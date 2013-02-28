@@ -1,0 +1,58 @@
+# ------ FOR K computer -----
+#
+NICAMBINDIR=/data/ra000006/NICAM/NICAM-DC/0.14/bin
+NICAMLIBDIR=/data/ra000006/NICAM/NICAM-DC/0.14/lib
+NICAMRUNDIR=/data/ra000006/NICAM/NICAM-DC/0.14/run
+
+############### for Product Run ###############
+# disable FPCOLL & runtime
+#FPCOLL = -U_FPCOLL_ -Ntl_notrt
+# enable SIMD
+#SIMD   = -Ksimd
+# disable All Timer
+#FJTIMER_BASIC  = -U_FJTIMER_BASIC_ -U_FJT_FIPPCOUNTER_
+#FJTIMER_DETAIL = -U_FJTIMER_       -U_FJT_FAPPCOUNTER_
+
+############### for SCALING Test (less timer) ###############
+# enable FPCOLL
+FPCOLL=-D_FPCOLL_ -Ntl_trt
+# enable SIMD
+SIMD=-Ksimd
+# enable Basic Timer & FIPPCOUNTER
+FJTIMER_BASIC  = -D_FJTIMER_BASIC_ -D_FJT_FIPPCOUNTER_
+FJTIMER_DETAIL = -U_FJTIMER_       -U_FJT_FAPPCOUNTER_
+
+############### for Detailed Profile ###############
+# disable FPCOLL & runtime
+#FPCOLL = -D_FPCOLL_ -Ntl_trt
+# enable SIMD
+#SIMD=-Ksimd
+# enable Detailed Timer without COUNTER
+#FJTIMER_BASIC  = -D_FJTIMER_BASIC_ -U_FJT_FIPPCOUNTER_
+#FJTIMER_DETAIL = -D_FJTIMER_       -D_FJT_FAPPCOUNTER_
+
+OCL = _ocl
+
+FC     = mpifrtpx
+FFLAGS = -Kfast,parallel,ocl,preex,array_private,auto,noalias=s,parallel_compress \
+         -Qi -Qt -X03 -v03s -v03d -v03o -Ncompdisp -Koptmsg=1 -Cpp \
+         $(FPCOLL) $(SIMD) $(FJTIMER_BASIC) $(FJTIMER_DETAIL)
+
+#FFLAGS = -Kfast,parallel,ocl,preex,array_private,auto,noalias=s,parallel_compress \
+#         -Qi -Qt -X03 -v03s -v03d -v03o -Ncompdisp -Koptmsg=1 -Cpp \
+#         -Eg -Ha -He -Hf -Ho -Hs -Hu -Hx
+
+CC     = mpifccpx
+CFLAGS = -Kfast,parallel,ocl,preex,array_private $(FPCOLL) $(SIMD)
+
+LD     = $(FC)
+LFLAGS = $(FFLAGS)
+
+INSTALL = install
+AR      = ar -rv
+RANLIB  = ranlib
+
+CLEAN = rm -f *~ *.o *.mod *__genmod.f90 *.lst
+
+JOBSUB  = pjsub
+MPIEXEC = mpiexec

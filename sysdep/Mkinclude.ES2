@@ -1,0 +1,31 @@
+# ------ FOR Earth Simulator 2 -----
+#
+NICAMBINDIR=/S/data03/G5015/c0360/NICAM-DC/0.15/bin
+NICAMLIBDIR=/S/data03/G5015/c0360/NICAM-DC/0.15/lib
+NICAMRUNDIR=/S/data03/G5015/c0360/NICAM-DC/0.15/run
+
+FC  = sxmpif90
+
+FFLAGS = -C hopt -dW -Ep                                \
+         -Wf,-L,fmtlist,transform,-pvctl,fullmsg,chgpwr \
+         -ftrace -f2003
+
+#FFLAGS = -dW -C vopt  -Ep                               \
+#         -Wf,-L,fmtlist,transform,-pvctl,fullmsg        \
+#         -ftrace -f2003                                 \
+#         -Wf"-init heap=nan stack=nan"
+
+CC     = sxc++
+CFLAGS =
+
+LD      = $(FC)
+LFLAGS  = $(FFLAGS)
+
+INSTALL = install
+AR      = sxar vru
+RANLIB  = touch
+
+CLEAN = rm -f *~ *.o *.mod *__genmod.f90 *.L
+
+JOBSUB  = qsub
+MPIEXEC = mpirun
