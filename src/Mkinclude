@@ -1,0 +1,13 @@
+ifeq ($(origin BINDIR), undefined)
+	BINDIR = $(TOPDIR)/bin
+endif
+
+ifeq ($(origin LIBDIR), undefined)
+   LIBDIR = $(TOPDIR)/lib
+endif
+
+SRCDIR  = $(TOPDIR)/src
+TESTDIR = $(TOPDIR)/test
+
+BINNAME  = nhm_driver
+LIBNAME = libnicamshare.a

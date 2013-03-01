@@ -1,19 +1,15 @@
--include Mkinclude
--include ../sysdep/Mkinclude.$(NICAM_SYS)
+################################################################################
+#
+# Makefile for main program
+#
+################################################################################
+
+TOPDIR = ..
+
+include $(TOPDIR)/sysdep/Makedef.$(NICAM_SYS)
+include $(TOPDIR)/src/Mkinclude
 
 VPATH = share:nhm/share:nhm/dynamics$(OCL):nhm/forcing:nhm
-
-ifeq ($(origin NICAMDIR), undefined)
-	export NICAMDIR = $(shell pwd)/..
-endif
-
-ifeq ($(origin NICAMBINDIR), undefined)
-	export NICAMBINDIR = $(NICAMDIR)/bin
-endif
-
-ifeq ($(origin NICAMLIBDIR), undefined)
-	export NICAMLIBDIR = $(NICAMDIR)/lib
-endif
 
 ifeq ($(prec), noreal16)
 VPATH += :share/extra
@@ -22,9 +18,6 @@ else
 mod_misc := mod_misc
 endif
 
-export BINNAME = nhm_driver
-export LIBNAME = libnicamshare.a
-
 PRJ1 = prg_driver-dc
 
 
@@ -32,11 +25,11 @@ PRJ1 = prg_driver-dc
 all: makedir makemain maketool
 
 makedir:
-	mkdir -p $(NICAMBINDIR)
-	mkdir -p $(NICAMLIBDIR)
+	mkdir -p $(BINDIR)
+	mkdir -p $(LIBDIR)
 
 makemain: $(PRJ1)
-	$(INSTALL) $(PRJ1) $(NICAMBINDIR)/$(BINNAME)
+	$(INSTALL) $(PRJ1) $(BINDIR)/$(BINNAME)
 	@echo; echo "##### $(BINNAME) is Installed Successfully #####"; echo
 
 maketool:
@@ -88,12 +81,12 @@ MODS =	\
 	mod_tb_smg.o	\
 	mod_forcing.o
 
-$(PRJ1): $(PRJ1).o $(NICAMLIBDIR)/$(LIBNAME)
+$(PRJ1): $(PRJ1).o $(LIBDIR)/$(LIBNAME)
 	$(LD) $(LFLAGS) -o $@ $^
 
 $(PRJ1).o : $(PRJ1).f90 $(LIBNAME)
 
-$(NICAMLIBDIR)/$(LIBNAME): $(LIBNAME)
+$(LIBDIR)/$(LIBNAME): $(LIBNAME)
 	install $< $@
 	@echo; echo "##### $(LIBNAME) is Installed Successfully #####"; echo
 

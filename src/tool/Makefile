@@ -1,7 +1,13 @@
--include ../Mkinclude
--include ../../sysdep/Mkinclude.$(NICAM_SYS)
+################################################################################
+#
+# Makefile for tools
+#
+################################################################################
 
-VPATH = ../share
+TOPDIR = ../..
+
+include $(TOPDIR)/sysdep/Makedef.$(NICAM_SYS)
+include $(TOPDIR)/src/Mkinclude
 
 PRJ12 = mkllmap
 PRJ13 = ico2ll
@@ -16,36 +22,39 @@ MODS_TOOL =	\
 	mod_option.o
 
 all: $(PRJS)
-	$(INSTALL) $(PRJS) $(NICAMBINDIR)
+	$(INSTALL) $(PRJS) $(BINDIR)
 	@echo; echo "##### Tools are Installed Successfully #####"; echo
 
-$(PRJ12): prg_$(PRJ12).o $(MODS_TOOL) $(NICAMLIBDIR)/$(LIBNAME)
+$(LIBDIR)/$(LIBNAME):
+	$(MAKE) -C $(TOPDIR)/src || exit 1
+
+$(PRJ12): prg_$(PRJ12).o $(MODS_TOOL) $(LIBDIR)/$(LIBNAME)
 	$(LD) $(LFLAGS) -o $@ $^
-$(PRJ13): prg_$(PRJ13).o $(MODS_TOOL) $(NICAMLIBDIR)/$(LIBNAME)
+$(PRJ13): prg_$(PRJ13).o $(MODS_TOOL) $(LIBDIR)/$(LIBNAME)
 	$(LD) $(LFLAGS) -o $@ $^
-$(PRJ26): prg_$(PRJ26).o $(MODS_TOOL) $(NICAMLIBDIR)/$(LIBNAME)
+$(PRJ26): prg_$(PRJ26).o $(MODS_TOOL) $(LIBDIR)/$(LIBNAME)
 	$(LD) $(LFLAGS) -o $@ $^
-$(PRJ30): prg_$(PRJ30).o $(MODS_TOOL) $(NICAMLIBDIR)/$(LIBNAME)
+$(PRJ30): prg_$(PRJ30).o $(MODS_TOOL) $(LIBDIR)/$(LIBNAME)
 	$(LD) $(LFLAGS) -o $@ $^
-$(PRJ37): prg_$(PRJ37).o $(MODS_TOOL) $(NICAMLIBDIR)/$(LIBNAME)
+$(PRJ37): prg_$(PRJ37).o $(MODS_TOOL) $(LIBDIR)/$(LIBNAME)
 	$(LD) $(LFLAGS) -o $@ $^
 
-prg_$(PRJ12).o	: prg_$(PRJ12).f90 $(NICAMLIBDIR)/$(LIBNAME)
-prg_$(PRJ13).o	: prg_$(PRJ13).f90 $(NICAMLIBDIR)/$(LIBNAME)
-prg_$(PRJ26).o	: prg_$(PRJ26).f90 $(NICAMLIBDIR)/$(LIBNAME)
-prg_$(PRJ30).o	: prg_$(PRJ30).f90 $(NICAMLIBDIR)/$(LIBNAME)
-prg_$(PRJ37).o	: prg_$(PRJ37).f90 $(NICAMLIBDIR)/$(LIBNAME)
+prg_$(PRJ12).o	: prg_$(PRJ12).f90 $(LIBDIR)/$(LIBNAME)
+prg_$(PRJ13).o	: prg_$(PRJ13).f90 $(LIBDIR)/$(LIBNAME)
+prg_$(PRJ26).o	: prg_$(PRJ26).f90 $(LIBDIR)/$(LIBNAME)
+prg_$(PRJ30).o	: prg_$(PRJ30).f90 $(LIBDIR)/$(LIBNAME)
+prg_$(PRJ37).o	: prg_$(PRJ37).f90 $(LIBDIR)/$(LIBNAME)
 
-mod_mnginfo_light.o	: mod_mnginfo_light.f90 $(NICAMLIBDIR)/$(LIBNAME)
+mod_mnginfo_light.o	: mod_mnginfo_light.f90 $(LIBDIR)/$(LIBNAME)
 mod_option.o	: mod_option.f90
 
 
 
 .SUFFIXES: .o .f90 .c
 .f90.o:
-	$(FC) $(FFLAGS) -I$(NICAMDIR)/src -o $@ -c $<
+	$(FC) $(FFLAGS) -I$(TOPDIR)/src -o $@ -c $<
 .c.o:
-	$(CC) $(CFLAGS) -I$(NICAMDIR)/src -o $@ -c $<
+	$(CC) $(CFLAGS) -I$(TOPDIR)/src -o $@ -c $<
 
 %.o: %.mod
 

@@ -1,5 +1,5 @@
 #
-# ------ FOR MacOSX & gfortran4.7 & OpenMPI1.6 -----
+# ------ FOR MacOSX & gfortran4.6 & OpenMPI1.6 -----
 #
 
 ##### for computation
@@ -12,12 +12,12 @@ FFLAGS_FAST = -cpp -O3 -m64 $(OPT)                              \
               -fconvert=big-endian -frecord-marker=4            \
               -funroll-all-loops -fprefetch-loop-arrays
 
-FFLAGS_DEBUG = -cpp -O -Wuninitialized -m64                      \
+FFLAGS_DEBUG = -cpp -O0 -Wuninitialized -m64                     \
                -pedantic-errors -fimplicit-none -fmodule-private \
-               -fconvert=big-endian -frecord-marker=4            \
-               -ffpe-trap=invalid,zero,overflow -finit-integer=-32768 -finit-real=nan -finit-logical=false -finit-character=9                    \
-               -Wall -Wextra -Warray-temporaries -Wcharacter-truncation -Wconversion-extra -Wimplicit-interface -Wimplicit-procedure -Wunderflow \
-               -fcheck=all -g -fbacktrace -fall-intrinsics
+               -fconvert=big-endian -frecord-marker=4            
+#                -ffpe-trap=invalid,zero,overflow -finit-integer=-32768 -finit-real=nan -finit-logical=false -finit-character=9                    \
+#                -Wall -Wextra -Warray-temporaries -Wcharacter-truncation -Wconversion-extra -Wimplicit-interface -Wimplicit-procedure -Wunderflow \
+#                -fcheck=all -g -fbacktrace -fall-intrinsics
 
 FC     = openmpif90
 FFLAGS = $(FFLAGS_DEBUG)
@@ -31,8 +31,8 @@ LFLAGS = $(FFLAGS)
 
 CLEAN   = rm -f *~ *.o *.mod *__genmod.f90
 
-NETCDF_LIBS    ?= -L/opt/local/lib -lnetcdff -lnetcdf
-NETCDF_INCLUDE ?= -I/opt/local/include
+NETCDF_LIBS    ?= -lnetcdf
+NETCDF_INCLUDE ?=
 
 ##### for frontend
 INSTALL = install
