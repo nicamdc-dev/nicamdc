@@ -88,7 +88,7 @@ ${MPIEXEC} ./fio_ico2ll_mpi \
 history \
 glevel=${GLEV} \
 rlevel=${RLEV} \
-mnginfo="rl${RL}-prc${NP}.info" \
+mnginfo="./rl${RL}-prc${NP}.info" \
 layerfile_dir="./zaxis" \
 llmap_base="./llmap" \
 -lon_swap \
