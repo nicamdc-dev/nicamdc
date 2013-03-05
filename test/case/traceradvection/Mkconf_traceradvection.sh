@@ -17,23 +17,26 @@ else
 fi
 ZL=${4:-40}
 vgrid=${5:-vgrid40_24000-600m.dat}
-case=${6:-"heldsuarez"}
+LSMAX=${6:-792}
+DTL=${7:-1200}
+DIFCF=${8:-1.29D16}
+NHIST=${9:-72}
 
 dir2d=gl${GL}rl${RL}pe${NP}
 res2d=GL${GL}RL${RL}
 dir3d=gl${GL}rl${RL}z${ZL}pe${NP}
 res3d=GL${GL}RL${RL}z${ZL}
 
-let ZLp2="${ZL} - 2"
+let ZLp2="${ZL} + 2"
 
-outdir=${NICAMRUNDIR}/${case}/${dir3d}
-mkdir -p ${outdir}
+outdir=${dir3d}
+cd ${outdir}
 
 ##### Generate nhm_driver.cnf
-cat << EOFNHM > ${outdir}/nhm_driver.cnf
+cat << EOFNHM > nhm_driver.cnf
 ################################################################################
 #
-# NICAM driver config (Tracer)
+# NICAM driver config (Tracer Advection)
 #
 ################################################################################
 
@@ -50,15 +53,15 @@ cat << EOFNHM > ${outdir}/nhm_driver.cnf
     hgrid_io_mode   = "ADVANCED",
     hgrid_fname     = "boundary_${res2d}",
     vgrid_fname     = "${vgrid}",
-    topo_fname      = "Jablonowski",
+    topo_fname      = "topog.files",
 /
 
-###--- for FULL RUN (15 days): LSTEP_MAX = 1080
+###--- for FULL RUN (11 days): LSTEP_MAX = 792
 &TIMEPARAM
+    DTL         = ${DTL}.D0,
     INTEG_TYPE  = "RK2",
+    LSTEP_MAX   = ${LSMAX},
     SSTEP_MAX   = 4,
-    LSTEP_MAX   = 50,
-    DTL         = 1200.D0,
     SPLIT       = .true.,
     start_year  = 1000,
     start_month = 1,
@@ -67,11 +70,10 @@ cat << EOFNHM > ${outdir}/nhm_driver.cnf
 
 ###--- SET RUN TYPE
 &RUNCONFPARAM 
-    RUN_TYPE       = 'Jablonowski',
+    RUN_TYPE       = 'Tracer-Advection',
     EIN_TYPE       = 'SIMPLE',
     NDIFF_LOCATION = 'IN_LARGE_STEP',
     AF_TYPE        = 'NONE',
-    CHEM_TYPE      = 'CHASER',
 /
 
 ###--- SET BASIC STATE
@@ -86,9 +88,9 @@ cat << EOFNHM > ${outdir}/nhm_driver.cnf
     Kh_coef_maxlim    = 9.9D99,
     Kh_coef_minlim    = 0.D0,
     divdamp_type      = 'DIRECT',
-    alpha_d           = 1.29D16,
+    alpha_d           = ${DIFCF},
     alpha_dv          = 0.D0,
-    gamma_h           = 1.29D16,
+    gamma_h           = ${DIFCF},
     gamma_v           = 0.D0,
     hdiff_fact_rho    = 0.01D0,
     hdiff_fact_q      = 0.D0,
@@ -108,7 +110,7 @@ cat << EOFNHM > ${outdir}/nhm_driver.cnf
     init_type = 'Tracer',
 /
 
-&EMBUDGETPARAM MNT_ON = .true., MNT_INTV = 10 /
+&EMBUDGETPARAM MNT_ON = .true., MNT_INTV = 72 /
 
 &NMHISD
     output_io_mode    = 'ADVANCED' ,
@@ -117,7 +119,7 @@ cat << EOFNHM > ${outdir}/nhm_driver.cnf
     DIRECT_ACCESS     = .true.     ,
     NO_VINTRPL        = .false.    ,
     output_type       = 'SNAPSHOT' ,
-    step              = 1          ,
+    step              = ${NHIST}   ,
 /
 
 &NMHIST item='ml_u',     file='u',   ktype='3D' /
@@ -130,27 +132,3 @@ cat << EOFNHM > ${outdir}/nhm_driver.cnf
 
 ################################################################################
 EOFNHM
-
-#$# ##### Generate ico2ll.cnf
-#$# cat << EOFICO2LL >> ${outdir}/ico2ll.cnf
-#$# ################################################################################
-#$# #
-#$# # NICAM ico2ll config
-#$# #
-#$# ################################################################################
-#$# &ico2ll_param
-#$#     glevel     = 5,
-#$#     rlevel     = 0,
-#$#     input_dir  = ".",
-#$#     output_dir = "."
-#$#     info_fname = "history.info",
-#$#     llmap_dir  = ".",
-#$#     llmap_base = "llmap",
-#$#     lon_swap   = .true.,
-#$#     input_size = 4,
-#$#     init_year  = 1000,
-#$#     init_month = 1,
-#$#     init_day   = 1,
-#$# /
-#$# ################################################################################
-#$# EOFICO2LL

@@ -13,20 +13,16 @@ include $(TESTDIR)/test.conf
 RUNDIR := $(shell sh $(TESTDIR)/util/dirname.sh $(glevel) $(rlevel) $(nmpi) $(zlayer))
 testcase = heldsuarez
 
-all: build
+all: build run
+
+build:
+	$(MAKE) -C $(TOPDIR)/src || exit 1
+
+getrundir:
+	@echo $(RUNDIR)
 
 makedir:
 	mkdir -p $(RUNDIR)
-
-build: makedir
-	$(MAKE) -C $(TOPDIR)/src || exit 1
-
-jobshell: build checkconfig
-	sh $(TESTDIR)/sysdep/Mkjobshell.$(NICAM_SYS).sh $(glevel) $(rlevel) $(nmpi) $(zlayer) $(vgrid) $(LSMAX) $(DTL) $(DIFCF) $(NHIST)
-	sh Mkconf.$(testcase).sh $(glevel) $(rlevel) $(nmpi) $(zlayer) $(vgrid) $(LSMAX) $(DTL) $(DIFCF) $(NHIST)
-
-run: jobshell
-	cd $(RUNDIR); $(JOBSUB) run.sh
 
 checkconfig:
 	@echo "##### Run configuration #####"
@@ -42,3 +38,10 @@ checkconfig:
 	@echo "+diffusion coef.  :" $(DIFCF)
 	@echo "+history steps    :" $(NHIST)
 	@echo
+
+jobshell: makedir checkconfig
+	sh $(TESTDIR)/sysdep/Mkjobshell.$(NICAM_SYS).sh $(glevel) $(rlevel) $(nmpi) $(zlayer) $(vgrid) $(LSMAX) $(DTL) $(DIFCF) $(NHIST)
+	sh Mkconf.$(testcase).sh $(glevel) $(rlevel) $(nmpi) $(zlayer) $(vgrid) $(LSMAX) $(DTL) $(DIFCF) $(NHIST)
+
+run: jobshell
+	cd $(RUNDIR); $(JOBSUB) run.sh

@@ -58,9 +58,10 @@ cat << EOFNHM > nhm_driver.cnf
 
 ###--- for FULL RUN (11 days): LSTEP_MAX = 792
 &TIMEPARAM
+    DTL         = ${DTL}.D0,
     INTEG_TYPE  = "RK2",
     LSTEP_MAX   = ${LSMAX},
-    DTL         = ${DTL}.D0,
+    SSTEP_MAX   = 4,
     SPLIT       = .true.,
     start_year  = 1000,
     start_month = 1,
@@ -109,7 +110,7 @@ cat << EOFNHM > nhm_driver.cnf
     init_type = 'Jablonowski',
 /
 
-&EMBUDGETPARAM MNT_ON = .true., MNT_INTV = 10 /
+&EMBUDGETPARAM MNT_ON = .true., MNT_INTV = 72 /
 
 &NMHISD
     output_io_mode    = 'ADVANCED' ,
@@ -130,27 +131,3 @@ cat << EOFNHM > nhm_driver.cnf
 
 ################################################################################
 EOFNHM
-
-#$# ##### Generate ico2ll.cnf
-#$# cat << EOFICO2LL >> ico2ll.cnf
-#$# ################################################################################
-#$# #
-#$# # NICAM ico2ll config
-#$# #
-#$# ################################################################################
-#$# &ico2ll_param
-#$#     glevel     = 5,
-#$#     rlevel     = 0,
-#$#     input_dir  = ".",
-#$#     output_dir = "."
-#$#     info_fname = "history.info",
-#$#     llmap_dir  = ".",
-#$#     llmap_base = "llmap",
-#$#     lon_swap   = .true.,
-#$#     input_size = 4,
-#$#     init_year  = 1000,
-#$#     init_month = 1,
-#$#     init_day   = 1,
-#$# /
-#$# ################################################################################
-#$# EOFICO2LL
