@@ -3736,25 +3736,28 @@ contains
     real(8), intent(in)  :: localsum
     real(8), intent(out) :: globalsum
 
-    real(8) :: gathersum(ADM_prc_all)
+    real(8) :: sendbuf(1)
+    real(8) :: recvbuf(ADM_prc_all)
+
     integer :: ierr
     !---------------------------------------------------------------------------
 
-    gathersum(ADM_prc_me) = localsum
 
     if ( COMM_pl ) then
-       call MPI_Allgather( MPI_IN_PLACE,         &
+       sendbuf(1) = localsum
+
+       call MPI_Allgather( sendbuf(:),           &
                            1,                    &
                            MPI_DOUBLE_PRECISION, &
-                           gathersum(1),         &
+                           recvbuf(:),           &
                            1,                    &
                            MPI_DOUBLE_PRECISION, &
                            ADM_COMM_RUN_WORLD,   &
                            ierr                  )
 
-       globalsum = sum( gathersum(:) )
+       globalsum = sum( recvbuf(:) )
     else
-       globalsum = gathersum(ADM_prc_me)
+       globalsum = localsum
     endif
 
     return
@@ -3823,25 +3826,27 @@ contains
     real(8), intent(in)  :: localavg
     real(8), intent(out) :: globalavg
 
-    real(8) :: gathersum(ADM_prc_all)
+    real(8) :: sendbuf(1)
+    real(8) :: recvbuf(ADM_prc_all)
+
     integer :: ierr
     !---------------------------------------------------------------------------
 
-    gathersum(ADM_prc_me) = localavg
-
     if ( COMM_pl ) then
-       call MPI_Allgather( MPI_IN_PLACE,         &
+       sendbuf(1) = localavg
+
+       call MPI_Allgather( sendbuf(:),           &
                            1,                    &
                            MPI_DOUBLE_PRECISION, &
-                           gathersum(1),         &
+                           recvbuf(:),           &
                            1,                    &
                            MPI_DOUBLE_PRECISION, &
                            ADM_COMM_RUN_WORLD,   &
                            ierr                  )
 
-       globalavg = sum( gathersum(:) ) / real(ADM_prc_all,kind=8)
+       globalavg = sum( recvbuf(:) ) / real(ADM_prc_all,kind=8)
     else
-       globalavg = gathersum(ADM_prc_me)
+       globalavg = localavg
     endif
 
     return
@@ -3858,25 +3863,26 @@ contains
     real(8), intent(in)  :: localmax
     real(8), intent(out) :: globalmax
 
-    real(8) :: gathermax(ADM_prc_all)
+    real(8) :: sendbuf(1)
+    real(8) :: recvbuf(ADM_prc_all)
+
     integer :: ierr
     !---------------------------------------------------------------------------
 
-    gathermax(ADM_prc_me) = localmax
+    sendbuf(1) = localmax
 
-    call MPI_Barrier(ADM_COMM_RUN_WORLD,ierr)
-
-    call MPI_Allgather( MPI_IN_PLACE,         &
+    call MPI_Allgather( sendbuf(:),           &
                         1,                    &
                         MPI_DOUBLE_PRECISION, &
-                        gathermax(1),         &
+                        recvbuf(:),           &
                         1,                    &
                         MPI_DOUBLE_PRECISION, &
                         ADM_COMM_RUN_WORLD,   &
                         ierr                  )
 
-    globalmax = maxval( gathermax(:) )
+    globalmax = maxval( recvbuf(:) )
 
+    return
   end subroutine COMM_Stat_max
 
   !-----------------------------------------------------------------------------
@@ -3890,25 +3896,26 @@ contains
     real(8), intent(in)  :: localmin
     real(8), intent(out) :: globalmin
 
-    real(8) :: gathermin(ADM_prc_all)
+    real(8) :: sendbuf(1)
+    real(8) :: recvbuf(ADM_prc_all)
+
     integer :: ierr
     !---------------------------------------------------------------------------
 
-    gathermin(ADM_prc_me) = localmin
+    sendbuf(1) = localmin
 
-    call MPI_Barrier(ADM_COMM_RUN_WORLD,ierr)
-
-    call MPI_Allgather( MPI_IN_PLACE,         &
+    call MPI_Allgather( sendbuf(:),           &
                         1,                    &
                         MPI_DOUBLE_PRECISION, &
-                        gathermin(1),         &
+                        recvbuf(:),           &
                         1,                    &
                         MPI_DOUBLE_PRECISION, &
                         ADM_COMM_RUN_WORLD,   &
                         ierr                  )
 
-    globalmin = minval( gathermin(:) )
+    globalmin = minval( recvbuf(:) )
 
+    return
   end subroutine COMM_Stat_min
 
 end module mod_comm

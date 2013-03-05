@@ -23,6 +23,8 @@ module mod_gtl
   !
   use mpi
   use mod_adm, only: &
+     ADM_LOG_FID, &
+     ADM_NSYS,    &
      ADM_MAXFNAME
   !-----------------------------------------------------------------------------
   implicit none
@@ -68,169 +70,9 @@ module mod_gtl
   !
   !-----------------------------------------------------------------------------
 contains
-
-  !-----------------------------------------------------------------------------
-  subroutine COMM_Stat_sum( pall, localsum, globalsum )
-    use mod_adm, only: &
-       ADM_prc_me,        &
-       ADM_COMM_RUN_WORLD
-    use mod_comm, only: &
-       COMM_pl
-    implicit none
-
-    integer, intent(in)  :: pall
-    real(8), intent(in)  :: localsum
-    real(8), intent(out) :: globalsum
-
-    real(8) :: gathersum(pall)
-
-    integer :: ierr
-    !---------------------------------------------------------------------------
-
-    gathersum(ADM_prc_me) = localsum
-
-    if ( COMM_pl ) then
-       call MPI_Allgather( MPI_IN_PLACE,         &
-                           1,                    &
-                           MPI_DOUBLE_PRECISION, &
-                           gathersum(1),         &
-                           1,                    &
-                           MPI_DOUBLE_PRECISION, &
-                           ADM_COMM_RUN_WORLD,   &
-                           ierr                  )
-
-       globalsum = sum( gathersum(:) )
-    else
-       globalsum = gathersum(ADM_prc_me)
-    endif
-
-    return
-  end subroutine COMM_Stat_sum
-
-  !-----------------------------------------------------------------------------
-  subroutine COMM_Stat_sum_eachlayer( pall, kall, localsum, globalsum )
-    use mod_adm, only: &
-       ADM_prc_me,        &
-       ADM_COMM_RUN_WORLD
-    use mod_comm, only: &
-       COMM_pl
-    implicit none
-
-    integer, intent(in)  :: pall
-    integer, intent(in)  :: kall
-    real(8), intent(in)  :: localsum (kall)
-    real(8), intent(out) :: globalsum(kall)
-
-    real(8) :: gathersum(pall,kall)
-
-    integer :: displs (pall)
-    integer :: rcounts(pall)
-
-    integer :: ierr
-    integer :: k, p
-    !---------------------------------------------------------------------------
-
-    do k = 1, kall
-       gathersum(ADM_prc_me,k) = localsum(k)
-    enddo
-
-    do p = 1, pall
-       displs (p) = (p-1) * pall + 1
-       rcounts(p) = 1
-    enddo
-
-    if ( COMM_pl ) then
-       call MPI_Allgatherv( MPI_IN_PLACE,         &
-                            1,                    &
-                            MPI_DOUBLE_PRECISION, &
-                            gathersum(1,1),       &
-                            rcounts,              &
-                            displs,               &
-                            MPI_DOUBLE_PRECISION, &
-                            ADM_COMM_RUN_WORLD,   &
-                            ierr                  )
-
-       do k = 1, kall
-          globalsum(k) = sum( gathersum(:,k) )
-       enddo
-    else
-       do k = 1, kall
-          globalsum = gathersum(ADM_prc_me,k)
-       enddo
-    endif
-
-  end subroutine COMM_Stat_sum_eachlayer
-
-  !-----------------------------------------------------------------------------
-  subroutine COMM_Stat_max( pall, localmax, globalmax )
-    use mod_adm, only: &
-       ADM_prc_me,        &
-       ADM_COMM_RUN_WORLD
-    implicit none
-
-    integer, intent(in)  :: pall
-    real(8), intent(in)  :: localmax
-    real(8), intent(out) :: globalmax
-
-    real(8) :: gathermax(pall)
-
-    integer :: ierr
-    !---------------------------------------------------------------------------
-
-    gathermax(ADM_prc_me) = localmax
-
-    call MPI_Barrier(ADM_COMM_RUN_WORLD,ierr)
-
-    call MPI_Allgather( MPI_IN_PLACE,         &
-                        1,                    &
-                        MPI_DOUBLE_PRECISION, &
-                        gathermax(1),         &
-                        1,                    &
-                        MPI_DOUBLE_PRECISION, &
-                        ADM_COMM_RUN_WORLD,   &
-                        ierr                  )
-
-    globalmax = maxval( gathermax(:) )
-
-  end subroutine COMM_Stat_max
-
-  !-----------------------------------------------------------------------------
-  subroutine COMM_Stat_min( pall, localmin, globalmin )
-    use mod_adm, only: &
-       ADM_prc_me,        &
-       ADM_COMM_RUN_WORLD
-    implicit none
-
-    integer, intent(in)  :: pall
-    real(8), intent(in)  :: localmin
-    real(8), intent(out) :: globalmin
-
-    real(8) :: gathermin(pall)
-
-    integer :: ierr
-    !---------------------------------------------------------------------------
-
-    gathermin(ADM_prc_me) = localmin
-
-    call MPI_Barrier(ADM_COMM_RUN_WORLD,ierr)
-
-    call MPI_Allgather( MPI_IN_PLACE,         &
-                        1,                    &
-                        MPI_DOUBLE_PRECISION, &
-                        gathermin(1),         &
-                        1,                    &
-                        MPI_DOUBLE_PRECISION, &
-                        ADM_COMM_RUN_WORLD,   &
-                        ierr                  )
-
-    globalmin = minval( gathermin(:) )
-
-  end subroutine COMM_Stat_min
-
   !-----------------------------------------------------------------------------
   function GTL_global_sum( var, var_pl ) result( sum_g )
     use mod_adm, only: &
-       ADM_prc_all,     &
        ADM_prc_me,      &
        ADM_prc_pl,      &
        ADM_gall,        &
@@ -244,6 +86,8 @@ contains
        ADM_IooJoo,      &
        ADM_GIoJo,       &
        ADM_GSLF_PL
+    use mod_comm, only: &
+       COMM_Stat_sum
     use mod_vmtr, only: &
        VMTR_VOLUME,   &
        VMTR_VOLUME_pl
@@ -274,7 +118,7 @@ contains
        enddo
     endif
 
-    call COMM_Stat_sum( ADM_prc_all, sum, sum_g )
+    call COMM_Stat_sum( sum, sum_g )
 
     return
   end function GTL_global_sum
@@ -282,7 +126,6 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_global_sum_srf( var, var_pl ) result( sum_g )
     use mod_adm, only: &
-       ADM_prc_all,     &
        ADM_prc_me,      &
        ADM_prc_pl,      &
        ADM_gall,        &
@@ -294,6 +137,8 @@ contains
        ADM_IooJoo,      &
        ADM_GIoJo,       &
        ADM_GSLF_PL
+    use mod_comm, only: &
+       COMM_Stat_sum
     use mod_gmtr, only: &
        GMTR_area,   &
        GMTR_area_pl
@@ -322,7 +167,7 @@ contains
        enddo
     endif
 
-    call COMM_Stat_sum( ADM_prc_all, sum, sum_g )
+    call COMM_Stat_sum( sum, sum_g )
 
     return
   end function GTL_global_sum_srf
@@ -330,7 +175,6 @@ contains
   !-----------------------------------------------------------------------------
   subroutine GTL_global_sum_eachlayer( var, var_pl, sum_g )
     use mod_adm, only: &
-       ADM_prc_all,     &
        ADM_prc_me,      &
        ADM_prc_pl,      &
        ADM_gall,        &
@@ -342,6 +186,8 @@ contains
        ADM_IooJoo,      &
        ADM_GIoJo,       &
        ADM_GSLF_PL
+    use mod_comm, only: &
+       COMM_Stat_sum_eachlayer
     use mod_gmtr, only: &
        GMTR_area,   &
        GMTR_area_pl
@@ -380,7 +226,7 @@ contains
     endif
 
 
-    call COMM_Stat_sum_eachlayer( ADM_prc_all, ADM_kall, sum(:), sum_g(:) )
+    call COMM_Stat_sum_eachlayer( ADM_kall, sum(:), sum_g(:) )
 
     return
   end subroutine GTL_global_sum_eachlayer
@@ -388,11 +234,13 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_global_mean( var, var_pl ) result( sum_g )
     use mod_adm, only: &
-         ADM_gall,    &
-         ADM_lall,    &
-         ADM_gall_pl, &
-         ADM_lall_pl, &
-         ADM_kall
+       ADM_gall,    &
+       ADM_lall,    &
+       ADM_gall_pl, &
+       ADM_lall_pl, &
+       ADM_kall
+    use mod_comm, only: &
+       COMM_Stat_sum
     implicit none
 
     real(8), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
@@ -425,7 +273,6 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_max( var, var_pl, kdim, kstart, kend ) result( vmax_g )
     use mod_adm, only: &
-       ADM_prc_all,     &
        ADM_prc_me,      &
        ADM_prc_pl,      &
        ADM_gall,        &
@@ -436,6 +283,8 @@ contains
        ADM_IooJoo,      &
        ADM_GIoJo,       &
        ADM_GSLF_PL
+    use mod_comm, only: &
+       COMM_Stat_max
     implicit none
 
     integer, intent(in) :: kdim
@@ -466,7 +315,7 @@ contains
        enddo
     endif
 
-    call COMM_Stat_max( ADM_prc_all, vmax, vmax_g )
+    call COMM_Stat_max( vmax, vmax_g )
 
     return
   end function GTL_max
@@ -474,7 +323,6 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_max_k( var, var_pl, k ) result( vmax_g )
     use mod_adm, only: &
-       ADM_prc_all,     &
        ADM_prc_me,      &
        ADM_prc_pl,      &
        ADM_gall,        &
@@ -486,6 +334,8 @@ contains
        ADM_IooJoo,      &
        ADM_GIoJo,       &
        ADM_GSLF_PL
+    use mod_comm, only: &
+       COMM_Stat_max
     implicit none
 
     real(8), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
@@ -510,7 +360,7 @@ contains
        enddo
     endif
 
-    call COMM_Stat_max( ADM_prc_all, vmax, vmax_g )
+    call COMM_Stat_max( vmax, vmax_g )
 
     return
   end function GTL_max_k
@@ -518,7 +368,6 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_min( var, var_pl, kdim, kstart, kend, nonzero ) result( vmin_g )
     use mod_adm, only: &
-       ADM_prc_all,     &
        ADM_prc_me,      &
        ADM_prc_pl,      &
        ADM_gall,        &
@@ -529,6 +378,8 @@ contains
        ADM_IooJoo,      &
        ADM_GIoJo,       &
        ADM_GSLF_PL
+    use mod_comm, only: &
+       COMM_Stat_min
     implicit none
 
     integer, intent(in) :: kdim
@@ -576,7 +427,7 @@ contains
           enddo
        endif
 
-       call COMM_Stat_min( ADM_prc_all, vmin, vmin_g )
+       call COMM_Stat_min( vmin, vmin_g )
        return
 
        endif
@@ -599,7 +450,7 @@ contains
        enddo
     endif
 
-    call COMM_Stat_min( ADM_prc_all, vmin, vmin_g )
+    call COMM_Stat_min( vmin, vmin_g )
 
     return
   end function GTL_min
@@ -607,7 +458,6 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_min_k( var, var_pl, k ) result( vmin_g )
     use mod_adm, only: &
-       ADM_prc_all,     &
        ADM_prc_me,      &
        ADM_prc_pl,      &
        ADM_gall,        &
@@ -619,6 +469,8 @@ contains
        ADM_IooJoo,      &
        ADM_GIoJo,       &
        ADM_GSLF_PL
+    use mod_comm, only: &
+       COMM_Stat_min
     implicit none
 
     real(8), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
@@ -643,7 +495,7 @@ contains
        enddo
     endif
 
-    call COMM_Stat_min( ADM_prc_all, vmin, vmin_g )
+    call COMM_Stat_min( vmin, vmin_g )
 
     return
   end function GTL_min_k
