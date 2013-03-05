@@ -1,8 +1,6 @@
-# ------ FOR Linux & ifort & MPICH2 -----
 #
-NICAMBINDIR=/home/user/src/NICAM-DC_0.16i/bin
-NICAMLIBDIR=/home/user/src/NICAM-DC_0.16i/lib
-NICAMRUNDIR=/home/user/src/NICAM-DC_0.16i/run
+# ------ FOR Linux 64bit & intel fortran&C & intel mpi -----
+#
 
 FC  = mpiifort
 
@@ -30,11 +28,13 @@ CFLAGS = -O3 -xAVX
 LD         = $(FC)
 LFLAGS     = $(FFLAGS) $(PAPILIB)
 
+CLEAN   = rm -f *~ *.o *.mod *__genmod.f90
+
+NETCDF_LIBS    ?= -lnetcdf
+NETCDF_INCLUDE ?=
+
+##### for frontend
 INSTALL = install
 AR      = ar -rv
 RANLIB  = ranlib
-
-CLEAN = rm -f *~ *.o *.mod *__genmod.f90 *.lst
-
 JOBSUB  = sh
-MPIEXEC = mpirun
