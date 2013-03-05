@@ -120,6 +120,7 @@ cat << EOFNHM > nhm_driver.cnf
     NO_VINTRPL        = .false.    ,
     output_type       = 'SNAPSHOT' ,
     step              = ${NHIST}   ,
+    doout_step0       = .true.     ,
 /
 
 &NMHIST item='ml_u',     file='u',   ktype='3D' /

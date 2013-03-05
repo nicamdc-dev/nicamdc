@@ -117,10 +117,11 @@ program prg_driver
        dynstep2
   use mod_history, only: &
        history_setup, &
-       history_out 
+       history_out,   &
+       HIST_output_step0
   use mod_history_vars, only: &
-       history_vars, &
-       history_vars_setup
+       history_vars_setup, &
+       history_vars
   use mod_embudget, only: &
        embudget_setup, &
        embudget_monitor
@@ -208,6 +209,11 @@ program prg_driver
   call DEBUG_rapend('Setup ALL')
   call DEBUG_rapstart('Main ALL')
   call TIME_report
+
+  if ( HIST_output_step0 ) then
+     call history_vars
+     call history_out
+  endif
 
   do n = 1, TIME_LSTEP_MAX
 

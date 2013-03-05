@@ -86,6 +86,7 @@ module mod_history
   !
   integer,                 public,              save :: HIST_req_nmax
   character(len=ADM_NSYS), public, allocatable, save :: item_save(:)
+  logical,                 public,              save :: HIST_output_step0 = .false.
 
   !-----------------------------------------------------------------------------
   !
@@ -206,6 +207,7 @@ contains
     logical                     :: no_vintrpl        = .true.
     logical                     :: opt_wgrid_def     = .false.
     logical                     :: opt_lagintrpl_def = .true.
+    logical                     :: doout_step0
 
     character(len=ADM_NSYS)     :: item
     character(len=ADM_MAXFNAME) :: file
@@ -240,8 +242,9 @@ contains
          opt_wgrid_def,     &
          opt_lagintrpl_def, &
          npreslev,          &
-         pres_levs,         & 
-         check_flag
+         pres_levs,         &
+         check_flag,        &
+         doout_step0
 
     namelist / NMHIST / &
          item,         &
@@ -286,6 +289,8 @@ contains
     output_type = output_type_def
     out_prelev  = out_prelev_def
 
+    doout_step0 = HIST_output_step0
+
     !--- read parameters
     write(ADM_LOG_FID,*)
     write(ADM_LOG_FID,*) '+++ Module[history]/Category[nhm share]'
@@ -308,6 +313,8 @@ contains
     kmax_def        = kmax
     output_type_def = output_type
     out_prelev_def  = out_prelev
+
+    HIST_output_step0 = doout_step0
 
     if (      trim(output_io_mode) == 'ADVANCED' &
          .OR. trim(output_io_mode) == 'LEGACY'   ) then
