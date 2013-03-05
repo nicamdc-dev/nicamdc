@@ -331,6 +331,7 @@ module mod_runconf
   !                                                = 'SPRINTARS'
 
   character(len=ADM_NSYS), public, save :: CHEM_TYPE = 'NONE'   ! Y.Niwa add save 080130
+  !                                                  = 'PASSIVE'
   !                                                  = 'CHASER'
 
   character(len=ADM_NSYS), public, save :: RD_TYPE = 'NONE'     ! Y.Niwa add save 080130
@@ -609,7 +610,8 @@ contains
     TRC_vmax = TRC_vmax + NTB_MAX
 
     !--- Tracer for chemistry
-    if ( trim(CHEM_TYPE) == 'CHASER' )then
+    if (      trim(CHEM_TYPE) == 'PASSIVE' &
+         .OR. trim(CHEM_TYPE) == 'CHASER'  )then
        NCHEM_MAX = CHEM_TRC_vmax
        NCHEM_STR = TRC_vmax + min(1,NCHEM_MAX)
        NCHEM_END = TRC_vmax + NCHEM_MAX

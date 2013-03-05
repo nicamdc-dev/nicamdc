@@ -74,6 +74,7 @@ cat << EOFNHM > nhm_driver.cnf
     EIN_TYPE       = 'SIMPLE',
     NDIFF_LOCATION = 'IN_LARGE_STEP',
     AF_TYPE        = 'NONE',
+    CHEM_TYPE      = 'PASSIVE',
 /
 
 ###--- SET BASIC STATE
