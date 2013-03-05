@@ -5736,9 +5736,7 @@ contains
     if(first) then
       allocate(local_t_var(ADM_gall,ADM_KNONE,ADM_lall,ADM_TI:ADM_TJ,GMTR_T_W1:GMTR_T_W3))
       allocate(local_t_var_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL,GMTR_T_W1:GMTR_T_W3))
-      local_t_var(:,:,:,:,:) = ADM_VMISS
-      local_t_var_pl(:,:,:,:) = ADM_VMISS
-      !
+
       do l=1, ADM_lall
          do t=ADM_TI, ADM_TJ
             do n=1, ADM_ImoJmo_nmax

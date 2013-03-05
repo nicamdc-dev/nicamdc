@@ -229,7 +229,6 @@ contains
          ADM_GSLF_PL,    &
          ADM_KNONE,      &
          ADM_VNONE,      &
-         ADM_VMISS,      &
          ADM_prc_me,     &
          ADM_lall,       &
          ADM_kall,       &
@@ -301,16 +300,12 @@ contains
     !------ ( cell CENTER )
     allocate( GRD_x   (ADM_gall,   K0,ADM_lall,   GRD_XDIR:GRD_ZDIR) )
     allocate( GRD_x_pl(ADM_gall_pl,K0,ADM_lall_pl,GRD_XDIR:GRD_ZDIR) )
-    GRD_x   (:,:,:,:) = ADM_VMISS
-    GRD_x_pl(:,:,:,:) = ADM_VMISS
-    !
+
     !------ allocation and intitialization of horizontal grid points
     !------  ( cell CORNER )
     allocate( GRD_xt   (ADM_gall,   K0,ADM_lall,   ADM_TI:ADM_TJ,GRD_XDIR:GRD_ZDIR) )
     allocate( GRD_xt_pl(ADM_gall_pl,K0,ADM_lall_pl,              GRD_XDIR:GRD_ZDIR) )
-    GRD_xt   (:,:,:,:,:) = ADM_VMISS
-    GRD_xt_pl(:,:,:,:)   = ADM_VMISS
-    !
+
     !--- reading the horzontal grid (unit sphere) and
     !--- scaled by earth radius
     call GRD_input_hgrid(hgrid_fname,Bgrid_dump=.true.,da_access=da_access_hgrid)
@@ -428,8 +423,6 @@ contains
        !------ allocation, initilization, and setting the z-coordinate
        allocate( GRD_vz   ( ADM_gall,   ADM_kall,ADM_lall,   GRD_Z:GRD_ZH) )
        allocate( GRD_vz_pl( ADM_gall_pl,ADM_kall,ADM_lall_pl,GRD_Z:GRD_ZH) )
-       GRD_vz   (:,:,:,:) = ADM_VMISS
-       GRD_vz_pl(:,:,:,:) = ADM_VMISS
 
        select case(trim(vgrid_scheme))
        case('LINEAR')

@@ -137,7 +137,6 @@ contains
        ADM_CTL_FID,   &
        ADM_prc_me,    &
        ADM_prc_pl,    &
-       ADM_VMISS,     &
        ADM_gall,      &
        ADM_gall_pl,   &
        ADM_lall,      &
@@ -219,108 +218,68 @@ contains
     !--- initialization
     allocate( VMTR_GSGAM2     (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_GSGAM2_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_GSGAM2   (:,:,:) = ADM_VMISS
-    VMTR_GSGAM2_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_RGSGAM2    (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_RGSGAM2_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_RGSGAM2   (:,:,:) = ADM_VMISS
-    VMTR_RGSGAM2_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_GSGAM2H    (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_GSGAM2H_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_GSGAM2H   (:,:,:) = ADM_VMISS
-    VMTR_GSGAM2H_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_RGSGAM2H   (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_RGSGAM2H_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_RGSGAM2H   (:,:,:) = ADM_VMISS
-    VMTR_RGSGAM2H_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_GSGAMH     (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_GSGAMH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_GSGAMH   (:,:,:) = ADM_VMISS
-    VMTR_GSGAMH_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_GZXH       (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_GZXH_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_GZXH   (:,:,:) = ADM_VMISS
-    VMTR_GZXH_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_GZYH       (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_GZYH_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_GZYH   (:,:,:) = ADM_VMISS
-    VMTR_GZYH_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_GZZH       (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_GZZH_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_GZZH   (:,:,:) = ADM_VMISS
-    VMTR_GZZH_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_GZX        (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_GZX_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_GZX   (:,:,:) = ADM_VMISS
-    VMTR_GZX_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_GZY        (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_GZY_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_GZY   (:,:,:) = ADM_VMISS
-    VMTR_GZY_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_GZZ        (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_GZZ_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_GZZ   (:,:,:) = ADM_VMISS
-    VMTR_GZZ_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_RGAM       (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_RGAM_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_RGAM   (:,:,:) = ADM_VMISS
-    VMTR_RGAM_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_GAM2       (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_GAM2_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_GAM2   (:,:,:) = ADM_VMISS
-    VMTR_GAM2_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_RGAM2      (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_RGAM2_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_RGAM2   (:,:,:) = ADM_VMISS
-    VMTR_RGAM2_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_GAM2H      (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_GAM2H_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_GAM2H   (:,:,:) = ADM_VMISS
-    VMTR_GAM2H_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_RGAM2H     (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_RGAM2H_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_RGAM2H   (:,:,:) = ADM_VMISS
-    VMTR_RGAM2H_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_RGSH       (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_RGSH_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_RGSH   (:,:,:) = ADM_VMISS
-    VMTR_RGSH_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_VOLUME     (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_VOLUME_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_VOLUME   (:,:,:) = ADM_VMISS
-    VMTR_VOLUME_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_PHI        (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_PHI_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_PHI   (:,:,:) = ADM_VMISS
-    VMTR_PHI_pl(:,:,:) = ADM_VMISS
 
     allocate( VMTR_C2Wfact   (6,ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_C2Wfact_pl(6,ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    VMTR_C2Wfact   (:,:,:,:) = ADM_VMISS
-    VMTR_C2Wfact_pl(:,:,:,:) = ADM_VMISS
 
     !--- if 1 layer model( shallow water model ),
     if ( ADM_kall == ADM_KNONE ) then
 
-       VMTR_VOLUME   (:,:,:) = GMTR_P_var(:,:,:,GMTR_P_AREA)
+       VMTR_VOLUME   (:,:,:) = GMTR_P_var   (:,:,:,GMTR_P_AREA)
        VMTR_VOLUME_pl(:,:,:) = GMTR_P_var_pl(:,:,:,GMTR_P_AREA)
 
        return

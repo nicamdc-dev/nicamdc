@@ -41,15 +41,15 @@ module mod_dycoretest
   real(8), private, parameter :: pi = 3.14159265358979323846D0
   real(8), private, parameter :: d2r = pi/180.D0          ! Degree to Radian
   real(8), private, parameter :: r2d = 180.D0/pi          ! Radian to Degree
-  real(8), private, parameter :: eps = 1.0d-14            ! minimum value
-  real(8), private, parameter :: eps_r = 1.0d-9           ! minimum value (reduce version)
+  real(8), private, parameter :: eps = 1.D-14            ! minimum value
+  real(8), private, parameter :: eps_r = 1.D-9           ! minimum value (reduce version)
   real(8), private, parameter :: zero = 0.D0              ! zero
   !
   ! test configurations
   integer, private, parameter :: PRCS_D = 8
   ! for Held and Suarez
-  real(8), private, save :: deltaT = 60.0d0
-  real(8), private, save :: deltaTh = 10.0d0
+  real(8), private, save :: deltaT = 60.D0
+  real(8), private, save :: deltaTh = 10.D0
   ! for Jablonowski
   real(8), private, save :: clat = 40.D0             ! perturbation center: latitude [deg]
   real(8), private, save :: clon = 20.D0             ! perturbation center: longitude [deg]
@@ -61,16 +61,14 @@ module mod_dycoretest
   real(8), private, save :: ganma = 0.005d0           ! [Km^-1]
   real(8), private, save :: u0 = 35.D0               ! [ms^-1]
   real(8), private, save :: uP = 1.D0                ! [ms^-1]
-  real(8), private, save :: p0 = 1.0d+5               ! [Pa]
-  real(8), private, save :: ps = 1.0d+5               ! [Pa]
+  real(8), private, save :: p0 = 1.D+5               ! [Pa]
+  real(8), private, save :: ps = 1.D+5               ! [Pa]
   real(8), private, save :: a = 6.371229d+6           ! [m] mean radis of the earth
   real(8), private, save :: omega = 7.29212d-5        ! [s^-1] rotation of the earth
   logical, private, save :: deep_atm = .false.        ! deep atmosphere setting
   logical, private, parameter :: message = .false.
   integer, private, parameter :: itrmax = 100                  ! # of iteration maximum
-  !
-  ! timer
-  real(8), private, save :: cpu_t1, cpu_t2
+
   !-----------------------------------------------------------------------------
   !
   !++ Public procedure
@@ -139,24 +137,18 @@ contains
     endif
     write(ADM_LOG_FID,DYCORETESTPARAM)
 
-    call cpu_time(cpu_t1)  ! timer
-
-    DIAG_var(:,:,:,:) = 0.D0
-
+    write(ADM_LOG_FID,*) '*** type: ', trim(init_type)
     if ( trim(init_type) == "Heldsuarez" ) then
-       call hs_init ( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,1:6) )
+       call hs_init ( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
     elseif( trim(init_type) == "Jablonowski" ) then
-       call jbw_init( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,1:6) )
+       call jbw_init( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
     elseif( trim(init_type) == "Tracer" ) then ! tentative test
-       call jbw_init   ( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,1:6)          )
-       call tracer_init( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,7:6+TRC_VMAX) )
+       call jbw_init   ( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
+       call tracer_init( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
     else
        write(ADM_LOG_FID,*) 'xxx Invalid input_io_mode. STOP.'
        call ADM_proc_stop
     endif
-
-    call cpu_time(cpu_t2)  ! timer
-    write (ADM_LOG_FID, '(" Msg : Dycore Initialize CPU Time: ",F7.4," [sec]")') (cpu_t2 - cpu_t1)
 
     return
   end subroutine dycore_input
@@ -180,14 +172,16 @@ contains
     use mod_cnst, only :  &
        CNST_RAIR, &
          CNST_EGRAV
+    use mod_runconf, only: &
+       TRC_vmax
     implicit none
 
     integer, intent(in)    :: ijdim
     integer, intent(in)    :: kdim
     integer, intent(in)    :: lall
-    real(8), intent(inout) :: DIAG_var(ijdim,kdim,lall,6)
+    real(8), intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-    real(8), parameter :: p_surf = 1.0d+5         ! [Pa]
+    real(8), parameter :: p_surf = 1.D+5         ! [Pa]
     real(8), parameter :: LASPdry = 9.771958146487295D-3
     real(8) :: t_1stlev, t_surf, t_atthelev, t_guess
     real(8) :: p_1stlev(2)
@@ -219,12 +213,12 @@ contains
        dZ = GRD_vz(n,k,l,1) - 0.D0
 
        ! Newton-Lapson
-       p_1stlev(1) = 0.0d0 ! to do the first step
+       p_1stlev(1) = 0.D0 ! to do the first step
        do itr = 1, itrmax
           if( abs(p_1stlev(1)-p_1stlev(2)) <= eps_r ) exit
 
           p_1stlev(1) = p_1stlev(2)
-          t_1stlev = ( 315.0d0 - deltaT*sin(lat)**2 - deltaTh*log(p_1stlev(1)/p0) &
+          t_1stlev = ( 315.D0 - deltaT*sin(lat)**2 - deltaTh*log(p_1stlev(1)/p0) &
                                             * cos(lat)**2 ) * (p_1stlev(1)/p0)**kai
           f  = ( log( p_surf ) - log( p_1stlev(1) ) ) / ( dZ ) &
              + CNST_EGRAV / CNST_RAIR * 2.D0 / ( t_surf + t_1stlev )
@@ -238,9 +232,9 @@ contains
        endif
 
        DIAG_var(n,k,l,1) = p_1stlev(2)
-       t_atthelev = ( 315.0d0 - deltaT*sin(lat)**2 - deltaTh*log(DIAG_var(n,k,l,1)/p0) &
+       t_atthelev = ( 315.D0 - deltaT*sin(lat)**2 - deltaTh*log(DIAG_var(n,k,l,1)/p0) &
                                          * cos(lat)**2 ) * (DIAG_var(n,k,l,1)/p0)**kai
-       DIAG_var(n,k,l,2) = max(200.0d0, t_atthelev)
+       DIAG_var(n,k,l,2) = max(200.D0, t_atthelev)
 
        ! guess pressure field upper k=1
        do k=2, kdim
@@ -248,9 +242,9 @@ contains
           t_guess = DIAG_var(n,k-1,l,2) - LASPdry * dZ
           dT = ( t_guess + DIAG_var(n,k-1,l,2) )/2.D0
           DIAG_var(n,k,l,1) = DIAG_var(n,k-1,l,1) * e**( -1.D0 * dZ * (g/(R*dT)) )
-          t_atthelev = ( 315.0d0 - deltaT*sin(lat)**2 - deltaTh*log(DIAG_var(n,k,l,1)/p0) &
+          t_atthelev = ( 315.D0 - deltaT*sin(lat)**2 - deltaTh*log(DIAG_var(n,k,l,1)/p0) &
                                                    * cos(lat)**2 ) * (DIAG_var(n,k,l,1)/p0)**kai
-          DIAG_var(n,k,l,2) = max(200.0d0, t_atthelev)
+          DIAG_var(n,k,l,2) = max(200.D0, t_atthelev)
        enddo
 
     enddo
@@ -278,12 +272,14 @@ contains
        GRD_ZDIR,       &
        GRD_Z,          &
        GRD_ZH
+    use mod_runconf, only: &
+       TRC_vmax
     implicit none
 
-    integer, intent(in)    :: ijdim
-    integer, intent(in)    :: kdim
-    integer, intent(in)    :: lall
-    real(8), intent(inout) :: DIAG_var(ijdim,kdim,lall,6)
+    integer, intent(in)  :: ijdim
+    integer, intent(in)  :: kdim
+    integer, intent(in)  :: lall
+    real(8), intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
     ! work paramters
     real(PRCS_D) :: lat, lon                 ! latitude, longitude on Icosahedral grid
@@ -344,14 +340,13 @@ contains
           DIAG_var(n,k,l,3) = vx_local(k)
           DIAG_var(n,k,l,4) = vy_local(k)
           DIAG_var(n,k,l,5) = vz_local(k)
+          DIAG_var(n,k,l,6) = 0.D0
        enddo
 
     enddo
     enddo
 
-    DIAG_var(:,:,:,6) = 0.D0
-
-    !!!call surface_height( lall, ijdim, a, omega, g )
+    !call surface_height( lall, ijdim, a, omega, g )
 
     return
   end subroutine jbw_init  
@@ -383,7 +378,7 @@ contains
     integer, intent(in)    :: ijdim
     integer, intent(in)    :: kdim
     integer, intent(in)    :: lall
-    real(8), intent(inout) :: tracer(ijdim,kdim,lall,TRC_vmax)
+    real(8), intent(inout) :: tracer(ijdim,kdim,lall,6+TRC_VMAX)
 
     real(8) :: lon_center   = 120.D0 ! [degree]
     real(8) :: lat_center   =  30.D0 ! [degree]
@@ -400,8 +395,8 @@ contains
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
-    tracer(:,:,:,:) = 0.D0
-    I_passive1 = chemvar_getid( "passive1" ) + NCHEM_STR - 1
+    tracer(:,:,:,7:TRC_VMAX) = 0.D0
+    I_passive1 = 6 + chemvar_getid( "passive1" ) + NCHEM_STR - 1
 
     rlon_center = lon_center / 180.D0 * CNST_PI
     rlat_center = lat_center / 180.D0 * CNST_PI
@@ -454,7 +449,7 @@ contains
        Feta(k) = -1.D0 * ( R/eta(k,1) ) * tmp(k)
        eta(k,2) = eta(k,1) - ( F(k)/Feta(k) )
        if(eta(k,2) > 1.D0) eta(k,2) = 1.D0     ! not allow over 1.0 for eta
-       if(eta(k,2) < 0.D0) eta(k,2) = 1.0d-20
+       if(eta(k,2) < 0.D0) eta(k,2) = 1.D-20
        diff(k) = abs( eta(k,2) - eta(k,1) )
     enddo
     !

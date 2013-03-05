@@ -71,7 +71,6 @@ module mod_diagvar
        ADM_LALL_PL,       &
        ADM_prc_me,        &
        ADM_prc_pl,        &
-       ADM_VMISS,         &
        ADM_kall,          &
        ADM_KNONE,         &
        ADM_gall,          &
@@ -1014,8 +1013,6 @@ contains
 
   if(ADM_prc_me==ADM_prc_pl) then
      dv_pl(1:ADM_gall_pl,:,:)   = diagvar_pl(1:ADM_gall_pl,:,:,vid)
-  else
-     dv_pl(:,:,:) = ADM_VMISS
   end if
   !
   return
@@ -1056,8 +1053,6 @@ contains
 
     if(ADM_prc_me==ADM_prc_pl) then
        diagvar_pl(1:ADM_gall_pl,:,:,vid)   = dv_pl(1:ADM_gall_pl,:,:)
-    else
-       diagvar_pl(:,:,:,vid)   = ADM_VMISS
     end if
     !
     diagvar(suf(ADM_gall_1d,1),:,:,vid) = diagvar(suf(ADM_gmax+1,ADM_gmin),:,:,vid)

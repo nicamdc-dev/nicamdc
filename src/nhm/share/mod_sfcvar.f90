@@ -358,7 +358,6 @@ contains
          ADM_LALL_PL,       &
          ADM_prc_me,        &
          ADM_prc_pl,        &
-         ADM_VMISS,         &
          ADM_KNONE,         &
          ADM_gall,          &
          ADM_lall,          &
@@ -375,8 +374,6 @@ contains
     if(ADM_prc_me==ADM_prc_pl) then
        sv_pl(1:ADM_gall_pl,ADM_KNONE,1:ADM_lall_pl) &
             = sfcvar_pl(1:ADM_gall_pl,KSTR(vid),1:ADM_lall_pl,1)
-    else
-       sv_pl(:,:,:) = ADM_VMISS
     end if
     !
     return
@@ -397,7 +394,6 @@ contains
          ADM_LALL_PL,       &
          ADM_prc_me,        &
          ADM_prc_pl,        &
-         ADM_VMISS,         &
          ADM_KNONE,         &
          ADM_gall,          &
          ADM_lall,          &
@@ -429,8 +425,6 @@ contains
              end do
           end do
        end do
-    else
-       sv_pl(:,:,:,:) = ADM_VMISS
     end if
     !
     return
@@ -517,7 +511,6 @@ contains
          ADM_LALL_PL,       &
          ADM_prc_me,        &
          ADM_prc_pl,        &
-         ADM_VMISS,         &
          ADM_KNONE,         &
          ADM_gall,          &
          ADM_gmin,          &
@@ -538,8 +531,6 @@ contains
     if(ADM_prc_me==ADM_prc_pl) then
        sfcvar_pl(1:ADM_gall_pl,KSTR(vid),1:ADM_lall_pl,1) &
             = sv_pl(1:ADM_gall_pl,ADM_KNONE,1:ADM_lall_pl)
-    else
-       sfcvar_pl(:,KSTR(vid),:,1) = ADM_VMISS
     end if
     !
     sfcvar(suf(ADM_gall_1d,1),KSTR(vid),:,1) &
@@ -684,7 +675,6 @@ contains
          ADM_gall_1d,       &
          adm_prc_me,        &
          adm_prc_pl,        &
-         ADM_VMISS,         &
          ADM_comm_run_world
     use mod_comm, only :    &
          COMM_data_transfer
@@ -723,10 +713,6 @@ contains
                 sfcvar_pl(n,KSTR(vid)+m-1,l,1) = sv_pl(n,ADM_KNONE,l,m)
              end do
           end do
-       end do
-    else
-       do m=1, mdim
-          sfcvar_pl(:,KSTR(vid)+m-1,:,:) = ADM_VMISS
        end do
     end if
 
@@ -946,7 +932,6 @@ contains
          ADM_gall_pl,       &
          ADM_lall,          &
          ADM_lall_pl,       &
-         ADM_VMISS,         &
          adm_prc_me,        &
          adm_prc_pl
     !
@@ -986,8 +971,6 @@ contains
              end do
           end do
        end do
-    else
-       sfcvar_pl(1:adm_gall_pl,KSTR(vid):KEND(vid),1:adm_lall_pl,1)=ADM_VMISS
     end if
     !
     return

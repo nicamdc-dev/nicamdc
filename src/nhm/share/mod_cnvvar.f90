@@ -347,8 +347,7 @@ contains
     use mod_adm, only :       &
          kdim => ADM_kall,    &
          kmin => ADM_kmin,    &
-         kmax => ADM_kmax,    &
-         ADM_VMISS
+         kmax => ADM_kmax
     use mod_grd, only :      &
          GRD_afac, GRD_bfac,         GRD_cfac, GRD_dfac
     !
@@ -377,39 +376,6 @@ contains
 
     !--- rhogkin = gamma^2 * g_sqrt * rho * kin
     !
-!del
-!del
-!del
-    do ij = 1, ijdim
-       rhogkin(ij,kmin-1) = ADM_VMISS
-    end do
-!del
-!del
-!del
-    do ij = 1, ijdim
-       rhogkin(ij,kmax+1) = ADM_VMISS
-    end do
-!del
-!del
-!del
-    do ij = 1, ijdim
-       rhogkin_h0(ij,kmin-1) = ADM_VMISS
-    end do
-!del
-!del
-!del
-    do ij = 1, ijdim
-       rhogkin_h0(ij,kmax+1) = ADM_VMISS
-    end do
-!del
-!del
-!del
-    do ij = 1, ijdim
-       rhogkin_v0(ij,kmin-1) = ADM_VMISS
-    end do
-!del
-!del
-!del
     do ij = 1, ijdim
        rhogkin_v0(ij,kmin) = 0.0D0
     end do

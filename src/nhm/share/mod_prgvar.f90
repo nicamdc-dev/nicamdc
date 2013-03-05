@@ -100,8 +100,8 @@ module mod_prgvar
   character(len=16), private, save :: DIAG_name(DIAG_vmax0)
   data DIAG_name / 'pre', 'tem', 'vx', 'vy', 'vz', 'w' /
 
-  integer, private,              save :: PRG_vmax  = 0 ! total number of prognostic variables
-  integer, private,              save :: DIAG_vmax = 0
+  integer, private,              save :: PRG_vmax  ! total number of prognostic variables
+  integer, private,              save :: DIAG_vmax
 
   real(8), private, allocatable, save :: PRG_var   (:,:,:,:) ! container
   real(8), private, allocatable, save :: PRG_var_pl(:,:,:,:)
@@ -134,7 +134,6 @@ contains
     use mod_adm, only: &
        ADM_CTL_FID,   &
        ADM_proc_stop, &
-       ADM_VMISS,     &
        ADM_gall,      &
        ADM_gall_pl,   &
        ADM_kall,      &
@@ -276,18 +275,12 @@ contains
 
     allocate( PRG_var    (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax) )
     allocate( PRG_var_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,PRG_vmax) )
-    PRG_var    (:,:,:,:) = ADM_VMISS
-    PRG_var_pl (:,:,:,:) = ADM_VMISS
 
     allocate( PRG_var1   (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax) )
     allocate( PRG_var1_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,PRG_vmax) )
-    PRG_var1   (:,:,:,:) = ADM_VMISS
-    PRG_var1_pl(:,:,:,:) = ADM_VMISS
 
     allocate( DIAG_var   (ADM_gall,   ADM_kall,ADM_lall,   DIAG_vmax) )
     allocate( DIAG_var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,DIAG_vmax) )
-    DIAG_var   (:,:,:,:) = ADM_VMISS
-    DIAG_var_pl(:,:,:,:) = ADM_VMISS
 
     return
   end subroutine prgvar_setup
@@ -1334,6 +1327,8 @@ contains
           endif
        endif !--- direct/sequencial
     elseif( input_io_mode == 'IDEAL' ) then
+
+       write(ADM_LOG_FID,*) '*** make ideal initials'
 
        call dycore_input( DIAG_var(:,:,:,:) ) !--- [OUT]
 
