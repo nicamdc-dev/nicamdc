@@ -763,25 +763,24 @@ contains
        ADM_kmax,      &
        ADM_kmin
     use mod_time, only: &
-         TIME_CSTEP, &
-         TIME_CTIME
+       TIME_CSTEP, &
+       TIME_CTIME
+    use mod_calendar, only : &
+       calendar_ss2yh, &
+       Calendar_SS2CC
+    use mod_comm, only : &
+       COMM_data_transfer, &
+       COMM_var
     use mod_fio, only: &
-         FIO_output
-    use mod_comm, only : &
-         COMM_data_transfer
-    use mod_comm, only : &
-         comm_var
-    use mod_gtl, only :         &
+       FIO_output
+    use mod_gtl, only: &
        GTL_max, &
        GTL_min, &
-       GTL_output_var2,       &
+       GTL_output_var2, &
        GTL_output_var2_da
-    use mod_vintrpl, only :     &
-         VINTRPL_z_level,  &
-         VINTRPL_z_level2
-    use mod_calendar, only : &
-         calendar_ss2yh, &
-         Calendar_SS2CC
+    use mod_vintrpl, only: &
+       VINTRPL_z_level, &
+       VINTRPL_z_level2
 
     real(8) :: tmp   (ADM_gall,   ADM_kall,ADM_lall   )
     real(8) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -857,7 +856,7 @@ contains
           do l = 1, ADM_lall_pl
           do k = ksumstr(n), ksumend(n)
           do g = 1, ADM_gall_pl
-             v_save_pl(g,k,l,1) = v_save_pl(g,k,l,1) / tsum_save(n,l)
+             v_save_pl(g,k,l,1) = v_save_pl(g,k,l,1) / tsum_save(n,1)
           enddo
           enddo
           enddo

@@ -3259,17 +3259,6 @@ contains
                           ierr                              ) !--- error id
        endif
 
-       if ( ADM_prc_me == ADM_prc_spl ) then !--- recv south pole value
-          call MPI_IRECV( v_spl_recv(1,1),                  & !--- starting address
-                          KNUM * NNUM,                      & !--- number of array
-                          MPI_DOUBLE_PRECISION,             & !--- type
-                          ADM_rgn2prc(ADM_rgnid_spl_mng)-1, & !--- srouce rank
-                          ADM_SPL,                          & !--- tag
-                          ADM_COMM_RUN_WORLD,               & !--- world
-                          ireq(4),                          & !--- request id
-                          ierr                              ) !--- error id
-       endif
-
        do l = 1, ADM_lall
           rgnid = ADM_prc_tab(l,ADM_prc_me)
 
@@ -3285,6 +3274,28 @@ contains
                              ireq(1),              & !--- request id
                              ierr                  ) !--- error id
 
+             call MPI_WAIT(ireq(1),istat,ierr)
+          endif
+       enddo
+
+       if ( ADM_prc_me == ADM_prc_npl ) then
+          call MPI_WAIT(ireq(3),istat,ierr)
+          var_pl(ADM_GSLF_PL,:,ADM_NPL,:) = v_npl_recv(:,:)
+       endif
+
+       if ( ADM_prc_me == ADM_prc_spl ) then !--- recv south pole value
+          call MPI_IRECV( v_spl_recv(1,1),                  & !--- starting address
+                          KNUM * NNUM,                      & !--- number of array
+                          MPI_DOUBLE_PRECISION,             & !--- type
+                          ADM_rgn2prc(ADM_rgnid_spl_mng)-1, & !--- srouce rank
+                          ADM_SPL,                          & !--- tag
+                          ADM_COMM_RUN_WORLD,               & !--- world
+                          ireq(4),                          & !--- request id
+                          ierr                              ) !--- error id
+       endif
+
+       do l = 1, ADM_lall
+          rgnid = ADM_prc_tab(l,ADM_prc_me)
           if ( rgnid == ADM_rgnid_spl_mng ) then !--- send south pole value
              v_spl_send(:,:) = var(suf(ADM_gmax+1,ADM_gmin),:,l,:)
 
@@ -3296,25 +3307,10 @@ contains
                              ADM_COMM_RUN_WORLD,   & !--- world
                              ireq(2),              & !--- request id
                              ierr                  ) !--- error id
-          endif
-       enddo
 
-       do l = 1, ADM_lall
-          rgnid = ADM_prc_tab(l,ADM_prc_me)
-
-          if ( rgnid == ADM_rgnid_npl_mng ) then
-             call MPI_WAIT(ireq(1),istat,ierr)
-          endif
-
-          if ( rgnid == ADM_rgnid_spl_mng ) then
              call MPI_WAIT(ireq(2),istat,ierr)
           endif
        enddo
-
-       if ( ADM_prc_me == ADM_prc_npl ) then
-          call MPI_WAIT(ireq(3),istat,ierr)
-          var_pl(ADM_GSLF_PL,:,ADM_NPL,:) = v_npl_recv(:,:)
-       endif
 
        if ( ADM_prc_me == ADM_prc_spl ) then
           call MPI_WAIT(ireq(4),istat,ierr)
@@ -3323,8 +3319,8 @@ contains
 
     endif
 
-    !write(ADM_LOG_FID,*) 'comm_var npl', v_npl_send(2,1), v_npl_recv(2,1), var_pl(ADM_GSLF_PL,2,ADM_NPL,1)
-    !write(ADM_LOG_FID,*) 'comm_var spl', v_spl_send(2,1), v_spl_recv(2,1), var_pl(ADM_GSLF_PL,2,ADM_SPL,1)
+    !write(ADM_LOG_FID,*) 'COMM_var npl', v_npl_send(2,1), v_npl_recv(2,1), var_pl(ADM_GSLF_PL,2,ADM_NPL,1)
+    !write(ADM_LOG_FID,*) 'COMM_var spl', v_spl_send(2,1), v_spl_recv(2,1), var_pl(ADM_GSLF_PL,2,ADM_SPL,1)
 
     !--- to complete communication
     if (      comm_type == 2 &
@@ -3723,10 +3719,10 @@ contains
     if ( COMM_pl ) then
        sendbuf(1) = localsum
 
-       call MPI_Allgather( sendbuf(:),           &
+       call MPI_Allgather( sendbuf,              &
                            1,                    &
                            MPI_DOUBLE_PRECISION, &
-                           recvbuf(:),           &
+                           recvbuf,              &
                            1,                    &
                            MPI_DOUBLE_PRECISION, &
                            ADM_COMM_RUN_WORLD,   &
@@ -3812,10 +3808,10 @@ contains
     if ( COMM_pl ) then
        sendbuf(1) = localavg
 
-       call MPI_Allgather( sendbuf(:),           &
+       call MPI_Allgather( sendbuf,              &
                            1,                    &
                            MPI_DOUBLE_PRECISION, &
-                           recvbuf(:),           &
+                           recvbuf,              &
                            1,                    &
                            MPI_DOUBLE_PRECISION, &
                            ADM_COMM_RUN_WORLD,   &
@@ -3825,6 +3821,8 @@ contains
     else
        globalavg = localavg
     endif
+
+    !write(ADM_LOG_FID,*) 'COMM_Stat_avg', sendbuf(1), recvbuf(:)
 
     return
   end subroutine COMM_Stat_avg
@@ -3848,16 +3846,18 @@ contains
 
     sendbuf(1) = localmax
 
-    call MPI_Allgather( sendbuf(:),           &
+    call MPI_Allgather( sendbuf,              &
                         1,                    &
                         MPI_DOUBLE_PRECISION, &
-                        recvbuf(:),           &
+                        recvbuf,              &
                         1,                    &
                         MPI_DOUBLE_PRECISION, &
                         ADM_COMM_RUN_WORLD,   &
                         ierr                  )
 
     globalmax = maxval( recvbuf(:) )
+
+    !write(ADM_LOG_FID,*) 'COMM_Stat_max', sendbuf(1), recvbuf(:)
 
     return
   end subroutine COMM_Stat_max
@@ -3881,16 +3881,18 @@ contains
 
     sendbuf(1) = localmin
 
-    call MPI_Allgather( sendbuf(:),           &
+    call MPI_Allgather( sendbuf,              &
                         1,                    &
                         MPI_DOUBLE_PRECISION, &
-                        recvbuf(:),           &
+                        recvbuf,              &
                         1,                    &
                         MPI_DOUBLE_PRECISION, &
                         ADM_COMM_RUN_WORLD,   &
                         ierr                  )
 
     globalmin = minval( recvbuf(:) )
+
+    !write(ADM_LOG_FID,*) 'COMM_Stat_min', sendbuf(1), recvbuf(:)
 
     return
   end subroutine COMM_Stat_min

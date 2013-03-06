@@ -387,24 +387,20 @@ contains
 
     real(8) :: albedo_sfc(ADM_gall,ADM_KNONE,ADM_lall,1:NRDIR,1:NRBND)
     real(8) :: slp(ADM_gall,ADM_KNONE,ADM_lall)
-    real(8) :: zs(ADM_gall,ADM_lall)
     real(8) :: albedo_sfc_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,1:NRDIR,1:NRBND) ! 05/11/13 S.Iga
 
     integer, parameter :: cot_binmax=11
 
     real(8) :: dummy2D   (ADM_gall,   ADM_KNONE,ADM_lall   )
     real(8) :: dummy2D_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(8) :: dummy3D   (ADM_gall,   ADM_kall, ADM_lall   )
-    real(8) :: dummy3D_pl(ADM_gall_pl,ADM_kall, ADM_lall_pl)
     real(8) :: dummy3D1_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8) :: dummy3D2_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8) :: dummy3D3_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8) :: dummy3D4_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8) :: dummy3D5_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8) :: rw(ADM_gall,ADM_lall)
-    real(8) :: val_max, val_min
 
-    integer :: n, k, l, nq, K0
+    integer :: k, l, nq, K0
     !---------------------------------------------------------------------------
 
     K0 = ADM_KNONE
@@ -474,7 +470,7 @@ contains
 
     !--- zonal and meridonal wind with cos(phi)
     if (out_ucos_vcos) then
-       call GTL_generate_uv( ucos, dummy3D_pl,  & ! [OUT]
+       call GTL_generate_uv( ucos, dummy3D1_pl, & ! [OUT]
                              vcos, dummy3D2_pl, & ! [OUT]
                              vx,   dummy3D3_pl, & ! [IN]
                              vy,   dummy3D4_pl, & ! [IN]
