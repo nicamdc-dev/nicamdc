@@ -50,8 +50,9 @@ module mod_comm
   !++ used modules
   !
   use mpi
-  use mod_adm, only :    &
-       ADM_vlink_nmax
+  use mod_adm, only: &
+     ADM_LOG_FID, &
+     ADM_vlink_nmax
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -3373,7 +3374,6 @@ contains
        ADM_vlink_nmax,     &
        ADM_lall,           &
        ADM_comm_run_world, &
-       ADM_LOG_FID,        &
        ADM_kall
     use mod_cnst, only : &
        CNST_undef

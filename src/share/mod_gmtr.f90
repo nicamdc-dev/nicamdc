@@ -205,10 +205,10 @@ contains
 
     GMTR_area   (:,:) = GMTR_P_var   (:,K0,:,GMTR_P_AREA)
     GMTR_area_pl(:,:) = GMTR_P_var_pl(:,K0,:,GMTR_P_AREA)
-    GMTR_lat    (:,:) = GMTR_P_var   (:,K0,:,GMTR_P_LAT)
-    GMTR_lat_pl (:,:) = GMTR_P_var_pl(:,K0,:,GMTR_P_LAT)
-    GMTR_lon    (:,:) = GMTR_P_var   (:,K0,:,GMTR_P_LON)
-    GMTR_lon_pl (:,:) = GMTR_P_var_pl(:,K0,:,GMTR_P_LON)
+    GMTR_lat    (:,:) = GMTR_P_var   (:,K0,:,GMTR_P_LAT )
+    GMTR_lat_pl (:,:) = GMTR_P_var_pl(:,K0,:,GMTR_P_LAT )
+    GMTR_lon    (:,:) = GMTR_P_var   (:,K0,:,GMTR_P_LON )
+    GMTR_lon_pl (:,:) = GMTR_P_var_pl(:,K0,:,GMTR_P_LON )
 
     !--- setup arc data
     allocate( GMTR_A_var   (ADM_gall,   K0,ADM_lall,   ADM_AI:ADM_AJ,GMTR_A_nmax_var   ) )
