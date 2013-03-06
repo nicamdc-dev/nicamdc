@@ -17,10 +17,20 @@ else
 fi
 ZL=${4:-40}
 vgrid=${5:-vgrid40_24000-600m.dat}
-LSMAX=${6:-792}
+LSMAX=${6:-0}
 DTL=${7:-1200}
 DIFCF=${8:-1.29D16}
-NHIST=${9:-72}
+NHIST=${9:-0}
+
+if [ ${LSMAX} == 0 ]; then
+   # 11day
+   let LSMAX=" 11 * 24 * 60 * 60 / ${DTL} "
+fi
+
+if [ ${NHIST} == 0 ]; then
+   # 1day
+   let NHIST="  1 * 24 * 60 * 60 / ${DTL} "
+fi
 
 dir2d=gl${GL}rl${RL}pe${NP}
 res2d=GL${GL}RL${RL}
@@ -108,10 +118,10 @@ cat << EOFNHM > nhm_driver.cnf
 /
 
 &DYCORETESTPARAM
-    init_type = 'Tracer',
+    init_type = 'Traceradvection',
 /
 
-&EMBUDGETPARAM MNT_ON = .true., MNT_INTV = 72 /
+&EMBUDGETPARAM MNT_ON = .true., MNT_INTV = ${NHIST} /
 
 &NMHISD
     output_io_mode    = 'ADVANCED' ,
@@ -121,6 +131,7 @@ cat << EOFNHM > nhm_driver.cnf
     NO_VINTRPL        = .false.    ,
     output_type       = 'SNAPSHOT' ,
     step              = ${NHIST}   ,
+    doout_step0       = .true.     ,
 /
 
 &NMHIST item='ml_u',     file='u',   ktype='3D' /
@@ -129,7 +140,7 @@ cat << EOFNHM > nhm_driver.cnf
 &NMHIST item='ml_pres',  file='prs', ktype='3D' /
 &NMHIST item='ml_tem',   file='t',   ktype='3D' /
 &NMHIST item='sl_ps',    file='ps',  ktype='2D' /
-&NMHIST item='passive1',             ktype='3D' /
+&NMHIST item='ml_passive1', file='passive1', ktype='3D' /
 
 ################################################################################
 EOFNHM

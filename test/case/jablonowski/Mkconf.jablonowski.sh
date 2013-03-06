@@ -17,10 +17,20 @@ else
 fi
 ZL=${4:-40}
 vgrid=${5:-vgrid40_24000-600m.dat}
-LSMAX=${6:-792}
+LSMAX=${6:-0}
 DTL=${7:-1200}
 DIFCF=${8:-1.29D16}
-NHIST=${9:-72}
+NHIST=${9:-0}
+
+if [ ${LSMAX} == 0 ]; then
+   # 11day
+   let LSMAX=" 11 * 24 * 60 * 60 / ${DTL} "
+fi
+
+if [ ${NHIST} == 0 ]; then
+   # 1day
+   let NHIST="  1 * 24 * 60 * 60 / ${DTL} "
+fi
 
 dir2d=gl${GL}rl${RL}pe${NP}
 res2d=GL${GL}RL${RL}
@@ -110,7 +120,7 @@ cat << EOFNHM > nhm_driver.cnf
     init_type = 'Jablonowski',
 /
 
-&EMBUDGETPARAM MNT_ON = .true., MNT_INTV = 72 /
+&EMBUDGETPARAM MNT_ON = .true., MNT_INTV = ${NHIST} /
 
 &NMHISD
     output_io_mode    = 'ADVANCED' ,
