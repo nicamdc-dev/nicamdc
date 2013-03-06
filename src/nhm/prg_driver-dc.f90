@@ -75,6 +75,7 @@ program prg_driver
      TIME_report,         &
      TIME_advance,        &
      TIME_LSTEP_MAX,      &
+     cstep => TIME_CSTEP, &
      ctime => TIME_CTIME, &
      dtime => TIME_DTL
   use mod_grd, only: &
@@ -211,7 +212,10 @@ program prg_driver
   call TIME_report
 
   if ( HIST_output_step0 ) then
+     cstep = -1
+     ctime = -dtime
      call history_vars
+     call TIME_advance
      call history_out
   endif
 
