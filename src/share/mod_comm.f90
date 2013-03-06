@@ -3193,174 +3193,151 @@ contains
   end subroutine COMM_data_transfer_rgn2pl
 
   !-----------------------------------------------------------------------------
+  !> comm_type : 1 ( region -> pole )
+  !>           : 2 ( region -> pole -> regular communication )
+  !>           : 3 ( regular communication only )
   subroutine COMM_var( &
-       var,            & !--- INOUT : variables
-       var_pl,         & !--- INOUT : variables at poles
-       KNUM,           & !--- IN : number of layers
-       NNUM,           & !--- IN : number of variables
-       comm_type,      & !--- IN : communication type
-       NSval_fix       & !--- IN : North & South value is fixed or not.
-       )
-    !
-    !--- comm_type : 1 ( region -> pole )
-    !---           : 2 ( region -> pole -> regular communication )
-    !---           : 3 ( regular communication only )
-    !
-    use mod_adm, only :     &
-         ADM_gall_pl,       &
-         ADM_lall_pl,       &
-         ADM_prc_me,        &
-         ADM_KNONE,         &
-         ADM_gall,          &
-         ADM_gmin,          &
-         ADM_gmax,          &
-         ADM_lall,          &
-         ADM_gall_1d,       &
-         ADM_rgnid_npl_mng, &
-         ADM_rgnid_spl_mng, &
-         ADM_prc_tab,       &
-         ADM_prc_npl,       &
-         ADM_prc_spl,       &
-         ADM_GSLF_PL,       &
-         ADM_NPL,           &
-         ADM_SPL,           &
-         ADM_COMM_RUN_WORLD,&
-         ADM_rgn2prc
-    !
+       var,       &
+       var_pl,    &
+       KNUM,      &
+       NNUM,      &
+       comm_type, &
+       NSval_fix  )
+    use mod_adm, only: &
+       ADM_COMM_RUN_WORLD,&
+       ADM_prc_tab,       &
+       ADM_rgn2prc,       &
+       ADM_prc_me,        &
+       ADM_prc_npl,       &
+       ADM_prc_spl,       &
+       ADM_rgnid_npl_mng, &
+       ADM_rgnid_spl_mng, &
+       ADM_gall,          &
+       ADM_gall_pl,       &
+       ADM_lall,          &
+       ADM_lall_pl,       &
+       ADM_KNONE,         &
+       ADM_gall_1d,       &
+       ADM_gmin,          &
+       ADM_gmax,          &
+       ADM_GSLF_PL,       &
+       ADM_NPL,           &
+       ADM_SPL
     implicit none
 
-    integer, intent(in) :: KNUM
-    integer, intent(in) :: NNUM
-    real(8), intent(inout) :: var(ADM_gall,KNUM,ADM_lall,NNUM)
-    real(8), intent(inout) :: var_pl(ADM_gall_pl,KNUM,ADM_lall_pl,NNUM)
-    integer, intent(in) :: comm_type
-    logical, intent(in) :: NSval_fix
+    integer, intent(in)    :: KNUM      ! number of layers
+    integer, intent(in)    :: NNUM      ! number of variables
+    real(8), intent(inout) :: var   (ADM_gall,   KNUM,ADM_lall,   NNUM) ! variables
+    real(8), intent(inout) :: var_pl(ADM_gall_pl,KNUM,ADM_lall_pl,NNUM) ! variables at poles
+    integer, intent(in)    :: comm_type ! communication type
+    logical, intent(in)    :: NSval_fix ! North & South value is fixed or not.
+
+    integer :: ireq(4), istat(MPI_STATUS_SIZE), ierr
     !
-    integer :: ireq(4),istat(MPI_STATUS_SIZE),ierr
-    integer :: l
-    !
-    real(8) :: v_npl(KNUM,NNUM)
-    real(8) :: v_spl(KNUM,NNUM)
-!!! FIX 20111024:s
+    real(8) :: v_npl_send(KNUM,NNUM)
+    real(8) :: v_spl_send(KNUM,NNUM)
     real(8) :: v_npl_recv(KNUM,NNUM)
     real(8) :: v_spl_recv(KNUM,NNUM)
-!!! FIX 20111024:e
-    !
+
     integer :: rgnid
-    !
+    integer :: l
+
     integer :: i,j,suf
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
-    !
-    !if( (comm_type==1).or.(comm_type==2) ) then                ! T.Ohno 110721
+    !---------------------------------------------------------------------------
+
     if( comm_pl .and. ((comm_type==1).or.(comm_type==2)) ) then ! T.Ohno 110721
-       !
-       !--- send pole value
-       do l=1,ADM_lall
-          rgnid=ADM_prc_tab(l,ADM_prc_me)
-          !
-          !--- north pole
-          if(rgnid==ADM_rgnid_npl_mng) then
-             v_npl(1:KNUM,1:NNUM)&
-                  = var(suf(ADM_gmin,ADM_gmax+1),1:KNUM,l,1:NNUM)
-             call MPI_ISEND(            &
-                  v_npl,                & !--- starting address
-                  KNUM * NNUM,          & !--- number of array
-                  MPI_DOUBLE_PRECISION, & !--- type
-                  ADM_prc_npl-1,        & !--- dest rank
-                  ADM_NPL,              & !--- tag
-                  ADM_COMM_RUN_WORLD,   & !--- world
-                  ireq(1),                 & !--- request id
-                  ierr)                   !--- error id
-          end if
-          !
-          !--- south pole
-          if(rgnid==ADM_rgnid_spl_mng) then
-             v_spl(1:KNUM,1:NNUM)&
-                  = var(suf(ADM_gmax+1,ADM_gmin),1:KNUM,l,1:NNUM)
-             call MPI_ISEND(            &
-                  v_spl,                & !--- starting address
-                  KNUM * NNUM,          & !--- number of array
-                  MPI_DOUBLE_PRECISION, & !--- type
-                  ADM_prc_spl-1,        & !--- dest rank
-                  ADM_SPL,              & !--- tag
-                  ADM_COMM_RUN_WORLD,   & !--- world
-                  ireq(2),                 & !--- request id
-                  ierr)                   !--- error id
-          end if
-       end do
-       !
-       !
-       !--- recv pole value
-       if(ADM_prc_me==ADM_prc_npl) then
-          call MPI_IRECV(            &
-!!FIX 20111024               v_npl,                & !--- starting address[
-               v_npl_recv,                & !--- starting address
-               KNUM * NNUM,          & !--- number of array
-               MPI_DOUBLE_PRECISION, & !--- type
-               ADM_rgn2prc(ADM_rgnid_npl_mng)-1, & !--- source rank
-               ADM_NPL,              & !--- tag
-               ADM_COMM_RUN_WORLD,   & !--- world
-               ireq(3),                 & !--- request id
-               ierr)                   !--- error id
-       end if
-       !
-       if(ADM_prc_me==ADM_prc_spl) then
-          call MPI_IRECV(            &
-!!FIX 20111024               v_spl,                & !--- starting address
-               v_spl_recv,                & !--- starting address
-               KNUM * NNUM,          & !--- number of array
-               MPI_DOUBLE_PRECISION, & !--- type
-               ADM_rgn2prc(ADM_rgnid_spl_mng)-1, & !--- srouce rank
-               ADM_SPL,              & !--- tag
-               ADM_COMM_RUN_WORLD,   & !--- world
-               ireq(4),                 & !--- request id
-               ierr)                   !--- error id
-       end if
-       !
-       !--- Wait : 06/06/02 H.Tomita
-       do l=1,ADM_lall
-          rgnid=ADM_prc_tab(l,ADM_prc_me)
-          !
-          !--- north pole
-          if(rgnid==ADM_rgnid_npl_mng) then
+
+       if ( ADM_prc_me == ADM_prc_npl ) then !--- recv north pole value
+          call MPI_IRECV( v_npl_recv(1,1),                  & !--- starting address
+                          KNUM * NNUM,                      & !--- number of array
+                          MPI_DOUBLE_PRECISION,             & !--- type
+                          ADM_rgn2prc(ADM_rgnid_npl_mng)-1, & !--- source rank
+                          ADM_NPL,                          & !--- tag
+                          ADM_COMM_RUN_WORLD,               & !--- world
+                          ireq(3),                          & !--- request id
+                          ierr                              ) !--- error id
+       endif
+
+       if ( ADM_prc_me == ADM_prc_spl ) then !--- recv south pole value
+          call MPI_IRECV( v_spl_recv(1,1),                  & !--- starting address
+                          KNUM * NNUM,                      & !--- number of array
+                          MPI_DOUBLE_PRECISION,             & !--- type
+                          ADM_rgn2prc(ADM_rgnid_spl_mng)-1, & !--- srouce rank
+                          ADM_SPL,                          & !--- tag
+                          ADM_COMM_RUN_WORLD,               & !--- world
+                          ireq(4),                          & !--- request id
+                          ierr                              ) !--- error id
+       endif
+
+       do l = 1, ADM_lall
+          rgnid = ADM_prc_tab(l,ADM_prc_me)
+
+          if ( rgnid == ADM_rgnid_npl_mng ) then !--- send north pole value
+             v_npl_send(:,:) = var(suf(ADM_gmin,ADM_gmax+1),:,l,:)
+
+             call MPI_ISEND( v_npl_send(1,1),      & !--- starting address
+                             KNUM * NNUM,          & !--- number of array
+                             MPI_DOUBLE_PRECISION, & !--- type
+                             ADM_prc_npl-1,        & !--- dest rank
+                             ADM_NPL,              & !--- tag
+                             ADM_COMM_RUN_WORLD,   & !--- world
+                             ireq(1),              & !--- request id
+                             ierr                  ) !--- error id
+
+          if ( rgnid == ADM_rgnid_spl_mng ) then !--- send south pole value
+             v_spl_send(:,:) = var(suf(ADM_gmax+1,ADM_gmin),:,l,:)
+
+             call MPI_ISEND( v_spl_send(1,1),      & !--- starting address
+                             KNUM * NNUM,          & !--- number of array
+                             MPI_DOUBLE_PRECISION, & !--- type
+                             ADM_prc_spl-1,        & !--- dest rank
+                             ADM_SPL,              & !--- tag
+                             ADM_COMM_RUN_WORLD,   & !--- world
+                             ireq(2),              & !--- request id
+                             ierr                  ) !--- error id
+          endif
+       enddo
+
+       do l = 1, ADM_lall
+          rgnid = ADM_prc_tab(l,ADM_prc_me)
+
+          if ( rgnid == ADM_rgnid_npl_mng ) then
              call MPI_WAIT(ireq(1),istat,ierr)
-          end if
-          !
-          !--- south pole
-          if(rgnid==ADM_rgnid_spl_mng) then
+          endif
+
+          if ( rgnid == ADM_rgnid_spl_mng ) then
              call MPI_WAIT(ireq(2),istat,ierr)
-          end if
-       end do
-       !
-       if(ADM_prc_me==ADM_prc_npl) then
+          endif
+       enddo
+
+       if ( ADM_prc_me == ADM_prc_npl ) then
           call MPI_WAIT(ireq(3),istat,ierr)
-          var_pl(ADM_GSLF_PL,1:KNUM,ADM_NPL,1:NNUM) &
-!!FIX 20111024               = v_npl(1:KNUM,1:NNUM)
-               = v_npl_recv(1:KNUM,1:NNUM)
-       end if
-       !
-       if(ADM_prc_me==ADM_prc_spl) then
+          var_pl(ADM_GSLF_PL,:,ADM_NPL,:) = v_npl_recv(:,:)
+       endif
+
+       if ( ADM_prc_me == ADM_prc_spl ) then
           call MPI_WAIT(ireq(4),istat,ierr)
-          var_pl(ADM_GSLF_PL,1:KNUM,ADM_SPL,1:NNUM) &
-!!FIX 20111024               = v_spl(1:KNUM,1:NNUM)
-               = v_spl_recv(1:KNUM,1:NNUM)
-       end if
-       !
-    end if
-    !
-    if( (comm_type==2).or.(comm_type==3) ) then
-       !
-       !--- to complete communication
-       call COMM_data_transfer(var,var_pl)
-    end if
-    !
-    if(NSval_fix) then
+          var_pl(ADM_GSLF_PL,:,ADM_SPL,:) = v_spl_recv(:,:)
+       endif
+
+    endif
+
+    !write(ADM_LOG_FID,*) 'comm_var npl', v_npl_send(2,1), v_npl_recv(2,1), var_pl(ADM_GSLF_PL,2,ADM_NPL,1)
+    !write(ADM_LOG_FID,*) 'comm_var spl', v_spl_send(2,1), v_spl_recv(2,1), var_pl(ADM_GSLF_PL,2,ADM_SPL,1)
+
+    !--- to complete communication
+    if (      comm_type == 2 &
+         .OR. comm_type == 3 ) then
+       call COMM_data_transfer( var, var_pl )
+    endif
+
+    if (NSval_fix) then
        var(suf(ADM_gall_1d,1),:,:,:) = var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
        var(suf(1,ADM_gall_1d),:,:,:) = var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
-    end if
-    !
+    endif
+
     return
-    !
   end subroutine COMM_var
 
   !-----------------------------------------------------------------------------
