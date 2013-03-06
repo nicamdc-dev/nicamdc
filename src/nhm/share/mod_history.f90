@@ -31,38 +31,6 @@
 module mod_history
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
-  !       This module is for the outputting data.
-  !       
-  ! 
-  !++ Current Corresponding Author : M.Satoh
-  ! 
-  !++ History: 
-  !      Version   Date       Comment 
-  !      -----------------------------------------------------------------------
-  !      0.00      05-11-29   M.Satoh [new]
-  !                05-12-14   S.Iga: ADM_gall
-  !                06-02-16   M.Satoh, T. Mitsui: correct timing
-  !                06-08-07   W.Yanase: v_save=0 in history_setup, NO_VINTRPL
-  !                07-01-19   K.Suzuki: higher vectorized rate and
-  !                                     allowing undefined value in average
-  !                07-06-27   Y.Niwa: add MONTHLY_AVERAGE option
-  !                                   add ktype 'GL' 'GO' options
-  !                07-07-02   Y.Niwa: bug fix
-  !                07-11-30   Y.Niwa: add option for output at pressure levels
-  !                07-12-05   T.Mitsui: bug fix
-  !                08-05-30   T.Mitsui: distinguish w-grid, and option of v_interpolation
-  !                09-07-13   S.Iga: check_count is added. (nmhist miswriting checker)
-  !                10-05-11   M.Satoh: add l_region in history_in 
-  !                11-04-26   C.Kodama: to support >10000 time steps
-  !                11-09-03   H.Yashiro : New I/O
-  !                12-01-26   Y.Yamada : trivial bug fix
-  !                12-03-28   T.Seiki : fix undefined reference
-  !                12-06-07   T.Seiki : add output_path for multi-job run
-  !      -----------------------------------------------------------------------
-  !
-  !-----------------------------------------------------------------------------
-  !
   !++ Used modules
   !
   use mod_adm, only: &
