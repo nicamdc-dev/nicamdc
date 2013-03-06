@@ -142,8 +142,7 @@ contains
        call hs_init ( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
     elseif( trim(init_type) == "Jablonowski" ) then
        call jbw_init( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
-    elseif( trim(init_type) == "Tracer" ) then ! tentative test
-       call jbw_init   ( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
+    elseif( trim(init_type) == "Traceradvection" ) then ! tentative test
        call tracer_init( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
     else
        write(ADM_LOG_FID,*) 'xxx Invalid input_io_mode. STOP.'
@@ -194,12 +193,7 @@ contains
     K0 = ADM_KNONE
     e = exp(1.D0)
 
-    !DIAG_var(:,:,:,1) = 1000.D2 ! pressure
-    !DIAG_var(:,:,:,2) =  300.D0 ! temperature
-    DIAG_var(:,:,:,3) =    0.D0 ! v(x)
-    DIAG_var(:,:,:,4) =    0.D0 ! v(y)
-    DIAG_var(:,:,:,5) =    0.D0 ! v(z)
-    DIAG_var(:,:,:,6) =    0.D0 ! w
+    DIAG_var(:,:,:,:) = 0.D0
 
     do l = 1, lall
     do n = 1, ijdim
@@ -298,6 +292,8 @@ contains
 
     K0 = ADM_KNONE
 
+    DIAG_var(:,:,:,:) = 0.D0
+
     do l = 1, lall
     do n = 1, ijdim
        z_local(1) = GRD_vz(n,2,l,GRD_ZH)
@@ -340,7 +336,6 @@ contains
           DIAG_var(n,k,l,3) = vx_local(k)
           DIAG_var(n,k,l,4) = vy_local(k)
           DIAG_var(n,k,l,5) = vz_local(k)
-          DIAG_var(n,k,l,6) = 0.D0
        enddo
 
     enddo
@@ -353,18 +348,27 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine tracer_init( &
-     ijdim, &
-     kdim,  &
-     lall,  &
-     tracer )
+     ijdim,   &
+     kdim,    &
+     lall,    &
+     DIAG_var )
     use mod_misc, only: &
+       MISC_get_latlon, &
        MISC_get_distance
+    use mod_adm, only: &
+       ADM_KNONE
     use mod_cnst, only: &
        CNST_PI, &
        CNST_ERADIUS
     use mod_grd, only: &
-       GRD_vz, &
-       GRD_Z
+       GRD_vz,         &
+       GRD_x,          &
+       GRD_x_pl,       &
+       GRD_XDIR,       &
+       GRD_YDIR,       &
+       GRD_ZDIR,       &
+       GRD_Z,          &
+       GRD_ZH
     use mod_gmtr, only: &
        GMTR_lon, &
        GMTR_lat
@@ -378,7 +382,7 @@ contains
     integer, intent(in)    :: ijdim
     integer, intent(in)    :: kdim
     integer, intent(in)    :: lall
-    real(8), intent(inout) :: tracer(ijdim,kdim,lall,6+TRC_VMAX)
+    real(8), intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
     real(8) :: lon_center   = 120.D0 ! [degree]
     real(8) :: lat_center   =  30.D0 ! [degree]
@@ -387,34 +391,90 @@ contains
     real(8) :: bubble_radius_v =    5.D3 ! [m]
     real(8) :: bubble_conc     =  100.D0
 
+    ! work paramters
     real(8) :: dist, dist_h
     real(8) :: rlon_center
     real(8) :: rlat_center
 
+    real(8) :: lat, lon                 ! latitude, longitude on Icosahedral grid
+    real(8) :: eta(kdim,2), geo(kdim)   ! eta & geopotential in ICO-grid field
+    real(8) :: prs(kdim),   tmp(kdim)   ! pressure & temperature in ICO-grid field
+    real(8) :: wix(kdim),   wiy(kdim)   ! wind components in ICO-grid field
+
+    real(8) :: z_local (kdim)
+    real(8) :: vx_local(kdim)
+    real(8) :: vy_local(kdim)
+    real(8) :: vz_local(kdim)
+
     integer :: I_passive1
-    integer :: g, k, l
+    logical :: signal ! if ture, continue iteration
+    integer :: n, l, k, itr, K0
     !---------------------------------------------------------------------------
 
-    tracer(:,:,:,7:TRC_VMAX) = 0.D0
+    K0 = ADM_KNONE
+
+    DIAG_var(:,:,:,:) = 0.D0
+
     I_passive1 = 6 + chemvar_getid( "passive1" ) + NCHEM_STR - 1
 
     rlon_center = lon_center / 180.D0 * CNST_PI
     rlat_center = lat_center / 180.D0 * CNST_PI
 
     do l = 1, lall
-    do g = 1, ijdim
+    do n = 1, ijdim
+       z_local(1) = GRD_vz(n,2,l,GRD_ZH)
+       do k = 2, kdim
+          z_local(k) = GRD_vz(n,k,l,GRD_Z)
+       enddo
+
+       call MISC_get_latlon( lat, lon,               &
+                             GRD_x(n,K0,l,GRD_XDIR), &
+                             GRD_x(n,K0,l,GRD_YDIR), &
+                             GRD_x(n,K0,l,GRD_ZDIR)  )
+
+       signal = .true.
+       ! iteration -----
+       do itr = 1, itrmax
+
+          if( itr == 1 ) then
+             eta(:,:) = 1.D-7 ! This initial value is recommended by Jablonowsky.
+          else
+             call eta_vert_coord_NW( kdim, itr, z_local, tmp, geo, eta, signal )
+          endif
+
+          call steady_state( kdim, lat, eta, wix, wiy, tmp, geo )
+
+          if( .NOT. signal ) exit
+       enddo
+
+       if ( itr > itrmax ) then
+          write(ADM_LOG_FID,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
+          stop
+       endif
+
+       call geo2prs     ( kdim, tmp, geo, prs )
+       call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
+
+       do k=1, kdim
+          DIAG_var(n,k,l,1) = prs(k)
+          DIAG_var(n,k,l,2) = tmp(k)
+          DIAG_var(n,k,l,3) = vx_local(k)
+          DIAG_var(n,k,l,4) = vy_local(k)
+          DIAG_var(n,k,l,5) = vz_local(k)
+       enddo
+
        call MISC_get_distance( CNST_ERADIUS,  &
                                rlon_center,   &
                                rlat_center,   &
-                               GMTR_lon(g,l), &
-                               GMTR_lat(g,l), &
+                               GMTR_lon(n,l), &
+                               GMTR_lat(n,l), &
                                dist_h         )
 
        do k = 1, kdim
           dist = ( dist_h                          /bubble_radius_h )**2 &
-               + ( (GRD_vz(g,k,l,GRD_Z)-alt_center)/bubble_radius_v )**2
+               + ( (GRD_vz(n,k,l,GRD_Z)-alt_center)/bubble_radius_v )**2
 
-          tracer(g,k,l,I_passive1) = bubble_conc * cos( 0.5D0*PI*sqrt( min(dist,1.D0) ) )**2
+          DIAG_var(n,k,l,I_passive1) = bubble_conc * cos( 0.5D0*PI*sqrt( min(dist,1.D0) ) )**2
        enddo
     enddo
     enddo
