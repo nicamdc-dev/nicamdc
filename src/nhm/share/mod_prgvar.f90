@@ -46,6 +46,7 @@ module mod_prgvar
   public :: prgvar_get_withdiag
   public :: prgvar_set
   public :: prgvar_get_in
+  public :: prgvar_get_in_withdiag
   public :: prgvar_set_in
 
   public :: prgvar_get_plane_nopl     ! [add] T.Ohno 110722
@@ -84,6 +85,9 @@ module mod_prgvar
 
   integer, private, save      :: I_RHOGQstr =  7 ! tracers
   integer, private, save      :: I_RHOGQend = -1 !
+
+  character(len=16), private, save :: PRG_name(PRG_vmax0)
+  data PRG_name / 'rhog', 'rhogvx', 'rhogvy', 'rhogvz', 'rhogw', 'rhoge' /
 
   integer, private, parameter :: DIAG_vmax0 = 6
 
@@ -580,77 +584,77 @@ contains
     call cnvvar_prg2diag( PRG_var (:,:,:,:), PRG_var_pl (:,:,:,:), & !--- [IN]
                           DIAG_var(:,:,:,:), DIAG_var_pl(:,:,:,:)  ) !--- [OUT]
 
-       do l = 1, ADM_lall
+    do l = 1, ADM_lall
+    do k = 1, ADM_kall
+    do n = 1, ADM_gall
+       rhog  (n,k,l) = PRG_var(n,k,l,I_RHOG  )
+       rhogvx(n,k,l) = PRG_var(n,k,l,I_RHOGVX)
+       rhogvy(n,k,l) = PRG_var(n,k,l,I_RHOGVY)
+       rhogvz(n,k,l) = PRG_var(n,k,l,I_RHOGVZ)
+       rhogw (n,k,l) = PRG_var(n,k,l,I_RHOGW )
+       rhoge (n,k,l) = PRG_var(n,k,l,I_RHOGE )
+
+       rho   (n,k,l) = PRG_var(n,k,l,I_RHOG) / VMTR_GSGAM2(n,k,l)
+
+       pre   (n,k,l) = DIAG_var(n,k,l,I_pre)
+       tem   (n,k,l) = DIAG_var(n,k,l,I_tem)
+       vx    (n,k,l) = DIAG_var(n,k,l,I_vx )
+       vy    (n,k,l) = DIAG_var(n,k,l,I_vy )
+       vz    (n,k,l) = DIAG_var(n,k,l,I_vz )
+       w     (n,k,l) = DIAG_var(n,k,l,I_w  )
+    enddo
+    enddo
+    enddo
+
+    do nq = 1, TRC_vmax
+    do l  = 1, ADM_lall
+    do k  = 1, ADM_kall
+    do n  = 1, ADM_gall
+       rhogq(n,k,l,nq) = PRG_var(n,k,l,PRG_vmax0+nq)
+
+       q    (n,k,l,nq) = DIAG_var(n,k,l,DIAG_vmax0+nq)
+    enddo
+    enddo
+    enddo
+    enddo
+
+    if ( ADM_prc_me == ADM_prc_pl ) then
+
+       do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
-       do n = 1, ADM_gall
-          rhog  (n,k,l) = PRG_var(n,k,l,I_RHOG  )
-          rhogvx(n,k,l) = PRG_var(n,k,l,I_RHOGVX)
-          rhogvy(n,k,l) = PRG_var(n,k,l,I_RHOGVY)
-          rhogvz(n,k,l) = PRG_var(n,k,l,I_RHOGVZ)
-          rhogw (n,k,l) = PRG_var(n,k,l,I_RHOGW )
-          rhoge (n,k,l) = PRG_var(n,k,l,I_RHOGE )
+       do n = 1, ADM_gall_pl
+          rhog_pl  (n,k,l) = PRG_var_pl(n,k,l,I_RHOG  )
+          rhogvx_pl(n,k,l) = PRG_var_pl(n,k,l,I_RHOGVX)
+          rhogvy_pl(n,k,l) = PRG_var_pl(n,k,l,I_RHOGVY)
+          rhogvz_pl(n,k,l) = PRG_var_pl(n,k,l,I_RHOGVZ)
+          rhogw_pl (n,k,l) = PRG_var_pl(n,k,l,I_RHOGW )
+          rhoge_pl (n,k,l) = PRG_var_pl(n,k,l,I_RHOGE )
 
-          rho   (n,k,l) = PRG_var(n,k,l,I_RHOG) / VMTR_GSGAM2(n,k,l)
+          rho_pl   (n,k,l) = PRG_var_pl(n,k,l,I_RHOG) / VMTR_GSGAM2_pl(n,k,l)
 
-          pre   (n,k,l) = DIAG_var(n,k,l,I_pre)
-          tem   (n,k,l) = DIAG_var(n,k,l,I_tem)
-          vx    (n,k,l) = DIAG_var(n,k,l,I_vx )
-          vy    (n,k,l) = DIAG_var(n,k,l,I_vy )
-          vz    (n,k,l) = DIAG_var(n,k,l,I_vz )
-          w     (n,k,l) = DIAG_var(n,k,l,I_w  )
+          pre_pl   (n,k,l) = DIAG_var_pl(n,k,l,I_pre)
+          tem_pl   (n,k,l) = DIAG_var_pl(n,k,l,I_tem)
+          vx_pl    (n,k,l) = DIAG_var_pl(n,k,l,I_vx )
+          vy_pl    (n,k,l) = DIAG_var_pl(n,k,l,I_vy )
+          vz_pl    (n,k,l) = DIAG_var_pl(n,k,l,I_vz )
+          w_pl     (n,k,l) = DIAG_var_pl(n,k,l,I_w  )
        enddo
        enddo
        enddo
 
        do nq = 1, TRC_vmax
-       do l  = 1, ADM_lall
+       do l  = 1, ADM_lall_pl
        do k  = 1, ADM_kall
-       do n  = 1, ADM_gall
-          rhogq(n,k,l,nq) = PRG_var(n,k,l,PRG_vmax0+nq)
+       do n  = 1, ADM_gall_pl
+          rhogq_pl(n,k,l,nq) = PRG_var_pl(n,k,l,PRG_vmax0+nq)
 
-          q    (n,k,l,nq) = DIAG_var(n,k,l,DIAG_vmax0+nq)
+          q_pl    (n,k,l,nq) = DIAG_var_pl(n,k,l,DIAG_vmax0+nq)
        enddo
        enddo
        enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
-
-          do l = 1, ADM_lall_pl
-          do k = 1, ADM_kall
-          do n = 1, ADM_gall_pl
-             rhog_pl  (n,k,l) = PRG_var_pl(n,k,l,I_RHOG  )
-             rhogvx_pl(n,k,l) = PRG_var_pl(n,k,l,I_RHOGVX)
-             rhogvy_pl(n,k,l) = PRG_var_pl(n,k,l,I_RHOGVY)
-             rhogvz_pl(n,k,l) = PRG_var_pl(n,k,l,I_RHOGVZ)
-             rhogw_pl (n,k,l) = PRG_var_pl(n,k,l,I_RHOGW )
-             rhoge_pl (n,k,l) = PRG_var_pl(n,k,l,I_RHOGE )
-
-             rho_pl   (n,k,l) = PRG_var_pl(n,k,l,I_RHOG) / VMTR_GSGAM2_pl(n,k,l)
-
-             pre_pl   (n,k,l) = DIAG_var_pl(n,k,l,I_pre)
-             tem_pl   (n,k,l) = DIAG_var_pl(n,k,l,I_tem)
-             vx_pl    (n,k,l) = DIAG_var_pl(n,k,l,I_vx )
-             vy_pl    (n,k,l) = DIAG_var_pl(n,k,l,I_vy )
-             vz_pl    (n,k,l) = DIAG_var_pl(n,k,l,I_vz )
-             w_pl     (n,k,l) = DIAG_var_pl(n,k,l,I_w  )
-          enddo
-          enddo
-          enddo
-
-          do nq = 1, TRC_vmax
-          do l  = 1, ADM_lall_pl
-          do k  = 1, ADM_kall
-          do n  = 1, ADM_gall_pl
-             rhogq_pl(n,k,l,nq) = PRG_var_pl(n,k,l,PRG_vmax0+nq)
-
-             q_pl    (n,k,l,nq) = DIAG_var_pl(n,k,l,DIAG_vmax0+nq)
-          enddo
-          enddo
-          enddo
-          enddo
-
-       endif
+    endif
 
     return
   end subroutine prgvar_get_withdiag
@@ -891,6 +895,102 @@ contains
 
     return
   end subroutine prgvar_get_in
+
+  !-----------------------------------------------------------------------------
+  !>
+  !> Description of the subroutine prgvar_get_in
+  !>
+  subroutine prgvar_get_in_withdiag( &
+       rhog,   &
+       rhogvx, &
+       rhogvy, &
+       rhogvz, &
+       rhogw,  &
+       rhoge,  &
+       rhogq,  &
+       rho,    &
+       pre,    &
+       tem,    &
+       vx,     &
+       vy,     &
+       vz,     &
+       w,      &
+       q       )
+    use mod_adm, only: &
+       ADM_gall,        &
+       ADM_kall,        &
+       ADM_lall,        &
+       ADM_IopJop_nmax, &
+       ADM_IopJop,      &
+       ADM_GIoJo
+    use mod_vmtr, only: &
+       VMTR_GSGAM2
+    use mod_runconf, only: &
+       TRC_vmax
+    implicit none
+
+    real(8), intent(out) :: rhog  (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(8), intent(out) :: rhogvx(ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(8), intent(out) :: rhogvy(ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(8), intent(out) :: rhogvz(ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(8), intent(out) :: rhogw (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(8), intent(out) :: rhoge (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(8), intent(out) :: rhogq (ADM_IopJop_nmax,ADM_kall,ADM_lall,TRC_vmax)
+    real(8), intent(out) :: rho   (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(8), intent(out) :: pre   (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(8), intent(out) :: tem   (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(8), intent(out) :: vx    (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(8), intent(out) :: vy    (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(8), intent(out) :: vz    (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(8), intent(out) :: w     (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(8), intent(out) :: q     (ADM_IopJop_nmax,ADM_kall,ADM_lall,TRC_vmax)
+
+    integer :: n, k, l, nq, ij
+    !---------------------------------------------------------------------------
+
+    call cnvvar_prg2diag( PRG_var (:,:,:,:), PRG_var_pl (:,:,:,:), & !--- [IN]
+                          DIAG_var(:,:,:,:), DIAG_var_pl(:,:,:,:)  ) !--- [OUT]
+
+    do l = 1, ADM_lall
+    do k = 1, ADM_kall
+    do n = 1, ADM_IopJop_nmax
+       ij = ADM_IopJop(n,ADM_GIoJo)
+
+       rhog  (n,k,l) = PRG_var(ij,k,l,I_RHOG  )
+       rhogvx(n,k,l) = PRG_var(ij,k,l,I_RHOGVX)
+       rhogvy(n,k,l) = PRG_var(ij,k,l,I_RHOGVY)
+       rhogvz(n,k,l) = PRG_var(ij,k,l,I_RHOGVZ)
+       rhogw (n,k,l) = PRG_var(ij,k,l,I_RHOGW )
+       rhoge (n,k,l) = PRG_var(ij,k,l,I_RHOGE )
+
+       rho   (n,k,l) = PRG_var(ij,k,l,I_RHOG) / VMTR_GSGAM2(ij,k,l)
+
+       pre   (n,k,l) = DIAG_var(ij,k,l,I_pre)
+       tem   (n,k,l) = DIAG_var(ij,k,l,I_tem)
+       vx    (n,k,l) = DIAG_var(ij,k,l,I_vx )
+       vy    (n,k,l) = DIAG_var(ij,k,l,I_vy )
+       vz    (n,k,l) = DIAG_var(ij,k,l,I_vz )
+       w     (n,k,l) = DIAG_var(ij,k,l,I_w  )
+    enddo
+    enddo
+    enddo
+
+    do nq = 1, TRC_vmax
+    do l  = 1, ADM_lall
+    do k  = 1, ADM_kall
+    do n  = 1, ADM_IopJop_nmax
+       ij = ADM_IopJop(n,ADM_GIoJo)
+
+       rhogq(n,k,l,nq) = PRG_var(ij,k,l,PRG_vmax0+nq)
+
+       q    (n,k,l,nq) = DIAG_var(ij,k,l,DIAG_vmax0+nq)
+    enddo
+    enddo
+    enddo
+    enddo
+
+    return
+  end subroutine prgvar_get_in_withdiag
 
   !-----------------------------------------------------------------------------
   !>
@@ -1338,7 +1438,7 @@ contains
     ! <- [add]&[Mod] H.Yashiro 20110819
 
     write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '====== data range check : prognostic variables ======'
+    write(ADM_LOG_FID,*) '====== data range check : diagnostic variables ======'
     do nq = 1, DIAG_vmax0
        val_max = GTL_max( DIAG_var   (:,:,:,nq),       &
                           DIAG_var_pl(:,:,:,nq),       &
@@ -1410,6 +1510,37 @@ contains
                                 DIAG_var(:,:,:,I_qstr:I_qend),        & !--- [INOUT]
                                 PRG_var (:,:,:,I_RHOGQstr:I_RHOGQend) ) !--- [INOUT]
     endif
+
+    write(ADM_LOG_FID,*)
+    write(ADM_LOG_FID,*) '====== data range check : prognostic variables ======'
+    do nq = 1, DIAG_vmax0
+       val_max = GTL_max( PRG_var   (:,:,:,nq),        &
+                          PRG_var_pl(:,:,:,nq),        &
+                          ADM_kall, ADM_kmin, ADM_kmax )
+       val_min = GTL_min( PRG_var   (:,:,:,nq),        &
+                          PRG_var_pl(:,:,:,nq),        &
+                          ADM_kall, ADM_kmin, ADM_kmax )
+
+       write(ADM_LOG_FID,'(1x,A,A16,2(A,1PE24.17))') '--- ', PRG_name(nq), ': max=', val_max, ', min=', val_min
+    enddo
+
+    do nq = 1, TRC_vmax
+       val_max = GTL_max( PRG_var   (:,:,:,PRG_vmax0+nq), &
+                          PRG_var_pl(:,:,:,PRG_vmax0+nq), &
+                          ADM_kall, ADM_kmin, ADM_kmax    )
+
+       if ( val_max <= 0.D0 ) then
+          nonzero = .false.
+       else
+          nonzero = .true.
+       endif
+
+       val_min = GTL_min( PRG_var   (:,:,:,PRG_vmax0+nq),      &
+                          PRG_var_pl(:,:,:,PRG_vmax0+nq),      &
+                          ADM_kall, ADM_kmin, ADM_kmax, nonzero)
+
+       write(ADM_LOG_FID,'(1x,A,A16,2(A,1PE24.17))') '--- rhog * ', TRC_name(nq),  ': max=', val_max, ', min=', val_min
+    enddo
 
     return
   end subroutine restart_input
