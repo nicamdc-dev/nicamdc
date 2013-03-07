@@ -84,6 +84,10 @@ module mod_cnst
   real(8), public, save :: CNST_KAPPA
   !<----- calculated in sub[CNST_setup].
   !
+  !------ dry lapse rate [K/m]
+  real(8), public, save :: CNST_LAPS
+  !<----- calculated in sub[CNST_setup].
+  !
   !------ molecular weight ( water/air )
   real(8), public, save :: CNST_EPSV
   !<----- calculated in sub[CNST_setup].
@@ -269,6 +273,7 @@ contains
     CNST_GAMMA = CNST_CP / CNST_CV
     CNST_KAPPA = CNST_RAIR / CNST_CP
     CNST_RHO00 = CNST_PRE00 / CNST_RAIR / CNST_TEM00
+    CNST_LAPS  = CNST_EGRAV / CNST_CP
 
     CNST_CVV   = CNST_CPV - CNST_RVAP
     CNST_EPSV  = CNST_RAIR / CNST_RVAP
