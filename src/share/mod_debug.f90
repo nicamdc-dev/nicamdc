@@ -323,6 +323,10 @@ contains
     DEBUG_raptstr(id) = time
     DEBUG_rapnstr(id) = DEBUG_rapnstr(id) + 1
 
+#ifdef _FAPP_
+call START_COLLECTION( rapname )
+#endif
+
     return
   end subroutine DEBUG_rapstart
 
@@ -344,6 +348,10 @@ contains
 
     DEBUG_rapttot(id) = DEBUG_rapttot(id) + ( time-DEBUG_raptstr(id) )
     DEBUG_rapnend(id) = DEBUG_rapnend(id) + 1
+
+#ifdef _FAPP_
+call STOP_COLLECTION( rapname )
+#endif
 
     return
   end subroutine DEBUG_rapend

@@ -207,6 +207,9 @@ program prg_driver
   if( FLAG_NUDGING ) call ndg_setup( ctime, dtime )
 
   call DEBUG_rapend('Setup ALL')
+#ifdef _FIPP_
+  call fipp_start()
+#endif
   call DEBUG_rapstart('Main ALL')
   call TIME_report
 
@@ -244,6 +247,10 @@ program prg_driver
   enddo
 
   call DEBUG_rapend('Main ALL')
+#ifdef _FIPP_
+  call fipp_stop()
+#endif
+
   call DEBUG_rapend('Total')
   call DEBUG_rapreport
 

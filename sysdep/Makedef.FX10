@@ -1,0 +1,44 @@
+#
+# ------ FOR Oakleaf-FX -----
+#
+
+##### for computation
+
+OCL =
+
+FFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,noalias=s,parallel_compress,parallel_iteration=8,instance=8 \
+               -Qi -Qt -X03 -v03s -v03d -v03o -Ncompdisp -Koptmsg=1 -Cpp \
+               -Kprefetch_cache_level=all,prefetch_iteration_L2=50 -Ksimd -Kdynamic_iteration
+
+FFLAGS_DEBUG = -O0 \
+               -Qi -Qt -X03 -v03s -v03d -v03o -Ncompdisp -Koptmsg=1 -Cpp \
+               -Eg -Ha -He -Hf -Ho -Hs -Hu -Hx -Ncheck_global
+
+# Performance monitor
+# disabled
+#PERF_MONIT = -Ntl_notrt -U_FIPP_ -U_FAPP_
+# fipp
+PERF_MONIT = -Ntl_trt -D_FIPP_ -U_FAPP_
+# fapp
+#PERF_MONIT = -Ntl_trt -U_FIPP_ -D_FAPP_
+
+FC     = mpifrtpx
+#FFLAGS = $(FFLAGS_DEBUG) $(PERF_MONIT)
+FFLAGS = $(FFLAGS_FAST) $(PERF_MONIT)
+
+CC     = mpifccpx
+CFLAGS = -Kfast,parallel,ocl,preex,array_private $(FPCOLL) $(SIMD)
+
+LD     = $(FC)
+LFLAGS = $(FFLAGS)
+
+CLEAN   = rm -f *~ *.o *.mod *__genmod.f90 *.lst
+
+NETCDF_LIBS    ?= -lnetcdf
+NETCDF_INCLUDE ?=
+
+##### for frontend
+INSTALL = install
+AR      = ar rv
+RANLIB  = ranlib
+JOBSUB  = pjsub
