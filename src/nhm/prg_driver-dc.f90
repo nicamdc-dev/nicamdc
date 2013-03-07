@@ -107,9 +107,8 @@ program prg_driver
        bndcnd_setup
   use mod_numfilter, only  : &
        numfilter_setup
-  use mod_forcing_init, only: & ! 12/10/12 R.Yoshida [ADD]
-       forcing_init
-  use mod_forcing, only : &
+  use mod_forcing_driver, only : &
+       forcing_init, &
        forcing
   use mod_ndg, only: &
        ndg_setup
@@ -193,7 +192,7 @@ program prg_driver
   call numfilter_setup
 
   !---< forcing module setup >---
-  call forcing_init( ctime )
+  call forcing_init
 
   !---< energy&mass budget module setup >---
   call embudget_setup
