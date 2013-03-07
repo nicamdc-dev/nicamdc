@@ -41,10 +41,9 @@ module mod_dycoretest
   real(8), private, parameter :: pi = 3.14159265358979323846D0
   real(8), private, parameter :: d2r = pi/180.D0          ! Degree to Radian
   real(8), private, parameter :: r2d = 180.D0/pi          ! Radian to Degree
-  real(8), private, parameter :: eps = 1.D-14            ! minimum value
-  real(8), private, parameter :: eps_r = 1.D-9           ! minimum value (reduce version)
+  real(8), private, parameter :: eps = 1.D-8              ! minimum value
   real(8), private, parameter :: zero = 0.D0              ! zero
-  !
+
   ! test configurations
   integer, private, parameter :: PRCS_D = 8
   ! for Held and Suarez
@@ -161,16 +160,21 @@ contains
     use mod_misc, only: &
        MISC_get_latlon
     use mod_adm, only: &
-       ADM_KNONE
-    use mod_grd, only: &
-       GRD_x,          &
-       GRD_XDIR,       &
-       GRD_YDIR,       &
-       GRD_ZDIR,       &
-       GRD_vz
+       ADM_KNONE, &
+       ADM_kmin,  &
+       ADM_kmax
     use mod_cnst, only :  &
-       CNST_RAIR, &
-         CNST_EGRAV
+       GRAV  => CNST_EGRAV, &
+       RAIR  => CNST_RAIR,  &
+       KAPPA => CNST_KAPPA,  &
+       PRE00 => CNST_PRE00
+    use mod_grd, only: &
+       GRD_x,    &
+       GRD_XDIR, &
+       GRD_YDIR, &
+       GRD_ZDIR, &
+       GRD_vz,   &
+       GRD_Z
     use mod_runconf, only: &
        TRC_vmax
     implicit none
@@ -180,70 +184,105 @@ contains
     integer, intent(in)    :: lall
     real(8), intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-    real(8), parameter :: p_surf = 1.D+5         ! [Pa]
-    real(8), parameter :: LASPdry = 9.771958146487295D-3
-    real(8) :: t_1stlev, t_surf, t_atthelev, t_guess
-    real(8) :: p_1stlev(2)
-    real(8) :: dZ, dT, f, df
-    real(8) :: lat, lon, e
+    real(8) :: pre(kdim), tem(kdim), dz(kdim)
+    real(8) :: pre_sfc, tem_sfc
+    real(8) :: pre_save
 
-    integer :: n, k, l, itr, K0
+    real(8) :: dT, f, df
+    real(8) :: lat, lon
+
+    integer :: n, k, l, itr
     !---------------------------------------------------------------------------
-
-    K0 = ADM_KNONE
-    e = exp(1.D0)
 
     DIAG_var(:,:,:,:) = 0.D0
 
     do l = 1, lall
     do n = 1, ijdim
-       k = 1
+
+       dz(ADM_kmin) = GRD_vz(n,ADM_kmin,l,GRD_Z)
+       do k = ADM_kmin+1, ADM_kmax+1
+          dz(k) = GRD_vz(n,k,l,GRD_Z) - GRD_vz(n,k-1,l,GRD_Z)
+       enddo
+
        call MISC_get_latlon( lat, lon,               &
-                             GRD_x(n,K0,l,GRD_XDIR), &
-                             GRD_x(n,K0,l,GRD_YDIR), &
-                             GRD_x(n,K0,l,GRD_ZDIR)  )
-       t_surf = 315.D0 - deltaT*sin(lat)**2.D0
-       p_1stlev(:) = p_surf
-       dZ = GRD_vz(n,k,l,1) - 0.D0
+                             GRD_x(n,ADM_KNONE,l,GRD_XDIR), &
+                             GRD_x(n,ADM_KNONE,l,GRD_YDIR), &
+                             GRD_x(n,ADM_KNONE,l,GRD_ZDIR)  )
+
+       pre_sfc = PRE00
+!       tem_sfc = 300.D0
+       tem_sfc = 315.D0 - deltaT*sin(lat)**2
+
+       !---< from ground surface to lowermost atmosphere >---
+       k = ADM_kmin
+       ! first guess
+       pre(k) = pre_sfc
+       tem(k) = tem_sfc
 
        ! Newton-Lapson
-       p_1stlev(1) = 0.D0 ! to do the first step
        do itr = 1, itrmax
-          if( abs(p_1stlev(1)-p_1stlev(2)) <= eps_r ) exit
+          pre_save = pre(k) ! save
 
-          p_1stlev(1) = p_1stlev(2)
-          t_1stlev = ( 315.D0 - deltaT*sin(lat)**2 - deltaTh*log(p_1stlev(1)/p0) &
-                                            * cos(lat)**2 ) * (p_1stlev(1)/p0)**kai
-          f  = ( log( p_surf ) - log( p_1stlev(1) ) ) / ( dZ ) &
-             + CNST_EGRAV / CNST_RAIR * 2.D0 / ( t_surf + t_1stlev )
-          df = 1.D0 / dZ / p_1stlev(1)
+          f  = log(pre(k)/pre_sfc) / dz(k) + GRAV / ( RAIR * 0.5D0 * (tem(k)+tem_sfc) )
+          df = 1.D0 / (pre(k)*dz(k))
 
-          p_1stlev(2) = p_1stlev(1) + f/df
+          pre(k) = pre(k) - f / df
+!          tem(k) = 300.D0 * ( pre(k)/PRE00 )**KAPPA
+          tem(k) = ( 315.D0 - deltaT*sin(lat)**2 - deltaTh*log(pre(k)/PRE00)*cos(lat)**2 ) &
+                 * ( pre(k)/PRE00 )**KAPPA
+          tem(k) = max( 200.D0, tem(k) )
+
+          if( abs(pre_save-pre(k)) <= eps ) exit
        enddo
+
        if ( itr > itrmax ) then
-          write(*,*) 'xxx iteration not converged!', &
-                     p_1stlev(1)-p_1stlev(2), p_1stlev(2), t_1stlev, t_surf
+          write(ADM_LOG_FID,*) 'xxx iteration not converged!', k, pre_save-pre(k), pre(k), pre_sfc, tem(k), tem_sfc
+          write(*,          *) 'xxx iteration not converged!', k, pre_save-pre(k), pre(k), pre_sfc, tem(k), tem_sfc
+          stop
        endif
 
-       DIAG_var(n,k,l,1) = p_1stlev(2)
-       t_atthelev = ( 315.D0 - deltaT*sin(lat)**2 - deltaTh*log(DIAG_var(n,k,l,1)/p0) &
-                                         * cos(lat)**2 ) * (DIAG_var(n,k,l,1)/p0)**kai
-       DIAG_var(n,k,l,2) = max(200.D0, t_atthelev)
+       !---< from lowermost to uppermost atmosphere >---
+       do k = ADM_kmin+1, ADM_kmax+1
 
-       ! guess pressure field upper k=1
-       do k=2, kdim
-          dZ = GRD_vz(n,k,l,1) - GRD_vz(n,k-1,l,1)
-          t_guess = DIAG_var(n,k-1,l,2) - LASPdry * dZ
-          dT = ( t_guess + DIAG_var(n,k-1,l,2) )/2.D0
-          DIAG_var(n,k,l,1) = DIAG_var(n,k-1,l,1) * e**( -1.D0 * dZ * (g/(R*dT)) )
-          t_atthelev = ( 315.D0 - deltaT*sin(lat)**2 - deltaTh*log(DIAG_var(n,k,l,1)/p0) &
-                                                   * cos(lat)**2 ) * (DIAG_var(n,k,l,1)/p0)**kai
-          DIAG_var(n,k,l,2) = max(200.D0, t_atthelev)
+          ! first guess
+          pre(k) = pre(k-1)
+          tem(k) = 300.D0 * ( pre(k)/PRE00 )**KAPPA
+          tem(k) = max( 200.D0, tem(k) )
+
+          ! Newton-Lapson
+          do itr = 1, itrmax
+             pre_save = pre(k) ! save
+
+             f  = log(pre(k)/pre(k-1)) / dz(k) + GRAV / ( RAIR * 0.5D0 * (tem(k)+tem(k-1)) )
+             df = 1.D0 / (pre(k)*dz(k))
+
+             pre(k) = pre(k) - f / df
+!             tem(k) = 300.D0 * ( pre(k)/PRE00 )**KAPPA
+             tem(k) = ( 315.D0 - deltaT*sin(lat)**2 - deltaTh*log(pre(k)/PRE00)*cos(lat)**2 ) &
+                    * ( pre(k)/PRE00 )**KAPPA
+             tem(k) = max( 200.D0, tem(k) )
+
+             if( abs(pre_save-pre(k)) <= eps ) exit
+
+          enddo
+
+          if ( itr > itrmax ) then
+             write(ADM_LOG_FID,*) 'xxx iteration not converged!', k, pre_save-pre(k), pre(k), pre(k-1), tem(k), tem(k-1)
+             write(*,          *) 'xxx iteration not converged!', k, pre_save-pre(k), pre(k), pre(k-1), tem(k), tem(k-1)
+             stop
+          endif
+       enddo
+
+       DIAG_var(n,ADM_kmin-1,l,1) = pre_sfc ! tentative
+       DIAG_var(n,ADM_kmin-1,l,2) = tem_sfc ! tentative
+       do k = ADM_kmin, ADM_kmax+1
+          DIAG_var(n,k,l,1) = pre(k)
+          DIAG_var(n,k,l,2) = tem(k)
        enddo
 
     enddo
     enddo
- 
+
     return
   end subroutine hs_init  
 
@@ -607,8 +646,7 @@ contains
     !
     return
   end subroutine steady_state
-  !-----------------------------------------------------------------------------
-  !
+
   !-----------------------------------------------------------------------------
   ! convert geopotential height to pressure
   subroutine geo2prs( &
@@ -624,7 +662,7 @@ contains
     real(PRCS_D), intent(in) :: geo(kdim)
     real(PRCS_D), intent(inout) :: prs(kdim)
     real(PRCS_D) :: dZ, dT, e
-    !
+
     e = exp(1.D0)
     prs(1) = p0
     ! guess pressure field upper k=0
@@ -643,8 +681,7 @@ contains
     !
     return
   end subroutine geo2prs
-  !-----------------------------------------------------------------------------
-  !
+
   !-----------------------------------------------------------------------------
   ! setting perturbation
   subroutine perturbation( &
