@@ -341,6 +341,8 @@ contains
     ! -> [add] R.Yoshida 20121020
     if ( trim(topo_fname) == 'Jablonowski' ) then
        call GRD_jbw_init_topo
+    elseif ( trim(topo_fname) == 'Mountainwave' ) then
+       call GRD_mwave_init_topo
     else
        call GRD_input_topograph(topo_fname,GRD_ZSFC)
     endif
@@ -1444,6 +1446,83 @@ contains
            maxval(GRD_zs(:,:,:,GRD_ZSFC)), minval(GRD_zs(:,:,:,GRD_ZSFC))
     return
   end subroutine GRD_jbw_init_topo
+
+  !-----------------------------------------------------------------------------
+  ! [ADD] R.Yoshida 20130328
+  ! mountain of dcmip 2012 setting
+  !-----------------------------------------------------------------------------
+  subroutine GRD_mwave_init_topo()
+    use mod_misc, only : &
+       MISC_get_latlon
+    use mod_adm, only :  &
+       ADM_lall,         &
+       ADM_gall,         &
+       ADM_GALL_PL,      &
+       ADM_LALL_PL,      &
+       ADM_KNONE,        &
+       ADM_prc_me,       &
+       ADM_prc_pl,       &
+       ADM_LOG_FID
+    implicit none
+
+    ! <DCMIP-13>
+    real(8),parameter :: df_PI = 3.14159265358979323846264338327950
+    real(8),parameter :: LAMBDA_M=df_PI/4.d0
+    real(8),parameter :: FAI_M   =0.d0
+    real(8),parameter :: H_ZERO  = 250.d0
+    real(8),parameter :: QSI  = 4000.d0
+    real(8),parameter :: a_ref  = 6371220.0D0
+    real(8),parameter :: X_reduce  = 500.d0
+    real(8),parameter :: HALF_WIDTH = 5000.0d0
+
+    real(8) :: dist_m, aa, bb
+    real(8) :: lat, lon
+    integer :: n, l, K0
+    !---------------------------------------------------------------------------
+
+    K0 = ADM_KNONE
+
+    ! for globe
+    do l=1, ADM_lall
+    do n=1, ADM_gall
+       call MISC_get_latlon( lat, lon,              &
+                             GRD_x(n,K0,l,GRD_XDIR), &
+                             GRD_x(n,K0,l,GRD_YDIR), &
+                             GRD_x(n,K0,l,GRD_ZDIR)  )
+
+        dist_m = (a_ref/X_reduce)*acos (sin (FAI_M)*sin (lat)  &
+                    +cos (FAI_M)*cos (lat)*cos (lon-LAMBDA_M))
+
+        aa = exp(- (dist_m)**2.0 / HALF_WIDTH**2.0d0)
+        bb = cos(df_PI*dist_m/QSI)**2.0d0
+        GRD_zs(n,ADM_KNONE,l,GRD_ZSFC) = H_ZERO * aa * bb   ! equation (76) in dcmip reference
+    enddo
+    enddo
+
+    ! for pole region
+    if ( ADM_prc_me==ADM_prc_pl ) then
+       do l=1, ADM_LALL_PL
+       do n=1, ADM_GALL_PL
+          call MISC_get_latlon( lat, lon,              &
+                                GRD_x(n,K0,l,GRD_XDIR), &
+                                GRD_x(n,K0,l,GRD_YDIR), &
+                                GRD_x(n,K0,l,GRD_ZDIR)  )
+
+           dist_m = (a_ref/X_reduce)*acos (sin (FAI_M)*sin (lat)&
+                       +cos (FAI_M)*cos (lat)*cos (lon-LAMBDA_M))
+
+           aa = exp(- (dist_m)**2.0 / HALF_WIDTH**2.0d0)
+           bb = cos(df_PI*dist_m/QSI)**2.0d0
+           GRD_zs_pl(n,ADM_KNONE,l,GRD_ZSFC) = H_ZERO * aa * bb   ! equation (76) in dcmip reference
+       enddo
+       enddo
+    endif
+
+    write(ADM_LOG_FID,*) 'Msg : Sub[GRD_input_topograph]/Mod[grid]'
+    write (ADM_LOG_FID, '("   *** Topography for mwave: -- MAX: ",F9.3,2X,"MIN: ",F9.3)') &
+           maxval(GRD_zs(:,:,:,GRD_ZSFC)), minval(GRD_zs(:,:,:,GRD_ZSFC))
+    return
+  end subroutine GRD_mwave_init_topo
 
 end module mod_grd
 !-------------------------------------------------------------------------------

@@ -57,6 +57,20 @@ ifeq ($(runnow), yes)
 	cd $(NICAMRUNDIR)/tracer/$(rundir); $(JOBSUB) run.sh
 endif
 
+mwave: makedir checkconfig
+	@echo "prepare mountain wave test"
+	@export NICAMDIR="$(NICAMDIR)";       \
+         export NICAMBINDIR="$(NICAMBINDIR)"; \
+         export NICAMRUNDIR="$(NICAMRUNDIR)"; \
+         export MPIEXEC="$(MPIEXEC)";           \
+         sh sysdep/Mkshell_$(NICAM_SYS).sh $(glevel) $(rlevel) $(nmpi) $(zlayer) $(vgrid) mwave
+	@export NICAMRUNDIR="$(NICAMRUNDIR)"; \
+         sh case/Mkconf_mountainwave.sh $(glevel) $(rlevel) $(nmpi) $(zlayer) $(vgrid) mwave
+ifeq ($(runnow), yes)
+	@echo "run immediately"
+	cd $(NICAMRUNDIR)/tracer/$(rundir); $(JOBSUB) run.sh
+endif
+
 makedir:
 	mkdir -p $(NICAMRUNDIR)
 
