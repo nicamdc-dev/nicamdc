@@ -35,10 +35,7 @@ cd src/
 
 make
 
-2. Run testcase
+2. Run testcase(ex. jablonowski)
 
-make test testtype=jablonowski
-
-or
-
-make test testtype=heldsuarez
+cd test/case/jablonowski
+make

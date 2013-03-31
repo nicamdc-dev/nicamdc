@@ -17,10 +17,6 @@ else
 fi
 ZL=${4:-40}
 vgrid=${5:-vgrid40_24000-600m.dat}
-LSMAX=${6:-792}
-DTL=${7:-1200}
-DIFCF=${8:-1.29D16}
-NHIST=${9:-72}
 
 dir2d=gl${GL}rl${RL}pe${NP}
 dir3d=gl${GL}rl${RL}z${ZL}pe${NP}
