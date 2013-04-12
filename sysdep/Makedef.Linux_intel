@@ -6,9 +6,9 @@ NICAMRUNDIR=/home/user/src/NICAM-DC_0.16i/run
 
 FC  = mpif90
 
-PAPIDEF  = -DPAPI_OPS
-PAPILIB  = -L/usr/local/papi-5.0.1/lib -lpapi \
-           -I/usr/local/papi-5.0.1/include
+PAPIDEF  = #-DPAPI_OPS
+#PAPILIB  = -L/usr/local/papi-5.0.1/lib -lpapi \
+#           -I/usr/local/papi-5.0.1/include
 
 FFLAGS = -fpp3 -O3 -ftz -m64                  \
          $(PAPIDEF)                           \
