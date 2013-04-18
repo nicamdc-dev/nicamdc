@@ -118,6 +118,7 @@ cat << EOFNHM > nhm_driver.cnf
 
 &DYCORETESTPARAM
     init_type = 'Jablonowski',
+    test_case = '1'
 /
 
 &EMBUDGETPARAM MNT_ON = .true., MNT_INTV = ${NHIST} /
