@@ -1,18 +1,12 @@
-# ------ FOR Linux & gfortran & MPICH2 -----
 #
-NICAMBINDIR=/home/user/src/NICAM-DC_0.16i/bin
-NICAMLIBDIR=/home/user/src/NICAM-DC_0.16i/lib
-NICAMRUNDIR=/home/user/src/NICAM-DC_0.16i/run
+# ------ FOR Linux 64bit & GNU compiler & MPICH2/openMPI -----
+#
 
 FC  = mpif90
 
 PAPIDEF  = -UPAPI_OPS
-#PAPILIB  = -L/usr/local/papi-5.0.1/lib -lpapi \
-#           -I/usr/local/papi-5.0.1/include
-
-#FFLAGS = -cpp -O0 -m64 $(PAPIDEF)                           \
-#         -ffree-line-length-none -fmax-identifier-length=63 \
-#         -fconvert=big-endian -frecord-marker=4
+#PAPILIB  = -L/usr/local/papi-5.1.0/lib -lpapi \
+#           -I/usr/local/papi-5.1.0/include
 
 FFLAGS = -cpp -O3 -mavx -mfma -m64 $(PAPIDEF)               \
          -ffree-line-length-none -fmax-identifier-length=63 \
@@ -30,11 +24,13 @@ CFLAGS = -cpp -O3 -mavx
 LD         = $(FC)
 LFLAGS     = $(FFLAGS) $(PAPILIB)
 
+CLEAN = rm -f *~ *.o *.mod *__genmod.f90 *.lst
+
+NETCDF_LIBS    ?= -lnetcdf
+NETCDF_INCLUDE ?=
+
+##### for frontend
 INSTALL = install
 AR      = ar -rv
 RANLIB  = ranlib
-
-CLEAN = rm -f *~ *.o *.mod *__genmod.f90 *.lst
-
 JOBSUB  = sh
-MPIEXEC = mpirun

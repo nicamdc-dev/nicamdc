@@ -143,7 +143,7 @@ contains
     if ( trim(init_type) == "Heldsuarez" ) then
        call hs_init ( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
     elseif( trim(init_type) == "Jablonowski" ) then
-       call jbw_init( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
+       call jbw_init( ADM_gall, ADM_kall, ADM_lall, test_case, DIAG_var(:,:,:,:) )
     elseif( trim(init_type) == "Traceradvection" ) then ! tentative test
        call tracer_init( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
     elseif( trim(init_type) == "Mountainwave" ) then
@@ -155,7 +155,9 @@ contains
        call ADM_proc_stop
     endif
 
-    if ( trim(init_type) == "Traceradvection" .or. trim(init_type) == "Mountainwave" ) then
+    if ( trim(init_type) == "Jablonowski"     .or. &
+         trim(init_type) == "Traceradvection" .or. &
+         trim(init_type) == "Mountainwave"         ) then
        write(ADM_LOG_FID,*) '*** test case: ', trim(test_case)
     endif
 
@@ -299,14 +301,16 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine jbw_init( &
-     ijdim,   &
-     kdim,    &
-     lall,    &
-     DIAG_var )
+     ijdim,      &
+     kdim,       &
+     lall,       &
+     test_case,  &
+     DIAG_var    )
     use mod_misc, only: &
        MISC_get_latlon
     use mod_adm, only: &
-       ADM_KNONE
+       ADM_KNONE,      &
+       ADM_NSYS
     use mod_grd, only: &
        GRD_vz,         &
        GRD_x,          &
@@ -323,6 +327,7 @@ contains
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
     integer, intent(in)  :: lall
+    character(len=ADM_NSYS), intent(in) :: test_case
     real(8), intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
     ! work paramters
@@ -337,12 +342,26 @@ contains
     real(8) :: vz_local(kdim)
 
     logical :: signal ! if ture, continue iteration
+    logical :: pertb  ! if ture, with perturbation
     integer :: n, l, k, itr, K0
     !---------------------------------------------------------------------------
 
     K0 = ADM_KNONE
 
     DIAG_var(:,:,:,:) = 0.D0
+
+    select case( trim(test_case) )
+    case ('1', '4-1')  ! with perturbation
+       write(ADM_LOG_FID,*) "Jablonowski Initialize - case 1: with perturbation"
+       pertb = .true.
+    case ('2', '4-2')  ! without perturbation
+       write(ADM_LOG_FID,*) "Jablonowski Initialize - case 2: without perturbation"
+       pertb = .false.
+    case default
+       write(ADM_LOG_FID,*) "Unknown test_case: '"//trim(test_case)//"' specified."
+       write(ADM_LOG_FID,*) "Force changed to case 1 (with perturbation)"
+       pertb = .true.
+    end select
 
     do l = 1, lall
     do n = 1, ijdim
@@ -377,7 +396,7 @@ contains
        endif
 
        call geo2prs     ( kdim, tmp, geo, prs )
-       call perturbation( kdim, lat, lon, tmp, prs, wix, wiy )
+       call perturbation( kdim, lat, lon, tmp, prs, wix, wiy, pertb )
        call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
        do k=1, kdim
@@ -943,11 +962,13 @@ contains
       tmp,  &  !--- INOUT : temperature
       prs,  &  !--- INOUT : pressure
       wix,  &  !--- INOUT : zonal wind component
-      wiy   )  !--- INOUT : meridional wind component
+      wiy,  &  !--- INOUT : meridional wind component
+      with  )  !--- IN : perturbation switch
     !
     implicit none
     integer :: k
     integer, intent(in) :: kdim
+    logical, intent(in) :: with
     real(PRCS_D), intent(in) :: lat, lon
     real(PRCS_D), intent(inout) :: tmp(kdim)
     real(PRCS_D), intent(inout) :: prs(kdim)
@@ -961,12 +982,14 @@ contains
     rr = a / 10.D0
     rbyrr = r/rr
     !
-    do k=1, kdim
-       !tmp(k) = tmp(k)
-       !prs(k) = prs(k)
-       wix(k) = wix(k) + uP * exp( -1.D0*rbyrr**2.D0 )
-       !wiy(k) = wiy(k)
-    enddo
+    if ( with ) then
+       do k=1, kdim
+          !tmp(k) = tmp(k)
+          !prs(k) = prs(k)
+          wix(k) = wix(k) + uP * exp( -1.D0*rbyrr**2.D0 )
+          !wiy(k) = wiy(k)
+       enddo
+    endif
     !
     if (message) then
        write (ADM_LOG_FID,'(A)') "|-----------------------------------------------------"
