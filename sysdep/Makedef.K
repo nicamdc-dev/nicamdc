@@ -1,58 +1,43 @@
+#
 # ------ FOR K computer -----
 #
-NICAMBINDIR=/data/ra000006/NICAM/NICAM-DC/0.14/bin
-NICAMLIBDIR=/data/ra000006/NICAM/NICAM-DC/0.14/lib
-NICAMRUNDIR=/data/ra000006/NICAM/NICAM-DC/0.14/run
 
-############### for Product Run ###############
-# disable FPCOLL & runtime
-#FPCOLL = -U_FPCOLL_ -Ntl_notrt
-# enable SIMD
-#SIMD   = -Ksimd
-# disable All Timer
-#FJTIMER_BASIC  = -U_FJTIMER_BASIC_ -U_FJT_FIPPCOUNTER_
-#FJTIMER_DETAIL = -U_FJTIMER_       -U_FJT_FAPPCOUNTER_
+##### for computation
 
-############### for SCALING Test (less timer) ###############
-# enable FPCOLL
-FPCOLL=-D_FPCOLL_ -Ntl_trt
-# enable SIMD
-SIMD=-Ksimd
-# enable Basic Timer & FIPPCOUNTER
-FJTIMER_BASIC  = -D_FJTIMER_BASIC_ -D_FJT_FIPPCOUNTER_
-FJTIMER_DETAIL = -U_FJTIMER_       -U_FJT_FAPPCOUNTER_
+FFLAGS_FAST  = -Kfast,parallel,auto,ocl,preex,array_private,noalias=s,mfunc=2 \
+               -Kparallel_iteration=8,instance=8,dynamic_iteration                   \
+               -Qi -Qt -X03 -Ncompdisp -Koptmsg=1 -Cpp                               \
+               -Kprefetch_cache_level=all,prefetch_iteration_L2=50 -Ksimd
 
-############### for Detailed Profile ###############
-# disable FPCOLL & runtime
-#FPCOLL = -D_FPCOLL_ -Ntl_trt
-# enable SIMD
-#SIMD=-Ksimd
-# enable Detailed Timer without COUNTER
-#FJTIMER_BASIC  = -D_FJTIMER_BASIC_ -U_FJT_FIPPCOUNTER_
-#FJTIMER_DETAIL = -D_FJTIMER_       -D_FJT_FAPPCOUNTER_
+FFLAGS_DEBUG = -O0 \
+               -Qi -Qt -X03 -v03s -v03d -v03o -Ncompdisp -Koptmsg=1 -Cpp \
+               -Ec -Eg -Ha -He -Hf -Ho -Hs -Hu -Hx -Ncheck_global
+#               -DDEBUG
 
-OCL = _ocl
+# Performance monitor
+# disable
+PERF_MONIT = -Ntl_notrt -U_FIPP_ -U_FAPP_
+# fipp
+#PERF_MONIT = -Ntl_trt -D_FIPP_ -U_FAPP_
+# fapp
+#PERF_MONIT = -Ntl_trt -U_FIPP_ -D_FAPP_
 
 FC     = mpifrtpx
-FFLAGS = -Kfast,parallel,ocl,preex,array_private,auto,noalias=s,parallel_compress \
-         -Qi -Qt -X03 -v03s -v03d -v03o -Ncompdisp -Koptmsg=1 -Cpp \
-         $(FPCOLL) $(SIMD) $(FJTIMER_BASIC) $(FJTIMER_DETAIL)
+FFLAGS = $(FFLAGS_FAST) $(PERF_MONIT) $(RDMA)
+#FFLAGS = $(FFLAGS_DEBUG) $(PERF_MONIT) $(RDMA)
 
-#FFLAGS = -Kfast,parallel,ocl,preex,array_private,auto,noalias=s,parallel_compress \
-#         -Qi -Qt -X03 -v03s -v03d -v03o -Ncompdisp -Koptmsg=1 -Cpp \
-#         -Eg -Ha -He -Hf -Ho -Hs -Hu -Hx
+MODDIROPT ?= -M
 
 CC     = mpifccpx
-CFLAGS = -Kfast,parallel,ocl,preex,array_private $(FPCOLL) $(SIMD)
+CFLAGS = -Kfast,parallel,ocl,preex,array_private,region_extension,restp=all -Qt -Ksimd $(PERF_MONIT)
 
 LD     = $(FC)
 LFLAGS = $(FFLAGS)
 
-INSTALL = install
-AR      = ar -rv
+NETCDF_INCLUDE ?= -I/data/share005/cross-K/include
+NETCDF_LIBS    ?= -L/data/share005/cross-K/lib -lnetcdf -lhdf5_hl -lhdf5 -lsz -lz
+
+##### for frontend
+AR      = ar r
 RANLIB  = ranlib
-
-CLEAN = rm -f *~ *.o *.mod *__genmod.f90 *.lst
-
 JOBSUB  = pjsub
-MPIEXEC = mpiexec

@@ -1,44 +1,43 @@
 #
-# ------ FOR Oakleaf-FX -----
+# ------ FOR FX10 -----
 #
 
 ##### for computation
 
-OCL =
-
-FFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,noalias=s,parallel_compress,parallel_iteration=8,instance=8 \
-               -Qi -Qt -X03 -v03s -v03d -v03o -Ncompdisp -Koptmsg=1 -Cpp \
-               -Kprefetch_cache_level=all,prefetch_iteration_L2=50 -Ksimd -Kdynamic_iteration
+FFLAGS_FAST  = -Kfast,parallel,auto,ocl,preex,array_private,noalias=s,mfunc=2 \
+               -Kparallel_iteration=8,instance=8,dynamic_iteration                   \
+               -Qi -Qt -X03 -Ncompdisp -Koptmsg=1 -Cpp                               \
+               -Kprefetch_cache_level=all,prefetch_iteration_L2=50 -Ksimd
 
 FFLAGS_DEBUG = -O0 \
                -Qi -Qt -X03 -v03s -v03d -v03o -Ncompdisp -Koptmsg=1 -Cpp \
-               -Eg -Ha -He -Hf -Ho -Hs -Hu -Hx -Ncheck_global
+               -Ec -Eg -Ha -He -Hf -Ho -Hs -Hu -Hx -Ncheck_global
+#               -DDEBUG
 
 # Performance monitor
-# disabled
-#PERF_MONIT = -Ntl_notrt -U_FIPP_ -U_FAPP_
+# disable
+PERF_MONIT = -Ntl_notrt -U_FIPP_ -U_FAPP_
 # fipp
-PERF_MONIT = -Ntl_trt -D_FIPP_ -U_FAPP_
+#PERF_MONIT = -Ntl_trt -D_FIPP_ -U_FAPP_
 # fapp
 #PERF_MONIT = -Ntl_trt -U_FIPP_ -D_FAPP_
 
 FC     = mpifrtpx
-#FFLAGS = $(FFLAGS_DEBUG) $(PERF_MONIT)
-FFLAGS = $(FFLAGS_FAST) $(PERF_MONIT)
+FFLAGS = $(FFLAGS_FAST) $(PERF_MONIT) $(RDMA)
+#FFLAGS = $(FFLAGS_DEBUG) $(PERF_MONIT) $(RDMA)
+
+MODDIROPT ?= -M
 
 CC     = mpifccpx
-CFLAGS = -Kfast,parallel,ocl,preex,array_private $(FPCOLL) $(SIMD)
+CFLAGS = -Kfast,parallel,ocl,preex,array_private,region_extension,restp=all -Qt -Ksimd $(PERF_MONIT)
 
 LD     = $(FC)
 LFLAGS = $(FFLAGS)
 
-CLEAN   = rm -f *~ *.o *.mod *__genmod.f90 *.lst
-
-NETCDF_LIBS    ?= -lnetcdf
-NETCDF_INCLUDE ?=
+NETCDF_INCLUDE ?= -I/data/yashiro/tool/cross-K/include
+NETCDF_LIBS    ?= -L/data/yashiro/tool/cross-K/lib -lnetcdf -lhdf5_hl -lhdf5 -lsz -lz
 
 ##### for frontend
-INSTALL = install
-AR      = ar rv
+AR      = ar r
 RANLIB  = ranlib
 JOBSUB  = pjsub
