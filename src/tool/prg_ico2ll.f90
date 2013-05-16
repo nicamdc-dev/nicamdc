@@ -649,7 +649,7 @@ function timeincrement(isec)&
   integer :: isec
   character(20):: plate
   character(18):: tmp
-  write(tmp,*) isec/60
+  write(tmp,*) max(isec/60,1)
   plate=trim(tmp)//'mn'
   !
 end function timeincrement

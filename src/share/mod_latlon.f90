@@ -30,6 +30,7 @@ module mod_latlon
   !
   use mpi
   use mod_adm, only: &
+     ADM_LOG_FID, &
      ADM_NSYS,    &
      ADM_MAXFNAME
   !-----------------------------------------------------------------------------
@@ -39,6 +40,7 @@ module mod_latlon
   !
   !++ Public procedure
   !
+  public :: LATLON_ico_setup
   public :: LATLON_setup
 
   !-----------------------------------------------------------------------------
@@ -58,14 +60,28 @@ module mod_latlon
   !
   !++ Private parameters & variables
   !
+  integer, public, parameter :: GMTR_P_nmax_var = 2
+  integer, public, parameter :: GMTR_P_LAT = 1
+  integer, public, parameter :: GMTR_P_LON = 2
+
+  real(8), public, allocatable, save :: GMTR_P_ll   (:,:,:,:)
+  real(8), public, allocatable, save :: GMTR_P_ll_pl(:,:,:,:)
+
+  character(len=ADM_NSYS),  public, save :: polygon_type = 'ON_SPHERE' ! triangle is fit to the sphere
+  !                                                        'ON_PLANE'  ! triangle is treated as 2D
+
   character(len=ADM_NSYS), private, save :: latlon_type = 'EQUIDIST' ! grid type ( equidist or gaussian )
-  integer,                 private, save :: imax       = 360         ! number of longitude
-  integer,                 private, save :: jmax       = 180         ! number of latitude
-  real(8),                 private, save :: lonmin     = -999.D0     ! minimun longitude of region window in deg
-  real(8),                 private, save :: lonmax     = -999.D0     ! maximun longitude of region window in deg
-  real(8),                 private, save :: latmin     = -999.D0     ! minimun latitude of region window in deg
-  real(8),                 private, save :: latmax     = -999.D0     ! maximun latitude of region window in deg
-  logical,                 private, save :: lon_offset = .true.      ! logitude offset
+  integer,                 private, save :: imax        = 360        ! number of longitude
+  integer,                 private, save :: jmax        = 180        ! number of latitude
+  real(8),                 private, save :: lonmin      = -999.D0    ! minimun longitude of region window in deg
+  real(8),                 private, save :: lonmax      = -999.D0    ! maximun longitude of region window in deg
+  real(8),                 private, save :: latmin      = -999.D0    ! minimun latitude of region window in deg
+  real(8),                 private, save :: latmax      = -999.D0    ! maximun latitude of region window in deg
+  logical,                 private, save :: lon_offset  = .true.     ! logitude offset
+  real(8),                 private, save :: polar_limit = -999.D0    ! search all longitude if abs(lat) > polar_limit
+
+  character(len=ADM_MAXFNAME), private :: SAMPLE_OUT_BASENAME = ''
+  character(len=ADM_NSYS),     private :: SAMPLE_io_mode      = 'ADVANCED'
 
   character(len=ADM_NSYS),     private, save :: output_lldata_type = 'mkllmap'
 
@@ -86,24 +102,98 @@ module mod_latlon
   real(8), private, allocatable, save :: w2       (:)
   real(8), private, allocatable, save :: w3       (:)
 
-  logical, private, save :: debug = .false.
+  logical, private,              save :: debug = .false.
+  real(4), private, allocatable, save :: checkmap   (:,:)
+  real(4), private, allocatable, save :: checkmapsum(:,:)
   !-----------------------------------------------------------------------------
 contains
 
   !-----------------------------------------------------------------------------
-  !>
-  !> Description of the subroutine LATLON_setup
-  !>
+  !> setup lat/lon value of the ico-grid (without mod_gmtr)
+  subroutine LATLON_ico_setup
+    use mod_misc, only: &
+       MISC_get_latlon
+    use mod_adm, only: &
+       ADM_prc_pl,      &
+       ADM_prc_me,      &
+       ADM_lall,        &
+       ADM_lall_pl,     &
+       ADM_gall,        &
+       ADM_gall_pl,     &
+       ADM_KNONE,       &
+       ADM_gall_1d,     &
+       ADM_gmax,        &
+       ADM_gmin,        &
+       ADM_GSLF_PL,     &
+       ADM_IooJoo_nmax, &
+       ADM_IooJoo,      &
+       ADM_GIoJo
+    use mod_comm, only: &
+       COMM_data_transfer
+    use mod_grd, only: &
+       GRD_XDIR, &
+       GRD_YDIR, &
+       GRD_ZDIR, &
+       GRD_x,    &
+       GRD_x_pl
+    implicit none
+
+    integer :: ij, n, k, l
+
+    integer :: i, j, suf
+    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+    !---------------------------------------------------------------------------
+
+    k = ADM_KNONE
+
+    !--- setup point data
+    allocate( GMTR_P_ll   (ADM_gall,   ADM_KNONE,ADM_lall,   GMTR_P_nmax_var) )
+    allocate( GMTR_P_ll_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,GMTR_P_nmax_var) )
+    GMTR_P_ll   (:,:,:,:) = 0.D0
+    GMTR_P_ll_pl(:,:,:,:) = 0.D0
+
+    do l = 1, ADM_lall
+       do n = 1, ADM_IooJoo_nmax
+          ij = ADM_IooJoo(n,ADM_GIoJo)
+          call MISC_get_latlon( GMTR_P_ll(ij,k,l,GMTR_P_LAT), &
+                                GMTR_P_ll(ij,k,l,GMTR_P_LON), &
+                                GRD_x    (ij,k,l,GRD_XDIR),   &
+                                GRD_x    (ij,k,l,GRD_YDIR),   &
+                                GRD_x    (ij,k,l,GRD_ZDIR)    )
+       enddo ! ij loop
+    enddo ! l loop
+
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       n = ADM_GSLF_PL
+       do l = 1,ADM_lall_pl
+          call MISC_get_latlon( GMTR_P_ll_pl(n,k,l,GMTR_P_LAT), &
+                                GMTR_P_ll_pl(n,k,l,GMTR_P_LON), &
+                                GRD_x_pl    (n,k,l,GRD_XDIR),   &
+                                GRD_x_pl    (n,k,l,GRD_YDIR),   &
+                                GRD_x_pl    (n,k,l,GRD_ZDIR)    )
+       enddo ! l loop
+    endif
+
+    !--- communication of point data
+    call COMM_data_transfer( GMTR_P_ll, GMTR_P_ll_pl )
+    ! fill unused grid (dummy)
+    GMTR_P_ll(suf(ADM_gall_1d,1),:,:,:) = GMTR_P_ll(suf(ADM_gmax+1,ADM_gmin),:,:,:)
+    GMTR_P_ll(suf(1,ADM_gall_1d),:,:,:) = GMTR_P_ll(suf(ADM_gmin,ADM_gmax+1),:,:,:)
+
+    return
+  end subroutine LATLON_ico_setup
+
+  !-----------------------------------------------------------------------------
+  !> Setup
   subroutine LATLON_setup( output_dirname, output_lldata_type_in )
     use mod_misc, only: &
        MISC_get_available_fid, &
        MISC_make_idstr
     use mod_adm, only: &
-       ADM_prc_all,    &
-       ADM_COMM_RUN_WORLD, &
-       ADM_LOG_FID,        &
        ADM_CTL_FID,        &
        ADM_proc_stop,      &
+       ADM_COMM_RUN_WORLD, &
+       ADM_prc_all,        &
        ADM_prc_tab,        &
        ADM_prc_run_master, &
        ADM_prc_me,         &
@@ -115,20 +205,24 @@ contains
     character(len=*), intent(in) :: output_dirname
     character(len=*), intent(in) :: output_lldata_type_in
 
-    real(8) :: latmax_deg =   90.D0
-    real(8) :: latmin_deg =  -90.D0
-    real(8) :: lonmax_deg =  180.D0
-    real(8) :: lonmin_deg = -180.D0
+    real(8) :: latmax_deg      =   90.D0
+    real(8) :: latmin_deg      =  -90.D0
+    real(8) :: lonmax_deg      =  180.D0
+    real(8) :: lonmin_deg      = -180.D0
+    real(8) :: polar_limit_deg =   89.D0
 
     namelist / LATLONPARAM / &
-         latlon_type, &
-         imax,        &
-         jmax,        &
-         lonmin_deg,  &
-         lonmax_deg,  &
-         latmin_deg,  &
-         latmax_deg,  &
-         lon_offset,  &
+         latlon_type,         &
+         imax,                &
+         jmax,                &
+         lonmin_deg,          &
+         lonmax_deg,          &
+         latmin_deg,          &
+         latmax_deg,          &
+         lon_offset,          &
+         polar_limit_deg,     &
+         SAMPLE_OUT_BASENAME, &
+         SAMPLE_io_mode,      &
          debug
 
     character(len=ADM_MAXFNAME) :: fname
@@ -136,11 +230,12 @@ contains
     real(8) :: d2r
 
     integer :: globalsum
-    integer :: gathersum(ADM_prc_all)
+    integer :: sendbuf(1)
+    integer :: recvbuf(ADM_prc_all)
 
     integer :: fid, ierr
     integer :: nstart, nend
-    integer :: n, l, rgnid
+    integer :: n, l, rgnid, i, j
     !---------------------------------------------------------------------------
 
     output_lldata_type = output_lldata_type_in
@@ -165,6 +260,8 @@ contains
     lonmax = lonmax_deg * d2r
     lonmin = lonmin_deg * d2r
 
+    polar_limit = abs(polar_limit_deg) * d2r
+
     !--- setup latitude-longitude grid
     allocate( lat(jmax) )
     allocate( lon(imax) )
@@ -183,6 +280,11 @@ contains
           write(fid) lat(:)
        close(fid)
     endif
+
+    allocate( checkmap   (imax,jmax) )
+    allocate( checkmapsum(imax,jmax) )
+    checkmap   (:,:) = 0.0
+    checkmapsum(:,:) = 0.0
 
     write(ADM_LOG_FID,*) '====== Lat-Lon grid info. ======'
     if ( latlon_type == 'EQUIDIST' ) then
@@ -208,36 +310,68 @@ contains
     ! count lat-lon number
     call mkrelmap_ico2ll( 'GET_NUM' )
 
+    if ( debug ) then
+       call MPI_Allreduce( checkmap(1,1),      &
+                           checkmapsum(1,1),   &
+                           imax*jmax,          &
+                           MPI_REAL,           &
+                           MPI_SUM,            &
+                           ADM_COMM_RUN_WORLD, &
+                           ierr                )
+    endif
+
     write(ADM_LOG_FID,*) '# of managing llgrid'
     do l = 1, ADM_lall
        rgnid = ADM_prc_tab(l,ADM_prc_me)
 
        write(ADM_LOG_FID,*) 'region=', rgnid, ', llgrid=', nmax_llgrid_rgn(l)
+
+       if ( debug ) then
+          do j = 1, jmax
+          do i = 1, imax
+             if    ( checkmapsum(i,j) >  1.0 ) then
+                write(ADM_LOG_FID,*) 'dupicate! (i,j)=', i, j, checkmapsum(i,j)
+             elseif( checkmapsum(i,j) == 0.0 ) then
+                write(ADM_LOG_FID,*) 'missed!   (i,j)=', i, j, checkmapsum(i,j)
+             endif
+          enddo
+          enddo
+
+          call MISC_make_idstr(fname,trim(output_dirname)//'/checkmap','grd',rgnid)
+
+          fid = MISC_get_available_fid()
+          open( unit   = fid,           &
+                file   = trim(fname),   &
+                form   = 'unformatted', &
+                access = 'direct',      &
+                recl   = imax*jmax*4,   &
+                status = 'unknown'      )
+             write(fid,rec=1) checkmap(:,:)
+          close(fid)
+       endif
     enddo
 
     ! check total lat-lon number
-    gathersum(ADM_prc_me) = nmax_llgrid
+    sendbuf(1) = nmax_llgrid
 
-    call MPI_Barrier(ADM_COMM_RUN_WORLD,ierr)
-
-    call MPI_Allgather( MPI_IN_PLACE,       &
+    call MPI_Allgather( sendbuf,            &
                         1,                  &
                         MPI_INTEGER,        &
-                        gathersum(1),       &
+                        recvbuf,            &
                         1,                  &
                         MPI_INTEGER,        &
                         ADM_COMM_RUN_WORLD, &
                         ierr                )
 
-    globalsum = sum( gathersum(:) )
+    globalsum = sum( recvbuf(:) )
 
     write(ADM_LOG_FID,*)
     write(ADM_LOG_FID,*) 'imax x jmax                    = ', imax*jmax
-    write(ADM_LOG_FID,*) 'global total of counted llgird = ', globalsum
+    write(ADM_LOG_FID,*) 'global total of counted llgrid = ', globalsum
     if ( globalsum /= imax*jmax ) then
        write(*,          *) 'counted llgrid does not match!'
        write(ADM_LOG_FID,*) 'counted llgrid does not match!'
-       call ADM_proc_stop
+!       call ADM_proc_stop
     endif
 
     allocate( lon_index(nmax_llgrid) )
@@ -302,34 +436,39 @@ contains
           endif
        close(fid)
     enddo
-    ! output relation map
-    do l = 1, ADM_lall
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
 
-       call MISC_make_idstr(fname,trim(output_dirname)//'/llmap','rgntxt',rgnid)
+    if ( SAMPLE_OUT_BASENAME /= '' ) then
+       call LL_outputsample
+    endif
 
-       fid = MISC_get_available_fid()
-       open( unit   = fid,           &
-             file   = trim(fname),   &
-             form   = 'formatted', &
-             status = 'unknown'      )
-
-          nend   = sum(nmax_llgrid_rgn(1:l))
-          nstart = nend - nmax_llgrid_rgn(l) + 1
-
-          write(fid,*) nmax_llgrid_rgn(l)
-          if ( nmax_llgrid_rgn(l) /= 0 ) then
-             write(fid,*) lon_index(nstart:nend)
-             write(fid,*) lat_index(nstart:nend)
-             write(fid,*) n1_index (nstart:nend)
-             write(fid,*) n2_index (nstart:nend)
-             write(fid,*) n3_index (nstart:nend)
-             write(fid,*) w1       (nstart:nend)
-             write(fid,*) w2       (nstart:nend)
-             write(fid,*) w3       (nstart:nend)
-          endif
-       close(fid)
-    enddo
+    ! ASCII output for debug
+!    do l = 1, ADM_lall
+!       rgnid = ADM_prc_tab(l,ADM_prc_me)
+!
+!       call MISC_make_idstr(fname,trim(output_dirname)//'/llmap','rgntxt',rgnid)
+!
+!       fid = MISC_get_available_fid()
+!       open( unit   = fid,           &
+!             file   = trim(fname),   &
+!             form   = 'formatted', &
+!             status = 'unknown'      )
+!
+!          nend   = sum(nmax_llgrid_rgn(1:l))
+!          nstart = nend - nmax_llgrid_rgn(l) + 1
+!
+!          write(fid,*) nmax_llgrid_rgn(l)
+!          if ( nmax_llgrid_rgn(l) /= 0 ) then
+!             write(fid,*) lon_index(nstart:nend)
+!             write(fid,*) lat_index(nstart:nend)
+!             write(fid,*) n1_index (nstart:nend)
+!             write(fid,*) n2_index (nstart:nend)
+!             write(fid,*) n3_index (nstart:nend)
+!             write(fid,*) w1       (nstart:nend)
+!             write(fid,*) w2       (nstart:nend)
+!             write(fid,*) w3       (nstart:nend)
+!          endif
+!       close(fid)
+!    enddo
  
     return
   end subroutine LATLON_setup
@@ -340,34 +479,36 @@ contains
   !>
   subroutine mkrelmap_ico2ll( what_is_done )
     use mod_misc, only: &
+       MISC_get_latlon,      &
        MISC_triangle_area_q, &
        MISC_3dvec_triangle,  &
        MISC_3dvec_cross,     &
        MISC_3dvec_dot,       &
        MISC_3dvec_abs
     use mod_adm, only: &
-       ADM_proc_stop,   &
-       ADM_LOG_FID,     &
-       ADM_TI,          &
-       ADM_TJ,          &
-       ADM_lall,        &
-       ADM_KNONE,       &
-       ADM_IooJoo_nmax, &
-       ADM_IooJoo,      &
-       ADM_GIoJo,       &
-       ADM_GIpJo,       &
-       ADM_GIpJp,       &
+       ADM_proc_stop,     &
+       ADM_prc_tab,       &
+       ADM_prc_me,        &
+       ADM_rgnid_npl_mng, &
+       ADM_rgnid_spl_mng, &
+       ADM_TI,            &
+       ADM_TJ,            &
+       ADM_lall,          &
+       ADM_gall_1d,       &
+       ADM_gmax,          &
+       ADM_gmin,          &
+       ADM_KNONE,         &
+       ADM_IooJoo_nmax,   &
+       ADM_IooJoo,        &
+       ADM_GIoJo,         &
+       ADM_GIpJo,         &
+       ADM_GIpJp,         &
        ADM_GIoJp
     use mod_cnst, only: &
        CNST_PI
     use mod_grd, only: &
-       GRD_rscale,       &
+       GRD_rscale, &
        GRD_x
-    use mod_gmtr, only: &
-       P_LAT => GMTR_P_LAT, &
-       P_LON => GMTR_P_LON, &
-       GMTR_polygon_type,   &
-       GMTR_P_var
     implicit none
 
     character(len=*), intent(in) :: what_is_done
@@ -383,17 +524,20 @@ contains
 
     real(8) :: coslat(jmax), sinlat(jmax)
     real(8) :: coslon(imax), sinlon(imax)
-    real(8) :: lat1, lat2, lat3, lat4
-    real(8) :: lon1,lon2,lon3,lon4
+    real(8) :: lat1, lat2, lat3
+    real(8) :: lon1, lon2, lon3
     real(8) :: latmin_l,latmax_l
     real(8) :: lonmin_l,lonmax_l
+    logical :: near_pole
 
     real(8) :: area_total, area1, area2, area3
 
-    real(8) :: eps_judge  = 1.D-10 ! marginal value for inner products
-    real(8) :: eps_latlon = 1.D-10 ! marginal square near grid points (in radian)
-    real(8) :: epsi_area  = 0.D0   ! marginal value for triangle area
+    real(8) :: eps_judge  = 1.D-18 ! marginal value for inner products
+    real(8) :: eps_latlon = 1.D-15 ! marginal square near grid points (in radian)
+    real(8) :: eps_vertex = 1.D-15 ! marginal value for vartex
+    real(8) :: eps_area   = 0.D0   ! marginal value for triangle area
 
+    integer :: rgnid
     integer :: n, k, l, t, i, j
     !---------------------------------------------------------------------------
 
@@ -413,61 +557,72 @@ contains
 
     do l = 1, ADM_lall
     do n = 1, ADM_IooJoo_nmax
+    do t = ADM_TI, ADM_TJ
 
-       lat1 = GMTR_P_var(ADM_IooJoo(n,ADM_GIoJo),k,l,P_LAT)
-       lat2 = GMTR_P_var(ADM_IooJoo(n,ADM_GIpJo),k,l,P_LAT)
-       lat3 = GMTR_P_var(ADM_IooJoo(n,ADM_GIpJp),k,l,P_LAT)
-       lat4 = GMTR_P_var(ADM_IooJoo(n,ADM_GIoJp),k,l,P_LAT)
+       if ( t == ADM_TI ) then
+          r1(:) = GRD_x(ADM_IooJoo(n,ADM_GIoJo),k,l,:) / GRD_rscale
+          r2(:) = GRD_x(ADM_IooJoo(n,ADM_GIpJo),k,l,:) / GRD_rscale
+          r3(:) = GRD_x(ADM_IooJoo(n,ADM_GIpJp),k,l,:) / GRD_rscale
 
-       lon1 = GMTR_P_var(ADM_IooJoo(n,ADM_GIoJo),k,l,P_LON)
-       lon2 = GMTR_P_var(ADM_IooJoo(n,ADM_GIpJo),k,l,P_LON)
-       lon3 = GMTR_P_var(ADM_IooJoo(n,ADM_GIpJp),k,l,P_LON)
-       lon4 = GMTR_P_var(ADM_IooJoo(n,ADM_GIoJp),k,l,P_LON)
+          lat1 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIoJo),k,l,GMTR_P_LAT)
+          lon1 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIoJo),k,l,GMTR_P_LON)
+          lat2 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIpJo),k,l,GMTR_P_LAT)
+          lon2 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIpJo),k,l,GMTR_P_LON)
+          lat3 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIpJp),k,l,GMTR_P_LAT)
+          lon3 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIpJp),k,l,GMTR_P_LON)
+       else !--- ADM_TJ
+          r1(:) = GRD_x(ADM_IooJoo(n,ADM_GIoJo),k,l,:) / GRD_rscale
+          r2(:) = GRD_x(ADM_IooJoo(n,ADM_GIpJp),k,l,:) / GRD_rscale
+          r3(:) = GRD_x(ADM_IooJoo(n,ADM_GIoJp),k,l,:) / GRD_rscale
 
-       latmin_l = min(lat1,lat2,lat3,lat4)
-       latmax_l = max(lat1,lat2,lat3,lat4)
-
-       lonmin_l = min(lon1,lon2,lon3,lon4) - eps_latlon
-       lonmax_l = max(lon1,lon2,lon3,lon4) + eps_latlon
-       if ( lonmax_l-lonmin_l > CNST_PI ) then
-          if(lon1 < 0 ) lon1 = lon1 + 2.D0 * CNST_PI
-          if(lon2 < 0 ) lon2 = lon2 + 2.D0 * CNST_PI
-          if(lon3 < 0 ) lon3 = lon3 + 2.D0 * CNST_PI
-          if(lon4 < 0 ) lon4 = lon4 + 2.D0 * CNST_PI
-
-          lonmin_l = min(lon1,lon2,lon3,lon4)
-          lonmax_l = max(lon1,lon2,lon3,lon4)
+          lat1 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIoJo),k,l,GMTR_P_LAT)
+          lon1 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIoJo),k,l,GMTR_P_LON)
+          lat2 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIpJp),k,l,GMTR_P_LAT)
+          lon2 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIpJp),k,l,GMTR_P_LON)
+          lat3 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIoJp),k,l,GMTR_P_LAT)
+          lon3 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIoJp),k,l,GMTR_P_LON)
        endif
-       lonmin_l = lonmin_l - eps_latlon
+
+       latmax_l = max(lat1,lat2,lat3) + eps_latlon
+       latmin_l = min(lat1,lat2,lat3) - eps_latlon
+
+       if( latmin_l >  polar_limit ) latmax_l =  CNST_PI
+       if( latmax_l < -polar_limit ) latmin_l = -CNST_PI
+
+       lonmax_l = max(lon1,lon2,lon3)
+       lonmin_l = min(lon1,lon2,lon3)
+       if ( lonmax_l-lonmin_l > CNST_PI ) then
+          if( lon1 < 0 ) lon1 = lon1 + 2.D0 * CNST_PI
+          if( lon2 < 0 ) lon2 = lon2 + 2.D0 * CNST_PI
+          if( lon3 < 0 ) lon3 = lon3 + 2.D0 * CNST_PI
+
+          lonmax_l = max(lon1,lon2,lon3)
+          lonmin_l = min(lon1,lon2,lon3)
+       endif
        lonmax_l = lonmax_l + eps_latlon
+       lonmin_l = lonmin_l - eps_latlon
 
-       do t = ADM_TI, ADM_TJ
+       do j = 1, jmax
 
-          if ( t == ADM_TI ) then
-             r1(:) = GRD_x(ADM_IooJoo(n,ADM_GIoJo),k,l,:) / GRD_rscale
-             r2(:) = GRD_x(ADM_IooJoo(n,ADM_GIpJo),k,l,:) / GRD_rscale
-             r3(:) = GRD_x(ADM_IooJoo(n,ADM_GIpJp),k,l,:) / GRD_rscale
-          else !--- ADM_TJ
-             r1(:) = GRD_x(ADM_IooJoo(n,ADM_GIoJo),k,l,:) / GRD_rscale
-             r2(:) = GRD_x(ADM_IooJoo(n,ADM_GIpJp),k,l,:) / GRD_rscale
-             r3(:) = GRD_x(ADM_IooJoo(n,ADM_GIoJp),k,l,:) / GRD_rscale
-          endif
+          if( lat(j) > latmax_l ) cycle
+          if( lat(j) < latmin_l ) cycle
+
+          near_pole = .false.
+          if( lat(j) >  polar_limit ) near_pole = .true.
+          if( lat(j) < -polar_limit ) near_pole = .true.
 
           do i = 1, imax
 
-             if ( .NOT. (      (       ( lonmin_l <= lon(i)                ) &
-                                 .AND. ( lonmax_l >= lon(i)                ) ) &
-                          .OR. (       ( lonmin_l <= lon(i) - 2.D0*CNST_PI ) &
-                                 .AND. ( lonmax_l >= lon(i) - 2.D0*CNST_PI ) ) &
-                          .OR. (       ( lonmin_l <= lon(i) + 2.D0*CNST_PI ) &
-                                 .AND. ( lonmax_l >= lon(i) + 2.D0*CNST_PI ) ) ) ) then
-                cycle
+             if ( .NOT. near_pole ) then
+                if ( .NOT. (      (       ( lon(i)                <= lonmax_l ) &
+                                    .AND. ( lon(i)                >= lonmin_l ) ) &
+                             .OR. (       ( lon(i) - 2.D0*CNST_PI <= lonmax_l ) &
+                                    .AND. ( lon(i) - 2.D0*CNST_PI >= lonmin_l ) ) &
+                             .OR. (       ( lon(i) + 2.D0*CNST_PI <= lonmax_l ) &
+                                    .AND. ( lon(i) + 2.D0*CNST_PI >= lonmin_l ) ) ) ) then
+                   cycle
+                endif
              endif
-
-          do j = 1, jmax
-
-             if( lat(j) < latmin_l ) cycle
-             if( lat(j) > latmax_l ) cycle
 
              !--- target latlon point on the sphere
              r0(1) = coslat(j) * coslon(i)
@@ -504,15 +659,16 @@ contains
              call MISC_3dvec_dot( judge23, o(:), nvec(:), o(:), v23xv20(:) )
              call MISC_3dvec_dot( judge31, o(:), nvec(:), o(:), v31xv30(:) )
 
-             if (       judge12 <= -eps_judge &
-                  .AND. judge23 <= -eps_judge &
-                  .AND. judge31 <= -eps_judge ) then ! in the triangle
+             if (       judge12 < eps_judge &
+                  .AND. judge23 < eps_judge &
+                  .AND. judge31 < eps_judge ) then ! in the triangle
 
                 select case( trim(what_is_done) )
                 case( 'GET_NUM' )
 
                    nmax_llgrid        = nmax_llgrid        + 1
                    nmax_llgrid_rgn(l) = nmax_llgrid_rgn(l) + 1
+                   checkmap(i,j) = checkmap(i,j) + 1.0
 
                 case('SET_INDEX')
 
@@ -529,27 +685,27 @@ contains
                       n3_index(nmax_llgrid) = ADM_IooJoo(n,ADM_GIpJp)
                    else !--- ADM_TJ
                       n1_index(nmax_llgrid) = ADM_IooJoo(n,ADM_GIoJo)
-                      n2_index(nmax_llgrid) = ADM_IooJoo(n,ADM_GIpJo)
-                      n3_index(nmax_llgrid) = ADM_IooJoo(n,ADM_GIpJp)
+                      n2_index(nmax_llgrid) = ADM_IooJoo(n,ADM_GIpJp)
+                      n3_index(nmax_llgrid) = ADM_IooJoo(n,ADM_GIoJp)
                    endif
 
                    if ( output_lldata_type == 'mkllmap_q' ) then ! quad precision
-                      area1 = MISC_triangle_area_q( r0(:), r2(:), r3(:),       &
-                                                    GMTR_polygon_type, rscale, &
-                                                    critical=epsi_area         )
-                      area2 = MISC_triangle_area_q( r0(:), r3(:), r1(:),       &
-                                                    GMTR_polygon_type, rscale, &
-                                                    critical=epsi_area         )
-                      area3 = MISC_triangle_area_q( r0(:), r1(:), r2(:),       &
-                                                    GMTR_polygon_type, rscale, &
-                                                    critical=epsi_area         )
+                      area1 = MISC_triangle_area_q( r0(:), r2(:), r3(:),  &
+                                                    polygon_type, rscale, &
+                                                    critical=eps_area     )
+                      area2 = MISC_triangle_area_q( r0(:), r3(:), r1(:),  &
+                                                    polygon_type, rscale, &
+                                                    critical=eps_area     )
+                      area3 = MISC_triangle_area_q( r0(:), r1(:), r2(:),  &
+                                                    polygon_type, rscale, &
+                                                    critical=eps_area     )
                    else ! double precision
-                      area1 = MISC_3Dvec_triangle( r0(:), r2(:), r3(:),       &
-                                                   GMTR_polygon_type, rscale  )
-                      area2 = MISC_3Dvec_triangle( r0(:), r3(:), r1(:),       &
-                                                   GMTR_polygon_type, rscale  )
-                      area3 = MISC_3Dvec_triangle( r0(:), r1(:), r2(:),       &
-                                                   GMTR_polygon_type, rscale  )
+                      area1 = MISC_3Dvec_triangle( r0(:), r2(:), r3(:), &
+                                                   polygon_type, rscale )
+                      area2 = MISC_3Dvec_triangle( r0(:), r3(:), r1(:), &
+                                                   polygon_type, rscale )
+                      area3 = MISC_3Dvec_triangle( r0(:), r1(:), r2(:), &
+                                                   polygon_type, rscale )
                    endif
 
                    if (      area1 * 0.D0 /= 0.D0 &
@@ -571,16 +727,17 @@ contains
 
                 cycle
 
-             elseif(       t == ADM_TI               &
-                     .AND. abs(v01(1)) <= eps_latlon &
-                     .AND. abs(v01(2)) <= eps_latlon &
-                     .AND. abs(v01(3)) <= eps_latlon ) then ! on the triangle vertex
+             elseif(       t == ADM_TI              &
+                     .AND. abs(v01(1)) < eps_vertex &
+                     .AND. abs(v01(2)) < eps_vertex &
+                     .AND. abs(v01(3)) < eps_vertex ) then ! on the triangle vertex
 
                 select case( trim(what_is_done) )
                 case( 'GET_NUM' )
 
                    nmax_llgrid        = nmax_llgrid        + 1
                    nmax_llgrid_rgn(l) = nmax_llgrid_rgn(l) + 1
+                   checkmap(i,j) = checkmap(i,j) + 1.0
 
                 case('SET_INDEX')
 
@@ -602,15 +759,187 @@ contains
              endif
 
           enddo ! i LOOP
-          enddo ! j LOOP
+       enddo ! j LOOP
 
-       enddo ! TI,TJ
 
+    enddo ! TI,TJ
     enddo ! n LOOP
     enddo ! l LOOP
 
+    do l = 1, ADM_lall
+       rgnid = ADM_prc_tab(l,ADM_prc_me)
+
+       if ( rgnid == ADM_rgnid_npl_mng ) then
+          n = ADM_gall_1d * ADM_gmax + ADM_gmin
+       elseif ( rgnid == ADM_rgnid_spl_mng ) then
+          n = ADM_gall_1d * (ADM_gmin-1) + ADM_gmax+1
+       else
+          cycle
+       endif
+
+       r1(:) = GRD_x(n,k,l,:) / GRD_rscale
+
+       do j = 1, jmax
+       do i = 1, imax
+          !--- target latlon point on the sphere
+          r0(1) = coslat(j) * coslon(i)
+          r0(2) = coslat(j) * sinlon(i)
+          r0(3) = sinlat(j)
+
+          !--- remove the case inner product is negative
+          call MISC_3dvec_dot( ip, o(:), r1(:), o(:), r0(:) )
+          if( ip < 0.D0 ) cycle
+          v01(:) = r1(:) - r0(:)
+
+          if (      abs(v01(1)) < eps_vertex &
+              .AND. abs(v01(2)) < eps_vertex &
+              .AND. abs(v01(3)) < eps_vertex ) then ! on the pole
+
+             select case( trim(what_is_done) )
+             case( 'GET_NUM' )
+
+                nmax_llgrid        = nmax_llgrid        + 1
+                nmax_llgrid_rgn(l) = nmax_llgrid_rgn(l) + 1
+                checkmap(i,j) = checkmap(i,j) + 1.0
+
+             case('SET_INDEX')
+
+                nmax_llgrid        = nmax_llgrid        + 1
+                nmax_llgrid_rgn(l) = nmax_llgrid_rgn(l) + 1
+
+                lon_index(nmax_llgrid) = i
+                lat_index(nmax_llgrid) = j
+                l_index  (nmax_llgrid) = l
+                t_index  (nmax_llgrid) = 0
+                n1_index (nmax_llgrid) = n
+                n2_index (nmax_llgrid) = n
+                n3_index (nmax_llgrid) = n
+                w1       (nmax_llgrid) = 1.D0
+                w2       (nmax_llgrid) = 0.D0
+                w3       (nmax_llgrid) = 0.D0
+             endselect
+
+          endif
+
+       enddo ! i LOOP
+       enddo ! j LOOP
+    enddo ! l LOOP
+
+
     return
   end subroutine mkrelmap_ico2ll
+
+  !-----------------------------------------------------------------------------
+  !> Output sample output
+  subroutine LL_outputsample
+    use mod_misc, only: &
+       MISC_make_idstr,&
+       MISC_get_available_fid
+    use mod_adm, only: &
+       ADM_proc_stop, &
+       ADM_prc_tab,   &
+       ADM_prc_me,    &
+       ADM_lall,      &
+       ADM_lall_pl,   &
+       ADM_gall,      &
+       ADM_gall_pl,   &
+       ADM_gall_1d,   &
+       ADM_gmax,      &
+       ADM_gmin,      &
+       ADM_KNONE
+    use mod_comm, only: &
+       COMM_data_transfer
+    use mod_fio, only: & ! [add] H.Yashiro 20110819
+       FIO_output, &
+       FIO_REAL8
+    implicit none
+
+    real(8) :: SAMPLE   ( ADM_gall,   ADM_KNONE,ADM_lall,   4)
+    real(8) :: SAMPLE_pl( ADM_gall_pl,ADM_KNONE,ADM_lall_pl,4)
+
+    character(len=ADM_MAXFNAME) :: fname
+
+    integer :: fid
+    integer :: rgnid, prc
+    integer :: i, j, ij, k, l
+    !---------------------------------------------------------------------------
+
+    k = ADM_KNONE
+
+    SAMPLE   (:,:,:,:) = -999.D0
+    SAMPLE_pl(:,:,:,:) = -999.D0
+
+    do l = 1, ADM_lall
+       rgnid = ADM_prc_tab(l,ADM_prc_me)
+       prc   = ADM_prc_me
+
+       do j = ADM_gmin, ADM_gmax
+       do i = ADM_gmin, ADM_gmax
+          ij = ADM_gall_1d * (j-1) + i
+
+          SAMPLE(ij,k,l,1) = real(prc,  kind=8)
+          SAMPLE(ij,k,l,2) = real(rgnid,kind=8)
+          SAMPLE(ij,k,l,3) = real(i,    kind=8)
+          SAMPLE(ij,k,l,4) = real(j,    kind=8)
+       enddo
+       enddo
+    enddo
+
+    do l = 1, ADM_lall_pl
+       rgnid = l
+       prc   = ADM_prc_me
+
+       do ij = 1, ADM_gall_pl
+          SAMPLE_pl(ij,k,l,1) = real(prc,   kind=8)
+          SAMPLE_pl(ij,k,l,2) = real(-rgnid,kind=8)
+          SAMPLE_pl(ij,k,l,3) = real( ij,   kind=8)
+          SAMPLE_pl(ij,k,l,4) = real(-ij,   kind=8)
+       enddo
+    enddo
+
+    call COMM_data_transfer( SAMPLE, SAMPLE_pl )
+
+    if ( SAMPLE_io_mode == 'ADVANCED' ) then
+
+       call FIO_output( SAMPLE(:,:,:,1), SAMPLE_OUT_BASENAME, "", "", &
+                       "sample1", "sample data(prc)", "", "NIL",      &
+                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.D0, 0.D0   )
+       call FIO_output( SAMPLE(:,:,:,2), SAMPLE_OUT_BASENAME, "", "", &
+                       "sample2", "sample data(rgn)", "", "NIL",      &
+                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.D0, 0.D0   )
+       call FIO_output( SAMPLE(:,:,:,3), SAMPLE_OUT_BASENAME, "", "", &
+                       "sample3", "sample data(i)", "", "NIL",      &
+                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.D0, 0.D0   )
+       call FIO_output( SAMPLE(:,:,:,4), SAMPLE_OUT_BASENAME, "", "", &
+                       "sample4", "sample data(j)", "", "NIL",      &
+                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.D0, 0.D0   )
+
+    elseif( sample_io_mode == 'LEGACY' ) then
+
+       do l = 1, ADM_lall
+          rgnid = ADM_prc_tab(l,ADM_prc_me)
+          call MISC_make_idstr(fname,trim(sample_io_mode),'rgn',rgnid)
+
+          fid = MISC_get_available_fid()
+          open( unit = fid, &
+               file=trim(fname),   &
+               form='unformatted', &
+               access='direct',    &
+               recl=ADM_gall*8     )
+
+             write(fid,rec=1) SAMPLE(:,k,l,1)
+             write(fid,rec=2) SAMPLE(:,k,l,2)
+             write(fid,rec=3) SAMPLE(:,k,l,3)
+             write(fid,rec=4) SAMPLE(:,k,l,4)
+          close(fid)
+       enddo
+    else
+       write(ADM_LOG_FID,*) 'Invalid io_mode!'
+       call ADM_proc_stop
+    endif
+
+    return
+  end subroutine LL_outputsample
 
   !-----------------------------------------------------------------------------
   !>

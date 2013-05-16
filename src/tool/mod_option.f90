@@ -3,7 +3,7 @@
 !+ module option interpreter
 !
 !-------------------------------------------------------------------------------
-module mod_tool_option
+module mod_option
   !-----------------------------------------------------------------------------
   !
   !++ Description: 
@@ -95,5 +95,5 @@ contains
     return
   end subroutine OPT_convert
 
-end module mod_tool_option
+end module mod_option
 !-------------------------------------------------------------------------------

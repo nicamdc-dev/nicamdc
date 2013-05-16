@@ -91,7 +91,7 @@ program fio_ico2ll_mpi
   logical                   :: output_grads        = .true.
   logical                   :: output_gtool        = .false.
   character(LEN=FIO_HSHORT) :: selectvar(max_nvar) = ''
-  integer                   :: nlim_llgrid         = 10000 ! limit number of lat-lon grid in 1 ico region
+  integer                   :: nlim_llgrid         = 100000 ! limit number of lat-lon grid in 1 ico region
   logical                   :: use_mpi             = .true.
   logical                   :: comm_smallchunk     = .false. ! apply MPI_Allreduce for each k-layer?
   logical                   :: help = .false.
@@ -750,7 +750,7 @@ contains
   subroutine readoption
     use mod_misc, only : &
       MISC_get_available_fid
-    use mod_tool_option, only: &
+    use mod_option, only: &
       OPT_convert, &
       OPT_fid
     implicit none
@@ -1168,7 +1168,7 @@ contains
     character(18):: tmp
     !---------------------------------------------------------------------------
 
-    write(tmp,*) isec/60
+    write(tmp,*) max(isec/60,1)
 
     template = trim(tmp)//'mn'
 

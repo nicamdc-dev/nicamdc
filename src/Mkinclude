@@ -9,5 +9,5 @@ endif
 SRCDIR  = $(TOPDIR)/src
 TESTDIR = $(TOPDIR)/test
 
-BINNAME  = nhm_driver
+BINNAME = nhm_driver
 LIBNAME = libnicamshare.a

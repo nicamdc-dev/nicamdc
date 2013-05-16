@@ -38,7 +38,8 @@ module mod_grd
   !
   use mpi
   use mod_adm, only: &
-     ADM_NSYS,    & ! [add] T.Ohno 110722
+     ADM_LOG_FID, &
+     ADM_NSYS,    &
      ADM_MAXFNAME
   !-----------------------------------------------------------------------------
   implicit none
@@ -193,7 +194,7 @@ module mod_grd
   character(len=ADM_MAXFNAME), private, save :: vegeindex_fname = ''       ! Vegetation index data file
 
   character(len=ADM_MAXFNAME), private, save :: vgrid_fname     = ''       ! Vertical grid file
-  character(len=ADM_MAXFNAME), private, save :: vgrid_scheme    = 'LINEAR' ! Vertical coordinate scheme
+  character(len=ADM_NSYS),     private, save :: vgrid_scheme    = 'LINEAR' ! Vertical coordinate scheme
   real(8),                     private, save :: h_efold         = 10000.D0 ! [m]
   real(8),                     private, save :: hflat           =  -999.D0 ! [m]
 
@@ -202,8 +203,8 @@ module mod_grd
 
   logical,                     private, save :: da_access_hgrid    = .false.
   logical,                     private, save :: topo_direct_access = .false.  ! [add] H.Yashiro 20110819
-  character(len=ADM_MAXFNAME), private, save :: hgrid_io_mode      = 'LEGACY' ! [add] H.Yashiro 20110819
-  character(len=ADM_MAXFNAME), private, save :: topo_io_mode       = 'LEGACY' ! [add] H.Yashiro 20110819
+  character(len=ADM_NSYS),     private, save :: hgrid_io_mode      = 'LEGACY' ! [add] H.Yashiro 20110819
+  character(len=ADM_NSYS),     private, save :: topo_io_mode       = 'LEGACY' ! [add] H.Yashiro 20110819
 
   logical,                     private, save :: output_vgrid       = .false.
 
@@ -219,7 +220,6 @@ contains
   !>
   subroutine GRD_setup
     use mod_adm, only :  &
-         ADM_LOG_FID,    &
          ADM_CTL_FID,    &
          ADM_PRC_PL,     &
          ADM_lall_pl,    &
@@ -308,7 +308,9 @@ contains
 
     !--- reading the horzontal grid (unit sphere) and
     !--- scaled by earth radius
-    call GRD_input_hgrid(hgrid_fname,Bgrid_dump=.true.,da_access=da_access_hgrid)
+    call GRD_input_hgrid( hgrid_fname,  & ![IN]
+                          .true.,       & ![IN]
+                          hgrid_io_mode ) ![IN]
 
     !--- data transfer for GRD_x
     !--- note : do not communicate GRD_xt
@@ -617,53 +619,41 @@ contains
   !> Description of the subroutine GRD_output_hgrid
   !>
   subroutine GRD_output_hgrid( &
-       basename,   &
-       bgrid_dump, &
-       txt_mode,   &
-       da_access   )
+       basename,      &
+       output_vertex, &
+       io_mode        )
     use mod_misc, only: &
        MISC_make_idstr,&
        MISC_get_available_fid
     use mod_adm, only: &
-       ADM_LOG_FID,   &
        ADM_proc_stop, &
        ADM_prc_tab,   &
        ADM_prc_me,    &
-       ADM_PRC_PL,    &
        ADM_TI,        &
        ADM_TJ,        &
        ADM_gall,      &
-       ADM_gall_pl,   &
        ADM_lall,      &
-       ADM_lall_pl,   &
-       ADM_KNONE,     & 
-       ADM_gall_1d
+       ADM_KNONE
     use mod_fio, only: & ! [add] H.Yashiro 20110819
        FIO_output, &
        FIO_HMID,   &
        FIO_REAL8
     implicit none
 
-    character(len=ADM_MAXFNAME), intent(in) :: basename   ! output basename
-    logical,                     intent(in) :: bgrid_dump ! flag of B-grid dump
-    logical,                     intent(in) :: txt_mode   ! flag of ascii mode
-    logical,                     intent(in) :: da_access  ! true or false for direct access
+    character(len=*), intent(in) :: basename      ! output basename
+    logical,          intent(in) :: output_vertex ! output flag of B-grid
+    character(len=*), intent(in) :: io_mode       ! io_mode
 
     character(len=ADM_MAXFNAME) :: fname
+    character(len=FIO_HMID)     :: desc = 'HORIZONTAL GRID FILE'
 
-    ! -> [add] H.Yashiro 20110819
-    character(len=FIO_HMID)   :: desc = 'HORIZONTAL GRID FILE'
-    ! <- [add] H.Yashiro 20110819
-
-    integer :: rgnid
     integer :: fid
-    integer :: i, j, l, n, K0
+    integer :: rgnid, l, K0
     !---------------------------------------------------------------------------
 
     K0 = ADM_KNONE
 
-    ! -> [add] H.Yashiro 20110819
-    if ( hgrid_io_mode == 'ADVANCED' ) then
+    if ( io_mode == 'ADVANCED' ) then
 
        call FIO_output( GRD_x(:,:,:,GRD_XDIR),                           &
                         basename, desc, "",                              &
@@ -678,7 +668,7 @@ contains
                        'grd_x_z', 'GRD_x (Z_DIR)', '',                   &
                        'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.D0, 0.D0 )
 
-       if ( bgrid_dump ) then
+       if ( output_vertex ) then
           call FIO_output( GRD_xt(:,:,:,ADM_TI,GRD_XDIR),                   &
                            basename, desc, '',                              &
                           'grd_xt_ix', 'GRD_xt (TI,X_DIR)', '',             &
@@ -705,123 +695,36 @@ contains
                           'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.D0, 0.D0 )
        endif
 
-    elseif( hgrid_io_mode == 'LEGACY' ) then
+    elseif( io_mode == 'LEGACY' ) then
 
        do l = 1, ADM_lall
           rgnid = ADM_prc_tab(l,ADM_prc_me)
           call MISC_make_idstr(fname,trim(basename),'rgn',rgnid)
 
           fid = MISC_get_available_fid()
+          open( unit = fid, &
+               file=trim(fname),   &
+               form='unformatted', &
+               access='direct',    &
+               recl=ADM_gall*8     )
 
-          if ( txt_mode ) then
-             open(fid,file=trim(fname),form='formatted')
-                write(fid,'(2I12)') ADM_gall_1d
-                do i = 1, ADM_gall_1d
-                do j = 1, ADM_gall_1d
-                   n = ADM_gall_1d*(j-1) + i
-                   write(fid,'(2I8,3E24.15)') i, j, GRD_x(n,K0,l,GRD_XDIR), &
-                                                    GRD_x(n,K0,l,GRD_YDIR), &
-                                                    GRD_x(n,K0,l,GRD_ZDIR)
-                enddo
-                enddo
-                if ( bgrid_dump ) then
-                   do i = 1, ADM_gall_1d
-                   do j = 1, ADM_gall_1d
-                      n = ADM_gall_1d*(j-1) + i
-                      write(fid,'(3I8,3E24.15)') i, j, ADM_TI, GRD_xt(n,K0,l,ADM_TI,GRD_XDIR), &
-                                                               GRD_xt(n,K0,l,ADM_TI,GRD_YDIR), &
-                                                               GRD_xt(n,K0,l,ADM_TI,GRD_ZDIR)
-                   enddo
-                   enddo
-                   do i = 1, ADM_gall_1d
-                   do j = 1, ADM_gall_1d
-                      n = ADM_gall_1d*(j-1) + i
-                      write(fid,'(3I8,3E24.15)') i, j, ADM_TJ, GRD_xt(n,K0,l,ADM_TJ,GRD_XDIR), &
-                                                               GRD_xt(n,K0,l,ADM_TJ,GRD_YDIR), &
-                                                               GRD_xt(n,K0,l,ADM_TJ,GRD_ZDIR)
-                   enddo
-                   enddo
-                endif
-             close(fid)
-          else
-             if ( da_access ) then
-                open( unit = fid, &
-                     file=trim(fname),   &
-                     form='unformatted', &
-                     access='direct',    &
-                     recl=ADM_gall*8     )
-
-                   write(fid,rec=1) GRD_x(:,K0,l,GRD_XDIR)
-                   write(fid,rec=2) GRD_x(:,K0,l,GRD_YDIR)
-                   write(fid,rec=3) GRD_x(:,K0,l,GRD_ZDIR)
-                   if ( bgrid_dump ) then
-                      write(fid,rec=4) GRD_xt(:,K0,l,ADM_TI,GRD_XDIR)
-                      write(fid,rec=5) GRD_xt(:,K0,l,ADM_TI,GRD_YDIR)
-                      write(fid,rec=6) GRD_xt(:,K0,l,ADM_TI,GRD_ZDIR)
-                      write(fid,rec=7) GRD_xt(:,K0,l,ADM_TJ,GRD_XDIR)
-                      write(fid,rec=8) GRD_xt(:,K0,l,ADM_TJ,GRD_YDIR)
-                      write(fid,rec=9) GRD_xt(:,K0,l,ADM_TJ,GRD_ZDIR)
-                   endif
-                close(fid)
-             else !--- legacy type
-                open(fid,file=trim(fname),form='unformatted')
-                   write(fid) ADM_gall_1d
-
-                   write(fid) GRD_x(:,K0,l,GRD_XDIR)
-                   write(fid) GRD_x(:,K0,l,GRD_YDIR)
-                   write(fid) GRD_x(:,K0,l,GRD_ZDIR)
-                   if ( bgrid_dump ) then
-                      write(fid) GRD_xt(:,K0,l,ADM_TI:ADM_TJ,GRD_XDIR)
-                      write(fid) GRD_xt(:,K0,l,ADM_TI:ADM_TJ,GRD_YDIR)
-                      write(fid) GRD_xt(:,K0,l,ADM_TI:ADM_TJ,GRD_ZDIR)
-                   endif
-                close(fid)
+             write(fid,rec=1) GRD_x(:,K0,l,GRD_XDIR)
+             write(fid,rec=2) GRD_x(:,K0,l,GRD_YDIR)
+             write(fid,rec=3) GRD_x(:,K0,l,GRD_ZDIR)
+             if ( output_vertex ) then
+                write(fid,rec=4) GRD_xt(:,K0,l,ADM_TI,GRD_XDIR)
+                write(fid,rec=5) GRD_xt(:,K0,l,ADM_TI,GRD_YDIR)
+                write(fid,rec=6) GRD_xt(:,K0,l,ADM_TI,GRD_ZDIR)
+                write(fid,rec=7) GRD_xt(:,K0,l,ADM_TJ,GRD_XDIR)
+                write(fid,rec=8) GRD_xt(:,K0,l,ADM_TJ,GRD_YDIR)
+                write(fid,rec=9) GRD_xt(:,K0,l,ADM_TJ,GRD_ZDIR)
              endif
-          endif
+          close(fid)
        enddo
-
-       if ( ADM_prc_me == ADM_PRC_PL ) then
-          if ( txt_mode ) then
-             fname=trim(basename)//'.pl'
-             fid = MISC_get_available_fid()
-             open(fid,file=fname,form='formatted')
-                do l = 1, ADM_lall_pl
-                do n = 1, ADM_gall_pl
-                   write(fid,'(I8,3E24.15)') n, GRD_x_pl(n,K0,l,GRD_XDIR), &
-                                                GRD_x_pl(n,K0,l,GRD_YDIR), &
-                                                GRD_x_pl(n,K0,l,GRD_ZDIR)
-                enddo
-                enddo
-                if ( bgrid_dump ) then
-                   do l = 1, ADM_lall_pl
-                   do n = 1, ADM_gall_pl
-                      write(fid,'(I8,3E24.15)') n, GRD_xt_pl(n,K0,l,GRD_XDIR), &
-                                                   GRD_xt_pl(n,K0,l,GRD_YDIR), &
-                                                   GRD_xt_pl(n,K0,l,GRD_ZDIR)
-                   enddo
-                   enddo
-                endif
-             close(fid)
-          else
-             if( da_access ) then
-                !--- nonthing to do
-             else
-                fname=trim(basename)//'.pl'
-                fid = MISC_get_available_fid()
-                open(fid,file=fname,form='unformatted')
-                   write(fid) GRD_x_pl(:,:,:,:)
-                   if( bgrid_dump ) then
-                      write(fid) GRD_xt_pl(:,:,:,:)
-                   endif
-                close(fid)
-             endif
-          endif
-       endif
     else
        write(ADM_LOG_FID,*) 'Invalid io_mode!'
        call ADM_proc_stop
     endif
-    ! <- [add] H.Yashiro 20110819
 
     return
   end subroutine GRD_output_hgrid
@@ -831,49 +734,43 @@ contains
   !> Description of the subroutine GRD_input_hgrid
   !>
   subroutine GRD_input_hgrid( &
-       basename,   &
-       bgrid_dump, &
-       da_access   )
+       basename,     &
+       input_vertex, &
+       io_mode       )
     use mod_misc, only: &
        MISC_make_idstr,       &
        MISC_get_available_fid
     use mod_adm, only: &
-       ADM_LOG_FID,   &
        ADM_proc_stop, &
        ADM_prc_tab,   &
        ADM_prc_me,    &
-       ADM_PRC_PL,    &
        ADM_TI,        &
        ADM_TJ,        &
        ADM_gall,      &
        ADM_lall,      &
-       ADM_KNONE,     &
-       ADM_gall_1d
+       ADM_KNONE
     use mod_fio, only : & ! [add] H.Yashiro 20110819
        FIO_input
     implicit none
 
-    character(len=ADM_MAXFNAME), intent(in) :: basename   ! input basename
-    logical,                     intent(in) :: bgrid_dump ! flag of B-grid input
-    logical, optional,           intent(in) :: da_access  ! true or false for direct access
-
-    logical :: read_success = .true.
+    character(len=*), intent(in) :: basename     ! input basename
+    logical,          intent(in) :: input_vertex ! flag of B-grid input
+    character(len=*), intent(in) :: io_mode      ! io_mode
 
     character(len=ADM_MAXFNAME) :: fname
 
     integer :: fid, ierr
-    integer :: K0, l, rgnid
+    integer :: rgnid, l, K0
     !---------------------------------------------------------------------------
 
     K0 = ADM_KNONE
 
-    ! -> [add] H.Yashiro 20110819
-    if ( hgrid_io_mode == 'ADVANCED' ) then
+    if ( io_mode == 'ADVANCED' ) then
 
        call FIO_input(GRD_x(:,:,:,GRD_XDIR),basename,'grd_x_x','ZSSFC1',K0,K0,1)
        call FIO_input(GRD_x(:,:,:,GRD_YDIR),basename,'grd_x_y','ZSSFC1',K0,K0,1)
        call FIO_input(GRD_x(:,:,:,GRD_ZDIR),basename,'grd_x_z','ZSSFC1',K0,K0,1)
-       if (bgrid_dump) then
+       if ( input_vertex ) then
           call FIO_input(GRD_xt(:,:,:,ADM_TI,GRD_XDIR),basename, &
                          'grd_xt_ix','ZSSFC1',K0,K0,1            )
           call FIO_input(GRD_xt(:,:,:,ADM_TJ,GRD_XDIR),basename, &
@@ -888,112 +785,46 @@ contains
                          'grd_xt_jz','ZSSFC1',K0,K0,1            )
        endif
 
-       call GRD_gen_plgrid
-
-    elseif( hgrid_io_mode == 'LEGACY' ) then
+    elseif( io_mode == 'LEGACY' ) then
 
        do l = 1, ADM_lall
           rgnid = ADM_prc_tab(l,ADM_prc_me)
-
           call MISC_make_idstr(fname,trim(basename),'rgn',rgnid)
-
-          fid = MISC_get_available_fid()
-          if ( da_access ) then
-             open( unit   = fid,           &
-                   file   = trim(fname),   &
-                   form   = 'unformatted', &
-                   access = 'direct',      &
-                   recl   = ADM_gall*8,    &
-                   status = 'old',         &
-                   iostat = ierr           )
-
-                if ( ierr /= 0 ) then
-                   write(ADM_LOG_FID,*) 'xxx No grid file.', trim(fname)
-                   read_success = .false.
-                   exit
-                endif
-
-                read(fid,rec=1) GRD_x(:,K0,l,GRD_XDIR)
-                read(fid,rec=2) GRD_x(:,K0,l,GRD_YDIR)
-                read(fid,rec=3) GRD_x(:,K0,l,GRD_ZDIR)
-                if ( bgrid_dump ) then
-                   read(fid,rec=4) GRD_xt(:,K0,l,ADM_TI,GRD_XDIR)
-                   read(fid,rec=5) GRD_xt(:,K0,l,ADM_TI,GRD_YDIR)
-                   read(fid,rec=6) GRD_xt(:,K0,l,ADM_TI,GRD_ZDIR)
-                   read(fid,rec=7) GRD_xt(:,K0,l,ADM_TJ,GRD_XDIR)
-                   read(fid,rec=8) GRD_xt(:,K0,l,ADM_TJ,GRD_YDIR)
-                   read(fid,rec=9) GRD_xt(:,K0,l,ADM_TJ,GRD_ZDIR)
-                endif
-             close(fid)
-          else
-             open( unit   = fid,           &
-                   file   = trim(fname),   &
-                   form   = 'unformatted', &
-                   status = 'old',         &
-                   iostat = ierr           )
-
-                if ( ierr /= 0 ) then
-                   write(ADM_LOG_FID,*) 'xxx No grid file.', trim(fname)
-                   read_success = .false.
-                   exit
-                endif
-
-                read(fid) ADM_gall_1d
-                read(fid) GRD_x(:,K0,l,GRD_XDIR)
-                read(fid) GRD_x(:,K0,l,GRD_YDIR)
-                read(fid) GRD_x(:,K0,l,GRD_ZDIR)
-                if ( bgrid_dump ) then
-                   read(fid) GRD_xt(:,K0,l,ADM_TI:ADM_TJ,GRD_XDIR)
-                   read(fid) GRD_xt(:,K0,l,ADM_TI:ADM_TJ,GRD_YDIR)
-                   read(fid) GRD_xt(:,K0,l,ADM_TI:ADM_TJ,GRD_ZDIR)
-                endif
-             close(fid)
-          endif
-
-       enddo
-
-       if ( .NOT. read_success ) then
-          write(ADM_LOG_FID,*) 'xxx Error occured in reading grid file.', trim(fname)
-       endif
-
-       if ( da_access ) then
-          call GRD_gen_plgrid
-       else
-          if ( ADM_prc_me == ADM_PRC_PL ) then
-             fname=trim(basename)//'.pl'
 
           fid = MISC_get_available_fid()
           open( unit   = fid,           &
                 file   = trim(fname),   &
                 form   = 'unformatted', &
+                access = 'direct',      &
+                recl   = ADM_gall*8,    &
                 status = 'old',         &
                 iostat = ierr           )
 
              if ( ierr /= 0 ) then
-                write(ADM_LOG_FID,*) 'xxx No pole-grid file.', trim(fname)
-                read_success = .false.
+                write(ADM_LOG_FID,*) 'xxx Error occured in reading grid file.', trim(fname)
+                call ADM_proc_stop
              endif
 
-             read(fid) GRD_x_pl(:,:,:,:)
-
-             if ( bgrid_dump ) then
-                read(fid) GRD_xt_pl(:,:,:,:)
+             read(fid,rec=1) GRD_x(:,K0,l,GRD_XDIR)
+             read(fid,rec=2) GRD_x(:,K0,l,GRD_YDIR)
+             read(fid,rec=3) GRD_x(:,K0,l,GRD_ZDIR)
+             if ( input_vertex ) then
+                read(fid,rec=4) GRD_xt(:,K0,l,ADM_TI,GRD_XDIR)
+                read(fid,rec=5) GRD_xt(:,K0,l,ADM_TI,GRD_YDIR)
+                read(fid,rec=6) GRD_xt(:,K0,l,ADM_TI,GRD_ZDIR)
+                read(fid,rec=7) GRD_xt(:,K0,l,ADM_TJ,GRD_XDIR)
+                read(fid,rec=8) GRD_xt(:,K0,l,ADM_TJ,GRD_YDIR)
+                read(fid,rec=9) GRD_xt(:,K0,l,ADM_TJ,GRD_ZDIR)
              endif
-
           close(fid)
-
-       endif
-    endif
-
-    if ( .NOT. read_success ) then
-       write(ADM_LOG_FID,*) 'xxx Error occured in reading pole-grid file.', trim(fname)
-    endif
+       enddo
 
     else
        write(ADM_LOG_FID,*) 'Invalid io_mode!'
        call ADM_proc_stop
     endif
-    ! <- [add] H.Yashiro 20110819
+
+    call GRD_gen_plgrid
 
     return
   end subroutine GRD_input_hgrid
@@ -1466,7 +1297,7 @@ contains
     implicit none
 
     ! <DCMIP-13>
-    real(8),parameter :: df_PI = 3.14159265358979323846264338327950
+    real(8),parameter :: df_PI = 3.1415926535897932384626433832795D0
     real(8),parameter :: LAMBDA_M=df_PI/4.d0
     real(8),parameter :: FAI_M   =0.d0
     real(8),parameter :: H_ZERO  = 250.d0

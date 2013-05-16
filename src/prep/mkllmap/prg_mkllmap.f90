@@ -38,10 +38,9 @@ program prg_mkllmap
      CNST_setup
   use mod_grd, only: &
      GRD_setup
-  use mod_gmtr, only: &
-     GMTR_setup
   use mod_latlon, only: &
-     LATLON_setup
+     LATLON_setup, &
+     LATLON_ico_setup
   implicit none
 
   character(len=ADM_MAXFNAME) :: output_dir   = './'
@@ -71,10 +70,6 @@ program prg_mkllmap
   !
   !--- < grid module setup > ---
   call GRD_setup
-  !
-  !--- < gmetrics module setup > ---
-  call GMTR_setup 
-  !
 
   !--- read parameters
   write(ADM_LOG_FID,*)
@@ -90,6 +85,7 @@ program prg_mkllmap
   endif
   write(ADM_LOG_FID,MKLLMAP_PARAM)
 
+  call LATLON_ico_setup
 
   if ( use_quadprec ) then
      call LATLON_setup( output_dir, 'mkllmap_q' )

@@ -9,7 +9,8 @@ TOPDIR = ..
 include $(TOPDIR)/sysdep/Makedef.$(NICAM_SYS)
 include $(TOPDIR)/src/Mkinclude
 
-VPATH = share:nhm/share:nhm/dynamics$(OCL):nhm/forcing:nhm
+VPATH  = share:nhm/share:nhm/dynamics:nhm/forcing:nhm
+VPATH += prep/mkmnginfo:prep/mkgrid:prep/mkvlayer:prep/mkllmap
 
 ifeq ($(prec), noreal16)
 VPATH += :share/extra
@@ -18,9 +19,14 @@ else
 mod_misc := mod_misc
 endif
 
-PRJ1 = prg_driver-dc
+PRJ1 = driver-dc
+PRJ2 = mkmnginfo
+PRJ3 = mkrawgrid
+PRJ4 = mkhgrid
+PRJ5 = mkvlayer
+PRJ6 = mkllmap
 
-
+PRJS = $(PRJ1) $(PRJ2) $(PRJ3) $(PRJ4) $(PRJ5) $(PRJ6)
 
 all: makedir makemain maketool
 
@@ -28,8 +34,9 @@ makedir:
 	mkdir -p $(BINDIR)
 	mkdir -p $(LIBDIR)
 
-makemain: $(PRJ1)
-	$(INSTALL) $(PRJ1) $(BINDIR)/$(BINNAME)
+makemain: $(PRJS)
+	$(INSTALL) $(PRJS) $(BINDIR)/
+	ln -svf    $(BINDIR)/$(PRJ1) $(BINDIR)/$(BINNAME)
 	@echo; echo "##### $(BINNAME) is Installed Successfully #####"; echo
 
 maketool:
@@ -49,13 +56,13 @@ MODS =	\
 	mod_comm.o	\
 	mod_grd.o	\
 	mod_gmtr.o	\
-	mod_oprt$(OCL).o	\
+	mod_oprt.o	\
 	mod_vmtr.o	\
 	mod_time.o	\
 	mod_latlon.o	\
 	mod_gtl.o	\
 	mod_vintrpl.o	\
-	mod_oprt3d$(OCL).o	\
+	mod_oprt3d.o	\
 	mod_history.o	\
 	mod_chemvar.o	\
 	mod_runconf.o	\
@@ -77,19 +84,35 @@ MODS =	\
 	mod_dynstep.o	\
 	mod_vi.o	\
 	mod_ndg.o	\
-	mod_tb_smg.o
+	mod_tb_smg.o	\
+	mod_mkgrd.o
 
-$(PRJ1): $(PRJ1).o $(LIBDIR)/$(LIBNAME)
+$(PRJ1): prg_$(PRJ1).o $(LIBDIR)/$(LIBNAME)
+	$(LD) $(LFLAGS) -o $@ $^
+$(PRJ2): prg_$(PRJ2).o $(LIBDIR)/$(LIBNAME)
+	$(LD) $(LFLAGS) -o $@ $^
+$(PRJ3): prg_$(PRJ3).o $(LIBDIR)/$(LIBNAME)
+	$(LD) $(LFLAGS) -o $@ $^
+$(PRJ4): prg_$(PRJ4).o $(LIBDIR)/$(LIBNAME)
+	$(LD) $(LFLAGS) -o $@ $^
+$(PRJ5): prg_$(PRJ5).o $(LIBDIR)/$(LIBNAME)
+	$(LD) $(LFLAGS) -o $@ $^
+$(PRJ6): prg_$(PRJ6).o $(LIBDIR)/$(LIBNAME)
 	$(LD) $(LFLAGS) -o $@ $^
 
-$(PRJ1).o : $(PRJ1).f90 $(LIBNAME)
+prg_$(PRJ1).o : prg_$(PRJ1).f90 $(LIBNAME)
+prg_$(PRJ2).o : prg_$(PRJ2).f90 $(LIBNAME)
+prg_$(PRJ3).o : prg_$(PRJ3).f90 $(LIBNAME)
+prg_$(PRJ4).o : prg_$(PRJ4).f90 $(LIBNAME)
+prg_$(PRJ5).o : prg_$(PRJ5).f90 $(LIBNAME)
+prg_$(PRJ6).o : prg_$(PRJ6).f90 $(LIBNAME)
 
 $(LIBDIR)/$(LIBNAME): $(LIBNAME)
 	install $< $@
 	@echo; echo "##### $(LIBNAME) is Installed Successfully #####"; echo
 
 $(LIBNAME): $(MODS)
-	$(AR) $@ $?
+	$(AR) $(ARFLAGS) $@ $?
 	$(RANLIB) $@
 
 $(mod_misc).o	: $(mod_misc).f90
@@ -103,13 +126,13 @@ mod_fio.o	: mod_fio.f90 mod_adm.o mod_calendar.o mod_cnst.o fio.o fiof.o
 mod_comm.o	: mod_comm.f90 mod_adm.o mod_cnst.o
 mod_grd.o	: mod_grd.f90 mod_adm.o mod_cnst.o mod_comm.o $(mod_misc).o mod_fio.o
 mod_gmtr.o	: mod_gmtr.f90 mod_adm.o mod_comm.o $(mod_misc).o mod_grd.o mod_cnst.o
-mod_oprt$(OCL).o	: mod_oprt$(OCL).f90 mod_adm.o mod_gmtr.o mod_grd.o mod_comm.o mod_cnst.o
-mod_vmtr.o	: mod_vmtr.f90 mod_adm.o mod_grd.o mod_comm.o mod_gmtr.o mod_oprt$(OCL).o mod_cnst.o
+mod_oprt.o	: mod_oprt.f90 mod_adm.o mod_gmtr.o mod_grd.o mod_comm.o mod_cnst.o
+mod_vmtr.o	: mod_vmtr.f90 mod_adm.o mod_grd.o mod_comm.o mod_gmtr.o mod_oprt.o mod_cnst.o
 mod_time.o	: mod_time.f90 mod_adm.o mod_calendar.o
-mod_latlon.o	: mod_latlon.f90 mod_adm.o mod_cnst.o $(mod_misc).o mod_grd.o mod_oprt$(OCL).o mod_comm.o mod_gmtr.o
+mod_latlon.o	: mod_latlon.f90 mod_adm.o mod_cnst.o $(mod_misc).o mod_grd.o mod_oprt.o mod_comm.o mod_gmtr.o
 mod_gtl.o	: mod_gtl.f90 mod_adm.o mod_comm.o mod_gmtr.o mod_vmtr.o mod_cnst.o $(mod_misc).o mod_grd.o
 mod_vintrpl.o	: mod_vintrpl.f90 mod_adm.o mod_grd.o mod_cnst.o
-mod_oprt3d$(OCL).o	: mod_oprt3d$(OCL).f90 mod_adm.o mod_grd.o mod_gmtr.o mod_vmtr.o
+mod_oprt3d.o	: mod_oprt3d.f90 mod_adm.o mod_grd.o mod_gmtr.o mod_vmtr.o
 
 mod_chemvar.o	: mod_chemvar.f90 mod_adm.o
 mod_runconf.o	: mod_runconf.f90 mod_adm.o mod_cnst.o mod_chemvar.o
@@ -125,14 +148,16 @@ mod_history_vars.o	: mod_history_vars.f90 mod_history.o mod_adm.o mod_runconf.o 
 mod_embudget.o	: mod_embudget.f90 mod_adm.o $(mod_misc).o mod_time.o mod_sfcvar.o mod_cnst.o mod_grd.o mod_vmtr.o mod_gtl.o mod_runconf.o mod_cnvvar.o mod_bsstate.o mod_thrmdyn.o mod_prgvar.o
 mod_dycoretest.o	: mod_dycoretest.f90 mod_adm.o mod_runconf.o $(mod_misc).o mod_vmtr.o mod_fio.o mod_time.o mod_cnvvar.o mod_vintrpl.o mod_comm.o mod_cnst.o mod_thrmdyn.o
 mod_advlim_thuburn.o	: mod_advlim_thuburn.f90 mod_adm.o mod_cnst.o mod_comm.o
-mod_src.o	: mod_src.f90 mod_adm.o mod_vmtr.o mod_grd.o mod_oprt$(OCL).o mod_cnst.o mod_runconf.o mod_gtl.o mod_advlim_thuburn.o
-mod_numfilter.o	: mod_numfilter.f90 mod_adm.o mod_time.o mod_grd.o mod_cnst.o mod_gtl.o mod_gmtr.o mod_oprt$(OCL).o mod_oprt3d$(OCL).o mod_comm.o mod_src.o mod_vmtr.o mod_runconf.o mod_bsstate.o
+mod_src.o	: mod_src.f90 mod_adm.o mod_vmtr.o mod_grd.o mod_oprt.o mod_cnst.o mod_runconf.o mod_gtl.o mod_advlim_thuburn.o
+mod_numfilter.o	: mod_numfilter.f90 mod_adm.o mod_time.o mod_grd.o mod_cnst.o mod_gtl.o mod_gmtr.o mod_oprt.o mod_oprt3d.o mod_comm.o mod_src.o mod_vmtr.o mod_runconf.o mod_bsstate.o
 mod_af_heldsuarez.o	: mod_af_heldsuarez.f90 mod_adm.o mod_cnst.o
 mod_forcing_driver.o	: mod_forcing_driver.f90 mod_adm.o mod_grd.o mod_gmtr.o mod_vmtr.o mod_time.o mod_runconf.o mod_cnst.o mod_cnvvar.o mod_prgvar.o mod_sfcvar.o mod_thrmdyn.o mod_gtl.o mod_diagvar.o mod_bsstate.o mod_bndcnd.o $(mod_misc).o mod_af_heldsuarez.o mod_history.o
-mod_vi.o	: mod_vi.f90 mod_adm.o mod_comm.o mod_time.o mod_cnst.o mod_grd.o mod_oprt$(OCL).o mod_vmtr.o mod_runconf.o mod_bndcnd.o mod_numfilter.o mod_src.o mod_cnvvar.o mod_bsstate.o
-mod_ndg.o	: mod_ndg.f90 mod_adm.o $(mod_misc).o mod_time.o mod_calendar.o mod_grd.o mod_cnst.o mod_vmtr.o mod_history.o mod_gmtr.o mod_oprt$(OCL).o mod_runconf.o mod_gtl.o mod_comm.o
-mod_tb_smg.o	: mod_tb_smg.f90 mod_adm.o mod_vmtr.o mod_history.o mod_gmtr.o mod_grd.o mod_cnst.o mod_runconf.o mod_oprt$(OCL).o mod_comm.o mod_bsstate.o mod_time.o
-mod_dynstep.o	: mod_dynstep.f90 mod_adm.o mod_cnst.o mod_time.o mod_grd.o mod_vmtr.o mod_runconf.o mod_bsstate.o mod_bndcnd.o mod_prgvar.o mod_diagvar.o mod_thrmdyn.o mod_numfilter.o mod_vi.o mod_src.o mod_ndg.o mod_tb_smg.o mod_oprt$(OCL).o mod_debug.o
+mod_vi.o	: mod_vi.f90 mod_adm.o mod_comm.o mod_time.o mod_cnst.o mod_grd.o mod_oprt.o mod_vmtr.o mod_runconf.o mod_bndcnd.o mod_numfilter.o mod_src.o mod_cnvvar.o mod_bsstate.o
+mod_ndg.o	: mod_ndg.f90 mod_adm.o $(mod_misc).o mod_time.o mod_calendar.o mod_grd.o mod_cnst.o mod_vmtr.o mod_history.o mod_gmtr.o mod_oprt.o mod_runconf.o mod_gtl.o mod_comm.o
+mod_tb_smg.o	: mod_tb_smg.f90 mod_adm.o mod_vmtr.o mod_history.o mod_gmtr.o mod_grd.o mod_cnst.o mod_runconf.o mod_oprt.o mod_comm.o mod_bsstate.o mod_time.o
+mod_dynstep.o	: mod_dynstep.f90 mod_adm.o mod_cnst.o mod_time.o mod_grd.o mod_vmtr.o mod_runconf.o mod_bsstate.o mod_bndcnd.o mod_prgvar.o mod_diagvar.o mod_thrmdyn.o mod_numfilter.o mod_vi.o mod_src.o mod_ndg.o mod_tb_smg.o mod_oprt.o mod_debug.o
+
+mod_mkgrd.o	: mod_mkgrd.f90 mod_adm.o mod_grd.o mod_cnst.o mod_comm.o mod_gtl.o mod_misc.o mod_gmtr.o
 
 
 .SUFFIXES: .o .f90 .c
@@ -146,6 +171,5 @@ mod_dynstep.o	: mod_dynstep.f90 mod_adm.o mod_cnst.o mod_time.o mod_grd.o mod_vm
 .PHONY: clean
 
 clean:
-	rm -f $(PRJ1) $(LIBNAME)
-	$(CLEAN)
+	rm -f $(PRJS) $(LIBNAME) *~ *.h *.mod *.o *__genmod.f90 *.lst *.L
 	$(MAKE) -C tool clean

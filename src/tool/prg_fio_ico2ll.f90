@@ -630,7 +630,7 @@ contains
   subroutine readoption
     use mod_misc, only : &
       MISC_get_available_fid
-    use mod_tool_option, only: &
+    use mod_option, only: &
       OPT_convert, &
       OPT_fid
     implicit none
@@ -1048,7 +1048,7 @@ contains
     character(18):: tmp
     !---------------------------------------------------------------------------
 
-    write(tmp,*) max(isec/60, 1)
+    write(tmp,*) max(isec/60,1)
 
     template = trim(tmp)//'mn'
 
