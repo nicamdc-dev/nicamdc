@@ -41,6 +41,7 @@ module mod_mkgrd
   public :: MKGRD_spring
   public :: MKGRD_prerotate
   public :: MKGRD_stretch
+  public :: MKGRD_shrink
   public :: MKGRD_rotate
   public :: MKGRD_gravcenter
   public :: MKGRD_diagnosis
@@ -71,12 +72,13 @@ module mod_mkgrd
   logical, private :: MKGRD_DOSPRING    = .true.
   logical, private :: MKGRD_DOPREROTATE = .false.
   logical, private :: MKGRD_DOSTRETCH   = .false.
+  logical, private :: MKGRD_DOSHRINK    = .false.
   logical, private :: MKGRD_DOROTATE    = .false.
 
-  real(8), private :: MKGRD_shrink_factor    =   1.D0 ! factor to shrink the diamond (only for 1-diamond experiment)
   real(8), private :: MKGRD_spring_beta      = 1.15D0 ! parameter beta for spring dynamics 
   real(8), private :: MKGRD_prerotation_tilt =   0.D0 ! [deg]
   real(8), private :: MKGRD_stretch_alpha    = 1.00D0 ! parameter alpha for stretch
+  integer, private :: MKGRD_shrink_level     =      0 ! shrink level (only for 1-diamond experiment)
   real(8), private :: MKGRD_rotation_lon     =   0.D0 ! [deg]
   real(8), private :: MKGRD_rotation_lat     =  90.D0 ! [deg]
 
@@ -101,15 +103,16 @@ contains
       MKGRD_DOSPRING,         &
       MKGRD_DOPREROTATE,      &
       MKGRD_DOSTRETCH,        &
+      MKGRD_DOSHRINK,         &
       MKGRD_DOROTATE,         &
       MKGRD_IN_BASENAME,      &
       MKGRD_IN_io_mode,       &
       MKGRD_OUT_BASENAME,     &
       MKGRD_OUT_io_mode,      &
-      MKGRD_shrink_factor,    &
       MKGRD_spring_beta,      &
       MKGRD_prerotation_tilt, &
       MKGRD_stretch_alpha,    &
+      MKGRD_shrink_level,     &
       MKGRD_rotation_lon,     &
       MKGRD_rotation_lat
 
@@ -166,7 +169,6 @@ contains
     real(8), allocatable :: g1(:,:,:)
 
     real(8) :: alpha2, phi
-    real(8) :: alpha2_mod, phi_modNN, phi_modNS, phi_modSN, phi_modSS
 
     integer :: rgnid, dmd
     real(8) :: rdmd
@@ -179,18 +181,11 @@ contains
     !---------------------------------------------------------------------------
 
     write(ADM_LOG_FID,*) '*** Make standard grid system'
-    write(ADM_LOG_FID,*) '*** Shrink factor (for 1-diamond system) = ', MKGRD_shrink_factor
 
     k = ADM_KNONE
 
     alpha2 = 2.D0 * PI / 5.D0
     phi    = asin( cos(alpha2) / (1.D0-cos(alpha2) ) )
-
-    alpha2_mod = alpha2 / MKGRD_shrink_factor
-    phi_modNN  =  phi + ( 0.5D0 * PI - phi ) / MKGRD_shrink_factor
-    phi_modNS  = -phi + ( 0.5D0 * PI + phi ) / MKGRD_shrink_factor
-    phi_modSN  =  phi - ( 0.5D0 * PI + phi ) / MKGRD_shrink_factor
-    phi_modSS  = -phi - ( 0.5D0 * PI - phi ) / MKGRD_shrink_factor
 
     rgn_all_1d = 2**ADM_rlevel
     rgn_all    = rgn_all_1d * rgn_all_1d
@@ -207,39 +202,39 @@ contains
        if ( dmd <= 5 ) then ! northern hemisphere
           rdmd = real(dmd-1,kind=8)
 
-          r0(1,1,GRD_XDIR) = cos(phi_modNN) * cos(alpha2*rdmd)
-          r0(1,1,GRD_YDIR) = cos(phi_modNN) * sin(alpha2*rdmd)
-          r0(1,1,GRD_ZDIR) = sin(phi_modNN)
+          r0(1,1,GRD_XDIR) = cos( phi) * cos(alpha2*rdmd)
+          r0(1,1,GRD_YDIR) = cos( phi) * sin(alpha2*rdmd)
+          r0(1,1,GRD_ZDIR) = sin( phi)
 
-          r0(2,1,GRD_XDIR) = cos(phi_modNS) * cos(alpha2*rdmd+alpha2_mod*0.5D0)
-          r0(2,1,GRD_YDIR) = cos(phi_modNS) * sin(alpha2*rdmd+alpha2_mod*0.5D0)
-          r0(2,1,GRD_ZDIR) = sin(phi_modNS)
+          r0(2,1,GRD_XDIR) = cos(-phi) * cos(alpha2*(rdmd+0.5D0))
+          r0(2,1,GRD_YDIR) = cos(-phi) * sin(alpha2*(rdmd+0.5D0))
+          r0(2,1,GRD_ZDIR) = sin(-phi)
 
           r0(1,2,GRD_XDIR) =  0.D0
           r0(1,2,GRD_YDIR) =  0.D0
           r0(1,2,GRD_ZDIR) =  1.D0
 
-          r0(2,2,GRD_XDIR) = cos(phi_modNN) * cos(alpha2*rdmd+alpha2_mod*1.0D0)
-          r0(2,2,GRD_YDIR) = cos(phi_modNN) * sin(alpha2*rdmd+alpha2_mod*1.0D0)
-          r0(2,2,GRD_ZDIR) = sin(phi_modNN)
+          r0(2,2,GRD_XDIR) = cos( phi) * cos(alpha2*(rdmd+1.0D0))
+          r0(2,2,GRD_YDIR) = cos( phi) * sin(alpha2*(rdmd+1.0D0))
+          r0(2,2,GRD_ZDIR) = sin( phi)
        else ! southern hemisphere
           rdmd = real(dmd-6,kind=8)
 
-          r0(1,1,GRD_XDIR) = cos(phi_modSS) * cos(-alpha2*(rdmd+0.5D0))
-          r0(1,1,GRD_YDIR) = cos(phi_modSS) * sin(-alpha2*(rdmd+0.5D0))
-          r0(1,1,GRD_ZDIR) = sin(phi_modSS)
+          r0(1,1,GRD_XDIR) = cos(-phi) * cos(-alpha2*(rdmd+0.5D0))
+          r0(1,1,GRD_YDIR) = cos(-phi) * sin(-alpha2*(rdmd+0.5D0))
+          r0(1,1,GRD_ZDIR) = sin(-phi)
 
           r0(2,1,GRD_XDIR) =  0.D0
           r0(2,1,GRD_YDIR) =  0.D0
           r0(2,1,GRD_ZDIR) = -1.D0
 
-          r0(1,2,GRD_XDIR) = cos(phi_modSN) * cos(-alpha2*(rdmd+0.5D0)+alpha2_mod*0.5D0)
-          r0(1,2,GRD_YDIR) = cos(phi_modSN) * sin(-alpha2*(rdmd+0.5D0)+alpha2_mod*0.5D0)
-          r0(1,2,GRD_ZDIR) = sin(phi_modSN)
+          r0(1,2,GRD_XDIR) = cos( phi) * cos(-alpha2*rdmd)
+          r0(1,2,GRD_YDIR) = cos( phi) * sin(-alpha2*rdmd)
+          r0(1,2,GRD_ZDIR) = sin( phi)
 
-          r0(2,2,GRD_XDIR) = cos(phi_modSS) * cos(-alpha2*(rdmd+0.5D0)+alpha2_mod*1.0D0)
-          r0(2,2,GRD_YDIR) = cos(phi_modSS) * sin(-alpha2*(rdmd+0.5D0)+alpha2_mod*1.0D0)
-          r0(2,2,GRD_ZDIR) = sin(phi_modSS)
+          r0(2,2,GRD_XDIR) = cos(-phi) * cos(-alpha2*(rdmd-0.5D0))
+          r0(2,2,GRD_YDIR) = cos(-phi) * sin(-alpha2*(rdmd-0.5D0))
+          r0(2,2,GRD_ZDIR) = sin(-phi)
        endif
 
        do rl = 1, ADM_rlevel
@@ -397,11 +392,6 @@ contains
     integer :: ij_singular
     integer :: n, ij, k, l, m
     !---------------------------------------------------------------------------
-
-    if ( MKGRD_shrink_factor /= 1.D0 ) then
-       write(ADM_LOG_FID,*) '*** Shrink factor is applied. Skip spring modification'
-       return
-    endif
 
     if( .NOT. MKGRD_DOSPRING ) return
 
@@ -610,9 +600,7 @@ contains
 
     real(8) :: g(3)
     real(8) :: angle_y, angle_z, angle_tilt
-
-    real(8) :: alpha2, phi
-    real(8) :: alpha2_mod, phi_modN, phi_modS
+    real(8) :: alpha2
 
     real(8) :: d2r
     integer :: ij, k, l
@@ -622,24 +610,14 @@ contains
 
     k = ADM_KNONE
 
-    alpha2 = 2.D0 * PI / 5.D0
-    phi    = asin( cos(alpha2) / (1.D0-cos(alpha2) ) )
-
-    alpha2_mod = alpha2 / MKGRD_shrink_factor
-    phi_modN   =  phi + ( 0.5D0 * PI - phi ) / MKGRD_shrink_factor
-    phi_modS   = -phi + ( 0.5D0 * PI + phi ) / MKGRD_shrink_factor
-
     d2r        = PI / 180.D0
-    angle_z    = alpha2_mod / 2.D0
-    angle_y    = 0.25D0*PI * ( 3.D0 - sqrt(3.D0) ) / MKGRD_shrink_factor
+    alpha2     = 2.D0 * PI / 5.D0
+    angle_z    = alpha2 / 2.D0
+    angle_y    = 0.25D0*PI * ( 3.D0 - sqrt(3.D0) )
     angle_tilt = MKGRD_prerotation_tilt * d2r
 
     write(ADM_LOG_FID,*) '*** Apply pre-rotation'
-    write(ADM_LOG_FID,*) '*** Shrink factor (for 1-diamond system) = ', MKGRD_shrink_factor
-    write(ADM_LOG_FID,*) '*** Diamond tilting factor               = ', MKGRD_prerotation_tilt
-    write(ADM_LOG_FID,*) '*** alpha2_mod(deg) = ', alpha2_mod / d2r
-    write(ADM_LOG_FID,*) '*** phi_modN  (deg) = ', phi_modN   / d2r
-    write(ADM_LOG_FID,*) '*** phi_modS  (deg) = ', phi_modS   / d2r
+    write(ADM_LOG_FID,*) '*** Diamond tilting factor = ', MKGRD_prerotation_tilt
     write(ADM_LOG_FID,*) '*** angle_z   (deg) = ', angle_z    / d2r
     write(ADM_LOG_FID,*) '*** angle_y   (deg) = ', angle_y    / d2r
     write(ADM_LOG_FID,*) '*** angle_tilt(deg) = ', angle_tilt / d2r
@@ -730,25 +708,25 @@ contains
     do l = 1, ADM_lall
        do ij = 1, ADM_gall
 
-          call MISC_get_latlon( lat,                  &
-                                lon,                  &
-                                GRD_x(ij,k,l,GRD_XDIR), &
-                                GRD_x(ij,k,l,GRD_YDIR), &
-                                GRD_x(ij,k,l,GRD_ZDIR)  )
+          call MISC_get_latlon( lat,                    & ! [OUT]
+                                lon,                    & ! [OUT]
+                                GRD_x(ij,k,l,GRD_XDIR), & ! [IN]
+                                GRD_x(ij,k,l,GRD_YDIR), & ! [IN]
+                                GRD_x(ij,k,l,GRD_ZDIR)  ) ! [IN]
 
-          if( abs(0.5D0*PI-lat) > criteria ) then
+          if ( 0.5D0*PI-abs(lat) > criteria ) then
              lat_trans = asin( ( MKGRD_stretch_alpha*(1.D0+sin(lat)) / (1.D0-sin(lat)) - 1.D0 ) &
                              / ( MKGRD_stretch_alpha*(1.D0+sin(lat)) / (1.D0-sin(lat)) + 1.D0 ) )
           else
              lat_trans = lat
           endif
 
-          call MISC_get_cartesian( GRD_x(ij,k,l,GRD_XDIR), &
-                                   GRD_x(ij,k,l,GRD_YDIR), &
-                                   GRD_x(ij,k,l,GRD_ZDIR), &
-                                   lat_trans,              &
-                                   lon,                    &
-                                   1.D0                    )
+          call MISC_get_cartesian( GRD_x(ij,k,l,GRD_XDIR), & ! [OUT]
+                                   GRD_x(ij,k,l,GRD_YDIR), & ! [OUT]
+                                   GRD_x(ij,k,l,GRD_ZDIR), & ! [OUT]
+                                   lat_trans,              & ! [IN]
+                                   lon,                    & ! [IN]
+                                   1.D0                    ) ! [IN]
        enddo
     enddo
 
@@ -756,25 +734,25 @@ contains
        do l  = 1, ADM_lall_pl
        do ij = 1, ADM_gall_pl
 
-          call MISC_get_latlon( lat,                       &
-                                lon,                       &
-                                GRD_x_pl(ij,k,l,GRD_XDIR), &
-                                GRD_x_pl(ij,k,l,GRD_YDIR), &
-                                GRD_x_pl(ij,k,l,GRD_ZDIR)  )
+          call MISC_get_latlon( lat,                       & ! [OUT]
+                                lon,                       & ! [OUT]
+                                GRD_x_pl(ij,k,l,GRD_XDIR), & ! [IN]
+                                GRD_x_pl(ij,k,l,GRD_YDIR), & ! [IN]
+                                GRD_x_pl(ij,k,l,GRD_ZDIR)  ) ! [IN]
 
-          if( abs(0.5D0*PI-lat) > criteria ) then
+          if ( 0.5D0*PI-abs(lat) > criteria ) then
              lat_trans = asin( ( MKGRD_stretch_alpha*(1.D0+sin(lat)) / (1.D0-sin(lat)) - 1.D0 ) &
                              / ( MKGRD_stretch_alpha*(1.D0+sin(lat)) / (1.D0-sin(lat)) + 1.D0 ) )
           else
              lat_trans = lat
           endif
 
-          call MISC_get_cartesian( GRD_x_pl(ij,k,l,GRD_XDIR), &
-                                   GRD_x_pl(ij,k,l,GRD_YDIR), &
-                                   GRD_x_pl(ij,k,l,GRD_ZDIR), &
-                                   lat_trans,                 &
-                                   lon,                       &
-                                   1.D0                       )
+          call MISC_get_cartesian( GRD_x_pl(ij,k,l,GRD_XDIR), & ! [OUT]
+                                   GRD_x_pl(ij,k,l,GRD_YDIR), & ! [OUT]
+                                   GRD_x_pl(ij,k,l,GRD_ZDIR), & ! [OUT]
+                                   lat_trans,                 & ! [IN]
+                                   lon,                       & ! [IN]
+                                   1.D0                       ) ! [IN]
        enddo
        enddo
     endif
@@ -783,6 +761,86 @@ contains
 
     return
   end subroutine MKGRD_stretch
+
+  !-----------------------------------------------------------------------------
+  !> Apply shrinkng to grid system
+  subroutine MKGRD_shrink
+    use mod_misc, only: &
+       MISC_get_latlon, &
+       MISC_get_cartesian
+    use mod_adm, only: &
+       ADM_prc_me,  &
+       ADM_prc_pl,  &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_KNONE,   &
+       ADM_lall,    &
+       ADM_lall_pl
+    use mod_comm, only: &
+       COMM_data_transfer
+    implicit none
+
+    real(8) :: o(3), g(3), len
+
+    integer :: ij, k, l, ite
+    !---------------------------------------------------------------------------
+
+    if( .NOT. MKGRD_DOSHRINK ) return
+
+    write(ADM_LOG_FID,*) '*** Apply shrink'
+    write(ADM_LOG_FID,*) '*** Shrink level = ', MKGRD_shrink_level
+
+    k = ADM_KNONE
+
+    o(GRD_XDIR) = 0.D0
+    o(GRD_YDIR) = 0.D0
+
+    do ite = 1, MKGRD_shrink_level
+       do l  = 1, ADM_lall
+       do ij = 1, ADM_gall
+          o(GRD_ZDIR) = sign(1.D0,GRD_x(ij,k,l,GRD_ZDIR))
+
+          g(GRD_XDIR) = GRD_x(ij,k,l,GRD_XDIR) + o(GRD_XDIR)
+          g(GRD_YDIR) = GRD_x(ij,k,l,GRD_YDIR) + o(GRD_YDIR)
+          g(GRD_ZDIR) = GRD_x(ij,k,l,GRD_ZDIR) + o(GRD_ZDIR)
+
+          len = ( g(GRD_XDIR)*g(GRD_XDIR) &
+                + g(GRD_YDIR)*g(GRD_YDIR) &
+                + g(GRD_ZDIR)*g(GRD_ZDIR) )
+
+          GRD_x(ij,k,l,GRD_XDIR) = g(GRD_XDIR) / len
+          GRD_x(ij,k,l,GRD_YDIR) = g(GRD_YDIR) / len
+          GRD_x(ij,k,l,GRD_ZDIR) = g(GRD_ZDIR) / len
+       enddo
+       enddo
+    enddo
+
+    if ( ADM_prc_me == ADM_prc_pl ) then
+    do ite = 1, MKGRD_shrink_level-1
+       do l  = 1, ADM_lall_pl
+       do ij = 1, ADM_gall_pl
+          o(GRD_ZDIR) = sign(1.D0,GRD_x_pl(ij,k,l,GRD_ZDIR))
+
+          g(GRD_XDIR) = GRD_x_pl(ij,k,l,GRD_XDIR) + o(GRD_XDIR)
+          g(GRD_YDIR) = GRD_x_pl(ij,k,l,GRD_YDIR) + o(GRD_YDIR)
+          g(GRD_ZDIR) = GRD_x_pl(ij,k,l,GRD_ZDIR) + o(GRD_ZDIR)
+
+          len = ( g(GRD_XDIR)*g(GRD_XDIR) &
+                + g(GRD_YDIR)*g(GRD_YDIR) &
+                + g(GRD_ZDIR)*g(GRD_ZDIR) )
+
+          GRD_x_pl(ij,k,l,GRD_XDIR) = g(GRD_XDIR) / len
+          GRD_x_pl(ij,k,l,GRD_YDIR) = g(GRD_YDIR) / len
+          GRD_x_pl(ij,k,l,GRD_ZDIR) = g(GRD_ZDIR) / len
+       enddo
+       enddo
+    enddo
+    endif
+
+    call COMM_data_transfer( GRD_x(:,:,:,:), GRD_x_pl(:,:,:,:) )
+
+    return
+  end subroutine MKGRD_shrink
 
   !-----------------------------------------------------------------------------
   !> Apply rotation to grid system
@@ -811,8 +869,8 @@ contains
     if( .NOT. MKGRD_DOROTATE ) return
 
     write(ADM_LOG_FID,*) '*** Apply rotation'
-    write(ADM_LOG_FID,*) '*** Longitudinal rotation(deg) = ', MKGRD_rotation_lon
-    write(ADM_LOG_FID,*) '*** Latitudinal  rotation(deg) = ', MKGRD_rotation_lat - 90.D0
+    write(ADM_LOG_FID,*) '*** North pole -> Longitude(deg) = ', MKGRD_rotation_lon
+    write(ADM_LOG_FID,*) '*** North pole -> Latitude (deg) = ', MKGRD_rotation_lat
 
     k = ADM_KNONE
 
@@ -1217,6 +1275,73 @@ contains
 
     return
   end subroutine MISC_3dvec_rotation
+
+  !-----------------------------------------------------------------------------
+  !> gnomonic projection
+  subroutine MISC_latlon2gnom( &
+      x,          &
+      y,          &
+      lat,        &
+      lon,        &
+      lat_center, &
+      lon_center  )
+    implicit none
+
+    real(8), intent(out) :: x          !> gnomonic, x
+    real(8), intent(out) :: y          !> gnomonic, y
+    real(8), intent(in)  :: lat        !> spheric, latitude
+    real(8), intent(in)  :: lon        !> spheric, longitude
+    real(8), intent(in)  :: lat_center !> projection center, latitude
+    real(8), intent(in)  :: lon_center !> projection center, longitude
+
+    real(8) :: cosc
+    !---------------------------------------------------------------------------
+
+    cosc = sin(lat_center) * sin(lat) &
+         + cos(lat_center) * cos(lat) * cos(lon-lon_center)
+
+    x = ( cos(lat) * sin(lon-lon_center) ) / cosc
+    y = ( cos(lat_center) * sin(lat)                       &
+        - sin(lat_center) * cos(lat) * cos(lon-lon_center) ) / cosc
+
+  end subroutine MISC_latlon2gnom
+
+  !-----------------------------------------------------------------------------
+  !> gnomonic projection (inverse)
+  subroutine MISC_gnom2latlon( &
+      lat,        &
+      lon,        &
+      x,          &
+      y,          &
+      lat_center, &
+      lon_center  )
+    implicit none
+
+    real(8), intent(out) :: lat        !> spheric, latitude
+    real(8), intent(out) :: lon        !> spheric, longitude
+    real(8), intent(in)  :: x          !> gnomonic, x
+    real(8), intent(in)  :: y          !> gnomonic, y
+    real(8), intent(in)  :: lat_center !> projection center, latitude
+    real(8), intent(in)  :: lon_center !> projection center, longitude
+
+    real(8) :: rho, c
+    !---------------------------------------------------------------------------
+
+    rho = sqrt( x*x + y*y )
+
+    if ( rho == 0 ) then ! singular point
+       lat = lat_center
+       lon = lon_center
+       return
+    endif
+
+    c = atan( rho )
+
+    lon = lon_center + atan2( x*sin(c), ( rho*cos(lat_center)*cos(c) - y*sin(lat_center)*sin(c) ) )
+    lat = asin( cos(c)*sin(lat_center) + y*sin(c)*cos(lat_center) / rho )
+
+    return
+  end subroutine MISC_gnom2latlon
 
   !-----------------------------------------------------------------------------
   !> Make center grid -> vertex grid

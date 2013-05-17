@@ -39,6 +39,7 @@ program mkhgrid
      MKGRD_setup,        &
      MKGRD_prerotate,    &
      MKGRD_stretch,      &
+     MKGRD_shrink,       &
      MKGRD_rotate,       &
      MKGRD_gravcenter,   &
      MKGRD_diagnosis,    &
@@ -80,6 +81,8 @@ program mkhgrid
   call MKGRD_prerotate
 
   call MKGRD_stretch
+
+  call MKGRD_shrink
 
   call MKGRD_rotate
 

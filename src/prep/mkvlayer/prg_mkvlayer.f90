@@ -120,25 +120,61 @@ contains
     close(fid)
     !
   end subroutine mk_layer_given
+
   !-----------------------------------------------------------------------------
   subroutine output_layer( outfname )
     implicit none
-    character(len=*) :: outfname
-    integer :: fid=10
-    integer :: k
-    !
-    open(fid,file=trim(outfname),form='unformatted')
-    write(fid) num_of_layer
-    write(fid) z_c
-    write(fid) z_h
-    close(fid)
-    
-    do k = 1, kall
-       write(*,*) k, z_h(k), z_c(k)
-    end do
 
-    !
+    character(len=*), intent(in) :: outfname
+
+    character(len=128) :: fname_all
+    character(len=128) :: fname_def
+    integer :: kall, kmin, kmax
+
+    integer :: fid = 10
+    integer :: k
+    !---------------------------------------------------------------------------
+
+    open( unit = fid,            &
+          file = trim(outfname), &
+          form = 'unformatted'   )
+       write(fid) num_of_layer
+       write(fid) z_c
+       write(fid) z_h
+    close(fid)
+
+    kmin = kdum + 1
+    kmax = kdum + num_of_layer
+    kall = kdum + num_of_layer + kdum
+
+    if ( kall > 100 ) then
+       write(fname_all,'(A5,I3.3,A4)') 'ZSALL', kall,         '.txt'
+       write(fname_def,'(A5,I3.3,A4)') 'ZSDEF', num_of_layer, '.txt'
+    else
+       write(fname_all,'(A5,I2.2,A4)') 'ZSALL', kall,         '.txt'
+       write(fname_def,'(A5,I2.2,A4)') 'ZSDEF', num_of_layer, '.txt'
+    endif
+
+    open( unit = fid,             &
+          file = trim(fname_all), &
+          form = 'formatted'      )
+       write(fid,'(I4)') kall
+       do k = 1, kall
+          write(fid,'(f12.3)') z_c(k)
+       enddo
+    close(fid)
+
+    open( unit = fid,             &
+          file = trim(fname_def), &
+          form = 'formatted'      )
+       write(fid,'(I4)') num_of_layer
+       do k = kmin, kmax
+          write(fid,'(f12.3)') z_c(k)
+       enddo
+    close(fid)
+
+    return
   end subroutine output_layer
-  !-----------------------------------------------------------------------------
+
 end program prg_mkvlayer
 !-------------------------------------------------------------------------------
