@@ -1,9 +1,13 @@
 #! /bin/bash -x
 
-##### set parameters from ARGV
-GLEV=${1:-5}
-RLEV=${2:-0}
-NMPI=${3:-5}
+GLEV=${1}
+RLEV=${2}
+NMPI=${3}
+ZL=${4}
+VGRID=${5}
+TOPDIR=${6}
+BINNAME=${7}
+
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
 if   [ ${NMPI} -ge 10000 ]; then
@@ -15,38 +19,39 @@ elif [ ${NMPI} -ge 100 ]; then
 else
 	NP=`printf %02d ${NMPI}`
 fi
-ZL=${4:-40}
-vgrid=${5:-vgrid40_24000-600m.dat}
-LSMAX=${6:-0}
-DTL=${7:-1200}
-DIFCF=${8:-1.29D16}
-NHIST=${9:-0}
+
+dir2d=gl${GL}rl${RL}pe${NP}
+dir3d=gl${GL}rl${RL}z${ZL}pe${NP}
+res2d=GL${GL}RL${RL}
+res3d=GL${GL}RL${RL}z${ZL}
+
+MNGINFO=rl${RL}-prc${NP}.info
+
+LSMAX=${8:-0}
+DTL=${9:-1200}
+DIFCF=${10:-1.29D16}
+NHIST=${11:-0}
 
 if [ ${LSMAX} == 0 ]; then
-   # 300day
-   let LSMAX=" 300 * 24 * 60 * 60 / ${DTL} "
+   # 11day
+   let LSMAX=" 11 * 24 * 60 * 60 / ${DTL} "
 fi
 
 if [ ${NHIST} == 0 ]; then
-   # 10day
-   let NHIST=" 10 * 24 * 60 * 60 / ${DTL} "
+   # 1day
+   let NHIST="  1 * 24 * 60 * 60 / ${DTL} "
 fi
-
-dir2d=gl${GL}rl${RL}pe${NP}
-res2d=GL${GL}RL${RL}
-dir3d=gl${GL}rl${RL}z${ZL}pe${NP}
-res3d=GL${GL}RL${RL}z${ZL}
 
 let ZLp2="${ZL} + 2"
 
 outdir=${dir3d}
 cd ${outdir}
 
-##### Generate nhm_driver.cnf
-cat << EOFNHM > nhm_driver.cnf
+##### Generate config file
+cat << EOFNHM > ${BINNAME}.cnf
 ################################################################################
 #
-# NICAM driver config (Held and Suarez)
+# NICAM driver config (Jablonowski Baroclinic Wave)
 #
 ################################################################################
 
@@ -62,11 +67,11 @@ cat << EOFNHM > nhm_driver.cnf
 &GRDPARAM
     hgrid_io_mode   = "ADVANCED",
     hgrid_fname     = "boundary_${res2d}",
-    vgrid_fname     = "${vgrid}",
-    topo_fname      = "topog.files",
+    VGRID_fname     = "${VGRID}",
+    topo_fname      = "Jablonowski",
 /
 
-###--- for FULL RUN (1300 days): LSTEP_MAX = 93600
+###--- for FULL RUN (11 days): LSTEP_MAX = 792
 &TIMEPARAM
     DTL         = ${DTL}.D0,
     INTEG_TYPE  = "RK2",
@@ -80,10 +85,10 @@ cat << EOFNHM > nhm_driver.cnf
 
 ###--- SET RUN TYPE
 &RUNCONFPARAM 
-    RUN_TYPE       = 'Held-Suarez',
+    RUN_TYPE       = 'Jablonowski',
     EIN_TYPE       = 'SIMPLE',
     NDIFF_LOCATION = 'IN_LARGE_STEP',
-    AF_TYPE        = 'HELD-SUAREZ',
+    AF_TYPE        = 'NONE',
 /
 
 ###--- SET BASIC STATE
@@ -117,7 +122,8 @@ cat << EOFNHM > nhm_driver.cnf
 /
 
 &DYCORETESTPARAM
-    init_type = 'Heldsuarez',
+    init_type = 'Jablonowski',
+    test_case = '1'
 /
 
 &EMBUDGETPARAM MNT_ON = .true., MNT_INTV = ${NHIST} /

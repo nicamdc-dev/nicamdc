@@ -11,12 +11,9 @@ include $(TOPDIR)/src/Mkinclude
 
 include $(TESTDIR)/test.conf
 RUNDIR := $(shell sh $(TESTDIR)/util/dirname.sh $(glevel) $(rlevel) $(nmpi) $(zlayer))
-testcase = gravitywave
+testcase = nhm_driver
 
-all: build run
-
-build:
-	$(MAKE) -C $(TOPDIR)/src || exit 1
+all: build
 
 getrundir:
 	@echo $(RUNDIR)
@@ -40,8 +37,11 @@ checkconfig:
 	@echo
 
 jobshell: makedir checkconfig
-	sh $(TESTDIR)/sysdep/Mkjobshell.$(NICAM_SYS).sh $(glevel) $(rlevel) $(nmpi) $(zlayer) $(vgrid) $(LSMAX) $(DTL) $(DIFCF) $(NHIST)
-	sh Mkconf.$(testcase).sh $(glevel) $(rlevel) $(nmpi) $(zlayer) $(vgrid) $(LSMAX) $(DTL) $(DIFCF) $(NHIST)
+	sh $(TOPDIR)/sysdep/Mkjobshell.$(NICAM_SYS).sh $(glevel) $(rlevel) $(nmpi) $(zlayer) $(vgrid) ../${TOPDIR} ${testcase}
+	sh Mkconf.$(testcase).sh                       $(glevel) $(rlevel) $(nmpi) $(zlayer) $(vgrid) ../${TOPDIR} ${testcase} $(LSMAX) $(DTL) $(DIFCF) $(NHIST)
 
 run: jobshell
 	cd $(RUNDIR); $(JOBSUB) run.sh
+
+build:
+	$(MAKE) -C $(TOPDIR)/src || exit 1
