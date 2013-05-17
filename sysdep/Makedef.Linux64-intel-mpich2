@@ -46,6 +46,8 @@ NETCDF_INCLUDE ?= -I$(NETCDF3)/include
 NETCDF_LIBS    ?= -L$(NETCDF3)/lib -lnetcdff -lnetcdf
 
 ##### for frontend
-AR      = ar r
+INSTALL = install
+AR      = ar
+ARFLAGS = r
 RANLIB  = ranlib
 JOBSUB  = sh

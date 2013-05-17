@@ -15,8 +15,10 @@ FFLAGS_DEBUG = -cpp -O0 -m64                     \
                -ffpe-trap=invalid,zero,overflow -finit-integer=-32768 -finit-real=nan -finit-logical=false -finit-character=9 \
                -Wall -Wextra -Wcharacter-truncation -Wunderflow \
                -Warray-temporaries  -Wuninitialized -Wconversion-extra -Wimplicit-interface -Wimplicit-procedure \
-               -g -fbacktrace -fcheck=all -fall-intrinsics
+               -g -fbacktrace -fall-intrinsics
+
 #               -DDEBUG
+#               -g -fbacktrace -fcheck=all -fall-intrinsics
 
 FC     = openmpif90
 #FFLAGS = $(FFLAGS_FAST)
@@ -35,6 +37,8 @@ NETCDF_INCLUDE ?= -I/opt/local/include
 NETCDF_LIBS    ?= -L/opt/local/lib -lnetcdff -lnetcdf
 
 ##### for frontend
-AR      = ar r
+INSTALL = install
+AR      = ar
+ARFLAGS = r
 RANLIB  = ranlib
 JOBSUB  = sh
