@@ -65,12 +65,10 @@ module mod_sfcvar
   !
   !++ Public variables
   !
-  ! < NONE >
   !-----------------------------------------------------------------------------
   !
   !++ Public procedures
   !
-  ! < NONE >
   !-----------------------------------------------------------------------------
   !
   !++ Public & Private parameters
@@ -694,11 +692,6 @@ contains
 
     integer :: ierr
 
-#ifdef _FJTIMER_
-    call timer_sta(8400)
-    call timer_sta(8401)
-#endif
-
     do m=1, mdim
        do l=1, ADM_lall
           do n=1, ADM_gall
@@ -716,59 +709,16 @@ contains
        end do
     end if
 
-#ifdef _FJTIMER_
-    call timer_end(8401)
-    call timer_sta(8402)
-#endif
-
     if ( present(comm_flag) ) then
        if(comm_flag==1) then
-
-#ifdef _CDTBR_
-          call timer_sta(49420)
-          call timer_sta(49421)
-          call MPI_Barrier(ADM_comm_run_world, ierr)
-          call timer_end(49421)
-#endif
-
-#ifdef _FJTIMER_
-          call timer_sta(8403)
-#endif
-
           call COMM_data_transfer(sfcvar(:,:,:,:),sfcvar_pl(:,:,:,:))
-
-#ifdef _FJTIMER_
-          call timer_end(8403)
-#endif
-
-#ifdef _CDTBR_
-          call timer_sta(49422)
-          call MPI_Barrier(ADM_comm_run_world, ierr)
-          call timer_end(49422)
-          call timer_end(49420)
-#endif
-
-       end if
-
-#ifdef _FJTIMER_
-       call timer_sta(8404)
-#endif
+       endif
 
        sfcvar(suf(ADM_gall_1d,1),:,:,:) = sfcvar(suf(ADM_gmax+1,ADM_gmin),:,:,:)
        sfcvar(suf(1,ADM_gall_1d),:,:,:) = sfcvar(suf(ADM_gmin,ADM_gmax+1),:,:,:)
+    endif
 
-#ifdef _FJTIMER_
-       call timer_end(8404)
-#endif
-
-    end if
-
-#ifdef _FJTIMER_
-    call timer_end(8402)
-    call timer_end(8400)
-#endif
-
-    !
+    return
   end subroutine sfcvar_set1
   !-----------------------------------------------------------------------------
   subroutine sfcvar_set1_in( &
@@ -975,6 +925,7 @@ contains
     !
     return
   end subroutine sfcvar_set2
+
   !-----------------------------------------------------------------------------
   subroutine sfcvar_comm( &
        comm_type          & !--- IN : communication type
@@ -983,10 +934,6 @@ contains
     !--- comm_type : 1 ( region -> pole )
     !---           : 2 ( region -> pole -> regular communication )
     !---           : 3 ( regular communication only )
-!!$    use mod_adm, only :     &
-!!$         ADM_LOG_FID,       &
-!!$         ADM_KNONE,         &
-!!$         ADM_lall
     use mod_adm, only : &
          ADM_comm_run_world
     use mod_comm, only :    &
@@ -997,58 +944,16 @@ contains
 
     integer :: ierr
 
-#ifdef _SFCVAR_COMMFALSE_
-    return
-#endif
-
-#ifdef _FJT_SFCVAR_COMM_
-    call timer_sta(24004)
-#endif
-
-#ifdef _FJT_COMMVAR_1_
-    call timer_sta(25000)
-#endif
-
-#ifdef _FJT_COMMVAR_1_BR_
-    call timer_sta(25001)
-    call MPI_Barrier(ADM_comm_run_world, ierr)
-    call timer_end(25001)
-#endif
-
-#ifdef _FJT_COMMVAR_1_
-    call timer_sta(25002)
-#endif
-
     call comm_var(  &
          sfcvar,    & !--- INOUT : variables
          sfcvar_pl, & !--- INOUT : variables at poles
          KSUM,      & !--- IN : number of layers
          DIAG_MAX,  & !--- IN : number of variables
          comm_type, & !--- IN : communication type
-         NSval_fix=.true.&
-         )
-
-#ifdef _FJT_COMMVAR_1_
-    call timer_end(25002)
-#endif
-
-#ifdef _FJT_COMMVAR_1_BR_
-    call timer_sta(25003)
-    call MPI_Barrier(ADM_comm_run_world, ierr)
-    call timer_end(25003)
-#endif
-
-#ifdef _FJT_COMMVAR_1_
-    call timer_end(25000)
-#endif
-
-#ifdef _FJT_SFCVAR_COMM_
-    call timer_end(24004)
-#endif
+         NSval_fix=.true. )
 
     return
   end subroutine sfcvar_comm
-  !-----------------------------------------------------------------------------
+
 end module mod_sfcvar
 !-------------------------------------------------------------------------------
-

@@ -221,13 +221,6 @@ contains
     read(ADM_CTL_FID,nml=SMGPARAM,iostat = ierr)
     write(ADM_LOG_FID,nml=SMGPARAM)
 
-!    if ((trim(divdamp_type)/="DIRECT").or.(trim(hdiff_type)/="DIRECT")) then
-!       area(:,ADM_KNONE,:) = GMTR_area(:,:)
-!       area_pl(:,ADM_KNONE,:) = GMTR_area_pl(:,:)
-!       horiz_dx2=GTL_global_mean_without_aw(area,area_pl)
-!    end if
-    !
-
     call tb_smg_oprt_init()
 
   end subroutine tb_smg_setup
@@ -318,10 +311,6 @@ contains
     real(8), intent(in) :: vz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     real(8), intent(in) :: w(ADM_gall,ADM_kall,ADM_lall)
     real(8), intent(in) :: w_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-!    real(8), intent(inout) :: w(ADM_gall,ADM_kall,ADM_lall)! inout for debug
-!    real(8), intent(inout) :: w_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)! inout for debug
-!    real(8), intent(in) :: temd(ADM_gall,ADM_kall,ADM_lall)
-!    real(8), intent(in) :: temd_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     real(8), intent(in) :: tem(ADM_gall,ADM_kall,ADM_lall)
     real(8), intent(in) :: tem_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     real(8), intent(in) :: q(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
@@ -509,21 +498,8 @@ contains
       abs_vz_pl(:,k,:) = vz_pl(:,k,:) + (w_pl(:,k,:)+w_pl(:,k,:))/2 * GRD_x_pl(:,ADM_knone,:,GRD_ZDIR)/GRD_rscale
     endif
 
-!    call dbgmx('abs_vx',abs_vx)
-!    call dbgmx('abs_vxh',abs_vxh)
-
-
-
-
-
-
-
     do l=1,ADM_lall
        if (dbgfirst)then
-
-
-
-
 
        call history_in('vx',vx(:,:,l))
        call history_in('vy',vy(:,:,l))
@@ -552,17 +528,8 @@ contains
        call history_in('smg_oprt_rgam',smg_oprt_rgam(:,:,l))!1
        call history_in('smg_oprt_rgamh',smg_oprt_rgamh(:,:,l))!1
 
-
-
-
-
        endif
     enddo
-
-
-
-
-
 
     !=============================== (2) calculate Sij and K_coefh at both full and half level ====================
 !    call dbgmx('aa oprt_GAM',smg_oprt_GAM(:,ADM_kmin:ADM_kmax,:))
@@ -578,13 +545,7 @@ contains
     uij=0.d0
     uij_pl=0.d0
 
-
-
-
-
-
     ! x
-!    write(*,*) 'x'
     call Gradient3dfh(        &
          uij(:,:,:,1,1),uij_pl(:,:,:,1,1),&
          uij(:,:,:,1,2),uij_pl(:,:,:,1,2),&
@@ -597,13 +558,7 @@ contains
          .true.&
           )
 
-
-
-
-
-
     ! y
-!    write(*,*) 'y'
     call Gradient3dfh(        &
          uij(:,:,:,2,1),uij_pl(:,:,:,2,1),&
          uij(:,:,:,2,2),uij_pl(:,:,:,2,2),&
@@ -616,13 +571,7 @@ contains
          .true.&
           )
 
-
-
-
-
-
     ! z
-!    write(*,*) 'z'
     call Gradient3dfh(        &
          uij(:,:,:,3,1),uij_pl(:,:,:,3,1),&
          uij(:,:,:,3,2),uij_pl(:,:,:,3,2),&
@@ -635,19 +584,8 @@ contains
          .true.&
           )
 
-
-
-
-
-
-!    call dbgmx('bb oprt_GAM',smg_oprt_GAM(:,ADM_kmin:ADM_kmax,:))
-!    if (ADM_prc_me.eq.1) call dbgmx('bb oprt_GAM_pl',smg_oprt_GAM_pl(:,ADM_kmin:ADM_kmax,:))
     do l=1,ADM_lall
        if (dbgfirst)then
-
-
-
-
 
           call history_in('uij11',uij(:,:,l,1,1))
           call history_in('uijh11',uijh(:,:,l,1,1))
@@ -658,17 +596,8 @@ contains
           call history_in('uij13',uij(:,:,l,1,3))
           call history_in('uijh13',uijh(:,:,l,1,3))
 
-
-
-
-
        endif
     enddo
-
-
-
-
-
 
     do i=1,3
        do j=1,3
@@ -736,13 +665,6 @@ contains
     stratosh=0
     stratos_pl=0
     stratosh_pl=0
-!!$   endif
-
-!    call dbgmx('cc oprt_GAM',smg_oprt_GAM(:,ADM_kmin:ADM_kmax,:))
-!    if (ADM_prc_me.eq.1) call dbgmx('cc oprt_GAM_pl',smg_oprt_GAM_pl(:,ADM_kmin:ADM_kmax,:))
-
-
-!    call dbgmx('sijsij',sijsij)
 
     wrkwrk=0.0
     wrkwrk2=0.0
@@ -766,26 +688,7 @@ contains
        enddo
     enddo
 
-    !hogehoge
-    write(adm_log_fid,*)'chksmg1',nl,grd_rscale
-
-
-
-
-
-
     if(nl==1)then
-
-
-
-
-
-       call dbgmx('K_coefh',K_coefh(:,:,:))
-
-
-
-
-
 
        do l=1,ADM_lall
           call history_in('K_coefh',K_coefh(:,:,l)) ! sonouchi kesu
@@ -799,16 +702,7 @@ contains
           call history_in('region',wrkwrk2(:,:,l))
        enddo
 
-
-
-
-
     endif
-
-
-
-
-
 
     call dbgmx('length',wrkwrk(:,:,:))
     call dbgmx('vx',vx(:,:,:))
@@ -827,17 +721,6 @@ contains
     call dbgmx('sijsijh',sqrt(max(2.0d0*sijsijh(:,:,:)+stratosh(:,:,:),SMALL)))
     call dbgmx('sijsijha',sqrt(max(2.0d0*sijsijh(:,:,:),SMALL)))
     call dbgmx('sijsijhb',sqrt(max(stratosh(:,:,:),SMALL)))
-
-
-
-
-
-
-!write(adm_log_fid,*)'chksmg1', &
-!   maxval(sqrt(max(2.0d0*sijsijh(:,:,:)+stratosh(:,:,:),SMALL))), &
-!   minval(sqrt(max(2.0d0*sijsijh(:,:,:)+stratosh(:,:,:),SMALL)))
-!write(adm_log_fid,*)'chksmg2', maxval(wrkwrk(:,:,:)),minval(wrkwrk(:,:,:))
-!write(adm_log_fid,*)'chksmg3', maxval(K_coefh(:,:,:)),minval(K_coefh(:,:,:))
 
     if(ADM_prc_me==ADM_prc_pl) then
        K_coefh_pl(:,ADM_kmin-1,:) = 0.0d0 ! im not sure
@@ -885,43 +768,19 @@ contains
        enddo
     endif
 
-!    call dbgmx('dd oprt_GAM',smg_oprt_GAM(:,ADM_kmin:ADM_kmax,:))
-!    if (ADM_prc_me.eq.1) call dbgmx('dd oprt_GAM_pl',smg_oprt_GAM_pl(:,ADM_kmin:ADM_kmax,:))
-
-
-
-
-
-
     do l=1,ADM_lall
        if (dbgfirst)then
-
-
-
-
 
           call history_in('K_coef',K_coef(:,:,l))
           call history_in('K_coefh',K_coefh(:,:,l))
           call history_in('sijsij',sijsij(:,:,l))
           call history_in('sijsijh',sijsijh(:,:,l))
 
-
-
-
-
        endif
     enddo
 
-
-
-
-
-
     !============================= (3) multiply K_coef(h) by rho ============================
     ! hereafter, K_coef(h) means rho*K
-    !
-!    call dbgmx('before_K_coef',K_coef(:,:,:))
-!    call dbgmx('before_K_coefh',K_coefh(:,:,:))
 
     K_coef(:,ADM_kmin:ADM_kmax,:)=K_coef(:,ADM_kmin:ADM_kmax,:)*rho(:,ADM_kmin:ADM_kmax,:)
     do k=ADM_kmin+1,ADM_kmax
@@ -943,46 +802,11 @@ contains
        K_coefh_pl(:,ADM_kmax+1,:) = 0.0d0
     endif
 
-!    call dbgmx('K_coef',K_coef(:,:,:))
-!    call dbgmx('K_coefh',K_coefh(:,:,:))
-
-!    call dbgmx('ee oprt_GAM',smg_oprt_GAM(:,ADM_kmin:ADM_kmax,:))
-!    if (ADM_prc_me.eq.1) call dbgmx('ee oprt_GAM_pl',smg_oprt_GAM_pl(:,ADM_kmin:ADM_kmax,:))
-
-
-
-
-
-
     !============================= (4) calculate gradient3D for q and potem ============================
     ! here, i assume d rhog = 0 (i.e. nothing to do with frhog)
     !
     ! q
     do nq=1, TRC_VMAX
-
-
-
-
-
-!       write(*,*) 'nq=',nq, 'nq+IMAX=',nq+IMAX
-!       write(*,*) q(:,:,:,nq)
-       if (adm_prc_me.eq.1) then
-          do l=1,ADM_lall_pl
-             do k=adm_kmin,ADM_kmax
-!                write(*,*) ADM_prc_me, l,k,q_pl(:,k,l,nq)
-             enddo
-          enddo
-       endif
-       do l=1,ADM_lall
-          do k=adm_kmin,ADM_kmax
-!                write(*,*) ADM_prc_me, l,k,q(:,k,l,nq)
-          enddo
-       enddo
-
-
-
-
-
 
        call Gradient3dfh(        &
             var(:,:,:,GRD_XDIR,nq+IMAX),var_pl(:,:,:,GRD_XDIR,nq+IMAX),&  ! output
@@ -995,24 +819,10 @@ contains
             q(:,:,:,nq), q_pl(:,:,:,nq),          & ! dummy(not used)
             input_sclh=.false.                &
             )
-!       stop
-
-
-
-
 
     enddo
 
-
-
-
-
-
-!    call dbgmx('ff oprt_GAM',smg_oprt_GAM(:,ADM_kmin:ADM_kmax,:))
-!    if (ADM_prc_me.eq.1) call dbgmx('ff oprt_GAM_pl',smg_oprt_GAM_pl(:,ADM_kmin:ADM_kmax,:))
-
     ! theta
-!       write(*,*) 'pot'
     call Gradient3dfh(        &
          var(:,:,:,GRD_XDIR,ipotem),var_pl(:,:,:,GRD_XDIR,ipotem),&  ! output
          var(:,:,:,GRD_YDIR,ipotem),var_pl(:,:,:,GRD_YDIR,ipotem),&  ! output
@@ -1024,13 +834,6 @@ contains
          potem(:,:,:), potem_pl(:,:,:),          & ! dummy(not used)
          input_sclh=.false.               &
           )
-!    call dbgmx('gg oprt_GAM',smg_oprt_GAM(:,ADM_kmin:ADM_kmax,:))
-!    if (ADM_prc_me.eq.1) call dbgmx('gg oprt_GAM_pl',smg_oprt_GAM_pl(:,ADM_kmin:ADM_kmax,:))
-
-
-
-
-
 
     !============================= (5) calculate inside the divergence and communicate ============================
     !
@@ -1049,11 +852,7 @@ contains
        enddo
        pih_pl(:,ADM_kmin,:)=pi_pl(:,ADM_kmin,:) ! im not sure
     endif
-    !
-    !
-!    call dbgmx('sijvx',sij(:,:,:,grd_xdir,ivx))
-!    call dbgmx('sijvy',sij(:,:,:,grd_ydir,ivx))
-!    call dbgmx('sijvz',sij(:,:,:,grd_zdir,ivx))
+
     do idir=GRD_XDIR,GRD_ZDIR
        do ivar=IVX,IVZ
           var(:,ADM_kmin:ADM_kmax,:,idir,ivar)=Sij(:,ADM_kmin:ADM_kmax,:,idir,ivar) * 2* K_coef(:,ADM_kmin:ADM_kmax,:) * GAMMA
@@ -1087,83 +886,13 @@ contains
        endif
     enddo
 
-!    write(*,*) reshape(var(:,:,:,:,:), (/ADM_gall,ADM_kall,ADM_lall,3*(IMAX+TRC_VMAX)/)) , &
-!         reshape(var_pl(:,:,:,:,:),(/ADM_gall_pl,ADM_kall,ADM_lall_pl,3*(IMAX+TRC_VMAX)/)) 
-
-!    call comm_data_transfer(var(:,:,:,:,1),var_pl(:,:,:,:,1))
-!    call comm_data_transfer(reshape(var(:,:,:,:,:), (/ADM_gall,ADM_kall,ADM_lall,3*(IMAX+TRC_VMAX)/)) , &
-!         reshape(var_pl(:,:,:,:,:),(/ADM_gall_pl,ADM_kall,ADM_lall_pl,3*(IMAX+TRC_VMAX)/)) )
-!    call comm_data_transfer(reshape(var, (/size(var,1),size(var,2),size(var,3),3*(IMAX+TRC_VMAX) /)), &
-!         reshape(var_pl, (/size(var_pl,1),size(var_pl,2),size(var_pl,3),3*(IMAX+TRC_VMAX) /) ))
-!    call comm_data_transfer(reshape(varh, (/size(varh,1),size(varh,2),size(varh,3),3*(IMAX+TRC_VMAX) /)), &
-!         reshape(varh_pl, (/size(varh_pl,1),size(varh_pl,2),size(varh_pl,3),3*(IMAX+TRC_VMAX) /) ))
-
-
-
-
-
-
-!    write(*,*) shape(var)
     do ivar=IVX,IMAX+TRC_VMAX
-!       call dbgmx('vxbefore'//char(ivar+48),var(:,:,:,grd_xdir,ivar))
-!       call dbgmx('vxbefore_pl'//char(ivar+48),var_pl(:,:,:,grd_xdir,ivar))
-
-
-
-
-
-
-
-
-
-
-
 
        call comm_data_transfer(var(:,:,:,:,ivar),var_pl(:,:,:,:,ivar))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
        call comm_data_transfer(varh(:,:,:,:,ivar),varh_pl(:,:,:,:,ivar))
 
-
-
-
-
-
-
-
-
-
-
-
-!       call dbgmx('vxafter'//char(ivar+48),var(:,:,:,grd_xdir,ivar))
-!       call dbgmx('vxafter_pl'//char(ivar+48),var_pl(:,:,:,grd_xdir,ivar))
     enddo
-
-
-
-
-
 
     !============================= (6) calculate divergence  ============================
     grhogvx=0
@@ -1175,13 +904,7 @@ contains
     grhogq=0
     grhoge=0
 
-
-
-
-
-
     ! velocity
-!write(*,*)'a',ADM_prc_me
     call gsqrt_Div3dfh(  &
          var(:,:,:,GRD_XDIR,IVX), var_pl(:,:,:,GRD_XDIR,IVX),&
          var(:,:,:,GRD_YDIR,IVX), var_pl(:,:,:,GRD_YDIR,IVX),&
@@ -1194,12 +917,6 @@ contains
          output_sclh=.true.                & !in optional ( input half level scl, or not )
        )
 
-
-
-
-
-
-!write(*,*)'b',ADM_prc_me
     call gsqrt_Div3dfh(  &
          var(:,:,:,GRD_XDIR,IVY), var_pl(:,:,:,GRD_XDIR,IVY),&
          var(:,:,:,GRD_YDIR,IVY), var_pl(:,:,:,GRD_YDIR,IVY),&
@@ -1212,12 +929,6 @@ contains
          output_sclh=.true.                & !in optional ( input half level scl, or not )
        )
 
-
-
-
-
-
-!write(*,*)'c',ADM_prc_me
     call gsqrt_Div3dfh(  &
          var(:,:,:,GRD_XDIR,IVZ), var_pl(:,:,:,GRD_XDIR,IVZ),&
          var(:,:,:,GRD_YDIR,IVZ), var_pl(:,:,:,GRD_YDIR,IVZ),&
@@ -1230,21 +941,11 @@ contains
          output_sclh=.true.                & !in optional ( input half level scl, or not )
        )
 
-
-
-
-
-
     ! vx,vy,vz
     call OPRT_horizontalize_vec(&
          grhogvx, grhogvx_pl,   & !--- inout
          grhogvy, grhogvy_pl,   & !--- inout
          grhogvz, grhogvz_pl)     !--- inout
-
-
-
-
-
 
     frhogvx(:,ADM_kmin:ADM_kmax,:)=frhogvx(:,ADM_kmin:ADM_kmax,:)+grhogvx(:,ADM_kmin:ADM_kmax,:)
     frhogvy(:,ADM_kmin:ADM_kmax,:)=frhogvy(:,ADM_kmin:ADM_kmax,:)+grhogvy(:,ADM_kmin:ADM_kmax,:)
@@ -1269,17 +970,8 @@ contains
        enddo
     endif
 
-
-
-
-
-
     ! q
     do nq=1, TRC_VMAX
-
-
-
-
 
        call gsqrt_Div3dfh(  &
          var(:,:,:,GRD_XDIR,IMAX+nq), var_pl(:,:,:,GRD_XDIR,IMAX+nq),&
@@ -1293,17 +985,8 @@ contains
          output_sclh=.false.                & !in optional ( input half level scl, or not )
        )
 
-
-
-
-
     enddo
     frhogq(:,ADM_kmin:ADM_kmax,:,:)=frhogq(:,ADM_kmin:ADM_kmax,:,:)+grhogq(:,ADM_kmin:ADM_kmax,:,:)
-
-
-
-
-
 
     ! energy
     call gsqrt_Div3dfh(  &
@@ -1318,27 +1001,13 @@ contains
          output_sclh=.false.                & !in optional ( input half level scl, or not )
        )
 
-
-
-
-
-
     frhoge(:,ADM_kmin:ADM_kmax,:)=frhoge(:,ADM_kmin:ADM_kmax,:)+grhoge(:,ADM_kmin:ADM_kmax,:)
 
     ! I don't know about grhogetot. more precisely, change in kinetic energy sould be concidered.
     frhogetot(:,ADM_kmin:ADM_kmax,:)=frhogetot(:,ADM_kmin:ADM_kmax,:)+grhoge(:,ADM_kmin:ADM_kmax,:)
 
-
-
-
-
-
     do l=1,ADM_lall
        if (dbgfirst)then
-
-
-
-
 
           call history_in('gvx',grhogvx(:,:,l))
           call history_in('gvy',grhogvy(:,:,l))
@@ -1355,27 +1024,15 @@ contains
           call history_in('var21h',varh(:,:,l,2,1))
           call history_in('var31h',varh(:,:,l,3,1))
 
-
-
-
-
        endif
     enddo
-!    dbgfirst=.false.
 
-
-
-
-
-
-    !
     return
     !
   end subroutine tb_smg_driver
   !-------------------------------------------------------------------------------
   subroutine tb_smg_oprt_init(  &
        )
-  
     use mod_grd, only: &
          GRD_xdir,     &
          GRD_ydir,     &
@@ -1387,15 +1044,11 @@ contains
          GRD_x,        &
          GRD_x_pl,     &
          GRD_rscale!=cnst_eradisu
-  
     use mod_runconf, only :         &
          TRC_VMAX
     implicit none
+
     integer::k
-                                                                                       
-
-!    write(*,*) GRD_x/GRD_rscale
-
 
     if(first)then  ! --> why is it needed?
        allocate(smg_oprt_cxh(ADM_gall,ADM_kall,ADM_lall))
@@ -1434,8 +1087,6 @@ contains
        first=.false.
     endif
 
-
-
     ! ad hoc
     smg_oprt_gsqrt(:,ADM_kmin:ADM_kmax,:) = VMTR_GSGAM2(:,ADM_kmin:ADM_kmax,:)/VMTR_GAM2(:,ADM_kmin:ADM_kmax,:)
     smg_oprt_gsqrtH(:,ADM_kmin:ADM_kmax,:) = VMTR_GSGAM2H(:,ADM_kmin:ADM_kmax,:)/VMTR_GAM2H(:,ADM_kmin:ADM_kmax,:)
@@ -1449,12 +1100,6 @@ contains
        smg_oprt_GAMH_pl(:,ADM_kmin:ADM_kmax,:) = sqrt(VMTR_GAM2H_pl(:,ADM_kmin:ADM_kmax,:))
     endif
 
-    
-!    do k=ADM_kmin,ADM_kmax
-!       if (ADM_prc_me.eq.1) write(*,*) k,smg_oprt_GAM_pl(:,k,:),VMTR_GAM2_pl(:,k,:)
-!    enddo
-!    stop
-
     ! 1/gamma at half level
     smg_oprt_rgamH(:,ADM_kmin:ADM_kmax,:)= 1.0d0/sqrt(VMTR_GAM2H(:,ADM_kmin:ADM_kmax,:))
     smg_oprt_rgam(:,ADM_kmin:ADM_kmax,:)= 1.0d0/sqrt(VMTR_GAM2(:,ADM_kmin:ADM_kmax,:))
@@ -1462,10 +1107,6 @@ contains
       smg_oprt_rgamH_pl(:,ADM_kmin:ADM_kmax,:)= 1.0d0/sqrt(VMTR_GAM2H_pl(:,ADM_kmin:ADM_kmax,:))
       smg_oprt_rgam_pl(:,ADM_kmin:ADM_kmax,:)= 1.0d0/sqrt(VMTR_GAM2_pl(:,ADM_kmin:ADM_kmax,:))
     endif
-
-!    call dbgmx('smg_oprt_rgam',smg_oprt_rgam)
-!    call dbgmx('smg_oprt_rgamH',smg_oprt_rgamH)
-
 
     ! coef for grad3d
     !half
@@ -1477,6 +1118,7 @@ contains
        smg_oprt_czh(:,k,:) =  GRD_rdgz(k)*   (GRD_x(:,ADM_knone,:,GRD_ZDIR) &
          *VMTR_RGSH(:,k,:)/GRD_rscale + VMTR_GZZH(:,k,:)*smg_oprt_rgamH(:,k,:) )
     enddo
+
     if(ADM_prc_me==ADM_prc_pl) then
       do k=ADM_kmin,ADM_kmax
         smg_oprt_cxh_pl(:,k,:) =  GRD_rdgz(k)*  (GRD_x_pl(:,ADM_knone,:,GRD_XDIR) &
@@ -1508,34 +1150,6 @@ contains
       enddo
     endif
 
-
-
-
-!    call dbgmx('oprt_GAM',smg_oprt_GAM(:,ADM_kmin:ADM_kmax,:))
-!    if (ADM_prc_me.eq.1) call dbgmx('oprt_GAM_pl',smg_oprt_GAM_pl(:,ADM_kmin:ADM_kmax,:))
-
-!!$!    ! 1/gamma at half level
-!!$!    smg_oprt_rgamH(:,ADM_kmin:ADM_kmax,:)= 1d0/sqrt(VMTR_GAM2H(:,ADM_kmin:ADM_kmax,:))
-!!$!    smg_oprt_rgamH_pl(:,ADM_kmin:ADM_kmax,:)= 1d0/sqrt(VMTR_GAM2H_pl(:,ADM_kmin:ADM_kmax,:))
-!!$
-!!$
-!!$!koko
-!!$!    smg_oprt_GzGzh(:,:,:)= VMTR_GXXH(:,:,:)**2+VMTR_GYXH(:,:,:)**2+VMTR_GZXH(:,:,:)**2
-!!$!    smg_oprt_GzGzh_pl(:,:,:)= VMTR_GXXH_pl(:,:,:)**2+VMTR_GYXH_pl(:,:,:)**2+VMTR_GZXH_pl(:,:,:)**2
-!!$!    smg_oprt_GzGz(:,:,:)= VMTR_GXX(:,:,:)**2+VMTR_GYX(:,:,:)**2+VMTR_GZX(:,:,:)**2
-!!$!    smg_oprt_GzGz_pl(:,:,:)= VMTR_GXX_pl(:,:,:)**2+VMTR_GYX_pl(:,:,:)**2+VMTR_GZX_pl(:,:,:)**2
-!!$
-!!$    smg_oprt_GzGzh(:,:,:)= VMTR_GZXH(:,:,:)**2+VMTR_GZYH(:,:,:)**2+VMTR_GZZH(:,:,:)**2
-!!$    smg_oprt_GzGz(:,:,:)= VMTR_GZX(:,:,:)**2+VMTR_GZY(:,:,:)**2+VMTR_GZZ(:,:,:)**2
-!!$    if(ADM_prc_me==ADM_prc_pl) then
-!!$      smg_oprt_GzGzh_pl(:,:,:)= VMTR_GZXH_pl(:,:,:)**2+VMTR_GZYH_pl(:,:,:)**2+VMTR_GZZH_pl(:,:,:)**2
-!!$      smg_oprt_GzGz_pl(:,:,:)= VMTR_GZX_pl(:,:,:)**2+VMTR_GZY_pl(:,:,:)**2+VMTR_GZZ_pl(:,:,:)**2
-!!$    endif
-
-
-
-
-
     return
   end subroutine tb_smg_oprt_init
   !-----------------------------------------------------------------------------------------
@@ -1552,11 +1166,10 @@ contains
        input_sclh                & !in optional ( input half level scl, or not )
        )
     ! note that vx, vy, vz are not velocity but just vector.
-  
     use mod_oprt, only:&
          OPRT_gradient
-  
     implicit none
+
     real(8),intent(in)::sclh(ADM_gall,ADM_kall,ADM_lall)          ! half level
     real(8),intent(in)::sclh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL) ! half level
     real(8),intent(in)::scl(ADM_gall,ADM_kall,ADM_lall)            ! full level

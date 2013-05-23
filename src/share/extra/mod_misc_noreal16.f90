@@ -15,9 +15,6 @@
 !! @li      2006-02-25 (S.Iga)     bugfix on 06-02-12
 !! @li      2006-08-10 (W.Yanase)  bug(?)fix on 06-08-10
 !! @li      2006-08-22 (Y.Niwa)    bug fix
-!! @li      2007-01-26 (H.Tomita)  Add func[MISC_gammafunc].
-!! @li      2008-04-12 (T.Mitsui)  Add func[MISC_igammafunc].
-!!                                 Add func[MISC_iigammafunc].
 !! @li      2009-07-17 (Y.Yamada)  Add func[MISC_triangle_area_q].
 !! @li      2011-11-11 (H.Yashiro) [Add] vector calculation suite
 !!
@@ -31,20 +28,13 @@ module mod_misc
   !++ Public parameters, variables & subroutines
   !
   public :: MISC_make_idstr        !--- make file name with a number
-  public :: MISC_in_region         !--- judge whether inner region or not
-  public :: MISC_frndm             !--- random generator (import from dcl)
   public :: MISC_get_available_fid !--- get an available file ID
   public :: MISC_get_fid           !--- get an information of open or not
   public :: MISC_get_latlon        !--- calculate (lat,lon) from (x,y,z)
   public :: MISC_triangle_area     !--- calculate triangle area.
   public :: MISC_triangle_area_q   !--- calculate triangle area at quad precision.  ![Add] Y.Yamada 09/07/17
   public :: MISC_mk_gmtrvec        !--- calculate normal and tangential vecs.
-  public :: MISC_sec2ymdhms        !--- convert second to (yr,mo,dy,hr,mn,sc).
-  public :: MISC_ymdhms2sec        !--- convert (yr,mo,dy,hr,mn,sc) to second.
   public :: MISC_msg_nmerror       !--- output error message
-  public :: MISC_gammafunc         !--- Gamma function
-  public :: MISC_igammafunc        !--- Incomplete Gamma function       ![Add] T.Mitsui 08/04/12
-  public :: MISC_iigammafunc       !--- inverse function of igammafunc  ![Add] T.Mitsui 08/04/12
   ![Add] H.Yashiro 11/11/11
   public :: MISC_3dvec_cross         !--- calc exterior product for 3D vector
   public :: MISC_3dvec_dot           !--- calc interior product for 3D vector
@@ -54,6 +44,7 @@ module mod_misc
   public :: MISC_3dvec_anticlockwise !--- sort 3D vectors anticlockwise
   public :: MISC_3Dvec_triangle      !--- calc triangle area on sphere, more precise
   public :: MISC_get_cartesian       !--- calc (x,y,z) from (lat,lon)
+  public :: MISC_get_distance        !--- calc horizontal distance on the sphere
 
   !-----------------------------------------------------------------------------
   !
@@ -118,137 +109,6 @@ contains
 
     return
   end subroutine MISC_make_idstr
-
-  !-----------------------------------------------------------------------------
-  !>
-  !> Description of the function %NAME
-  !> @return f
-  !>
-  function MISC_in_region( &
-       clat,  &
-       clon,  &
-       alpha, &
-       tlat,  &
-       tlon   ) &
-       result(f)
-    implicit none
-
-    real(8), intent(in) :: clat  ! center of circle ( latitude )
-    real(8), intent(in) :: clon  ! center of circle ( longitude )
-    real(8), intent(in) :: alpha ! search radius
-    real(8), intent(in) :: tlat  ! target point ( latitude )
-    real(8), intent(in) :: tlon  ! target point ( longitude )
-    logical :: f                 ! OUT : judgement
-
-    real(8) :: cp(3)
-    real(8) :: tp(3)
-    real(8) :: cdott
-    !---------------------------------------------------------------------------
-
-    cp(1) = cos(clat) * cos(clon)
-    cp(2) = cos(clat) * sin(clon)
-    cp(3) = sin(clat)
-
-    tp(1) = cos(tlat) * cos(tlon)
-    tp(2) = cos(tlat) * sin(tlon)
-    tp(3) = sin(tlat)
-
-    cdott = cp(1)*tp(1) + cp(2)*tp(2) + cp(3)*tp(3) ! inner production
-    cdott = min( max( cdott, -1.0D0 ), 1.D0 )
-
-    f = .false.
-    if( acos(cdott) <= alpha ) f = .true.
-
-    return
-  end function MISC_in_region
-
-  !-----------------------------------------------------------------------------
-  !>
-  !> Description of the subroutine MISC_frndm
-  !>
-  subroutine MISC_frndm( &
-       ndim,   &
-       iseed0, &
-       random  )
-    implicit none
-
-    integer, intent(in)    :: ndim         ! number of array (1D)
-    integer, intent(in)    :: iseed0       ! initial seed for randomization
-    real(8), intent(inout) :: random(ndim) ! random values
-
-    integer :: iseed, i
-    !---------------------------------------------------------------------------
-
-    iseed = iseed0
-    do i = 1, ndim
-       random(i) = rngu3(iseed) - 0.5D0
-    enddo
-
-    return
-  contains
-    !---------------------------------------------------------------------------
-    !>
-    !> RANDOM NUMBER GENERATOR (? METHOD BY KUNUTH) from dcl4.2
-    !> @return rngu3
-    !>
-    function rngu3(iseed)
-      integer :: iseed
-      real(8) :: rngu3
-
-      integer, parameter :: mbig  = 100000000
-      integer, parameter :: mseed = 161803398
-      integer, parameter :: mz    = 0
-      real(8), parameter :: fac   = 1.D-9
-
-      integer, save      :: ma(55)
-      integer, save      :: inext, inextp
-
-      integer :: mj, mk, i, ii, k
-      !-------------------------------------------------------------------------
-
-      if ( iseed /= 0 ) then
-         mj = mseed - iabs(iseed)
-         mj = mod(mj,mbig)
-         ma(55) = mj
-         mk = 1
-
-         do i = 1,54
-            ii = mod(21*i,55)
-            ma(ii) = mk
-            mk = mj-mk
-            if(mk < mz) mk = mk+mbig
-            mj = ma(ii)
-         enddo
-
-         do k = 1, 4
-         do i = 1, 55
-            ma(i) = ma(i) - ma(1+mod(i+30,55))
-            if(ma(i) < mz)ma(i)=ma(i)+mbig
-         enddo
-         enddo
-
-         inext  = 0
-         inextp = 31
-         iseed  = 0
-      endif
-
-      inext = inext + 1
-      if(inext == 56) inext = 1
-
-      inextp = inextp + 1
-      if(inextp == 56) inextp = 1
-
-      mj = ma(inext) - ma(inextp)
-      if(mj < mz) mj = mj + mbig
-
-      ma(inext) = mj
-
-      rngu3 = mj * fac
-
-      return
-    end function rngu3
-
-  end subroutine MISC_frndm
 
   !-----------------------------------------------------------------------------
   !>
@@ -803,75 +663,6 @@ contains
     return
     !
   end subroutine MISC_mk_gmtrvec
-  !-----------------------------------------------------------------------------
-  !>
-  !> Description of the subroutine MISC_sec2ymdhms
-  !>
-  subroutine MISC_sec2ymdhms(           &
-       ctime_second,                    & !--- IN : target time [sec]
-       year, month, day, hour, min, sec & !--- OUT : year, month day hour minite, second
-       )
-    !
-    implicit none
-    !
-    real(8), intent(in)  :: ctime_second
-    integer, intent(out) :: sec
-    integer, intent(out) :: min
-    integer, intent(out) :: hour
-    integer, intent(out) :: day
-    integer, intent(out) :: month
-    integer, intent(out) :: year
-    !
-    !    integer(4) :: second
-    integer :: second      ! S.Iga 060212
-    !
-    second = idnint(ctime_second)
-    year = second/(60*60*24*30*12)
-    !
-    second = mod(second,60*60*24*30*12)
-    month = second/(60*60*24*30)
-    !
-    second = mod(second,60*60*24*30)
-    day = second/(60*60*24)
-    !
-    second = mod(second,60*60*24)
-    hour = second/(60*60)
-    !
-    second = mod(second,60*60)
-    min = second/(60)
-    !
-    second = mod(second,60)
-    sec = second
-
-  end subroutine MISC_sec2ymdhms
-  !-----------------------------------------------------------------------------
-  !>
-  !> Description of the subroutine MISC_ymdhms2sec
-  !>
-  subroutine MISC_ymdhms2sec(            &
-       ctime_second,                     & !--- OUT : target time [sec]
-       year, month, day, hour, min, sec  & !--- IN : year, month day hour minite, second
-       )
-
-    implicit none
-
-    real(8), intent(out) :: ctime_second
-    integer, intent(in)  :: sec
-    integer, intent(in)  :: min
-    integer, intent(in)  :: hour
-    integer, intent(in)  :: day
-    integer, intent(in)  :: month
-    integer, intent(in)  :: year
-
-    ctime_second = year  * 60.D0 * 60.D0 * 24.D0 * 30.D0 * 12.D0 &
-                 + month * 60.D0 * 60.D0 * 24.D0 * 30.D0         &
-                 + day   * 60.D0 * 60.D0 * 24.D0                 &
-                 + hour  * 60.D0 * 60.D0                         &
-                 + min   * 60.D0                                 &
-                 + sec
-
-    return
-  end subroutine MISC_ymdhms2sec
 
   !-----------------------------------------------------------------------------
   !>
@@ -905,188 +696,6 @@ contains
             trim(namelist_name),' CHECK!!'
     endif
   end subroutine MISC_msg_nmerror
-  !-----------------------------------------------------------------------------
-  !>
-  !> Description of the function %NAME
-  !> @return
-  !>
-  function MISC_gammafunc( xx ) result(f)
-    implicit none
-    real(8), intent(in) :: xx
-    real(8) :: f
-    real(8) :: coef(6)=(/&
-         +76.18009172947146D0,&
-         -86.50532032941677D0,&
-         +24.01409824083091D0,&
-         -1.231739572450155D0,&
-         +0.1208650973866179D-2,&
-         -0.5395239384953D-5&
-         /)
-    integer :: j
-    real(8) :: x,y,tmp,ser
-
-    x=xx
-    y=x
-    tmp=x+5.5D0
-    tmp = tmp - (x+0.5)*log(tmp)
-    ser=1.000000000190015D0
-    do j=1,6
-       y=y+1
-       ser = ser+coef(j)/y
-    enddo
-    f = exp(-tmp+log(2.5066282746310005D0*ser/x))
-  end function MISC_gammafunc
-  !-----------------------------------------------------------------------------
-  ![Add] T.Mitsui 08/04/12
-  !>
-  !> Section 6.2 in "Numerical Recipes in C"
-  !> function is represented by(6.2.1)
-  !> g(x,alpha)=1/gamma(alpha)*integral_0^x { exp(-t) * t^(alpha-1) }dt
-  !> g(0)=0 and g(+infinity)=1
-  !> @return g
-  !>
-  function MISC_igammafunc( x, alpha, nm ) result(g)
-    implicit none
-
-    real(8), intent(in) :: x
-    real(8), intent(in) :: alpha
-
-    real(8), intent(in), optional :: nm ! nmax
-    real(8) :: g
-
-    real(8), parameter :: eps=1.D-30
-    real(8) :: a,b,c,d,h,an,del
-    real(8) :: gm, lgm
-
-    integer :: nmax, n
-    !---------------------------------------------------------------------------
-
-    gm  = MISC_gammafunc(alpha)
-    lgm = log(gm)
-
-    if ( x < alpha + 1.D0 )then ! series expansion (6.2.5)
-
-       if ( present(nm) ) then
-          nmax = int(nm)
-       else
-          ! nmax=10 is enough to represent Droplet Size Distribution
-          ! relative error is below 1% arround local maximum(x=alpha-1)
-          nmax = 10
-       endif
-
-       a = 1.D0 / alpha
-       g = a
-
-       do n = 1, nmax
-          a = a*x/(alpha+n)
-          g = g+a
-       enddo
-       g = g*exp( -x + alpha*log(x) - lgm )
-
-    else ! continued fraction expansion (6.2.6)
-
-       if ( present(nm) ) then
-          nmax = int(nm)
-       else
-          ! nmax=2 is enough to represent Droplet Size Distribution
-          ! relative error is below 1% arround local maximum(x=alpha-1)
-          nmax = 2
-       endif
-
-       b = x+1.d0-alpha
-       c = 1.d0/eps
-       d = 1.d0/b
-       h=d
-       do n=1, nmax
-          an = -n*(n-alpha)
-          b  = b + 2.d0
-          d  = an*d+b
-          if(abs(d)<eps) d=eps
-          c  = b+an/c
-          if(abs(c)<eps) c=eps
-          d  = 1.d0/d
-          del= d*c
-          h  = h*del
-       enddo
-       g = 1.d0 - exp( -x+alpha*log(x) - lgm )*h
-    endif
-
-    return
-  end function MISC_igammafunc
-
-  !-----------------------------------------------------------------------------
-  ![Add] T.Mitsui 08/04/12
-  !>
-  !> Description of the function %NAME
-  !> @return
-  !>
-  function MISC_iigammafunc( p, alpha ) result(x)
-    ! p = MISC_igammafunc( x, alpha, nm )
-    ! Didonato and Morris, 1986,
-    ! Computation of the Incomplete Gamma Function Ratios and their Inverse,
-    ! ACM Transactions on Mathmatical Software, Vol.12, No.4,
-    !
-    implicit none
-    !
-    real(8), intent(in) :: alpha  !
-    real(8), intent(in) :: p      !
-    real(8) :: x
-    !
-    real(8) :: s,s2,s3,s4,s5
-    real(8) :: t,t2,t3,t4
-    real(8) :: tau
-    real(8) :: m
-    real(8) :: a_n, a_d
-    real(8) :: sa ! sqrt(alpha)
-    !
-    real(8), parameter :: a0=3.31125922108741d0
-    real(8), parameter :: a1=11.6616720288968d0
-    real(8), parameter :: a2=4.28342155967104d0
-    real(8), parameter :: a3=0.213623493715853d0
-    real(8), parameter :: b1=6.61053765625462d0
-    real(8), parameter :: b2=6.40691597760039d0
-    real(8), parameter :: b3=1.27364489782223d0
-    real(8), parameter :: b4=0.361170810188420d-1
-    !
-    real(8), parameter :: eps = 1.d-10
-    !
-    if(alpha < 1.d0)then
-       write(*,*) "Invalid parameter, alpha=",alpha
-       write(*,*) "This routine does not support."
-       return
-    endif
-    if( (alpha > 1.d0-eps) .and. (alpha < 1.d0+eps) )then ! alpha = 1
-       x = -log(1.d0 - p)
-       return
-    endif
-    !
-    if(p>=0.5d0)then
-       m  = 1.d0
-       tau= 1.d0-p
-    else
-       m  =-1.d0
-       tau= p
-    endif
-    t    = sqrt(-2.d0*log(tau))
-    t2   = t*t
-    t3   = t2*t
-    t4   = t2*t2
-    a_n  = a0   + a1*t + a2*t2 + a3*t3
-    a_d  = 1.d0 + b1*t + b2*t2 + b3*t3 + b4*t4
-    s    = m*(t-a_n/a_d) !(32)
-    !
-    s2   = s*s
-    s3   = s*s2
-    s4   = s2*s2
-    s5   = s3*s2
-    sa   = sqrt(alpha)
-    !
-    x    = alpha + s*sa + (s2-1.d0)/3.d0 + (s3 - 7.d0*s)/(36.d0*sa) &
-         - (3.d0*s4 + 7.d0*s2 - 16.d0)/(810.d0*alpha)               &
-         + (9.d0*s5 + 256.d0*s3 - 433.d0*s)/(38880.d0*alpha*sa)
-    !
-    return
-  end function MISC_iigammafunc
 
   !-----------------------------------------------------------------------------
   subroutine MISC_3dvec_cross( nv, a, b, c, d )
@@ -1104,6 +713,7 @@ contains
     nv(3) = ( b(1)-a(1) ) * ( d(2)-c(2) ) &
           - ( b(2)-a(2) ) * ( d(1)-c(1) )
 
+    return
   end subroutine MISC_3dvec_cross
 
   !-----------------------------------------------------------------------------
@@ -1120,6 +730,7 @@ contains
       + ( b(2)-a(2) ) * ( d(2)-c(2) ) &
       + ( b(3)-a(3) ) * ( d(3)-c(3) ) 
 
+    return
   end subroutine MISC_3dvec_dot
 
   !-----------------------------------------------------------------------------
@@ -1134,6 +745,7 @@ contains
     l = a(1)*a(1) + a(2)*a(2) + a(3)*a(3)
     l = sqrt(l)
 
+    return
   end subroutine MISC_3dvec_abs
 
   !---------------------------------------------------------------------
@@ -1413,8 +1025,41 @@ contains
     return
   end subroutine MISC_get_cartesian
 
+  !-----------------------------------------------------------------------
+  ! Get horizontal distance on the sphere
+  !  2008/09/10 [Add] M.Hara
+  !  The formuation is Vincentry (1975)
+  !  http://www.ngs.noaa.gov/PUBS_LIB/inverse.pdf
+  !  2012/11/07 [Mod] H.Yashiro
+  subroutine MISC_get_distance( &
+       r,    &
+       lon1, &
+       lat1, &
+       lon2, &
+       lat2, &
+       dist  )
+    implicit none
+
+    real(8), intent(in)  :: r          ! radius in meter
+    real(8), intent(in)  :: lon1, lat1 ! in radian
+    real(8), intent(in)  :: lon2, lat2 ! in radian
+    real(8), intent(out) :: dist       ! distance of the two points in meter
+
+    real(8) :: gmm, gno_x, gno_y
+    !-----------------------------------------------------------------------
+
+    gmm = sin(lat1) * sin(lat2) &
+        + cos(lat1) * cos(lat2) * cos(lon2-lon1)
+
+    gno_x = gmm * ( cos(lat2) * sin(lon2-lon1) )
+    gno_y = gmm * ( cos(lat1) * sin(lat2) &
+                  - sin(lat1) * cos(lat2) * cos(lon2-lon1) )
+
+    dist = r * atan2( sqrt(gno_x*gno_x+gno_y*gno_y), gmm )
+
+    return
+  end subroutine MISC_get_distance
+
   !-----------------------------------------------------------------------------
 end module mod_misc
 !-------------------------------------------------------------------------------
-
-

@@ -170,7 +170,6 @@ module mod_runconf
   !--- Location of numerical filtering
   character(len=ADM_NSYS), public, save :: NDIFF_LOCATION = 'IN_LARGE_STEP'
   !                                        'IN_LARGE_STEP'  : insert in  the large step
-  !                                        'OUT_LARGE_STEP' : insert out the large step
 
   !--- Number of division of numerical filtering at the out large step
   ! Note: this number is used only at a large diffusion
@@ -206,7 +205,6 @@ module mod_runconf
 
   !--- Tracer advection scheme
   character(len=ADM_NSYS), public, save :: TRC_ADV_TYPE = 'MIURA2004'    ! Y.Niwa 080124
-  !                                                       'MIURA2004OLD'
   !                                                       'DEFAULT'
 
   !--- negative fixer of water contents
