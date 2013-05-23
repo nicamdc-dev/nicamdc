@@ -10,7 +10,7 @@ BINNAME=${7}
 RUNCONF=${8}
 
 # System specific
-MPIEXEC="mpirun -np ${TPROC}"
+MPIEXEC="mpirun -np ${NMPI}"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
