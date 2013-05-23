@@ -1936,8 +1936,8 @@ contains
        GRD_ZDIR, &
        GRD_rdgz
     use mod_oprt, only: &
-       oprt_divergence2_prep_rev, &
-       oprt_divergence2_rev
+       oprt_divergence2_prep, &
+       oprt_divergence2
     use mod_advlim_thuburn, only: &
        advlim_thuburn_v
     implicit none
@@ -2255,13 +2255,13 @@ contains
        enddo
     endif
 
-    call OPRT_divergence2_prep_rev( flx_h,     flx_h_pl,     & !--- [OUT]
-                                    cp,        cp_pl,        & !--- [OUT]
-                                    vx_r,      vx_r_pl,      & !--- [IN]
-                                    vy_r,      vy_r_pl,      & !--- [IN]
-                                    vz_r,      vz_r_pl,      & !--- [IN]
-                                    rhog_mean, rhog_mean_pl, & !--- [IN]
-                                    dt                       ) !--- [IN]
+    call oprt_divergence2_prep( flx_h,     flx_h_pl,     & !--- [OUT]
+                                cp,        cp_pl,        & !--- [OUT]
+                                vx_r,      vx_r_pl,      & !--- [IN]
+                                vy_r,      vy_r_pl,      & !--- [IN]
+                                vz_r,      vz_r_pl,      & !--- [IN]
+                                rhog_mean, rhog_mean_pl, & !--- [IN]
+                                dt                       ) !--- [IN]
 
     do l = 1, ADM_lall
        do k = 1, ADM_kall
@@ -2318,13 +2318,13 @@ contains
        endif
 
 
-       call OPRT_divergence2_rev( hdiv,  hdiv_pl,  & !--- [OUT]
-                                  q,     q_pl,     & !--- [IN]
-                                  flx_h, flx_h_pl, & !--- [IN]
-                                  c,     c_pl,     & !--- [IN]
-                                  cp,    cp_pl,    & !--- [IN]
-                                  d,     d_pl,     & !--- [IN]
-                                  dt               ) !--- [IN]
+       call oprt_divergence2( hdiv,  hdiv_pl,  & !--- [OUT]
+                              q,     q_pl,     & !--- [IN]
+                              flx_h, flx_h_pl, & !--- [IN]
+                              c,     c_pl,     & !--- [IN]
+                              cp,    cp_pl,    & !--- [IN]
+                              d,     d_pl,     & !--- [IN]
+                              dt               ) !--- [IN]
 
        !--- update rhogq
        do l = 1, ADM_lall

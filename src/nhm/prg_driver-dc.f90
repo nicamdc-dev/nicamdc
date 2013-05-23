@@ -113,8 +113,7 @@ program prg_driver
   use mod_ndg, only: &
        ndg_setup
   use mod_dynstep, only : &
-       dynstep, &
-       dynstep2
+       dynstep
   use mod_history, only: &
        history_setup, &
        history_out,   &
@@ -226,7 +225,6 @@ program prg_driver
      call DEBUG_rapstart('Dynamics')
      call dynstep
      call forcing
-     call dynstep2
      call DEBUG_rapend('Dynamics')
 
      call DEBUG_rapstart('History & Monitor')

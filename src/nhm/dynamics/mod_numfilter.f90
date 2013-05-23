@@ -1617,8 +1617,7 @@ contains
     !---------------------------------------------------------------------------
     ! 08/04/12 [Mod] T.Mitsui, hyper diffusion is needless for tracer if MIURA2004
     !                          because that is upwind-type advection(already diffusive)
-    if (       TRC_ADV_TYPE /= 'MIURA2004'    &
-         .AND. TRC_ADV_TYPE /= 'MIURA2004OLD' ) then 
+    if ( TRC_ADV_TYPE /= 'MIURA2004' ) then 
 
        qtmp   (:,:,:,:) = q   (:,:,:,:)
        qtmp_pl(:,:,:,:) = q_pl(:,:,:,:)
