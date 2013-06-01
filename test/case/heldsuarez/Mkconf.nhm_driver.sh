@@ -33,8 +33,8 @@ DIFCF=${10:-1.29D16}
 NHIST=${11:-0}
 
 if [ ${LSMAX} == 0 ]; then
-   # 300day
-   let LSMAX=" 300 * 24 * 60 * 60 / ${DTL} "
+   # 1000day
+   let LSMAX=" 1000 * 24 * 60 * 60 / ${DTL} "
 fi
 
 if [ ${NHIST} == 0 ]; then
@@ -74,9 +74,9 @@ cat << EOFNHM > ${BINNAME}.cnf
 ###--- for FULL RUN (1300 days): LSTEP_MAX = 93600
 &TIMEPARAM
     DTL         = ${DTL}.D0,
-    INTEG_TYPE  = "RK2",
+    INTEG_TYPE  = "RK3",
     LSTEP_MAX   = ${LSMAX},
-    SSTEP_MAX   = 4,
+    SSTEP_MAX   = 6,
     SPLIT       = .true.,
     start_year  = 1000,
     start_month = 1,
@@ -87,7 +87,7 @@ cat << EOFNHM > ${BINNAME}.cnf
 &RUNCONFPARAM 
     RUN_TYPE       = 'Held-Suarez',
     EIN_TYPE       = 'SIMPLE',
-    NDIFF_LOCATION = 'IN_LARGE_STEP',
+    NDIFF_LOCATION = 'IN_LARGE_STEP2',
     AF_TYPE        = 'HELD-SUAREZ',
 /
 

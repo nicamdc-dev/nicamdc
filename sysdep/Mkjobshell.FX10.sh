@@ -66,9 +66,12 @@ cat << EOF1 > run.sh
 ################################################################################
 #PJM --rsc-list "rscgrp=${rscgrp}"
 #PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=02:00:00"
+#PJM --rsc-list "elapse=05:00:00"
 #PJM -j
 #PJM -s
+#
+. /work/system/Env_base
+#
 export PARALLEL=8
 export OMP_NUM_THREADS=8
 
@@ -100,9 +103,12 @@ cat << EOFICO2LL1 > ico2ll.sh
 ################################################################################
 #PJM --rsc-list "rscgrp=${rscgrp}"
 #PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=02:00:00"
+#PJM --rsc-list "elapse=01:00:00"
 #PJM -j
 #PJM -s
+#
+. /work/system/Env_base
+#
 export PARALLEL=8
 export OMP_NUM_THREADS=8
 

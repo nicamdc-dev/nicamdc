@@ -74,9 +74,9 @@ cat << EOFNHM > ${BINNAME}.cnf
 ###--- for FULL RUN (11 days): LSTEP_MAX = 792
 &TIMEPARAM
     DTL         = ${DTL}.D0,
-    INTEG_TYPE  = "RK2",
+    INTEG_TYPE  = "RK3",
     LSTEP_MAX   = ${LSMAX},
-    SSTEP_MAX   = 4,
+    SSTEP_MAX   = 6,
     SPLIT       = .true.,
     start_year  = 1000,
     start_month = 1,
@@ -87,7 +87,7 @@ cat << EOFNHM > ${BINNAME}.cnf
 &RUNCONFPARAM 
     RUN_TYPE       = 'Jablonowski',
     EIN_TYPE       = 'SIMPLE',
-    NDIFF_LOCATION = 'IN_LARGE_STEP',
+    NDIFF_LOCATION = 'IN_LARGE_STEP2',
     AF_TYPE        = 'NONE',
 /
 

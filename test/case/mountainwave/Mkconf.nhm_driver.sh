@@ -79,9 +79,9 @@ cat << EOFNHM > ${BINNAME}.cnf
 ###--- for FULL RUN (11 days): LSTEP_MAX = 792
 &TIMEPARAM
     DTL         = ${DTL}.D0,
-    INTEG_TYPE  = "RK2",
+    INTEG_TYPE  = "RK3",
     LSTEP_MAX   = ${LSMAX},
-    SSTEP_MAX   = 4,
+    SSTEP_MAX   = 6,
     SPLIT       = .true.,
     start_year  = 1000,
     start_month = 1,
