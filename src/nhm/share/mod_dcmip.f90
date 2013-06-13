@@ -1341,6 +1341,7 @@ IMPLICIT NONE
 
 END SUBROUTINE test3_gravity_wave
 !
-!end module mod_dcmip
+!
+end module mod_dcmip
 
 
