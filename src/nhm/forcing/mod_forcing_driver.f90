@@ -28,7 +28,7 @@ module mod_forcing_driver
   !
   public :: forcing_init
   public :: forcing
-
+  public :: updating
   !-----------------------------------------------------------------------------
   !
   !++ Public parameters & variables
@@ -40,6 +40,18 @@ module mod_forcing_driver
   !-----------------------------------------------------------------------------
   !
   !++ Private parameters & variables
+  !
+  integer, private, parameter :: I_RHOG     = 1 ! Density x G^{1/2} x gamma^2
+  integer, private, parameter :: I_RHOGVX   = 2 ! Density x G^{1/2} x gamma^2 x Horizontal velocity (X-direction)
+  integer, private, parameter :: I_RHOGVY   = 3 ! Density x G^{1/2} x gamma^2 x Horizontal velocity (Y-direction)
+  integer, private, parameter :: I_RHOGVZ   = 4 ! Density x G^{1/2} x gamma^2 x Horizontal velocity (Z-direction)
+  integer, private, parameter :: I_RHOGW    = 5 ! Density x G^{1/2} x gamma^2 x Vertical   velocity
+  integer, private, parameter :: I_RHOGE    = 6 ! Density x G^{1/2} x gamma^2 x Internal Energy
+  integer, private, parameter :: I_RHOGETOT = 7 ! Density x G^{1/2} x gamma^2 x Total Energy
+  !
+  integer, private, parameter :: nmax_TEND     = 7
+  integer, private, parameter :: nmax_PROG     = 6
+  integer, private, parameter :: nmax_v_mean_c = 5
   !
   !-----------------------------------------------------------------------------
 contains
@@ -244,5 +256,151 @@ contains
     return
   end subroutine forcing
 
+  ! [add; original by H.Miura] 20130613 R.Yoshida
+  !-----------------------------------------------------------------------------
+  subroutine updating( &
+       PROG0, PROG0_pl,  &  !--- IN : prognostic variables for save
+       PROG,  PROG_pl    &  !--- INOUT : prognostic variables for update
+       )
+       !
+    use mod_adm, only: &
+       ADM_prc_me,  &
+       ADM_prc_pl,  &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_kall,    &
+       ADM_gall_1d, &
+       ADM_gmax,    &
+       ADM_gmin,    &
+       ADM_kmax,    &
+       ADM_kmin,    &
+       ADM_log_fid, &  ! R.Yoshida 13/06/12 [add]
+       ADM_proc_stop   ! R.Yoshida 13/06/12 [add]
+    use mod_time, only:  &
+       TIME_DTL
+    use mod_grd, only: &
+       GRD_x,    &
+       GRD_x_pl, &
+       GRD_vz,   &
+       GRD_vz_pl
+    use mod_gmtr, only: &
+       GMTR_lon,    &
+       GMTR_lon_pl, &
+       GMTR_lat,    &
+       GMTR_lat_pl
+    use mod_runconf, only: &
+       RUN_TYPE,       & ! R.Yoshida 13/06/13 [add]
+       TRC_VMAX,       &
+       TRC_ADV_TYPE
+    use mod_af_trcadv, only: & ![add] 20130612 R.Yoshida
+       test11_velocity,  &
+       test12_velocity
+    implicit none
+    !--- prognostic variables (save)
+    real(8), intent(in) :: PROG0     (ADM_gall,   ADM_kall,ADM_lall,   nmax_PROG)
+    real(8), intent(in) :: PROG0_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_PROG)
+    !--- prognostic variables
+    real(8), intent(inout) :: PROG      (ADM_gall,   ADM_kall,ADM_lall,   nmax_PROG)
+    real(8), intent(inout) :: PROG_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_PROG)
+
+    !--- horizontal velocity_x  ( physical )
+    real(8) :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8) :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+
+    !--- horizontal velocity_y  ( physical )
+    real(8) :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8) :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+
+    !--- horizontal velocity_z  ( physical )
+    real(8) :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8) :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+
+    !--- vertical velocity ( physical )
+    real(8) :: w   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8) :: w_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+
+    !--- density deviation from the base state ( G^{1/2} X gamma2 )
+    real(8) :: rhogd   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8) :: rhogd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+
+    integer :: ij, k ,l
+
+    ! for tracer advection test  [add; original by H.Miura] 20130612 R.Yoshida
+    real(8), save :: time=0.d0
+
+
+    !--- reset density
+    rhogd(:,:,:)    = PROG0(:,:,:,I_rhog)
+    rhogd_pl(:,:,:) = PROG0_pl(:,:,:,I_rhog)
+
+    !--- update velocity
+    time=time+TIME_DTL
+    vx=0.d0; vx_pl=0.d0
+    vy=0.d0; vy_pl=0.d0
+    vz=0.d0; vz_pl=0.d0
+    w=0.d0
+
+    select case (RUN_TYPE)
+    !------------------------------------------------------------------------
+    case ("TRCADV-1") 
+       do l=1,ADM_lall
+       do k=ADM_kmin-1,ADM_kmax+1
+          ! full (1): u,v
+          ! half (2): w
+          do ij=1,ADM_gall
+             call test11_velocity (time,GMTR_lon(ij,l),GMTR_lat(ij,l),GRD_vz(ij,k,l,1),GRD_vz(ij,k,l,2), &
+                                   vx(ij,k,l),vy(ij,k,l),vz(ij,k,l),w(ij,k,l))
+          end do
+       end do
+       end do
+
+       if(ADM_prc_me==ADM_prc_pl) then
+          do l=1,ADM_lall_pl
+          do k=ADM_kmin-1,ADM_kmax+1
+          do ij=1,ADM_GALL_PL
+             call test11_velocity (time,GMTR_lon_pl(ij,l),GMTR_lat_pl(ij,l),GRD_vz_pl(ij,k,l,1),GRD_vz_pl(ij,k,l,2), &
+                                   vx_pl(ij,k,l),vy_pl(ij,k,l),vz_pl(ij,k,l),w_pl(ij,k,l)) 
+          end do
+          end do
+          end do
+       end if
+
+    !------------------------------------------------------------------------
+    case ("TRCADV-2")
+       do l=1,ADM_lall
+       do k=ADM_kmin-1,ADM_kmax+1
+          ! full (1): u,v
+          ! half (2): w
+          do ij=1,ADM_gall
+             call test12_velocity (time,GMTR_lon(ij,l),GMTR_lat(ij,l),GRD_vz(ij,k,l,1),GRD_vz(ij,k,l,2), &
+                                   vx(ij,k,l),vy(ij,k,l),vz(ij,k,l),w(ij,k,l))
+          end do
+       end do
+       end do
+
+       if(ADM_prc_me==ADM_prc_pl) then
+          do l=1,ADM_lall_pl
+          do k=ADM_kmin-1,ADM_kmax+1
+          do ij=1,ADM_GALL_PL
+             call test12_velocity (time,GMTR_lon_pl(ij,l),GMTR_lat_pl(ij,l),GRD_vz_pl(ij,k,l,1),GRD_vz_pl(ij,k,l,2), &
+                                   vx_pl(ij,k,l),vy_pl(ij,k,l),vz_pl(ij,k,l),w_pl(ij,k,l)) 
+          end do
+          end do
+          end do
+       end if
+
+    !------------------------------------------------------------------------
+    end select
+    !
+    PROG(:,:,:,I_RHOGVX)=vx(:,:,:)*rhogd(:,:,:); PROG_pl(:,:,:,I_RHOGVX)=vx_pl(:,:,:)*rhogd_pl(:,:,:)
+    PROG(:,:,:,I_RHOGVY)=vy(:,:,:)*rhogd(:,:,:); PROG_pl(:,:,:,I_RHOGVY)=vy_pl(:,:,:)*rhogd_pl(:,:,:)
+    PROG(:,:,:,I_RHOGVZ)=vz(:,:,:)*rhogd(:,:,:); PROG_pl(:,:,:,I_RHOGVZ)=vz_pl(:,:,:)*rhogd_pl(:,:,:)
+    PROG(:,:,:,I_RHOGW) =w(:,:,:) *rhogd(:,:,:); PROG_pl(:,:,:,I_RHOGW) =w_pl(:,:,:) *rhogd_pl(:,:,:)
+    !
+    return
+  end subroutine updating
+  !
 end module mod_forcing_driver
 !-------------------------------------------------------------------------------
