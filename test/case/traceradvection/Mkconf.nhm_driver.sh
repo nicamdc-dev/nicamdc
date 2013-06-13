@@ -74,7 +74,7 @@ cat << EOFNHM > ${BINNAME}.cnf
 ###--- for FULL RUN (11 days): LSTEP_MAX = 792
 &TIMEPARAM
     DTL         = ${DTL}.D0,
-    INTEG_TYPE  = "RK3",
+    INTEG_TYPE  = "TRCADV",
     LSTEP_MAX   = ${LSMAX},
     SSTEP_MAX   = 6,
     SPLIT       = .true.,
@@ -85,7 +85,7 @@ cat << EOFNHM > ${BINNAME}.cnf
 
 ###--- SET RUN TYPE
 &RUNCONFPARAM 
-    RUN_TYPE       = 'Tracer-Advection',
+    RUN_TYPE       = 'TRCADV-1',
     EIN_TYPE       = 'SIMPLE',
     NDIFF_LOCATION = 'IN_LARGE_STEP',
     AF_TYPE        = 'NONE',
@@ -124,6 +124,7 @@ cat << EOFNHM > ${BINNAME}.cnf
 
 &DYCORETESTPARAM
     init_type = 'Traceradvection',
+    test_case = '1'
 /
 
 &EMBUDGETPARAM MNT_ON = .true., MNT_INTV = ${NHIST} /
@@ -142,10 +143,13 @@ cat << EOFNHM > ${BINNAME}.cnf
 &NMHIST item='ml_u',     file='u',   ktype='3D' /
 &NMHIST item='ml_v',     file='v',   ktype='3D' /
 &NMHIST item='ml_w',     file='w',   ktype='3D' /
-&NMHIST item='ml_pres',  file='prs', ktype='3D' /
-&NMHIST item='ml_tem',   file='t',   ktype='3D' /
-&NMHIST item='sl_ps',    file='ps',  ktype='2D' /
-&NMHIST item='ml_passive1', file='passive1', ktype='3D' /
+#&NMHIST item='ml_pres',  file='prs', ktype='3D' /
+#&NMHIST item='ml_tem',   file='t',   ktype='3D' /
+#&NMHIST item='sl_ps',    file='ps',  ktype='2D' /
+&NMHIST item='ml_pasv1', file='pasv1', ktype='3D' /
+&NMHIST item='ml_pasv2', file='pasv2', ktype='3D' /
+&NMHIST item='ml_pasv3', file='pasv3', ktype='3D' /
+&NMHIST item='ml_pasv4', file='pasv4', ktype='3D' /
 
 ################################################################################
 EOFNHM

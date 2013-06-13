@@ -43,6 +43,7 @@ module mod_dynstep
   !                12-04-06   T.yamaura: optimized for K
   !                12-05-30   T.Yashiro: Change arguments from character to index/switch
   !                12-10-22   R.Yoshida  : add papi instructions
+  !                13-06-13   R.Yoshida  : add tracer advection mode
   !      -----------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------------
@@ -95,7 +96,9 @@ contains
        ADM_gmax,    &
        ADM_gmin,    &
        ADM_kmax,    &
-       ADM_kmin
+       ADM_kmin,    &
+       ADM_log_fid, &  ! R.Yoshida 13/06/13 [add]
+       ADM_proc_stop   ! R.Yoshida 13/06/13 [add]
     use mod_cnst, only: &
        CNST_RAIR, &
        CNST_RVAP, &
@@ -174,6 +177,8 @@ contains
        ndg_update_var
     use mod_tb_smg, only: & ! [add] 10/11/29 A.Noda
        tb_smg_driver
+    use mod_forcing_driver, only: &
+       updating          ! R.Yoshida 13/06/13 [add]
     implicit none
 
     integer, parameter :: nmax_TEND   = 7
@@ -305,12 +310,16 @@ contains
           num_of_iteration_sstep(1) = TIME_SSTEP_MAX / 3
           num_of_iteration_sstep(2) = TIME_SSTEP_MAX / 2
           num_of_iteration_sstep(3) = TIME_SSTEP_MAX
-        case('RK4')
+       case('RK4')
           num_of_iteration_lstep = 4
           num_of_iteration_sstep(1) = TIME_SSTEP_MAX/4
           num_of_iteration_sstep(2) = TIME_SSTEP_MAX/3
           num_of_iteration_sstep(3) = TIME_SSTEP_MAX/2
           num_of_iteration_sstep(4) = TIME_SSTEP_MAX
+       case('TRCADV')  ! R.Yoshida 13/06/13 [add]
+          num_of_iteration_lstep = 1
+          num_of_iteration_sstep(1) = 1
+          num_of_iteration_sstep(2) = 1
        case default
           write(*,*) 'Msg : Sub[sub_dynstep]'
           write(*,*) ' --- Error : invalid TIME_INTEG_TYPE=', TIME_INTEG_TYPE
@@ -332,6 +341,11 @@ contains
     PROG0_pl(:,:,:,:) = PROG_pl(:,:,:,:)
 
     if ( TRC_ADV_TYPE == 'DEFAULT' ) then
+       if ( trim(TIME_INTEG_TYPE) == 'TRCADV' ) then
+          write(ADM_LOG_FID,*) 'Tracer Advection Test Mode'
+          write(ADM_LOG_FID,*) 'does not support current setting. STOP.'
+          call ADM_proc_stop
+       endif
        PROGq0   (:,:,:,:) = PROGq   (:,:,:,:)
        PROGq0_pl(:,:,:,:) = PROGq_pl(:,:,:,:)
     endif
@@ -342,6 +356,8 @@ contains
     !
     !---------------------------------------------------------------------------
     do nl = 1, num_of_iteration_lstep
+
+       if ( trim(TIME_INTEG_TYPE) /= 'TRCADV' ) then  ! TRC-ADV Test Bifurcation
 
        !---< Generate diagnostic values and set the boudary conditions
        rho(:,:,:) = PROG(:,:,:,I_RHOG  ) / VMTR_GSGAM2(:,:,:)
@@ -747,6 +763,19 @@ contains
                            small_step_ite,                                            & !--- [IN]
                            small_step_dt                                              ) !--- [IN]
 
+
+       else  ! TRC-ADV Test Bifurcation
+
+          !--- Make v_mean_c  ![add] 20130613 R.Yoshida
+          !--- save point(old) is mean here (although it is not exactly valid for rho)
+          v_mean_c(:,:,:,I_rhog)  = PROG0(:,:,:,I_rhog);   v_mean_c_pl(:,:,:,I_rhog)  = PROG0_pl(:,:,:,I_rhog)
+          v_mean_c(:,:,:,I_rhogvx)= PROG0(:,:,:,I_rhogvx); v_mean_c_pl(:,:,:,I_rhogvx)= PROG0_pl(:,:,:,I_rhogvx)
+          v_mean_c(:,:,:,I_rhogvy)= PROG0(:,:,:,I_rhogvy); v_mean_c_pl(:,:,:,I_rhogvy)= PROG0_pl(:,:,:,I_rhogvy)
+          v_mean_c(:,:,:,I_rhogvz)= PROG0(:,:,:,I_rhogvz); v_mean_c_pl(:,:,:,I_rhogvz)= PROG0_pl(:,:,:,I_rhogvz)
+          v_mean_c(:,:,:,I_rhogw) = PROG0(:,:,:,I_rhogw);  v_mean_c_pl(:,:,:,I_rhogw) = PROG0_pl(:,:,:,I_rhogw)
+
+       endif  ! TRC-ADV Test Bifurcation
+
        !------------------------------------------------------------------------
        !>  Tracer advection
        !------------------------------------------------------------------------
@@ -765,13 +794,15 @@ contains
                                      f_TEND (:,:,:,I_RHOG),    f_TEND_pl (:,:,:,I_RHOG),    & !--- [IN]
                                      TIME_DTL                                               ) !--- [IN]
 
-             PROGq(:,:,:,:) = PROGq(:,:,:,:) + TIME_DTL * f_TENDq(:,:,:,:) ! update rhogq by viscosity
+             if (trim(TIME_INTEG_TYPE) /= 'TRCADV') PROGq(:,:,:,:) =   &
+                                                     PROGq(:,:,:,:) + TIME_DTL * f_TENDq(:,:,:,:) ! update rhogq by viscosity
 
              PROGq(:,ADM_kmin-1,:,:) = 0.D0
              PROGq(:,ADM_kmax+1,:,:) = 0.D0
 
              if ( ADM_prc_pl == ADM_prc_me ) then
-                PROGq_pl(:,:,:,:) = PROGq_pl(:,:,:,:) + TIME_DTL * f_TENDq_pl(:,:,:,:)
+                if (trim(TIME_INTEG_TYPE) /= 'TRCADV') PROGq_pl(:,:,:,:) = &
+                                                        PROGq_pl(:,:,:,:) + TIME_DTL * f_TENDq_pl(:,:,:,:)
 
                 PROGq_pl(:,ADM_kmin-1,:,:) = 0.D0
                 PROGq_pl(:,ADM_kmax+1,:,:) = 0.D0
@@ -783,6 +814,7 @@ contains
           endif ! Last large step only
 
        elseif( TRC_ADV_TYPE == 'DEFAULT' ) then
+          !This scheme isn't supported in TRC-ADV Test  (20130612 R.Yoshida)
 
           do nq = 1, TRC_VMAX
 
@@ -812,6 +844,9 @@ contains
           enddo ! tracer LOOP
 
        endif
+
+
+       if ( trim(TIME_INTEG_TYPE) /= 'TRCADV' ) then  ! TRC-ADV Test Bifurcation
 
        !--- TKE fixer ( TKE >= 0.D0 )
        ! 2011/08/16 M.Satoh [comment] need this fixer for every small time steps
@@ -857,7 +892,14 @@ contains
           PROG(suf(1,ADM_gall_1d),:,:,:) = PROG(suf(ADM_gmin,ADM_gmax+1),:,:,:)
        endif
 
+       endif  ! TRC-ADV Test Bifurcation
+
     enddo !--- large step 
+
+    if ( trim(TIME_INTEG_TYPE) == 'TRCADV' ) then
+       call updating( PROG0(:,:,:,:),  PROG0_pl(:,:,:,:),  & !--- [IN]
+                       PROG(:,:,:,:),    PROG_pl(:,:,:,:)   ) !--- [INOUT]
+    endif
 
     call prgvar_set( PROG(:,:,:,I_RHOG),   PROG_pl(:,:,:,I_RHOG),   & !--- [IN]
                      PROG(:,:,:,I_RHOGVX), PROG_pl(:,:,:,I_RHOGVX), & !--- [IN]
