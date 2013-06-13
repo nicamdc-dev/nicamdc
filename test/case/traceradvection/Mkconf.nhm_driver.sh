@@ -146,10 +146,10 @@ cat << EOFNHM > ${BINNAME}.cnf
 #&NMHIST item='ml_pres',  file='prs', ktype='3D' /
 #&NMHIST item='ml_tem',   file='t',   ktype='3D' /
 #&NMHIST item='sl_ps',    file='ps',  ktype='2D' /
-&NMHIST item='ml_pasv1', file='pasv1', ktype='3D' /
-&NMHIST item='ml_pasv2', file='pasv2', ktype='3D' /
-&NMHIST item='ml_pasv3', file='pasv3', ktype='3D' /
-&NMHIST item='ml_pasv4', file='pasv4', ktype='3D' /
+&NMHIST item='ml_passive1', file='pasv1', ktype='3D' /
+&NMHIST item='ml_passive2', file='pasv2', ktype='3D' /
+&NMHIST item='ml_passive3', file='pasv3', ktype='3D' /
+&NMHIST item='ml_passive4', file='pasv4', ktype='3D' /
 
 ################################################################################
 EOFNHM
