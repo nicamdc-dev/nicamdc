@@ -140,7 +140,8 @@ contains
        TRC_ADV_TYPE,   &
        FLAG_NUDGING,   & ! Y.Niwa add 08/09/09
        CP_TYPE,        & ! 2010.5.11 M.Satoh [add]
-       TB_TYPE           ! [add] 10/11/29 A.Noda
+       TB_TYPE,        & ! [add] 10/11/29 A.Noda
+       THUBURN_LIM       ! R.Yoshida 13/06/13 [add]
     use mod_bsstate, only: &
        pre_bs, pre_bs_pl, &
        tem_bs, tem_bs_pl, &
@@ -792,7 +793,8 @@ contains
                                      v_mean_c(:,:,:,I_rhogvz), v_mean_c_pl(:,:,:,I_rhogvz), & !--- [IN]
                                      v_mean_c(:,:,:,I_rhogw),  v_mean_c_pl(:,:,:,I_rhogw),  & !--- [IN]
                                      f_TEND (:,:,:,I_RHOG),    f_TEND_pl (:,:,:,I_RHOG),    & !--- [IN]
-                                     TIME_DTL                                               ) !--- [IN]
+                                     TIME_DTL,                                              & !--- [IN]
+                                     THUBURN_LIM                                            ) !--- [IN]  ![add] 20130613 R.Yoshida
 
              if (trim(TIME_INTEG_TYPE) /= 'TRCADV') PROGq(:,:,:,:) =   &
                                                      PROGq(:,:,:,:) + TIME_DTL * f_TENDq(:,:,:,:) ! update rhogq by viscosity
