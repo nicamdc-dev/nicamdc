@@ -1896,7 +1896,8 @@ contains
        rhogvz_mean, rhogvz_mean_pl, & !--- IN    : rho*Vz  ( gam2 X G^{1/2} )
        rhogw_mean,  rhogw_mean_pl,  & !--- IN    : rho*w   ( gam2 X G^{1/2} )
        frhog,       frhog_pl,       & !--- IN    : hyperviscosity tendency for rhog
-       dt                           ) !--- IN    : delta t
+       dt,                          & !--- IN    : delta t
+       thubern_lim                  ) !--- IN    : switch of thubern limiter
     use mod_adm, only :  &
          ADM_gall,       &
          ADM_gmin,       &
@@ -1961,6 +1962,8 @@ contains
     real(8), intent(in)    :: frhog_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     real(8), intent(in)    :: dt
+
+    logical, intent(in)    :: thubern_lim  ![add] 20130613 R.Yoshida
 
     real(8) :: rhog    (ADM_gall,   ADM_kall,ADM_lall   )
     real(8) :: rhog_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -2151,10 +2154,11 @@ contains
           enddo
        endif
 
-       call advlim_thuburn_v( q_h, q_h_pl, & !--- [INOUT]
-                              q,   q_pl,   & !--- [IN]
-                              ck,  ck_pl,  & !--- [IN]
-                              d,   d_pl    ) !--- [IN]
+       ! [mod] 20130613 R.Yoshida
+       if (thubern_lim) call advlim_thuburn_v( q_h, q_h_pl, & !--- [INOUT]
+                                             q,   q_pl,   & !--- [IN]
+                                             ck,  ck_pl,  & !--- [IN]
+                                             d,   d_pl    ) !--- [IN]
 
        !--- update rhogq
        do l = 1, ADM_lall
@@ -2496,10 +2500,11 @@ contains
           enddo
        endif
 
-       call advlim_thuburn_v( q_h, q_h_pl, & !--- [INOUT]
-                              q,   q_pl,   & !--- [IN]
-                              ck,  ck_pl,  & !--- [IN]
-                              d,   d_pl    ) !--- [IN]
+       ! [mod] 20130613 R.Yoshida
+       if (thubern_lim) call advlim_thuburn_v( q_h, q_h_pl, & !--- [INOUT]
+                                             q,   q_pl,   & !--- [IN]
+                                             ck,  ck_pl,  & !--- [IN]
+                                             d,   d_pl    ) !--- [IN]
 
        !--- update rhogq
        do l = 1, ADM_lall
