@@ -97,6 +97,7 @@ module mod_history_vars
   logical, private, save :: out_tem_atm   = .false.
   logical, private, save :: out_albedo    = .false.
   logical, private, save :: out_slp       = .false.
+  logical, private, save :: out_850hPa    = .false.
   logical, private, save :: out_cape_cin  = .false.
 
   !-----------------------------------------------------------------------------
@@ -138,6 +139,11 @@ contains
            .OR. item_save(n) == 'sl_v10m'            &
            .OR. item_save(n) == 'sl_ucos10m'         &
            .OR. item_save(n) == 'sl_vcos10m'         ) out_10m_uv    = .true.
+
+       if(      item_save(n) == 'sl_u850'            &
+           .OR. item_save(n) == 'sl_v850'            &
+           .OR. item_save(n) == 'sl_w850'            &
+           .OR. item_save(n) == 'sl_t850'            ) out_850hPa    = .true.
 
        if(      item_save(n) == 'sl_slh'             ) out_slh       = .true.
        if(      item_save(n) == 'sl_vap_atm'         ) out_vap_atm   = .true.
@@ -384,6 +390,10 @@ contains
     real(8) :: vz10m(ADM_gall,ADM_KNONE,ADM_lall)
     real(8) :: t2m(ADM_gall,ADM_KNONE,ADM_lall)
     real(8) :: q2m(ADM_gall,ADM_KNONE,ADM_lall)
+    real(8) :: u_850(ADM_gall,ADM_KNONE,ADM_lall)   ! [add] 20130705 R.Yoshida
+    real(8) :: v_850(ADM_gall,ADM_KNONE,ADM_lall)
+    real(8) :: w_850(ADM_gall,ADM_KNONE,ADM_lall)
+    real(8) :: t_850(ADM_gall,ADM_KNONE,ADM_lall)
 
     real(8) :: albedo_sfc(ADM_gall,ADM_KNONE,ADM_lall,1:NRDIR,1:NRBND)
     real(8) :: slp(ADM_gall,ADM_KNONE,ADM_lall)
@@ -643,6 +653,27 @@ contains
        enddo
     endif
 
+    if (out_850hPa) then   ! [add] 20130705 R.Yoshida
+       do l = 1, ADM_lall
+          call sv_plev_uvwt( ADM_gall,              & ! [IN]
+                             pre    (:,:,l),        & ! [IN]
+                             u      (:,:,l),        & ! [IN]
+                             v      (:,:,l),        & ! [IN]
+                             w      (:,:,l),        & ! [IN]
+                             tem    (:,:,l),        & ! [IN]
+                             85000.d0,              & ! [IN]
+                             u_850  (:,K0,l),       & ! [OUT]
+                             v_850  (:,K0,l),       & ! [OUT]
+                             w_850  (:,K0,l),       & ! [OUT]
+                             t_850  (:,K0,l)        ) ! [OUT]
+
+          call history_in( 'sl_u850', u_850(:,:,l) )
+          call history_in( 'sl_v850', v_850(:,:,l) )
+          call history_in( 'sl_w850', w_850(:,:,l) )
+          call history_in( 'sl_t850', t_850(:,:,l) )
+       enddo
+    endif
+
     if (out_tau_uv) then
        do l = 1, ADM_lall
           dummy2D(:,K0,l) = taux(:,K0,l) * GMTR_P_var(:,K0,l,GMTR_P_IX) &
@@ -787,6 +818,67 @@ contains
 
     return
   end subroutine sv_pre_sfc
+
+  subroutine sv_plev_uvwt( &   ! [add] 20130705 R.Yoshida
+       ijdim,   &
+       pre,     &
+       u_z,     &
+       v_z,     &
+       w_z,     &
+       t_z,     &
+       plev,    &
+       u_p,     &
+       v_p,     &
+       w_p,     &
+       t_p      )
+    use mod_adm, only :  &
+       kdim => ADM_kall,    &
+       kmin => ADM_kmin
+    implicit none
+
+    integer, intent(in)  :: ijdim
+    real(8), intent(in)  :: pre  (ijdim,kdim)
+    real(8), intent(in)  :: u_z  (ijdim,kdim), v_z(ijdim,kdim)
+    real(8), intent(in)  :: w_z  (ijdim,kdim), t_z(ijdim,kdim)
+    real(8), intent(in)  :: plev
+    real(8), intent(out) :: u_p  (ijdim),      v_p(ijdim)
+    real(8), intent(out) :: w_p  (ijdim),      t_p(ijdim)
+
+    integer :: ij, kk
+    integer, allocatable :: kl(:), ku(:)
+    real(8) :: wght_l, wght_u
+    !---------------------------------------------------------------------------
+
+    allocate( kl(ijdim) )
+    allocate( ku(ijdim) )
+
+    ! search z-level
+    do ij=1, ijdim
+       do kk=kmin,kdim
+          if (pre(ij,kk)<plev) exit
+       end do
+       if (kk==kdim) stop "internal error! [sv_uvwp_850/mod_history_vars]"
+       ku(ij) = kk
+       kl(ij) = kk-1
+    end do
+
+    ! interpolate
+    do ij=1, ijdim
+       wght_l =  ( log(plev)           - log(pre(ij,ku(ij))) ) &
+               / ( log(pre(ij,kl(ij))) - log(pre(ij,ku(ij))) )
+       wght_u =  ( log(pre(ij,kl(ij))) - log(plev) ) &
+               / ( log(pre(ij,kl(ij))) - log(pre(ij,ku(ij))) )
+
+       u_p(ij) = wght_l*u_z(ij,kl(ij)) + wght_u*u_z(ij,ku(ij))
+       v_p(ij) = wght_l*v_z(ij,kl(ij)) + wght_u*v_z(ij,ku(ij))
+       w_p(ij) = wght_l*w_z(ij,kl(ij)) + wght_u*w_z(ij,ku(ij))
+       t_p(ij) = wght_l*t_z(ij,kl(ij)) + wght_u*t_z(ij,ku(ij))
+    end do
+
+    deallocate( kl, ku )
+
+    return
+  end subroutine sv_plev_uvwt
 
 end module mod_history_vars
 !-------------------------------------------------------------------------------
