@@ -1,6 +1,6 @@
 README nicam-dc
-ver. 0.16
-Last update: 2012-11-29
+ver. 0.9
+Last update: 2013-07-15
 ---------------------------------------------------
 
 NICAM-DC
@@ -28,7 +28,7 @@ email: <aics-climate@riken.jp>
 
 0. Setting
 
-export NICAM_SYS=Linux_intel
+export NICAM_SYS=Linux64-gnu-ompi
 cd src/
 
 1. Compilation
@@ -39,3 +39,5 @@ make
 
 cd test/case/jablonowski
 make
+make jobshell
+make run
