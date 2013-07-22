@@ -33,6 +33,13 @@ module mod_dycoretest
      test2_steady_state_mountain,  &
      test2_schaer_mountain,        &
      test3_gravity_wave
+  use mod_cnst, only: &
+     Rd    => CNST_RAIR,    &  ! ideal gas constant of dry air
+     Cp    => CNST_CP,      &  ! heat capacity of const. pressure
+     g     => CNST_EGRAV,   &  ! gravity accelaration [ms^-2]
+     a     => CNST_ERADIUS, &  ! mean radis of the earth [m]
+     omega => CNST_EOHM,    &  ! rotation of the earth [s^-1]
+     pi    => CNST_PI
   !
   !-----------------------------------------------------------------------------
   implicit none
@@ -42,17 +49,14 @@ module mod_dycoretest
   !++ Public parameters
   !
   ! physical parameters configurations
-  real(8), private, parameter :: R = 287.04d0             ! ideal gas constant of dry air
-  real(8), private, parameter :: Rd = 287.04d0            ! ideal gas constant of dry air
-  real(8), private, parameter :: Cp = 1004.D0             ! heat capacity of const. pressure
-  real(8), private, parameter :: kai = R / Cp             ! temporal value
-  real(8), private, parameter :: g = 9.80616d0            ! gravity accelaration [ms^-2]
-  real(8), private, parameter :: pi = 3.14159265358979323846D0
-  real(8), private, parameter :: d2r = pi/180.D0          ! Degree to Radian
-  real(8), private, parameter :: r2d = 180.D0/pi          ! Radian to Degree
-  real(8), private, parameter :: eps = 1.D-8              ! minimum value
-  real(8), private, parameter :: zero = 0.D0              ! zero
+  real(8), private, save :: kai                    ! temporal value
+  real(8), private, save :: d2r                    ! Degree to Radian
+  real(8), private, save :: r2d                    ! Radian to Degree
+  real(8), private, save :: eps = 1.D-14           ! minimum value
+  real(8), private, save :: zero = 0.D0            ! zero
 
+  ! test configurations
+  integer, private, parameter :: PRCS_D = 8
   ! for Held and Suarez
   real(8), private, save :: deltaT = 60.D0
   real(8), private, save :: deltaTh = 10.D0
@@ -62,15 +66,13 @@ module mod_dycoretest
   real(8), private, save :: etaS = 1.D0               ! surface eta level
   real(8), private, save :: etaT = 0.2d0              ! threashold of vertical profile
   real(8), private, save :: eta0 = 0.252d0            ! threashold of vertical profile
+  real(8), private, save :: t0 = 288.D0               ! [K]
   real(8), private, save :: delT = 4.8d+5             ! [K]
   real(8), private, save :: ganma = 0.005d0           ! [K m^-1]
   real(8), private, save :: u0 = 35.D0                ! [m s^-1]
   real(8), private, save :: uP = 1.D0                 ! [m s^-1]
   real(8), private, save :: p0 = 1.D+5                ! [Pa]
   real(8), private, save :: ps = 1.D+5                ! [Pa]
-  real(8), private, save :: a = 6.371229d+6           ! [m] mean radis of the earth
-  real(8), private, save :: omega = 7.29212d-5        ! [s^-1] rotation of the earth
-  logical, private, save :: deep_atm = .false.      ! deep atmosphere setting
   logical, private, parameter :: message = .false.
   integer, private, parameter :: itrmax = 100       ! # of iteration maximum
 
@@ -122,13 +124,15 @@ contains
     implicit none
 
     real(8), intent(out) :: DIAG_var(ADM_gall,ADM_kall,ADM_lall,6+TRC_VMAX)
-
     character(len=ADM_NSYS) :: init_type, test_case
+    integer :: ierr
 
     namelist / DYCORETESTPARAM / &
          init_type, test_case
 
-    integer :: ierr
+    kai = Rd / Cp
+    d2r = pi/180.D0
+    r2d = 180.D0/pi
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -317,10 +321,8 @@ contains
     use mod_misc, only: &
        MISC_get_latlon
     use mod_adm, only: &
-       ADM_KNONE, &
-       ADM_NSYS,  &
-       ADM_kmin,  &
-       ADM_kmax
+       ADM_KNONE,      &
+       ADM_NSYS
     use mod_grd, only: &
        GRD_vz,         &
        GRD_x,          &
@@ -341,10 +343,10 @@ contains
     real(8), intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
     ! work paramters
-    real(8) :: lat, lon                 ! latitude, longitude on Icosahedral grid
-    real(8) :: eta(kdim,2), geo(kdim)   ! eta & geopotential in ICO-grid field
-    real(8) :: prs(kdim),   tmp(kdim)   ! pressure & temperature in ICO-grid field
-    real(8) :: wix(kdim),   wiy(kdim)   ! wind components in ICO-grid field
+    real(PRCS_D) :: lat, lon                 ! latitude, longitude on Icosahedral grid
+    real(PRCS_D) :: eta(kdim,2), geo(kdim)   ! eta & geopotential in ICO-grid field
+    real(PRCS_D) :: prs(kdim),   tmp(kdim)   ! pressure & temperature in ICO-grid field
+    real(PRCS_D) :: wix(kdim),   wiy(kdim)   ! zonal/meridional wind components in ICO-grid field
 
     real(8) :: z_local (kdim)
     real(8) :: vx_local(kdim)
@@ -375,8 +377,8 @@ contains
 
     do l = 1, lall
     do n = 1, ijdim
-       z_local(1) = GRD_vz(n,ADM_kmin,l,GRD_ZH) ! surface
-       do k = ADM_kmin, kdim
+       z_local(1) = GRD_vz(n,2,l,GRD_ZH)
+       do k = 2, kdim
           z_local(k) = GRD_vz(n,k,l,GRD_Z)
        enddo
 
@@ -813,133 +815,119 @@ contains
       geo,    &  !--- IN : guessed geopotential
       eta,    &  !--- INOUT : eta level vertical coordinate
       signal  )  !--- INOUT : iteration signal
-    use mod_cnst, only: &
-       CNST_PI, &
-       CNST_EGRAV, &
-       CNST_RAIR
+    !
     implicit none
-
     integer, intent(in) :: itr
     integer, intent(in) :: kdim
-    real(8), intent(in) :: z(kdim)
-    real(8), intent(in) :: geo(kdim), tmp(kdim)
-    real(8), intent(inout) :: eta(kdim,2)
+    real(PRCS_D), intent(in) :: z(kdim)
+    real(PRCS_D), intent(in) :: geo(kdim), tmp(kdim)
+    real(PRCS_D), intent(inout) :: eta(kdim,2)
     logical, intent(inout) :: signal
-    real(8) :: diffmax, diff(kdim)
-    real(8) :: F(kdim), Feta(kdim)
     integer :: k
-
-    do k = 1, kdim
-       F   (k) = -CNST_EGRAV * z(k) + geo(k)
-       Feta(k) = -1.D0 * ( CNST_RAIR/eta(k,1) ) * tmp(k)
+    real(PRCS_D) :: diffmax, diff(kdim)
+    real(PRCS_D) :: F(kdim), Feta(kdim)
+    !
+    do k=1, kdim
+       F(k) = -g*z(k) + geo(k)
+       Feta(k) = -1.D0 * ( Rd/eta(k,1) ) * tmp(k)
        eta(k,2) = eta(k,1) - ( F(k)/Feta(k) )
-
        if(eta(k,2) > 1.D0) eta(k,2) = 1.D0     ! not allow over 1.0 for eta
        if(eta(k,2) < 0.D0) eta(k,2) = 1.D-20
-
        diff(k) = abs( eta(k,2) - eta(k,1) )
     enddo
-
+    !
     eta(:,1) = eta(:,2)
     diffmax = maxval(diff)
     if (message) write (*, '("| Eta  ",I4,": -- MAX: ",F23.20,3X,"MIN: ",F23.20)') itr, maxval(eta(:,1)), minval(eta(:,1))
     if (message) write (*, '("| Diff ",I4,": -- MAX: ",F23.20,3X,"MIN: ",F23.20)') itr, diffmax, minval(diff)
-
-    if ( diffmax < eps ) then
+    !
+    if(diffmax < eps) then
        signal = .false.
     else
-       if(message) write (ADM_LOG_FID,*) "| ----- Iterating ", itr
+       if (message) write (ADM_LOG_FID,*) "| ----- Iterating ", itr
     endif
-
+    !
     return
   end subroutine eta_vert_coord_NW
-
+  !-----------------------------------------------------------------------------
+  !
   !-----------------------------------------------------------------------------
   ! calculation of steady state
   subroutine steady_state( &
-      kdim, &
-      lat,  &
-      eta,  &
-      wix,  &
-      wiy,  &
-      tmp,  &
-      geo   )
-    use mod_cnst, only: &
-       CNST_PI,      &
-       CNST_ERADIUS, &
-       CNST_EOHM,    &
-       CNST_EGRAV,   &
-       CNST_RAIR
+      kdim,   &  !--- IN : # of z dimension
+      lat,  &  !--- IN : latitude information
+      eta,  &  !--- IN : eta level vertical coordinate
+      wix,  &  !--- INOUT : zonal wind component
+      wiy,  &  !--- INOUT : meridional wind component
+      tmp,  &  !--- INOUT : mean temperature
+      geo   )  !--- INOUT : mean geopotential height
+    !
     implicit none
-
-    integer, intent(in) :: kdim
-    real(8), intent(in) :: lat
-    real(8), intent(in) :: eta(kdim,2)
-    real(8), intent(inout) :: wix(kdim)
-    real(8), intent(inout) :: wiy(kdim)
-    real(8), intent(inout) :: tmp(kdim)
-    real(8), intent(inout) :: geo(kdim)
-    real(8) :: eta_v
-    real(8) :: RGAMMAovG
-
-    real(8), parameter :: t0 = 288.D0 ! [K]
-
     integer :: k
-
+    integer, intent(in) :: kdim
+    real(PRCS_D), intent(in) :: lat
+    real(PRCS_D), intent(in) :: eta(kdim,2)
+    real(PRCS_D), intent(inout) :: wix(kdim)
+    real(PRCS_D), intent(inout) :: wiy(kdim)
+    real(PRCS_D), intent(inout) :: tmp(kdim)
+    real(PRCS_D), intent(inout) :: geo(kdim)
+    real(PRCS_D) :: eta_v
+    real(PRCS_D) :: work1, work2
+    !
     ! ---------- horizontal mean
-    RGAMMAovG = CNST_RAIR * ganma / CNST_EGRAV
-
-    do k = 1, kdim
-       ! JW06 eq.(1)
-       eta_v  = ( eta(k,1)-eta0 ) * 0.5D0 * CNST_PI
-       ! JW06 eq.(2)
-       wix(k) = u0 * (cos(eta_v))**1.5D0 * sin(2.D0*lat)**2
-
-       if ( eta(k,1) >= etaT ) then
-
-          ! JW06 eq.(4)
-          tmp(k) = t0 * eta(k,1)**RGAMMAovG
-          ! JW06 eq.(8)
-          geo(k) = t0 * CNST_EGRAV / ganma * ( 1.D0 - eta(k,1)**RGAMMAovG )
-
-       elseif( eta(k,1) < etaT ) then
-
-          ! JW06 eq.(5)
-          tmp(k) = t0 * eta(k,1)**RGAMMAovG + delT * ( etaT-eta(k,1) )**5
-          ! JW06 eq.(9)
-          geo(k) = t0 * CNST_EGRAV / ganma * ( 1.D0 - eta(k,1)**RGAMMAovG )      &
-                 - CNST_RAIR * delT * ( ( log( eta(k,1)/etaT ) + 137.D0/60.D0 ) * etaT**5 &
-                                      -  5.D0      * etaT**4 * eta(k,1)    &
-                                      +  5.D0      * etaT**3 * eta(k,1)**2 &
-                                      - 10.D0/3.D0 * etaT**2 * eta(k,1)**3 &
-                                      +  5.D0/4.D0 * etaT    * eta(k,1)**4 &
-                                      -  1.D0/5.D0           * eta(k,1)**5 )
-
-       else
-          write (ADM_LOG_FID,'(A)') "|-- ETA BOUNDARY ERROR: [steady state calc.]"
-          write (ADM_LOG_FID,'("|-- (",I3,")  eta: ",F10.4)') k, eta(k,1)
-          stop
-       endif
+    work1 = pi/2.D0
+    work2 = Rd*ganma/g
+    do k=1, kdim
+       eta_v = (eta(k,1) - eta0)*(work1)
+       wix(k) = u0 * (cos(eta_v))**1.5d0 * (sin(2.D0*lat))**2.D0
+       !
+      !if( etaS >= eta(k,1) .and. eta(k,1) >= etaT ) then  ! not allow over 1.0 for eta
+        if( eta(k,1) >= etaT ) then
+           tmp(k) = t0 * eta(k,1)**work2
+           geo(k) = t0*g/ganma * ( 1.D0 - eta(k,1)**work2 )
+        elseif( eta(k,1) < etaT ) then
+           tmp(k) = t0 * eta(k,1)**work2 + delT*(etaT - eta(k,1))**5.D0
+           !
+           geo(k) = t0*g/ganma * ( 1.D0 - eta(k,1)**work2 ) - Rd * delT *                                     &
+                   ( ( log(eta(k,1)/etaT) + 137.D0/60.D0 )*etaT**5.D0 - 5.D0*(etaT**4.D0)*eta(k,1)       &
+                     + 5.D0*(etaT**3.D0)*(eta(k,1)**2.D0) - (10.D0/3.D0)*(etaT**2.D0)*(eta(k,1)**3.D0) &
+                     + (5.D0/4.D0)*etaT*(eta(k,1)**4.D0) - (1.D0/5.D0)*(eta(k,1)**5.D0)                 &
+                   )
+        else
+           write (ADM_LOG_FID,'(A)') "|-- ETA BOUNDARY ERROR: [steady state calc.]"
+           write (ADM_LOG_FID,'("|-- (",I3,")  eta: ",F10.4)') k, eta(k,1)
+           stop
+        endif
+      !else
+      !   write (ADM_LOG_FID,'(A)') "|-- OVER 1.0 for eta: [steady state calc.]"
+      !   stop
+      !endif
+       !
     enddo
-
+    !
     ! ---------- meridional distribution for temeperature and geopotential
-    do k = 1, kdim
-       eta_v  = ( eta(k,1)-eta0 ) * 0.5D0 * CNST_PI
-
-       ! JW06 eq.(6)
-       tmp(k) = tmp(k) + 3.D0/4.D0 * eta(k,1)*CNST_PI*u0/CNST_RAIR * sin(eta_v) * sqrt(cos(eta_v)) &
-                       * ( ( -2.D0 * sin(lat)**6 * ( cos(lat)**2 + 1.D0/3.D0 ) + 10.D0/63.D0 ) * 2.D0*u0*cos(eta_v)**1.5D0 &
-                         + ( 8.D0/5.D0 * cos(lat)**3 * ( sin(lat)**2 + 2.D0/3.D0 ) - CNST_PI/4.D0 ) * CNST_ERADIUS * CNST_EOHM &
-                         )
-
-       ! JW06 eq.(7)
-       geo(k) = geo(k) + u0 * cos(eta_v)**1.5D0  &
-                       * ( ( -2.D0 * sin(lat)**6 * ( cos(lat)**2 + 1.D0/3.D0 ) + 10.D0/63.D0 ) * u0*cos(eta_v)**1.5D0 &
-                         + ( 8.D0/5.D0 * cos(lat)**3 * ( sin(lat)**2.D0 + 2.D0/3.D0 ) - CNST_PI/4.D0 ) * CNST_ERADIUS*CNST_EOHM &
-                         )
+    work1 = pi/2.D0
+    work2 = 3.D0/4.D0 * ( pi*u0 / Rd )
+    do k=1, kdim
+       eta_v = (eta(k,1) - eta0)*(work1)
+       tmp(k) = tmp(k)                                           &
+                    + work2*eta(k,1) * sin(eta_v) * (cos(eta_v))**0.5d0  &
+                    * ( ( -2.D0 * (sin(lat))**6.D0 * (cos(lat)**2.D0 + 1.D0/3.D0) + 10.D0/63.D0 )   &
+                         * 2.D0*u0*(cos(eta_v))**1.5d0                   &
+                        + ( 8.D0/5.D0 * (cos(lat))**3.D0 * ((sin(lat))**2.D0 + 2.D0/3.D0) - pi/4.D0 ) &
+                         * a*omega                                       &
+                      )
+       geo(k) = geo(k)                                           &
+                    + u0*(cos(eta_v))**1.5d0  &
+                    * ( ( -2.D0 * (sin(lat))**6.D0 * (cos(lat)**2.D0 + 1.D0/3.D0) + 10.D0/63.D0 )   &
+                         * u0*(cos(eta_v))**1.5d0                        &
+                        + ( 8.D0/5.D0 * (cos(lat))**3.D0 * ((sin(lat))**2.D0 + 2.D0/3.D0) - pi/4.D0 ) &
+                         * a*omega                                       &
+                      )
     enddo
+    !
     wiy(:) = 0.D0
-
+    !
     return
   end subroutine steady_state
   !-----------------------------------------------------------------------------
@@ -947,34 +935,26 @@ contains
   !-----------------------------------------------------------------------------
   ! convert geopotential height to pressure
   subroutine geo2prs( &
-      kdim, &
-      tmp,  &
-      geo,  &
-      prs   )
-    use mod_adm, only: &
-       ADM_kmin,  &
-       ADM_kmax
-    use mod_cnst, only: &
-       CNST_PI,      &
-       CNST_EGRAV,   &
-       CNST_RAIR
+      kdim,   &  !--- IN : # of z dimension
+      tmp,  &  !--- IN : temperature
+      geo,  &  !--- IN : geopotential height at full height
+      prs   )  !--- INOUT : pressure
+    !
     implicit none
-
-    integer, intent(in) :: kdim
-    real(8), intent(in) :: tmp(kdim)
-    real(8), intent(in) :: geo(kdim)
-    real(8), intent(inout) :: prs(kdim)
-    real(8) :: dZ, Tmid, e
-
     integer :: k
+    integer, intent(in) :: kdim
+    real(PRCS_D), intent(in) :: tmp(kdim)
+    real(PRCS_D), intent(in) :: geo(kdim)
+    real(PRCS_D), intent(inout) :: prs(kdim)
+    real(PRCS_D) :: dZ, dT, e
 
-    ! guess pressure field upper k=0
+    e = exp(1.D0)
     prs(1) = p0
-    do k = ADM_kmin, kdim
-       dZ = ( geo(k) - geo(k-1) ) / CNST_EGRAV
-       Tmid = ( tmp(k) + tmp(k-1) ) * 0.5D0
-
-       prs(k) = prs(k-1) * exp( -CNST_EGRAV / (CNST_RAIR*Tmid) * dZ )
+    ! guess pressure field upper k=0
+    do k=2, kdim
+       dZ = ( geo(k) - geo(k-1) )/g
+       dT = ( tmp(k) + tmp(k-1) )/2.D0
+       prs(k) = prs(k-1) * e**( -1.D0 * dZ * (g/(Rd*dT)) )
     enddo
     !
     if (message) then
@@ -1004,12 +984,12 @@ contains
     integer :: k
     integer, intent(in) :: kdim
     logical, intent(in) :: with
-    real(8), intent(in) :: lat, lon
-    real(8), intent(inout) :: tmp(kdim)
-    real(8), intent(inout) :: prs(kdim)
-    real(8), intent(inout) :: wix(kdim)
-    real(8), intent(inout) :: wiy(kdim)
-    real(8) :: r, rr, rbyrr, cla, clo
+    real(PRCS_D), intent(in) :: lat, lon
+    real(PRCS_D), intent(inout) :: tmp(kdim)
+    real(PRCS_D), intent(inout) :: prs(kdim)
+    real(PRCS_D), intent(inout) :: wix(kdim)
+    real(PRCS_D), intent(inout) :: wiy(kdim)
+    real(PRCS_D) :: r, rr, rbyrr, cla, clo
     !
     cla = clat * d2r
     clo = clon * d2r
@@ -1051,15 +1031,15 @@ contains
     !
     implicit none
     integer, intent(in) :: kdim
-    real(8), intent(in) :: lat, lon
-    real(8), intent(in) :: wix(kdim)
-    real(8), intent(in) :: wiy(kdim)
-    real(8), intent(inout) :: vx1d(kdim)
-    real(8), intent(inout) :: vy1d(kdim)
-    real(8), intent(inout) :: vz1d(kdim)
+    real(PRCS_D), intent(in) :: lat, lon
+    real(PRCS_D), intent(in) :: wix(kdim)
+    real(PRCS_D), intent(in) :: wiy(kdim)
+    real(PRCS_D), intent(inout) :: vx1d(kdim)
+    real(PRCS_D), intent(inout) :: vy1d(kdim)
+    real(PRCS_D), intent(inout) :: vz1d(kdim)
     !
     integer :: k
-    real(8) :: unit_east(3), unit_north(3)
+    real(PRCS_D) :: unit_east(3), unit_north(3)
     !
     ! imported from NICAM/nhm/mkinit/prg_mkinit_ncep.f90 (original written by H.Miura)
     ! *** compute vx, vy, vz as 1-dimensional variables
@@ -1078,13 +1058,13 @@ contains
   !
   !-----------------------------------------------------------------------------
   function sphere_xyz_to_lon (xyz) result (lon)  !(x,y,z) to longitude [-pi,pi].
-    real(8),intent(in) :: xyz(3) !< (x,y,z)
-    real(8) :: lon !< longitude [rad]
-    real(8) :: proj
+    real(PRCS_D),intent(in) :: xyz(3) !< (x,y,z)
+    real(PRCS_D) :: lon !< longitude [rad]
+    real(PRCS_D) :: proj
     !
     proj=sqrt (xyz(1)*xyz(1) + xyz(2)*xyz(2))
     if (proj<eps) then
-       lon=0.0_8       !# pole points
+       lon=0.0_PRCS_D       !# pole points
     else
        lon=atan2 (xyz(2),xyz(1))
     end if
@@ -1094,13 +1074,13 @@ contains
   !
   !-----------------------------------------------------------------------------
   function sphere_xyz_to_lat (xyz) result (lat)  !(x,y,z) to latitude [-pi/2,pi/2].
-    real(8),intent(in) :: xyz(3) !< (x,y,z)
-    real(8) :: lat !< latitude [rad]
-    real(8) :: proj
+    real(PRCS_D),intent(in) :: xyz(3) !< (x,y,z)
+    real(PRCS_D) :: lat !< latitude [rad]
+    real(PRCS_D) :: proj
     !
     proj=sqrt (xyz(1)*xyz(1) + xyz(2)*xyz(2))
     if (proj<eps) then
-       lat=sign (0.5_8*pi,xyz(3))       !# pole points
+       lat=sign (0.5_PRCS_D*pi,xyz(3))       !# pole points
     else
        lat=atan (xyz(3)/proj)
     end if
@@ -1117,12 +1097,12 @@ contains
     ! given longitude (lon) of a position.
     !
     implicit none
-    real(8), intent(in) :: lon  ! [ rad ]
-    real(8) :: unit_east(3)
+    real(PRCS_D), intent(in) :: lon  ! [ rad ]
+    real(PRCS_D) :: unit_east(3)
     !
     unit_east(1) = - sin( lon )    ! --- x-direction
     unit_east(2) =   cos( lon )    ! --- y-direction
-    unit_east(3) = 0.0_8      ! --- z-direction
+    unit_east(3) = 0.0_PRCS_D      ! --- z-direction
     return
   end function Sp_Unit_East
   !-----------------------------------------------------------------------------
@@ -1136,8 +1116,8 @@ contains
     ! given longitude (lon) and latitude (lat) of a position.
     !
     implicit none
-    real(8), intent(in) :: lon, lat  ! [ rad ]
-    real(8) :: unit_north(3)
+    real(PRCS_D), intent(in) :: lon, lat  ! [ rad ]
+    real(PRCS_D) :: unit_north(3)
     !
     unit_north(1) = - sin( lat ) * cos( lon )    ! --- x-direction
     unit_north(2) = - sin( lat ) * sin( lon )    ! --- y-direction
@@ -1145,8 +1125,10 @@ contains
     return
   end function Sp_Unit_North
   !-----------------------------------------------------------------------------
+  !
+  !
   !  "subroutine surface_height" was moved to share/mod_grd.f90
   !-----------------------------------------------------------------------------
-
+  !
 end module mod_dycoretest
 !-------------------------------------------------------------------------------
