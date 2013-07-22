@@ -60,6 +60,12 @@ module mod_dcmip
 
   IMPLICIT NONE
 
+  public :: test1_advection_deformation
+  public :: test1_advection_hadley
+  public :: test2_steady_state_mountain
+  public :: test2_schaer_mountain
+  public :: test3_gravity_wave
+
 !-----------------------------------------------------------------------
 !     Physical Parameters
 !-----------------------------------------------------------------------
