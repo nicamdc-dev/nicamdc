@@ -20,11 +20,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-/*
-#ifndef NO_MPIIO
-#include <mpi.h>
-#endif
-R.Yoshida */
 
 #include "fio_def.h"
 
@@ -33,10 +28,6 @@ typedef double(real64_t);
 
 /* common information */
 typedef struct{
-/*
-  int32_t use_mpiio; 
-R.Yoshida */
-
   int32_t fmode;
   int32_t endiantype;
   int32_t grid_topology;
@@ -83,12 +74,6 @@ typedef struct{
   int32_t opened;
   FILE *fp;
   fpos_t eoh;
-/*
-#ifndef NO_MPIIO
-  MPI_Offset mpi_eoh;
-  MPI_File mpi_fid;
-#endif
-R.Yoshida */
 } statusinfo_t;
 
 /* file structure */
@@ -123,15 +108,14 @@ extern void fio_set_str( char *_str,
 
 /** string postprocess *************************************************/
 extern void fio_trim_str( char *_str,
-                         const char *str,
-                         const int str_len );
+                          const char *str,
+                          const int str_len );
 
 /** check system & initialze ******************************************/
 extern int32_t fio_syscheck( void );
 
 /** store common informtation *****************************************/
-extern int32_t fio_put_commoninfo( /*int32_t use_mpiio, R.Yoshida  */
-                                   int32_t fmode,
+extern int32_t fio_put_commoninfo( int32_t fmode,
                                    int32_t endiantype,
                                    int32_t grid_topology,
                                    int32_t glevel,
@@ -186,6 +170,9 @@ extern int32_t fio_write_datainfo( int32_t fid,
 /** read data information *********************************************/
 extern int32_t fio_read_datainfo( int32_t fid );
 
+/** read data information and store data as tmpdata *******************/
+extern int32_t fio_read_datainfo_tmpdata( int32_t fid );
+
 /** write data array **************************************************/
 extern int32_t fio_write_data( int32_t fid,
                                int32_t did,
@@ -201,6 +188,10 @@ extern int32_t fio_read_data( int32_t fid,
                               int32_t did,
                               void *data   );
 
+/** read data array from tmpdata **************************************/
+extern int32_t fio_read_data_tmpdata( int32_t fid,
+                                      int32_t did,
+                                      void *data   );
 
 /** register new file *************************************************/
 extern int32_t fio_register_file( char *fname );
@@ -213,6 +204,10 @@ extern int32_t fio_put_write_pkginfo( int32_t fid,
 /** validate package information with common **************************/
 extern int32_t fio_valid_pkginfo( int32_t fid );
 
+/** validate package information with common (except rgnid) ***********/
+extern int32_t fio_valid_pkginfo_validrgn( int32_t fid,
+                                           int32_t rgnid[] );
+
 /** put & write data information and write data ***********************/
 extern int32_t fio_put_write_datainfo_data( int32_t fid,
                                             datainfo_t ditem,
@@ -222,11 +217,21 @@ extern int32_t fio_put_write_datainfo_data( int32_t fid,
 extern int32_t fio_put_write_datainfo( int32_t fid,
                                        datainfo_t ditem );
 
-/** read pkginfo and datainfo and get pkginfo *************************/
+/** read pkginfo and datainfo *****************************************/
 extern int32_t fio_read_allinfo( int32_t fid );
 
-/** read pkginfo and datainfo and get pkginfo *************************/
-extern headerinfo_t fio_read_allinfo_get_pkginfo( int32_t fid );
+/** read pkginfo and datainfo, with validating rgnid ******************/
+extern int32_t fio_read_allinfo_validrgn( int32_t fid,
+                                          int32_t rgnid[] );
+
+/** read pkginfo and datainfo and store data as tmpdata ***************/
+extern int32_t fio_read_allinfo_tmpdata( int32_t fid );
+
+extern void fio_register_vname_tmpdata( const char *vname_in );
+
+/** allocate and copy datainfo ****************************************/
+extern int32_t fio_copy_datainfo( int32_t fid,
+                                  int32_t fid_org );
 
 /** dump package summary of all finfo *********************************/
 extern int32_t fio_dump_finfolist( void );

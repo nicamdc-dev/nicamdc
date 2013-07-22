@@ -22,6 +22,7 @@ program fio_ico2ll_mpi
   !      0.90      11-09-07  H.Yashiro : [NEW] partially imported from ico2ll.f90
   !      0.95      12-04-19  H.Yashiro : [mod] deal large record length
   !      0.95      12-06-28  H.Yashiro : [mod] parallelization
+  !      1.00      13-06-17  H.Yashiro : [mod] reduce file open frequency
   !      -----------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------------
@@ -56,6 +57,7 @@ program fio_ico2ll_mpi
     MNG_mnginfo_input,   &
     MNG_mnginfo_noinput, &
     MNG_PALL,            &
+    MNG_prc_rnum,        &
     MNG_prc_tab
   !-----------------------------------------------------------------------------
   implicit none
@@ -94,29 +96,31 @@ program fio_ico2ll_mpi
   integer                   :: nlim_llgrid         = 100000 ! limit number of lat-lon grid in 1 ico region
   logical                   :: use_mpi             = .true.
   logical                   :: comm_smallchunk     = .false. ! apply MPI_Allreduce for each k-layer?
+  logical                   :: datainfo_nodep_pe   = .true.  ! can be .true. if data header do not depend on pe.
   logical                   :: help = .false.
 
-  namelist /OPTION/ glevel,          &
-                    rlevel,          &
-                    grid_topology,   &
-                    complete,        &
-                    mnginfo,         &
-                    layerfile_dir,   &
-                    llmap_base,      &
-                    infile,          &
-                    step_str,        &
-                    step_end,        &
-                    outfile_dir,     &
-                    outfile_prefix,  &
-                    outfile_rec,     &
-                    lon_swap,        &
-                    devide_template, &
-                    output_grads,    &
-                    output_gtool,    &
-                    selectvar,       &
-                    use_mpi,         &
-                    comm_smallchunk, &
-                    help,            &
+  namelist /OPTION/ glevel,            &
+                    rlevel,            &
+                    grid_topology,     &
+                    complete,          &
+                    mnginfo,           &
+                    layerfile_dir,     &
+                    llmap_base,        &
+                    infile,            &
+                    step_str,          &
+                    step_end,          &
+                    outfile_dir,       &
+                    outfile_prefix,    &
+                    outfile_rec,       &
+                    lon_swap,          &
+                    devide_template,   &
+                    output_grads,      &
+                    output_gtool,      &
+                    selectvar,         &
+                    use_mpi,           &
+                    comm_smallchunk,   &
+                    datainfo_nodep_pe, &
+                    help,              &
                     nlim_llgrid
   !-----------------------------------------------------------------------------
   character(LEN=FIO_HLONG) :: infname   = ""
@@ -138,6 +142,7 @@ program fio_ico2ll_mpi
   real(8), allocatable :: w1(:,:,:), w2(:,:,:), w3(:,:,:)
 
   ! ico data information
+  integer, allocatable :: ifid(:)
   integer, allocatable :: prc_tab_C(:)
   type(headerinfo) hinfo 
   type(datainfo)   dinfo 
@@ -189,7 +194,7 @@ program fio_ico2ll_mpi
 
   logical :: addvar
   integer :: rgnid
-  integer :: fid, did, ifid, ofid, irec
+  integer :: fid, did, ofid, irec
   integer :: v, t, p, l, k , n, pp
   !=============================================================================
 
@@ -228,6 +233,8 @@ program fio_ico2ll_mpi
   if ( trim(selectvar(1)) /= '' ) then
      allvar = .false.
   endif
+
+  !#########################################################
 
   !--- prepare region infomation
   if (complete) then ! all region
@@ -280,6 +287,9 @@ program fio_ico2ll_mpi
   call fio_syscheck()
 
   !#########################################################
+
+  write(fid_log,*) '*** llmap read start'
+
   !--- Read lat-lon grid information
   fid = MISC_get_available_fid()
   open(fid, file=trim(llmap_base)//'.info',form='unformatted',status='old',iostat=ierr)
@@ -346,8 +356,57 @@ program fio_ico2ll_mpi
      enddo
   enddo
 
-  ! Read icodata information
+  write(fid_log,*) '*** llmap read end'
+
+  !#########################################################
+
+  write(fid_log,*) '*** icodata read start'
+
+  ! Read icodata information (all process)
+  allocate( ifid(prc_nlocal) )
+
   allocate( prc_tab_C(LALL_local) )
+
+  do p = pstr, pend
+     pp = p - pstr + 1
+
+     if (complete) then ! all region
+        infname = trim(infile(1))//'.rgnall'
+     else
+        call fio_mk_fname(infname,trim(infile(1)),'pe',p-1,6)
+     endif
+     prc_tab_C(1:LALL_local) = MNG_prc_tab(1:LALL_local,p)-1
+
+     if ( pp == 1 ) then
+        call fio_put_commoninfo( fmode,           &
+                                 FIO_BIG_ENDIAN,  &
+                                 gtopology,       &
+                                 glevel,          &
+                                 rlevel,          &
+                                 LALL_local,      &
+                                 prc_tab_C        )
+     endif
+
+     call fio_register_file(ifid(pp),trim(infname))
+     call fio_fopen(ifid(pp),FIO_FREAD)
+
+     if( datainfo_nodep_pe .AND. pp > 1 ) then ! assume that datainfo do not depend on pe.
+        call fio_read_pkginfo(ifid(pp))
+        call fio_valid_pkginfo_validrgn(ifid(pp),prc_tab_C)
+        call fio_copy_datainfo(ifid(pp),ifid(1))
+     else
+        call fio_read_allinfo_validrgn(ifid(pp),prc_tab_C)
+     endif
+
+  enddo
+
+  write(fid_log,*) '*** icodata read end'
+
+  !#########################################################
+
+  write(fid_log,*) '*** header check start'
+
+  !--- check all header
   allocate( hinfo%rgnid(LALL_local) )
 
   allocate( var_nstep    (max_nvar) )
@@ -362,34 +421,14 @@ program fio_ico2ll_mpi
   allocate( var_zgrid    (max_nlayer, max_nvar) )
   allocate( var_gthead   (64, max_nvar) )
 
-  p = pstr
+  pp = 1 ! only for first file
 
-  if (complete) then ! all region
-     infname = trim(infile(1))//'.rgnall'
-  else
-     call fio_mk_fname(infname,trim(infile(1)),'pe',p-1,6)
-  endif
-  prc_tab_C(:) = MNG_prc_tab(:,p)-1
-
-  call fio_put_commoninfo( &!FIO_MPIIO_NOUSE, &
-                           fmode,           &
-                           FIO_BIG_ENDIAN,  &
-                           gtopology,       &
-                           glevel,          &
-                           rlevel,          &
-                           LALL_local,      &
-                           prc_tab_C        )
-
-  call fio_register_file(ifid,trim(infname))
-  call fio_fopen(ifid,FIO_FREAD)
-  call fio_read_allinfo(ifid)
-
-  call fio_get_pkginfo(ifid,hinfo)
+  call fio_get_pkginfo(ifid(pp),hinfo)
   num_of_data = hinfo%num_of_data
 
   nvar = 0
   do did = 0, num_of_data-1
-     call fio_get_datainfo(ifid,did,dinfo)
+     call fio_get_datainfo(ifid(pp),did,dinfo)
 
      if (allvar) then ! output all variables
         addvar = .true.
@@ -471,9 +510,12 @@ program fio_ico2ll_mpi
               v,'|',var_name(v),'|',var_nstep(v),'|',var_layername(v),'|', tmpl,'|', var_dt(v)
   enddo
 
-  write(fid_log,*) '*** convert start : PaNDa format to lat-lon data'
+  write(fid_log,*) '*** header check end'
 
   !#########################################################
+
+  write(fid_log,*) '*** convert start : PaNDa format to lat-lon data'
+
   !--- start weighting summation
   do v = 1, nvar
 
@@ -496,7 +538,7 @@ program fio_ico2ll_mpi
  
         if ( .not. devide_template ) then
            if (output_grads) then
-              write(fid_log,*) 'Output: ', trim(outbase)//'.grd', recsize, imax, jmax, kmax
+              write(fid_log,*) 'Output: ', trim(outbase)//'.grd'
               open( unit   = ofid,                  &
                     file   = trim(outbase)//'.grd', &
                     form   = 'unformatted',         &
@@ -549,7 +591,7 @@ program fio_ico2ll_mpi
            if (devide_template) then !--- open output file (every timestep)
               tmpl = sec2template(nowsec)
               write(fid_log,*)
-              write(fid_log,*) 'Output: ', trim(outbase)//'.'//trim(tmpl)//'.grd', recsize
+              write(fid_log,*) 'Output: ', trim(outbase)//'.'//trim(tmpl)//'.grd'
 
               open( unit   = ofid,             &
                     file   = trim(outbase)//'.'//trim(tmpl)//'.grd', &
@@ -564,31 +606,8 @@ program fio_ico2ll_mpi
         do p = pstr, pend
            pp = p - pstr + 1
 
-           if (complete) then ! all region
-              infname = trim(infile(1))//'.rgnall'
-              if ( t==1 ) write(fid_log,*) '+complete file'
-           else
-              call fio_mk_fname(infname,trim(infile(1)),'pe',p-1,6)
-              if ( t==1 ) write(fid_log,*) '+pe:', p
-              if ( t==1 ) write(fid_log,'(A)',advance='no') ' ->region:'
-           endif
-
-           prc_tab_C(:) = MNG_prc_tab(:,p) - 1 ! starts from 0
-           call fio_put_commoninfo( &!FIO_MPIIO_NOUSE, &
-                                    fmode,           &
-                                    FIO_BIG_ENDIAN,  &
-                                    gtopology,       &
-                                    glevel,          &
-                                    rlevel,          &
-                                    LALL_local,      &
-                                    prc_tab_C        ) ! vary in each PEs
-
-           call fio_register_file(ifid,trim(infname))
-           call fio_fopen(ifid,FIO_FREAD)
-           call fio_read_allinfo(ifid) ! read & validate package/data header
-
            !--- seek data ID and get information
-           call fio_seek_datainfo(did,ifid,var_name(v),step)
+           call fio_seek_datainfo(did,ifid(pp),var_name(v),step)
            !--- verify
            if ( did == -1 ) then
               write(*,*) 'xxx data not found! varname:',trim(var_name(v)),", step : ",step
@@ -598,11 +617,11 @@ program fio_ico2ll_mpi
            !--- read from pe000xx file
            if ( var_datatype(v) == FIO_REAL4 ) then
 
-              call fio_read_data(ifid,did,data4allrgn(:))
+              call fio_read_data(ifid(pp),did,data4allrgn(:))
 
            elseif( var_datatype(v) == FIO_REAL8 ) then
 
-              call fio_read_data(ifid,did,data8allrgn(:))
+              call fio_read_data(ifid(pp),did,data8allrgn(:))
 
               data4allrgn(:) = real(data8allrgn(:),kind=4)
               where( data8allrgn(:) == CNST_UNDEF )
@@ -613,7 +632,14 @@ program fio_ico2ll_mpi
            icodata4(:,:,:) = reshape( data4allrgn(:), shape(icodata4) )
 
            do l = 1, LALL_local
-              if ( t==1 ) write(fid_log,'(1x,I6.6)',advance='no') MNG_prc_tab(l,p)
+              if ( t == 1 ) then
+                 if ( mod(l,10) == 0 ) then
+                    write(fid_log,'(1x,I6.6)')              MNG_prc_tab(l,p)
+                    write(fid_log,'(A)',advance='no')       '          '
+                 else
+                    write(fid_log,'(1x,I6.6)',advance='no') MNG_prc_tab(l,p)
+                 endif
+              endif
 
               !--- ico -> lat-lon
               if ( nmax_llgrid(l,pp) /= 0 ) then
@@ -625,9 +651,9 @@ program fio_ico2ll_mpi
 
                        lldata(lon_idx(n,l,pp),lat_idx(n,l,pp),k) = CNST_UNDEF4
                     else
-                       lldata(lon_idx(n,l,pp),lat_idx(n,l,pp),k) = real(w1(n,l,pp),kind=4) * icodata4(n1(n,l,pp),k,l) &
-                                                                 + real(w2(n,l,pp),kind=4) * icodata4(n2(n,l,pp),k,l) &
-                                                                 + real(w3(n,l,pp),kind=4) * icodata4(n3(n,l,pp),k,l)
+                       lldata(lon_idx(n,l,pp),lat_idx(n,l,pp),k) = w1(n,l,pp) * icodata4(n1(n,l,pp),k,l) &
+                                                                 + w2(n,l,pp) * icodata4(n2(n,l,pp),k,l) &
+                                                                 + w3(n,l,pp) * icodata4(n3(n,l,pp),k,l)
                     endif
                  enddo
                  enddo
@@ -635,7 +661,6 @@ program fio_ico2ll_mpi
            enddo ! region LOOP
 
            if ( t==1 ) write(fid_log,*)
-           call fio_fclose(ifid)
 
         enddo ! PE LOOP
 
@@ -668,16 +693,6 @@ program fio_ico2ll_mpi
                                MPI_COMM_WORLD,      &
                                ierr                 )
         endif
-
-!        !--- Gather Lat-Lon data
-!        call MPI_Reduce( lldata(1,1,1),       &
-!                         lldata_total(1,1,1), &
-!                         imax*jmax*kmax,      &
-!                         MPI_REAL,            &
-!                         MPI_SUM,             &
-!                         0,                   &
-!                         MPI_COMM_WORLD,      &
-!                         ierr                 )
 
         if ( prc_myrank == 0 ) then ! only for master process
            !--- output lat-lon data file
@@ -736,6 +751,11 @@ program fio_ico2ll_mpi
 
   write(fid_log,*) '*** convert finished! '
 
+  do p = pstr, pend
+     pp = p - pstr + 1
+     call fio_fclose(ifid(pp))
+  enddo ! PE LOOP
+
   if ( use_mpi ) then
      call MPI_Barrier(MPI_COMM_WORLD,ierr)
      call MPI_FINALIZE(ierr)
@@ -750,7 +770,7 @@ contains
   subroutine readoption
     use mod_misc, only : &
       MISC_get_available_fid
-    use mod_option, only: &
+    use mod_tool_option, only: &
       OPT_convert, &
       OPT_fid
     implicit none
@@ -942,7 +962,7 @@ contains
     do i=1,16
        if( hitem(i:i)=='_' ) hitem(i:i)  = '-' ! escape underbar
     enddo
-    htitle(1:32) = description(1:32) ! trim to 32char
+    htitle = description ! trim to 32char
     do i=1,32
        if( htitle(i:i)=='_' ) htitle(i:i) = '-' ! escape underbar
     enddo
@@ -1168,7 +1188,7 @@ contains
     character(18):: tmp
     !---------------------------------------------------------------------------
 
-    write(tmp,*) max(isec/60,1)
+    write(tmp,*) max(isec/60, 1)
 
     template = trim(tmp)//'mn'
 

@@ -8,9 +8,15 @@
  *    1.00      11-08-25  H.Yashiro : Complete format specification   *
  *    1.22      12-06-21  H.Yashiro : [fix] bad char tail treatment   *
  *                                    thanks to ohno-san@riken        *
+ *    1.23      13-04-18  C.Kodama  : [add] fio_read_datainfo_tmpdata,*
+ *                                      fio_register_vname_tmpdata,   *
+ *                                      fio_read_data_tmpdata,        *
+ *                                      fio_read_allinfo_tmpdata,     *
+ *                                      fio_copy_datainfo             *
  *                                                                    *
  **********************************************************************/
 #include "fiof.h"
+
 
 /** endian change *****************************************************/
 void fio_ednchg_( void* avp_pointer,
@@ -58,8 +64,7 @@ void fio_syscheck_( void )
 }
 
 /** put common informtation *******************************************/
-void fio_put_commoninfo_( /* int32_t *use_mpiio, R.Yoshida */
-                          int32_t *fmode,
+void fio_put_commoninfo_( int32_t *fmode,
                           int32_t *endiantype,
                           int32_t *grid_topology,
                           int32_t *glevel,
@@ -69,8 +74,7 @@ void fio_put_commoninfo_( /* int32_t *use_mpiio, R.Yoshida */
 {
   int32_t ierr;
 
-  ierr = fio_put_commoninfo( /* *use_mpiio, R.Yoshida */
-                             *fmode,
+  ierr = fio_put_commoninfo( *fmode,
                              *endiantype,
                              *grid_topology,
                              *glevel,
@@ -186,6 +190,16 @@ void fio_read_datainfo_( int32_t *fid )
   ierr = fio_read_datainfo( *fid );
 }
 
+/** read data information and store data as tmpdata *******************/
+/* [add] C.Kodama 13-04-18 */
+void fio_read_datainfo_tmpdata_( int32_t *fid )
+{
+  int32_t ierr;
+
+  ierr = fio_read_datainfo_tmpdata( *fid );
+}
+
+
 /** write data array **************************************************/
 void fio_write_data_( int32_t *fid,
                       int32_t *did,
@@ -220,6 +234,18 @@ void fio_read_data_( int32_t *fid,
   ierr = fio_read_data( *fid,
                         *did,
                         data  );
+}
+
+/* [add] C.Kodama 13-04-18 */
+void fio_read_data_tmpdata_( int32_t *fid,
+                             int32_t *did,
+                             void *data   )
+{
+  int32_t ierr;
+
+  ierr = fio_read_data_tmpdata( *fid,
+                                *did,
+                                data  );
 }
 
 
@@ -269,6 +295,16 @@ void fio_valid_pkginfo_( int32_t *fid )
   ierr = fio_valid_pkginfo( *fid );
 }
 
+/** validate package information with common (except rgnid) ***********/
+void fio_valid_pkginfo_validrgn_( int32_t *fid,
+                                  int32_t *rgnid )
+{
+  int32_t ierr;
+
+  ierr = fio_valid_pkginfo_validrgn( *fid,
+                                     rgnid );
+}
+
 /** put & write data information and write data ***********************/
 void fio_put_write_datainfo_data_( int32_t *did,
                                    int32_t *fid,
@@ -297,11 +333,44 @@ void fio_read_allinfo_( int32_t *fid )
   ierr = fio_read_allinfo( *fid );
 }
 
-/** read pkginfo and datainfo and get pkginfo *************************/
-void fio_read_allinfo_get_pkginfo_( int32_t *fid,
-                                    headerinfo_t *hinfo )
+/** read pkginfo and datainfo, with validating rgnid ******************/
+void fio_read_allinfo_validrgn_( int32_t *fid,
+                                 int32_t *rgnid )
 {
-  *hinfo = fio_read_allinfo_get_pkginfo( *fid );
+  int32_t ierr;
+
+  ierr = fio_read_allinfo_validrgn( *fid,
+                                    rgnid );
+}
+
+/** read pkginfo and datainfo and store data as tmpdata ***************/
+/* [add] C.Kodama 13-04-18 */
+void fio_read_allinfo_tmpdata_( int32_t *fid )
+{
+  int32_t ierr;
+
+  ierr = fio_read_allinfo_tmpdata( *fid );
+}
+
+/* [add] C.Kodama 13-04-18 */
+void fio_register_vname_tmpdata_( const char *vname_in, 
+                                  int32_t    *vname_len )
+{
+  char _vname_in[FIO_HSHORT];
+  int32_t _vname_len  = *vname_len;
+  if( _vname_len  > FIO_HSHORT-1 ){ _vname_len  = FIO_HSHORT-1; }
+  fio_set_str( _vname_in,  vname_in,  _vname_len  );
+  fio_register_vname_tmpdata( _vname_in );
+}
+
+/** allocate and copy datainfo ****************************************/
+/* [add] C.Kodama 13-04-18 */
+void fio_copy_datainfo_( int32_t *fid,
+                         int32_t *fid_org )
+{
+  int32_t ierr;
+
+  ierr = fio_copy_datainfo( *fid, *fid_org );
 }
 
 /** dump package summary of all finfo *********************************/

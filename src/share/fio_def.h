@@ -44,10 +44,6 @@
 #define FIO_SINGLE_PROC 0
 #define FIO_MULTI_PROC  1
 
-/* MPI-IO */
-#define FIO_MPIIO_NOUSE 0
-#define FIO_MPIIO_USE   1
-
 
 /* action type */
 #define FIO_FREAD   0

@@ -14,36 +14,42 @@
  *                                    fio_write_data_1rgn             *
  *    1.22      12-06-21  H.Yashiro : [fix] bad char tail treatment   *
  *                                    thanks to ohno-san@riken        *
+ *    1.23      13-04-18  C.Kodama  : [add] fio_read_datainfo_tmpdata,*
+ *                                      fio_register_vname_tmpdata,   *
+ *                                      fio_read_data_tmpdata,        *
+ *                                      fio_read_allinfo_tmpdata,     *
+ *                                      fio_copy_datainfo             *
  *                                                                    *
  **********************************************************************
  *functions
  * : put/get indicates the communication with the database
  *   read/write indicates the communication with the file
- *   MPI-IO is not supported yet.
  *<utilities>
- *void           fio_ednchg         : endian changer
- *void           fio_mk_fname       : filename generator
- *void           fio_set_str        : string preprocess
+ *void           fio_ednchg                   : endian changer
+ *void           fio_mk_fname                 : filename generator
+ *void           fio_set_str                  : string preprocess
  *<database>
- *int32_t        fio_syscheck       : check system
- *int32_t        fio_put_commoninfo : store common informtation
- *static int32_t fio_new_finfo      : add new file structure
- *static int32_t fio_new_datainfo   : add new datainfo structure
- *int32_t        fio_put_pkginfo    : put package information (full)
- *int32_t        fio_get_pkginfo    : get package information (full)
- *int32_t        fio_put_datainfo   : put data information (full)
- *int32_t        fio_get_datainfo   : get data information (full)
- *int32_t        fio_seek_datainfo  : seek data id by varname and step
+ *int32_t        fio_syscheck                 : check system
+ *int32_t        fio_put_commoninfo           : store common informtation
+ *static int32_t fio_new_finfo                : add new file structure
+ *static int32_t fio_new_datainfo             : add new datainfo structure
+ *int32_t        fio_put_pkginfo              : put package information (full)
+ *int32_t        fio_get_pkginfo              : get package information (full)
+ *int32_t        fio_put_datainfo             : put data information (full)
+ *int32_t        fio_get_datainfo             : get data information (full)
+ *int32_t        fio_seek_datainfo            : seek data id by varname and step
  *<file r/w>
- *int32_t        fio_fopen           : open file IO stream
- *int32_t        fio_fclose          : close file IO stream
- *int32_t        fio_write_pkginfo   : write package information
- *int32_t        fio_read_pkginfo    : read package information
- *int32_t        fio_write_datainfo  : write data information
- *int32_t        fio_read_datainfo   : read data information
- *int32_t        fio_write_data      : write data array
- *int32_t        fio_write_data_1rgn : write data array (1 region)
- *int32_t        fio_read_data       : read data array
+ *int32_t        fio_fopen                    : open file IO stream
+ *int32_t        fio_fclose                   : close file IO stream
+ *int32_t        fio_write_pkginfo            : write package information
+ *int32_t        fio_read_pkginfo             : read package information
+ *int32_t        fio_write_datainfo           : write data information
+ *int32_t        fio_read_datainfo            : read data information
+ *int32_t        fio_read_datainfo_tmpdata    : read data information and store data as tmpdata
+ *int32_t        fio_write_data               : write data array
+ *int32_t        fio_write_data_1rgn          : write data array (1 region)
+ *int32_t        fio_read_data                : read data array
+ *int32_t        fio_read_data_tmpdata        : read data array from tmpdata
  *<function suite for fortran program>
  *int32_t        fio_register_file            : register new file
  *int32_t        fio_put_write_pkginfo        : put & write package information (quick put)
@@ -51,7 +57,9 @@
  *int32_t        fio_valid_datainfo           : validate data size
  *int32_t        fio_put_write_datainfo_data  : put & write data information and write data
  *int32_t        fio_put_write_datainfo       : put & write data information
+ *int32_t        fio_read_allinfo_tmpdata     : read pkginfo and datainfo and store data as tmpdata
  *int32_t        fio_read_allinfo_get_pkginfo : read pkginfo and datainfo and get pkginfo
+ *int32_t        fio_copy_datainfo            : allocate and copy datainfo
  *int32_t        fio_dump_finfolist           : dump package summary of all finfo
  *int32_t        fio_dump_finfo               : dump package detail of finfo
  **********************************************************************/
@@ -78,6 +86,12 @@ int32_t dinfosize = sizeof(char)*FIO_HSHORT*3
                   + sizeof(char)*FIO_HLONG
                   + sizeof(int64_t)*3
                   + sizeof(int32_t)*3;
+
+/* for temporary data (13-04-18 C.Kodama) */
+int nvar = 0;
+char vname[500][FIO_HSHORT];
+struct type_tmpdata{ void **tmpdata; };
+struct type_tmpdata *tdata = NULL;
 
 /** endian change *****************************************************/
 void fio_ednchg( void* avp_pointer,
@@ -184,7 +198,6 @@ int32_t fio_syscheck( void )
   }
 
   /* intitialize */
-  /* common.use_mpiio     = -1; R.Yoshida */
   common.fmode         = -1;
   common.endiantype    = -1;
   common.grid_topology = -1;
@@ -197,8 +210,7 @@ int32_t fio_syscheck( void )
 }
 
 /** put common informtation *******************************************/
-int32_t fio_put_commoninfo( /* int32_t use_mpiio, R.Yoshida */
-                            int32_t fmode,
+int32_t fio_put_commoninfo( int32_t fmode,
                             int32_t endiantype,
                             int32_t grid_topology,
                             int32_t glevel,
@@ -208,7 +220,6 @@ int32_t fio_put_commoninfo( /* int32_t use_mpiio, R.Yoshida */
 {
   int32_t i;
 
-  /* common.use_mpiio     = use_mpiio; R.Yoshida */
   common.fmode         = fmode;
   common.endiantype    = endiantype;
   common.grid_topology = grid_topology;
@@ -258,10 +269,6 @@ static int32_t fio_new_finfo( void )
   finfo[fid].status.opened    = 0;
   finfo[fid].status.fp        = NULL;
   /* finfo[fid].status.eoh.__pos = 0; [add] 20111007 H.Yashiro */
-  /* #ifndef NO_MPIIO [add] 20120918 R.Yoshida *//*
-  finfo[fid].status.mpi_eoh   = 0;
-  finfo[fid].status.mpi_fid   = NULL;
-  #endif R.Yoshida */
 
   return(fid);
 }
@@ -400,53 +407,34 @@ int32_t fio_fopen( int32_t fid, int32_t mode )
     return(SUCCESS_CODE);
   }
 
-  /* if(common.use_mpiio) { R.Yoshida */
-    /*    if(mode==FIO_FCREATE){
-      ierr = MPI_File_delete(finfo[fid].header.fname,mpi_info);
-    }
-    ierr = MPI_File_open ( MPI_COMM_WORLD,finfo[fid].header.fname, 
-			   MPI_MODE_RDWR | MPI_MODE_CREATE, 
-			   MPI_INFO_NULL, &(finfo[fid].status.mpi_fid));
-    if(ierr!=0){
+  if ( mode==FIO_FWRITE ) {
+    if ( (finfo[fid].status.fp=fopen(finfo[fid].header.fname,"wb"))==NULL ) {
       fprintf(stderr,"Can not open file : %s!\n",finfo[fid].header.fname);
-      return(ERROR_CODE);
+      exit(1);
     }
-    finfo[fid].status.opened = 1;
-    */
-  /* } else { R.Yoshida */
-    if ( mode==FIO_FWRITE ) {
-      if ( (finfo[fid].status.fp=fopen(finfo[fid].header.fname,"wb"))==NULL ) {
-        fprintf(stderr,"Can not open file : %s!\n",finfo[fid].header.fname);
-        exit(1);
-      }
-    } else if( mode==FIO_FREAD ) { /* [mod] H.Yashiro 20110907 avoid overwrite action */
-      if ( (finfo[fid].status.fp=fopen(finfo[fid].header.fname,"rb"))==NULL ) {
-        fprintf(stderr,"Can not open file : %s!\n",finfo[fid].header.fname);
-        exit(1);
-      }
-    } else if( mode==FIO_FAPPEND ) { /* [add] H.Yashiro 20110907 overwrite mode */
-      if ( (finfo[fid].status.fp=fopen(finfo[fid].header.fname,"r+b"))==NULL ) {
-        fprintf(stderr,"Can not open file : %s!\n",finfo[fid].header.fname);
-        exit(1);
-      }
+  } else if( mode==FIO_FREAD ) { /* [mod] H.Yashiro 20110907 avoid overwrite action */
+    if ( (finfo[fid].status.fp=fopen(finfo[fid].header.fname,"rb"))==NULL ) {
+      fprintf(stderr,"Can not open file : %s!\n",finfo[fid].header.fname);
+      exit(1);
     }
-    finfo[fid].status.rwmode = mode;
-    finfo[fid].status.opened = 1;
-  /* } R.Yoshida */
+  } else if( mode==FIO_FAPPEND ) { /* [add] H.Yashiro 20110907 overwrite mode */
+    if ( (finfo[fid].status.fp=fopen(finfo[fid].header.fname,"r+b"))==NULL ) {
+      fprintf(stderr,"Can not open file : %s!\n",finfo[fid].header.fname);
+      exit(1);
+    }
+  }
+  finfo[fid].status.rwmode = mode;
+  finfo[fid].status.opened = 1;
+
   return(SUCCESS_CODE);
 }
 
 /** close file IO stream **********************************************/
 int32_t fio_fclose( int32_t fid )
 {
-  /* if(common.use_mpiio) { R.Yoshida */
-    /*    MPI_File_close(&(finfo[fid].status.mpi_fid));
-    finfo[fid].status.opened=0;
-    */
-  /* } else { R.Yoshida */
-    fclose(finfo[fid].status.fp);
-    finfo[fid].status.opened = 0;
-  /* } R.Yoshida */
+  fclose(finfo[fid].status.fp);
+  finfo[fid].status.opened = 0;
+
   return(SUCCESS_CODE);
 }
 
@@ -462,143 +450,50 @@ int32_t fio_write_pkginfo( int32_t fid )
     return(ERROR_CODE);
   }
 
-  /* if(common.use_mpiio) { R.Yoshida */
-    /*
-    MPI_File_seek(finfo[fid].status.mpi_fid,0,MPI_SEEK_SET);
-    MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-    if(myid==0){
-      ** file description **
-      ierr = MPI_File_write(finfo[fid].status.mpi_fid,
-			    finfo[fid].header.description,
-			    MAX_CHAR,MPI_CHAR,
-			    &status);
-      ** endian_type **
-      dummy32=finfo[fid].header.endiantype;
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg( &dummy32, sizeof(int32_t),1);
-      }
-      ierr = MPI_File_write(finfo[fid].status.mpi_fid,
-			    &dummy32,
-			    1,MPI_INTEGER,
-			    &status);
-      ** grid_topology **
-      dummy32=finfo[fid].header.grid_topology;
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg( &dummy32, sizeof(int32_t),1);
-      }
-      ierr = MPI_File_write(finfo[fid].status.mpi_fid,
-			    &dummy32,
-			    1,MPI_INTEGER,
-			    &status);
-      ** glevel **
-      dummy32=finfo[fid].header.glevel;
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg( &dummy32, sizeof(int32_t),1);
-      }
-      ierr = MPI_File_write(finfo[fid].status.mpi_fid,
-			    &dummy32,
-			    1,MPI_INTEGER,
-			    &status);
-      ** rlevel **
-      dummy32=finfo[fid].header.rlevel;
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg( &dummy32, sizeof(int32_t),1);
-      }
-      ierr = MPI_File_write(finfo[fid].status.mpi_fid,
-			    &dummy32,
-			    1,MPI_INTEGER,
-			    &status);
-      ** number of region **
-      num_of_rgn = pow(4,finfo[fid].header.rlevel)*10;
-      dummy32=num_of_rgn;
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg( &dummy32, sizeof(int32_t),1);
-      }
-      ierr = MPI_File_write(finfo[fid].status.mpi_fid,
-			    &dummy32,
-			    1,MPI_INTEGER,
-			    &status);
-      ** region id **
-      rgnid=(int32_t *)malloc(sizeof(int32_t)*num_of_rgn);
-      for(i=0;i<num_of_rgn;i++){
-	rgnid[i] = i;
-      }
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg(rgnid, sizeof(int32_t),num_of_rgn);
-      }
-      ierr = MPI_File_write(finfo[fid].status.mpi_fid,
-			    rgnid,
-			    num_of_rgn,MPI_INTEGER,
-			    &status);
-      free(rgnid);
-      ** number of data **
-      dummy32=finfo[fid].header.num_of_data;
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg( &dummy32, sizeof(int32_t),1);
-      }
-      ierr = MPI_File_write(finfo[fid].status.mpi_fid,
-			    &dummy32,
-			    1,MPI_INTEGER,
-			    &status);
-      ** File mode  **
-      dummy32=finfo[fid].header.fmode;
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg( &dummy32, sizeof(int32_t),1);
-      }
-      ierr = MPI_File_write(finfo[fid].status.mpi_fid,
-			    &dummy32,
-			    1,MPI_INTEGER,
-			    &status);
+  fseek(finfo[fid].status.fp,0L,SEEK_SET);
+  /* description */
+  fwrite(finfo[fid].header.description,sizeof(char),FIO_HMID,finfo[fid].status.fp);
+  /* note */
+  fwrite(finfo[fid].header.note,sizeof(char),FIO_HLONG,finfo[fid].status.fp);
+  /* file mode */
+  temp32=finfo[fid].header.fmode;
+  if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
+  fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
+  /* endian type */
+  temp32 = finfo[fid].header.endiantype;
+  if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
+  fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
+  /* grid topology */
+  temp32 = finfo[fid].header.grid_topology;
+  if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
+  fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
+  /* glevel */
+  temp32 = finfo[fid].header.glevel;
+  if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
+  fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
+  /* rlevel */
+  temp32=finfo[fid].header.rlevel;
+  if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
+  fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
+  /* number of region & region id */
+  temp32=finfo[fid].header.num_of_rgn;
+  if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
+  fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
 
-      MPI_File_get_position(finfo[fid].status.mpi_fid,&(finfo[fid].status.mpi_eoh));
-    }
-    MPI_Bcast(&(finfo[fid].status.mpi_eoh),sizeof(MPI_Offset), MPI_BYTE, 0, MPI_COMM_WORLD);
-    */
-  /* } else { R.Yoshida */
-    fseek(finfo[fid].status.fp,0L,SEEK_SET);
-    /* description */
-    fwrite(finfo[fid].header.description,sizeof(char),FIO_HMID,finfo[fid].status.fp);
-    /* note */
-    fwrite(finfo[fid].header.note,sizeof(char),FIO_HLONG,finfo[fid].status.fp);
-    /* file mode */
-    temp32=finfo[fid].header.fmode;
-    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
-    fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
-    /* endian type */
-    temp32 = finfo[fid].header.endiantype;
-    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
-    fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
-    /* grid topology */
-    temp32 = finfo[fid].header.grid_topology;
-    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
-    fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
-    /* glevel */
-    temp32 = finfo[fid].header.glevel;
-    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
-    fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
-    /* rlevel */
-    temp32=finfo[fid].header.rlevel;
-    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
-    fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
-    /* number of region & region id */
-    temp32=finfo[fid].header.num_of_rgn;
-    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
-    fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
+  array32=(int32_t *)malloc(sizeof(int32_t)*finfo[fid].header.num_of_rgn);
+  memcpy(array32,finfo[fid].header.rgnid,finfo[fid].header.num_of_rgn*sizeof(int32_t));
+  if(system_ednchg){ fio_ednchg(array32,sizeof(int32_t),finfo[fid].header.num_of_rgn); }
+  fwrite( array32,sizeof(int32_t),finfo[fid].header.num_of_rgn,finfo[fid].status.fp );
+  free(array32);
+  /* number of data */
+  temp32=finfo[fid].header.num_of_data;
+  if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
+  fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
 
-    array32=(int32_t *)malloc(sizeof(int32_t)*finfo[fid].header.num_of_rgn);
-    memcpy(array32,finfo[fid].header.rgnid,finfo[fid].header.num_of_rgn*sizeof(int32_t));
-    if(system_ednchg){ fio_ednchg(array32,sizeof(int32_t),finfo[fid].header.num_of_rgn); }
-    fwrite( array32,sizeof(int32_t),finfo[fid].header.num_of_rgn,finfo[fid].status.fp );
-    free(array32);
-    /* number of data */
-    temp32=finfo[fid].header.num_of_data;
-    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
-    fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
+  /* remember endpoint of pkginfo */
+  /* finfo[fid].status.EOH = ftell(finfo[fid].status.fp);     [del] 20111007 H.Yashiro */
+  fgetpos(finfo[fid].status.fp, &(finfo[fid].status.eoh)); /* [add] 20111007 H.Yashiro */
 
-    /* remember endpoint of pkginfo */
-    /* finfo[fid].status.EOH = ftell(finfo[fid].status.fp);     [del] 20111007 H.Yashiro */
-    fgetpos(finfo[fid].status.fp, &(finfo[fid].status.eoh)); /* [add] 20111007 H.Yashiro */
-  /* } R.Yoshida */
   return(SUCCESS_CODE);
 }
 
@@ -613,137 +508,55 @@ int32_t fio_read_pkginfo( int32_t fid )
     fprintf(stderr,"%s is not open!\n",finfo[fid].header.fname);
     return(ERROR_CODE);
   }
-  /* if(common.use_mpiio) { R.Yoshida */
-    /*
-    MPI_File_seek(finfo[fid].status.mpi_fid,0,MPI_SEEK_SET);
-    MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-    if(myid==0){
-      ** file description **
-      ierr = MPI_File_read(finfo[fid].status.mpi_fid,
-			   finfo[fid].header.description,
-			   MAX_CHAR,MPI_CHAR,
-			   &status);
-      ** endian type *
-      ierr = MPI_File_read(finfo[fid].status.mpi_fid,
-			   &(finfo[fid].header.endiantype),
-			   1,MPI_INTEGER,
-			   &status);
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg( &(finfo[fid].header.endiantype), sizeof(int32_t),1);	
-      }
-      * grid topology *
-      ierr = MPI_File_read(finfo[fid].status.mpi_fid,
-			   &(finfo[fid].header.grid_topology),
-			   1,MPI_INTEGER,
-			   &status);
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg( &(finfo[fid].header.grid_topology), sizeof(int32_t),1);	
-      }
-      * glevel *
-      ierr = MPI_File_read(finfo[fid].status.mpi_fid,
-			   &(finfo[fid].header.glevel),
-			   1,MPI_INTEGER,
-			   &status);
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg( &(finfo[fid].header.glevel), sizeof(int32_t),1);	
-      }
-      * rlevel *
-      ierr = MPI_File_read(finfo[fid].status.mpi_fid,
-			   &(finfo[fid].header.rlevel),
-			   1,MPI_INTEGER,
-			   &status);
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg( &(finfo[fid].header.rlevel), sizeof(int32_t),1);	
-      }
-      * number of region *
-      num_of_rgn = pow(4,finfo[fid].header.rlevel)*10;
-      ierr = MPI_File_read(finfo[fid].status.mpi_fid,
-			   &(num_of_rgn),
-			   1,MPI_INTEGER,
-			   &status);
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg( &num_of_rgn, sizeof(int32_t),1);	
-      }
-      * region id *
-      rgnid=(int32_t *)malloc(sizeof(int32_t)*num_of_rgn);
-      ierr = MPI_File_read(finfo[fid].status.mpi_fid,
-			   rgnid,
-			   num_of_rgn,MPI_INTEGER,
-			   &status);
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg(rgnid, sizeof(int32_t),num_of_rgn);
-      }
-      free(rgnid);
-      * number of data *
-      ierr = MPI_File_read(finfo[fid].status.mpi_fid,
-			   &(finfo[fid].header.num_of_data),
-			   1,MPI_INTEGER,
-			   &status);
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg( &(finfo[fid].header.num_of_data),sizeof(int32_t),1);
-      }
-      * File mode  *
-      ierr = MPI_File_read(finfo[fid].status.mpi_fid,
-			   &(finfo[fid].header.fmode),
-			   1,MPI_INTEGER,
-			   &status);
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg( &(finfo[fid].header.fmode),sizeof(int32_t),1);
-      }
 
-      MPI_File_get_position(finfo[fid].status.mpi_fid,&(finfo[fid].status.EOH));
-    }
-    MPI_Bcast(&(finfo[fid].status.EOH),sizeof(MPI_Offset), MPI_BYTE, 0, MPI_COMM_WORLD);
-    */
-  /* } else { R.Yoshida */
-    fseek(finfo[fid].status.fp,0L,SEEK_SET);
-    /* description */
-    fread(finfo[fid].header.description,sizeof(char),FIO_HMID,finfo[fid].status.fp);
-    /* note */
-    fread(finfo[fid].header.note,sizeof(char),FIO_HLONG,finfo[fid].status.fp);
-    /* file mode */
-    fread(&temp32,sizeof(int32_t),1,finfo[fid].status.fp);
-    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
-    finfo[fid].header.fmode = temp32;
-    /* endian type */
-    fread(&temp32,sizeof(int32_t),1,finfo[fid].status.fp);
-    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
-    finfo[fid].header.endiantype = temp32;
-    /* grid topology */
-    fread(&temp32,sizeof(int32_t),1,finfo[fid].status.fp);
-    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
-    finfo[fid].header.grid_topology = temp32;
-    /* glevel */
-    fread(&temp32,sizeof(int32_t),1,finfo[fid].status.fp);
-    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
-    finfo[fid].header.glevel = temp32;
-    /* rlevel */
-    fread(&temp32,sizeof(int32_t),1,finfo[fid].status.fp);
-    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
-    finfo[fid].header.rlevel = temp32;
-    /* number of region & region id */
-    fread(&temp32,sizeof(int32_t),1,finfo[fid].status.fp);
-    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
-    finfo[fid].header.num_of_rgn = temp32;
+  fseek(finfo[fid].status.fp,0L,SEEK_SET);
+  /* description */
+  fread(finfo[fid].header.description,sizeof(char),FIO_HMID,finfo[fid].status.fp);
+  /* note */
+  fread(finfo[fid].header.note,sizeof(char),FIO_HLONG,finfo[fid].status.fp);
+  /* file mode */
+  fread(&temp32,sizeof(int32_t),1,finfo[fid].status.fp);
+  if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
+  finfo[fid].header.fmode = temp32;
+  /* endian type */
+  fread(&temp32,sizeof(int32_t),1,finfo[fid].status.fp);
+  if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
+  finfo[fid].header.endiantype = temp32;
+  /* grid topology */
+  fread(&temp32,sizeof(int32_t),1,finfo[fid].status.fp);
+  if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
+  finfo[fid].header.grid_topology = temp32;
+  /* glevel */
+  fread(&temp32,sizeof(int32_t),1,finfo[fid].status.fp);
+  if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
+  finfo[fid].header.glevel = temp32;
+  /* rlevel */
+  fread(&temp32,sizeof(int32_t),1,finfo[fid].status.fp);
+  if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
+  finfo[fid].header.rlevel = temp32;
+  /* number of region & region id */
+  fread(&temp32,sizeof(int32_t),1,finfo[fid].status.fp);
+  if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
+  finfo[fid].header.num_of_rgn = temp32;
 
-    array32=(int32_t *)malloc(sizeof(int32_t)*temp32);
-    fread(array32,sizeof(int32_t),temp32,finfo[fid].status.fp);
-    if(system_ednchg){ fio_ednchg(array32,sizeof(int32_t),temp32); }
-    finfo[fid].header.rgnid = (int32_t *)realloc(finfo[fid].header.rgnid,
-                              finfo[fid].header.num_of_rgn*sizeof(int32_t));
-    for( i=0; i<finfo[fid].header.num_of_rgn; i++ ) {
-      finfo[fid].header.rgnid[i] = array32[i];
-    }
-    free(array32);
-    /* number of data */
-    fread(&temp32,sizeof(int32_t),1,finfo[fid].status.fp);
-    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
-    finfo[fid].header.num_of_data = temp32;
+  array32=(int32_t *)malloc(sizeof(int32_t)*temp32);
+  fread(array32,sizeof(int32_t),temp32,finfo[fid].status.fp);
+  if(system_ednchg){ fio_ednchg(array32,sizeof(int32_t),temp32); }
+  finfo[fid].header.rgnid = (int32_t *)realloc(finfo[fid].header.rgnid,
+                            finfo[fid].header.num_of_rgn*sizeof(int32_t));
+  for( i=0; i<finfo[fid].header.num_of_rgn; i++ ) {
+    finfo[fid].header.rgnid[i] = array32[i];
+  }
+  free(array32);
+  /* number of data */
+  fread(&temp32,sizeof(int32_t),1,finfo[fid].status.fp);
+  if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1); }
+  finfo[fid].header.num_of_data = temp32;
 
-    /* remember endpoint of pkginfo */
-    /* finfo[fid].status.EOH = ftell(finfo[fid].status.fp);     [del] 20111007 H.Yashiro */
-    fgetpos(finfo[fid].status.fp, &(finfo[fid].status.eoh)); /* [add] 20111007 H.Yashiro */
-  /* } R.Yoshida */
+  /* remember endpoint of pkginfo */
+  /* finfo[fid].status.EOH = ftell(finfo[fid].status.fp);     [del] 20111007 H.Yashiro */
+  fgetpos(finfo[fid].status.fp, &(finfo[fid].status.eoh)); /* [add] 20111007 H.Yashiro */
+
   return(SUCCESS_CODE);
 }
 
@@ -759,45 +572,42 @@ int32_t fio_write_datainfo( int32_t fid,
     return(ERROR_CODE);
   }
 
-  /* if(common.use_mpiio) {
+  fseek(finfo[fid].status.fp,0L,SEEK_END);
+  /* varname */
+  fwrite(finfo[fid].dinfo[did].varname,sizeof(char),FIO_HSHORT,finfo[fid].status.fp);
+  /* description */
+  fwrite(finfo[fid].dinfo[did].description,sizeof(char),FIO_HMID,finfo[fid].status.fp);
+  /* unit */
+  fwrite(finfo[fid].dinfo[did].unit,sizeof(char),FIO_HSHORT,finfo[fid].status.fp);
+  /* layername */
+  fwrite(finfo[fid].dinfo[did].layername,sizeof(char),FIO_HSHORT,finfo[fid].status.fp);
+  /* note */
+  fwrite(finfo[fid].dinfo[did].note,sizeof(char),FIO_HLONG,finfo[fid].status.fp);
+  /* datasize */
+  temp64 = finfo[fid].dinfo[did].datasize;
+  if(system_ednchg){ fio_ednchg(&temp64,sizeof(int64_t),1 ); }
+  fwrite( &temp64,sizeof(int64_t),1,finfo[fid].status.fp );
+  /* datatype */
+  temp32 = finfo[fid].dinfo[did].datatype;
+  if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1 ); }
+  fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
+  /* num_of_layer */
+  temp32 = finfo[fid].dinfo[did].num_of_layer;
+  if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1 ); }
+  fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
+  /* step */
+  temp32 = finfo[fid].dinfo[did].step;
+  if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1 ); }
+  fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
+  /* time_start */
+  temp64 = finfo[fid].dinfo[did].time_start;
+  if(system_ednchg){ fio_ednchg(&temp64,sizeof(int64_t),1 ); }
+  fwrite( &temp64,sizeof(int64_t),1,finfo[fid].status.fp );
+  /* time_end */
+  temp64 = finfo[fid].dinfo[did].time_end;
+  if(system_ednchg){ fio_ednchg(&temp64,sizeof(int64_t),1 ); }
+  fwrite( &temp64,sizeof(int64_t),1,finfo[fid].status.fp );
 
-  } else { R.Yoshida */
-    fseek(finfo[fid].status.fp,0L,SEEK_END);
-    /* varname */
-    fwrite(finfo[fid].dinfo[did].varname,sizeof(char),FIO_HSHORT,finfo[fid].status.fp);
-    /* description */
-    fwrite(finfo[fid].dinfo[did].description,sizeof(char),FIO_HMID,finfo[fid].status.fp);
-    /* unit */
-    fwrite(finfo[fid].dinfo[did].unit,sizeof(char),FIO_HSHORT,finfo[fid].status.fp);
-    /* layername */
-    fwrite(finfo[fid].dinfo[did].layername,sizeof(char),FIO_HSHORT,finfo[fid].status.fp);
-    /* note */
-    fwrite(finfo[fid].dinfo[did].note,sizeof(char),FIO_HLONG,finfo[fid].status.fp);
-    /* datasize */
-    temp64 = finfo[fid].dinfo[did].datasize;
-    if(system_ednchg){ fio_ednchg(&temp64,sizeof(int64_t),1 ); }
-    fwrite( &temp64,sizeof(int64_t),1,finfo[fid].status.fp );
-    /* datatype */
-    temp32 = finfo[fid].dinfo[did].datatype;
-    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1 ); }
-    fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
-    /* num_of_layer */
-    temp32 = finfo[fid].dinfo[did].num_of_layer;
-    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1 ); }
-    fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
-    /* step */
-    temp32 = finfo[fid].dinfo[did].step;
-    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1 ); }
-    fwrite( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
-    /* time_start */
-    temp64 = finfo[fid].dinfo[did].time_start;
-    if(system_ednchg){ fio_ednchg(&temp64,sizeof(int64_t),1 ); }
-    fwrite( &temp64,sizeof(int64_t),1,finfo[fid].status.fp );
-    /* time_end */
-    temp64 = finfo[fid].dinfo[did].time_end;
-    if(system_ednchg){ fio_ednchg(&temp64,sizeof(int64_t),1 ); }
-    fwrite( &temp64,sizeof(int64_t),1,finfo[fid].status.fp );
-  /* } R.Yoshida */
   return(SUCCESS_CODE);
 }
 
@@ -814,154 +624,138 @@ int32_t fio_read_datainfo( int32_t fid )
     return(ERROR_CODE);
   }
 
-  /* if(common.use_mpiio) { R.Yoshida */
-    /*
-    MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-    MPI_File_seek(finfo[fid].status.mpi_fid,0,MPI_SEEK_SET);
-    if(myid==0){
-      pos = finfo[fid].status.EOH;
-      di_headersize=sizeof(char)*MAX_CHAR+sizeof(int32_t)*3+sizeof(int64_t);
-      for(i=0;i<finfo[fid].header.num_of_data-1;i++){
-	pos += ( di_headersize
-		 +precision[finfo[fid].datainfo[i].datatype]
-		 *(pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel)+2)
-		 *(pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel)+2)
-		 *finfo[fid].datainfo[i].num_of_layer*pow(4,finfo[fid].header.rlevel)*10 );
-	* <- The extension for another topology is needed. Currently, not supported!*
-      }
-      * set stating point of dataset *
-      MPI_File_seek(finfo[fid].status.mpi_fid,pos,MPI_SEEK_SET);
+  /* read all data information from file */
+  fsetpos(finfo[fid].status.fp, &(finfo[fid].status.eoh)); /* [add] 20111007 H.Yashiro */
+  pos = 0;                                                 /* [mod] 20111007 H.Yashiro */
+  for( did=0; did<finfo[fid].header.num_of_data; did++ ) {
+    fseek(finfo[fid].status.fp,pos,SEEK_CUR); /* [mod] 20111007 H.Yashiro */
+    /* varname */
+    fread(finfo[fid].dinfo[did].varname,sizeof(char),FIO_HSHORT,finfo[fid].status.fp);
+    /* description */
+    fread(finfo[fid].dinfo[did].description,sizeof(char),FIO_HMID,finfo[fid].status.fp);
+    /* unit */
+    fread(finfo[fid].dinfo[did].unit,sizeof(char),FIO_HSHORT,finfo[fid].status.fp);
+    /* layername */
+    fread(finfo[fid].dinfo[did].layername,sizeof(char),FIO_HSHORT,finfo[fid].status.fp);
+    /* note */
+    fread(finfo[fid].dinfo[did].note,sizeof(char),FIO_HLONG,finfo[fid].status.fp);
+    /* datasize */
+    fread( &temp64,sizeof(int64_t),1,finfo[fid].status.fp );
+    if(system_ednchg){ fio_ednchg(&temp64,sizeof(int64_t),1 ); }
+    finfo[fid].dinfo[did].datasize = temp64;
+    /* datatype */
+    fread( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
+    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1 ); }
+    finfo[fid].dinfo[did].datatype = temp32;
+    /* num_of_layer */
+    fread( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
+    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1 ); }
+    finfo[fid].dinfo[did].num_of_layer = temp32;
+    /* step */
+    fread( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
+    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1 ); }
+    finfo[fid].dinfo[did].step = temp32;
+    /* time_start */
+    fread( &temp64,sizeof(int64_t),1,finfo[fid].status.fp );
+    if(system_ednchg){ fio_ednchg(&temp64,sizeof(int64_t),1 ); }
+    finfo[fid].dinfo[did].time_start = temp64;
+    /* time_end */
+    fread( &temp64,sizeof(int64_t),1,finfo[fid].status.fp );
+    if(system_ednchg){ fio_ednchg(&temp64,sizeof(int64_t),1 ); }
+    finfo[fid].dinfo[did].time_end = temp64;
 
-      * varname *
-      ierr = MPI_File_write(finfo[fid].status.mpi_fid,
-			    finfo[fid].datainfo[did].varname,
-			    MAX_CHAR,MPI_CHAR,
-			    &status);
-      * datatype *
-      dummy32=finfo[fid].datainfo[did].datatype;
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg( &dummy32, sizeof(int32_t),1);	
-      }
-      ierr = MPI_File_write(finfo[fid].status.mpi_fid,
-			    &dummy32,
-			    1,MPI_INTEGER,
-			    &status);
-      * num of layer  *
-      dummy32=finfo[fid].datainfo[did].num_of_layer;
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg( &dummy32, sizeof(int32_t),1);	
-      }
-      ierr = MPI_File_write(finfo[fid].status.mpi_fid,
-			    &dummy32,
-			    1,MPI_INTEGER,
-			    &status);
-      * time  *
-      dummy32=finfo[fid].datainfo[did].time;
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg( &dummy32, sizeof(int32_t),1);	
-      }
-      ierr = MPI_File_write(finfo[fid].status.mpi_fid,
-			    &dummy32,
-			    1,MPI_INTEGER,
-			    &status);
-      * datasize  *
-      di_datasize
-	=precision[finfo[fid].datainfo[did].datatype]
-	*(pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel)+2)
-	*(pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel)+2)
-	*finfo[fid].datainfo[did].num_of_layer*pow(4,finfo[fid].header.rlevel)*10;
-      * <- The extension for another topology is needed. Currently, not supported!*
-      if(finfo[fid].header.endiantype!=fio_system_endian){
-	fio_ednchg( &di_datasize, sizeof(int64_t),1);	
-      }
-      ierr = MPI_File_write(finfo[fid].status.mpi_fid,
-			    &(di_datasize),
-			    1,MPI_INTEGER8,
-			    &status);
-      MPI_File_get_position(finfo[fid].status.mpi_fid,&(offset0));
-    }
-    MPI_Bcast(&offset0,sizeof(MPI_Offset), MPI_BYTE, 0, MPI_COMM_WORLD);
+    /* skip data array */
+    pos = finfo[fid].dinfo[did].datasize; /* [mod] 20111007 H.Yashiro */
+  }
 
-    if(finfo[fid].datainfo[did].datatype==FIO_REAL4){
-      datatype_for_mpi=MPI_REAL;
-    } else if(finfo[fid].datainfo[did].datatype==FIO_REAL8){
-      datatype_for_mpi=MPI_DOUBLE_PRECISION;
-    } else if(finfo[fid].datainfo[did].datatype==FIO_INTEGER4){
-      datatype_for_mpi=MPI_INTEGER;
-    } else if(finfo[fid].datainfo[did].datatype==FIO_INTEGER8){
-      datatype_for_mpi=MPI_INTEGER8;
-    }
-    count 
-      = (pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel)+2)
-      * (pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel)+2)
-      *finfo[fid].datainfo[did].num_of_layer;
+  return(SUCCESS_CODE);
+}
 
-    if(finfo[fid].header.endiantype!=fio_system_endian){
-      _data=malloc(count*finfo[fid].header.num_of_rgn*precision[finfo[fid].datainfo[did].datatype]);
-      fio_ednchg(_data,
-		precision[finfo[fid].datainfo[did].datatype],
-		count*finfo[fid].header.num_of_rgn);
-    } else {
-      _data = data;
-    }
+/** read data information and store data as tmpdata *******************/
+/* [add] C.Kodama 13-04-18 */
+int32_t fio_read_datainfo_tmpdata( int32_t fid )
+{
+  int32_t did;
+  int32_t pos;
+  int32_t temp32;
+  int64_t temp64;
+  int32_t i, ijklall, v;
 
-    for(i=0;i<finfo[fid].header.num_of_rgn;i++){
-      offset = offset0 + ( count*precision[finfo[fid].datainfo[did].datatype] )*finfo[fid].header.rgnid[i];
-      data_start = count*i;
-      dp = (char *)_data;
-      dp=dp+data_start*precision[finfo[fid].datainfo[did].datatype];
-      MPI_File_write_at(finfo[fid].status.mpi_fid, offset, 
-			dp, count, datatype_for_mpi, &status);
-    }
-    if(finfo[fid].header.endiantype!=fio_system_endian){
-      free(_data);
-    }
-    */
-  /* } else { R.Yoshida */
-    /* read all data information from file */
-    fsetpos(finfo[fid].status.fp, &(finfo[fid].status.eoh)); /* [add] 20111007 H.Yashiro */
-    pos = 0;                                                 /* [mod] 20111007 H.Yashiro */
-    for( did=0; did<finfo[fid].header.num_of_data; did++ ) {
-      fseek(finfo[fid].status.fp,pos,SEEK_CUR); /* [mod] 20111007 H.Yashiro */
-      /* varname */
-      fread(finfo[fid].dinfo[did].varname,sizeof(char),FIO_HSHORT,finfo[fid].status.fp);
-      /* description */
-      fread(finfo[fid].dinfo[did].description,sizeof(char),FIO_HMID,finfo[fid].status.fp);
-      /* unit */
-      fread(finfo[fid].dinfo[did].unit,sizeof(char),FIO_HSHORT,finfo[fid].status.fp);
-      /* layername */
-      fread(finfo[fid].dinfo[did].layername,sizeof(char),FIO_HSHORT,finfo[fid].status.fp);
-      /* note */
-      fread(finfo[fid].dinfo[did].note,sizeof(char),FIO_HLONG,finfo[fid].status.fp);
-      /* datasize */
-      fread( &temp64,sizeof(int64_t),1,finfo[fid].status.fp );
-      if(system_ednchg){ fio_ednchg(&temp64,sizeof(int64_t),1 ); }
-      finfo[fid].dinfo[did].datasize = temp64;
-      /* datatype */
-      fread( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
-      if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1 ); }
-      finfo[fid].dinfo[did].datatype = temp32;
-      /* num_of_layer */
-      fread( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
-      if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1 ); }
-      finfo[fid].dinfo[did].num_of_layer = temp32;
-      /* step */
-      fread( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
-      if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1 ); }
-      finfo[fid].dinfo[did].step = temp32;
-      /* time_start */
-      fread( &temp64,sizeof(int64_t),1,finfo[fid].status.fp );
-      if(system_ednchg){ fio_ednchg(&temp64,sizeof(int64_t),1 ); }
-      finfo[fid].dinfo[did].time_start = temp64;
-      /* time_end */
-      fread( &temp64,sizeof(int64_t),1,finfo[fid].status.fp );
-      if(system_ednchg){ fio_ednchg(&temp64,sizeof(int64_t),1 ); }
-      finfo[fid].dinfo[did].time_end = temp64;
+  if(tdata == NULL){
+    tdata = (struct type_tmpdata *)malloc(sizeof(struct type_tmpdata)*(10*(int32_t)(pow(4,common.rlevel)))); /* common.num_of_rgn >= fid */
+    for( i=0; i<common.num_of_rgn; i++ ){ tdata[i].tmpdata = NULL; }
+    
+  }
+  tdata[fid].tmpdata = (void **)malloc(sizeof(void *)*finfo[fid].header.num_of_data);
 
-      /* skip data array */
-      pos = finfo[fid].dinfo[did].datasize; /* [mod] 20111007 H.Yashiro */
+  if (!finfo[fid].status.opened) {
+    fprintf(stderr,"%s is not open!\n",finfo[fid].header.fname);
+    return(ERROR_CODE);
+  }
+
+  /* read all data information from file */
+  fsetpos(finfo[fid].status.fp, &(finfo[fid].status.eoh)); /* [add] 20111007 H.Yashiro */
+  pos = 0;                                                 /* [mod] 20111007 H.Yashiro */
+  fseek(finfo[fid].status.fp,pos,SEEK_CUR);
+  for( did=0; did<finfo[fid].header.num_of_data; did++ ) {
+    /*fseek(finfo[fid].status.fp,pos,SEEK_CUR);*/ /* [mod] 20111007 H.Yashiro */
+    /* varname */
+    fread(finfo[fid].dinfo[did].varname,sizeof(char),FIO_HSHORT,finfo[fid].status.fp);
+    /* description */
+    fread(finfo[fid].dinfo[did].description,sizeof(char),FIO_HMID,finfo[fid].status.fp);
+    /* unit */
+    fread(finfo[fid].dinfo[did].unit,sizeof(char),FIO_HSHORT,finfo[fid].status.fp);
+    /* layername */
+    fread(finfo[fid].dinfo[did].layername,sizeof(char),FIO_HSHORT,finfo[fid].status.fp);
+    /* note */
+    fread(finfo[fid].dinfo[did].note,sizeof(char),FIO_HLONG,finfo[fid].status.fp);
+    /* datasize */
+    fread( &temp64,sizeof(int64_t),1,finfo[fid].status.fp );
+    if(system_ednchg){ fio_ednchg(&temp64,sizeof(int64_t),1 ); }
+    finfo[fid].dinfo[did].datasize = temp64;
+    /* datatype */
+    fread( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
+    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1 ); }
+    finfo[fid].dinfo[did].datatype = temp32;
+    /* num_of_layer */
+    fread( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
+    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1 ); }
+    finfo[fid].dinfo[did].num_of_layer = temp32;
+    /* step */
+    fread( &temp32,sizeof(int32_t),1,finfo[fid].status.fp );
+    if(system_ednchg){ fio_ednchg(&temp32,sizeof(int32_t),1 ); }
+    finfo[fid].dinfo[did].step = temp32;
+    /* time_start */
+    fread( &temp64,sizeof(int64_t),1,finfo[fid].status.fp );
+    if(system_ednchg){ fio_ednchg(&temp64,sizeof(int64_t),1 ); }
+    finfo[fid].dinfo[did].time_start = temp64;
+    /* time_end */
+    fread( &temp64,sizeof(int64_t),1,finfo[fid].status.fp );
+    if(system_ednchg){ fio_ednchg(&temp64,sizeof(int64_t),1 ); }
+    finfo[fid].dinfo[did].time_end = temp64;
+
+    /* skip data array */
+    pos = finfo[fid].dinfo[did].datasize; /* [mod] 20111007 H.Yashiro */
+
+    for( v=0; v<nvar; v++ ){
+      if( strcmp( vname[v], finfo[fid].dinfo[did].varname ) == 0 ){
+        tdata[fid].tmpdata[did] = (void *)malloc(finfo[fid].dinfo[did].datasize);
+
+        fread( tdata[fid].tmpdata[did], finfo[fid].dinfo[did].datasize, 1, finfo[fid].status.fp );
+        
+        ijklall = finfo[fid].dinfo[did].datasize
+          / precision[finfo[fid].dinfo[did].datatype];
+        if(system_ednchg){
+          fio_ednchg(tdata[fid].tmpdata[did],precision[finfo[fid].dinfo[did].datatype],ijklall);
+        }
+        break;
+      }
+      if( v == nvar-1 ){
+        tdata[fid].tmpdata[did] = NULL;
+        fseek(finfo[fid].status.fp,pos,SEEK_CUR);
+      }
     }
-  /* } R.Yoshida */
+  }
 
   return(SUCCESS_CODE);
 }
@@ -977,23 +771,20 @@ int32_t fio_write_data( int32_t fid,
   ijklall = finfo[fid].dinfo[did].datasize
           / precision[finfo[fid].dinfo[did].datatype];
 
-  /* if(common.use_mpiio) { R.Yoshida */
+  fseek(finfo[fid].status.fp,0L,SEEK_END);
+  /* data */
+  if(system_ednchg){ 
+    _data = malloc(finfo[fid].dinfo[did].datasize);
+    memcpy( _data, data, finfo[fid].dinfo[did].datasize);
+    fio_ednchg(_data,precision[finfo[fid].dinfo[did].datatype],ijklall);
+  }else{
+    _data = data;
+  }
 
-  /* } else { */
-    fseek(finfo[fid].status.fp,0L,SEEK_END);
-    /* data */
-    if(system_ednchg){ 
-      _data = malloc(finfo[fid].dinfo[did].datasize);
-      memcpy( _data, data, finfo[fid].dinfo[did].datasize);
-      fio_ednchg(_data,precision[finfo[fid].dinfo[did].datatype],ijklall);
-    }else{
-      _data = data;
-    }
+  fwrite(_data,finfo[fid].dinfo[did].datasize,1,finfo[fid].status.fp);
 
-    fwrite(_data,finfo[fid].dinfo[did].datasize,1,finfo[fid].status.fp);
+  if(system_ednchg) { free(_data); }    
 
-    if(system_ednchg) { free(_data); }    
-  /* } R.Yoshida */
   return(SUCCESS_CODE);
 }
 
@@ -1007,28 +798,25 @@ int32_t fio_write_data_1rgn( int32_t fid,
   void *_data;
 
   ijkall = (pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel)+2)
-		   * (pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel)+2)
+                   * (pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel)+2)
          * finfo[fid].dinfo[did].num_of_layer;
 
   datasize = ijkall * precision[finfo[fid].dinfo[did].datatype];
 
-  /* if(common.use_mpiio) {
+  fseek(finfo[fid].status.fp,0L,SEEK_END);
+  /* data */
+  if(system_ednchg){ 
+    _data = malloc(datasize);       /* [fix] 20111028 H.Yashiro */
+    memcpy( _data, data, datasize); /* [fix] 20111028 H.Yashiro */
+    fio_ednchg(_data,precision[finfo[fid].dinfo[did].datatype],ijkall);
+  }else{
+    _data = data;
+  }
 
-  } else { R.Yoshida */
-    fseek(finfo[fid].status.fp,0L,SEEK_END);
-    /* data */
-    if(system_ednchg){ 
-      _data = malloc(datasize);       /* [fix] 20111028 H.Yashiro */
-      memcpy( _data, data, datasize); /* [fix] 20111028 H.Yashiro */
-      fio_ednchg(_data,precision[finfo[fid].dinfo[did].datatype],ijkall);
-    }else{
-      _data = data;
-    }
+  fwrite(_data,datasize,1,finfo[fid].status.fp);
 
-    fwrite(_data,datasize,1,finfo[fid].status.fp);
+  if(system_ednchg) { free(_data); }
 
-    if(system_ednchg) { free(_data); }    
-  /* } R.Yoshida */
   return(SUCCESS_CODE);
 }
 
@@ -1044,24 +832,48 @@ int32_t fio_read_data( int32_t fid,
   ijklall = finfo[fid].dinfo[did].datasize
           / precision[finfo[fid].dinfo[did].datatype];
 
-  /* if(common.use_mpiio) {
+  fsetpos(finfo[fid].status.fp, &(finfo[fid].status.eoh)); /* [add] 20111007 H.Yashiro */
+  pos = 0;                                                 /* [mod] 20111007 H.Yashiro */
+  for( i=0; i<did; i++ ) {
+    pos += dinfosize + finfo[fid].dinfo[i].datasize;
+  }
+  pos += dinfosize;
 
-  } else { R.Yoshida */
+  fseek(finfo[fid].status.fp,pos,SEEK_CUR);
 
-    fsetpos(finfo[fid].status.fp, &(finfo[fid].status.eoh)); /* [add] 20111007 H.Yashiro */
-    pos = 0;                                                 /* [mod] 20111007 H.Yashiro */
-    for( i=0; i<did; i++ ) {
-      pos += dinfosize + finfo[fid].dinfo[i].datasize;
+  fread(data,finfo[fid].dinfo[did].datasize,1,finfo[fid].status.fp);
+  if(system_ednchg){
+    fio_ednchg(data,precision[finfo[fid].dinfo[did].datatype],ijklall);
+  }
+
+  return(SUCCESS_CODE);
+}
+
+/** read data array from tmpdata **************************************/
+/* [add] C.Kodama 13-04-18 */
+int32_t fio_read_data_tmpdata( int32_t fid,
+                               int32_t did,
+                               void *data   )
+{
+  int64_t i;
+  int64_t pos;
+  int64_t ijklall;
+  int32_t flag_tmpdata;
+
+  flag_tmpdata = 1;
+  if( tdata == NULL ){ flag_tmpdata = 0; }
+  else {
+    if( tdata[fid].tmpdata == NULL ){ flag_tmpdata = 0; }
+    else {
+      if( tdata[fid].tmpdata[did] == NULL ){ flag_tmpdata = 0; }
     }
-    pos += dinfosize;
+  }
+  if( flag_tmpdata == 0 ){ return fio_read_data( fid,did,data ); }
+  memcpy( data, tdata[fid].tmpdata[did], finfo[fid].dinfo[did].datasize );
+  /* to save memory */
+  free( tdata[fid].tmpdata[did] );
+  tdata[fid].tmpdata[did] = NULL;
 
-    fseek(finfo[fid].status.fp,pos,SEEK_CUR);
-
-    fread(data,finfo[fid].dinfo[did].datasize,1,finfo[fid].status.fp);
-    if(system_ednchg){
-      fio_ednchg(data,precision[finfo[fid].dinfo[did].datatype],ijklall);
-    }
-  /* } R.Yoshida */
   return(SUCCESS_CODE);
 }
 
@@ -1206,6 +1018,7 @@ int32_t get_header_num_of_data( int32_t fid, int32_t num_of_data )
 /** register new file *************************************************/
 int32_t fio_register_file( char *fname )
 {
+  int32_t ierr;
   int32_t fid;
 
   /* request new file space */
@@ -1278,6 +1091,41 @@ int32_t fio_valid_pkginfo( int32_t fid )
   return(SUCCESS_CODE);
 }
 
+/** validate package information with common **************************/
+int32_t fio_valid_pkginfo_validrgn( int32_t fid,
+                                    int32_t rgnid[] )
+{
+  int32_t i;
+
+  if(finfo[fid].header.grid_topology!=common.grid_topology) {
+    fprintf(stderr,"Warning: grid_topology is not match, %d, %d\n",
+                   finfo[fid].header.grid_topology,common.grid_topology);
+  }
+
+  if(finfo[fid].header.glevel!=common.glevel) {
+    fprintf(stderr,"Warning: glevel is not match, %d, %d\n",
+                   finfo[fid].header.glevel,common.glevel              );
+  }
+
+  if(finfo[fid].header.rlevel!=common.rlevel) {
+    fprintf(stderr,"Warning: rlevel is not match, %d, %d\n",
+                   finfo[fid].header.rlevel,common.rlevel              );
+  }
+
+  if(finfo[fid].header.num_of_rgn!=common.num_of_rgn) {
+    fprintf(stderr,"Warning: num_of_rgn is not match, %d, %d\n",
+                   finfo[fid].header.num_of_rgn,common.num_of_rgn      );
+  }
+
+  for( i=0; i<finfo[fid].header.num_of_rgn; i++ ) {
+    if(finfo[fid].header.rgnid[i]!=rgnid[i]) {
+    fprintf(stderr,"Warning: rgnid[%d] is not match, %d, %d\n",
+                   i,finfo[fid].header.rgnid[i],rgnid[i]               );
+    }
+  }
+  return(SUCCESS_CODE);
+}
+
 /** validate data size ************************************************/
 int32_t fio_valid_datainfo( int32_t fid )
 {
@@ -1287,7 +1135,7 @@ int32_t fio_valid_datainfo( int32_t fid )
   char* str_dtype[5] = { "XXXX","REAL4","REAL8","INTEGER4","INTEGER8" };
 
   ijall = (pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel)+2)
-		  * (pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel)+2);
+                  * (pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel)+2);
 
   for( did=0; did<finfo[fid].header.num_of_data; did++ ) {
     datasize = ijall
@@ -1347,6 +1195,8 @@ int32_t fio_put_write_datainfo( int32_t fid,
 /** read pkginfo and datainfo *****************************************/
 int32_t fio_read_allinfo( int32_t fid )
 {
+  int32_t i;
+
   fio_read_pkginfo( fid );
   fio_valid_pkginfo( fid );
 
@@ -1363,13 +1213,14 @@ int32_t fio_read_allinfo( int32_t fid )
   return(SUCCESS_CODE);
 }
 
-/** read pkginfo and datainfo and get pkginfo *************************/
-headerinfo_t fio_read_allinfo_get_pkginfo( int32_t fid )
+/** read pkginfo and datainfo, with validating rgnid ******************/
+int32_t fio_read_allinfo_validrgn( int32_t fid,
+                                   int32_t rgnid[] )
 {
-  headerinfo_t hinfo;
+  int32_t i;
 
   fio_read_pkginfo( fid );
-  fio_valid_pkginfo( fid );
+  fio_valid_pkginfo_validrgn( fid, rgnid );
 
   /* memory allocation */
   if ( (finfo[fid].dinfo
@@ -1381,14 +1232,59 @@ headerinfo_t fio_read_allinfo_get_pkginfo( int32_t fid )
   fio_read_datainfo( fid );
   fio_valid_datainfo( fid );
 
-  hinfo = fio_get_pkginfo( fid );
+  return(SUCCESS_CODE);
+}
 
-  return(hinfo);
+/** read pkginfo and datainfo and store data as tmpdata ***************/
+/* [add] C.Kodama 13-04-18 */
+int32_t fio_read_allinfo_tmpdata( int32_t fid )
+{
+  int32_t i;
+
+  fio_read_pkginfo( fid );
+  fio_valid_pkginfo( fid );
+
+  /* memory allocation */
+  if ( (finfo[fid].dinfo
+       = (datainfo_t *)realloc(finfo[fid].dinfo,
+         sizeof(datainfo_t)*finfo[fid].header.num_of_data)) == NULL ) {
+    printf("Allocation error!\n");
+  }
+
+  fio_read_datainfo_tmpdata( fid );
+  fio_valid_datainfo( fid );
+
+  return(SUCCESS_CODE);
+}
+
+void fio_register_vname_tmpdata( const char *vname_in )
+{
+  strcpy(vname[nvar++],vname_in);
+  /* printf("debug:%s\n", vname[nvar-1]);*/
+}
+
+/** allocate and copy datainfo ****************************************/
+/* [add] C.Kodama 13-04-18 */
+int32_t fio_copy_datainfo( int32_t fid, int32_t fid_org )
+{
+  /* memory allocation */
+  if ( (finfo[fid].dinfo
+       = (datainfo_t *)realloc(finfo[fid].dinfo,
+         sizeof(datainfo_t)*finfo[fid].header.num_of_data)) == NULL ) {
+    printf("Allocation error!\n");
+  }
+
+  /*fio_read_datainfo( fid );*/
+  memcpy( finfo[fid].dinfo, finfo[fid_org].dinfo, sizeof(datainfo_t)*finfo[fid].header.num_of_data );
+  fio_valid_datainfo( fid );
+
+  return(SUCCESS_CODE);
 }
 
 /** dump package summary of all finfo *********************************/
 int32_t fio_dump_finfolist( void )
 {
+  int32_t i;
   int32_t fid;
   char* str_mode[3]     = { "XXXX","SPRT","INTG" };
   char* str_rw[4]       = { "X","R","W","A" };
@@ -1397,14 +1293,13 @@ int32_t fio_dump_finfolist( void )
   char* str_topology[4] = { "XXXX","ICO","LCP","MLCP" };
 
   printf( "========== common information ==========\n" );
-  printf( " MODE ENDIAN GRID GL RL LALL MPI\n" );
+  printf( " MODE ENDIAN GRID GL RL LALL\n" );
   printf( " %4s", str_mode[common.fmode+1] );
   printf( " %6s", str_endian[common.endiantype+1] );
   printf( " %4s", str_topology[common.grid_topology+1] );
   printf( " %2d", common.glevel );
   printf( " %2d", common.rlevel );
   printf( " %4d", common.num_of_rgn );
-  /* printf( " %3d", common.use_mpiio ); R.Yoshida */
   printf( "\n" );
 
   printf( "================== file information ===================\n" );
@@ -1453,7 +1348,6 @@ int32_t fio_dump_finfo( int32_t fid,
     system_ednchg = 1;
     printf("%s to %s\n",str_endian[endiantype+1],str_endian[system_endiantype+1]);
   }
-  /* common.use_mpiio = FIO_MPIIO_NOUSE; R.Yoshida */
 
   fio_fopen( fid, FIO_FREAD );
   fio_read_pkginfo ( fid );
@@ -1466,7 +1360,7 @@ int32_t fio_dump_finfo( int32_t fid,
   fio_read_datainfo( fid );
 
   ijall = (pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel)+2)
-		  * (pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel)+2);
+                  * (pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel)+2);
 
   /* package info */
   printf( "============ DATA PACKAGE DEFINITION =============\n" );
@@ -1548,24 +1442,24 @@ int32_t fio_dump_finfo( int32_t fid,
 
         switch(finfo[fid].dinfo[did].datatype){
         case FIO_REAL4:
-	       printf("%f\n",*(real32_t *)c);
-	       c += 4;
-	       break;
+               printf("%f\n",*(real32_t *)c);
+               c += 4;
+               break;
         case FIO_REAL8:
-	       printf("%lf\n",*(real64_t *)c);
-	       c += 8;
-	       break;
+               printf("%lf\n",*(real64_t *)c);
+               c += 8;
+               break;
         case FIO_INTEGER4:
-	       printf("%d\n",*(int32_t *)c);
-	       c += 4;
-	       break;
+               printf("%d\n",*(int32_t *)c);
+               c += 4;
+               break;
         case FIO_INTEGER8:
-	       printf("%lld\n",*(int64_t *)c);
-	       c += 8;
-	       break;
+               printf("%lld\n",*(int64_t *)c);
+               c += 8;
+               break;
         default :
-	       fprintf(stderr,"xxx Undefined data type! stop\n");
-	       break;
+               fprintf(stderr,"xxx Undefined data type! stop\n");
+               break;
         }
       }
       }
@@ -1598,24 +1492,24 @@ int32_t fio_dump_finfo( int32_t fid,
 
         switch(finfo[fid].dinfo[did].datatype){
         case FIO_REAL4:
-	       printf("%.60e\n",*(real32_t *)c);
-	       c += 4;
-	       break;
+               printf("%.60e\n",*(real32_t *)c);
+               c += 4;
+               break;
         case FIO_REAL8:
-	       printf("%.60le\n",*(real64_t *)c);
-	       c += 8;
-	       break;
+               printf("%.60le\n",*(real64_t *)c);
+               c += 8;
+               break;
         case FIO_INTEGER4:
-	       printf("%d\n",*(int32_t *)c);
-	       c += 4;
-	       break;
+               printf("%d\n",*(int32_t *)c);
+               c += 4;
+               break;
         case FIO_INTEGER8:
-	       printf("%lld\n",*(int64_t *)c);
-	       c += 8;
-	       break;
+               printf("%lld\n",*(int64_t *)c);
+               c += 8;
+               break;
         default :
-	       fprintf(stderr,"xxx Undefined data type! stop\n");
-	       break;
+               fprintf(stderr,"xxx Undefined data type! stop\n");
+               break;
         }
       }
       }
@@ -1628,6 +1522,4 @@ int32_t fio_dump_finfo( int32_t fid,
 
   return(SUCCESS_CODE);
 }
-
-
 
