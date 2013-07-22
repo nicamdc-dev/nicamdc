@@ -1185,10 +1185,10 @@ contains
     real(8), parameter :: gravity = 9.80616d0     ! gravity accelaration [ms^-2]
     real(8), parameter :: u00 = 35.0d0
     real(8), parameter :: eps = 1.0d-14
-    logical, parameter :: deep_atm = .false.      ! deep atmosphere setting
 
-    real(8) :: cs32ev, pi, piby2, f1, f2, min_surf
+    real(8) :: cs32ev, pi, f1, f2, min_surf
     real(8) :: lat, p_lat, proj
+    real(8) :: piby2, pi025, one3, two3, ten63
     real(8) :: rsurf  (ADM_gall,ADM_lall)        ! surface height in ICO-grid
     real(8) :: rsurf_p(ADM_GALL_PL,ADM_LALL_PL)   ! surface height in ICO-grid for pole region
 
@@ -1197,16 +1197,16 @@ contains
 
     pi    = 2.D0 * asin(1.D0)
     piby2 = pi / 2.0d0
+    pi025 = 0.25d0*pi
+    one3    = 1.0d0 / 3.0d0
+    two3    = 2.0d0 / 3.0d0
+    ten63   = 10.0d0 / 63.0d0
     cs32ev = ( COS((1.0d0 - 0.252d0)*piby2) )**1.5d0
     !
     ! for globe
     do l=1, ADM_lall
     DO n=1, ADM_gall
-       if ( deep_atm ) then
-          rsurf(n,l) = rearth
-       else
-          rsurf(n,l) = 0.0d0
-       endif
+       rsurf(n,l) = 0.0d0
        !
        proj=sqrt (GRD_x(n,ADM_KNONE,l,GRD_XDIR)*GRD_x(n,ADM_KNONE,l,GRD_XDIR) &
                   + GRD_x(n,ADM_KNONE,l,GRD_YDIR)*GRD_x(n,ADM_KNONE,l,GRD_YDIR))
@@ -1216,21 +1216,15 @@ contains
           lat=atan (GRD_x(n,ADM_KNONE,l,GRD_ZDIR)/proj)
        end if
        !
-       f1 = 10.0d0/63.0d0 - 2.0d0*( sin(lat)**6.0d0)*( cos(lat)**2.0d0 + 1.0d0/3.0d0 )
-       f2 = 1.6d0*( cos(lat)**3.0d0)*(sin(lat)**2.0d0 + 2.0d0/3.0d0 ) - 0.25d0*pi
+       f1 = ten63 - 2.0d0*( sin(lat)**6.0d0)*( cos(lat)**2.0d0 + one3 )
+       f2 = 1.6d0*( cos(lat)**3.0d0)*(sin(lat)**2.0d0 + two3 ) - pi025
        rsurf(n,l) = rsurf(n,l) + u00*cs32ev*( f1*u00*cs32ev + f2*rearth*rotatn )/gravity
     ENDDO
     enddo
     !
-    if ( deep_atm ) then
-       write (ADM_LOG_FID, '(A)') "|-- Deep atmosphere setting [jbw_init topo]"
-       min_surf = 0.0d0
-    else
-       min_surf = minval(rsurf)
-    endif
     do l=1, ADM_lall
     do n=1, ADM_gall
-       GRD_zs(n,ADM_KNONE,l,GRD_ZSFC) = rsurf(n,l) - min_surf
+       GRD_zs(n,ADM_KNONE,l,GRD_ZSFC) = rsurf(n,l)
     enddo
     enddo
 
@@ -1238,11 +1232,7 @@ contains
     if ( ADM_prc_me==ADM_prc_pl ) then !---------------------------------
        do l=1, ADM_LALL_PL
        do n=1, ADM_GALL_PL
-          if ( deep_atm ) then
-             rsurf_p(n,l) = rearth
-          else
-             rsurf_p(n,l) = 0.0d0
-          endif
+          rsurf_p(n,l) = 0.0d0
           !
           proj=sqrt (GRD_x_pl(n,ADM_KNONE,l,GRD_XDIR)*GRD_x_pl(n,ADM_KNONE,l,GRD_XDIR) &
                      + GRD_x_pl(n,ADM_KNONE,l,GRD_YDIR)*GRD_x_pl(n,ADM_KNONE,l,GRD_YDIR))
@@ -1252,21 +1242,15 @@ contains
              p_lat=atan (GRD_x_pl(n,ADM_KNONE,l,GRD_ZDIR)/proj)
           end if
           !
-          f1 = 10.0d0/63.0d0 - 2.0d0*( sin(p_lat)**6)*( cos(p_lat)**2 + 1.0d0/3.0d0 )
-          f2 = 1.6d0*( cos(p_lat)**3)*(sin(p_lat)**2 + 2.0d0/3.0d0 ) - 0.25d0*pi
+          f1 = ten63 - 2.0d0*( sin(p_lat)**6)*( cos(p_lat)**2 + one3 )
+          f2 = 1.6d0*( cos(p_lat)**3)*(sin(p_lat)**2 + two3 ) - pi025
           rsurf_p(n,l) = rsurf_p(n,l) + u00*cs32ev*( f1*u00*cs32ev + f2*rearth*rotatn )/gravity
        enddo
        enddo
        !
-       if ( deep_atm ) then
-          write (ADM_LOG_FID, '(A)') "|-- Deep atmosphere setting (pole) [jbw_init topo]"
-          min_surf = 0.0d0
-       else
-          min_surf = minval(rsurf)
-       endif
        do l=1, ADM_LALL_PL
        do n=1, ADM_GALL_PL
-          GRD_zs_pl(n,ADM_KNONE,l,GRD_ZSFC) = rsurf_p(n,l) - min_surf
+          GRD_zs_pl(n,ADM_KNONE,l,GRD_ZSFC) = rsurf_p(n,l)
        enddo
        enddo
        !

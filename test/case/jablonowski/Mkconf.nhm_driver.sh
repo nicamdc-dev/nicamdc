@@ -139,12 +139,17 @@ cat << EOFNHM > ${BINNAME}.cnf
     doout_step0       = .true.     ,
 /
 
-&NMHIST item='ml_u',     file='u',   ktype='3D' /
-&NMHIST item='ml_v',     file='v',   ktype='3D' /
-&NMHIST item='ml_w',     file='w',   ktype='3D' /
-&NMHIST item='ml_pres',  file='prs', ktype='3D' /
-&NMHIST item='ml_tem',   file='t',   ktype='3D' /
-&NMHIST item='sl_ps',    file='ps',  ktype='2D' /
+&NMHIST item='ml_u',     file='u',    ktype='3D' /
+&NMHIST item='ml_v',     file='v',    ktype='3D' /
+&NMHIST item='ml_w',     file='w',    ktype='3D' /
+&NMHIST item='ml_pres',  file='prs',  ktype='3D' /
+&NMHIST item='ml_tem',   file='t',    ktype='3D' /
+&NMHIST item='sl_ps',    file='ps',   ktype='2D' /
+&NMHIST item='sl_u850',  file='u850', ktype='2D' /
+&NMHIST item='sl_v850',  file='v850', ktype='2D' /
+&NMHIST item='sl_w850',  file='w850', ktype='2D' /
+&NMHIST item='sl_t850',  file='t850', ktype='2D' /
+
 
 ################################################################################
 EOFNHM
