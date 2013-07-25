@@ -104,6 +104,7 @@ module mod_dycoretest
   private :: eta_vert_coord_NW
   private :: steady_state
   private :: geo2prs
+  private :: geost_rebalance
   private :: perturbation
   private :: conv_vxvyvz
   private :: Sp_Unit_East
@@ -355,6 +356,7 @@ contains
 
     logical :: signal ! if ture, continue iteration
     logical :: pertb  ! if ture, with perturbation
+    logical :: rebalance ! if ture, with geostophic wind rebalance
     integer :: n, l, k, itr, K0
     !---------------------------------------------------------------------------
 
@@ -364,11 +366,21 @@ contains
 
     select case( trim(test_case) )
     case ('1', '4-1')  ! with perturbation
-       write(ADM_LOG_FID,*) "Jablonowski Initialize - case 1: with perturbation"
+       write(ADM_LOG_FID,*) "Jablonowski Initialize - case 1: with perturbation (no rebalance)"
        pertb = .true.
+       rebalance = .false.
     case ('2', '4-2')  ! without perturbation
-       write(ADM_LOG_FID,*) "Jablonowski Initialize - case 2: without perturbation"
+       write(ADM_LOG_FID,*) "Jablonowski Initialize - case 2: without perturbation (no rebalance)"
        pertb = .false.
+       rebalance = .false.
+    case ('3')  ! with perturbation & with rebalance
+       write(ADM_LOG_FID,*) "Jablonowski Initialize - case 3: with perturbation (with rebalance)"
+       pertb = .true.
+       rebalance = .true.
+    case ('4')  ! without perturbation & with rebalance
+       write(ADM_LOG_FID,*) "Jablonowski Initialize - case 4: without perturbation (with rebalance)"
+       pertb = .false.
+       rebalance = .true.
     case default
        write(ADM_LOG_FID,*) "Unknown test_case: '"//trim(test_case)//"' specified."
        write(ADM_LOG_FID,*) "Force changed to case 1 (with perturbation)"
@@ -408,7 +420,6 @@ contains
        endif
 
        call geo2prs     ( kdim, tmp, geo, prs )
-       call perturbation( kdim, lat, lon, tmp, prs, wix, wiy, pertb )
        call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
        do k=1, kdim
@@ -422,7 +433,8 @@ contains
     enddo
     enddo
 
-    !call surface_height( lall, ijdim, a, omega, g )
+    if(rebalance) call geost_rebalance( ijdim, kdim, lall, 5, DIAG_var(:,:,:,1:5) )
+    if(pertb) call perturbation( ijdim, kdim, lall, 5, DIAG_var(:,:,:,1:5) )
 
     return
   end subroutine jbw_init  
@@ -888,10 +900,10 @@ contains
         elseif( eta(k,1) < etaT ) then
            tmp(k) = t0 * eta(k,1)**work2 + delT*(etaT - eta(k,1))**5.D0
            !
-           geo(k) = t0*g/ganma * ( 1.D0 - eta(k,1)**work2 ) - Rd * delT *                                     &
-                   ( ( log(eta(k,1)/etaT) + 137.D0/60.D0 )*etaT**5.D0 - 5.D0*(etaT**4.D0)*eta(k,1)       &
+           geo(k) = t0*g/ganma * ( 1.D0 - eta(k,1)**work2 ) - Rd * delT *                              &
+                   ( ( log(eta(k,1)/etaT) + 137.D0/60.D0 )*etaT**5.D0 - 5.D0*(etaT**4.D0)*eta(k,1)     &
                      + 5.D0*(etaT**3.D0)*(eta(k,1)**2.D0) - (10.D0/3.D0)*(etaT**2.D0)*(eta(k,1)**3.D0) &
-                     + (5.D0/4.D0)*etaT*(eta(k,1)**4.D0) - (1.D0/5.D0)*(eta(k,1)**5.D0)                 &
+                     + (5.D0/4.D0)*etaT*(eta(k,1)**4.D0) - (1.D0/5.D0)*(eta(k,1)**5.D0)                &
                    )
         else
            write (ADM_LOG_FID,'(A)') "|-- ETA BOUNDARY ERROR: [steady state calc.]"
@@ -969,50 +981,255 @@ contains
   !-----------------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------------
-  ! setting perturbation
-  subroutine perturbation( &
-      kdim,   &  !--- IN : # of z dimension
-      lat,  &  !--- IN : latitude information
-      lon,  &  !--- IN : longitude information
-      tmp,  &  !--- INOUT : temperature
-      prs,  &  !--- INOUT : pressure
-      wix,  &  !--- INOUT : zonal wind component
-      wiy,  &  !--- INOUT : meridional wind component
-      with  )  !--- IN : perturbation switch
+  ! Reproduce zonal wind by geostophic wind balance
+  subroutine geost_rebalance( &
+      ijdim,    &  !--- IN : # of ij dimension
+      kdim,     &  !--- IN : # of z dimension
+      lall,     &  !--- IN : # of region
+      vmax,     &  !--- IN : # of variables
+      DIAG_var  )  !--- INOUT : variables container
+    use mod_adm, only: &
+       ADM_prc_me,  &
+       ADM_prc_pl,  &
+       K0       => ADM_KNONE,   &
+       ijdim_pl => ADM_gall_pl, &
+       lall_pl  => ADM_lall_pl
+    use mod_comm, only: &
+       COMM_var,           &
+       COMM_data_transfer, &
+       COMM_Stat_max
+    use mod_grd, only: &
+       GRD_x,      &
+       GRD_x_pl,   &
+       GRD_XDIR,   &
+       GRD_YDIR,   &
+       GRD_ZDIR
+    use mod_misc, only: &
+       MISC_get_latlon
+    use mod_vmtr, only: &
+       VMTR_GSGAM2,     &
+       VMTR_GSGAM2_pl
+    use mod_src, only: &
+       src_gradient,              &
+       I_SRC_default,             &
+       I_SRC_horizontal
     !
     implicit none
-    integer :: k
-    integer, intent(in) :: kdim
-    logical, intent(in) :: with
-    real(PRCS_D), intent(in) :: lat, lon
-    real(PRCS_D), intent(inout) :: tmp(kdim)
-    real(PRCS_D), intent(inout) :: prs(kdim)
-    real(PRCS_D), intent(inout) :: wix(kdim)
-    real(PRCS_D), intent(inout) :: wiy(kdim)
-    real(PRCS_D) :: r, rr, rbyrr, cla, clo
-    !
+    integer, intent(in) :: ijdim, kdim, lall, vmax
+    real(8), intent(inout) :: DIAG_var(ijdim,kdim,lall,vmax)
+
+    integer, parameter :: ID_prs = 1
+    integer, parameter :: ID_tmp = 2
+    integer, parameter :: ID_vx  = 3
+    integer, parameter :: ID_vy  = 4
+    integer, parameter :: ID_vz  = 5
+    integer :: n, k, l
+    real(8) :: lat, lon
+    real(8) :: f, rho
+    real(8) :: ws, max_ws, global_max_ws, fit_fact
+    real(8) :: pre_bs, pre_bs_pl
+    real(8) :: unit_east(3)
+    real(8), parameter :: thres_f = 1.0d-12
+    real(8), allocatable :: DIAG_var_pl(:,:,:,:)
+    real(8), allocatable :: pregd(:,:,:), pregd_pl(:,:,:)
+    real(8), allocatable :: pgf(:,:,:,:), pgf_pl(:,:,:,:)
+    real(8), allocatable :: pgfz(:,:,:), pgfz_pl(:,:,:)
+    !-----
+    allocate( DIAG_var_pl(ijdim_pl,kdim,lall_pl,vmax) )
+    allocate( pregd(ijdim,kdim,lall) )
+    allocate( pregd_pl(ijdim_pl,kdim,lall_pl) )
+    allocate( pgf(ijdim,kdim,lall,3) )
+    allocate( pgf_pl(ijdim_pl,kdim,lall_pl,3) )
+    allocate( pgfz(ijdim,kdim,lall) )
+    allocate( pgfz_pl(ijdim_pl,kdim,lall_pl) )
+
+    pre_bs    = 0.0d0
+    pre_bs_pl = 0.0d0
+
+    write (ADM_LOG_FID,*) " Re-Balance Geostophic Wind ---[ original ]---"
+    write (ADM_LOG_FID,*) "  vx - max:",maxval(DIAG_var(:,:,:,ID_vx)), "  min:",minval(DIAG_var(:,:,:,ID_vx))
+    write (ADM_LOG_FID,*) "  vy - max:",maxval(DIAG_var(:,:,:,ID_vx)), "  min:",minval(DIAG_var(:,:,:,ID_vx))
+
+    !--- fill HALO (to make DIAG_var_pl)
+    call comm_var( DIAG_var, DIAG_var_pl, kdim, vmax, comm_type=2, NSval_fix=.true. )
+    pregd(:,:,:)    = ( DIAG_var(:,:,:,ID_prs)    - pre_bs )    * VMTR_GSGAM2(:,:,:)
+    pregd_pl(:,:,:) = ( DIAG_var_pl(:,:,:,ID_prs) - pre_bs_pl ) * VMTR_GSGAM2_pl(:,:,:)
+
+    !--- take pressure gradient force
+    call src_gradient( pregd,        pregd_pl,         & !--- [IN]
+                       pgf(:,:,:,1),  pgf_pl(:,:,:,1),  & !--- [OUT]
+                       pgf(:,:,:,2),  pgf_pl(:,:,:,2),  & !--- [OUT]
+                       pgf(:,:,:,3),  pgf_pl(:,:,:,3),  & !--- [OUT]
+                       pgfz(:,:,:),   pgfz_pl(:,:,:),   & !--- [OUT]
+                       I_SRC_horizontal                 ) !--- [IN]
+    write (ADM_LOG_FID,*) "  pgf (x) - max:",maxval(pgf(:,:,:,1)), "  min:",minval(pgf(:,:,:,1))
+
+    !--- geostophic wind
+    do l = 1, lall
+    do n = 1, ijdim
+       call MISC_get_latlon( lat, lon,              &
+                             GRD_x(n,K0,l,GRD_XDIR), &
+                             GRD_x(n,K0,l,GRD_YDIR), &
+                             GRD_x(n,K0,l,GRD_ZDIR)  )
+       unit_east  = Sp_Unit_East(lon)
+       f = 2.0d0 * omega * sin(lat)
+
+       do k = 2, kdim
+          rho = DIAG_var(n,k,l,ID_prs) / ( Rd*DIAG_var(n,k,l,ID_tmp) )
+
+          ! x-direction
+          if(abs(f) > thres_f) then
+             DIAG_var(n,k,l,ID_vx) = (-1.0d0/f) * (1.0d0/rho) * (  pgf(n,k,l,3)*unit_east(1) &
+                                                                 + pgf(n,k,l,2)*sign(1.0d0,lat) )
+          else
+             DIAG_var(n,k,l,ID_vx) = 0.0d0
+          endif
+
+          ! y-direction
+          if(abs(f) > thres_f) then
+             DIAG_var(n,k,l,ID_vy) = (-1.0d0/f) * (1.0d0/rho) * (  pgf(n,k,l,3)*unit_east(2) &
+                                                                 + pgf(n,k,l,1)*sign(1.0d0,lat*(-1)) )
+          else
+             DIAG_var(n,k,l,ID_vy) = 0.0d0
+          endif
+       enddo
+    enddo
+    enddo
+    DIAG_var(:,1,:,ID_vx) = DIAG_var(:,2,:,ID_vx)
+    DIAG_var(:,1,:,ID_vy) = DIAG_var(:,2,:,ID_vy)
+
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       do l = 1, lall_pl
+       do n = 1, ijdim_pl
+          call MISC_get_latlon( lat, lon,               &
+                                GRD_x_pl(n,K0,l,GRD_XDIR), &
+                                GRD_x_pl(n,K0,l,GRD_YDIR), &
+                                GRD_x_pl(n,K0,l,GRD_ZDIR)  )
+          unit_east  = Sp_Unit_East(lon)
+          f = 2.0d0 * omega * sin(lat)
+
+          do k = 2, kdim
+             rho = DIAG_var_pl(n,k,l,ID_prs) / ( Rd*DIAG_var_pl(n,k,l,ID_tmp) )
+
+             ! x-direction
+             if(abs(f) > thres_f) then
+                DIAG_var_pl(n,k,l,ID_vx) = (-1.0d0/f) * (1.0d0/rho) * (  pgf_pl(n,k,l,3)*unit_east(1) &
+                                                                       + pgf_pl(n,k,l,2)*sign(1.0d0,lat) )
+             else
+                DIAG_var_pl(n,k,l,ID_vx) = 0.0d0
+             endif
+
+             ! y-direction
+             if(abs(f) > thres_f) then
+                DIAG_var_pl(n,k,l,ID_vy) = (-1.0d0/f) * (1.0d0/rho) * (  pgf_pl(n,k,l,3)*unit_east(2) &
+                                                                       + pgf_pl(n,k,l,1)*sign(1.0d0,lat*(-1)) )
+             else
+                DIAG_var_pl(n,k,l,ID_vy) = 0.0d0
+             endif
+          enddo
+       enddo
+       enddo
+       DIAG_var_pl(:,1,:,ID_vx) = DIAG_var_pl(:,2,:,ID_vx)
+       DIAG_var_pl(:,1,:,ID_vy) = DIAG_var_pl(:,2,:,ID_vy)
+    endif
+
+    !--- fill HALO
+    call COMM_data_transfer( DIAG_var, DIAG_var_pl )
+
+    write (ADM_LOG_FID,*) " Re-Balance Geostophic Wind ---[ calc ]---"
+    write (ADM_LOG_FID,*) "  vx - max:",maxval(DIAG_var(:,:,:,ID_vx)), "  min:",minval(DIAG_var(:,:,:,ID_vx))
+    write (ADM_LOG_FID,*) "  vy - max:",maxval(DIAG_var(:,:,:,ID_vx)), "  min:",minval(DIAG_var(:,:,:,ID_vx))
+
+    !--- evaluate max windspeed setting
+    max_ws = 1.0d-14
+    do l = 1, lall
+    do n = 1, ijdim
+    do k = 1, kdim
+        ws = sqrt(DIAG_var(n,k,l,ID_vx)**2 + DIAG_var(n,k,l,ID_vy)**2)
+        if( max_ws < ws ) max_ws = ws
+    enddo
+    enddo
+    enddo
+    call COMM_Stat_max( max_ws, global_max_ws )
+    fit_fact = abs( u0 / global_max_ws )
+    write (ADM_LOG_FID,*) "  JBW Re-Balance: Fitting - max windspeed:",global_max_ws
+    write (ADM_LOG_FID,*) "  JBW Re-Balance: Fitting - fitting factor:",fit_fact
+    DIAG_var(:,:,:,ID_vx) = DIAG_var(:,:,:,ID_vx) * fit_fact
+    DIAG_var(:,:,:,ID_vy) = DIAG_var(:,:,:,ID_vy) * fit_fact
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       DIAG_var_pl(:,:,:,ID_vx) = DIAG_var_pl(:,:,:,ID_vx) * fit_fact
+       DIAG_var_pl(:,:,:,ID_vy) = DIAG_var_pl(:,:,:,ID_vy) * fit_fact
+    endif
+
+    write (ADM_LOG_FID,*) " Re-Balance Geostophic Wind ---[ fitted ]---"
+    write (ADM_LOG_FID,*) "  vx - max:",maxval(DIAG_var(:,:,:,ID_vx)), "  min:",minval(DIAG_var(:,:,:,ID_vx))
+    write (ADM_LOG_FID,*) "  vy - max:",maxval(DIAG_var(:,:,:,ID_vx)), "  min:",minval(DIAG_var(:,:,:,ID_vx))
+    write (ADM_LOG_FID,*) "  vz - force to zero"
+
+    deallocate( DIAG_var_pl, pregd, pregd_pl )
+    deallocate( pgf, pgf_pl, pgfz, pgfz_pl )
+    return
+  end subroutine geost_rebalance
+  !-----------------------------------------------------------------------------
+  !
+  !-----------------------------------------------------------------------------
+  ! setting perturbation
+  subroutine perturbation( &
+      ijdim,     &  !--- IN : # of ij dimension
+      kdim,      &  !--- IN : # of z dimension
+      lall,      &  !--- IN : # of region
+      vmax,      &  !--- IN : # of variables
+      DIAG_var   )  !--- INOUT : variables container
+    use mod_grd, only: &
+       GRD_x,      &
+       GRD_x_pl,   &
+       GRD_XDIR,   &
+       GRD_YDIR,   &
+       GRD_ZDIR
+    use mod_misc, only: &
+       MISC_get_latlon
+    use mod_adm, only: &
+       K0 => ADM_KNONE
+    implicit none
+    integer, intent(in) :: ijdim, kdim, lall, vmax
+    real(8), intent(inout) :: DIAG_var(ijdim,kdim,lall,vmax)
+
+    integer, parameter :: ID_prs = 1
+    integer, parameter :: ID_tmp = 2
+    integer, parameter :: ID_vx  = 3
+    integer, parameter :: ID_vy  = 4
+    integer, parameter :: ID_vz  = 5
+    integer :: n, k, l
+    real(8) :: lat, lon
+    real(8) :: r, rr, rbyrr, cla, clo
+    real(8) :: ptb_wix(kdim), ptb_wiy(kdim)
+    real(8) :: ptb_vx(kdim), ptb_vy(kdim), ptb_vz(kdim)
+
     cla = clat * d2r
     clo = clon * d2r
-    r = a * acos( sin(cla)*sin(lat) + cos(cla)*cos(lat)*cos(lon-clo) )
-    rr = a / 10.D0
-    rbyrr = r/rr
-    !
-    if ( with ) then
-       do k=1, kdim
-          !tmp(k) = tmp(k)
-          !prs(k) = prs(k)
-          wix(k) = wix(k) + uP * exp( -1.D0*rbyrr**2.D0 )
-          !wiy(k) = wiy(k)
+
+    do l = 1, lall
+    do n = 1, ijdim
+       call MISC_get_latlon( lat, lon,              &
+                             GRD_x(n,K0,l,GRD_XDIR), &
+                             GRD_x(n,K0,l,GRD_YDIR), &
+                             GRD_x(n,K0,l,GRD_ZDIR)  )
+       r = a * acos( sin(cla)*sin(lat) + cos(cla)*cos(lat)*cos(lon-clo) )
+       rr = a / 10.D0
+       rbyrr = r/rr
+       do k = 1, kdim
+          ptb_wix(k) = uP * exp( -1.D0*rbyrr**2.D0 )
+          ptb_wiy(k) = 0.0d0
        enddo
-    endif
-    !
-    if (message) then
-       write (ADM_LOG_FID,'(A)') "|-----------------------------------------------------"
-       write (ADM_LOG_FID, '("| T: -- MAX: ",F9.3,3X,"MIN: ",F9.3)') maxval(tmp), minval(tmp)
-       write (ADM_LOG_FID, '("| P: -- MAX: ",F9.2,3X,"MIN: ",F9.2)') maxval(prs), minval(prs)
-       write (ADM_LOG_FID, '("| U: -- MAX: ",F9.5,3X,"MIN: ",F9.5)') maxval(wix), minval(wix)
-       write (ADM_LOG_FID, '("| V: -- MAX: ",F9.5,3X,"MIN: ",F9.5)') maxval(wiy), minval(wiy)
-    endif
+
+       call conv_vxvyvz( kdim, lat, lon, ptb_wix, ptb_wiy, ptb_vx, ptb_vy, ptb_vz )
+       do k = 1, kdim
+          DIAG_var(n,k,l,ID_vx) = DIAG_var(n,k,l,ID_vx) + ptb_vx(k)
+          DIAG_var(n,k,l,ID_vy) = DIAG_var(n,k,l,ID_vy) + ptb_vy(k)
+          DIAG_var(n,k,l,ID_vz) = DIAG_var(n,k,l,ID_vz) + ptb_vz(k)
+       enddo
+    enddo
+    enddo
     !
     return
   end subroutine perturbation
