@@ -149,7 +149,7 @@ mod_diagvar.o	: mod_diagvar.f90 mod_adm.o mod_comm.o $(mod_misc).o mod_gtl.o mod
 mod_history_vars.o	: mod_history_vars.f90 mod_history.o mod_adm.o mod_runconf.o mod_gmtr.o mod_gtl.o mod_vmtr.o mod_prgvar.o mod_sfcvar.o mod_bsstate.o mod_cnvvar.o mod_thrmdyn.o mod_cnst.o mod_bndcnd.o mod_diagvar.o mod_grd.o
 mod_embudget.o	: mod_embudget.f90 mod_adm.o $(mod_misc).o mod_time.o mod_sfcvar.o mod_cnst.o mod_grd.o mod_vmtr.o mod_gtl.o mod_runconf.o mod_cnvvar.o mod_bsstate.o mod_thrmdyn.o mod_prgvar.o
 mod_dcmip.o     : mod_dcmip.f90
-mod_dycoretest.o	: mod_dycoretest.f90 mod_adm.o mod_runconf.o $(mod_misc).o mod_vmtr.o mod_fio.o mod_time.o mod_cnvvar.o mod_vintrpl.o mod_comm.o mod_cnst.o mod_thrmdyn.o mod_dcmip.o
+mod_dycoretest.o	: mod_dycoretest.f90 mod_adm.o mod_runconf.o $(mod_misc).o mod_vmtr.o mod_fio.o mod_time.o mod_cnvvar.o mod_vintrpl.o mod_comm.o mod_cnst.o mod_thrmdyn.o mod_dcmip.o mod_vmtr.o mod_src.o
 mod_advlim_thuburn.o	: mod_advlim_thuburn.f90 mod_adm.o mod_cnst.o mod_comm.o
 mod_src.o	: mod_src.f90 mod_adm.o mod_vmtr.o mod_grd.o mod_oprt.o mod_cnst.o mod_runconf.o mod_gtl.o mod_advlim_thuburn.o
 mod_numfilter.o	: mod_numfilter.f90 mod_adm.o mod_time.o mod_grd.o mod_cnst.o mod_gtl.o mod_gmtr.o mod_oprt.o mod_oprt3d.o mod_comm.o mod_src.o mod_vmtr.o mod_runconf.o mod_bsstate.o

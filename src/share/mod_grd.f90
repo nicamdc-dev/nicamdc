@@ -1267,11 +1267,11 @@ contains
        ADM_prc_me,       &
        ADM_prc_pl,       &
        ADM_LOG_FID
+    use mod_cnst, only: &
+       CNST_PI
     implicit none
 
     ! <DCMIP-13>
-    real(8),parameter :: df_PI = 3.1415926535897932384626433832795D0
-    real(8),parameter :: LAMBDA_M=df_PI/4.d0
     real(8),parameter :: FAI_M   =0.d0
     real(8),parameter :: H_ZERO  = 250.d0
     real(8),parameter :: QSI  = 4000.d0
@@ -1279,11 +1279,12 @@ contains
     real(8),parameter :: X_reduce  = 500.d0
     real(8),parameter :: HALF_WIDTH = 5000.0d0
 
-    real(8) :: dist_m, aa, bb
+    real(8) :: dist_m, aa, bb, LAMBDA_M
     real(8) :: lat, lon
     integer :: n, l, K0
     !---------------------------------------------------------------------------
 
+    LAMBDA_M=CNST_PI/4.d0
     K0 = ADM_KNONE
 
     ! for globe
@@ -1298,7 +1299,7 @@ contains
                     +cos (FAI_M)*cos (lat)*cos (lon-LAMBDA_M))
 
         aa = exp(- (dist_m)**2.0 / HALF_WIDTH**2.0d0)
-        bb = cos(df_PI*dist_m/QSI)**2.0d0
+        bb = cos(CNST_PI*dist_m/QSI)**2.0d0
         GRD_zs(n,ADM_KNONE,l,GRD_ZSFC) = H_ZERO * aa * bb   ! equation (76) in dcmip reference
     enddo
     enddo
@@ -1316,7 +1317,7 @@ contains
                        +cos (FAI_M)*cos (lat)*cos (lon-LAMBDA_M))
 
            aa = exp(- (dist_m)**2.0 / HALF_WIDTH**2.0d0)
-           bb = cos(df_PI*dist_m/QSI)**2.0d0
+           bb = cos(CNST_PI*dist_m/QSI)**2.0d0
            GRD_zs_pl(n,ADM_KNONE,l,GRD_ZSFC) = H_ZERO * aa * bb   ! equation (76) in dcmip reference
        enddo
        enddo
