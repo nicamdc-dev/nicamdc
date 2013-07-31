@@ -80,6 +80,10 @@ module mod_vmtr
   real(8), public, allocatable, save :: VMTR_RGAM   (:,:,:)
   real(8), public, allocatable, save :: VMTR_RGAM_pl(:,:,:)
 
+  !--- 1/gamma at the half-integer level
+  real(8), public, allocatable, save :: VMTR_RGAMH   (:,:,:)
+  real(8), public, allocatable, save :: VMTR_RGAMH_pl(:,:,:)
+
   !--- 1/gamma^2 at the integer level
   real(8), public, allocatable, save :: VMTR_RGAM2   (:,:,:)
   real(8), public, allocatable, save :: VMTR_RGAM2_pl(:,:,:)
@@ -252,6 +256,9 @@ contains
     allocate( VMTR_RGAM       (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_RGAM_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
 
+    allocate( VMTR_RGAMH      (ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( VMTR_RGAMH_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
+
     allocate( VMTR_GAM2       (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_GAM2_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
 
@@ -364,6 +371,7 @@ contains
 
              VMTR_RGSH    (n,k,l) = 1.D0 / GSQRTH(n,k)
              VMTR_RGAM    (n,k,l) = 1.D0 / GAM
+             VMTR_RGAMH   (n,k,l) = 1.D0 / GAMH
              VMTR_RGAM2   (n,k,l) = 1.D0 / VMTR_GAM2   (n,k,l)
              VMTR_RGAM2H  (n,k,l) = 1.D0 / VMTR_GAM2H  (n,k,l)
              VMTR_RGSGAM2 (n,k,l) = 1.D0 / VMTR_GSGAM2 (n,k,l)
@@ -386,6 +394,7 @@ contains
 
              VMTR_RGSH    (n,k,l) = 1.D0 / GSQRTH(n,k)
              VMTR_RGAM    (n,k,l) = 1.D0
+             VMTR_RGAMH   (n,k,l) = 1.D0
              VMTR_RGAM2   (n,k,l) = 1.D0
              VMTR_RGAM2H  (n,k,l) = 1.D0
              VMTR_RGSGAM2 (n,k,l) = 1.D0 / GSQRT (n,k)
@@ -420,7 +429,7 @@ contains
 
        do k = ADM_kmin, ADM_kall
        do n = 1, ADM_gall
-          !--- calculation of factor for integer to half integer level
+          !--- calculation of factor for integer to half integer level with Gz
           VMTR_C2Wfact(I_a_GZXH,n,k,l) = 0.5D0 * GRD_afac(k) &
                                        * VMTR_GSGAM2H(n,k,l) / VMTR_GSGAM2(n,k  ,l) * VMTR_GZXH(n,k,l)
           VMTR_C2Wfact(I_b_GZXH,n,k,l) = 0.5D0 * GRD_bfac(k) &
@@ -479,6 +488,7 @@ contains
 
              VMTR_RGSH_pl    (n,k,l) = 1.D0 / GSQRTH_pl(n,k)
              VMTR_RGAM_pl    (n,k,l) = 1.D0 / GAM
+             VMTR_RGAMH_pl   (n,k,l) = 1.D0 / GAMH
              VMTR_RGAM2_pl   (n,k,l) = 1.D0 / VMTR_GAM2_pl (n,k,l)
              VMTR_RGAM2H_pl  (n,k,l) = 1.D0 / VMTR_GAM2H_pl(n,k,l)
              VMTR_RGSGAM2_pl (n,k,l) = 1.D0 / VMTR_GSGAM2_pl (n,k,l)
@@ -501,6 +511,7 @@ contains
 
              VMTR_RGSH_pl    (n,k,l) = 1.D0 / GSQRTH_pl(n,k)
              VMTR_RGAM_pl    (n,k,l) = 1.D0
+             VMTR_RGAMH_pl   (n,k,l) = 1.D0
              VMTR_RGAM2_pl   (n,k,l) = 1.D0
              VMTR_RGAM2H_pl  (n,k,l) = 1.D0
              VMTR_RGSGAM2_pl (n,k,l) = 1.D0 / GSQRT_pl (n,k)
