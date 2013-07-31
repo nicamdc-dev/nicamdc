@@ -65,13 +65,8 @@ module mod_oprt
   integer,allocatable,private,save::n021(:)
 
   ! < for divergence operator >
-  real(8), private, allocatable, save :: cdiv(:,:,:,:) !(0:6,gall,lall,1:3)
-  real(8), private, allocatable, save :: cdiv0_pl(:,:,:)
-  real(8), private, allocatable, save :: cdiv1_pl(:,:,:)
-  real(8), private, allocatable, save :: cdiv2_pl(:,:,:)
-  real(8), private, allocatable, save :: cdiv3_pl(:,:,:)
-  real(8), private, allocatable, save :: cdiv4_pl(:,:,:)
-  real(8), private, allocatable, save :: cdiv5_pl(:,:,:)
+  real(8), private, allocatable, save :: cdiv   (:,:,:,:)
+  real(8), private, allocatable, save :: cdiv_pl(:,:,:,:)
 
   ! < for gradient operator >
   real(8), private, allocatable, save :: cgrad(:,:,:,:)!(0:6,gall,lall,1:3)
@@ -119,378 +114,282 @@ module mod_oprt
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
+  !> Setup
   subroutine OPRT_setup
-    use mod_adm, only :   &
-         ADM_W,           &
-         ADM_prc_pl,      &
-         ADM_TI,          &
-         ADM_TJ,          &
-         ADM_AI,          &
-         ADM_AIJ,         &
-         ADM_AJ,          &
-         ADM_KNONE,       &
-         ADM_LALL_PL,     &
-         ADM_GMIN_PL,     &
-         ADM_GSLF_PL,     &
-         ADM_GALL_PL,     &
-         ADM_prc_me,      &
-         ADM_prc_tab,     &
-         ADM_rgn_vnum,    &
-         ADM_gall_1d,     &
-         ADM_kall,        &
-         ADM_lall,        &
-         ADM_kmin,        &
-         ADM_kmax,        &
-         ADM_gmin,        &
-         ADM_gmax,        &
-         ADM_gall
-    use mod_gmtr, only :  &
-         !--- public parameters
-         gmtr_t_w1,       &
-         gmtr_t_w2,       &
-         gmtr_t_w3,       &
-         gmtr_t_rarea,    &
-         gmtr_a_hnx,      &
-         gmtr_a_hny,      &
-         gmtr_a_hnz,      &
-         gmtr_a_tnx,      &
-         gmtr_a_tny,      &
-         gmtr_a_tnz,      &
-         gmtr_a_tn2x,     &
-         gmtr_a_tn2y,     &
-         gmtr_a_tn2z,     &
-         gmtr_p_rarea,    &
-         !--- public variables
-         gmtr_t_var,      &
-         gmtr_t_var_pl,   &
-         gmtr_p_var,      &
-         gmtr_p_var_pl,   &
-         gmtr_a_var,      &
-         gmtr_a_var_pl
-    !
+    use mod_adm, only: &
+       ADM_W,          &
+       ADM_TI,         &
+       ADM_TJ,         &
+       ADM_AI,         &
+       ADM_AIJ,        &
+       ADM_AJ,         &
+       ADM_prc_tab,    &
+       ADM_prc_me,     &
+       ADM_prc_pl,     &
+       ADM_rgn_vnum,   &
+       ADM_vlink_nmax, &
+       ADM_lall,       &
+       ADM_lall_pl,    &
+       ADM_gall,       &
+       ADM_gall_pl,    &
+       ADM_kall,       &
+       ADM_gall_1d,    &
+       ADM_gmin,       &
+       ADM_gmax,       &
+       ADM_gslf_pl,    &
+       ADM_gmin_pl,    &
+       ADM_gmax_pl,    &
+       ADM_KNONE,      &
+       ADM_kmin,       &
+       ADM_kmax
+    use mod_gmtr, only: &
+       GMTR_P_rarea,  &
+       GMTR_T_W1,     &
+       GMTR_T_W2,     &
+       GMTR_T_W3,     &
+       GMTR_T_rarea,  &
+       GMTR_A_hnx,    &
+       GMTR_A_hny,    &
+       GMTR_A_hnz,    &
+       GMTR_A_tnx,    &
+       GMTR_A_tny,    &
+       GMTR_A_tnz,    &
+       GMTR_A_tn2x,   &
+       GMTR_A_tn2y,   &
+       GMTR_A_tn2z,   &
+       GMTR_P_var,    &
+       GMTR_P_var_pl, &
+       GMTR_T_var,    &
+       GMTR_T_var_pl, &
+       GMTR_A_var,    &
+       GMTR_A_var_pl
     implicit none
-    !
-    integer::im1j,ijm1,im1jm1
-    integer::ip1j,ijp1,ip1jp1
-    integer::ij
-    integer::n0,n1,n2,n3,n4
-    integer::k0,a0
-    integer::tx1,ty1,tz1
-    integer::tx2,ty2,tz2
-    integer::hx1,hy1,hz1
-    !
-    integer::rgnid
-    !
-    integer::l,k,n,m,md
-    !
-    integer::nstart,nend
-    !
-    integer::suf,i,j
-    suf(i,j)=ADM_gall_1d*((j)-1)+(i)
 
-    !
-    ! ---- setup coefficient of divergence operator
-    allocate(cdiv(0:6,ADM_gall,ADM_lall,1:3))
-    !
-    allocate(cdiv0_pl(ADM_GALL_PL,ADM_LALL_PL,1:3))
-    allocate(cdiv1_pl(ADM_GALL_PL,ADM_LALL_PL,1:3))
-    allocate(cdiv2_pl(ADM_GALL_PL,ADM_LALL_PL,1:3))
-    allocate(cdiv3_pl(ADM_GALL_PL,ADM_LALL_PL,1:3))
-    allocate(cdiv4_pl(ADM_GALL_PL,ADM_LALL_PL,1:3))
-    allocate(cdiv5_pl(ADM_GALL_PL,ADM_LALL_PL,1:3))
-    !
-    allocate(n021((ADM_gall_1d-2)**2))
-    !
-    do n=1,(ADM_gall_1d-2)**2
-      n021(n)=ADM_gall_1d*((n-1)/(ADM_gall_1d-2)+1)+mod(n-1,ADM_gall_1d-2)+2
+    integer :: n0,n1,n2,n3,n4
+    integer :: k0,a0
+    integer :: tx1,ty1,tz1
+    integer :: tx2,ty2,tz2
+    integer :: hx1,hy1,hz1
+
+    integer :: ij
+    integer :: im1j,ijm1,im1jm1
+    integer :: ip1j,ijp1,ip1jp1
+
+    integer :: rgnid
+    integer :: nstart, nend
+    integer :: n, k, l, m, md, v
+
+    integer :: suf, i, j
+    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+
+    integer :: TI,TJ,AI,AIJ,AJ,W1,W2,W3
+    !---------------------------------------------------------------------------
+
+    TI  = ADM_TI
+    TJ  = ADM_TJ
+    AI  = ADM_AI
+    AIJ = ADM_AIJ
+    AJ  = ADM_AJ
+    W1  = GMTR_T_W1
+    W2  = GMTR_T_W2
+    W3  = GMTR_T_W3
+
+    k0 = ADM_KNONE
+
+    allocate( n021((ADM_gall_1d-2)**2) )
+
+    do n = 1, (ADM_gall_1d-2)**2
+      n021(n) = ADM_gall_1d * ( (n-1)/(ADM_gall_1d-2)+1) + mod(n-1,ADM_gall_1d-2)+2
     enddo
-    !
-    nstart=suf(ADM_gmin,ADM_gmin)
-    nend=suf(ADM_gmax,ADM_gmax)
-    do l=1,ADM_lall
-      do m=1,3
-        md=m+gmtr_a_hnx-1
-        do n=nstart,nend
-          ij=n
-          ip1j=n+1
-          ip1jp1=n+1+ADM_gall_1d
-          ijp1=n+ADM_gall_1d
-          im1j=n-1
-          im1jm1=n-1-ADM_gall_1d
-          ijm1=n-ADM_gall_1d
-          !
-          ! ij
-          cdiv(0,ij,l,m)=(                                                   &
-                      +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI ,gmtr_t_w1)  &
-                      *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md) &
-                      +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI ,gmtr_t_w1)  &
-                      *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md) &
-                      +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w1)  &
-                      *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md) &
-                      +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w1)  &
-                      *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md) &
-                      +gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI ,gmtr_t_w2)  &
-                      *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md) &
-                      -gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI ,gmtr_t_w2)  &
-                      *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md) &
-                      -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TI ,gmtr_t_w3)  &
-                      *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md) &
-                      -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ ,gmtr_t_w2)  &
-                      *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md) &
-                      -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TI ,gmtr_t_w3)  &
-                      *gmtr_a_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md) &
-                      -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ ,gmtr_t_w2)  &
-                      *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md) &
-                      +gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w3)  &
-                      *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md) &
-                      -gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w3)  &
-                      *gmtr_a_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md) &
-                     )*0.5d0*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea)
-          ! ip1j
-          cdiv(1,ij,l,m)=(                                                   &
-                      +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI ,gmtr_t_w2)  &
-                      *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md) &
-                      +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI ,gmtr_t_w2)  &
-                      *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md) &
-                      +gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w2)  &
-                      *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md) &
-                      -gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w2)  &
-                      *gmtr_a_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md) &
-                     )*0.5d0*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea)
-          ! ip1jp1
-          cdiv(2,ij,l,m)=(                                                   &
-                      +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI ,gmtr_t_w3)  &
-                      *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md) &
-                      +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI ,gmtr_t_w3)  &
-                      *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md) &
-                      +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w2)  &
-                      *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md) &
-                      +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w2)  &
-                      *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md) &
-                     )*0.5d0*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea)
-          ! ijp1
-          cdiv(3,ij,l,m)=(                                                   &
-                      +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w3)  &
-                      *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md) &
-                      +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w3)  &
-                      *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md) &
-                      +gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI ,gmtr_t_w3)  &
-                      *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md) &
-                      -gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI ,gmtr_t_w3)  &
-                      *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md) &
-                     )*0.5d0*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea)
-          ! im1j
-          cdiv(4,ij,l,m)=(                                                   &
-                      +gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI ,gmtr_t_w1)  &
-                      *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md) &
-                      -gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI ,gmtr_t_w1)  &
-                      *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md) &
-                      -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ ,gmtr_t_w3)  &
-                      *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md) &
-                      -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ ,gmtr_t_w3)  &
-                      *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md) &
-                     )*0.5d0*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea)
-          ! im1jm1
-          cdiv(5,ij,l,m)=(                                                   &
-                      -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TI ,gmtr_t_w1)  &
-                      *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md) &
-                      -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ ,gmtr_t_w1)  &
-                      *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md) &
-                      -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TI ,gmtr_t_w1)  &
-                      *gmtr_a_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md) &
-                      -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ ,gmtr_t_w1)  &
-                      *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md) &
-                     )*0.5d0*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea)
-          ! ijm1
-          cdiv(6,ij,l,m)=(                                                   &
-                      -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TI ,gmtr_t_w2)  &
-                      *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md) &
-                      -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TI ,gmtr_t_w2)  &
-                      *gmtr_a_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md) &
-                      +gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w1)  &
-                      *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md) &
-                      -gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w1)  &
-                      *gmtr_a_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md) &
-                     )*0.5d0*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea)
-        enddo !loop n
-      enddo !loop md
-    enddo !loop l
-    !
-    do l=1,ADM_lall
-      rgnid=ADM_prc_tab(l,ADM_prc_me)
-      if (ADM_rgn_vnum(ADM_W,rgnid)==3) then
-        n=suf(ADM_gmin,ADM_gmin)
-        do m=1,3
-          md=m+gmtr_a_hnx-1
-          ij=n
-          ip1j=ij+1
-          ip1jp1=ij+1+ADM_gall_1d
-          ijp1=ij+ADM_gall_1d
-          im1j=ij-1
-          im1jm1=ij-1-ADM_gall_1d
-          ijm1=ij-ADM_gall_1d
-          ! ij
-          cdiv(0,ij,l,m)=(                                                  &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI ,gmtr_t_w1)  &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)         &
-                        +gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w3)  &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)         &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI ,gmtr_t_w1)  &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)         &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w1)  &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)         &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w1)  &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)         &
-                        +gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI ,gmtr_t_w2)  &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)         &
-                        -gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI ,gmtr_t_w2)  &
-                        *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)         &
-                        -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ ,gmtr_t_w2)  &
-                        *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)         &
-                        -gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w3)  &
-                        *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)         &
-                        -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ ,gmtr_t_w2)  &
-                        *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)         &
-                        )*0.5d0*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea)
-          ! ip1j
-          cdiv(1,ij,l,m)=(                                                  &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI ,gmtr_t_w2)  &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)         &
-                        +gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w2)  &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)         &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI ,gmtr_t_w2)  &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)         &
-                        -gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w2)  &
-                        *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)         &
-                        )*0.5d0*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea)
-          ! ip1jp1
-          cdiv(2,ij,l,m)=(                                                  &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI ,gmtr_t_w3)  &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)         &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI ,gmtr_t_w3)  &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)         &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w2)  &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)         &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w2)  &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)         &
-                        )*0.5d0*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea)
-          ! ijp1
-          cdiv(3,ij,l,m)=(                                                  &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w3)  &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)         &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w3)  &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)         &
-                        +gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI ,gmtr_t_w3)  &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)         &
-                        -gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI ,gmtr_t_w3)  &
-                        *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)         &
-                        )*0.5d0*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea)
-          ! im1j
-          cdiv(4,ij,l,m)=(                                                  &
-                        +gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI ,gmtr_t_w1)  &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)         &
-                        -gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI ,gmtr_t_w1)  &
-                        *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)         &
-                        -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ ,gmtr_t_w3)  &
-                        *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)         &
-                        -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ ,gmtr_t_w3)  &
-                        *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)         &
-                        )*0.5d0*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea)
-          ! im1jm1
-          cdiv(5,ij,l,m)=(                                                  &
-                        -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ ,gmtr_t_w1)  &
-                        *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)         &
-                        -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ ,gmtr_t_w1)  &
-                        *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)         &
-                        )*0.5d0*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea)
-          ! ijm1
-          cdiv(6,ij,l,m)=(                                                  &
-                        +gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w1)  &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)         &
-                        -gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ ,gmtr_t_w1)  &
-                        *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)         &
-                        )*0.5d0*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea)
-        enddo !loop md
-      endif
-    enddo !loop l
-    !
-    if (ADM_prc_me==ADM_prc_pl) then
-      n=ADM_GSLF_PL
-      n0=ADM_GMIN_PL
-      n1=ADM_GMIN_PL+1
-      n2=ADM_GMIN_PL+2
-      n3=ADM_GMIN_PL+3
-      n4=ADM_GMIN_PL+4
-      do l=1,ADM_LALL_PL
-        do m=1,3
-          md=m+gmtr_a_hnx-1
-          ! n
-          cdiv0_pl(n,l,m)=(                                                                         &
-                           +gmtr_t_var_pl(n0,ADM_KNONE,l,gmtr_t_w1)*gmtr_a_var_pl(n0,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n0,ADM_KNONE,l,gmtr_t_w1)*gmtr_a_var_pl(n1,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n1,ADM_KNONE,l,gmtr_t_w1)*gmtr_a_var_pl(n1,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n1,ADM_KNONE,l,gmtr_t_w1)*gmtr_a_var_pl(n2,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n2,ADM_KNONE,l,gmtr_t_w1)*gmtr_a_var_pl(n2,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n2,ADM_KNONE,l,gmtr_t_w1)*gmtr_a_var_pl(n3,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n3,ADM_KNONE,l,gmtr_t_w1)*gmtr_a_var_pl(n3,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n3,ADM_KNONE,l,gmtr_t_w1)*gmtr_a_var_pl(n4,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n4,ADM_KNONE,l,gmtr_t_w1)*gmtr_a_var_pl(n4,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n4,ADM_KNONE,l,gmtr_t_w1)*gmtr_a_var_pl(n0,ADM_KNONE,l,md) &
-                          )*0.5d0*gmtr_p_var_pl(n,ADM_KNONE,l,gmtr_p_rarea)
-          ! n0
-          cdiv1_pl(n,l,m)=(                                                                         &
-                           +gmtr_t_var_pl(n0,ADM_KNONE,l,gmtr_t_w2)*gmtr_a_var_pl(n0,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n0,ADM_KNONE,l,gmtr_t_w2)*gmtr_a_var_pl(n1,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n4,ADM_KNONE,l,gmtr_t_w3)*gmtr_a_var_pl(n0,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n4,ADM_KNONE,l,gmtr_t_w3)*gmtr_a_var_pl(n4,ADM_KNONE,l,md) &
-                          )*0.5d0*gmtr_p_var_pl(n,ADM_KNONE,l,gmtr_p_rarea)
-          ! n1
-          cdiv2_pl(n,l,m)=(                                                                         &
-                           +gmtr_t_var_pl(n0,ADM_KNONE,l,gmtr_t_w3)*gmtr_a_var_pl(n0,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n0,ADM_KNONE,l,gmtr_t_w3)*gmtr_a_var_pl(n1,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n1,ADM_KNONE,l,gmtr_t_w2)*gmtr_a_var_pl(n1,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n1,ADM_KNONE,l,gmtr_t_w2)*gmtr_a_var_pl(n2,ADM_KNONE,l,md) &
-                          )*0.5d0*gmtr_p_var_pl(n,ADM_KNONE,l,gmtr_p_rarea)
-          ! n2
-          cdiv3_pl(n,l,m)=(                                                                         &
-                           +gmtr_t_var_pl(n1,ADM_KNONE,l,gmtr_t_w3)*gmtr_a_var_pl(n1,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n1,ADM_KNONE,l,gmtr_t_w3)*gmtr_a_var_pl(n2,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n2,ADM_KNONE,l,gmtr_t_w2)*gmtr_a_var_pl(n2,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n2,ADM_KNONE,l,gmtr_t_w2)*gmtr_a_var_pl(n3,ADM_KNONE,l,md) &
-                          )*0.5d0*gmtr_p_var_pl(n,ADM_KNONE,l,gmtr_p_rarea)
-          ! n3
-          cdiv4_pl(n,l,m)=(                                                                         &
-                           +gmtr_t_var_pl(n2,ADM_KNONE,l,gmtr_t_w3)*gmtr_a_var_pl(n2,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n2,ADM_KNONE,l,gmtr_t_w3)*gmtr_a_var_pl(n3,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n3,ADM_KNONE,l,gmtr_t_w2)*gmtr_a_var_pl(n3,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n3,ADM_KNONE,l,gmtr_t_w2)*gmtr_a_var_pl(n4,ADM_KNONE,l,md) &
-                          )*0.5d0*gmtr_p_var_pl(n,ADM_KNONE,l,gmtr_p_rarea)
-          ! n4
-          cdiv5_pl(n,l,m)=(                                                                         &
-                           +gmtr_t_var_pl(n4,ADM_KNONE,l,gmtr_t_w2)*gmtr_a_var_pl(n4,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n3,ADM_KNONE,l,gmtr_t_w3)*gmtr_a_var_pl(n4,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n4,ADM_KNONE,l,gmtr_t_w2)*gmtr_a_var_pl(n0,ADM_KNONE,l,md) &
-                           +gmtr_t_var_pl(n3,ADM_KNONE,l,gmtr_t_w3)*gmtr_a_var_pl(n3,ADM_KNONE,l,md) &
-                          )*0.5d0*gmtr_p_var_pl(n,ADM_KNONE,l,gmtr_p_rarea)
-        enddo !loop m
-      enddo !loop l
+
+    !---< setup coefficient of divergence operator >
+    allocate( cdiv   (0:6,             ADM_gall   ,ADM_lall   ,3) )
+    allocate( cdiv_pl(0:ADM_vlink_nmax,ADM_gall_pl,ADM_lall_pl,3) )
+
+    nstart = suf(ADM_gmin,ADM_gmin)
+    nend   = suf(ADM_gmax,ADM_gmax)
+
+    do l = 1, ADM_lall
+       rgnid = ADM_prc_tab(l,ADM_prc_me)
+
+       do m = 1, 3
+          md = m + GMTR_A_HNX - 1
+          do n = nstart, nend
+             ij     = n
+             ip1j   = n + 1
+             ip1jp1 = n + 1 + ADM_gall_1d
+             ijp1   = n     + ADM_gall_1d
+             im1j   = n - 1
+             im1jm1 = n - 1 - ADM_gall_1d
+             ijm1   = n     - ADM_gall_1d
+
+             ! ij
+             cdiv(0,n,l,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
+                               + GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               + GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               - GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W2) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TI,GMTR_T_W3) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TI,GMTR_T_W3) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
+                             ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+             ! ip1j
+             cdiv(1,n,l,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
+                               + GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                             ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+             ! ip1jp1
+             cdiv(2,n,l,m) = ( + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                             ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+             ! ijp1
+             cdiv(3,n,l,m) = ( + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               + GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               - GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W3) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                             ) * 0.5D0*GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+             ! im1j
+             cdiv(4,n,l,m) = ( + GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               - GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W1) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                             ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+             ! im1jm1
+             cdiv(5,n,l,m) = ( - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TI,GMTR_T_W1) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TI,GMTR_T_W1) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
+                             ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+             ! ijm1
+             cdiv(6,n,l,m) = ( - GMTR_T_var(im1jm1,k0,l,TI,GMTR_T_W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TI,GMTR_T_W2) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
+                               - GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
+                               + GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                             ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+          enddo
+       enddo
+
+       if ( ADM_rgn_vnum(ADM_W,rgnid) == 3 ) then ! pentagon
+          n = suf(ADM_gmin,ADM_gmin)
+
+          do m = 1, 3
+             md = m + GMTR_A_hnx - 1
+
+             ij     = n
+             ip1j   = n + 1
+             ip1jp1 = n + 1 + ADM_gall_1d
+             ijp1   = n     + ADM_gall_1d
+             im1j   = n - 1
+             im1jm1 = n - 1 - ADM_gall_1d
+             ijm1   = n     - ADM_gall_1d
+
+             ! ij
+             cdiv(0,n,l,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                               + GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               + GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               - GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W2) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                             ) * 0.5D0 * GMTR_P_var(n,k0,l,GMTR_P_rarea)
+             ! ip1j
+             cdiv(1,n,l,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                               + GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                             ) * 0.5D0 * GMTR_P_var(n,k0,l,GMTR_P_rarea)
+             ! ip1jp1
+             cdiv(2,n,l,m) = ( + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                             ) * 0.5D0 * GMTR_P_var(n,k0,l,GMTR_P_rarea)
+             ! ijp1
+             cdiv(3,n,l,m) = ( + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               + GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               - GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W3) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                             ) * 0.5D0 * GMTR_P_var(n,k0,l,GMTR_P_rarea)
+             ! im1j
+             cdiv(4,n,l,m) = ( + GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               - GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W1) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                             ) * 0.5D0 * GMTR_P_var(n,k0,l,GMTR_P_rarea)
+             ! im1jm1
+             cdiv(5,n,l,m) = ( - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                             ) * 0.5D0 * GMTR_P_var(n,k0,l,GMTR_P_rarea)
+             ! ijm1
+             cdiv(6,n,l,m) = ( + GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               - GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                             ) * 0.5D0 * GMTR_P_var(n,k0,l,GMTR_P_rarea)
+          enddo
+       endif
+
+    enddo ! loop l
+
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       n = ADM_gslf_pl
+       do l = 1, ADM_lall_pl
+          do m = 1, 3
+             md = m + GMTR_A_hnx - 1
+
+             cdiv_pl(0,n,l,m) = 0.D0
+             do v = ADM_gmin_pl, ADM_gmax_pl
+                ij   = v
+                ijp1 = v + 1
+                if( ijp1 > ADM_gmax_pl ) ijp1 = ADM_gmin_pl
+
+                cdiv_pl(0,n,l,m) = cdiv_pl(0,n,l,m) + ( GMTR_T_var_pl(ij,k0,l,GMTR_T_W1) * GMTR_A_var_pl(ij  ,k0,l,md) &
+                                                      + GMTR_T_var_pl(ij,k0,l,GMTR_T_W1) * GMTR_A_var_pl(ijp1,k0,l,md) )
+             enddo
+             cdiv_pl(0,n,l,m) = cdiv_pl(0,n,l,m) * 0.5D0 * GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)
+
+             do v = ADM_gmin_pl, ADM_gmax_pl
+                ij   = v
+                ijp1 = v + 1
+                ijm1 = v - 1
+                if( ijp1 == ADM_gmax_pl + 1 ) ijp1 = ADM_gmin_pl
+                if( ijm1 == ADM_gmin_pl - 1 ) ijm1 = ADM_gmax_pl
+
+                cdiv_pl(v-1,n,l,m) = ( + GMTR_T_var_pl(ijm1,k0,l,GMTR_T_W3) * GMTR_A_var_pl(ijm1,k0,l,md) &
+                                       + GMTR_T_var_pl(ijm1,k0,l,GMTR_T_W3) * GMTR_A_var_pl(ij  ,k0,l,md) &
+                                       + GMTR_T_var_pl(ij  ,k0,l,GMTR_T_W2) * GMTR_A_var_pl(ij  ,k0,l,md) &
+                                       + GMTR_T_var_pl(ij  ,k0,l,GMTR_T_W2) * GMTR_A_var_pl(ijp1,k0,l,md) &
+                                     ) * 0.5D0 * GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)
+             enddo
+          enddo ! loop m
+       enddo ! loop l
     endif
-    !
+
+
+
     ! ---- setup coefficient of gradient operator
     allocate(cgrad(0:6,ADM_gall,ADM_lall,1:3))
     !
-    allocate(cgrad0_pl(ADM_GALL_PL,ADM_LALL_PL,1:3))
-    allocate(cgrad1_pl(ADM_GALL_PL,ADM_LALL_PL,1:3))
-    allocate(cgrad2_pl(ADM_GALL_PL,ADM_LALL_PL,1:3))
-    allocate(cgrad3_pl(ADM_GALL_PL,ADM_LALL_PL,1:3))
-    allocate(cgrad4_pl(ADM_GALL_PL,ADM_LALL_PL,1:3))
-    allocate(cgrad5_pl(ADM_GALL_PL,ADM_LALL_PL,1:3))
+    allocate(cgrad0_pl(ADM_gall_pl,ADM_lall_pl,1:3))
+    allocate(cgrad1_pl(ADM_gall_pl,ADM_lall_pl,1:3))
+    allocate(cgrad2_pl(ADM_gall_pl,ADM_lall_pl,1:3))
+    allocate(cgrad3_pl(ADM_gall_pl,ADM_lall_pl,1:3))
+    allocate(cgrad4_pl(ADM_gall_pl,ADM_lall_pl,1:3))
+    allocate(cgrad5_pl(ADM_gall_pl,ADM_lall_pl,1:3))
     !
     nstart=suf(ADM_gmin,ADM_gmin)
     nend  =suf(ADM_gmax,ADM_gmax)
     do l=1,ADM_lall
       do m=1,3
-        md=m+gmtr_a_hnx-1
+        md=m+GMTR_A_hnx-1
         do n = nstart,nend
           ij=n
           ip1j=ij+1
@@ -501,90 +400,90 @@ contains
           ijm1=ij-ADM_gall_1d
           ! 
           ! ij
-          cgrad(0,n,l,m)=(gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI,gmtr_t_w1) &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ,gmtr_t_w3) &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI,gmtr_t_w1) &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ,gmtr_t_w1) &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ,gmtr_t_w1) &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI,gmtr_t_w2) &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI,gmtr_t_w2) &
-                        *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ,gmtr_t_w2) &
-                        *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TI,gmtr_t_w3) &
-                        *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ,gmtr_t_w2) &
-                        *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ,gmtr_t_w3) &
-                        *gmtr_a_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TI,gmtr_t_w3) &
-                        *gmtr_a_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                      -2*gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                      -2*gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                      -2*gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                      +2*gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                      +2*gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                      +2*gmtr_a_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea))*0.5d0
+          cgrad(0,n,l,m)=(GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W1) &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W3) &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W1) &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W1) &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W1) &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W2) &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W2) &
+                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W2) &
+                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TI,GMTR_T_W3) &
+                        *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W2) &
+                        *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W3) &
+                        *GMTR_A_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TI,GMTR_T_W3) &
+                        *GMTR_A_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                      -2*GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                      -2*GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                      -2*GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                      +2*GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                      +2*GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                      +2*GMTR_A_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
           ! ip1j
-          cgrad(1,n,l,m)=(gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI,gmtr_t_w2) &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ,gmtr_t_w2) &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI,gmtr_t_w2) &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ,gmtr_t_w2) &
-                        *gmtr_a_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea))*0.5d0
+          cgrad(1,n,l,m)=(GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W2) &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W2) &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W2) &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W2) &
+                        *GMTR_A_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
           ! ip1jp1
-          cgrad(2,n,l,m)=(gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI,gmtr_t_w3) &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI,gmtr_t_w3) &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ,gmtr_t_w2) &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ,gmtr_t_w2) &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea))*0.5d0
+          cgrad(2,n,l,m)=(GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W3) &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W3) &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W2) &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W2) &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
           ! ijp1
-          cgrad(3,n,l,m)=(gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ,gmtr_t_w3) &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ,gmtr_t_w3) &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI,gmtr_t_w3) &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI,gmtr_t_w3) &
-                        *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea))*0.5d0
+          cgrad(3,n,l,m)=(GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W3) &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W3) &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W3) &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W3) &
+                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
           ! im1j
-          cgrad(4,n,l,m)=(gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI,gmtr_t_w1) &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI,gmtr_t_w1) &
-                        *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ,gmtr_t_w3) &
-                        *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ,gmtr_t_w3) &
-                        *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea))*0.5d0
+          cgrad(4,n,l,m)=(GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W1) &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W1) &
+                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W3) &
+                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W3) &
+                        *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
           ! im1jm1
-          cgrad(5,n,l,m)=(-gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ,gmtr_t_w1) &
-                         *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                         -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TI,gmtr_t_w1) &
-                         *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                         -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TI,gmtr_t_w1) &
-                         *gmtr_a_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                         -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ,gmtr_t_w1) &
-                         *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea))*0.5d0
+          cgrad(5,n,l,m)=(-GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W1) &
+                         *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                         -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TI,GMTR_T_W1) &
+                         *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                         -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TI,GMTR_T_W1) &
+                         *GMTR_A_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                         -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W1) &
+                         *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
           ! ijm1
-          cgrad(6,n,l,m)=(gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ,gmtr_t_w1) &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TI,gmtr_t_w2) &
-                        *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ,gmtr_t_w1) &
-                        *gmtr_a_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TI,gmtr_t_w2) &
-                        *gmtr_a_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea))*0.5d0    
+          cgrad(6,n,l,m)=(GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W1) &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TI,GMTR_T_W2) &
+                        *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W1) &
+                        *GMTR_A_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TI,GMTR_T_W2) &
+                        *GMTR_A_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0    
         enddo !loop n
       enddo !loop m
     enddo !loop l
@@ -601,161 +500,161 @@ contains
         im1jm1=ij-1-ADM_gall_1d
         ijm1=ij-ADM_gall_1d
         do m=1,3
-          md=m+gmtr_a_hnx-1
+          md=m+GMTR_A_hnx-1
           ! ij
-          cgrad(0,n,l,m)=(gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI,gmtr_t_w1)                                   &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ,gmtr_t_w3)                                   &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI,gmtr_t_w1)                                   &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ,gmtr_t_w1)                                   &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ,gmtr_t_w1)                                   &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI,gmtr_t_w2)                                   &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI,gmtr_t_w2)                                   &
-                        *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ,gmtr_t_w2)                                   &
-                        *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ,gmtr_t_w3)                                   &
-                        *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ,gmtr_t_w2)                                   &
-                        *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                      -2*gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                      -2*gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                      -2*gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                      +2*gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                      +2*gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea))*0.5d0
+          cgrad(0,n,l,m)=(GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W1)                                   &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)                                   &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W1)                                   &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W1)                                   &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W1)                                   &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W2)                                   &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W2)                                   &
+                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W2)                                   &
+                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)                                   &
+                        *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W2)                                   &
+                        *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                      -2*GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                      -2*GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                      -2*GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                      +2*GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                      +2*GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
           ! ip1j
-          cgrad(1,n,l,m)=(gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI,gmtr_t_w2)                                   &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ,gmtr_t_w2)                                   &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI,gmtr_t_w2)                                   &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ,gmtr_t_w2)                                   &
-                        *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea))*0.5d0
+          cgrad(1,n,l,m)=(GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W2)                                   &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W2)                                   &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W2)                                   &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W2)                                   &
+                        *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
           ! ip1jp1
-          cgrad(2,n,l,m)=(gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI,gmtr_t_w3)                                   &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TI,gmtr_t_w3)                                   &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ,gmtr_t_w2)                                   &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ,gmtr_t_w2)                                   &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea))*0.5d0
+          cgrad(2,n,l,m)=(GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W3)                                   &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W3)                                   &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W2)                                   &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W2)                                   &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
           ! ijp1
-          cgrad(3,n,l,m)=(gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ,gmtr_t_w3)                                   &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(ij    ,ADM_KNONE,l,ADM_TJ,gmtr_t_w3)                                   &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        +gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI,gmtr_t_w3)                                   &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI,gmtr_t_w3)                                   &
-                        *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea))*0.5d0
+          cgrad(3,n,l,m)=(GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)                                   &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)                                   &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        +GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W3)                                   &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W3)                                   &
+                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
           ! im1j
-          cgrad(4,n,l,m)=(gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI,gmtr_t_w1)                                   &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(im1j  ,ADM_KNONE,l,ADM_TI,gmtr_t_w1)                                   &
-                        *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ,gmtr_t_w3)                                   &
-                        *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ,gmtr_t_w3)                                   &
-                        *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea))*0.5d0
+          cgrad(4,n,l,m)=(GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W1)                                   &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W1)                                   &
+                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)                                   &
+                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)                                   &
+                        *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
           ! im1jm1
-          cgrad(5,n,l,m)=(-gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ,gmtr_t_w1)                                   &
-                         *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                         -gmtr_t_var(im1jm1,ADM_KNONE,l,ADM_TJ,gmtr_t_w1)                                   &
-                         *gmtr_a_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea))*0.5d0
+          cgrad(5,n,l,m)=(-GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W1)                                   &
+                         *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                         -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W1)                                   &
+                         *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
           ! ijm1
-          cgrad(6,n,l,m)=(gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ,gmtr_t_w1)                                   &
-                        *gmtr_a_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea) &
-                        -gmtr_t_var(ijm1  ,ADM_KNONE,l,ADM_TJ,gmtr_t_w1)                                   &
-                        *gmtr_a_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*gmtr_p_var(ij,ADM_KNONE,l,gmtr_p_rarea))*0.5d0
+          cgrad(6,n,l,m)=(GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W1)                                   &
+                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
+                        -GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W1)                                   &
+                        *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
         enddo
       endif
     enddo
     !
     if (ADM_prc_me==ADM_prc_pl) then
-      n=ADM_GSLF_PL
-      n0=ADM_GMIN_PL
-      n1=ADM_GMIN_PL+1
-      n2=ADM_GMIN_PL+2
-      n3=ADM_GMIN_PL+3
-      n4=ADM_GMIN_PL+4
-      do l=1,ADM_LALL_PL
+      n=ADM_gslf_pl
+      n0=ADM_gmin_pl
+      n1=ADM_gmin_pl+1
+      n2=ADM_gmin_pl+2
+      n3=ADM_gmin_pl+3
+      n4=ADM_gmin_pl+4
+      do l=1,ADM_lall_pl
         do m=1,3
-          md=m+gmtr_a_hnx-1
+          md=m+GMTR_A_hnx-1
           !n
           cgrad0_pl(n,l,m)=(                                                   &
-                            +2*(gmtr_t_var_pl(n4,ADM_KNONE,l,gmtr_t_w1)-1.0d0) &
-                            *gmtr_a_var_pl(n0,ADM_KNONE,l,md)                  &
-                            +2*(gmtr_t_var_pl(n0,ADM_KNONE,l,gmtr_t_w1)-1.0d0) &
-                            *gmtr_a_var_pl(n1,ADM_KNONE,l,md)                  &
-                            +2*(gmtr_t_var_pl(n1,ADM_KNONE,l,gmtr_t_w1)-1.0d0) &
-                            *gmtr_a_var_pl(n2,ADM_KNONE,l,md)                  &
-                            +2*(gmtr_t_var_pl(n2,ADM_KNONE,l,gmtr_t_w1)-1.0d0) &
-                            *gmtr_a_var_pl(n3,ADM_KNONE,l,md)                  &
-                            +2*(gmtr_t_var_pl(n3,ADM_KNONE,l,gmtr_t_w1)-1.0d0) &
-                            *gmtr_a_var_pl(n4,ADM_KNONE,l,md)                  &
-                           )*gmtr_p_var_pl(n,ADM_KNONE,l,gmtr_p_rarea)*0.5d0                                           
+                            +2*(GMTR_T_var_pl(n4,ADM_KNONE,l,GMTR_T_W1)-1.0d0) &
+                            *GMTR_A_var_pl(n0,ADM_KNONE,l,md)                  &
+                            +2*(GMTR_T_var_pl(n0,ADM_KNONE,l,GMTR_T_W1)-1.0d0) &
+                            *GMTR_A_var_pl(n1,ADM_KNONE,l,md)                  &
+                            +2*(GMTR_T_var_pl(n1,ADM_KNONE,l,GMTR_T_W1)-1.0d0) &
+                            *GMTR_A_var_pl(n2,ADM_KNONE,l,md)                  &
+                            +2*(GMTR_T_var_pl(n2,ADM_KNONE,l,GMTR_T_W1)-1.0d0) &
+                            *GMTR_A_var_pl(n3,ADM_KNONE,l,md)                  &
+                            +2*(GMTR_T_var_pl(n3,ADM_KNONE,l,GMTR_T_W1)-1.0d0) &
+                            *GMTR_A_var_pl(n4,ADM_KNONE,l,md)                  &
+                           )*GMTR_P_var_pl(n,ADM_KNONE,l,GMTR_P_rarea)*0.5d0                                           
           !n0
           cgrad1_pl(n,l,m)=(                                         &
-                            +gmtr_t_var_pl(n4,ADM_KNONE,l,gmtr_t_w3) &
-                            *gmtr_a_var_pl(n4,ADM_KNONE,l,md)        &
-                            +gmtr_t_var_pl(n4,ADM_KNONE,l,gmtr_t_w3) &
-                            *gmtr_a_var_pl(n0,ADM_KNONE,l,md)        &
-                            +gmtr_t_var_pl(n0,ADM_KNONE,l,gmtr_t_w2) &
-                            *gmtr_a_var_pl(n0,ADM_KNONE,l,md)        &
-                            +gmtr_t_var_pl(n0,ADM_KNONE,l,gmtr_t_w2) &
-                            *gmtr_a_var_pl(n1,ADM_KNONE,l,md)        &
-                           )*gmtr_p_var_pl(n,ADM_KNONE,l,gmtr_p_rarea)*0.5d0                                 
+                            +GMTR_T_var_pl(n4,ADM_KNONE,l,GMTR_T_W3) &
+                            *GMTR_A_var_pl(n4,ADM_KNONE,l,md)        &
+                            +GMTR_T_var_pl(n4,ADM_KNONE,l,GMTR_T_W3) &
+                            *GMTR_A_var_pl(n0,ADM_KNONE,l,md)        &
+                            +GMTR_T_var_pl(n0,ADM_KNONE,l,GMTR_T_W2) &
+                            *GMTR_A_var_pl(n0,ADM_KNONE,l,md)        &
+                            +GMTR_T_var_pl(n0,ADM_KNONE,l,GMTR_T_W2) &
+                            *GMTR_A_var_pl(n1,ADM_KNONE,l,md)        &
+                           )*GMTR_P_var_pl(n,ADM_KNONE,l,GMTR_P_rarea)*0.5d0                                 
           !n1
           cgrad2_pl(n,l,m)=(                                         &
-                            +gmtr_t_var_pl(n0,ADM_KNONE,l,gmtr_t_w3) &
-                            *gmtr_a_var_pl(n0,ADM_KNONE,l,md)        &
-                            +gmtr_t_var_pl(n0,ADM_KNONE,l,gmtr_t_w3) &
-                            *gmtr_a_var_pl(n1,ADM_KNONE,l,md)        &
-                            +gmtr_t_var_pl(n1,ADM_KNONE,l,gmtr_t_w2) &
-                            *gmtr_a_var_pl(n1,ADM_KNONE,l,md)        &
-                            +gmtr_t_var_pl(n1,ADM_KNONE,l,gmtr_t_w2) &
-                            *gmtr_a_var_pl(n2,ADM_KNONE,l,md)        &
-                           )*gmtr_p_var_pl(n,ADM_KNONE,l,gmtr_p_rarea)*0.5d0                                 
+                            +GMTR_T_var_pl(n0,ADM_KNONE,l,GMTR_T_W3) &
+                            *GMTR_A_var_pl(n0,ADM_KNONE,l,md)        &
+                            +GMTR_T_var_pl(n0,ADM_KNONE,l,GMTR_T_W3) &
+                            *GMTR_A_var_pl(n1,ADM_KNONE,l,md)        &
+                            +GMTR_T_var_pl(n1,ADM_KNONE,l,GMTR_T_W2) &
+                            *GMTR_A_var_pl(n1,ADM_KNONE,l,md)        &
+                            +GMTR_T_var_pl(n1,ADM_KNONE,l,GMTR_T_W2) &
+                            *GMTR_A_var_pl(n2,ADM_KNONE,l,md)        &
+                           )*GMTR_P_var_pl(n,ADM_KNONE,l,GMTR_P_rarea)*0.5d0                                 
           !n2
           cgrad3_pl(n,l,m)=(                                         &
-                            +gmtr_t_var_pl(n1,ADM_KNONE,l,gmtr_t_w3) &
-                            *gmtr_a_var_pl(n1,ADM_KNONE,l,md)        &
-                            +gmtr_t_var_pl(n1,ADM_KNONE,l,gmtr_t_w3) &
-                            *gmtr_a_var_pl(n2,ADM_KNONE,l,md)        &
-                            +gmtr_t_var_pl(n2,ADM_KNONE,l,gmtr_t_w2) &
-                            *gmtr_a_var_pl(n2,ADM_KNONE,l,md)        &
-                            +gmtr_t_var_pl(n2,ADM_KNONE,l,gmtr_t_w2) &
-                            *gmtr_a_var_pl(n3,ADM_KNONE,l,md)        &
-                           )*gmtr_p_var_pl(n,ADM_KNONE,l,gmtr_p_rarea)*0.5d0                                 
+                            +GMTR_T_var_pl(n1,ADM_KNONE,l,GMTR_T_W3) &
+                            *GMTR_A_var_pl(n1,ADM_KNONE,l,md)        &
+                            +GMTR_T_var_pl(n1,ADM_KNONE,l,GMTR_T_W3) &
+                            *GMTR_A_var_pl(n2,ADM_KNONE,l,md)        &
+                            +GMTR_T_var_pl(n2,ADM_KNONE,l,GMTR_T_W2) &
+                            *GMTR_A_var_pl(n2,ADM_KNONE,l,md)        &
+                            +GMTR_T_var_pl(n2,ADM_KNONE,l,GMTR_T_W2) &
+                            *GMTR_A_var_pl(n3,ADM_KNONE,l,md)        &
+                           )*GMTR_P_var_pl(n,ADM_KNONE,l,GMTR_P_rarea)*0.5d0                                 
           !n3
           cgrad4_pl(n,l,m)=(                                         &
-                            +gmtr_t_var_pl(n2,ADM_KNONE,l,gmtr_t_w3) &
-                            *gmtr_a_var_pl(n2,ADM_KNONE,l,md)        &
-                            +gmtr_t_var_pl(n2,ADM_KNONE,l,gmtr_t_w3) &
-                            *gmtr_a_var_pl(n3,ADM_KNONE,l,md)        &
-                            +gmtr_t_var_pl(n3,ADM_KNONE,l,gmtr_t_w2) &
-                            *gmtr_a_var_pl(n3,ADM_KNONE,l,md)        &
-                            +gmtr_t_var_pl(n3,ADM_KNONE,l,gmtr_t_w2) &
-                            *gmtr_a_var_pl(n4,ADM_KNONE,l,md)        &
-                           )*gmtr_p_var_pl(n,ADM_KNONE,l,gmtr_p_rarea)*0.5d0                                 
+                            +GMTR_T_var_pl(n2,ADM_KNONE,l,GMTR_T_W3) &
+                            *GMTR_A_var_pl(n2,ADM_KNONE,l,md)        &
+                            +GMTR_T_var_pl(n2,ADM_KNONE,l,GMTR_T_W3) &
+                            *GMTR_A_var_pl(n3,ADM_KNONE,l,md)        &
+                            +GMTR_T_var_pl(n3,ADM_KNONE,l,GMTR_T_W2) &
+                            *GMTR_A_var_pl(n3,ADM_KNONE,l,md)        &
+                            +GMTR_T_var_pl(n3,ADM_KNONE,l,GMTR_T_W2) &
+                            *GMTR_A_var_pl(n4,ADM_KNONE,l,md)        &
+                           )*GMTR_P_var_pl(n,ADM_KNONE,l,GMTR_P_rarea)*0.5d0                                 
           !n4
           cgrad5_pl(n,l,m)=(                                         &
-                            +gmtr_t_var_pl(n3,ADM_KNONE,l,gmtr_t_w3) &
-                            *gmtr_a_var_pl(n3,ADM_KNONE,l,md)        &
-                            +gmtr_t_var_pl(n3,ADM_KNONE,l,gmtr_t_w3) &
-                            *gmtr_a_var_pl(n4,ADM_KNONE,l,md)        &
-                            +gmtr_t_var_pl(n4,ADM_KNONE,l,gmtr_t_w2) &
-                            *gmtr_a_var_pl(n4,ADM_KNONE,l,md)        &
-                            +gmtr_t_var_pl(n4,ADM_KNONE,l,gmtr_t_w2) &
-                            *gmtr_a_var_pl(n0,ADM_KNONE,l,md)        &
-                           )*gmtr_p_var_pl(n,ADM_KNONE,l,gmtr_p_rarea)*0.5d0                                 
+                            +GMTR_T_var_pl(n3,ADM_KNONE,l,GMTR_T_W3) &
+                            *GMTR_A_var_pl(n3,ADM_KNONE,l,md)        &
+                            +GMTR_T_var_pl(n3,ADM_KNONE,l,GMTR_T_W3) &
+                            *GMTR_A_var_pl(n4,ADM_KNONE,l,md)        &
+                            +GMTR_T_var_pl(n4,ADM_KNONE,l,GMTR_T_W2) &
+                            *GMTR_A_var_pl(n4,ADM_KNONE,l,md)        &
+                            +GMTR_T_var_pl(n4,ADM_KNONE,l,GMTR_T_W2) &
+                            *GMTR_A_var_pl(n0,ADM_KNONE,l,md)        &
+                           )*GMTR_P_var_pl(n,ADM_KNONE,l,GMTR_P_rarea)*0.5d0                                 
         enddo
       enddo
     endif
@@ -770,13 +669,13 @@ contains
     allocate(clap6(ADM_gall,ADM_lall))
     !
     k0=ADM_KNONE
-    a0=gmtr_t_rarea
-    tx1=gmtr_a_tnx
-    ty1=gmtr_a_tny
-    tz1=gmtr_a_tnz
-    hx1=gmtr_a_hnx
-    hy1=gmtr_a_hny
-    hz1=gmtr_a_hnz
+    a0=GMTR_T_rarea
+    tx1=GMTR_A_tnx
+    ty1=GMTR_A_tny
+    tz1=GMTR_A_tnz
+    hx1=GMTR_A_hnx
+    hy1=GMTR_A_hny
+    hz1=GMTR_A_hnz
     nstart=suf(ADM_gmin,ADM_gmin)
     nend  =suf(ADM_gmax,ADM_gmax)
     do l=1,ADM_lall
@@ -792,351 +691,351 @@ contains
           !
      ! 0: ij
      clap0(ij,l)=( &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          +2*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          +1*gmtr_a_var(ijm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          +2*gmtr_a_var(ijm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          +2*gmtr_a_var(ip1j,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          +1*gmtr_a_var(ijm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          +2*gmtr_a_var(ijm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          +2*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          +1*gmtr_a_var(ijm1,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          +2*gmtr_a_var(ijm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          +2*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          -2*gmtr_a_var(ijp1,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          +2*gmtr_a_var(ip1j,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -2*gmtr_a_var(ijp1,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +2*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          -2*gmtr_a_var(ijp1,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -2*gmtr_a_var(ijp1,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -1*gmtr_a_var(im1j,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -2*gmtr_a_var(im1j,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          -2*gmtr_a_var(ijp1,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          -1*gmtr_a_var(im1j,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          -2*gmtr_a_var(im1j,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          -2*gmtr_a_var(ijp1,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          -1*gmtr_a_var(im1j,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          -2*gmtr_a_var(im1j,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-      )*gmtr_p_var(ij,k0,l,gmtr_p_rarea)/12.0d0
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          +2*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          +1*GMTR_A_var(ijm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          +2*GMTR_A_var(ijm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          +2*GMTR_A_var(ip1j,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          +1*GMTR_A_var(ijm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          +2*GMTR_A_var(ijm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          +2*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          +1*GMTR_A_var(ijm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          +2*GMTR_A_var(ijm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          +2*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          -2*GMTR_A_var(ijp1,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          +2*GMTR_A_var(ip1j,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -2*GMTR_A_var(ijp1,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +2*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          -2*GMTR_A_var(ijp1,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -2*GMTR_A_var(ijp1,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -1*GMTR_A_var(im1j,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -2*GMTR_A_var(im1j,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          -2*GMTR_A_var(ijp1,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          -1*GMTR_A_var(im1j,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          -2*GMTR_A_var(im1j,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          -2*GMTR_A_var(ijp1,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          -1*GMTR_A_var(im1j,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          -2*GMTR_A_var(im1j,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+      )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
      clap0(ij,l)=clap0(ij,l)+( &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       +1*gmtr_a_var(ij    ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       +1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       +1*gmtr_a_var(ij    ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       +1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       +1*gmtr_a_var(ij    ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       +1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       +2*gmtr_a_var(im1j  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       +2*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       +2*gmtr_a_var(im1j  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       +2*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       +2*gmtr_a_var(im1j  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       +2*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -2*gmtr_a_var(im1jm1,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -2*gmtr_a_var(im1jm1,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      -2*gmtr_a_var(im1jm1,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      +2*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      +2*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      +2*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hx1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hy1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hz1) &
-      -1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hx1) &
-      -1*gmtr_a_var(ij    ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hx1) &
-      -2*gmtr_a_var(ijm1  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hx1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hx1) &
-      -2*gmtr_a_var(im1jm1,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hx1) &
-      -1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hy1) &
-      -1*gmtr_a_var(ij    ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hy1) &
-      -2*gmtr_a_var(ijm1  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hy1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hy1) &
-      -2*gmtr_a_var(im1jm1,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hy1) &
-      -1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hz1) &
-      -1*gmtr_a_var(ij    ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hz1) &
-      -2*gmtr_a_var(ijm1  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hz1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hz1) &
-      -2*gmtr_a_var(im1jm1,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hz1) &
-      )*gmtr_p_var(ij,k0,l,gmtr_p_rarea)/12.0d0
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       +1*GMTR_A_var(ij    ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       +1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       +1*GMTR_A_var(ij    ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       +1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       +1*GMTR_A_var(ij    ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       +1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       +2*GMTR_A_var(im1j  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       +2*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       +2*GMTR_A_var(im1j  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       +2*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       +2*GMTR_A_var(im1j  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       +2*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -2*GMTR_A_var(im1jm1,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -2*GMTR_A_var(im1jm1,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      -2*GMTR_A_var(im1jm1,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      +2*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      +2*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      +2*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hx1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hy1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
+      -1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hx1) &
+      -1*GMTR_A_var(ij    ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hx1) &
+      -2*GMTR_A_var(ijm1  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hx1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hx1) &
+      -2*GMTR_A_var(im1jm1,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hx1) &
+      -1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hy1) &
+      -1*GMTR_A_var(ij    ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hy1) &
+      -2*GMTR_A_var(ijm1  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hy1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hy1) &
+      -2*GMTR_A_var(im1jm1,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hy1) &
+      -1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
+      -1*GMTR_A_var(ij    ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
+      -2*GMTR_A_var(ijm1  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
+      -2*GMTR_A_var(im1jm1,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
+      )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
      ! 1: ip1j
      clap1(ij,l)=( &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          -1*gmtr_a_var(ijm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          -2*gmtr_a_var(ijm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          -1*gmtr_a_var(ijm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          -2*gmtr_a_var(ijm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          -1*gmtr_a_var(ijm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          -2*gmtr_a_var(ijm1,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-      -1*gmtr_a_var(ij    ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hx1) &
-      -1*gmtr_a_var(ij    ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hy1) &
-      -1*gmtr_a_var(ij    ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hz1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hx1) &
-      +2*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hx1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hy1) &
-      +2*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hy1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hz1) &
-      +2*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hz1) &
-      )*gmtr_p_var(ij,k0,l,gmtr_p_rarea)/12.0d0
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          -1*GMTR_A_var(ijm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          -2*GMTR_A_var(ijm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          -1*GMTR_A_var(ijm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          -2*GMTR_A_var(ijm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          -1*GMTR_A_var(ijm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          -2*GMTR_A_var(ijm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+      -1*GMTR_A_var(ij    ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hx1) &
+      -1*GMTR_A_var(ij    ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hy1) &
+      -1*GMTR_A_var(ij    ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hx1) &
+      +2*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hx1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hy1) &
+      +2*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hy1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
+      +2*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
+      )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
      ! 2: ip1jp1
      clap2(ij,l)=( &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-      )*gmtr_p_var(ij,k0,l,gmtr_p_rarea)/12.0d0
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+      )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
      ! 3: ijp1
      clap3(ij,l)=( &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          +1*gmtr_a_var(im1j,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          +2*gmtr_a_var(im1j,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          +1*gmtr_a_var(im1j,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          +2*gmtr_a_var(im1j,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          +1*gmtr_a_var(im1j,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          +2*gmtr_a_var(im1j,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-       +1*gmtr_a_var(ij    ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       +1*gmtr_a_var(ij    ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       +1*gmtr_a_var(ij    ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &     
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       -2*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       -2*gmtr_a_var(im1j  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       -2*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-      )*gmtr_p_var(ij,k0,l,gmtr_p_rarea)/12.0d0
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          +1*GMTR_A_var(im1j,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          +2*GMTR_A_var(im1j,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          +1*GMTR_A_var(im1j,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          +2*GMTR_A_var(im1j,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          +1*GMTR_A_var(im1j,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          +2*GMTR_A_var(im1j,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+       +1*GMTR_A_var(ij    ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       +1*GMTR_A_var(ij    ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       +1*GMTR_A_var(ij    ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &     
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       -2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       -2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       -2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+      )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
      ! 4: im1j
      clap4(ij,l)=( &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          +1*gmtr_a_var(im1j,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -1*gmtr_a_var(im1j,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          +1*gmtr_a_var(im1j,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          -1*gmtr_a_var(im1j,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          +1*gmtr_a_var(im1j,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          -1*gmtr_a_var(im1j,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-       +1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       +1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       +1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       -2*gmtr_a_var(ij    ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       -2*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       -2*gmtr_a_var(ij    ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       -2*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       -2*gmtr_a_var(ij    ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       -2*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      -2*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -2*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -2*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      )*gmtr_p_var(ij,k0,l,gmtr_p_rarea)/12.0d0
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          +1*GMTR_A_var(im1j,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -1*GMTR_A_var(im1j,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          +1*GMTR_A_var(im1j,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          -1*GMTR_A_var(im1j,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          +1*GMTR_A_var(im1j,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          -1*GMTR_A_var(im1j,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+       +1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       +1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       +1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       -2*GMTR_A_var(ij    ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       -2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       -2*GMTR_A_var(ij    ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       -2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       -2*GMTR_A_var(ij    ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       -2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      -2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
      ! 5: im1jm1
      clap5(ij,l)=( &
-       -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       +2*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       +2*gmtr_a_var(im1j  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       +2*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -2*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -2*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      -2*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &  
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      +2*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      +2*gmtr_a_var(im1j  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      +2*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hx1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hy1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hz1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hx1) &
-      -2*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hx1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hy1) &
-      -2*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hy1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hz1) &
-      -2*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hz1) &
-      )*gmtr_p_var(ij,k0,l,gmtr_p_rarea)/12.0d0
+       -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       +2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       +2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       +2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -2*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -2*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      -2*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &  
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      +2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      +2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      +2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hx1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hy1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hx1) &
+      -2*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hx1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hy1) &
+      -2*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hy1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
+      -2*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
+      )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
      ! 6: ijm1
      clap6(ij,l)=( &
-          -1*gmtr_a_var(ijm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          +1*gmtr_a_var(ijm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          -1*gmtr_a_var(ijm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          +1*gmtr_a_var(ijm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          -1*gmtr_a_var(ijm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          +1*gmtr_a_var(ijm1,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      +2*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      +2*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      +2*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      -1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hx1) &
-      -1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hy1) &
-      -1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hz1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hx1) &
-      +2*gmtr_a_var(ij    ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hx1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hx1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hx1) &
-      +2*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hx1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hy1) &
-      +2*gmtr_a_var(ij    ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hy1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hy1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hy1) &
-      +2*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hy1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hz1) &
-      +2*gmtr_a_var(ij    ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hz1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hz1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hz1) &
-      +2*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TI,a0)*gmtr_a_var(ijm1,k0,l,ADM_AJ,hz1) &
-      )*gmtr_p_var(ij,k0,l,gmtr_p_rarea)/12.0d0
+          -1*GMTR_A_var(ijm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          +1*GMTR_A_var(ijm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          -1*GMTR_A_var(ijm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          +1*GMTR_A_var(ijm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          -1*GMTR_A_var(ijm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          +1*GMTR_A_var(ijm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      +2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      +2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      +2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      -1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hx1) &
+      -1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hy1) &
+      -1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hx1) &
+      +2*GMTR_A_var(ij    ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hx1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hx1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hx1) &
+      +2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hx1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hy1) &
+      +2*GMTR_A_var(ij    ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hy1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hy1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hy1) &
+      +2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hy1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
+      +2*GMTR_A_var(ij    ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
+      +2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
+      )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
         enddo
       enddo
     enddo
@@ -1156,624 +1055,624 @@ contains
         do k= 1,ADM_kall
      ! 0: ij
      clap0(ij,l)=( &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          +2*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          +1*gmtr_a_var(ijm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          +2*gmtr_a_var(ijm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          +2*gmtr_a_var(ip1j,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          +1*gmtr_a_var(ijm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          +2*gmtr_a_var(ijm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          +2*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          +1*gmtr_a_var(ijm1,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          +2*gmtr_a_var(ijm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          +2*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          -2*gmtr_a_var(ijp1,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          +2*gmtr_a_var(ip1j,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -2*gmtr_a_var(ijp1,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +2*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          -2*gmtr_a_var(ijp1,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -2*gmtr_a_var(ijp1,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -1*gmtr_a_var(im1j,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -2*gmtr_a_var(im1j,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          -2*gmtr_a_var(ijp1,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-      )*gmtr_p_var(ij,k0,l,gmtr_p_rarea)/12.0d0  ! Y.Niwa add 06/08/22
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          +2*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          +1*GMTR_A_var(ijm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          +2*GMTR_A_var(ijm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          +2*GMTR_A_var(ip1j,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          +1*GMTR_A_var(ijm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          +2*GMTR_A_var(ijm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          +2*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          +1*GMTR_A_var(ijm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          +2*GMTR_A_var(ijm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          +2*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          -2*GMTR_A_var(ijp1,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          +2*GMTR_A_var(ip1j,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -2*GMTR_A_var(ijp1,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +2*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          -2*GMTR_A_var(ijp1,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -2*GMTR_A_var(ijp1,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -1*GMTR_A_var(im1j,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -2*GMTR_A_var(im1j,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          -2*GMTR_A_var(ijp1,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+      )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0  ! Y.Niwa add 06/08/22
      clap0(ij,l)=clap0(ij,l)+( &                 ! Y.Niwa add 06/08/22 
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          -1*gmtr_a_var(im1j,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          -2*gmtr_a_var(im1j,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          -2*gmtr_a_var(ijp1,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          -1*gmtr_a_var(im1j,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          -2*gmtr_a_var(im1j,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       +1*gmtr_a_var(ij    ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       +1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       +2*gmtr_a_var(im1j  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       +2*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       +1*gmtr_a_var(ij    ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       +1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       +2*gmtr_a_var(im1j  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       +2*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       +1*gmtr_a_var(ij    ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       +1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       +2*gmtr_a_var(im1j  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       +2*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-      -1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -1*gmtr_a_var(ij    ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -1*gmtr_a_var(ij    ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -1*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      -1*gmtr_a_var(ij    ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      -2*gmtr_a_var(ijm1  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -2*gmtr_a_var(ijm1  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -2*gmtr_a_var(ijm1  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      +2*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      +2*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      +2*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      )*gmtr_p_var(ij,k0,l,gmtr_p_rarea)/12.0d0
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          -1*GMTR_A_var(im1j,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          -2*GMTR_A_var(im1j,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          -2*GMTR_A_var(ijp1,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          -1*GMTR_A_var(im1j,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          -2*GMTR_A_var(im1j,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       +1*GMTR_A_var(ij    ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       +1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       +2*GMTR_A_var(im1j  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       +2*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       +1*GMTR_A_var(ij    ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       +1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       +2*GMTR_A_var(im1j  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       +2*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       +1*GMTR_A_var(ij    ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       +1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       +2*GMTR_A_var(im1j  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       +2*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+      -1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -1*GMTR_A_var(ij    ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -1*GMTR_A_var(ij    ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -1*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      -1*GMTR_A_var(ij    ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      -2*GMTR_A_var(ijm1  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -2*GMTR_A_var(ijm1  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -2*GMTR_A_var(ijm1  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      +2*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      +2*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      +2*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
      ! 1: ip1j
      clap1(ij,l)=( &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          -1*gmtr_a_var(ijm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          -2*gmtr_a_var(ijm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          -1*gmtr_a_var(ijm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          -2*gmtr_a_var(ijm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          -1*gmtr_a_var(ijm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          -2*gmtr_a_var(ijm1,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-      -1*gmtr_a_var(ij    ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -1*gmtr_a_var(ij    ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -1*gmtr_a_var(ij    ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      +1*gmtr_a_var(ijm1  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      +2*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      +2*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      +2*gmtr_a_var(ijm1  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ijm1  ,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      )*gmtr_p_var(ij,k0,l,gmtr_p_rarea)/12.0d0
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          -1*GMTR_A_var(ijm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          -2*GMTR_A_var(ijm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          -1*GMTR_A_var(ijm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          -2*GMTR_A_var(ijm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          -1*GMTR_A_var(ijm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          -2*GMTR_A_var(ijm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+      -1*GMTR_A_var(ij    ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -1*GMTR_A_var(ij    ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -1*GMTR_A_var(ij    ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      +1*GMTR_A_var(ijm1  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      +2*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      +2*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      +2*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
      ! 2: ip1jp1
      clap2(ij,l)=( &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          -1*gmtr_a_var(ip1j,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          -2*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-      )*gmtr_p_var(ij,k0,l,gmtr_p_rarea)/12.0d0
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          -2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+      )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
      ! 3: ijp1
      clap3(ij,l)=( &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hy1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AIJ,hz1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          +1*gmtr_a_var(im1j,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          +2*gmtr_a_var(im1j,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          +1*gmtr_a_var(im1j,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          +2*gmtr_a_var(im1j,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          +1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          +1*gmtr_a_var(ijp1,k0,l,ADM_AI ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ij  ,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          +1*gmtr_a_var(im1j,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          -1*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          +2*gmtr_a_var(im1j,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-       +1*gmtr_a_var(ij    ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       +1*gmtr_a_var(ij    ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       +1*gmtr_a_var(ij    ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &     
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       -2*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       -2*gmtr_a_var(im1j  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       -2*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-      )*gmtr_p_var(ij,k0,l,gmtr_p_rarea)/12.0d0
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hy1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hz1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          +1*GMTR_A_var(im1j,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          +2*GMTR_A_var(im1j,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          +1*GMTR_A_var(im1j,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          +2*GMTR_A_var(im1j,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          +1*GMTR_A_var(im1j,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          -1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          +2*GMTR_A_var(im1j,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+       +1*GMTR_A_var(ij    ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       +1*GMTR_A_var(ij    ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       +1*GMTR_A_var(ij    ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &     
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       -2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       -2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       -2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+      )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
      ! 4: im1j
      clap4(ij,l)=( &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          +1*gmtr_a_var(im1j,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          -1*gmtr_a_var(im1j,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hx1) &
-          +1*gmtr_a_var(im1j,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          -1*gmtr_a_var(im1j,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          +1*gmtr_a_var(im1j,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hy1) &
-          -1*gmtr_a_var(im1j,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-          +2*gmtr_a_var(ij  ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1j,k0,l,ADM_TI,a0)*gmtr_a_var(ij,k0,l,ADM_AJ,hz1) &
-       +1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       +1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       +1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       -2*gmtr_a_var(ij    ,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       -2*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       -2*gmtr_a_var(ij    ,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       -2*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       -2*gmtr_a_var(ij    ,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1j  ,k0,l,ADM_TI,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       -2*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -2*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -2*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      -1*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      -2*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      )*gmtr_p_var(ij,k0,l,gmtr_p_rarea)/12.0d0
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          +1*GMTR_A_var(im1j,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          -1*GMTR_A_var(im1j,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
+          +1*GMTR_A_var(im1j,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          -1*GMTR_A_var(im1j,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          +1*GMTR_A_var(im1j,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
+          -1*GMTR_A_var(im1j,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+          +2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
+       +1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       +1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       +1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       -2*GMTR_A_var(ij    ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       -2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       -2*GMTR_A_var(ij    ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       -2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       -2*GMTR_A_var(ij    ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       -2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      -2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
      ! 5: im1jm1
      clap5(ij,l)=( &
-       -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-       +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       +2*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hx1) &
-       +2*gmtr_a_var(im1j  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hy1) &
-       +2*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1j,k0,l,ADM_AI,hz1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -1*gmtr_a_var(im1jm1,k0,l,ADM_AJ ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      +1*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      +2*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      +2*gmtr_a_var(im1j  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      +2*gmtr_a_var(im1j  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(im1jm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      )*gmtr_p_var(ij,k0,l,gmtr_p_rarea)/12.0d0
+       -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+       +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       +2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
+       +2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
+       +2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      +1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      +2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      +2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      +2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
      ! 6: ijm1
      clap6(ij,l)=( &
-      -1*gmtr_a_var(ijm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      -1*gmtr_a_var(ijm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      -1*gmtr_a_var(ijm1,k0,l,ADM_AJ ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      +1*gmtr_a_var(ijm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &  
-      +1*gmtr_a_var(ijm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      +1*gmtr_a_var(ijm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      +2*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hx1) &
-      +2*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hy1) &
-      +2*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(im1jm1,k0,l,ADM_AIJ,hz1) &
-      -1*gmtr_a_var(ijm1,k0,l,ADM_AIJ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-      +1*gmtr_a_var(ijm1,k0,l,ADM_AJ ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-      -2*gmtr_a_var(ij  ,k0,l,ADM_AI ,tx1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hx1) &
-      -1*gmtr_a_var(ijm1,k0,l,ADM_AIJ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-      +1*gmtr_a_var(ijm1,k0,l,ADM_AJ ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-      -1*gmtr_a_var(ijm1,k0,l,ADM_AIJ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-      +1*gmtr_a_var(ijm1,k0,l,ADM_AJ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-      -2*gmtr_a_var(ij  ,k0,l,ADM_AI ,tz1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hz1) &
-      -2*gmtr_a_var(ij  ,k0,l,ADM_AI ,ty1)*gmtr_t_var(ijm1,k0,l,ADM_TJ,a0)*gmtr_a_var(ij,k0,l,ADM_AI,hy1) &
-         )*gmtr_p_var(ij,k0,l,gmtr_p_rarea)/12.0d0
+      -1*GMTR_A_var(ijm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      -1*GMTR_A_var(ijm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      -1*GMTR_A_var(ijm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      +1*GMTR_A_var(ijm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &  
+      +1*GMTR_A_var(ijm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      +1*GMTR_A_var(ijm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      +2*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
+      +2*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
+      +2*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
+      -1*GMTR_A_var(ijm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+      +1*GMTR_A_var(ijm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+      -2*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
+      -1*GMTR_A_var(ijm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+      +1*GMTR_A_var(ijm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+      -1*GMTR_A_var(ijm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+      +1*GMTR_A_var(ijm1,k0,l,ADM_AJ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+      -2*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
+      -2*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
+         )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
         !
         enddo
       endif
     enddo
     !
-    allocate(clap0_pl(ADM_GALL_PL,ADM_LALL_PL))
-    allocate(clap1_pl(ADM_GALL_PL,ADM_LALL_PL))
-    allocate(clap2_pl(ADM_GALL_PL,ADM_LALL_PL))
-    allocate(clap3_pl(ADM_GALL_PL,ADM_LALL_PL))
-    allocate(clap4_pl(ADM_GALL_PL,ADM_LALL_PL))
-    allocate(clap5_pl(ADM_GALL_PL,ADM_LALL_PL))
+    allocate(clap0_pl(ADM_gall_pl,ADM_lall_pl))
+    allocate(clap1_pl(ADM_gall_pl,ADM_lall_pl))
+    allocate(clap2_pl(ADM_gall_pl,ADM_lall_pl))
+    allocate(clap3_pl(ADM_gall_pl,ADM_lall_pl))
+    allocate(clap4_pl(ADM_gall_pl,ADM_lall_pl))
+    allocate(clap5_pl(ADM_gall_pl,ADM_lall_pl))
     !
     if (ADM_prc_me==ADM_prc_pl) then
-      n =ADM_GSLF_PL
-      n0=ADM_GMIN_PL
-      n1=ADM_GMIN_PL+1
-      n2=ADM_GMIN_PL+2
-      n3=ADM_GMIN_PL+3
-      n4=ADM_GMIN_PL+4
+      n =ADM_gslf_pl
+      n0=ADM_gmin_pl
+      n1=ADM_gmin_pl+1
+      n2=ADM_gmin_pl+2
+      n3=ADM_gmin_pl+3
+      n4=ADM_gmin_pl+4
       k0=ADM_KNONE
-      a0=gmtr_t_rarea
+      a0=GMTR_T_rarea
       tx1=gMtr_a_tnx
-      tx2=gmtr_a_tn2x
-      ty1=gmtr_a_tny
-      ty2=gmtr_a_tn2y
-      tz1=gmtr_a_tnz
-      tz2=gmtr_a_tn2z
-      hx1=gmtr_a_hnx
-      hy1=gmtr_a_hny
-      hz1=gmtr_a_hnz
-      do l=1,ADM_LALL_PL
+      tx2=GMTR_A_tn2x
+      ty1=GMTR_A_tny
+      ty2=GMTR_A_tn2y
+      tz1=GMTR_A_tnz
+      tz2=GMTR_A_tn2z
+      hx1=GMTR_A_hnx
+      hy1=GMTR_A_hny
+      hz1=GMTR_A_hnz
+      do l=1,ADM_lall_pl
           !
           ! n
           clap0_pl(n,l)=( &  
-                       +1*gmtr_a_var_pl(n4,k0,l,tx1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n4,k0,l,tx2)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n0,k0,l,tx1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,tx1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n0,k0,l,tx2)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n1,k0,l,tx1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n4,k0,l,ty1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n4,k0,l,ty2)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n0,k0,l,ty1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,ty1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n0,k0,l,ty2)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n1,k0,l,ty1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n4,k0,l,tz1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hz1) & 
-                       -2*gmtr_a_var_pl(n4,k0,l,tz2)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hz1) & 
-                       -1*gmtr_a_var_pl(n0,k0,l,tz1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n0,k0,l,tz1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hz1) & 
-                       -2*gmtr_a_var_pl(n0,k0,l,tz2)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hz1) & 
-                       -1*gmtr_a_var_pl(n1,k0,l,tz1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n0,k0,l,tx1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n0,k0,l,tx2)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n1,k0,l,tx1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n1,k0,l,tx1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n1,k0,l,tx2)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n2,k0,l,tx1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,ty1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n0,k0,l,ty2)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n1,k0,l,ty1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n1,k0,l,ty1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n1,k0,l,ty2)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n2,k0,l,ty1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,tz1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hz1) & 
-                       -2*gmtr_a_var_pl(n0,k0,l,tz2)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hz1) & 
-                       -1*gmtr_a_var_pl(n1,k0,l,tz1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n1,k0,l,tz1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hz1) & 
-                       -2*gmtr_a_var_pl(n1,k0,l,tz2)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hz1) & 
-                       -1*gmtr_a_var_pl(n2,k0,l,tz1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n1,k0,l,tx1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n1,k0,l,tx2)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n2,k0,l,tx1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n2,k0,l,tx1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n2,k0,l,tx2)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n3,k0,l,tx1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n1,k0,l,ty1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n1,k0,l,ty2)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n2,k0,l,ty1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hy1) &
-                      )*gmtr_p_var_pl(n,k0,l,gmtr_p_rarea)/12.0d0   ! Y.Niwa add 060822
+                       +1*GMTR_A_var_pl(n4,k0,l,tx1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n4,k0,l,tx2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n0,k0,l,tx1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,tx1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n0,k0,l,tx2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n1,k0,l,tx1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n4,k0,l,ty1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n4,k0,l,ty2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n0,k0,l,ty1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,ty1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n0,k0,l,ty2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n1,k0,l,ty1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n4,k0,l,tz1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hz1) & 
+                       -2*GMTR_A_var_pl(n4,k0,l,tz2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hz1) & 
+                       -1*GMTR_A_var_pl(n0,k0,l,tz1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n0,k0,l,tz1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hz1) & 
+                       -2*GMTR_A_var_pl(n0,k0,l,tz2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hz1) & 
+                       -1*GMTR_A_var_pl(n1,k0,l,tz1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n0,k0,l,tx1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n0,k0,l,tx2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n1,k0,l,tx1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n1,k0,l,tx1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n1,k0,l,tx2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n2,k0,l,tx1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,ty1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n0,k0,l,ty2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n1,k0,l,ty1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n1,k0,l,ty1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n1,k0,l,ty2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n2,k0,l,ty1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,tz1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hz1) & 
+                       -2*GMTR_A_var_pl(n0,k0,l,tz2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hz1) & 
+                       -1*GMTR_A_var_pl(n1,k0,l,tz1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n1,k0,l,tz1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hz1) & 
+                       -2*GMTR_A_var_pl(n1,k0,l,tz2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hz1) & 
+                       -1*GMTR_A_var_pl(n2,k0,l,tz1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n1,k0,l,tx1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n1,k0,l,tx2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n2,k0,l,tx1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n2,k0,l,tx1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n2,k0,l,tx2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n3,k0,l,tx1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n1,k0,l,ty1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n1,k0,l,ty2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n2,k0,l,ty1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
+                      )*GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)/12.0d0   ! Y.Niwa add 060822
           clap0_pl(n,l)= clap0_pl(n,l) + ( &                        ! Y.Niwa add 060822 
-                       +1*gmtr_a_var_pl(n2,k0,l,ty1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n2,k0,l,ty2)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n3,k0,l,ty1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n1,k0,l,tz1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hz1) & 
-                       -2*gmtr_a_var_pl(n1,k0,l,tz2)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hz1) & 
-                       -1*gmtr_a_var_pl(n2,k0,l,tz1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n2,k0,l,tz1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hz1) & 
-                       -2*gmtr_a_var_pl(n2,k0,l,tz2)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hz1) & 
-                       -1*gmtr_a_var_pl(n3,k0,l,tz1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n2,k0,l,tx1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n2,k0,l,tx2)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n3,k0,l,tx1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n3,k0,l,tx1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n3,k0,l,tx2)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n4,k0,l,tx1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n2,k0,l,ty1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n2,k0,l,ty2)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n3,k0,l,ty1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n3,k0,l,ty1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n3,k0,l,ty2)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n4,k0,l,ty1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n2,k0,l,tz1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hz1) & 
-                       -2*gmtr_a_var_pl(n2,k0,l,tz2)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hz1) & 
-                       -1*gmtr_a_var_pl(n3,k0,l,tz1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n3,k0,l,tz1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hz1) & 
-                       -2*gmtr_a_var_pl(n3,k0,l,tz2)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hz1) & 
-                       -1*gmtr_a_var_pl(n4,k0,l,tz1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n3,k0,l,tx1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n3,k0,l,tx2)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n4,k0,l,tx1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n4,k0,l,tx1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n4,k0,l,tx2)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n0,k0,l,tx1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n3,k0,l,ty1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n3,k0,l,ty2)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n4,k0,l,ty1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n4,k0,l,ty1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n4,k0,l,ty2)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n0,k0,l,ty1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n3,k0,l,tz1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hz1) & 
-                       -2*gmtr_a_var_pl(n3,k0,l,tz2)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hz1) & 
-                       -1*gmtr_a_var_pl(n4,k0,l,tz1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n4,k0,l,tz1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hz1) & 
-                       -2*gmtr_a_var_pl(n4,k0,l,tz2)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hz1) & 
-                       -1*gmtr_a_var_pl(n0,k0,l,tz1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hz1) &
-                      )*gmtr_p_var_pl(n,k0,l,gmtr_p_rarea)/12.0d0
+                       +1*GMTR_A_var_pl(n2,k0,l,ty1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n2,k0,l,ty2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n3,k0,l,ty1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n1,k0,l,tz1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hz1) & 
+                       -2*GMTR_A_var_pl(n1,k0,l,tz2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hz1) & 
+                       -1*GMTR_A_var_pl(n2,k0,l,tz1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n2,k0,l,tz1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hz1) & 
+                       -2*GMTR_A_var_pl(n2,k0,l,tz2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hz1) & 
+                       -1*GMTR_A_var_pl(n3,k0,l,tz1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n2,k0,l,tx1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n2,k0,l,tx2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n3,k0,l,tx1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n3,k0,l,tx1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n3,k0,l,tx2)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n4,k0,l,tx1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n2,k0,l,ty1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n2,k0,l,ty2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n3,k0,l,ty1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n3,k0,l,ty1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n3,k0,l,ty2)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n4,k0,l,ty1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n2,k0,l,tz1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hz1) & 
+                       -2*GMTR_A_var_pl(n2,k0,l,tz2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hz1) & 
+                       -1*GMTR_A_var_pl(n3,k0,l,tz1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n3,k0,l,tz1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hz1) & 
+                       -2*GMTR_A_var_pl(n3,k0,l,tz2)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hz1) & 
+                       -1*GMTR_A_var_pl(n4,k0,l,tz1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n3,k0,l,tx1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n3,k0,l,tx2)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n4,k0,l,tx1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n4,k0,l,tx1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n4,k0,l,tx2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n0,k0,l,tx1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n3,k0,l,ty1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n3,k0,l,ty2)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n4,k0,l,ty1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n4,k0,l,ty1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n4,k0,l,ty2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n0,k0,l,ty1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n3,k0,l,tz1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hz1) & 
+                       -2*GMTR_A_var_pl(n3,k0,l,tz2)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hz1) & 
+                       -1*GMTR_A_var_pl(n4,k0,l,tz1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n4,k0,l,tz1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hz1) & 
+                       -2*GMTR_A_var_pl(n4,k0,l,tz2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hz1) & 
+                       -1*GMTR_A_var_pl(n0,k0,l,tz1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hz1) &
+                      )*GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)/12.0d0
           !
           ! n0
           clap1_pl(n,l)=( &  
-                       +1*gmtr_a_var_pl(n0,k0,l,tx2)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n4,k0,l,tx1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n0,k0,l,tx1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n4,k0,l,tx2)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,tx1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hx1) &
-                       +2*gmtr_a_var_pl(n1,k0,l,tx1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,ty2)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n4,k0,l,ty1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n0,k0,l,ty1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n4,k0,l,ty2)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,ty1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hy1) &
-                       +2*gmtr_a_var_pl(n1,k0,l,ty1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,tz2)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hz1) &
-                       -2*gmtr_a_var_pl(n4,k0,l,tz1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hz1) &
-                       -1*gmtr_a_var_pl(n0,k0,l,tz1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hz1) &
-                       +1*gmtr_a_var_pl(n4,k0,l,tz2)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hz1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,tz1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hz1) &
-                       +2*gmtr_a_var_pl(n1,k0,l,tz1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hz1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,tx1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,tx2)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hx1) &
-                       +2*gmtr_a_var_pl(n1,k0,l,tx1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,ty1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,ty2)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hy1) &
-                       +2*gmtr_a_var_pl(n1,k0,l,ty1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,tz1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n0,k0,l,tz2)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hz1) & 
-                       +2*gmtr_a_var_pl(n1,k0,l,tz1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n4,k0,l,tx2)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n4,k0,l,tx1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n0,k0,l,tx1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n4,k0,l,ty2)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n4,k0,l,ty1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n0,k0,l,ty1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n4,k0,l,tz2)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hz1) &
-                       -2*gmtr_a_var_pl(n4,k0,l,tz1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hz1) &
-                       -1*gmtr_a_var_pl(n0,k0,l,tz1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hz1) &
-                      )*gmtr_p_var_pl(n,k0,l,gmtr_p_rarea)/12.0d0
+                       +1*GMTR_A_var_pl(n0,k0,l,tx2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n4,k0,l,tx1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n0,k0,l,tx1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n4,k0,l,tx2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,tx1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
+                       +2*GMTR_A_var_pl(n1,k0,l,tx1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,ty2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n4,k0,l,ty1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n0,k0,l,ty1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n4,k0,l,ty2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,ty1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hy1) &
+                       +2*GMTR_A_var_pl(n1,k0,l,ty1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,tz2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hz1) &
+                       -2*GMTR_A_var_pl(n4,k0,l,tz1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hz1) &
+                       -1*GMTR_A_var_pl(n0,k0,l,tz1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hz1) &
+                       +1*GMTR_A_var_pl(n4,k0,l,tz2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hz1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,tz1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hz1) &
+                       +2*GMTR_A_var_pl(n1,k0,l,tz1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hz1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,tx1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,tx2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
+                       +2*GMTR_A_var_pl(n1,k0,l,tx1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,ty1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,ty2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hy1) &
+                       +2*GMTR_A_var_pl(n1,k0,l,ty1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,tz1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n0,k0,l,tz2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hz1) & 
+                       +2*GMTR_A_var_pl(n1,k0,l,tz1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n4,k0,l,tx2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n4,k0,l,tx1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n0,k0,l,tx1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n4,k0,l,ty2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n4,k0,l,ty1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n0,k0,l,ty1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n4,k0,l,tz2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hz1) &
+                       -2*GMTR_A_var_pl(n4,k0,l,tz1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hz1) &
+                       -1*GMTR_A_var_pl(n0,k0,l,tz1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hz1) &
+                      )*GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)/12.0d0
           !
           ! n1
           clap2_pl(n,l)=( &  
-                       +1*gmtr_a_var_pl(n0,k0,l,tx2)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n0,k0,l,tx1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n1,k0,l,tx1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,ty2)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n0,k0,l,ty1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n1,k0,l,ty1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,tz2)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hz1) &
-                       -2*gmtr_a_var_pl(n0,k0,l,tz1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hz1) &
-                       -1*gmtr_a_var_pl(n1,k0,l,tz1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hz1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,tx2)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n0,k0,l,tx1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n1,k0,l,tx1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n1,k0,l,tx1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n1,k0,l,tx2)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hx1) &
-                       +2*gmtr_a_var_pl(n2,k0,l,tx1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,ty2)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n0,k0,l,ty1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n1,k0,l,ty1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n1,k0,l,ty1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n1,k0,l,ty2)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hy1) &
-                       +2*gmtr_a_var_pl(n2,k0,l,ty1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n0,k0,l,tz2)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hz1) & 
-                       -2*gmtr_a_var_pl(n0,k0,l,tz1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hz1) & 
-                       -1*gmtr_a_var_pl(n1,k0,l,tz1)*gmtr_t_var_pl(n0,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n1,k0,l,tz1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n1,k0,l,tz2)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hz1) & 
-                       +2*gmtr_a_var_pl(n2,k0,l,tz1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n1,k0,l,tx1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n1,k0,l,tx2)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hx1) &
-                       +2*gmtr_a_var_pl(n2,k0,l,tx1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n1,k0,l,ty1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n1,k0,l,ty2)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hy1) &
-                       +2*gmtr_a_var_pl(n2,k0,l,ty1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n1,k0,l,tz1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n1,k0,l,tz2)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hz1) & 
-                       +2*gmtr_a_var_pl(n2,k0,l,tz1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hz1) & 
-                      )*gmtr_p_var_pl(n,k0,l,gmtr_p_rarea)/12.0d0
+                       +1*GMTR_A_var_pl(n0,k0,l,tx2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n0,k0,l,tx1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n1,k0,l,tx1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,ty2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n0,k0,l,ty1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n1,k0,l,ty1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,tz2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hz1) &
+                       -2*GMTR_A_var_pl(n0,k0,l,tz1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hz1) &
+                       -1*GMTR_A_var_pl(n1,k0,l,tz1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hz1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,tx2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n0,k0,l,tx1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n1,k0,l,tx1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n1,k0,l,tx1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n1,k0,l,tx2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
+                       +2*GMTR_A_var_pl(n2,k0,l,tx1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,ty2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n0,k0,l,ty1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n1,k0,l,ty1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n1,k0,l,ty1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n1,k0,l,ty2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hy1) &
+                       +2*GMTR_A_var_pl(n2,k0,l,ty1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n0,k0,l,tz2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hz1) & 
+                       -2*GMTR_A_var_pl(n0,k0,l,tz1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hz1) & 
+                       -1*GMTR_A_var_pl(n1,k0,l,tz1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n1,k0,l,tz1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n1,k0,l,tz2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hz1) & 
+                       +2*GMTR_A_var_pl(n2,k0,l,tz1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n1,k0,l,tx1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n1,k0,l,tx2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
+                       +2*GMTR_A_var_pl(n2,k0,l,tx1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n1,k0,l,ty1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n1,k0,l,ty2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
+                       +2*GMTR_A_var_pl(n2,k0,l,ty1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n1,k0,l,tz1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n1,k0,l,tz2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hz1) & 
+                       +2*GMTR_A_var_pl(n2,k0,l,tz1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hz1) & 
+                      )*GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)/12.0d0
           !
           ! n2
           clap3_pl(n,l)=( &  
-                       +1*gmtr_a_var_pl(n1,k0,l,tx2)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n1,k0,l,tx1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n2,k0,l,tx1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n1,k0,l,ty2)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n1,k0,l,ty1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n2,k0,l,ty1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n1,k0,l,tz2)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hz1) &
-                       -2*gmtr_a_var_pl(n1,k0,l,tz1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hz1) &
-                       -1*gmtr_a_var_pl(n2,k0,l,tz1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n1,k0,l,hz1) &
-                       +1*gmtr_a_var_pl(n1,k0,l,tx2)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n1,k0,l,tx1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n2,k0,l,tx1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n2,k0,l,tx1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n2,k0,l,tx2)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hx1) &
-                       +2*gmtr_a_var_pl(n3,k0,l,tx1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n1,k0,l,ty2)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n1,k0,l,ty1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n2,k0,l,ty1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n2,k0,l,ty1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n2,k0,l,ty2)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hy1) &
-                       +2*gmtr_a_var_pl(n3,k0,l,ty1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n1,k0,l,tz2)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hz1) & 
-                       -2*gmtr_a_var_pl(n1,k0,l,tz1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hz1) & 
-                       -1*gmtr_a_var_pl(n2,k0,l,tz1)*gmtr_t_var_pl(n1,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n2,k0,l,tz1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n2,k0,l,tz2)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hz1) & 
-                       +2*gmtr_a_var_pl(n3,k0,l,tz1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n2,k0,l,tx1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n2,k0,l,tx2)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hx1) &
-                       +2*gmtr_a_var_pl(n3,k0,l,tx1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n2,k0,l,ty1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n2,k0,l,ty2)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hy1) &
-                       +2*gmtr_a_var_pl(n3,k0,l,ty1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n2,k0,l,tz1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n2,k0,l,tz2)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hz1) & 
-                       +2*gmtr_a_var_pl(n3,k0,l,tz1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hz1) & 
-                      )*gmtr_p_var_pl(n,k0,l,gmtr_p_rarea)/12.0d0
+                       +1*GMTR_A_var_pl(n1,k0,l,tx2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n1,k0,l,tx1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n2,k0,l,tx1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n1,k0,l,ty2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n1,k0,l,ty1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n2,k0,l,ty1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n1,k0,l,tz2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hz1) &
+                       -2*GMTR_A_var_pl(n1,k0,l,tz1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hz1) &
+                       -1*GMTR_A_var_pl(n2,k0,l,tz1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hz1) &
+                       +1*GMTR_A_var_pl(n1,k0,l,tx2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n1,k0,l,tx1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n2,k0,l,tx1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n2,k0,l,tx1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n2,k0,l,tx2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
+                       +2*GMTR_A_var_pl(n3,k0,l,tx1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n1,k0,l,ty2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n1,k0,l,ty1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n2,k0,l,ty1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n2,k0,l,ty1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n2,k0,l,ty2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
+                       +2*GMTR_A_var_pl(n3,k0,l,ty1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n1,k0,l,tz2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hz1) & 
+                       -2*GMTR_A_var_pl(n1,k0,l,tz1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hz1) & 
+                       -1*GMTR_A_var_pl(n2,k0,l,tz1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n2,k0,l,tz1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n2,k0,l,tz2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hz1) & 
+                       +2*GMTR_A_var_pl(n3,k0,l,tz1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n2,k0,l,tx1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n2,k0,l,tx2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hx1) &
+                       +2*GMTR_A_var_pl(n3,k0,l,tx1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n2,k0,l,ty1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n2,k0,l,ty2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hy1) &
+                       +2*GMTR_A_var_pl(n3,k0,l,ty1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n2,k0,l,tz1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n2,k0,l,tz2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hz1) & 
+                       +2*GMTR_A_var_pl(n3,k0,l,tz1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hz1) & 
+                      )*GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)/12.0d0
           !
           ! n3
           clap4_pl(n,l)=( &  
-                       +1*gmtr_a_var_pl(n2,k0,l,tx2)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n2,k0,l,tx1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n3,k0,l,tx1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n2,k0,l,ty2)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n2,k0,l,ty1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n3,k0,l,ty1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n2,k0,l,tz2)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hz1) &
-                       -2*gmtr_a_var_pl(n2,k0,l,tz1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hz1) &
-                       -1*gmtr_a_var_pl(n3,k0,l,tz1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n2,k0,l,hz1) &
-                       +1*gmtr_a_var_pl(n2,k0,l,tx2)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n2,k0,l,tx1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n3,k0,l,tx1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n3,k0,l,tx1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n3,k0,l,tx2)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hx1) &
-                       +2*gmtr_a_var_pl(n4,k0,l,tx1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n2,k0,l,ty2)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n2,k0,l,ty1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n3,k0,l,ty1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n3,k0,l,ty1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n3,k0,l,ty2)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hy1) &
-                       +2*gmtr_a_var_pl(n4,k0,l,ty1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n2,k0,l,tz2)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hz1) & 
-                       -2*gmtr_a_var_pl(n2,k0,l,tz1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hz1) & 
-                       -1*gmtr_a_var_pl(n3,k0,l,tz1)*gmtr_t_var_pl(n2,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n3,k0,l,tz1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n3,k0,l,tz2)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hz1) & 
-                       +2*gmtr_a_var_pl(n4,k0,l,tz1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n3,k0,l,tx1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n3,k0,l,tx2)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hx1) &
-                       +2*gmtr_a_var_pl(n4,k0,l,tx1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n3,k0,l,ty1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n3,k0,l,ty2)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hy1) &
-                       +2*gmtr_a_var_pl(n4,k0,l,ty1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n3,k0,l,tz1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n3,k0,l,tz2)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hz1) & 
-                       +2*gmtr_a_var_pl(n4,k0,l,tz1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hz1) &
-                      )*gmtr_p_var_pl(n,k0,l,gmtr_p_rarea)/12.0d0
+                       +1*GMTR_A_var_pl(n2,k0,l,tx2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n2,k0,l,tx1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n3,k0,l,tx1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n2,k0,l,ty2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n2,k0,l,ty1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n3,k0,l,ty1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n2,k0,l,tz2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hz1) &
+                       -2*GMTR_A_var_pl(n2,k0,l,tz1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hz1) &
+                       -1*GMTR_A_var_pl(n3,k0,l,tz1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hz1) &
+                       +1*GMTR_A_var_pl(n2,k0,l,tx2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n2,k0,l,tx1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n3,k0,l,tx1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n3,k0,l,tx1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n3,k0,l,tx2)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hx1) &
+                       +2*GMTR_A_var_pl(n4,k0,l,tx1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n2,k0,l,ty2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n2,k0,l,ty1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n3,k0,l,ty1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n3,k0,l,ty1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n3,k0,l,ty2)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hy1) &
+                       +2*GMTR_A_var_pl(n4,k0,l,ty1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n2,k0,l,tz2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hz1) & 
+                       -2*GMTR_A_var_pl(n2,k0,l,tz1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hz1) & 
+                       -1*GMTR_A_var_pl(n3,k0,l,tz1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n3,k0,l,tz1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n3,k0,l,tz2)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hz1) & 
+                       +2*GMTR_A_var_pl(n4,k0,l,tz1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n3,k0,l,tx1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n3,k0,l,tx2)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hx1) &
+                       +2*GMTR_A_var_pl(n4,k0,l,tx1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n3,k0,l,ty1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n3,k0,l,ty2)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hy1) &
+                       +2*GMTR_A_var_pl(n4,k0,l,ty1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n3,k0,l,tz1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n3,k0,l,tz2)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hz1) & 
+                       +2*GMTR_A_var_pl(n4,k0,l,tz1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hz1) &
+                      )*GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)/12.0d0
           !
           ! n4
           clap5_pl(n,l)=( &  
-                       +1*gmtr_a_var_pl(n4,k0,l,tx1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n4,k0,l,tx2)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hx1) &
-                       +2*gmtr_a_var_pl(n0,k0,l,tx1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n4,k0,l,ty1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n4,k0,l,ty2)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hy1) &
-                       +2*gmtr_a_var_pl(n0,k0,l,ty1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n4,k0,l,tz1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hz1) &
-                       +1*gmtr_a_var_pl(n4,k0,l,tz2)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hz1) &
-                       +2*gmtr_a_var_pl(n0,k0,l,tz1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n0,k0,l,hz1) &
-                       +1*gmtr_a_var_pl(n3,k0,l,tx2)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n3,k0,l,tx1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n4,k0,l,tx1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n3,k0,l,ty2)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n3,k0,l,ty1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n4,k0,l,ty1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n3,k0,l,tz2)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hz1) &
-                       -2*gmtr_a_var_pl(n3,k0,l,tz1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hz1) &
-                       -1*gmtr_a_var_pl(n4,k0,l,tz1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n3,k0,l,hz1) &
-                       +1*gmtr_a_var_pl(n3,k0,l,tx2)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hx1) &
-                       -2*gmtr_a_var_pl(n3,k0,l,tx1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hx1) &
-                       -1*gmtr_a_var_pl(n4,k0,l,tx1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n4,k0,l,tx1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n4,k0,l,tx2)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hx1) &
-                       +2*gmtr_a_var_pl(n0,k0,l,tx1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hx1) &
-                       +1*gmtr_a_var_pl(n3,k0,l,ty2)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hy1) &
-                       -2*gmtr_a_var_pl(n3,k0,l,ty1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hy1) &
-                       -1*gmtr_a_var_pl(n4,k0,l,ty1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n4,k0,l,ty1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n4,k0,l,ty2)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hy1) &
-                       +2*gmtr_a_var_pl(n0,k0,l,ty1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hy1) &
-                       +1*gmtr_a_var_pl(n3,k0,l,tz2)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hz1) & 
-                       -2*gmtr_a_var_pl(n3,k0,l,tz1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hz1) & 
-                       -1*gmtr_a_var_pl(n4,k0,l,tz1)*gmtr_t_var_pl(n3,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n4,k0,l,tz1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hz1) & 
-                       +1*gmtr_a_var_pl(n4,k0,l,tz2)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hz1) & 
-                       +2*gmtr_a_var_pl(n0,k0,l,tz1)*gmtr_t_var_pl(n4,k0,l,a0)*gmtr_a_var_pl(n4,k0,l,hz1) & 
-                      )*gmtr_p_var_pl(n,k0,l,gmtr_p_rarea)/12.0d0
+                       +1*GMTR_A_var_pl(n4,k0,l,tx1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n4,k0,l,tx2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
+                       +2*GMTR_A_var_pl(n0,k0,l,tx1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n4,k0,l,ty1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n4,k0,l,ty2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hy1) &
+                       +2*GMTR_A_var_pl(n0,k0,l,ty1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n4,k0,l,tz1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hz1) &
+                       +1*GMTR_A_var_pl(n4,k0,l,tz2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hz1) &
+                       +2*GMTR_A_var_pl(n0,k0,l,tz1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hz1) &
+                       +1*GMTR_A_var_pl(n3,k0,l,tx2)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n3,k0,l,tx1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n4,k0,l,tx1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n3,k0,l,ty2)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n3,k0,l,ty1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n4,k0,l,ty1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n3,k0,l,tz2)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hz1) &
+                       -2*GMTR_A_var_pl(n3,k0,l,tz1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hz1) &
+                       -1*GMTR_A_var_pl(n4,k0,l,tz1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n3,k0,l,hz1) &
+                       +1*GMTR_A_var_pl(n3,k0,l,tx2)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hx1) &
+                       -2*GMTR_A_var_pl(n3,k0,l,tx1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hx1) &
+                       -1*GMTR_A_var_pl(n4,k0,l,tx1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n4,k0,l,tx1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n4,k0,l,tx2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hx1) &
+                       +2*GMTR_A_var_pl(n0,k0,l,tx1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hx1) &
+                       +1*GMTR_A_var_pl(n3,k0,l,ty2)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hy1) &
+                       -2*GMTR_A_var_pl(n3,k0,l,ty1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hy1) &
+                       -1*GMTR_A_var_pl(n4,k0,l,ty1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n4,k0,l,ty1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n4,k0,l,ty2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hy1) &
+                       +2*GMTR_A_var_pl(n0,k0,l,ty1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hy1) &
+                       +1*GMTR_A_var_pl(n3,k0,l,tz2)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hz1) & 
+                       -2*GMTR_A_var_pl(n3,k0,l,tz1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hz1) & 
+                       -1*GMTR_A_var_pl(n4,k0,l,tz1)*GMTR_T_var_pl(n3,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n4,k0,l,tz1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hz1) & 
+                       +1*GMTR_A_var_pl(n4,k0,l,tz2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hz1) & 
+                       +2*GMTR_A_var_pl(n0,k0,l,tz1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n4,k0,l,hz1) & 
+                      )*GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)/12.0d0
       enddo
     endif
     allocate(cmdif_T(ADM_TI:ADM_TJ,ADM_gall,ADM_lall))
@@ -1810,140 +1709,117 @@ contains
     enddo
   end subroutine OPRT_setup
   !-----------------------------------------------------------------------------
-  subroutine OPRT_divergence(      &
-       scl, scl_pl,                &
-       vx, vx_pl,                  &
-       vy, vy_pl,                  &
-       vz, vz_pl,                  &
-       mfact )
-    use mod_adm, only :   &
-         !--- public parameters
-         ADM_prc_pl,      &
-         ADM_LALL_PL,     &
-         ADM_GMIN_PL,     &
-         ADM_GSLF_PL,     &
-         ADM_GALL_PL,     &
-         !--- public variables
-         ADM_prc_me,      &
-         ADM_gall_1d,     &
-         ADM_kall,        &
-         ADM_lall,        &
-         ADM_kmin,        &
-         ADM_kmax,        &
-         ADM_gmin,        &
-         ADM_gmax,        &
-         ADM_gall
-    !
+  subroutine OPRT_divergence( &
+       scl, scl_pl, &
+       vx,  vx_pl,  &
+       vy,  vy_pl,  &
+       vz,  vz_pl,  &
+       mfact        )
+    use mod_adm, only: &
+       ADM_prc_me,  &
+       ADM_prc_pl,  &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_gall_1d, &
+       ADM_gmin,    &
+       ADM_gmax,    &
+       ADM_gslf_pl, &
+       ADM_gmax_pl, &
+       ADM_kmin,    &
+       ADM_kmax
     implicit none
-    !
-    real(8),intent(inout)::scl(ADM_gall,ADM_kall,ADM_lall)
-    real(8),intent(inout)::scl_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    !
-    real(8),intent(in)::vx(ADM_gall,ADM_kall,ADM_lall)
-    real(8),intent(in)::vx_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8),intent(in)::vy(ADM_gall,ADM_kall,ADM_lall)
-    real(8),intent(in)::vy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8),intent(in)::vz(ADM_gall,ADM_kall,ADM_lall)
-    real(8),intent(in)::vz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    !
-    real(8),intent(in),optional::mfact
-    !
-    real(8)::fact
-    !
-    !real(8)::scld((ADM_gall_1d-2)**2,ADM_kall,ADM_lall)
-    !
-    integer::im1j,ijm1,im1jm1
-    integer::ip1j,ijp1,ip1jp1
-    integer::ij
-    integer::n0,n1,n2,n3,n4
-    !
-    integer::l,k,n
-    !
-    integer::nstart,nend
-    !
-    integer::suf,i,j
-    suf(i,j)=ADM_gall_1d*((j)-1)+(i)
 
-    if(present(mfact)) then
-       fact=mfact
+    real(8), intent(inout) :: scl   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(inout) :: scl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)    :: vx    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)    :: vx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)    :: vy    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)    :: vy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)    :: vz    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)    :: vz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in), optional :: mfact
+
+    real(8) :: fact
+
+    integer :: ij
+    integer :: im1j, ijm1, im1jm1
+    integer :: ip1j, ijp1, ip1jp1
+
+    integer :: nstart, nend
+    integer :: n, k, l, v
+
+    integer :: suf, i, j
+    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+    !---------------------------------------------------------------------------
+
+    if ( present(mfact) ) then
+       fact = mfact
     else
-       fact=1.0d0
-    end if
-    !
-    nstart=suf(ADM_gmin,ADM_gmin)
-    nend=suf(ADM_gmax,ADM_gmax)
-    do l=1,ADM_lall
-      do k=1,ADM_kall
-        do n=nstart,nend
-          ij=n
-          ip1j=ij+1
-          ip1jp1=ij+1+ADM_gall_1d
-          ijp1=ij+ADM_gall_1d
-          im1j=ij-1
-          im1jm1=ij-1-ADM_gall_1d
-          ijm1=ij-ADM_gall_1d
-
-          scl(n,k,l)=(                             &
-                     +cdiv(0,ij,l,1)*vx(ij    ,k,l) &
-                     +cdiv(1,ij,l,1)*vx(ip1j  ,k,l) &
-                     +cdiv(2,ij,l,1)*vx(ip1jp1,k,l) &
-                     +cdiv(3,ij,l,1)*vx(ijp1  ,k,l) &
-                     +cdiv(4,ij,l,1)*vx(im1j  ,k,l) &
-                     +cdiv(5,ij,l,1)*vx(im1jm1,k,l) &
-                     +cdiv(6,ij,l,1)*vx(ijm1  ,k,l) &
-                     +cdiv(0,ij,l,2)*vy(ij    ,k,l) &
-                     +cdiv(1,ij,l,2)*vy(ip1j  ,k,l) &
-                     +cdiv(2,ij,l,2)*vy(ip1jp1,k,l) &
-                     +cdiv(3,ij,l,2)*vy(ijp1  ,k,l) &
-                     +cdiv(4,ij,l,2)*vy(im1j  ,k,l) &
-                     +cdiv(5,ij,l,2)*vy(im1jm1,k,l) &
-                     +cdiv(6,ij,l,2)*vy(ijm1  ,k,l) &
-                     +cdiv(0,ij,l,3)*vz(ij    ,k,l) &
-                     +cdiv(1,ij,l,3)*vz(ip1j  ,k,l) &
-                     +cdiv(2,ij,l,3)*vz(ip1jp1,k,l) &
-                     +cdiv(3,ij,l,3)*vz(ijp1  ,k,l) &
-                     +cdiv(4,ij,l,3)*vz(im1j  ,k,l) &
-                     +cdiv(5,ij,l,3)*vz(im1jm1,k,l) &
-                     +cdiv(6,ij,l,3)*vz(ijm1  ,k,l) &
-                     )*fact
-        enddo
-      enddo
-    enddo
-
-    if (ADM_prc_me==ADM_prc_pl) then
-      n=ADM_GSLF_PL
-      n0=ADM_GMIN_PL
-      n1=ADM_GMIN_PL+1
-      n2=ADM_GMIN_PL+2
-      n3=ADM_GMIN_PL+3
-      n4=ADM_GMIN_PL+4
-      do l=1,ADM_LALL_PL
-        do k=1,ADM_kall
-          scl_pl(n,k,l)=(                                &
-                         +cdiv0_pl(n,l,1)*vx_pl(n ,k,l)  &
-                         +cdiv1_pl(n,l,1)*vx_pl(n0,k,l)  &
-                         +cdiv2_pl(n,l,1)*vx_pl(n1,k,l)  &
-                         +cdiv3_pl(n,l,1)*vx_pl(n2,k,l)  &
-                         +cdiv4_pl(n,l,1)*vx_pl(n3,k,l)  &
-                         +cdiv5_pl(n,l,1)*vx_pl(n4,k,l)  &
-                         +cdiv0_pl(n,l,2)*vy_pl(n ,k,l)  &
-                         +cdiv1_pl(n,l,2)*vy_pl(n0,k,l)  &
-                         +cdiv2_pl(n,l,2)*vy_pl(n1,k,l)  &
-                         +cdiv3_pl(n,l,2)*vy_pl(n2,k,l)  &
-                         +cdiv4_pl(n,l,2)*vy_pl(n3,k,l)  &
-                         +cdiv5_pl(n,l,2)*vy_pl(n4,k,l)  &
-                         +cdiv0_pl(n,l,3)*vz_pl(n ,k,l)  &
-                         +cdiv1_pl(n,l,3)*vz_pl(n0,k,l)  &
-                         +cdiv2_pl(n,l,3)*vz_pl(n1,k,l)  &
-                         +cdiv3_pl(n,l,3)*vz_pl(n2,k,l)  &
-                         +cdiv4_pl(n,l,3)*vz_pl(n3,k,l)  &
-                         +cdiv5_pl(n,l,3)*vz_pl(n4,k,l)  &
-                        )*fact
-        enddo
-      enddo
+       fact = 1.D0
     endif
 
+    nstart = suf(ADM_gmin,ADM_gmin)
+    nend   = suf(ADM_gmax,ADM_gmax)
+
+    do l = 1, ADM_lall
+    do k = ADM_kmin, ADM_kmax
+    do n = nstart, nend
+       ij     = n
+       ip1j   = n + 1
+       ip1jp1 = n + 1 + ADM_gall_1d
+       ijp1   = n     + ADM_gall_1d
+       im1j   = n - 1
+       im1jm1 = n - 1 - ADM_gall_1d
+       ijm1   = n     - ADM_gall_1d
+
+       scl(n,k,l) = ( cdiv(0,n,l,1) * vx(ij    ,k,l) &
+                    + cdiv(1,n,l,1) * vx(ip1j  ,k,l) &
+                    + cdiv(2,n,l,1) * vx(ip1jp1,k,l) &
+                    + cdiv(3,n,l,1) * vx(ijp1  ,k,l) &
+                    + cdiv(4,n,l,1) * vx(im1j  ,k,l) &
+                    + cdiv(5,n,l,1) * vx(im1jm1,k,l) &
+                    + cdiv(6,n,l,1) * vx(ijm1  ,k,l) &
+                    + cdiv(0,n,l,2) * vy(ij    ,k,l) &
+                    + cdiv(1,n,l,2) * vy(ip1j  ,k,l) &
+                    + cdiv(2,n,l,2) * vy(ip1jp1,k,l) &
+                    + cdiv(3,n,l,2) * vy(ijp1  ,k,l) &
+                    + cdiv(4,n,l,2) * vy(im1j  ,k,l) &
+                    + cdiv(5,n,l,2) * vy(im1jm1,k,l) &
+                    + cdiv(6,n,l,2) * vy(ijm1  ,k,l) &
+                    + cdiv(0,n,l,3) * vz(ij    ,k,l) &
+                    + cdiv(1,n,l,3) * vz(ip1j  ,k,l) &
+                    + cdiv(2,n,l,3) * vz(ip1jp1,k,l) &
+                    + cdiv(3,n,l,3) * vz(ijp1  ,k,l) &
+                    + cdiv(4,n,l,3) * vz(im1j  ,k,l) &
+                    + cdiv(5,n,l,3) * vz(im1jm1,k,l) &
+                    + cdiv(6,n,l,3) * vz(ijm1  ,k,l) ) * fact
+    enddo
+    enddo
+    enddo
+
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       n = ADM_gslf_pl
+       do l = 1, ADM_lall_pl
+       do k = ADM_kmin, ADM_kmax
+          scl_pl(n,k,l) = 0
+
+          do v = ADM_gslf_pl, ADM_gmax_pl
+             scl_pl(n,k,l) = scl_pl(n,k,l) + ( cdiv_pl(v-1,n,l,1) * vx_pl(v,k,l) &
+                                             + cdiv_pl(v-1,n,l,2) * vy_pl(v,k,l) &
+                                             + cdiv_pl(v-1,n,l,3) * vz_pl(v,k,l) )
+          enddo
+
+          scl_pl(n,k,l) = scl_pl(n,k,l) * fact
+       enddo
+       enddo
+    endif
+
+    return
   end subroutine OPRT_divergence
+
   !-----------------------------------------------------------------------------
   subroutine OPRT_gradient(        &
        vx, vx_pl,                  &
@@ -1954,10 +1830,10 @@ contains
     use mod_adm, only :   &
          !--- public parameters
          ADM_prc_pl,      &
-         ADM_LALL_PL,     &
-         ADM_GMIN_PL,     &
-         ADM_GSLF_PL,     &
-         ADM_GALL_PL,     &
+         ADM_lall_pl,     &
+         ADM_gmin_pl,     &
+         ADM_gslf_pl,     &
+         ADM_gall_pl,     &
          !--- public variables
          ADM_prc_me,      &
          ADM_gall_1d,     &
@@ -1970,29 +1846,28 @@ contains
          ADM_gall
     implicit none
 
-    real(8),intent(in)::scl(ADM_gall,ADM_kall,ADM_lall)
-    real(8),intent(in)::scl_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(in)    :: scl   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)    :: scl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(inout) :: vx    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(inout) :: vx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(inout) :: vy    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(inout) :: vy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(inout) :: vz    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(inout) :: vz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+
+    real(8), intent(in), optional :: mfact
+
+    integer :: im1j,ijm1,im1jm1
+    integer :: ip1j,ijp1,ip1jp1
+    integer :: ij
+    integer :: n0,n1,n2,n3,n4
     !
-    real(8),intent(inout)::vx(ADM_gall,ADM_kall,ADM_lall)
-    real(8),intent(inout)::vy(ADM_gall,ADM_kall,ADM_lall)
-    real(8),intent(inout)::vz(ADM_gall,ADM_kall,ADM_lall)
-    real(8),intent(inout)::vx_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8),intent(inout)::vy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8),intent(inout)::vz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    !
-    real(8),intent(in),optional::mfact
-    !
-    integer::im1j,ijm1,im1jm1
-    integer::ip1j,ijp1,ip1jp1
-    integer::ij
-    integer::n0,n1,n2,n3,n4
-    !
-    integer::l,n,k
-    integer::nstart,nend
-    integer::rgnid
+    integer :: l,n,k
+    integer :: nstart,nend
+    integer :: rgnid
     real(8)::fact
     !
-    integer::suf,i,j
+    integer :: suf,i,j
     suf(i,j)=ADM_gall_1d*((j)-1)+(i)
 
     if(present(mfact)) then
@@ -2045,13 +1920,13 @@ contains
     enddo
     !
     if (ADM_prc_me==ADM_prc_pl) then
-      n=ADM_GSLF_PL
-      n0=ADM_GMIN_PL
-      n1=ADM_GMIN_PL+1
-      n2=ADM_GMIN_PL+2
-      n3=ADM_GMIN_PL+3
-      n4=ADM_GMIN_PL+4
-      do l=1,ADM_LALL_PL
+      n=ADM_gslf_pl
+      n0=ADM_gmin_pl
+      n1=ADM_gmin_pl+1
+      n2=ADM_gmin_pl+2
+      n3=ADM_gmin_pl+3
+      n4=ADM_gmin_pl+4
+      do l=1,ADM_lall_pl
         do k=1,ADM_kall
           vx_pl(n,k,l)=(                                &
                        +cgrad0_pl(n,l,1)*scl_pl(n ,k,l) & 
@@ -2088,10 +1963,10 @@ contains
          !--- public parameters
          ADM_prc_pl,      &
          ADM_TI,          &
-         ADM_LALL_PL,     &
-         ADM_GMIN_PL,     &
-         ADM_GSLF_PL,     &
-         ADM_GALL_PL,     &
+         ADM_lall_pl,     &
+         ADM_gmin_pl,     &
+         ADM_gslf_pl,     &
+         ADM_gall_pl,     &
          !--- public variables
          ADM_prc_me,      &
          ADM_gall_1d,     &
@@ -2105,19 +1980,19 @@ contains
     !
     implicit none
     !
-    real(8),intent(inout)::dscl(ADM_gall,ADM_kall,ADM_lall)
-    real(8),intent(inout)::dscl_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8),intent(in)   :: scl(ADM_gall,ADM_kall,ADM_lall)
-    real(8),intent(in)   :: scl_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8),intent(inout)::dscl(ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8),intent(inout)::dscl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8),intent(in)   :: scl(ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8),intent(in)   :: scl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !
     real(8),intent(in),optional::mfact
     !
-    integer::im1j,ijm1,im1jm1
-    integer::ip1j,ijp1,ip1jp1
-    integer::ij
-    integer::n0,n1,n2,n3,n4
-    integer::nstart,nend
-    integer::l,n,k
+    integer :: im1j,ijm1,im1jm1
+    integer :: ip1j,ijp1,ip1jp1
+    integer :: ij
+    integer :: n0,n1,n2,n3,n4
+    integer :: nstart,nend
+    integer :: l,n,k
     !
     real(8)::fact
     !
@@ -2158,13 +2033,13 @@ contains
     enddo
     !
     if (ADM_prc_me==ADM_prc_pl) then
-      n =ADM_GSLF_PL
-      n0=ADM_GMIN_PL
-      n1=ADM_GMIN_PL+1
-      n2=ADM_GMIN_PL+2
-      n3=ADM_GMIN_PL+3
-      n4=ADM_GMIN_PL+4
-      do l=1,ADM_LALL_PL
+      n =ADM_gslf_pl
+      n0=ADM_gmin_pl
+      n1=ADM_gmin_pl+1
+      n2=ADM_gmin_pl+2
+      n3=ADM_gmin_pl+3
+      n4=ADM_gmin_pl+4
+      do l=1,ADM_lall_pl
         do k=1,ADM_kall
           dscl_pl(n,k,l)=( &
                           +clap0_pl(n,l)*scl_pl(n ,k,l) &  
@@ -2196,11 +2071,11 @@ contains
          adm_aij,         &
          adm_aj,          &
          adm_w,           &
-         ADM_LALL_PL,     &
+         ADM_lall_pl,     &
          ADM_GMAX_PL,     &
-         ADM_GMIN_PL,     &
-         ADM_GSLF_PL,     &
-         ADM_GALL_PL,     &
+         ADM_gmin_pl,     &
+         ADM_gslf_pl,     &
+         ADM_gall_pl,     &
          ADM_rgn_vnum,    &
          !--- public variables
          ADM_prc_me,      &
@@ -2215,41 +2090,41 @@ contains
          ADM_gall
     use mod_gmtr, only : &
          !--- public parameters
-         gmtr_t_w1,       &
-         gmtr_t_w2,       &
-         gmtr_t_w3,       &
-         gmtr_t_rarea,    &
-         gmtr_a_hnx,      &
-         gmtr_a_hny,      &
-         gmtr_a_hnz,      &
-         gmtr_a_htx,      &
-         gmtr_a_hty,      &
-         gmtr_a_htz,      &
-         gmtr_a_tnx,      &
-         gmtr_a_tny,      &
-         gmtr_a_tnz,      &
-         gmtr_a_tn2x,     &
-         gmtr_a_tn2y,     &
-         gmtr_a_tn2z,     &
-         gmtr_p_rarea,    &
+         GMTR_T_W1,       &
+         GMTR_T_W2,       &
+         GMTR_T_W3,       &
+         GMTR_T_rarea,    &
+         GMTR_A_hnx,      &
+         GMTR_A_hny,      &
+         GMTR_A_hnz,      &
+         GMTR_A_htx,      &
+         GMTR_A_hty,      &
+         GMTR_A_htz,      &
+         GMTR_A_tnx,      &
+         GMTR_A_tny,      &
+         GMTR_A_tnz,      &
+         GMTR_A_tn2x,     &
+         GMTR_A_tn2y,     &
+         GMTR_A_tn2z,     &
+         GMTR_P_rarea,    &
          !--- public variables
-         gmtr_t_var,      &
-         gmtr_t_var_pl,   &
-         gmtr_p_var,      &
-         gmtr_p_var_pl,   &
-         gmtr_a_var,      &
-         gmtr_a_var_pl
+         GMTR_T_var,      &
+         GMTR_T_var_pl,   &
+         GMTR_P_var,      &
+         GMTR_P_var_pl,   &
+         GMTR_A_var,      &
+         GMTR_A_var_pl
  
     !
 
     implicit none
     !
-    real(8), intent(inout) :: dscl(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(inout) :: dscl_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(in) :: scl(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in) :: scl_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(in) :: kh(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in) :: kh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(inout) :: dscl(ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(inout) :: dscl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in) :: scl(ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in) :: scl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in) :: kh(ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in) :: kh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !
     real(8), intent(in), optional :: mfact
     !
@@ -2259,9 +2134,9 @@ contains
          ADM_lall,           &
          ADM_TI:ADM_TJ)
     real(8)  :: vxt_pl(      &
-         ADM_GALL_PL,        &
+         ADM_gall_pl,        &
          ADM_kall,           &
-         ADM_LALL_PL)
+         ADM_lall_pl)
     !
     real(8)  :: vyt(         &
          ADM_gall,           &
@@ -2269,9 +2144,9 @@ contains
          ADM_lall,           &
          ADM_TI:ADM_TJ)
     real(8)  :: vyt_pl(      &
-         ADM_GALL_PL,        &
+         ADM_gall_pl,        &
          ADM_kall,           &
-         ADM_LALL_PL)
+         ADM_lall_pl)
     !
     real(8)  :: vzt(         &
          ADM_gall,           &
@@ -2279,15 +2154,15 @@ contains
          ADM_lall,           &
          ADM_TI:ADM_TJ)
     real(8)  :: vzt_pl(      &
-         ADM_GALL_PL,        &
+         ADM_gall_pl,        &
          ADM_kall,           &
-         ADM_LALL_PL)
+         ADM_lall_pl)
     !
     real(8)  :: flux(        &
          ADM_gall,           &
          ADM_AI:ADM_AJ)
     real(8)  :: flux_pl(     &
-         ADM_GALL_PL)
+         ADM_gall_pl)
     !
     integer :: l,n,k
     integer :: rgnid
@@ -2372,15 +2247,15 @@ contains
 
     if(ADM_prc_me==ADM_prc_pl) then
        do k= 1, ADM_kall
-          do l=1,ADM_LALL_PL
-             do n=ADM_GMIN_PL,ADM_GMAX_PL-1
-                smean = (scl_pl(ADM_GSLF_PL,k,l)+scl_pl(n,k,l)+scl_pl(n+1,k,l))/3.0D0
+          do l=1,ADM_lall_pl
+             do n=ADM_gmin_pl,ADM_GMAX_PL-1
+                smean = (scl_pl(ADM_gslf_pl,k,l)+scl_pl(n,k,l)+scl_pl(n+1,k,l))/3.0D0
                 u1=+GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_RAREA)&
-                     *(0.5D0*(scl_pl(ADM_GSLF_PL,k,l)+scl_pl(n,k,l))-smean)
+                     *(0.5D0*(scl_pl(ADM_gslf_pl,k,l)+scl_pl(n,k,l))-smean)
                 u2=+GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_RAREA)&
                      *(0.5D0*(scl_pl(n,k,l)+scl_pl(n+1,k,l))-smean)
                 u3=-GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_RAREA)&
-                     *(0.5D0*(scl_pl(n+1,k,l)+scl_pl(ADM_GSLF_PL,k,l))-smean)
+                     *(0.5D0*(scl_pl(n+1,k,l)+scl_pl(ADM_gslf_pl,k,l))-smean)
                 vxt_pl(n,k,l)&
                      =u1*GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_TNX)&
                      +u2*GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_TN2X)&
@@ -2394,25 +2269,25 @@ contains
                      +u2*GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_TN2Z)&
                      +u3*GMTR_A_var_pl(n+1,ADM_KNONE,l,GMTR_A_TNZ)
              end do
-             smean = (scl_pl(ADM_GSLF_PL,k,l)+scl_pl(ADM_GMAX_PL,k,l)+scl_pl(ADM_GMIN_PL,k,l))/3.0D0
+             smean = (scl_pl(ADM_gslf_pl,k,l)+scl_pl(ADM_GMAX_PL,k,l)+scl_pl(ADM_gmin_pl,k,l))/3.0D0
              u1=+GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_RAREA)&
-                  *(0.5D0*(scl_pl(ADM_GSLF_PL,k,l)+scl_pl(ADM_GMAX_PL,k,l))-smean)
+                  *(0.5D0*(scl_pl(ADM_gslf_pl,k,l)+scl_pl(ADM_GMAX_PL,k,l))-smean)
              u2=+GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_RAREA)&
-                  *(0.5D0*(scl_pl(ADM_GMAX_PL,k,l)+scl_pl(ADM_GMIN_PL,k,l))-smean)
+                  *(0.5D0*(scl_pl(ADM_GMAX_PL,k,l)+scl_pl(ADM_gmin_pl,k,l))-smean)
              u3=-GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_RAREA)&
-                  *(0.5D0*(scl_pl(ADM_GMIN_PL,k,l)+scl_pl(ADM_GSLF_PL,k,l))-smean)
+                  *(0.5D0*(scl_pl(ADM_gmin_pl,k,l)+scl_pl(ADM_gslf_pl,k,l))-smean)
              vxt_pl(ADM_GMAX_PL,k,l)&
                   =u1*GMTR_A_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_A_TNX)&
                   +u2*GMTR_A_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_A_TN2X)&
-                  +u3*GMTR_A_var_pl(ADM_GMIN_PL,ADM_KNONE,l,GMTR_A_TNX)
+                  +u3*GMTR_A_var_pl(ADM_gmin_pl,ADM_KNONE,l,GMTR_A_TNX)
              vyt_pl(ADM_GMAX_PL,k,l)&
                   =u1*GMTR_A_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_A_TNY)&
                   +u2*GMTR_A_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_A_TN2Y)&
-                  +u3*GMTR_A_var_pl(ADM_GMIN_PL,ADM_KNONE,l,GMTR_A_TNY)
+                  +u3*GMTR_A_var_pl(ADM_gmin_pl,ADM_KNONE,l,GMTR_A_TNY)
              vzt_pl(ADM_GMAX_PL,k,l)&
                   =u1*GMTR_A_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_A_TNZ)&
                   +u2*GMTR_A_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_A_TN2Z)&
-                  +u3*GMTR_A_var_pl(ADM_GMIN_PL,ADM_KNONE,l,GMTR_A_TNZ)
+                  +u3*GMTR_A_var_pl(ADM_gmin_pl,ADM_KNONE,l,GMTR_A_TNZ)
           end do
        end do
     end if
@@ -2506,17 +2381,17 @@ contains
     !
     if(ADM_prc_me==ADM_prc_pl) then
        do k= 1, ADM_kall
-          do l=1,ADM_LALL_PL
-             flux_pl(ADM_GMIN_PL)&
-                  =((vxt_pl(ADM_GMAX_PL,k,l)+vxt_pl(ADM_GMIN_PL,k,l))&
-                  *GMTR_A_var_pl(ADM_GMIN_PL,ADM_KNONE,l,GMTR_A_HNX)&
-                  +(vyt_pl(ADM_GMAX_PL,k,l)+vyt_pl(ADM_GMIN_PL,k,l))&
-                  *GMTR_A_var_pl(ADM_GMIN_PL,ADM_KNONE,l,GMTR_A_HNY)&
-                  +(vzt_pl(ADM_GMAX_PL,k,l)+vzt_pl(ADM_GMIN_PL,k,l))&
-                  *GMTR_A_var_pl(ADM_GMIN_PL,ADM_KNONE,l,GMTR_A_HNZ) )*0.5D0
-             flux_pl(ADM_GMIN_PL) = flux_pl(ADM_GMIN_PL)&
-                  * ( kh_pl(ADM_GSLF_PL,k,l)+kh_pl(ADM_GMIN_PL,k,l) )*0.5D0
-             do n=ADM_GMIN_PL+1,ADM_GMAX_PL
+          do l=1,ADM_lall_pl
+             flux_pl(ADM_gmin_pl)&
+                  =((vxt_pl(ADM_GMAX_PL,k,l)+vxt_pl(ADM_gmin_pl,k,l))&
+                  *GMTR_A_var_pl(ADM_gmin_pl,ADM_KNONE,l,GMTR_A_HNX)&
+                  +(vyt_pl(ADM_GMAX_PL,k,l)+vyt_pl(ADM_gmin_pl,k,l))&
+                  *GMTR_A_var_pl(ADM_gmin_pl,ADM_KNONE,l,GMTR_A_HNY)&
+                  +(vzt_pl(ADM_GMAX_PL,k,l)+vzt_pl(ADM_gmin_pl,k,l))&
+                  *GMTR_A_var_pl(ADM_gmin_pl,ADM_KNONE,l,GMTR_A_HNZ) )*0.5D0
+             flux_pl(ADM_gmin_pl) = flux_pl(ADM_gmin_pl)&
+                  * ( kh_pl(ADM_gslf_pl,k,l)+kh_pl(ADM_gmin_pl,k,l) )*0.5D0
+             do n=ADM_gmin_pl+1,ADM_GMAX_PL
                 flux_pl(n)&
                      =((vxt_pl(n-1,k,l)+vxt_pl(n,k,l))&
                      *GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_HNX)&
@@ -2525,16 +2400,16 @@ contains
                      +(vzt_pl(n-1,k,l)+vzt_pl(n,k,l))&
                      *GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_HNZ) )*0.5D0
                 flux_pl(n) = flux_pl(n)&
-                     * ( kh_pl(ADM_GSLF_PL,k,l)+kh_pl(n,k,l) )*0.5D0
+                     * ( kh_pl(ADM_gslf_pl,k,l)+kh_pl(n,k,l) )*0.5D0
              end do
              !
-             dscl_pl(ADM_GSLF_PL,k,l)=(&
-                  +flux_pl(ADM_GMIN_PL  )&
-                  +flux_pl(ADM_GMIN_PL+1)&
-                  +flux_pl(ADM_GMIN_PL+2)&
-                  +flux_pl(ADM_GMIN_PL+3)&
-                  +flux_pl(ADM_GMIN_PL+4)&
-                  ) * GMTR_P_var_pl(ADM_GSLF_PL,ADM_KNONE,l,GMTR_P_RAREA)&
+             dscl_pl(ADM_gslf_pl,k,l)=(&
+                  +flux_pl(ADM_gmin_pl  )&
+                  +flux_pl(ADM_gmin_pl+1)&
+                  +flux_pl(ADM_gmin_pl+2)&
+                  +flux_pl(ADM_gmin_pl+3)&
+                  +flux_pl(ADM_gmin_pl+4)&
+                  ) * GMTR_P_var_pl(ADM_gslf_pl,ADM_KNONE,l,GMTR_P_RAREA)&
                   * fact
           end do
        end do
@@ -2629,11 +2504,11 @@ contains
          ADM_AIJ,         &
          ADM_AJ,          &
          ADM_KNONE,       &
-         ADM_LALL_PL,     &
-         ADM_GMIN_PL,     &
+         ADM_lall_pl,     &
+         ADM_gmin_pl,     &
          ADM_GMAX_PL,     &
-         ADM_GSLF_PL,     &
-         ADM_GALL_PL,     &
+         ADM_gslf_pl,     &
+         ADM_gall_pl,     &
          !--- public variables
          ADM_prc_me,      &
          ADM_prc_tab,     &
@@ -2648,32 +2523,32 @@ contains
          ADM_gall
     use mod_gmtr, only :  &
          !--- public parameters
-         gmtr_t_w1,       &
-         gmtr_t_w2,       &
-         gmtr_t_w3,       &
-         gmtr_a_htx,      &
-         gmtr_a_hty,      &
-         gmtr_a_htz,      &
-         gmtr_p_rarea,    &
+         GMTR_T_W1,       &
+         GMTR_T_W2,       &
+         GMTR_T_W3,       &
+         GMTR_A_htx,      &
+         GMTR_A_hty,      &
+         GMTR_A_htz,      &
+         GMTR_P_rarea,    &
          !--- public variables
-         gmtr_t_var,      &
-         gmtr_t_var_pl,   &
-         gmtr_p_var,      &
-         gmtr_p_var_pl,   &
-         gmtr_a_var,      &
-         gmtr_a_var_pl
+         GMTR_T_var,      &
+         GMTR_T_var_pl,   &
+         GMTR_P_var,      &
+         GMTR_P_var_pl,   &
+         GMTR_A_var,      &
+         GMTR_A_var_pl
     !
     implicit none
     !
-    real(8), intent(inout) :: scl(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(inout) :: scl_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(inout) :: scl(ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(inout) :: scl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !
-    real(8), intent(in)  :: vx(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in)  :: vx_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(in)  :: vy(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in)  :: vy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(in)  :: vz(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in)  :: vz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(in)  :: vx(ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)  :: vy(ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)  :: vz(ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !
     real(8), intent(in), optional :: mfact
     !
@@ -2683,9 +2558,9 @@ contains
          ADM_lall,           &
          ADM_TI:ADM_TJ)
     real(8)  :: vxt_pl(      &
-         ADM_GALL_PL,        &
+         ADM_gall_pl,        &
          ADM_kall,           &
-         ADM_LALL_PL)
+         ADM_lall_pl)
     !
     real(8)  :: vyt(         &
          ADM_gall,           &
@@ -2693,9 +2568,9 @@ contains
          ADM_lall,           &
          ADM_TI:ADM_TJ)
     real(8)  :: vyt_pl(      &
-         ADM_GALL_PL,        &
+         ADM_gall_pl,        &
          ADM_kall,           &
-         ADM_LALL_PL)
+         ADM_lall_pl)
     !
     real(8)  :: vzt(         &
          ADM_gall,           &
@@ -2703,15 +2578,15 @@ contains
          ADM_lall,           &
          ADM_TI:ADM_TJ)
     real(8)  :: vzt_pl(      &
-         ADM_GALL_PL,        &
+         ADM_gall_pl,        &
          ADM_kall,           &
-         ADM_LALL_PL)
+         ADM_lall_pl)
     !
     real(8)  :: flux(        &
          ADM_gall,           &
          ADM_AI:ADM_AJ)
     real(8)  :: flux_pl(     &
-         ADM_GALL_PL)
+         ADM_gall_pl)
     !
     integer :: l,n,k
     integer :: rgnid
@@ -2792,25 +2667,25 @@ contains
     if(ADM_prc_me==ADM_prc_pl) then
        !
        do k=ADM_kmin,ADM_kmax
-          do l=1,ADM_LALL_PL
-             do n=ADM_GMIN_PL,ADM_GMAX_PL-1
+          do l=1,ADM_lall_pl
+             do n=ADM_gmin_pl,ADM_GMAX_PL-1
                 vxt_pl(n,k,l)                            &
                      =GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W1)&
-                     *vx_pl(ADM_GSLF_PL,k,l)              &
+                     *vx_pl(ADM_gslf_pl,k,l)              &
                      +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W2)&
                      *vx_pl(n,k,l)                        &
                      +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W3)&
                      *vx_pl(n+1,k,l)
                 vyt_pl(n,k,l)                            &
                      =GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W1)&
-                     *vy_pl(ADM_GSLF_PL,k,l)              &
+                     *vy_pl(ADM_gslf_pl,k,l)              &
                      +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W2)&
                      *vy_pl(n,k,l)                        &
                      +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W3)&
                      *vy_pl(n+1,k,l)
                 vzt_pl(n,k,l)                            &
                      =GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W1)&
-                     *vz_pl(ADM_GSLF_PL,k,l)              &
+                     *vz_pl(ADM_gslf_pl,k,l)              &
                      +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W2)&
                      *vz_pl(n,k,l)                        &
                      +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W3)&
@@ -2818,25 +2693,25 @@ contains
              end do
              vxt_pl(ADM_GMAX_PL,k,l)&
                   =GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_W1)&
-                  *vx_pl(ADM_GSLF_PL,k,l)                        &
+                  *vx_pl(ADM_gslf_pl,k,l)                        &
                   +GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_W2)&
                   *vx_pl(ADM_GMAX_PL,k,l)                        &
                   +GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_W3)&
-                  *vx_pl(ADM_GMIN_PL,k,l)
+                  *vx_pl(ADM_gmin_pl,k,l)
              vyt_pl(ADM_GMAX_PL,k,l)&
                   =GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_W1)&
-                  *vy_pl(ADM_GSLF_PL,k,l)                        &
+                  *vy_pl(ADM_gslf_pl,k,l)                        &
                   +GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_W2)&
                   *vy_pl(ADM_GMAX_PL,k,l)                        &
                   +GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_W3)&
-                  *vy_pl(ADM_GMIN_PL,k,l)
+                  *vy_pl(ADM_gmin_pl,k,l)
              vzt_pl(ADM_GMAX_PL,k,l)&
                   =GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_W1)&
-                  *vz_pl(ADM_GSLF_PL,k,l)                        &
+                  *vz_pl(ADM_gslf_pl,k,l)                        &
                   +GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_W2)&
                   *vz_pl(ADM_GMAX_PL,k,l)                        &
                   +GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_W3)&
-                  *vz_pl(ADM_GMIN_PL,k,l)
+                  *vz_pl(ADM_gmin_pl,k,l)
           end do
        end do
     end if
@@ -2909,16 +2784,16 @@ contains
     !
     if(ADM_prc_me==ADM_prc_pl) then
        do k=ADM_kmin,ADM_kmax
-          do l=1,ADM_LALL_PL
+          do l=1,ADM_lall_pl
              !
-             flux_pl(ADM_GMIN_PL)&
-                  =((vxt_pl(ADM_GMAX_PL,k,l)+vxt_pl(ADM_GMIN_PL,k,l))&
-                  *GMTR_A_var_pl(ADM_GMIN_PL,ADM_KNONE,l,GMTR_A_HTX)&
-                  +(vyt_pl(ADM_GMAX_PL,k,l)+vyt_pl(ADM_GMIN_PL,k,l))&
-                  *GMTR_A_var_pl(ADM_GMIN_PL,ADM_KNONE,l,GMTR_A_HTY)&
-                  +(vzt_pl(ADM_GMAX_PL,k,l)+vzt_pl(ADM_GMIN_PL,k,l))&
-                  *GMTR_A_var_pl(ADM_GMIN_PL,ADM_KNONE,l,GMTR_A_HTZ) )*0.5D0
-             do n=ADM_GMIN_PL+1,ADM_GMAX_PL
+             flux_pl(ADM_gmin_pl)&
+                  =((vxt_pl(ADM_GMAX_PL,k,l)+vxt_pl(ADM_gmin_pl,k,l))&
+                  *GMTR_A_var_pl(ADM_gmin_pl,ADM_KNONE,l,GMTR_A_HTX)&
+                  +(vyt_pl(ADM_GMAX_PL,k,l)+vyt_pl(ADM_gmin_pl,k,l))&
+                  *GMTR_A_var_pl(ADM_gmin_pl,ADM_KNONE,l,GMTR_A_HTY)&
+                  +(vzt_pl(ADM_GMAX_PL,k,l)+vzt_pl(ADM_gmin_pl,k,l))&
+                  *GMTR_A_var_pl(ADM_gmin_pl,ADM_KNONE,l,GMTR_A_HTZ) )*0.5D0
+             do n=ADM_gmin_pl+1,ADM_GMAX_PL
                 flux_pl(n)&
                      =((vxt_pl(n-1,k,l)+vxt_pl(n,k,l))&
                      *GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_HTX)&
@@ -2928,13 +2803,13 @@ contains
                      *GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_HTZ) )*0.5D0
              end do
              !
-             scl_pl(ADM_GSLF_PL,k,l)=-(&
-                  +flux_pl(ADM_GMIN_PL  )&
-                  +flux_pl(ADM_GMIN_PL+1)&
-                  +flux_pl(ADM_GMIN_PL+2)&
-                  +flux_pl(ADM_GMIN_PL+3)&
-                  +flux_pl(ADM_GMIN_PL+4)&
-                  ) * GMTR_P_var_pl(ADM_GSLF_PL,ADM_KNONE,l,GMTR_P_RAREA)&
+             scl_pl(ADM_gslf_pl,k,l)=-(&
+                  +flux_pl(ADM_gmin_pl  )&
+                  +flux_pl(ADM_gmin_pl+1)&
+                  +flux_pl(ADM_gmin_pl+2)&
+                  +flux_pl(ADM_gmin_pl+3)&
+                  +flux_pl(ADM_gmin_pl+4)&
+                  ) * GMTR_P_var_pl(ADM_gslf_pl,ADM_KNONE,l,GMTR_P_RAREA)&
                   * fact
           end do
        end do
@@ -2960,11 +2835,11 @@ contains
          ADM_AIJ,         &
          ADM_AJ,          &
          ADM_KNONE,       &
-         ADM_LALL_PL,     &
-         ADM_GMIN_PL,     &
+         ADM_lall_pl,     &
+         ADM_gmin_pl,     &
          ADM_GMAX_PL,     &
-         ADM_GSLF_PL,     &
-         ADM_GALL_PL,     &
+         ADM_gslf_pl,     &
+         ADM_gall_pl,     &
          !--- public variables
          ADM_prc_me,      &
          ADM_prc_tab,     &
@@ -2979,39 +2854,38 @@ contains
          ADM_gall
     use mod_gmtr, only :  &
          !--- public parameters
-         gmtr_t_rarea,    &
-         gmtr_a_hnx,      &
-         gmtr_a_hny,      &
-         gmtr_a_hnz,      &
-         gmtr_a_tnx,      &
-         gmtr_a_tny,      &
-         gmtr_a_tnz,      &
-         gmtr_a_tn2x,     &
-         gmtr_a_tn2y,     &
-         gmtr_a_tn2z,     &
-         gmtr_p_rarea,    &
-         !--- public variables
-         gmtr_t_var,      &
-         gmtr_t_var_pl,   &
-         gmtr_p_var,      &
-         gmtr_p_var_pl,   &
-         gmtr_a_var,      &
-         gmtr_a_var_pl
+         GMTR_T_rarea,    &
+         GMTR_A_hnx,      &
+         GMTR_A_hny,      &
+         GMTR_A_hnz,      &
+         GMTR_A_tnx,      &
+         GMTR_A_tny,      &
+         GMTR_A_tnz,      &
+         GMTR_A_tn2x,     &
+         GMTR_A_tn2y,     &
+         GMTR_A_tn2z,     &
+         GMTR_P_rarea,    &
+         GMTR_T_var,      &
+         GMTR_T_var_pl,   &
+         GMTR_P_var,      &
+         GMTR_P_var_pl,   &
+         GMTR_A_var,      &
+         GMTR_A_var_pl
     implicit none
 
-    real(8), intent(inout)  :: grdx(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(inout)  :: grdx_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(inout)  :: grdy(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(inout)  :: grdy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(inout)  :: grdz(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(inout)  :: grdz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(inout) :: grdx   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(inout) :: grdx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(inout) :: grdy   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(inout) :: grdy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(inout) :: grdz   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(inout) :: grdz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !
-    real(8), intent(in)  :: vx(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in)  :: vx_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(in)  :: vy(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in)  :: vy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(in)  :: vz(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in)  :: vz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(in)  :: vx(ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)  :: vy(ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)  :: vz(ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !
     real(8), intent(in), optional :: mfact
     !
@@ -3021,11 +2895,11 @@ contains
          ADM_lall,                &
          ADM_TI:ADM_TJ )
     real(8)  :: sclt_pl(          &
-         ADM_GALL_PL,             &
+         ADM_gall_pl,             &
          ADM_kall,                &
-         ADM_LALL_PL )
+         ADM_lall_pl )
     real(8)  :: flux_pl(          &
-         ADM_GALL_PL)
+         ADM_gall_pl)
     !
     integer :: l,n,k
     integer :: nstart, nend
@@ -3115,22 +2989,22 @@ contains
 
     if(ADM_prc_me==ADM_prc_pl) then
        do k=ADM_kmin,ADM_kmax
-          do l=1,ADM_LALL_PL
-             do n=ADM_GMIN_PL,ADM_GMAX_PL-1
+          do l=1,ADM_lall_pl
+             do n=ADM_gmin_pl,ADM_GMAX_PL-1
                 !
                 f=GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_RAREA)*0.5D0
                 !
-                ux1=+(vx_pl(ADM_GSLF_PL,k,l)+vx_pl(n,k,l))
-                uy1=+(vy_pl(ADM_GSLF_PL,k,l)+vy_pl(n,k,l))
-                uz1=+(vz_pl(ADM_GSLF_PL,k,l)+vz_pl(n,k,l))
+                ux1=+(vx_pl(ADM_gslf_pl,k,l)+vx_pl(n,k,l))
+                uy1=+(vy_pl(ADM_gslf_pl,k,l)+vy_pl(n,k,l))
+                uz1=+(vz_pl(ADM_gslf_pl,k,l)+vz_pl(n,k,l))
                 !
                 ux2=+(vx_pl(n,k,l)+vx_pl(n+1,k,l))
                 uy2=+(vy_pl(n,k,l)+vy_pl(n+1,k,l))
                 uz2=+(vz_pl(n,k,l)+vz_pl(n+1,k,l))
                 !
-                ux3=-(vx_pl(n+1,k,l)+vx_pl(ADM_GSLF_PL,k,l))
-                uy3=-(vy_pl(n+1,k,l)+vy_pl(ADM_GSLF_PL,k,l))
-                uz3=-(vz_pl(n+1,k,l)+vz_pl(ADM_GSLF_PL,k,l))
+                ux3=-(vx_pl(n+1,k,l)+vx_pl(ADM_gslf_pl,k,l))
+                uy3=-(vy_pl(n+1,k,l)+vy_pl(ADM_gslf_pl,k,l))
+                uz3=-(vz_pl(n+1,k,l)+vz_pl(ADM_gslf_pl,k,l))
                 sclt_pl(n,k,l)=f*(&
                      +ux1*GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_TNX)&
                      +uy1*GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_TNY)&
@@ -3145,17 +3019,17 @@ contains
              !
              f=GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_RAREA)*0.5D0
              !
-             ux1=+(vx_pl(ADM_GSLF_PL,k,l)+vx_pl(ADM_GMAX_PL,k,l))
-             uy1=+(vy_pl(ADM_GSLF_PL,k,l)+vy_pl(ADM_GMAX_PL,k,l))
-             uz1=+(vz_pl(ADM_GSLF_PL,k,l)+vz_pl(ADM_GMAX_PL,k,l))
+             ux1=+(vx_pl(ADM_gslf_pl,k,l)+vx_pl(ADM_GMAX_PL,k,l))
+             uy1=+(vy_pl(ADM_gslf_pl,k,l)+vy_pl(ADM_GMAX_PL,k,l))
+             uz1=+(vz_pl(ADM_gslf_pl,k,l)+vz_pl(ADM_GMAX_PL,k,l))
              !
-             ux2=+(vx_pl(ADM_GMAX_PL,k,l)+vx_pl(ADM_GMIN_PL,k,l))
-             uy2=+(vy_pl(ADM_GMAX_PL,k,l)+vy_pl(ADM_GMIN_PL,k,l))
-             uz2=+(vz_pl(ADM_GMAX_PL,k,l)+vz_pl(ADM_GMIN_PL,k,l))
+             ux2=+(vx_pl(ADM_GMAX_PL,k,l)+vx_pl(ADM_gmin_pl,k,l))
+             uy2=+(vy_pl(ADM_GMAX_PL,k,l)+vy_pl(ADM_gmin_pl,k,l))
+             uz2=+(vz_pl(ADM_GMAX_PL,k,l)+vz_pl(ADM_gmin_pl,k,l))
              !
-             ux3=-(vx_pl(ADM_GMIN_PL,k,l)+vx_pl(ADM_GSLF_PL,k,l))
-             uy3=-(vy_pl(ADM_GMIN_PL,k,l)+vy_pl(ADM_GSLF_PL,k,l))
-             uz3=-(vz_pl(ADM_GMIN_PL,k,l)+vz_pl(ADM_GSLF_PL,k,l))
+             ux3=-(vx_pl(ADM_gmin_pl,k,l)+vx_pl(ADM_gslf_pl,k,l))
+             uy3=-(vy_pl(ADM_gmin_pl,k,l)+vy_pl(ADM_gslf_pl,k,l))
+             uz3=-(vz_pl(ADM_gmin_pl,k,l)+vz_pl(ADM_gslf_pl,k,l))
              !   
              sclt_pl(ADM_GMAX_PL,k,l)=f*(&
                   +ux1*GMTR_A_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_A_TNX)&
@@ -3164,9 +3038,9 @@ contains
                   +ux2*GMTR_A_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_A_TN2X)&
                   +uy2*GMTR_A_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_A_TN2Y)&
                   +uz2*GMTR_A_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_A_TN2Z)&
-                  +ux3*GMTR_A_var_pl(ADM_GMIN_PL,ADM_KNONE,l,GMTR_A_TNX)&
-                  +uy3*GMTR_A_var_pl(ADM_GMIN_PL,ADM_KNONE,l,GMTR_A_TNY)&
-                  +uz3*GMTR_A_var_pl(ADM_GMIN_PL,ADM_KNONE,l,GMTR_A_TNZ))
+                  +ux3*GMTR_A_var_pl(ADM_gmin_pl,ADM_KNONE,l,GMTR_A_TNX)&
+                  +uy3*GMTR_A_var_pl(ADM_gmin_pl,ADM_KNONE,l,GMTR_A_TNY)&
+                  +uz3*GMTR_A_var_pl(ADM_gmin_pl,ADM_KNONE,l,GMTR_A_TNZ))
              !
           end do
        end do
@@ -3257,46 +3131,46 @@ contains
 
     if(ADM_prc_me==ADM_prc_pl) then
        do k=ADM_kmin,ADM_kmax
-          do l=1,ADM_LALL_PL
+          do l=1,ADM_lall_pl
              !
-             flux_pl(ADM_GMIN_PL)&
-                  =(sclt_pl(ADM_GMAX_PL,k,l)+sclt_pl(ADM_GMIN_PL,k,l))*0.5D0
-             do n=ADM_GMIN_PL+1,ADM_GMAX_PL
+             flux_pl(ADM_gmin_pl)&
+                  =(sclt_pl(ADM_GMAX_PL,k,l)+sclt_pl(ADM_gmin_pl,k,l))*0.5D0
+             do n=ADM_gmin_pl+1,ADM_GMAX_PL
                 flux_pl(n)&
                      =(sclt_pl(n-1,k,l)+sclt_pl(n,k,l))*0.5D0
              end do
              !
-             dp1=flux_pl(ADM_GMIN_PL  )
-             dp2=flux_pl(ADM_GMIN_PL+1)
-             dp3=flux_pl(ADM_GMIN_PL+2)
-             dp4=flux_pl(ADM_GMIN_PL+3)
-             dp5=flux_pl(ADM_GMIN_PL+4)
+             dp1=flux_pl(ADM_gmin_pl  )
+             dp2=flux_pl(ADM_gmin_pl+1)
+             dp3=flux_pl(ADM_gmin_pl+2)
+             dp4=flux_pl(ADM_gmin_pl+3)
+             dp5=flux_pl(ADM_gmin_pl+4)
              !
-             grdx_pl(ADM_GSLF_PL,k,l)=(                                 &
-                  +dp1*GMTR_A_var_pl(ADM_GMIN_PL  ,ADM_KNONE,l,GMTR_A_HNX) &
-                  +dp2*GMTR_A_var_pl(ADM_GMIN_PL+1,ADM_KNONE,l,GMTR_A_HNX) &
-                  +dp3*GMTR_A_var_pl(ADM_GMIN_PL+2,ADM_KNONE,l,GMTR_A_HNX) &
-                  +dp4*GMTR_A_var_pl(ADM_GMIN_PL+3,ADM_KNONE,l,GMTR_A_HNX) &
-                  +dp5*GMTR_A_var_pl(ADM_GMIN_PL+4,ADM_KNONE,l,GMTR_A_HNX) &
-                  ) * GMTR_P_var_pl(ADM_GSLF_PL,ADM_KNONE,l,GMTR_P_RAREA)  &
+             grdx_pl(ADM_gslf_pl,k,l)=(                                 &
+                  +dp1*GMTR_A_var_pl(ADM_gmin_pl  ,ADM_KNONE,l,GMTR_A_HNX) &
+                  +dp2*GMTR_A_var_pl(ADM_gmin_pl+1,ADM_KNONE,l,GMTR_A_HNX) &
+                  +dp3*GMTR_A_var_pl(ADM_gmin_pl+2,ADM_KNONE,l,GMTR_A_HNX) &
+                  +dp4*GMTR_A_var_pl(ADM_gmin_pl+3,ADM_KNONE,l,GMTR_A_HNX) &
+                  +dp5*GMTR_A_var_pl(ADM_gmin_pl+4,ADM_KNONE,l,GMTR_A_HNX) &
+                  ) * GMTR_P_var_pl(ADM_gslf_pl,ADM_KNONE,l,GMTR_P_RAREA)  &
                   * fact
              !
-             grdy_pl(ADM_GSLF_PL,k,l)=(                                      &
-                  +dp1*GMTR_A_var_pl(ADM_GMIN_PL  ,ADM_KNONE,l,GMTR_A_HNY) &
-                  +dp2*GMTR_A_var_pl(ADM_GMIN_PL+1,ADM_KNONE,l,GMTR_A_HNY) &
-                  +dp3*GMTR_A_var_pl(ADM_GMIN_PL+2,ADM_KNONE,l,GMTR_A_HNY) &
-                  +dp4*GMTR_A_var_pl(ADM_GMIN_PL+3,ADM_KNONE,l,GMTR_A_HNY) &
-                  +dp5*GMTR_A_var_pl(ADM_GMIN_PL+4,ADM_KNONE,l,GMTR_A_HNY) &
-                  ) * GMTR_P_var_pl(ADM_GSLF_PL,ADM_KNONE,l,GMTR_P_RAREA)  &
+             grdy_pl(ADM_gslf_pl,k,l)=(                                      &
+                  +dp1*GMTR_A_var_pl(ADM_gmin_pl  ,ADM_KNONE,l,GMTR_A_HNY) &
+                  +dp2*GMTR_A_var_pl(ADM_gmin_pl+1,ADM_KNONE,l,GMTR_A_HNY) &
+                  +dp3*GMTR_A_var_pl(ADM_gmin_pl+2,ADM_KNONE,l,GMTR_A_HNY) &
+                  +dp4*GMTR_A_var_pl(ADM_gmin_pl+3,ADM_KNONE,l,GMTR_A_HNY) &
+                  +dp5*GMTR_A_var_pl(ADM_gmin_pl+4,ADM_KNONE,l,GMTR_A_HNY) &
+                  ) * GMTR_P_var_pl(ADM_gslf_pl,ADM_KNONE,l,GMTR_P_RAREA)  &
                   * fact
              !
-             grdz_pl(ADM_GSLF_PL,k,l)=(                                      &
-                  +dp1*GMTR_A_var_pl(ADM_GMIN_PL  ,ADM_KNONE,l,GMTR_A_HNZ) &
-                  +dp2*GMTR_A_var_pl(ADM_GMIN_PL+1,ADM_KNONE,l,GMTR_A_HNZ) &
-                  +dp3*GMTR_A_var_pl(ADM_GMIN_PL+2,ADM_KNONE,l,GMTR_A_HNZ) &
-                  +dp4*GMTR_A_var_pl(ADM_GMIN_PL+3,ADM_KNONE,l,GMTR_A_HNZ) &
-                  +dp5*GMTR_A_var_pl(ADM_GMIN_PL+4,ADM_KNONE,l,GMTR_A_HNZ) &
-                  ) * GMTR_P_var_pl(ADM_GSLF_PL,ADM_KNONE,l,GMTR_P_RAREA)  &
+             grdz_pl(ADM_gslf_pl,k,l)=(                                      &
+                  +dp1*GMTR_A_var_pl(ADM_gmin_pl  ,ADM_KNONE,l,GMTR_A_HNZ) &
+                  +dp2*GMTR_A_var_pl(ADM_gmin_pl+1,ADM_KNONE,l,GMTR_A_HNZ) &
+                  +dp3*GMTR_A_var_pl(ADM_gmin_pl+2,ADM_KNONE,l,GMTR_A_HNZ) &
+                  +dp4*GMTR_A_var_pl(ADM_gmin_pl+3,ADM_KNONE,l,GMTR_A_HNZ) &
+                  +dp5*GMTR_A_var_pl(ADM_gmin_pl+4,ADM_KNONE,l,GMTR_A_HNZ) &
+                  ) * GMTR_P_var_pl(ADM_gslf_pl,ADM_KNONE,l,GMTR_P_RAREA)  &
                   * fact
              !
           end do
@@ -3323,11 +3197,11 @@ contains
          ADM_AIJ,         &
          ADM_AJ,          &
          ADM_KNONE,       &
-         ADM_LALL_PL,     &
-         ADM_GMIN_PL,     &
+         ADM_lall_pl,     &
+         ADM_gmin_pl,     &
          ADM_GMAX_PL,     &
-         ADM_GSLF_PL,     &
-         ADM_GALL_PL,     &
+         ADM_gslf_pl,     &
+         ADM_gall_pl,     &
          !--- public variables
          ADM_prc_me,      &
          ADM_prc_tab,     &
@@ -3342,32 +3216,32 @@ contains
          ADM_gall
     use mod_gmtr, only :  &
          !--- public parameters
-         gmtr_t_w1,       &
-         gmtr_t_w2,       &
-         gmtr_t_w3,       &
-         gmtr_a_hnx,      &
-         gmtr_a_hny,      &
-         gmtr_a_hnz,      &
-         gmtr_p_rarea,    &
+         GMTR_T_W1,       &
+         GMTR_T_W2,       &
+         GMTR_T_W3,       &
+         GMTR_A_hnx,      &
+         GMTR_A_hny,      &
+         GMTR_A_hnz,      &
+         GMTR_P_rarea,    &
          !--- public variables
-         gmtr_t_var,      &
-         gmtr_t_var_pl,   &
-         gmtr_p_var,      &
-         gmtr_p_var_pl,   &
-         gmtr_a_var,      &
-         gmtr_a_var_pl
+         GMTR_T_var,      &
+         GMTR_T_var_pl,   &
+         GMTR_P_var,      &
+         GMTR_P_var_pl,   &
+         GMTR_A_var,      &
+         GMTR_A_var_pl
     !
     implicit none
     !
-    real(8), intent(in) :: scl(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in) :: scl_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(in) :: scl(ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in) :: scl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !
-    real(8), intent(inout)  :: vx(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(inout)  :: vx_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(inout)  :: vy(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(inout)  :: vy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(inout)  :: vz(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(inout)  :: vz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(inout)  :: vx(ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(inout)  :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(inout)  :: vy(ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(inout)  :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(inout)  :: vz(ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(inout)  :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !
     real(8), intent(in), optional :: mfact
     !
@@ -3377,14 +3251,14 @@ contains
          ADM_lall,                &
          ADM_TI:ADM_TJ )
     real(8)  :: sclt_pl(          &
-         ADM_GALL_PL,             &
+         ADM_gall_pl,             &
          ADM_kall,                &
-         ADM_LALL_PL )
+         ADM_lall_pl )
     real(8)  :: flux(             &
          ADM_gall,                &
          ADM_AI:ADM_AJ)
     real(8)  :: flux_pl(          &
-         ADM_GALL_PL)
+         ADM_gall_pl)
     !
     integer :: l,n,k
     integer :: nstart,nend
@@ -3431,11 +3305,11 @@ contains
     !
     if(ADM_prc_me==ADM_prc_pl) then
        do k=1, ADM_kall
-          do l=1,ADM_LALL_PL
-             do n=ADM_GMIN_PL,ADM_GMAX_PL-1
+          do l=1,ADM_lall_pl
+             do n=ADM_gmin_pl,ADM_GMAX_PL-1
                 sclt_pl(n,k,l)                            &
                      =GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W1)&
-                     *scl_pl(ADM_GSLF_PL,k,l)              &
+                     *scl_pl(ADM_gslf_pl,k,l)              &
                      +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W2)&
                      *scl_pl(n,k,l)                        &
                      +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W3)&
@@ -3443,11 +3317,11 @@ contains
              end do
              sclt_pl(ADM_GMAX_PL,k,l)&
                   =GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_W1)&
-                  *scl_pl(ADM_GSLF_PL,k,l)                        &
+                  *scl_pl(ADM_gslf_pl,k,l)                        &
                   +GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_W2)&
                   *scl_pl(ADM_GMAX_PL,k,l)                        &
                   +GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_W3)&
-                  *scl_pl(ADM_GMIN_PL,k,l)
+                  *scl_pl(ADM_gmin_pl,k,l)
           end do
        end do
     end if
@@ -3556,46 +3430,46 @@ contains
     !
     if(ADM_prc_me==ADM_prc_pl) then
        do k=1, ADM_kall
-          do l=1,ADM_LALL_PL
+          do l=1,ADM_lall_pl
              !
-             flux_pl(ADM_GMIN_PL)&
-                  =(sclt_pl(ADM_GMAX_PL,k,l)+sclt_pl(ADM_GMIN_PL,k,l))*0.5D0
-             do n=ADM_GMIN_PL+1,ADM_GMAX_PL
+             flux_pl(ADM_gmin_pl)&
+                  =(sclt_pl(ADM_GMAX_PL,k,l)+sclt_pl(ADM_gmin_pl,k,l))*0.5D0
+             do n=ADM_gmin_pl+1,ADM_GMAX_PL
                 flux_pl(n)&
                      =(sclt_pl(n-1,k,l)+sclt_pl(n,k,l))*0.5D0
              end do
              !
-             dp1=flux_pl(ADM_GMIN_PL  )
-             dp2=flux_pl(ADM_GMIN_PL+1)
-             dp3=flux_pl(ADM_GMIN_PL+2)
-             dp4=flux_pl(ADM_GMIN_PL+3)
-             dp5=flux_pl(ADM_GMIN_PL+4)
+             dp1=flux_pl(ADM_gmin_pl  )
+             dp2=flux_pl(ADM_gmin_pl+1)
+             dp3=flux_pl(ADM_gmin_pl+2)
+             dp4=flux_pl(ADM_gmin_pl+3)
+             dp5=flux_pl(ADM_gmin_pl+4)
              !
-             vx_pl(ADM_GSLF_PL,k,l)=(                                 &
-                  +dp1*GMTR_A_var_pl(ADM_GMIN_PL  ,ADM_KNONE,l,GMTR_A_HNX) &
-                  +dp2*GMTR_A_var_pl(ADM_GMIN_PL+1,ADM_KNONE,l,GMTR_A_HNX) &
-                  +dp3*GMTR_A_var_pl(ADM_GMIN_PL+2,ADM_KNONE,l,GMTR_A_HNX) &
-                  +dp4*GMTR_A_var_pl(ADM_GMIN_PL+3,ADM_KNONE,l,GMTR_A_HNX) &
-                  +dp5*GMTR_A_var_pl(ADM_GMIN_PL+4,ADM_KNONE,l,GMTR_A_HNX) &
-                  ) * GMTR_P_var_pl(ADM_GSLF_PL,ADM_KNONE,l,GMTR_P_RAREA)  &
+             vx_pl(ADM_gslf_pl,k,l)=(                                 &
+                  +dp1*GMTR_A_var_pl(ADM_gmin_pl  ,ADM_KNONE,l,GMTR_A_HNX) &
+                  +dp2*GMTR_A_var_pl(ADM_gmin_pl+1,ADM_KNONE,l,GMTR_A_HNX) &
+                  +dp3*GMTR_A_var_pl(ADM_gmin_pl+2,ADM_KNONE,l,GMTR_A_HNX) &
+                  +dp4*GMTR_A_var_pl(ADM_gmin_pl+3,ADM_KNONE,l,GMTR_A_HNX) &
+                  +dp5*GMTR_A_var_pl(ADM_gmin_pl+4,ADM_KNONE,l,GMTR_A_HNX) &
+                  ) * GMTR_P_var_pl(ADM_gslf_pl,ADM_KNONE,l,GMTR_P_RAREA)  &
                   * fact
              !
-             vy_pl(ADM_GSLF_PL,k,l)=(                                      &
-                  +dp1*GMTR_A_var_pl(ADM_GMIN_PL  ,ADM_KNONE,l,GMTR_A_HNY) &
-                  +dp2*GMTR_A_var_pl(ADM_GMIN_PL+1,ADM_KNONE,l,GMTR_A_HNY) &
-                  +dp3*GMTR_A_var_pl(ADM_GMIN_PL+2,ADM_KNONE,l,GMTR_A_HNY) &
-                  +dp4*GMTR_A_var_pl(ADM_GMIN_PL+3,ADM_KNONE,l,GMTR_A_HNY) &
-                  +dp5*GMTR_A_var_pl(ADM_GMIN_PL+4,ADM_KNONE,l,GMTR_A_HNY) &
-                  ) * GMTR_P_var_pl(ADM_GSLF_PL,ADM_KNONE,l,GMTR_P_RAREA)  &
+             vy_pl(ADM_gslf_pl,k,l)=(                                      &
+                  +dp1*GMTR_A_var_pl(ADM_gmin_pl  ,ADM_KNONE,l,GMTR_A_HNY) &
+                  +dp2*GMTR_A_var_pl(ADM_gmin_pl+1,ADM_KNONE,l,GMTR_A_HNY) &
+                  +dp3*GMTR_A_var_pl(ADM_gmin_pl+2,ADM_KNONE,l,GMTR_A_HNY) &
+                  +dp4*GMTR_A_var_pl(ADM_gmin_pl+3,ADM_KNONE,l,GMTR_A_HNY) &
+                  +dp5*GMTR_A_var_pl(ADM_gmin_pl+4,ADM_KNONE,l,GMTR_A_HNY) &
+                  ) * GMTR_P_var_pl(ADM_gslf_pl,ADM_KNONE,l,GMTR_P_RAREA)  &
                   * fact
              !
-             vz_pl(ADM_GSLF_PL,k,l)=(                                      &
-                  +dp1*GMTR_A_var_pl(ADM_GMIN_PL  ,ADM_KNONE,l,GMTR_A_HNZ) &
-                  +dp2*GMTR_A_var_pl(ADM_GMIN_PL+1,ADM_KNONE,l,GMTR_A_HNZ) &
-                  +dp3*GMTR_A_var_pl(ADM_GMIN_PL+2,ADM_KNONE,l,GMTR_A_HNZ) &
-                  +dp4*GMTR_A_var_pl(ADM_GMIN_PL+3,ADM_KNONE,l,GMTR_A_HNZ) &
-                  +dp5*GMTR_A_var_pl(ADM_GMIN_PL+4,ADM_KNONE,l,GMTR_A_HNZ) &
-                  ) * GMTR_P_var_pl(ADM_GSLF_PL,ADM_KNONE,l,GMTR_P_RAREA)  &
+             vz_pl(ADM_gslf_pl,k,l)=(                                      &
+                  +dp1*GMTR_A_var_pl(ADM_gmin_pl  ,ADM_KNONE,l,GMTR_A_HNZ) &
+                  +dp2*GMTR_A_var_pl(ADM_gmin_pl+1,ADM_KNONE,l,GMTR_A_HNZ) &
+                  +dp3*GMTR_A_var_pl(ADM_gmin_pl+2,ADM_KNONE,l,GMTR_A_HNZ) &
+                  +dp4*GMTR_A_var_pl(ADM_gmin_pl+3,ADM_KNONE,l,GMTR_A_HNZ) &
+                  +dp5*GMTR_A_var_pl(ADM_gmin_pl+4,ADM_KNONE,l,GMTR_A_HNZ) &
+                  ) * GMTR_P_var_pl(ADM_gslf_pl,ADM_KNONE,l,GMTR_P_RAREA)  &
                   * fact
              !
           end do
@@ -3626,10 +3500,10 @@ contains
          ADM_AIJ,         &
          ADM_AJ,          &
          ADM_KNONE,       &
-         ADM_LALL_PL,     &
-         ADM_GMIN_PL,     &
-         ADM_GSLF_PL,     &
-         ADM_GALL_PL,     &
+         ADM_lall_pl,     &
+         ADM_gmin_pl,     &
+         ADM_gslf_pl,     &
+         ADM_gall_pl,     &
          ADM_GMAX_PL,     &
          !--- public variables
          ADM_prc_me,      &
@@ -3649,27 +3523,27 @@ contains
          ADM_VMISS           ! Y.Niwa add 080130
     use mod_gmtr, only :  &
          !--- public parameters
-         gmtr_t_w1,       &
-         gmtr_t_w2,       &
-         gmtr_t_w3,       &
-         gmtr_t_rarea,    &
-         gmtr_a_hnx,      &
-         gmtr_a_hny,      &
-         gmtr_a_hnz,      &
-         gmtr_a_tnx,      &
-         gmtr_a_tny,      &
-         gmtr_a_tnz,      &
-         gmtr_a_tn2x,     &
-         gmtr_a_tn2y,     &
-         gmtr_a_tn2z,     &
-         gmtr_p_rarea,    &
+         GMTR_T_W1,       &
+         GMTR_T_W2,       &
+         GMTR_T_W3,       &
+         GMTR_T_rarea,    &
+         GMTR_A_hnx,      &
+         GMTR_A_hny,      &
+         GMTR_A_hnz,      &
+         GMTR_A_tnx,      &
+         GMTR_A_tny,      &
+         GMTR_A_tnz,      &
+         GMTR_A_tn2x,     &
+         GMTR_A_tn2y,     &
+         GMTR_A_tn2z,     &
+         GMTR_P_rarea,    &
          !--- public variables
-         gmtr_t_var,      &
-         gmtr_t_var_pl,   &
-         gmtr_p_var,      &
-         gmtr_p_var_pl,   &
-         gmtr_a_var,      &
-         gmtr_a_var_pl
+         GMTR_T_var,      &
+         GMTR_T_var_pl,   &
+         GMTR_P_var,      &
+         GMTR_P_var_pl,   &
+         GMTR_A_var,      &
+         GMTR_A_var_pl
     use mod_grd, only :    &
          GRD_x, GRD_x_pl,  &
          GRD_xt, GRD_xt_pl,&
@@ -3681,9 +3555,8 @@ contains
     use mod_cnst, only : &
          CNST_MAX_REAL,  &
          CNST_EPS_ZERO
-    !
     implicit none
-    !
+
     real(8), intent(out) :: flx_h(6,ADM_gall,ADM_kall,ADM_lall)
     real(8), intent(out) :: flx_h_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     real(8), intent(out) :: cp(ADM_gall,ADM_kall,ADM_lall,ADM_AI:ADM_AJ,GRD_XDIR:GRD_ZDIR)
@@ -3697,8 +3570,7 @@ contains
     real(8), intent(in)  :: rho(ADM_gall,ADM_kall,ADM_lall)
     real(8), intent(in)  :: rho_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     real(8), intent(in)  :: dt
-    !
-    !
+
     real(8)  :: rhovxt(ADM_gall,ADM_kall,ADM_lall,ADM_TI:ADM_TJ)
     real(8)  :: rhovxt_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     !
@@ -3715,11 +3587,11 @@ contains
     real(8)  :: ccc_pl
     !
     real(8)  :: rpx(ADM_gall,ADM_AI:ADM_AJ)
-    real(8)  :: rpx_pl(ADM_GALL_PL)
+    real(8)  :: rpx_pl(ADM_gall_pl)
     real(8)  :: rpy(ADM_gall,ADM_AI:ADM_AJ)
-    real(8)  :: rpy_pl(ADM_GALL_PL)
+    real(8)  :: rpy_pl(ADM_gall_pl)
     real(8)  :: rpz(ADM_gall,ADM_AI:ADM_AJ)
-    real(8)  :: rpz_pl(ADM_GALL_PL)
+    real(8)  :: rpz_pl(ADM_gall_pl)
     !
     real(8)  :: rhovxa(ADM_gall,ADM_AI:ADM_AJ)
     real(8)  :: rhovxa_pl(ADM_GALL_PL)
@@ -3733,8 +3605,8 @@ contains
     integer :: l,n,k
     integer :: rgnid
     !
-    integer :: np1(ADM_GALL_PL)
-    integer :: nm1(ADM_GALL_PL)
+    integer :: np1(ADM_gall_pl)
+    integer :: nm1(ADM_gall_pl)
     !
     integer :: nstart,nend
     logical, save :: first = .true.  ! Y.Niwa add 080130
@@ -3750,7 +3622,7 @@ contains
     ! Y.Niwa add 080130 =>
     if(first) then
       allocate(local_t_var(ADM_gall,ADM_KNONE,ADM_lall,ADM_TI:ADM_TJ,GMTR_T_W1:GMTR_T_W3))
-      allocate(local_t_var_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL,GMTR_T_W1:GMTR_T_W3))
+      allocate(local_t_var_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,GMTR_T_W1:GMTR_T_W3))
 
       do l=1, ADM_lall
          do t=ADM_TI, ADM_TJ
@@ -3766,8 +3638,8 @@ contains
       end do
       !
       if(ADM_prc_me==ADM_prc_pl) then
-         do l=1, ADM_LALL_PL
-            do n=ADM_GMIN_PL, ADM_GMAX_PL
+         do l=1, ADM_lall_pl
+            do n=ADM_gmin_pl, ADM_GMAX_PL
                local_t_var_pl(n,ADM_KNONE,l,GMTR_T_W1) &
                   = GMTR_t_var_pl(n,ADM_KNONE,l,GMTR_T_W1)
                local_t_var_pl(n,ADM_KNONE,l,GMTR_T_W2) &
@@ -3786,15 +3658,15 @@ contains
     cp(:,:,:,:,:) = 0.0d0
     cp_pl(:,:,:,:) = 0.0d0
     !
-    nm1(ADM_GMIN_PL) = ADM_GMAX_PL
-    do n=ADM_GMIN_PL+1,ADM_GMAX_PL
+    nm1(ADM_gmin_pl) = ADM_GMAX_PL
+    do n=ADM_gmin_pl+1,ADM_GMAX_PL
        nm1(n) = n-1
     end do
     !
-    do n=ADM_GMIN_PL,ADM_GMAX_PL-1
+    do n=ADM_gmin_pl,ADM_GMAX_PL-1
        np1(n) = n+1
     end do
-    np1(ADM_GMAX_PL) = ADM_GMIN_PL
+    np1(ADM_GMAX_PL) = ADM_gmin_pl
     !
     do l=1,ADM_lall
        rgnid=ADM_prc_tab(l,ADM_prc_me)
@@ -3889,39 +3761,39 @@ contains
     !
     if(ADM_prc_me==ADM_prc_pl) then
        !
-       do l=1,ADM_LALL_PL
+       do l=1,ADM_lall_pl
           do k = 1, ADM_kall
-             do n=ADM_GMIN_PL,ADM_GMAX_PL
+             do n=ADM_gmin_pl,ADM_GMAX_PL
                 rhovxt_pl(n,k,l)                            &
                      =GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W1)&
-                     *rhovx_pl(ADM_GSLF_PL,k,l)              &
+                     *rhovx_pl(ADM_gslf_pl,k,l)              &
                      +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W2)&
                      *rhovx_pl(n,k,l)                        &
                      +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W3)&
                      *rhovx_pl(np1(n),k,l)
                 rhovyt_pl(n,k,l)                            &
                      =GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W1)&
-                     *rhovy_pl(ADM_GSLF_PL,k,l)              &
+                     *rhovy_pl(ADM_gslf_pl,k,l)              &
                      +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W2)&
                      *rhovy_pl(n,k,l)                        &
                      +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W3)&
                      *rhovy_pl(np1(n),k,l)
                 rhovzt_pl(n,k,l)                            &
                      =GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W1)&
-                     *rhovz_pl(ADM_GSLF_PL,k,l)              &
+                     *rhovz_pl(ADM_gslf_pl,k,l)              &
                      +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W2)&
                      *rhovz_pl(n,k,l)                        &
                      +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W3)&
                      *rhovz_pl(np1(n),k,l)
                 rhot_pl(n,k,l)                            &
                      =local_T_var_pl(n,ADM_KNONE,l,GMTR_T_W1)&
-                     *rho_pl(ADM_GSLF_PL,k,l)              &
+                     *rho_pl(ADM_gslf_pl,k,l)              &
                      +local_T_var_pl(n,ADM_KNONE,l,GMTR_T_W2)&
                      *rho_pl(n,k,l)                        &
                      +local_T_var_pl(n,ADM_KNONE,l,GMTR_T_W3)&
                      *rho_pl(np1(n),k,l)
 !!$                     =GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W1)&  ! Y.Niwa 080130
-!!$                     *rho_pl(ADM_GSLF_PL,k,l)              &
+!!$                     *rho_pl(ADM_gslf_pl,k,l)              &
 !!$                     +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W2)&
 !!$                     *rho_pl(n,k,l)                        &
 !!$                     +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W3)&
@@ -4024,9 +3896,9 @@ contains
     !
     if(ADM_prc_me==ADM_prc_pl) then
        !
-       do l=1,ADM_LALL_PL
+       do l=1,ADM_lall_pl
           do k = 1, ADM_kall
-             do n=ADM_GMIN_PL,ADM_GMAX_PL
+             do n=ADM_gmin_pl,ADM_GMAX_PL
                 rpx_pl(n) &
                      = 0.5D0*(GRD_xt_pl(nm1(n),ADM_KNONE,l,GRD_XDIR)+GRD_xt_pl(n,ADM_KNONE,l,GRD_XDIR))
                 rpy_pl(n) &
@@ -4047,7 +3919,7 @@ contains
                      (rhovxa_pl(n)*GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_HNX)&
                      +rhovya_pl(n)*GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_HNY)&
                      +rhovza_pl(n)*GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_HNZ))
-                flx_h_pl(n,k,l) = ccc_pl*dt*GMTR_P_var_pl(ADM_GSLF_PL,ADM_KNONE,l,GMTR_P_RAREA)
+                flx_h_pl(n,k,l) = ccc_pl*dt*GMTR_P_var_pl(ADM_gslf_pl,ADM_KNONE,l,GMTR_P_RAREA)
              end do
           end do
        end do
@@ -4074,10 +3946,10 @@ contains
        ADM_AIJ,         &
        ADM_AJ,          &
        ADM_KNONE,       &
-       ADM_LALL_PL,     &
-       ADM_GMIN_PL,     &
-       ADM_GSLF_PL,     &
-       ADM_GALL_PL,     &
+       ADM_lall_pl,     &
+       ADM_gmin_pl,     &
+       ADM_gslf_pl,     &
+       ADM_gall_pl,     &
        ADM_GMAX_PL,     &
        ADM_prc_me,      &
        ADM_prc_tab,     &
@@ -4104,33 +3976,33 @@ contains
        CNST_MAX_REAL
     implicit none
 
-    real(8), intent(out) :: scl     (ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(out) :: scl_pl  (ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(in)  :: s       (ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in)  :: s_pl    (ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(out) :: scl     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(out) :: scl_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)  :: s       (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: s_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(in)  :: flx_h   (6,ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in)  :: flx_h_pl(  ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(in)  :: flx_h_pl(  ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(in)  :: c       (6,ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in)  :: c_pl    (  ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(in)  :: c_pl    (  ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(in)  :: cp      (ADM_gall,ADM_kall,ADM_lall,ADM_AI:ADM_AJ,GRD_XDIR:GRD_ZDIR)
-    real(8), intent(in)  :: cp_pl   (ADM_GALL_PL,ADM_kall,ADM_LALL_PL,GRD_XDIR:GRD_ZDIR)
-    real(8), intent(in)  :: d       (ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in)  :: d_pl    (ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(in)  :: cp_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,GRD_XDIR:GRD_ZDIR)
+    real(8), intent(in)  :: d       (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: d_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(in)  :: dt
 
     character(len=*), intent(in), optional :: limiter
     real(8),          intent(in), optional :: mfact
 
     real(8)  :: sa(ADM_AI:ADM_AJ,ADM_gall,ADM_kall,ADM_lall)
-    real(8)  :: sa_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8)  :: sa_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8)  :: sa_p,sa_m
 
     real(8)  :: sw(ADM_AI:ADM_AJ,ADM_gall)
 
     real(8)  :: s_in_min(6,ADM_gall,ADM_kall,ADM_lall)
-    real(8)  :: s_in_min_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,2)
+    real(8)  :: s_in_min_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,2)
     real(8)  :: s_in_max(6,ADM_gall,ADM_kall,ADM_lall)
-    real(8)  :: s_in_max_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,2)
+    real(8)  :: s_in_max_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,2)
     !
     real(8)  :: s_m1_k_min(ADM_gall)
     real(8)  :: s_m1_k_min_pl
@@ -4152,8 +4024,8 @@ contains
     real(8)  :: c_qin_sum_max_n
     real(8)  :: c_qin_sum_min_n
     !
-    integer :: np1(ADM_GALL_PL)
-    integer :: nm1(ADM_GALL_PL)
+    integer :: np1(ADM_gall_pl)
+    integer :: nm1(ADM_gall_pl)
     !
     real(8) :: SMALL_ZERO = 0.0d0
     !
@@ -4163,7 +4035,7 @@ contains
     integer, parameter :: s_out_k_min=4
     integer, parameter :: s_out_k_max=5
     real(8)  :: wrk(ADM_gall,ADM_kall,ADM_lall,dsx:s_out_k_max)
-    real(8)  :: wrk_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,dsx:s_out_k_max)
+    real(8)  :: wrk_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,dsx:s_out_k_max)
     !
 !    logical :: NON_NEG=.false.
     !
@@ -4172,7 +4044,7 @@ contains
     real(8) :: fact
     !
     integer :: nstart,nend
-    integer::nstart2,nstart3
+    integer :: nstart2,nstart3
 
     real(8) :: AI_min, AIJ_min, AJ_min
     real(8) :: AI_max, AIJ_max, AJ_max
@@ -4193,15 +4065,15 @@ contains
        fact = 1.D0 / dt
     endif
 
-    nm1(ADM_GMIN_PL) = ADM_GMAX_PL
-    do n = ADM_GMIN_PL+1, ADM_GMAX_PL
+    nm1(ADM_gmin_pl) = ADM_GMAX_PL
+    do n = ADM_gmin_pl+1, ADM_GMAX_PL
        nm1(n) = n-1
     enddo
 
-    do n = ADM_GMIN_PL, ADM_GMAX_PL-1
+    do n = ADM_gmin_pl, ADM_GMAX_PL-1
        np1(n) = n+1
     enddo
-    np1(ADM_GMAX_PL) = ADM_GMIN_PL
+    np1(ADM_GMAX_PL) = ADM_gmin_pl
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
@@ -4486,17 +4358,17 @@ contains
     enddo
 
     if(ADM_prc_me==ADM_prc_pl) then
-       do l=1,ADM_LALL_PL
+       do l=1,ADM_lall_pl
           do k = 1, ADM_kall
              s_in_min_pl(:,k,l,:) = CNST_MAX_REAL
              s_in_max_pl(:,k,l,:) =-CNST_MAX_REAL
-             do n=ADM_GMIN_PL,ADM_GMAX_PL
+             do n=ADM_gmin_pl,ADM_GMAX_PL
                 if(c_pl(n,k,l)<=0.0D0) then
-                   s_in_min_pl(n,k,l,1) = min(s_pl(ADM_GSLF_PL,k,l),s_pl(n,k,l),s_pl(nm1(n),k,l),s_pl(np1(n),k,l))
-                   s_in_max_pl(n,k,l,1) = max(s_pl(ADM_GSLF_PL,k,l),s_pl(n,k,l),s_pl(nm1(n),k,l),s_pl(np1(n),k,l))
+                   s_in_min_pl(n,k,l,1) = min(s_pl(ADM_gslf_pl,k,l),s_pl(n,k,l),s_pl(nm1(n),k,l),s_pl(np1(n),k,l))
+                   s_in_max_pl(n,k,l,1) = max(s_pl(ADM_gslf_pl,k,l),s_pl(n,k,l),s_pl(nm1(n),k,l),s_pl(np1(n),k,l))
                 else
-                   s_in_min_pl(n,k,l,2) = min(s_pl(ADM_GSLF_PL,k,l),s_pl(n,k,l),s_pl(nm1(n),k,l),s_pl(np1(n),k,l))
-                   s_in_max_pl(n,k,l,2) = max(s_pl(ADM_GSLF_PL,k,l),s_pl(n,k,l),s_pl(nm1(n),k,l),s_pl(np1(n),k,l))
+                   s_in_min_pl(n,k,l,2) = min(s_pl(ADM_gslf_pl,k,l),s_pl(n,k,l),s_pl(nm1(n),k,l),s_pl(np1(n),k,l))
+                   s_in_max_pl(n,k,l,2) = max(s_pl(ADM_gslf_pl,k,l),s_pl(n,k,l),s_pl(nm1(n),k,l),s_pl(np1(n),k,l))
                 end if
              end do
 
@@ -4570,54 +4442,54 @@ contains
     end do !L
     !
     if(ADM_prc_me==ADM_prc_pl) then
-       do l=1,ADM_LALL_PL
+       do l=1,ADM_lall_pl
           do k = 1, ADM_kall
              s_m1_k_min_pl &
-                  = min(s_in_min_pl(ADM_GMIN_PL,k,l,1),s_in_min_pl(ADM_GMIN_PL+1,k,l,1),&
-                  s_in_min_pl(ADM_GMIN_PL+2,k,l,1),s_in_min_pl(ADM_GMIN_PL+3,k,l,1),s_in_min_pl(ADM_GMIN_PL+4,k,l,1))
-             if(s_m1_k_min_pl== CNST_MAX_REAL) s_m1_k_min_pl=s_pl(ADM_GSLF_PL,k,l)
+                  = min(s_in_min_pl(ADM_gmin_pl,k,l,1),s_in_min_pl(ADM_gmin_pl+1,k,l,1),&
+                  s_in_min_pl(ADM_gmin_pl+2,k,l,1),s_in_min_pl(ADM_gmin_pl+3,k,l,1),s_in_min_pl(ADM_gmin_pl+4,k,l,1))
+             if(s_m1_k_min_pl== CNST_MAX_REAL) s_m1_k_min_pl=s_pl(ADM_gslf_pl,k,l)
              !          s_m1_k_min_pl = max(SMALL_ZERO,s_m1_k_min_pl)
              s_m1_k_max_pl &
-                  = max(s_in_min_pl(ADM_GMIN_PL,k,l,1),s_in_min_pl(ADM_GMIN_PL+1,k,l,1),&
-                  s_in_min_pl(ADM_GMIN_PL+2,k,l,1),s_in_min_pl(ADM_GMIN_PL+3,k,l,1),s_in_min_pl(ADM_GMIN_PL+4,k,l,1))
-             if(s_m1_k_max_pl==-CNST_MAX_REAL) s_m1_k_max_pl=s_pl(ADM_GSLF_PL,k,l)
+                  = max(s_in_min_pl(ADM_gmin_pl,k,l,1),s_in_min_pl(ADM_gmin_pl+1,k,l,1),&
+                  s_in_min_pl(ADM_gmin_pl+2,k,l,1),s_in_min_pl(ADM_gmin_pl+3,k,l,1),s_in_min_pl(ADM_gmin_pl+4,k,l,1))
+             if(s_m1_k_max_pl==-CNST_MAX_REAL) s_m1_k_max_pl=s_pl(ADM_gslf_pl,k,l)
              !
              c_in_sum_pl &
-                  = (0.5D0-sign(0.5D0,c_pl(ADM_GMIN_PL  ,k,l)))*c_pl(ADM_GMIN_PL  ,k,l)&
-                  + (0.5D0-sign(0.5D0,c_pl(ADM_GMIN_PL+1,k,l)))*c_pl(ADM_GMIN_PL+1,k,l)&
-                  + (0.5D0-sign(0.5D0,c_pl(ADM_GMIN_PL+2,k,l)))*c_pl(ADM_GMIN_PL+2,k,l)&
-                  + (0.5D0-sign(0.5D0,c_pl(ADM_GMIN_PL+3,k,l)))*c_pl(ADM_GMIN_PL+3,k,l)&
-                  + (0.5D0-sign(0.5D0,c_pl(ADM_GMIN_PL+4,k,l)))*c_pl(ADM_GMIN_PL+4,k,l)
+                  = (0.5D0-sign(0.5D0,c_pl(ADM_gmin_pl  ,k,l)))*c_pl(ADM_gmin_pl  ,k,l)&
+                  + (0.5D0-sign(0.5D0,c_pl(ADM_gmin_pl+1,k,l)))*c_pl(ADM_gmin_pl+1,k,l)&
+                  + (0.5D0-sign(0.5D0,c_pl(ADM_gmin_pl+2,k,l)))*c_pl(ADM_gmin_pl+2,k,l)&
+                  + (0.5D0-sign(0.5D0,c_pl(ADM_gmin_pl+3,k,l)))*c_pl(ADM_gmin_pl+3,k,l)&
+                  + (0.5D0-sign(0.5D0,c_pl(ADM_gmin_pl+4,k,l)))*c_pl(ADM_gmin_pl+4,k,l)
              c_out_sum_pl &
-                  = (0.5D0+sign(0.5D0,c_pl(ADM_GMIN_PL  ,k,l)))*c_pl(ADM_GMIN_PL  ,k,l)&
-                  + (0.5D0+sign(0.5D0,c_pl(ADM_GMIN_PL+1,k,l)))*c_pl(ADM_GMIN_PL+1,k,l)&
-                  + (0.5D0+sign(0.5D0,c_pl(ADM_GMIN_PL+2,k,l)))*c_pl(ADM_GMIN_PL+2,k,l)&
-                  + (0.5D0+sign(0.5D0,c_pl(ADM_GMIN_PL+3,k,l)))*c_pl(ADM_GMIN_PL+3,k,l)&
-                  + (0.5D0+sign(0.5D0,c_pl(ADM_GMIN_PL+4,k,l)))*c_pl(ADM_GMIN_PL+4,k,l)
+                  = (0.5D0+sign(0.5D0,c_pl(ADM_gmin_pl  ,k,l)))*c_pl(ADM_gmin_pl  ,k,l)&
+                  + (0.5D0+sign(0.5D0,c_pl(ADM_gmin_pl+1,k,l)))*c_pl(ADM_gmin_pl+1,k,l)&
+                  + (0.5D0+sign(0.5D0,c_pl(ADM_gmin_pl+2,k,l)))*c_pl(ADM_gmin_pl+2,k,l)&
+                  + (0.5D0+sign(0.5D0,c_pl(ADM_gmin_pl+3,k,l)))*c_pl(ADM_gmin_pl+3,k,l)&
+                  + (0.5D0+sign(0.5D0,c_pl(ADM_gmin_pl+4,k,l)))*c_pl(ADM_gmin_pl+4,k,l)
              c_qin_sum_max_pl &
-                  = (0.5D0-sign(0.5D0,c_pl(ADM_GMIN_PL  ,k,l)))*(c_pl(ADM_GMIN_PL  ,k,l)*s_in_max_pl(ADM_GMIN_PL  ,k,l,1))&
-                  + (0.5D0-sign(0.5D0,c_pl(ADM_GMIN_PL+1,k,l)))*(c_pl(ADM_GMIN_PL+1,k,l)*s_in_max_pl(ADM_GMIN_PL+1,k,l,1))&
-                  + (0.5D0-sign(0.5D0,c_pl(ADM_GMIN_PL+2,k,l)))*(c_pl(ADM_GMIN_PL+2,k,l)*s_in_max_pl(ADM_GMIN_PL+2,k,l,1))&
-                  + (0.5D0-sign(0.5D0,c_pl(ADM_GMIN_PL+3,k,l)))*(c_pl(ADM_GMIN_PL+3,k,l)*s_in_max_pl(ADM_GMIN_PL+3,k,l,1))&
-                  + (0.5D0-sign(0.5D0,c_pl(ADM_GMIN_PL+4,k,l)))*(c_pl(ADM_GMIN_PL+4,k,l)*s_in_max_pl(ADM_GMIN_PL+4,k,l,1))
+                  = (0.5D0-sign(0.5D0,c_pl(ADM_gmin_pl  ,k,l)))*(c_pl(ADM_gmin_pl  ,k,l)*s_in_max_pl(ADM_gmin_pl  ,k,l,1))&
+                  + (0.5D0-sign(0.5D0,c_pl(ADM_gmin_pl+1,k,l)))*(c_pl(ADM_gmin_pl+1,k,l)*s_in_max_pl(ADM_gmin_pl+1,k,l,1))&
+                  + (0.5D0-sign(0.5D0,c_pl(ADM_gmin_pl+2,k,l)))*(c_pl(ADM_gmin_pl+2,k,l)*s_in_max_pl(ADM_gmin_pl+2,k,l,1))&
+                  + (0.5D0-sign(0.5D0,c_pl(ADM_gmin_pl+3,k,l)))*(c_pl(ADM_gmin_pl+3,k,l)*s_in_max_pl(ADM_gmin_pl+3,k,l,1))&
+                  + (0.5D0-sign(0.5D0,c_pl(ADM_gmin_pl+4,k,l)))*(c_pl(ADM_gmin_pl+4,k,l)*s_in_max_pl(ADM_gmin_pl+4,k,l,1))
              c_qin_sum_min_pl &
-                  = (0.5D0-sign(0.5D0,c_pl(ADM_GMIN_PL  ,k,l)))*(c_pl(ADM_GMIN_PL  ,k,l)*s_in_min_pl(ADM_GMIN_PL  ,k,l,1))&
-                  + (0.5D0-sign(0.5D0,c_pl(ADM_GMIN_PL+1,k,l)))*(c_pl(ADM_GMIN_PL+1,k,l)*s_in_min_pl(ADM_GMIN_PL+1,k,l,1))&
-                  + (0.5D0-sign(0.5D0,c_pl(ADM_GMIN_PL+2,k,l)))*(c_pl(ADM_GMIN_PL+2,k,l)*s_in_min_pl(ADM_GMIN_PL+2,k,l,1))&
-                  + (0.5D0-sign(0.5D0,c_pl(ADM_GMIN_PL+3,k,l)))*(c_pl(ADM_GMIN_PL+3,k,l)*s_in_min_pl(ADM_GMIN_PL+3,k,l,1))&
-                  + (0.5D0-sign(0.5D0,c_pl(ADM_GMIN_PL+4,k,l)))*(c_pl(ADM_GMIN_PL+4,k,l)*s_in_min_pl(ADM_GMIN_PL+4,k,l,1))
+                  = (0.5D0-sign(0.5D0,c_pl(ADM_gmin_pl  ,k,l)))*(c_pl(ADM_gmin_pl  ,k,l)*s_in_min_pl(ADM_gmin_pl  ,k,l,1))&
+                  + (0.5D0-sign(0.5D0,c_pl(ADM_gmin_pl+1,k,l)))*(c_pl(ADM_gmin_pl+1,k,l)*s_in_min_pl(ADM_gmin_pl+1,k,l,1))&
+                  + (0.5D0-sign(0.5D0,c_pl(ADM_gmin_pl+2,k,l)))*(c_pl(ADM_gmin_pl+2,k,l)*s_in_min_pl(ADM_gmin_pl+2,k,l,1))&
+                  + (0.5D0-sign(0.5D0,c_pl(ADM_gmin_pl+3,k,l)))*(c_pl(ADM_gmin_pl+3,k,l)*s_in_min_pl(ADM_gmin_pl+3,k,l,1))&
+                  + (0.5D0-sign(0.5D0,c_pl(ADM_gmin_pl+4,k,l)))*(c_pl(ADM_gmin_pl+4,k,l)*s_in_min_pl(ADM_gmin_pl+4,k,l,1))
              !
              if(abs(c_out_sum_pl)<CNST_EPS_ZERO) then
-                wrk_pl(ADM_GSLF_PL,k,l,s_out_k_min) = s_pl(ADM_GSLF_PL,k,l)
-                wrk_pl(ADM_GSLF_PL,k,l,s_out_k_max) = s_pl(ADM_GSLF_PL,k,l)
+                wrk_pl(ADM_gslf_pl,k,l,s_out_k_min) = s_pl(ADM_gslf_pl,k,l)
+                wrk_pl(ADM_gslf_pl,k,l,s_out_k_max) = s_pl(ADM_gslf_pl,k,l)
              else
-                wrk_pl(ADM_GSLF_PL,k,l,s_out_k_min) = ( &
-                     s_pl(ADM_GSLF_PL,k,l)-c_qin_sum_max_pl&
-                     -s_m1_k_max_pl*(1.0D0-c_in_sum_pl-c_out_sum_pl+d_pl(ADM_GSLF_PL,k,l)) &
+                wrk_pl(ADM_gslf_pl,k,l,s_out_k_min) = ( &
+                     s_pl(ADM_gslf_pl,k,l)-c_qin_sum_max_pl&
+                     -s_m1_k_max_pl*(1.0D0-c_in_sum_pl-c_out_sum_pl+d_pl(ADM_gslf_pl,k,l)) &
                      )/c_out_sum_pl
-                wrk_pl(ADM_GSLF_PL,k,l,s_out_k_max) = ( &
-                     s_pl(ADM_GSLF_PL,k,l)-c_qin_sum_min_pl&
-                     -s_m1_k_min_pl*(1.0D0-c_in_sum_pl-c_out_sum_pl+d_pl(ADM_GSLF_PL,k,l)) &
+                wrk_pl(ADM_gslf_pl,k,l,s_out_k_max) = ( &
+                     s_pl(ADM_gslf_pl,k,l)-c_qin_sum_min_pl&
+                     -s_m1_k_min_pl*(1.0D0-c_in_sum_pl-c_out_sum_pl+d_pl(ADM_gslf_pl,k,l)) &
                      )/c_out_sum_pl
              end if
           end do
@@ -4702,13 +4574,13 @@ contains
     !
     if(ADM_prc_me==ADM_prc_pl) then
        !
-       do l=1,ADM_LALL_PL
+       do l=1,ADM_lall_pl
           do k = 1, ADM_kall
-             do n=ADM_GMIN_PL,ADM_GMAX_PL
-                sa_p = s_pl(ADM_GSLF_PL,k,l) &
-                     +wrk_pl(ADM_GSLF_PL,k,l,dsx)*(cp_pl(n,k,l,GRD_XDIR)-GRD_x_pl(ADM_GSLF_PL,ADM_KNONE,l,GRD_XDIR)) &
-                     +wrk_pl(ADM_GSLF_PL,k,l,dsy)*(cp_pl(n,k,l,GRD_YDIR)-GRD_x_pl(ADM_GSLF_PL,ADM_KNONE,l,GRD_YDIR)) &
-                     +wrk_pl(ADM_GSLF_PL,k,l,dsz)*(cp_pl(n,k,l,GRD_ZDIR)-GRD_x_pl(ADM_GSLF_PL,ADM_KNONE,l,GRD_ZDIR))
+             do n=ADM_gmin_pl,ADM_GMAX_PL
+                sa_p = s_pl(ADM_gslf_pl,k,l) &
+                     +wrk_pl(ADM_gslf_pl,k,l,dsx)*(cp_pl(n,k,l,GRD_XDIR)-GRD_x_pl(ADM_gslf_pl,ADM_KNONE,l,GRD_XDIR)) &
+                     +wrk_pl(ADM_gslf_pl,k,l,dsy)*(cp_pl(n,k,l,GRD_YDIR)-GRD_x_pl(ADM_gslf_pl,ADM_KNONE,l,GRD_YDIR)) &
+                     +wrk_pl(ADM_gslf_pl,k,l,dsz)*(cp_pl(n,k,l,GRD_ZDIR)-GRD_x_pl(ADM_gslf_pl,ADM_KNONE,l,GRD_ZDIR))
                 sa_m = s_pl(n,k,l) &
                      +wrk_pl(n,k,l,dsx)*(cp_pl(n,k,l,GRD_XDIR)-GRD_x_pl(n,ADM_KNONE,l,GRD_XDIR)) &
                      +wrk_pl(n,k,l,dsy)*(cp_pl(n,k,l,GRD_YDIR)-GRD_x_pl(n,ADM_KNONE,l,GRD_YDIR)) &
@@ -4754,9 +4626,9 @@ contains
     end do
     !
     if(ADM_prc_me==ADM_prc_pl) then
-       do l=1,ADM_LALL_PL
+       do l=1,ADM_lall_pl
           do k = 1, ADM_kall
-             do n=ADM_GMIN_PL,ADM_GMAX_PL
+             do n=ADM_gmin_pl,ADM_GMAX_PL
                 sa_pl(n,k,l) &
                   =(0.5D0-sign(0.5D0,c_pl(n,k,l)))&
                   *min(max(sa_pl(n,k,l),s_in_min_pl(n,k,l,1)),s_in_max_pl(n,k,l,1))&
@@ -4798,12 +4670,12 @@ contains
     if(ADM_prc_me==ADM_prc_pl) then
        do l=1,ADM_lall_pl
           do k = 1, ADM_kall
-             do n = ADM_GMIN_PL,ADM_GMAX_PL
+             do n = ADM_gmin_pl,ADM_GMAX_PL
                 sa_pl(n,k,l)&
                      =(0.5D0-sign(0.5D0,c_pl(n,k,l)))&
                      *max(min(sa_pl(n,k,l),wrk_pl(n,k,l,s_out_k_max)),wrk_pl(n,k,l,s_out_k_min))&
                      +(0.5D0+sign(0.5D0,c_pl(n,k,l)))&
-                     *max(min(sa_pl(n,k,l),wrk_pl(ADM_GSLF_PL,k,l,s_out_k_max)),wrk_pl(ADM_GSLF_PL,k,l,s_out_k_min))
+                     *max(min(sa_pl(n,k,l),wrk_pl(ADM_gslf_pl,k,l,s_out_k_max)),wrk_pl(ADM_gslf_pl,k,l,s_out_k_min))
              end do
           end do
        end do
@@ -4833,14 +4705,14 @@ contains
     end do
 
     if(ADM_prc_me==ADM_prc_pl) then
-       do l=1,ADM_LALL_PL
+       do l=1,ADM_lall_pl
           do k = 1, ADM_kall
-             scl_pl(ADM_GSLF_PL,k,l)=  &
-                  ( flx_h_pl(ADM_GMIN_PL  ,k,l)*sa_pl(ADM_GMIN_PL  ,k,l) &
-                  + flx_h_pl(ADM_GMIN_PL+1,k,l)*sa_pl(ADM_GMIN_PL+1,k,l) &
-                  + flx_h_pl(ADM_GMIN_PL+2,k,l)*sa_pl(ADM_GMIN_PL+2,k,l) &
-                  + flx_h_pl(ADM_GMIN_PL+3,k,l)*sa_pl(ADM_GMIN_PL+3,k,l) &
-                  + flx_h_pl(ADM_GMIN_PL+4,k,l)*sa_pl(ADM_GMIN_PL+4,k,l) &
+             scl_pl(ADM_gslf_pl,k,l)=  &
+                  ( flx_h_pl(ADM_gmin_pl  ,k,l)*sa_pl(ADM_gmin_pl  ,k,l) &
+                  + flx_h_pl(ADM_gmin_pl+1,k,l)*sa_pl(ADM_gmin_pl+1,k,l) &
+                  + flx_h_pl(ADM_gmin_pl+2,k,l)*sa_pl(ADM_gmin_pl+2,k,l) &
+                  + flx_h_pl(ADM_gmin_pl+3,k,l)*sa_pl(ADM_gmin_pl+3,k,l) &
+                  + flx_h_pl(ADM_gmin_pl+4,k,l)*sa_pl(ADM_gmin_pl+4,k,l) &
                   ) * fact
           end do
        end do

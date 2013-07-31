@@ -160,19 +160,19 @@ contains
     use mod_thrmdyn, only: &
        thrmdyn_th, &
        thrmdyn_eth
+    use mod_src, only: &
+       src_advection_convergence_momentum, &
+       src_advection_convergence,   &
+       src_update_tracer,           &
+       I_SRC_default                  ! [add] H.Yashiro 20120530
+    use mod_vi, only :         &
+       vi_small_step
     use mod_numfilter, only: &
        NUMFILTER_DOrayleigh,       & ! [add] H.Yashiro 20120530
        NUMFILTER_DOverticaldiff,   & ! [add] H.Yashiro 20120530
        numfilter_rayleigh_damping, &
        numfilter_numerical_hdiff,  &
        numfilter_numerical_vdiff
-    use mod_vi, only :         &
-       vi_small_step
-    use mod_src, only: &
-       src_advection_convergence_v, &
-       src_advection_convergence,   &
-       src_update_tracer,           &
-       I_SRC_default                  ! [add] H.Yashiro 20120530
     use mod_ndg, only: & ! Y.Niwa add 08/09/09
        ndg_nudging_uvtp, &
        ndg_update_var
@@ -269,10 +269,10 @@ contains
     real(8) :: temd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- temporary variables
-    real(8) :: qd      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: qd_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: cv      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: cv_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8) :: qd   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8) :: qd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8) :: cv   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8) :: cv_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     real(8), parameter :: TKE_MIN = 0.D0
     real(8)            :: TKEg_corr
@@ -510,19 +510,19 @@ contains
        !------------------------------------------------------------------------
 
        !--- calculation of advection tendency including Coriolis force
-       call src_advection_convergence_v( vx,                     vx_pl,                     & !--- [IN]
-                                         vy,                     vy_pl,                     & !--- [IN]
-                                         vz,                     vz_pl,                     & !--- [IN]
-                                         w,                      w_pl,                      & !--- [IN]
-                                         PROG  (:,:,:,I_RHOG  ), PROG_pl  (:,:,:,I_RHOG  ), & !--- [IN]
-                                         PROG  (:,:,:,I_RHOGVX), PROG_pl  (:,:,:,I_RHOGVX), & !--- [IN]
-                                         PROG  (:,:,:,I_RHOGVY), PROG_pl  (:,:,:,I_RHOGVY), & !--- [IN]
-                                         PROG  (:,:,:,I_RHOGVZ), PROG_pl  (:,:,:,I_RHOGVZ), & !--- [IN]
-                                         PROG  (:,:,:,I_RHOGW ), PROG_pl  (:,:,:,I_RHOGW ), & !--- [IN]
-                                         g_TEND(:,:,:,I_RHOGVX), g_TEND_pl(:,:,:,I_RHOGVX), & !--- [OUT]
-                                         g_TEND(:,:,:,I_RHOGVY), g_TEND_pl(:,:,:,I_RHOGVY), & !--- [OUT]
-                                         g_TEND(:,:,:,I_RHOGVZ), g_TEND_pl(:,:,:,I_RHOGVZ), & !--- [OUT]
-                                         g_TEND(:,:,:,I_RHOGW ), g_TEND_pl(:,:,:,I_RHOGW )  ) !--- [OUT]
+       call src_advection_convergence_momentum( vx,                     vx_pl,                     & !--- [IN]
+                                                vy,                     vy_pl,                     & !--- [IN]
+                                                vz,                     vz_pl,                     & !--- [IN]
+                                                w,                      w_pl,                      & !--- [IN]
+                                                PROG  (:,:,:,I_RHOG  ), PROG_pl  (:,:,:,I_RHOG  ), & !--- [IN]
+                                                PROG  (:,:,:,I_RHOGVX), PROG_pl  (:,:,:,I_RHOGVX), & !--- [IN]
+                                                PROG  (:,:,:,I_RHOGVY), PROG_pl  (:,:,:,I_RHOGVY), & !--- [IN]
+                                                PROG  (:,:,:,I_RHOGVZ), PROG_pl  (:,:,:,I_RHOGVZ), & !--- [IN]
+                                                PROG  (:,:,:,I_RHOGW ), PROG_pl  (:,:,:,I_RHOGW ), & !--- [IN]
+                                                g_TEND(:,:,:,I_RHOGVX), g_TEND_pl(:,:,:,I_RHOGVX), & !--- [OUT]
+                                                g_TEND(:,:,:,I_RHOGVY), g_TEND_pl(:,:,:,I_RHOGVY), & !--- [OUT]
+                                                g_TEND(:,:,:,I_RHOGVZ), g_TEND_pl(:,:,:,I_RHOGVZ), & !--- [OUT]
+                                                g_TEND(:,:,:,I_RHOGW ), g_TEND_pl(:,:,:,I_RHOGW )  ) !--- [OUT]
 
        g_TEND   (:,:,:,I_RHOG)     = 0.D0
        g_TEND   (:,:,:,I_RHOGE)    = 0.D0
@@ -655,16 +655,16 @@ contains
           endif
 
           call tb_smg_driver( nl,                                                      &
-                              rho,                       rho_pl,                       & !--- [IN] : density
+                              rho,                       rho_pl,                       & !--- [IN]
                               PROG(:,:,:,I_RHOG  ),      PROG_pl(:,:,:,I_RHOG  ),      & !--- [IN]
                               PROGq(:,:,:,:),            PROGq_pl(:,:,:,:  ),          & !--- [IN]
-                              vx,                        vx_pl,                        & !--- [IN] : Vx
-                              vy,                        vy_pl,                        & !--- [IN] : Vy
-                              vz,                        vz_pl,                        & !--- [IN] : Vz
-                              w,                         w_pl,                         & !--- [IN] : w
-                              tem,                       tem_pl,                       & !--- [IN] : temperature
-                              q,                         q_pl,                         & !--- [IN] : q
-                              th,                        th_pl,                        & !--- [IN] : potential temperature 
+                              vx,                        vx_pl,                        & !--- [IN]
+                              vy,                        vy_pl,                        & !--- [IN]
+                              vz,                        vz_pl,                        & !--- [IN]
+                              w,                         w_pl,                         & !--- [IN]
+                              tem,                       tem_pl,                       & !--- [IN]
+                              q,                         q_pl,                         & !--- [IN]
+                              th,                        th_pl,                        & !--- [IN]
                               f_TEND (:,:,:,I_RHOG    ), f_TEND_pl (:,:,:,I_RHOG    ), & !--- [INOUT]
                               f_TEND (:,:,:,I_RHOGVX  ), f_TEND_pl (:,:,:,I_RHOGVX  ), & !--- [INOUT]
                               f_TEND (:,:,:,I_RHOGVY  ), f_TEND_pl (:,:,:,I_RHOGVY  ), & !--- [INOUT]
