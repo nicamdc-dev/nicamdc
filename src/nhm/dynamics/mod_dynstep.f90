@@ -162,11 +162,12 @@ contains
        thrmdyn_eth
     use mod_src, only: &
        src_advection_convergence_momentum, &
-       src_advection_convergence,   &
-       src_update_tracer,           &
-       I_SRC_default                  ! [add] H.Yashiro 20120530
+       src_advection_convergence,          &
+       I_SRC_default
     use mod_vi, only :         &
        vi_small_step
+    use mod_trcadv_thuburn, only: &
+       src_update_tracer
     use mod_numfilter, only: &
        NUMFILTER_DOrayleigh,       & ! [add] H.Yashiro 20120530
        NUMFILTER_DOverticaldiff,   & ! [add] H.Yashiro 20120530

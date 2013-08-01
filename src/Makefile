@@ -82,7 +82,7 @@ MODS =	\
 	mod_af_heldsuarez.o	\
 	mod_numfilter.o	\
 	mod_src.o	\
-	mod_advlim_thuburn.o	\
+	mod_trcadv_thuburn.o	\
 	mod_dynstep.o	\
 	mod_vi.o	\
 	mod_ndg.o	\
@@ -150,8 +150,8 @@ mod_history_vars.o	: mod_history_vars.f90 mod_history.o mod_adm.o mod_runconf.o 
 mod_embudget.o	: mod_embudget.f90 mod_adm.o $(mod_misc).o mod_time.o mod_sfcvar.o mod_cnst.o mod_grd.o mod_vmtr.o mod_gtl.o mod_runconf.o mod_cnvvar.o mod_bsstate.o mod_thrmdyn.o mod_prgvar.o
 mod_dcmip.o     : mod_dcmip.f90
 mod_dycoretest.o	: mod_dycoretest.f90 mod_adm.o mod_runconf.o $(mod_misc).o mod_vmtr.o mod_fio.o mod_time.o mod_cnvvar.o mod_vintrpl.o mod_comm.o mod_cnst.o mod_thrmdyn.o mod_dcmip.o mod_vmtr.o mod_src.o
-mod_advlim_thuburn.o	: mod_advlim_thuburn.f90 mod_adm.o mod_cnst.o mod_comm.o
-mod_src.o	: mod_src.f90 mod_adm.o mod_vmtr.o mod_grd.o mod_oprt.o mod_cnst.o mod_runconf.o mod_gtl.o mod_advlim_thuburn.o
+mod_trcadv_thuburn.o	: mod_trcadv_thuburn.f90 mod_adm.o mod_cnst.o mod_comm.o mod_grd.o mod_gmtr.o mod_vmtr.o
+mod_src.o	: mod_src.f90 mod_adm.o mod_grd.o mod_vmtr.o mod_oprt.o mod_cnst.o mod_runconf.o mod_gtl.o
 mod_numfilter.o	: mod_numfilter.f90 mod_adm.o mod_time.o mod_grd.o mod_cnst.o mod_gtl.o mod_gmtr.o mod_oprt.o mod_oprt3d.o mod_comm.o mod_src.o mod_vmtr.o mod_runconf.o mod_bsstate.o
 mod_af_trcadv.o	: mod_af_trcadv.f90
 mod_af_heldsuarez.o	: mod_af_heldsuarez.f90 mod_adm.o mod_cnst.o
@@ -159,7 +159,7 @@ mod_forcing_driver.o	: mod_forcing_driver.f90 mod_adm.o mod_grd.o mod_gmtr.o mod
 mod_vi.o	: mod_vi.f90 mod_adm.o mod_comm.o mod_time.o mod_cnst.o mod_grd.o mod_oprt.o mod_vmtr.o mod_runconf.o mod_bndcnd.o mod_numfilter.o mod_src.o mod_cnvvar.o mod_bsstate.o
 mod_ndg.o	: mod_ndg.f90 mod_adm.o $(mod_misc).o mod_time.o mod_calendar.o mod_grd.o mod_cnst.o mod_vmtr.o mod_history.o mod_gmtr.o mod_oprt.o mod_runconf.o mod_gtl.o mod_comm.o
 mod_tb_smg.o	: mod_tb_smg.f90 mod_adm.o mod_vmtr.o mod_history.o mod_gmtr.o mod_grd.o mod_cnst.o mod_runconf.o mod_oprt.o mod_comm.o mod_bsstate.o mod_time.o
-mod_dynstep.o	: mod_dynstep.f90 mod_adm.o mod_cnst.o mod_time.o mod_grd.o mod_vmtr.o mod_runconf.o mod_bsstate.o mod_bndcnd.o mod_prgvar.o mod_diagvar.o mod_thrmdyn.o mod_numfilter.o mod_vi.o mod_src.o mod_ndg.o mod_tb_smg.o mod_oprt.o mod_debug.o
+mod_dynstep.o	: mod_dynstep.f90 mod_adm.o mod_cnst.o mod_time.o mod_grd.o mod_vmtr.o mod_runconf.o mod_bsstate.o mod_bndcnd.o mod_prgvar.o mod_diagvar.o mod_thrmdyn.o mod_numfilter.o mod_vi.o mod_src.o mod_trcadv_thuburn.o mod_ndg.o mod_tb_smg.o mod_oprt.o mod_debug.o
 
 mod_mkgrd.o	: mod_mkgrd.f90 mod_adm.o mod_grd.o mod_cnst.o mod_comm.o mod_gtl.o mod_misc.o mod_gmtr.o
 
