@@ -23,6 +23,8 @@ module mod_trcadv_thuburn
   !
   !++ Used modules
   !
+  use mod_adm, only: &
+     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -83,7 +85,7 @@ contains
        ADM_AI,ADM_AJ,  &
        ADM_GSLF_PL,    &
        ADM_GMIN_PL,    &
-       ADM_GMAX_PL,    &
+       ADM_gmax_pl,    &
        ADM_gall_1d
     use mod_vmtr, only : &
        VMTR_RGSGAM2,   &
@@ -457,7 +459,7 @@ contains
                 rrhog_pl(g,k,l) = 1.D0 / rhog_pl(g,k,l)
              enddo
 
-             do n = ADM_GMIN_PL, ADM_GMAX_PL
+             do n = ADM_GMIN_PL, ADM_gmax_pl
                 c_pl(n,k,l) = flx_h_pl(n,k,l) * rrhog_pl(ADM_GSLF_PL,k,l)
              enddo
 
@@ -962,7 +964,7 @@ contains
          ADM_gmin_pl,     &
          ADM_gslf_pl,     &
          ADM_gall_pl,     &
-         ADM_GMAX_PL,     &
+         ADM_gmax_pl,     &
          !--- public variables
          ADM_prc_me,      &
          ADM_prc_tab,     &
@@ -1012,7 +1014,8 @@ contains
          COMM_data_transfer
     use mod_cnst, only : &
          CNST_MAX_REAL,  &
-         CNST_EPS_ZERO
+         CNST_EPS_ZERO, &
+         CNST_UNDEF
     implicit none
 
     real(8), intent(out) :: flx_h(6,ADM_gall,ADM_kall,ADM_lall)
@@ -1029,21 +1032,18 @@ contains
     real(8), intent(in)  :: rho_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     real(8), intent(in)  :: dt
 
-    real(8)  :: rhovxt(ADM_gall,ADM_kall,ADM_lall,ADM_TI:ADM_TJ)
-    real(8)  :: rhovxt_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    !
-    real(8)  :: rhovyt(ADM_gall,ADM_kall,ADM_lall,ADM_TI:ADM_TJ)
-    real(8)  :: rhovyt_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    !
-    real(8)  :: rhovzt(ADM_gall,ADM_kall,ADM_lall,ADM_TI:ADM_TJ)
-    real(8)  :: rhovzt_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    !
-    real(8)  :: rhot(ADM_gall,ADM_kall,ADM_lall,ADM_TI:ADM_TJ)
-    real(8) ::  rhot_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    !
+    real(8) :: rhovxt(ADM_gall,ADM_kall,ADM_lall,ADM_TI:ADM_TJ)
+    real(8) :: rhovxt_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8) :: rhovyt(ADM_gall,ADM_kall,ADM_lall,ADM_TI:ADM_TJ)
+    real(8) :: rhovyt_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8) :: rhovzt(ADM_gall,ADM_kall,ADM_lall,ADM_TI:ADM_TJ)
+    real(8) :: rhovzt_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8) :: rhot(ADM_gall,ADM_kall,ADM_lall,ADM_TI:ADM_TJ)
+    real(8) :: rhot_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+
     real(8)  :: ccc
     real(8)  :: ccc_pl
-    !
+
     real(8)  :: rpx(ADM_gall,ADM_AI:ADM_AJ)
     real(8)  :: rpx_pl(ADM_gall_pl)
     real(8)  :: rpy(ADM_gall,ADM_AI:ADM_AJ)
@@ -1060,7 +1060,7 @@ contains
     real(8)  :: rhoa(ADM_gall,ADM_AI:ADM_AJ)
     real(8)  :: rhoa_pl(ADM_GALL_PL)
     !
-    integer :: l,n,k
+    integer :: l,n,k, k0, ij
     integer :: rgnid
     !
     integer :: np1(ADM_gall_pl)
@@ -1072,136 +1072,104 @@ contains
     !
     integer :: suf,i,j
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+    !---------------------------------------------------------------------------
 
+    k0 = ADM_KNONE
 
+    if (first) then
+       first = .false.
 
+       allocate( local_t_var   (ADM_gall   ,k0,ADM_lall   ,ADM_TI:ADM_TJ,GMTR_T_W1:GMTR_T_W3) )
+       allocate( local_t_var_pl(ADM_gall_pl,k0,ADM_lall_pl,              GMTR_T_W1:GMTR_T_W3) )
+       local_t_var = CNST_UNDEF
 
+       do l = 1, ADM_lall
+       do t = ADM_TI, ADM_TJ
+       do n = 1, ADM_ImoJmo_nmax
+          ij = ADM_ImoJmo(n,ADM_GIoJo)
 
-    ! Y.Niwa add 080130 =>
-    if(first) then
-      allocate(local_t_var(ADM_gall,ADM_KNONE,ADM_lall,ADM_TI:ADM_TJ,GMTR_T_W1:GMTR_T_W3))
-      allocate(local_t_var_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,GMTR_T_W1:GMTR_T_W3))
+          local_t_var(ij,k0,l,t,GMTR_T_W1) = GMTR_t_var(ij,k0,l,t,GMTR_T_W1)
+          local_t_var(ij,k0,l,t,GMTR_T_W2) = GMTR_t_var(ij,k0,l,t,GMTR_T_W2)
+          local_t_var(ij,k0,l,t,GMTR_T_W3) = GMTR_t_var(ij,k0,l,t,GMTR_T_W3)
+       enddo
+       enddo
+       enddo
 
-      do l=1, ADM_lall
-         do t=ADM_TI, ADM_TJ
-            do n=1, ADM_ImoJmo_nmax
-               local_t_var(ADM_ImoJmo(n,ADM_GIoJo),ADM_KNONE,l,t,GMTR_T_W1) &
-                  =  GMTR_t_var(ADM_ImoJmo(n,ADM_GIoJo),ADM_KNONE,l,t,GMTR_T_W1)
-               local_t_var(ADM_ImoJmo(n,ADM_GIoJo),ADM_KNONE,l,t,GMTR_T_W2) &
-                  =  GMTR_t_var(ADM_ImoJmo(n,ADM_GIoJo),ADM_KNONE,l,t,GMTR_T_W2)
-               local_t_var(ADM_ImoJmo(n,ADM_GIoJo),ADM_KNONE,l,t,GMTR_T_W3) &
-                  =  GMTR_t_var(ADM_ImoJmo(n,ADM_GIoJo),ADM_KNONE,l,t,GMTR_T_W3)
-            end do
-         end do
-      end do
-      !
-      if(ADM_prc_me==ADM_prc_pl) then
-         do l=1, ADM_lall_pl
-            do n=ADM_gmin_pl, ADM_GMAX_PL
-               local_t_var_pl(n,ADM_KNONE,l,GMTR_T_W1) &
-                  = GMTR_t_var_pl(n,ADM_KNONE,l,GMTR_T_W1)
-               local_t_var_pl(n,ADM_KNONE,l,GMTR_T_W2) &
-                  = GMTR_t_var_pl(n,ADM_KNONE,l,GMTR_T_W2)
-               local_t_var_pl(n,ADM_KNONE,l,GMTR_T_W3) &
-                  = GMTR_t_var_pl(n,ADM_KNONE,l,GMTR_T_W3)
-            end do
-         end do
-      end if
-      first = .false.
-    end if
-    !<= Y.Niwa add 080130
-    ! 
-    flx_h(:,:,:,:) = 0.0d0
-    flx_h_pl(:,:,:) = 0.0d0
-    cp(:,:,:,:,:) = 0.0d0
-    cp_pl(:,:,:,:) = 0.0d0
-    !
-    nm1(ADM_gmin_pl) = ADM_GMAX_PL
-    do n=ADM_gmin_pl+1,ADM_GMAX_PL
-       nm1(n) = n-1
-    end do
-    !
-    do n=ADM_gmin_pl,ADM_GMAX_PL-1
-       np1(n) = n+1
-    end do
-    np1(ADM_GMAX_PL) = ADM_gmin_pl
-    !
-    do l=1,ADM_lall
-       rgnid=ADM_prc_tab(l,ADM_prc_me)
+       if ( ADM_prc_me == ADM_prc_pl ) then
+          do l = 1, ADM_lall_pl
+          do n = ADM_gmin_pl, ADM_gmax_pl
+             local_t_var_pl(n,k0,l,GMTR_T_W1) = GMTR_t_var_pl(n,k0,l,GMTR_T_W1)
+             local_t_var_pl(n,k0,l,GMTR_T_W2) = GMTR_t_var_pl(n,k0,l,GMTR_T_W2)
+             local_t_var_pl(n,k0,l,GMTR_T_W3) = GMTR_t_var_pl(n,k0,l,GMTR_T_W3)
+          enddo
+          enddo
+       endif
+    endif
+
+    flx_h   (:,:,:,:)   = 0.D0
+    flx_h_pl(:,:,:)     = 0.D0
+    cp      (:,:,:,:,:) = 0.D0
+    cp_pl   (:,:,:,:)   = 0.D0
+
+    nm1(ADM_gmin_pl) = ADM_gmax_pl
+    do n = ADM_gmin_pl+1, ADM_gmax_pl
+       nm1(n) = n - 1
+    enddo
+
+    do n = ADM_gmin_pl, ADM_gmax_pl-1
+       np1(n) = n + 1
+    enddo
+    np1(ADM_gmax_pl) = ADM_gmin_pl
+
+    do l = 1, ADM_lall
+       rgnid = ADM_prc_tab(l,ADM_prc_me)
+
        do k = 1, ADM_kall
-          !
+
           nstart = suf(ADM_gmin-1,ADM_gmin-1)
-          nend = suf(ADM_gmax,ADM_gmax)
-          do n = nstart,nend
-             rhovxt(n,k,l,ADM_TI)                            &
-                  =GMTR_T_var(n,ADM_KNONE,l,ADM_TI,GMTR_T_W1)&
-                  *rhovx(n,k,l)                         &
-                  +GMTR_T_var(n,ADM_KNONE,l,ADM_TI,GMTR_T_W2)&
-                  *rhovx(n+1,k,l)                       &
-                  +GMTR_T_var(n,ADM_KNONE,l,ADM_TI,GMTR_T_W3)&
-                  *rhovx(n+1+ADM_gall_1d,k,l)
-             rhovxt(n,k,l,ADM_TJ)                            &
-                  =GMTR_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W1)&
-                  *rhovx(n,k,l)                         &
-                  +GMTR_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W2)&
-                  *rhovx(n+1+ADM_gall_1d,k,l)                     &
-                  +GMTR_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)&
-                  *rhovx(n+ADM_gall_1d,k,l)
-             rhovyt(n,k,l,ADM_TI)                            &
-                  =GMTR_T_var(n,ADM_KNONE,l,ADM_TI,GMTR_T_W1)&
-                  *rhovy(n,k,l)                         &
-                  +GMTR_T_var(n,ADM_KNONE,l,ADM_TI,GMTR_T_W2)&
-                  *rhovy(n+1,k,l)                       &
-                  +GMTR_T_var(n,ADM_KNONE,l,ADM_TI,GMTR_T_W3)&
-                  *rhovy(n+1+ADM_gall_1d,k,l)
-             rhovyt(n,k,l,ADM_TJ)                            &
-                  =GMTR_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W1)&
-                  *rhovy(n,k,l)                         &
-                  +GMTR_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W2)&
-                  *rhovy(n+1+ADM_gall_1d,k,l)                     &
-                  +GMTR_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)&
-                  *rhovy(n+ADM_gall_1d,k,l)
-             rhovzt(n,k,l,ADM_TI)                            &
-                  =GMTR_T_var(n,ADM_KNONE,l,ADM_TI,GMTR_T_W1)&
-                  *rhovz(n,k,l)                         &
-                  +GMTR_T_var(n,ADM_KNONE,l,ADM_TI,GMTR_T_W2)&
-                  *rhovz(n+1,k,l)                       &
-                  +GMTR_T_var(n,ADM_KNONE,l,ADM_TI,GMTR_T_W3)&
-                  *rhovz(n+1+ADM_gall_1d,k,l)
-             rhovzt(n,k,l,ADM_TJ)                            &
-                  =GMTR_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W1)&
-                  *rhovz(n,k,l)                         &
-                  +GMTR_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W2)&
-                  *rhovz(n+1+ADM_gall_1d,k,l)                     &
-                  +GMTR_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)&
-                  *rhovz(n+ADM_gall_1d,k,l)
-             rhot(n,k,l,ADM_TI)                            &
-                  =local_T_var(n,ADM_KNONE,l,ADM_TI,GMTR_T_W1)&
-                  *rho(n,k,l)                         &
-                  +local_T_var(n,ADM_KNONE,l,ADM_TI,GMTR_T_W2)&
-                  *rho(n+1,k,l)                       &
-                  +local_T_var(n,ADM_KNONE,l,ADM_TI,GMTR_T_W3)&
-                  *rho(n+1+ADM_gall_1d,k,l)
-!                 =GMTR_T_var(n,ADM_KNONE,l,ADM_TI,GMTR_T_W1)&  ! A.Noda 110728
+          nend   = suf(ADM_gmax  ,ADM_gmax  )
+          do n = nstart, nend
+             rhovxt(n,k,l,ADM_TI) = GMTR_T_var(n,k0,l,ADM_TI,GMTR_T_W1) * rhovx(n              ,k,l) &
+                                  + GMTR_T_var(n,k0,l,ADM_TI,GMTR_T_W2) * rhovx(n+1            ,k,l) &
+                                  + GMTR_T_var(n,k0,l,ADM_TI,GMTR_T_W3) * rhovx(n+1+ADM_gall_1d,k,l)
+             rhovxt(n,k,l,ADM_TJ) = GMTR_T_var(n,k0,l,ADM_TJ,GMTR_T_W1) * rhovx(n              ,k,l) &
+                                  + GMTR_T_var(n,k0,l,ADM_TJ,GMTR_T_W2) * rhovx(n+1+ADM_gall_1d,k,l) &
+                                  + GMTR_T_var(n,k0,l,ADM_TJ,GMTR_T_W3) * rhovx(n+ADM_gall_1d,  k,l)
+             rhovyt(n,k,l,ADM_TI) =GMTR_T_var(n,k0,l,ADM_TI,GMTR_T_W1) *rhovy(n,k,l) &
+                  +GMTR_T_var(n,k0,l,ADM_TI,GMTR_T_W2) *rhovy(n+1,k,l) &
+                  +GMTR_T_var(n,k0,l,ADM_TI,GMTR_T_W3) *rhovy(n+1+ADM_gall_1d,k,l)
+             rhovyt(n,k,l,ADM_TJ) =GMTR_T_var(n,k0,l,ADM_TJ,GMTR_T_W1) *rhovy(n,k,l) &
+                  +GMTR_T_var(n,k0,l,ADM_TJ,GMTR_T_W2) *rhovy(n+1+ADM_gall_1d,k,l) &
+                  +GMTR_T_var(n,k0,l,ADM_TJ,GMTR_T_W3) *rhovy(n+ADM_gall_1d,k,l)
+             rhovzt(n,k,l,ADM_TI) =GMTR_T_var(n,k0,l,ADM_TI,GMTR_T_W1) *rhovz(n,k,l) &
+                  +GMTR_T_var(n,k0,l,ADM_TI,GMTR_T_W2) *rhovz(n+1,k,l) &
+                  +GMTR_T_var(n,k0,l,ADM_TI,GMTR_T_W3) *rhovz(n+1+ADM_gall_1d,k,l)
+             rhovzt(n,k,l,ADM_TJ) =GMTR_T_var(n,k0,l,ADM_TJ,GMTR_T_W1) *rhovz(n,k,l) &
+                  +GMTR_T_var(n,k0,l,ADM_TJ,GMTR_T_W2) *rhovz(n+1+ADM_gall_1d,k,l) &
+                  +GMTR_T_var(n,k0,l,ADM_TJ,GMTR_T_W3) *rhovz(n+ADM_gall_1d,k,l)
+             rhot(n,k,l,ADM_TI) =local_T_var(n,k0,l,ADM_TI,GMTR_T_W1) *rho(n,k,l) &
+                  +local_T_var(n,k0,l,ADM_TI,GMTR_T_W2) *rho(n+1,k,l) &
+                  +local_T_var(n,k0,l,ADM_TI,GMTR_T_W3) *rho(n+1+ADM_gall_1d,k,l)
+!                 =GMTR_T_var(n,k0,l,ADM_TI,GMTR_T_W1)&  ! A.Noda 110728
 !                 *rho(n,k,l)                         &
-!                 +GMTR_T_var(n,ADM_KNONE,l,ADM_TI,GMTR_T_W2)&
+!                 +GMTR_T_var(n,k0,l,ADM_TI,GMTR_T_W2)&
 !                 *rho(n+1,k,l)                       &
-!                 +GMTR_T_var(n,ADM_KNONE,l,ADM_TI,GMTR_T_W3)&
+!                 +GMTR_T_var(n,k0,l,ADM_TI,GMTR_T_W3)&
 !                 *rho(n+1+ADM_gall_1d,k,l)
              rhot(n,k,l,ADM_TJ)                            &
-                 =local_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W1)&
+                 =local_T_var(n,k0,l,ADM_TJ,GMTR_T_W1)&
                   *rho(n,k,l)                         &
-                  +local_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W2)&
+                  +local_T_var(n,k0,l,ADM_TJ,GMTR_T_W2)&
                   *rho(n+1+ADM_gall_1d,k,l)                     &
-                  +local_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)&
+                  +local_T_var(n,k0,l,ADM_TJ,GMTR_T_W3)&
                   *rho(n+ADM_gall_1d,k,l)
-!!$                  =GMTR_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W1)&   ! Y.Niwa 080130
+!!$                  =GMTR_T_var(n,k0,l,ADM_TJ,GMTR_T_W1)&   ! Y.Niwa 080130
 !!$                  *rho(n,k,l)                         &
-!!$                  +GMTR_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W2)&
+!!$                  +GMTR_T_var(n,k0,l,ADM_TJ,GMTR_T_W2)&
 !!$                  *rho(n+1+ADM_gall_1d,k,l)                     &
-!!$                  +GMTR_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)&
+!!$                  +GMTR_T_var(n,k0,l,ADM_TJ,GMTR_T_W3)&
 !!$                  *rho(n+ADM_gall_1d,k,l)
-          end do
+          enddo
           if(ADM_rgn_vnum(ADM_W,rgnid)==3) then
              rhovxt(suf(ADM_gmin-1,ADM_gmin-1),k,l,ADM_TI)     &
                   =rhovxt(suf(ADM_gmin,ADM_gmin-1),k,l,ADM_TJ)
@@ -1213,96 +1181,92 @@ contains
                   =rhot(suf(ADM_gmin,ADM_gmin-1),k,l,ADM_TJ)
           end if
           !
-       end do
+       enddo
        !
-    end do
+    enddo
     !
     if(ADM_prc_me==ADM_prc_pl) then
        !
        do l=1,ADM_lall_pl
           do k = 1, ADM_kall
-             do n=ADM_gmin_pl,ADM_GMAX_PL
+             do n=ADM_gmin_pl,ADM_gmax_pl
                 rhovxt_pl(n,k,l)                            &
-                     =GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W1)&
+                     =GMTR_T_var_pl(n,k0,l,GMTR_T_W1)&
                      *rhovx_pl(ADM_gslf_pl,k,l)              &
-                     +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W2)&
+                     +GMTR_T_var_pl(n,k0,l,GMTR_T_W2)&
                      *rhovx_pl(n,k,l)                        &
-                     +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W3)&
+                     +GMTR_T_var_pl(n,k0,l,GMTR_T_W3)&
                      *rhovx_pl(np1(n),k,l)
                 rhovyt_pl(n,k,l)                            &
-                     =GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W1)&
+                     =GMTR_T_var_pl(n,k0,l,GMTR_T_W1)&
                      *rhovy_pl(ADM_gslf_pl,k,l)              &
-                     +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W2)&
+                     +GMTR_T_var_pl(n,k0,l,GMTR_T_W2)&
                      *rhovy_pl(n,k,l)                        &
-                     +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W3)&
+                     +GMTR_T_var_pl(n,k0,l,GMTR_T_W3)&
                      *rhovy_pl(np1(n),k,l)
                 rhovzt_pl(n,k,l)                            &
-                     =GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W1)&
+                     =GMTR_T_var_pl(n,k0,l,GMTR_T_W1)&
                      *rhovz_pl(ADM_gslf_pl,k,l)              &
-                     +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W2)&
+                     +GMTR_T_var_pl(n,k0,l,GMTR_T_W2)&
                      *rhovz_pl(n,k,l)                        &
-                     +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W3)&
+                     +GMTR_T_var_pl(n,k0,l,GMTR_T_W3)&
                      *rhovz_pl(np1(n),k,l)
                 rhot_pl(n,k,l)                            &
-                     =local_T_var_pl(n,ADM_KNONE,l,GMTR_T_W1)&
+                     =local_T_var_pl(n,k0,l,GMTR_T_W1)&
                      *rho_pl(ADM_gslf_pl,k,l)              &
-                     +local_T_var_pl(n,ADM_KNONE,l,GMTR_T_W2)&
+                     +local_T_var_pl(n,k0,l,GMTR_T_W2)&
                      *rho_pl(n,k,l)                        &
-                     +local_T_var_pl(n,ADM_KNONE,l,GMTR_T_W3)&
+                     +local_T_var_pl(n,k0,l,GMTR_T_W3)&
                      *rho_pl(np1(n),k,l)
-!!$                     =GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W1)&  ! Y.Niwa 080130
+!!$                     =GMTR_T_var_pl(n,k0,l,GMTR_T_W1)&  ! Y.Niwa 080130
 !!$                     *rho_pl(ADM_gslf_pl,k,l)              &
-!!$                     +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W2)&
+!!$                     +GMTR_T_var_pl(n,k0,l,GMTR_T_W2)&
 !!$                     *rho_pl(n,k,l)                        &
-!!$                     +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W3)&
+!!$                     +GMTR_T_var_pl(n,k0,l,GMTR_T_W3)&
 !!$                     *rho_pl(np1(n),k,l)
-             end do
-          end do
-       end do
+             enddo
+          enddo
+       enddo
     end if
-    !
+
     !--- calculation of courant number
     do l=1,ADM_lall
        rgnid=ADM_prc_tab(l,ADM_prc_me)
-       !
+
        do k = 1, ADM_kall
           nstart = suf(ADM_gmin-1,ADM_gmin  )
           nend   = suf(ADM_gmax,  ADM_gmax  )
           do n = nstart,nend
-             rpx(n,ADM_AI) &
-                  = 0.5D0*(GRD_xt(n,ADM_KNONE,l,ADM_TI,GRD_XDIR)+GRD_xt(n-ADM_gall_1d,ADM_KNONE,l,ADM_TJ,GRD_XDIR))
-             rpy(n,ADM_AI) &
-                  = 0.5D0*(GRD_xt(n,ADM_KNONE,l,ADM_TI,GRD_YDIR)+GRD_xt(n-ADM_gall_1d,ADM_KNONE,l,ADM_TJ,GRD_YDIR))
-             rpz(n,ADM_AI) &
-                  = 0.5D0*(GRD_xt(n,ADM_KNONE,l,ADM_TI,GRD_ZDIR)+GRD_xt(n-ADM_gall_1d,ADM_KNONE,l,ADM_TJ,GRD_ZDIR))
-             rhovxa(n,ADM_AI) = (rhovxt(n-ADM_gall_1d,k,l,ADM_TJ)+rhovxt(n,k,l,ADM_TI))*0.5D0
-             rhovya(n,ADM_AI) = (rhovyt(n-ADM_gall_1d,k,l,ADM_TJ)+rhovyt(n,k,l,ADM_TI))*0.5D0
-             rhovza(n,ADM_AI) = (rhovzt(n-ADM_gall_1d,k,l,ADM_TJ)+rhovzt(n,k,l,ADM_TI))*0.5D0
-             rhoa(n,ADM_AI) = (rhot(n-ADM_gall_1d,k,l,ADM_TJ)+rhot(n,k,l,ADM_TI))*0.5D0
-             !
-             cp(n,k,l,ADM_AI,GRD_XDIR) = rpx(n,ADM_AI) - rhovxa(n,ADM_AI)/rhoa(n,ADM_AI)*dt*0.5D0
-             cp(n,k,l,ADM_AI,GRD_YDIR) = rpy(n,ADM_AI) - rhovya(n,ADM_AI)/rhoa(n,ADM_AI)*dt*0.5D0
-             cp(n,k,l,ADM_AI,GRD_ZDIR) = rpz(n,ADM_AI) - rhovza(n,ADM_AI)/rhoa(n,ADM_AI)*dt*0.5D0
-             !
-             ccc = &
-                  (rhovxa(n,ADM_AI)*GMTR_A_var(n,ADM_KNONE,l,ADM_AI,GMTR_A_HNX)&
-                  +rhovya(n,ADM_AI)*GMTR_A_var(n,ADM_KNONE,l,ADM_AI,GMTR_A_HNY)&
-                  +rhovza(n,ADM_AI)*GMTR_A_var(n,ADM_KNONE,l,ADM_AI,GMTR_A_HNZ))
-             flx_h(1,n  ,k,l) = ccc*dt*GMTR_P_var(n,ADM_KNONE,l,GMTR_P_RAREA)
-             flx_h(4,n+1,k,l) =-ccc*dt*GMTR_P_var(n+1,ADM_KNONE,l,GMTR_P_RAREA)
-             !
-          end do
-          !
-          !
+             rpx(n,ADM_AI) = 0.5D0 * ( GRD_xt(n,k0,l,ADM_TI,GRD_XDIR) + GRD_xt(n-ADM_gall_1d,k0,l,ADM_TJ,GRD_XDIR) )
+             rpy(n,ADM_AI) = 0.5D0 * ( GRD_xt(n,k0,l,ADM_TI,GRD_YDIR) + GRD_xt(n-ADM_gall_1d,k0,l,ADM_TJ,GRD_YDIR) )
+             rpz(n,ADM_AI) = 0.5D0 * ( GRD_xt(n,k0,l,ADM_TI,GRD_ZDIR) + GRD_xt(n-ADM_gall_1d,k0,l,ADM_TJ,GRD_ZDIR) )
+
+             rhovxa(n,ADM_AI) = 0.5D0 * ( rhovxt(n-ADM_gall_1d,k,l,ADM_TJ) + rhovxt(n,k,l,ADM_TI) )
+             rhovya(n,ADM_AI) = 0.5D0 * ( rhovyt(n-ADM_gall_1d,k,l,ADM_TJ) + rhovyt(n,k,l,ADM_TI) )
+             rhovza(n,ADM_AI) = 0.5D0 * ( rhovzt(n-ADM_gall_1d,k,l,ADM_TJ) + rhovzt(n,k,l,ADM_TI) )
+             rhoa  (n,ADM_AI) = 0.5D0 * ( rhot  (n-ADM_gall_1d,k,l,ADM_TJ) + rhot  (n,k,l,ADM_TI) )
+
+             cp(n,k,l,ADM_AI,GRD_XDIR) = rpx(n,ADM_AI) - rhovxa(n,ADM_AI) / rhoa(n,ADM_AI) * dt * 0.5D0
+             cp(n,k,l,ADM_AI,GRD_YDIR) = rpy(n,ADM_AI) - rhovya(n,ADM_AI) / rhoa(n,ADM_AI) * dt * 0.5D0
+             cp(n,k,l,ADM_AI,GRD_ZDIR) = rpz(n,ADM_AI) - rhovza(n,ADM_AI) / rhoa(n,ADM_AI) * dt * 0.5D0
+
+             ccc = ( rhovxa(n,ADM_AI) * GMTR_A_var(n,k0,l,ADM_AI,GMTR_A_HNX) &
+                   + rhovya(n,ADM_AI) * GMTR_A_var(n,k0,l,ADM_AI,GMTR_A_HNY) &
+                   + rhovza(n,ADM_AI) * GMTR_A_var(n,k0,l,ADM_AI,GMTR_A_HNZ) )
+
+             flx_h(1,n  ,k,l) =  ccc * dt * GMTR_P_var(n  ,k0,l,GMTR_P_RAREA)
+             flx_h(4,n+1,k,l) = -ccc * dt * GMTR_P_var(n+1,k0,l,GMTR_P_RAREA)
+          enddo
+
           nstart = suf(ADM_gmin-1,ADM_gmin-1)
           nend   = suf(ADM_gmax,  ADM_gmax  )
           do n = nstart,nend
              rpx(n,ADM_AIJ) &
-                  = 0.5D0*(GRD_xt(n,ADM_KNONE,l,ADM_TI,GRD_XDIR)+GRD_xt(n,ADM_KNONE,l,ADM_TJ,GRD_XDIR))
+                  = 0.5D0*(GRD_xt(n,k0,l,ADM_TI,GRD_XDIR)+GRD_xt(n,k0,l,ADM_TJ,GRD_XDIR))
              rpy(n,ADM_AIJ) &
-                  = 0.5D0*(GRD_xt(n,ADM_KNONE,l,ADM_TI,GRD_YDIR)+GRD_xt(n,ADM_KNONE,l,ADM_TJ,GRD_YDIR))
+                  = 0.5D0*(GRD_xt(n,k0,l,ADM_TI,GRD_YDIR)+GRD_xt(n,k0,l,ADM_TJ,GRD_YDIR))
              rpz(n,ADM_AIJ) &
-                  = 0.5D0*(GRD_xt(n,ADM_KNONE,l,ADM_TI,GRD_ZDIR)+GRD_xt(n,ADM_KNONE,l,ADM_TJ,GRD_ZDIR))
+                  = 0.5D0*(GRD_xt(n,k0,l,ADM_TI,GRD_ZDIR)+GRD_xt(n,k0,l,ADM_TJ,GRD_ZDIR))
              rhovxa(n,ADM_AIJ) = (rhovxt(n,k,l,ADM_TI)+rhovxt(n,k,l,ADM_TJ))*0.5D0
              rhovya(n,ADM_AIJ) = (rhovyt(n,k,l,ADM_TI)+rhovyt(n,k,l,ADM_TJ))*0.5D0
              rhovza(n,ADM_AIJ) = (rhovzt(n,k,l,ADM_TI)+rhovzt(n,k,l,ADM_TJ))*0.5D0
@@ -1313,22 +1277,23 @@ contains
              cp(n,k,l,ADM_AIJ,GRD_ZDIR) = rpz(n,ADM_AIJ) - rhovza(n,ADM_AIJ)/rhoa(n,ADM_AIJ)*dt*0.5D0
              !
              ccc = &
-                  (rhovxa(n,ADM_AIJ)*GMTR_A_var(n,ADM_KNONE,l,ADM_AIJ,GMTR_A_HNX)&
-                  +rhovya(n,ADM_AIJ)*GMTR_A_var(n,ADM_KNONE,l,ADM_AIJ,GMTR_A_HNY)&
-                  +rhovza(n,ADM_AIJ)*GMTR_A_var(n,ADM_KNONE,l,ADM_AIJ,GMTR_A_HNZ))
-             flx_h(2,n              ,k,l) = ccc*dt*GMTR_P_var(n,ADM_KNONE,l,GMTR_P_RAREA)
-             flx_h(5,n+1+ADM_gall_1d,k,l) =-ccc*dt*GMTR_P_var(n+1+ADM_gall_1d,ADM_KNONE,l,GMTR_P_RAREA)
+                  (rhovxa(n,ADM_AIJ)*GMTR_A_var(n,k0,l,ADM_AIJ,GMTR_A_HNX)&
+                  +rhovya(n,ADM_AIJ)*GMTR_A_var(n,k0,l,ADM_AIJ,GMTR_A_HNY)&
+                  +rhovza(n,ADM_AIJ)*GMTR_A_var(n,k0,l,ADM_AIJ,GMTR_A_HNZ))
+             flx_h(2,n              ,k,l) = ccc*dt*GMTR_P_var(n,k0,l,GMTR_P_RAREA)
+             flx_h(5,n+1+ADM_gall_1d,k,l) =-ccc*dt*GMTR_P_var(n+1+ADM_gall_1d,k0,l,GMTR_P_RAREA)
              !
-          end do
+          enddo
+
           nstart = suf(ADM_gmin  ,ADM_gmin-1)
           nend   = suf(ADM_gmax  ,ADM_gmax  )
           do n = nstart,nend
              rpx(n,ADM_AJ) &
-                  = 0.5D0*(GRD_xt(n,ADM_KNONE,l,ADM_TJ,GRD_XDIR)+GRD_xt(n-1,ADM_KNONE,l,ADM_TI,GRD_XDIR))
+                  = 0.5D0*(GRD_xt(n,k0,l,ADM_TJ,GRD_XDIR)+GRD_xt(n-1,k0,l,ADM_TI,GRD_XDIR))
              rpy(n,ADM_AJ) &
-                  = 0.5D0*(GRD_xt(n,ADM_KNONE,l,ADM_TJ,GRD_YDIR)+GRD_xt(n-1,ADM_KNONE,l,ADM_TI,GRD_YDIR))
+                  = 0.5D0*(GRD_xt(n,k0,l,ADM_TJ,GRD_YDIR)+GRD_xt(n-1,k0,l,ADM_TI,GRD_YDIR))
              rpz(n,ADM_AJ) &
-                  = 0.5D0*(GRD_xt(n,ADM_KNONE,l,ADM_TJ,GRD_ZDIR)+GRD_xt(n-1,ADM_KNONE,l,ADM_TI,GRD_ZDIR))
+                  = 0.5D0*(GRD_xt(n,k0,l,ADM_TJ,GRD_ZDIR)+GRD_xt(n-1,k0,l,ADM_TI,GRD_ZDIR))
              rhovxa(n,ADM_AJ)=  (rhovxt(n,k,l,ADM_TJ)+rhovxt(n-1,k,l,ADM_TI))*0.5D0
              rhovya(n,ADM_AJ)=  (rhovyt(n,k,l,ADM_TJ)+rhovyt(n-1,k,l,ADM_TI))*0.5D0
              rhovza(n,ADM_AJ)=  (rhovzt(n,k,l,ADM_TJ)+rhovzt(n-1,k,l,ADM_TI))*0.5D0
@@ -1339,30 +1304,30 @@ contains
              cp(n,k,l,ADM_AJ,GRD_ZDIR) = rpz(n,ADM_AJ) - rhovza(n,ADM_AJ)/rhoa(n,ADM_AJ)*dt*0.5D0
              !
              ccc = &
-                  (rhovxa(n,ADM_AJ)*GMTR_A_var(n,ADM_KNONE,l,ADM_AJ,GMTR_A_HNX)&
-                  +rhovya(n,ADM_AJ)*GMTR_A_var(n,ADM_KNONE,l,ADM_AJ,GMTR_A_HNY)&
-                  +rhovza(n,ADM_AJ)*GMTR_A_var(n,ADM_KNONE,l,ADM_AJ,GMTR_A_HNZ))
-             flx_h(3,n            ,k,l) = ccc*dt*GMTR_P_var(n,ADM_KNONE,l,GMTR_P_RAREA)
-             flx_h(6,n+ADM_gall_1d,k,l) =-ccc*dt*GMTR_P_var(n+ADM_gall_1d,ADM_KNONE,l,GMTR_P_RAREA)
-          end do
+                  (rhovxa(n,ADM_AJ)*GMTR_A_var(n,k0,l,ADM_AJ,GMTR_A_HNX)&
+                  +rhovya(n,ADM_AJ)*GMTR_A_var(n,k0,l,ADM_AJ,GMTR_A_HNY)&
+                  +rhovza(n,ADM_AJ)*GMTR_A_var(n,k0,l,ADM_AJ,GMTR_A_HNZ))
+             flx_h(3,n            ,k,l) = ccc*dt*GMTR_P_var(n,k0,l,GMTR_P_RAREA)
+             flx_h(6,n+ADM_gall_1d,k,l) =-ccc*dt*GMTR_P_var(n+ADM_gall_1d,k0,l,GMTR_P_RAREA)
+          enddo
           !
           if(ADM_rgn_vnum(ADM_W,rgnid)==3) then
              flx_h(6,suf(ADM_gmin,ADM_gmin),k,l) = 0.0D0
           end if
-       end do
-    end do
-    !
+       enddo
+    enddo
+
     if(ADM_prc_me==ADM_prc_pl) then
        !
        do l=1,ADM_lall_pl
           do k = 1, ADM_kall
-             do n=ADM_gmin_pl,ADM_GMAX_PL
+             do n=ADM_gmin_pl,ADM_gmax_pl
                 rpx_pl(n) &
-                     = 0.5D0*(GRD_xt_pl(nm1(n),ADM_KNONE,l,GRD_XDIR)+GRD_xt_pl(n,ADM_KNONE,l,GRD_XDIR))
+                     = 0.5D0*(GRD_xt_pl(nm1(n),k0,l,GRD_XDIR)+GRD_xt_pl(n,k0,l,GRD_XDIR))
                 rpy_pl(n) &
-                     = 0.5D0*(GRD_xt_pl(nm1(n),ADM_KNONE,l,GRD_YDIR)+GRD_xt_pl(n,ADM_KNONE,l,GRD_YDIR))
+                     = 0.5D0*(GRD_xt_pl(nm1(n),k0,l,GRD_YDIR)+GRD_xt_pl(n,k0,l,GRD_YDIR))
                 rpz_pl(n) &
-                     = 0.5D0*(GRD_xt_pl(nm1(n),ADM_KNONE,l,GRD_ZDIR)+GRD_xt_pl(n,ADM_KNONE,l,GRD_ZDIR))
+                     = 0.5D0*(GRD_xt_pl(nm1(n),k0,l,GRD_ZDIR)+GRD_xt_pl(n,k0,l,GRD_ZDIR))
                 !
                 rhovxa_pl(n)=  (rhovxt_pl(nm1(n),k,l)+rhovxt_pl(n,k,l))*0.5D0
                 rhovya_pl(n)=  (rhovyt_pl(nm1(n),k,l)+rhovyt_pl(n,k,l))*0.5D0
@@ -1374,13 +1339,13 @@ contains
                 cp_pl(n,k,l,GRD_ZDIR) = rpz_pl(n) - rhovza_pl(n)/rhoa_pl(n)*dt*0.5D0
                 !
                 ccc_pl = &
-                     (rhovxa_pl(n)*GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_HNX)&
-                     +rhovya_pl(n)*GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_HNY)&
-                     +rhovza_pl(n)*GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_HNZ))
-                flx_h_pl(n,k,l) = ccc_pl*dt*GMTR_P_var_pl(ADM_gslf_pl,ADM_KNONE,l,GMTR_P_RAREA)
-             end do
-          end do
-       end do
+                     (rhovxa_pl(n)*GMTR_A_var_pl(n,k0,l,GMTR_A_HNX)&
+                     +rhovya_pl(n)*GMTR_A_var_pl(n,k0,l,GMTR_A_HNY)&
+                     +rhovza_pl(n)*GMTR_A_var_pl(n,k0,l,GMTR_A_HNZ))
+                flx_h_pl(n,k,l) = ccc_pl*dt*GMTR_P_var_pl(ADM_gslf_pl,k0,l,GMTR_P_RAREA)
+             enddo
+          enddo
+       enddo
     end if
 
     return
@@ -1408,7 +1373,7 @@ contains
        ADM_gmin_pl,     &
        ADM_gslf_pl,     &
        ADM_gall_pl,     &
-       ADM_GMAX_PL,     &
+       ADM_gmax_pl,     &
        ADM_prc_me,      &
        ADM_prc_tab,     &
        ADM_gall_1d,     &
@@ -1525,15 +1490,15 @@ contains
        fact = 1.D0 / dt
     endif
 
-    nm1(ADM_gmin_pl) = ADM_GMAX_PL
-    do n = ADM_gmin_pl+1, ADM_GMAX_PL
+    nm1(ADM_gmin_pl) = ADM_gmax_pl
+    do n = ADM_gmin_pl+1, ADM_gmax_pl
        nm1(n) = n-1
     enddo
 
-    do n = ADM_gmin_pl, ADM_GMAX_PL-1
+    do n = ADM_gmin_pl, ADM_gmax_pl-1
        np1(n) = n+1
     enddo
-    np1(ADM_GMAX_PL) = ADM_gmin_pl
+    np1(ADM_gmax_pl) = ADM_gmin_pl
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
@@ -1822,7 +1787,7 @@ contains
           do k = 1, ADM_kall
              s_in_min_pl(:,k,l,:) = CNST_MAX_REAL
              s_in_max_pl(:,k,l,:) =-CNST_MAX_REAL
-             do n=ADM_gmin_pl,ADM_GMAX_PL
+             do n=ADM_gmin_pl,ADM_gmax_pl
                 if(c_pl(n,k,l)<=0.0D0) then
                    s_in_min_pl(n,k,l,1) = min(s_pl(ADM_gslf_pl,k,l),s_pl(n,k,l),s_pl(nm1(n),k,l),s_pl(np1(n),k,l))
                    s_in_max_pl(n,k,l,1) = max(s_pl(ADM_gslf_pl,k,l),s_pl(n,k,l),s_pl(nm1(n),k,l),s_pl(np1(n),k,l))
@@ -1830,11 +1795,11 @@ contains
                    s_in_min_pl(n,k,l,2) = min(s_pl(ADM_gslf_pl,k,l),s_pl(n,k,l),s_pl(nm1(n),k,l),s_pl(np1(n),k,l))
                    s_in_max_pl(n,k,l,2) = max(s_pl(ADM_gslf_pl,k,l),s_pl(n,k,l),s_pl(nm1(n),k,l),s_pl(np1(n),k,l))
                 end if
-             end do
+             enddo
 
-          end do
+          enddo
           !
-       end do
+       enddo
        !
     end if
     !
@@ -1897,9 +1862,9 @@ contains
               -s_m1_k_min_n*(1.0D0-c_in_sum_n-c_out_sum_n+d(n,k,l)) &
               )/c_out_sum_n
           end if
-       end do !N
-    end do !K
-    end do !L
+       enddo !N
+    enddo !K
+    enddo !L
     !
     if(ADM_prc_me==ADM_prc_pl) then
        do l=1,ADM_lall_pl
@@ -1952,8 +1917,8 @@ contains
                      -s_m1_k_min_pl*(1.0D0-c_in_sum_pl-c_out_sum_pl+d_pl(ADM_gslf_pl,k,l)) &
                      )/c_out_sum_pl
              end if
-          end do
-       end do
+          enddo
+       enddo
     endif
     !
     !
@@ -1964,17 +1929,17 @@ contains
       do k=1,ADM_kall
         do n=1,ADM_gall
           wrk(n,k,l,dsx:dsz)=0.0D0
-        end do
-      end do
-    end do
+        enddo
+      enddo
+    enddo
 
     do l=1,ADM_lall_pl
       do k=1,ADM_kall
         do n=1,ADM_gall_pl
           wrk_pl(n,k,l,dsx:dsz)=0.0D0
-        end do
-      end do
-    end do
+        enddo
+      enddo
+    enddo
 
     call OPRT_gradient(                    &
          wrk(:,:,:,dsx), wrk_pl(:,:,:,dsx),&
@@ -2028,15 +1993,15 @@ contains
             +wrk(n+ADM_gall_1d,k,l,dsz)*(cp(n,k,l,ADM_AJ,GRD_ZDIR)- GRD_x(n+ADM_gall_1d,ADM_KNONE,l,GRD_ZDIR))
           sa(ADM_AJ,n,k,l) &
             =(0.5D0+sign(0.5D0,c(3,n,k,l)))*sa_p+(0.5D0-sign(0.5D0,c(3,n,k,l)))*sa_m
-        end do !N
-      end do !K
-    end do !L
+        enddo !N
+      enddo !K
+    enddo !L
     !
     if(ADM_prc_me==ADM_prc_pl) then
        !
        do l=1,ADM_lall_pl
           do k = 1, ADM_kall
-             do n=ADM_gmin_pl,ADM_GMAX_PL
+             do n=ADM_gmin_pl,ADM_gmax_pl
                 sa_p = s_pl(ADM_gslf_pl,k,l) &
                      +wrk_pl(ADM_gslf_pl,k,l,dsx)*(cp_pl(n,k,l,GRD_XDIR)-GRD_x_pl(ADM_gslf_pl,ADM_KNONE,l,GRD_XDIR)) &
                      +wrk_pl(ADM_gslf_pl,k,l,dsy)*(cp_pl(n,k,l,GRD_YDIR)-GRD_x_pl(ADM_gslf_pl,ADM_KNONE,l,GRD_YDIR)) &
@@ -2047,9 +2012,9 @@ contains
                      +wrk_pl(n,k,l,dsz)*(cp_pl(n,k,l,GRD_ZDIR)-GRD_x_pl(n,ADM_KNONE,l,GRD_ZDIR))
                 sa_pl(n,k,l) &
                      =(0.5D0+sign(0.5D0,c_pl(n,k,l)))*sa_p+(0.5D0-sign(0.5D0,c_pl(n,k,l)))*sa_m
-             end do
-          end do
-       end do
+             enddo
+          enddo
+       enddo
        !
     end if
     !
@@ -2081,22 +2046,22 @@ contains
             *min(max(sa(ADM_AJ,n,k,l),s_in_min(3,n,k,l)),s_in_max(3,n,k,l))&
             +(0.5D0+sign(0.5D0,c(3,n,k,l)))&
             *min(max(sa(ADM_AJ,n,k,l),s_in_min(6,n+ADM_gall_1d,k,l)),s_in_max(6,n+ADM_gall_1d,k,l))
-        end do
-      end do
-    end do
+        enddo
+      enddo
+    enddo
     !
     if(ADM_prc_me==ADM_prc_pl) then
        do l=1,ADM_lall_pl
           do k = 1, ADM_kall
-             do n=ADM_gmin_pl,ADM_GMAX_PL
+             do n=ADM_gmin_pl,ADM_gmax_pl
                 sa_pl(n,k,l) &
                   =(0.5D0-sign(0.5D0,c_pl(n,k,l)))&
                   *min(max(sa_pl(n,k,l),s_in_min_pl(n,k,l,1)),s_in_max_pl(n,k,l,1))&
                   +(0.5D0+sign(0.5D0,c_pl(n,k,l)))&
                   *min(max(sa_pl(n,k,l),s_in_min_pl(n,k,l,2)),s_in_max_pl(n,k,l,2))
-             end do
-          end do
-       end do
+             enddo
+          enddo
+       enddo
     end if
     !
     !---- apply outflow limitter
@@ -2123,22 +2088,22 @@ contains
             *max(min(sa(ADM_AJ,n,k,l),wrk(n+ADM_gall_1d,k,l,s_out_k_max)),wrk(n+ADM_gall_1d,k,l,s_out_k_min))&
             +(0.5D0+sign(0.5D0,c(3,n,k,l)))&
             *max(min(sa(ADM_AJ,n,k,l),wrk(n,k,l,s_out_k_max)),wrk(n,k,l,s_out_k_min))
-        end do
-       end do
-    end do
+        enddo
+       enddo
+    enddo
     !
     if(ADM_prc_me==ADM_prc_pl) then
        do l=1,ADM_lall_pl
           do k = 1, ADM_kall
-             do n = ADM_gmin_pl,ADM_GMAX_PL
+             do n = ADM_gmin_pl,ADM_gmax_pl
                 sa_pl(n,k,l)&
                      =(0.5D0-sign(0.5D0,c_pl(n,k,l)))&
                      *max(min(sa_pl(n,k,l),wrk_pl(n,k,l,s_out_k_max)),wrk_pl(n,k,l,s_out_k_min))&
                      +(0.5D0+sign(0.5D0,c_pl(n,k,l)))&
                      *max(min(sa_pl(n,k,l),wrk_pl(ADM_gslf_pl,k,l,s_out_k_max)),wrk_pl(ADM_gslf_pl,k,l,s_out_k_min))
-             end do
-          end do
-       end do
+             enddo
+          enddo
+       enddo
     end if
     !
     !
@@ -2160,9 +2125,9 @@ contains
                   + flx_h(5,n,k,l)*sa(ADM_AIJ,n-1-ADM_gall_1d,k,l) &
                   + flx_h(6,n,k,l)*sa(ADM_AJ,n-ADM_gall_1d,k,l)    &
                   ) * fact
-          end do
-       end do
-    end do
+          enddo
+       enddo
+    enddo
 
     if(ADM_prc_me==ADM_prc_pl) then
        do l=1,ADM_lall_pl
@@ -2174,8 +2139,8 @@ contains
                   + flx_h_pl(ADM_gmin_pl+3,k,l)*sa_pl(ADM_gmin_pl+3,k,l) &
                   + flx_h_pl(ADM_gmin_pl+4,k,l)*sa_pl(ADM_gmin_pl+4,k,l) &
                   ) * fact
-          end do
-       end do
+          enddo
+       enddo
     end if
 
     return

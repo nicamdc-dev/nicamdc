@@ -32,6 +32,8 @@ module mod_oprt
   !
   !++ used modules
   !
+  use mod_adm, only: &
+     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -60,51 +62,26 @@ module mod_oprt
   !
   !++ Private parameters & variables
   !
-  integer,allocatable,private,save::n021(:)
+  integer, private, save :: OPRT_nstart
+  integer, private, save :: OPRT_nend
 
   ! < for divergence operator >
   real(8), private, allocatable, save :: cdiv   (:,:,:,:)
   real(8), private, allocatable, save :: cdiv_pl(:,:,:,:)
 
   ! < for gradient operator >
-  real(8), private, allocatable, save :: cgrad(:,:,:,:)!(0:6,gall,lall,1:3)
-  real(8), private, allocatable, save :: cgrad0_pl(:,:,:)
-  real(8), private, allocatable, save :: cgrad1_pl(:,:,:)
-  real(8), private, allocatable, save :: cgrad2_pl(:,:,:)
-  real(8), private, allocatable, save :: cgrad3_pl(:,:,:)
-  real(8), private, allocatable, save :: cgrad4_pl(:,:,:)
-  real(8), private, allocatable, save :: cgrad5_pl(:,:,:)
+  real(8), private, allocatable, save :: cgrad   (:,:,:,:)
+  real(8), private, allocatable, save :: cgrad_pl(:,:,:,:)
 
   ! < for laplacian operator >
-  real(8), private, allocatable, save :: clap0(:,:)
-  real(8), private, allocatable, save :: clap1(:,:)
-  real(8), private, allocatable, save :: clap2(:,:)
-  real(8), private, allocatable, save :: clap3(:,:)
-  real(8), private, allocatable, save :: clap4(:,:)
-  real(8), private, allocatable, save :: clap5(:,:)
-  real(8), private, allocatable, save :: clap6(:,:)
-
-  real(8), private, allocatable, save :: clap0_pl(:,:)
-  real(8), private, allocatable, save :: clap1_pl(:,:)
-  real(8), private, allocatable, save :: clap2_pl(:,:)
-  real(8), private, allocatable, save :: clap3_pl(:,:)
-  real(8), private, allocatable, save :: clap4_pl(:,:)
-  real(8), private, allocatable, save :: clap5_pl(:,:)
+  real(8), private, allocatable, save :: clap   (:,:,:)
+  real(8), private, allocatable, save :: clap_pl(:,:,:)
 
   ! < for diffusion operator >
-  real(8), public,  allocatable, save :: cmdif_T(:,:,:)! (TI:TJ,n,l) <- GMTR_T_VAR(n,1,l,TI:TJ,T_RAREA)
-  real(8), allocatable, public,  save  :: cmdif_AH(:,:,:,:)!(AI:AJ,1:3,n,l) <-GMTR_A_VAR(n,1,l,TI:TJ,HN[XYZ])
-  real(8), allocatable, public,  save  :: cmdif_AT(:,:,:,:)!(AI:AJ,1:3,n,l) <-GMTR_A_VAR(n,1,l,TI:TJ,TN[XYZ])
-  real(8), allocatable, public,  save  :: cmdif_P(:,:) !(n,l) <- GMTR_P_VAR(n,1,l,P_RAREA)
-
-  !
-  ! <  For XTMS (when it is used, above clap0-5_pl,cgrad0-5_pl,cdiv0-5_pl are 
-  !            not needed)
-  real(8), private, allocatable, save :: cdivN_pl(:,:,:,:) !S.iga100608
-  real(8), private, allocatable, save :: cgradN_pl(:,:,:,:)!S.iga100608
-  real(8), private, allocatable, save :: clapN_pl(:,:,:)   !S.iga100608
-  real(8),private::tmp1 !S.iga100608
-  integer,private::itmp !S.iga100608
+  real(8), private, allocatable, save :: cmdif_P (:,:)     !(n,l) <- GMTR_P_VAR(n,1,l,P_RAREA)
+  real(8), private, allocatable, save :: cmdif_T (:,:,:)   !(TI:TJ,n,l) <- GMTR_T_VAR(n,1,l,TI:TJ,T_RAREA)
+  real(8), private, allocatable, save :: cmdif_AH(:,:,:,:) !(AI:AJ,1:3,n,l) <-GMTR_A_VAR(n,1,l,TI:TJ,HN[XYZ])
+  real(8), private, allocatable, save :: cmdif_AT(:,:,:,:) !(AI:AJ,1:3,n,l) <-GMTR_A_VAR(n,1,l,TI:TJ,TN[XYZ])
 
   !-----------------------------------------------------------------------------
 contains
@@ -180,6 +157,11 @@ contains
     integer :: TI,TJ,AI,AIJ,AJ,W1,W2,W3
     !---------------------------------------------------------------------------
 
+    write(ADM_LOG_FID,*)
+    write(ADM_LOG_FID,*) '+++ Module[oprt]/Category[common share]'
+
+    k0  = ADM_KNONE
+
     TI  = ADM_TI
     TJ  = ADM_TJ
     AI  = ADM_AI
@@ -189,27 +171,21 @@ contains
     W2  = GMTR_T_W2
     W3  = GMTR_T_W3
 
-    k0 = ADM_KNONE
-
-    allocate( n021((ADM_gall_1d-2)**2) )
-
-    do n = 1, (ADM_gall_1d-2)**2
-      n021(n) = ADM_gall_1d * ( (n-1)/(ADM_gall_1d-2)+1) + mod(n-1,ADM_gall_1d-2)+2
-    enddo
+    OPRT_nstart = suf(ADM_gmin,ADM_gmin)
+    OPRT_nend   = suf(ADM_gmax,ADM_gmax)
 
     !---< setup coefficient of divergence operator >
+    write(ADM_LOG_FID,*) '*** setup coefficient of divergence operator'
+
     allocate( cdiv   (0:6,             ADM_gall   ,ADM_lall   ,3) )
     allocate( cdiv_pl(0:ADM_vlink_nmax,ADM_gall_pl,ADM_lall_pl,3) )
-
-    nstart = suf(ADM_gmin,ADM_gmin)
-    nend   = suf(ADM_gmax,ADM_gmax)
 
     do l = 1, ADM_lall
        rgnid = ADM_prc_tab(l,ADM_prc_me)
 
        do m = 1, 3
           md = m + GMTR_A_HNX - 1
-          do n = nstart, nend
+          do n = OPRT_nstart, OPRT_nend
              ij     = n
              ip1j   = n + 1
              ip1jp1 = n + 1 + ADM_gall_1d
@@ -219,54 +195,54 @@ contains
              ijm1   = n     - ADM_gall_1d
 
              ! ij
-             cdiv(0,n,l,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
-                               + GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AI ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AI ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
-                               + GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
-                               - GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W2) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
-                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
-                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
-                               - GMTR_T_var(im1jm1,k0,l,TI,GMTR_T_W3) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
-                               - GMTR_T_var(im1jm1,k0,l,TI,GMTR_T_W3) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
+             cdiv(0,n,l,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,W3) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
+                               + GMTR_T_var(ijm1  ,k0,l,TJ,W3) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,W1) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,W1) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,W1) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,W1) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               + GMTR_T_var(im1j  ,k0,l,TI,W2) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               - GMTR_T_var(im1j  ,k0,l,TI,W2) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,W2) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TI,W3) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TI,W3) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
              ! ip1j
-             cdiv(1,n,l,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
-                               + GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AI ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AI ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+             cdiv(1,n,l,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,W2) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
+                               + GMTR_T_var(ijm1  ,k0,l,TJ,W2) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,W2) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,W2) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
              ! ip1jp1
-             cdiv(2,n,l,m) = ( + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AI ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+             cdiv(2,n,l,m) = ( + GMTR_T_var(ij    ,k0,l,TI,W3) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,W3) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,W2) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,W2) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
              ! ijp1
-             cdiv(3,n,l,m) = ( + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
-                               + GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
-                               - GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W3) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+             cdiv(3,n,l,m) = ( + GMTR_T_var(ij    ,k0,l,TJ,W3) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,W3) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               + GMTR_T_var(im1j  ,k0,l,TI,W3) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               - GMTR_T_var(im1j  ,k0,l,TI,W3) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
                              ) * 0.5D0*GMTR_P_var(ij,k0,l,GMTR_P_rarea)
              ! im1j
-             cdiv(4,n,l,m) = ( + GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
-                               - GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W1) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
-                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
-                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+             cdiv(4,n,l,m) = ( + GMTR_T_var(im1j  ,k0,l,TI,W1) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               - GMTR_T_var(im1j  ,k0,l,TI,W1) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,W3) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,W3) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
              ! im1jm1
-             cdiv(5,n,l,m) = ( - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
-                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
-                               - GMTR_T_var(im1jm1,k0,l,TI,GMTR_T_W1) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
-                               - GMTR_T_var(im1jm1,k0,l,TI,GMTR_T_W1) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
+             cdiv(5,n,l,m) = ( - GMTR_T_var(im1jm1,k0,l,TJ,W1) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,W1) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TI,W1) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TI,W1) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
              ! ijm1
-             cdiv(6,n,l,m) = ( - GMTR_T_var(im1jm1,k0,l,TI,GMTR_T_W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
-                               - GMTR_T_var(im1jm1,k0,l,TI,GMTR_T_W2) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
-                               - GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
-                               + GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+             cdiv(6,n,l,m) = ( - GMTR_T_var(im1jm1,k0,l,TI,W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TI,W2) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
+                               - GMTR_T_var(ijm1  ,k0,l,TJ,W1) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
+                               + GMTR_T_var(ijm1  ,k0,l,TJ,W1) * GMTR_A_var(ij    ,k0,l,AI ,md) &
                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
           enddo
        enddo
@@ -286,48 +262,48 @@ contains
              ijm1   = n     - ADM_gall_1d
 
              ! ij
-             cdiv(0,n,l,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
-                               + GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AI ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AI ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
-                               + GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
-                               - GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W2) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
-                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
-                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+             cdiv(0,n,l,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,W3) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                               + GMTR_T_var(ijm1  ,k0,l,TJ,W3) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,W1) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,W1) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,W1) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,W1) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               + GMTR_T_var(im1j  ,k0,l,TI,W2) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               - GMTR_T_var(im1j  ,k0,l,TI,W2) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,W2) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
                              ) * 0.5D0 * GMTR_P_var(n,k0,l,GMTR_P_rarea)
              ! ip1j
-             cdiv(1,n,l,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
-                               + GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AI ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AI ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+             cdiv(1,n,l,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                               + GMTR_T_var(ijm1  ,k0,l,TJ,W2) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,W2) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,W2) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
                              ) * 0.5D0 * GMTR_P_var(n,k0,l,GMTR_P_rarea)
              ! ip1jp1
-             cdiv(2,n,l,m) = ( + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AI ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TI,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W2) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+             cdiv(2,n,l,m) = ( + GMTR_T_var(ij    ,k0,l,TI,W3) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TI,W3) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,W2) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,W2) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
                              ) * 0.5D0 * GMTR_P_var(n,k0,l,GMTR_P_rarea)
              ! ijp1
-             cdiv(3,n,l,m) = ( + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
-                               + GMTR_T_var(ij    ,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
-                               + GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W3) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
-                               - GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W3) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+             cdiv(3,n,l,m) = ( + GMTR_T_var(ij    ,k0,l,TJ,W3) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                               + GMTR_T_var(ij    ,k0,l,TJ,W3) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               + GMTR_T_var(im1j  ,k0,l,TI,W3) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               - GMTR_T_var(im1j  ,k0,l,TI,W3) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
                              ) * 0.5D0 * GMTR_P_var(n,k0,l,GMTR_P_rarea)
              ! im1j
-             cdiv(4,n,l,m) = ( + GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
-                               - GMTR_T_var(im1j  ,k0,l,TI,GMTR_T_W1) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
-                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
-                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W3) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+             cdiv(4,n,l,m) = ( + GMTR_T_var(im1j  ,k0,l,TI,W1) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                               - GMTR_T_var(im1j  ,k0,l,TI,W1) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,W3) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,W3) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
                              ) * 0.5D0 * GMTR_P_var(n,k0,l,GMTR_P_rarea)
              ! im1jm1
-             cdiv(5,n,l,m) = ( - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
-                               - GMTR_T_var(im1jm1,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+             cdiv(5,n,l,m) = ( - GMTR_T_var(im1jm1,k0,l,TJ,W1) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                               - GMTR_T_var(im1jm1,k0,l,TJ,W1) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
                              ) * 0.5D0 * GMTR_P_var(n,k0,l,GMTR_P_rarea)
              ! ijm1
-             cdiv(6,n,l,m) = ( + GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(ij    ,k0,l,AI ,md) &
-                               - GMTR_T_var(ijm1  ,k0,l,TJ,GMTR_T_W1) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+             cdiv(6,n,l,m) = ( + GMTR_T_var(ijm1  ,k0,l,TJ,W1) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                               - GMTR_T_var(ijm1  ,k0,l,TJ,W1) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
                              ) * 0.5D0 * GMTR_P_var(n,k0,l,GMTR_P_rarea)
           enddo
        endif
@@ -346,8 +322,8 @@ contains
                 ijp1 = v + 1
                 if( ijp1 > ADM_gmax_pl ) ijp1 = ADM_gmin_pl
 
-                cdiv_pl(0,n,l,m) = cdiv_pl(0,n,l,m) + ( GMTR_T_var_pl(ij,k0,l,GMTR_T_W1) * GMTR_A_var_pl(ij  ,k0,l,md) &
-                                                      + GMTR_T_var_pl(ij,k0,l,GMTR_T_W1) * GMTR_A_var_pl(ijp1,k0,l,md) )
+                cdiv_pl(0,n,l,m) = cdiv_pl(0,n,l,m) + ( GMTR_T_var_pl(ij,k0,l,W1) * GMTR_A_var_pl(ij  ,k0,l,md) &
+                                                      + GMTR_T_var_pl(ij,k0,l,W1) * GMTR_A_var_pl(ijp1,k0,l,md) )
              enddo
              cdiv_pl(0,n,l,m) = cdiv_pl(0,n,l,m) * 0.5D0 * GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)
 
@@ -358,10 +334,10 @@ contains
                 if( ijp1 == ADM_gmax_pl + 1 ) ijp1 = ADM_gmin_pl
                 if( ijm1 == ADM_gmin_pl - 1 ) ijm1 = ADM_gmax_pl
 
-                cdiv_pl(v-1,n,l,m) = ( + GMTR_T_var_pl(ijm1,k0,l,GMTR_T_W3) * GMTR_A_var_pl(ijm1,k0,l,md) &
-                                       + GMTR_T_var_pl(ijm1,k0,l,GMTR_T_W3) * GMTR_A_var_pl(ij  ,k0,l,md) &
-                                       + GMTR_T_var_pl(ij  ,k0,l,GMTR_T_W2) * GMTR_A_var_pl(ij  ,k0,l,md) &
-                                       + GMTR_T_var_pl(ij  ,k0,l,GMTR_T_W2) * GMTR_A_var_pl(ijp1,k0,l,md) &
+                cdiv_pl(v-1,n,l,m) = ( + GMTR_T_var_pl(ijm1,k0,l,W3) * GMTR_A_var_pl(ijm1,k0,l,md) &
+                                       + GMTR_T_var_pl(ijm1,k0,l,W3) * GMTR_A_var_pl(ij  ,k0,l,md) &
+                                       + GMTR_T_var_pl(ij  ,k0,l,W2) * GMTR_A_var_pl(ij  ,k0,l,md) &
+                                       + GMTR_T_var_pl(ij  ,k0,l,W2) * GMTR_A_var_pl(ijp1,k0,l,md) &
                                      ) * 0.5D0 * GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)
              enddo
           enddo ! loop m
@@ -370,322 +346,216 @@ contains
 
 
 
-    ! ---- setup coefficient of gradient operator
-    allocate(cgrad(0:6,ADM_gall,ADM_lall,1:3))
-    !
-    allocate(cgrad0_pl(ADM_gall_pl,ADM_lall_pl,1:3))
-    allocate(cgrad1_pl(ADM_gall_pl,ADM_lall_pl,1:3))
-    allocate(cgrad2_pl(ADM_gall_pl,ADM_lall_pl,1:3))
-    allocate(cgrad3_pl(ADM_gall_pl,ADM_lall_pl,1:3))
-    allocate(cgrad4_pl(ADM_gall_pl,ADM_lall_pl,1:3))
-    allocate(cgrad5_pl(ADM_gall_pl,ADM_lall_pl,1:3))
-    !
-    nstart=suf(ADM_gmin,ADM_gmin)
-    nend  =suf(ADM_gmax,ADM_gmax)
-    do l=1,ADM_lall
-      do m=1,3
-        md=m+GMTR_A_hnx-1
-        do n = nstart,nend
-          ij=n
-          ip1j=ij+1
-          ip1jp1=ij+1+ADM_gall_1d
-          ijp1=ij+ADM_gall_1d
-          im1j=ij-1
-          im1jm1=ij-1-ADM_gall_1d
-          ijm1=ij-ADM_gall_1d
-          ! 
-          ! ij
-          cgrad(0,n,l,m)=(GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W1) &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W3) &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W1) &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W1) &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W1) &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W2) &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W2) &
-                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W2) &
-                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TI,GMTR_T_W3) &
-                        *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W2) &
-                        *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W3) &
-                        *GMTR_A_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TI,GMTR_T_W3) &
-                        *GMTR_A_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                      -2*GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                      -2*GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                      -2*GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                      +2*GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                      +2*GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                      +2*GMTR_A_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
-          ! ip1j
-          cgrad(1,n,l,m)=(GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W2) &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W2) &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W2) &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W2) &
-                        *GMTR_A_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
-          ! ip1jp1
-          cgrad(2,n,l,m)=(GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W3) &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W3) &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W2) &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W2) &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
-          ! ijp1
-          cgrad(3,n,l,m)=(GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W3) &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W3) &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W3) &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W3) &
-                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
-          ! im1j
-          cgrad(4,n,l,m)=(GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W1) &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W1) &
-                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W3) &
-                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W3) &
-                        *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
-          ! im1jm1
-          cgrad(5,n,l,m)=(-GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W1) &
-                         *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                         -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TI,GMTR_T_W1) &
-                         *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                         -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TI,GMTR_T_W1) &
-                         *GMTR_A_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                         -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W1) &
-                         *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
-          ! ijm1
-          cgrad(6,n,l,m)=(GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W1) &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TI,GMTR_T_W2) &
-                        *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W1) &
-                        *GMTR_A_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TI,GMTR_T_W2) &
-                        *GMTR_A_var(ijm1  ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0    
-        enddo !loop n
-      enddo !loop m
-    enddo !loop l
-    !
-    do l=1,ADM_lall
-      rgnid=ADM_prc_tab(l,ADM_prc_me)
-      if (ADM_rgn_vnum(ADM_W,rgnid)==3) then
-        n=suf(ADM_gmin,ADM_gmin)
-        ij=n
-        ip1j=ij+1
-        ip1jp1=ij+1+ADM_gall_1d
-        ijp1=ij+ADM_gall_1d
-        im1j=ij-1
-        im1jm1=ij-1-ADM_gall_1d
-        ijm1=ij-ADM_gall_1d
-        do m=1,3
-          md=m+GMTR_A_hnx-1
-          ! ij
-          cgrad(0,n,l,m)=(GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W1)                                   &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)                                   &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W1)                                   &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W1)                                   &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W1)                                   &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W2)                                   &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W2)                                   &
-                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W2)                                   &
-                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)                                   &
-                        *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W2)                                   &
-                        *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                      -2*GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                      -2*GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                      -2*GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                      +2*GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                      +2*GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
-          ! ip1j
-          cgrad(1,n,l,m)=(GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W2)                                   &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W2)                                   &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W2)                                   &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W2)                                   &
-                        *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
-          ! ip1jp1
-          cgrad(2,n,l,m)=(GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W3)                                   &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TI,GMTR_T_W3)                                   &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W2)                                   &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W2)                                   &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
-          ! ijp1
-          cgrad(3,n,l,m)=(GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)                                   &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(ij    ,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)                                   &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        +GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W3)                                   &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W3)                                   &
-                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
-          ! im1j
-          cgrad(4,n,l,m)=(GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W1)                                   &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AJ ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(im1j  ,ADM_KNONE,l,ADM_TI,GMTR_T_W1)                                   &
-                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)                                   &
-                        *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)                                   &
-                        *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
-          ! im1jm1
-          cgrad(5,n,l,m)=(-GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W1)                                   &
-                         *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                         -GMTR_T_var(im1jm1,ADM_KNONE,l,ADM_TJ,GMTR_T_W1)                                   &
-                         *GMTR_A_var(im1j  ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
-          ! ijm1
-          cgrad(6,n,l,m)=(GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W1)                                   &
-                        *GMTR_A_var(ij    ,ADM_KNONE,l,ADM_AI ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea) &
-                        -GMTR_T_var(ijm1  ,ADM_KNONE,l,ADM_TJ,GMTR_T_W1)                                   &
-                        *GMTR_A_var(im1jm1,ADM_KNONE,l,ADM_AIJ,md)*GMTR_P_var(ij,ADM_KNONE,l,GMTR_P_rarea))*0.5d0
-        enddo
-      endif
+    !---< setup coefficient of gradient operator >
+
+    write(ADM_LOG_FID,*) '*** setup coefficient of gradient operator'
+
+    allocate( cgrad   (0:6,             ADM_gall   ,ADM_lall   ,3) )
+    allocate( cgrad_pl(0:ADM_vlink_nmax,ADM_gall_pl,ADM_lall_pl,3) )
+
+    do l = 1, ADM_lall
+       rgnid = ADM_prc_tab(l,ADM_prc_me)
+
+       do m = 1, 3
+          md = m + GMTR_A_HNX - 1
+          do n = OPRT_nstart, OPRT_nend
+             ij     = n
+             ip1j   = n + 1
+             ip1jp1 = n + 1 + ADM_gall_1d
+             ijp1   = n     + ADM_gall_1d
+             im1j   = n - 1
+             im1jm1 = n - 1 - ADM_gall_1d
+             ijm1   = n     - ADM_gall_1d
+
+             ! ij
+             cgrad(0,n,l,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,W3) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
+                                + GMTR_T_var(ijm1  ,k0,l,TJ,W3) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TI,W1) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TI,W1) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TJ,W1) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TJ,W1) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                                + GMTR_T_var(im1j  ,k0,l,TI,W2) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                                - GMTR_T_var(im1j  ,k0,l,TI,W2) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                                - GMTR_T_var(im1jm1,k0,l,TJ,W2) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                                - GMTR_T_var(im1jm1,k0,l,TI,W3) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                                - GMTR_T_var(im1jm1,k0,l,TJ,W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                                - GMTR_T_var(im1jm1,k0,l,TI,W3) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
+                                - 2.D0 * GMTR_A_var(ij    ,k0,l,AI ,md)                          &
+                                - 2.D0 * GMTR_A_var(ij    ,k0,l,AIJ,md)                          &
+                                - 2.D0 * GMTR_A_var(ij    ,k0,l,AJ ,md)                          &
+                                + 2.D0 * GMTR_A_var(im1j  ,k0,l,AI ,md)                          &
+                                + 2.D0 * GMTR_A_var(im1jm1,k0,l,AIJ,md)                          &
+                                + 2.D0 * GMTR_A_var(ijm1  ,k0,l,AJ ,md)                          &
+                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+             ! ip1j
+             cgrad(1,n,l,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,W2) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
+                                + GMTR_T_var(ijm1  ,k0,l,TJ,W2) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TI,W2) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TI,W2) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+             ! ip1jp1
+             cgrad(2,n,l,m) = ( + GMTR_T_var(ij    ,k0,l,TI,W3) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TI,W3) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TJ,W2) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TJ,W2) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+             ! ijp1
+             cgrad(3,n,l,m) = ( + GMTR_T_var(ij    ,k0,l,TJ,W3) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TJ,W3) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                                + GMTR_T_var(im1j  ,k0,l,TI,W3) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                                - GMTR_T_var(im1j  ,k0,l,TI,W3) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+             ! im1j
+             cgrad(4,n,l,m) = ( + GMTR_T_var(im1j  ,k0,l,TI,W1) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                                - GMTR_T_var(im1j  ,k0,l,TI,W1) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                                - GMTR_T_var(im1jm1,k0,l,TJ,W3) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                                - GMTR_T_var(im1jm1,k0,l,TJ,W3) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+             ! im1jm1
+             cgrad(5,n,l,m) = ( - GMTR_T_var(im1jm1,k0,l,TJ,W1) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                                - GMTR_T_var(im1jm1,k0,l,TJ,W1) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                                - GMTR_T_var(im1jm1,k0,l,TI,W1) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                                - GMTR_T_var(im1jm1,k0,l,TI,W1) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
+                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+             ! ijm1
+             cgrad(6,n,l,m) = ( - GMTR_T_var(im1jm1,k0,l,TI,W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                                - GMTR_T_var(im1jm1,k0,l,TI,W2) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
+                                - GMTR_T_var(ijm1  ,k0,l,TJ,W1) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
+                                + GMTR_T_var(ijm1  ,k0,l,TJ,W1) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+          enddo
+       enddo
+
+       if ( ADM_rgn_vnum(ADM_W,rgnid) == 3 ) then ! pentagon
+          n = suf(ADM_gmin,ADM_gmin)
+
+          do m = 1, 3
+             md = m + GMTR_A_hnx - 1
+
+             ij     = n
+             ip1j   = n + 1
+             ip1jp1 = n + 1 + ADM_gall_1d
+             ijp1   = n     + ADM_gall_1d
+             im1j   = n - 1
+             im1jm1 = n - 1 - ADM_gall_1d
+             ijm1   = n     - ADM_gall_1d
+
+             ! ij
+             cgrad(0,n,l,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,W3) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                                + GMTR_T_var(ijm1  ,k0,l,TJ,W3) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TI,W1) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TI,W1) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TJ,W1) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TJ,W1) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                                + GMTR_T_var(im1j  ,k0,l,TI,W2) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                                - GMTR_T_var(im1j  ,k0,l,TI,W2) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                                - GMTR_T_var(im1jm1,k0,l,TJ,W2) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                                - GMTR_T_var(im1jm1,k0,l,TJ,W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                                - 2.D0 * GMTR_A_var(ij    ,k0,l,AI ,md)                          &
+                                - 2.D0 * GMTR_A_var(ij    ,k0,l,AIJ,md)                          &
+                                - 2.D0 * GMTR_A_var(ij    ,k0,l,AJ ,md)                          &
+                                + 2.D0 * GMTR_A_var(im1j  ,k0,l,AI ,md)                          &
+                                + 2.D0 * GMTR_A_var(im1jm1,k0,l,AIJ,md)                          &
+                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+             ! ip1j
+             cgrad(1,n,l,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                                + GMTR_T_var(ijm1  ,k0,l,TJ,W2) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TI,W2) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TI,W2) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+             ! ip1jp1
+             cgrad(2,n,l,m) = ( + GMTR_T_var(ij    ,k0,l,TI,W3) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TI,W3) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TJ,W2) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TJ,W2) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+             ! ijp1
+             cgrad(3,n,l,m) = ( + GMTR_T_var(ij    ,k0,l,TJ,W3) * GMTR_A_var(ij    ,k0,l,AIJ,md) &
+                                + GMTR_T_var(ij    ,k0,l,TJ,W3) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                                + GMTR_T_var(im1j  ,k0,l,TI,W3) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                                - GMTR_T_var(im1j  ,k0,l,TI,W3) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+             ! im1j
+             cgrad(4,n,l,m) = ( + GMTR_T_var(im1j  ,k0,l,TI,W1) * GMTR_A_var(ij    ,k0,l,AJ ,md) &
+                                - GMTR_T_var(im1j  ,k0,l,TI,W1) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                                - GMTR_T_var(im1jm1,k0,l,TJ,W3) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                                - GMTR_T_var(im1jm1,k0,l,TJ,W3) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+             ! im1jm1
+             cgrad(5,n,l,m) = ( - GMTR_T_var(im1jm1,k0,l,TJ,W1) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
+                                - GMTR_T_var(im1jm1,k0,l,TJ,W1) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+             ! ijm1
+             cgrad(6,n,l,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,W1) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
+                                + GMTR_T_var(ijm1  ,k0,l,TJ,W1) * GMTR_A_var(ij    ,k0,l,AI ,md) &
+                              ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_rarea)
+          enddo
+       endif
     enddo
-    !
-    if (ADM_prc_me==ADM_prc_pl) then
-      n=ADM_gslf_pl
-      n0=ADM_gmin_pl
-      n1=ADM_gmin_pl+1
-      n2=ADM_gmin_pl+2
-      n3=ADM_gmin_pl+3
-      n4=ADM_gmin_pl+4
-      do l=1,ADM_lall_pl
-        do m=1,3
-          md=m+GMTR_A_hnx-1
-          !n
-          cgrad0_pl(n,l,m)=(                                                   &
-                            +2*(GMTR_T_var_pl(n4,ADM_KNONE,l,GMTR_T_W1)-1.0d0) &
-                            *GMTR_A_var_pl(n0,ADM_KNONE,l,md)                  &
-                            +2*(GMTR_T_var_pl(n0,ADM_KNONE,l,GMTR_T_W1)-1.0d0) &
-                            *GMTR_A_var_pl(n1,ADM_KNONE,l,md)                  &
-                            +2*(GMTR_T_var_pl(n1,ADM_KNONE,l,GMTR_T_W1)-1.0d0) &
-                            *GMTR_A_var_pl(n2,ADM_KNONE,l,md)                  &
-                            +2*(GMTR_T_var_pl(n2,ADM_KNONE,l,GMTR_T_W1)-1.0d0) &
-                            *GMTR_A_var_pl(n3,ADM_KNONE,l,md)                  &
-                            +2*(GMTR_T_var_pl(n3,ADM_KNONE,l,GMTR_T_W1)-1.0d0) &
-                            *GMTR_A_var_pl(n4,ADM_KNONE,l,md)                  &
-                           )*GMTR_P_var_pl(n,ADM_KNONE,l,GMTR_P_rarea)*0.5d0                                           
-          !n0
-          cgrad1_pl(n,l,m)=(                                         &
-                            +GMTR_T_var_pl(n4,ADM_KNONE,l,GMTR_T_W3) &
-                            *GMTR_A_var_pl(n4,ADM_KNONE,l,md)        &
-                            +GMTR_T_var_pl(n4,ADM_KNONE,l,GMTR_T_W3) &
-                            *GMTR_A_var_pl(n0,ADM_KNONE,l,md)        &
-                            +GMTR_T_var_pl(n0,ADM_KNONE,l,GMTR_T_W2) &
-                            *GMTR_A_var_pl(n0,ADM_KNONE,l,md)        &
-                            +GMTR_T_var_pl(n0,ADM_KNONE,l,GMTR_T_W2) &
-                            *GMTR_A_var_pl(n1,ADM_KNONE,l,md)        &
-                           )*GMTR_P_var_pl(n,ADM_KNONE,l,GMTR_P_rarea)*0.5d0                                 
-          !n1
-          cgrad2_pl(n,l,m)=(                                         &
-                            +GMTR_T_var_pl(n0,ADM_KNONE,l,GMTR_T_W3) &
-                            *GMTR_A_var_pl(n0,ADM_KNONE,l,md)        &
-                            +GMTR_T_var_pl(n0,ADM_KNONE,l,GMTR_T_W3) &
-                            *GMTR_A_var_pl(n1,ADM_KNONE,l,md)        &
-                            +GMTR_T_var_pl(n1,ADM_KNONE,l,GMTR_T_W2) &
-                            *GMTR_A_var_pl(n1,ADM_KNONE,l,md)        &
-                            +GMTR_T_var_pl(n1,ADM_KNONE,l,GMTR_T_W2) &
-                            *GMTR_A_var_pl(n2,ADM_KNONE,l,md)        &
-                           )*GMTR_P_var_pl(n,ADM_KNONE,l,GMTR_P_rarea)*0.5d0                                 
-          !n2
-          cgrad3_pl(n,l,m)=(                                         &
-                            +GMTR_T_var_pl(n1,ADM_KNONE,l,GMTR_T_W3) &
-                            *GMTR_A_var_pl(n1,ADM_KNONE,l,md)        &
-                            +GMTR_T_var_pl(n1,ADM_KNONE,l,GMTR_T_W3) &
-                            *GMTR_A_var_pl(n2,ADM_KNONE,l,md)        &
-                            +GMTR_T_var_pl(n2,ADM_KNONE,l,GMTR_T_W2) &
-                            *GMTR_A_var_pl(n2,ADM_KNONE,l,md)        &
-                            +GMTR_T_var_pl(n2,ADM_KNONE,l,GMTR_T_W2) &
-                            *GMTR_A_var_pl(n3,ADM_KNONE,l,md)        &
-                           )*GMTR_P_var_pl(n,ADM_KNONE,l,GMTR_P_rarea)*0.5d0                                 
-          !n3
-          cgrad4_pl(n,l,m)=(                                         &
-                            +GMTR_T_var_pl(n2,ADM_KNONE,l,GMTR_T_W3) &
-                            *GMTR_A_var_pl(n2,ADM_KNONE,l,md)        &
-                            +GMTR_T_var_pl(n2,ADM_KNONE,l,GMTR_T_W3) &
-                            *GMTR_A_var_pl(n3,ADM_KNONE,l,md)        &
-                            +GMTR_T_var_pl(n3,ADM_KNONE,l,GMTR_T_W2) &
-                            *GMTR_A_var_pl(n3,ADM_KNONE,l,md)        &
-                            +GMTR_T_var_pl(n3,ADM_KNONE,l,GMTR_T_W2) &
-                            *GMTR_A_var_pl(n4,ADM_KNONE,l,md)        &
-                           )*GMTR_P_var_pl(n,ADM_KNONE,l,GMTR_P_rarea)*0.5d0                                 
-          !n4
-          cgrad5_pl(n,l,m)=(                                         &
-                            +GMTR_T_var_pl(n3,ADM_KNONE,l,GMTR_T_W3) &
-                            *GMTR_A_var_pl(n3,ADM_KNONE,l,md)        &
-                            +GMTR_T_var_pl(n3,ADM_KNONE,l,GMTR_T_W3) &
-                            *GMTR_A_var_pl(n4,ADM_KNONE,l,md)        &
-                            +GMTR_T_var_pl(n4,ADM_KNONE,l,GMTR_T_W2) &
-                            *GMTR_A_var_pl(n4,ADM_KNONE,l,md)        &
-                            +GMTR_T_var_pl(n4,ADM_KNONE,l,GMTR_T_W2) &
-                            *GMTR_A_var_pl(n0,ADM_KNONE,l,md)        &
-                           )*GMTR_P_var_pl(n,ADM_KNONE,l,GMTR_P_rarea)*0.5d0                                 
-        enddo
-      enddo
+
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       n = ADM_gslf_pl
+       do l = 1, ADM_lall_pl
+          do m = 1, 3
+             md = m + GMTR_A_hnx - 1
+
+             cgrad_pl(0,n,l,m) = 0.D0
+             do v = ADM_gmin_pl, ADM_gmax_pl
+                ij   = v
+                ijp1 = v + 1
+                if( ijp1 > ADM_gmax_pl ) ijp1 = ADM_gmin_pl
+
+                cgrad_pl(0,n,l,m) = cgrad_pl(0,n,l,m) &
+                                  + 2.D0 * ( GMTR_T_var_pl(ij,k0,l,W1) - 1.D0 ) * GMTR_A_var_pl(ijp1,k0,l,md)
+             enddo
+             cgrad_pl(0,n,l,m) = cdiv_pl(0,n,l,m) * 0.5D0 * GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)
+
+             do v = ADM_gmin_pl, ADM_gmax_pl
+                ij   = v
+                ijp1 = v + 1
+                ijm1 = v - 1
+                if( ijp1 == ADM_gmax_pl + 1 ) ijp1 = ADM_gmin_pl
+                if( ijm1 == ADM_gmin_pl - 1 ) ijm1 = ADM_gmax_pl
+
+                cgrad_pl(v-1,n,l,m) = ( + GMTR_T_var_pl(ijm1,k0,l,W3) * GMTR_A_var_pl(ijm1,k0,l,md) &
+                                        + GMTR_T_var_pl(ijm1,k0,l,W3) * GMTR_A_var_pl(ij  ,k0,l,md) &
+                                        + GMTR_T_var_pl(ij  ,k0,l,W2) * GMTR_A_var_pl(ij  ,k0,l,md) &
+                                        + GMTR_T_var_pl(ij  ,k0,l,W2) * GMTR_A_var_pl(ijp1,k0,l,md) &
+                                      ) * 0.5D0 * GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)
+             enddo
+          enddo ! loop m
+       enddo ! loop l
     endif
-    !
+
     ! ---- setup coefficient of laplacian operator
-    allocate(clap0(ADM_gall,ADM_lall))
-    allocate(clap1(ADM_gall,ADM_lall))
-    allocate(clap2(ADM_gall,ADM_lall))
-    allocate(clap3(ADM_gall,ADM_lall))
-    allocate(clap4(ADM_gall,ADM_lall))
-    allocate(clap5(ADM_gall,ADM_lall))
-    allocate(clap6(ADM_gall,ADM_lall))
-    !
-    k0=ADM_KNONE
-    a0=GMTR_T_rarea
-    tx1=GMTR_A_tnx
-    ty1=GMTR_A_tny
-    tz1=GMTR_A_tnz
-    hx1=GMTR_A_hnx
-    hy1=GMTR_A_hny
-    hz1=GMTR_A_hnz
-    nstart=suf(ADM_gmin,ADM_gmin)
-    nend  =suf(ADM_gmax,ADM_gmax)
-    do l=1,ADM_lall
-      do k=1,ADM_kall
-        do n=nstart,nend
-          ij    =n
-          ip1j  =ij+1
-          ip1jp1=ij+1+ADM_gall_1d
-          ijp1  =ij+ADM_gall_1d
-          im1j  =ij-1
-          im1jm1=ij-1-ADM_gall_1d
-          ijm1  =ij-ADM_gall_1d
-          !
-     ! 0: ij
-     clap0(ij,l)=( &
+
+    write(ADM_LOG_FID,*) '*** setup coefficient of laplacian operator'
+
+    allocate( clap   (0:6,             ADM_gall   ,ADM_lall   ) )
+    allocate( clap_pl(0:ADM_vlink_nmax,ADM_gall_pl,ADM_lall_pl) )
+
+    a0  = GMTR_T_rarea
+    tx1 = GMTR_A_tnx
+    ty1 = GMTR_A_tny
+    tz1 = GMTR_A_tnz
+    hx1 = GMTR_A_hnx
+    hy1 = GMTR_A_hny
+    hz1 = GMTR_A_hnz
+
+    do l = 1, ADM_lall
+       rgnid = ADM_prc_tab(l,ADM_prc_me)
+
+       do n = OPRT_nstart, OPRT_nend
+          ij     = n
+          ip1j   = n + 1
+          ip1jp1 = n + 1 + ADM_gall_1d
+          ijp1   = n     + ADM_gall_1d
+          im1j   = n - 1
+          im1jm1 = n - 1 - ADM_gall_1d
+          ijm1   = n     - ADM_gall_1d
+
+          ! ij
+          clap(0,ij,l) = ( &
           -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
           +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
           +2*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
@@ -741,7 +611,8 @@ contains
           -1*GMTR_A_var(im1j,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
           -2*GMTR_A_var(im1j,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
       )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
-     clap0(ij,l)=clap0(ij,l)+( &
+
+          clap(0,ij,l) = clap(0,ij,l) + ( &
        -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
        -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
        -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
@@ -797,8 +668,9 @@ contains
       -1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
       -2*GMTR_A_var(im1jm1,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
       )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
-     ! 1: ip1j
-     clap1(ij,l)=( &
+
+          ! ip1j
+          clap(1,ij,l) = ( &
           -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
           -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
           -2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
@@ -836,8 +708,9 @@ contains
       +1*GMTR_A_var(ijm1  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
       +2*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
       )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
-     ! 2: ip1jp1
-     clap2(ij,l)=( &
+
+          ! ip1jp1
+          clap(2,ij,l) = ( &
           +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
           -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
           +2*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
@@ -875,8 +748,9 @@ contains
           -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
           -2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
       )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
-     ! 3: ijp1
-     clap3(ij,l)=( &
+
+          ! ijp1
+          clap(3,ij,l) = ( &
           +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
           +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
           +2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
@@ -914,8 +788,9 @@ contains
        -2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
        -2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
       )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
-     ! 4: im1j
-     clap4(ij,l)=( &
+
+          ! im1j
+          clap(4,ij,l) = ( &
           +2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
           +1*GMTR_A_var(im1j,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
           -1*GMTR_A_var(im1j,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
@@ -953,8 +828,9 @@ contains
       -2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
       -2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
       )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
-     ! 5: im1jm1
-     clap5(ij,l)=( &
+
+          ! im1jm1
+          clap(5,ij,l) = ( &
        -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
        -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
        -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
@@ -992,8 +868,9 @@ contains
       -1*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
       -2*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
       )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
-     ! 6: ijm1
-     clap6(ij,l)=( &
+
+          ! ijm1
+          clap(6,ij,l) = ( &
           -1*GMTR_A_var(ijm1,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
           +1*GMTR_A_var(ijm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
           -2*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
@@ -1031,25 +908,22 @@ contains
       +1*GMTR_A_var(im1jm1,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
       +2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TI,a0)*GMTR_A_var(ijm1,k0,l,ADM_AJ,hz1) &
       )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
-        enddo
-      enddo
-    enddo
-    !
-    do l=1,ADM_lall
-      rgnid=ADM_prc_tab(l,ADM_prc_me)
-      if (ADM_rgn_vnum(ADM_W,rgnid)==3) then
-        n=suf(ADM_gmin,ADM_gmin)
-        ij    =n
-        ip1j  =ij+1
-        ip1jp1=ij+1+ADM_gall_1d
-        ijp1  =ij+ADM_gall_1d
-        im1j  =ij-1
-        im1jm1=ij-1-ADM_gall_1d
-        ijm1  =ij-ADM_gall_1d
-        !
-        do k= 1,ADM_kall
-     ! 0: ij
-     clap0(ij,l)=( &
+
+       enddo
+
+       if ( ADM_rgn_vnum(ADM_W,rgnid) == 3 ) then ! pentagon
+          n = suf(ADM_gmin,ADM_gmin)
+
+          ij     = n
+          ip1j   = n + 1
+          ip1jp1 = n + 1 + ADM_gall_1d
+          ijp1   = n     + ADM_gall_1d
+          im1j   = n - 1
+          im1jm1 = n - 1 - ADM_gall_1d
+          ijm1   = n     - ADM_gall_1d
+
+          ! 0: ij
+          clap(0,ij,l) = ( &
           -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
           +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
           +2*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
@@ -1096,7 +970,8 @@ contains
           +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
           -2*GMTR_A_var(ijp1,k0,l,ADM_AI ,ty1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
       )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0  ! Y.Niwa add 06/08/22
-     clap0(ij,l)=clap0(ij,l)+( &                 ! Y.Niwa add 06/08/22 
+
+          clap(0,ij,l) = clap(0,ij,l) + ( &
           -1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
           -1*GMTR_A_var(im1j,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
           -2*GMTR_A_var(im1j,k0,l,ADM_AIJ,ty1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hy1) &
@@ -1143,8 +1018,9 @@ contains
       +2*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
       +2*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
       )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
-     ! 1: ip1j
-     clap1(ij,l)=( &
+
+          ! ip1j
+          clap(1,ij,l) = ( &
           -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
           -1*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
           -2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
@@ -1182,8 +1058,9 @@ contains
       +2*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
       +2*GMTR_A_var(ijm1  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ijm1  ,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
       )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
-     ! 2: ip1jp1
-     clap2(ij,l)=( &
+
+          ! ip1jp1
+          clap(2,ij,l) = ( &
           +1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
           -1*GMTR_A_var(ip1j,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
           +2*GMTR_A_var(ij  ,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij  ,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hx1) &
@@ -1221,8 +1098,9 @@ contains
           -1*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
           -2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ij  ,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hz1) &
       )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
-     ! 3: ijp1
-     clap3(ij,l)=( &
+
+          ! ijp1
+          clap(3,ij,l) = ( &
           +1*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
           +1*GMTR_A_var(ijp1,k0,l,ADM_AI ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
           +2*GMTR_A_var(ij  ,k0,l,ADM_AIJ,tx1)*GMTR_T_var(ij,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AIJ,hx1) &
@@ -1260,8 +1138,9 @@ contains
        -2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
        -2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1j  ,k0,l,ADM_TI,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
       )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
-     ! 4: im1j
-     clap4(ij,l)=( &
+
+          ! im1j
+          clap(4,ij,l) = ( &
           +2*GMTR_A_var(ij  ,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
           +1*GMTR_A_var(im1j,k0,l,ADM_AIJ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
           -1*GMTR_A_var(im1j,k0,l,ADM_AI ,tx1)*GMTR_T_var(im1j,k0,l,ADM_TI,a0)*GMTR_A_var(ij,k0,l,ADM_AJ,hx1) &
@@ -1299,8 +1178,9 @@ contains
       -1*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
       -2*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
       )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
-     ! 5: im1jm1
-     clap5(ij,l)=( &
+
+          ! im1jm1
+          clap(5,ij,l) = ( &
        -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hx1) &
        -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hy1) &
        -1*GMTR_A_var(im1jm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1j,k0,l,ADM_AI,hz1) &
@@ -1320,8 +1200,9 @@ contains
       +2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
       +2*GMTR_A_var(im1j  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(im1jm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
       )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
-     ! 6: ijm1
-     clap6(ij,l)=( &
+
+          ! ijm1
+          clap(6,ij,l) = ( &
       -1*GMTR_A_var(ijm1,k0,l,ADM_AJ ,tx1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hx1) &
       -1*GMTR_A_var(ijm1,k0,l,ADM_AJ ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hy1) &
       -1*GMTR_A_var(ijm1,k0,l,ADM_AJ ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(im1jm1,k0,l,ADM_AIJ,hz1) &
@@ -1341,19 +1222,12 @@ contains
       -2*GMTR_A_var(ij  ,k0,l,ADM_AI ,tz1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hz1) &
       -2*GMTR_A_var(ij  ,k0,l,ADM_AI ,ty1)*GMTR_T_var(ijm1,k0,l,ADM_TJ,a0)*GMTR_A_var(ij,k0,l,ADM_AI,hy1) &
          )*GMTR_P_var(ij,k0,l,GMTR_P_rarea)/12.0d0
-        !
-        enddo
+
       endif
     enddo
-    !
-    allocate(clap0_pl(ADM_gall_pl,ADM_lall_pl))
-    allocate(clap1_pl(ADM_gall_pl,ADM_lall_pl))
-    allocate(clap2_pl(ADM_gall_pl,ADM_lall_pl))
-    allocate(clap3_pl(ADM_gall_pl,ADM_lall_pl))
-    allocate(clap4_pl(ADM_gall_pl,ADM_lall_pl))
-    allocate(clap5_pl(ADM_gall_pl,ADM_lall_pl))
-    !
-    if (ADM_prc_me==ADM_prc_pl) then
+
+    if ( ADM_prc_me == ADM_prc_pl ) then
+
       n =ADM_gslf_pl
       n0=ADM_gmin_pl
       n1=ADM_gmin_pl+1
@@ -1371,10 +1245,9 @@ contains
       hx1=GMTR_A_hnx
       hy1=GMTR_A_hny
       hz1=GMTR_A_hnz
-      do l=1,ADM_lall_pl
-          !
-          ! n
-          clap0_pl(n,l)=( &  
+
+      do l = 1,ADM_lall_pl
+          clap_pl(0,n,l)=( &  
                        +1*GMTR_A_var_pl(n4,k0,l,tx1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
                        -2*GMTR_A_var_pl(n4,k0,l,tx2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
                        -1*GMTR_A_var_pl(n0,k0,l,tx1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
@@ -1421,7 +1294,8 @@ contains
                        -2*GMTR_A_var_pl(n1,k0,l,ty2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
                        -1*GMTR_A_var_pl(n2,k0,l,ty1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
                       )*GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)/12.0d0   ! Y.Niwa add 060822
-          clap0_pl(n,l)= clap0_pl(n,l) + ( &                        ! Y.Niwa add 060822 
+
+          clap_pl(0,n,l)= clap_pl(0,n,l) + ( &                        ! Y.Niwa add 060822 
                        +1*GMTR_A_var_pl(n2,k0,l,ty1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
                        -2*GMTR_A_var_pl(n2,k0,l,ty2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
                        -1*GMTR_A_var_pl(n3,k0,l,ty1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hy1) &
@@ -1470,7 +1344,7 @@ contains
                       )*GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)/12.0d0
           !
           ! n0
-          clap1_pl(n,l)=( &  
+          clap_pl(1,n,l)=( &  
                        +1*GMTR_A_var_pl(n0,k0,l,tx2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
                        -2*GMTR_A_var_pl(n4,k0,l,tx1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
                        -1*GMTR_A_var_pl(n0,k0,l,tx1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
@@ -1510,7 +1384,7 @@ contains
                       )*GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)/12.0d0
           !
           ! n1
-          clap2_pl(n,l)=( &  
+          clap_pl(2,n,l)=( &  
                        +1*GMTR_A_var_pl(n0,k0,l,tx2)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
                        -2*GMTR_A_var_pl(n0,k0,l,tx1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
                        -1*GMTR_A_var_pl(n1,k0,l,tx1)*GMTR_T_var_pl(n0,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
@@ -1550,7 +1424,7 @@ contains
                       )*GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)/12.0d0
           !
           ! n2
-          clap3_pl(n,l)=( &  
+          clap_pl(3,n,l)=( &  
                        +1*GMTR_A_var_pl(n1,k0,l,tx2)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
                        -2*GMTR_A_var_pl(n1,k0,l,tx1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
                        -1*GMTR_A_var_pl(n2,k0,l,tx1)*GMTR_T_var_pl(n1,k0,l,a0)*GMTR_A_var_pl(n1,k0,l,hx1) &
@@ -1590,7 +1464,7 @@ contains
                       )*GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)/12.0d0
           !
           ! n3
-          clap4_pl(n,l)=( &  
+          clap_pl(4,n,l)=( &  
                        +1*GMTR_A_var_pl(n2,k0,l,tx2)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
                        -2*GMTR_A_var_pl(n2,k0,l,tx1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
                        -1*GMTR_A_var_pl(n3,k0,l,tx1)*GMTR_T_var_pl(n2,k0,l,a0)*GMTR_A_var_pl(n2,k0,l,hx1) &
@@ -1630,7 +1504,7 @@ contains
                       )*GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)/12.0d0
           !
           ! n4
-          clap5_pl(n,l)=( &  
+          clap_pl(5,n,l)=( &  
                        +1*GMTR_A_var_pl(n4,k0,l,tx1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
                        +1*GMTR_A_var_pl(n4,k0,l,tx2)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
                        +2*GMTR_A_var_pl(n0,k0,l,tx1)*GMTR_T_var_pl(n4,k0,l,a0)*GMTR_A_var_pl(n0,k0,l,hx1) &
@@ -1670,17 +1544,25 @@ contains
                       )*GMTR_P_var_pl(n,k0,l,GMTR_P_rarea)/12.0d0
       enddo
     endif
-    allocate(cmdif_T(ADM_TI:ADM_TJ,ADM_gall,ADM_lall))
-    allocate(cmdif_AT(ADM_AI:ADM_AJ,1:3,ADM_gall,ADM_lall))
-    allocate(cmdif_AH(ADM_AI:ADM_AJ,1:3,ADM_gall,ADM_lall))
-    allocate(cmdif_P(ADM_gall,ADM_lall))
 
-    do m=ADM_TI, ADM_TJ
-       do l=1,ADM_lall
-          do n=1,ADM_gall
-             cmdif_T(m, n, l) = GMTR_T_var(n, ADM_KNONE, l, m, GMTR_T_RAREA)
-          enddo
-       enddo
+
+
+    allocate( cmdif_P (                  ADM_gall,ADM_lall) )
+    allocate( cmdif_T (ADM_TI:ADM_TJ,    ADM_gall,ADM_lall) )
+    allocate( cmdif_AT(ADM_AI:ADM_AJ,1:3,ADM_gall,ADM_lall) )
+    allocate( cmdif_AH(ADM_AI:ADM_AJ,1:3,ADM_gall,ADM_lall) )
+
+    do l = 1, ADM_lall
+    do n = 1, ADM_gall
+       cmdif_P(n,l) = GMTR_P_var(n,k0,l,GMTR_P_RAREA)
+    enddo
+    enddo
+
+    do l = 1, ADM_lall
+    do n = 1, ADM_gall
+       cmdif_T(TI,n,l) = GMTR_T_var(n,k0,l,TI,GMTR_T_RAREA)
+       cmdif_T(TJ,n,l) = GMTR_T_var(n,k0,l,TJ,GMTR_T_RAREA)
+    enddo
     enddo
 
     do m=ADM_AI,ADM_AJ
@@ -1697,12 +1579,9 @@ contains
        enddo
     enddo
 
-    do l=1,ADM_lall
-       do n=1,ADM_gall
-          cmdif_P( n, l ) = GMTR_P_var( n,  ADM_KNONE,  l,    GMTR_P_RAREA  )
-       enddo
-    enddo
+    return
   end subroutine OPRT_setup
+
   !-----------------------------------------------------------------------------
   subroutine OPRT_divergence( &
        scl, scl_pl, &
@@ -1719,8 +1598,6 @@ contains
        ADM_gall_pl, &
        ADM_kall,    &
        ADM_gall_1d, &
-       ADM_gmin,    &
-       ADM_gmax,    &
        ADM_gslf_pl, &
        ADM_gmax_pl, &
        ADM_kmin,    &
@@ -1743,11 +1620,7 @@ contains
     integer :: im1j, ijm1, im1jm1
     integer :: ip1j, ijp1, ip1jp1
 
-    integer :: nstart, nend
     integer :: n, k, l, v
-
-    integer :: suf, i, j
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
     if ( present(mfact) ) then
@@ -1756,12 +1629,9 @@ contains
        fact = 1.D0
     endif
 
-    nstart = suf(ADM_gmin,ADM_gmin)
-    nend   = suf(ADM_gmax,ADM_gmax)
-
     do l = 1, ADM_lall
     do k = ADM_kmin, ADM_kmax
-    do n = nstart, nend
+    do n = OPRT_nstart, OPRT_nend
        ij     = n
        ip1j   = n + 1
        ip1jp1 = n + 1 + ADM_gall_1d
@@ -1799,7 +1669,7 @@ contains
        n = ADM_gslf_pl
        do l = 1, ADM_lall_pl
        do k = ADM_kmin, ADM_kmax
-          scl_pl(n,k,l) = 0
+          scl_pl(n,k,l) = 0.D0
 
           do v = ADM_gslf_pl, ADM_gmax_pl
              scl_pl(n,k,l) = scl_pl(n,k,l) + ( cdiv_pl(v-1,n,l,1) * vx_pl(v,k,l) &
@@ -1816,29 +1686,25 @@ contains
   end subroutine OPRT_divergence
 
   !-----------------------------------------------------------------------------
-  subroutine OPRT_gradient(        &
-       vx, vx_pl,                  &
-       vy, vy_pl,                  &
-       vz, vz_pl,                  &
-       scl, scl_pl,                &
-       mfact )
-    use mod_adm, only :   &
-         !--- public parameters
-         ADM_prc_pl,      &
-         ADM_lall_pl,     &
-         ADM_gmin_pl,     &
-         ADM_gslf_pl,     &
-         ADM_gall_pl,     &
-         !--- public variables
-         ADM_prc_me,      &
-         ADM_gall_1d,     &
-         ADM_kall,        &
-         ADM_lall,        &
-         ADM_kmin,        &
-         ADM_kmax,        &
-         ADM_gmin,        &
-         ADM_gmax,        &
-         ADM_gall
+  subroutine OPRT_gradient( &
+       vx,  vx_pl,  &
+       vy,  vy_pl,  &
+       vz,  vz_pl,  &
+       scl, scl_pl, &
+       mfact        )
+    use mod_adm, only: &
+       ADM_prc_me,  &
+       ADM_prc_pl,  &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_gall_1d, &
+       ADM_gslf_pl, &
+       ADM_gmax_pl, &
+       ADM_kmin,    &
+       ADM_kmax
     implicit none
 
     real(8), intent(in)    :: scl   (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -1849,205 +1715,164 @@ contains
     real(8), intent(inout) :: vy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(inout) :: vz    (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(inout) :: vz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-
     real(8), intent(in), optional :: mfact
 
-    integer :: im1j,ijm1,im1jm1
-    integer :: ip1j,ijp1,ip1jp1
-    integer :: ij
-    integer :: n0,n1,n2,n3,n4
-    !
-    integer :: l,n,k
-    integer :: nstart,nend
-    integer :: rgnid
-    real(8)::fact
-    !
-    integer :: suf,i,j
-    suf(i,j)=ADM_gall_1d*((j)-1)+(i)
+    real(8) :: fact
 
-    if(present(mfact)) then
-       fact=mfact
+    integer :: ij
+    integer :: im1j, ijm1, im1jm1
+    integer :: ip1j, ijp1, ip1jp1
+
+    integer :: n, k, l, v
+    !---------------------------------------------------------------------------
+
+    if ( present(mfact) ) then
+       fact = mfact
     else
-       fact=1.0d0
-    end if
-    !
-    nstart=suf(ADM_gmin,ADM_gmin)
-    nend  =suf(ADM_gmax,ADM_gmax)
-    do l=1,ADM_lall
-      do k=1,ADM_kall
-        do n=nstart,nend
-          ij=n
-          ip1j=ij+1
-          ip1jp1=ij+1+ADM_gall_1d
-          ijp1=ij+ADM_gall_1d
-          im1j=ij-1
-          im1jm1=ij-1-ADM_gall_1d
-          ijm1=ij-ADM_gall_1d
-          vx(n,k,l)=(                                &
-                     +cgrad(0,ij,l,1)*scl(ij    ,k,l) &
-                     +cgrad(1,ij,l,1)*scl(ip1j  ,k,l) &
-                     +cgrad(2,ij,l,1)*scl(ip1jp1,k,l) &
-                     +cgrad(3,ij,l,1)*scl(ijp1  ,k,l) &
-                     +cgrad(4,ij,l,1)*scl(im1j  ,k,l) &
-                     +cgrad(5,ij,l,1)*scl(im1jm1,k,l) &
-                     +cgrad(6,ij,l,1)*scl(ijm1  ,k,l) &
-                    )*fact
-          vy(n,k,l)=(                                &
-                     +cgrad(0,ij,l,2)*scl(ij    ,k,l) &
-                     +cgrad(1,ij,l,2)*scl(ip1j  ,k,l) &
-                     +cgrad(2,ij,l,2)*scl(ip1jp1,k,l) &
-                     +cgrad(3,ij,l,2)*scl(ijp1  ,k,l) &
-                     +cgrad(4,ij,l,2)*scl(im1j  ,k,l) &
-                     +cgrad(5,ij,l,2)*scl(im1jm1,k,l) &
-                     +cgrad(6,ij,l,2)*scl(ijm1  ,k,l) &
-                    )*fact
-          vz(n,k,l)=(                                &
-                     +cgrad(0,ij,l,3)*scl(ij    ,k,l) &
-                     +cgrad(1,ij,l,3)*scl(ip1j  ,k,l) &
-                     +cgrad(2,ij,l,3)*scl(ip1jp1,k,l) &
-                     +cgrad(3,ij,l,3)*scl(ijp1  ,k,l) &
-                     +cgrad(4,ij,l,3)*scl(im1j  ,k,l) &
-                     +cgrad(5,ij,l,3)*scl(im1jm1,k,l) &
-                     +cgrad(6,ij,l,3)*scl(ijm1  ,k,l) &
-                    )*fact
-        enddo
-      enddo
-    enddo
-    !
-    if (ADM_prc_me==ADM_prc_pl) then
-      n=ADM_gslf_pl
-      n0=ADM_gmin_pl
-      n1=ADM_gmin_pl+1
-      n2=ADM_gmin_pl+2
-      n3=ADM_gmin_pl+3
-      n4=ADM_gmin_pl+4
-      do l=1,ADM_lall_pl
-        do k=1,ADM_kall
-          vx_pl(n,k,l)=(                                &
-                       +cgrad0_pl(n,l,1)*scl_pl(n ,k,l) & 
-                       +cgrad1_pl(n,l,1)*scl_pl(n0,k,l) & 
-                       +cgrad2_pl(n,l,1)*scl_pl(n1,k,l) & 
-                       +cgrad3_pl(n,l,1)*scl_pl(n2,k,l) & 
-                       +cgrad4_pl(n,l,1)*scl_pl(n3,k,l) & 
-                       +cgrad5_pl(n,l,1)*scl_pl(n4,k,l) & 
-                       )*fact
-          vy_pl(n,k,l)=(                                &
-                       +cgrad0_pl(n,l,2)*scl_pl(n ,k,l) & 
-                       +cgrad1_pl(n,l,2)*scl_pl(n0,k,l) & 
-                       +cgrad2_pl(n,l,2)*scl_pl(n1,k,l) & 
-                       +cgrad3_pl(n,l,2)*scl_pl(n2,k,l) & 
-                       +cgrad4_pl(n,l,2)*scl_pl(n3,k,l) & 
-                       +cgrad5_pl(n,l,2)*scl_pl(n4,k,l) & 
-                       )*fact
-          vz_pl(n,k,l)=(                                &
-                       +cgrad0_pl(n,l,3)*scl_pl(n ,k,l) & 
-                       +cgrad1_pl(n,l,3)*scl_pl(n0,k,l) & 
-                       +cgrad2_pl(n,l,3)*scl_pl(n1,k,l) & 
-                       +cgrad3_pl(n,l,3)*scl_pl(n2,k,l) & 
-                       +cgrad4_pl(n,l,3)*scl_pl(n3,k,l) & 
-                       +cgrad5_pl(n,l,3)*scl_pl(n4,k,l) & 
-                       )*fact
-        enddo
-      enddo
+       fact = 1.D0
     endif
 
+    do l = 1, ADM_lall
+    do k = 1, ADM_kall
+    do n = OPRT_nstart, OPRT_nend
+       ij     = n
+       ip1j   = n + 1
+       ip1jp1 = n + 1 + ADM_gall_1d
+       ijp1   = n     + ADM_gall_1d
+       im1j   = n - 1
+       im1jm1 = n - 1 - ADM_gall_1d
+       ijm1   = n     - ADM_gall_1d
+
+       vx(n,k,l) = ( cgrad(0,ij,l,1) * scl(ij    ,k,l) &
+                   + cgrad(1,ij,l,1) * scl(ip1j  ,k,l) &
+                   + cgrad(2,ij,l,1) * scl(ip1jp1,k,l) &
+                   + cgrad(3,ij,l,1) * scl(ijp1  ,k,l) &
+                   + cgrad(4,ij,l,1) * scl(im1j  ,k,l) &
+                   + cgrad(5,ij,l,1) * scl(im1jm1,k,l) &
+                   + cgrad(6,ij,l,1) * scl(ijm1  ,k,l) ) * fact
+
+       vy(n,k,l) = ( cgrad(0,ij,l,2) * scl(ij    ,k,l) &
+                   + cgrad(1,ij,l,2) * scl(ip1j  ,k,l) &
+                   + cgrad(2,ij,l,2) * scl(ip1jp1,k,l) &
+                   + cgrad(3,ij,l,2) * scl(ijp1  ,k,l) &
+                   + cgrad(4,ij,l,2) * scl(im1j  ,k,l) &
+                   + cgrad(5,ij,l,2) * scl(im1jm1,k,l) &
+                   + cgrad(6,ij,l,2) * scl(ijm1  ,k,l) ) * fact
+
+       vz(n,k,l) = ( cgrad(0,ij,l,3) * scl(ij    ,k,l) &
+                   + cgrad(1,ij,l,3) * scl(ip1j  ,k,l) &
+                   + cgrad(2,ij,l,3) * scl(ip1jp1,k,l) &
+                   + cgrad(3,ij,l,3) * scl(ijp1  ,k,l) &
+                   + cgrad(4,ij,l,3) * scl(im1j  ,k,l) &
+                   + cgrad(5,ij,l,3) * scl(im1jm1,k,l) &
+                   + cgrad(6,ij,l,3) * scl(ijm1  ,k,l) ) * fact
+    enddo
+    enddo
+    enddo
+
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       n = ADM_gslf_pl
+       do l = 1, ADM_lall_pl
+       do k = 1, ADM_kall
+          vx_pl(n,k,l) = 0.D0
+          vy_pl(n,k,l) = 0.D0
+          vz_pl(n,k,l) = 0.D0
+
+          do v = ADM_gslf_pl, ADM_gmax_pl
+             vx_pl(n,k,l) = vx_pl(n,k,l) + cgrad_pl(v-1,n,l,1) * scl_pl(v,k,l)
+             vy_pl(n,k,l) = vy_pl(n,k,l) + cgrad_pl(v-1,n,l,2) * scl_pl(v,k,l)
+             vz_pl(n,k,l) = vz_pl(n,k,l) + cgrad_pl(v-1,n,l,3) * scl_pl(v,k,l)
+          enddo
+
+          vx_pl(n,k,l) = vx_pl(n,k,l) * fact
+          vy_pl(n,k,l) = vy_pl(n,k,l) * fact
+          vz_pl(n,k,l) = vz_pl(n,k,l) * fact
+       enddo
+       enddo
+    endif
+
+    return
   end subroutine OPRT_gradient
-  !-----------------------------------------------------------------------------
-  subroutine OPRT_laplacian(dscl,dscl_pl,scl, scl_pl,mfact)
-    use mod_adm, only :   &
-         !--- public parameters
-         ADM_prc_pl,      &
-         ADM_TI,          &
-         ADM_lall_pl,     &
-         ADM_gmin_pl,     &
-         ADM_gslf_pl,     &
-         ADM_gall_pl,     &
-         !--- public variables
-         ADM_prc_me,      &
-         ADM_gall_1d,     &
-         ADM_kall,        &
-         ADM_lall,        &
-         ADM_kmin,        &
-         ADM_kmax,        &
-         ADM_gmin,        &
-         ADM_gmax,        &
-         ADM_gall
-    !
-    implicit none
-    !
-    real(8),intent(inout)::dscl(ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8),intent(inout)::dscl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8),intent(in)   :: scl(ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8),intent(in)   :: scl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    !
-    real(8),intent(in),optional::mfact
-    !
-    integer :: im1j,ijm1,im1jm1
-    integer :: ip1j,ijp1,ip1jp1
-    integer :: ij
-    integer :: n0,n1,n2,n3,n4
-    integer :: nstart,nend
-    integer :: l,n,k
-    !
-    real(8)::fact
-    !
-    integer ::suf,i,j
-    suf(i,j)=ADM_gall_1d*((j)-1)+(i)
 
-    if(present(mfact)) then
-       fact=mfact
+  !-----------------------------------------------------------------------------
+  subroutine OPRT_laplacian( &
+       dscl, dscl_pl, &
+       scl,  scl_pl,  &
+       mfact          )
+    use mod_adm, only: &
+       ADM_prc_me,  &
+       ADM_prc_pl,  &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_gall_1d, &
+       ADM_gslf_pl, &
+       ADM_gmax_pl, &
+       ADM_kmin,    &
+       ADM_kmax
+    implicit none
+
+    real(8), intent(inout) :: dscl   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(inout) :: dscl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)    :: scl    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)    :: scl_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in), optional :: mfact
+
+    real(8) :: fact
+
+    integer :: ij
+    integer :: im1j, ijm1, im1jm1
+    integer :: ip1j, ijp1, ip1jp1
+
+    integer :: n, k, l, v
+    !---------------------------------------------------------------------------
+
+    if ( present(mfact) ) then
+       fact = mfact
     else
-       fact=1.0d0
-    end if
-    !
-    nstart=suf(ADM_gmin,ADM_gmin)
-    nend  =suf(ADM_gmax,ADM_gmax)
-    do l=1,ADM_lall
-      do k=1,ADM_kall
-        do n=nstart,nend
-          !
-          ij    =n
-          ip1j  =ij+1
-          ip1jp1=ij+1+ADM_gall_1d
-          ijp1  =ij+ADM_gall_1d
-          im1j  =ij-1
-          im1jm1=ij-1-ADM_gall_1d
-          ijm1  =ij-ADM_gall_1d
-          !
-          dscl(n,k,l)=( &
-                       +clap0(ij,l)*scl(ij    ,k,l) &
-                       +clap1(ij,l)*scl(ip1j  ,k,l) &
-                       +clap2(ij,l)*scl(ip1jp1,k,l) &
-                       +clap3(ij,l)*scl(ijp1  ,k,l) &
-                       +clap4(ij,l)*scl(im1j  ,k,l) &
-                       +clap5(ij,l)*scl(im1jm1,k,l) &
-                       +clap6(ij,l)*scl(ijm1  ,k,l) &
-                      )*fact
-        enddo
-      enddo
-    enddo
-    !
-    if (ADM_prc_me==ADM_prc_pl) then
-      n =ADM_gslf_pl
-      n0=ADM_gmin_pl
-      n1=ADM_gmin_pl+1
-      n2=ADM_gmin_pl+2
-      n3=ADM_gmin_pl+3
-      n4=ADM_gmin_pl+4
-      do l=1,ADM_lall_pl
-        do k=1,ADM_kall
-          dscl_pl(n,k,l)=( &
-                          +clap0_pl(n,l)*scl_pl(n ,k,l) &  
-                          +clap1_pl(n,l)*scl_pl(n0,k,l) &  
-                          +clap2_pl(n,l)*scl_pl(n1,k,l) &  
-                          +clap3_pl(n,l)*scl_pl(n2,k,l) &  
-                          +clap4_pl(n,l)*scl_pl(n3,k,l) &  
-                          +clap5_pl(n,l)*scl_pl(n4,k,l) &  
-                         )*fact
-        enddo
-      enddo
+       fact = 1.D0
     endif
 
+    do l = 1, ADM_lall
+    do k = 1, ADM_kall
+    do n = OPRT_nstart, OPRT_nend
+       ij     = n
+       ip1j   = n + 1
+       ip1jp1 = n + 1 + ADM_gall_1d
+       ijp1   = n     + ADM_gall_1d
+       im1j   = n - 1
+       im1jm1 = n - 1 - ADM_gall_1d
+       ijm1   = n     - ADM_gall_1d
+
+       dscl(n,k,l) = ( clap(0,ij,l) * scl(ij    ,k,l) &
+                     + clap(1,ij,l) * scl(ip1j  ,k,l) &
+                     + clap(2,ij,l) * scl(ip1jp1,k,l) &
+                     + clap(3,ij,l) * scl(ijp1  ,k,l) &
+                     + clap(4,ij,l) * scl(im1j  ,k,l) &
+                     + clap(5,ij,l) * scl(im1jm1,k,l) &
+                     + clap(6,ij,l) * scl(ijm1  ,k,l) ) * fact
+    enddo
+    enddo
+    enddo
+
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       n = ADM_gslf_pl
+       do l = 1, ADM_lall_pl
+       do k = 1, ADM_kall
+          dscl_pl(n,k,l) = 0.D0
+
+          do v = ADM_gslf_pl, ADM_gmax_pl
+             dscl_pl(n,k,l) = dscl_pl(n,k,l) + clap_pl(v-1,n,l) * scl_pl(v,k,l)
+          enddo
+
+          dscl_pl(n,k,l) = dscl_pl(n,k,l) * fact
+       enddo
+       enddo
+    endif
+
+    return
   end subroutine OPRT_laplacian
 
   !-----------------------------------------------------------------------------  
@@ -2437,7 +2262,7 @@ contains
        GRD_e_pl
     implicit none
 
-    real(8), intent(inout) :: vx   (ADM_gall,   ADM_kall,   ADM_lall)
+    real(8), intent(inout) :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
     real(8), intent(inout) :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(inout) :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
     real(8), intent(inout) :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -2810,6 +2635,7 @@ contains
        end do
     end if
   end subroutine OPRT_vorticity
+
   !-----------------------------------------------------------------------------
   subroutine OPRT_divdamp(       &
        grdx, grdx_pl,            &
@@ -3173,304 +2999,6 @@ contains
     end if
 
   end subroutine OPRT_divdamp
-
-  !-----------------------------------------------------------------------------
-  subroutine OPRT_gradient_nobase(        &
-       vx, vx_pl,                  &
-       vy, vy_pl,                  &
-       vz, vz_pl,                  &
-       scl, scl_pl,                &
-       mfact )
-    !
-    use mod_adm, only :   &
-         !--- public parameters
-         ADM_W,           &
-         ADM_prc_pl,      &
-         ADM_TI,          &
-         ADM_TJ,          &
-         ADM_AI,          &
-         ADM_AIJ,         &
-         ADM_AJ,          &
-         ADM_KNONE,       &
-         ADM_lall_pl,     &
-         ADM_gmin_pl,     &
-         ADM_GMAX_PL,     &
-         ADM_gslf_pl,     &
-         ADM_gall_pl,     &
-         !--- public variables
-         ADM_prc_me,      &
-         ADM_prc_tab,     &
-         ADM_rgn_vnum,    &
-         ADM_gall_1d,     &
-         ADM_kall,        &
-         ADM_lall,        &
-         ADM_kmin,        &
-         ADM_kmax,        &
-         ADM_gmin,        &
-         ADM_gmax,        &
-         ADM_gall
-    use mod_gmtr, only :  &
-         !--- public parameters
-         GMTR_T_W1,       &
-         GMTR_T_W2,       &
-         GMTR_T_W3,       &
-         GMTR_A_hnx,      &
-         GMTR_A_hny,      &
-         GMTR_A_hnz,      &
-         GMTR_P_rarea,    &
-         !--- public variables
-         GMTR_T_var,      &
-         GMTR_T_var_pl,   &
-         GMTR_P_var,      &
-         GMTR_P_var_pl,   &
-         GMTR_A_var,      &
-         GMTR_A_var_pl
-    !
-    implicit none
-    !
-    real(8), intent(in) :: scl(ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in) :: scl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    !
-    real(8), intent(inout)  :: vx(ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(inout)  :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout)  :: vy(ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(inout)  :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout)  :: vz(ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(inout)  :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    !
-    real(8), intent(in), optional :: mfact
-    !
-    real(8)  :: sclt(             &
-         ADM_gall,                &
-         ADM_kall,                &
-         ADM_lall,                &
-         ADM_TI:ADM_TJ )
-    real(8)  :: sclt_pl(          &
-         ADM_gall_pl,             &
-         ADM_kall,                &
-         ADM_lall_pl )
-    real(8)  :: flux(             &
-         ADM_gall,                &
-         ADM_AI:ADM_AJ)
-    real(8)  :: flux_pl(          &
-         ADM_gall_pl)
-    !
-    integer :: l,n,k
-    integer :: nstart,nend
-    integer :: rgnid
-    real(8) :: fact
-    real(8) :: dp1,dp2,dp3,dp4,dp5,dp6
-    !
-    integer :: suf,i,j
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
-    !
-    if(present(mfact)) then
-       fact=mfact
-    else
-       fact=1.0D0
-    end if
-
-    do l=1,ADM_lall
-       rgnid=ADM_prc_tab(l,ADM_prc_me)
-       do k=1, ADM_kall
-          nstart = suf(ADM_gmin-1,ADM_gmin-1)
-          nend = suf(ADM_gmax,ADM_gmax)
-          do n = nstart,nend
-             sclt(n,k,l,ADM_TI)                            &
-                  =GMTR_T_var(n,ADM_KNONE,l,ADM_TI,GMTR_T_W1)&
-                  *scl(n,k,l)                         &
-                  +GMTR_T_var(n,ADM_KNONE,l,ADM_TI,GMTR_T_W2)&
-                  *scl(n+1,k,l)                       &
-                  +GMTR_T_var(n,ADM_KNONE,l,ADM_TI,GMTR_T_W3)&
-                  *scl(n+1+ADM_gall_1d,k,l)
-             sclt(n,k,l,ADM_TJ)                            &
-                  =GMTR_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W1)&
-                  *scl(n,k,l)                         &
-                  +GMTR_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W2)&
-                  *scl(n+1+ADM_gall_1d,k,l)                     &
-                  +GMTR_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)&
-                  *scl(n+ADM_gall_1d,k,l)
-          end do
-          if(ADM_rgn_vnum(ADM_W,rgnid)==3) then
-             sclt(suf(ADM_gmin-1,ADM_gmin-1),k,l,ADM_TI)     &
-                  =sclt(suf(ADM_gmin,ADM_gmin-1),k,l,ADM_TJ)
-          end if
-       end do
-    end do
-    !
-    if(ADM_prc_me==ADM_prc_pl) then
-       do k=1, ADM_kall
-          do l=1,ADM_lall_pl
-             do n=ADM_gmin_pl,ADM_GMAX_PL-1
-                sclt_pl(n,k,l)                            &
-                     =GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W1)&
-                     *scl_pl(ADM_gslf_pl,k,l)              &
-                     +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W2)&
-                     *scl_pl(n,k,l)                        &
-                     +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W3)&
-                     *scl_pl(n+1,k,l)
-             end do
-             sclt_pl(ADM_GMAX_PL,k,l)&
-                  =GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_W1)&
-                  *scl_pl(ADM_gslf_pl,k,l)                        &
-                  +GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_W2)&
-                  *scl_pl(ADM_GMAX_PL,k,l)                        &
-                  +GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_W3)&
-                  *scl_pl(ADM_gmin_pl,k,l)
-          end do
-       end do
-    end if
-    !
-    do l=1,ADM_lall
-       rgnid=ADM_prc_tab(l,ADM_prc_me)
-       do k=1, ADM_kall
-          nstart = suf(ADM_gmin-1,ADM_gmin  )
-          nend   = suf(ADM_gmax,  ADM_gmax  )
-          do n = nstart,nend
-             flux(n,ADM_AI)&
-                  =(sclt(n-ADM_gall_1d,k,l,ADM_TJ)+sclt(n,k,l,ADM_TI))*0.5D0
-          end do
-          !
-          nstart = suf(ADM_gmin-1,ADM_gmin-1)
-          nend   = suf(ADM_gmax  ,ADM_gmax  )
-          do n = nstart,nend
-             flux(n,ADM_AIJ)&
-                  =(sclt(n,k,l,ADM_TI)+sclt(n,k,l,ADM_TJ))*0.5D0
-          end do
-          !
-          nstart = suf(ADM_gmin  ,ADM_gmin-1)
-          nend   = suf(ADM_gmax  ,ADM_gmax  )
-          do n = nstart,nend
-             flux(n,ADM_AJ)&
-                  =(sclt(n,k,l,ADM_TJ)+sclt(n-1,k,l,ADM_TI))*0.5D0
-          end do
-          !
-          nstart = suf(ADM_gmin  ,ADM_gmin  )
-          nend   = suf(ADM_gmax  ,ADM_gmax  )
-          do n = nstart,nend
-             dp1=flux(n,ADM_AI )
-             dp2=flux(n,ADM_AIJ)
-             dp3=flux(n,ADM_AJ )
-             dp4=flux(n-1,ADM_AI )
-             dp5=flux(n-1-ADM_gall_1d,ADM_AIJ)
-             dp6=flux(n-ADM_gall_1d,ADM_AJ )
-             !
-             vx(n,k,l)=(                                     &
-                  +dp1*GMTR_A_var(n,ADM_KNONE,l,ADM_AI ,GMTR_A_HNX) &
-                  +dp2*GMTR_A_var(n,ADM_KNONE,l,ADM_AIJ,GMTR_A_HNX) &
-                  +dp3*GMTR_A_var(n,ADM_KNONE,l,ADM_AJ ,GMTR_A_HNX) &
-                  -dp4*GMTR_A_var(n-1,ADM_KNONE,l,ADM_AI ,GMTR_A_HNX) &
-                  -dp5*GMTR_A_var(n-1-ADM_gall_1d,ADM_KNONE,l,ADM_AIJ,GMTR_A_HNX) &
-                  -dp6*GMTR_A_var(n-ADM_gall_1d,ADM_KNONE,l,ADM_AJ ,GMTR_A_HNX) &
-                  ) * GMTR_P_var(n,ADM_KNONE,l,GMTR_P_RAREA)      &
-                  * fact
-             !
-             vy(n,k,l)=(                                     &
-                  +dp1*GMTR_A_var(n,ADM_KNONE,l,ADM_AI ,GMTR_A_HNY) &
-                  +dp2*GMTR_A_var(n,ADM_KNONE,l,ADM_AIJ,GMTR_A_HNY) &
-                  +dp3*GMTR_A_var(n,ADM_KNONE,l,ADM_AJ ,GMTR_A_HNY) &
-                  -dp4*GMTR_A_var(n-1,ADM_KNONE,l,ADM_AI ,GMTR_A_HNY) &
-                  -dp5*GMTR_A_var(n-1-ADM_gall_1d,ADM_KNONE,l,ADM_AIJ,GMTR_A_HNY) &
-                  -dp6*GMTR_A_var(n-ADM_gall_1d,ADM_KNONE,l,ADM_AJ ,GMTR_A_HNY) &
-                  ) * GMTR_P_var(n,ADM_KNONE,l,GMTR_P_RAREA)      &
-                  * fact
-             !
-             vz(n,k,l)=(                                     &
-                  +dp1*GMTR_A_var(n,ADM_KNONE,l,ADM_AI ,GMTR_A_HNZ) &
-                  +dp2*GMTR_A_var(n,ADM_KNONE,l,ADM_AIJ,GMTR_A_HNZ) &
-                  +dp3*GMTR_A_var(n,ADM_KNONE,l,ADM_AJ ,GMTR_A_HNZ) &
-                  -dp4*GMTR_A_var(n-1,ADM_KNONE,l,ADM_AI ,GMTR_A_HNZ) &
-                  -dp5*GMTR_A_var(n-1-ADM_gall_1d,ADM_KNONE,l,ADM_AIJ,GMTR_A_HNZ) &
-                  -dp6*GMTR_A_var(n-ADM_gall_1d,ADM_KNONE,l,ADM_AJ ,GMTR_A_HNZ) &
-                  ) * GMTR_P_var(n,ADM_KNONE,l,GMTR_P_RAREA)      &
-                  * fact
-          end do
-          if(ADM_rgn_vnum(ADM_W,rgnid)==3) then
-             n=suf(ADM_gmin,ADM_gmin)
-             dp1=flux(n,ADM_AI )
-             dp2=flux(n,ADM_AIJ)
-             dp3=flux(n,ADM_AJ )
-             dp4=flux(n-1,ADM_AI )
-             dp5=flux(n-1-ADM_gall_1d,ADM_AIJ)
-             !
-             vx(n,k,l)=(                                     &
-                  +dp1*GMTR_A_var(n,ADM_KNONE,l,ADM_AI ,GMTR_A_HNX) &
-                  +dp2*GMTR_A_var(n,ADM_KNONE,l,ADM_AIJ,GMTR_A_HNX) &
-                  +dp3*GMTR_A_var(n,ADM_KNONE,l,ADM_AJ ,GMTR_A_HNX) &
-                  -dp4*GMTR_A_var(n-1,ADM_KNONE,l,ADM_AI ,GMTR_A_HNX) &
-                  -dp5*GMTR_A_var(n-1-ADM_gall_1d,ADM_KNONE,l,ADM_AIJ,GMTR_A_HNX) &
-                  ) * GMTR_P_var(n,ADM_KNONE,l,GMTR_P_RAREA)      &
-                  * fact
-             !
-             vy(n,k,l)=(                                     &
-                  +dp1*GMTR_A_var(n,ADM_KNONE,l,ADM_AI ,GMTR_A_HNY) &
-                  +dp2*GMTR_A_var(n,ADM_KNONE,l,ADM_AIJ,GMTR_A_HNY) &
-                  +dp3*GMTR_A_var(n,ADM_KNONE,l,ADM_AJ ,GMTR_A_HNY) &
-                  -dp4*GMTR_A_var(n-1,ADM_KNONE,l,ADM_AI ,GMTR_A_HNY) &
-                  -dp5*GMTR_A_var(n-1-ADM_gall_1d,ADM_KNONE,l,ADM_AIJ,GMTR_A_HNY) &
-                  ) * GMTR_P_var(n,ADM_KNONE,l,GMTR_P_RAREA)      &
-                  * fact
-             !
-             vz(n,k,l)=(                                     &
-                  +dp1*GMTR_A_var(n,ADM_KNONE,l,ADM_AI ,GMTR_A_HNZ) &
-                  +dp2*GMTR_A_var(n,ADM_KNONE,l,ADM_AIJ,GMTR_A_HNZ) &
-                  +dp3*GMTR_A_var(n,ADM_KNONE,l,ADM_AJ ,GMTR_A_HNZ) &
-                  -dp4*GMTR_A_var(n-1,ADM_KNONE,l,ADM_AI ,GMTR_A_HNZ) &
-                  -dp5*GMTR_A_var(n-1-ADM_gall_1d,ADM_KNONE,l,ADM_AIJ,GMTR_A_HNZ) &
-                  ) * GMTR_P_var(n,ADM_KNONE,l,GMTR_P_RAREA)      &
-                  * fact
-          end if
-       end do
-    end do
-    !
-    if(ADM_prc_me==ADM_prc_pl) then
-       do k=1, ADM_kall
-          do l=1,ADM_lall_pl
-             !
-             flux_pl(ADM_gmin_pl)&
-                  =(sclt_pl(ADM_GMAX_PL,k,l)+sclt_pl(ADM_gmin_pl,k,l))*0.5D0
-             do n=ADM_gmin_pl+1,ADM_GMAX_PL
-                flux_pl(n)&
-                     =(sclt_pl(n-1,k,l)+sclt_pl(n,k,l))*0.5D0
-             end do
-             !
-             dp1=flux_pl(ADM_gmin_pl  )
-             dp2=flux_pl(ADM_gmin_pl+1)
-             dp3=flux_pl(ADM_gmin_pl+2)
-             dp4=flux_pl(ADM_gmin_pl+3)
-             dp5=flux_pl(ADM_gmin_pl+4)
-             !
-             vx_pl(ADM_gslf_pl,k,l)=(                                 &
-                  +dp1*GMTR_A_var_pl(ADM_gmin_pl  ,ADM_KNONE,l,GMTR_A_HNX) &
-                  +dp2*GMTR_A_var_pl(ADM_gmin_pl+1,ADM_KNONE,l,GMTR_A_HNX) &
-                  +dp3*GMTR_A_var_pl(ADM_gmin_pl+2,ADM_KNONE,l,GMTR_A_HNX) &
-                  +dp4*GMTR_A_var_pl(ADM_gmin_pl+3,ADM_KNONE,l,GMTR_A_HNX) &
-                  +dp5*GMTR_A_var_pl(ADM_gmin_pl+4,ADM_KNONE,l,GMTR_A_HNX) &
-                  ) * GMTR_P_var_pl(ADM_gslf_pl,ADM_KNONE,l,GMTR_P_RAREA)  &
-                  * fact
-             !
-             vy_pl(ADM_gslf_pl,k,l)=(                                      &
-                  +dp1*GMTR_A_var_pl(ADM_gmin_pl  ,ADM_KNONE,l,GMTR_A_HNY) &
-                  +dp2*GMTR_A_var_pl(ADM_gmin_pl+1,ADM_KNONE,l,GMTR_A_HNY) &
-                  +dp3*GMTR_A_var_pl(ADM_gmin_pl+2,ADM_KNONE,l,GMTR_A_HNY) &
-                  +dp4*GMTR_A_var_pl(ADM_gmin_pl+3,ADM_KNONE,l,GMTR_A_HNY) &
-                  +dp5*GMTR_A_var_pl(ADM_gmin_pl+4,ADM_KNONE,l,GMTR_A_HNY) &
-                  ) * GMTR_P_var_pl(ADM_gslf_pl,ADM_KNONE,l,GMTR_P_RAREA)  &
-                  * fact
-             !
-             vz_pl(ADM_gslf_pl,k,l)=(                                      &
-                  +dp1*GMTR_A_var_pl(ADM_gmin_pl  ,ADM_KNONE,l,GMTR_A_HNZ) &
-                  +dp2*GMTR_A_var_pl(ADM_gmin_pl+1,ADM_KNONE,l,GMTR_A_HNZ) &
-                  +dp3*GMTR_A_var_pl(ADM_gmin_pl+2,ADM_KNONE,l,GMTR_A_HNZ) &
-                  +dp4*GMTR_A_var_pl(ADM_gmin_pl+3,ADM_KNONE,l,GMTR_A_HNZ) &
-                  +dp5*GMTR_A_var_pl(ADM_gmin_pl+4,ADM_KNONE,l,GMTR_A_HNZ) &
-                  ) * GMTR_P_var_pl(ADM_gslf_pl,ADM_KNONE,l,GMTR_P_RAREA)  &
-                  * fact
-             !
-          end do
-       end do
-    end if
-  end subroutine OPRT_gradient_nobase
 
 end module mod_oprt
 !-------------------------------------------------------------------------------

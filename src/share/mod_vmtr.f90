@@ -430,18 +430,18 @@ contains
        do k = ADM_kmin, ADM_kall
        do n = 1, ADM_gall
           !--- calculation of factor for integer to half integer level with Gz
-          VMTR_C2Wfact(I_a_GZXH,n,k,l) = 0.5D0 * GRD_afac(k) &
-                                       * VMTR_GSGAM2H(n,k,l) / VMTR_GSGAM2(n,k  ,l) * VMTR_GZXH(n,k,l)
-          VMTR_C2Wfact(I_b_GZXH,n,k,l) = 0.5D0 * GRD_bfac(k) &
-                                       * VMTR_GSGAM2H(n,k,l) / VMTR_GSGAM2(n,k-1,l) * VMTR_GZXH(n,k,l)
-          VMTR_C2Wfact(I_a_GZYH,n,k,l) = 0.5D0 * GRD_afac(k) &
-                                       * VMTR_GSGAM2H(n,k,l) / VMTR_GSGAM2(n,k  ,l) * VMTR_GZYH(n,k,l)
-          VMTR_C2Wfact(I_b_GZYH,n,k,l) = 0.5D0 * GRD_bfac(k) &
-                                       * VMTR_GSGAM2H(n,k,l) / VMTR_GSGAM2(n,k-1,l) * VMTR_GZYH(n,k,l)
-          VMTR_C2Wfact(I_a_GZZH,n,k,l) = 0.5D0 * GRD_afac(k) &
-                                       * VMTR_GSGAM2H(n,k,l) / VMTR_GSGAM2(n,k  ,l) * VMTR_GZZH(n,k,l)
-          VMTR_C2Wfact(I_b_GZZH,n,k,l) = 0.5D0 * GRD_bfac(k) &
-                                       * VMTR_GSGAM2H(n,k,l) / VMTR_GSGAM2(n,k-1,l) * VMTR_GZZH(n,k,l)
+          VMTR_C2Wfact(I_a_GZXH,n,k,l) = 0.5D0 * GRD_afac(k) / VMTR_GSGAM2(n,k  ,l) * VMTR_GSGAM2H(n,k,l) &
+                                       * VMTR_GZXH(n,k,l)
+          VMTR_C2Wfact(I_b_GZXH,n,k,l) = 0.5D0 * GRD_bfac(k) / VMTR_GSGAM2(n,k-1,l) * VMTR_GSGAM2H(n,k,l) &
+                                       * VMTR_GZXH(n,k,l)
+          VMTR_C2Wfact(I_a_GZYH,n,k,l) = 0.5D0 * GRD_afac(k) / VMTR_GSGAM2(n,k  ,l) * VMTR_GSGAM2H(n,k,l) &
+                                       * VMTR_GZYH(n,k,l)
+          VMTR_C2Wfact(I_b_GZYH,n,k,l) = 0.5D0 * GRD_bfac(k) / VMTR_GSGAM2(n,k-1,l) * VMTR_GSGAM2H(n,k,l) &
+                                       * VMTR_GZYH(n,k,l)
+          VMTR_C2Wfact(I_a_GZZH,n,k,l) = 0.5D0 * GRD_afac(k) / VMTR_GSGAM2(n,k  ,l) * VMTR_GSGAM2H(n,k,l) &
+                                       * VMTR_GZZH(n,k,l)
+          VMTR_C2Wfact(I_b_GZZH,n,k,l) = 0.5D0 * GRD_bfac(k) / VMTR_GSGAM2(n,k-1,l) * VMTR_GSGAM2H(n,k,l) &
+                                       * VMTR_GZZH(n,k,l)
        enddo
        enddo
     enddo
