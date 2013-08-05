@@ -25,7 +25,6 @@ module mod_oprt3d
   !++ Public procedure
   !
   public :: OPRT3D_divdamp
-  public :: OPRT3D_gradient_intpl
 
   !-----------------------------------------------------------------------------
   !
@@ -43,43 +42,42 @@ module mod_oprt3d
 contains
   !-----------------------------------------------------------------------------
   subroutine OPRT3D_divdamp( &
-       grdx,     grdx_pl,     &
-       grdy,     grdy_pl,     &
-       grdz,     grdz_pl,     &
-       rhovx_in, rhovx_in_pl, &
-       rhovy_in, rhovy_in_pl, &
-       rhovz_in, rhovz_in_pl, &
-       rhow,     rhow_pl      )
+       grdx,   grdx_pl,   &
+       grdy,   grdy_pl,   &
+       grdz,   grdz_pl,   &
+       rhogvx, rhogvx_pl, &
+       rhogvy, rhogvy_pl, &
+       rhogvz, rhogvz_pl, &
+       rhogw,  rhogw_pl   )
     use mod_adm, only: &
-       ADM_prc_me,   &
-       ADM_PRC_PL,   &
-       ADM_rgn_vnum, &
-       ADM_prc_tab,  &
        ADM_W,        &
        ADM_TI,       &
        ADM_TJ,       &
        ADM_AI,       &
        ADM_AIJ,      &
        ADM_AJ,       &
-       ADM_gall,     &
-       ADM_gall_pl,  &
+       ADM_prc_tab,  &
+       ADM_prc_me,   &
+       ADM_prc_pl,   &
+       ADM_rgn_vnum, &
        ADM_lall,     &
        ADM_lall_pl,  &
+       ADM_gall,     &
+       ADM_gall_pl,  &
        ADM_kall,     &
        ADM_gall_1d,  &
        ADM_gmin,     &
        ADM_gmax,     &
-       ADM_GSLF_PL,  &
-       ADM_GMIN_PL,  &
-       ADM_GMAX_PL,  &
+       ADM_gslf_pl,  &
+       ADM_gmin_pl,  &
+       ADM_gmax_pl,  &
+       ADM_KNONE,    &
        ADM_kmin,     &
-       ADM_kmax,     &
-       ADM_KNONE
+       ADM_kmax
     use mod_grd, only: &
-       GRD_dgz,  &
-       GRD_afac, &
-       GRD_bfac
+       GRD_rdgz
     use mod_gmtr, only: &
+       GMTR_P_RAREA,  &
        GMTR_T_RAREA,  &
        GMTR_A_HNX,    &
        GMTR_A_HNY,    &
@@ -90,368 +88,314 @@ contains
        GMTR_A_TN2X,   &
        GMTR_A_TN2Y,   &
        GMTR_A_TN2Z,   &
-       GMTR_P_RAREA,  &
-       GMTR_T_var,    &
-       GMTR_T_var_pl, &
        GMTR_P_var,    &
        GMTR_P_var_pl, &
+       GMTR_T_var,    &
+       GMTR_T_var_pl, &
        GMTR_A_var,    &
        GMTR_A_var_pl
     use mod_vmtr, only: &
        VMTR_RGAM,       &
        VMTR_RGAM_pl,    &
-       VMTR_RGSGAM2,    &
-       VMTR_RGSGAM2_pl, &
-       VMTR_GSGAMH,     &
-       VMTR_GSGAMH_pl,  &
-       VMTR_GZXH,       &
-       VMTR_GZXH_pl,    &
-       VMTR_GZYH,       &
-       VMTR_GZYH_pl,    &
-       VMTR_GZZH,       &
-       VMTR_GZZH_pl,    &
+       VMTR_RGAMH,      &
+       VMTR_RGAMH_pl,   &
        VMTR_RGSH,       &
-       VMTR_RGSH_pl
+       VMTR_RGSH_pl,    &
+       VMTR_C2Wfact,    &
+       VMTR_C2Wfact_pl
     implicit none
 
-    real(8), intent(out) :: grdx       (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(out) :: grdx_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: grdy       (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(out) :: grdy_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: grdz       (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(out) :: grdz_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhovx_in   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: rhovx_in_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhovy_in   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: rhovy_in_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhovz_in   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: rhovz_in_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhow       (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: rhow_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(out) :: grdx    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8), intent(out) :: grdx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(out) :: grdy    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8), intent(out) :: grdy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(out) :: grdz    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8), intent(out) :: grdz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)  :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)  :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)  :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)  :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: flx_vz    (ADM_gall,   ADM_kall)
-    real(8) :: flx_vz_pl (ADM_gall_pl,ADM_kall)
-    real(8) :: sclt      (ADM_gall,   ADM_kall,ADM_TI:ADM_TJ)
-    real(8) :: sclt_pl   (ADM_gall_pl,ADM_kall)
+    real(8) :: sclt         (ADM_gall,   ADM_kall,ADM_TI:ADM_TJ)
+    real(8) :: sclt_pl      (ADM_gall_pl,ADM_kall)
+    real(8) :: sclt_rhogw   (ADM_gall,   ADM_kall,ADM_TI:ADM_TJ)
+    real(8) :: sclt_rhogw_pl(ADM_gall_pl,ADM_kall)
 
-    real(8) :: rhovx_k   (ADM_gall   )
-    real(8) :: rhovx_k_pl(ADM_gall_pl)
-    real(8) :: rhovy_k   (ADM_gall   )
-    real(8) :: rhovy_k_pl(ADM_gall_pl)
-    real(8) :: rhovz_k   (ADM_gall   )
-    real(8) :: rhovz_k_pl(ADM_gall_pl)
+    real(8) :: rhogvx_vm   (ADM_gall   )
+    real(8) :: rhogvx_vm_pl(ADM_gall_pl)
+    real(8) :: rhogvy_vm   (ADM_gall   )
+    real(8) :: rhogvy_vm_pl(ADM_gall_pl)
+    real(8) :: rhogvz_vm   (ADM_gall   )
+    real(8) :: rhogvz_vm_pl(ADM_gall_pl)
+    real(8) :: rhogw_vm    (ADM_gall,   ADM_kall)
+    real(8) :: rhogw_vm_pl (ADM_gall_pl,ADM_kall)
 
-    real(8) :: ux1, ux2, ux3
-    real(8) :: uy1, uy2, uy3
-    real(8) :: uz1, uz2, uz3
-    real(8) :: flx_vzt_top, flx_vzt_bot
-    real(8) :: dp1, dp2, dp3, dp4, dp5, dp6
-    real(8) :: dp_pl
-
+    integer :: rgnid
     integer :: nstart, nend
+
+    integer :: ij
     integer :: im1j, ijm1, im1jm1
     integer :: ip1j, ijp1, ip1jp1
-    integer :: ij_pl, ijp1_pl, ijm1_pl
 
-    integer :: k0
-    integer :: rgnid
-    integer :: ij, k, l, n
+    integer :: g, k, l, n, v, k0
 
     integer :: suf,i,j
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+
+    integer :: TI,TJ,AI,AIJ,AJ,TNX,TNY,TNZ,TN2X,TN2Y,TN2Z,HNX,HNY,HNZ
     !---------------------------------------------------------------------------
 
-    grdx   (:,1:ADM_kmin-1,:) = 0.D0
-    grdx_pl(:,1:ADM_kmin-1,:) = 0.D0
-    grdy   (:,1:ADM_kmin-1,:) = 0.D0
-    grdy_pl(:,1:ADM_kmin-1,:) = 0.D0
-    grdz   (:,1:ADM_kmin-1,:) = 0.D0
-    grdz_pl(:,1:ADM_kmin-1,:) = 0.D0
+    k0  = ADM_KNONE
+    TI  = ADM_TI
+    TJ  = ADM_TJ
+    AI  = ADM_AI
+    AIJ = ADM_AIJ
+    AJ  = ADM_AJ
+    TNX = GMTR_A_TNX
+    TNY = GMTR_A_TNY
+    TNZ = GMTR_A_TNZ
+    HNX = GMTR_A_HNX
+    HNY = GMTR_A_HNY
+    HNZ = GMTR_A_HNZ
+    TNX = GMTR_A_TN2X
+    TNY = GMTR_A_TN2Y
+    TNZ = GMTR_A_TN2Z
 
-    grdx   (:,ADM_kmax+1:ADM_kall,:) = 0.D0
-    grdx_pl(:,ADM_kmax+1:ADM_kall,:) = 0.D0
-    grdy   (:,ADM_kmax+1:ADM_kall,:) = 0.D0
-    grdy_pl(:,ADM_kmax+1:ADM_kall,:) = 0.D0
-    grdz   (:,ADM_kmax+1:ADM_kall,:) = 0.D0
-    grdz_pl(:,ADM_kmax+1:ADM_kall,:) = 0.D0
+    ! boundary condition
+    rhogw_vm(:,ADM_kmin  ) = 0.D0
+    rhogw_vm(:,ADM_kmax+1) = 0.D0
 
-    k0 = ADM_KNONE
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       rhogw_vm_pl(:,ADM_kmin  ) = 0.D0
+       rhogw_vm_pl(:,ADM_kmax+1) = 0.D0
+    endif
+
+
 
     do l = 1, ADM_lall
        rgnid = ADM_prc_tab(l,ADM_prc_me)
 
-       do k = ADM_kmin, ADM_kmax+1
-          do ij = 1, ADM_gall
-             flx_vz(ij,k) = ( ( GRD_afac(k) * VMTR_RGSGAM2(ij,k,  l) * rhovx_in(ij,k,  l) &
-                              + GRD_bfac(k) * VMTR_RGSGAM2(ij,k-1,l) * rhovx_in(ij,k-1,l) &
-                              ) * 0.5D0 * VMTR_GSGAMH(ij,k,l) * VMTR_GZXH(ij,k,l)         &
-                            + ( GRD_afac(k) * VMTR_RGSGAM2(ij,k,  l) * rhovy_in(ij,k,  l) &
-                              + GRD_bfac(k) * VMTR_RGSGAM2(ij,k-1,l) * rhovy_in(ij,k-1,l) &
-                              ) * 0.5D0 * VMTR_GSGAMH(ij,k,l) * VMTR_GZYH(ij,k,l)         &
-                            + ( GRD_afac(k) * VMTR_RGSGAM2(ij,k,  l) * rhovz_in(ij,k,  l) &
-                              + GRD_bfac(k) * VMTR_RGSGAM2(ij,k-1,l) * rhovz_in(ij,k-1,l) &
-                              ) * 0.5D0 * VMTR_GSGAMH(ij,k,l) * VMTR_GZZH(ij,k,l)         &
-                            ) + rhow(ij,k,l) * VMTR_RGSH(ij,k,l)
+       do k = ADM_kmin+1, ADM_kmax
+          do g = 1, ADM_gall
+             rhogw_vm(g,k) = ( VMTR_C2Wfact(1,g,k,l) * rhogvx(g,k  ,l) &
+                             + VMTR_C2Wfact(2,g,k,l) * rhogvx(g,k-1,l) &
+                             + VMTR_C2Wfact(3,g,k,l) * rhogvy(g,k  ,l) &
+                             + VMTR_C2Wfact(4,g,k,l) * rhogvy(g,k-1,l) &
+                             + VMTR_C2Wfact(5,g,k,l) * rhogvz(g,k  ,l) &
+                             + VMTR_C2Wfact(6,g,k,l) * rhogvz(g,k-1,l) &
+                             ) * VMTR_RGAMH(g,k,l)                     & ! horizontal contribution
+                           + rhogw(g,k,l) * VMTR_RGSH(g,k,l)             ! vertical   contribution
+          enddo
+       enddo
+
+       nstart = suf(ADM_gmin-1,ADM_gmin-1)
+       nend   = suf(ADM_gmax,  ADM_gmax  )
+
+       do k = ADM_kmin, ADM_kmax
+          do n = nstart, nend
+             ij     = n
+             ip1j   = n + 1
+             ijp1   = n     + ADM_gall_1d
+             ip1jp1 = n + 1 + ADM_gall_1d
+
+             sclt_rhogw(n,k,TI) = ( ( rhogw_vm(ij,k+1) + rhogw_vm(ip1j,k+1) + rhogw_vm(ip1jp1,k+1) ) &
+                                  - ( rhogw_vm(ij,k  ) + rhogw_vm(ip1j,k  ) + rhogw_vm(ip1jp1,k  ) ) &
+                                  ) / 3.D0 * GRD_rdgz(k)
+
+             sclt_rhogw(n,k,TJ) = ( ( rhogw_vm(ij,k+1) + rhogw_vm(ijp1,k+1) + rhogw_vm(ip1jp1,k+1) ) &
+                                  - ( rhogw_vm(ij,k  ) + rhogw_vm(ijp1,k  ) + rhogw_vm(ip1jp1,k  ) ) &
+                                  ) / 3.D0 * GRD_rdgz(k)
           enddo
        enddo
 
        do k = ADM_kmin, ADM_kmax
-          do ij = 1, ADM_gall
-             rhovx_k(ij) = rhovx_in(ij,k,l) * VMTR_RGAM(ij,k,l)
-             rhovy_k(ij) = rhovy_in(ij,k,l) * VMTR_RGAM(ij,k,l)
-             rhovz_k(ij) = rhovz_in(ij,k,l) * VMTR_RGAM(ij,k,l)
-          enddo
-
-          nstart = suf(ADM_gmin-1,ADM_gmin-1)
-          nend   = suf(ADM_gmax,  ADM_gmax  )
+          rhogvx_vm(:) = rhogvx(:,k,l) * VMTR_RGAM(:,k,l)
+          rhogvy_vm(:) = rhogvy(:,k,l) * VMTR_RGAM(:,k,l)
+          rhogvz_vm(:) = rhogvz(:,k,l) * VMTR_RGAM(:,k,l)
 
           do n = nstart, nend
              ij     = n
-             ip1j   = ij+1
-             ip1jp1 = ij+1 + ADM_gall_1d
+             ip1j   = n + 1
+             ijp1   = n     + ADM_gall_1d
+             ip1jp1 = n + 1 + ADM_gall_1d
 
-             ux1 = -( rhovx_k(ij)     + rhovx_k(ip1j)   )
-             uy1 = -( rhovy_k(ij)     + rhovy_k(ip1j)   )
-             uz1 = -( rhovz_k(ij)     + rhovz_k(ip1j)   )
+             sclt(n,k,ADM_TI) = ( - ( rhogvx_vm(ij    ) + rhogvx_vm(ip1j  ) ) * GMTR_A_var(ij,  k0,l,AI, TNX) &
+                                  - ( rhogvy_vm(ij    ) + rhogvy_vm(ip1j  ) ) * GMTR_A_var(ij,  k0,l,AI, TNY) &
+                                  - ( rhogvz_vm(ij    ) + rhogvz_vm(ip1j  ) ) * GMTR_A_var(ij,  k0,l,AI, TNZ) &
+                                  - ( rhogvx_vm(ip1j  ) + rhogvx_vm(ip1jp1) ) * GMTR_A_var(ip1j,k0,l,AJ, TNX) &
+                                  - ( rhogvy_vm(ip1j  ) + rhogvy_vm(ip1jp1) ) * GMTR_A_var(ip1j,k0,l,AJ, TNY) &
+                                  - ( rhogvz_vm(ip1j  ) + rhogvz_vm(ip1jp1) ) * GMTR_A_var(ip1j,k0,l,AJ, TNZ) &
+                                  + ( rhogvx_vm(ip1jp1) + rhogvx_vm(ij    ) ) * GMTR_A_var(ij,  k0,l,AIJ,TNX) &
+                                  + ( rhogvy_vm(ip1jp1) + rhogvy_vm(ij    ) ) * GMTR_A_var(ij,  k0,l,AIJ,TNY) &
+                                  + ( rhogvz_vm(ip1jp1) + rhogvz_vm(ij    ) ) * GMTR_A_var(ij,  k0,l,AIJ,TNZ) &
+                                ) * 0.5D0 * GMTR_T_var(ij,k0,l,ADM_TI,GMTR_T_RAREA) &
+                              + sclt_rhogw(n,k,TI)
 
-             ux2 = -( rhovx_k(ip1j)   + rhovx_k(ip1jp1) )
-             uy2 = -( rhovy_k(ip1j)   + rhovy_k(ip1jp1) )
-             uz2 = -( rhovz_k(ip1j)   + rhovz_k(ip1jp1) )
-
-             ux3 = +( rhovx_k(ip1jp1) + rhovx_k(ij)     )
-             uy3 = +( rhovy_k(ip1jp1) + rhovy_k(ij)     )
-             uz3 = +( rhovz_k(ip1jp1) + rhovz_k(ij)     )
-
-             flx_vzt_top = ( flx_vz(ij,    k+1) &
-                           + flx_vz(ip1j,  k+1) &
-                           + flx_vz(ip1jp1,k+1) ) / 3.D0
-             flx_vzt_bot = ( flx_vz(ij,    k  ) &
-                           + flx_vz(ip1j,  k  ) &
-                           + flx_vz(ip1jp1,k  ) ) / 3.D0
-
-             sclt(ij,k,ADM_TI) = ( ux1 * GMTR_A_var(ij,  k0,l,ADM_AI, GMTR_A_TNX)    &
-                                 + uy1 * GMTR_A_var(ij,  k0,l,ADM_AI, GMTR_A_TNY)    &
-                                 + uz1 * GMTR_A_var(ij,  k0,l,ADM_AI, GMTR_A_TNZ)    &
-                                 + ux2 * GMTR_A_var(ip1j,k0,l,ADM_AJ, GMTR_A_TNX)    &
-                                 + uy2 * GMTR_A_var(ip1j,k0,l,ADM_AJ, GMTR_A_TNY)    &
-                                 + uz2 * GMTR_A_var(ip1j,k0,l,ADM_AJ, GMTR_A_TNZ)    &
-                                 + ux3 * GMTR_A_var(ij,  k0,l,ADM_AIJ,GMTR_A_TNX)    &
-                                 + uy3 * GMTR_A_var(ij,  k0,l,ADM_AIJ,GMTR_A_TNY)    &
-                                 + uz3 * GMTR_A_var(ij,  k0,l,ADM_AIJ,GMTR_A_TNZ)    &
-                                 ) * 0.5D0 * GMTR_T_var(ij,k0,l,ADM_TI,GMTR_T_RAREA) &
-                               + ( flx_vzt_top - flx_vzt_bot ) / GRD_dgz(k)
-
+             sclt(n,k,ADM_TJ) = ( - ( rhogvx_vm(ij    ) + rhogvx_vm(ip1jp1) ) * GMTR_A_var(ij,  k0,l,AIJ,TNX) &
+                                  - ( rhogvy_vm(ij    ) + rhogvy_vm(ip1jp1) ) * GMTR_A_var(ij,  k0,l,AIJ,TNY) &
+                                  - ( rhogvz_vm(ij    ) + rhogvz_vm(ip1jp1) ) * GMTR_A_var(ij,  k0,l,AIJ,TNZ) &
+                                  + ( rhogvx_vm(ip1jp1) + rhogvx_vm(ijp1  ) ) * GMTR_A_var(ijp1,k0,l,AI, TNX) &
+                                  + ( rhogvy_vm(ip1jp1) + rhogvy_vm(ijp1  ) ) * GMTR_A_var(ijp1,k0,l,AI, TNY) &
+                                  + ( rhogvz_vm(ip1jp1) + rhogvz_vm(ijp1  ) ) * GMTR_A_var(ijp1,k0,l,AI, TNZ) &
+                                  + ( rhogvx_vm(ijp1  ) + rhogvx_vm(ij    ) ) * GMTR_A_var(ij,  k0,l,AJ, TNX) &
+                                  + ( rhogvy_vm(ijp1  ) + rhogvy_vm(ij    ) ) * GMTR_A_var(ij,  k0,l,AJ, TNY) &
+                                  + ( rhogvz_vm(ijp1  ) + rhogvz_vm(ij    ) ) * GMTR_A_var(ij,  k0,l,AJ, TNZ) &
+                                ) * 0.5D0 * GMTR_T_var(ij,k0,l,ADM_TJ,GMTR_T_RAREA) &
+                              + sclt_rhogw(n,k,TJ)
           enddo
+       enddo
 
-          nstart = suf(ADM_gmin-1,ADM_gmin-1)
-          nend   = suf(ADM_gmax,  ADM_gmax  )
+       nstart = suf(ADM_gmin,ADM_gmin)
 
+       do k = ADM_kmin, ADM_kmax
           do n = nstart, nend
              ij     = n
-             ijp1   = ij   + ADM_gall_1d
-             ip1jp1 = ij+1 + ADM_gall_1d
+             im1j   = n - 1
+             im1jm1 = n - 1 - ADM_gall_1d
+             ijm1   = n     - ADM_gall_1d
 
-             ux1 = -( rhovx_k(ij)     + rhovx_k(ip1jp1) )
-             uy1 = -( rhovy_k(ij)     + rhovy_k(ip1jp1) )
-             uz1 = -( rhovz_k(ij)     + rhovz_k(ip1jp1) )
+             grdx(n,k,l) = ( + ( sclt(ijm1,  k,TJ) + sclt(ij,    k,TI) ) * GMTR_A_var(ij,    k0,l,AI, HNX) &
+                             + ( sclt(ij,    k,TI) + sclt(ij,    k,TJ) ) * GMTR_A_var(ij,    k0,l,AIJ,HNX) &
+                             + ( sclt(ij,    k,TJ) + sclt(im1j,  k,TI) ) * GMTR_A_var(ij,    k0,l,AJ, HNX) &
+                             - ( sclt(im1jm1,k,TJ) + sclt(im1j,  k,TI) ) * GMTR_A_var(im1j,  k0,l,AI, HNX) &
+                             - ( sclt(im1jm1,k,TI) + sclt(im1jm1,k,TJ) ) * GMTR_A_var(im1jm1,k0,l,AIJ,HNX) &
+                             - ( sclt(ijm1  ,k,TJ) + sclt(im1jm1,k,TI) ) * GMTR_A_var(ijm1,  k0,l,AJ, HNX) &
+                           ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_RAREA)
 
-             ux2 = +( rhovx_k(ip1jp1) + rhovx_k(ijp1)   )
-             uy2 = +( rhovy_k(ip1jp1) + rhovy_k(ijp1)   )
-             uz2 = +( rhovz_k(ip1jp1) + rhovz_k(ijp1)   )
+             grdy(n,k,l) = ( + ( sclt(ijm1,  k,TJ) + sclt(ij,    k,TI) ) * GMTR_A_var(ij,    k0,l,AI, HNY) &
+                             + ( sclt(ij,    k,TI) + sclt(ij,    k,TJ) ) * GMTR_A_var(ij,    k0,l,AIJ,HNY) &
+                             + ( sclt(ij,    k,TJ) + sclt(im1j,  k,TI) ) * GMTR_A_var(ij,    k0,l,AJ, HNY) &
+                             - ( sclt(im1jm1,k,TJ) + sclt(im1j,  k,TI) ) * GMTR_A_var(im1j,  k0,l,AI, HNY) &
+                             - ( sclt(im1jm1,k,TI) + sclt(im1jm1,k,TJ) ) * GMTR_A_var(im1jm1,k0,l,AIJ,HNY) &
+                             - ( sclt(ijm1  ,k,TJ) + sclt(im1jm1,k,TI) ) * GMTR_A_var(ijm1,  k0,l,AJ, HNY) &
+                           ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_RAREA)
 
-             ux3 = +( rhovx_k(ijp1)   + rhovx_k(ij)     )
-             uy3 = +( rhovy_k(ijp1)   + rhovy_k(ij)     )
-             uz3 = +( rhovz_k(ijp1)   + rhovz_k(ij)     )
-
-             flx_vzt_top = ( flx_vz(ij,    k+1) &
-                           + flx_vz(ijp1,  k+1) &
-                           + flx_vz(ip1jp1,k+1) ) / 3.D0
-             flx_vzt_bot = ( flx_vz(ij,    k  ) &
-                           + flx_vz(ijp1,  k  ) &
-                           + flx_vz(ip1jp1,k  ) ) / 3.D0
-
-             sclt(ij,k,ADM_TJ) = ( ux1 * GMTR_A_var(ij,  k0,l,ADM_AIJ,GMTR_A_TNX)    &
-                                 + uy1 * GMTR_A_var(ij,  k0,l,ADM_AIJ,GMTR_A_TNY)    &
-                                 + uz1 * GMTR_A_var(ij,  k0,l,ADM_AIJ,GMTR_A_TNZ)    &
-                                 + ux2 * GMTR_A_var(ijp1,k0,l,ADM_AI, GMTR_A_TNX)    &
-                                 + uy2 * GMTR_A_var(ijp1,k0,l,ADM_AI, GMTR_A_TNY)    &
-                                 + uz2 * GMTR_A_var(ijp1,k0,l,ADM_AI, GMTR_A_TNZ)    &
-                                 + ux3 * GMTR_A_var(ij,  k0,l,ADM_AJ, GMTR_A_TNX)    &
-                                 + uy3 * GMTR_A_var(ij,  k0,l,ADM_AJ, GMTR_A_TNY)    &
-                                 + uz3 * GMTR_A_var(ij,  k0,l,ADM_AJ, GMTR_A_TNZ)    &
-                                 ) * 0.5D0 * GMTR_T_var(ij,k0,l,ADM_TJ,GMTR_T_RAREA) &
-                               + ( flx_vzt_top - flx_vzt_bot ) / GRD_dgz(k)
+             grdz(n,k,l) = ( + ( sclt(ijm1,  k,TJ) + sclt(ij,    k,TI) ) * GMTR_A_var(ij,    k0,l,AI, HNZ) &
+                             + ( sclt(ij,    k,TI) + sclt(ij,    k,TJ) ) * GMTR_A_var(ij,    k0,l,AIJ,HNZ) &
+                             + ( sclt(ij,    k,TJ) + sclt(im1j,  k,TI) ) * GMTR_A_var(ij,    k0,l,AJ, HNZ) &
+                             - ( sclt(im1jm1,k,TJ) + sclt(im1j,  k,TI) ) * GMTR_A_var(im1j,  k0,l,AI, HNZ) &
+                             - ( sclt(im1jm1,k,TI) + sclt(im1jm1,k,TJ) ) * GMTR_A_var(im1jm1,k0,l,AIJ,HNZ) &
+                             - ( sclt(ijm1  ,k,TJ) + sclt(im1jm1,k,TI) ) * GMTR_A_var(ijm1,  k0,l,AJ, HNZ) &
+                           ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_RAREA)
           enddo
+       enddo
 
-          nstart = suf(ADM_gmin,ADM_gmin)
-          nend   = suf(ADM_gmax,ADM_gmax)
+       if ( ADM_rgn_vnum(ADM_W,rgnid) == 3 ) then
+          n = suf(ADM_gmin,ADM_gmin)
 
-          do n = nstart, nend
-             ij     = n
-             im1j   = ij-1
-             im1jm1 = ij-1 - ADM_gall_1d
-             ijm1   = ij   - ADM_gall_1d
+          ij     = n
+          im1j   = n - 1
+          im1jm1 = n - 1 - ADM_gall_1d
+          ijm1   = n     - ADM_gall_1d
 
-             dp1 = 0.5D0 * ( sclt(ijm1,  k,ADM_TJ) + sclt(ij,    k,ADM_TI) )
-             dp2 = 0.5D0 * ( sclt(ij,    k,ADM_TI) + sclt(ij,    k,ADM_TJ) )
-             dp3 = 0.5D0 * ( sclt(ij,    k,ADM_TJ) + sclt(im1j,  k,ADM_TI) )
-             dp4 = 0.5D0 * ( sclt(im1jm1,k,ADM_TJ) + sclt(im1j,  k,ADM_TI) )
-             dp5 = 0.5D0 * ( sclt(im1jm1,k,ADM_TI) + sclt(im1jm1,k,ADM_TJ) )
-             dp6 = 0.5D0 * ( sclt(ijm1  ,k,ADM_TJ) + sclt(im1jm1,k,ADM_TI) )
-
-             grdx(ij,k,l) = ( dp1 * GMTR_A_var(ij,    k0,l,ADM_AI, GMTR_A_HNX) &
-                            + dp2 * GMTR_A_var(ij,    k0,l,ADM_AIJ,GMTR_A_HNX) &
-                            + dp3 * GMTR_A_var(ij,    k0,l,ADM_AJ, GMTR_A_HNX) &
-                            - dp4 * GMTR_A_var(im1j,  k0,l,ADM_AI, GMTR_A_HNX) &
-                            - dp5 * GMTR_A_var(im1jm1,k0,l,ADM_AIJ,GMTR_A_HNX) &
-                            - dp6 * GMTR_A_var(ijm1,  k0,l,ADM_AJ, GMTR_A_HNX) &
-                            ) * GMTR_P_var(ij,k0,l,GMTR_P_RAREA)
-
-             grdy(ij,k,l) = ( dp1 * GMTR_A_var(ij,    k0,l,ADM_AI, GMTR_A_HNY) &
-                            + dp2 * GMTR_A_var(ij,    k0,l,ADM_AIJ,GMTR_A_HNY) &
-                            + dp3 * GMTR_A_var(ij,    k0,l,ADM_AJ, GMTR_A_HNY) &
-                            - dp4 * GMTR_A_var(im1j,  k0,l,ADM_AI, GMTR_A_HNY) &
-                            - dp5 * GMTR_A_var(im1jm1,k0,l,ADM_AIJ,GMTR_A_HNY) &
-                            - dp6 * GMTR_A_var(ijm1,  k0,l,ADM_AJ, GMTR_A_HNY) &
-                            ) * GMTR_P_var(ij,k0,l,GMTR_P_RAREA)     
-
-             grdz(ij,k,l) = ( dp1 * GMTR_A_var(ij,    k0,l,ADM_AI, GMTR_A_HNZ) &
-                            + dp2 * GMTR_A_var(ij,    k0,l,ADM_AIJ,GMTR_A_HNZ) &
-                            + dp3 * GMTR_A_var(ij,    k0,l,ADM_AJ, GMTR_A_HNZ) &
-                            - dp4 * GMTR_A_var(im1j,  k0,l,ADM_AI, GMTR_A_HNZ) &
-                            - dp5 * GMTR_A_var(im1jm1,k0,l,ADM_AIJ,GMTR_A_HNZ) &
-                            - dp6 * GMTR_A_var(ijm1,  k0,l,ADM_AJ, GMTR_A_HNZ) &
-                            ) * GMTR_P_var(ij,k0,l,GMTR_P_RAREA)   
-          enddo
-
-          if ( ADM_rgn_vnum(ADM_W,rgnid) == 3 ) then
-             n = suf(ADM_gmin,ADM_gmin)
-
-             ij     = n
-             im1j   = ij-1
-             im1jm1 = ij-1 - ADM_gall_1d
-             ijm1   = ij   - ADM_gall_1d
-
+          do k = ADM_kmin, ADM_kmax
              sclt(im1jm1,k,ADM_TI) = sclt(ijm1,k,ADM_TJ) ! copy
 
-             dp1 = 0.5D0 * ( sclt(ijm1,  k,ADM_TJ) + sclt(ij,    k,ADM_TI) )
-             dp2 = 0.5D0 * ( sclt(ij,    k,ADM_TI) + sclt(ij,    k,ADM_TJ) )
-             dp3 = 0.5D0 * ( sclt(ij,    k,ADM_TJ) + sclt(im1j,  k,ADM_TI) )
-             dp4 = 0.5D0 * ( sclt(im1jm1,k,ADM_TJ) + sclt(im1j,  k,ADM_TI) )
-             dp5 = 0.5D0 * ( sclt(im1jm1,k,ADM_TI) + sclt(im1jm1,k,ADM_TJ) )
+             grdx(n,k,l) = ( + ( sclt(ijm1,  k,TJ) + sclt(ij,    k,TI) ) * GMTR_A_var(ij,    k0,l,AI, HNX) &
+                             + ( sclt(ij,    k,TI) + sclt(ij,    k,TJ) ) * GMTR_A_var(ij,    k0,l,AIJ,HNX) &
+                             + ( sclt(ij,    k,TJ) + sclt(im1j,  k,TI) ) * GMTR_A_var(ij,    k0,l,AJ, HNX) &
+                             - ( sclt(im1jm1,k,TJ) + sclt(im1j,  k,TI) ) * GMTR_A_var(im1j,  k0,l,AI, HNX) &
+                             - ( sclt(im1jm1,k,TI) + sclt(im1jm1,k,TJ) ) * GMTR_A_var(im1jm1,k0,l,AIJ,HNX) &
+                           ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_RAREA)
 
-             grdx(ij,k,l) = ( dp1 * GMTR_A_var(ij,    k0,l,ADM_AI, GMTR_A_HNX) &
-                            + dp2 * GMTR_A_var(ij,    k0,l,ADM_AIJ,GMTR_A_HNX) &
-                            + dp3 * GMTR_A_var(ij,    k0,l,ADM_AJ, GMTR_A_HNX) &
-                            - dp4 * GMTR_A_var(im1j,  k0,l,ADM_AI, GMTR_A_HNX) &
-                            - dp5 * GMTR_A_var(im1jm1,k0,l,ADM_AIJ,GMTR_A_HNX) &
-                            ) * GMTR_P_var(ij,k0,l,GMTR_P_RAREA)
+             grdy(n,k,l) = ( + ( sclt(ijm1,  k,TJ) + sclt(ij,    k,TI) ) * GMTR_A_var(ij,    k0,l,AI, HNY) &
+                             + ( sclt(ij,    k,TI) + sclt(ij,    k,TJ) ) * GMTR_A_var(ij,    k0,l,AIJ,HNY) &
+                             + ( sclt(ij,    k,TJ) + sclt(im1j,  k,TI) ) * GMTR_A_var(ij,    k0,l,AJ, HNY) &
+                             - ( sclt(im1jm1,k,TJ) + sclt(im1j,  k,TI) ) * GMTR_A_var(im1j,  k0,l,AI, HNY) &
+                             - ( sclt(im1jm1,k,TI) + sclt(im1jm1,k,TJ) ) * GMTR_A_var(im1jm1,k0,l,AIJ,HNY) &
+                           ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_RAREA)
 
-             grdy(ij,k,l) = ( dp1 * GMTR_A_var(ij,    k0,l,ADM_AI, GMTR_A_HNY) &
-                            + dp2 * GMTR_A_var(ij,    k0,l,ADM_AIJ,GMTR_A_HNY) &
-                            + dp3 * GMTR_A_var(ij,    k0,l,ADM_AJ, GMTR_A_HNY) &
-                            - dp4 * GMTR_A_var(im1j,  k0,l,ADM_AI, GMTR_A_HNY) &
-                            - dp5 * GMTR_A_var(im1jm1,k0,l,ADM_AIJ,GMTR_A_HNY) &
-                            ) * GMTR_P_var(ij,k0,l,GMTR_P_RAREA)
+             grdz(n,k,l) = ( + ( sclt(ijm1,  k,TJ) + sclt(ij,    k,TI) ) * GMTR_A_var(ij,    k0,l,AI, HNZ) &
+                             + ( sclt(ij,    k,TI) + sclt(ij,    k,TJ) ) * GMTR_A_var(ij,    k0,l,AIJ,HNZ) &
+                             + ( sclt(ij,    k,TJ) + sclt(im1j,  k,TI) ) * GMTR_A_var(ij,    k0,l,AJ, HNZ) &
+                             - ( sclt(im1jm1,k,TJ) + sclt(im1j,  k,TI) ) * GMTR_A_var(im1j,  k0,l,AI, HNZ) &
+                             - ( sclt(im1jm1,k,TI) + sclt(im1jm1,k,TJ) ) * GMTR_A_var(im1jm1,k0,l,AIJ,HNZ) &
+                           ) * 0.5D0 * GMTR_P_var(ij,k0,l,GMTR_P_RAREA)
+          enddo
+       endif
 
-             grdz(ij,k,l) = ( dp1 * GMTR_A_var(ij,    k0,l,ADM_AI, GMTR_A_HNZ) &
-                            + dp2 * GMTR_A_var(ij,    k0,l,ADM_AIJ,GMTR_A_HNZ) &
-                            + dp3 * GMTR_A_var(ij,    k0,l,ADM_AJ, GMTR_A_HNZ) &
-                            - dp4 * GMTR_A_var(im1j,  k0,l,ADM_AI, GMTR_A_HNZ) &
-                            - dp5 * GMTR_A_var(im1jm1,k0,l,ADM_AIJ,GMTR_A_HNZ) &
-                            ) * GMTR_P_var(ij,k0,l,GMTR_P_RAREA)
-          endif
-
-       enddo
+       grdx   (:,ADM_kmin-1,l) = 0.D0
+       grdx   (:,ADM_kmax+1,l) = 0.D0
+       grdy   (:,ADM_kmin-1,l) = 0.D0
+       grdy   (:,ADM_kmax+1,l) = 0.D0
+       grdz   (:,ADM_kmin-1,l) = 0.D0
+       grdz   (:,ADM_kmax+1,l) = 0.D0
     enddo
 
     if ( ADM_prc_me == ADM_prc_pl ) then
        do l = 1, ADM_lall_pl
-          do k = ADM_kmin, ADM_kmax+1
-             do ij = 1, ADM_gall_pl
-                flx_vz_pl(ij,k) = ( ( GRD_afac(k) * VMTR_RGSGAM2_pl(ij,k,  l) * rhovx_in_pl(ij,k,  l) &
-                                    + GRD_bfac(k) * VMTR_RGSGAM2_pl(ij,k-1,l) * rhovx_in_pl(ij,k-1,l) &
-                                    ) *  0.5D0 * VMTR_GSGAMH_pl(ij,k,l) * VMTR_GZXH_pl(ij,k,l)        &
-                                  + ( GRD_afac(k) * VMTR_RGSGAM2_pl(ij,k,  l) * rhovy_in_pl(ij,k,  l) &
-                                    + GRD_bfac(k) * VMTR_RGSGAM2_pl(ij,k-1,l) * rhovy_in_pl(ij,k-1,l) &
-                                    ) *  0.5D0 * VMTR_GSGAMH_pl(ij,k,l) * VMTR_GZYH_pl(ij,k,l)        & 
-                                  + ( GRD_afac(k) * VMTR_RGSGAM2_pl(ij,k,  l) * rhovz_in_pl(ij,k,  l) &
-                                    + GRD_bfac(k) * VMTR_RGSGAM2_pl(ij,k-1,l) * rhovz_in_pl(ij,k-1,l) &
-                                    ) * 0.5D0 * VMTR_GSGAMH_pl(ij,k,l) * VMTR_GZZH_pl(ij,k,l)         &
-                                  ) + rhow_pl(ij,k,l) * VMTR_RGSH_pl(ij,k,l)
+          do k = ADM_kmin+1, ADM_kmax
+             do g = 1, ADM_gall_pl
+                rhogw_vm_pl(g,k) = ( VMTR_C2Wfact_pl(1,g,k,l) * rhogvx_pl(g,k  ,l) &
+                                   + VMTR_C2Wfact_pl(2,g,k,l) * rhogvx_pl(g,k-1,l) &
+                                   + VMTR_C2Wfact_pl(3,g,k,l) * rhogvy_pl(g,k  ,l) &
+                                   + VMTR_C2Wfact_pl(4,g,k,l) * rhogvy_pl(g,k-1,l) &
+                                   + VMTR_C2Wfact_pl(5,g,k,l) * rhogvz_pl(g,k  ,l) &
+                                   + VMTR_C2Wfact_pl(6,g,k,l) * rhogvz_pl(g,k-1,l) &
+                                   ) * VMTR_RGAMH_pl(g,k,l)                        & ! horizontal contribution
+                                 + rhogw_pl(g,k,l) * VMTR_RGSH_pl(g,k,l)             ! vertical   contribution
+             enddo
+          enddo
+
+          n = ADM_GSLF_PL
+          do k = ADM_kmin, ADM_kmax
+             do v = ADM_gmin_pl, ADM_gmax_pl
+                ij   = v
+                ijp1 = v + 1
+                if( ijp1 > ADM_gmax_pl ) ijp1 = ADM_gmin_pl
+
+                sclt_rhogw_pl(v,k) = ( ( rhogw_vm_pl(n,k+1) + rhogw_vm_pl(ij,k+1) + rhogw_vm_pl(ijp1,k+1) ) &
+                                     - ( rhogw_vm_pl(n,k  ) + rhogw_vm_pl(ij,k  ) + rhogw_vm_pl(ijp1,k  ) ) &
+                                     ) / 3.D0 * GRD_rdgz(k)
              enddo
           enddo
 
           do k = ADM_kmin, ADM_kmax
+             rhogvx_vm_pl(:) = rhogvx_pl(:,k,l) * VMTR_RGAM_pl(:,k,l)
+             rhogvy_vm_pl(:) = rhogvy_pl(:,k,l) * VMTR_RGAM_pl(:,k,l)
+             rhogvz_vm_pl(:) = rhogvz_pl(:,k,l) * VMTR_RGAM_pl(:,k,l)
 
-             do ij = 1, ADM_gall_pl
-                rhovx_k_pl(ij) = rhovx_in_pl(ij,k,l) * VMTR_RGAM_pl(ij,k,l)
-                rhovy_k_pl(ij) = rhovy_in_pl(ij,k,l) * VMTR_RGAM_pl(ij,k,l)
-                rhovz_k_pl(ij) = rhovz_in_pl(ij,k,l) * VMTR_RGAM_pl(ij,k,l)
+             do v = ADM_gmin_pl, ADM_gmax_pl
+                ij   = v
+                ijp1 = v + 1
+                if( ijp1 > ADM_gmax_pl ) ijp1 = ADM_gmin_pl
+
+                sclt_pl(v,k) = ( + ( rhogvx_vm_pl(n   ) + rhogvx_vm_pl(ij  ) ) * GMTR_A_var_pl(ij,  k0,l,TNX ) &
+                                 + ( rhogvy_vm_pl(n   ) + rhogvy_vm_pl(ij  ) ) * GMTR_A_var_pl(ij,  k0,l,TNY ) &
+                                 + ( rhogvz_vm_pl(n   ) + rhogvz_vm_pl(ij  ) ) * GMTR_A_var_pl(ij,  k0,l,TNZ ) &
+                                 + ( rhogvx_vm_pl(ij  ) + rhogvx_vm_pl(ijp1) ) * GMTR_A_var_pl(ij,  k0,l,TN2X) &
+                                 + ( rhogvy_vm_pl(ij  ) + rhogvy_vm_pl(ijp1) ) * GMTR_A_var_pl(ij,  k0,l,TN2Y) &
+                                 + ( rhogvz_vm_pl(ij  ) + rhogvz_vm_pl(ijp1) ) * GMTR_A_var_pl(ij,  k0,l,TN2Z) &
+                                 - ( rhogvx_vm_pl(ijp1) + rhogvx_vm_pl(n   ) ) * GMTR_A_var_pl(ijp1,k0,l,TNX ) &
+                                 - ( rhogvy_vm_pl(ijp1) + rhogvy_vm_pl(n   ) ) * GMTR_A_var_pl(ijp1,k0,l,TNY ) &
+                                 - ( rhogvz_vm_pl(ijp1) + rhogvz_vm_pl(n   ) ) * GMTR_A_var_pl(ijp1,k0,l,TNZ ) &
+                               ) * 0.5D0 * GMTR_T_var_pl(ij,k0,l,GMTR_T_RAREA) &
+                             + sclt_rhogw_pl(v,k)
+             enddo
+          enddo
+
+          do k = ADM_kmin, ADM_kmax
+             grdx_pl(n,k,l) = 0.D0
+             grdy_pl(n,k,l) = 0.D0
+             grdz_pl(n,k,l) = 0.D0
+
+             do v = ADM_gmin_pl, ADM_gmax_pl
+                ij   = v
+                ijm1 = v - 1
+                if( ijm1 < ADM_gmin_pl ) ijm1 = ADM_gmax_pl ! cyclic condition
+
+                grdx_pl(n,k,l) = grdx_pl(n,k,l) + ( sclt_pl(ijm1,k) + sclt_pl(ij,k) ) * GMTR_A_var_pl(ij,k0,l,HNX)
+                grdy_pl(n,k,l) = grdy_pl(n,k,l) + ( sclt_pl(ijm1,k) + sclt_pl(ij,k) ) * GMTR_A_var_pl(ij,k0,l,HNY)
+                grdz_pl(n,k,l) = grdz_pl(n,k,l) + ( sclt_pl(ijm1,k) + sclt_pl(ij,k) ) * GMTR_A_var_pl(ij,k0,l,HNZ)
              enddo
 
-             ij = ADM_GSLF_PL
-             do n = ADM_GMIN_PL, ADM_GMAX_PL
-                ij_pl   = n
-                ijp1_pl = n+1
-
-                if( ij_pl == ADM_GMAX_PL ) ijp1_pl = ADM_GMIN_PL ! cyclic condition
-
-                ux1 = +( rhovx_k_pl(ij     ) + rhovx_k_pl(ij_pl  ) )
-                uy1 = +( rhovy_k_pl(ij     ) + rhovy_k_pl(ij_pl  ) )
-                uz1 = +( rhovz_k_pl(ij     ) + rhovz_k_pl(ij_pl  ) )
-
-                ux2 = +( rhovx_k_pl(ij_pl  ) + rhovx_k_pl(ijp1_pl) )
-                uy2 = +( rhovy_k_pl(ij_pl  ) + rhovy_k_pl(ijp1_pl) )
-                uz2 = +( rhovz_k_pl(ij_pl  ) + rhovz_k_pl(ijp1_pl) )
-
-                ux3 = -( rhovx_k_pl(ijp1_pl) + rhovx_k_pl(ij     ) )
-                uy3 = -( rhovy_k_pl(ijp1_pl) + rhovy_k_pl(ij     ) )
-                uz3 = -( rhovz_k_pl(ijp1_pl) + rhovz_k_pl(ij     ) )
-
-                flx_vzt_top = ( flx_vz_pl(ij,     k+1) &
-                              + flx_vz_pl(ij_pl,  k+1) &
-                              + flx_vz_pl(ijp1_pl,k+1) ) / 3.D0
-                flx_vzt_bot = ( flx_vz_pl(ij,     k  ) &
-                              + flx_vz_pl(ij_pl,  k  ) &
-                              + flx_vz_pl(ijp1_pl,k  ) ) / 3.D0
-
-                sclt_pl(ij_pl,k) = ( ux1 * GMTR_A_var_pl(ij_pl,  k0,l,GMTR_A_TNX )    &
-                                   + uy1 * GMTR_A_var_pl(ij_pl,  k0,l,GMTR_A_TNY )    &
-                                   + uz1 * GMTR_A_var_pl(ij_pl,  k0,l,GMTR_A_TNZ )    &
-                                   + ux2 * GMTR_A_var_pl(ij_pl,  k0,l,GMTR_A_TN2X)    &
-                                   + uy2 * GMTR_A_var_pl(ij_pl,  k0,l,GMTR_A_TN2Y)    &
-                                   + uz2 * GMTR_A_var_pl(ij_pl,  k0,l,GMTR_A_TN2Z)    &
-                                   + ux3 * GMTR_A_var_pl(ijp1_pl,k0,l,GMTR_A_TNX )    &
-                                   + uy3 * GMTR_A_var_pl(ijp1_pl,k0,l,GMTR_A_TNY )    &
-                                   + uz3 * GMTR_A_var_pl(ijp1_pl,k0,l,GMTR_A_TNZ )    &
-                                   ) * 0.5D0 * GMTR_T_var_pl(ij_pl,k0,l,GMTR_T_RAREA) &
-                                 + ( flx_vzt_top - flx_vzt_bot ) / GRD_dgz(k)
-             enddo
-
-             grdx_pl(ij,k,l) = 0.D0
-             grdy_pl(ij,k,l) = 0.D0
-             grdz_pl(ij,k,l) = 0.D0
-             do n = ADM_GMIN_PL, ADM_GMAX_PL
-                ij_pl   = n
-                ijm1_pl = n-1
-
-                if( ij_pl == ADM_GMIN_PL ) ijm1_pl = ADM_GMAX_PL ! cyclic condition
-
-                dp_pl = 0.5D0 * ( sclt_pl(ijm1_pl,k) + sclt_pl(ij_pl,k) )
-
-                grdx_pl(ij,k,l) = grdx_pl(ij,k,l) &
-                                + dp_pl * GMTR_A_var_pl(ij_pl,k0,l,GMTR_A_HNX)
-                grdy_pl(ij,k,l) = grdy_pl(ij,k,l) &
-                                + dp_pl * GMTR_A_var_pl(ij_pl,k0,l,GMTR_A_HNY)
-                grdz_pl(ij,k,l) = grdz_pl(ij,k,l) &
-                                + dp_pl * GMTR_A_var_pl(ij_pl,k0,l,GMTR_A_HNZ)
-             enddo
-
-             grdx_pl(ij,k,l) = grdx_pl(ij,k,l) * GMTR_P_var_pl(ij,k0,l,GMTR_P_RAREA)
-             grdy_pl(ij,k,l) = grdy_pl(ij,k,l) * GMTR_P_var_pl(ij,k0,l,GMTR_P_RAREA)
-             grdz_pl(ij,k,l) = grdz_pl(ij,k,l) * GMTR_P_var_pl(ij,k0,l,GMTR_P_RAREA)
-
+             grdx_pl(n,k,l) = grdx_pl(n,k,l) * 0.5D0 * GMTR_P_var_pl(n,k0,l,GMTR_P_RAREA)
+             grdy_pl(n,k,l) = grdy_pl(n,k,l) * 0.5D0 * GMTR_P_var_pl(n,k0,l,GMTR_P_RAREA)
+             grdz_pl(n,k,l) = grdz_pl(n,k,l) * 0.5D0 * GMTR_P_var_pl(n,k0,l,GMTR_P_RAREA)
           enddo
 
        enddo
@@ -459,304 +403,6 @@ contains
 
     return
   end subroutine OPRT3D_divdamp
-
-  !-----------------------------------------------------------------------------
-  subroutine OPRT3D_gradient_intpl( &
-       vx,  vx_pl,  &
-       vy,  vy_pl,  &
-       vz,  vz_pl,  &
-       scl, scl_pl, &
-       mfact        )
-    use mod_adm, only: &
-       ADM_prc_me,   &
-       ADM_PRC_PL,   &
-       ADM_rgn_vnum, &
-       ADM_prc_tab,  &
-       ADM_W,        &
-       ADM_TI,       &
-       ADM_TJ,       &
-       ADM_AI,       &
-       ADM_AIJ,      &
-       ADM_AJ,       &
-       ADM_gall,     &
-       ADM_gall_pl,  &
-       ADM_lall,     &
-       ADM_lall_pl,  &
-       ADM_kall,     &
-       ADM_gall_1d,  &
-       ADM_gmin,     &
-       ADM_gmax,     &
-       ADM_GSLF_PL,  &
-       ADM_GMIN_PL,  &
-       ADM_GMAX_PL,  &
-       ADM_kmin,     &
-       ADM_kmax,     &
-       ADM_KNONE
-    use mod_grd, only: &
-       GRD_vz,     &
-       GRD_vz_pl, &
-       GRD_Z
-    use mod_gmtr, only: &
-         GMTR_T_W1,       &
-         GMTR_T_W2,       &
-         GMTR_T_W3,       &
-         GMTR_A_HNX,      &
-         GMTR_A_HNY,      &
-         GMTR_A_HNZ,      &
-         GMTR_P_RAREA,    &
-         GMTR_T_var,      &
-         GMTR_T_var_pl,   &
-         GMTR_P_var,      &
-         GMTR_P_var_pl,   &
-         GMTR_A_var,      &
-         GMTR_A_var_pl
-    implicit none
-
-    real(8), intent(in)    :: scl   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: scl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: vx    (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: vx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: vy    (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: vy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: vz    (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: vz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-
-    real(8), intent(in), optional :: mfact
-
-    real(8) :: flx6    (6)
-    real(8) :: flx6_pl
-    real(8) :: scl6    (6)
-    real(8) :: scl6_pl (ADM_gall_pl)
-    real(8) :: sclt6   (ADM_gall,6)
-    real(8) :: sclt6_pl(ADM_gall_pl)
-
-    real(8) :: fact
-
-    integer :: nstart, nend
-    integer :: im1j, ijm1, im1jm1
-    integer :: ip1j, ijp1, ip1jp1
-    integer :: ij_pl, ijp1_pl, ijm1_pl
-
-    integer :: k0
-    integer :: rgnid
-    integer :: ij, k, l, n
-
-    real(8) :: p,z,z1,z2,z3,p1,p2,p3 ! interpolation
-    p(z,z1,p1,z2,p2,z3,p3) = ( (z-z2)*(z-z3) ) / ( (z1-z2)*(z1-z3) ) * p1 &
-                           + ( (z-z1)*(z-z3) ) / ( (z2-z1)*(z2-z3) ) * p2 &
-                           + ( (z-z1)*(z-z2) ) / ( (z3-z1)*(z3-z2) ) * p3
-    integer :: suf,i,j
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
-    !---------------------------------------------------------------------------
-
-    k0 = ADM_KNONE
-
-    if ( present(mfact) ) then
-       fact = mfact
-    else
-       fact = 1.D0
-    endif
-
-    do l = 1, ADM_lall
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
-
-       do k = ADM_kmin, ADM_kmax
-          nstart = suf(ADM_gmin,ADM_gmin)
-          nend   = suf(ADM_gmax,ADM_gmax)
-
-          do n = nstart, nend
-             ij     = n
-             ip1j   = n+1
-             ijp1   = n   + ADM_gall_1d
-             ip1jp1 = n+1 + ADM_gall_1d
-             im1j   = n-1
-             ijm1   = n   - ADM_gall_1d
-             im1jm1 = n-1 - ADM_gall_1d
-
-             scl6(1) = p( GRD_vz(ij,    k,  l,GRD_Z),                    &
-                          GRD_vz(ip1j,  k-1,l,GRD_Z), scl(ip1j,  k-1,l), &
-                          GRD_vz(ip1j,  k,  l,GRD_Z), scl(ip1j,  k,  l), &
-                          GRD_vz(ip1j,  k+1,l,GRD_Z), scl(ip1j,  k+1,l)  )
-
-             scl6(2) = p( GRD_vz(ij,    k,  l,GRD_Z),                    &
-                          GRD_vz(ip1jp1,k-1,l,GRD_Z), scl(ip1jp1,k-1,l), &
-                          GRD_vz(ip1jp1,k,  l,GRD_Z), scl(ip1jp1,k,  l), &
-                          GRD_vz(ip1jp1,k+1,l,GRD_Z), scl(ip1jp1,k+1,l)  )
-
-             scl6(3) = p( GRD_vz(ij,    k,  l,GRD_Z),                    &
-                          GRD_vz(ijp1,  k-1,l,GRD_Z), scl(ijp1,  k-1,l), &
-                          GRD_vz(ijp1,  k,  l,GRD_Z), scl(ijp1,  k,  l), &
-                          GRD_vz(ijp1,  k+1,l,GRD_Z), scl(ijp1,  k+1,l)  )
-
-             scl6(4) = p( GRD_vz(ij,    k,  l,GRD_Z),                    &
-                          GRD_vz(im1j,  k-1,l,GRD_Z), scl(im1j,  k-1,l), &
-                          GRD_vz(im1j,  k,  l,GRD_Z), scl(im1j,  k,  l), &
-                          GRD_vz(im1j,  k+1,l,GRD_Z), scl(im1j,  k+1,l)  )
-
-             scl6(5) = p( GRD_vz(ij,    k,  l,GRD_Z),                    &
-                          GRD_vz(im1jm1,k-1,l,GRD_Z), scl(im1jm1,k-1,l), &
-                          GRD_vz(im1jm1,k,  l,GRD_Z), scl(im1jm1,k,  l), &
-                          GRD_vz(im1jm1,k+1,l,GRD_Z), scl(im1jm1,k+1,l)  )
-
-             scl6(6) = p( GRD_vz(ij,    k,  l,GRD_Z),                    &
-                          GRD_vz(ijm1,  k-1,l,GRD_Z), scl(ijm1,  k-1,l), &
-                          GRD_vz(ijm1,  k,  l,GRD_Z), scl(ijm1,  k,  l), &
-                          GRD_vz(ijm1,  k+1,l,GRD_Z), scl(ijm1,  k+1,l)  )
-
-             sclt6(ij,1) = GMTR_T_var(ij,    k0,l,ADM_TI,GMTR_T_W1) * scl(ij,k,l) &
-                         + GMTR_T_var(ij,    k0,l,ADM_TI,GMTR_T_W2) * scl6(1)     &
-                         + GMTR_T_var(ij,    k0,l,ADM_TI,GMTR_T_W3) * scl6(2)
-
-             sclt6(ij,2) = GMTR_T_var(ij,    k0,l,ADM_TJ,GMTR_T_W1) * scl(ij,k,l) &
-                         + GMTR_T_var(ij,    k0,l,ADM_TJ,GMTR_T_W2) * scl6(2)     &
-                         + GMTR_T_var(ij,    k0,l,ADM_TJ,GMTR_T_W3) * scl6(3)
-
-             sclt6(ij,3) = GMTR_T_var(im1j,  k0,l,ADM_TI,GMTR_T_W1) * scl6(4)     &
-                         + GMTR_T_var(im1j,  k0,l,ADM_TI,GMTR_T_W2) * scl(ij,k,l) &
-                         + GMTR_T_var(im1j,  k0,l,ADM_TI,GMTR_T_W3) * scl6(3)
-
-             sclt6(ij,4) = GMTR_T_var(im1jm1,k0,l,ADM_TJ,GMTR_T_W1) * scl6(5)     &
-                         + GMTR_T_var(im1jm1,k0,l,ADM_TJ,GMTR_T_W2) * scl(ij,k,l) &
-                         + GMTR_T_var(im1jm1,k0,l,ADM_TJ,GMTR_T_W3) * scl6(4)
-
-             sclt6(ij,5) = GMTR_T_var(im1jm1,k0,l,ADM_TI,GMTR_T_W1) * scl6(5)     &
-                         + GMTR_T_var(im1jm1,k0,l,ADM_TI,GMTR_T_W2) * scl6(6)     &
-                         + GMTR_T_var(im1jm1,k0,l,ADM_TI,GMTR_T_W3) * scl(ij,k,l)
-
-             sclt6(ij,6) = GMTR_T_var(ijm1,  k0,l,ADM_TJ,GMTR_T_W1) * scl6(6)     &
-                         + GMTR_T_var(ijm1,  k0,l,ADM_TJ,GMTR_T_W2) * scl6(1)     &
-                         + GMTR_T_var(ijm1,  k0,l,ADM_TJ,GMTR_T_W3) * scl(ij,k,l)
-          enddo
-
-          do n = nstart, nend
-             ij     = n
-             im1j   = n-1
-             ijm1   = n   - ADM_gall_1d
-             im1jm1 = n-1 - ADM_gall_1d
-
-             flx6(1) = 0.5D0 * ( sclt6(ij,6) + sclt6(ij,1) ) - scl(ij,k,l)
-             flx6(2) = 0.5D0 * ( sclt6(ij,1) + sclt6(ij,2) ) - scl(ij,k,l)
-             flx6(3) = 0.5D0 * ( sclt6(ij,2) + sclt6(ij,3) ) - scl(ij,k,l)
-             flx6(4) = 0.5D0 * ( sclt6(ij,3) + sclt6(ij,4) ) - scl(ij,k,l)
-             flx6(5) = 0.5D0 * ( sclt6(ij,4) + sclt6(ij,5) ) - scl(ij,k,l)
-             flx6(6) = 0.5D0 * ( sclt6(ij,5) + sclt6(ij,6) ) - scl(ij,k,l)
-
-             vx(ij,k,l) = ( flx6(1) * GMTR_A_var(ij,    k0,l,ADM_AI, GMTR_A_HNX) &
-                          + flx6(2) * GMTR_A_var(ij,    k0,l,ADM_AIJ,GMTR_A_HNX) &
-                          + flx6(3) * GMTR_A_var(ij,    k0,l,ADM_AJ, GMTR_A_HNX) &
-                          - flx6(4) * GMTR_A_var(im1j,  k0,l,ADM_AI, GMTR_A_HNX) &
-                          - flx6(5) * GMTR_A_var(im1jm1,k0,l,ADM_AIJ,GMTR_A_HNX) &
-                          - flx6(6) * GMTR_A_var(ijm1,  k0,l,ADM_AJ, GMTR_A_HNX) &
-                          ) * GMTR_P_var(ij,k0,l,GMTR_P_RAREA) * fact
-
-             vy(ij,k,l) = ( flx6(1) * GMTR_A_var(ij,    k0,l,ADM_AI, GMTR_A_HNY) &
-                          + flx6(2) * GMTR_A_var(ij,    k0,l,ADM_AIJ,GMTR_A_HNY) &
-                          + flx6(3) * GMTR_A_var(ij,    k0,l,ADM_AJ, GMTR_A_HNY) &
-                          - flx6(4) * GMTR_A_var(im1j,  k0,l,ADM_AI, GMTR_A_HNY) &
-                          - flx6(5) * GMTR_A_var(im1jm1,k0,l,ADM_AIJ,GMTR_A_HNY) &
-                          - flx6(6) * GMTR_A_var(ijm1,  k0,l,ADM_AJ, GMTR_A_HNY) &
-                          ) * GMTR_P_var(ij,k0,l,GMTR_P_RAREA) * fact
-
-             vz(ij,k,l) = ( flx6(1) * GMTR_A_var(ij,    k0,l,ADM_AI, GMTR_A_HNZ) &
-                          + flx6(2) * GMTR_A_var(ij,    k0,l,ADM_AIJ,GMTR_A_HNZ) &
-                          + flx6(3) * GMTR_A_var(ij,    k0,l,ADM_AJ, GMTR_A_HNZ) &
-                          - flx6(4) * GMTR_A_var(im1j,  k0,l,ADM_AI, GMTR_A_HNZ) &
-                          - flx6(5) * GMTR_A_var(im1jm1,k0,l,ADM_AIJ,GMTR_A_HNZ) &
-                          - flx6(6) * GMTR_A_var(ijm1,  k0,l,ADM_AJ, GMTR_A_HNZ) &
-                          ) * GMTR_P_var(ij,k0,l,GMTR_P_RAREA) * fact
-          enddo
-
-          if ( ADM_rgn_vnum(ADM_W,rgnid) == 3 ) then ! pentagon
-             n = suf(ADM_gmin,ADM_gmin)
-
-             ij     = n
-             im1j   = n-1
-             ijm1   = n   - ADM_gall_1d
-             im1jm1 = n-1 - ADM_gall_1d
-
-             flx6(1) = 0.5D0 * ( sclt6(ij,5) + sclt6(ij,1) ) - scl(ij,k,l)
-             flx6(2) = 0.5D0 * ( sclt6(ij,1) + sclt6(ij,2) ) - scl(ij,k,l)
-             flx6(3) = 0.5D0 * ( sclt6(ij,2) + sclt6(ij,3) ) - scl(ij,k,l)
-             flx6(4) = 0.5D0 * ( sclt6(ij,3) + sclt6(ij,4) ) - scl(ij,k,l)
-             flx6(5) = 0.5D0 * ( sclt6(ij,4) + sclt6(ij,5) ) - scl(ij,k,l)
-
-             vx(ij,k,l) = ( flx6(1) * GMTR_A_var(ij,    k0,l,ADM_AI, GMTR_A_HNX) &
-                          + flx6(2) * GMTR_A_var(ij,    k0,l,ADM_AIJ,GMTR_A_HNX) &
-                          + flx6(3) * GMTR_A_var(ij,    k0,l,ADM_AJ, GMTR_A_HNX) &
-                          - flx6(4) * GMTR_A_var(im1j,  k0,l,ADM_AI, GMTR_A_HNX) &
-                          - flx6(5) * GMTR_A_var(im1jm1,k0,l,ADM_AIJ,GMTR_A_HNX) &
-                          ) * GMTR_P_var(ij,k0,l,GMTR_P_RAREA) * fact
-
-             vy(ij,k,l) = ( flx6(1) * GMTR_A_var(ij,    k0,l,ADM_AI, GMTR_A_HNY) &
-                          + flx6(2) * GMTR_A_var(ij,    k0,l,ADM_AIJ,GMTR_A_HNY) &
-                          + flx6(3) * GMTR_A_var(ij,    k0,l,ADM_AJ, GMTR_A_HNY) &
-                          - flx6(4) * GMTR_A_var(im1j,  k0,l,ADM_AI, GMTR_A_HNY) &
-                          - flx6(5) * GMTR_A_var(im1jm1,k0,l,ADM_AIJ,GMTR_A_HNY) &
-                          ) * GMTR_P_var(ij,k0,l,GMTR_P_RAREA) * fact
-
-             vz(ij,k,l) = ( flx6(1) * GMTR_A_var(ij,    k0,l,ADM_AI, GMTR_A_HNZ) &
-                          + flx6(2) * GMTR_A_var(ij,    k0,l,ADM_AIJ,GMTR_A_HNZ) &
-                          + flx6(3) * GMTR_A_var(ij,    k0,l,ADM_AJ, GMTR_A_HNZ) &
-                          - flx6(4) * GMTR_A_var(im1j,  k0,l,ADM_AI, GMTR_A_HNZ) &
-                          - flx6(5) * GMTR_A_var(im1jm1,k0,l,ADM_AIJ,GMTR_A_HNZ) &
-                          ) * GMTR_P_var(ij,k0,l,GMTR_P_RAREA) * fact
-          endif
-       enddo
-    enddo
-
-    if ( ADM_prc_me == ADM_prc_pl ) then
-       do l = 1, ADM_lall_pl
-       do k = ADM_kmin, ADM_kmax
-
-          ij = ADM_GSLF_PL
-
-          vx_pl(ij,k,l) = 0.D0
-          vy_pl(ij,k,l) = 0.D0
-          vz_pl(ij,k,l) = 0.D0
-
-          do n = ADM_GSLF_PL, ADM_GMAX_PL
-             ij_pl = n
-
-             scl6_pl(ij_pl) = p( GRD_vz_pl(ij,   k,  l,GRD_Z),                      &
-                                 GRD_vz_pl(ij_pl,k-1,l,GRD_Z), scl_pl(ij_pl,k-1,l), & 
-                                 GRD_vz_pl(ij_pl,k,  l,GRD_Z), scl_pl(ij_pl,k,  l), & 
-                                 GRD_vz_pl(ij_pl,k+1,l,GRD_Z), scl_pl(ij_pl,k+1,l)  ) 
-          enddo
-
-          do n = ADM_GMIN_PL, ADM_GMAX_PL
-             ij_pl   = n
-             ijp1_pl = n+1
-
-             if( ij_pl == ADM_GMAX_PL ) ijp1_pl = ADM_GMIN_PL ! cyclic condition
-
-             sclt6_pl(ij_pl)  = GMTR_T_var_pl(ij_pl,k0,l,GMTR_T_W1) * scl6_pl(ij     ) &
-                              + GMTR_T_var_pl(ij_pl,k0,l,GMTR_T_W2) * scl6_pl(ij_pl  ) &
-                              + GMTR_T_var_pl(ij_pl,k0,l,GMTR_T_W3) * scl6_pl(ijp1_pl)
-          enddo
-
-          do n = ADM_GMIN_PL, ADM_GMAX_PL
-             ij_pl   = n
-             ijm1_pl = n-1
-
-             if( ij_pl == ADM_GMIN_PL ) ijm1_pl = ADM_GMAX_PL ! cyclic condition
-
-             flx6_pl = 0.5D0 * ( sclt6_pl(ijm1_pl) + sclt6_pl(ij_pl) ) - scl6_pl(ij)
-
-             vx_pl(ij,k,l) = vx_pl(ij,k,l) + flx6_pl * GMTR_A_var_pl(n,k0,l,GMTR_A_HNX)
-             vy_pl(ij,k,l) = vy_pl(ij,k,l) + flx6_pl * GMTR_A_var_pl(n,k0,l,GMTR_A_HNY)
-             vz_pl(ij,k,l) = vz_pl(ij,k,l) + flx6_pl * GMTR_A_var_pl(n,k0,l,GMTR_A_HNZ)
-          enddo
-
-          vx_pl(ij,k,l) = vx_pl(ij,k,l) * GMTR_P_var_pl(ij,k0,l,GMTR_P_RAREA) * fact
-          vy_pl(ij,k,l) = vy_pl(ij,k,l) * GMTR_P_var_pl(ij,k0,l,GMTR_P_RAREA) * fact
-          vz_pl(ij,k,l) = vz_pl(ij,k,l) * GMTR_P_var_pl(ij,k0,l,GMTR_P_RAREA) * fact
-
-       enddo
-       enddo
-    endif
-
-    return
-  end subroutine OPRT3D_gradient_intpl
 
 end module mod_oprt3d
 !-------------------------------------------------------------------------------

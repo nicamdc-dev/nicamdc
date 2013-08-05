@@ -387,11 +387,8 @@ contains
     integer, intent(in) :: kend
     real(8), intent(in) :: var   (ADM_gall,   kdim,ADM_lall   )
     real(8), intent(in) :: var_pl(ADM_gall_pl,kdim,ADM_lall_pl)
-    real(8)             :: vmax_g
-
-    logical, optional, intent(in) :: nonzero
-
     real(8)             :: vmin_g
+    logical, optional, intent(in) :: nonzero
 
     real(8) :: vmin
     integer :: n, k, l
