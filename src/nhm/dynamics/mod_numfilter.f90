@@ -716,7 +716,7 @@ contains
     integer :: k
     !---------------------------------------------------------------------------
 
-    if ( alpha == 0.D0 ) NUMFILTER_DOrayleigh = .false.
+    if ( alpha > 0.D0 ) NUMFILTER_DOrayleigh = .true.
 
     allocate( rayleigh_coef  (ADM_kall) )
     allocate( rayleigh_coef_h(ADM_kall) )
@@ -775,12 +775,12 @@ contains
     integer :: k
     !---------------------------------------------------------------------------
 
-    if ( gamma == 0.D0 ) NUMFILTER_DOverticaldiff = .false.
+    if ( gamma > 0.D0 ) NUMFILTER_DOverticaldiff = .true.
 
     allocate( Kv_coef  (ADM_kall) )
     allocate( Kv_coef_h(ADM_kall) )
-    Kv_coef  (k) = 0.D0
-    Kv_coef_h(k) = 0.D0
+    Kv_coef  (:) = 0.D0
+    Kv_coef_h(:) = 0.D0
 
     ! 6th order vertical numerical diffusion
     do k = 1, ADM_kall
@@ -860,7 +860,7 @@ contains
     divdamp_coef_pl = 0.D0
 
     if ( divdamp_type == "DIRECT") then
-       if ( alpha == 0.D0 ) NUMFILTER_DOdivdamp = .false.
+       if( alpha > 0.D0 ) NUMFILTER_DOdivdamp = .true.
 
        ! alpha_d is an absolute value.
        coef = alpha
@@ -869,7 +869,7 @@ contains
        divdamp_coef_pl(:,:,:) = coef
 
     elseif( divdamp_type == "NONDIM_COEF" ) then
-       if ( alpha == 0.D0 ) NUMFILTER_DOdivdamp = .false.
+       if( alpha > 0.D0 ) NUMFILTER_DOdivdamp = .true.
 
        ! alpha_d is a non-dimensional number.
        ! alpha_d * (c_s)^p * dt^{2p-1}
@@ -879,9 +879,7 @@ contains
        divdamp_coef_pl(:,:,:) = coef
 
     elseif( divdamp_type == "E_FOLD_TIME" ) then
-       if ( tau == 0.D0 ) then
-          NUMFILTER_DOdivdamp = .false.
-       endif
+       if( tau > 0.D0 ) NUMFILTER_DOdivdamp = .true.
 
        ! tau_d is e-folding time for 2*dx.
        if ( dep_hgrid ) then
@@ -1006,7 +1004,7 @@ contains
     divdamp_2d_coef_pl = 0.D0
 
     if ( divdamp_type == "DIRECT") then
-       if ( alpha == 0.D0 ) NUMFILTER_DOdivdamp_2d = .false.
+       if( alpha > 0.D0 ) NUMFILTER_DOdivdamp_2d = .true.
 
        ! alpha is the absolute value.
        coef = alpha
@@ -1015,7 +1013,7 @@ contains
        divdamp_2d_coef_pl(:,:,:) = coef
 
     elseif( divdamp_type == "NONDIM_COEF" ) then
-       if ( alpha == 0.D0 ) NUMFILTER_DOdivdamp_2d = .false.
+       if( alpha > 0.D0 ) NUMFILTER_DOdivdamp_2d = .true.
 
        ! alpha is the non-dimensional number.
        ! alpha * (c_s)^p * dt^{2p-1}
@@ -1025,9 +1023,7 @@ contains
        divdamp_2d_coef_pl(:,:,:) = coef
 
     elseif( divdamp_type == "E_FOLD_TIME" ) then
-       if ( tau == 0.D0 ) then
-          NUMFILTER_DOdivdamp_2d = .false.
-       endif
+       if( tau > 0.D0 ) NUMFILTER_DOdivdamp_2d = .true.
 
        ! tau is e-folding time for 2*dx.
        if ( dep_hgrid ) then

@@ -2734,9 +2734,9 @@ contains
     HNX = GMTR_A_HNX
     HNY = GMTR_A_HNY
     HNZ = GMTR_A_HNZ
-    TNX = GMTR_A_TN2X
-    TNY = GMTR_A_TN2Y
-    TNZ = GMTR_A_TN2Z
+    TN2X = GMTR_A_TN2X
+    TN2Y = GMTR_A_TN2Y
+    TN2Z = GMTR_A_TN2Z
 
     if ( present(mfact) ) then
        fact = mfact
