@@ -50,6 +50,7 @@ module mod_dynstep
   !
   !++ Used modules
   !
+  use mod_debug
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -292,12 +293,13 @@ contains
     integer :: i, j, suf
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
-
 #ifdef PAPI_OPS
     ! <-- [add] PAPI R.Yoshida 20121022
     !call PAPIF_flips( PAPI_real_time_i, PAPI_proc_time_i, PAPI_flpins, PAPI_mflins, PAPI_check )
     call PAPIF_flops( PAPI_real_time_o, PAPI_proc_time_o, PAPI_flpops, PAPI_mflops, PAPI_check )
 #endif
+
+    call DEBUG_rapstart('++Dynamics')
 
     if ( iflag ) then
        iflag = .false.
@@ -314,9 +316,9 @@ contains
           num_of_iteration_sstep(3) = TIME_SSTEP_MAX
        case('RK4')
           num_of_iteration_lstep = 4
-          num_of_iteration_sstep(1) = TIME_SSTEP_MAX/4
-          num_of_iteration_sstep(2) = TIME_SSTEP_MAX/3
-          num_of_iteration_sstep(3) = TIME_SSTEP_MAX/2
+          num_of_iteration_sstep(1) = TIME_SSTEP_MAX / 4
+          num_of_iteration_sstep(2) = TIME_SSTEP_MAX / 3
+          num_of_iteration_sstep(3) = TIME_SSTEP_MAX / 2
           num_of_iteration_sstep(4) = TIME_SSTEP_MAX
        case('TRCADV')  ! R.Yoshida 13/06/13 [add]
           num_of_iteration_lstep = 1
@@ -509,6 +511,7 @@ contains
        !------------------------------------------------------------------------
        !> LARGE step
        !------------------------------------------------------------------------
+       call DEBUG_rapstart('+++Large step')
 
        !--- calculation of advection tendency including Coriolis force
        call src_advection_convergence_momentum( vx,                     vx_pl,                     & !--- [IN]
@@ -638,7 +641,7 @@ contains
        endif
 
        ! Smagorinksy-type SGS model [add] A.Noda 10/11/29
-       if ( trim(TB_TYPE ) == 'SMG' ) then
+       if ( TB_TYPE == 'SMG' ) then
 
           if ( ADM_prc_me /= ADM_prc_pl ) then ! for safety
              th_pl(:,:,:) = 0.D0
@@ -709,9 +712,12 @@ contains
        g_TEND   (:,:,:,:) = g_TEND   (:,:,:,:) + f_TEND   (:,:,:,:)
        g_TEND_pl(:,:,:,:) = g_TEND_pl(:,:,:,:) + f_TEND_pl(:,:,:,:)
 
+       call DEBUG_rapend  ('+++Large step')
        !------------------------------------------------------------------------
        !> SMALL step
        !------------------------------------------------------------------------
+       call DEBUG_rapstart('+++Small step')
+
        if ( nl /= 1 ) then ! update split values
           PROG_split   (:,:,:,:) = PROG0   (:,:,:,:) - PROG   (:,:,:,:)
           PROG_split_pl(:,:,:,:) = PROG0_pl(:,:,:,:) - PROG_pl(:,:,:,:)
@@ -766,6 +772,8 @@ contains
                            small_step_dt                                              ) !--- [IN]
 
 
+       call DEBUG_rapend  ('+++Small step')
+
        else  ! TRC-ADV Test Bifurcation
 
           !--- Make v_mean_c  ![add] 20130613 R.Yoshida
@@ -781,6 +789,8 @@ contains
        !------------------------------------------------------------------------
        !>  Tracer advection
        !------------------------------------------------------------------------
+       call DEBUG_rapstart('+++Tracer Advection')
+
        if ( TRC_ADV_TYPE == 'MIURA2004' ) then
 
           if ( nl == num_of_iteration_lstep ) then
@@ -845,6 +855,7 @@ contains
 
        endif
 
+       call DEBUG_rapend  ('+++Tracer Advection')
 
        if ( trim(TIME_INTEG_TYPE) /= 'TRCADV' ) then  ! TRC-ADV Test Bifurcation
 
@@ -909,6 +920,8 @@ contains
                      PROG(:,:,:,I_RHOGE),  PROG_pl(:,:,:,I_RHOGE),  & !--- [IN]
                      PROGq(:,:,:,:),       PROGq_pl(:,:,:,:),       & !--- [IN]
                      0                                              ) !--- [IN]
+
+    call DEBUG_rapend  ('++Dynamics')
 
 #ifdef PAPI_OPS
     ! <-- [add] PAPI R.Yoshida 20121022

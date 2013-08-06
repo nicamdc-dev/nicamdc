@@ -32,6 +32,7 @@ module mod_vi
   !
   !++ Used modules
   !
+  use mod_debug
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -1040,6 +1041,8 @@ contains
     integer :: ij, k, l
     !---------------------------------------------------------------------------
 
+    call DEBUG_rapstart('++++vi_path2')
+
     ! calc rhogkin ( previous )
     call cnvvar_rhokin_ijkl( rhog,     rhog_pl,    & !--- [IN]
                              rhogvx,   rhogvx_pl,  & !--- [IN]
@@ -1264,6 +1267,8 @@ contains
                                 - rhog_split2_pl    (:,:,:) ) * phi_pl(:,:,:)
     endif
 
+    call DEBUG_rapend('++++vi_path2')
+
     return
   end subroutine vi_path2
 
@@ -1315,6 +1320,8 @@ contains
 
     integer :: ij, k, l
     !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('++++vi_rhow_update_matrix')
 
 ! Original concept
 !
@@ -1439,6 +1446,8 @@ contains
        enddo
     endif
 
+    call DEBUG_rapend('++++vi_rhow_update_matrix')
+
     return
   end subroutine vi_rhow_update_matrix
 
@@ -1511,6 +1520,8 @@ contains
 
     integer :: ij, k, l
     !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('++++vi_rhow')
 
     do l = 1, ADM_lall
 
@@ -1640,6 +1651,8 @@ contains
        enddo
 
     endif
+
+    call DEBUG_rapend('++++vi_rhow')
 
     return
   end subroutine vi_rhow

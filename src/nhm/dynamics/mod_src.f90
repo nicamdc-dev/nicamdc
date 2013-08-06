@@ -35,6 +35,7 @@ module mod_src
   !
   !++ Used modules
   !
+  use mod_debug
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -165,6 +166,8 @@ contains
 
     integer :: g, k, l
     !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('++++src_advection_convergence_m')
 
     !---< merge horizontal velocity & vertical velocity >
 
@@ -320,6 +323,8 @@ contains
        enddo
     endif
 
+    call DEBUG_rapend('++++src_advection_convergence_m')
+
     return
   end subroutine src_advection_convergence_momentum
 
@@ -377,6 +382,8 @@ contains
     integer :: k, l
     !---------------------------------------------------------------------------
 
+    call DEBUG_rapstart('++++src_advection_convergence')
+
     rhogvxscl(:,:,:) = rhogvx(:,:,:) * scl(:,:,:)
     rhogvyscl(:,:,:) = rhogvy(:,:,:) * scl(:,:,:)
     rhogvzscl(:,:,:) = rhogvz(:,:,:) * scl(:,:,:)
@@ -422,6 +429,8 @@ contains
                                rhogwscl,  rhogwscl_pl,  & !--- [IN]
                                grhogscl,  grhogscl_pl,  & !--- [OUT]
                                fluxtype                 ) !--- [IN]
+
+    call DEBUG_rapend('++++src_advection_convergence')
 
     return
   end subroutine src_advection_convergence
@@ -494,6 +503,8 @@ contains
 
     integer :: g, k, l
     !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('++++src_flux_convergence')
 
     ! boundary condition
     do l = 1, ADM_lall
@@ -652,6 +663,8 @@ contains
        enddo
     endif
 
+    call DEBUG_rapend('++++src_flux_convergence')
+
     return
   end subroutine src_flux_convergence
 
@@ -703,10 +716,10 @@ contains
     real(8), intent(out) :: gez_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(out) :: gevz   (ADM_gall   ,ADM_kall,ADM_lall   ) ! vertical grad.   ( half point )
     real(8), intent(out) :: gevz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    integer, intent(in)  :: grad_type
-    !<-----                    = I_SRC_horizontal : horizontal gradient
-    !<-----                    = I_SRC_vertical   : vertical gradient ( no use )
-    !<-----                    = I_SRC_default    : both of them
+    integer, intent(in)  :: grad_type                                 ! scheme type
+                                                                      ! I_SRC_horizontal : horizontal gradient
+                                                                      ! I_SRC_vertical   : vertical gradient ( no use )
+                                                                      ! I_SRC_default    : both of them
 
     real(8) :: fex_h   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8) :: fex_h_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -720,6 +733,8 @@ contains
 
     integer :: g, k, l
     !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('++++src_gradient')
 
     !------ horizontal gradient without mountain
     gee(:,:,:) = e(:,:,:) * VMTR_RGAM(:,:,:)
@@ -828,6 +843,8 @@ contains
 
     endif
 
+    call DEBUG_rapend('++++src_gradient')
+
     return
   end subroutine src_gradient
 
@@ -867,6 +884,8 @@ contains
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
+    call DEBUG_rapstart('++++src_buoyancy')
+
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kmax+1
        do g = 1, ADM_gall
@@ -890,6 +909,8 @@ contains
           gbz_pl(:,ADM_kmin-1,l) = 0.D0
        enddo
     endif
+
+    call DEBUG_rapend('++++src_buoyancy')
 
     return
   end subroutine src_buoyancy

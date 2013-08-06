@@ -32,6 +32,7 @@ module mod_oprt
   !
   !++ used modules
   !
+  use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID
   !-----------------------------------------------------------------------------
@@ -1622,6 +1623,8 @@ contains
     integer :: n, k, l, v
     !---------------------------------------------------------------------------
 
+    call DEBUG_rapstart('++++OPRT_divergence')
+
     if ( present(mfact) ) then
        fact = mfact
     else
@@ -1681,6 +1684,8 @@ contains
        enddo
     endif
 
+    call DEBUG_rapend('++++OPRT_divergence')
+
     return
   end subroutine OPRT_divergence
 
@@ -1724,6 +1729,8 @@ contains
 
     integer :: n, k, l, v
     !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('++++OPRT_gradient')
 
     if ( present(mfact) ) then
        fact = mfact
@@ -1790,6 +1797,8 @@ contains
        enddo
     endif
 
+    call DEBUG_rapend('++++OPRT_gradient')
+
     return
   end subroutine OPRT_gradient
 
@@ -1827,6 +1836,8 @@ contains
 
     integer :: n, k, l, v
     !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('++++OPRT_laplacian')
 
     if ( present(mfact) ) then
        fact = mfact
@@ -1870,6 +1881,8 @@ contains
        enddo
        enddo
     endif
+
+    call DEBUG_rapend('++++OPRT_laplacian')
 
     return
   end subroutine OPRT_laplacian
@@ -1933,11 +1946,8 @@ contains
          GMTR_P_var_pl,   &
          GMTR_A_var,      &
          GMTR_A_var_pl
- 
-    !
-
     implicit none
-    !
+
     real(8), intent(inout) :: dscl(ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(inout) :: dscl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(in) :: scl(ADM_gall   ,ADM_kall,ADM_lall   )
@@ -1994,6 +2004,8 @@ contains
     !
     integer :: suf,i,j
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+
+    call DEBUG_rapstart('++++OPRT_diffusion')
 
     if(present(mfact)) then
        fact=mfact
@@ -2236,6 +2248,7 @@ contains
 
 
 
+    call DEBUG_rapend('++++OPRT_diffusion')
 
 
   end subroutine OPRT_diffusion
@@ -2272,6 +2285,8 @@ contains
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
+    call DEBUG_rapstart('++++OPRT_horizontalize_vec')
+
     do l = 1, ADM_lall
     do k = 1, ADM_kall
     do g = 1, ADM_gall
@@ -2301,6 +2316,8 @@ contains
        enddo
        enddo
     endif
+
+    call DEBUG_rapend('++++OPRT_horizontalize_vec')
 
     return
   end subroutine OPRT_horizontalize_vec
@@ -2415,7 +2432,9 @@ contains
     !
     integer :: suf,i,j
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
-    !
+
+    call DEBUG_rapstart('++++OPRT_vorticity')
+
     if(present(mfact)) then
        fact=mfact
     else
@@ -2633,6 +2652,9 @@ contains
           end do
        end do
     end if
+
+    call DEBUG_rapend('++++OPRT_vorticity')
+
   end subroutine OPRT_vorticity
 
   !-----------------------------------------------------------------------------
@@ -2722,18 +2744,20 @@ contains
     integer :: TI,TJ,AI,AIJ,AJ,TNX,TNY,TNZ,TN2X,TN2Y,TN2Z,HNX,HNY,HNZ
     !---------------------------------------------------------------------------
 
-    k0  = ADM_KNONE
-    TI  = ADM_TI
-    TJ  = ADM_TJ
-    AI  = ADM_AI
-    AIJ = ADM_AIJ
-    AJ  = ADM_AJ
-    TNX = GMTR_A_TNX
-    TNY = GMTR_A_TNY
-    TNZ = GMTR_A_TNZ
-    HNX = GMTR_A_HNX
-    HNY = GMTR_A_HNY
-    HNZ = GMTR_A_HNZ
+    call DEBUG_rapstart('++++OPRT_divdamp')
+
+    k0   = ADM_KNONE
+    TI   = ADM_TI
+    TJ   = ADM_TJ
+    AI   = ADM_AI
+    AIJ  = ADM_AIJ
+    AJ   = ADM_AJ
+    TNX  = GMTR_A_TNX
+    TNY  = GMTR_A_TNY
+    TNZ  = GMTR_A_TNZ
+    HNX  = GMTR_A_HNX
+    HNY  = GMTR_A_HNY
+    HNZ  = GMTR_A_HNZ
     TN2X = GMTR_A_TN2X
     TN2Y = GMTR_A_TN2Y
     TN2Z = GMTR_A_TN2Z
@@ -2902,6 +2926,8 @@ contains
 
        enddo
     endif
+
+    call DEBUG_rapend('++++OPRT_divdamp')
 
     return
   end subroutine OPRT_divdamp

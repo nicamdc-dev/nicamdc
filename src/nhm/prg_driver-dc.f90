@@ -58,9 +58,12 @@ program prg_driver
   !
   use mod_debug
   use mod_adm, only: &
-     ADM_MULTI_PRC, &
-     ADM_proc_init, &
-     ADM_proc_stop, &
+     ADM_MULTI_PRC,      &
+     ADM_LOG_FID,        &
+     ADM_prc_me,         &
+     ADM_prc_run_master, &
+     ADM_proc_init,      &
+     ADM_proc_stop,      &
      ADM_setup
   use mod_fio, only: &
      FIO_setup
@@ -133,17 +136,18 @@ program prg_driver
 
   call ADM_proc_init(ADM_MULTI_PRC)
 
-  call DEBUG_rapstart('Total')
-  call DEBUG_rapstart('Setup ALL')
-
   !---< admin module setup >---
   call ADM_setup('nhm_driver.cnf')
 
-  !---< I/O module setup >---
-  call FIO_setup
+  !#############################################################################
 
-  !---< comm module setup >---
-  call COMM_setup
+  write(ADM_LOG_FID,*) '##### start  setup     #####'
+  if ( ADM_prc_me == ADM_prc_run_master ) then
+     write(*,*) '##### start  setup     #####'
+  endif
+
+  call DEBUG_rapstart('Total')
+  call DEBUG_rapstart('Setup ALL')
 
   !---< cnst module setup >---
   call CNST_setup
@@ -151,8 +155,11 @@ program prg_driver
   !---< calendar module setup >---
   call calendar_setup
 
-  !---< time module setup >---
-  call TIME_setup
+  !---< I/O module setup >---
+  call FIO_setup
+
+  !---< comm module setup >---
+  call COMM_setup
 
   !---< grid module setup >---
   call GRD_setup
@@ -166,6 +173,9 @@ program prg_driver
   !---< vertical metrics module setup >---
   call VMTR_setup
 
+  !---< time module setup >---
+  call TIME_setup
+
 
   !---< nhm_runconf module setup >---
   call runconf_setup
@@ -174,11 +184,11 @@ program prg_driver
   call prgvar_setup
   call restart_input( restart_input_basename )
 
-  !---< surface variable module setup >---
-  call sfcvar_setup
-
   !---< diagnostic variable module setup >---
   call diagvar_setup
+
+  !---< surface variable module setup >---
+  call sfcvar_setup
 
 
   !---< boundary condition module setup >---
@@ -205,13 +215,27 @@ program prg_driver
   !---< nudging module setup >---
   if( FLAG_NUDGING ) call ndg_setup( ctime, dtime )
 
+  write(ADM_LOG_FID,*) '##### finish setup     #####'
+  if ( ADM_prc_me == ADM_prc_run_master ) then
+     write(*,*) '##### finish setup     #####'
+  endif
+
   call DEBUG_rapend('Setup ALL')
+
+  !#############################################################################
 #ifdef _FIPP_
   call fipp_start()
 #endif
   call DEBUG_rapstart('Main ALL')
+
+  write(ADM_LOG_FID,*) '##### start  main loop #####'
+  if ( ADM_prc_me == ADM_prc_run_master ) then
+     write(*,*) '##### start  main loop #####'
+  endif
+
   call TIME_report
 
+  !--- history output at initial time
   if ( HIST_output_step0 ) then
      cstep = -1
      ctime = -dtime
@@ -222,12 +246,12 @@ program prg_driver
 
   do n = 1, TIME_LSTEP_MAX
 
-     call DEBUG_rapstart('Dynamics')
+     call DEBUG_rapstart('+Atmos')
      call dynstep
      call forcing
-     call DEBUG_rapend('Dynamics')
+     call DEBUG_rapend  ('+Atmos')
 
-     call DEBUG_rapstart('History & Monitor')
+     call DEBUG_rapstart('+History')
      call history_vars
      call TIME_advance
 
@@ -240,14 +264,20 @@ program prg_driver
         call restart_output( restart_output_basename )
         call diagvar_restart_output ( cdate )
      endif
-     call DEBUG_rapend('History & Monitor')
+     call DEBUG_rapend  ('+History')
 
   enddo
+
+  write(ADM_LOG_FID,*) '##### finish main loop #####'
+  if ( ADM_prc_me == ADM_prc_run_master ) then
+     write(*,*) '##### finish main loop #####'
+  endif
 
   call DEBUG_rapend('Main ALL')
 #ifdef _FIPP_
   call fipp_stop()
 #endif
+  !#############################################################################
 
   call DEBUG_rapend('Total')
   call DEBUG_rapreport

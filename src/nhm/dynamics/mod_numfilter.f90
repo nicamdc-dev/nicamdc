@@ -51,6 +51,7 @@ module mod_numfilter
   !
   !++ Used modules
   !
+  use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID, &
      ADM_NSYS
@@ -1171,6 +1172,8 @@ contains
 
     if( .NOT. NUMFILTER_DOrayleigh ) return
 
+    call DEBUG_rapstart('++++numfilter_rayleigh_damping')
+
     if ( .NOT. rayleigh_damp_only_w ) then
        do l = 1, ADM_lall
        do k = 1, ADM_kall
@@ -1220,6 +1223,8 @@ contains
        enddo
        enddo
     endif
+
+    call DEBUG_rapend('++++numfilter_rayleigh_damping')
 
     return
   end subroutine numfilter_rayleigh_damping
@@ -1324,6 +1329,8 @@ contains
     !---------------------------------------------------------------------------
 
     if( .NOT. NUMFILTER_DOverticaldiff ) return
+
+    call DEBUG_rapstart('++++numfilter_vertical_diffusion')
 
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kmax+1
@@ -1713,6 +1720,8 @@ contains
                                  frhogvy, frhogvy_pl, & !--- [INOUT]
                                  frhogvz, frhogvz_pl  ) !--- [INOUT]
 
+    call DEBUG_rapend('++++numfilter_vertical_diffusion')
+
     return
   end subroutine numfilter_vertical_diffusion
 
@@ -1835,6 +1844,8 @@ contains
 
     integer :: g, k, l, nq, p
     !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('++++numfilter_numerical_hdiff')
 
     if ( trim(hdiff_type) == "NONLINEAR1" ) then
        do k = 1, ADM_kall
@@ -2155,9 +2166,10 @@ contains
 
     endif ! apply filter to tracer?
 
+    call DEBUG_rapend('++++numfilter_numerical_hdiff')
+
     return
   end subroutine numfilter_numerical_hdiff
-
 
   !-----------------------------------------------------------------------------
   !> 3D divergence damping
@@ -2239,6 +2251,8 @@ contains
        return
     endif
 
+    call DEBUG_rapstart('++++numfilter_divdamp')
+
     !--- 3D divergence divdamp
     call OPRT3D_divdamp( vtmp2(:,:,:,1), vtmp2_pl(:,:,:,1), & !--- [OUT]
                          vtmp2(:,:,:,2), vtmp2_pl(:,:,:,2), & !--- [OUT]
@@ -2251,10 +2265,10 @@ contains
     if ( lap_order_divdamp > 1 ) then
        do p = 1, lap_order_divdamp-1
 
-          call COMM_data_transfer(vtmp2,vtmp2_pl)
+          call COMM_data_transfer( vtmp2, vtmp2_pl )
 
           !--- note : sign changes
-          vtmp   (:,:,:,:) = -vtmp2(:,:,:,:)
+          vtmp   (:,:,:,:) = -vtmp2   (:,:,:,:)
           vtmp_pl(:,:,:,:) = -vtmp2_pl(:,:,:,:)
 
           !--- 2D dinvergence divdamp
@@ -2311,6 +2325,8 @@ contains
        gdvz_pl(:,ADM_kmin  ,:) = 0.D0
        gdvz_pl(:,ADM_kmax+1,:) = 0.D0
     endif
+
+    call DEBUG_rapend('++++numfilter_divdamp')
 
     return
   end subroutine numfilter_divdamp
@@ -2371,6 +2387,8 @@ contains
        return
     endif
 
+    call DEBUG_rapstart('++++numfilter_divdamp_2d')
+
     !--- 2D dinvergence divdamp
     call OPRT_divdamp( vtmp2(:,:,:,1), vtmp2_pl(:,:,:,1), & !--- [OUT]
                        vtmp2(:,:,:,2), vtmp2_pl(:,:,:,2), & !--- [OUT]
@@ -2414,9 +2432,10 @@ contains
                                  gdy(:,:,:), gdy_pl(:,:,:), & !--- [INOUT]
                                  gdz(:,:,:), gdz_pl(:,:,:)  ) !--- [INOUT]
 
+    call DEBUG_rapend('++++numfilter_divdamp_2d')
+
     return
   end subroutine numfilter_divdamp_2d
-
 
   !------ Numerical diffusion
   !------     1. Calculation region of frhogvx,...., frhoge

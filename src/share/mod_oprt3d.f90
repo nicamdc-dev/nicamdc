@@ -17,6 +17,7 @@ module mod_oprt3d
   !
   !++ Used modules
   !
+  use mod_debug
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -149,18 +150,20 @@ contains
     integer :: TI,TJ,AI,AIJ,AJ,TNX,TNY,TNZ,TN2X,TN2Y,TN2Z,HNX,HNY,HNZ
     !---------------------------------------------------------------------------
 
-    k0  = ADM_KNONE
-    TI  = ADM_TI
-    TJ  = ADM_TJ
-    AI  = ADM_AI
-    AIJ = ADM_AIJ
-    AJ  = ADM_AJ
-    TNX = GMTR_A_TNX
-    TNY = GMTR_A_TNY
-    TNZ = GMTR_A_TNZ
-    HNX = GMTR_A_HNX
-    HNY = GMTR_A_HNY
-    HNZ = GMTR_A_HNZ
+    call DEBUG_rapstart('++++OPRT3D_divdamp')
+
+    k0   = ADM_KNONE
+    TI   = ADM_TI
+    TJ   = ADM_TJ
+    AI   = ADM_AI
+    AIJ  = ADM_AIJ
+    AJ   = ADM_AJ
+    TNX  = GMTR_A_TNX
+    TNY  = GMTR_A_TNY
+    TNZ  = GMTR_A_TNZ
+    HNX  = GMTR_A_HNX
+    HNY  = GMTR_A_HNY
+    HNZ  = GMTR_A_HNZ
     TN2X = GMTR_A_TN2X
     TN2Y = GMTR_A_TN2Y
     TN2Z = GMTR_A_TN2Z
@@ -400,6 +403,8 @@ contains
 
        enddo
     endif
+
+    call DEBUG_rapend('++++OPRT3D_divdamp')
 
     return
   end subroutine OPRT3D_divdamp

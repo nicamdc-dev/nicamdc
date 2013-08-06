@@ -50,6 +50,7 @@ module mod_comm
   !++ used modules
   !
   use mpi
+  use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID, &
      ADM_vlink_nmax
@@ -2522,6 +2523,15 @@ contains
 !    integer :: i_dbg !iga
     logical :: dbg_ierr !iga
   !=============================================================================
+
+    if ( opt_comm_barrier ) then
+       call DEBUG_rapstart('Node imbalance adjustment')
+       call MPI_BARRIER( ADM_comm_run_world, ierr )
+       call DEBUG_rapend  ('Node imbalance adjustment')
+    endif
+
+    call DEBUG_rapstart('COMM data_transfer')
+
     !
     ! --- pre-process
     !
@@ -3038,7 +3048,9 @@ contains
     t(12)=mpi_wtime()
     time_bar2=time_bar2+(t(12)-t(11))
     time_total=time_total+(t(12)-t(0))
-    !
+
+    call DEBUG_rapend('COMM data_transfer')
+
   end subroutine COMM_data_transfer
 
   !-----------------------------------------------------------------------------
@@ -3246,6 +3258,14 @@ contains
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
+    if ( opt_comm_barrier ) then
+       call DEBUG_rapstart('Node imbalance adjustment')
+       call MPI_BARRIER( ADM_comm_run_world, ierr )
+       call DEBUG_rapend  ('Node imbalance adjustment')
+    endif
+
+    call DEBUG_rapstart('COMM var')
+
     if( comm_pl .and. ((comm_type==1).or.(comm_type==2)) ) then ! T.Ohno 110721
 
        if ( ADM_prc_me == ADM_prc_npl ) then !--- recv north pole value
@@ -3332,6 +3352,8 @@ contains
        var(suf(ADM_gall_1d,1),:,:,:) = var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
        var(suf(1,ADM_gall_1d),:,:,:) = var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
     endif
+
+    call DEBUG_rapend('COMM var')
 
     return
   end subroutine COMM_var
