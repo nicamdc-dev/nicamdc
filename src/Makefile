@@ -119,13 +119,13 @@ $(LIBNAME): $(MODS)
 
 $(mod_misc).o	: $(mod_misc).f90
 mod_adm.o	: mod_adm.f90 $(mod_misc).o
-mod_debug.o	: mod_debug.f90 mod_adm.o $(mod_misc).o mod_comm.o
+mod_debug.o	: mod_debug.f90 mod_adm.o $(mod_misc).o
 mod_cnst.o	: mod_cnst.f90 mod_adm.o
 mod_calendar.o	: mod_calendar.f90 mod_adm.o
 fio.o	: fio.c fio.h fio_def.h
 fiof.o	: fiof.c fiof.h fio.h fio_def.h
-mod_fio.o	: mod_fio.f90 mod_adm.o mod_calendar.o mod_cnst.o fio.o fiof.o
-mod_comm.o	: mod_comm.f90 mod_adm.o mod_cnst.o
+mod_fio.o	: mod_fio.f90 mod_adm.o mod_calendar.o mod_cnst.o fio.o fiof.o mod_debug.o
+mod_comm.o	: mod_comm.f90 mod_adm.o mod_cnst.o mod_debug.o
 mod_grd.o	: mod_grd.f90 mod_adm.o mod_cnst.o mod_comm.o $(mod_misc).o mod_fio.o
 mod_gmtr.o	: mod_gmtr.f90 mod_adm.o mod_comm.o $(mod_misc).o mod_grd.o mod_cnst.o
 mod_oprt.o	: mod_oprt.f90 mod_adm.o mod_gmtr.o mod_grd.o mod_comm.o mod_cnst.o
@@ -166,9 +166,9 @@ mod_mkgrd.o	: mod_mkgrd.f90 mod_adm.o mod_grd.o mod_cnst.o mod_comm.o mod_gtl.o 
 
 .SUFFIXES: .o .f90 .c
 .f90.o:
-	$(FC) $(FFLAGS) -o $@ -c $<
+	$(FC) $(FFLAGS) -I$(INCDIR) -o $@ -c $<
 .c.o:
-	$(CC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) -I$(INCDIR) -o $@ -c $<
 
 %.o: %.mod
 
