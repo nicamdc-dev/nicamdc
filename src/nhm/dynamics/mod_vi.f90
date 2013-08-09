@@ -33,6 +33,8 @@ module mod_vi
   !++ Used modules
   !
   use mod_debug
+  use mod_adm, only: &
+     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private

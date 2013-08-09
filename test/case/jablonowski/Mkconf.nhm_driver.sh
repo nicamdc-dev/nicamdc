@@ -97,21 +97,14 @@ cat << EOFNHM > ${BINNAME}.cnf
 /
 
 &NUMFILTERPARAM
-    dep_hgrid         = .false.,
-    lap_order_divdamp = 2,
     hdiff_type        = 'DIRECT',
-    Kh_coef_maxlim    = 9.9D99,
-    Kh_coef_minlim    = 0.D0,
-    divdamp_type      = 'DIRECT',
-    alpha_d           = ${DIFCF},
-    alpha_dv          = 0.D0,
+    lap_order_hdiff   = 2,
     gamma_h           = ${DIFCF},
-    gamma_v           = 0.D0,
-    hdiff_fact_rho    = 0.01D0,
-    hdiff_fact_q      = 0.D0,
-    ZD                = 99999.9D0,
-    alpha_r           = 0.D0,
-    DEEP_EFFECT       = .false.,
+    Kh_coef_minlim    = 0.D0,
+    Kh_coef_maxlim    = 9.9D99,
+    divdamp_type      = 'DIRECT',
+    lap_order_divdamp = 2,
+    alpha_d           = ${DIFCF},
 /
 
 &RESTARTPARAM
