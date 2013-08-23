@@ -6,6 +6,11 @@
  *    0.80      11-07-27  H.Tomita  : [NEW]                           *
  *    0.90      11-08-19  H.Yashiro : Incorporate into NICAM          *
  *    1.00      11-08-25  H.Yashiro : Complete format specification   *
+ *    1.23      13-04-18  C.Kodama  : [add] fio_read_datainfo_tmpdata,*
+ *                                      fio_register_vname_tmpdata,   *
+ *                                      fio_read_data_tmpdata,        *
+ *                                      fio_read_allinfo_tmpdata,     *
+ *                                      fio_copy_datainfo             *
  *                                                                    *
  **********************************************************************/
 #include "fio.h"
@@ -29,8 +34,7 @@ extern void fio_mk_fname_( char *fname,
 extern void fio_syscheck_( void );
 
 /** put common informtation *******************************************/
-extern void fio_put_commoninfo_( /* int32_t *use_mpiio, R.Yoshida */
-                                 int32_t *fmode,
+extern void fio_put_commoninfo_( int32_t *fmode,
                                  int32_t *endiantype,
                                  int32_t *grid_topology,
                                  int32_t *glevel,
@@ -83,6 +87,9 @@ extern void fio_write_datainfo_( int32_t *fid,
 /** read data information ******************************************/
 extern void fio_read_datainfo_( int32_t *fid );
 
+/** read data information and store data as tmpdata *******************/
+/* [add] C.Kodama 13-04-18 */
+extern void fio_read_datainfo_tmpdata_( int32_t *fid );
 
 /** write data array **************************************************/
 extern void fio_write_data_( int32_t *fid,
@@ -94,6 +101,11 @@ extern void fio_read_data_( int32_t *fid,
                             int32_t *did,
                             void *data   );
 
+/** read data array from tmpdata **************************************/
+/* [add] C.Kodama 13-04-18 */
+extern void fio_read_data_tmpdata_( int32_t *fid,
+                                    int32_t *did,
+                                    void *data   );
 
 /** register new file *************************************************/
 extern void fio_register_file_( int32_t *fid,
@@ -111,6 +123,9 @@ extern void fio_put_write_pkginfo_( int32_t *fid,
 /** validate package information with common **************************/
 extern void fio_valid_pkginfo_( int32_t *fid );
 
+/** validate package information with common (except rgnid) ***********/
+extern void fio_valid_pkginfo_validrgn_( int32_t *fid,
+                                         int32_t *rgnid );
 
 /** put & write data information and write data ***********************/
 extern void fio_put_write_datainfo_data_( int32_t *did,
@@ -126,9 +141,21 @@ extern void fio_put_write_datainfo_( int32_t *did,
 /** read pkginfo and datainfo *****************************************/
 extern void fio_read_allinfo_( int32_t *fid );
 
-/** read pkginfo and datainfo and get pkginfo *************************/
-extern void fio_read_allinfo_get_pkginfo_( int32_t *fid,
-                                           headerinfo_t *hinfo );
+/** read pkginfo and datainfo, with validating rgnid ******************/
+extern void fio_read_allinfo_validrgn_( int32_t *fid,
+                                        int32_t *rgnid );
+
+/** read pkginfo and datainfo and store data as tmpdata ***************/
+/* [add] C.Kodama 13-04-18 */
+extern void fio_read_allinfo_tmpdata_( int32_t *fid );
+
+extern void fio_register_vname_tmpdata_( const char *vname_in, 
+                                         int32_t    *vname_len );
+
+/** allocate and copy datainfo ****************************************/
+/* [add] C.Kodama 13-04-18 */
+extern void fio_copy_datainfo_( int32_t *fid,
+                                int32_t *fid_org );
 
 /** dump package summary of all finfo *********************************/
 extern void fio_dump_finfolist_( void );

@@ -33,17 +33,19 @@ module mod_chemvar
   !
   !++ Public parameters & variables
   !
-  integer,                 public, parameter :: CHEM_TRC_vmax = 3
+  integer,                 public, parameter :: CHEM_TRC_vmax = 4
   character(len=16),       public, save      :: CHEM_TRC_name(CHEM_TRC_vmax) ! short name  of tracer
   character(len=ADM_NSYS), public, save      :: CHEM_TRC_desc(CHEM_TRC_vmax) ! description of tracer
 
   data CHEM_TRC_name / 'passive1', &
                        'passive2', &
-                       'passive3'  /
+                       'passive3', &
+                       'passive4'  /
 
   data CHEM_TRC_desc / 'passive_tracer_no1', &
                        'passive_tracer_no2', &
-                       'passive_tracer_no3'  /
+                       'passive_tracer_no3', &
+                       'passive_tracer_no4'  /
 
   !-----------------------------------------------------------------------------
   !

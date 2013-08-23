@@ -36,19 +36,19 @@ program fio_ico2ll
   use mod_calendar, only : &
     calendar_ss2yh
   use mod_fio, only : &
-    FIO_HSHORT,      &
-    FIO_HMID,        &
+    FIO_HSHORT,       &
+    FIO_HMID,         &
     FIO_HLONG,        &
-    FIO_REAL4,       &
-    FIO_REAL8,       &
-    FIO_BIG_ENDIAN,  &
-    FIO_ICOSAHEDRON, &
-    FIO_IGA_LCP,     &
-    FIO_IGA_MLCP,    &
-    FIO_INTEG_FILE,  &
-    FIO_SPLIT_FILE,  &
-    FIO_FREAD,       &
-    headerinfo,      &
+    FIO_REAL4,        &
+    FIO_REAL8,        &
+    FIO_BIG_ENDIAN,   &
+    FIO_ICOSAHEDRON,  &
+    FIO_IGA_LCP,      &
+    FIO_IGA_MLCP,     &
+    FIO_INTEG_FILE,   &
+    FIO_SPLIT_FILE,   &
+    FIO_FREAD,        &
+    headerinfo,       &
     datainfo
   use mod_mnginfo_light, only : &
     MNG_mnginfo_input,   &
@@ -89,28 +89,32 @@ program fio_ico2ll
   logical                   :: devide_template     = .false.
   logical                   :: output_grads        = .true.
   logical                   :: output_gtool        = .false.
+  logical                   :: datainfo_nodep_pe   = .false.   !   <- can be .true. if data header do not depend on pe.
   character(LEN=FIO_HSHORT) :: selectvar(max_nvar) = ''
+  character(LEN=FIO_HSHORT) :: large_memory_var(max_nvar) = '' ! [add] 13-04-18
 
   logical                   :: help = .false.
 
-  namelist /OPTION/ glevel,          &
-                    rlevel,          &
-                    grid_topology,   &
-                    complete,        &
-                    mnginfo,         &
-                    layerfile_dir,   &
-                    llmap_base,      &
-                    infile,          &
-                    step_str,        &
-                    step_end,        &
-                    outfile_dir,     &
-                    outfile_prefix,  &
-                    outfile_rec,     &
-                    lon_swap,        &
-                    devide_template, &
-                    output_grads,    &
-                    output_gtool,    &
-                    selectvar,       &
+  namelist /OPTION/ glevel,            &
+                    rlevel,            &
+                    grid_topology,     &
+                    complete,          &
+                    mnginfo,           &
+                    layerfile_dir,     &
+                    llmap_base,        &
+                    infile,            &
+                    step_str,          &
+                    step_end,          &
+                    outfile_dir,       &
+                    outfile_prefix,    &
+                    outfile_rec,       &
+                    lon_swap,          &
+                    devide_template,   &
+                    output_grads,      &
+                    output_gtool,      &
+                    datainfo_nodep_pe, &  ! [add] 13-04-18
+                    selectvar,         &
+                    large_memory_var,  &  ! [add] 13-04-18
                     help
   !-----------------------------------------------------------------------------
   character(LEN=FIO_HLONG) :: infname   = ""
@@ -123,6 +127,7 @@ program fio_ico2ll
   ! ll grid coordinate
   integer              :: imax, jmax
   real(8), allocatable :: lon(:), lat(:)
+  real(8), allocatable :: lon_tmp(:) ! [add] 13-04-18
 
   ! ico2ll weight mapping
   integer              :: LALL
@@ -173,8 +178,11 @@ program fio_ico2ll
 
   logical :: addvar
   integer :: fid, did, ofid, ierr, irec
-  integer :: v, t, p, l, k , n
+  integer :: v, t, p, l, k, n, i, j
+  real(8) :: pi
   !=============================================================================
+
+  pi = 4.D0 * atan( 1.D0 ) ! [add] 13-04-18
 
   !--- read option and preprocess
   call readoption !! set fmax, infile
@@ -304,7 +312,17 @@ program fio_ico2ll
   allocate( var_zgrid    (max_nlayer, max_nvar) )
   allocate( var_gthead   (64, max_nvar) )
 
+
+  do v = 1, max_nvar
+     if ( trim(large_memory_var(v)) == '' ) exit
+     !write(*,*) v, trim(large_memory_var(v)), len_trim(large_memory_var(v))
+     call fio_register_vname_tmpdata( trim(large_memory_var(v)), &
+          len_trim(large_memory_var(v)) )
+  end do
+
   do p = 1, MNG_PALL
+     write(*,*) 'p=', p
+
      if (complete) then ! all region
         infname = trim(infile(1))//'.rgnall'
      else
@@ -313,8 +331,7 @@ program fio_ico2ll
      allocate( prc_tab_C(MNG_prc_rnum(p))   )
      prc_tab_C(:) = MNG_prc_tab(:,p)-1
 
-     call fio_put_commoninfo( &!FIO_MPIIO_NOUSE, &
-                              fmode,           &
+     call fio_put_commoninfo( fmode,           &
                               FIO_BIG_ENDIAN,  &
                               gtopology,       &
                               glevel,          &
@@ -324,8 +341,23 @@ program fio_ico2ll
 
      call fio_register_file(ifid(p),trim(infname))
      call fio_fopen(ifid(p),FIO_FREAD)
-     call fio_read_allinfo(ifid(p))
-
+     
+     ! <-- [add] C.Kodama 13.04.18
+     if( datainfo_nodep_pe .and. p > 1 ) then
+        ! assume that datainfo do not depend on pe.
+        call fio_read_pkginfo( ifid(p) )
+        call fio_valid_pkginfo( ifid(p) )
+        call fio_copy_datainfo( ifid(p), ifid(1) )
+     else if ( .not. datainfo_nodep_pe  &
+               .and. trim(large_memory_var(1)) /= '' ) then
+        ! also read field data and store them in temporary buffer
+        call fio_read_allinfo_tmpdata( ifid(p) )
+     else
+        ! normal way to read pkginfo and datainfo
+        call fio_read_allinfo( ifid(p) )
+     end if
+     ! -->
+     
      if ( p == 1 ) then ! only once
         allocate( hinfo%rgnid(MNG_prc_rnum(p)) )
 
@@ -399,6 +431,7 @@ program fio_ico2ll
      endif !--- PE=000000
 
      deallocate( prc_tab_C )
+     call fio_fclose(ifid(p)) ! [add] 13-04-18
   enddo !--- PE LOOP
 
   if ( nvar == 0 ) then
@@ -428,6 +461,8 @@ program fio_ico2ll
      outbase = trim(outfile_dir)//'/'//trim(outfile_prefix)//trim(var_name(v))
      ofid = MISC_get_available_fid()
  
+     num_of_step = min(step_end,var_nstep(v)) - step_str + 1  ! [mov] 13-04-18
+
      if (.not. devide_template) then
         if (output_grads) then
 
@@ -473,7 +508,6 @@ program fio_ico2ll
         endif
      endif
 
-     num_of_step = min(step_end,var_nstep(v)) - step_str + 1
 
      do t = 1, num_of_step
 
@@ -500,6 +534,7 @@ program fio_ico2ll
         step = t-1 + step_str
 
         do p = 1, MNG_PALL
+           call fio_fopen(ifid(p),FIO_FREAD)  ! [add] 13-04-18
            if ( t==1 ) write(*,'(A10)',advance='no') ' ->region:'
 
            allocate( data4allrgn(GALL*kmax*MNG_prc_rnum(p)) )
@@ -520,10 +555,21 @@ program fio_ico2ll
            endif
 
            !--- read from pe000xx file
+
+
            if ( dinfo%datatype == FIO_REAL4 ) then
-              call fio_read_data(ifid(p),did,data4allrgn(:))
+              if ( trim(large_memory_var(1)) /= '' ) then
+                 call fio_read_data_tmpdata(ifid(p),did,data4allrgn(:))
+              else
+                 call fio_read_data(ifid(p),did,data4allrgn(:))
+              end if
+
            elseif( dinfo%datatype == FIO_REAL8 ) then
-              call fio_read_data(ifid(p),did,data8allrgn(:))
+              if ( trim(large_memory_var(1)) /= '' ) then
+                 call fio_read_data_tmpdata(ifid(p),did,data8allrgn(:))
+              else
+                 call fio_read_data(ifid(p),did,data8allrgn(:))
+              end if
 
               data4allrgn(:) = real(data8allrgn(:),kind=4)
               where( data8allrgn(:) == CNST_UNDEF )
@@ -560,6 +606,7 @@ program fio_ico2ll
            deallocate( data4allrgn )
            deallocate( data8allrgn )
            deallocate( icodata4    )
+           call fio_fclose(ifid(p)) ! [add] 13-04-18
         enddo ! PE LOOP
 
         !--- swap longitude
@@ -619,9 +666,10 @@ program fio_ico2ll
 
   enddo ! variable LOOP
 
-  do p = 1, MNG_PALL
-     call fio_fclose(ifid(p))
-  enddo
+! [del] 13-04-18
+!  do p = 1, MNG_PALL
+!     call fio_fclose(ifid(p))
+!  enddo
 
 contains
   !-----------------------------------------------------------------------------
@@ -630,7 +678,7 @@ contains
   subroutine readoption
     use mod_misc, only : &
       MISC_get_available_fid
-    use mod_option, only: &
+    use mod_tool_option, only: &
       OPT_convert, &
       OPT_fid
     implicit none
@@ -1048,7 +1096,7 @@ contains
     character(18):: tmp
     !---------------------------------------------------------------------------
 
-    write(tmp,*) max(isec/60,1)
+    write(tmp,*) max(isec/60, 1)
 
     template = trim(tmp)//'mn'
 

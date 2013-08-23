@@ -896,7 +896,7 @@ contains
     !
     implicit none
     !
-    integer :: k,l,n
+    integer :: k,l
     !
     !---  pot. temp. ( dummy )
     real(8) :: qd(ADM_gall,ADM_kall,ADM_lall)

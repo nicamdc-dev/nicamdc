@@ -387,11 +387,8 @@ contains
     integer, intent(in) :: kend
     real(8), intent(in) :: var   (ADM_gall,   kdim,ADM_lall   )
     real(8), intent(in) :: var_pl(ADM_gall_pl,kdim,ADM_lall_pl)
-    real(8)             :: vmax_g
-
-    logical, optional, intent(in) :: nonzero
-
     real(8)             :: vmin_g
+    logical, optional, intent(in) :: nonzero
 
     real(8) :: vmin
     integer :: n, k, l
@@ -515,13 +512,13 @@ contains
        ADM_lall_pl
     implicit none
 
-    character(len=ADM_MAXFNAME), intent(in)    :: basename
-    integer,                     intent(in)    :: k_start
-    integer,                     intent(in)    :: k_end
-    real(8),                     intent(inout) :: var   (ADM_gall,   k_start:k_end,ADM_lall   )
-    real(8),                     intent(inout) :: var_pl(ADM_gall_pl,k_start:k_end,ADM_lall_pl)
-    integer, optional,           intent(in)    :: input_size
-    integer, optional,           intent(in)    :: num
+    character(len=*),  intent(in)    :: basename
+    integer,           intent(in)    :: k_start
+    integer,           intent(in)    :: k_end
+    real(8),           intent(inout) :: var   (ADM_gall,   k_start:k_end,ADM_lall   )
+    real(8),           intent(inout) :: var_pl(ADM_gall_pl,k_start:k_end,ADM_lall_pl)
+    integer, optional, intent(in)    :: input_size
+    integer, optional, intent(in)    :: num
 
     real(4) :: var4   (ADM_gall,   k_start:k_end)
     real(4) :: var4_pl(ADM_gall_pl,k_start:k_end)
@@ -619,12 +616,12 @@ contains
        ADM_lall_pl
     implicit none
 
-    character(len=ADM_MAXFNAME), intent(in) :: basename
-    real(8),                     intent(in) :: var   (:,:,:)
-    real(8),                     intent(in) :: var_pl(:,:,:)
-    integer,                     intent(in) :: k_start
-    integer,                     intent(in) :: k_end
-    integer, optional,           intent(in) :: output_size
+    character(len=*),  intent(in) :: basename
+    real(8),           intent(in) :: var   (:,:,:)
+    real(8),           intent(in) :: var_pl(:,:,:)
+    integer,           intent(in) :: k_start
+    integer,           intent(in) :: k_end
+    integer, optional, intent(in) :: output_size
 
     real(4) :: var4   (ADM_gall,   k_start:k_end)
     real(4) :: var4_pl(ADM_gall_pl,k_start:k_end)
@@ -712,7 +709,7 @@ contains
        ADM_lall
     implicit none
 
-    character(len=ADM_MAXFNAME), intent(in)  :: basename
+    character(len=*), intent(in)  :: basename
 
     character(len=ADM_MAXFNAME) :: fname
 
@@ -758,7 +755,7 @@ contains
        ADM_lall
     implicit none
 
-    character(len=ADM_MAXFNAME), intent(in)  :: basename
+    character(len=*), intent(in)  :: basename
 
     character(len=ADM_MAXFNAME) :: fname
 
@@ -799,12 +796,12 @@ contains
        ADM_lall_pl
     implicit none
 
-    integer,                     intent(in)    :: kall
-    character(len=ADM_MAXFNAME), intent(in)    :: basename
-    real(8),                     intent(inout) :: var   (ADM_gall,   kall,ADM_lall   )
-    real(8),                     intent(inout) :: var_pl(ADM_gall_pl,kall,ADM_lall_pl)
-    logical,                     intent(out)   :: lerr
-    integer, optional,           intent(in)    :: input_size
+    integer,           intent(in)    :: kall
+    character(len=*),  intent(in)    :: basename
+    real(8),           intent(inout) :: var   (ADM_gall,   kall,ADM_lall   )
+    real(8),           intent(inout) :: var_pl(ADM_gall_pl,kall,ADM_lall_pl)
+    logical,           intent(out)   :: lerr
+    integer, optional, intent(in)    :: input_size
 
     real(4) :: var4   (ADM_gall,   kall)
     real(4) :: var4_pl(ADM_gall_pl,kall)
@@ -909,12 +906,12 @@ contains
        ADM_lall
     implicit none
 
-    character(len=ADM_MAXFNAME), intent(in)  :: basename
-    integer,                     intent(in)  :: k_start
-    integer,                     intent(in)  :: k_end
-    real(8),                     intent(out) :: var(ADM_gall,k_start:k_end,ADM_lall)
-    integer,                     intent(in)  :: recnum
-    integer,                     intent(in)  :: input_size
+    character(len=*), intent(in)  :: basename
+    integer,          intent(in)  :: k_start
+    integer,          intent(in)  :: k_end
+    real(8),          intent(out) :: var(ADM_gall,k_start:k_end,ADM_lall)
+    integer,          intent(in)  :: recnum
+    integer,          intent(in)  :: input_size
 
     real(4) :: var4(ADM_gall,k_start:k_end)
     real(8) :: var8(ADM_gall,k_start:k_end)

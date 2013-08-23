@@ -43,12 +43,16 @@ module mod_dynstep
   !                12-04-06   T.yamaura: optimized for K
   !                12-05-30   T.Yashiro: Change arguments from character to index/switch
   !                12-10-22   R.Yoshida  : add papi instructions
+  !                13-06-13   R.Yoshida  : add tracer advection mode
   !      -----------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------------
   !
   !++ Used modules
   !
+  use mod_debug
+  use mod_adm, only: &
+     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -95,7 +99,9 @@ contains
        ADM_gmax,    &
        ADM_gmin,    &
        ADM_kmax,    &
-       ADM_kmin
+       ADM_kmin,    &
+       ADM_log_fid, &  ! R.Yoshida 13/06/13 [add]
+       ADM_proc_stop   ! R.Yoshida 13/06/13 [add]
     use mod_cnst, only: &
        CNST_RAIR, &
        CNST_RVAP, &
@@ -137,7 +143,8 @@ contains
        TRC_ADV_TYPE,   &
        FLAG_NUDGING,   & ! Y.Niwa add 08/09/09
        CP_TYPE,        & ! 2010.5.11 M.Satoh [add]
-       TB_TYPE           ! [add] 10/11/29 A.Noda
+       TB_TYPE,        & ! [add] 10/11/29 A.Noda
+       THUBURN_LIM       ! R.Yoshida 13/06/13 [add]
     use mod_bsstate, only: &
        pre_bs, pre_bs_pl, &
        tem_bs, tem_bs_pl, &
@@ -156,24 +163,27 @@ contains
     use mod_thrmdyn, only: &
        thrmdyn_th, &
        thrmdyn_eth
+    use mod_src, only: &
+       src_advection_convergence_momentum, &
+       src_advection_convergence,          &
+       I_SRC_default
+    use mod_vi, only :         &
+       vi_small_step
+    use mod_trcadv_thuburn, only: &
+       src_update_tracer
     use mod_numfilter, only: &
        NUMFILTER_DOrayleigh,       & ! [add] H.Yashiro 20120530
        NUMFILTER_DOverticaldiff,   & ! [add] H.Yashiro 20120530
        numfilter_rayleigh_damping, &
-       numfilter_numerical_hdiff,  &
-       numfilter_numerical_vdiff
-    use mod_vi, only :         &
-       vi_small_step
-    use mod_src, only: &
-       src_advection_convergence_v, &
-       src_advection_convergence,   &
-       src_update_tracer,           &
-       I_SRC_default                  ! [add] H.Yashiro 20120530
+       numfilter_hdiffusion,       &
+       numfilter_vdiffusion
     use mod_ndg, only: & ! Y.Niwa add 08/09/09
        ndg_nudging_uvtp, &
        ndg_update_var
     use mod_tb_smg, only: & ! [add] 10/11/29 A.Noda
        tb_smg_driver
+    use mod_forcing_driver, only: &
+       updating          ! R.Yoshida 13/06/13 [add]
     implicit none
 
     integer, parameter :: nmax_TEND   = 7
@@ -263,10 +273,10 @@ contains
     real(8) :: temd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- temporary variables
-    real(8) :: qd      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: qd_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: cv      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: cv_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8) :: qd   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8) :: qd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8) :: cv   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8) :: cv_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     real(8), parameter :: TKE_MIN = 0.D0
     real(8)            :: TKEg_corr
@@ -280,17 +290,18 @@ contains
     integer, save :: num_of_iteration_lstep    ! number of large steps ( 2-4 )
     integer, save :: num_of_iteration_sstep(4) ! number of small steps in each of large steps
 
-    integer :: ij, k ,l, nq, nl
+    integer :: g, k ,l, nq, nl
 
     integer :: i, j, suf
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
-
 #ifdef PAPI_OPS
     ! <-- [add] PAPI R.Yoshida 20121022
     !call PAPIF_flips( PAPI_real_time_i, PAPI_proc_time_i, PAPI_flpins, PAPI_mflins, PAPI_check )
     call PAPIF_flops( PAPI_real_time_o, PAPI_proc_time_o, PAPI_flpops, PAPI_mflops, PAPI_check )
 #endif
+
+    call DEBUG_rapstart('++Dynamics')
 
     if ( iflag ) then
        iflag = .false.
@@ -305,12 +316,16 @@ contains
           num_of_iteration_sstep(1) = TIME_SSTEP_MAX / 3
           num_of_iteration_sstep(2) = TIME_SSTEP_MAX / 2
           num_of_iteration_sstep(3) = TIME_SSTEP_MAX
-        case('RK4')
+       case('RK4')
           num_of_iteration_lstep = 4
-          num_of_iteration_sstep(1) = TIME_SSTEP_MAX/4
-          num_of_iteration_sstep(2) = TIME_SSTEP_MAX/3
-          num_of_iteration_sstep(3) = TIME_SSTEP_MAX/2
+          num_of_iteration_sstep(1) = TIME_SSTEP_MAX / 4
+          num_of_iteration_sstep(2) = TIME_SSTEP_MAX / 3
+          num_of_iteration_sstep(3) = TIME_SSTEP_MAX / 2
           num_of_iteration_sstep(4) = TIME_SSTEP_MAX
+       case('TRCADV')  ! R.Yoshida 13/06/13 [add]
+          num_of_iteration_lstep = 1
+          num_of_iteration_sstep(1) = 1
+          num_of_iteration_sstep(2) = 1
        case default
           write(*,*) 'Msg : Sub[sub_dynstep]'
           write(*,*) ' --- Error : invalid TIME_INTEG_TYPE=', TIME_INTEG_TYPE
@@ -332,6 +347,11 @@ contains
     PROG0_pl(:,:,:,:) = PROG_pl(:,:,:,:)
 
     if ( TRC_ADV_TYPE == 'DEFAULT' ) then
+       if ( trim(TIME_INTEG_TYPE) == 'TRCADV' ) then
+          write(ADM_LOG_FID,*) 'Tracer Advection Test Mode'
+          write(ADM_LOG_FID,*) 'does not support current setting. STOP.'
+          call ADM_proc_stop
+       endif
        PROGq0   (:,:,:,:) = PROGq   (:,:,:,:)
        PROGq0_pl(:,:,:,:) = PROGq_pl(:,:,:,:)
     endif
@@ -342,6 +362,8 @@ contains
     !
     !---------------------------------------------------------------------------
     do nl = 1, num_of_iteration_lstep
+
+       if ( trim(TIME_INTEG_TYPE) /= 'TRCADV' ) then  ! TRC-ADV Test Bifurcation
 
        !---< Generate diagnostic values and set the boudary conditions
        rho(:,:,:) = PROG(:,:,:,I_RHOG  ) / VMTR_GSGAM2(:,:,:)
@@ -367,11 +389,11 @@ contains
 
        do l = 1, ADM_lall
           do k = ADM_kmin+1, ADM_kmax
-             do ij = 1, ADM_gall
-                w(ij,k,l) = PROG(ij,k,l,I_RHOGW) &
-                          / ( VMTR_GSGAM2H(ij,k,l) * 0.5D0 * ( GRD_afac(k) * rho(ij,k  ,l) &
-                                                             + GRD_bfac(k) * rho(ij,k-1,l) ) )
-             enddo
+          do g = 1, ADM_gall
+             w(g,k,l) = PROG(g,k,l,I_RHOGW) &
+                      / ( VMTR_GSGAM2H(g,k,l) * 0.5D0 * ( GRD_afac(k) * rho(g,k  ,l) &
+                                                        + GRD_bfac(k) * rho(g,k-1,l) ) )
+          enddo
           enddo
 
           !--- boundary conditions
@@ -430,11 +452,11 @@ contains
 
           do l = 1, ADM_lall_pl
              do k = ADM_kmin+1, ADM_kmax
-                do ij = 1, ADM_gall_pl
-                   w_pl(ij,k,l) = PROG_pl(ij,k,l,I_RHOGW) &
-                             / ( 0.5D0 * ( GRD_afac(k) * rho_pl(ij,k  ,l) &
-                                         + GRD_bfac(k) * rho_pl(ij,k-1,l) ) * VMTR_GSGAM2H_pl(ij,k,l) )
-                enddo
+             do g = 1, ADM_gall_pl
+                w_pl(g,k,l) = PROG_pl(g,k,l,I_RHOGW) &
+                            / ( VMTR_GSGAM2H_pl(g,k,l) * 0.5D0 * ( GRD_afac(k) * rho_pl(g,k  ,l) &
+                                                                 + GRD_bfac(k) * rho_pl(g,k-1,l) ) )
+             enddo
              enddo
 
              !--- boundary conditions
@@ -491,21 +513,22 @@ contains
        !------------------------------------------------------------------------
        !> LARGE step
        !------------------------------------------------------------------------
+       call DEBUG_rapstart('+++Large step')
 
        !--- calculation of advection tendency including Coriolis force
-       call src_advection_convergence_v( vx,                     vx_pl,                     & !--- [IN]
-                                         vy,                     vy_pl,                     & !--- [IN]
-                                         vz,                     vz_pl,                     & !--- [IN]
-                                         w,                      w_pl,                      & !--- [IN]
-                                         PROG  (:,:,:,I_RHOG  ), PROG_pl  (:,:,:,I_RHOG  ), & !--- [IN]
-                                         PROG  (:,:,:,I_RHOGVX), PROG_pl  (:,:,:,I_RHOGVX), & !--- [IN]
-                                         PROG  (:,:,:,I_RHOGVY), PROG_pl  (:,:,:,I_RHOGVY), & !--- [IN]
-                                         PROG  (:,:,:,I_RHOGVZ), PROG_pl  (:,:,:,I_RHOGVZ), & !--- [IN]
-                                         PROG  (:,:,:,I_RHOGW ), PROG_pl  (:,:,:,I_RHOGW ), & !--- [IN]
-                                         g_TEND(:,:,:,I_RHOGVX), g_TEND_pl(:,:,:,I_RHOGVX), & !--- [OUT]
-                                         g_TEND(:,:,:,I_RHOGVY), g_TEND_pl(:,:,:,I_RHOGVY), & !--- [OUT]
-                                         g_TEND(:,:,:,I_RHOGVZ), g_TEND_pl(:,:,:,I_RHOGVZ), & !--- [OUT]
-                                         g_TEND(:,:,:,I_RHOGW ), g_TEND_pl(:,:,:,I_RHOGW )  ) !--- [OUT]
+       call src_advection_convergence_momentum( vx,                     vx_pl,                     & !--- [IN]
+                                                vy,                     vy_pl,                     & !--- [IN]
+                                                vz,                     vz_pl,                     & !--- [IN]
+                                                w,                      w_pl,                      & !--- [IN]
+                                                PROG  (:,:,:,I_RHOG  ), PROG_pl  (:,:,:,I_RHOG  ), & !--- [IN]
+                                                PROG  (:,:,:,I_RHOGVX), PROG_pl  (:,:,:,I_RHOGVX), & !--- [IN]
+                                                PROG  (:,:,:,I_RHOGVY), PROG_pl  (:,:,:,I_RHOGVY), & !--- [IN]
+                                                PROG  (:,:,:,I_RHOGVZ), PROG_pl  (:,:,:,I_RHOGVZ), & !--- [IN]
+                                                PROG  (:,:,:,I_RHOGW ), PROG_pl  (:,:,:,I_RHOGW ), & !--- [IN]
+                                                g_TEND(:,:,:,I_RHOGVX), g_TEND_pl(:,:,:,I_RHOGVX), & !--- [OUT]
+                                                g_TEND(:,:,:,I_RHOGVY), g_TEND_pl(:,:,:,I_RHOGVY), & !--- [OUT]
+                                                g_TEND(:,:,:,I_RHOGVZ), g_TEND_pl(:,:,:,I_RHOGVZ), & !--- [OUT]
+                                                g_TEND(:,:,:,I_RHOGW ), g_TEND_pl(:,:,:,I_RHOGW )  ) !--- [OUT]
 
        g_TEND   (:,:,:,I_RHOG)     = 0.D0
        g_TEND   (:,:,:,I_RHOGE)    = 0.D0
@@ -524,38 +547,38 @@ contains
              f_TENDq_pl(:,:,:,:) = 0.D0
 
              !------ numerical diffusion
-             call numfilter_numerical_hdiff( rho,                       rho_pl,                       & !--- [IN]
-                                             vx,                        vx_pl,                        & !--- [IN]
-                                             vy,                        vy_pl,                        & !--- [IN]
-                                             vz,                        vz_pl,                        & !--- [IN]
-                                             w,                         w_pl,                         & !--- [IN]
-                                             temd,                      temd_pl,                      & !--- [IN]
-                                             q,                         q_pl,                         & !--- [IN]
-                                             f_TEND (:,:,:,I_RHOG    ), f_TEND_pl (:,:,:,I_RHOG    ), & !--- [INOUT]
-                                             f_TEND (:,:,:,I_RHOGVX  ), f_TEND_pl (:,:,:,I_RHOGVX  ), & !--- [INOUT]
-                                             f_TEND (:,:,:,I_RHOGVY  ), f_TEND_pl (:,:,:,I_RHOGVY  ), & !--- [INOUT]
-                                             f_TEND (:,:,:,I_RHOGVZ  ), f_TEND_pl (:,:,:,I_RHOGVZ  ), & !--- [INOUT]
-                                             f_TEND (:,:,:,I_RHOGW   ), f_TEND_pl (:,:,:,I_RHOGW   ), & !--- [INOUT]
-                                             f_TEND (:,:,:,I_RHOGE   ), f_TEND_pl (:,:,:,I_RHOGE   ), & !--- [INOUT]
-                                             f_TEND (:,:,:,I_RHOGETOT), f_TEND_pl (:,:,:,I_RHOGETOT), & !--- [INOUT]
-                                             f_TENDq(:,:,:,:),          f_TENDq_pl(:,:,:,:)           ) !--- [INOUT]
+             call numfilter_hdiffusion( rho,                       rho_pl,                       & !--- [IN]
+                                        vx,                        vx_pl,                        & !--- [IN]
+                                        vy,                        vy_pl,                        & !--- [IN]
+                                        vz,                        vz_pl,                        & !--- [IN]
+                                        w,                         w_pl,                         & !--- [IN]
+                                        temd,                      temd_pl,                      & !--- [IN]
+                                        q,                         q_pl,                         & !--- [IN]
+                                        f_TEND (:,:,:,I_RHOG    ), f_TEND_pl (:,:,:,I_RHOG    ), & !--- [INOUT]
+                                        f_TEND (:,:,:,I_RHOGVX  ), f_TEND_pl (:,:,:,I_RHOGVX  ), & !--- [INOUT]
+                                        f_TEND (:,:,:,I_RHOGVY  ), f_TEND_pl (:,:,:,I_RHOGVY  ), & !--- [INOUT]
+                                        f_TEND (:,:,:,I_RHOGVZ  ), f_TEND_pl (:,:,:,I_RHOGVZ  ), & !--- [INOUT]
+                                        f_TEND (:,:,:,I_RHOGW   ), f_TEND_pl (:,:,:,I_RHOGW   ), & !--- [INOUT]
+                                        f_TEND (:,:,:,I_RHOGE   ), f_TEND_pl (:,:,:,I_RHOGE   ), & !--- [INOUT]
+                                        f_TEND (:,:,:,I_RHOGETOT), f_TEND_pl (:,:,:,I_RHOGETOT), & !--- [INOUT]
+                                        f_TENDq(:,:,:,:),          f_TENDq_pl(:,:,:,:)           ) !--- [INOUT]
 
              if ( NUMFILTER_DOverticaldiff ) then ! numerical diffusion (vertical)
-                call numfilter_numerical_vdiff( rho,                       rho_pl,                       & !--- [IN]
-                                                vx,                        vx_pl,                        & !--- [IN]
-                                                vy,                        vy_pl,                        & !--- [IN]
-                                                vz,                        vz_pl,                        & !--- [IN]
-                                                w,                         w_pl,                         & !--- [IN]
-                                                temd,                      temd_pl,                      & !--- [IN]
-                                                q,                         q_pl,                         & !--- [IN]
-                                                f_TEND (:,:,:,I_RHOG    ), f_TEND_pl (:,:,:,I_RHOG    ), & !--- [INOUT]
-                                                f_TEND (:,:,:,I_RHOGVX  ), f_TEND_pl (:,:,:,I_RHOGVX  ), & !--- [INOUT]
-                                                f_TEND (:,:,:,I_RHOGVY  ), f_TEND_pl (:,:,:,I_RHOGVY  ), & !--- [INOUT]
-                                                f_TEND (:,:,:,I_RHOGVZ  ), f_TEND_pl (:,:,:,I_RHOGVZ  ), & !--- [INOUT]
-                                                f_TEND (:,:,:,I_RHOGW   ), f_TEND_pl (:,:,:,I_RHOGW   ), & !--- [INOUT]
-                                                f_TEND (:,:,:,I_RHOGE   ), f_TEND_pl (:,:,:,I_RHOGE   ), & !--- [INOUT]
-                                                f_TEND (:,:,:,I_RHOGETOT), f_TEND_pl (:,:,:,I_RHOGETOT), & !--- [INOUT]
-                                                f_TENDq(:,:,:,:),          f_TENDq_pl(:,:,:,:)           ) !--- [INOUT]
+                call numfilter_vdiffusion( rho,                       rho_pl,                       & !--- [IN]
+                                           vx,                        vx_pl,                        & !--- [IN]
+                                           vy,                        vy_pl,                        & !--- [IN]
+                                           vz,                        vz_pl,                        & !--- [IN]
+                                           w,                         w_pl,                         & !--- [IN]
+                                           temd,                      temd_pl,                      & !--- [IN]
+                                           q,                         q_pl,                         & !--- [IN]
+                                           f_TEND (:,:,:,I_RHOG    ), f_TEND_pl (:,:,:,I_RHOG    ), & !--- [INOUT]
+                                           f_TEND (:,:,:,I_RHOGVX  ), f_TEND_pl (:,:,:,I_RHOGVX  ), & !--- [INOUT]
+                                           f_TEND (:,:,:,I_RHOGVY  ), f_TEND_pl (:,:,:,I_RHOGVY  ), & !--- [INOUT]
+                                           f_TEND (:,:,:,I_RHOGVZ  ), f_TEND_pl (:,:,:,I_RHOGVZ  ), & !--- [INOUT]
+                                           f_TEND (:,:,:,I_RHOGW   ), f_TEND_pl (:,:,:,I_RHOGW   ), & !--- [INOUT]
+                                           f_TEND (:,:,:,I_RHOGE   ), f_TEND_pl (:,:,:,I_RHOGE   ), & !--- [INOUT]
+                                           f_TEND (:,:,:,I_RHOGETOT), f_TEND_pl (:,:,:,I_RHOGETOT), & !--- [INOUT]
+                                           f_TENDq(:,:,:,:),          f_TENDq_pl(:,:,:,:)           ) !--- [INOUT]
              endif
 
              if ( NUMFILTER_DOrayleigh ) then ! rayleigh damping
@@ -579,38 +602,38 @@ contains
           f_TENDq_pl(:,:,:,:) = 0.D0
 
           !------ numerical diffusion
-          call numfilter_numerical_hdiff( rho,                       rho_pl,                       & !--- [IN]
-                                          vx,                        vx_pl,                        & !--- [IN]
-                                          vy,                        vy_pl,                        & !--- [IN]
-                                          vz,                        vz_pl,                        & !--- [IN]
-                                          w,                         w_pl,                         & !--- [IN]
-                                          temd,                      temd_pl,                      & !--- [IN]
-                                          q,                         q_pl,                         & !--- [IN]
-                                          f_TEND (:,:,:,I_RHOG    ), f_TEND_pl (:,:,:,I_RHOG    ), & !--- [INOUT]
-                                          f_TEND (:,:,:,I_RHOGVX  ), f_TEND_pl (:,:,:,I_RHOGVX  ), & !--- [INOUT]
-                                          f_TEND (:,:,:,I_RHOGVY  ), f_TEND_pl (:,:,:,I_RHOGVY  ), & !--- [INOUT]
-                                          f_TEND (:,:,:,I_RHOGVZ  ), f_TEND_pl (:,:,:,I_RHOGVZ  ), & !--- [INOUT]
-                                          f_TEND (:,:,:,I_RHOGW   ), f_TEND_pl (:,:,:,I_RHOGW   ), & !--- [INOUT]
-                                          f_TEND (:,:,:,I_RHOGE   ), f_TEND_pl (:,:,:,I_RHOGE   ), & !--- [INOUT]
-                                          f_TEND (:,:,:,I_RHOGETOT), f_TEND_pl (:,:,:,I_RHOGETOT), & !--- [INOUT]
-                                          f_TENDq(:,:,:,:),          f_TENDq_pl(:,:,:,:)           ) !--- [INOUT]
+          call numfilter_hdiffusion( rho,                       rho_pl,                       & !--- [IN]
+                                     vx,                        vx_pl,                        & !--- [IN]
+                                     vy,                        vy_pl,                        & !--- [IN]
+                                     vz,                        vz_pl,                        & !--- [IN]
+                                     w,                         w_pl,                         & !--- [IN]
+                                     temd,                      temd_pl,                      & !--- [IN]
+                                     q,                         q_pl,                         & !--- [IN]
+                                     f_TEND (:,:,:,I_RHOG    ), f_TEND_pl (:,:,:,I_RHOG    ), & !--- [INOUT]
+                                     f_TEND (:,:,:,I_RHOGVX  ), f_TEND_pl (:,:,:,I_RHOGVX  ), & !--- [INOUT]
+                                     f_TEND (:,:,:,I_RHOGVY  ), f_TEND_pl (:,:,:,I_RHOGVY  ), & !--- [INOUT]
+                                     f_TEND (:,:,:,I_RHOGVZ  ), f_TEND_pl (:,:,:,I_RHOGVZ  ), & !--- [INOUT]
+                                     f_TEND (:,:,:,I_RHOGW   ), f_TEND_pl (:,:,:,I_RHOGW   ), & !--- [INOUT]
+                                     f_TEND (:,:,:,I_RHOGE   ), f_TEND_pl (:,:,:,I_RHOGE   ), & !--- [INOUT]
+                                     f_TEND (:,:,:,I_RHOGETOT), f_TEND_pl (:,:,:,I_RHOGETOT), & !--- [INOUT]
+                                     f_TENDq(:,:,:,:),          f_TENDq_pl(:,:,:,:)           ) !--- [INOUT]
 
           if ( NUMFILTER_DOverticaldiff ) then ! numerical diffusion (vertical)
-             call numfilter_numerical_vdiff( rho,                       rho_pl,                       & !--- [IN]
-                                             vx,                        vx_pl,                        & !--- [IN]
-                                             vy,                        vy_pl,                        & !--- [IN]
-                                             vz,                        vz_pl,                        & !--- [IN]
-                                             w,                         w_pl,                         & !--- [IN]
-                                             temd,                      temd_pl,                      & !--- [IN]
-                                             q,                         q_pl,                         & !--- [IN]
-                                             f_TEND (:,:,:,I_RHOG    ), f_TEND_pl (:,:,:,I_RHOG    ), & !--- [INOUT]
-                                             f_TEND (:,:,:,I_RHOGVX  ), f_TEND_pl (:,:,:,I_RHOGVX  ), & !--- [INOUT]
-                                             f_TEND (:,:,:,I_RHOGVY  ), f_TEND_pl (:,:,:,I_RHOGVY  ), & !--- [INOUT]
-                                             f_TEND (:,:,:,I_RHOGVZ  ), f_TEND_pl (:,:,:,I_RHOGVZ  ), & !--- [INOUT]
-                                             f_TEND (:,:,:,I_RHOGW   ), f_TEND_pl (:,:,:,I_RHOGW   ), & !--- [INOUT]
-                                             f_TEND (:,:,:,I_RHOGE   ), f_TEND_pl (:,:,:,I_RHOGE   ), & !--- [INOUT]
-                                             f_TEND (:,:,:,I_RHOGETOT), f_TEND_pl (:,:,:,I_RHOGETOT), & !--- [INOUT]
-                                             f_TENDq(:,:,:,:),          f_TENDq_pl(:,:,:,:)           ) !--- [INOUT]
+             call numfilter_vdiffusion( rho,                       rho_pl,                       & !--- [IN]
+                                        vx,                        vx_pl,                        & !--- [IN]
+                                        vy,                        vy_pl,                        & !--- [IN]
+                                        vz,                        vz_pl,                        & !--- [IN]
+                                        w,                         w_pl,                         & !--- [IN]
+                                        temd,                      temd_pl,                      & !--- [IN]
+                                        q,                         q_pl,                         & !--- [IN]
+                                        f_TEND (:,:,:,I_RHOG    ), f_TEND_pl (:,:,:,I_RHOG    ), & !--- [INOUT]
+                                        f_TEND (:,:,:,I_RHOGVX  ), f_TEND_pl (:,:,:,I_RHOGVX  ), & !--- [INOUT]
+                                        f_TEND (:,:,:,I_RHOGVY  ), f_TEND_pl (:,:,:,I_RHOGVY  ), & !--- [INOUT]
+                                        f_TEND (:,:,:,I_RHOGVZ  ), f_TEND_pl (:,:,:,I_RHOGVZ  ), & !--- [INOUT]
+                                        f_TEND (:,:,:,I_RHOGW   ), f_TEND_pl (:,:,:,I_RHOGW   ), & !--- [INOUT]
+                                        f_TEND (:,:,:,I_RHOGE   ), f_TEND_pl (:,:,:,I_RHOGE   ), & !--- [INOUT]
+                                        f_TEND (:,:,:,I_RHOGETOT), f_TEND_pl (:,:,:,I_RHOGETOT), & !--- [INOUT]
+                                        f_TENDq(:,:,:,:),          f_TENDq_pl(:,:,:,:)           ) !--- [INOUT]
           endif
 
           if ( NUMFILTER_DOrayleigh ) then ! rayleigh damping
@@ -627,7 +650,7 @@ contains
        endif
 
        ! Smagorinksy-type SGS model [add] A.Noda 10/11/29
-       if ( trim(TB_TYPE ) == 'SMG' ) then
+       if ( TB_TYPE == 'SMG' ) then
 
           if ( ADM_prc_me /= ADM_prc_pl ) then ! for safety
              th_pl(:,:,:) = 0.D0
@@ -638,16 +661,16 @@ contains
           endif
 
           call tb_smg_driver( nl,                                                      &
-                              rho,                       rho_pl,                       & !--- [IN] : density
+                              rho,                       rho_pl,                       & !--- [IN]
                               PROG(:,:,:,I_RHOG  ),      PROG_pl(:,:,:,I_RHOG  ),      & !--- [IN]
                               PROGq(:,:,:,:),            PROGq_pl(:,:,:,:  ),          & !--- [IN]
-                              vx,                        vx_pl,                        & !--- [IN] : Vx
-                              vy,                        vy_pl,                        & !--- [IN] : Vy
-                              vz,                        vz_pl,                        & !--- [IN] : Vz
-                              w,                         w_pl,                         & !--- [IN] : w
-                              tem,                       tem_pl,                       & !--- [IN] : temperature
-                              q,                         q_pl,                         & !--- [IN] : q
-                              th,                        th_pl,                        & !--- [IN] : potential temperature 
+                              vx,                        vx_pl,                        & !--- [IN]
+                              vy,                        vy_pl,                        & !--- [IN]
+                              vz,                        vz_pl,                        & !--- [IN]
+                              w,                         w_pl,                         & !--- [IN]
+                              tem,                       tem_pl,                       & !--- [IN]
+                              q,                         q_pl,                         & !--- [IN]
+                              th,                        th_pl,                        & !--- [IN]
                               f_TEND (:,:,:,I_RHOG    ), f_TEND_pl (:,:,:,I_RHOG    ), & !--- [INOUT]
                               f_TEND (:,:,:,I_RHOGVX  ), f_TEND_pl (:,:,:,I_RHOGVX  ), & !--- [INOUT]
                               f_TEND (:,:,:,I_RHOGVY  ), f_TEND_pl (:,:,:,I_RHOGVY  ), & !--- [INOUT]
@@ -691,9 +714,12 @@ contains
        g_TEND   (:,:,:,:) = g_TEND   (:,:,:,:) + f_TEND   (:,:,:,:)
        g_TEND_pl(:,:,:,:) = g_TEND_pl(:,:,:,:) + f_TEND_pl(:,:,:,:)
 
+       call DEBUG_rapend  ('+++Large step')
        !------------------------------------------------------------------------
        !> SMALL step
        !------------------------------------------------------------------------
+       call DEBUG_rapstart('+++Small step')
+
        if ( nl /= 1 ) then ! update split values
           PROG_split   (:,:,:,:) = PROG0   (:,:,:,:) - PROG   (:,:,:,:)
           PROG_split_pl(:,:,:,:) = PROG0_pl(:,:,:,:) - PROG_pl(:,:,:,:)
@@ -747,9 +773,26 @@ contains
                            small_step_ite,                                            & !--- [IN]
                            small_step_dt                                              ) !--- [IN]
 
+
+       call DEBUG_rapend  ('+++Small step')
+
+       else  ! TRC-ADV Test Bifurcation
+
+          !--- Make v_mean_c  ![add] 20130613 R.Yoshida
+          !--- save point(old) is mean here (although it is not exactly valid for rho)
+          v_mean_c(:,:,:,I_rhog)  = PROG0(:,:,:,I_rhog);   v_mean_c_pl(:,:,:,I_rhog)  = PROG0_pl(:,:,:,I_rhog)
+          v_mean_c(:,:,:,I_rhogvx)= PROG0(:,:,:,I_rhogvx); v_mean_c_pl(:,:,:,I_rhogvx)= PROG0_pl(:,:,:,I_rhogvx)
+          v_mean_c(:,:,:,I_rhogvy)= PROG0(:,:,:,I_rhogvy); v_mean_c_pl(:,:,:,I_rhogvy)= PROG0_pl(:,:,:,I_rhogvy)
+          v_mean_c(:,:,:,I_rhogvz)= PROG0(:,:,:,I_rhogvz); v_mean_c_pl(:,:,:,I_rhogvz)= PROG0_pl(:,:,:,I_rhogvz)
+          v_mean_c(:,:,:,I_rhogw) = PROG0(:,:,:,I_rhogw);  v_mean_c_pl(:,:,:,I_rhogw) = PROG0_pl(:,:,:,I_rhogw)
+
+       endif  ! TRC-ADV Test Bifurcation
+
        !------------------------------------------------------------------------
        !>  Tracer advection
        !------------------------------------------------------------------------
+       call DEBUG_rapstart('+++Tracer Advection')
+
        if ( TRC_ADV_TYPE == 'MIURA2004' ) then
 
           if ( nl == num_of_iteration_lstep ) then
@@ -763,26 +806,27 @@ contains
                                      v_mean_c(:,:,:,I_rhogvz), v_mean_c_pl(:,:,:,I_rhogvz), & !--- [IN]
                                      v_mean_c(:,:,:,I_rhogw),  v_mean_c_pl(:,:,:,I_rhogw),  & !--- [IN]
                                      f_TEND (:,:,:,I_RHOG),    f_TEND_pl (:,:,:,I_RHOG),    & !--- [IN]
-                                     TIME_DTL                                               ) !--- [IN]
+                                     TIME_DTL,                                              & !--- [IN]
+                                     THUBURN_LIM                                            ) !--- [IN]  ![add] 20130613 R.Yoshida
 
-             PROGq(:,:,:,:) = PROGq(:,:,:,:) + TIME_DTL * f_TENDq(:,:,:,:) ! update rhogq by viscosity
+             if( TIME_INTEG_TYPE /= 'TRCADV' ) PROGq(:,:,:,:) = PROGq(:,:,:,:) + TIME_DTL * f_TENDq(:,:,:,:) ! update rhogq by viscosity
 
              PROGq(:,ADM_kmin-1,:,:) = 0.D0
              PROGq(:,ADM_kmax+1,:,:) = 0.D0
 
              if ( ADM_prc_pl == ADM_prc_me ) then
-                PROGq_pl(:,:,:,:) = PROGq_pl(:,:,:,:) + TIME_DTL * f_TENDq_pl(:,:,:,:)
+                if( TIME_INTEG_TYPE /= 'TRCADV' ) PROGq_pl(:,:,:,:) = PROGq_pl(:,:,:,:) + TIME_DTL * f_TENDq_pl(:,:,:,:)
 
                 PROGq_pl(:,ADM_kmin-1,:,:) = 0.D0
                 PROGq_pl(:,ADM_kmax+1,:,:) = 0.D0
              endif
 
-             !<---- I don't recommend adding the hyperviscosity term
-             !<---- because of numerical instability in this case. ( H.Tomita )
+             ! [comment] H.Tomita: I don't recommend adding the hyperviscosity term because of numerical instability in this case.
 
           endif ! Last large step only
 
        elseif( TRC_ADV_TYPE == 'DEFAULT' ) then
+          !This scheme isn't supported in TRC-ADV Test  (20130612 R.Yoshida)
 
           do nq = 1, TRC_VMAX
 
@@ -813,35 +857,39 @@ contains
 
        endif
 
+       call DEBUG_rapend  ('+++Tracer Advection')
+
+       if ( trim(TIME_INTEG_TYPE) /= 'TRCADV' ) then  ! TRC-ADV Test Bifurcation
+
        !--- TKE fixer ( TKE >= 0.D0 )
        ! 2011/08/16 M.Satoh [comment] need this fixer for every small time steps
        if ( I_TKE >= 0 ) then
           if ( TRC_ADV_TYPE == 'DEFAULT' .OR. nl == num_of_iteration_lstep ) then
-             do l  = 1, ADM_lall
-                do k  = 1, ADM_kall
-                do ij = 1, ADM_gall
-                   TKEg_corr = TKE_MIN * VMTR_GSGAM2(ij,k,l) - PROGq(ij,k,l,I_TKE)
+             do l = 1, ADM_lall
+             do k = 1, ADM_kall
+             do g = 1, ADM_gall
+                TKEg_corr = TKE_MIN * VMTR_GSGAM2(g,k,l) - PROGq(g,k,l,I_TKE)
 
-                   if ( TKEg_corr >= 0.D0 ) then
-                      PROG(ij,k,l,I_RHOGE)       = PROG(ij,k,l,I_RHOGE)       - TKEg_corr
-                      PROGq(ij,k,l,I_TKE) = PROGq(ij,k,l,I_TKE) + TKEg_corr
-                   endif
-                enddo
-                enddo
+                if ( TKEg_corr >= 0.D0 ) then
+                   PROG (g,k,l,I_RHOGE) = PROG (g,k,l,I_RHOGE) - TKEg_corr
+                   PROGq(g,k,l,I_TKE)   = PROGq(g,k,l,I_TKE)   + TKEg_corr
+                endif
+             enddo
+             enddo
              enddo
 
              if ( ADM_prc_pl == ADM_prc_me ) then
-                do l  = 1, ADM_lall_pl
-                   do k  = 1, ADM_kall
-                   do ij = 1, ADM_gall_pl
-                      TKEg_corr = TKE_MIN * VMTR_GSGAM2_pl(ij,k,l) - PROGq_pl(ij,k,l,I_TKE)
+                do l = 1, ADM_lall_pl
+                do k = 1, ADM_kall
+                do g = 1, ADM_gall_pl
+                   TKEg_corr = TKE_MIN * VMTR_GSGAM2_pl(g,k,l) - PROGq_pl(g,k,l,I_TKE)
 
-                      if ( TKEg_corr >= 0.D0 ) then
-                         PROG_pl(ij,k,l,I_RHOGE)       = PROG_pl(ij,k,l,I_RHOGE)       - TKEg_corr
-                         PROGq_pl(ij,k,l,I_TKE) = PROGq_pl(ij,k,l,I_TKE) + TKEg_corr
-                      endif
-                   enddo
-                   enddo
+                   if ( TKEg_corr >= 0.D0 ) then
+                      PROG_pl (g,k,l,I_RHOGE) = PROG_pl (g,k,l,I_RHOGE) - TKEg_corr
+                      PROGq_pl(g,k,l,I_TKE)   = PROGq_pl(g,k,l,I_TKE)   + TKEg_corr
+                   endif
+                enddo
+                enddo
                 enddo
              endif
 
@@ -857,7 +905,14 @@ contains
           PROG(suf(1,ADM_gall_1d),:,:,:) = PROG(suf(ADM_gmin,ADM_gmax+1),:,:,:)
        endif
 
-    enddo !--- large step 
+       endif  ! TRC-ADV Test Bifurcation
+
+    enddo !--- large step
+
+    if ( trim(TIME_INTEG_TYPE) == 'TRCADV' ) then
+       call updating( PROG0(:,:,:,:), PROG0_pl(:,:,:,:), & !--- [IN]
+                      PROG (:,:,:,:), PROG_pl (:,:,:,:)  ) !--- [INOUT]
+    endif
 
     call prgvar_set( PROG(:,:,:,I_RHOG),   PROG_pl(:,:,:,I_RHOG),   & !--- [IN]
                      PROG(:,:,:,I_RHOGVX), PROG_pl(:,:,:,I_RHOGVX), & !--- [IN]
@@ -867,6 +922,8 @@ contains
                      PROG(:,:,:,I_RHOGE),  PROG_pl(:,:,:,I_RHOGE),  & !--- [IN]
                      PROGq(:,:,:,:),       PROGq_pl(:,:,:,:),       & !--- [IN]
                      0                                              ) !--- [IN]
+
+    call DEBUG_rapend  ('++Dynamics')
 
 #ifdef PAPI_OPS
     ! <-- [add] PAPI R.Yoshida 20121022

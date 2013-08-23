@@ -287,7 +287,6 @@ contains
     character(len=*), intent(in) :: rapname
 
     integer :: id
-    character(len=ADM_NSYS) :: trapname
     !---------------------------------------------------------------------------
 
     if ( DEBUG_rapnmax >= 1 ) then
@@ -296,11 +295,13 @@ contains
        enddo
     endif
 
-    trapname = trim(rapname)
-
     DEBUG_rapnmax     = DEBUG_rapnmax + 1
     id                = DEBUG_rapnmax
-    DEBUG_rapname(id) = trapname
+    DEBUG_rapname(id) = trim(rapname)
+    DEBUG_raptstr(id) = 0.D0
+    DEBUG_rapttot(id) = 0.D0
+    DEBUG_rapnstr(id) = 0
+    DEBUG_rapnend(id) = 0
 
   end function DEBUG_rapid
 
@@ -317,8 +318,7 @@ contains
 
     id = DEBUG_rapid( rapname )
 
-    time = MPI_WTIME()
-!    call cpu_time(time)
+    time = real(MPI_WTIME(), kind=8)
 
     DEBUG_raptstr(id) = time
     DEBUG_rapnstr(id) = DEBUG_rapnstr(id) + 1
@@ -343,8 +343,7 @@ call START_COLLECTION( rapname )
 
     id = DEBUG_rapid( rapname )
 
-    time = MPI_WTIME()
-!    call cpu_time(time)
+    time = real(MPI_WTIME(), kind=8)
 
     DEBUG_rapttot(id) = DEBUG_rapttot(id) + ( time-DEBUG_raptstr(id) )
     DEBUG_rapnend(id) = DEBUG_rapnend(id) + 1
@@ -358,18 +357,21 @@ call STOP_COLLECTION( rapname )
 
   !-----------------------------------------------------------------------------
   subroutine DEBUG_rapreport
-    use mod_comm, only: &
-       COMM_Stat_sum, &
-       COMM_Stat_avg, &
-       COMM_Stat_max, &
-       COMM_Stat_min
+    use mod_adm, only: &
+       ADM_COMM_RUN_WORLD, &
+       ADM_prc_all,        &
+       ADM_prc_me
     implicit none
+
+    real(8) :: sendbuf(1)
+    real(8) :: recvbuf(ADM_prc_all)
 
     real(8) :: globalavg, globalmax, globalmin
 #ifdef PAPI_OPS
     real(8) :: globalsum, total_flops
 #endif
 
+    integer :: ierr
     integer :: id
     !---------------------------------------------------------------------------
 
@@ -390,16 +392,27 @@ call STOP_COLLECTION( rapname )
 !       enddo
 
        do id = 1, DEBUG_rapnmax
-          call COMM_Stat_avg( DEBUG_rapttot(id), globalavg )
-          call COMM_Stat_max( DEBUG_rapttot(id), globalmax )
-          call COMM_Stat_min( DEBUG_rapttot(id), globalmin )
+          sendbuf(1) = DEBUG_rapttot(id)
+          call MPI_Allgather( sendbuf,              &
+                              1,                    &
+                              MPI_DOUBLE_PRECISION, &
+                              recvbuf,              &
+                              1,                    &
+                              MPI_DOUBLE_PRECISION, &
+                              ADM_COMM_RUN_WORLD,   &
+                              ierr                  )
+
+          globalavg = sum( recvbuf(:) ) / real(ADM_prc_all,kind=8)
+          globalmax = maxval( recvbuf(:) )
+          globalmin = minval( recvbuf(:) )
 
           write(ADM_LOG_FID,'(1x,A,I3.3,A,A,A,F10.3,A,F10.3,A,F10.3,A,I7)') &
-                     '*** ID=',id,' : ',DEBUG_rapname(id), &
-                     ' T(avg)=',globalavg,  &
-                     ', T(max)=',globalmax, &
-                     ', T(min)=',globalmin, &
-                     ' N=',DEBUG_rapnstr(id)
+                            '*** ID=',   id,                &
+                            ' : ',       DEBUG_rapname(id), &
+                            '  T(avg)=', globalavg,         &
+                            ', T(max)=', globalmax,         &
+                            ', T(min)=', globalmin,         &
+                            ', N=',      DEBUG_rapnstr(id)
        enddo
     else
        write(ADM_LOG_FID,*)
@@ -420,23 +433,51 @@ call STOP_COLLECTION( rapname )
     write(ADM_LOG_FID,*) '--- FLOPS by PAPI     [MFLOPS] (this PE):', papi_mflops
     write(ADM_LOG_FID,*) '--- FLOP / Time       [MFLOPS] (this PE):', papi_flpops / papi_proc_time_o / 1024.D0**2 !GIGA
     write(ADM_LOG_FID,*)
+
+    sendbuf(1) = real(papi_proc_time_o,kind=8)
+    call MPI_Allgather( sendbuf,              &
+                        1,                    &
+                        MPI_DOUBLE_PRECISION, &
+                        recvbuf,              &
+                        1,                    &
+                        MPI_DOUBLE_PRECISION, &
+                        ADM_COMM_RUN_WORLD,   &
+                        ierr                  )
+
+    globalavg = sum( recvbuf(:) ) / real(ADM_prc_all,kind=8)
+    globalmax = maxval( recvbuf(:) )
+    globalmin = minval( recvbuf(:) )
+
     call COMM_Stat_avg( real(papi_proc_time_o,kind=8), globalavg )
     call COMM_Stat_max( real(papi_proc_time_o,kind=8), globalmax )
     call COMM_Stat_min( real(papi_proc_time_o,kind=8), globalmin )
+
     write(ADM_LOG_FID,'(1x,A,F10.3,A,F10.3,A,F10.3)') &
-                      '--- Processor Time        [sec] (avg)=',globalavg, &
-                                                    ', (max)=',globalmax, &
-                                                    ', (min)=',globalmin
-    call COMM_Stat_sum( real(papi_flpops,kind=8), globalsum )
+                      '--- Processor Time        [sec] (avg)=', globalavg, &
+                                                    ', (max)=', globalmax, &
+                                                    ', (min)=', globalmin
+
+    sendbuf(1) = real(papi_flpops,kind=8)
+    call MPI_Allgather( sendbuf,              &
+                        1,                    &
+                        MPI_DOUBLE_PRECISION, &
+                        recvbuf,              &
+                        1,                    &
+                        MPI_DOUBLE_PRECISION, &
+                        ADM_COMM_RUN_WORLD,   &
+                        ierr                  )
+
+    globalsum = sum( recvbuf(:) )
+    globalavg = globalsum / real(ADM_prc_all,kind=8)
+    globalmax = maxval( recvbuf(:) )
+    globalmin = minval( recvbuf(:) )
+
     total_flops = globalsum / globalmax / 1024.D0**3
 
-    call COMM_Stat_avg( real(papi_flpops,kind=8), globalavg )
-    call COMM_Stat_max( real(papi_flpops,kind=8), globalmax )
-    call COMM_Stat_min( real(papi_flpops,kind=8), globalmin )
     write(ADM_LOG_FID,'(1x,A,F10.3,A,F10.3,A,F10.3)') &
-                      '--- Floating Operations [GFLOP] (avg)=',globalavg / 1024.D0**3, &
-                                                    ', (max)=',globalmax / 1024.D0**3, &
-                                                    ', (min)=',globalmin / 1024.D0**3
+                      '--- Floating Operations [GFLOP] (avg)=', globalavg / 1024.D0**3, &
+                                                    ', (max)=', globalmax / 1024.D0**3, &
+                                                    ', (min)=', globalmin / 1024.D0**3
     write(ADM_LOG_FID,'(1x,A,F10.3)') &
                       '--- Total Flops [GFLOPS] (all PE):',total_flops
 

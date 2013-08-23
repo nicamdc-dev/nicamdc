@@ -1172,109 +1172,82 @@ contains
     use mod_adm, only :  &
        ADM_lall,         &
        ADM_gall,         &
-       ADM_GALL_PL,      &
-       ADM_LALL_PL,      &
+       ADM_gall_pl,      &
+       ADM_lall_pl,      &
        ADM_KNONE,        &
        ADM_prc_me,       &
        ADM_prc_pl,       &
        ADM_LOG_FID
+    use mod_cnst, only: &
+       CNST_PI,      &
+       CNST_ERADIUS, &
+       CNST_EOHM,    &
+       CNST_EGRAV,   &
+       CNST_RAIR
     implicit none
 
-    real(8), parameter :: rearth  = 6.371229d+6   ! [m] mean radis of the earth
-    real(8), parameter :: rotatn  = 7.29212d-5    ! [s^-1] rotation of the earth
-    real(8), parameter :: gravity = 9.80616d0     ! gravity accelaration [ms^-2]
-    real(8), parameter :: u00 = 35.0d0
-    real(8), parameter :: eps = 1.0d-14
-    logical, parameter :: deep_atm = .false.      ! deep atmosphere setting
+    real(8), parameter :: u00 = 35.D0
 
-    real(8) :: cs32ev, pi, piby2, f1, f2, min_surf
-    real(8) :: lat, p_lat, proj
-    real(8) :: rsurf  (ADM_gall,ADM_lall)        ! surface height in ICO-grid
-    real(8) :: rsurf_p(ADM_GALL_PL,ADM_LALL_PL)   ! surface height in ICO-grid for pole region
+    real(8) :: cs32ev, f1, f2
+    real(8) :: lat, lon
+    real(8) :: rsurf  (ADM_gall   ,ADM_lall   ) ! surface height in ICO-grid
+    real(8) :: rsurf_p(ADM_gall_pl,ADM_lall_pl) ! surface height in ICO-grid for pole region
 
-    integer :: n, l
+    integer :: n, l, k0
     !---------------------------------------------------------------------------
 
-    pi    = 2.D0 * asin(1.D0)
-    piby2 = pi / 2.0d0
-    cs32ev = ( COS((1.0d0 - 0.252d0)*piby2) )**1.5d0
-    !
+    k0 = ADM_KNONE
+
+    cs32ev = ( cos( (1.D0-0.252D0) * CNST_PI * 0.5D0 ) )**1.5D0
+
     ! for globe
-    do l=1, ADM_lall
-    DO n=1, ADM_gall
-       if ( deep_atm ) then
-          rsurf(n,l) = rearth
-       else
-          rsurf(n,l) = 0.0d0
-       endif
-       !
-       proj=sqrt (GRD_x(n,ADM_KNONE,l,GRD_XDIR)*GRD_x(n,ADM_KNONE,l,GRD_XDIR) &
-                  + GRD_x(n,ADM_KNONE,l,GRD_YDIR)*GRD_x(n,ADM_KNONE,l,GRD_YDIR))
-       if (proj<eps) then
-          lat=sign (0.5d0*pi,GRD_x(n,ADM_KNONE,l,GRD_ZDIR)) !# pole points
-       else
-          lat=atan (GRD_x(n,ADM_KNONE,l,GRD_ZDIR)/proj)
-       end if
-       !
-       f1 = 10.0d0/63.0d0 - 2.0d0*( sin(lat)**6.0d0)*( cos(lat)**2.0d0 + 1.0d0/3.0d0 )
-       f2 = 1.6d0*( cos(lat)**3.0d0)*(sin(lat)**2.0d0 + 2.0d0/3.0d0 ) - 0.25d0*pi
-       rsurf(n,l) = rsurf(n,l) + u00*cs32ev*( f1*u00*cs32ev + f2*rearth*rotatn )/gravity
-    ENDDO
+    do l = 1, ADM_lall
+    do n = 1, ADM_gall
+       call MISC_get_latlon( lat, lon,               &
+                             GRD_x(n,k0,l,GRD_XDIR), &
+                             GRD_x(n,k0,l,GRD_YDIR), &
+                             GRD_x(n,k0,l,GRD_ZDIR)  )
+
+       f1 = 10.D0/63.D0 - 2.D0 * sin(lat)**6 * ( cos(lat)**2 + 1.D0/3.D0 )
+       f2 = 1.6D0 * cos(lat)**3 * ( sin(lat)**2 + 2.D0/3.D0 ) - 0.25D0 * CNST_PI
+
+       rsurf(n,l) = u00 * cs32ev * ( f1*u00*cs32ev + f2*CNST_ERADIUS*CNST_EOHM ) / CNST_EGRAV
     enddo
-    !
-    if ( deep_atm ) then
-       write (ADM_LOG_FID, '(A)') "|-- Deep atmosphere setting [jbw_init topo]"
-       min_surf = 0.0d0
-    else
-       min_surf = minval(rsurf)
-    endif
+    enddo
+
     do l=1, ADM_lall
     do n=1, ADM_gall
-       GRD_zs(n,ADM_KNONE,l,GRD_ZSFC) = rsurf(n,l) - min_surf
+       GRD_zs(n,k0,l,GRD_ZSFC) = rsurf(n,l)
     enddo
     enddo
 
     ! for pole region
-    if ( ADM_prc_me==ADM_prc_pl ) then !---------------------------------
-       do l=1, ADM_LALL_PL
-       do n=1, ADM_GALL_PL
-          if ( deep_atm ) then
-             rsurf_p(n,l) = rearth
-          else
-             rsurf_p(n,l) = 0.0d0
-          endif
-          !
-          proj=sqrt (GRD_x_pl(n,ADM_KNONE,l,GRD_XDIR)*GRD_x_pl(n,ADM_KNONE,l,GRD_XDIR) &
-                     + GRD_x_pl(n,ADM_KNONE,l,GRD_YDIR)*GRD_x_pl(n,ADM_KNONE,l,GRD_YDIR))
-          if (proj<eps) then
-             p_lat=sign (0.5d0*pi,GRD_x_pl(n,ADM_KNONE,l,GRD_ZDIR)) !# pole points
-          else
-             p_lat=atan (GRD_x_pl(n,ADM_KNONE,l,GRD_ZDIR)/proj)
-          end if
-          !
-          f1 = 10.0d0/63.0d0 - 2.0d0*( sin(p_lat)**6)*( cos(p_lat)**2 + 1.0d0/3.0d0 )
-          f2 = 1.6d0*( cos(p_lat)**3)*(sin(p_lat)**2 + 2.0d0/3.0d0 ) - 0.25d0*pi
-          rsurf_p(n,l) = rsurf_p(n,l) + u00*cs32ev*( f1*u00*cs32ev + f2*rearth*rotatn )/gravity
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       do l = 1, ADM_lall_pl
+       do n = 1, ADM_gall_pl
+          call MISC_get_latlon( lat, lon,                  &
+                                GRD_x_pl(n,k0,l,GRD_XDIR), &
+                                GRD_x_pl(n,k0,l,GRD_YDIR), &
+                                GRD_x_pl(n,k0,l,GRD_ZDIR)  )
+
+          f1 = 10.D0/63.D0 - 2.D0 * sin(lat)**6 * ( cos(lat)**2 + 1.D0/3.D0 )
+          f2 = 1.6D0 * cos(lat)**3 * ( sin(lat)**2 + 2.D0/3.D0 ) - 0.25D0 * CNST_PI
+
+          rsurf_p(n,l) = u00 * cs32ev * ( f1*u00*cs32ev + f2*CNST_ERADIUS*CNST_EOHM ) / CNST_EGRAV
        enddo
        enddo
-       !
-       if ( deep_atm ) then
-          write (ADM_LOG_FID, '(A)') "|-- Deep atmosphere setting (pole) [jbw_init topo]"
-          min_surf = 0.0d0
-       else
-          min_surf = minval(rsurf)
-       endif
-       do l=1, ADM_LALL_PL
-       do n=1, ADM_GALL_PL
-          GRD_zs_pl(n,ADM_KNONE,l,GRD_ZSFC) = rsurf_p(n,l) - min_surf
+
+       do l=1, ADM_lall_pl
+       do n=1, ADM_gall_pl
+          GRD_zs_pl(n,k0,l,GRD_ZSFC) = rsurf_p(n,l)
        enddo
        enddo
-       !
-    endif  !-------------------------------------------------------------
+    endif
 
     write(ADM_LOG_FID,*) 'Msg : Sub[GRD_input_topograph]/Mod[grid]'
-    write (ADM_LOG_FID, '("   *** Topography for JBW: -- MAX: ",F9.3,2X,"MIN: ",F9.3)') &
+    write(ADM_LOG_FID, '("   *** Topography for JBW: -- MAX: ",F9.3,2X,"MIN: ",F9.3)') &
            maxval(GRD_zs(:,:,:,GRD_ZSFC)), minval(GRD_zs(:,:,:,GRD_ZSFC))
+
     return
   end subroutine GRD_jbw_init_topo
 
@@ -1288,17 +1261,17 @@ contains
     use mod_adm, only :  &
        ADM_lall,         &
        ADM_gall,         &
-       ADM_GALL_PL,      &
-       ADM_LALL_PL,      &
+       ADM_gall_pl,      &
+       ADM_lall_pl,      &
        ADM_KNONE,        &
        ADM_prc_me,       &
        ADM_prc_pl,       &
        ADM_LOG_FID
+    use mod_cnst, only: &
+       CNST_PI
     implicit none
 
     ! <DCMIP-13>
-    real(8),parameter :: df_PI = 3.1415926535897932384626433832795D0
-    real(8),parameter :: LAMBDA_M=df_PI/4.d0
     real(8),parameter :: FAI_M   =0.d0
     real(8),parameter :: H_ZERO  = 250.d0
     real(8),parameter :: QSI  = 4000.d0
@@ -1306,11 +1279,12 @@ contains
     real(8),parameter :: X_reduce  = 500.d0
     real(8),parameter :: HALF_WIDTH = 5000.0d0
 
-    real(8) :: dist_m, aa, bb
+    real(8) :: dist_m, aa, bb, LAMBDA_M
     real(8) :: lat, lon
     integer :: n, l, K0
     !---------------------------------------------------------------------------
 
+    LAMBDA_M=CNST_PI/4.d0
     K0 = ADM_KNONE
 
     ! for globe
@@ -1325,15 +1299,15 @@ contains
                     +cos (FAI_M)*cos (lat)*cos (lon-LAMBDA_M))
 
         aa = exp(- (dist_m)**2.0 / HALF_WIDTH**2.0d0)
-        bb = cos(df_PI*dist_m/QSI)**2.0d0
+        bb = cos(CNST_PI*dist_m/QSI)**2.0d0
         GRD_zs(n,ADM_KNONE,l,GRD_ZSFC) = H_ZERO * aa * bb   ! equation (76) in dcmip reference
     enddo
     enddo
 
     ! for pole region
     if ( ADM_prc_me==ADM_prc_pl ) then
-       do l=1, ADM_LALL_PL
-       do n=1, ADM_GALL_PL
+       do l=1, ADM_lall_pl
+       do n=1, ADM_gall_pl
           call MISC_get_latlon( lat, lon,              &
                                 GRD_x(n,K0,l,GRD_XDIR), &
                                 GRD_x(n,K0,l,GRD_YDIR), &
@@ -1343,7 +1317,7 @@ contains
                        +cos (FAI_M)*cos (lat)*cos (lon-LAMBDA_M))
 
            aa = exp(- (dist_m)**2.0 / HALF_WIDTH**2.0d0)
-           bb = cos(df_PI*dist_m/QSI)**2.0d0
+           bb = cos(CNST_PI*dist_m/QSI)**2.0d0
            GRD_zs_pl(n,ADM_KNONE,l,GRD_ZSFC) = H_ZERO * aa * bb   ! equation (76) in dcmip reference
        enddo
        enddo

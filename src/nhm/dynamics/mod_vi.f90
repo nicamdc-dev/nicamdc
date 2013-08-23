@@ -32,6 +32,9 @@ module mod_vi
   !
   !++ Used modules
   !
+  use mod_debug
+  use mod_adm, only: &
+     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -166,11 +169,10 @@ contains
        numfilter_divdamp,   &
        numfilter_divdamp_2d
     use mod_src, only: &
-       src_flux_convergence,      &
-       src_buoyancy,              &
-       src_gradient,              &
        src_advection_convergence, &
-       src_pres_work_uv,          &
+       src_flux_convergence,      &
+       src_gradient,              &
+       src_buoyancy,              &
        I_SRC_default,             &
        I_SRC_horizontal
     implicit none
@@ -393,13 +395,16 @@ contains
                                     I_SRC_default      ) !--- [IN]
 
     !--- pressure work (horizontal)
-    call src_pres_work_uv( vx,  vx_pl,             & !--- [IN]
-                           vy,  vy_pl,             & !--- [IN]
-                           vz,  vz_pl,             & !--- [IN]
-                           gpx, gpx_pl,            & !--- [IN]
-                           gpy, gpy_pl,            & !--- [IN]
-                           gpz, gpz_pl,            & !--- [IN]
-                           drhoge_pw, drhoge_pw_pl ) !--- [OUT]
+    drhoge_pw(:,:,:) = vx(:,:,:) * gpx(:,:,:) &
+                     + vy(:,:,:) * gpy(:,:,:) &
+                     + vz(:,:,:) * gpz(:,:,:)
+
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       drhoge_pw_pl(:,:,:) = vx_pl(:,:,:) * gpx_pl(:,:,:) &
+                           + vy_pl(:,:,:) * gpy_pl(:,:,:) &
+                           + vz_pl(:,:,:) * gpz_pl(:,:,:)
+    endif
+
 
     !--- Caluculation of (-rhogw * g_tilde) and interpolation to half level
     do l = 1, ADM_lall
@@ -1038,6 +1043,8 @@ contains
     integer :: ij, k, l
     !---------------------------------------------------------------------------
 
+    call DEBUG_rapstart('++++vi_path2')
+
     ! calc rhogkin ( previous )
     call cnvvar_rhokin_ijkl( rhog,     rhog_pl,    & !--- [IN]
                              rhogvx,   rhogvx_pl,  & !--- [IN]
@@ -1262,6 +1269,8 @@ contains
                                 - rhog_split2_pl    (:,:,:) ) * phi_pl(:,:,:)
     endif
 
+    call DEBUG_rapend('++++vi_path2')
+
     return
   end subroutine vi_path2
 
@@ -1313,6 +1322,8 @@ contains
 
     integer :: ij, k, l
     !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('++++vi_rhow_update_matrix')
 
 ! Original concept
 !
@@ -1437,6 +1448,8 @@ contains
        enddo
     endif
 
+    call DEBUG_rapend('++++vi_rhow_update_matrix')
+
     return
   end subroutine vi_rhow_update_matrix
 
@@ -1509,6 +1522,8 @@ contains
 
     integer :: ij, k, l
     !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('++++vi_rhow')
 
     do l = 1, ADM_lall
 
@@ -1638,6 +1653,8 @@ contains
        enddo
 
     endif
+
+    call DEBUG_rapend('++++vi_rhow')
 
     return
   end subroutine vi_rhow

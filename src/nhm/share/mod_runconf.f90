@@ -370,7 +370,6 @@ module mod_runconf
   character(len=ADM_NSYS), public, save :: GWD_TYPE = 'NONE'    ! Y.Niwa add save 080130
 
 
-
   !--- number of aerosol species for radiation : 07/07/23 K.Suzuki for SPRINTARS
   integer, parameter, public :: KAPCL = 7
   !<= K.Suzuki add for SPRINTARS 07/07/23
@@ -412,6 +411,9 @@ module mod_runconf
   integer, public, save :: ISO2_QS = -1
   integer, public, save :: ISO2_QG = -1
   !<= [add] K.Yoshimura 20110414
+
+  !--- limiter switch
+  logical, public, save :: THUBURN_LIM = .true.  ![add] 20130613 R.Yoshida
 
   !-----------------------------------------------------------------------------
   !
@@ -500,7 +502,8 @@ contains
          MP_DIV_NUM,          &  ! 08/04/23 [add] H.Tomita
          TB_DIV_NUM,          &
          SFC_DIV_NUM,         &
-         PRCIP_TRN_ECORRECT
+         PRCIP_TRN_ECORRECT,  &
+         THUBURN_LIM             ! R.Yoshida 13/06/13 [add]
 
     character(len=2) :: is ! [add] H.Yashiro 20110819
 
@@ -991,6 +994,12 @@ contains
     if( mod(TB_DIV_NUM,SFC_DIV_NUM)/=0 ) then
        TB_DIV_NUM = SFC_DIV_NUM
        write(ADM_LOG_FID,*) '### FIX to TB_DIV_NUM =',TB_DIV_NUM
+    endif
+
+    if( THUBURN_LIM ) then  ![add] 20130613 R.Yoshida
+       write(ADM_LOG_FID,*) 'Run with \"Thuburn Limiter\" in MIURA2004 Advection'
+    else
+       write(ADM_LOG_FID,*) '### Without \"Thuburn Limiter\" in MIURA2004 Advection'
     endif
 
     return
