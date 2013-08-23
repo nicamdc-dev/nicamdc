@@ -125,16 +125,20 @@ contains
     implicit none
 
     real(8), intent(out) :: DIAG_var(ADM_gall,ADM_kall,ADM_lall,6+TRC_VMAX)
-    character(len=ADM_NSYS) :: init_type, test_case
-    integer :: ierr
+
+    character(len=ADM_NSYS) :: init_type
+    character(len=ADM_NSYS) :: test_case
 
     namelist / DYCORETESTPARAM / &
-         init_type, test_case
+       init_type, &
+       test_case
+
+    integer :: ierr
+    !---------------------------------------------------------------------------
 
     kai = Rd / Cp
     d2r = pi/180.D0
     r2d = 180.D0/pi
-    !---------------------------------------------------------------------------
 
     !--- read parameters
     write(ADM_LOG_FID,*)
@@ -151,55 +155,67 @@ contains
     write(ADM_LOG_FID,DYCORETESTPARAM)
 
     write(ADM_LOG_FID,*) '*** type: ', trim(init_type)
-    if ( trim(init_type) == "Heldsuarez" ) then
+
+    if (      init_type == "Jablonowski"     &
+         .OR. init_type == "Traceradvection" &
+         .OR. init_type == "Mountainwave"    ) then
+
+       write(ADM_LOG_FID,*) '*** test case: ', trim(test_case)
+
+    endif
+
+    if ( init_type == "Heldsuarez" ) then
+
        call hs_init ( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
-    elseif( trim(init_type) == "Jablonowski" ) then
+
+    elseif( init_type == "Jablonowski" ) then
+
        call jbw_init( ADM_gall, ADM_kall, ADM_lall, test_case, DIAG_var(:,:,:,:) )
-    elseif( trim(init_type) == "Traceradvection" ) then
+
+    elseif( init_type == "Traceradvection" ) then
+
        call tracer_init( ADM_gall, ADM_kall, ADM_lall, test_case, DIAG_var(:,:,:,:) )
-    elseif( trim(init_type) == "Mountainwave" ) then
+
+    elseif( init_type == "Mountainwave" ) then
+
        call mountwave_init( ADM_gall, ADM_kall, ADM_lall, test_case, DIAG_var(:,:,:,:) )
-    elseif( trim(init_type) == "Gravitywave" ) then
+
+    elseif( init_type == "Gravitywave" ) then
+
        call gravwave_init( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
+
     else
        write(ADM_LOG_FID,*) 'xxx Invalid input_io_mode. STOP.'
        call ADM_proc_stop
     endif
 
-    if ( trim(init_type) == "Jablonowski"     .or. &
-         trim(init_type) == "Traceradvection" .or. &
-         trim(init_type) == "Mountainwave"         ) then
-       write(ADM_LOG_FID,*) '*** test case: ', trim(test_case)
-    endif
-
     return
   end subroutine dycore_input
-  !-----------------------------------------------------------------------------
-  !
+
   !-----------------------------------------------------------------------------
   subroutine hs_init( &
-     ijdim,   &
-     kdim,    &
-     lall,    &
-     DIAG_var )
+       ijdim,   &
+       kdim,    &
+       lall,    &
+       DIAG_var )
     use mod_misc, only: &
        MISC_get_latlon
     use mod_adm, only: &
        ADM_KNONE, &
        ADM_kmin,  &
        ADM_kmax
-    use mod_cnst, only :  &
+    use mod_cnst, only: &
        GRAV  => CNST_EGRAV, &
        RAIR  => CNST_RAIR,  &
-       KAPPA => CNST_KAPPA,  &
+       KAPPA => CNST_KAPPA, &
        PRE00 => CNST_PRE00
     use mod_grd, only: &
-       GRD_x,    &
        GRD_XDIR, &
        GRD_YDIR, &
        GRD_ZDIR, &
-       GRD_vz,   &
-       GRD_Z
+       GRD_Z,    &
+       GRD_x,    &
+       GRD_vz
     use mod_runconf, only: &
        TRC_vmax
     implicit none
@@ -229,7 +245,7 @@ contains
           dz(k) = GRD_vz(n,k,l,GRD_Z) - GRD_vz(n,k-1,l,GRD_Z)
        enddo
 
-       call MISC_get_latlon( lat, lon,               &
+       call MISC_get_latlon( lat, lon,                      &
                              GRD_x(n,ADM_KNONE,l,GRD_XDIR), &
                              GRD_x(n,ADM_KNONE,l,GRD_YDIR), &
                              GRD_x(n,ADM_KNONE,l,GRD_ZDIR)  )
@@ -309,16 +325,15 @@ contains
     enddo
 
     return
-  end subroutine hs_init  
-  !-----------------------------------------------------------------------------
-  !
+  end subroutine hs_init
+
   !-----------------------------------------------------------------------------
   subroutine jbw_init( &
-     ijdim,      &
-     kdim,       &
-     lall,       &
-     test_case,  &
-     DIAG_var    )
+       ijdim,      &
+       kdim,       &
+       lall,       &
+       test_case,  &
+       DIAG_var    )
     use mod_misc, only: &
        MISC_get_latlon
     use mod_adm, only: &

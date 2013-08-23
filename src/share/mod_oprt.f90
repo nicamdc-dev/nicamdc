@@ -1850,11 +1850,11 @@ contains
     do n = OPRT_nstart, OPRT_nend
        ij     = n
        ip1j   = n + 1
-       ip1jp1 = n + 1 + ADM_gall_1d
        ijp1   = n     + ADM_gall_1d
+       ip1jp1 = n + 1 + ADM_gall_1d
        im1j   = n - 1
-       im1jm1 = n - 1 - ADM_gall_1d
        ijm1   = n     - ADM_gall_1d
+       im1jm1 = n - 1 - ADM_gall_1d
 
        dscl(n,k,l) = ( clap(0,ij,l) * scl(ij    ,k,l) &
                      + clap(1,ij,l) * scl(ip1j  ,k,l) &
@@ -2004,11 +2004,12 @@ contains
     !
     integer :: suf,i,j
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+    !---------------------------------------------------------------------------
 
     call DEBUG_rapstart('++++OPRT_diffusion')
 
-    if(present(mfact)) then
-       fact=mfact
+    if ( present(mfact) ) then
+       fact = mfact
     else
        fact=1.0D0
     end if
@@ -2099,7 +2100,7 @@ contains
                      =u1*GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_TNZ)&
                      +u2*GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_TN2Z)&
                      +u3*GMTR_A_var_pl(n+1,ADM_KNONE,l,GMTR_A_TNZ)
-             end do
+             enddo
              smean = (scl_pl(ADM_gslf_pl,k,l)+scl_pl(ADM_GMAX_PL,k,l)+scl_pl(ADM_gmin_pl,k,l))/3.0D0
              u1=+GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_RAREA)&
                   *(0.5D0*(scl_pl(ADM_gslf_pl,k,l)+scl_pl(ADM_GMAX_PL,k,l))-smean)
@@ -2119,8 +2120,8 @@ contains
                   =u1*GMTR_A_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_A_TNZ)&
                   +u2*GMTR_A_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_A_TN2Z)&
                   +u3*GMTR_A_var_pl(ADM_gmin_pl,ADM_KNONE,l,GMTR_A_TNZ)
-          end do
-       end do
+          enddo
+       enddo
     end if
     !
     do l=1,ADM_lall
@@ -2232,7 +2233,7 @@ contains
                      *GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_HNZ) )*0.5D0
                 flux_pl(n) = flux_pl(n)&
                      * ( kh_pl(ADM_gslf_pl,k,l)+kh_pl(n,k,l) )*0.5D0
-             end do
+             enddo
              !
              dscl_pl(ADM_gslf_pl,k,l)=(&
                   +flux_pl(ADM_gmin_pl  )&
@@ -2242,8 +2243,8 @@ contains
                   +flux_pl(ADM_gmin_pl+4)&
                   ) * GMTR_P_var_pl(ADM_gslf_pl,ADM_KNONE,l,GMTR_P_RAREA)&
                   * fact
-          end do
-       end do
+          enddo
+       enddo
     end if
 
 
@@ -2490,7 +2491,7 @@ contains
                   *vz(n+1+ADM_gall_1d,k,l)                     &
                   +GMTR_T_var(n,ADM_KNONE,l,ADM_TJ,GMTR_T_W3)&
                   *vz(n+ADM_gall_1d,k,l)
-          end do
+          enddo
           if(ADM_rgn_vnum(ADM_W,rgnid)==3) then
              vxt(suf(ADM_gmin-1,ADM_gmin-1),k,l,ADM_TI)     &
                   =vxt(suf(ADM_gmin,ADM_gmin-1),k,l,ADM_TJ)
@@ -2499,8 +2500,8 @@ contains
              vzt(suf(ADM_gmin-1,ADM_gmin-1),k,l,ADM_TI)     &
                   =vzt(suf(ADM_gmin,ADM_gmin-1),k,l,ADM_TJ)
           end if
-       end do
-    end do
+       enddo
+    enddo
     !
     if(ADM_prc_me==ADM_prc_pl) then
        !
@@ -2528,7 +2529,7 @@ contains
                      *vz_pl(n,k,l)                        &
                      +GMTR_T_var_pl(n,ADM_KNONE,l,GMTR_T_W3)&
                      *vz_pl(n+1,k,l)
-             end do
+             enddo
              vxt_pl(ADM_GMAX_PL,k,l)&
                   =GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_W1)&
                   *vx_pl(ADM_gslf_pl,k,l)                        &
@@ -2550,8 +2551,8 @@ contains
                   *vz_pl(ADM_GMAX_PL,k,l)                        &
                   +GMTR_T_var_pl(ADM_GMAX_PL,ADM_KNONE,l,GMTR_T_W3)&
                   *vz_pl(ADM_gmin_pl,k,l)
-          end do
-       end do
+          enddo
+       enddo
     end if
     !
     do l=1,ADM_lall
@@ -2569,7 +2570,7 @@ contains
                   *GMTR_A_var(n,ADM_KNONE,l,ADM_AI,GMTR_A_HTY)&
                   +(vzt(n-ADM_gall_1d,k,l,ADM_TJ)+vzt(n,k,l,ADM_TI))&
                   *GMTR_A_var(n,ADM_KNONE,l,ADM_AI,GMTR_A_HTZ))*0.5D0
-          end do
+          enddo
           nstart = suf(ADM_gmin-1,ADM_gmin-1)
           nend   = suf(ADM_gmax  ,ADM_gmax  )
           do n = nstart,nend
@@ -2580,7 +2581,7 @@ contains
                   *GMTR_A_var(n,ADM_KNONE,l,ADM_AIJ,GMTR_A_HTY)&
                   +(vzt(n,k,l,ADM_TI)+vzt(n,k,l,ADM_TJ))&
                   *GMTR_A_var(n,ADM_KNONE,l,ADM_AIJ,GMTR_A_HTZ))*0.5D0
-          end do
+          enddo
           nstart = suf(ADM_gmin  ,ADM_gmin-1)
           nend   = suf(ADM_gmax  ,ADM_gmax  )
           do n = nstart,nend
@@ -2591,7 +2592,7 @@ contains
                   *GMTR_A_var(n,ADM_KNONE,l,ADM_AJ,GMTR_A_HTY)&
                   +(vzt(n,k,l,ADM_TJ)+vzt(n-1,k,l,ADM_TI))&
                   *GMTR_A_var(n,ADM_KNONE,l,ADM_AJ,GMTR_A_HTZ))*0.5D0
-          end do
+          enddo
           !
           nstart = suf(ADM_gmin  ,ADM_gmin  )
           nend   = suf(ADM_gmax  ,ADM_gmax  )
@@ -2605,7 +2606,7 @@ contains
                   -flux(n-ADM_gall_1d,ADM_AJ)&
                   ) * GMTR_P_var(n,ADM_KNONE,l,GMTR_P_RAREA)&
                   * fact
-          end do
+          enddo
           !
           if(ADM_rgn_vnum(ADM_W,rgnid)==3) then
              scl(suf(ADM_gmin,ADM_gmin),k,l)=-(&
@@ -2617,8 +2618,8 @@ contains
                   ) * GMTR_P_var(suf(ADM_gmin,ADM_gmin),ADM_KNONE,l,GMTR_P_RAREA)&
                   * fact
           end if
-       end do
-    end do
+       enddo
+    enddo
     !
     if(ADM_prc_me==ADM_prc_pl) then
        do k=ADM_kmin,ADM_kmax
@@ -2639,7 +2640,7 @@ contains
                      *GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_HTY)&
                      +(vzt_pl(n-1,k,l)+vzt_pl(n,k,l))&
                      *GMTR_A_var_pl(n,ADM_KNONE,l,GMTR_A_HTZ) )*0.5D0
-             end do
+             enddo
              !
              scl_pl(ADM_gslf_pl,k,l)=-(&
                   +flux_pl(ADM_gmin_pl  )&
@@ -2649,8 +2650,8 @@ contains
                   +flux_pl(ADM_gmin_pl+4)&
                   ) * GMTR_P_var_pl(ADM_gslf_pl,ADM_KNONE,l,GMTR_P_RAREA)&
                   * fact
-          end do
-       end do
+          enddo
+       enddo
     end if
 
     call DEBUG_rapend('++++OPRT_vorticity')

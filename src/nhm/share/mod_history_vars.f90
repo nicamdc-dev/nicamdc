@@ -655,17 +655,17 @@ contains
 
     if (out_850hPa) then   ! [add] 20130705 R.Yoshida
        do l = 1, ADM_lall
-          call sv_plev_uvwt( ADM_gall,              & ! [IN]
-                             pre    (:,:,l),        & ! [IN]
-                             u      (:,:,l),        & ! [IN]
-                             v      (:,:,l),        & ! [IN]
-                             w      (:,:,l),        & ! [IN]
-                             tem    (:,:,l),        & ! [IN]
-                             85000.d0,              & ! [IN]
-                             u_850  (:,K0,l),       & ! [OUT]
-                             v_850  (:,K0,l),       & ! [OUT]
-                             w_850  (:,K0,l),       & ! [OUT]
-                             t_850  (:,K0,l)        ) ! [OUT]
+          call sv_plev_uvwt( ADM_gall,        & ! [IN]
+                             pre    (:,:,l),  & ! [IN]
+                             u      (:,:,l),  & ! [IN]
+                             v      (:,:,l),  & ! [IN]
+                             w      (:,:,l),  & ! [IN]
+                             tem    (:,:,l),  & ! [IN]
+                             85000.d0,        & ! [IN]
+                             u_850  (:,K0,l), & ! [OUT]
+                             v_850  (:,K0,l), & ! [OUT]
+                             w_850  (:,K0,l), & ! [OUT]
+                             t_850  (:,K0,l)  ) ! [OUT]
 
           call history_in( 'sl_u850', u_850(:,:,l) )
           call history_in( 'sl_v850', v_850(:,:,l) )
@@ -819,63 +819,69 @@ contains
     return
   end subroutine sv_pre_sfc
 
-  subroutine sv_plev_uvwt( &   ! [add] 20130705 R.Yoshida
-       ijdim,   &
-       pre,     &
-       u_z,     &
-       v_z,     &
-       w_z,     &
-       t_z,     &
-       plev,    &
-       u_p,     &
-       v_p,     &
-       w_p,     &
-       t_p      )
-    use mod_adm, only :  &
-       kdim => ADM_kall,    &
+  !-----------------------------------------------------------------------------
+  ! [add] 20130705 R.Yoshida
+  subroutine sv_plev_uvwt( &
+       ijdim, &
+       pre,   &
+       u_z,   &
+       v_z,   &
+       w_z,   &
+       t_z,   &
+       plev,  &
+       u_p,   &
+       v_p,   &
+       w_p,   &
+       t_p    )
+    use mod_adm, only: &
+       kdim => ADM_kall, &
        kmin => ADM_kmin
     implicit none
 
     integer, intent(in)  :: ijdim
-    real(8), intent(in)  :: pre  (ijdim,kdim)
-    real(8), intent(in)  :: u_z  (ijdim,kdim), v_z(ijdim,kdim)
-    real(8), intent(in)  :: w_z  (ijdim,kdim), t_z(ijdim,kdim)
+    real(8), intent(in)  :: pre(ijdim,kdim)
+    real(8), intent(in)  :: u_z(ijdim,kdim)
+    real(8), intent(in)  :: v_z(ijdim,kdim)
+    real(8), intent(in)  :: w_z(ijdim,kdim)
+    real(8), intent(in)  :: t_z(ijdim,kdim)
     real(8), intent(in)  :: plev
-    real(8), intent(out) :: u_p  (ijdim),      v_p(ijdim)
-    real(8), intent(out) :: w_p  (ijdim),      t_p(ijdim)
+    real(8), intent(out) :: u_p(ijdim)
+    real(8), intent(out) :: v_p(ijdim)
+    real(8), intent(out) :: w_p(ijdim)
+    real(8), intent(out) :: t_p(ijdim)
 
-    integer :: ij, kk
-    integer, allocatable :: kl(:), ku(:)
+    integer :: kl(ijdim)
+    integer :: ku(ijdim)
+
     real(8) :: wght_l, wght_u
+
+    integer :: ij, k
     !---------------------------------------------------------------------------
 
-    allocate( kl(ijdim) )
-    allocate( ku(ijdim) )
-
     ! search z-level
-    do ij=1, ijdim
-       do kk=kmin,kdim
-          if (pre(ij,kk)<plev) exit
-       end do
-       if (kk==kdim) stop "internal error! [sv_uvwp_850/mod_history_vars]"
-       ku(ij) = kk
-       kl(ij) = kk-1
-    end do
+    do ij = 1, ijdim
+       do k = kmin, kdim
+          if( pre(ij,k) < plev ) exit
+       enddo
+       if( k >= kdim ) stop "internal error! [sv_uvwp_850/mod_history_vars]"
+
+       ku(ij) = k
+       kl(ij) = k - 1
+    enddo
 
     ! interpolate
-    do ij=1, ijdim
-       wght_l =  ( log(plev)           - log(pre(ij,ku(ij))) ) &
-               / ( log(pre(ij,kl(ij))) - log(pre(ij,ku(ij))) )
-       wght_u =  ( log(pre(ij,kl(ij))) - log(plev) ) &
-               / ( log(pre(ij,kl(ij))) - log(pre(ij,ku(ij))) )
+    do ij = 1, ijdim
+       wght_l = ( log(plev)           - log(pre(ij,ku(ij))) ) &
+              / ( log(pre(ij,kl(ij))) - log(pre(ij,ku(ij))) )
 
-       u_p(ij) = wght_l*u_z(ij,kl(ij)) + wght_u*u_z(ij,ku(ij))
-       v_p(ij) = wght_l*v_z(ij,kl(ij)) + wght_u*v_z(ij,ku(ij))
-       w_p(ij) = wght_l*w_z(ij,kl(ij)) + wght_u*w_z(ij,ku(ij))
-       t_p(ij) = wght_l*t_z(ij,kl(ij)) + wght_u*t_z(ij,ku(ij))
-    end do
+       wght_u = ( log(pre(ij,kl(ij))) - log(plev)           ) &
+              / ( log(pre(ij,kl(ij))) - log(pre(ij,ku(ij))) )
 
-    deallocate( kl, ku )
+       u_p(ij) = wght_l * u_z(ij,kl(ij)) + wght_u * u_z(ij,ku(ij))
+       v_p(ij) = wght_l * v_z(ij,kl(ij)) + wght_u * v_z(ij,ku(ij))
+       w_p(ij) = wght_l * w_z(ij,kl(ij)) + wght_u * w_z(ij,ku(ij))
+       t_p(ij) = wght_l * t_z(ij,kl(ij)) + wght_u * t_z(ij,ku(ij))
+    enddo
 
     return
   end subroutine sv_plev_uvwt

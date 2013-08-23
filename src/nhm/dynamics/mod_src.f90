@@ -249,6 +249,7 @@ contains
        enddo
        enddo
 
+       !---< horizontalize & separate vertical velocity >
        do k = ADM_kmin, ADM_kmax
        do g = 1, ADM_gall
           prd = dvvx(g,k,l) * GRD_e(g,l,GRD_XDIR) &
@@ -283,6 +284,7 @@ contains
  
     if ( ADM_prc_me == ADM_prc_pl ) then
        do l = 1, ADM_lall_pl
+          !---< coriolis force >
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
              dvvx_pl(g,k,l) = dvvx_pl(g,k,l) - 2.D0 * rhog_pl(g,k,l) * ( -CNST_EOHM * vvy_pl(g,k,l) )
@@ -290,6 +292,7 @@ contains
           enddo
           enddo
 
+          !---< horizontalize & separate vertical velocity >
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
              prd = dvvx_pl(g,k,l) * GRD_e_pl(g,l,GRD_XDIR)  &
@@ -312,10 +315,10 @@ contains
           enddo
 
           grhogvx_pl(:,ADM_kmin-1,l) = 0.D0
-          grhogvy_pl(:,ADM_kmin-1,l) = 0.D0
-          grhogvz_pl(:,ADM_kmin-1,l) = 0.D0
           grhogvx_pl(:,ADM_kmax+1,l) = 0.D0
+          grhogvy_pl(:,ADM_kmin-1,l) = 0.D0
           grhogvy_pl(:,ADM_kmax+1,l) = 0.D0
+          grhogvz_pl(:,ADM_kmin-1,l) = 0.D0
           grhogvz_pl(:,ADM_kmax+1,l) = 0.D0
           grhogw_pl (:,ADM_kmin-1,l) = 0.D0
           grhogw_pl (:,ADM_kmin  ,l) = 0.D0
