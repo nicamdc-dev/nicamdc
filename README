@@ -1,32 +1,38 @@
 README nicam-dc
-ver. 0.9
-Last update: 2013-07-15
+ver. 1.0
+Last update: 2013-09-03
 ---------------------------------------------------
 
 NICAM-DC
 =========
-
 The dynamical part of Non-hydrostatic ICosahedral Atmospheric Model.
+
+
 
 Contributing
 -----------
-This code was developped by NICAM development team 
+This code was developped by NICAM development team
 ( JAMSTEC/RIGC , The University of Tokyo/AORI, RIKEN/AICS ).
+
+
 
 License
 -----------
 - License: The BSD 2-Clause License
 
+
+
 Contact for inquiry about this code.
 -----------
 RIKEN Advanced Institute for Computational Science
 Computational Climate System Research Team 
-email: <aics-climate@riken.jp>
+email: <nicamdc@riken.jp>
 
 
 
-
-0. Setting
+Usage
+-----------
+0. Setting(ex. run on the 64bit-Linux using gnu fortran & OpenMPI)
 
 export NICAM_SYS=Linux64-gnu-ompi
 cd src/
@@ -35,7 +41,7 @@ cd src/
 
 make
 
-2. Run testcase(ex. jablonowski)
+2. Run testcase(ex. Jablonowski and Williamson test case)
 
 cd test/case/jablonowski
 make
