@@ -174,19 +174,19 @@ contains
     !--- reading the parameters
     rewind(ADM_CTL_FID)
     read(ADM_CTL_FID,nml=BSSTATEPARAM,iostat=ierr)
-    if(ierr<0) then
+    if ( ierr<0) then
        write(ADM_LOG_FID,*) &
             'Msg : Sub[bsstate_setup_setup]/Mod[bsstate]'
        write(ADM_LOG_FID,*) &
             ' *** Not found namelist.'
        write(ADM_LOG_FID,*) &
             ' *** Use default values.'
-    else if(ierr>0) then
+    else if ( ierr>0) then
        write(*,*) &
             'Msg : Sub[bsstate_setup_setup]/Mod[bsstate]'
        write(*,*) &
             ' *** WARNING : Not appropriate names in namelist!! CHECK!!'
-    end if
+    endif
     !
     !--- allocation of reference variables
     allocate(phi_ref(ADM_kall))
@@ -230,7 +230,7 @@ contains
     qv_bs    = 0.0D0
     qv_bs_pl = 0.0D0
     !
-    if(ref_type=='INPUT') then
+    if ( ref_type=='INPUT') then
        !
        !---- input reference state
        call bsstate_input_ref(ref_fname)
@@ -244,69 +244,49 @@ contains
        !
        !--- calculation of basic state
        call set_basicstate
-    end if
+    endif
     !
     !--- output the information
     call output_info
-    !
+
+    return
   end subroutine bsstate_setup
+
   !-----------------------------------------------------------------------------
   subroutine output_info
-    !
-    use mod_adm, only :  &
-         ADM_LOG_FID,    &
-         ADM_kall,       &
-         ADM_kmin,       &
-         ADM_kmax
-    !
+    use mod_adm, only: &
+       ADM_LOG_FID, &
+       ADM_kall,    &
+       ADM_kmin,    &
+       ADM_kmax
     implicit none
+
     integer :: k
-    write(ADM_LOG_FID,*) &
-         'Msg : Sub[nhm_bs_output_info]/Mod[basicstate]'
-    write(ADM_LOG_FID,*) &
-         ' --- Basic state type                : ',&
-            trim(ref_type)
-    write(ADM_LOG_FID,*) &
-         ' --- Reference pressure              : ',&
-         pre_g
-    write(ADM_LOG_FID,*) &
-         ' --- Reference temperature           : ',&
-         tem_g
-    write(ADM_LOG_FID,*) &
-         ' --- Reference density               : ',&
-         rho_g
-    write(ADM_LOG_FID,*) &
-         ' --- Vaisala frequency               : ',&
-         BV_freq
-    write(ADM_LOG_FID,*) &
-         ' --- Lapse rate of temperature       : ',&
-         TGAMMA
-    write(ADM_LOG_FID,*) &
-         ' --- Effective height                : ',&
-         ZT
-    write(ADM_LOG_FID,*) &
-         '-------------------------------------------------------'
-    write(ADM_LOG_FID,*) &
-         'Level   Density  Pressure     Temp. Pot. Tem.        qv'
+    !---------------------------------------------------------------------------
+
+    write(ADM_LOG_FID,*) 'Msg : Sub[nhm_bs_output_info]/Mod[basicstate]'
+    write(ADM_LOG_FID,*) ' --- Basic state type         : ', trim(ref_type)
+    write(ADM_LOG_FID,*) ' --- Reference pressure       : ', pre_g
+    write(ADM_LOG_FID,*) ' --- Reference temperature    : ', tem_g
+    write(ADM_LOG_FID,*) ' --- Reference density        : ', rho_g
+    write(ADM_LOG_FID,*) ' --- Vaisala frequency        : ', BV_freq
+    write(ADM_LOG_FID,*) ' --- Lapse rate of temperature: ', TGAMMA
+    write(ADM_LOG_FID,*) ' --- Effective height         : ', ZT
+
+    write(ADM_LOG_FID,*) '-------------------------------------------------------'
+    write(ADM_LOG_FID,*) 'Level   Density  Pressure     Temp. Pot. Tem.        qv'
     do k=1,ADM_kall
-       write(ADM_LOG_FID,'(I4,F12.4,F10.2,F10.2,F10.2,F10.7)') k,&
-            rho_ref(k), pre_ref(k), tem_ref(k),th_ref(k), qv_ref(k)
-       if(k==ADM_kmin-1) then
-          write(ADM_LOG_FID,*) &
-               '-------------------------------------------------------'
-       end if
-       if(k==ADM_kmax) then
-          write(ADM_LOG_FID,*) &
-               '-------------------------------------------------------'
-       end if
-    end do
+       write(ADM_LOG_FID,'(I4,F12.4,F10.2,F10.2,F10.2,F10.7)') &
+                         k, rho_ref(k), pre_ref(k), tem_ref(k),th_ref(k), qv_ref(k)
+       if (  k == ADM_kmin-1 ) write(ADM_LOG_FID,*) '-------------------------------------------------------'
+       if (  k == ADM_kmax   ) write(ADM_LOG_FID,*) '-------------------------------------------------------'
+    enddo
+
+    return
   end subroutine output_info
+
   !-----------------------------------------------------------------------------
   subroutine set_referencestate
-    !------
-    !------ Calculate the reference state.
-    !------
-    !
     use mod_cnst, only : &
          CNST_EGRAV,     &
          CNST_RAIR,      &
@@ -325,19 +305,20 @@ contains
          GRD_gzh,        &
          GRD_afac,       &
          GRD_bfac
-    !
     implicit none
+
+    real(8) :: dpre_ref_k
+    real(8) :: pre_s, rho_s, total_mass0, total_mass, mass_diff_ratio
+
     integer :: k
-    real(8) :: dpre_ref_k, pre_ref_k, tem_ref_k
-    real(8) :: pre_s, rho_s, total_mass0, total_mass,mass_diff_ratio
-    !
-    !
+    !---------------------------------------------------------------------------
+
     !--- calculation of reference geopotential
     do k=1,ADM_kall
        phi_ref(k) = CNST_EGRAV * GRD_gz(k)
-    end do
+    enddo
     !
-    if(ref_type=='NOBASE') then
+    if ( ref_type=='NOBASE') then
        !
        phi_ref = 0.0D0
        rho_ref = 0.0D0
@@ -362,19 +343,19 @@ contains
           rho_g = pre_g / CNST_RAIR / tem_g
        else
           rho_g = 0.0d0
-       end if
+       endif
        !
     else if ( ref_type == 'TEM' ) then
        qv_ref = 0.0D0
        !
        !---  calculation of reference temperature
        do k=1,ADM_kall
-          if(GRD_gz(k) <=ZT ) then
+          if ( GRD_gz(k) <=ZT ) then
              tem_ref(k) = tem_g - TGAMMA * GRD_gz(k)
           else
              tem_ref(k) = tem_g - TGAMMA * ZT
-          end if
-       end do
+          endif
+       enddo
        !
        !--- calculation of density at the surface
        rho_g = pre_g / CNST_RAIR / tem_g
@@ -437,14 +418,14 @@ contains
                * ( phi_ref(k) - phi_ref(k-1) )  &
                )
           pre_ref(k) = rho_ref(k) * CNST_RAIR * tem_ref(k)
-       end do
+       enddo
        !
        !--- calculation of reference potential temperature
        do k = 1, ADM_kall
           th_ref(k)                                        &
                = tem_ref(k)                                &
                * ( CNST_PRE00 / pre_ref(k) ) ** CNST_KAPPA
-       end do
+       enddo
        !
     else if ( ref_type == 'RHO' ) then
        qv_ref = 0.0D0
@@ -455,18 +436,18 @@ contains
        do 
           do k = ADM_kmin-1, ADM_kmax+1
              rho_ref(k) = pre_s/CNST_RAIR/tem_g / exp(CNST_EGRAV*GRD_gz(k)/CNST_RAIR/tem_g)
-          end do
+          enddo
           total_mass = 0.0D0
           do k = ADM_kmin, ADM_kmax
              total_mass = total_mass + GRD_dgz(k)*rho_ref(k)
-          end do
+          enddo
           mass_diff_ratio = total_mass0/total_mass
-          if(abs(mass_diff_ratio-1.0D0)<1.0D-8) then
+          if ( abs(mass_diff_ratio-1.0D0)<1.0D-8) then
              exit
           else
              pre_s = pre_s * mass_diff_ratio
-          end if
-       end do
+          endif
+       enddo
        !
        !--- calculation of density at the surface
        rho_s = pre_s /CNST_RAIR / tem_g
@@ -490,7 +471,7 @@ contains
                - 0.5D0 * ( GRD_afac(k) * rho_ref(k)     &
                           +GRD_bfac(k) * rho_ref(k-1)  )&
                * ( phi_ref(k) - phi_ref(k-1) )
-       end do
+       enddo
        !
        !--- calculation of reference temperature & pot temperature
        do k = 1, ADM_kall
@@ -498,7 +479,7 @@ contains
           th_ref(k)                                        &
                = tem_ref(k)                                &
                * ( CNST_PRE00 / pre_ref(k) ) ** CNST_KAPPA
-       end do
+       enddo
        !
     else if ( ref_type == 'TH' ) then
        qv_ref = 0.0D0
@@ -524,8 +505,8 @@ contains
                          * ( GRD_gz(k) - GRD_gz(k-1) ) )
           else
              th_ref(k) = th_ref(k-1)
-          end if
-       end do
+          endif
+       enddo
        !
        !--- calculation of density at the surface
        tem_g = th_g / ( CNST_PRE00 / pre_g ) ** CNST_KAPPA
@@ -578,7 +559,7 @@ contains
                = pre_ref(k) &
                / CNST_RAIR  &
                / tem_ref(k)
-       end do
+       enddo
        !--- hydro static balance adjustment
        do k = ADM_kmin+1, ADM_kmax+1
           do 
@@ -595,24 +576,24 @@ contains
                   )
              dpre_ref_k = rho_ref(k) * CNST_RAIR * tem_ref(k) - pre_ref(k)
              pre_ref(k) = pre_ref(k)+ dpre_ref_k
-             if(abs(dpre_ref_k) < 1.0D-10 ) exit
-             if(ADM_prc_me==ADM_prc_pl) then
+             if ( abs(dpre_ref_k) < 1.0D-10 ) exit
+             if ( ADM_prc_me==ADM_prc_pl) then
                 write(*,*) k,abs(dpre_ref_k)
-             end if
-          end do
-       end do
+             endif
+          enddo
+       enddo
     else if ( ref_type == 'TH-SP' ) then
        qv_ref = 0.0D0
        !
        !--- calculation of reference pot. temp. 
        !--- just below the surface level.
        do k=ADM_kmin-1,ADM_kmax+1
-          if(GRD_gz(k)<10000.0D0) then
+          if ( GRD_gz(k)<10000.0D0) then
              th_ref(k) = th_g
           else
              th_ref(k) = th_g+10.0D0/1000.0D0*(GRD_gz(k)-10000.0D0)
-          end if
-       end do
+          endif
+       enddo
        !
        !--- calculation of density at the surface
        tem_g = th_g / ( CNST_PRE00 / pre_g ) ** CNST_KAPPA
@@ -665,7 +646,7 @@ contains
                = pre_ref(k) &
                / CNST_RAIR  &
                / tem_ref(k)
-       end do
+       enddo
        !--- hydro static balance adjustment
        do k = ADM_kmin+1, ADM_kmax+1
           do 
@@ -682,12 +663,12 @@ contains
                   )
              dpre_ref_k = rho_ref(k) * CNST_RAIR * tem_ref(k) - pre_ref(k)
              pre_ref(k) = pre_ref(k)+ dpre_ref_k
-             if(abs(dpre_ref_k) < 1.0D-10 ) exit
-             if(ADM_prc_me==ADM_prc_pl) then
+             if ( abs(dpre_ref_k) < 1.0D-10 ) exit
+             if ( ADM_prc_me==ADM_prc_pl) then
                 write(*,*) k,abs(dpre_ref_k)
-             end if
-          end do
-       end do
+             endif
+          enddo
+       enddo
     else if ( ref_type == 'OOYAMA' ) then
        call ooyama_reference
        do k = 1, ADM_kall
@@ -696,8 +677,8 @@ contains
           th_ref(k)                                        &
                = tem_ref(k)                                &
                * ( CNST_PRE00 / pre_ref(k) ) ** CNST_KAPPA
-       end do
-    end if
+       enddo
+    endif
 
 !   if ( ref_type == 'GCSS_CASE1' ) then
     if ( ref_type == 'GCSS_CASE1' .or. ref_type=='TWP-ICE') then ! 11/08/13 A.Noda [add]
@@ -707,8 +688,8 @@ contains
                / ( CNST_PRE00 / pre_ref(k) ) ** CNST_KAPPA
           rho_ref(k) = pre_ref(k)/tem_ref(k) &
                / ( (1.0D0-qv_ref(k))*CNST_RAIR+qv_ref(k)*CNST_RVAP )
-       end do
-    end if
+       enddo
+    endif
 
 
   end subroutine set_referencestate
@@ -736,131 +717,98 @@ contains
   end subroutine gcss_reference
   !-----------------------------------------------------------------------------
   subroutine ooyama_reference
-    !
-    use mod_misc, only : &
-         MISC_get_available_fid
-    use mod_cnst, only : &
-         CNST_RVAP
-    use mod_adm, only :  &
-         ADM_kall,       &
-         ADM_kmin,       &
-         ADM_kmax
-    use mod_grd, only :  &
-         GRD_gz
-    use mod_runconf, only : &
-         TRC_VMAX
-    !
-    !
+    use mod_misc, only: &
+       MISC_get_available_fid
+    use mod_adm, only: &
+       ADM_kall, &
+       ADM_kmin, &
+       ADM_kmax
+    use mod_cnst, only: &
+       CNST_RVAP
+    use mod_grd, only: &
+       GRD_gz
+    use mod_runconf, only: &
+       TRC_VMAX
     implicit none
-    !
+
+    character(len=128) :: fname = 'ooyama_profile.dat'
+
+    real(8), allocatable :: z_s  (:)
+    real(8), allocatable :: rho_s(:)
+    real(8), allocatable :: tem_s(:)
+    real(8), allocatable :: qv_s (:)
+
     integer :: fid
-    !
-    character(128) :: fname = 'ooyama_profile.dat'
-    !
     integer :: kmax
-    real(8), allocatable :: z_s(:), rho_s(:), tem_s(:), qv_s(:)
-    real(8) :: rho_s_intpl(ADM_kall), tem_s_intpl(ADM_kall), qv_s_intpl(ADM_kall)
-    !
+    integer :: k, kk, kp
+
     real(8) :: lag_intpl
     real(8) :: z,z1,p1,z2,p2,z3,p3
-    !
-    integer :: l,n,k,kk,kp
-    !
-    lag_intpl(z,z1,p1,z2,p2,z3,p3)             &
-         = ((z-z2)*(z-z3))/((z1-z2)*(z1-z3))*p1&
-         + ((z-z1)*(z-z3))/((z2-z1)*(z2-z3))*p2&
-         + ((z-z1)*(z-z2))/((z3-z1)*(z3-z2))*p3
+    lag_intpl(z,z1,p1,z2,p2,z3,p3) = ((z-z2)*(z-z3))/((z1-z2)*(z1-z3))*p1 &
+                                   + ((z-z1)*(z-z3))/((z2-z1)*(z2-z3))*p2 &
+                                   + ((z-z1)*(z-z2))/((z3-z1)*(z3-z2))*p3
+    !---------------------------------------------------------------------------
 
-    !
     !--- read sounding data ( ooyama(2001) )
     fid = MISC_get_available_fid()
-    Open(fid,file=Trim(fname),status='old',form='unformatted')
-    !
-    read(fid) kmax
-    !
-    allocate(z_s(kmax))
-    allocate(rho_s(kmax))
-    allocate(tem_s(kmax))
-    allocate(qv_s(kmax))
-    !
-    read(fid) z_s(:)
-    read(fid) rho_s(:)
-    read(fid) tem_s(:)
-    read(fid) qv_s(:)
-    !
+    open( unit   = fid,         &
+          file   = trim(fname), &
+          status = 'old',       &
+          form   = 'unformatted')
+
+       read(fid) kmax
+
+       allocate( z_s  (kmax) )
+       allocate( rho_s(kmax) )
+       allocate( tem_s(kmax) )
+       allocate( qv_s (kmax) )
+
+       read(fid) z_s  (:)
+       read(fid) rho_s(:)
+       read(fid) tem_s(:)
+       read(fid) qv_s (:)
     close(fid)
-    !
+
     !--- initialization
-    do k = ADM_kmin,ADM_kmax
-       do kk = 1, kmax-1
-          if ( ( z_s(kk)   <= GRD_gz(k) ) .and. &
-               ( z_s(kk+1) >=  GRD_gz(k) ) ) then
-             if(kk==1) then
-                kp=2
-             else
-                kp=kk
-             end if
-             rho_ref(k)                            &
-                  = lag_intpl(GRD_gz(k), &
-                  z_s(kp+1),rho_s(kp+1),           &
-                  z_s(kp  ),rho_s(kp  ),           &
-                  z_s(kp-1),rho_s(kp-1))
-             tem_ref(k)                            &
-                  = lag_intpl(GRD_gz(k), &
-                  z_s(kp+1),tem_s(kp+1),           &
-                  z_s(kp  ),tem_s(kp  ),           &
-                  z_s(kp-1),tem_s(kp-1))
-             qv_ref(k)                             &
-                  = lag_intpl(GRD_gz(k), &
-                  z_s(kp+1),qv_s(kp+1),            &
-                  z_s(kp  ),qv_s(kp  ),            &
-                  z_s(kp-1),qv_s(kp-1))
-             exit
-          end if
-       end do
-    end do
-    !
-    k = ADM_kmin-1
+    do k = ADM_kmin, ADM_kmax
+    do kk = 1, kmax-1
+       if (       z_s(kk)   <= GRD_gz(k) &
+            .AND. z_s(kk+1) >= GRD_gz(k) ) then
+          if ( kk == 1 ) then
+             kp = 2
+          else
+             kp = kk
+          endif
+
+          rho_ref(k) = lag_intpl(GRD_gz(k),z_s(kp+1),rho_s(kp+1),z_s(kp),rho_s(kp),z_s(kp-1),rho_s(kp-1))
+          tem_ref(k) = lag_intpl(GRD_gz(k),z_s(kp+1),tem_s(kp+1),z_s(kp),tem_s(kp),z_s(kp-1),tem_s(kp-1))
+          qv_ref (k) = lag_intpl(GRD_gz(k),z_s(kp+1),qv_s (kp+1),z_s(kp),qv_s (kp),z_s(kp-1),qv_s (kp-1))
+          exit
+       endif
+    enddo
+    enddo
+
+    k  = ADM_kmin-1
     kp = 2
-    rho_ref(k)                            &
-         = lag_intpl(GRD_gz(k), &
-         z_s(kp+1),rho_s(kp+1),           &
-         z_s(kp  ),rho_s(kp  ),           &
-         z_s(kp-1),rho_s(kp-1))
-    tem_ref(k)                            &
-         = lag_intpl(GRD_gz(k), &
-         z_s(kp+1),tem_s(kp+1),           &
-         z_s(kp  ),tem_s(kp  ),           &
-         z_s(kp-1),tem_s(kp-1))
-    qv_ref(k)                             &
-         = lag_intpl(GRD_gz(k), &
-         z_s(kp+1),qv_s(kp+1),            &
-         z_s(kp  ),qv_s(kp  ),            &
-         z_s(kp-1),qv_s(kp-1))
-    !
-    k = ADM_kmax+1
+
+    rho_ref(k) = lag_intpl(GRD_gz(k),z_s(kp+1),rho_s(kp+1),z_s(kp),rho_s(kp),z_s(kp-1),rho_s(kp-1))
+    tem_ref(k) = lag_intpl(GRD_gz(k),z_s(kp+1),tem_s(kp+1),z_s(kp),tem_s(kp),z_s(kp-1),tem_s(kp-1))
+    qv_ref (k) = lag_intpl(GRD_gz(k),z_s(kp+1),qv_s (kp+1),z_s(kp),qv_s (kp),z_s(kp-1),qv_s (kp-1))
+
+    k  = ADM_kmax+1
     kp = kmax-1
-    rho_ref(k)                            &
-         = lag_intpl(GRD_gz(k), &
-         z_s(kp+1),rho_s(kp+1),           &
-         z_s(kp  ),rho_s(kp  ),           &
-         z_s(kp-1),rho_s(kp-1))
-    tem_ref(k)                            &
-         = lag_intpl(GRD_gz(k), &
-         z_s(kp+1),tem_s(kp+1),           &
-         z_s(kp  ),tem_s(kp  ),           &
-         z_s(kp-1),tem_s(kp-1))
-    qv_ref(k)                             &
-         = lag_intpl(GRD_gz(k), &
-         z_s(kp+1),qv_s(kp+1),            &
-         z_s(kp  ),qv_s(kp  ),            &
-         z_s(kp-1),qv_s(kp-1))
-    !
-    deallocate(rho_s)
-    deallocate(tem_s)
-    deallocate(qv_s)
-    !
+
+    rho_ref(k) = lag_intpl(GRD_gz(k),z_s(kp+1),rho_s(kp+1),z_s(kp),rho_s(kp),z_s(kp-1),rho_s(kp-1))
+    tem_ref(k) = lag_intpl(GRD_gz(k),z_s(kp+1),tem_s(kp+1),z_s(kp),tem_s(kp),z_s(kp-1),tem_s(kp-1))
+    qv_ref (k) = lag_intpl(GRD_gz(k),z_s(kp+1),qv_s (kp+1),z_s(kp),qv_s (kp),z_s(kp-1),qv_s (kp-1))
+
+    deallocate( rho_s )
+    deallocate( tem_s )
+    deallocate( qv_s  )
+
+    return
   end subroutine ooyama_reference
+
   !-----------------------------------------------------------------------------
   subroutine set_basicstate
     !------
@@ -906,13 +854,13 @@ contains
     !
     !--- calculation of geo-potential
     phi(:,:,:)    = CNST_EGRAV * GRD_vz(:,:,:,GRD_Z)
-    if(ADM_prc_me==ADM_prc_pl) then
+    if ( ADM_prc_me==ADM_prc_pl) then
        phi_pl(:,:,:) = CNST_EGRAV * GRD_vz_pl(:,:,:,GRD_Z)
-    end if
+    endif
     !
-    if(ref_type=='NOBASE') then
+    if ( ref_type=='NOBASE') then
        return
-    end if
+    endif
     !
     do k=1, ADM_kall
        pre_bs(:,k,:) = pre_ref(k)
@@ -921,7 +869,7 @@ contains
        tem_bs_pl(:,k,:) = tem_ref(k)
        qv_bs(:,k,:) = qv_ref(k)
        qv_bs_pl(:,k,:) = qv_ref(k)
-    end do
+    enddo
     !
     !-- from z-level to zstar-level
     call VINTRPL_zstar_level( pre_bs, pre_bs_pl, .false. )
@@ -940,16 +888,16 @@ contains
             qd(:,:,l),  & !--- OUT  : dry mass concentration
             q(:,:,l,:)  & !--- IN  : mass concentration
             )
-    end do
-    if(ADM_prc_me==ADM_prc_pl) then
+    enddo
+    if ( ADM_prc_me==ADM_prc_pl) then
        do l=1, ADM_lall_pl
           call thrmdyn_qd(   &
                ADM_gall_pl,  & !--- in
                qd_pl(:,:,l), & !--- OUT  : dry mass concentration
                q_pl(:,:,l,:) & !--- IN  : mass concentration
                )
-       end do
-    end if
+       enddo
+    endif
     !
     !--- calculation of density
     do l=1, ADM_lall
@@ -961,8 +909,8 @@ contains
             qd(:,:,l),     & !--- in
             q(:,:,l,:)     & !--- in
             )
-    end do
-    if(ADM_prc_me==ADM_prc_pl) then
+    enddo
+    if ( ADM_prc_me==ADM_prc_pl) then
        do l=1, ADM_lall_pl
           call thrmdyn_rho(      &
                ADM_gall_pl,      & !--- in
@@ -972,8 +920,8 @@ contains
                qd_pl(:,:,l),     & !--- in
                q_pl(:,:,l,:)     & !--- in
                )
-       end do
-    end if
+       enddo
+    endif
     !
     !--- set boundary conditions of basic state
     do l=1, ADM_lall
@@ -990,9 +938,9 @@ contains
             tem_bs(:,:,l), &  !--- IN  : temperature       
             pre_bs(:,:,l)  &  !--- IN  : pressure
             )
-    end do
+    enddo
 
-    if(ADM_prc_me==ADM_prc_pl) then
+    if ( ADM_prc_me==ADM_prc_pl) then
        do l=1, ADM_lall_pl
           call bndcnd_thermo(    &
                ADM_gall_pl,      & !--- in
@@ -1007,8 +955,8 @@ contains
                tem_bs_pl(:,:,l), &  !--- IN  : temperature       
                pre_bs_pl(:,:,l)  &  !--- IN  : pressure
                )
-       end do
-    end if
+       enddo
+    endif
     !
     return
     !
@@ -1029,7 +977,7 @@ contains
     integer :: fid
     !
     !--- output
-    if(ADM_prc_me==ADM_prc_run_master) then
+    if ( ADM_prc_me==ADM_prc_run_master) then
        fid = MISC_get_available_fid()
        Open(fid,file=Trim(basename),form='unformatted')
        Write(fid) pre_ref(:)
@@ -1037,7 +985,7 @@ contains
        Write(fid) qv_ref(:)
        Close(fid)
        !
-    End if
+    endif
     !
   end subroutine bsstate_output_ref
   !-----------------------------------------------------------------------------
@@ -1077,7 +1025,7 @@ contains
             * ( CNST_PRE00 / pre_ref(k) ) ** CNST_KAPPA
        phi_ref(k) = CNST_EGRAV * GRD_gz(k)
        rho_ref(k) = pre_ref(k)/ ( (1.0D0-qv_ref(k))*CNST_RAIR+qv_ref(k)*CNST_RVAP )/ tem_ref(k)
-    end do
+    enddo
     !
   end subroutine bsstate_input_ref
   !-----------------------------------------------------------------------------

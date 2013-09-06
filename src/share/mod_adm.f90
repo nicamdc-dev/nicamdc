@@ -417,6 +417,9 @@ contains
     integer                 :: ierr
     !---------------------------------------------------------------------------
 
+    ! flush 1kbyte
+    write(ADM_LOG_FID,'(32A32)') '                                '
+
     if ( ADM_run_type == ADM_MULTI_PRC ) then
        write(ADM_LOG_FID,*)
        write(ADM_LOG_FID,*) 'MPI process going to STOP...'
