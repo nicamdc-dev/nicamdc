@@ -290,19 +290,19 @@ contains
     if ( did == -1 ) then
        if ( present(allow_missingq) ) then ! [bugfix] H.Yashiro 20110912
           if ( allow_missingq ) then
-             write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] data not found! : ', &
+             write(ADM_LOG_FID,*) '*** [INPUT]/[FIO] data not found! : ', &
                                   'varname= ',trim(varname),', step=',step
-             write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] Q Value is set to 0.'
+             write(ADM_LOG_FID,*) '*** [INPUT]/[FIO] Q Value is set to 0.'
 
              var(:,k_start:k_end,:) = 0.D0
 
              return
           endif
-       else
-          write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] data not found! : ', &
-                               'varname= ',trim(varname),', step=',step
-          call ADM_proc_stop
        endif
+
+       write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] data not found! : ', &
+                            'varname= ',trim(varname),', step=',step
+       call ADM_proc_stop
     endif
 
     if ( trim(dinfo%layername) /= trim(layername) ) then
