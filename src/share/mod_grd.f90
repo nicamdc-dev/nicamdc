@@ -241,7 +241,8 @@ contains
          ADM_prc_run_master,&
          ADM_proc_stop
     use mod_cnst, only : &
-         CNST_ERADIUS
+         CNST_ERADIUS, &
+         CNST_UNDEF
     use mod_comm, only :  &
          COMM_data_transfer, &
          COMM_var ! [add] H.Yashiro 20110819
@@ -300,11 +301,15 @@ contains
     !------ ( cell CENTER )
     allocate( GRD_x   (ADM_gall,   K0,ADM_lall,   GRD_XDIR:GRD_ZDIR) )
     allocate( GRD_x_pl(ADM_gall_pl,K0,ADM_lall_pl,GRD_XDIR:GRD_ZDIR) )
+    GRD_x   (:,:,:,:) = CNST_UNDEF
+    GRD_x_pl(:,:,:,:) = CNST_UNDEF
 
     !------ allocation and intitialization of horizontal grid points
     !------  ( cell CORNER )
     allocate( GRD_xt   (ADM_gall,   K0,ADM_lall,   ADM_TI:ADM_TJ,GRD_XDIR:GRD_ZDIR) )
     allocate( GRD_xt_pl(ADM_gall_pl,K0,ADM_lall_pl,              GRD_XDIR:GRD_ZDIR) )
+    GRD_xt   (:,:,:,:,:) = CNST_UNDEF
+    GRD_xt_pl(:,:,:,:)   = CNST_UNDEF
 
     !--- reading the horzontal grid (unit sphere) and
     !--- scaled by earth radius
@@ -1157,7 +1162,11 @@ contains
 
     !--- grid point communication
     call COMM_var(GRD_x,GRD_x_pl,ADM_KNONE,3,comm_type=2,NSval_fix=.false.)
-    GRD_xt_pl(ADM_GSLF_PL,:,:,:) = GRD_x_pl(ADM_GSLF_PL,:,:,:)
+
+    if (      ADM_prc_me == ADM_prc_npl &
+         .OR. ADM_prc_me == ADM_prc_spl ) then
+       GRD_xt_pl(ADM_GSLF_PL,:,:,:) = GRD_x_pl(ADM_GSLF_PL,:,:,:)
+    endif
 
     return
   end subroutine GRD_gen_plgrid

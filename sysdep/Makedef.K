@@ -29,7 +29,7 @@ FFLAGS = $(FFLAGS_FAST) $(PERF_MONIT) $(RDMA)
 MODDIROPT ?= -M
 
 CC     = mpifccpx
-CFLAGS = -Kfast,parallel,ocl,preex,array_private,region_extension,restp=all -Qt -Ksimd $(PERF_MONIT)
+CFLAGS = -Kfast,parallel,ocl,preex,array_private,region_extension,restp=all -Ksimd $(PERF_MONIT)
 
 LD     = $(FC)
 LFLAGS = $(FFLAGS)

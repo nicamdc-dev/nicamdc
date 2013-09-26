@@ -118,6 +118,8 @@ module mod_adm
   integer, public,  save     :: ADM_prc_spl
   integer, public,  save     :: ADM_prc_nspl(ADM_NPL:ADM_SPL)
 
+  logical, public,  save     :: ADM_have_pl
+
   !
   !====== Information for processes-region relationship ======
   !
@@ -200,6 +202,8 @@ module mod_adm
   !
   !------ Present Local region number ! 2010.4.26 M.Satoh
   integer, public, save      :: ADM_l_me
+
+  logical, public, allocatable, save :: ADM_have_sgp(:) ! region have singlar point?
 
   !
   !====== Grid resolution informations  ======
@@ -488,6 +492,7 @@ contains
 
     integer :: rgn_nmax
     integer :: nmax
+    integer :: l, rgnid
     integer :: ierr
 
     character(LEN=ADM_MAXFNAME) :: fname
@@ -627,6 +632,22 @@ contains
     endif
 
     ADM_lall = ADM_prc_rnum(ADM_prc_me)
+
+    allocate( ADM_have_sgp(ADM_lall) )
+    ADM_have_sgp(:) = .false.
+
+    do l = 1, ADM_lall
+       rgnid = ADM_prc_tab(l,ADM_prc_me)
+       if ( ADM_rgn_vnum(ADM_W,rgnid) == 3 ) then
+          ADM_have_sgp(l) = .true.
+       endif
+    enddo
+
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       ADM_have_pl = .true.
+    else
+       ADM_have_pl = .false.
+    endif
 
     ! 2010.4.26 M.Satoh; 2010.5.11 M.Satoh
     ! ADM_l_me: this spans from 1 to ADM_lall, if effective.

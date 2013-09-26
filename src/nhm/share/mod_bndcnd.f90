@@ -425,7 +425,7 @@ contains
     real(8), intent(in)    :: gsqrtgam2 (ijdim,kdim)
     real(8), intent(in)    :: gsqrtgam2h(ijdim,kdim)
     real(8), intent(in)    :: phi       (ijdim,kdim)
-    real(8), intent(in)    :: c2wfact   (ijdim,kdim)
+    real(8), intent(in)    :: c2wfact   (6,ijdim,kdim)
 
     integer :: ij, k
     !---------------------------------------------------------------------------

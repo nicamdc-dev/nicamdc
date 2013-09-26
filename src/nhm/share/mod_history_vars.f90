@@ -834,6 +834,7 @@ contains
        w_p,   &
        t_p    )
     use mod_adm, only: &
+       ADM_proc_stop,    &
        kdim => ADM_kall, &
        kmin => ADM_kmin
     implicit none
@@ -863,7 +864,11 @@ contains
        do k = kmin, kdim
           if( pre(ij,k) < plev ) exit
        enddo
-       if( k >= kdim ) stop "internal error! [sv_uvwp_850/mod_history_vars]"
+       if ( k >= kdim ) then
+          write(*,          *) 'xxx internal error! [sv_uvwp_850/mod_history_vars] STOP.'
+          write(ADM_LOG_FID,*) 'xxx internal error! [sv_uvwp_850/mod_history_vars] STOP.',kdim,k,plev,pre(ij,:)
+          call ADM_proc_stop
+       endif
 
        ku(ij) = k
        kl(ij) = k - 1

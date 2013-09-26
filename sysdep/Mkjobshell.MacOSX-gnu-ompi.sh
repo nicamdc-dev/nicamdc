@@ -93,6 +93,7 @@ mnginfo="./${MNGINFO}" \
 layerfile_dir="./zaxis" \
 llmap_base="./llmap" \
 -lon_swap \
+-output_gtool \
 -comm_smallchunk
 
 ################################################################################
