@@ -1941,11 +1941,12 @@ contains
       enddo
     enddo
 
-    call OPRT_gradient(                    &
-         wrk(:,:,:,dsx), wrk_pl(:,:,:,dsx),&
-         wrk(:,:,:,dsy), wrk_pl(:,:,:,dsy),&
-         wrk(:,:,:,dsz), wrk_pl(:,:,:,dsz),&
-         s, s_pl )
+    call OPRT_gradient(                     &
+         wrk(:,:,:,dsx), wrk_pl(:,:,:,dsx), &
+         wrk(:,:,:,dsy), wrk_pl(:,:,:,dsy), &
+         wrk(:,:,:,dsz), wrk_pl(:,:,:,dsz), &
+         s, s_pl,                           &
+         mfact=1.D0                         )
 
     call COMM_data_transfer(wrk,wrk_pl)
 

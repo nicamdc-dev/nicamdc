@@ -1218,8 +1218,8 @@ contains
        vx, vx_pl,                  &
        vy, vy_pl,                  &
        vz, vz_pl,                  &
-       scl, scl_pl              &
-       )
+       scl, scl_pl,              &
+       mfact=1.D0)
     ! horizontal gradient for half
     if (input_sclh_in) then
 !       write(*,*) 'input!'
@@ -1227,8 +1227,8 @@ contains
             vxh, vxh_pl,                  &
             vyh, vyh_pl,                  &
             vzh, vzh_pl,                  &
-            sclh, sclh_pl              &
-            )
+            sclh, sclh_pl,             &
+            mfact=1.D0)
     else
        do k=ADM_kmin+1,ADM_kmax
           vxh(:,k,:)=(vx(:,k,:)+vx(:,k-1,:))/2
@@ -1466,8 +1466,8 @@ contains
          tmp,tmp_pl,&
          tmp_vx, tmp_vx_pl,   &
          tmp_vy, tmp_vy_pl,   &
-         tmp_vz, tmp_vz_pl    &
-         )
+         tmp_vz, tmp_vz_pl,    &
+         mfact=1.D0)
 
 !       write(*,*) 'a',smg_oprt_GAM(1144,9,1),tmp(1144,9,1)
 !       write(*,*) 'b',tmp_vx(1144,9,1),tmp_vy(1144,9,1),tmp_vz(1144,9,1)
@@ -1578,8 +1578,8 @@ contains
          tmph,tmph_pl,&
          tmp_vxh, tmp_vxh_pl,   &
          tmp_vyh, tmp_vyh_pl,   &
-         tmp_vzh, tmp_vzh_pl    &
-         )
+         tmp_vzh, tmp_vzh_pl,   &
+         mfact=1.D0)
     sclh(:,ADM_kmin:ADM_kmax,:) = tmph(:,ADM_kmin:ADM_kmax,:) * smg_oprt_GAMH(:,ADM_kmin:ADM_kmax,:)
     if(ADM_prc_me==ADM_prc_pl) then
        sclh_pl(:,ADM_kmin:ADM_kmax,:) = tmph_pl(:,ADM_kmin:ADM_kmax,:) * smg_oprt_GAMH_pl(:,ADM_kmin:ADM_kmax,:)

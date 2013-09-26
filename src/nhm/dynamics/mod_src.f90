@@ -426,12 +426,12 @@ contains
     endif
 
     !--- flux convergence step
-    call src_flux_convergence( rhogvxscl, rhogvxscl_pl, & !--- [IN]
-                               rhogvyscl, rhogvyscl_pl, & !--- [IN]
-                               rhogvzscl, rhogvzscl_pl, & !--- [IN]
-                               rhogwscl,  rhogwscl_pl,  & !--- [IN]
-                               grhogscl,  grhogscl_pl,  & !--- [OUT]
-                               fluxtype                 ) !--- [IN]
+    call src_flux_convergence( rhogvxscl, rhogvxscl_pl, & ! [IN]
+                               rhogvyscl, rhogvyscl_pl, & ! [IN]
+                               rhogvzscl, rhogvzscl_pl, & ! [IN]
+                               rhogwscl,  rhogwscl_pl,  & ! [IN]
+                               grhogscl,  grhogscl_pl,  & ! [OUT]
+                               fluxtype                 ) ! [IN]
 
     call DEBUG_rapend('++++src_advection_convergence')
 
@@ -563,10 +563,11 @@ contains
        endif
 
        !--- Horizontal flux convergence
-       call OPRT_divergence( div_rhogvh, div_rhogvh_pl, & !--- [OUT]
-                             rhogvx_vm,  rhogvx_vm_pl,  & !--- [IN]
-                             rhogvy_vm,  rhogvy_vm_pl,  & !--- [IN]
-                             rhogvz_vm,  rhogvz_vm_pl   ) !--- [IN]
+       call OPRT_divergence( div_rhogvh, div_rhogvh_pl, & ! [OUT]
+                             rhogvx_vm,  rhogvx_vm_pl,  & ! [IN]
+                             rhogvy_vm,  rhogvy_vm_pl,  & ! [IN]
+                             rhogvz_vm,  rhogvz_vm_pl,  & ! [IN]
+                             mfact=1.D0                 ) ! [IN]
 
     elseif( fluxtype == I_SRC_vertical ) then ! Vertical
 
@@ -636,10 +637,11 @@ contains
        endif
 
        !--- Horizontal flux convergence
-       call OPRT_divergence( div_rhogvh, div_rhogvh_pl, & !--- [OUT]
-                             rhogvx_vm,  rhogvx_vm_pl,  & !--- [IN]
-                             rhogvy_vm,  rhogvy_vm_pl,  & !--- [IN]
-                             rhogvz_vm,  rhogvz_vm_pl   ) !--- [IN]
+       call OPRT_divergence( div_rhogvh, div_rhogvh_pl, & ! [OUT]
+                             rhogvx_vm,  rhogvx_vm_pl,  & ! [IN]
+                             rhogvy_vm,  rhogvy_vm_pl,  & ! [IN]
+                             rhogvz_vm,  rhogvz_vm_pl,  & ! [IN]
+                             mfact=1.D0                 ) ! [IN]
 
     endif
 
@@ -748,7 +750,8 @@ contains
     call OPRT_gradient( gex, gex_pl, & ! [OUT]
                         gey, gey_pl, & ! [OUT]
                         gez, gez_pl, & ! [OUT]
-                        gee, gee_pl  ) ! [IN]
+                        gee, gee_pl, & ! [IN]
+                        mfact=1.D0   ) ! [IN]
 
     !--- horizontal gradient
     do l = 1, ADM_lall

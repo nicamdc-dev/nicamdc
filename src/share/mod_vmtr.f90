@@ -306,19 +306,21 @@ contains
 !                                 GRD_vz(:,:,:,GRD_Z) ) !--- [IN]
     else
        !--- calculation of Jxh, Jyh, and Jzh
-       call OPRT_gradient( var(:,:,:,JXH),       var_pl(:,:,:,JXH),      & !--- [OUT]
-                           var(:,:,:,JYH),       var_pl(:,:,:,JYH),      & !--- [OUT]
-                           var(:,:,:,JZH),       var_pl(:,:,:,JZH),      & !--- [OUT]
-                           GRD_vz(:,:,:,GRD_ZH), GRD_vz_pl(:,:,:,GRD_ZH) ) !--- [IN]
+       call OPRT_gradient( var(:,:,:,JXH),       var_pl(:,:,:,JXH),       & !--- [OUT]
+                           var(:,:,:,JYH),       var_pl(:,:,:,JYH),       & !--- [OUT]
+                           var(:,:,:,JZH),       var_pl(:,:,:,JZH),       & !--- [OUT]
+                           GRD_vz(:,:,:,GRD_ZH), GRD_vz_pl(:,:,:,GRD_ZH), & !--- [IN]
+                           mfact=1.D0                                     ) !--- [IN]
 
        call OPRT_horizontalize_vec( var(:,:,:,JXH), var_pl(:,:,:,JXH), & !--- [INOUT]
                                     var(:,:,:,JYH), var_pl(:,:,:,JYH), & !--- [INOUT]
                                     var(:,:,:,JZH), var_pl(:,:,:,JZH)  ) !--- [INOUT]
        !--- calculation of Jx, Jy, and Jz
-       call OPRT_gradient( var(:,:,:,JX),       var_pl(:,:,:,JX),      & !--- [OUT]
-                           var(:,:,:,JY),       var_pl(:,:,:,JY),      & !--- [OUT]
-                           var(:,:,:,JZ),       var_pl(:,:,:,JZ),      & !--- [OUT]
-                           GRD_vz(:,:,:,GRD_Z), GRD_vz_pl(:,:,:,GRD_Z) ) !--- [IN]
+       call OPRT_gradient( var(:,:,:,JX),       var_pl(:,:,:,JX),       & !--- [OUT]
+                           var(:,:,:,JY),       var_pl(:,:,:,JY),       & !--- [OUT]
+                           var(:,:,:,JZ),       var_pl(:,:,:,JZ),       & !--- [OUT]
+                           GRD_vz(:,:,:,GRD_Z), GRD_vz_pl(:,:,:,GRD_Z), & !--- [IN]
+                           mfact=1.D0                                   ) !--- [IN]
 
        call OPRT_horizontalize_vec( var(:,:,:,JX), var_pl(:,:,:,JX), & !--- [INOUT]
                                     var(:,:,:,JY), var_pl(:,:,:,JY), & !--- [INOUT]

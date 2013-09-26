@@ -1334,17 +1334,21 @@ contains
     ! high order laplacian
     do p = 1, lap_order_hdiff
        ! for momentum
-       call OPRT_laplacian( vtmp2(:,:,:,1), vtmp2_pl(:,:,:,1), & !--- [OUT]
-                            vtmp (:,:,:,1), vtmp_pl (:,:,:,1)  ) !--- [IN]
- 
-       call OPRT_laplacian( vtmp2(:,:,:,2), vtmp2_pl(:,:,:,2), & !--- [OUT]
-                            vtmp (:,:,:,2), vtmp_pl (:,:,:,2)  ) !--- [IN]
- 
-       call OPRT_laplacian( vtmp2(:,:,:,3), vtmp2_pl(:,:,:,3), & !--- [OUT]
-                            vtmp (:,:,:,3), vtmp_pl (:,:,:,3)  ) !--- [IN]
- 
-       call OPRT_laplacian( vtmp2(:,:,:,4), vtmp2_pl(:,:,:,4), & !--- [OUT]
-                            vtmp (:,:,:,4), vtmp_pl (:,:,:,4)  ) !--- [IN]
+       call OPRT_laplacian( vtmp2(:,:,:,1), vtmp2_pl(:,:,:,1), & ! [OUT]
+                            vtmp (:,:,:,1), vtmp_pl (:,:,:,1), & ! [IN]
+                            mfact=1.D0                         ) ! [IN]
+
+       call OPRT_laplacian( vtmp2(:,:,:,2), vtmp2_pl(:,:,:,2), & ! [OUT]
+                            vtmp (:,:,:,2), vtmp_pl (:,:,:,2), & ! [IN]
+                            mfact=1.D0                         ) ! [IN]
+
+       call OPRT_laplacian( vtmp2(:,:,:,3), vtmp2_pl(:,:,:,3), & ! [OUT]
+                            vtmp (:,:,:,3), vtmp_pl (:,:,:,3), & ! [IN]
+                            mfact=1.D0                         ) ! [IN]
+
+       call OPRT_laplacian( vtmp2(:,:,:,4), vtmp2_pl(:,:,:,4), & ! [OUT]
+                            vtmp (:,:,:,4), vtmp_pl (:,:,:,4), & ! [IN]
+                            mfact=1.D0                         ) ! [IN]
 
        ! for scalar
        if ( p == lap_order_hdiff ) then
@@ -1393,22 +1397,26 @@ contains
           wk   (:,:,:) = rhog   (:,:,:) * CNST_CV * KH_coef   (:,:,:)
           wk_pl(:,:,:) = rhog_pl(:,:,:) * CNST_CV * KH_coef_pl(:,:,:)
 
-          call OPRT_diffusion( vtmp2(:,:,:,5), vtmp2_pl(:,:,:,5), &
-                               vtmp (:,:,:,5), vtmp_pl (:,:,:,5), &
-                               wk   (:,:,:)  , wk_pl   (:,:,:)    )
+          call OPRT_diffusion( vtmp2(:,:,:,5), vtmp2_pl(:,:,:,5), & ! [OUT]
+                               vtmp (:,:,:,5), vtmp_pl (:,:,:,5), & ! [IN]
+                               wk   (:,:,:)  , wk_pl   (:,:,:),   & ! [IN]
+                               mfact=1.D0                         ) ! [IN]
 
           wk   (:,:,:) = rhog   (:,:,:) * hdiff_fact_rho * KH_coef   (:,:,:)
           wk_pl(:,:,:) = rhog_pl(:,:,:) * hdiff_fact_rho * KH_coef_pl(:,:,:)
 
-          call OPRT_diffusion( vtmp2(:,:,:,6), vtmp2_pl(:,:,:,6), &
-                               vtmp (:,:,:,6), vtmp_pl (:,:,:,6), &
-                               wk   (:,:,:)  , wk_pl   (:,:,:)    )
+          call OPRT_diffusion( vtmp2(:,:,:,6), vtmp2_pl(:,:,:,6), & ! [OUT]
+                               vtmp (:,:,:,6), vtmp_pl (:,:,:,6), & ! [IN]
+                               wk   (:,:,:)  , wk_pl   (:,:,:),   & ! [IN]
+                               mfact=1.D0                         ) ! [IN]
        else
-          call OPRT_laplacian( vtmp2(:,:,:,5), vtmp2_pl(:,:,:,5), & !--- [OUT]
-                               vtmp (:,:,:,5), vtmp_pl (:,:,:,5)  ) !--- [IN]
+          call OPRT_laplacian( vtmp2(:,:,:,5), vtmp2_pl(:,:,:,5), & ! [OUT]
+                               vtmp (:,:,:,5), vtmp_pl (:,:,:,5), & ! [IN]
+                               mfact=1.D0                         ) ! [IN]
 
-          call OPRT_laplacian( vtmp2(:,:,:,6), vtmp2_pl(:,:,:,6), & !--- [OUT]
-                               vtmp (:,:,:,6), vtmp_pl (:,:,:,6)  ) !--- [IN]
+          call OPRT_laplacian( vtmp2(:,:,:,6), vtmp2_pl(:,:,:,6), & ! [OUT]
+                               vtmp (:,:,:,6), vtmp_pl (:,:,:,6), & ! [IN]
+                               mfact=1.D0                         ) ! [IN]
        endif
 
        vtmp   (:,:,:,:) = -vtmp2   (:,:,:,:)
@@ -1424,31 +1432,37 @@ contains
        KH_coef_lap1_h   (:,:,:) = KH_coef_lap1   (:,:,:)
        KH_coef_lap1_h_pl(:,:,:) = KH_coef_lap1_pl(:,:,:)
 
-       call OPRT_laplacian( vtmp2    (:,:,:,1), vtmp2_pl    (:,:,:,1), &
-                            vtmp_lap1(:,:,:,1), vtmp_lap1_pl(:,:,:,1)  )
+       call OPRT_laplacian( vtmp2    (:,:,:,1), vtmp2_pl    (:,:,:,1), & ! [OUT]
+                            vtmp_lap1(:,:,:,1), vtmp_lap1_pl(:,:,:,1), & ! [IN]
+                            mfact=1.D0                                 ) ! [IN]
 
-       call OPRT_laplacian( vtmp2    (:,:,:,2), vtmp2_pl    (:,:,:,2), &
-                            vtmp_lap1(:,:,:,2), vtmp_lap1_pl(:,:,:,2)  )
+       call OPRT_laplacian( vtmp2    (:,:,:,2), vtmp2_pl    (:,:,:,2), & ! [OUT]
+                            vtmp_lap1(:,:,:,2), vtmp_lap1_pl(:,:,:,2), & ! [IN]
+                            mfact=1.D0                                 ) ! [IN]
 
-       call OPRT_laplacian( vtmp2    (:,:,:,3), vtmp2_pl    (:,:,:,3), &
-                            vtmp_lap1(:,:,:,3), vtmp_lap1_pl(:,:,:,3)  )
+       call OPRT_laplacian( vtmp2    (:,:,:,3), vtmp2_pl    (:,:,:,3), & ! [OUT]
+                            vtmp_lap1(:,:,:,3), vtmp_lap1_pl(:,:,:,3), & ! [IN]
+                            mfact=1.D0                                 ) ! [IN]
 
-       call OPRT_laplacian( vtmp2    (:,:,:,4), vtmp2_pl    (:,:,:,4), &
-                            vtmp_lap1(:,:,:,4), vtmp_lap1_pl(:,:,:,4)  )
+       call OPRT_laplacian( vtmp2    (:,:,:,4), vtmp2_pl    (:,:,:,4), & ! [OUT]
+                            vtmp_lap1(:,:,:,4), vtmp_lap1_pl(:,:,:,4), & ! [IN]
+                            mfact=1.D0                                 ) ! [IN]
 
        wk   (:,:,:) = rhog   (:,:,:) * CNST_CV * KH_coef_lap1   (:,:,:)
        wk_pl(:,:,:) = rhog_pl(:,:,:) * CNST_CV * KH_coef_lap1_pl(:,:,:)
 
-       call OPRT_diffusion( vtmp2    (:,:,:,5), vtmp2_pl    (:,:,:,5), &
-                            vtmp_lap1(:,:,:,5), vtmp_lap1_pl(:,:,:,5), &
-                            wk       (:,:,:),   wk_pl       (:,:,:)    )
+       call OPRT_diffusion( vtmp2    (:,:,:,5), vtmp2_pl    (:,:,:,5), & ! [OUT]
+                            vtmp_lap1(:,:,:,5), vtmp_lap1_pl(:,:,:,5), & ! [IN]
+                            wk       (:,:,:),   wk_pl       (:,:,:),   & ! [IN]
+                            mfact=1.D0                                 ) ! [IN]
 
        wk   (:,:,:) = rhog   (:,:,:) * hdiff_fact_rho * KH_coef_lap1   (:,:,:)
        wk_pl(:,:,:) = rhog_pl(:,:,:) * hdiff_fact_rho * KH_coef_lap1_pl(:,:,:)
 
-       call OPRT_diffusion( vtmp2    (:,:,:,6), vtmp2_pl    (:,:,:,6), &
-                            vtmp_lap1(:,:,:,6), vtmp_lap1_pl(:,:,:,6), &
-                            wk       (:,:,:),   wk_pl       (:,:,:)    )
+       call OPRT_diffusion( vtmp2    (:,:,:,6), vtmp2_pl    (:,:,:,6), & ! [OUT]
+                            vtmp_lap1(:,:,:,6), vtmp_lap1_pl(:,:,:,6), & ! [IN]
+                            wk       (:,:,:),   wk_pl       (:,:,:),   & ! [IN]
+                            mfact=1.D0                                 ) ! [IN]
 
        vtmp_lap1   (:,:,:,:) = -vtmp2   (:,:,:,:)
        vtmp_lap1_pl(:,:,:,:) = -vtmp2_pl(:,:,:,:)
@@ -1534,14 +1548,16 @@ contains
              wk_pl(:,:,:) = rhog_pl(:,:,:) * hdiff_fact_q * KH_coef_pl(:,:,:)
 
              do nq = 1, TRC_VMAX
-                call OPRT_diffusion( qtmp2(:,:,:,nq), qtmp2_pl(:,:,:,nq), &
-                                     qtmp (:,:,:,nq), qtmp_pl (:,:,:,nq), &
-                                     wk   (:,:,:),    wk_pl   (:,:,:)     )
+                call OPRT_diffusion( qtmp2(:,:,:,nq), qtmp2_pl(:,:,:,nq), & ! [OUT]
+                                     qtmp (:,:,:,nq), qtmp_pl (:,:,:,nq), & ! [IN]
+                                     wk   (:,:,:),    wk_pl   (:,:,:),    & ! [IN]
+                                     mfact=1.D0                           ) ! [IN]
              enddo
           else
              do nq = 1, TRC_VMAX
-                call OPRT_laplacian( qtmp2(:,:,:,nq), qtmp2_pl(:,:,:,nq), & !--- [OUT]
-                                     qtmp (:,:,:,nq), qtmp_pl (:,:,:,nq)  ) !--- [IN
+                call OPRT_laplacian( qtmp2(:,:,:,nq), qtmp2_pl(:,:,:,nq), & ! [OUT]
+                                     qtmp (:,:,:,nq), qtmp_pl (:,:,:,nq), & ! [IN]
+                                     mfact=1.D0                           ) ! [IN]
              enddo
           endif
 
@@ -1559,9 +1575,10 @@ contains
           wk_pl(:,:,:) = rhog_pl(:,:,:) * hdiff_fact_q * KH_coef_lap1_pl(:,:,:)
 
           do nq = 1, TRC_VMAX
-             call OPRT_diffusion( qtmp2    (:,:,:,nq), qtmp2_pl    (:,:,:,nq), &
-                                  qtmp_lap1(:,:,:,nq), qtmp_lap1_pl(:,:,:,nq), &
-                                  wk       (:,:,:),    wk_pl       (:,:,:)     )
+             call OPRT_diffusion( qtmp2    (:,:,:,nq), qtmp2_pl    (:,:,:,nq), & ! [OUT]
+                                  qtmp_lap1(:,:,:,nq), qtmp_lap1_pl(:,:,:,nq), & ! [IN]
+                                  wk       (:,:,:),    wk_pl       (:,:,:),    & ! [IN]
+                                  mfact=1.D0                                   ) ! [IN]
           enddo
 
           qtmp_lap1   (:,:,:,:) = -qtmp2   (:,:,:,:)
@@ -2179,13 +2196,13 @@ contains
     endif
 
     !--- 3D divergence divdamp
-    call OPRT3D_divdamp( vtmp2(:,:,:,1), vtmp2_pl(:,:,:,1), & !--- [OUT]
-                         vtmp2(:,:,:,2), vtmp2_pl(:,:,:,2), & !--- [OUT]
-                         vtmp2(:,:,:,3), vtmp2_pl(:,:,:,3), & !--- [OUT]
-                         rhogvx(:,:,:),  rhogvx_pl(:,:,:),  & !--- [IN]
-                         rhogvy(:,:,:),  rhogvy_pl(:,:,:),  & !--- [IN]
-                         rhogvz(:,:,:),  rhogvz_pl(:,:,:),  & !--- [IN]
-                         rhogw (:,:,:),  rhogw_pl (:,:,:)   ) !--- [IN]
+    call OPRT3D_divdamp( vtmp2(:,:,:,1), vtmp2_pl(:,:,:,1), & ! [OUT]
+                         vtmp2(:,:,:,2), vtmp2_pl(:,:,:,2), & ! [OUT]
+                         vtmp2(:,:,:,3), vtmp2_pl(:,:,:,3), & ! [OUT]
+                         rhogvx(:,:,:),  rhogvx_pl(:,:,:),  & ! [IN]
+                         rhogvy(:,:,:),  rhogvy_pl(:,:,:),  & ! [IN]
+                         rhogvz(:,:,:),  rhogvz_pl(:,:,:),  & ! [IN]
+                         rhogw (:,:,:),  rhogw_pl (:,:,:)   ) ! [IN]
 
     if ( lap_order_divdamp > 1 ) then
        do p = 1, lap_order_divdamp-1
@@ -2197,12 +2214,13 @@ contains
           vtmp_pl(:,:,:,:) = -vtmp2_pl(:,:,:,:)
 
           !--- 2D dinvergence divdamp
-          call OPRT_divdamp( vtmp2(:,:,:,1), vtmp2_pl(:,:,:,1), & !--- [OUT]
-                             vtmp2(:,:,:,2), vtmp2_pl(:,:,:,2), & !--- [OUT]
-                             vtmp2(:,:,:,3), vtmp2_pl(:,:,:,3), & !--- [OUT]
-                             vtmp (:,:,:,1), vtmp_pl (:,:,:,1), & !--- [IN]
-                             vtmp (:,:,:,2), vtmp_pl (:,:,:,2), & !--- [IN]
-                             vtmp (:,:,:,3), vtmp_pl (:,:,:,3)  ) !--- [IN]
+          call OPRT_divdamp( vtmp2(:,:,:,1), vtmp2_pl(:,:,:,1), & ! [OUT]
+                             vtmp2(:,:,:,2), vtmp2_pl(:,:,:,2), & ! [OUT]
+                             vtmp2(:,:,:,3), vtmp2_pl(:,:,:,3), & ! [OUT]
+                             vtmp (:,:,:,1), vtmp_pl (:,:,:,1), & ! [IN]
+                             vtmp (:,:,:,2), vtmp_pl (:,:,:,2), & ! [IN]
+                             vtmp (:,:,:,3), vtmp_pl (:,:,:,3), & ! [IN]
+                             mfact=1.D0                         ) ! [IN]
        enddo ! lap_order
     endif
 
@@ -2223,12 +2241,12 @@ contains
 
     if ( NUMFILTER_DOdivdamp_v ) then
 
-       call src_flux_convergence( rhogvx(:,:,:), rhogvx_pl(:,:,:), & !--- [IN]
-                                  rhogvy(:,:,:), rhogvy_pl(:,:,:), & !--- [IN]
-                                  rhogvz(:,:,:), rhogvz_pl(:,:,:), & !--- [IN]
-                                  rhogw (:,:,:), rhogw_pl (:,:,:), & !--- [IN]
-                                  cnv   (:,:,:), cnv_pl   (:,:,:), & !--- [OUT]
-                                  I_SRC_default                    ) !--- [IN]
+       call src_flux_convergence( rhogvx(:,:,:), rhogvx_pl(:,:,:), & ! [IN]
+                                  rhogvy(:,:,:), rhogvy_pl(:,:,:), & ! [IN]
+                                  rhogvz(:,:,:), rhogvz_pl(:,:,:), & ! [IN]
+                                  rhogw (:,:,:), rhogw_pl (:,:,:), & ! [IN]
+                                  cnv   (:,:,:), cnv_pl   (:,:,:), & ! [OUT]
+                                  I_SRC_default                    ) ! [IN]
 
        do l = 1, ADM_lall
           do k = ADM_kmin+1, ADM_kmax
@@ -2317,13 +2335,13 @@ contains
     endif
 
     !--- 2D dinvergence divdamp
-    call OPRT_divdamp( vtmp2(:,:,:,1), vtmp2_pl(:,:,:,1), & !--- [OUT]
-                       vtmp2(:,:,:,2), vtmp2_pl(:,:,:,2), & !--- [OUT]
-                       vtmp2(:,:,:,3), vtmp2_pl(:,:,:,3), & !--- [OUT]
-                       rhogvx(:,:,:),  rhogvx_pl(:,:,:),  & !--- [IN]
-                       rhogvy(:,:,:),  rhogvy_pl(:,:,:),  & !--- [IN]
-                       rhogvz(:,:,:),  rhogvz_pl(:,:,:)   ) !--- [IN]
-
+    call OPRT_divdamp( vtmp2(:,:,:,1), vtmp2_pl(:,:,:,1), & ! [OUT]
+                       vtmp2(:,:,:,2), vtmp2_pl(:,:,:,2), & ! [OUT]
+                       vtmp2(:,:,:,3), vtmp2_pl(:,:,:,3), & ! [OUT]
+                       rhogvx(:,:,:),  rhogvx_pl(:,:,:),  & ! [IN]
+                       rhogvy(:,:,:),  rhogvy_pl(:,:,:),  & ! [IN]
+                       rhogvz(:,:,:),  rhogvz_pl(:,:,:),  & ! [IN]
+                       mfact=1.D0                         ) ! [IN]
     if ( lap_order_divdamp_2d > 1 ) then
        do p = 1, lap_order_divdamp_2d-1
 
@@ -2334,12 +2352,13 @@ contains
           vtmp_pl(:,:,:,:) = -vtmp2_pl(:,:,:,:)
 
           !--- 2D dinvergence divdamp
-          call OPRT_divdamp( vtmp2(:,:,:,1), vtmp2_pl(:,:,:,1), & !--- [OUT]
-                             vtmp2(:,:,:,2), vtmp2_pl(:,:,:,2), & !--- [OUT]
-                             vtmp2(:,:,:,3), vtmp2_pl(:,:,:,3), & !--- [OUT]
-                             vtmp (:,:,:,1), vtmp_pl (:,:,:,1), & !--- [IN]
-                             vtmp (:,:,:,2), vtmp_pl (:,:,:,2), & !--- [IN]
-                             vtmp (:,:,:,3), vtmp_pl (:,:,:,3)  ) !--- [IN]
+          call OPRT_divdamp( vtmp2(:,:,:,1), vtmp2_pl(:,:,:,1), & ! [OUT]
+                             vtmp2(:,:,:,2), vtmp2_pl(:,:,:,2), & ! [OUT]
+                             vtmp2(:,:,:,3), vtmp2_pl(:,:,:,3), & ! [OUT]
+                             vtmp (:,:,:,1), vtmp_pl (:,:,:,1), & ! [IN]
+                             vtmp (:,:,:,2), vtmp_pl (:,:,:,2), & ! [IN]
+                             vtmp (:,:,:,3), vtmp_pl (:,:,:,3), & ! [IN]
+                             mfact=1.D0                         ) ! [IN]
 
        enddo ! lap_order
     endif
@@ -2416,8 +2435,9 @@ contains
           vtmp2   (:,:,:,:) = 0.D0
           vtmp2_pl(:,:,:,:) = 0.D0
 
-          call OPRT_laplacian( vtmp2(:,:,:,1), vtmp2_pl(:,:,:,1), & !--- [OUT]
-                               vtmp (:,:,:,1), vtmp_pl (:,:,:,1)  ) !--- [IN]
+          call OPRT_laplacian( vtmp2(:,:,:,1), vtmp2_pl(:,:,:,1), & ! [OUT]
+                               vtmp (:,:,:,1), vtmp_pl (:,:,:,1), & ! [IN]
+                               mfact=1.D0                         ) ! [IN]
 
           vtmp   (:,:,:,:) = -vtmp2   (:,:,:,:)
           vtmp_pl(:,:,:,:) = -vtmp2_pl(:,:,:,:)
