@@ -69,6 +69,8 @@ cat << EOFNHM > ${BINNAME}.cnf
     hgrid_fname     = "boundary_${res2d}",
     VGRID_fname     = "${VGRID}",
     topo_fname      = "Jablonowski",
+    vgrid_scheme    = "HYBRID",
+    h_efold         = 40000,1q
 /
 
 ###--- for FULL RUN (11 days): LSTEP_MAX = 792
@@ -96,6 +98,15 @@ cat << EOFNHM > ${BINNAME}.cnf
     ref_type = 'NOBASE',
 /
 
+###--- Jablonowski Specified Values
+&CNSTPARAM
+    earth_radius      = 6.371229d+6,
+    earth_angvel      = 7.29212d-5,
+    earth_gravity     = 9.80616d0,
+    gas_cnst          = 287.0d0,
+    specific_heat_pre = 1004.5d0,
+/
+
 &NUMFILTERPARAM
     hdiff_type        = 'DIRECT',
     lap_order_hdiff   = 2,
@@ -111,20 +122,22 @@ cat << EOFNHM > ${BINNAME}.cnf
     input_io_mode     = 'IDEAL',
     output_io_mode    = 'ADVANCED',
     output_basename   = 'restart_all_${res3d}',
-    restart_layername = 'ZSALL${ZLp2}',
+    restart_layername = 'ZSALL${ZLp2}T',
 /
 
 &DYCORETESTPARAM
     init_type = 'Jablonowski',
     test_case = '1'
 /
+# test_case = 1: with initial perturbation
+#             2: without initial perturbation
 
 &EMBUDGETPARAM MNT_ON = .true., MNT_INTV = ${NHIST} /
 
 &NMHISD
     output_io_mode    = 'ADVANCED' ,
     histall_fname     = 'history'  ,
-    hist3D_layername  = 'ZSDEF${ZL}',
+    hist3D_layername  = 'ZSDEF${ZL}T',
     DIRECT_ACCESS     = .true.     ,
     NO_VINTRPL        = .false.    ,
     output_type       = 'SNAPSHOT' ,
