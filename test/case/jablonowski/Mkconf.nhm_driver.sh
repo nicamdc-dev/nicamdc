@@ -70,7 +70,7 @@ cat << EOFNHM > ${BINNAME}.cnf
     VGRID_fname     = "${VGRID}",
     topo_fname      = "Jablonowski",
     vgrid_scheme    = "HYBRID",
-    h_efold         = 40000,1q
+    h_efold         = 40000,
 /
 
 ###--- for FULL RUN (11 days): LSTEP_MAX = 792
