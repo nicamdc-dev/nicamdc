@@ -231,6 +231,7 @@ contains
 
     real(8) :: dT, f, df
     real(8) :: lat, lon
+    real(8) :: eps_hs = 1.0d-7
 
     integer :: n, k, l, itr
     !---------------------------------------------------------------------------
@@ -273,7 +274,7 @@ contains
                  * ( pre(k)/PRE00 )**KAPPA
           tem(k) = max( 200.D0, tem(k) )
 
-          if( abs(pre_save-pre(k)) <= eps ) exit
+          if( abs(pre_save-pre(k)) <= eps_hs ) exit
        enddo
 
        if ( itr > itrmax ) then
@@ -303,7 +304,7 @@ contains
                     * ( pre(k)/PRE00 )**KAPPA
              tem(k) = max( 200.D0, tem(k) )
 
-             if( abs(pre_save-pre(k)) <= eps ) exit
+             if( abs(pre_save-pre(k)) <= eps_hs ) exit
 
           enddo
 
