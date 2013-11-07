@@ -6,15 +6,15 @@
 module mod_vi
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
+  !++ Description:
   !       This module is for the vertical implicit scheme of non-hydorostatic
   !       model.
-  !       
-  ! 
+  !
+  !
   !++ Current Corresponding Author : H.Tomita
-  ! 
-  !++ History: 
-  !      Version   Date       Comment 
+  !
+  !++ History:
+  !      Version   Date       Comment
   !      -----------------------------------------------------------------------
   !      0.00      04-02-17   Imported from igdc-4.34
   !                06-08-11   Add averaged rhog for tracer advection.
@@ -162,7 +162,7 @@ contains
        VMTR_RGSGAM2,     &
        VMTR_RGSGAM2_pl
     use mod_runconf, only: &
-       NON_HYDRO_ALPHA 
+       NON_HYDRO_ALPHA
     use mod_bndcnd, only: &
        BNDCND_rhovxvyvz
     use mod_numfilter, only: &
@@ -668,7 +668,7 @@ contains
              enddo
           enddo
 
-          if ( ADM_prc_me == ADM_prc_pl ) then       
+          if ( ADM_prc_me == ADM_prc_pl ) then
              do l = 1, ADM_lall_pl
                 do k = 1, ADM_kall
                    do ij = 1, ADM_gall_pl
@@ -938,8 +938,8 @@ contains
     use mod_time, only: &
        TIME_SPLIT
     use mod_vmtr, only: &
-       VMTR_C2Wfact,    &
-       VMTR_C2Wfact_pl
+       VMTR_C2Wfact_Gz,    &
+       VMTR_C2Wfact_Gz_pl
     use mod_src, only: &
        src_flux_convergence,      &
        src_advection_convergence, &
@@ -1054,29 +1054,29 @@ contains
                              rhogkin0, rhogkin0_pl ) !--- [OUT]
 
     ! prognostic variables ( large step + split (t=n) )
-    do l = 1, ADM_lall
-       do k = 1, ADM_kall
-          do ij = 1, ADM_gall
-             wk_rhog  (ij,k,l) = rhog  (ij,k,l) + rhog_split  (ij,k,l)
-             wk_rhogvx(ij,k,l) = rhogvx(ij,k,l) + rhogvx_split(ij,k,l)
-             wk_rhogvy(ij,k,l) = rhogvy(ij,k,l) + rhogvy_split(ij,k,l)
-             wk_rhogvz(ij,k,l) = rhogvz(ij,k,l) + rhogvz_split(ij,k,l)
-             wk_rhogw (ij,k,l) = rhogw (ij,k,l) + rhogw_split (ij,k,l)
-          enddo
-       enddo
+    do l  = 1, ADM_lall
+    do k  = 1, ADM_kall
+    do ij = 1, ADM_gall
+       wk_rhog  (ij,k,l) = rhog  (ij,k,l) + rhog_split  (ij,k,l)
+       wk_rhogvx(ij,k,l) = rhogvx(ij,k,l) + rhogvx_split(ij,k,l)
+       wk_rhogvy(ij,k,l) = rhogvy(ij,k,l) + rhogvy_split(ij,k,l)
+       wk_rhogvz(ij,k,l) = rhogvz(ij,k,l) + rhogvz_split(ij,k,l)
+       wk_rhogw (ij,k,l) = rhogw (ij,k,l) + rhogw_split (ij,k,l)
+    enddo
+    enddo
     enddo
 
     if ( ADM_prc_me == ADM_prc_pl ) then
-       do l = 1, ADM_lall_pl
-          do k = 1, ADM_kall
-             do ij = 1, ADM_gall_pl
-                wk_rhog_pl  (ij,k,l) = rhog_pl  (ij,k,l) + rhog_split_pl  (ij,k,l)
-                wk_rhogvx_pl(ij,k,l) = rhogvx_pl(ij,k,l) + rhogvx_split_pl(ij,k,l)
-                wk_rhogvy_pl(ij,k,l) = rhogvy_pl(ij,k,l) + rhogvy_split_pl(ij,k,l)
-                wk_rhogvz_pl(ij,k,l) = rhogvz_pl(ij,k,l) + rhogvz_split_pl(ij,k,l)
-                wk_rhogw_pl (ij,k,l) = rhogw_pl (ij,k,l) + rhogw_split_pl (ij,k,l)
-             enddo
-          enddo
+       do l  = 1, ADM_lall_pl
+       do k  = 1, ADM_kall
+       do ij = 1, ADM_gall_pl
+          wk_rhog_pl  (ij,k,l) = rhog_pl  (ij,k,l) + rhog_split_pl  (ij,k,l)
+          wk_rhogvx_pl(ij,k,l) = rhogvx_pl(ij,k,l) + rhogvx_split_pl(ij,k,l)
+          wk_rhogvy_pl(ij,k,l) = rhogvy_pl(ij,k,l) + rhogvy_split_pl(ij,k,l)
+          wk_rhogvz_pl(ij,k,l) = rhogvz_pl(ij,k,l) + rhogvz_split_pl(ij,k,l)
+          wk_rhogw_pl (ij,k,l) = rhogw_pl (ij,k,l) + rhogw_split_pl (ij,k,l)
+       enddo
+       enddo
        enddo
     endif
 
@@ -1159,7 +1159,7 @@ contains
                          rhogvy_split2(:,:,l),   & !--- [IN]
                          rhogvz_split2(:,:,l),   & !--- [IN]
                          rhogw_split2 (:,:,l),   & !--- [INOUT]
-                         VMTR_C2Wfact (:,:,:,l)  ) !--- [IN]
+                         VMTR_C2Wfact_Gz (:,:,:,l)  ) !--- [IN]
     enddo
 
     if ( ADM_prc_me == ADM_prc_pl ) then
@@ -1175,7 +1175,7 @@ contains
                             rhogvy_split2_pl(:,:,l),   & !--- [IN]
                             rhogvz_split2_pl(:,:,l),   & !--- [IN]
                             rhogw_split2_pl (:,:,l),   & !--- [INOUT]
-                            VMTR_C2Wfact_pl (:,:,:,l)  ) !--- [IN]
+                            VMTR_C2Wfact_Gz_pl (:,:,:,l)  ) !--- [IN]
        enddo
     endif
 
@@ -1236,7 +1236,7 @@ contains
                   + rhogkin0(:,:,:) / rhog(:,:,:) &
                   + phi(:,:,:)
 
-    if ( ADM_prc_me == ADM_prc_pl ) then    
+    if ( ADM_prc_me == ADM_prc_pl ) then
        ethtot_pl(:,:,:) = eth_pl(:,:,:)                       &
                         + rhogkin0_pl(:,:,:) / rhog_pl(:,:,:) &
                         + phi_pl(:,:,:)
@@ -1259,7 +1259,7 @@ contains
                         + ( rhog_split     (:,:,:)                 & ! potential energy (diff,t=n)
                           - rhog_split2    (:,:,:) ) * phi(:,:,:)    ! potential energy (diff,t=n+1)
 
-    if ( ADM_prc_me == ADM_prc_pl ) then       
+    if ( ADM_prc_me == ADM_prc_pl ) then
        rhoge_split2_pl(:,:,:) = rhoge_split_pl      (:,:,:)                    &
                               + ( grhogetot_pl      (:,:,:)                    &
                                 + drhogetot_split_pl(:,:,:) ) * dt             &
@@ -1454,7 +1454,7 @@ contains
   end subroutine vi_rhow_update_matrix
 
   !-----------------------------------------------------------------------------
-  subroutine vi_rhow( & 
+  subroutine vi_rhow( &
        rhogw_new, rhogw_new_pl, & !--- [INOUT]
        rhogw,     rhogw_pl,     & !--- [IN]
        preg,      preg_pl,      & !--- [IN]

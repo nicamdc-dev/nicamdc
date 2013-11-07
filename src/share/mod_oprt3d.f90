@@ -9,7 +9,7 @@
 !!
 !! @par History
 !! @li      2004-02-17 (H.Tomita)    Imported from igdc-4.33
-!! @li      2011-09-27 (T.Seiki)     merge optimization by RIST and M.Terai 
+!! @li      2011-09-27 (T.Seiki)     merge optimization by RIST and M.Terai
 !!
 !<
 module mod_oprt3d
@@ -115,8 +115,8 @@ contains
        VMTR_RGAMH_pl,   &
        VMTR_RGSH,       &
        VMTR_RGSH_pl,    &
-       VMTR_C2Wfact,    &
-       VMTR_C2Wfact_pl
+       VMTR_C2Wfact_Gz,    &
+       VMTR_C2Wfact_Gz_pl
     implicit none
 
     real(8), intent(out) :: grdx     (ADM_gall,   ADM_kall,ADM_lall   )
@@ -175,14 +175,14 @@ contains
     do l = 1, ADM_lall
        do k = ADM_kmin+1, ADM_kmax
        do n = 1, ADM_gall
-          rhogw_vm(n,k) = ( VMTR_C2Wfact(1,n,k,l) * rhogvx(n,k  ,l) &
-                          + VMTR_C2Wfact(2,n,k,l) * rhogvx(n,k-1,l) &
-                          + VMTR_C2Wfact(3,n,k,l) * rhogvy(n,k  ,l) &
-                          + VMTR_C2Wfact(4,n,k,l) * rhogvy(n,k-1,l) &
-                          + VMTR_C2Wfact(5,n,k,l) * rhogvz(n,k  ,l) &
-                          + VMTR_C2Wfact(6,n,k,l) * rhogvz(n,k-1,l) &
-                          ) * VMTR_RGAMH(n,k,l)                     & ! horizontal contribution
-                        + rhogw(n,k,l) * VMTR_RGSH(n,k,l)             ! vertical   contribution
+          rhogw_vm(n,k) = ( VMTR_C2Wfact_Gz(1,n,k,l) * rhogvx(n,k  ,l) &
+                          + VMTR_C2Wfact_Gz(2,n,k,l) * rhogvx(n,k-1,l) &
+                          + VMTR_C2Wfact_Gz(3,n,k,l) * rhogvy(n,k  ,l) &
+                          + VMTR_C2Wfact_Gz(4,n,k,l) * rhogvy(n,k-1,l) &
+                          + VMTR_C2Wfact_Gz(5,n,k,l) * rhogvz(n,k  ,l) &
+                          + VMTR_C2Wfact_Gz(6,n,k,l) * rhogvz(n,k-1,l) &
+                          ) * VMTR_RGAMH(n,k,l)                        & ! horizontal contribution
+                        + rhogw(n,k,l) * VMTR_RGSH(n,k,l)                ! vertical   contribution
        enddo
        enddo
 
@@ -317,14 +317,14 @@ contains
 
           do k = ADM_kmin+1, ADM_kmax
           do n = 1, ADM_gall_pl
-             rhogw_vm_pl(n,k) = ( VMTR_C2Wfact_pl(1,n,k,l) * rhogvx_pl(n,k  ,l) &
-                                + VMTR_C2Wfact_pl(2,n,k,l) * rhogvx_pl(n,k-1,l) &
-                                + VMTR_C2Wfact_pl(3,n,k,l) * rhogvy_pl(n,k  ,l) &
-                                + VMTR_C2Wfact_pl(4,n,k,l) * rhogvy_pl(n,k-1,l) &
-                                + VMTR_C2Wfact_pl(5,n,k,l) * rhogvz_pl(n,k  ,l) &
-                                + VMTR_C2Wfact_pl(6,n,k,l) * rhogvz_pl(n,k-1,l) &
-                                ) * VMTR_RGAMH_pl(n,k,l)                        & ! horizontal contribution
-                              + rhogw_pl(n,k,l) * VMTR_RGSH_pl(n,k,l)             ! vertical   contribution
+             rhogw_vm_pl(n,k) = ( VMTR_C2Wfact_Gz_pl(1,n,k,l) * rhogvx_pl(n,k  ,l) &
+                                + VMTR_C2Wfact_Gz_pl(2,n,k,l) * rhogvx_pl(n,k-1,l) &
+                                + VMTR_C2Wfact_Gz_pl(3,n,k,l) * rhogvy_pl(n,k  ,l) &
+                                + VMTR_C2Wfact_Gz_pl(4,n,k,l) * rhogvy_pl(n,k-1,l) &
+                                + VMTR_C2Wfact_Gz_pl(5,n,k,l) * rhogvz_pl(n,k  ,l) &
+                                + VMTR_C2Wfact_Gz_pl(6,n,k,l) * rhogvz_pl(n,k-1,l) &
+                                ) * VMTR_RGAMH_pl(n,k,l)                           & ! horizontal contribution
+                              + rhogw_pl(n,k,l) * VMTR_RGSH_pl(n,k,l)                ! vertical   contribution
           enddo
           enddo
 

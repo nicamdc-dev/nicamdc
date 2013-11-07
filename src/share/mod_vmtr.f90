@@ -33,6 +33,9 @@ module mod_vmtr
   !
 
   ! index for VMTR_C2Wfact
+  integer, public, parameter :: I_a = 1
+  integer, public, parameter :: I_b = 2
+
   integer, public, parameter :: I_a_GZXH = 1
   integer, public, parameter :: I_b_GZXH = 2
   integer, public, parameter :: I_a_GZYH = 3
@@ -112,6 +115,10 @@ module mod_vmtr
   !--- geopotential at the integer level
   real(8), public, allocatable, save :: VMTR_PHI   (:,:,:)
   real(8), public, allocatable, save :: VMTR_PHI_pl(:,:,:)
+
+  !--- factor for integer to half integer level w/ Gz
+  real(8), public, allocatable, save :: VMTR_C2Wfact_Gz   (:,:,:,:)
+  real(8), public, allocatable, save :: VMTR_C2Wfact_Gz_pl(:,:,:,:)
 
   !--- factor for integer to half integer level
   real(8), public, allocatable, save :: VMTR_C2Wfact   (:,:,:,:)
@@ -202,7 +209,7 @@ contains
     integer :: ierr
     integer :: n, k, l
     integer :: i, j, suf
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i) 
+    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -280,8 +287,11 @@ contains
     allocate( VMTR_PHI        (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_PHI_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
 
-    allocate( VMTR_C2Wfact   (6,ADM_gall,   ADM_kall,ADM_lall   ) )
-    allocate( VMTR_C2Wfact_pl(6,ADM_gall_pl,ADM_kall,ADM_lall_pl) )
+    allocate( VMTR_C2Wfact_Gz   (6,ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( VMTR_C2Wfact_Gz_pl(6,ADM_gall_pl,ADM_kall,ADM_lall_pl) )
+
+    allocate( VMTR_C2Wfact      (2,ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( VMTR_C2Wfact_pl   (2,ADM_gall_pl,ADM_kall,ADM_lall_pl) )
 
     !--- if 1 layer model( shallow water model ),
     if ( ADM_kall == ADM_KNONE ) then
@@ -432,18 +442,21 @@ contains
        do k = ADM_kmin, ADM_kall
        do n = 1, ADM_gall
           !--- calculation of factor for integer to half integer level with Gz
-          VMTR_C2Wfact(I_a_GZXH,n,k,l) = 0.5D0 * GRD_afac(k) / VMTR_GSGAM2(n,k  ,l) * VMTR_GSGAM2H(n,k,l) &
-                                       * VMTR_GZXH(n,k,l)
-          VMTR_C2Wfact(I_b_GZXH,n,k,l) = 0.5D0 * GRD_bfac(k) / VMTR_GSGAM2(n,k-1,l) * VMTR_GSGAM2H(n,k,l) &
-                                       * VMTR_GZXH(n,k,l)
-          VMTR_C2Wfact(I_a_GZYH,n,k,l) = 0.5D0 * GRD_afac(k) / VMTR_GSGAM2(n,k  ,l) * VMTR_GSGAM2H(n,k,l) &
-                                       * VMTR_GZYH(n,k,l)
-          VMTR_C2Wfact(I_b_GZYH,n,k,l) = 0.5D0 * GRD_bfac(k) / VMTR_GSGAM2(n,k-1,l) * VMTR_GSGAM2H(n,k,l) &
-                                       * VMTR_GZYH(n,k,l)
-          VMTR_C2Wfact(I_a_GZZH,n,k,l) = 0.5D0 * GRD_afac(k) / VMTR_GSGAM2(n,k  ,l) * VMTR_GSGAM2H(n,k,l) &
-                                       * VMTR_GZZH(n,k,l)
-          VMTR_C2Wfact(I_b_GZZH,n,k,l) = 0.5D0 * GRD_bfac(k) / VMTR_GSGAM2(n,k-1,l) * VMTR_GSGAM2H(n,k,l) &
-                                       * VMTR_GZZH(n,k,l)
+          VMTR_C2Wfact_Gz(I_a_GZXH,n,k,l) = 0.5D0 * GRD_afac(k) / VMTR_GSGAM2(n,k  ,l) * VMTR_GSGAM2H(n,k,l) &
+                                          * VMTR_GZXH(n,k,l)
+          VMTR_C2Wfact_Gz(I_b_GZXH,n,k,l) = 0.5D0 * GRD_bfac(k) / VMTR_GSGAM2(n,k-1,l) * VMTR_GSGAM2H(n,k,l) &
+                                          * VMTR_GZXH(n,k,l)
+          VMTR_C2Wfact_Gz(I_a_GZYH,n,k,l) = 0.5D0 * GRD_afac(k) / VMTR_GSGAM2(n,k  ,l) * VMTR_GSGAM2H(n,k,l) &
+                                          * VMTR_GZYH(n,k,l)
+          VMTR_C2Wfact_Gz(I_b_GZYH,n,k,l) = 0.5D0 * GRD_bfac(k) / VMTR_GSGAM2(n,k-1,l) * VMTR_GSGAM2H(n,k,l) &
+                                          * VMTR_GZYH(n,k,l)
+          VMTR_C2Wfact_Gz(I_a_GZZH,n,k,l) = 0.5D0 * GRD_afac(k) / VMTR_GSGAM2(n,k  ,l) * VMTR_GSGAM2H(n,k,l) &
+                                          * VMTR_GZZH(n,k,l)
+          VMTR_C2Wfact_Gz(I_b_GZZH,n,k,l) = 0.5D0 * GRD_bfac(k) / VMTR_GSGAM2(n,k-1,l) * VMTR_GSGAM2H(n,k,l) &
+                                          * VMTR_GZZH(n,k,l)
+
+          VMTR_C2Wfact(I_a,n,k,l) = 0.5D0 * GRD_afac(k) / VMTR_GSGAM2(n,k  ,l) * VMTR_GSGAM2H(n,k,l)
+          VMTR_C2Wfact(I_b,n,k,l) = 0.5D0 * GRD_bfac(k) / VMTR_GSGAM2(n,k-1,l) * VMTR_GSGAM2H(n,k,l)
        enddo
        enddo
     enddo
@@ -560,6 +573,9 @@ contains
                                           * VMTR_GSGAM2H_pl(n,k,l) / VMTR_GSGAM2_pl(n,k  ,l) * VMTR_GZZH_pl(n,k,l)
           VMTR_C2Wfact_pl(I_b_GZZH,n,k,l) = 0.5D0 * GRD_bfac(k) &
                                           * VMTR_GSGAM2H_pl(n,k,l) / VMTR_GSGAM2_pl(n,k-1,l) * VMTR_GZZH_pl(n,k,l)
+
+          VMTR_C2Wfact_pl(I_a,n,k,l) = 0.5D0 * GRD_afac(k) / VMTR_GSGAM2_pl(n,k  ,l) * VMTR_GSGAM2H_pl(n,k,l)
+          VMTR_C2Wfact_pl(I_b,n,k,l) = 0.5D0 * GRD_bfac(k) / VMTR_GSGAM2_pl(n,k-1,l) * VMTR_GSGAM2H_pl(n,k,l)
        enddo
        enddo
 

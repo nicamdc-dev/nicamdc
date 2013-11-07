@@ -6,15 +6,15 @@
 module mod_src
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
+  !++ Description:
   !       This module is for the caluculation of source terms
   !       in the nhm-model.
-  !       
-  ! 
+  !
+  !
   !++ Current Corresponding Author : H.Tomita
-  ! 
-  !++ History: 
-  !      Version   Date       Comment 
+  !
+  !++ History:
+  !      Version   Date       Comment
   !      -----------------------------------------------------------------------
   !      0.00      04-02-17   Imported from igdc-4.34
   !                06-08-11   Add sub[src_update_tracer] for tracer advection.
@@ -23,7 +23,7 @@ module mod_src
   !                                     apply the limiter from rho q to q.
   !                07-11-14   Y.Niwa: bug fix /rho_h => /rho_h_pl
   !                08-01-24   Y.Niwa: add src_update_tracer
-  !                08-04-28   Y.Niwa: add initialization and avoid zero-dividing. 
+  !                08-04-28   Y.Niwa: add initialization and avoid zero-dividing.
   !                09-05-26   Y.Yamada: add directive, derected by T.Asano
   !                11-09-27   T.Seiki: merge optimized routines for K by RIST and M.Terai
   !                12-03-29   T.Yamaura: optimized for K
@@ -71,7 +71,7 @@ module mod_src
 contains
   !-----------------------------------------------------------------------------
   !> Advection convergence for momentum
-  subroutine src_advection_convergence_momentum( &  
+  subroutine src_advection_convergence_momentum( &
        vx,      vx_pl,      &
        vy,      vy_pl,      &
        vz,      vz_pl,      &
@@ -150,7 +150,7 @@ contains
     real(8) :: vvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8) :: vvz   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8) :: vvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
- 
+
     real(8) :: dvvx   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8) :: dvvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8) :: dvvy   (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -280,7 +280,7 @@ contains
        grhogw (:,ADM_kmin  ,l) = 0.D0
        grhogw (:,ADM_kmax+1,l) = 0.D0
     enddo
- 
+
     if ( ADM_prc_me == ADM_prc_pl ) then
        do l = 1, ADM_lall_pl
           !---< coriolis force >
@@ -439,7 +439,7 @@ contains
 
   !-----------------------------------------------------------------------------
   !> Flux convergence calculation
-  !! 1. Horizontal flux convergence is calculated by using rhovx, rhovy, and 
+  !! 1. Horizontal flux convergence is calculated by using rhovx, rhovy, and
   !!    rhovz which are defined at cell center (vertical) and A-grid (horizontal).
   !! 2. Vertical flux convergence is calculated by using rhovx, rhovy, rhovz, and rhow.
   !! 3. rhovx, rhovy, and rhovz can be replaced by rhovx*h, rhovy*h, and rhovz*h, respectively.
@@ -470,8 +470,8 @@ contains
        VMTR_RGAMH_pl,   &
        VMTR_RGSH,       &
        VMTR_RGSH_pl,    &
-       VMTR_C2Wfact,    &
-       VMTR_C2Wfact_pl
+       VMTR_C2Wfact_Gz,    &
+       VMTR_C2Wfact_Gz_pl
     use mod_oprt, only: &
        OPRT_divergence
     implicit none
@@ -526,12 +526,12 @@ contains
        do l = 1, ADM_lall
        do k = ADM_kmin+1, ADM_kmax
        do g = 1, ADM_gall
-          rhogw_vm(g,k,l) = ( VMTR_C2Wfact(1,g,k,l) * rhogvx(g,k  ,l) &
-                            + VMTR_C2Wfact(2,g,k,l) * rhogvx(g,k-1,l) &
-                            + VMTR_C2Wfact(3,g,k,l) * rhogvy(g,k  ,l) &
-                            + VMTR_C2Wfact(4,g,k,l) * rhogvy(g,k-1,l) &
-                            + VMTR_C2Wfact(5,g,k,l) * rhogvz(g,k  ,l) &
-                            + VMTR_C2Wfact(6,g,k,l) * rhogvz(g,k-1,l) &
+          rhogw_vm(g,k,l) = ( VMTR_C2Wfact_Gz(1,g,k,l) * rhogvx(g,k  ,l) &
+                            + VMTR_C2Wfact_Gz(2,g,k,l) * rhogvx(g,k-1,l) &
+                            + VMTR_C2Wfact_Gz(3,g,k,l) * rhogvy(g,k  ,l) &
+                            + VMTR_C2Wfact_Gz(4,g,k,l) * rhogvy(g,k-1,l) &
+                            + VMTR_C2Wfact_Gz(5,g,k,l) * rhogvz(g,k  ,l) &
+                            + VMTR_C2Wfact_Gz(6,g,k,l) * rhogvz(g,k-1,l) &
                             ) * VMTR_RGAMH(g,k,l) ! horizontal contribution
        enddo
        enddo
@@ -545,12 +545,12 @@ contains
           do l = 1, ADM_lall_pl
           do k = ADM_kmin+1, ADM_kmax
           do g = 1, ADM_gall_pl
-             rhogw_vm_pl(g,k,l) = ( VMTR_C2Wfact_pl(1,g,k,l) * rhogvx_pl(g,k  ,l) &
-                                  + VMTR_C2Wfact_pl(2,g,k,l) * rhogvx_pl(g,k-1,l) &
-                                  + VMTR_C2Wfact_pl(3,g,k,l) * rhogvy_pl(g,k  ,l) &
-                                  + VMTR_C2Wfact_pl(4,g,k,l) * rhogvy_pl(g,k-1,l) &
-                                  + VMTR_C2Wfact_pl(5,g,k,l) * rhogvz_pl(g,k  ,l) &
-                                  + VMTR_C2Wfact_pl(6,g,k,l) * rhogvz_pl(g,k-1,l) &
+             rhogw_vm_pl(g,k,l) = ( VMTR_C2Wfact_Gz_pl(1,g,k,l) * rhogvx_pl(g,k  ,l) &
+                                  + VMTR_C2Wfact_Gz_pl(2,g,k,l) * rhogvx_pl(g,k-1,l) &
+                                  + VMTR_C2Wfact_Gz_pl(3,g,k,l) * rhogvy_pl(g,k  ,l) &
+                                  + VMTR_C2Wfact_Gz_pl(4,g,k,l) * rhogvy_pl(g,k-1,l) &
+                                  + VMTR_C2Wfact_Gz_pl(5,g,k,l) * rhogvz_pl(g,k  ,l) &
+                                  + VMTR_C2Wfact_Gz_pl(6,g,k,l) * rhogvz_pl(g,k-1,l) &
                                   ) * VMTR_RGAMH_pl(g,k,l) ! horizontal contribution
           enddo
           enddo
@@ -598,12 +598,12 @@ contains
        do l = 1, ADM_lall
        do k = ADM_kmin+1, ADM_kmax
        do g = 1, ADM_gall
-          rhogw_vm(g,k,l) = ( VMTR_C2Wfact(1,g,k,l) * rhogvx(g,k  ,l) &
-                            + VMTR_C2Wfact(2,g,k,l) * rhogvx(g,k-1,l) &
-                            + VMTR_C2Wfact(3,g,k,l) * rhogvy(g,k  ,l) &
-                            + VMTR_C2Wfact(4,g,k,l) * rhogvy(g,k-1,l) &
-                            + VMTR_C2Wfact(5,g,k,l) * rhogvz(g,k  ,l) &
-                            + VMTR_C2Wfact(6,g,k,l) * rhogvz(g,k-1,l) &
+          rhogw_vm(g,k,l) = ( VMTR_C2Wfact_Gz(1,g,k,l) * rhogvx(g,k  ,l) &
+                            + VMTR_C2Wfact_Gz(2,g,k,l) * rhogvx(g,k-1,l) &
+                            + VMTR_C2Wfact_Gz(3,g,k,l) * rhogvy(g,k  ,l) &
+                            + VMTR_C2Wfact_Gz(4,g,k,l) * rhogvy(g,k-1,l) &
+                            + VMTR_C2Wfact_Gz(5,g,k,l) * rhogvz(g,k  ,l) &
+                            + VMTR_C2Wfact_Gz(6,g,k,l) * rhogvz(g,k-1,l) &
                             ) * VMTR_RGAMH(g,k,l)                     & ! horizontal contribution
                           + rhogw(g,k,l) * VMTR_RGSH(g,k,l)             ! vertical   contribution
        enddo
@@ -618,12 +618,12 @@ contains
           do l = 1, ADM_lall_pl
           do k = ADM_kmin+1, ADM_kmax
           do g = 1, ADM_gall_pl
-             rhogw_vm_pl(g,k,l) = ( VMTR_C2Wfact_pl(1,g,k,l) * rhogvx_pl(g,k  ,l) &
-                                  + VMTR_C2Wfact_pl(2,g,k,l) * rhogvx_pl(g,k-1,l) &
-                                  + VMTR_C2Wfact_pl(3,g,k,l) * rhogvy_pl(g,k  ,l) &
-                                  + VMTR_C2Wfact_pl(4,g,k,l) * rhogvy_pl(g,k-1,l) &
-                                  + VMTR_C2Wfact_pl(5,g,k,l) * rhogvz_pl(g,k  ,l) &
-                                  + VMTR_C2Wfact_pl(6,g,k,l) * rhogvz_pl(g,k-1,l) &
+             rhogw_vm_pl(g,k,l) = ( VMTR_C2Wfact_Gz_pl(1,g,k,l) * rhogvx_pl(g,k  ,l) &
+                                  + VMTR_C2Wfact_Gz_pl(2,g,k,l) * rhogvx_pl(g,k-1,l) &
+                                  + VMTR_C2Wfact_Gz_pl(3,g,k,l) * rhogvy_pl(g,k  ,l) &
+                                  + VMTR_C2Wfact_Gz_pl(4,g,k,l) * rhogvy_pl(g,k-1,l) &
+                                  + VMTR_C2Wfact_Gz_pl(5,g,k,l) * rhogvz_pl(g,k  ,l) &
+                                  + VMTR_C2Wfact_Gz_pl(6,g,k,l) * rhogvz_pl(g,k-1,l) &
                                   ) * VMTR_RGAMH_pl(g,k,l)                        & ! horizontal contribution
                                 + rhogw_pl(g,k,l) * VMTR_RGSH_pl(g,k,l)             ! vertical   contribution
           enddo
@@ -703,8 +703,8 @@ contains
        VMTR_RGSGAM2_pl, &
        VMTR_GAM2H,      &
        VMTR_GAM2H_pl,   &
-       VMTR_C2Wfact,    &
-       VMTR_C2Wfact_pl
+       VMTR_C2Wfact_Gz,    &
+       VMTR_C2Wfact_Gz_pl
     use mod_oprt, only: &
        OPRT_gradient,          &
        OPRT_horizontalize_vec
@@ -743,7 +743,7 @@ contains
     !------ horizontal gradient without mountain
     gee(:,:,:) = e(:,:,:) * VMTR_RGAM(:,:,:)
     if ( ADM_prc_me == ADM_prc_pl) then
-       gee_pl(:,:,:) = e_pl(:,:,:) * VMTR_RGAM_pl(:,:,:) 
+       gee_pl(:,:,:) = e_pl(:,:,:) * VMTR_RGAM_pl(:,:,:)
     endif
 
     call OPRT_gradient( gex, gex_pl, & ! [OUT]
@@ -756,12 +756,12 @@ contains
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kmax+1
           do g = 1, ADM_gall
-             fex_h(g,k,l) = ( VMTR_C2Wfact(1,g,k,l) * e(g,k  ,l) &
-                            + VMTR_C2Wfact(2,g,k,l) * e(g,k-1,l) ) * VMTR_RGAMH(g,k,l)
-             fey_h(g,k,l) = ( VMTR_C2Wfact(3,g,k,l) * e(g,k  ,l) &
-                            + VMTR_C2Wfact(4,g,k,l) * e(g,k-1,l) ) * VMTR_RGAMH(g,k,l)
-             fez_h(g,k,l) = ( VMTR_C2Wfact(5,g,k,l) * e(g,k  ,l) &
-                            + VMTR_C2Wfact(6,g,k,l) * e(g,k-1,l) ) * VMTR_RGAMH(g,k,l)  
+             fex_h(g,k,l) = ( VMTR_C2Wfact_Gz(1,g,k,l) * e(g,k  ,l) &
+                            + VMTR_C2Wfact_Gz(2,g,k,l) * e(g,k-1,l) ) * VMTR_RGAMH(g,k,l)
+             fey_h(g,k,l) = ( VMTR_C2Wfact_Gz(3,g,k,l) * e(g,k  ,l) &
+                            + VMTR_C2Wfact_Gz(4,g,k,l) * e(g,k-1,l) ) * VMTR_RGAMH(g,k,l)
+             fez_h(g,k,l) = ( VMTR_C2Wfact_Gz(5,g,k,l) * e(g,k  ,l) &
+                            + VMTR_C2Wfact_Gz(6,g,k,l) * e(g,k-1,l) ) * VMTR_RGAMH(g,k,l)
           enddo
        enddo
 
@@ -783,12 +783,12 @@ contains
        do l = 1, ADM_lall_pl
           do k = ADM_kmin, ADM_kmax+1
              do g = 1, ADM_gall_pl
-             fex_h_pl(g,k,l) = ( VMTR_C2Wfact_pl(1,g,k,l) * e_pl(g,k  ,l) &
-                               + VMTR_C2Wfact_pl(2,g,k,l) * e_pl(g,k-1,l) ) * VMTR_RGAMH_pl(g,k,l)
-             fey_h_pl(g,k,l) = ( VMTR_C2Wfact_pl(3,g,k,l) * e_pl(g,k  ,l) &
-                               + VMTR_C2Wfact_pl(4,g,k,l) * e_pl(g,k-1,l) ) * VMTR_RGAMH_pl(g,k,l)
-             fez_h_pl(g,k,l) = ( VMTR_C2Wfact_pl(5,g,k,l) * e_pl(g,k  ,l) &
-                               + VMTR_C2Wfact_pl(6,g,k,l) * e_pl(g,k-1,l) ) * VMTR_RGAMH_pl(g,k,l)  
+             fex_h_pl(g,k,l) = ( VMTR_C2Wfact_Gz_pl(1,g,k,l) * e_pl(g,k  ,l) &
+                               + VMTR_C2Wfact_Gz_pl(2,g,k,l) * e_pl(g,k-1,l) ) * VMTR_RGAMH_pl(g,k,l)
+             fey_h_pl(g,k,l) = ( VMTR_C2Wfact_Gz_pl(3,g,k,l) * e_pl(g,k  ,l) &
+                               + VMTR_C2Wfact_Gz_pl(4,g,k,l) * e_pl(g,k-1,l) ) * VMTR_RGAMH_pl(g,k,l)
+             fez_h_pl(g,k,l) = ( VMTR_C2Wfact_Gz_pl(5,g,k,l) * e_pl(g,k  ,l) &
+                               + VMTR_C2Wfact_Gz_pl(6,g,k,l) * e_pl(g,k-1,l) ) * VMTR_RGAMH_pl(g,k,l)
              enddo
           enddo
 
