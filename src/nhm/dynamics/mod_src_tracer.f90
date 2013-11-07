@@ -3,8 +3,8 @@
   !++ Description:
   !       This module is for limitting values of q at cell walls in advection
   !       calculation.
-  !       (Reference: Thuburn, 1996) 
-  !        These are imported from sub[src_update_tracer/mod_src] and 
+  !       (Reference: Thuburn, 1996)
+  !        These are imported from sub[src_tracer_advection/mod_src] and
   !        sub[OPRT_divergence2/mod_oprt].
   !
   !++ Current COrresponding Author: Y.Niwa
@@ -18,7 +18,7 @@
   !                                           into the original code.
   !      -----------------------------------------------------------------------
   !
-module mod_trcadv_thuburn
+module mod_src_tracer
   !-----------------------------------------------------------------------------
   !
   !++ Used modules
@@ -32,7 +32,7 @@ module mod_trcadv_thuburn
   !
   !++ Public procedure
   !
-  public :: src_update_tracer
+  public :: src_tracer_advection
   public :: advlim_thuburn_v
   public :: OPRT_divergence2_prep
   public :: OPRT_divergence2
@@ -57,8 +57,8 @@ module mod_trcadv_thuburn
 contains
   !----------------------------------------------------------------------------------
   ! Y.Niwa add 080124
-  ! This routine is revised version of src_update_tracer
-  subroutine src_update_tracer( &
+  ! This routine is revised version of src_tracer_advection
+  subroutine src_tracer_advection( &
        nqmax,                       & !--- IN    : number of tracers
        rhogq,       rhogq_pl,       & !--- INOUT : rhogq   ( gam2 X G^{1/2} )
        rhog_in,     rhog_in_pl,     & !--- IN    : rho(old)( gam2 X G^{1/2} )
@@ -197,7 +197,7 @@ contains
                                 ) * 0.5D0 * VMTR_GSGAMH(g,k,l) * VMTR_GZXH(g,k,l)            &
                               + ( GRD_afac(k) * VMTR_RGSGAM2(g,k  ,l) * rhogvy_mean(g,k  ,l) &
                                 + GRD_bfac(k) * VMTR_RGSGAM2(g,k-1,l) * rhogvy_mean(g,k-1,l) &
-                                ) * 0.5D0 * VMTR_GSGAMH(g,k,l) * VMTR_GZYH(g,k,l)            & 
+                                ) * 0.5D0 * VMTR_GSGAMH(g,k,l) * VMTR_GZYH(g,k,l)            &
                               + ( GRD_afac(k) * VMTR_RGSGAM2(g,k  ,l) * rhogvz_mean(g,k  ,l) &
                                 + GRD_bfac(k) * VMTR_RGSGAM2(g,k-1,l) * rhogvz_mean(g,k-1,l) &
                                 ) * 0.5D0 * VMTR_GSGAMH(g,k,l) * VMTR_GZZH(g,k,l)            &
@@ -220,7 +220,7 @@ contains
        enddo
 
        do g = 1, ADM_gall
-          ck(g,ADM_kmin-1,l,1) = 0.D0 
+          ck(g,ADM_kmin-1,l,1) = 0.D0
           ck(g,ADM_kmin-1,l,2) = 0.D0
           ck(g,ADM_kmax+1,l,1) = 0.D0
           ck(g,ADM_kmax+1,l,2) = 0.D0
@@ -245,7 +245,7 @@ contains
                                       ) * 0.5D0 * VMTR_GSGAMH_pl(g,k,l) * VMTR_GZXH_pl(g,k,l)            &
                                     + ( GRD_afac(k) * VMTR_RGSGAM2_pl(g,k  ,l) * rhogvy_mean_pl(g,k  ,l) &
                                       + GRD_bfac(k) * VMTR_RGSGAM2_pl(g,k-1,l) * rhogvy_mean_pl(g,k-1,l) &
-                                      ) * 0.5D0 * VMTR_GSGAMH_pl(g,k,l) * VMTR_GZYH_pl(g,k,l)            & 
+                                      ) * 0.5D0 * VMTR_GSGAMH_pl(g,k,l) * VMTR_GZYH_pl(g,k,l)            &
                                     + ( GRD_afac(k) * VMTR_RGSGAM2_pl(g,k  ,l) * rhogvz_mean_pl(g,k  ,l) &
                                       + GRD_bfac(k) * VMTR_RGSGAM2_pl(g,k-1,l) * rhogvz_mean_pl(g,k-1,l) &
                                       ) * 0.5D0 * VMTR_GSGAMH_pl(g,k,l) * VMTR_GZZH_pl(g,k,l)            &
@@ -408,8 +408,8 @@ contains
        do k = 1, ADM_kall
           do g = 1, ADM_gall
              vx_r(g,k,l) = rhogvx_mean(g,k,l) * VMTR_RGAM(g,k,l)
-             vy_r(g,k,l) = rhogvy_mean(g,k,l) * VMTR_RGAM(g,k,l) 
-             vz_r(g,k,l) = rhogvz_mean(g,k,l) * VMTR_RGAM(g,k,l) 
+             vy_r(g,k,l) = rhogvy_mean(g,k,l) * VMTR_RGAM(g,k,l)
+             vz_r(g,k,l) = rhogvz_mean(g,k,l) * VMTR_RGAM(g,k,l)
           enddo
        enddo
     enddo
@@ -418,9 +418,9 @@ contains
        do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
              do g = 1, ADM_gall_pl
-                vx_r_pl(g,k,l) = rhogvx_mean_pl(g,k,l) * VMTR_RGAM_pl(g,k,l)  
-                vy_r_pl(g,k,l) = rhogvy_mean_pl(g,k,l) * VMTR_RGAM_pl(g,k,l)   
-                vz_r_pl(g,k,l) = rhogvz_mean_pl(g,k,l) * VMTR_RGAM_pl(g,k,l)   
+                vx_r_pl(g,k,l) = rhogvx_mean_pl(g,k,l) * VMTR_RGAM_pl(g,k,l)
+                vy_r_pl(g,k,l) = rhogvy_mean_pl(g,k,l) * VMTR_RGAM_pl(g,k,l)
+                vz_r_pl(g,k,l) = rhogvz_mean_pl(g,k,l) * VMTR_RGAM_pl(g,k,l)
              enddo
           enddo
        enddo
@@ -576,7 +576,7 @@ contains
        enddo
 
        do g = 1, ADM_gall
-          ck(g,ADM_kmin-1,l,1) = 0.D0 
+          ck(g,ADM_kmin-1,l,1) = 0.D0
           ck(g,ADM_kmin-1,l,2) = 0.D0
           ck(g,ADM_kmax+1,l,1) = 0.D0
           ck(g,ADM_kmax+1,l,2) = 0.D0
@@ -709,7 +709,7 @@ contains
     enddo ! tracer q LOOP
 
     return
-  end subroutine src_update_tracer
+  end subroutine src_tracer_advection
 
   !-----------------------------------------------------------------------------
   subroutine advlim_thuburn_v( &
@@ -1007,7 +1007,7 @@ contains
     use mod_grd, only :    &
          GRD_x, GRD_x_pl,  &
          GRD_xt, GRD_xt_pl,&
-         GRD_XDIR,         &  
+         GRD_XDIR,         &
          GRD_YDIR,         &
          GRD_ZDIR
     use mod_comm, only : &
@@ -1352,7 +1352,7 @@ contains
   end subroutine OPRT_divergence2_prep
 
   !-----------------------------------------------------------------------------
-  ! Miura(2004)'s scheme with Thuburn(1996) limiter : path2 
+  ! Miura(2004)'s scheme with Thuburn(1996) limiter : path2
   subroutine OPRT_divergence2( &
        scl,   scl_pl,   &
        s,     s_pl,     &
@@ -1387,7 +1387,7 @@ contains
        ADM_W,           &
        ADM_rgn_vnum
     use mod_grd, only: &
-       GRD_XDIR, &  
+       GRD_XDIR, &
        GRD_YDIR, &
        GRD_ZDIR, &
        GRD_x,    &
@@ -1395,7 +1395,7 @@ contains
     use mod_comm, only: &
        COMM_data_transfer
     use mod_cnst, only: &
-       CNST_EPS_ZERO, & 
+       CNST_EPS_ZERO, &
        CNST_MAX_REAL
     use mod_oprt, only: &
        OPRT_gradient
@@ -1832,7 +1832,7 @@ contains
             + (0.5D0+sign(0.5D0,c(4,n,k,l)))*c(4,n,k,l)&
             + (0.5D0+sign(0.5D0,c(5,n,k,l)))*c(5,n,k,l)&
             + (0.5D0+sign(0.5D0,c(6,n,k,l)))*c(6,n,k,l)
-          
+
           c_qin_sum_max_n &
             = (0.5D0-sign(0.5D0,c(1,n,k,l)))*(c(1,n,k,l)*s_in_max(1,n,k,l))&
             + (0.5D0-sign(0.5D0,c(2,n,k,l)))*(c(2,n,k,l)*s_in_max(2,n,k,l))&
@@ -1924,7 +1924,7 @@ contains
     !
 1000 continue
     !
-    !--- H.Tomita 090414 
+    !--- H.Tomita 090414
     do l=1,ADM_lall
       do k=1,ADM_kall
         do n=1,ADM_gall
@@ -2147,5 +2147,5 @@ contains
     return
   end subroutine OPRT_divergence2
 
-end module mod_trcadv_thuburn
+end module mod_src_tracer
 !-------------------------------------------------------------------------------------

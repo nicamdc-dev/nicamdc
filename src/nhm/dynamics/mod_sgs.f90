@@ -5,23 +5,23 @@
 ! - Effect of stratos
 ! - Energy_tot ok?
 ! - potem_l    ok?
-! 
+!
 !-------------------------------------------------------------------------------
 !
 !+  Smagorinsky turbulent diffusion module
 !
 !-------------------------------------------------------------------------------
-module mod_tb_smg
+module mod_sgs
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
+  !++ Description:
   !       This module contains subroutines for Smagorinsky-type turbulent diffusion
-  !       
-  ! 
+  !
+  !
   !++ Current Corresponding Authors : S.Iga and A.Noda
-  ! 
-  !++ History: 
-  !      Version   Date       Comment 
+  !
+  !++ History:
+  !      Version   Date       Comment
   !      -----------------------------------------------------------------------
   !      0.00      11-xx-xx   generated
   !                10-12-03   Iga modified
@@ -96,8 +96,8 @@ module mod_tb_smg
   !
   !++ Public procedure
   !
-  public :: tb_smg_setup
-  public :: tb_smg_driver
+  public :: sgs_setup
+  public :: sgs_smagorinsky
 
   !-----------------------------------------------------------------------------
   !
@@ -107,7 +107,7 @@ module mod_tb_smg
   !
   !++ Private variables
   !
-  !------ Dependency of horizontal grid size 
+  !------ Dependency of horizontal grid size
   logical, private, save :: dep_hgrid = .false.
   !------ coefficient for diffusion (horizontal)
   integer, private, save :: lap_order_hdiff = 2
@@ -181,7 +181,7 @@ module mod_tb_smg
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  subroutine tb_smg_setup
+  subroutine sgs_setup
     !
     use mod_adm, only :  &
        ADM_ctl_fid
@@ -189,15 +189,15 @@ contains
     implicit none
     !
     integer :: ierr
-                                  
+
     namelist / SMGPARAM / &
          dep_hgrid,             & !--- depnedency of horzontal grid size
          K_coef_minlim,        & !--- K_coef (minimum limit)
          K_coef_maxlim,        & !--- K_coef (maximum limit)
-         LENGTH_maxlim,       & !--- 
+         LENGTH_maxlim,       & !---
          SMG_CS,                & !--- Smagorinsky constant
          stratos_effect                 !--- stratos effect (default: false)
-!         DEEP_EFFECT            
+!         DEEP_EFFECT
     !
 !    integer :: k,l,n
     !
@@ -223,9 +223,9 @@ contains
 
     call tb_smg_oprt_init()
 
-  end subroutine tb_smg_setup
+  end subroutine sgs_setup
   !-----------------------------------------------------------------------------
-  subroutine tb_smg_driver(&
+  subroutine sgs_smagorinsky(&
        nl,&
        rho,   rho_pl,                  &  !--- IN : density
        rhog,  rhog_pl,                 &  !--- IN : density
@@ -247,14 +247,14 @@ contains
        frhogetot,  frhogetot_pl,       &  !--- INOUT : tend. of rhoge
        frhogq,  frhogq_pl              &  !--- INOUT : tend. of rhogq
        )
-    !------ 
+    !------
     !------ Numerical diffusion
     !------     1. Calculation region of frhogvx,...., frhoge
     !------                    : (:,:,:)
-    !------ 
+    !------
     !
     use mod_adm, only : &
-         ADM_comm_run_world
+         ADM_COMM_WORLD
     use mod_gmtr, only :  &
          GMTR_area,&
          GMTR_area_pl
@@ -395,13 +395,13 @@ contains
     real(8)::abs_vy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)   ! full level
     real(8)::abs_vz(ADM_gall,ADM_kall,ADM_lall)            ! full level
     real(8)::abs_vz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)   ! full level
-   
+
     ! tensor
     real(8)::uijh(ADM_gall,ADM_kall,ADM_lall,3,3)
     real(8)::uijh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,3,3)  ! partial ui / partial xj
     real(8)::uij(ADM_gall,ADM_kall,ADM_lall,3,3)
     real(8)::uij_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,3,3)  ! partial ui / partial xj
-   
+
 
     real(8) :: stratos(ADM_GALL,ADM_kall,ADM_LALL)
     real(8) :: stratos_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
@@ -486,7 +486,7 @@ contains
     abs_vy(:,k,:) = vy(:,k,:) + (w(:,k,:)+w(:,k,:))/2 * GRD_x(:,ADM_knone,:,GRD_YDIR)/GRD_rscale
     abs_vz(:,k,:) = vz(:,k,:) + (w(:,k,:)+w(:,k,:))/2 * GRD_x(:,ADM_knone,:,GRD_ZDIR)/GRD_rscale
 
-    if(ADM_prc_me==ADM_prc_pl) then 
+    if(ADM_prc_me==ADM_prc_pl) then
       do k=ADM_kmin,ADM_kmax-1
        abs_vx_pl(:,k,:) = vx_pl(:,k,:) + (w_pl(:,k,:)+w_pl(:,k+1,:))/2 * GRD_x_pl(:,ADM_knone,:,GRD_XDIR)/GRD_rscale
        abs_vy_pl(:,k,:) = vy_pl(:,k,:) + (w_pl(:,k,:)+w_pl(:,k+1,:))/2 * GRD_x_pl(:,ADM_knone,:,GRD_YDIR)/GRD_rscale
@@ -642,7 +642,7 @@ contains
 !!$       k=ADM_kmin
 !!$       potemh(:,k,:)=potem(:,k,:)
 !!$       !
-!!$       beta_theta = 
+!!$       beta_theta =
 !!$
 !!$
 !!$
@@ -653,7 +653,7 @@ contains
 !!$                n2= CNST_EGRAV/(potemh(n,k,l) * (potem(n,k,l)-potem(n,k-1,l))/ ( GRD_vz(n,k,l,GRD_Z)-GRD_vz(n,k-1,l,GRD_Z) ))
 !!$                ri= n2/max(  (vx(n,k,l)-vx(n,k-1,l))**2+(vy(n,k,l)-vy(n,k-1,l))**2+(vz(n,k,l)-vz(n,k-1,l))**2, small) *&
 !!$                     ( GRD_vz(n,k,l,GRD_Z)-GRD_vz(n,k-1,l,GRD_Z) )**2
-!!$                qtot = 
+!!$                qtot =
 !!$
 !!$                stratos_pl(n,k,l)=
 !!$             enddo
@@ -1029,7 +1029,7 @@ contains
 
     return
     !
-  end subroutine tb_smg_driver
+  end subroutine sgs_smagorinsky
   !-------------------------------------------------------------------------------
   subroutine tb_smg_oprt_init(  &
        )
@@ -1197,7 +1197,7 @@ contains
 
     if (.not.present(input_sclh)) input_sclh_in=.true.
     if (present(input_sclh)) input_sclh_in=input_sclh
-  
+
     !initial
     vx=0.D0 ! needed because halo region is not written in oprt_gradient
     vy=0.D0 ! needed because halo region is not written in oprt_gradient
@@ -1366,7 +1366,7 @@ contains
        output_sclh                & !optional, in ( input half level scl, or not )
        )
     ! note that vx, vy, vz are not velocity but just vector.
-  
+
     use mod_oprt, only:&
          OPRT_divergence
     use mod_grd,only:&
@@ -1407,22 +1407,22 @@ contains
 
     integer::k,i,l
 
-    real(8)::tmp(ADM_gall,ADM_kall,ADM_lall)         
+    real(8)::tmp(ADM_gall,ADM_kall,ADM_lall)
     real(8)::tmp_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8)::tmph(ADM_gall,ADM_kall,ADM_lall)         
+    real(8)::tmph(ADM_gall,ADM_kall,ADM_lall)
     real(8)::tmph_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8)::tmp_vx(ADM_gall,ADM_kall,ADM_lall)         
+    real(8)::tmp_vx(ADM_gall,ADM_kall,ADM_lall)
     real(8)::tmp_vx_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8)::tmp_vy(ADM_gall,ADM_kall,ADM_lall)         
+    real(8)::tmp_vy(ADM_gall,ADM_kall,ADM_lall)
     real(8)::tmp_vy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8)::tmp_vz(ADM_gall,ADM_kall,ADM_lall)         
+    real(8)::tmp_vz(ADM_gall,ADM_kall,ADM_lall)
     real(8)::tmp_vz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     !
-    real(8)::tmp_vxh(ADM_gall,ADM_kall,ADM_lall)         
+    real(8)::tmp_vxh(ADM_gall,ADM_kall,ADM_lall)
     real(8)::tmp_vxh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8)::tmp_vyh(ADM_gall,ADM_kall,ADM_lall)         
+    real(8)::tmp_vyh(ADM_gall,ADM_kall,ADM_lall)
     real(8)::tmp_vyh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8)::tmp_vzh(ADM_gall,ADM_kall,ADM_lall)         
+    real(8)::tmp_vzh(ADM_gall,ADM_kall,ADM_lall)
     real(8)::tmp_vzh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
 
     if (present(output_sclh)) output_sclh_in=output_sclh
@@ -1497,7 +1497,7 @@ contains
 !    call dbgmx('oprt_GAM',smg_oprt_GAM(:,ADM_kmin:ADM_kmax,:))
 !    if (ADM_prc_me.eq.1) call dbgmx('oprt_GAM_pl',smg_oprt_GAM_pl(:,ADM_kmin:ADM_kmax,:))
     !-----------
- 
+
     do k=ADM_kmin,ADM_kmax
       tmph(:,k,:) = smg_oprt_gsqrtH(:,k,:) * (&
             VMTR_GZXH(:,k,:)*vxh(:,k,:) &
@@ -1560,7 +1560,7 @@ contains
        scl_pl(:,ADM_kmin:ADM_kmax,:) = scl_pl(:,ADM_kmin:ADM_kmax,:) + tmp_pl(:,ADM_kmin:ADM_kmax,:)
     endif
 
-    
+
     !-------------------------- for half level -------------------------
     if (.not.output_sclh_in) then
        return
@@ -1586,7 +1586,7 @@ contains
     endif
 
     !-----------
- 
+
     do k=ADM_kmin,ADM_kmax
       tmp(:,k,:) = smg_oprt_gsqrt(:,k,:) * (&
             VMTR_GZX(:,k,:)*vx(:,k,:) &
@@ -1597,7 +1597,7 @@ contains
        tmph(:,k,:)=(tmp(:,k,:)-tmp(:,k-1,:))*GRD_rdgzH(k)
     enddo
     k=ADM_kmin
-    tmph(:,k,:)=(tmp(:,k,:)-0)*GRD_rdgzH(k) ! flux from ground is zero 
+    tmph(:,k,:)=(tmp(:,k,:)-0)*GRD_rdgzH(k) ! flux from ground is zero
     if(ADM_prc_me==ADM_prc_pl) then
        do k=ADM_kmin,ADM_kmax
           tmp_pl(:,k,:) = smg_oprt_gsqrt_pl(:,k,:) * (&
@@ -1662,5 +1662,5 @@ contains
 
 
 
-end module mod_tb_smg
+end module mod_sgs
 !-------------------------------------------------------------------------------

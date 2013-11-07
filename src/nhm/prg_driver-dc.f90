@@ -6,23 +6,23 @@
 program prg_driver
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
-  !       This program is a driver of non-hydrostatic model based on an 
+  !++ Description:
+  !       This program is a driver of non-hydrostatic model based on an
   !       icosahedral grid system.
-  ! 
+  !
   !++ Current Corresponding Author : H.Tomita
-  ! 
-  !++ History: 
-  !      Version   Date       Comment 
+  !
+  !++ History:
+  !      Version   Date       Comment
   !      -----------------------------------------------------------------------
   !      0.00      04-02-17   Imported from igdc-4.34
   !      0.03      04-05-31   Change by addtion of mod[onestep].
   !                05-12-01   M.Satoh add history_setup
   !                05-12-19   S.Iga moved output_timeinfo after output_all
   !                06-04-18   T.Mitsui add sfc_restart
-  !                06-04-21   H.Tomita:  remove output_timeinfo due to 
+  !                06-04-21   H.Tomita:  remove output_timeinfo due to
   !                                      computational efficeincy.
-  !                                      Instead, this process is move to 
+  !                                      Instead, this process is move to
   !                                      mod[mod_output].
   !                06-08-07   W.Yanase add history_vars
   !                06-09-27   S.Iga add history_vars_cfmip
@@ -50,7 +50,7 @@ program prg_driver
   !                12-06-07   T.Seiki  : Application to Multi-job System
   !                12-10-12   R.Yoshida  : Modify for Dynamical Core test
   !                12-10-22   R.Yoshida  : add papi instructions
-  !      ----------------------------------------------------------------------- 
+  !      -----------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------------
   !
@@ -74,10 +74,10 @@ program prg_driver
   use mod_calendar, only: &
      calendar_setup
   use mod_time, only: &
-     TIME_setup,          &
-     TIME_report,         &
-     TIME_advance,        &
-     TIME_LSTEP_MAX,      &
+     TIME_setup,     &
+     TIME_report,    &
+     TIME_advance,   &
+     TIME_LSTEP_MAX, &
      TIME_CSTEP,     &
      TIME_CTIME,     &
      TIME_DTL
@@ -101,33 +101,26 @@ program prg_driver
      restart_input,           &
      restart_output
   use mod_diagvar, only: &
-       diagvar_setup, &
-       diagvar_restart_output
+     diagvar_setup, &
+     diagvar_restart_output
   use mod_sfcvar, only: &
-       sfcvar_setup
-  use mod_bsstate, only: &
-       bsstate_setup
-  use mod_bndcnd, only   :   &
-       bndcnd_setup
-  use mod_numfilter, only  : &
-       numfilter_setup
+     sfcvar_setup
+  use mod_dynamics, only : &
+     dynamics_setup, &
+     dynamics_step
   use mod_forcing_driver, only : &
-       forcing_init, &
-       forcing
-  use mod_ndg, only: &
-       ndg_setup
-  use mod_dynstep, only : &
-       dynstep
+     forcing_setup, &
+     forcing_step
   use mod_history, only: &
-       history_setup, &
-       history_out,   &
-       HIST_output_step0
+     history_setup, &
+     history_out,   &
+     HIST_output_step0
   use mod_history_vars, only: &
-       history_vars_setup, &
-       history_vars
+     history_vars_setup, &
+     history_vars
   use mod_embudget, only: &
-       embudget_setup, &
-       embudget_monitor
+     embudget_setup, &
+     embudget_monitor
   implicit none
 
   character(len=14) :: cdate
@@ -195,17 +188,11 @@ program prg_driver
   call sfcvar_setup
 
 
-  !---< boundary condition module setup >---
-  call bndcnd_setup
-
-  !---< basic state module setup >---
-  call bsstate_setup
-
-  !---< numerical filter module setup >---
-  call numfilter_setup
+  !---< dynamics module setup >---
+  call dynamics_setup
 
   !---< forcing module setup >---
-  call forcing_init
+  call forcing_setup
 
   !---< energy&mass budget module setup >---
   call embudget_setup
@@ -215,9 +202,6 @@ program prg_driver
 
   !---< history variable module setup >---
   call history_vars_setup
-
-  !---< nudging module setup >---
-  if( FLAG_NUDGING ) call ndg_setup( ctime, dtime )
 
   write(ADM_LOG_FID,*) '##### finish setup     #####'
   if ( ADM_prc_me == ADM_prc_run_master ) then
@@ -251,8 +235,8 @@ program prg_driver
   do n = 1, TIME_LSTEP_MAX
 
      call DEBUG_rapstart('+Atmos')
-     call dynstep
-     call forcing
+     call dynamics_step
+     call forcing_step
      call DEBUG_rapend  ('+Atmos')
 
      call DEBUG_rapstart('+History')

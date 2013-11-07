@@ -26,9 +26,9 @@ module mod_forcing_driver
   !
   !++ Public procedure
   !
-  public :: forcing_init
-  public :: forcing
-  public :: updating
+  public :: forcing_setup
+  public :: forcing_step
+  public :: forcing_update
   !-----------------------------------------------------------------------------
   !
   !++ Public parameters & variables
@@ -56,7 +56,7 @@ module mod_forcing_driver
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  subroutine forcing_init
+  subroutine forcing_setup
     use mod_runconf, only: &
        AF_TYPE
     use mod_af_heldsuarez, only: &
@@ -76,10 +76,10 @@ contains
     end select
 
     return
-  end subroutine forcing_init
+  end subroutine forcing_setup
 
   !-----------------------------------------------------------------------------
-  subroutine forcing
+  subroutine forcing_step
     use mod_adm, only: &
        ADM_gall_in, &
        ADM_kall,    &
@@ -130,7 +130,7 @@ contains
     real(8) :: w     (ADM_gall_in,ADM_kall,ADM_lall)
     real(8) :: q     (ADM_gall_in,ADM_kall,ADM_lall,TRC_vmax)
 
-    ! forcing tendency 
+    ! forcing tendency
     real(8) :: fvx(ADM_gall_in,ADM_kall,ADM_lall)
     real(8) :: fvy(ADM_gall_in,ADM_kall,ADM_lall)
     real(8) :: fvz(ADM_gall_in,ADM_kall,ADM_lall)
@@ -254,11 +254,11 @@ contains
                         rhogq   ) ! [IN]
 
     return
-  end subroutine forcing
+  end subroutine forcing_step
 
   ! [add; original by H.Miura] 20130613 R.Yoshida
   !-----------------------------------------------------------------------------
-  subroutine updating( &
+  subroutine forcing_update( &
        PROG0, PROG0_pl,  &  !--- IN : prognostic variables for save
        PROG,  PROG_pl    &  !--- INOUT : prognostic variables for update
        )
@@ -291,7 +291,7 @@ contains
        GMTR_lat,    &
        GMTR_lat_pl
     use mod_runconf, only: &
-       RUN_TYPE,       & ! R.Yoshida 13/06/13 [add]
+       RUNNAME,       & ! R.Yoshida 13/06/13 [add]
        TRC_VMAX,       &
        TRC_ADV_TYPE
     use mod_af_trcadv, only: & ![add] 20130612 R.Yoshida
@@ -328,6 +328,7 @@ contains
     integer :: ij, k ,l
 
     ! for tracer advection test  [add; original by H.Miura] 20130612 R.Yoshida
+
     real(8), save :: time=0.d0
 
 
@@ -335,72 +336,128 @@ contains
     rhogd(:,:,:)    = PROG0(:,:,:,I_rhog)
     rhogd_pl(:,:,:) = PROG0_pl(:,:,:,I_rhog)
 
+
+
     !--- update velocity
+
     time=time+TIME_DTL
+
     vx=0.d0; vx_pl=0.d0
+
     vy=0.d0; vy_pl=0.d0
+
     vz=0.d0; vz_pl=0.d0
+
     w=0.d0
 
-    select case (RUN_TYPE)
+    select case (RUNNAME)
     !------------------------------------------------------------------------
-    case ("TRCADV-1") 
+
+    case ("TRCADV-1")
+
        do l=1,ADM_lall
+
        do k=ADM_kmin-1,ADM_kmax+1
+
           ! full (1): u,v
+
           ! half (2): w
+
           do ij=1,ADM_gall
+
              call test11_velocity (time,GMTR_lon(ij,l),GMTR_lat(ij,l),GRD_vz(ij,k,l,1),GRD_vz(ij,k,l,2), &
+
                                    vx(ij,k,l),vy(ij,k,l),vz(ij,k,l),w(ij,k,l))
+
           end do
-       end do
+
        end do
 
+       end do
+
+
+
        if(ADM_prc_me==ADM_prc_pl) then
+
           do l=1,ADM_lall_pl
+
           do k=ADM_kmin-1,ADM_kmax+1
+
           do ij=1,ADM_GALL_PL
+
              call test11_velocity (time,GMTR_lon_pl(ij,l),GMTR_lat_pl(ij,l),GRD_vz_pl(ij,k,l,1),GRD_vz_pl(ij,k,l,2), &
-                                   vx_pl(ij,k,l),vy_pl(ij,k,l),vz_pl(ij,k,l),w_pl(ij,k,l)) 
+
+                                   vx_pl(ij,k,l),vy_pl(ij,k,l),vz_pl(ij,k,l),w_pl(ij,k,l))
+
           end do
+
           end do
+
           end do
+
        end if
 
     !------------------------------------------------------------------------
+
     case ("TRCADV-2")
+
        do l=1,ADM_lall
+
        do k=ADM_kmin-1,ADM_kmax+1
+
           ! full (1): u,v
+
           ! half (2): w
+
           do ij=1,ADM_gall
+
              call test12_velocity (time,GMTR_lon(ij,l),GMTR_lat(ij,l),GRD_vz(ij,k,l,1),GRD_vz(ij,k,l,2), &
+
                                    vx(ij,k,l),vy(ij,k,l),vz(ij,k,l),w(ij,k,l))
+
           end do
+
        end do
+
        end do
+
+
 
        if(ADM_prc_me==ADM_prc_pl) then
+
           do l=1,ADM_lall_pl
+
           do k=ADM_kmin-1,ADM_kmax+1
+
           do ij=1,ADM_GALL_PL
+
              call test12_velocity (time,GMTR_lon_pl(ij,l),GMTR_lat_pl(ij,l),GRD_vz_pl(ij,k,l,1),GRD_vz_pl(ij,k,l,2), &
-                                   vx_pl(ij,k,l),vy_pl(ij,k,l),vz_pl(ij,k,l),w_pl(ij,k,l)) 
+
+                                   vx_pl(ij,k,l),vy_pl(ij,k,l),vz_pl(ij,k,l),w_pl(ij,k,l))
+
           end do
+
           end do
+
           end do
+
        end if
 
     !------------------------------------------------------------------------
+
     end select
     !
+
     PROG(:,:,:,I_RHOGVX)=vx(:,:,:)*rhogd(:,:,:); PROG_pl(:,:,:,I_RHOGVX)=vx_pl(:,:,:)*rhogd_pl(:,:,:)
+
     PROG(:,:,:,I_RHOGVY)=vy(:,:,:)*rhogd(:,:,:); PROG_pl(:,:,:,I_RHOGVY)=vy_pl(:,:,:)*rhogd_pl(:,:,:)
+
     PROG(:,:,:,I_RHOGVZ)=vz(:,:,:)*rhogd(:,:,:); PROG_pl(:,:,:,I_RHOGVZ)=vz_pl(:,:,:)*rhogd_pl(:,:,:)
+
     PROG(:,:,:,I_RHOGW) =w(:,:,:) *rhogd(:,:,:); PROG_pl(:,:,:,I_RHOGW) =w_pl(:,:,:) *rhogd_pl(:,:,:)
     !
     return
-  end subroutine updating
+  end subroutine forcing_update
   !
 end module mod_forcing_driver
 !-------------------------------------------------------------------------------
