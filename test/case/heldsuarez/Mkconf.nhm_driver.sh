@@ -84,9 +84,8 @@ cat << EOFNHM > ${BINNAME}.cnf
 /
 
 ###--- SET RUN TYPE
-&RUNCONFPARAM 
-    RUN_TYPE       = 'Held-Suarez',
-    EIN_TYPE       = 'SIMPLE',
+&RUNCONFPARAM
+    RUNNAME        = 'Held-Suarez',
     NDIFF_LOCATION = 'IN_LARGE_STEP2',
     AF_TYPE        = 'HELD-SUAREZ',
 /

@@ -6,21 +6,21 @@
 module mod_diagvar
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
+  !++ Description:
   !       This module provides diagnosys
   !       in non-hydrostatic model.
-  !       
-  ! 
+  !
+  !
   !++ Current Corresponding Author : M.Satoh
-  ! 
-  !++ History: 
-  !      Version   Date       Comment 
+  !
+  !++ History:
+  !      Version   Date       Comment
   !      -----------------------------------------------------------------------
   !      0.00      04-11-02   NICAM nicam_start041102.tgz
   !      0.01      04-12-07   M.Satoh: add diagvar_checkvalues
   !                05-11-15   M.Satoh: diagvar_comm
-  !                07-07-17   A.T.Noda: 
-  !                           1. Add I_QKEd, I_TSQd, I_QSQd, I_COVd, I_CFRACP 
+  !                07-07-17   A.T.Noda:
+  !                           1. Add I_QKEd, I_TSQd, I_QSQd, I_COVd, I_CFRACP
   !                              I_QCLWB, I_QCLIWB for turbulent module.
   !                           2. Add diagvar_timeinfo
   !                07-07-23   K.Suzuki: Add I_DFE for use in SPRINTARS
@@ -30,12 +30,12 @@ module mod_diagvar
   !                08-05-30   T.Mitsui: call diagvar_comm in diagvar_restart_output
   !                09-01-28   A.T.Noda: Implement mynn
   !                09-08-18   T.Mitsui: clear up intent(in) for -debug option @ SR11000
-  !                10-04-26   M.Satoh: add diagvar1, 
+  !                10-04-26   M.Satoh: add diagvar1,
   !                                    diagvar_get_in_1layer,
   !                                    diagvar_set_in_1layer
   !                                    diagvar_get_in_1layer_region,
   !                                    diagvar_set_in_1layer_region
-  !                10-05-05   M.Satoh: add 
+  !                10-05-05   M.Satoh: add
   !                                    diagvar_get_in_region,
   !                                    diagvar_set_in_region
   !                10-06-19   A.T.Noda:
@@ -46,7 +46,7 @@ module mod_diagvar
   !                11-05-07   Y.Yamada: Implementation of ES tuning cord by NEC.
   !                             Modified line: (2011/03/02 NEC)
   !                11-08-16   M.Satoh: bug fix for TDK: conv => tendency
-  !                11-08-16   M.Satoh: implementation for Chikira scheme: 
+  !                11-08-16   M.Satoh: implementation for Chikira scheme:
   !                                    introduce diagvarn for n-layers diagnostic variables
   !                11-08-16b  M.Satoh : update TIEDKE, cp_driver
   !                11-08-17   M.Satoh : bug fix
@@ -89,7 +89,7 @@ module mod_diagvar
        ADM_GSLF_PL,       &
        ADM_NPL,           &
        ADM_SPL,           &
-       ADM_COMM_RUN_WORLD,&
+       ADM_COMM_WORLD,&
        ADM_rgn2prc,       &
        ADM_proc_stop,     &
        ADM_NSYS
@@ -97,12 +97,10 @@ module mod_diagvar
        COMM_data_transfer
 
   implicit none
-  
-  logical, private,save ::  flag_diagset           ! [Add] 07.11.06 T.Mitsui
   !
   integer, public, save ::  DIAG_VMAX
-  integer, private      ::  I_STA          
-  integer, private      ::  I_END           
+  integer, private      ::  I_STA
+  integer, private      ::  I_END
 
   ! [Add] 10.04.26 M.Satoh
   integer, public, save ::  DIAG_VMAX_1LAYER
@@ -129,12 +127,12 @@ module mod_diagvar
   integer, public, save ::  I_EVAP_SFC     = -999 ! 10/05/22 M.Satoh
   integer, public, save ::  I_SH_FLUX_SFC  = -999 ! 2011/08/16b M.Satoh
   ! 11/08/16 M.Satoh
-  !   I_CBMFX_CHIKIRA is specific to Chikira scheme, 
+  !   I_CBMFX_CHIKIRA is specific to Chikira scheme,
   !   while I_CBMFX is generic for any cumulus parameterization.
-  !   The variable for I_CBMFX_CHIKIRA has NCTP layers, 
+  !   The variable for I_CBMFX_CHIKIRA has NCTP layers,
   !   while the variable for I_CBMFX has ADM_kall layers.
   integer, public, save ::  I_CBMFX_CHIKIRA = -999 ! 11/08/16 M.Satoh
-  ! only for TB_TYPE == MY2MOIST 
+  ! only for TB_TYPE == MY2MOIST
   ! 07/12/05 [Mod] T.Mitsui
 !!$  integer, private, parameter :: I_MY2MOIST_VMAX = 7
 ! integer, private,save ::  I_MY2MOIST_VMAX
@@ -170,7 +168,7 @@ module mod_diagvar
   real(8), public, allocatable, save :: diagvarn_pl(:,:,:,:) ! 11/08/16 [add] M.Satoh
   !
   integer, private, parameter :: DIAG_VMAX_DEF = 256 ! 2010/05/05 M.Satoh [add]
-  character(len=ADM_NSYS), public, save :: & 
+  character(len=ADM_NSYS), public, save :: &
        diag_cname(DIAG_VMAX_DEF)             ! 07/12/05 [Add] T.Mitsui
   character(len=ADM_NSYS), public, save :: &
        diag_cname_1layer(DIAG_VMAX_DEF)      ! 10/04/29 [Add] M.Satoh
@@ -206,11 +204,11 @@ module mod_diagvar
   character(ADM_MAXFNAME), private, save  :: output_basename_CBMFX = ''
   character(ADM_MAXFNAME), private, save  :: output_basename_MP    = ''
   character(ADM_MAXFNAME), private, save  :: output_basename_QV_TB_TEND = ''
-  character(ADM_MAXFNAME), private, save  :: output_basename_EVAP_SFC = '' 
-  character(ADM_MAXFNAME), private, save  :: output_basename_SH_FLUX_SFC = '' 
+  character(ADM_MAXFNAME), private, save  :: output_basename_EVAP_SFC = ''
+  character(ADM_MAXFNAME), private, save  :: output_basename_SH_FLUX_SFC = ''
   character(ADM_MAXFNAME), private, save  :: output_basename_ROUGHNESS_SEA = ''
   character(ADM_MAXFNAME), private, save  :: output_basename_CBMFX_CHIKIRA = ''
-  
+
   character(ADM_MAXFNAME), private, save  :: CBMFX_fname = 'NONE'
   character(ADM_MAXFNAME), private, save  :: TB_fname    = 'NONE' ! 07/07/05 A.T.Noda
   character(ADM_MAXFNAME), private, save  :: MP_fname    = 'NONE' ! 07/12/05  T.Mitsui
@@ -220,45 +218,37 @@ module mod_diagvar
   character(ADM_MAXFNAME), private, save  :: SH_FLUX_SFC_fname = 'NONE' ! 11/08/16b  M.Satoh
   character(ADM_MAXFNAME), private, save  :: ROUGHNESS_SEA_fname = 'NONE' ! 10/04/28 M.Satoh
   character(ADM_MAXFNAME), private, save  :: CBMFX_CHIKIRA_fname = 'NONE' ! 11/08/16 M.Satoh
-  
+
   logical, private, save :: input_direct_access = .false.
   logical, private, save :: output_direct_access = .false.
-  
-  character(LEN=ADM_MAXFNAME), private, save :: input_io_mode  = 'LEGACY' ! [add] H.Yashiro 20110819
-  character(LEN=ADM_MAXFNAME), private, save :: output_io_mode = 'LEGACY' ! [add] H.Yashiro 20110819
-  character(LEN=ADM_MAXFNAME), private, save :: restart_layername = ''    ! [add] H.Yashiro 20110826
+
+  character(LEN=ADM_MAXFNAME), private, save :: input_io_mode     = 'ADVANCED' ! [add] H.Yashiro 20110819
+  character(LEN=ADM_MAXFNAME), private, save :: output_io_mode    = 'ADVANCED' ! [add] H.Yashiro 20110819
+  character(LEN=ADM_MAXFNAME), private, save :: restart_layername = ''         ! [add] H.Yashiro 20110826
 
   integer :: NCTP = 14 !! No. of cloud types for CHIKIRA scheme: 11/08/16 M.Satoh
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
   subroutine diagvar_setup
-    !
-    use mod_misc, only : &
-         MISC_msg_nmerror
-    use mod_gtl, only : &
-         GTL_input_var2,  &
-         GTL_input_var2_da
-    use mod_runconf, only : &
-         RAIN_TYPE,         &
-         TB_TYPE,           &    ! 07/07/05 A.T.Noda
-         RAD_CLOUD_TYPE,    &    ! 07/07/05 A.T.Noda
-         AE_TYPE,           &    ! 07/11/06 T.Mitsui
-         MP_TYPE,           &    ! 07/12/05 T.Mitsui
-         CP_TYPE,           &    ! 10/05/05 M.Satoh
-         ROUGHNESS_SEA_TYPE      ! 10/04/28 M.Satoh
-    use mod_comm, only : &
-         comm_var
-    use mod_fio, only : & ! [add] H.Yashiro 20110819
-         FIO_input
+    use mod_fio, only: &
+       FIO_input
+    use mod_comm, only: &
+       COMM_var
+    use mod_runconf, only: &
+       RAIN_TYPE,          &
+       CP_TYPE,            &
+       MP_TYPE,            &
+       ROUGHNESS_SEA_TYPE, &
+       TB_TYPE,            &
+       AE_TYPE
     implicit none
-    !
+
     namelist / DIAGVARPARAM / &
          CBMFX_fname,         &
          TB_fname,            &  ! 07/07/05 A.T.Noda
          MP_fname,            &  ! 07/12/05 T.Mitsui
          QV_TB_TEND_fname,    &  ! 11/08/16 M.Satoh
-!!$         RHOGQV_CONV_TB_fname, & ! 10/05/22 M.Satoh
          EVAP_SFC_fname,      &  ! 10/05/22 M.Satoh
          SH_FLUX_SFC_fname,   &  ! 11/08/16 M.Satoh
          ROUGHNESS_SEA_fname, &  ! 10/04/28 M.Satoh
@@ -279,34 +269,30 @@ contains
 
     NAMELIST / NM_CP_CHIKIRA_SETUP / &
          NCTP
-    !
+
     integer :: ierr
     integer :: iv         ! 07/12/05 [Add] T.Mitsui
     integer :: ksta, kend ! 11/07/26 [Add] M.Satoh
     !---------------------------------------------------------------------------
 
-    !
-    ! [Add] T.Mitsui 07/11/06
     I_STA        = 0
     I_END        = 0
-    flag_diagset = .false.
     diag_cname(:) = ''
     diag_cname_1layer(:) = '' ! 10/04/29 M.Satoh
     diag_cname_nlayer(:) = '' ! 11/08/16 M.Satoh
     diag_knum_nlayer(:) = 0   ! 11/08/16 M.Satoh
     diag_ksta_nlayer(:) = 0   ! 11/08/16 M.Satoh
     diag_kend_nlayer(:) = 0   ! 11/08/16 M.Satoh
-    ! [Add] 07/12/05 Mitsui
-    if(  trim(MP_TYPE) /= 'NONE' ) then
-       flag_diagset  = .true.
+
+    if (  trim(MP_TYPE) /= 'NONE' ) then
        I_STA         = I_END + 1
        I_UNCCN       = I_STA
        I_END         = I_STA
        I_MP_VMAX     = I_END - I_STA + 1
        diag_cname(I_UNCCN) = 'unccn'
-    end if
-    if(  trim(CP_TYPE)/='NONE' ) then ! 10/06/10 A.T.Noda
-       flag_diagset  = .true.
+    endif
+
+    if (  trim(CP_TYPE)/='NONE' ) then ! 10/06/10 A.T.Noda
        I_STA         = I_END + 1
        I_CUMCLW      = I_STA
        I_GDCLW       = I_STA + 1
@@ -324,7 +310,7 @@ contains
           I_RHOGQV_CONV    = I_STA + 4
           I_END            = I_STA + 4
           diag_cname(I_RHOGQV_CONV) = 'rhogqv_conv'
-       end if
+       endif
        if ( trim(CP_TYPE) == 'TDK' ) then
           ! 2011.08.16 M.Satoh,bug fix: conv => tendency
           I_QV_DYN_TEND   = I_STA + 4
@@ -336,17 +322,16 @@ contains
           diag_cname(I_QV_TB_TEND) = 'qv_tb_tend'
 !!$          diag_cname(I_RHOGQV_CONV) = 'rhogqv_conv'
 !!$          diag_cname(I_RHOGQV_CONV_TB) = 'rhogqv_conv_tb'
-       end if
+       endif
 
 !      I_CLOUD_PARAM_VMAX = I_END - I_STA + 1 ! not used ? ! 11/08/16b M.Satoh [del]
-    end if
+    endif
 
-    if(     trim(TB_TYPE)=='MY2MOIST' .or. trim(TB_TYPE)=='MYNN2' &     !==> 09/01/28 A.T.Noda
+    if (     trim(TB_TYPE)=='MY2MOIST' .or. trim(TB_TYPE)=='MYNN2' &     !==> 09/01/28 A.T.Noda
        .or. trim(TB_TYPE)=='MYNN2.5'  .or. trim(TB_TYPE)=='MYNN3' ) then
-       flag_diagset  = .true.
        I_STA = I_END + 1
-       if( trim(TB_TYPE)=='MY2MOIST' .or. trim(TB_TYPE)=='MYNN2' .or. trim(TB_TYPE)=='MYNN2.5')then
-         if( trim(TB_TYPE)=='MY2MOIST' .or. trim(TB_TYPE)=='MYNN2' )then
+       if ( trim(TB_TYPE)=='MY2MOIST' .or. trim(TB_TYPE)=='MYNN2' .or. trim(TB_TYPE)=='MYNN2.5')then
+         if ( trim(TB_TYPE)=='MY2MOIST' .or. trim(TB_TYPE)=='MYNN2' )then
            I_END         = I_END + 1
            I_QKEd        = I_END
            diag_cname(I_QKEd)   = 'qke'
@@ -363,41 +348,23 @@ contains
          diag_cname(I_QSQd)   = 'qsq'
          diag_cname(I_COVd)   = 'cov'
        endif
-       ![Mod] 07/12/05 Mitsui, for memory saving
-       if ( trim(RAD_CLOUD_TYPE)=='PARTIAL_CLOUD') then
-!         I_CFRACP      = I_STA + 4  
-!         I_QCLWB       = I_STA + 5  
-!         I_QCLIB       = I_STA + 6  
-!         I_END         = I_STA + 6
-          I_END         = I_END + 1
-          I_CFRACP      = I_END
-          I_END         = I_END + 1
-          I_QCLWB       = I_END
-          I_END         = I_END + 1
-          I_QCLIB       = I_END
-          diag_cname(I_CFRACP) = 'cfrac_pdf'
-          diag_cname(I_QCLWB)  = 'q_clw_before'
-          diag_cname(I_QCLIB)  = 'q_cli_before'
-       end if
        I_TURB_VMAX      = I_END - I_STA + 1   ! renamed 090128 A.T.Noda
-    end if                                    !<== 09/01/28 A.T.Noda
+    endif                                    !<== 09/01/28 A.T.Noda
 
-    if(  trim(AE_TYPE) == 'SPRINTARS' ) then
-       flag_diagset  = .true.
+    if (  trim(AE_TYPE) == 'SPRINTARS' ) then
        I_STA         = I_END + 1
        I_DFE         = I_STA
        I_END         = I_STA
-       I_SPRINTARS_VMAX  = I_END - I_STA + 1       
+       I_SPRINTARS_VMAX  = I_END - I_STA + 1
        ![Add] 07/12/05 Mitsui
        diag_cname(I_DFE) = 'dfe'
-    end if
+    endif
     DIAG_VMAX = I_END
 
     ! 2010.04.26 M.Satoh
     I_STA_1LAYER = 0
     I_END_1LAYER = 0
     if ( ROUGHNESS_SEA_TYPE == 'YQW' ) then
-       flag_diagset  = .true.
        I_STA_1LAYER = I_END_1LAYER + 1 ! 2010.5.5 M.Satoh [add]
        I_END_1LAYER = I_STA_1LAYER     ! 2010.5.5 M.Satoh [mod]
        I_ROUGHNESS_SEA = I_END_1LAYER
@@ -405,18 +372,16 @@ contains
 !       I_ROUGHNESS_SEA_MAX &
 !            = I_END_1LAYER - I_STA_1LAYER + 1 ! 2010.5.5 M.Satoh [add]
        diag_cname_1layer(I_ROUGHNESS_SEA) = 'z0_roughness_sea'
-    end if
+    endif
+
     if ( CP_TYPE == 'TDK' ) then ! 2010.5.22 M.Satoh [add]
-       flag_diagset  = .true.
        I_STA_1LAYER  = I_END_1LAYER + 1
        I_EVAP_SFC    = I_STA_1LAYER
        I_SH_FLUX_SFC = I_STA_1LAYER + 1
        I_END_1LAYER  = I_STA_1LAYER + 1
-!       I_ROUGHNESS_SEA_MAX = I_END_1LAYER - I_STA_1LAYER + 1 ! <=??
-!       diag_cname_1layer(I_ROUGHNESS_SEA) = 'evap_sfc'
        diag_cname_1layer(I_EVAP_SFC) = 'evap_sfc'
        diag_cname_1layer(I_SH_FLUX_SFC) = 'sh_flux_sfc'
-    end if
+    endif
     DIAG_VMAX_1LAYER = I_END_1LAYER
 
     ! 2011.07.25 M.Satoh
@@ -425,25 +390,25 @@ contains
 
     if ( CP_TYPE == 'CHIKIRA' ) then ! 2011.8.16 M.Satoh [add]
 
+       !--- read parameters
        rewind(ADM_CTL_FID)
-       read(ADM_CTL_FID, NM_CP_CHIKIRA_SETUP,iostat=ierr)
-       call MISC_msg_nmerror( &
-            ierr,             & !--- in
-            ADM_LOG_FID,      & !--- in
-            'NM_CP_CHIKIRA_SETUP',   & !--- in
-            'diagvar_setup',  & !--- in
-            'diagvar'         & !--- in
-            )
+       read(ADM_CTL_FID,nml=NM_CP_CHIKIRA_SETUP,iostat=ierr)
+       if ( ierr < 0 ) then
+          write(ADM_LOG_FID,*) '*** NM_CP_CHIKIRA_SETUP is not specified. use default.'
+       elseif( ierr > 0 ) then
+          write(*,          *) 'xxx Not appropriate names in namelist NM_CP_CHIKIRA_SETUP. STOP.'
+          write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist NM_CP_CHIKIRA_SETUP. STOP.'
+          call ADM_proc_stop
+       endif
        write(ADM_LOG_FID,NM_CP_CHIKIRA_SETUP)
        write(ADM_LOG_FID,*) '# CHIKIRA scheme: NCTP=', NCTP
 
-       flag_diagset  = .true.
        I_STA_NLAYER = I_END_NLAYER + 1
        I_END_NLAYER = I_STA_NLAYER
        I_CBMFX_CHIKIRA = I_END_NLAYER
        diag_cname_nlayer(I_CBMFX_CHIKIRA) = 'cbmfx_chikira'
        diag_knum_nlayer(I_CBMFX_CHIKIRA) = NCTP
-    end if
+    endif
     DIAG_VMAX_NLAYER = I_END_NLAYER
     if ( DIAG_VMAX_NLAYER > 0 ) then
        diag_ksta_nlayer(1) = 1
@@ -454,33 +419,32 @@ contains
              diag_kend_nlayer(iv) &
                   = diag_ksta_nlayer(iv) + diag_knum_nlayer(iv) - 1
           end do
-       end if
+       endif
        DIAG_KTOT_NLAYER = diag_kend_nlayer(DIAG_VMAX_NLAYER)
-    end if
+    endif
 
 
     ! 2010.5.5. M.Satoh
     if ( DIAG_VMAX > DIAG_VMAX_DEF ) then
        write(ADM_LOG_FID,*) &
-            "DIAG_VMAX exceeds the default value", DIAG_VMAX, DIAG_VMAX_DEF 
-    end if
+            "DIAG_VMAX exceeds the default value", DIAG_VMAX, DIAG_VMAX_DEF
+    endif
     if ( DIAG_VMAX_1LAYER > DIAG_VMAX_DEF ) then
        write(ADM_LOG_FID,*) &
             "DIAG_VMAX_1LAYER exceeds the default value", &
-            DIAG_VMAX_1LAYER, DIAG_VMAX_DEF 
-    end if
+            DIAG_VMAX_1LAYER, DIAG_VMAX_DEF
+    endif
     if ( DIAG_VMAX_NLAYER > DIAG_VMAX_DEF ) then ! 11/08/16 M.Satoh
        write(ADM_LOG_FID,*) &
             "DIAG_VMAX_NLAYER exceeds the default value", &
-            DIAG_VMAX_NLAYER, DIAG_VMAX_DEF 
-    end if
+            DIAG_VMAX_NLAYER, DIAG_VMAX_DEF
+    endif
 
     !
     write(ADM_LOG_FID,'(a  )') 'Msg : Sub[diagvar_setup]/Mod[diagvar]'
     write(ADM_LOG_FID,*      ) "DIAG_VMAX   = ", DIAG_VMAX
     write(ADM_LOG_FID,*      ) "DIAG_VMAX_1LAYER = ", DIAG_VMAX_1LAYER ! 10/04/30 M.Satoh
     write(ADM_LOG_FID,*      ) "DIAG_VMAX_NLAYER = ", DIAG_VMAX_NLAYER ! 11/08/16 M.Satoh
-    write(ADM_LOG_FID,*      ) "flag_diagset= ", flag_diagset
     ! [Add] 07/12/05 Mitsui
     do iv=1, DIAG_VMAX
        write(ADM_LOG_FID,'(a20, i5 )') trim(diag_cname(iv)),iv
@@ -490,34 +454,30 @@ contains
        do iv=1, DIAG_VMAX_1LAYER
           write(ADM_LOG_FID,'(a20, i5 )') trim(diag_cname_1layer(iv)),iv
        end do
-    end if
+    endif
     ! [Add] 11/08/16 M.Satoh
     if ( DIAG_VMAX_NLAYER > 0 ) then
        do iv=1, DIAG_VMAX_NLAYER
           write(ADM_LOG_FID,'(a20, i5 )') trim(diag_cname_nlayer(iv)),iv
        end do
-    end if
-
-    ! -> [mod] H.Yashiro 20111102 change position of config file reading  
-    if( flag_diagset )then
-       rewind(ADM_CTL_FID)
-       read(ADM_CTL_FID, DIAGVARPARAM,iostat=ierr)
-       call MISC_msg_nmerror( &
-            ierr,             & !--- in
-            ADM_LOG_FID,      & !--- in
-            'DIAGVARPARAM',   & !--- in
-            'diagvar_setup',  & !--- in
-            'diagvar'         & !--- in
-            )
-       write(ADM_LOG_FID,DIAGVARPARAM)
     endif
+
+    !--- read parameters
+    rewind(ADM_CTL_FID)
+    read(ADM_CTL_FID,nml=DIAGVARPARAM,iostat=ierr)
+    if ( ierr < 0 ) then
+       write(ADM_LOG_FID,*) '*** DIAGVARPARAM is not specified. use default.'
+    elseif( ierr > 0 ) then
+       write(*,          *) 'xxx Not appropriate names in namelist DIAGVARPARAM. STOP.'
+       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist DIAGVARPARAM. STOP.'
+       call ADM_proc_stop
+    endif
+    write(ADM_LOG_FID,DIAGVARPARAM)
 
     ! -> [add] H.Yashiro 20110819
     if ( input_io_mode == 'ADVANCED' ) then
        write(ADM_LOG_FID,*) '*** io_mode for restart,input : ',trim(input_io_mode)
        input_direct_access = .true.
-    elseif( input_io_mode == 'LEGACY' ) then
-       write(ADM_LOG_FID,*) '*** io_mode for restart,input : ',trim(input_io_mode)
     else
        write(ADM_LOG_FID,*) 'xxx Invalid input_io_mode!',trim(input_io_mode)
        call ADM_proc_stop
@@ -525,17 +485,13 @@ contains
     if ( output_io_mode == 'ADVANCED' ) then
        write(ADM_LOG_FID,*) '*** io_mode for restart,output: ',trim(output_io_mode)
        output_direct_access = .true.
-    elseif( output_io_mode == 'LEGACY' ) then
-       write(ADM_LOG_FID,*) '*** io_mode for restart,output: ',trim(output_io_mode)
     else
        write(ADM_LOG_FID,*) 'xxx Invalid output_io_mode!',trim(output_io_mode)
        call ADM_proc_stop
     endif
     ! <- [add] H.Yashiro 20110819
 
-    ! [Mod] T.Mitsui 07/11/06, bug fix for SPRINTARS
-    if( flag_diagset )then
-       ! -> [mod] H.Yashiro 20111102 change position of config file reading  
+    if ( DIAG_VMAX > 0 )then
 
        allocate(diagvar(     &
             ADM_gall,        &
@@ -551,9 +507,9 @@ contains
             ))
        diagvar = 0.0D0
        diagvar_pl = 0.0D0
-       
+
        ! [Add] 10/04/26 M.Satoh
-       if ( DIAG_VMAX_1LAYER > 0 ) then 
+       if ( DIAG_VMAX_1LAYER > 0 ) then
           allocate(diagvar1(    &
                ADM_gall,        &
                ADM_KNONE,       &
@@ -568,10 +524,10 @@ contains
                ))
           diagvar1 = -999.0D0
           diagvar1_pl = -999.0D0
-       end if
-          
+       endif
+
        ! [Add] 11/08/16 M.Satoh
-       if ( DIAG_VMAX_NLAYER > 0 ) then 
+       if ( DIAG_VMAX_NLAYER > 0 ) then
           allocate(diagvarn(    &
                ADM_gall,        &
                DIAG_KTOT_NLAYER, &
@@ -586,131 +542,72 @@ contains
                ))
           diagvarn(:,:,:,:) = -999.0D0
           diagvarn_pl(:,:,:,:) = -999.0D0
-       end if
-       
+       endif
+
        ! [Add] 07/12/05 Mitsui
-       if(trim(MP_TYPE) /= 'NONE') then
-          if(trim(MP_fname)=='NONE') then
+       if (trim(MP_TYPE) /= 'NONE') then
+          if (trim(MP_fname)=='NONE') then
              diagvar(:,:,:,I_UNCCN)     = 100.d6 ! 100 [/cm3]
              diagvar_pl (:,:,:,I_UNCCN) = 100.d6 ! 100 [/cm3]
           else
-             ! -> [add] H.Yashiro 20110826
              if ( input_io_mode == 'ADVANCED' ) then
 
                 call FIO_input( diagvar(:,:,:,I_UNCCN),MP_fname,'UNCCN', &
                                 restart_layername,1,ADM_kall,1           )
 
-             elseif( input_io_mode == 'LEGACY' ) then
-             ! <- [add] H.Yashiro 20110826
-
-                if(input_direct_access) then
-                   call GTL_input_var2_da( trim(MP_fname),    &
-                        diagvar(:,:,:,I_UNCCN), 1, ADM_kall,  &
-                        recnum=1, input_size=8 )
-                else
-                   call GTL_input_var2( trim(MP_fname),                    &
-                        diagvar(:,:,:,I_UNCCN), diagvar_pl(:,:,:,I_UNCCN), &
-                       1, ADM_kall )
-                endif !--- direct/sequencial
-
              endif !--- io_mode
           endif
        endif
-       
-       if( trim(CP_TYPE)=='AS'.or.trim(CP_TYPE)=='PAS' ) then ! 10/06/10 A.T.Noda
-          if(CBMFX_fname=='NONE') then
+
+       if ( trim(CP_TYPE)=='AS'.or.trim(CP_TYPE)=='PAS' ) then ! 10/06/10 A.T.Noda
+          if (CBMFX_fname=='NONE') then
              !--- nothing
           else
-             ! -> [add] H.Yashiro 20110826
              if ( input_io_mode == 'ADVANCED' ) then
 
                 call FIO_input( diagvar(:,:,:,I_CBMFX),CBMFX_fname,'CBMFX', &
                                 restart_layername,1,ADM_kall,1           )
 
-             elseif( input_io_mode == 'LEGACY' ) then
-             ! <- [add] H.Yashiro 20110826
-
-                if(input_direct_access) then
-                   call GTL_input_var2_da( trim(CBMFX_fname), &
-                        diagvar(:,:,:,I_CBMFX), 1, ADM_kall,  &
-                        recnum=1, input_size=8 )
-                else
-                   call GTL_input_var2( trim(CBMFX_fname),                 &
-                        diagvar(:,:,:,I_CBMFX), diagvar_pl(:,:,:,I_CBMFX), &
-                        1, ADM_kall )
-                endif !--- direct/sequencial
-
              endif !--- io_mode
-          end if
-       end if
-       
+          endif
+       endif
+
        ! 2011/08/16 M.Satoh
        if ( trim(CP_TYPE) == 'CHIKIRA' ) then
-          if(CBMFX_CHIKIRA_fname=='NONE') then
+          if (CBMFX_CHIKIRA_fname=='NONE') then
              diagvarn(:,ksta:kend,:,1) = 0.d0
              diagvarn_pl(:,ksta:kend,:,1) = 0.d0
           else
              ksta = diag_ksta_nlayer(I_CBMFX_CHIKIRA)
              kend = diag_kend_nlayer(I_CBMFX_CHIKIRA)
-             ! 11/08/17 M.Satoh bug fix: ksta-kend+1 => kend-ksta+1
 
-             ! -> [add] H.Yashiro 20110826
              if ( input_io_mode == 'ADVANCED' ) then
 
                 call FIO_input( diagvarn(:,ksta:kend,:,1),CBMFX_CHIKIRA_fname, &
                                 'CBMFX_CHIKIRA',                               &
                                 'GCCKR',1,ADM_kall,1                           )
 
-             elseif( input_io_mode == 'LEGACY' ) then
-             ! <- [add] H.Yashiro 20110826
-
-                if(input_direct_access) then
-                   call GTL_input_var2_da( trim(CBMFX_CHIKIRA_fname), &
-                        diagvarn(:,ksta:kend,:,1), 1, kend-ksta+1,  &
-                        recnum=1, input_size=8 )
-                else
-                   call GTL_input_var2( trim(CBMFX_CHIKIRA_fname), &
-                        diagvarn(:,ksta:kend,:,1), &
-                        diagvarn_pl(:,ksta:kend,:,1), &
-                        1, kend-ksta+1 )
-                endif !--- direct/sequencial
-
              endif !--- io_mode
-          end if
-       end if
-       
+          endif
+       endif
+
        ! 2010/05/11 M.Satoh
        ! 2011/08/16 M.Satoh, change names
        if ( trim(CP_TYPE) == 'TDK' ) then
-          if(QV_TB_TEND_fname=='NONE') then
+          if (QV_TB_TEND_fname=='NONE') then
              diagvar(:,:,:,I_QV_TB_TEND) = 0.d0
              diagvar_pl(:,:,:,I_QV_TB_TEND) = 0.d0 ! 11/08/16 M.Satoh
           else
-             ! -> [add] H.Yashiro 20110826
              if ( input_io_mode == 'ADVANCED' ) then
 
                 call FIO_input( diagvar(:,:,:,I_QV_TB_TEND),QV_TB_TEND_fname, &
                                 'QV_TB_TEND',                                 &
                                 restart_layername,1,ADM_kall,1                )
 
-             elseif( input_io_mode == 'LEGACY' ) then
-             ! <- [add] H.Yashiro 20110826
-
-                if(input_direct_access) then
-                   call GTL_input_var2_da( trim(QV_TB_TEND_fname), &
-                        diagvar(:,:,:,I_QV_TB_TEND), 1, ADM_kall,  &
-                        recnum=1, input_size=8 )
-                else
-                   call GTL_input_var2( trim(QV_TB_TEND_fname),    &
-                        diagvar(:,:,:,I_QV_TB_TEND), &
-                        diagvar_pl(:,:,:,I_QV_TB_TEND), &
-                        1, ADM_kall )
-                endif !--- direct/sequencial
-
              endif !--- io_mode
-          end if
+          endif
           ! 2010.5.22 M.Satoh
-          if( EVAP_SFC_fname == 'NONE' ) then
+          if ( EVAP_SFC_fname == 'NONE' ) then
              ! set initial value of evap_sfc
              diagvar1(:,:,:,I_EVAP_SFC) = 0.0d0
              diagvar1_pl(:,:,:,I_EVAP_SFC) = 0.0d0 ! 11/08/16 M.Satoh
@@ -721,65 +618,36 @@ contains
                 call FIO_input( diagvar(:,:,:,I_EVAP_SFC),EVAP_SFC_fname, &
                                 'EVAP_SFC', 'ZSSFC1',1,1,1                )
 
-             elseif( input_io_mode == 'LEGACY' ) then
-             ! <- [add] H.Yashiro 20110826
-
-                if(input_direct_access) then
-                   call GTL_input_var2_da( trim(EVAP_SFC_fname), &
-                        diagvar1(:,:,:,I_EVAP_SFC), 1, ADM_KNONE,  &
-                        recnum=1, input_size=8 )
-                else
-                   call GTL_input_var2( trim(EVAP_SFC_fname), &
-                        diagvar1(:,:,:,I_EVAP_SFC), &
-                        diagvar1_pl(:,:,:,I_EVAP_SFC), &
-                        1, ADM_KNONE )
-                endif !--- direct/sequencial
-
              endif !--- io_mode
 
              write(ADM_LOG_FID,*) 'restart in: evap_sfc', &
                   maxval(diagvar1(:,:,:,I_EVAP_SFC)), &
                   minval(diagvar1(:,:,:,I_EVAP_SFC))
-          end if
+          endif
 
           ! 2011/08/16b M.Satoh
-          if( SH_FLUX_SFC_fname == 'NONE' ) then
+          if ( SH_FLUX_SFC_fname == 'NONE' ) then
              ! set initial value of sh_flux_sfc
              diagvar1(:,:,:,I_SH_FLUX_SFC) = 0.0d0
              diagvar1_pl(:,:,:,I_SH_FLUX_SFC) = 0.0d0
           else
-             ! -> [add] H.Yashiro 20110826
              if ( input_io_mode == 'ADVANCED' ) then
 
                 call FIO_input( diagvar(:,:,:,I_SH_FLUX_SFC),SH_FLUX_SFC_fname, &
                                 'SH_FLUX_SFC','ZSSFC1',1,1,1                    )
-
-             elseif( input_io_mode == 'LEGACY' ) then
-             ! <- [add] H.Yashiro 20110826
-
-                if(input_direct_access) then
-                   call GTL_input_var2_da( trim(SH_FLUX_SFC_fname), &
-                        diagvar1(:,:,:,I_SH_FLUX_SFC), 1, ADM_KNONE,  &
-                        recnum=1, input_size=8 )
-                else
-                   call GTL_input_var2( trim(SH_FLUX_SFC_fname), &
-                        diagvar1(:,:,:,I_SH_FLUX_SFC), &
-                        diagvar1_pl(:,:,:,I_SH_FLUX_SFC), &
-                        1, ADM_KNONE )
-                endif !--- direct/sequencial
 
              endif !--- io_mode
 
              write(ADM_LOG_FID,*) 'restart in: sh_sfc', &
                   maxval(diagvar1(:,:,:,I_SH_FLUX_SFC)), &
                   minval(diagvar1(:,:,:,I_SH_FLUX_SFC))
-          end if
+          endif
 
-       end if
-       
+       endif
+
        ! -> [add&mod] H.Yashiro 20110826
        !==> 09/01/28 A.T.Noda
-       if(TB_fname=='NONE') then
+       if (TB_fname=='NONE') then
           !--- nothing
        else
           if (      trim(TB_TYPE)=='MY2MOIST' &
@@ -799,18 +667,6 @@ contains
                       call FIO_input( diagvar(:,:,:,I_QKEd),TB_fname,       &
                                       'qked',restart_layername,1,ADM_kall,1 )
 
-                   elseif( input_io_mode == 'LEGACY' ) then
-                      !
-                      if (input_direct_access) then
-                         call GTL_input_var2_da( trim(TB_fname), &
-                              diagvar(:,:,:,I_QKEd), 1, ADM_kall,  &
-                              recnum=1, input_size=8 )
-                      else
-                         call GTL_input_var2( trim(TB_fname),                  &
-                              diagvar(:,:,:,I_QKEd), diagvar_pl(:,:,:,I_QKEd), &
-                              1, ADM_kall )
-                      endif !--- direct/sequencial
-
                    endif  !--- io_mode
 
                    write(ADM_LOG_FID,*) 'restart in: qked', &
@@ -827,30 +683,6 @@ contains
                    call FIO_input( diagvar(:,:,:,I_COVd),TB_fname,       &
                                    'covd',restart_layername,1,ADM_kall,1 )
 
-                elseif( input_io_mode == 'LEGACY' ) then
-                   !
-                   if (input_direct_access) then
-                      call GTL_input_var2_da( trim(TB_fname), &
-                           diagvar(:,:,:,I_TSQd), 1, ADM_kall,  &
-                           recnum=2, input_size=8 )
-                      call GTL_input_var2_da( trim(TB_fname), &
-                           diagvar(:,:,:,I_QSQd), 1, ADM_kall,  &
-                           recnum=3, input_size=8 )
-                      call GTL_input_var2_da( trim(TB_fname), &
-                           diagvar(:,:,:,I_COVd), 1, ADM_kall,  &
-                           recnum=4, input_size=8 )
-                   else
-                      call GTL_input_var2( trim(TB_fname),                  &
-                           diagvar(:,:,:,I_TSQd), diagvar_pl(:,:,:,I_TSQd), &
-                           1, ADM_kall )
-                      call GTL_input_var2( trim(TB_fname),                  &
-                           diagvar(:,:,:,I_QSQd), diagvar_pl(:,:,:,I_QSQd), &
-                           1, ADM_kall )
-                      call GTL_input_var2( trim(TB_fname),                  &
-                           diagvar(:,:,:,I_COVd), diagvar_pl(:,:,:,I_COVd), &
-                           1, ADM_kall )
-                   endif !--- direct/sequencial
-
                 endif  !--- io_mode
 
                 write(ADM_LOG_FID,*) 'restart in: tsqd', &
@@ -861,59 +693,14 @@ contains
                      maxval(diagvar(:,:,:,I_COVd)), minval(diagvar(:,:,:,I_COVd))
              endif !--- MY2M, MYNN2, MYNN2.5
 
-             if ( RAD_CLOUD_TYPE=='PARTIAL_CLOUD' )then
-                !
-                if ( input_io_mode == 'ADVANCED' ) then
-                   !
-                   call FIO_input( diagvar(:,:,:,I_QCLWB),TB_fname,              &
-                                   'q_clw_before',restart_layername,1,ADM_kall,1 )
-                   call FIO_input( diagvar(:,:,:,I_QCLIB),TB_fname,              &
-                                   'q_cli_before',restart_layername,1,ADM_kall,1 )
-                   call FIO_input( diagvar(:,:,:,I_CFRACP),TB_fname,          &
-                                   'cfrac_pdf',restart_layername,1,ADM_kall,1 )
-
-                elseif( input_io_mode == 'LEGACY' ) then
-                   !
-                   if (input_direct_access) then
-                   call GTL_input_var2_da( trim(TB_fname), &
-                        diagvar(:,:,:,I_QCLWB ), 1, ADM_kall,  &
-                        recnum=5, input_size=8 )
-                   call GTL_input_var2_da( trim(TB_fname), &
-                        diagvar(:,:,:,I_QCLIB ), 1, ADM_kall,  &
-                        recnum=6, input_size=8 )
-                   call GTL_input_var2_da( trim(TB_fname), &
-                        diagvar(:,:,:,I_CFRACP ), 1, ADM_kall,  &
-                        recnum=7, input_size=8 )
-                   else
-                   call GTL_input_var2( trim(TB_fname),                  &
-                        diagvar(:,:,:,I_QCLWB), diagvar_pl(:,:,:,I_QCLWB), &
-                        1, ADM_kall )
-                   call GTL_input_var2( trim(TB_fname),                  &
-                        diagvar(:,:,:,I_QCLIB), diagvar_pl(:,:,:,I_QCLIB), &
-                        1, ADM_kall )
-                   call GTL_input_var2( trim(TB_fname),                  &
-                        diagvar(:,:,:,I_CFRACP), diagvar_pl(:,:,:,I_CFRACP), &
-                        1, ADM_kall )
-                   endif !--- direct/sequencial
-
-                endif  !--- io_mode
-
-                write(ADM_LOG_FID,*) 'restart in: q_clw_before', &
-                     maxval(diagvar(:,:,:,I_QCLWB)), minval(diagvar(:,:,:,I_QCLWB))
-                write(ADM_LOG_FID,*) 'restart in: q_cli_before', &
-                     maxval(diagvar(:,:,:,I_QCLIB)), minval(diagvar(:,:,:,I_QCLIB))
-                write(ADM_LOG_FID,*) 'restart in: cfrac_pdf', &
-                     maxval(diagvar(:,:,:,I_CFRACP)), minval(diagvar(:,:,:,I_CFRACP))
-             endif !--- PARTIAL_CLOUD
-
           endif !--- MY2M, MYNN2, MYNN2.5
        endif
        !<=== 09/01/28 A.T.Noda
        ! <- [add&mod] H.Yashiro 20110826
-       
+
        ! 10/04/28 M.Satoh
-       if( ROUGHNESS_SEA_TYPE == 'YQW' ) then 
-          if( ROUGHNESS_SEA_fname == 'NONE' ) then 
+       if ( ROUGHNESS_SEA_TYPE == 'YQW' ) then
+          if ( ROUGHNESS_SEA_fname == 'NONE' ) then
              ! set initial value in roughness_sea_init
              diagvar1(:,:,:,I_ROUGHNESS_SEA) = -999.0d0
              diagvar1_pl(:,:,:,I_ROUGHNESS_SEA) = -999.0d0 ! 11/08/16 M.Satoh
@@ -926,58 +713,25 @@ contains
                 call FIO_input( diagvar1(:,:,:,I_ROUGHNESS_SEA),ROUGHNESS_SEA_fname, &
                      'ROUGHNESS_SEA','ZSSFC1',1,1,1                      )
                 ! <- [mod] Y.Yamada 20111125
-             elseif( input_io_mode == 'LEGACY' ) then
-             ! <- [add] H.Yashiro 20110826
-
-                if(input_direct_access) then
-                   call GTL_input_var2_da( trim(ROUGHNESS_SEA_fname), &
-                        diagvar1(:,:,:,I_ROUGHNESS_SEA), 1, ADM_KNONE,  &
-                        recnum=1, input_size=8 )
-                else
-                   call GTL_input_var2( trim(ROUGHNESS_SEA_fname), &
-                        diagvar1(:,:,:,I_ROUGHNESS_SEA), &
-                        diagvar1_pl(:,:,:,I_ROUGHNESS_SEA), &
-                        1, ADM_KNONE )
-                endif !--- direct/sequencial
-
              endif !--- io_mode
 
              write(ADM_LOG_FID,*) 'restart in: z0_roughness_sea', &
                   maxval(diagvar1(:,:,:,I_ROUGHNESS_SEA)), &
                   minval(diagvar1(:,:,:,I_ROUGHNESS_SEA))
-          end if
-       end if
+          endif
+       endif
        ! <= 10/04/28 M.Satoh
-       
-       ! [Add] T.Mitsui 07/11/06, call at once 
-       if(input_direct_access) then
-          call comm_var(            &
-               diagvar,diagvar_pl,  &
-               ADM_kall,            &
-               DIAG_VMAX,           &
-               comm_type = 2,       &
-               NSval_fix=.true.     &
-               )
-          if ( DIAG_VMAX_1LAYER > 0 ) then ! [add] 2010.4.28 M.Satoh 
-             call comm_var(            &
-                  diagvar1,diagvar1_pl,&
-                  ADM_KNONE,           &
-                  DIAG_VMAX_1LAYER,    &
-                  comm_type = 2,       &
-                  NSval_fix=.true.     &
-                  )
-          end if
-          if ( DIAG_VMAX_NLAYER > 0 ) then ! [add] 2011.8.16 M.Satoh 
-             call comm_var(            &
-                  diagvarn,diagvarn_pl,&
-                  DIAG_KTOT_NLAYER,    &
-                  1,                   &
-                  comm_type = 2,       &
-                  NSval_fix=.true.     &
-                  )
-          end if
-       end if
-       
+
+       if ( input_direct_access ) then
+          call COMM_var( diagvar,diagvar_pl, ADM_kall, DIAG_VMAX )
+          if ( DIAG_VMAX_1LAYER > 0 ) then ! [add] 2010.4.28 M.Satoh
+             call COMM_var( diagvar1,diagvar1_pl, ADM_KNONE, DIAG_VMAX_1LAYER )
+          endif
+          if ( DIAG_VMAX_NLAYER > 0 ) then ! [add] 2011.8.16 M.Satoh
+             call COMM_var( diagvarn,diagvarn_pl, DIAG_KTOT_NLAYER, 1 )
+          endif
+       endif
+
     endif ! flag_diagset
 
    return
@@ -995,13 +749,13 @@ contains
   real(8), intent(out) :: dv(ADM_gall,ADM_kall,ADM_lall)
   real(8), intent(out) :: dv_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
   integer:: ij,k,l
-  integer, intent(in)  :: vid 
+  integer, intent(in)  :: vid
   ! [Add] 07/11/06 T.Mitsui for check
-  if(.not. flag_diagset .or. vid == -999 )then 
+  if ( vid == -999 )then
      write(ADM_LOG_FID,*) "*** Error, DIAGVAR has not been setup."
      write(ADM_LOG_FID,*) "    Check [sub: diagvar_setup] "
      call ADM_proc_stop
-  end if
+  endif
   do l=1,ADM_lall
      do k=1,ADM_kall
         do ij=1,ADM_gall
@@ -1011,9 +765,9 @@ contains
   enddo
 
 
-  if(ADM_prc_me==ADM_prc_pl) then
+  if (ADM_prc_me==ADM_prc_pl) then
      dv_pl(1:ADM_gall_pl,:,:)   = diagvar_pl(1:ADM_gall_pl,:,:,vid)
-  end if
+  endif
   !
   return
   !
@@ -1027,7 +781,7 @@ contains
     !------
     !------ set diagnostic variables
     !------ and COMMUNICATION.
-    !------ 
+    !------
     implicit none
     real(8), intent(in) :: dv(ADM_gall,ADM_kall,ADM_lall)
     real(8), intent(in) :: dv_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
@@ -1037,11 +791,11 @@ contains
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
 
     ! [Add] 07/11/06 T.Mitsui for check
-    if(.not. flag_diagset .or. vid == -999 )then 
+    if ( vid == -999 )then
        write(ADM_LOG_FID,*) "*** Error, DIAGVAR has not been setup."
        write(ADM_LOG_FID,*) "    Check [sub: diagvar_setup] "
        call ADM_proc_stop
-    end if
+    endif
 
   do l=1,ADM_lall
      do k=1,ADM_kall
@@ -1051,9 +805,9 @@ contains
      enddo
   enddo
 
-    if(ADM_prc_me==ADM_prc_pl) then
+    if (ADM_prc_me==ADM_prc_pl) then
        diagvar_pl(1:ADM_gall_pl,:,:,vid)   = dv_pl(1:ADM_gall_pl,:,:)
-    end if
+    endif
     !
     diagvar(suf(ADM_gall_1d,1),:,:,vid) = diagvar(suf(ADM_gmax+1,ADM_gmin),:,:,vid)
     diagvar(suf(1,ADM_gall_1d),:,:,vid) = diagvar(suf(ADM_gmin,ADM_gmax+1),:,:,vid)
@@ -1077,11 +831,11 @@ contains
     integer :: l,n,nn,k
     !
     ! [Add] 07/11/06 T.Mitsui for check
-    if(.not. flag_diagset .or. vid == -999 )then 
+    if ( vid == -999 )then
        write(ADM_LOG_FID,*) "*** Error, DIAGVAR has not been setup."
        write(ADM_LOG_FID,*) "    Check [sub: diagvar_setup] "
        call ADM_proc_stop
-    end if
+    endif
     do l=1, ADM_lall
        do k = 1, ADM_kall
           do n=1, ADM_IopJop_nmax
@@ -1103,7 +857,7 @@ contains
     !------
     !------ set prognostic variables to diag[num]
     !------ and COMMUNICATION.
-    !------ 
+    !------
     implicit none
     real(8), intent(in) :: sv(ADM_IopJop_nmax,ADM_kall,ADM_lall)
     integer, intent(in) :: vid
@@ -1114,11 +868,11 @@ contains
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !
     ! [Add] 07/11/06 T.Mitsui for check
-    if(.not. flag_diagset .or. vid == -999 )then 
+    if ( vid == -999 )then
        write(ADM_LOG_FID,*) "*** Error, DIAGVAR has not been setup."
        write(ADM_LOG_FID,*) "    Check [sub: diagvar_setup] "
        call ADM_proc_stop
-    end if
+    endif
     do l=1, ADM_lall
        do k = 1, ADM_kall
           do n=1, ADM_IopJop_nmax
@@ -1150,11 +904,11 @@ contains
     !
     integer :: l,n,nn,k
     !
-    if(.not. flag_diagset .or. vid == -999 )then 
+    if ( vid == -999 )then
        write(ADM_LOG_FID,*) "*** Error, DIAGVAR has not been setup."
        write(ADM_LOG_FID,*) "    Check [sub: diagvar_setup] "
        call ADM_proc_stop
-    end if
+    endif
     do k = 1, ADM_kall
        do n=1, ADM_IopJop_nmax
           nn = ADM_IopJop(n,ADM_GIoJo)
@@ -1176,7 +930,7 @@ contains
     !------
     !------ set prognostic variables to diag[num]
     !------ and COMMUNICATION.
-    !------ 
+    !------
     implicit none
     real(8), intent(in) :: sv(ADM_IopJop_nmax,ADM_kall)
     integer, intent(in) :: vid
@@ -1187,11 +941,11 @@ contains
     integer :: i,j,suf
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !
-    if(.not. flag_diagset .or. vid == -999 )then 
+    if ( vid == -999 )then
        write(ADM_LOG_FID,*) "*** Error, DIAGVAR has not been setup."
        write(ADM_LOG_FID,*) "    Check [sub: diagvar_setup] "
        call ADM_proc_stop
-    end if
+    endif
     do k = 1, ADM_kall
        do n=1, ADM_IopJop_nmax
           nn = ADM_IopJop(n,ADM_GIoJo)
@@ -1223,11 +977,11 @@ contains
     !
     integer :: l,n,nn
     !
-    if(.not. flag_diagset .or. vid == -999 )then 
+    if ( vid == -999 )then
        write(ADM_LOG_FID,*) "*** Error, DIAGVAR has not been setup."
        write(ADM_LOG_FID,*) "    Check [sub: diagvar_setup] "
        call ADM_proc_stop
-    end if
+    endif
     do l=1, ADM_lall
        do n=1, ADM_IopJop_nmax
           nn = ADM_IopJop(n,ADM_GIoJo)
@@ -1240,10 +994,10 @@ contains
   end subroutine diagvar_get_in_1layer
 
   !-----------------------------------------------------------------------------
-  ! 2011/03/02 NEC   
+  ! 2011/03/02 NEC
   subroutine diagvar_get_in_1layer_k ( &
        sv,                 &  !--- OUT : surface variable
-       ksize ,             &  !--- IN : 
+       ksize ,             &  !--- IN :
        k ,                 &  !--- IN :
        vid                 &  !--- IN : variable ID
        )
@@ -1257,11 +1011,11 @@ contains
     !
     integer :: l,n,nn
     !
-    if(.not. flag_diagset .or. vid == -999 )then 
+    if ( vid == -999 )then
        write(ADM_LOG_FID,*) "*** Error, DIAGVAR has not been setup."
        write(ADM_LOG_FID,*) "    Check [sub: diagvar_setup] "
        call ADM_proc_stop
-    end if
+    endif
     do l=1, ADM_lall
        do n=1, ADM_IopJop_nmax
           nn = ADM_IopJop(n,ADM_GIoJo)
@@ -1272,7 +1026,7 @@ contains
     return
     !
   end subroutine diagvar_get_in_1layer_k
- 
+
   !-----------------------------------------------------------------------------
   subroutine diagvar_set_in_1layer ( &
        sv,                  &  !--- IN : surface variable
@@ -1281,7 +1035,7 @@ contains
     !------
     !------ set prognostic variables to diag[num]
     !------ and COMMUNICATION.
-    !------ 
+    !------
     implicit none
     real(8), intent(in) :: sv(ADM_IopJop_nmax,ADM_lall)
     integer, intent(in) :: vid
@@ -1291,11 +1045,11 @@ contains
     integer :: i,j,suf
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !
-    if(.not. flag_diagset .or. vid == -999 )then 
+    if ( vid == -999 )then
        write(ADM_LOG_FID,*) "*** Error, DIAGVAR has not been setup."
        write(ADM_LOG_FID,*) "    Check [sub: diagvar_setup] "
        call ADM_proc_stop
-    end if
+    endif
     do l=1, ADM_lall
        do n=1, ADM_IopJop_nmax
           nn = ADM_IopJop(n,ADM_GIoJo)
@@ -1326,11 +1080,11 @@ contains
     !
     integer :: n,nn
     !
-    if(.not. flag_diagset .or. vid == -999 )then 
+    if ( vid == -999 )then
        write(ADM_LOG_FID,*) "*** Error, DIAGVAR has not been setup."
        write(ADM_LOG_FID,*) "    Check [sub: diagvar_setup] "
        call ADM_proc_stop
-    end if
+    endif
     do n=1, ADM_IopJop_nmax
        nn = ADM_IopJop(n,ADM_GIoJo)
        sv(n)  = diagvar1(nn,ADM_KNONE,l_region,vid)
@@ -1349,7 +1103,7 @@ contains
     !------
     !------ set prognostic variables to diag[num]
     !------ and COMMUNICATION.
-    !------ 
+    !------
     implicit none
     real(8), intent(in) :: sv(ADM_IopJop_nmax)
     integer, intent(in) :: vid
@@ -1360,11 +1114,11 @@ contains
     integer :: i,j,suf
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !
-    if(.not. flag_diagset .or. vid == -999 )then 
+    if ( vid == -999 )then
        write(ADM_LOG_FID,*) "*** Error, DIAGVAR has not been setup."
        write(ADM_LOG_FID,*) "    Check [sub: diagvar_setup] "
        call ADM_proc_stop
-    end if
+    endif
     do n=1, ADM_IopJop_nmax
        nn = ADM_IopJop(n,ADM_GIoJo)
        diagvar1(nn,ADM_KNONE,l_region,vid) = sv(n)
@@ -1399,11 +1153,11 @@ contains
     integer :: l,n,nn,k
     integer :: ksta
     !
-    if(.not. flag_diagset .or. vid == -999 )then 
+    if ( vid == -999 )then
        write(ADM_LOG_FID,*) "*** Error, DIAGVAR has not been setup."
        write(ADM_LOG_FID,*) "    Check [sub: diagvar_setup] "
        call ADM_proc_stop
-    end if
+    endif
     if ( DIAG_VMAX_NLAYER >= vid &
          .and. diag_knum_nlayer(vid) == knum ) then
        ksta = diag_ksta_nlayer(vid)
@@ -1418,7 +1172,7 @@ contains
             DIAG_VMAX_NLAYER
        write(ADM_LOG_FID,*) "    Check [sub: diagvar_setup] "
        call ADM_proc_stop
-    end if
+    endif
 
     return
     !
@@ -1432,11 +1186,8 @@ contains
        knum,                &  !--- IN : number of layers
        l_region             &  !--- IN
        )
-    !------
-    !------ set prognostic variables to diag[num]
-    !------ and COMMUNICATION.
-    !------ 
     implicit none
+
     real(8), intent(in) :: sv(ADM_IopJop_nmax,ADM_kall)
     integer, intent(in) :: vid
     integer, intent(in) :: knum
@@ -1447,12 +1198,7 @@ contains
     !
     integer :: i,j,suf
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
-    !
-    if(.not. flag_diagset .or. vid == -999 )then 
-       write(ADM_LOG_FID,*) "*** Error, DIAGVAR has not been setup."
-       write(ADM_LOG_FID,*) "    Check [sub: diagvar_setup] "
-       call ADM_proc_stop
-    end if
+
     if ( DIAG_VMAX_NLAYER >= vid &
          .and. diag_knum_nlayer(vid) == knum ) then
        ksta = diag_ksta_nlayer(vid)
@@ -1473,145 +1219,36 @@ contains
             DIAG_VMAX_NLAYER
        write(ADM_LOG_FID,*) "    Check [sub: diagvar_setup] "
        call ADM_proc_stop
-    end if
+    endif
 
     !
   end subroutine diagvar_set_in_nlayer_region
 
   !-----------------------------------------------------------------------------
   subroutine diagvar_comm( &
-       comm_type          & !--- IN : communication type
-       )
-    !
-    !--- comm_type : 1 ( region -> pole )
-    !---           : 2 ( region -> pole -> regular communication )
-    !---           : 3 ( regular communication only )
-    use mod_adm, only :     &
-         ADM_LOG_FID,       &
-         ADM_KNONE,         &
-         ADM_lall,          &
-         ADM_proc_stop,     &
-         ADM_comm_run_world
-    use mod_comm, only :    &
-         comm_var
-    !
+       comm_type )
+    use mod_adm, only: &
+       ADM_proc_stop, &
+       ADM_lall,      &
+       ADM_KNONE
+    use mod_comm, only: &
+       COMM_var
     implicit none
+
     integer, intent(in) :: comm_type
+    !---------------------------------------------------------------------------
 
-    integer :: ierr
+    call COMM_var( diagvar, diagvar_pl, ADM_kall, DIAG_VMAX )
 
-!!$    !
-!!$    integer :: ireq,istat(MPI_STATUS_SIZE),ierr
-!!$    integer :: l
-!!$    !
-!!$    real(8) :: v_npl(ADM_kall,DIAG_VMAX)
-!!$    real(8) :: v_spl(ADM_kall,DIAG_VMAX)
-!!$    !
-!!$    integer :: rgnid
-!!$    !
-!!$    integer :: i,j,suf
-!!$    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
-!!$    !
-    ! [Add] 07/11/06 T.Mitsui for check
-    if(.not. flag_diagset )then 
-       write(ADM_LOG_FID,*) "*** Error, DIAGVAR has not been setup."
-       write(ADM_LOG_FID,*) "    Check [sub: diagvar_setup] "
-       call ADM_proc_stop
-    end if
+    if ( DIAG_VMAX_1LAYER > 0 ) then ! [add] 2010.4.28 M.Satoh
+       call COMM_var( diagvar1, diagvar1_pl, ADM_KNONE, DIAG_VMAX_1LAYER )
+    endif
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    call comm_var(  &
-         diagvar,   & !--- INOUT : variables
-         diagvar_pl,& !--- INOUT : variables at poles
-         adm_kall,  & !--- IN : number of layers
-         DIAG_VMAX, & !--- IN : number of variables
-         comm_type, & !--- IN : communication type
-         NSval_fix=.true.&
-         )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    ! 2010.4.26 M.Satoh
-    if ( DIAG_VMAX_1LAYER > 0 ) then 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-       call comm_var(  &
-            diagvar1,         & !--- INOUT : variables
-            diagvar1_pl,      & !--- INOUT : variables at poles
-            adm_KNONE,        & !--- IN : number of layers
-            DIAG_VMAX_1LAYER, & !--- IN : number of variables
-            comm_type,        & !--- IN : communication type
-            NSval_fix=.true.  &
-            )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    end if
-
-    ! 2011.8.16 M.Satoh
-    if ( DIAG_VMAX_NLAYER > 0 ) then 
-       call comm_var(  &
-            diagvarn,         & !--- INOUT : variables
-            diagvarn_pl,      & !--- INOUT : variables at poles
-            DIAG_KTOT_NLAYER, & !--- IN : number of layers
-            1,                & !--- IN : number of variables
-            comm_type,        & !--- IN : communication type
-            NSval_fix=.true.  &
-            )
-    end if
+    if ( DIAG_VMAX_NLAYER > 0 ) then ! [add] 2011.8.16 M.Satoh
+       call COMM_var( diagvarn, diagvarn_pl, DIAG_KTOT_NLAYER, 1 )
+    endif
 
     return
-
   end subroutine diagvar_comm
 
   !-----------------------------------------------------------------------------
@@ -1636,15 +1273,12 @@ contains
             ' :max=', varmax, &
             ' :min=', varmin, &
             vmax, vmin
-    end if
+    endif
 
   end subroutine diagvar_checkvalues
 
   !-----------------------------------------------------------------------------
   subroutine diagvar_restart_output( cdate ) !08/03/10 T.Mitsui [Add] cdate
-    use mod_gtl, only : &
-         GTL_output_var2,&
-         GTL_output_var2_da
     use mod_adm, only :     &               ! 07/07/05 A.T.Noda
          ADM_NSYS
     use mod_runconf, only : &
@@ -1653,7 +1287,6 @@ contains
          CP_TYPE,           &               ! 10/05/24  M.Satoh
          AE_TYPE,           &               ! 07/12/05  T.Mitsui
          TB_TYPE,           &               ! 07/07/05 A.T.Noda
-         RAD_CLOUD_TYPE,    &               ! 07/07/05 A.T.Noda
          ROUGHNESS_SEA_TYPE                 ! 10/04/28 M.Satoh
     use mod_fio, only : & ! [add] H.Yashiro 20110819
          FIO_output, &
@@ -1662,15 +1295,10 @@ contains
     use mod_time, only : &
          TIME_CTIME
     implicit none
+
     integer :: ksta, kend
-    !
-    character(len=14), intent(in) :: cdate !08/03/10 T.Mitsui [Add] 
-    ! 07/12/05 [Del] T.Mitsui
-!!$    character(LEN=ADM_NSYS) :: cname(10)    ! 07/07/05 A.T.Noda
-    integer :: iv     ! 07/12/05 [Add] T.Mitsui
-!!$    ! [Add] work T.Mitsui 10/08/03
-!!$    character(len=256) :: cwork(256)
-!!$    character(len=256) :: cwork_1layer(256)
+
+    character(len=14), intent(in) :: cdate !08/03/10 T.Mitsui [Add]
 
     ! -> [add] H.Yashiro 20110819
     character(LEN=ADM_MAXFNAME) :: basename
@@ -1679,12 +1307,12 @@ contains
     !---------------------------------------------------------------------------
 
     !
-    ! [Add] 08/05/30 T.Mitsui 
+    ! [Add] 08/05/30 T.Mitsui
     call diagvar_comm( comm_type=2 )
 
-!   if(RAIN_TYPE/='CLOUD_PARAM') return 
-!   if(RAIN_TYPE=='CLOUD_PARAM')then        ! 07/07/05 A.T.Noda
-    if(trim(CP_TYPE)=='AS'.or.trim(CP_TYPE)=='PAS')then ! 10/06/10 A.T.Noda
+!   if (RAIN_TYPE/='CLOUD_PARAM') return
+!   if (RAIN_TYPE=='CLOUD_PARAM')then        ! 07/07/05 A.T.Noda
+    if (trim(CP_TYPE)=='AS'.or.trim(CP_TYPE)=='PAS')then ! 10/06/10 A.T.Noda
 
        ! -> [add] H.Yashiro 20110819
        if ( output_io_mode == 'ADVANCED' ) then
@@ -1699,30 +1327,11 @@ contains
                            FIO_REAL8, restart_layername, 1, ADM_kall,      &
                            1, TIME_CTIME, TIME_CTIME                       )
 
-       elseif( output_io_mode == 'LEGACY' ) then
-       ! <- [add] H.Yashiro 20110819
-          ! [Add] 2012/06/07 T.Seiki
-          if ( trim(output_basename_CBMFX) == "" ) then 
-             basename='restart_CBMFX'//trim(cdate)
-          else
-             basename=trim(output_basename_CBMFX)//trim(cdate)
-          endif
-          
-          if (output_direct_access) then    
-             call GTL_output_var2_da( basename, &
-                                      diagvar(:,:,:,I_CBMFX), 1, ADM_kall, &
-                                      recnum=1, output_size=8 )
-          else
-             call GTL_output_var2( basename,        &
-                                   diagvar(:,:,:,I_CBMFX), diagvar_pl(:,:,:,I_CBMFX), &
-                                   1, ADM_kall )
-          endif !--- direct/sequencial
-
        endif  !--- io_mode
     endif
 
     ! 07/12/05 [Add] T.Mitsui
-    if(  (MP_TYPE/='NONE') .and. (AE_TYPE/='NONE') )then 
+    if (  (MP_TYPE/='NONE') .and. (AE_TYPE/='NONE') )then
 
        ! -> [add] H.Yashiro 20110819
        if ( output_io_mode == 'ADVANCED' ) then
@@ -1736,24 +1345,6 @@ contains
                            'UNCCN', 'CCN Concentration', '', '1/m3',   &
                            FIO_REAL8, restart_layername, 1, ADM_kall,  &
                            1, TIME_CTIME, TIME_CTIME                   )
-
-       elseif( output_io_mode == 'LEGACY' ) then
-       ! <- [add] H.Yashiro 20110819
-          ! [Add] 2012/06/07 T.Seiki
-          if ( trim(output_basename_MP) == "" ) then 
-             basename='restart_mp'//trim(cdate)
-          else
-             basename=trim(output_basename_MP)//trim(cdate)
-          endif
-          if(output_direct_access) then    
-             call GTL_output_var2_da( basename, &
-                  diagvar(:,:,:,I_UNCCN), 1, ADM_kall, &
-                  recnum=1, output_size=8 )
-          else
-             call GTL_output_var2( basename,           &
-                  diagvar(:,:,:,I_UNCCN), diagvar_pl(:,:,:,I_UNCCN),    &
-                  1, ADM_kall )
-          endif !--- direct/sequencial
 
        endif  !--- io_mode
     endif
@@ -1796,59 +1387,6 @@ contains
                            FIO_REAL8, 'ZSSFC1', 1, 1,                        &
                            1, TIME_CTIME, TIME_CTIME                         )
 
-       elseif( output_io_mode == 'LEGACY' ) then
-       ! <- [add] H.Yashiro 20110819
-          ! [Add] 2012/06/07 T.Seiki
-          if ( trim(output_basename_QV_TB_TEND) == "" ) then 
-             basename='restart_QV_TB_TEND'//trim(cdate)
-          else
-             basename=trim(output_basename_QV_TB_TEND)//trim(cdate)
-          endif
-          ! 2011/08/16 M.Satoh, change names
-          if(output_direct_access) then
-             call GTL_output_var2_da( basename, &
-                  diagvar(:,:,:,I_QV_TB_TEND), 1, ADM_kall,  &
-                  recnum=1, output_size=8 )
-          else
-             call GTL_output_var2( basename, &
-                  diagvar(:,:,:,I_QV_TB_TEND), &
-                  diagvar_pl(:,:,:,I_QV_TB_TEND), &
-                  1, ADM_kall )
-          endif !--- direct/sequencial
-          ! [Add] 2012/06/07 T.Seiki
-          if ( trim(output_basename_EVAP_SFC) == "" ) then 
-             basename='restart_EVAP_SFC'//trim(cdate)
-          else
-             basename=trim(output_basename_EVAP_SFC)//trim(cdate)
-          endif
-          if(output_direct_access) then
-             call GTL_output_var2_da( basename, &
-                  diagvar1(:,:,:,I_EVAP_SFC), 1, ADM_KNONE,  &
-                  recnum=1, output_size=8 )
-          else
-             call GTL_output_var2( basename, &
-                  diagvar1(:,:,:,I_EVAP_SFC), &
-                  diagvar1_pl(:,:,:,I_EVAP_SFC), &
-                  1, ADM_KNONE )
-          endif !--- direct/sequencial
-          ! [Add] 2012/06/07 T.Seiki
-          if ( trim(output_basename_SH_FLUX_SFC) == "" ) then 
-             basename='restart_EVAP_SFC'//trim(cdate)
-          else
-             basename=trim(output_basename_EVAP_SFC)//trim(cdate)
-          endif          
-          ! 2011/08/16b M.Satoh
-          if(output_direct_access) then
-             call GTL_output_var2_da( basename, &
-                  diagvar1(:,:,:,I_SH_FLUX_SFC), 1, ADM_KNONE,  &
-                  recnum=1, output_size=8 )
-          else
-             call GTL_output_var2( basename, &
-                  diagvar1(:,:,:,I_SH_FLUX_SFC), &
-                  diagvar1_pl(:,:,:,I_SH_FLUX_SFC), &
-                  1, ADM_KNONE )
-          endif !--- direct/sequencial
-          
        endif  !--- io_mode
     endif
 
@@ -1872,32 +1410,12 @@ contains
                            FIO_REAL8, 'GCCKR', 1, kend-ksta+1,                        &
                            1, TIME_CTIME, TIME_CTIME                                  )
 
-       elseif( output_io_mode == 'LEGACY' ) then
-       ! <- [add] H.Yashiro 20110819
-          ! [Add] 2012/06/07 T.Seiki
-          if ( trim(output_basename_CBMFX_CHIKIRA) == "" ) then 
-             basename='restart_CBMFX_CHIKIRA'//trim(cdate)
-          else
-             basename=trim(output_basename_CBMFX_CHIKIRA)//trim(cdate)
-          endif          
-
-          if(output_direct_access) then
-             call GTL_output_var2_da( basename, &
-                                      diagvarn(:,ksta:kend,:,1), 1, kend-ksta+1,  &
-                                      recnum=1, output_size=8 )
-          else
-             call GTL_output_var2( basename, &
-                                   diagvarn(:,ksta:kend,:,1), &
-                                   diagvarn_pl(:,ksta:kend,:,1), &
-                                   1, kend-ksta+1 )
-          endif !--- direct/sequencial
-
        endif  !--- io_mode
     endif
 
 ! -> [add&mod] H.Yashiro 20110826
 !==> 09/01/28 A.T.Noda
-!   if(TB_TYPE=='MY2MOIST')then             ! 07/07/05 A.T.Noda
+!   if (TB_TYPE=='MY2MOIST')then             ! 07/07/05 A.T.Noda
     if (      trim(TB_TYPE)=='MY2MOIST' &
          .or. trim(TB_TYPE)=='MYNN2'    &
          .or. trim(TB_TYPE)=='MYNN2.5'  &
@@ -1923,19 +1441,6 @@ contains
                                  FIO_REAL8, restart_layername, 1, ADM_kall,         &
                                  1, TIME_CTIME, TIME_CTIME                          )
 
-             elseif( output_io_mode == 'LEGACY' ) then
-                !
-                if (output_direct_access) then
-                   call GTL_output_var2_da( basename,                           &
-                                            diagvar(:,:,:,I_QKEd), 1, ADM_kall, &
-                                            recnum=1, output_size=8             )
-                else
-                   call GTL_output_var2( basename,                 &
-                                         diagvar(:,:,:,I_QKEd),    &
-                                         diagvar_pl(:,:,:,I_QKEd), &
-                                         1, ADM_kall               )
-                endif !--- direct/sequencial
-
              endif  !--- io_mode
 
              write(ADM_LOG_FID,*) 'restart out: qked',           &
@@ -1959,33 +1464,6 @@ contains
                               FIO_REAL8, restart_layername, 1, ADM_kall,         &
                               1, TIME_CTIME, TIME_CTIME                          )
 
-          elseif( output_io_mode == 'LEGACY' ) then
-             !
-             if (output_direct_access) then
-                call GTL_output_var2_da( basename,                           &
-                                         diagvar(:,:,:,I_TSQd), 1, ADM_kall, &
-                                         recnum=2, output_size=8             )
-                call GTL_output_var2_da( basename,                           &
-                                         diagvar(:,:,:,I_QSQd), 1, ADM_kall, &
-                                         recnum=3, output_size=8             )
-                call GTL_output_var2_da( basename,                           &
-                                         diagvar(:,:,:,I_COVd), 1, ADM_kall, &
-                                         recnum=4, output_size=8             )
-             else
-                call GTL_output_var2( basename,                 &
-                                      diagvar(:,:,:,I_TSQd),    &
-                                      diagvar_pl(:,:,:,I_TSQd), &
-                                      1, ADM_kall               )
-                call GTL_output_var2( basename,                 &
-                                      diagvar(:,:,:,I_QSQd),    &
-                                      diagvar_pl(:,:,:,I_QSQd), &
-                                      1, ADM_kall               )
-                call GTL_output_var2( basename,                 &
-                                      diagvar(:,:,:,I_COVd),    &
-                                      diagvar_pl(:,:,:,I_COVd), &
-                                      1, ADM_kall               )
-             endif !--- direct/sequencial
-
           endif  !--- io_mode
 
           write(ADM_LOG_FID,*) 'restart out: tsqd',           &
@@ -1999,69 +1477,12 @@ contains
                                minval(diagvar(:,:,:,I_COVd))
        endif !--- MY2M, MYNN2, MYNN2.5
 
-       if ( RAD_CLOUD_TYPE=='PARTIAL_CLOUD' )then
-          !
-          if ( output_io_mode == 'ADVANCED' ) then
-             !
-             call FIO_output( diagvar(:,:,:,I_QCLWB), basename, desc, '',        &
-                              'q_clw_before', 'q_clw_before', '', 'kg/kg',       &
-                              FIO_REAL8, restart_layername, 1, ADM_kall,         &
-                              1, TIME_CTIME, TIME_CTIME                          )
-             call FIO_output( diagvar(:,:,:,I_QCLIB), basename, desc, '',        &
-                              'q_cli_before', 'q_cli_before', '', 'kg/kg',       &
-                              FIO_REAL8, restart_layername, 1, ADM_kall,         &
-                              1, TIME_CTIME, TIME_CTIME                          )
-             call FIO_output( diagvar(:,:,:,I_CFRACP), basename, desc, '0-1',    &
-                              'cfrac_pdf', 'cfrac_pdf', '', '',                  &
-                              FIO_REAL8, restart_layername, 1, ADM_kall,         &
-                              1, TIME_CTIME, TIME_CTIME                          )
-
-          elseif( output_io_mode == 'LEGACY' ) then
-             !
-             if (output_direct_access) then
-                call GTL_output_var2_da( basename,                             &
-                                         diagvar(:,:,:,I_QCLWB), 1, ADM_kall,  &
-                                         recnum=5, output_size=8               )
-                call GTL_output_var2_da( basename,                             &
-                                         diagvar(:,:,:,I_QCLIB), 1, ADM_kall,  &
-                                         recnum=6, output_size=8               )
-                call GTL_output_var2_da( basename,                             &
-                                         diagvar(:,:,:,I_CFRACP), 1, ADM_kall, &
-                                         recnum=7, output_size=8               )
-             else
-                call GTL_output_var2( basename,                   &
-                                      diagvar(:,:,:,I_QCLWB),     &
-                                      diagvar_pl(:,:,:,I_QCLWB),  &
-                                      1, ADM_kall                 )
-                call GTL_output_var2( basename,                   &
-                                      diagvar(:,:,:,I_QCLIB),     &
-                                      diagvar_pl(:,:,:,I_QCLIB),  &
-                                      1, ADM_kall                 )
-                call GTL_output_var2( basename,                   &
-                                      diagvar(:,:,:,I_CFRACP),    &
-                                      diagvar_pl(:,:,:,I_CFRACP), &
-                                      1, ADM_kall                 )
-             endif !--- direct/sequencial
-
-          endif  !--- io_mode
-
-          write(ADM_LOG_FID,*) 'restart out: q_clw_before',    &
-                               maxval(diagvar(:,:,:,I_QCLWB)), &
-                               minval(diagvar(:,:,:,I_QCLWB))
-          write(ADM_LOG_FID,*) 'restart out: q_cli_before',    &
-                               maxval(diagvar(:,:,:,I_QCLIB)), &
-                               minval(diagvar(:,:,:,I_QCLIB))
-          write(ADM_LOG_FID,*) 'restart out: cfrac_pdf',        &
-                               maxval(diagvar(:,:,:,I_CFRACP)), &
-                               minval(diagvar(:,:,:,I_CFRACP))
-       endif !--- PARTIAL_CLOUD
-
     endif !--- MY2M, MYNN2, MYNN2.5, MYNN3
 !<== 09/01/28 A.T.Noda
 ! <- [add&mod] H.Yashiro 20110826
 
     ! 10/04/28 M.Satoh
-    if( ROUGHNESS_SEA_TYPE == 'YQW' ) then 
+    if ( ROUGHNESS_SEA_TYPE == 'YQW' ) then
 
        ! -> [add] H.Yashiro 20110819
        if ( output_io_mode == 'ADVANCED' ) then
@@ -2080,26 +1501,6 @@ contains
                            FIO_REAL8, 'ZSSFC1', 1, 1,                          &
                            1, TIME_CTIME, TIME_CTIME                           )
           ! <- [mod] Y.Yamada 20111125
-       elseif( output_io_mode == 'LEGACY' ) then
-       ! <- [add] H.Yashiro 20110819
-          ! [Add] 2012/06/07 T.Seiki
-          if ( trim(output_basename_ROUGHNESS_SEA) == "" ) then 
-             basename='restart_ROUGHNESS_SEA'//trim(cdate)
-          else
-             basename=trim(output_basename_ROUGHNESS_SEA)//trim(cdate)
-          endif
-          
-          if (output_direct_access) then
-             call GTL_output_var2_da( basename, &
-                                      diagvar1(:,:,:,I_ROUGHNESS_SEA), 1, ADM_KNONE,    &
-                                      recnum=1, output_size=8 )
-          else
-             call GTL_output_var2( basename,   &
-                                   diagvar1(:,:,:,I_ROUGHNESS_SEA), &
-                                   diagvar1_pl(:,:,:,I_ROUGHNESS_SEA),    &
-                                   1, ADM_KNONE )
-          endif !--- direct/sequencial
-
        endif  !--- io_mode
 
        write(ADM_LOG_FID,*) 'restart out: z0_roughness_sea', &
@@ -2110,53 +1511,8 @@ contains
     ! [mod] 11/08/16 M.Satoh
     call diagvar_timeinfo ( cdate )
 
-      ! del below; 11/08/16 M.Satoh 
-      !
-      ! 07/12/05 [Add] T.Mitsui
-!!$ call diagvar_timeinfo(DIAG_VMAX,diag_cname(1:DIAG_VMAX))
-    ! 08/03/10 [Mod] T.Mitsui
-    ! 10/04/28 [Mod] M.Satoh
-
-    ! 10/06/09 A.T.Noda
-!    call diagvar_timeinfo ( &
-!         DIAG_VMAX,         &
-!         diag_cname(1:DIAG_VMAX)//trim(cdate), &
-!         DIAG_VMAX_1layer,  &
-!         diag_cname_1layer(1:DIAG_VMAX_1layer)//trim(cdate) &
-!         )
-!!$    ! [fix] 10/08/03 T.Mitsui, bug(?) by gfortran
-!!$    cwork(:)=""
-!!$    cwork_1layer(:)=""
-!!$    cwork_nlayer(:)="" ! 11/08/16 M.Satoh
-!!$    do iv=1, DIAG_VMAX
-!!$       cwork(iv)=diag_cname(iv)//trim(cdate)
-!!$    end do
-!!$    if( DIAG_VMAX_1layer>0 )then
-!!$       do iv=1, DIAG_VMAX_1layer
-!!$          cwork_1layer(iv)=diag_cname_1layer(iv)//trim(cdate)
-!!$       end do
-!!$    end do
-!!$    if( DIAG_VMAX_nlayer>0 )then ! 11/08/16 M.Satoh
-!!$       do iv=1, DIAG_VMAX_nlayer
-!!$          cwork_nlayer(iv)=diag_cname_nlayer(iv)//trim(cdate)
-!!$       end do
-!!$    end do
-
-!!$       call diagvar_timeinfo ( &
-!!$            DIAG_VMAX,         &
-!!$            cwork(1:DIAG_VMAX),&
-!!$            DIAG_VMAX_1layer,  &
-!!$            cwork_1layer(1:DIAG_VMAX_1layer) &
-!!$            )
-!!$    else
-!!$       call diagvar_timeinfo ( &
-!!$            DIAG_VMAX,         &
-!!$            cwork(1:DIAG_VMAX),&
-!!$            DIAG_VMAX_1layer   &
-!!$            )
-!!$    endif
-    !
   end subroutine diagvar_restart_output
+
   !-----------------------------------------------------------------------------
   ! 11/08/16 [Mod] M.Satoh
   subroutine diagvar_timeinfo &
@@ -2187,7 +1543,6 @@ contains
     integer :: k
     integer :: n
     integer :: iv
-    character(len=3) :: wc       ! [Add] 2012/06/07 T.Seiki
 
     cname(:) = ""
     cname_1layer(:) = ""
@@ -2196,18 +1551,18 @@ contains
     do iv = 1, DIAG_VMAX
        cname(iv) = diag_cname(iv)//trim(cdate)
     end do
-    if( DIAG_VMAX_1layer > 0 )then
+    if ( DIAG_VMAX_1layer > 0 )then
        do iv = 1, DIAG_VMAX_1layer
           cname_1layer(iv) = diag_cname_1layer(iv)//trim(cdate)
        end do
-    end if
-    if( DIAG_VMAX_nlayer > 0 )then ! 11/08/16 M.Satoh
+    endif
+    if ( DIAG_VMAX_nlayer > 0 )then ! 11/08/16 M.Satoh
        do iv = 1, DIAG_VMAX_nlayer
           cname_nlayer(iv) = diag_cname_nlayer(iv)//trim(cdate)
        end do
-    end if
+    endif
 
-    if(ADM_prc_me == ADM_prc_run_master) then
+    if (ADM_prc_me == ADM_prc_run_master) then
        !
        fid = MISC_get_available_fid()
           open(fid,file='diagvar.info',form='formatted',status='replace')
@@ -2228,7 +1583,7 @@ contains
              write(fid,'(I4)') num
              write(fid,'(a32)') trim(cname_1layer(n))
           end do
-       end if
+       endif
        if ( DIAG_VMAX_nlayer > 0 ) then
           do n = 1, DIAG_VMAX_nlayer
              write(fid,'(I4,F16.2)') 1, TIME_DTL*TIME_LSTEP_MAX
@@ -2239,10 +1594,10 @@ contains
              write(fid,'(I4)') num
              write(fid,'(a32)') trim(cname_nlayer(n))
           end do
-       end if
+       endif
        close(fid)
        !
-    end if
+    endif
     !
     return
     !

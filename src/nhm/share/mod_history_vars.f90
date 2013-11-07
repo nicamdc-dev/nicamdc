@@ -14,10 +14,10 @@
 !! @li      2007-08-06   K.Suzuki: move SPRINTARS variables from mod_postphystep
 !! @li      2007-08-20   W.Yanase: debug in "call getr1_in_mat"
 !! @li      2007-11-22   T.Mitsui: Effective Radius is calculated in rd_driver => mp_driver
-!!                                 and some variables are moved from aerovar 
+!!                                 and some variables are moved from aerovar
 !! @li      2007-11-30   T.Mitsui: del double use(trivial)
 !! @li      2007-12-05   T.Mitsui: add radiative flux categolized as ISCCP-D series
-!! @li      2008-02-19   T.Mitsui: Add output for slice-cloud normalized by cot 
+!! @li      2008-02-19   T.Mitsui: Add output for slice-cloud normalized by cot
 !!                                 and trivial fix for output option
 !! @li      2008-03-06   H.Tomita: add mp_wsm3_wcdiag.
 !! @li      2008-05-24   T.Mitsui: add nc, nr, ni, ns, ng for 2moment option
@@ -282,7 +282,7 @@ contains
          I_GDCFRC,          &
          I_CUMCLW,          &
          I_UNCCN                 ! 08/02/19 T.Mitsui
-    use mod_grd, only:          & 
+    use mod_grd, only:          &
          grd_zsfc,              &
          grd_zs,                &
          grd_zs_pl,             &
@@ -421,9 +421,9 @@ contains
 
     !--- density, temperature & pressure
     do l = 1, ADM_lall
-       call history_in( 'ml_rho',  rho(:,:,l) ) 
-       call history_in( 'ml_tem',  tem(:,:,l) ) 
-       call history_in( 'ml_pres', pre(:,:,l) ) 
+       call history_in( 'ml_rho',  rho(:,:,l) )
+       call history_in( 'ml_tem',  tem(:,:,l) )
+       call history_in( 'ml_pres', pre(:,:,l) )
     enddo
 
     !--- wind on cartesian
@@ -454,7 +454,7 @@ contains
        wc(:,ADM_kmin-1,l) = 0.D0
        wc(:,ADM_kmax+1,l) = 0.D0
 
-       call history_in( 'ml_w', wc(:,:,l) ) 
+       call history_in( 'ml_w', wc(:,:,l) )
     enddo
 
     !--- zonal and meridonal wind with cos(phi)
@@ -467,8 +467,8 @@ contains
                              icos = 1           ) ! [IN]
 
        do l = 1, ADM_lall
-          call history_in( 'ml_ucos', ucos(:,:,l) )  
-          call history_in( 'ml_vcos', vcos(:,:,l) ) 
+          call history_in( 'ml_ucos', ucos(:,:,l) )
+          call history_in( 'ml_vcos', vcos(:,:,l) )
        enddo
     endif
 
@@ -477,7 +477,7 @@ contains
        do l = 1, ADM_lall
           omg(:,:,l) = -CNST_EGRAV * rho(:,:,l) * wc(:,:,l)
 
-          call history_in( 'ml_omg', omg(:,:,l) ) 
+          call history_in( 'ml_omg', omg(:,:,l) )
        enddo
     endif
 
@@ -487,7 +487,7 @@ contains
        do l = 1, ADM_lall
           hgt(:,:,l) = GRD_vz(:,:,l,GRD_Z)
 
-          call history_in( 'ml_hgt', hgt(:,:,l) ) 
+          call history_in( 'ml_hgt', hgt(:,:,l) )
        enddo
     endif
 
@@ -683,7 +683,7 @@ contains
                           + vy10m(:,K0,l) * GMTR_P_var(:,K0,l,GMTR_P_IY) &
                           + vz10m(:,K0,l) * GMTR_P_var(:,K0,l,GMTR_P_IZ)
 
-          call history_in( 'sl_u10m', dummy2D(:,:,l) )  
+          call history_in( 'sl_u10m', dummy2D(:,:,l) )
 
           dummy2D(:,K0,l) = dummy2D(:,K0,l) * cos( GMTR_P_var(:,K0,l,GMTR_P_LAT) )
 
@@ -715,7 +715,7 @@ contains
     if (out_tem_atm) then
        do l = 1, ADM_lall
           dummy2D(:,K0,l) = 0.D0
-          rw(:,:)         = 0.D0 
+          rw(:,:)         = 0.D0
           do k = ADM_kmin, ADM_kmax
              dummy2D(:,K0,l) = dummy2D(:,K0,l) + rho(:,k,l) * tem(:,k,l) * VMTR_VOLUME(:,k,l)
              rw     (:,l)    = rw     (:,l)    + rho(:,k,l)              * VMTR_VOLUME(:,k,l)

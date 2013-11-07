@@ -86,9 +86,8 @@ cat << EOFNHM > ${BINNAME}.cnf
 /
 
 ###--- SET RUN TYPE
-&RUNCONFPARAM 
-    RUN_TYPE       = 'Jablonowski',
-    EIN_TYPE       = 'SIMPLE',
+&RUNCONFPARAM
+    RUNNAME        = 'Jablonowski',
     NDIFF_LOCATION = 'IN_LARGE_STEP2',
     AF_TYPE        = 'NONE',
 /

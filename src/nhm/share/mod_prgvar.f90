@@ -147,7 +147,6 @@ contains
        TRC_vmax,             &
        TRC_name,             &
        opt_2moment_water,    &
-       flag_diagnose_number, &
        RAIN_TYPE,            &
        I_QC,                 &
        I_QR,                 &
@@ -179,6 +178,8 @@ contains
          opt_qcqi_to_qv          !--- option to convert qc and qi into qv,  09/08/18 T.Mitsui
 
     logical, allocatable :: flag_exist(:) ! [Add] 08/04/12 T.Mitsui
+
+    logical :: flag_diagnose_number(TRC_vmax)
 
     integer :: ierr
     integer :: nq
@@ -1010,12 +1011,12 @@ contains
        ADM_lall,        &
        ADM_IopJop_nmax, &
        ADM_IopJop,      &
-       ADM_GIoJo,       & 
+       ADM_GIoJo,       &
        ADM_gall_1d,     &
        ADM_gmax,        &
        ADM_gmin
     use mod_comm, only: &
-       COMM_data_transfer,       &
+       COMM_data_transfer, &
        COMM_var
     use mod_runconf, only: &
        TRC_vmax
@@ -1321,7 +1322,6 @@ contains
        GTL_min
     use mod_runconf, only: &
        opt_2moment_water,    &
-       flag_diagnose_number, &
        TRC_vmax, &
        TRC_name, &
        I_QC,     &
@@ -1338,6 +1338,8 @@ contains
     real(8) :: val_max, val_min
     logical :: nonzero
 
+    logical :: flag_diagnose_number(TRC_vmax)
+
     integer :: fid
     integer :: l, rgnid, nq
     !---------------------------------------------------------------------------
@@ -1349,7 +1351,7 @@ contains
     if ( input_io_mode == 'ADVANCED' ) then
 
        do nq = 1, DIAG_vmax0
-          call FIO_input(DIAG_var(:,:,:,nq),basename,DIAG_name(nq), & 
+          call FIO_input(DIAG_var(:,:,:,nq),basename,DIAG_name(nq), &
                          layername,1,ADM_kall,1                     )
        enddo
 
@@ -1766,7 +1768,7 @@ contains
                            qd  (:,:,:),                  & !--- [OUT]
                            diag(:,:,:,I_qstr:I_qend)     ) !--- [IN]
 
-    !--- calculation  of density 
+    !--- calculation  of density
     call THRMDYN_rho_ijkl( ADM_gall, ADM_kall, ADM_lall, & !--- [IN]
                            rho(:,:,:),                   & !--- [OUT]
                            diag(:,:,:,I_pre),            & !--- [IN]
@@ -1831,7 +1833,7 @@ contains
                               qd_pl  (:,:,:),                     & !--- [OUT]
                               diag_pl(:,:,:,I_qstr:I_qend)        ) !--- [IN]
 
-       !--- calculation  of density 
+       !--- calculation  of density
        call THRMDYN_rho_ijkl( ADM_gall_pl, ADM_kall, ADM_lall_pl, & !--- [IN]
                               rho_pl(:,:,:),                      & !--- [OUT]
                               diag_pl(:,:,:,I_pre),               & !--- [IN]
@@ -2089,9 +2091,9 @@ contains
     real(8), intent(inout) :: rhogqi(gall,kall,lall)
     ! Reference: MIROC4.1, G98, Rogers and Yau(1989)(book) and so on.
     ! -15deg. is the most effective temperature of Bergeron process
-    real(8), save :: tem_low = 258.15d0 
+    real(8), save :: tem_low = 258.15d0
     !   0deg. is begining of Bergeron process
-    real(8), save :: tem_up  = 273.15d0 
+    real(8), save :: tem_up  = 273.15d0
     !
     real(8), parameter :: dtem_min=0.1d0
     real(8), parameter :: tem_low_min = 173.15d0
@@ -2214,19 +2216,19 @@ contains
           q(:,:,l_region,I_QI) = 0.d0
           rhogq(:,:,l_region,I_QV) = rhogq(:,:,l_region,I_QV) + drhogqv(:,:)
           rhogq(:,:,l_region,I_QC) = 0.d0
-          rhogq(:,:,l_region,I_QI) = 0.d0          
+          rhogq(:,:,l_region,I_QI) = 0.d0
           if( opt_2moment_water )then
              q(:,:,l_region,I_NC)     = 0.d0
              q(:,:,l_region,I_NI)     = 0.d0
              rhogq(:,:,l_region,I_NC) = 0.d0
-             rhogq(:,:,l_region,I_NI) = 0.d0          
+             rhogq(:,:,l_region,I_NI) = 0.d0
           end if
        else
-          dqv(:,:)     = q(:,:,l_region,I_QC) 
-          drhogqv(:,:) = rhogq(:,:,l_region,I_QC) 
+          dqv(:,:)     = q(:,:,l_region,I_QC)
+          drhogqv(:,:) = rhogq(:,:,l_region,I_QC)
           !
           drhoe(:,:)   = -CNST_LH00*dqv(:,:) &
-               - (CNST_CVV*tem(:,:,l_region)-CNST_CL*tem(:,:,l_region))*dqv(:,:) 
+               - (CNST_CVV*tem(:,:,l_region)-CNST_CL*tem(:,:,l_region))*dqv(:,:)
           !
           tem(:,:,l_region)    = tem(:,:,l_region) + drhoe(:,:)/cva(:,:)
           q(:,:,l_region,I_QV) = q(:,:,l_region,I_QV) + dqv(:,:)
@@ -2241,7 +2243,7 @@ contains
     end do
 
     return
-  end subroutine convert_qcqi_to_qv    
+  end subroutine convert_qcqi_to_qv
 
 end module mod_prgvar
 !-------------------------------------------------------------------------------
