@@ -60,12 +60,12 @@ module mod_debug
   ! <-- [add] PAPI R.Yoshida 20121022
   !integer(8),public, save :: papi_flpins    !total floating point instructions since the first call
   integer(8),public, save :: papi_flpops    !total floating point operations since the first call
-  !real(4),   public, save :: papi_real_time_i !total realtime since the first PAPI_flins() call 
-  !real(4),   public, save :: papi_proc_time_i !total process time since the first PAPI_flins() call 
-  real(4),   public, save :: papi_real_time_o !total realtime since the first PAPI_flops() call 
-  real(4),   public, save :: papi_proc_time_o !total process time since the first PAPI_flops() call 
-  !real(4),   public, save :: papi_mflins    !Mflip/s achieved since the previous call 
-  real(4),   public, save :: papi_mflops    !Mflop/s achieved since the previous call 
+  !real(4),   public, save :: papi_real_time_i !total realtime since the first PAPI_flins() call
+  !real(4),   public, save :: papi_proc_time_i !total process time since the first PAPI_flins() call
+  real(4),   public, save :: papi_real_time_o !total realtime since the first PAPI_flops() call
+  real(4),   public, save :: papi_proc_time_o !total process time since the first PAPI_flops() call
+  !real(4),   public, save :: papi_mflins    !Mflip/s achieved since the previous call
+  real(4),   public, save :: papi_mflops    !Mflop/s achieved since the previous call
   integer,   public, save :: papi_check
 #endif
 
@@ -323,6 +323,8 @@ contains
     DEBUG_raptstr(id) = time
     DEBUG_rapnstr(id) = DEBUG_rapnstr(id) + 1
 
+    !write(ADM_LOG_FID,*) rapname, DEBUG_rapnstr(id)
+
 #ifdef _FAPP_
 call START_COLLECTION( rapname )
 #endif
@@ -358,7 +360,7 @@ call STOP_COLLECTION( rapname )
   !-----------------------------------------------------------------------------
   subroutine DEBUG_rapreport
     use mod_adm, only: &
-       ADM_COMM_RUN_WORLD, &
+       ADM_COMM_WORLD, &
        ADM_prc_all,        &
        ADM_prc_me
     implicit none
@@ -399,7 +401,7 @@ call STOP_COLLECTION( rapname )
                               recvbuf,              &
                               1,                    &
                               MPI_DOUBLE_PRECISION, &
-                              ADM_COMM_RUN_WORLD,   &
+                              ADM_COMM_WORLD,   &
                               ierr                  )
 
           globalavg = sum( recvbuf(:) ) / real(ADM_prc_all,kind=8)
@@ -441,7 +443,7 @@ call STOP_COLLECTION( rapname )
                         recvbuf,              &
                         1,                    &
                         MPI_DOUBLE_PRECISION, &
-                        ADM_COMM_RUN_WORLD,   &
+                        ADM_COMM_WORLD,   &
                         ierr                  )
 
     globalavg = sum( recvbuf(:) ) / real(ADM_prc_all,kind=8)
@@ -464,7 +466,7 @@ call STOP_COLLECTION( rapname )
                         recvbuf,              &
                         1,                    &
                         MPI_DOUBLE_PRECISION, &
-                        ADM_COMM_RUN_WORLD,   &
+                        ADM_COMM_WORLD,   &
                         ierr                  )
 
     globalsum = sum( recvbuf(:) )

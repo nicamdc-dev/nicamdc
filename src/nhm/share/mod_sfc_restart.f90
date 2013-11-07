@@ -1,19 +1,19 @@
 !-------------------------------------------------------------------------------
-! 
+!
 !+  restart sfc I/O module
 !
 !-------------------------------------------------------------------------------
 module mod_sfc_restart
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
+  !++ Description:
   !       This module is for the sfc restart file I/O.
-  !       
-  ! 
+  !
+  !
   !++ Current Corresponding Author : T.Mitsui
-  ! 
-  !++ History: 
-  !      Version   Date       Comment 
+  !
+  !++ History:
+  !      Version   Date       Comment
   !      -----------------------------------------------------------------------
   !      0.00      06-04-18   Add this module
   !                08-03-10   T.Mitsui: add output of intermediate restart file
@@ -90,7 +90,7 @@ contains
     integer :: level
     !
     allocate(tmp(ADM_gall,NRDIR*NRBND,ADM_lall) )
-    allocate(tmp_pl(ADM_gall_pl,NRDIR*NRBND,ADM_lall_pl) )    
+    allocate(tmp_pl(ADM_gall_pl,NRDIR*NRBND,ADM_lall_pl) )
     tmp(:,:,:) = ALB_INIT
     tmp_pl(:,:,:) = ALB_INIT
     !
@@ -143,7 +143,7 @@ contains
 
 !!! debug
 !!$    if(adm_prc_me == 1) then
-!!$       write(*,*) ' INPUT albedo (100,1,2,:,:) :' , albedo_sfc(100,1,2,:,:) 
+!!$       write(*,*) ' INPUT albedo (100,1,2,:,:) :' , albedo_sfc(100,1,2,:,:)
 !!$    end if
 !!!
     !
@@ -243,7 +243,7 @@ contains
     !
 !!! debug
 !!$    if(adm_prc_me == 1) then
-!!$       write(*,*) ' OUTPUT albedo (100,1,2,:,:) :' , albedo_sfc(100,1,2,:,:) 
+!!$       write(*,*) ' OUTPUT albedo (100,1,2,:,:) :' , albedo_sfc(100,1,2,:,:)
 !!$    end if
 !!!
     write(ADM_LOG_FID,*) ' Msg : Sub[sfc_restart_output_all]/Mod[sfc_restart]'
@@ -278,12 +278,11 @@ contains
          GTL_input_var2,        &
          GTL_input_var2_da
     use mod_comm, only :     &
-         comm_var
+       COMM_var
     use mod_fio, only : & ! [add] H.Yashiro 20110826
          FIO_input
-    !
     implicit none
-    !
+
     character(LEN=*), intent(in) :: DNAME     ! data name
     integer, intent(in) :: knum
     real(8), intent(inout) :: gdata(ADM_gall,knum,ADM_lall)          ! data
@@ -388,13 +387,7 @@ contains
        endif
        ! <- [add] H.Yashiro 20110826
 
-       call comm_var(   &
-            tmp,tmp_pl, &
-            knum_in,    &
-            1,          &
-            comm_type=2,&
-            NSval_fix=.true.&
-            )
+       call COMM_var( tmp, tmp_pl, knum_in, 1 )
        !
        gdata(:,1:knum_in,:) = tmp(:,1:knum_in,:,1)
        If(ADM_prc_me==ADM_prc_pl) Then
@@ -435,7 +428,7 @@ contains
        gdata,                  & !--- in
        gdata_pl,               & !--- in
        knum                  )   !--- in
-    
+
     use mod_misc, only :        &
          MISC_make_idstr,       &
          MISC_get_available_fid,&
@@ -454,7 +447,7 @@ contains
          ADM_prc_tab
     use mod_gtl, only :         &
          GTL_output_var2,       &
-         GTL_output_var2_da  
+         GTL_output_var2_da
     use mod_fio, only : & ! [add] H.Yashiro 20110819
          FIO_output, &
          FIO_HMID,   &
@@ -467,14 +460,14 @@ contains
     integer, intent(in) :: knum
     real(8), intent(in) :: gdata(ADM_gall,knum,ADM_lall)          ! data
     real(8), intent(in) :: gdata_pl(ADM_gall_pl,knum,ADM_lall_pl) ! data (pole)
-    !    
+    !
     character(ADM_MAXFNAME) :: dataname = ''
     character(ADM_MAXFNAME) :: filename = ''
     !
     character(ADM_MAXFNAME) :: fname
     integer :: rgnid
     integer :: fid
-    !   
+    !
     logical :: otag
     integer :: ierr
     integer :: l

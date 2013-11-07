@@ -242,52 +242,33 @@ contains
          I_Q2,               &
          INDEX_SEA
     use mod_runconf, only : &
-         LHV,LHS,           &
-         RAIN_TYPE,         &
-         CP_TYPE,           & ! 10/06/10 A.T.Noda
-         NQW_MAX,           &
          TRC_VMAX,          &
          TRC_name,          &
+         RAIN_TYPE,         &
+         CP_TYPE,           & ! 10/06/10 A.T.Noda
          MP_TYPE,           & ! 07/05/08 H.tomita
+         LAND_TYPE,         &  ! Y.Niwa add 070627
+         OCEAN_TYPE,        &
          AE_TYPE,           & ! 07/07/30 K.Suzuki
-         opt_2moment_water, & ! 08/05/24 T.Mitsui
-         opt_incloud_aerosol,& ! 12/02/01 T.Seiki
-         I_NC, I_NR, I_NI,  & ! 08/05/24 T.Mitsui
-         I_NS, I_NG,        & ! 08/05/24 T.Mitsui
-         NNW_STR, NNW_END,  & ! 08/05/24 T.Mitsui
+         NQW_MAX,           &
+         NQW_STR,NQW_END,   &
          I_QV,              &
          I_QC,              &
          I_QR,              &
          I_QI,              &
          I_QS,              &
          I_QG,              &
-         I_QH,              &
-         NQW_STR,NQW_END,   &
-         opt_carb_on, opt_dust_on, &! 12/02/01 T.Seiki
-         opt_salt_on, opt_sulf_on, &! 12/02/01 T.Seiki
-         NQDU_STR, NQDU_END,&       ! 12/02/01 T.Seiki
-         NQDUIN_STR, NQDUIN_END, &  ! 12/02/01 T.Seiki
-         NQCB_STR, NQCB_END, &      ! 12/02/01 T.Seiki
-         NQCBIN_STR, NQCBIN_END, &  ! 12/02/01 T.Seiki
-         NQSU_SO4,          &       ! 12/02/01 T.Seiki
-         NQSU_SO2,          &       ! 12/02/01 T.Seiki
-         NQSU_DMS,          &       ! 12/02/01 T.Seiki
-         NQSO4IN,           &       ! 12/02/01 T.Seiki
-         NQSA_STR, NQSA_END, &      ! 12/02/01 T.Seiki
-         NQSAIN_STR, NQSAIN_END, &  ! 12/02/01 T.Seiki
-         NRDIR,             &
+         opt_2moment_water, & ! 08/05/24 T.Mitsui
+         NNW_STR, NNW_END,  & ! 08/05/24 T.Mitsui
+         I_NC, I_NR, I_NI,  & ! 08/05/24 T.Mitsui
+         I_NS, I_NG,        & ! 08/05/24 T.Mitsui
          NRBND,             &
          NRBND_VIS,         &
          NRBND_NIR,         &
          NRBND_IR,          &
+         NRDIR,             &
          NRDIR_DIRECT,      &
-         NRDIR_DIFFUSE,     &
-         NCRF,              &
-         RAD_TYPE,          &  ! 07/12/05 T.Mitsui
-         NTAU_ISCCP,        &  ! 07/12/05 T.Mitsui
-         NPRES_ISCCP,       &  ! 07/12/05 T.Mitsui
-         LAND_TYPE,         &  ! Y.Niwa add 070627
-         OCEAN_TYPE            ! Y.Niwa add 070627
+         NRDIR_DIFFUSE
     use mod_bsstate, only : &
          phi, phi_pl
     use mod_cnvvar, only :  &
@@ -398,8 +379,6 @@ contains
     real(8) :: albedo_sfc(ADM_gall,ADM_KNONE,ADM_lall,1:NRDIR,1:NRBND)
     real(8) :: slp(ADM_gall,ADM_KNONE,ADM_lall)
     real(8) :: albedo_sfc_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,1:NRDIR,1:NRBND) ! 05/11/13 S.Iga
-
-    integer, parameter :: cot_binmax=11
 
     real(8) :: dummy2D   (ADM_gall,   ADM_KNONE,ADM_lall   )
     real(8) :: dummy2D_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)

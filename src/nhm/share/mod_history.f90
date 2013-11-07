@@ -833,7 +833,7 @@ contains
        call Calendar_SS2CC ( HTIME, TIME_CTIME )
        write(ADM_LOG_FID,*) '###         date-time  = ', HTIME
 
-       call comm_var( v_save, v_save_pl, KSUM, 1, comm_type=2, NSval_fix=.true. )
+       call COMM_var( v_save, v_save_pl, KSUM, 1 )
     else
        return
     endif

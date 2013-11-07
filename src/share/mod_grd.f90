@@ -360,7 +360,7 @@ contains
 
     !--- data transfer for GRD_zs
     if (topo_direct_access) then ! [add] H.Yashiro 20110819
-       call COMM_var( GRD_zs, GRD_zs_pl, K0, 3, comm_type=2, NSval_fix=.true. )
+       call COMM_var( GRD_zs, GRD_zs_pl, K0, 3 )
     else
        call COMM_data_transfer(GRD_zs,GRD_zs_pl)
     endif
@@ -1007,7 +1007,7 @@ contains
       ADM_rgn2prc,        &
       ADM_RID,            &
       ADM_VLINK_NMAX,     &
-      ADM_COMM_RUN_WORLD, &
+      ADM_COMM_WORLD, &
       ADM_prc_tab,        &
       ADM_prc_me,         &
       ADM_prc_npl,        &
@@ -1068,7 +1068,7 @@ contains
                              MPI_DOUBLE_PRECISION, &
                              ADM_prc_npl-1,        &
                              rgntab(n),            &
-                             ADM_COMM_RUN_WORLD,   &
+                             ADM_COMM_WORLD,   &
                              sreq(n),              &
                              ierr                  )
 
@@ -1084,7 +1084,7 @@ contains
                           MPI_DOUBLE_PRECISION, &
                           prctab(n)-1,          &
                           rgntab(n),            &
-                          ADM_COMM_RUN_WORLD,   &
+                          ADM_COMM_WORLD,   &
                           rreq(n),              &
                           ierr                  )
        enddo
@@ -1125,7 +1125,7 @@ contains
                              MPI_DOUBLE_PRECISION, &
                              ADM_prc_spl-1,        &
                              rgntab(n),            &
-                             ADM_COMM_RUN_WORLD,   &
+                             ADM_COMM_WORLD,   &
                              sreq(n),              &
                              ierr                  )
 
@@ -1141,7 +1141,7 @@ contains
                           MPI_DOUBLE_PRECISION, &
                           prctab(n)-1,          &
                           rgntab(n),            &
-                          ADM_COMM_RUN_WORLD,   &
+                          ADM_COMM_WORLD,   &
                           rreq(n),              &
                           ierr                  )
        enddo
@@ -1161,7 +1161,7 @@ contains
     endif
 
     !--- grid point communication
-    call COMM_var(GRD_x,GRD_x_pl,ADM_KNONE,3,comm_type=2,NSval_fix=.false.)
+    call COMM_var( GRD_x, GRD_x_pl, ADM_KNONE, 3 )
 
     if (      ADM_prc_me == ADM_prc_npl &
          .OR. ADM_prc_me == ADM_prc_spl ) then

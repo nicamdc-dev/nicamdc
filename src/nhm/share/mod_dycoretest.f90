@@ -1011,8 +1011,8 @@ contains
        ijdim_pl => ADM_gall_pl, &
        lall_pl  => ADM_lall_pl
     use mod_comm, only: &
-       COMM_var,           &
        COMM_data_transfer, &
+       COMM_var, &
        COMM_Stat_max
     use mod_grd, only: &
        GRD_x,      &
@@ -1067,7 +1067,7 @@ contains
     write (ADM_LOG_FID,*) "  vy - max:",maxval(DIAG_var(:,:,:,ID_vx)), "  min:",minval(DIAG_var(:,:,:,ID_vx))
 
     !--- fill HALO (to make DIAG_var_pl)
-    call comm_var( DIAG_var, DIAG_var_pl, kdim, vmax, comm_type=2, NSval_fix=.true. )
+    call COMM_var( DIAG_var, DIAG_var_pl, kdim, vmax )
     pregd(:,:,:)    = ( DIAG_var(:,:,:,ID_prs)    - pre_bs )    * VMTR_GSGAM2(:,:,:)
     pregd_pl(:,:,:) = ( DIAG_var_pl(:,:,:,ID_prs) - pre_bs_pl ) * VMTR_GSGAM2_pl(:,:,:)
 

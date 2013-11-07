@@ -23,7 +23,6 @@ module mod_src
   !                                     apply the limiter from rho q to q.
   !                07-11-14   Y.Niwa: bug fix /rho_h => /rho_h_pl
   !                08-01-24   Y.Niwa: add src_update_tracer
-  !                                   save_memory => TRC_SAVE_MEMORY
   !                08-04-28   Y.Niwa: add initialization and avoid zero-dividing. 
   !                09-05-26   Y.Yamada: add directive, derected by T.Asano
   !                11-09-27   T.Seiki: merge optimized routines for K by RIST and M.Terai

@@ -26,7 +26,7 @@ program prg_driver
   !                                      mod[mod_output].
   !                06-08-07   W.Yanase add history_vars
   !                06-09-27   S.Iga add history_vars_cfmip
-  !                07-03-23   Y.Niwa add ndg_setup, ndg_do, FLAG_NUDGING
+  !                07-03-23   Y.Niwa add NDG_setup, ndg_do, FLAG_NUDGING
   !                07-06-27   Y.Niwa add history_vars_setup
   !                07-07-24   K.Suzuki: implementing SPRINTARS aerosol model
   !                07-08-06   Y.Niwa: add history_obs, history_vars_obs
@@ -36,7 +36,7 @@ program prg_driver
   !                08-09-09   Y.Niwa : modfied for nudging
   !                09-01-23   H.Tomita: a) abolish mod_output, mod_extdata
   !                                     mod_history_vars_cfmip, mod_o3var.
-  !                                     b) introduce mod_extdata2.
+  !                                     b) introduce mod_extdata.
   !                09-04-14   T.Mitsui: arrange initialization of aerosols
   !                09-07-10   H.Tomita: Add the module [mod_embudget].
   !                09-08-05   S.Iga: remove latlon_setup (suggested by T.Mitsui)
@@ -78,9 +78,9 @@ program prg_driver
      TIME_report,         &
      TIME_advance,        &
      TIME_LSTEP_MAX,      &
-     cstep => TIME_CSTEP, &
-     ctime => TIME_CTIME, &
-     dtime => TIME_DTL
+     TIME_CSTEP,     &
+     TIME_CTIME,     &
+     TIME_DTL
   use mod_grd, only: &
      GRD_setup
   use mod_gmtr, only: &
@@ -237,15 +237,15 @@ program prg_driver
      write(*,*) '##### start  main loop #####'
   endif
 
-  call TIME_report
-
   !--- history output at initial time
   if ( HIST_output_step0 ) then
-     cstep = -1
-     ctime = -dtime
+     TIME_CSTEP = TIME_CSTEP - 1
+     TIME_CTIME = TIME_CTIME - TIME_DTL
      call history_vars
      call TIME_advance
      call history_out
+  else
+     call TIME_report
   endif
 
   do n = 1, TIME_LSTEP_MAX

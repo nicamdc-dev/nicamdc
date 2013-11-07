@@ -1016,7 +1016,7 @@ contains
        ADM_gmin
     use mod_comm, only: &
        COMM_data_transfer,       &
-       COMM_data_transfer_rgn2pl
+       COMM_var
     use mod_runconf, only: &
        TRC_vmax
     implicit none
@@ -1064,9 +1064,7 @@ contains
     enddo
 
     ! communication
-    call COMM_data_transfer_rgn2pl( PRG_var, PRG_var_pl, ADM_kall, PRG_vmax )
-
-    call COMM_data_transfer( PRG_var, PRG_var_pl )
+    call COMM_var( PRG_var, PRG_var_pl, ADM_kall, PRG_vmax )
 
     PRG_var(suf(ADM_gall_1d,1),:,:,:) = PRG_var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
     PRG_var(suf(1,ADM_gall_1d),:,:,:) = PRG_var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
@@ -1328,11 +1326,7 @@ contains
        TRC_name, &
        I_QC,     &
        I_QI,     &
-       I_NI!,     &
-!       ISOTOPE,  & ! [add] K.Yoshimura 20120414
-!       ISO_MAX,  & ! [add] K.Yoshimura 20120414
-!       ISO_STR,  & ! [add] K.Yoshimura 20120414
-!       ISO_STR2    ! [add] K.Yoshimura 20120414
+       I_NI
     use mod_dycoretest, only :  & ! [add] R.Yoshida 20121019
        dycore_input
     implicit none
@@ -1365,7 +1359,7 @@ contains
                          allow_missingq=allow_missingq                        )
        enddo
 
-       call comm_var( DIAG_var, DIAG_var_pl, ADM_kall, DIAG_vmax, comm_type=2, NSval_fix=.true. )
+       call COMM_var( DIAG_var, DIAG_var_pl, ADM_kall, DIAG_vmax )
 
     elseif( input_io_mode == 'LEGACY' ) then
 
@@ -1389,7 +1383,7 @@ contains
              close(fid)
           enddo
 
-          call comm_var( DIAG_var, DIAG_var_pl, ADM_kall, DIAG_vmax, comm_type=2, NSval_fix=.true. )
+          call COMM_var( DIAG_var, DIAG_var_pl, ADM_kall, DIAG_vmax )
 
        else !--- sequential access
 
@@ -1432,7 +1426,7 @@ contains
 
        call dycore_input( DIAG_var(:,:,:,:) ) !--- [OUT]
 
-       call comm_var( DIAG_var, DIAG_var_pl, ADM_kall, DIAG_vmax, comm_type=2, NSval_fix=.true. )
+       call COMM_var( DIAG_var, DIAG_var_pl, ADM_kall, DIAG_vmax )
 
     endif !--- io_mode
     ! <- [add]&[Mod] H.Yashiro 20110819
@@ -1564,8 +1558,6 @@ contains
        FIO_HSHORT, &
        FIO_HMID,   &
        FIO_REAL8
-    use mod_comm, only: &
-       COMM_var
     use mod_time, only : &
        TIME_CTIME
     use mod_gtl, only: &

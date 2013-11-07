@@ -192,7 +192,7 @@ contains
     use mod_adm, only: &
        ADM_CTL_FID,        &
        ADM_proc_stop,      &
-       ADM_COMM_RUN_WORLD, &
+       ADM_COMM_WORLD, &
        ADM_prc_all,        &
        ADM_prc_tab,        &
        ADM_prc_run_master, &
@@ -316,7 +316,7 @@ contains
                            imax*jmax,          &
                            MPI_REAL,           &
                            MPI_SUM,            &
-                           ADM_COMM_RUN_WORLD, &
+                           ADM_COMM_WORLD, &
                            ierr                )
     endif
 
@@ -360,7 +360,7 @@ contains
                         recvbuf,            &
                         1,                  &
                         MPI_INTEGER,        &
-                        ADM_COMM_RUN_WORLD, &
+                        ADM_COMM_WORLD, &
                         ierr                )
 
     globalsum = sum( recvbuf(:) )

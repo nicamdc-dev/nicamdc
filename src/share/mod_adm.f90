@@ -99,7 +99,7 @@ module mod_adm
   !====== Information for processes ======
   !
   !------ Communication world for NICAM
-  integer, public, save      :: ADM_COMM_RUN_WORLD
+  integer, public, save      :: ADM_COMM_WORLD
   !
   !------ Master process
   integer, public, parameter :: ADM_prc_run_master = 1
@@ -396,7 +396,7 @@ contains
        call MPI_Comm_size(MPI_COMM_WORLD, ADM_prc_all, ierr)
        call MPI_Comm_rank(MPI_COMM_WORLD, my_rank,     ierr)
 
-       call MPI_Comm_split(MPI_COMM_WORLD, 0, my_rank, ADM_COMM_RUN_WORLD,ierr)
+       call MPI_Comm_split(MPI_COMM_WORLD, 0, my_rank, ADM_COMM_WORLD,ierr)
 
        call MPI_Barrier(MPI_COMM_WORLD,ierr)
     else
@@ -689,7 +689,7 @@ contains
          sw,    &
          nw,    &
          ne,    &
-         se                     
+         se
 
     integer :: num_of_proc !--- number of run-processes
 
@@ -703,7 +703,7 @@ contains
     namelist /rgn_mng_info/ &
          peid,       &
          num_of_mng, &
-         mng_rgnid            
+         mng_rgnid
 
     integer :: fid, ierr
     integer :: l, m, n
