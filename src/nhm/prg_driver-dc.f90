@@ -89,7 +89,8 @@ program prg_driver
      OPRT_setup
   use mod_vmtr, only: &
      VMTR_setup
-
+  use mod_extdata, only: &
+     extdata_setup
   use mod_runconf, only: &
      runconf_setup, &
      FLAG_NUDGING
@@ -175,6 +176,9 @@ program prg_driver
 
   !---< time module setup >---
   call TIME_setup
+
+  !---< external data module setup >---
+  call extdata_setup
 
 
   !---< nhm_runconf module setup >---

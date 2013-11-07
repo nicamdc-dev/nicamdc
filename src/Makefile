@@ -64,6 +64,7 @@ MODS =	\
 	mod_vintrpl.o	\
 	mod_oprt3d.o	\
 	mod_history.o	\
+	mod_extdata.o	\
 	mod_chemvar.o	\
 	mod_runconf.o	\
 	mod_cnvvar.o	\
@@ -138,6 +139,7 @@ mod_oprt3d.o	: mod_oprt3d.f90 mod_adm.o mod_grd.o mod_gmtr.o mod_vmtr.o
 
 mod_chemvar.o	: mod_chemvar.f90 mod_adm.o
 mod_runconf.o	: mod_runconf.f90 mod_adm.o mod_cnst.o mod_chemvar.o
+mod_extdata.o	: mod_extdata.f90 mod_adm.o mod_debug.o mod_fio.o mod_calendar.o mod_gtl.o mod_comm.o
 mod_thrmdyn.o	: mod_thrmdyn.f90 mod_adm.o mod_cnst.o mod_runconf.o
 mod_bndcnd.o	: mod_bndcnd.f90 mod_adm.o mod_cnst.o mod_grd.o mod_runconf.o
 mod_cnvvar.o	: mod_cnvvar.f90 mod_adm.o mod_grd.o mod_thrmdyn.o mod_runconf.o mod_bndcnd.o mod_vmtr.o
