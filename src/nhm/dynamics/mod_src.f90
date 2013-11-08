@@ -107,10 +107,11 @@ contains
        GRD_e_pl,   &
        GRD_x,      &
        GRD_x_pl,   &
-       GRD_afac,   &
-       GRD_bfac,   &
        GRD_cfac,   &
        GRD_dfac
+    use mod_vmtr, only: &
+       VMTR_C2Wfact,    &
+       VMTR_C2Wfact_pl
     use mod_runconf, only : &
        NON_HYDRO_ALPHA
     implicit none
@@ -265,8 +266,8 @@ contains
 
        do k = ADM_kmin+1, ADM_kmax
        do g = 1, ADM_gall
-          grhogw(g,k,l) = 0.5D0 * ( GRD_afac(k) * grhogwc(g,k  ,l) &
-                                  + GRD_bfac(k) * grhogwc(g,k-1,l) )
+          grhogw(g,k,l) = ( VMTR_C2Wfact(1,g,k,l) * grhogwc(g,k  ,l) &
+                          + VMTR_C2Wfact(2,g,k,l) * grhogwc(g,k-1,l) )
        enddo
        enddo
 
@@ -308,8 +309,8 @@ contains
 
           do k = ADM_kmin+1, ADM_kmax
           do g = 1, ADM_gall_pl
-             grhogw_pl(g,k,l) = 0.5D0 * ( GRD_afac(k) * grhogwc_pl(g,k  ,l) &
-                                        + GRD_bfac(k) * grhogwc_pl(g,k-1,l) )
+             grhogw_pl(g,k,l) = ( VMTR_C2Wfact_pl(1,g,k,l) * grhogwc_pl(g,k  ,l) &
+                                + VMTR_C2Wfact_pl(2,g,k,l) * grhogwc_pl(g,k-1,l) )
           enddo
           enddo
 
