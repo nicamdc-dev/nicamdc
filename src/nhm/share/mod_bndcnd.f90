@@ -160,7 +160,7 @@ contains
        tem,   &
        rho,   &
        pre,   &
-       phi    )                   
+       phi    )
     use mod_adm, only: &
        kdim => ADM_kall, &
        kmin => ADM_kmin, &
@@ -173,7 +173,7 @@ contains
 
     integer, intent(in)    :: ijdim           ! number of horizontal grid
     real(8), intent(inout) :: tem(ijdim,kdim) ! temperature
-    real(8), intent(inout) :: rho(ijdim,kdim) ! density  
+    real(8), intent(inout) :: rho(ijdim,kdim) ! density
     real(8), intent(inout) :: pre(ijdim,kdim) ! pressure
     real(8), intent(in)    :: phi(ijdim,kdim) ! geopotential
 
@@ -188,9 +188,9 @@ contains
 
     !--- set the TOP boundary of temperature
     select case( trim(BND_TYPE_T_TOP) )
-    case('TEM') 
+    case('TEM')
        tem(:,kmax+1) = tem(:,kmax) ! dT/dz = 0
-    case('EPL') 
+    case('EPL')
        do ij = 1, ijdim
           z  = phi(ij,kmax+1) / CNST_EGRAV
           z1 = phi(ij,kmax  ) / CNST_EGRAV
@@ -210,7 +210,7 @@ contains
        tem(:,kmin-1) = CNST_TEMS0
     case('TEM')
        tem(:,kmin-1) = tem(:,kmin) ! dT/dz = 0
-    case('EPL') 
+    case('EPL')
        do ij = 1, ijdim
           z1 = phi(ij,kmin+2) / CNST_EGRAV
           z2 = phi(ij,kmin+1) / CNST_EGRAV
@@ -363,9 +363,9 @@ contains
   !-----------------------------------------------------------------------------
   !------
   !------ Boundary condition setting for all variables.
-  !------    1. calculation region (:,[kmin,kmax+1],:) 
+  !------    1. calculation region (:,[kmin,kmax+1],:)
   !------       for  rhogw & w.
-  !------    2. calculation region (:,[kmin-1,kmax+1],:) 
+  !------    2. calculation region (:,[kmin-1,kmax+1],:)
   !------       for  the other variables.
   !------
   subroutine BNDCND_all( &
@@ -385,19 +385,15 @@ contains
        rhogw,      &
        rhoge,      &
        gsqrtgam2,  &
-       gsqrtgam2h, &
        phi,        &
-       c2wfact     )
+       c2wfact,    &
+       c2wfact_Gz  )
     use mod_adm, only: &
        kdim => ADM_kall, &
        kmin => ADM_kmin, &
-       kmax => ADM_kmax, &
-       ADM_VMISS
+       kmax => ADM_kmax
     use mod_cnst, only: &
        CNST_CV
-    use mod_grd, only: &
-       GRD_afac, &
-       GRD_bfac
     implicit none
 
     integer, intent(in)    :: ijdim
@@ -418,9 +414,9 @@ contains
     real(8), intent(inout) :: rhoge (ijdim,kdim)
 
     real(8), intent(in)    :: gsqrtgam2 (ijdim,kdim)
-    real(8), intent(in)    :: gsqrtgam2h(ijdim,kdim)
     real(8), intent(in)    :: phi       (ijdim,kdim)
-    real(8), intent(in)    :: c2wfact   (6,ijdim,kdim)
+    real(8), intent(in)    :: c2wfact   (2,ijdim,kdim)
+    real(8), intent(in)    :: c2wfact_Gz(6,ijdim,kdim)
 
     integer :: ij, k
     !---------------------------------------------------------------------------
@@ -466,26 +462,26 @@ contains
     !
     !--- Momentum ( rhogw, w )
     !
-    call BNDCND_rhow( ijdim,   & !--- [IN]
-                      rhogvx,  & !--- [IN]
-                      rhogvy,  & !--- [IN]
-                      rhogvz,  & !--- [IN]
-                      rhogw,   & !--- [INOUT]
-                      c2wfact  ) !--- [IN]
+    call BNDCND_rhow( ijdim,     & !--- [IN]
+                      rhogvx,    & !--- [IN]
+                      rhogvy,    & !--- [IN]
+                      rhogvz,    & !--- [IN]
+                      rhogw,     & !--- [INOUT]
+                      c2wfact_Gz ) !--- [IN]
 
     k = kmax+1
     do ij = 1, ijdim
-       w(ij,k) = rhogw(ij,k) / ( gsqrtgam2h(ij,k) * 0.5D0 * ( GRD_afac(k) * rho(ij,k  ) &
-                                                            + GRD_bfac(k) * rho(ij,k-1) ) )
+       w(ij,k) = rhogw(ij,k) / ( c2wfact(1,ij,k) * rhog(ij,k  ) &
+                               + c2wfact(2,ij,k) * rhog(ij,k-1) )
     enddo
 
     k = kmin
     do ij = 1, ijdim
-       w(ij,k) = rhogw(ij,k) / ( gsqrtgam2h(ij,k) * 0.5D0 * ( GRD_afac(k) * rho(ij,k  ) &
-                                                            + GRD_bfac(k) * rho(ij,k-1) ) )
+       w(ij,k) = rhogw(ij,k) / ( c2wfact(1,ij,k) * rhog(ij,k  ) &
+                               + c2wfact(2,ij,k) * rhog(ij,k-1) )
     enddo
 
-    w(:,1:kmin-1) = ADM_VMISS
+    w(:,1:kmin-1) = 0.D0
 
     return
   end subroutine BNDCND_all

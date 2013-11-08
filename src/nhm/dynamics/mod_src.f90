@@ -871,14 +871,9 @@ contains
        ADM_kmax
     use mod_cnst, only: &
        CNST_EGRAV
-    use mod_grd, only: &
-       GRD_afac, &
-       GRD_bfac
     use mod_vmtr, only: &
-       VMTR_RGSGAM2,    &
-       VMTR_RGSGAM2_pl, &
-       VMTR_GSGAM2H,    &
-       VMTR_GSGAM2H_pl
+       VMTR_C2Wfact,    &
+       VMTR_C2Wfact_pl
     implicit none
 
     real(8), intent(in)  :: rhog   (ADM_gall   ,ADM_kall,ADM_lall   ) ! density perturbation ( gam2 X G^{1/2} )
@@ -894,9 +889,8 @@ contains
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kmax+1
        do g = 1, ADM_gall
-          gbz(g,k,l) = -0.5D0 * ( GRD_afac(k) * rhog(g,k  ,l) * VMTR_RGSGAM2(g,k  ,l) &
-                                + GRD_bfac(k) * rhog(g,k-1,l) * VMTR_RGSGAM2(g,k-1,l) &
-                                ) * VMTR_GSGAM2H(g,k,l) * CNST_EGRAV
+          gbz(g,k,l) = -CNST_EGRAV * ( VMTR_C2Wfact(1,g,k,l) * rhog(g,k  ,l) &
+                                     + VMTR_C2Wfact(2,g,k,l) * rhog(g,k-1,l) )
        enddo
        enddo
        gbz(:,ADM_kmin-1,l) = 0.D0
@@ -906,9 +900,8 @@ contains
        do l = 1, ADM_lall_pl
           do k = ADM_kmin, ADM_kmax+1
           do g = 1, ADM_gall_pl
-             gbz_pl(g,k,l) = -0.5D0 * ( GRD_afac(k) * rhog_pl(g,k  ,l) * VMTR_RGSGAM2_pl(g,k  ,l) &
-                                      + GRD_bfac(k) * rhog_pl(g,k-1,l) * VMTR_RGSGAM2_pl(g,k-1,l) &
-                                      ) * VMTR_GSGAM2H_pl(g,k,l) * CNST_EGRAV
+             gbz_pl(g,k,l) = -CNST_EGRAV * ( VMTR_C2Wfact_pl(1,g,k,l) * rhog_pl(g,k  ,l) &
+                                           + VMTR_C2Wfact_pl(2,g,k,l) * rhog_pl(g,k-1,l) )
           enddo
           enddo
           gbz_pl(:,ADM_kmin-1,l) = 0.D0

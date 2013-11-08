@@ -160,7 +160,9 @@ contains
        VMTR_RGSGAM2H,    &
        VMTR_RGSGAM2H_pl, &
        VMTR_RGSGAM2,     &
-       VMTR_RGSGAM2_pl
+       VMTR_RGSGAM2_pl,  &
+       VMTR_C2Wfact,     &
+       VMTR_C2Wfact_pl
     use mod_runconf, only: &
        NON_HYDRO_ALPHA
     use mod_bndcnd, only: &
@@ -411,9 +413,8 @@ contains
        !--- Calculation of gz_tilde
        do k  = ADM_kmin, ADM_kmax+1
        do ij = 1, ADM_gall
-          drhog_h(ij,k,l) = 0.5D0 * ( GRD_afac(k) * VMTR_RGSGAM2(ij,k  ,l) * rhog(ij,k,  l) &
-                                    + GRD_bfac(k) * VMTR_RGSGAM2(ij,k-1,l) * rhog(ij,k-1,l) &
-                                    ) * VMTR_GSGAM2H(ij,k,l)
+          drhog_h(ij,k,l) = ( VMTR_C2Wfact(1,ij,k,l) * rhog(ij,k,  l) &
+                            + VMTR_C2Wfact(2,ij,k,l) * rhog(ij,k-1,l) )
        enddo
        enddo
        do ij = 1, ADM_gall
@@ -444,9 +445,8 @@ contains
        do l = 1, ADM_lall_pl
           do k  = ADM_kmin, ADM_kmax+1
           do ij = 1, ADM_gall_pl
-             drhog_h_pl(ij,k,l) = 0.5D0 * ( GRD_afac(k) * VMTR_RGSGAM2_pl(ij,k  ,l)*rhog_pl(ij,k,  l) &
-                                          + GRD_bfac(k) * VMTR_RGSGAM2_pl(ij,k-1,l)*rhog_pl(ij,k-1,l) &
-                                          ) * VMTR_GSGAM2H_pl(ij,k,l)
+             drhog_h_pl(ij,k,l) = ( VMTR_C2Wfact_pl(1,ij,k,l) * rhog_pl(ij,k,  l) &
+                                  + VMTR_C2Wfact_pl(2,ij,k,l) * rhog_pl(ij,k-1,l) )
           enddo
           enddo
           do ij = 1, ADM_gall_pl
