@@ -59,16 +59,11 @@ contains
        ADM_kall,    &
        ADM_kmax,    &
        ADM_kmin
-    use mod_grd, only: &
-       GRD_cfac, &
-       GRD_dfac
     use mod_vmtr, only: &
-       VMTR_GSGAM2H,    &
-       VMTR_GSGAM2H_pl, &
-       VMTR_RGSGAM2,    &
-       VMTR_RGSGAM2_pl, &
        VMTR_C2Wfact,    &
-       VMTR_C2Wfact_pl
+       VMTR_C2Wfact_pl, &
+       VMTR_W2Cfact,    &
+       VMTR_W2Cfact_pl
     implicit none
 
     real(8), intent(in)  :: rhog      (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^{1/2} X gamma2 )
@@ -91,7 +86,7 @@ contains
 
     integer :: n, k, l
     !---------------------------------------------------------------------------
-
+print *, 'OK0'
     do l = 1, ADM_lall
        !--- horizontal kinetic energy
        do k = ADM_kmin, ADM_kmax
@@ -116,14 +111,15 @@ contains
        !--- total kinetic energy
        do k = ADM_kmin, ADM_kmax
        do n = 1, ADM_gall
-          rhogkin(n,k,l) = rhogkin_h(n,k)                           & ! horizontal
-                         + 0.5D0 * ( GRD_dfac(k) * rhogkin_v(n,k+1) & ! vertical
-                                   + GRD_cfac(k) * rhogkin_v(n,k  ) )
+          rhogkin(n,k,l) = rhogkin_h(n,k)                             & ! horizontal
+                         + ( VMTR_W2Cfact(1,n,k,l) * rhogkin_v(n,k+1) & ! vertical
+                           + VMTR_W2Cfact(2,n,k,l) * rhogkin_v(n,k  ) )
        enddo
        enddo
        rhogkin(:,ADM_kmin-1,l) = 0.D0
        rhogkin(:,ADM_kmax+1,l) = 0.D0
     enddo
+print *, 'OK1'
 
     if ( ADM_prc_me == ADM_prc_pl ) then
        do l = 1, ADM_lall_pl
@@ -150,15 +146,16 @@ contains
           !--- total kinetic energy
           do k = ADM_kmin, ADM_kmax
           do n = 1, ADM_gall_pl
-             rhogkin_pl(n,k,l) = rhogkin_h_pl(n,k)                           & ! horizontal
-                               + 0.5D0 * ( GRD_dfac(k) * rhogkin_v_pl(n,k+1) & ! vertical
-                                         + GRD_cfac(k) * rhogkin_v_pl(n,k  ) )
+             rhogkin_pl(n,k,l) = rhogkin_h_pl(n,k)                                & ! horizontal
+                               + ( VMTR_W2Cfact_pl(1,n,k,l) * rhogkin_v_pl(n,k+1) & ! vertical
+                                 + VMTR_W2Cfact_pl(2,n,k,l) * rhogkin_v_pl(n,k  ) )
           enddo
           enddo
           rhogkin_pl(:,ADM_kmin-1,l) = 0.D0
           rhogkin_pl(:,ADM_kmax+1,l) = 0.D0
        enddo
     endif
+print *, 'OK2'
 
     return
   end subroutine cnvvar_rhokin_ijkl

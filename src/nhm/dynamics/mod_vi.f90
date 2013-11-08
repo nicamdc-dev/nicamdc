@@ -147,22 +147,14 @@ contains
        CNST_CV
     use mod_grd, only: &
        GRD_afac, &
-       GRD_bfac, &
-       GRD_cfac, &
-       GRD_dfac
+       GRD_bfac
     use mod_oprt, only: &
        OPRT_horizontalize_vec
     use mod_vmtr, only: &
-       VMTR_GSGAM2H,     &
-       VMTR_GSGAM2H_pl,  &
-       VMTR_GSGAM2,      &
-       VMTR_GSGAM2_pl,   &
-       VMTR_RGSGAM2H,    &
-       VMTR_RGSGAM2H_pl, &
-       VMTR_RGSGAM2,     &
-       VMTR_RGSGAM2_pl,  &
-       VMTR_C2Wfact,     &
-       VMTR_C2Wfact_pl
+       VMTR_C2Wfact,    &
+       VMTR_C2Wfact_pl, &
+       VMTR_W2Cfact,    &
+       VMTR_W2Cfact_pl
     use mod_runconf, only: &
        NON_HYDRO_ALPHA
     use mod_bndcnd, only: &
@@ -430,9 +422,8 @@ contains
 
        do k  = ADM_kmin, ADM_kmax
        do ij = 1, ADM_gall
-          drhogez(ij,k,l) = 0.5D0 * ( GRD_cfac(k) * VMTR_RGSGAM2H(ij,k+1,l) * gpzw(ij,k+1,l) &
-                                    + GRD_dfac(k) * VMTR_RGSGAM2H(ij,k,  l) * gpzw(ij,k,  l) &
-                                    ) * VMTR_GSGAM2(ij,k,l)
+          drhogez(ij,k,l) = ( VMTR_W2Cfact(1,ij,k,l) * gpzw(ij,k+1,l) &
+                            + VMTR_W2Cfact(2,ij,k,l) * gpzw(ij,k,  l) )
        enddo
        enddo
        do ij = 1, ADM_gall
@@ -462,9 +453,8 @@ contains
 
           do k  = ADM_kmin, ADM_kmax
           do ij = 1, ADM_gall_pl
-             drhogez_pl(ij,k,l) = 0.5D0 * ( GRD_cfac(k) * gpzw_pl(ij,k+1,l) * VMTR_RGSGAM2H_pl(ij,k+1,l) &
-                                          + GRD_dfac(k) * gpzw_pl(ij,k,  l) * VMTR_RGSGAM2H_pl(ij,k,  l) &
-                                          ) * VMTR_GSGAM2_pl(ij,k,l)
+             drhogez_pl(ij,k,l) = ( VMTR_W2Cfact_pl(1,ij,k,l) * gpzw_pl(ij,k+1,l) &
+                                  + VMTR_W2Cfact_pl(2,ij,k,l) * gpzw_pl(ij,k,  l) )
           enddo
           enddo
           do ij = 1, ADM_gall_pl

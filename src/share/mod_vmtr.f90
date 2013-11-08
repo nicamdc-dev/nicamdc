@@ -32,9 +32,12 @@ module mod_vmtr
   !++ Public parameters & variables
   !
 
-  ! index for VMTR_C2Wfact
+  ! index for VMTR_C2Wfact, W2Cfact
   integer, public, parameter :: I_a = 1
   integer, public, parameter :: I_b = 2
+
+  integer, public, parameter :: I_c = 1
+  integer, public, parameter :: I_d = 2
 
   integer, public, parameter :: I_a_GZXH = 1
   integer, public, parameter :: I_b_GZXH = 2
@@ -116,13 +119,13 @@ module mod_vmtr
   real(8), public, allocatable, save :: VMTR_PHI   (:,:,:)
   real(8), public, allocatable, save :: VMTR_PHI_pl(:,:,:)
 
-  !--- factor for integer to half integer level
-  real(8), public, allocatable, save :: VMTR_C2Wfact   (:,:,:,:)
-  real(8), public, allocatable, save :: VMTR_C2Wfact_pl(:,:,:,:)
-
   !--- factor for half integer to integer level
   real(8), public, allocatable, save :: VMTR_W2Cfact   (:,:,:,:)
   real(8), public, allocatable, save :: VMTR_W2Cfact_pl(:,:,:,:)
+
+  !--- factor for integer to half integer level
+  real(8), public, allocatable, save :: VMTR_C2Wfact   (:,:,:,:)
+  real(8), public, allocatable, save :: VMTR_C2Wfact_pl(:,:,:,:)
 
   !--- factor for integer to half integer level w/ Gz
   real(8), public, allocatable, save :: VMTR_C2Wfact_Gz   (:,:,:,:)
@@ -291,11 +294,11 @@ contains
     allocate( VMTR_PHI        (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_PHI_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
 
-    allocate( VMTR_C2Wfact      (2,ADM_gall,   ADM_kall,ADM_lall   ) )
-    allocate( VMTR_C2Wfact_pl   (2,ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-
     allocate( VMTR_W2Cfact      (2,ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_W2Cfact_pl   (2,ADM_gall_pl,ADM_kall,ADM_lall_pl) )
+
+    allocate( VMTR_C2Wfact      (2,ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( VMTR_C2Wfact_pl   (2,ADM_gall_pl,ADM_kall,ADM_lall_pl) )
 
     allocate( VMTR_C2Wfact_Gz   (6,ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_C2Wfact_Gz_pl(6,ADM_gall_pl,ADM_kall,ADM_lall_pl) )
@@ -435,24 +438,30 @@ contains
        enddo
        enddo
 
-       do k = ADM_kmin, ADM_kall
+       do k = ADM_kmin-1, ADM_kmax
        do n = 1, ADM_gall
-          !--- calculation of factor for integer to half integer level with Gz
-          VMTR_C2Wfact_Gz(I_a_GZXH,n,k,l) = 0.5D0 * GRD_afac(k) / VMTR_GSGAM2(n,k  ,l) * VMTR_GSGAM2H(n,k,l) &
-                                          * VMTR_GZXH(n,k,l)
-          VMTR_C2Wfact_Gz(I_b_GZXH,n,k,l) = 0.5D0 * GRD_bfac(k) / VMTR_GSGAM2(n,k-1,l) * VMTR_GSGAM2H(n,k,l) &
-                                          * VMTR_GZXH(n,k,l)
-          VMTR_C2Wfact_Gz(I_a_GZYH,n,k,l) = 0.5D0 * GRD_afac(k) / VMTR_GSGAM2(n,k  ,l) * VMTR_GSGAM2H(n,k,l) &
-                                          * VMTR_GZYH(n,k,l)
-          VMTR_C2Wfact_Gz(I_b_GZYH,n,k,l) = 0.5D0 * GRD_bfac(k) / VMTR_GSGAM2(n,k-1,l) * VMTR_GSGAM2H(n,k,l) &
-                                          * VMTR_GZYH(n,k,l)
-          VMTR_C2Wfact_Gz(I_a_GZZH,n,k,l) = 0.5D0 * GRD_afac(k) / VMTR_GSGAM2(n,k  ,l) * VMTR_GSGAM2H(n,k,l) &
-                                          * VMTR_GZZH(n,k,l)
-          VMTR_C2Wfact_Gz(I_b_GZZH,n,k,l) = 0.5D0 * GRD_bfac(k) / VMTR_GSGAM2(n,k-1,l) * VMTR_GSGAM2H(n,k,l) &
-                                          * VMTR_GZZH(n,k,l)
+          VMTR_W2Cfact(I_c,n,k,l) = 0.5D0 * GRD_cfac(k) * VMTR_GSGAM2(n,k,l) * VMTR_RGSGAM2H(n,k+1,l)
+          VMTR_W2Cfact(I_d,n,k,l) = 0.5D0 * GRD_dfac(k) * VMTR_GSGAM2(n,k,l) * VMTR_RGSGAM2H(n,k  ,l)
+       enddo
+       enddo
 
-          VMTR_C2Wfact(I_a,n,k,l) = 0.5D0 * GRD_afac(k) / VMTR_GSGAM2(n,k  ,l) * VMTR_GSGAM2H(n,k,l)
-          VMTR_C2Wfact(I_b,n,k,l) = 0.5D0 * GRD_bfac(k) / VMTR_GSGAM2(n,k-1,l) * VMTR_GSGAM2H(n,k,l)
+       do k = ADM_kmin, ADM_kmax+1
+       do n = 1, ADM_gall
+          VMTR_C2Wfact(I_a,n,k,l) = 0.5D0 * GRD_afac(k) * VMTR_RGSGAM2(n,k  ,l) * VMTR_GSGAM2H(n,k,l)
+          VMTR_C2Wfact(I_b,n,k,l) = 0.5D0 * GRD_bfac(k) * VMTR_RGSGAM2(n,k-1,l) * VMTR_GSGAM2H(n,k,l)
+
+          VMTR_C2Wfact_Gz(I_a_GZXH,n,k,l) = 0.5D0 * GRD_afac(k) * VMTR_RGSGAM2(n,k  ,l) * VMTR_GSGAM2H(n,k,l) &
+                                          * VMTR_GZXH(n,k,l)
+          VMTR_C2Wfact_Gz(I_b_GZXH,n,k,l) = 0.5D0 * GRD_bfac(k) * VMTR_RGSGAM2(n,k-1,l) * VMTR_GSGAM2H(n,k,l) &
+                                          * VMTR_GZXH(n,k,l)
+          VMTR_C2Wfact_Gz(I_a_GZYH,n,k,l) = 0.5D0 * GRD_afac(k) * VMTR_RGSGAM2(n,k  ,l) * VMTR_GSGAM2H(n,k,l) &
+                                          * VMTR_GZYH(n,k,l)
+          VMTR_C2Wfact_Gz(I_b_GZYH,n,k,l) = 0.5D0 * GRD_bfac(k) * VMTR_RGSGAM2(n,k-1,l) * VMTR_GSGAM2H(n,k,l) &
+                                          * VMTR_GZYH(n,k,l)
+          VMTR_C2Wfact_Gz(I_a_GZZH,n,k,l) = 0.5D0 * GRD_afac(k) * VMTR_RGSGAM2(n,k  ,l) * VMTR_GSGAM2H(n,k,l) &
+                                          * VMTR_GZZH(n,k,l)
+          VMTR_C2Wfact_Gz(I_b_GZZH,n,k,l) = 0.5D0 * GRD_bfac(k) * VMTR_RGSGAM2(n,k-1,l) * VMTR_GSGAM2H(n,k,l) &
+                                          * VMTR_GZZH(n,k,l)
        enddo
        enddo
     enddo
@@ -555,23 +564,30 @@ contains
        enddo
        enddo
 
-       do k = ADM_kmin, ADM_kall
+       do k = ADM_kmin-1, ADM_kmax
        do n = 1, ADM_gall_pl
-          VMTR_C2Wfact_pl(I_a_GZXH,n,k,l) = 0.5D0 * GRD_afac(k) &
-                                          * VMTR_GSGAM2H_pl(n,k,l) / VMTR_GSGAM2_pl(n,k  ,l) * VMTR_GZXH_pl(n,k,l)
-          VMTR_C2Wfact_pl(I_b_GZXH,n,k,l) = 0.5D0 * GRD_bfac(k) &
-                                          * VMTR_GSGAM2H_pl(n,k,l) / VMTR_GSGAM2_pl(n,k-1,l) * VMTR_GZXH_pl(n,k,l)
-          VMTR_C2Wfact_pl(I_a_GZYH,n,k,l) = 0.5D0 * GRD_afac(k) &
-                                          * VMTR_GSGAM2H_pl(n,k,l) / VMTR_GSGAM2_pl(n,k  ,l) * VMTR_GZYH_pl(n,k,l)
-          VMTR_C2Wfact_pl(I_b_GZYH,n,k,l) = 0.5D0 * GRD_bfac(k) &
-                                          * VMTR_GSGAM2H_pl(n,k,l) / VMTR_GSGAM2_pl(n,k-1,l) * VMTR_GZYH_pl(n,k,l)
-          VMTR_C2Wfact_pl(I_a_GZZH,n,k,l) = 0.5D0 * GRD_afac(k) &
-                                          * VMTR_GSGAM2H_pl(n,k,l) / VMTR_GSGAM2_pl(n,k  ,l) * VMTR_GZZH_pl(n,k,l)
-          VMTR_C2Wfact_pl(I_b_GZZH,n,k,l) = 0.5D0 * GRD_bfac(k) &
-                                          * VMTR_GSGAM2H_pl(n,k,l) / VMTR_GSGAM2_pl(n,k-1,l) * VMTR_GZZH_pl(n,k,l)
+          VMTR_W2Cfact_pl(I_c,n,k,l) = 0.5D0 * GRD_cfac(k) * VMTR_GSGAM2_pl(n,k,l) * VMTR_RGSGAM2H_pl(n,k+1,l)
+          VMTR_W2Cfact_pl(I_d,n,k,l) = 0.5D0 * GRD_dfac(k) * VMTR_GSGAM2_pl(n,k,l) * VMTR_RGSGAM2H_pl(n,k  ,l)
+       enddo
+       enddo
 
-          VMTR_C2Wfact_pl(I_a,n,k,l) = 0.5D0 * GRD_afac(k) / VMTR_GSGAM2_pl(n,k  ,l) * VMTR_GSGAM2H_pl(n,k,l)
-          VMTR_C2Wfact_pl(I_b,n,k,l) = 0.5D0 * GRD_bfac(k) / VMTR_GSGAM2_pl(n,k-1,l) * VMTR_GSGAM2H_pl(n,k,l)
+       do k = ADM_kmin, ADM_kmax+1
+       do n = 1, ADM_gall_pl
+          VMTR_C2Wfact_pl(I_a,n,k,l) = 0.5D0 * GRD_afac(k) * VMTR_RGSGAM2_pl(n,k  ,l) * VMTR_GSGAM2H_pl(n,k,l)
+          VMTR_C2Wfact_pl(I_b,n,k,l) = 0.5D0 * GRD_bfac(k) * VMTR_RGSGAM2_pl(n,k-1,l) * VMTR_GSGAM2H_pl(n,k,l)
+
+          VMTR_C2Wfact_pl(I_a_GZXH,n,k,l) = 0.5D0 * GRD_afac(k) &
+                                          * VMTR_GSGAM2H_pl(n,k,l) * VMTR_RGSGAM2_pl(n,k  ,l) * VMTR_GZXH_pl(n,k,l)
+          VMTR_C2Wfact_pl(I_b_GZXH,n,k,l) = 0.5D0 * GRD_bfac(k) &
+                                          * VMTR_GSGAM2H_pl(n,k,l) * VMTR_RGSGAM2_pl(n,k-1,l) * VMTR_GZXH_pl(n,k,l)
+          VMTR_C2Wfact_pl(I_a_GZYH,n,k,l) = 0.5D0 * GRD_afac(k) &
+                                          * VMTR_GSGAM2H_pl(n,k,l) * VMTR_RGSGAM2_pl(n,k  ,l) * VMTR_GZYH_pl(n,k,l)
+          VMTR_C2Wfact_pl(I_b_GZYH,n,k,l) = 0.5D0 * GRD_bfac(k) &
+                                          * VMTR_GSGAM2H_pl(n,k,l) * VMTR_RGSGAM2_pl(n,k-1,l) * VMTR_GZYH_pl(n,k,l)
+          VMTR_C2Wfact_pl(I_a_GZZH,n,k,l) = 0.5D0 * GRD_afac(k) &
+                                          * VMTR_GSGAM2H_pl(n,k,l) * VMTR_RGSGAM2_pl(n,k  ,l) * VMTR_GZZH_pl(n,k,l)
+          VMTR_C2Wfact_pl(I_b_GZZH,n,k,l) = 0.5D0 * GRD_bfac(k) &
+                                          * VMTR_GSGAM2H_pl(n,k,l) * VMTR_RGSGAM2_pl(n,k-1,l) * VMTR_GZZH_pl(n,k,l)
        enddo
        enddo
 
