@@ -6,13 +6,13 @@
 module mod_vintrpl
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
+  !++ Description:
   !       This module contains vertical interpolation subroutines.
-  !       
+  !
   !++ Current Corresponding Author : H.Tomita
-  ! 
-  !++ History: 
-  !      Version    Date      Comment 
+  !
+  !++ History:
+  !      Version    Date      Comment
   !      -----------------------------------------------------------------------
   !      0.00       04-02-17  Imported from igdc-4.33
   !                 07-01-24  added VINTRPL_z_level2 (linear interpolation) and
@@ -158,7 +158,7 @@ contains
           ! 07/01/24 K.Suzuki: consider undefined value
           do l=1,ADM_lall
           do k=ADM_kmin,ADM_kmax
-          do n=1,ADM_gall 
+          do n=1,ADM_gall
             if ( v_pl(n,k+1,l) == CNST_UNDEF ) then
               tmp_pl(n,k,l) = v_pl(n,k,l)
             else if ( v_pl(n,k,l) == CNST_UNDEF ) then
@@ -209,7 +209,7 @@ contains
                          = lag_intpl_linear(GRD_gz(k),         &
                          GRD_vz(n,kp  ,l,GRD_Z),tmp(n,kp  ,l), &
                          GRD_vz(n,kp-1,l,GRD_Z),tmp(n,kp-1,l)  )
-                  end if 
+                  end if
                 else if ( tmp(n,kp,l) == CNST_UNDEF ) then
                    v(n,k,l) = tmp(n,kp-1,l)
                 else if ( tmp(n,kp-1,l) == CNST_UNDEF ) then
@@ -347,7 +347,7 @@ contains
                    if(GRD_gz(k)<GRD_vz(n,kk,l,GRD_Z)) exit
                 end do
                 if (kp<=ADM_kmin) then
-                   v(n,k,l)=tmp(n,ADM_kmin,l)  
+                   v(n,k,l)=tmp(n,ADM_kmin,l)
                 elseif(kp>=ADM_kmax+1) then
                    v(n,k,l)=tmp(n,ADM_kmax,l)
                 else
@@ -408,7 +408,7 @@ contains
     real(8), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
     real(8), intent(inout) :: v_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     logical, intent(in) :: wgrid
-    
+
     real(8) :: tmp(ADM_gall,ADM_kall,ADM_lall)
     real(8) :: tmp_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     !
@@ -553,7 +553,7 @@ contains
     end If
     !
   end subroutine VINTRPL_half2full
-  !-----------------------------------------------------------------------------  
+  !-----------------------------------------------------------------------------
   subroutine VINTRPL_mk_sigma( sigma, sigma_pl, pre, pre_pl, pres, pres_pl )
     !
     implicit none
@@ -653,6 +653,6 @@ contains
        end Do
     end If
   end subroutine VINTRPL_sigma_level
-  !-----------------------------------------------------------------------------  
+  !-----------------------------------------------------------------------------
 end module mod_vintrpl
 !-------------------------------------------------------------------------------

@@ -946,7 +946,6 @@ contains
        I_SRC_horizontal,          &
        I_SRC_default
     use mod_cnvvar, only: &
-       cnvvar_rhokin, &
        cnvvar_rhokin_ijkl
     use mod_bsstate, only: &
        phi, phi_pl

@@ -38,41 +38,41 @@ module mod_fio
   !
   !++ Public parameters & variables
   !
-  !--- character length 
+  !--- character length
   integer, parameter, public :: FIO_HSHORT =  16
   integer, parameter, public :: FIO_HMID   =  64
   integer, parameter, public :: FIO_HLONG  = 256
 
-  !--- data type 
+  !--- data type
   integer, parameter, public :: FIO_REAL4    = 0
   integer, parameter, public :: FIO_REAL8    = 1
   integer, parameter, public :: FIO_INTEGER4 = 2
   integer, parameter, public :: FIO_INTEGER8 = 3
 
-  !--- data endian 
+  !--- data endian
   integer, parameter, public :: FIO_UNKNOWN_ENDIAN = 0
   integer, parameter, public :: FIO_LITTLE_ENDIAN  = 1
   integer, parameter, public :: FIO_BIG_ENDIAN     = 2
 
-  !--- topology 
+  !--- topology
   integer, parameter, public :: FIO_ICOSAHEDRON = 0
   integer, parameter, public :: FIO_IGA_LCP     = 1
   integer, parameter, public :: FIO_IGA_MLCP    = 2
 
-  !--- file mode (partial or complete) 
+  !--- file mode (partial or complete)
   integer, parameter, public :: FIO_SPLIT_FILE = 0
   integer, parameter, public :: FIO_INTEG_FILE = 1
 
-  !--- proccessor type 
+  !--- proccessor type
   integer, parameter, public :: FIO_SINGLE_PROC = 0
   integer, parameter, public :: FIO_MULTI_PROC  = 1
 
-  !--- action type 
+  !--- action type
   integer, parameter, public :: FIO_FREAD   = 0
   integer, parameter, public :: FIO_FWRITE  = 1
   integer, parameter, public :: FIO_FAPPEND = 2 ! [add] H.Yashiro 20110907 overwrite mode
 
-  !--- data dump type 
+  !--- data dump type
   integer, parameter, public :: FIO_DUMP_OFF      = 0
   integer, parameter, public :: FIO_DUMP_HEADER   = 1
   integer, parameter, public :: FIO_DUMP_ALL      = 2
@@ -123,13 +123,13 @@ module mod_fio
   integer,                  save, private :: FIO_fid_list  (FIO_nmaxfile)
   integer,                  save, private :: FIO_fid_count = 1
 
-  type(headerinfo), private :: hinfo 
-  type(datainfo),   private :: dinfo 
+  type(headerinfo), private :: hinfo
+  type(datainfo),   private :: dinfo
 
   integer, private, parameter :: max_num_of_data = 2500 !--- max time step num
   integer, parameter, private :: preclist(0:3) = (/ 4, 8, 4, 8 /)
 
-  !-----------------------------------------------------------------------------  
+  !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
   subroutine FIO_setup
@@ -142,7 +142,7 @@ contains
       ADM_lall
     implicit none
 
-    integer, allocatable :: prc_tab(:) 
+    integer, allocatable :: prc_tab(:)
     !---------------------------------------------------------------------------
 
     ! dummy call
@@ -155,7 +155,7 @@ contains
     ! [fix] 20120201 T.Seiki
     !!$ prc_tab(:) = ADM_prc_tab(:,ADM_prc_me)-1
     prc_tab(1:ADM_lall) = ADM_prc_tab(1:ADM_lall,ADM_prc_me)-1
-    
+
     call fio_syscheck()
     call fio_put_commoninfo( FIO_SPLIT_FILE,  &
                              FIO_BIG_ENDIAN,  &

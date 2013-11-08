@@ -98,22 +98,22 @@ void fio_ednchg( void* avp_pointer,
                  const int32_t ai_size,
                  const int32_t ai_num   )
 {
-  int ai_csize, ai_cnum;   
-  char ac_buf[16];         
+  int ai_csize, ai_cnum;
+  char ac_buf[16];
   char *acp_tmp;
-  char *acp_local;         
+  char *acp_local;
 
   memset(ac_buf,'\0',sizeof(ac_buf));
 
   acp_tmp   = avp_pointer;
   acp_local = avp_pointer;
   for( ai_cnum=0; ai_cnum<ai_num; ai_cnum++ ) {
-    memcpy(ac_buf, acp_local, ai_size);        
+    memcpy(ac_buf, acp_local, ai_size);
     for( ai_csize=0; ai_csize<ai_size; ai_csize++ ) {
       *acp_local = ac_buf[ai_size-ai_csize-1];
       acp_local++;
     }
-    acp_tmp += ai_size;        
+    acp_tmp += ai_size;
   }
 }
 
@@ -361,7 +361,7 @@ int32_t fio_put_datainfo( int32_t fid,
 }
 
 /** get data information (full) ***************************************/
-datainfo_t fio_get_datainfo( int32_t fid, 
+datainfo_t fio_get_datainfo( int32_t fid,
                              int32_t did  )
 {
   datainfo_t ditem;
@@ -382,7 +382,7 @@ datainfo_t fio_get_datainfo( int32_t fid,
 }
 
 /** seek data id by varname and step **********************************/
-int32_t fio_seek_datainfo( int32_t fid, 
+int32_t fio_seek_datainfo( int32_t fid,
                            char *varname,
                            int32_t step   )
 {
@@ -684,7 +684,7 @@ int32_t fio_read_datainfo_tmpdata( int32_t fid )
   if(tdata == NULL){
     tdata = (struct type_tmpdata *)malloc(sizeof(struct type_tmpdata)*(10*(int32_t)(pow(4,common.rlevel)))); /* common.num_of_rgn >= fid */
     for( i=0; i<common.num_of_rgn; i++ ){ tdata[i].tmpdata = NULL; }
-    
+
   }
   tdata[fid].tmpdata = (void **)malloc(sizeof(void *)*finfo[fid].header.num_of_data);
 
@@ -742,7 +742,7 @@ int32_t fio_read_datainfo_tmpdata( int32_t fid )
         tdata[fid].tmpdata[did] = (void *)malloc(finfo[fid].dinfo[did].datasize);
 
         fread( tdata[fid].tmpdata[did], finfo[fid].dinfo[did].datasize, 1, finfo[fid].status.fp );
-        
+
         ijklall = finfo[fid].dinfo[did].datasize
           / precision[finfo[fid].dinfo[did].datatype];
         if(system_ednchg){
@@ -773,7 +773,7 @@ int32_t fio_write_data( int32_t fid,
 
   fseek(finfo[fid].status.fp,0L,SEEK_END);
   /* data */
-  if(system_ednchg){ 
+  if(system_ednchg){
     _data = malloc(finfo[fid].dinfo[did].datasize);
     memcpy( _data, data, finfo[fid].dinfo[did].datasize);
     fio_ednchg(_data,precision[finfo[fid].dinfo[did].datatype],ijklall);
@@ -783,7 +783,7 @@ int32_t fio_write_data( int32_t fid,
 
   fwrite(_data,finfo[fid].dinfo[did].datasize,1,finfo[fid].status.fp);
 
-  if(system_ednchg) { free(_data); }    
+  if(system_ednchg) { free(_data); }
 
   return(SUCCESS_CODE);
 }
@@ -805,7 +805,7 @@ int32_t fio_write_data_1rgn( int32_t fid,
 
   fseek(finfo[fid].status.fp,0L,SEEK_END);
   /* data */
-  if(system_ednchg){ 
+  if(system_ednchg){
     _data = malloc(datasize);       /* [fix] 20111028 H.Yashiro */
     memcpy( _data, data, datasize); /* [fix] 20111028 H.Yashiro */
     fio_ednchg(_data,precision[finfo[fid].dinfo[did].datatype],ijkall);

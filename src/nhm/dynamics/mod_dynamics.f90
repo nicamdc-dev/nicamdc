@@ -150,7 +150,7 @@ contains
   call numfilter_setup
 
   !---< nudging module setup >---
-  if( FLAG_NUDGING ) call NDG_setup( ctime, dtime )
+  if( FLAG_NUDGING ) call NDG_setup
 
 
     call sgs_setup

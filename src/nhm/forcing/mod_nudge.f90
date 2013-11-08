@@ -76,7 +76,7 @@ module mod_nudge
 contains
   !-----------------------------------------------------------------------------
   !> Setup
-  subroutine NDG_setup(ctime, dtime)
+  subroutine NDG_setup
     use mod_adm, only: &
        ADM_CTL_FID,   &
        ADM_proc_stop, &
@@ -102,9 +102,6 @@ contains
        VMTR_GSGAM2,    &
        VMTR_GSGAM2_pl
     implicit none
-
-    real(8), intent(in) :: ctime
-    real(8), intent(in) :: dtime
 
     integer :: NDG_kmin0 = -1
     integer :: NDG_kmax0 = 1000
@@ -493,16 +490,15 @@ contains
     use mod_cnst, only: &
        CNST_CV,   &
        CNST_EGRAV
-    use mod_grd, only: &
-       GRD_afac, &
-       GRD_bfac
     use mod_oprt, only: &
        OPRT_horizontalize_vec
     use mod_vmtr, only: &
        VMTR_RGSGAM2,    &
        VMTR_RGSGAM2_pl, &
        VMTR_GSGAM2H,    &
-       VMTR_GSGAM2H_pl
+       VMTR_GSGAM2H_pl, &
+       VMTR_C2Wfact,    &
+       VMTR_C2Wfact_pl
     use mod_gtl, only: &
        GTL_generate_uv
     use mod_history, only: &
@@ -553,7 +549,6 @@ contains
     real(8) :: dv     (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8) :: dv_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8) :: dtem   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: dyrm_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     real(8) :: rhog_h
     real(8) :: NDG_ref_w
@@ -597,9 +592,8 @@ contains
        do l = 1, ADM_lall
        do k = ADM_kmin,ADM_kmax+1
        do g = 1, ADM_gall
-          rhog_h = 0.5D0 * ( GRD_afac(k) * rhog(g,k  ,l) * VMTR_RGSGAM2(g,k  ,l) &
-                           + GRD_bfac(k) * rhog(g,k-1,l) * VMTR_RGSGAM2(g,k-1,l) &
-                           ) * VMTR_GSGAM2H(g,k,l)
+          rhog_h = ( VMTR_C2Wfact(1,g,k,l) * rhog(g,k  ,l) &
+                   + VMTR_C2Wfact(2,g,k,l) * rhog(g,k-1,l) )
 
           NDG_ref_w = NDG_ref(g,k,l,I_w) * VMTR_GSGAM2H(g,k,l) / ( rhog_h * CNST_EGRAV )
 
@@ -614,9 +608,8 @@ contains
           do l = 1, ADM_lall_pl
           do k = ADM_kmin,ADM_kmax+1
           do g = 1, ADM_gall_pl
-             rhog_h = 0.5D0 * ( GRD_afac(k) * rhog_pl(g,k  ,l) * VMTR_RGSGAM2_pl(g,k  ,l) &
-                              + GRD_bfac(k) * rhog_pl(g,k-1,l) * VMTR_RGSGAM2_pl(g,k-1,l) &
-                              ) * VMTR_GSGAM2H_pl(g,k,l)
+             rhog_h = ( VMTR_C2Wfact_pl(1,g,k,l) * rhog_pl(g,k  ,l) &
+                      + VMTR_C2Wfact_pl(2,g,k,l) * rhog_pl(g,k-1,l) )
 
              NDG_ref_w = NDG_ref_pl(g,k,l,I_w) * VMTR_GSGAM2H_pl(g,k,l) / ( rhog_h * CNST_EGRAV )
 

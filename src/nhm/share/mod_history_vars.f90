@@ -271,8 +271,6 @@ contains
          NRDIR_DIFFUSE
     use mod_bsstate, only : &
          phi, phi_pl
-    use mod_cnvvar, only :  &
-         cnvvar_p2d
     use mod_thrmdyn, only : &
          thrmdyn_th
     use mod_bndcnd, only : &

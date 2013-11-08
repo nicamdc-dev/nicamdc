@@ -257,9 +257,9 @@ contains
 
     call calendar_ss2cc ( HTIME, TIME_CTIME )
 
-    write(ADM_LOG_FID,*) '### TIME =', HTIME,'( step = ', TIME_CSTEP, ' )' 
+    write(ADM_LOG_FID,*) '### TIME =', HTIME,'( step = ', TIME_CSTEP, ' )'
     if( ADM_prc_me == ADM_prc_run_master ) then
-       write(*,*) '### TIME = ', HTIME,'( step = ', TIME_CSTEP, ' )' 
+       write(*,*) '### TIME = ', HTIME,'( step = ', TIME_CSTEP, ' )'
     endif
 
     return

@@ -320,8 +320,11 @@ contains
        prgvar_get_withdiag
     use mod_thrmdyn, only: &
        THRMDYN_qd_ijkl
+    use mod_vmtr, only : &
+       VMTR_RGSGAM2,    &
+       VMTR_RGSGAM2_pl
     use mod_cnvvar, only: &
-       cnvvar_kin
+       cnvvar_rhokin_ijkl
     implicit none
 
     real(8) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
@@ -391,7 +394,7 @@ contains
     real(8), save :: rhoetot_sum_old
     logical, save :: iflag = .true.
 
-    integer :: l, nq
+    integer :: nq
     !---------------------------------------------------------------------------
 
     call prgvar_get_withdiag( rhog,   rhog_pl,   & !--- [OUT]
@@ -426,7 +429,7 @@ contains
 
     !--- total mass (dry air)
     tmp(:,:,:) = rho(:,:,:) * qd(:,:,:)
-    if ( ADM_prc_me == ADM_prc_pl ) then    
+    if ( ADM_prc_me == ADM_prc_pl ) then
        tmp_pl(:,:,:) = rho_pl(:,:,:) * qd_pl(:,:,:)
     endif
     rhoqd_sum = GTL_global_sum( tmp, tmp_pl )
@@ -486,7 +489,7 @@ contains
 
     !--- internal energy (dry air)
     tmp = rho * qd * CNST_CV * tem
-    if ( ADM_prc_me == ADM_prc_pl ) then    
+    if ( ADM_prc_me == ADM_prc_pl ) then
        tmp_pl = rho_pl * qd_pl * CNST_CV * tem_pl
     end if
     rhoein_qd_sum = GTL_global_sum( tmp, tmp_pl )
@@ -503,7 +506,7 @@ contains
           tmp(:,:,:) = tmp(:,:,:) - rho(:,:,:) * q(:,:,:,nq) * LHF
        endif
 
-       if ( ADM_prc_me == ADM_prc_pl ) then    
+       if ( ADM_prc_me == ADM_prc_pl ) then
           tmp_pl(:,:,:) = rho_pl(:,:,:) * q_pl(:,:,:,nq) * CVW(nq) * tem_pl(:,:,:)
 
           if    ( nq == I_QV ) then
@@ -520,39 +523,21 @@ contains
     !--- potential energy
     tmp(:,:,:) = rho(:,:,:) * VMTR_PHI(:,:,:)
     if ( ADM_prc_me == ADM_prc_pl ) then
-       tmp_pl(:,:,:) = rho_pl(:,:,:)*VMTR_PHI_pl(:,:,:)
+       tmp_pl(:,:,:) = rho_pl(:,:,:) * VMTR_PHI_pl(:,:,:)
     endif
     rhophi_sum = GTL_global_sum( tmp, tmp_pl )
 
     !--- kinetic energy
-    do l = 1, ADM_lall
-       call cnvvar_kin( ADM_gall,            & !--- [IN]
-                        rhog        (:,:,l), & !--- [IN]
-                        rhogvx      (:,:,l), & !--- [IN]
-                        rhogvy      (:,:,l), & !--- [IN]
-                        rhogvz      (:,:,l), & !--- [IN]
-                        rhogw       (:,:,l), & !--- [IN]
-                        VMTR_GSGAM2 (:,:,l), & !--- [IN]
-                        VMTR_GSGAM2H(:,:,l), & !--- [IN]
-                        tmp         (:,:,l)  ) !--- [OUT]
+    call cnvvar_rhokin_ijkl( rhog,   rhog_pl,   & !--- [IN]
+                             rhogvx, rhogvx_pl, & !--- [IN]
+                             rhogvy, rhogvy_pl, & !--- [IN]
+                             rhogvz, rhogvz_pl, & !--- [IN]
+                             rhogw,  rhogw_pl,  & !--- [IN]
+                             tmp,    tmp_pl     ) !--- [OUT]
 
-       tmp(:,:,l) = tmp(:,:,l) * rho(:,:,l)
-    enddo
-
+    tmp(:,:,:) = tmp(:,:,:) *  VMTR_RGSGAM2(:,:,:)
     if ( ADM_prc_me == ADM_prc_pl ) then
-       do l = 1, ADM_lall_pl
-          call cnvvar_kin( ADM_gall_pl,            & !--- [IN]
-                           rhog_pl        (:,:,l), & !--- [IN]
-                           rhogvx_pl      (:,:,l), & !--- [IN]
-                           rhogvy_pl      (:,:,l), & !--- [IN]
-                           rhogvz_pl      (:,:,l), & !--- [IN]
-                           rhogw_pl       (:,:,l), & !--- [IN]
-                           VMTR_GSGAM2_pl (:,:,l), & !--- [IN]
-                           VMTR_GSGAM2H_pl(:,:,l), & !--- [IN]
-                           tmp_pl         (:,:,l)  ) !--- [OUT]
-
-          tmp_pl(:,:,l) = tmp_pl(:,:,l) * rho_pl(:,:,l)
-       enddo
+       tmp_pl(:,:,:) = tmp_pl(:,:,:) * VMTR_RGSGAM2_pl(:,:,:)
     endif
     rhokin_sum = GTL_global_sum( tmp, tmp_pl )
 

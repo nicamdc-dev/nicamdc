@@ -116,13 +116,17 @@ module mod_vmtr
   real(8), public, allocatable, save :: VMTR_PHI   (:,:,:)
   real(8), public, allocatable, save :: VMTR_PHI_pl(:,:,:)
 
-  !--- factor for integer to half integer level w/ Gz
-  real(8), public, allocatable, save :: VMTR_C2Wfact_Gz   (:,:,:,:)
-  real(8), public, allocatable, save :: VMTR_C2Wfact_Gz_pl(:,:,:,:)
-
   !--- factor for integer to half integer level
   real(8), public, allocatable, save :: VMTR_C2Wfact   (:,:,:,:)
   real(8), public, allocatable, save :: VMTR_C2Wfact_pl(:,:,:,:)
+
+  !--- factor for half integer to integer level
+  real(8), public, allocatable, save :: VMTR_W2Cfact   (:,:,:,:)
+  real(8), public, allocatable, save :: VMTR_W2Cfact_pl(:,:,:,:)
+
+  !--- factor for integer to half integer level w/ Gz
+  real(8), public, allocatable, save :: VMTR_C2Wfact_Gz   (:,:,:,:)
+  real(8), public, allocatable, save :: VMTR_C2Wfact_Gz_pl(:,:,:,:)
 
   !-----------------------------------------------------------------------------
   !
@@ -172,13 +176,13 @@ contains
        GRD_dgzh,  &
        GRD_afac,  &
        GRD_bfac,  &
+       GRD_cfac,  &
+       GRD_dfac,  &
        GRD_grid_type
     use mod_gmtr, only: &
        GMTR_P_AREA,  &
        GMTR_P_var,   &
        GMTR_P_var_pl
-!    use mod_oprt_plane, only: &
-!       OPRT_PLANE_gradient
     use mod_oprt, only: &
        OPRT_gradient,         &
        OPRT_horizontalize_vec
@@ -287,11 +291,14 @@ contains
     allocate( VMTR_PHI        (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_PHI_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
 
-    allocate( VMTR_C2Wfact_Gz   (6,ADM_gall,   ADM_kall,ADM_lall   ) )
-    allocate( VMTR_C2Wfact_Gz_pl(6,ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-
     allocate( VMTR_C2Wfact      (2,ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_C2Wfact_pl   (2,ADM_gall_pl,ADM_kall,ADM_lall_pl) )
+
+    allocate( VMTR_W2Cfact      (2,ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( VMTR_W2Cfact_pl   (2,ADM_gall_pl,ADM_kall,ADM_lall_pl) )
+
+    allocate( VMTR_C2Wfact_Gz   (6,ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( VMTR_C2Wfact_Gz_pl(6,ADM_gall_pl,ADM_kall,ADM_lall_pl) )
 
     !--- if 1 layer model( shallow water model ),
     if ( ADM_kall == ADM_KNONE ) then
@@ -305,37 +312,26 @@ contains
     var   (:,:,:,:) = 0.D0
     var_pl(:,:,:,:) = 0.D0
 
-    if ( trim(GRD_grid_type) == 'ON_PLANE' ) then
-!       --- calculation of Jxh, Jyh, and Jzh
-!       call OPRT_PLANE_gradient( var   (:,:,:,JXH),   & !--- [OUT]
-!                                 var   (:,:,:,JYH),   & !--- [OUT]
-!                                 GRD_vz(:,:,:,GRD_ZH) ) !--- [IN]
-!       --- calculation of Jx, Jy, and Jz
-!       call OPRT_PLANE_gradient( var   (:,:,:,JX),   & !--- [OUT]
-!                                 var   (:,:,:,JY),   & !--- [OUT]
-!                                 GRD_vz(:,:,:,GRD_Z) ) !--- [IN]
-    else
-       !--- calculation of Jxh, Jyh, and Jzh
-       call OPRT_gradient( var(:,:,:,JXH),       var_pl(:,:,:,JXH),       & !--- [OUT]
-                           var(:,:,:,JYH),       var_pl(:,:,:,JYH),       & !--- [OUT]
-                           var(:,:,:,JZH),       var_pl(:,:,:,JZH),       & !--- [OUT]
-                           GRD_vz(:,:,:,GRD_ZH), GRD_vz_pl(:,:,:,GRD_ZH), & !--- [IN]
-                           mfact=1.D0                                     ) !--- [IN]
+    !--- calculation of Jxh, Jyh, and Jzh
+    call OPRT_gradient( var(:,:,:,JXH),       var_pl(:,:,:,JXH),       & !--- [OUT]
+                        var(:,:,:,JYH),       var_pl(:,:,:,JYH),       & !--- [OUT]
+                        var(:,:,:,JZH),       var_pl(:,:,:,JZH),       & !--- [OUT]
+                        GRD_vz(:,:,:,GRD_ZH), GRD_vz_pl(:,:,:,GRD_ZH), & !--- [IN]
+                        mfact=1.D0                                     ) !--- [IN]
 
-       call OPRT_horizontalize_vec( var(:,:,:,JXH), var_pl(:,:,:,JXH), & !--- [INOUT]
-                                    var(:,:,:,JYH), var_pl(:,:,:,JYH), & !--- [INOUT]
-                                    var(:,:,:,JZH), var_pl(:,:,:,JZH)  ) !--- [INOUT]
-       !--- calculation of Jx, Jy, and Jz
-       call OPRT_gradient( var(:,:,:,JX),       var_pl(:,:,:,JX),       & !--- [OUT]
-                           var(:,:,:,JY),       var_pl(:,:,:,JY),       & !--- [OUT]
-                           var(:,:,:,JZ),       var_pl(:,:,:,JZ),       & !--- [OUT]
-                           GRD_vz(:,:,:,GRD_Z), GRD_vz_pl(:,:,:,GRD_Z), & !--- [IN]
-                           mfact=1.D0                                   ) !--- [IN]
+    call OPRT_horizontalize_vec( var(:,:,:,JXH), var_pl(:,:,:,JXH), & !--- [INOUT]
+                                 var(:,:,:,JYH), var_pl(:,:,:,JYH), & !--- [INOUT]
+                                 var(:,:,:,JZH), var_pl(:,:,:,JZH)  ) !--- [INOUT]
+    !--- calculation of Jx, Jy, and Jz
+    call OPRT_gradient( var(:,:,:,JX),       var_pl(:,:,:,JX),       & !--- [OUT]
+                        var(:,:,:,JY),       var_pl(:,:,:,JY),       & !--- [OUT]
+                        var(:,:,:,JZ),       var_pl(:,:,:,JZ),       & !--- [OUT]
+                        GRD_vz(:,:,:,GRD_Z), GRD_vz_pl(:,:,:,GRD_Z), & !--- [IN]
+                        mfact=1.D0                                   ) !--- [IN]
 
-       call OPRT_horizontalize_vec( var(:,:,:,JX), var_pl(:,:,:,JX), & !--- [INOUT]
-                                    var(:,:,:,JY), var_pl(:,:,:,JY), & !--- [INOUT]
-                                    var(:,:,:,JZ), var_pl(:,:,:,JZ)  ) !--- [INOUT]
-    endif
+    call OPRT_horizontalize_vec( var(:,:,:,JX), var_pl(:,:,:,JX), & !--- [INOUT]
+                                 var(:,:,:,JY), var_pl(:,:,:,JY), & !--- [INOUT]
+                                 var(:,:,:,JZ), var_pl(:,:,:,JZ)  ) !--- [INOUT]
 
     !--- fill HALO
     call COMM_data_transfer( var, var_pl )

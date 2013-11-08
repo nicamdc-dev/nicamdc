@@ -94,7 +94,7 @@ void fio_put_pkginfo_( int32_t *fid,
 }
 
 /** get package information (full) ************************************/
-void fio_get_pkginfo_( int32_t *fid, 
+void fio_get_pkginfo_( int32_t *fid,
                        headerinfo_t *hinfo )
 {
   *hinfo = fio_get_pkginfo( *fid );
@@ -113,7 +113,7 @@ void fio_put_datainfo_( int32_t *fid,
 }
 
 /** get data information (full) ***************************************/
-void fio_get_datainfo_( int32_t *fid, 
+void fio_get_datainfo_( int32_t *fid,
                         int32_t *did,
                         datainfo_t *ditem )
 {
@@ -122,8 +122,8 @@ void fio_get_datainfo_( int32_t *fid,
 }
 
 /** seek data id by varname and step **********************************/
-void fio_seek_datainfo_( int32_t *did, 
-                         int32_t *fid, 
+void fio_seek_datainfo_( int32_t *did,
+                         int32_t *fid,
                          char *varname,
                          int32_t *step,
                          int32_t varname_len )
@@ -134,7 +134,7 @@ void fio_seek_datainfo_( int32_t *did,
 
   fio_set_str( _varname, varname, _varname_len );
 
-  *did = fio_seek_datainfo( *fid, 
+  *did = fio_seek_datainfo( *fid,
                             _varname,
                             *step     );
 }
@@ -353,7 +353,7 @@ void fio_read_allinfo_tmpdata_( int32_t *fid )
 }
 
 /* [add] C.Kodama 13-04-18 */
-void fio_register_vname_tmpdata_( const char *vname_in, 
+void fio_register_vname_tmpdata_( const char *vname_in,
                                   int32_t    *vname_len )
 {
   char _vname_in[FIO_HSHORT];

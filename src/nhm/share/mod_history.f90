@@ -1049,8 +1049,6 @@ contains
          ADM_GALL_PL, &
          ADM_LALL_PL, &
          ADM_KNONE
-    use mod_cnvvar, only :  &
-         cnvvar_p2d
     use mod_runconf, only : &
          nqmax => TRC_VMAX
     use mod_thrmdyn, only :    &

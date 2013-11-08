@@ -270,8 +270,6 @@ contains
          GRD_Z,        &!101201
          GRD_ZH,        &
          GRD_vz_pl,    &
-         GRD_afac,       &
-         GRD_bfac,       &
          GRD_gz,         &
          GRD_gzh
     use mod_cnst, only : &

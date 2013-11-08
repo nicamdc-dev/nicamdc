@@ -66,7 +66,7 @@ typedef struct{
   int32_t step;
   int64_t time_start;
   int64_t time_end;
-} datainfo_t; 
+} datainfo_t;
 
 /* status information */
 typedef struct{
@@ -142,11 +142,11 @@ extern int32_t fio_put_datainfo( int32_t fid,
                                  datainfo_t ditem );
 
 /** get data information (full) ***************************************/
-extern datainfo_t fio_get_datainfo( int32_t fid, 
+extern datainfo_t fio_get_datainfo( int32_t fid,
                                     int32_t did  );
 
 /** seek data id by varname and step **********************************/
-extern int32_t fio_seek_datainfo( int32_t fid, 
+extern int32_t fio_seek_datainfo( int32_t fid,
                                   char *varname,
                                   int32_t step   );
 
