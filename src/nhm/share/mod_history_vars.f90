@@ -843,7 +843,7 @@ contains
        enddo
        if ( k >= kdim ) then
           write(*,          *) 'xxx internal error! [sv_uvwp_850/mod_history_vars] STOP.'
-          write(ADM_LOG_FID,*) 'xxx internal error! [sv_uvwp_850/mod_history_vars] STOP.',kdim,k,plev,pre(ij,:)
+          write(ADM_LOG_FID,*) 'xxx internal error! [sv_uvwp_850/mod_history_vars] STOP.',kdim,k,plev,ij,pre(ij,:)
           call ADM_proc_stop
        endif
 

@@ -86,7 +86,7 @@ contains
 
     integer :: n, k, l
     !---------------------------------------------------------------------------
-print *, 'OK0'
+
     do l = 1, ADM_lall
        !--- horizontal kinetic energy
        do k = ADM_kmin, ADM_kmax
@@ -119,7 +119,6 @@ print *, 'OK0'
        rhogkin(:,ADM_kmin-1,l) = 0.D0
        rhogkin(:,ADM_kmax+1,l) = 0.D0
     enddo
-print *, 'OK1'
 
     if ( ADM_prc_me == ADM_prc_pl ) then
        do l = 1, ADM_lall_pl
@@ -155,7 +154,6 @@ print *, 'OK1'
           rhogkin_pl(:,ADM_kmax+1,l) = 0.D0
        enddo
     endif
-print *, 'OK2'
 
     return
   end subroutine cnvvar_rhokin_ijkl

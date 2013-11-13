@@ -1,52 +1,35 @@
 !-------------------------------------------------------------------------------
-!
-!+  Numerical smoothing module
-!
-!-------------------------------------------------------------------------------
+!>
+!! Numerical filter module
+!!
+!! @par Description
+!!         This module contains subroutines for numerical smoothings or filters
+!!
+!! @author  H.Tomita
+!!
+!! @par History
+!! @li      2004-02-17 (H.Tomita)  Imported from igdc-4.34
+!! @li      2005-11-02 (N.Hirota)  Add 2 dimensional damping
+!! @li      2005-11-10 (N.Hirota)  Add z dependent horizontal diffusion
+!! @li      2005-12-09 (M.Satoh)   Bug fix
+!! @li      2005-12-10 (N.Hirota)  1/gamma -> tau when type==E_FOLD_TIME
+!! @li      2005-12-17 (M.Satoh)   Read namelist twice for compatibility
+!! @li      2006-01-10 (S.Iga)     Add 'Kh_coef_lap1'
+!! @li      2006-04-17 (H.Tomita)  Add nonlinear diffusion
+!! @li      2006-10-20 (K.Suzuki)  Not calling tracer diffusion in using Miura2004
+!! @li      2007-01-26 (H.Tomita)  Some change in numfilter_rayleigh_damping
+!! @li      2007-08-07 (T.Mitsui)  Trivial fix
+!! @li      2008-01-24 (Y.Niwa)    Add MIURA2004OLD in numerical_hdiff hdiff_fact_q = 0.D0
+!! @li      2008-01-30 (Y.Niwa)    Bug fix
+!! @li      2008-04-12 (T.Mitsui)  Omit needless calculation in hdiff
+!! @li      2009-04-14 (H.Tomita)  Add the initilization for Kh_coef_lap1.
+!! @li      2012-02-10 (T.Yamaura) Optimized numfilter_divdamp and numfilter_hdiffusion
+!! @li      2012-03-28 (T.Seiki)   Change the method to calculate AREA_ave collective communication => analytic diagnosis
+!! @li      2012-05-30 (T.Yashiro) Change arguments from character to index/switch
+!! @li      2012-07-21 (S.Iga)     Add switch smooth_1var which control smooth_1var
+!!
+!<
 module mod_numfilter
-  !-----------------------------------------------------------------------------
-  !
-  !++ Description:
-  !       This module contains subroutines for numerical smoothings or filters.
-  !
-  !
-  !++ Current Corresponding Author : H.Tomita
-  !
-  !++ History:
-  !      Version   Date       Comment
-  !      -----------------------------------------------------------------------
-  !      0.00      04-02-17   Imported from igdc-4.34
-  !                05-11-02   add 2 dimensional damping (N. Hirota)
-  !                05-11-10   add z dependent horizontal diffusion (N. Hirota)
-  !                05-12-09   M.Satoh bug fix
-  !                05-12-10   1/gamma -> tau when type==E_FOLD_TIME (N. Hirota)
-  !                05-12-17   M.Satoh: read namelist twice for compatibility
-  !                06-01-10   S.Iga: add 'Kh_coef_lap1'
-  !                06-04-17   H.Tomita : Add nonlinear diffusion
-  !                06-10-20   K.Suzuki : not calling tracer diffusion in using
-  !                                      Miura(2004) advection scheme
-  !                07-01-26   H.Tomita : Add an option [rayleigh_damp_only_w].
-  !                                      Some change in
-  !                                      sub[numfilter_rayleigh_damping].
-  !                07-08-07   T.Mitsui : trivial fix
-  !                08-01-24   Y.Niwa : add MIURA2004OLD in numerical_hdiff
-  !                                    hdiff_fact_q = 0.D0
-  !                08-01-30   Y.Niwa : bug fix
-  !                08-04-12   T.Mitsui: omit needless calculation in hdiff
-  !                09-04-14   H.Tomita: Add the initilization ( zero clear )
-  !                                     for Kh_coef_lap1.
-  !                11-11-28   Y.Yamada: Merge Terai-san code
-  !                                        into the original code.
-  !                12-02-10   T.Yamaura: Optimized numfilter_divdamp and
-  !                                        numfilter_hdiffusion for K-Computer (comitted by Iga 12-03-09)
-  !                12-03-28   T.Seiki : fix undefined reference,
-  !                                     change the method to calculate AREA_ave
-  !                                     collective communication => analytic diagnosis
-  !                12-05-30   T.Yashiro: Change arguments from character to index/switch
-  !                12-07-21   S.Iga: add switch 'logical:smooth_1var' which control
-  !                                 'call smooth_1var'
-  !      -----------------------------------------------------------------------
-  !
   !-----------------------------------------------------------------------------
   !
   !++ Used modules
@@ -63,7 +46,6 @@ module mod_numfilter
   !++ Public procedure
   !
   public :: numfilter_setup
-
   public :: numfilter_rayleigh_damping
   public :: numfilter_hdiffusion
   public :: numfilter_vdiffusion
@@ -91,7 +73,6 @@ module mod_numfilter
   private :: numfilter_vdiffusion_setup
   private :: numfilter_divdamp_setup
   private :: numfilter_divdamp_2d_setup
-
   private :: numfilter_smooth_1var
   private :: height_factor
 
@@ -2254,6 +2235,7 @@ contains
              gdvz_pl(:,ADM_kmax+1,l) = 0.D0
           enddo
        endif
+
     else
        gdvz   (:,:,:) = 0.D0
        gdvz_pl(:,:,:) = 0.D0

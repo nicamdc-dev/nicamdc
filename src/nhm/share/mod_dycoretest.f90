@@ -6,14 +6,14 @@
 module mod_dycoretest
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
+  !++ Description:
   !       This module is for the Dyn Core Test Initialization.
-  !       
-  ! 
+  !
+  !
   !++ Current Corresponding Author : R.Yoshida
-  ! 
-  !++ History: 
-  !      Version   Date       Comment 
+  !
+  !++ History:
+  !      Version   Date       Comment
   !      -----------------------------------------------------------------------
   !      0.00      12-10-19   Imported from mod_restart.f90 of NICAM
   !      0.01      13-06-12   Test cases in DCMIP2012 were imported
@@ -453,7 +453,7 @@ contains
     if(pertb) call perturbation( ijdim, kdim, lall, 5, DIAG_var(:,:,:,1:5) )
 
     return
-  end subroutine jbw_init  
+  end subroutine jbw_init
   !-----------------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------------
@@ -531,10 +531,10 @@ contains
 
     DIAG_var(:,:,:,:) = 0.D0
 
-    I_passive1 = 6 + chemvar_getid( "passive1" ) + NCHEM_STR - 1
-    I_passive2 = 6 + chemvar_getid( "passive2" ) + NCHEM_STR - 1
-    I_passive3 = 6 + chemvar_getid( "passive3" ) + NCHEM_STR - 1
-    I_passive4 = 6 + chemvar_getid( "passive4" ) + NCHEM_STR - 1
+    I_passive1 = 6 + NCHEM_STR + chemvar_getid( "passive1" ) - 1
+    I_passive2 = 6 + NCHEM_STR + chemvar_getid( "passive2" ) - 1
+    I_passive3 = 6 + NCHEM_STR + chemvar_getid( "passive3" ) - 1
+    I_passive4 = 6 + NCHEM_STR + chemvar_getid( "passive4" ) - 1
 
     do l = 1, lall
     do n = 1, ijdim
@@ -1344,7 +1344,7 @@ contains
   function Sp_Unit_North( lon, lat ) result( unit_north )
     ! imported from prg_mkinit_ncep.f90 (original written by H.Miura)
     ! ------
-    ! Compute local northward unit vector (unit_north) 
+    ! Compute local northward unit vector (unit_north)
     ! in the Cartesian coordinate system
     ! given longitude (lon) and latitude (lat) of a position.
     !

@@ -20,10 +20,10 @@
 !! @li      2010-08-16 (A.T.Noda ) Bug fix (Qconv not diveded by density)
 !! @li      2010-08-20 (A.T.Noda ) Bug fix (Qconv should be TEND, and not be multiplied by DT)
 !! @li      2010-11-29 (A.T.Noda ) Introduce the Smagorinsky model
-!! @li      2011-08-16 (M.Satoh  ) bug fix for TDK: conv => TEND; qv_dyn_tend = v grad q = ( div(rho v q) - div(rho v)*q )/rho
-!! @li      2011-08-16 (M.Satoh  ) move codes related to CP_TYPE below the tracer calculation
+!! @li      2011-08-16 (M.Satoh  ) Bug fix for TDK: conv => TEND; qv_dyn_tend = v grad q = ( div(rho v q) - div(rho v)*q )/rho
+!! @li      2011-08-16 (M.Satoh  ) Move codes related to CP_TYPE below the tracer calculation
 !! @li      2013-08-23 (H.Yashiro) Change arguments from character to index/switch
-!! @li      2013-06-13 (R.Yoshida) add tracer advection mode
+!! @li      2013-06-13 (R.Yoshida) Add tracer advection mode
 !!
 !<
 module mod_dynamics

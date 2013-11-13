@@ -444,6 +444,7 @@ contains
           VMTR_W2Cfact(I_d,n,k,l) = 0.5D0 * GRD_dfac(k) * VMTR_GSGAM2(n,k,l) * VMTR_RGSGAM2H(n,k  ,l)
        enddo
        enddo
+       VMTR_W2Cfact(:,:,ADM_kmax+1,l) = 0.D0
 
        do k = ADM_kmin, ADM_kmax+1
        do n = 1, ADM_gall
@@ -464,6 +465,8 @@ contains
                                           * VMTR_GZZH(n,k,l)
        enddo
        enddo
+       VMTR_C2Wfact   (:,:,ADM_kmin-1,l) = 0.D0
+       VMTR_C2Wfact_Gz(:,:,ADM_kmin-1,l) = 0.D0
     enddo
 
     if ( ADM_prc_me == ADM_prc_pl ) then
@@ -570,26 +573,29 @@ contains
           VMTR_W2Cfact_pl(I_d,n,k,l) = 0.5D0 * GRD_dfac(k) * VMTR_GSGAM2_pl(n,k,l) * VMTR_RGSGAM2H_pl(n,k  ,l)
        enddo
        enddo
+       VMTR_W2Cfact_pl(:,:,ADM_kmax+1,l) = 0.D0
 
        do k = ADM_kmin, ADM_kmax+1
        do n = 1, ADM_gall_pl
           VMTR_C2Wfact_pl(I_a,n,k,l) = 0.5D0 * GRD_afac(k) * VMTR_RGSGAM2_pl(n,k  ,l) * VMTR_GSGAM2H_pl(n,k,l)
           VMTR_C2Wfact_pl(I_b,n,k,l) = 0.5D0 * GRD_bfac(k) * VMTR_RGSGAM2_pl(n,k-1,l) * VMTR_GSGAM2H_pl(n,k,l)
 
-          VMTR_C2Wfact_pl(I_a_GZXH,n,k,l) = 0.5D0 * GRD_afac(k) &
-                                          * VMTR_GSGAM2H_pl(n,k,l) * VMTR_RGSGAM2_pl(n,k  ,l) * VMTR_GZXH_pl(n,k,l)
-          VMTR_C2Wfact_pl(I_b_GZXH,n,k,l) = 0.5D0 * GRD_bfac(k) &
-                                          * VMTR_GSGAM2H_pl(n,k,l) * VMTR_RGSGAM2_pl(n,k-1,l) * VMTR_GZXH_pl(n,k,l)
-          VMTR_C2Wfact_pl(I_a_GZYH,n,k,l) = 0.5D0 * GRD_afac(k) &
-                                          * VMTR_GSGAM2H_pl(n,k,l) * VMTR_RGSGAM2_pl(n,k  ,l) * VMTR_GZYH_pl(n,k,l)
-          VMTR_C2Wfact_pl(I_b_GZYH,n,k,l) = 0.5D0 * GRD_bfac(k) &
-                                          * VMTR_GSGAM2H_pl(n,k,l) * VMTR_RGSGAM2_pl(n,k-1,l) * VMTR_GZYH_pl(n,k,l)
-          VMTR_C2Wfact_pl(I_a_GZZH,n,k,l) = 0.5D0 * GRD_afac(k) &
-                                          * VMTR_GSGAM2H_pl(n,k,l) * VMTR_RGSGAM2_pl(n,k  ,l) * VMTR_GZZH_pl(n,k,l)
-          VMTR_C2Wfact_pl(I_b_GZZH,n,k,l) = 0.5D0 * GRD_bfac(k) &
-                                          * VMTR_GSGAM2H_pl(n,k,l) * VMTR_RGSGAM2_pl(n,k-1,l) * VMTR_GZZH_pl(n,k,l)
+          VMTR_C2Wfact_Gz_pl(I_a_GZXH,n,k,l) = 0.5D0 * GRD_afac(k) * VMTR_RGSGAM2_pl(n,k  ,l) * VMTR_GSGAM2H_pl(n,k,l) &
+                                             * VMTR_GZXH_pl(n,k,l)
+          VMTR_C2Wfact_Gz_pl(I_b_GZXH,n,k,l) = 0.5D0 * GRD_bfac(k) * VMTR_RGSGAM2_pl(n,k-1,l) * VMTR_GSGAM2H_pl(n,k,l) &
+                                             * VMTR_GZXH_pl(n,k,l)
+          VMTR_C2Wfact_Gz_pl(I_a_GZYH,n,k,l) = 0.5D0 * GRD_afac(k) * VMTR_RGSGAM2_pl(n,k  ,l) * VMTR_GSGAM2H_pl(n,k,l) &
+                                             * VMTR_GZYH_pl(n,k,l)
+          VMTR_C2Wfact_Gz_pl(I_b_GZYH,n,k,l) = 0.5D0 * GRD_bfac(k) * VMTR_RGSGAM2_pl(n,k-1,l) * VMTR_GSGAM2H_pl(n,k,l) &
+                                             * VMTR_GZYH_pl(n,k,l)
+          VMTR_C2Wfact_Gz_pl(I_a_GZZH,n,k,l) = 0.5D0 * GRD_afac(k) * VMTR_RGSGAM2_pl(n,k  ,l) * VMTR_GSGAM2H_pl(n,k,l) &
+                                             * VMTR_GZZH_pl(n,k,l)
+          VMTR_C2Wfact_Gz_pl(I_b_GZZH,n,k,l) = 0.5D0 * GRD_bfac(k) * VMTR_RGSGAM2_pl(n,k-1,l) * VMTR_GSGAM2H_pl(n,k,l) &
+                                             * VMTR_GZZH_pl(n,k,l)
        enddo
        enddo
+       VMTR_C2Wfact_pl   (:,:,ADM_kmin-1,l) = 0.D0
+       VMTR_C2Wfact_Gz_pl(:,:,ADM_kmin-1,l) = 0.D0
 
        enddo
     endif
