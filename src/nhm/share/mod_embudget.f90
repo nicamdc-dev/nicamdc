@@ -408,10 +408,17 @@ contains
                               w,      w_pl,      & !--- [OUT]
                               q,      q_pl       ) !--- [OUT]
 
-    call THRMDYN_qd_ijkl ( ADM_gall, ADM_kall, ADM_lall, & !--- [IN]
-                           TRC_vmax, NQW_STR, NQW_END,   & !--- [IN]
-                           qd(:,:,:),                    & !--- [OUT]
-                           q (:,:,:,:)                   ) !--- [IN]
+    call THRMDYN_qd_ijkl( ADM_gall, ADM_kall, ADM_lall, & !--- [IN]
+                          TRC_vmax, NQW_STR, NQW_END,   & !--- [IN]
+                          qd(:,:,:),                    & !--- [OUT]
+                          q (:,:,:,:)                   ) !--- [IN]
+
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       call THRMDYN_qd_ijkl ( ADM_gall_pl, ADM_kall, ADM_lall_pl, & !--- [IN]
+                              TRC_vmax, NQW_STR, NQW_END,         & !--- [IN]
+                              qd_pl(:,:,:),                       & !--- [OUT]
+                              q_pl (:,:,:,:)                      ) !--- [IN]
+    endif
 
     !----- Mass budget
 
