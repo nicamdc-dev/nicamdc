@@ -89,7 +89,7 @@ module mod_numfilter
   integer, private,              save :: lap_order_hdiff = 2            ! laplacian order
   real(8), private,              save :: hdiff_fact_rho  = 1.D-2
   real(8), private,              save :: hdiff_fact_q    = 0.D0
-  real(8), private,              save :: Kh_coef_minlim  = 3.D9
+  real(8), private,              save :: Kh_coef_minlim  = 0.D0
   real(8), private,              save :: Kh_coef_maxlim  = 1.D99
 
   logical, private,              save :: hdiff_nonlinear = .false.
@@ -508,10 +508,10 @@ contains
                 write(ADM_LOG_FID,'(1x,F8.2,4E14.6)') GRD_gz(k), coef_min, coef_max, eft_max, eft_min
              enddo
           else
-             write(ADM_LOG_FID,*) '=> Nonlinear filter is used.'
+             write(ADM_LOG_FID,*) '=> used.'
           endif
        else
-          write(ADM_LOG_FID,*) '=> used.'
+          write(ADM_LOG_FID,*) '=> Nonlinear filter is used.'
        endif
     else
        write(ADM_LOG_FID,*) '=> not used.'

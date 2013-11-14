@@ -6,15 +6,15 @@
 module mod_bsstate
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
+  !++ Description:
   !       This module is for the set of basic state for non-hydrostatic
   !       model.
-  !       
-  ! 
+  !
+  !
   !++ Current Corresponding Author : H.Tomita
-  ! 
-  !++ History: 
-  !      Version   Date       Comment 
+  !
+  !++ History:
+  !      Version   Date       Comment
   !      -----------------------------------------------------------------------
   !      0.00      04-02-17   Imported from igdc-4.34
   !                11-08-13   A.Noda : add twp-ice exp
@@ -65,7 +65,7 @@ module mod_bsstate
   real(8),allocatable, public, save :: phi_pl(:,:,:)
   !
   !--- Basic state type
-  character(ADM_NSYS), public, save :: ref_type = 'TEM'
+  character(ADM_NSYS), public, save :: ref_type = 'NOBASE'
   !                                  ='TEM': temerature is given.
   !                                  ='TH' : potential temperature is given.
   !                                  ='NOBASE' : no basic state
@@ -322,7 +322,7 @@ contains
        !
        phi_ref = 0.0D0
        rho_ref = 0.0D0
-       pre_ref = 0.0D0 
+       pre_ref = 0.0D0
        tem_ref = 0.0D0
        th_ref  = 0.0D0
        qv_ref  = 0.0D0
@@ -360,8 +360,8 @@ contains
        !--- calculation of density at the surface
        rho_g = pre_g / CNST_RAIR / tem_g
        !
-       !--- calculation of reference pressure and density 
-       !--- just below the ground level 
+       !--- calculation of reference pressure and density
+       !--- just below the ground level
        pre_ref(ADM_kmin-1)                                &
             = pre_g                                        &
             + 0.5D0                                       &
@@ -382,31 +382,31 @@ contains
             / tem_ref(ADM_kmin)
        !
        !--- Reference pressure and density at k level
-       !---    In this caluculation, the hydrostatic balance equation 
-       !---    ( dP/dz=-RHO dPHI/dz ) is applied at the half integer 
+       !---    In this caluculation, the hydrostatic balance equation
+       !---    ( dP/dz=-RHO dPHI/dz ) is applied at the half integer
        !---    level ( k-1/2 ). RHO is obtained by extrapolation from
        !---    the values at lower level.
-       !--- 
+       !---
        !--- Consistent way(?) in the scheme.
-       !--- 
-       !--- pre_ref(k) - pre_ref(k-1) 
-       !--- = - 0.5D0 * ( GRD_afac(k) * rho_ref(k) 
+       !---
+       !--- pre_ref(k) - pre_ref(k-1)
+       !--- = - 0.5D0 * ( GRD_afac(k) * rho_ref(k)
        !---              +GRD_bfac(k) * rho_ref(k-1)  )
        !---   * ( phi_ref(k) - phi_ref(k-1) )
-       !--- 
-       !--- rho_ref(k)*CNST_RAIR*tem_ref(k)  - pre_ref(k-1) 
-       !--- = - 0.5D0 * ( GRD_afac(k) * rho_ref(k) 
+       !---
+       !--- rho_ref(k)*CNST_RAIR*tem_ref(k)  - pre_ref(k-1)
+       !--- = - 0.5D0 * ( GRD_afac(k) * rho_ref(k)
        !---              +GRD_bfac(k) * rho_ref(k-1)  )
        !---   * ( phi_ref(k) - phi_ref(k-1) )
        !
-       !--- rho_ref(k)*( CNST_RAIR*tem_ref(k) 
+       !--- rho_ref(k)*( CNST_RAIR*tem_ref(k)
        !---            + 0.5D0 * GRD_afac(k)
-       !---            * ( phi_ref(k) - phi_ref(k-1) ) 
+       !---            * ( phi_ref(k) - phi_ref(k-1) )
        !---            )
-       !--- = pre_ref(k-1) 
+       !--- = pre_ref(k-1)
        !---            - 0.5D0 * GRD_bfac(k) * rho_ref(k-1)
-       !---            * ( phi_ref(k) - phi_ref(k-1) ) 
-       !--- 
+       !---            * ( phi_ref(k) - phi_ref(k-1) )
+       !---
        do k = ADM_kmin+1, ADM_kmax+1
           rho_ref(k) = &
                ( pre_ref(k-1) &
@@ -433,7 +433,7 @@ contains
        !---  calculation of reference density
        total_mass0 = CNST_PRE00/CNST_EGRAV
        pre_s = CNST_PRE00
-       do 
+       do
           do k = ADM_kmin-1, ADM_kmax+1
              rho_ref(k) = pre_s/CNST_RAIR/tem_g / exp(CNST_EGRAV*GRD_gz(k)/CNST_RAIR/tem_g)
           enddo
@@ -452,8 +452,8 @@ contains
        !--- calculation of density at the surface
        rho_s = pre_s /CNST_RAIR / tem_g
        !
-       !--- calculation of reference pressure and density 
-       !--- just below the ground level 
+       !--- calculation of reference pressure and density
+       !--- just below the ground level
        pre_ref(ADM_kmin-1)                                &
             = pre_s                                       &
             + 0.5D0                                       &
@@ -484,7 +484,7 @@ contains
     else if ( ref_type == 'TH' ) then
        qv_ref = 0.0D0
        !
-       !--- calculation of reference pot. temp. 
+       !--- calculation of reference pot. temp.
        !--- just below the surface level.
        th_ref(ADM_kmin-1)                                 &
             = th_g                                         &
@@ -512,7 +512,7 @@ contains
        tem_g = th_g / ( CNST_PRE00 / pre_g ) ** CNST_KAPPA
        rho_g = pre_g / CNST_RAIR / tem_g
        !
-       !--- calculation of reference pressure, temperature, density  
+       !--- calculation of reference pressure, temperature, density
        !--- just below the ground level.
        pre_ref(ADM_kmin-1)                                &
             = pre_g                                        &
@@ -527,7 +527,7 @@ contains
             / CNST_RAIR           &
             / tem_ref(ADM_kmin-1)
        !
-       !--- calculation of reference pressure and density 
+       !--- calculation of reference pressure and density
        !--- at the first level
        pre_ref(ADM_kmin)                                         &
             = pre_ref(ADM_kmin-1)                                &
@@ -539,8 +539,8 @@ contains
             = pre_ref(ADM_kmin) / CNST_RAIR / tem_ref(ADM_kmin)
        !
        !--- Reference pressure and density at k level
-       !---    In this caluculation, the hydrostatic balance equation 
-       !---    ( dP/dz=-RHO dPHI/dz ) is applied at the half integer 
+       !---    In this caluculation, the hydrostatic balance equation
+       !---    ( dP/dz=-RHO dPHI/dz ) is applied at the half integer
        !---    level ( k-1/2 ). RHO is obtained by extrapolation from
        !---    the values at lower level.
        !
@@ -562,7 +562,7 @@ contains
        enddo
        !--- hydro static balance adjustment
        do k = ADM_kmin+1, ADM_kmax+1
-          do 
+          do
              tem_ref(k) = th_ref(k)                                &
                   / ( CNST_PRE00 / pre_ref(k) ) ** CNST_KAPPA
              rho_ref(k) = &
@@ -585,7 +585,7 @@ contains
     else if ( ref_type == 'TH-SP' ) then
        qv_ref = 0.0D0
        !
-       !--- calculation of reference pot. temp. 
+       !--- calculation of reference pot. temp.
        !--- just below the surface level.
        do k=ADM_kmin-1,ADM_kmax+1
           if ( GRD_gz(k)<10000.0D0) then
@@ -599,7 +599,7 @@ contains
        tem_g = th_g / ( CNST_PRE00 / pre_g ) ** CNST_KAPPA
        rho_g = pre_g / CNST_RAIR / tem_g
        !
-       !--- calculation of reference pressure, temperature, density  
+       !--- calculation of reference pressure, temperature, density
        !--- just below the ground level.
        pre_ref(ADM_kmin-1)                                &
             = pre_g                                        &
@@ -614,7 +614,7 @@ contains
             / CNST_RAIR           &
             / tem_ref(ADM_kmin-1)
        !
-       !--- calculation of reference pressure and density 
+       !--- calculation of reference pressure and density
        !--- at the first level
        pre_ref(ADM_kmin)                                         &
             = pre_ref(ADM_kmin-1)                                &
@@ -626,8 +626,8 @@ contains
             = pre_ref(ADM_kmin) / CNST_RAIR / tem_ref(ADM_kmin)
        !
        !--- Reference pressure and density at k level
-       !---    In this caluculation, the hydrostatic balance equation 
-       !---    ( dP/dz=-RHO dPHI/dz ) is applied at the half integer 
+       !---    In this caluculation, the hydrostatic balance equation
+       !---    ( dP/dz=-RHO dPHI/dz ) is applied at the half integer
        !---    level ( k-1/2 ). RHO is obtained by extrapolation from
        !---    the values at lower level.
        !
@@ -649,7 +649,7 @@ contains
        enddo
        !--- hydro static balance adjustment
        do k = ADM_kmin+1, ADM_kmax+1
-          do 
+          do
              tem_ref(k) = th_ref(k)                                &
                   / ( CNST_PRE00 / pre_ref(k) ) ** CNST_KAPPA
              rho_ref(k) = &
@@ -935,7 +935,7 @@ contains
        call thrmdyn_th(    &
             ADM_gall,      &
             th_bs(:,:,l),  &  !--- OUT : potential temperature
-            tem_bs(:,:,l), &  !--- IN  : temperature       
+            tem_bs(:,:,l), &  !--- IN  : temperature
             pre_bs(:,:,l)  &  !--- IN  : pressure
             )
     enddo
@@ -952,7 +952,7 @@ contains
           call thrmdyn_th(       &
                ADM_gall_pl,      &
                th_bs_pl(:,:,l),  &  !--- OUT : potential temperature
-               tem_bs_pl(:,:,l), &  !--- IN  : temperature       
+               tem_bs_pl(:,:,l), &  !--- IN  : temperature
                pre_bs_pl(:,:,l)  &  !--- IN  : pressure
                )
        enddo
