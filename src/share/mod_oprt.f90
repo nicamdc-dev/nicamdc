@@ -121,15 +121,12 @@ contains
        ADM_lall_pl,    &
        ADM_gall,       &
        ADM_gall_pl,    &
-       ADM_kall,       &
        ADM_gall_1d,    &
        ADM_gmin,       &
        ADM_gmax,       &
        ADM_gslf_pl,    &
        ADM_gmin_pl,    &
-       ADM_gmax_pl,    &
-       ADM_kmin,       &
-       ADM_kmax
+       ADM_gmax_pl
     use mod_gmtr, only: &
        GMTR_P_var,    &
        GMTR_P_var_pl, &
@@ -1865,11 +1862,8 @@ contains
        ADM_gmin_pl,  &
        ADM_gmax_pl
     use mod_gmtr, only: &
-       GMTR_P_var,    &
        GMTR_P_var_pl, &
-       GMTR_T_var,    &
        GMTR_T_var_pl, &
-       GMTR_A_var,    &
        GMTR_A_var_pl
     implicit none
 
@@ -2183,11 +2177,9 @@ contains
        ADM_gmin_pl,  &
        ADM_gmax_pl
     use mod_gmtr, only: &
-       GMTR_P_var,    &
        GMTR_P_var_pl, &
        GMTR_T_var,    &
        GMTR_T_var_pl, &
-       GMTR_A_var,    &
        GMTR_A_var_pl
     implicit none
 
@@ -2396,11 +2388,8 @@ contains
        ADM_kmin,     &
        ADM_kmax
     use mod_gmtr, only: &
-       GMTR_P_var,    &
        GMTR_P_var_pl, &
-       GMTR_T_var,    &
        GMTR_T_var_pl, &
-       GMTR_A_var,    &
        GMTR_A_var_pl
     implicit none
 

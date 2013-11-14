@@ -259,10 +259,8 @@ contains
   ! [add; original by H.Miura] 20130613 R.Yoshida
   !-----------------------------------------------------------------------------
   subroutine forcing_update( &
-       PROG0, PROG0_pl,  &  !--- IN : prognostic variables for save
-       PROG,  PROG_pl    &  !--- INOUT : prognostic variables for update
-       )
-       !
+       PROG0, PROG0_pl,  &
+       PROG,  PROG_pl    )
     use mod_adm, only: &
        ADM_prc_me,  &
        ADM_prc_pl,  &
@@ -271,18 +269,12 @@ contains
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_kall,    &
-       ADM_gall_1d, &
-       ADM_gmax,    &
-       ADM_gmin,    &
        ADM_kmax,    &
        ADM_kmin,    &
-       ADM_log_fid, &  ! R.Yoshida 13/06/12 [add]
        ADM_proc_stop   ! R.Yoshida 13/06/12 [add]
-    use mod_time, only:  &
+    use mod_time, only: &
        TIME_DTL
     use mod_grd, only: &
-       GRD_x,    &
-       GRD_x_pl, &
        GRD_vz,   &
        GRD_vz_pl
     use mod_gmtr, only: &
@@ -291,13 +283,13 @@ contains
        GMTR_lat,    &
        GMTR_lat_pl
     use mod_runconf, only: &
-       RUNNAME,       & ! R.Yoshida 13/06/13 [add]
-       TRC_VMAX,       &
+       RUNNAME,      & ! R.Yoshida 13/06/13 [add]
        TRC_ADV_TYPE
     use mod_af_trcadv, only: & ![add] 20130612 R.Yoshida
-       test11_velocity,  &
+       test11_velocity, &
        test12_velocity
     implicit none
+
     !--- prognostic variables (save)
     real(8), intent(in) :: PROG0     (ADM_gall,   ADM_kall,ADM_lall,   nmax_PROG)
     real(8), intent(in) :: PROG0_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_PROG)

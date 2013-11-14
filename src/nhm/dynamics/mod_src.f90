@@ -88,7 +88,6 @@ contains
     use mod_adm, only: &
        ADM_prc_me,  &
        ADM_prc_pl,  &
-       ADM_KNONE,   &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_gall,    &
@@ -102,11 +101,8 @@ contains
        GRD_XDIR,   &
        GRD_YDIR,   &
        GRD_ZDIR,   &
-       GRD_rscale, &
        GRD_e,      &
        GRD_e_pl,   &
-       GRD_x,      &
-       GRD_x_pl,   &
        GRD_cfac,   &
        GRD_dfac
     use mod_vmtr, only: &

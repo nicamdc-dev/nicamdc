@@ -390,7 +390,6 @@ contains
     use mod_adm, only: &
       ADM_LOG_FID,     &
       ADM_gall_in,     &
-      ADM_IopJop_nmax, &
       ADM_IopJop,      &
       ADM_GIoJo,       &
       ADM_proc_stop

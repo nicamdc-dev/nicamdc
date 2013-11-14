@@ -396,13 +396,16 @@ contains
     enddo
 
     write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '--- Prognostic Tracers'
+    write(ADM_LOG_FID,*) '*** Prognostic Tracers'
     write(ADM_LOG_FID,*) '|=========================================================|'
     write(ADM_LOG_FID,*) '|       :varname         :description                     |'
     do v = 1, TRC_vmax
        write(ADM_LOG_FID,'(1x,A,I4,A,A16,A,A,A)') '|ID=', v, ':', TRC_name(v), ':', WLABEL(v),'|'
     enddo
     write(ADM_LOG_FID,*) '|=========================================================|'
+    write(ADM_LOG_FID,*)
+    write(ADM_LOG_FID,*) '*** thermodynamic(water) tracers'
+    write(ADM_LOG_FID,*) '-->', NQW_MAX, ' tracers(',NQW_STR,'-',NQW_END,')'
 
     return
   end subroutine RUNCONF_tracer_setup

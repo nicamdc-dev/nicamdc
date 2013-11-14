@@ -76,20 +76,18 @@ contains
        ADM_proc_stop
     use mod_time, only: &
        TIME_INTEG_TYPE, &
-       TIME_SSTEP_MAX, &
-     ctime => TIME_CTIME, &
-     dtime => TIME_DTL
+       TIME_SSTEP_MAX
     use mod_runconf, only: &
        TRC_ADV_TYPE, &
        FLAG_NUDGING
-  use mod_bsstate, only: &
-     bsstate_setup
-  use mod_bndcnd, only   :   &
-     bndcnd_setup
-  use mod_numfilter, only  : &
-     numfilter_setup
-  use mod_nudge, only: &
-     NDG_setup
+    use mod_bsstate, only: &
+       bsstate_setup
+    use mod_bndcnd, only: &
+       bndcnd_setup
+    use mod_numfilter, only: &
+       numfilter_setup
+    use mod_nudge, only: &
+       NDG_setup
     use mod_sgs, only: &
        sgs_setup
     implicit none
@@ -139,20 +137,19 @@ contains
        call ADM_proc_stop
     endselect
 
+    !---< boundary condition module setup >---
+    call bndcnd_setup
 
-  !---< boundary condition module setup >---
-  call bndcnd_setup
+    !---< basic state module setup >---
+    call bsstate_setup
 
-  !---< basic state module setup >---
-  call bsstate_setup
+    !---< numerical filter module setup >---
+    call numfilter_setup
 
-  !---< numerical filter module setup >---
-  call numfilter_setup
+    !---< nudging module setup >---
+    if( FLAG_NUDGING ) call NDG_setup
 
-  !---< nudging module setup >---
-  if( FLAG_NUDGING ) call NDG_setup
-
-
+    !---< sub-grid scale dynamics module setup >---
     call sgs_setup
 
     return
@@ -186,8 +183,6 @@ contains
     use mod_vmtr, only: &
        VMTR_GSGAM2,        &
        VMTR_GSGAM2_pl,     &
-       VMTR_GSGAM2H,       &
-       VMTR_GSGAM2H_pl,    &
        VMTR_PHI,           &
        VMTR_PHI_pl,        &
        VMTR_C2Wfact_Gz,    &

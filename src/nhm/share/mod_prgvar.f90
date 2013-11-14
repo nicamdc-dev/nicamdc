@@ -842,7 +842,6 @@ contains
        rhoge,  &
        rhogq   )
     use mod_adm, only: &
-       ADM_gall,        &
        ADM_kall,        &
        ADM_lall,        &
        ADM_IopJop_nmax, &
@@ -914,7 +913,6 @@ contains
        w,      &
        q       )
     use mod_adm, only: &
-       ADM_gall,        &
        ADM_kall,        &
        ADM_lall,        &
        ADM_IopJop_nmax, &
@@ -1002,7 +1000,6 @@ contains
        rhoge,  &
        rhogq   )
     use mod_adm, only : &
-       ADM_gall,        &
        ADM_kall,        &
        ADM_lall,        &
        ADM_IopJop_nmax, &
@@ -1677,8 +1674,6 @@ contains
     use mod_vmtr, only : &
        VMTR_RGSGAM2,    &
        VMTR_RGSGAM2_pl, &
-       VMTR_GSGAM2H,    &
-       VMTR_GSGAM2H_pl, &
        VMTR_C2Wfact,    &
        VMTR_C2Wfact_pl
     use mod_runconf, only: &

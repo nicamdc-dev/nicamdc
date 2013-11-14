@@ -340,7 +340,6 @@ contains
        ctime )
     use mod_adm, only: &
        ADM_lall,        &
-       ADM_gall,        &
        ADM_kall,        &
        ADM_IopJop_nmax, &
        ADM_IopJop,      &
@@ -493,8 +492,6 @@ contains
     use mod_oprt, only: &
        OPRT_horizontalize_vec
     use mod_vmtr, only: &
-       VMTR_RGSGAM2,    &
-       VMTR_RGSGAM2_pl, &
        VMTR_GSGAM2H,    &
        VMTR_GSGAM2H_pl, &
        VMTR_C2Wfact,    &

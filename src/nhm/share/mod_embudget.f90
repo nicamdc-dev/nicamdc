@@ -294,10 +294,8 @@ contains
     use mod_time, only: &
        TIME_CSTEP
     use mod_vmtr, only: &
-       VMTR_GSGAM2,     &
-       VMTR_GSGAM2_pl,  &
-       VMTR_GSGAM2H,    &
-       VMTR_GSGAM2H_pl, &
+       VMTR_RGSGAM2,    &
+       VMTR_RGSGAM2_pl, &
        VMTR_PHI,        &
        VMTR_PHI_pl
     use mod_gtl, only: &
@@ -318,13 +316,10 @@ contains
        CVW
     use mod_prgvar, only: &
        prgvar_get_withdiag
-    use mod_thrmdyn, only: &
-       THRMDYN_qd_ijkl
-    use mod_vmtr, only : &
-       VMTR_RGSGAM2,    &
-       VMTR_RGSGAM2_pl
     use mod_cnvvar, only: &
        cnvvar_rhokin_ijkl
+    use mod_thrmdyn, only: &
+       THRMDYN_qd_ijkl
     implicit none
 
     real(8) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )

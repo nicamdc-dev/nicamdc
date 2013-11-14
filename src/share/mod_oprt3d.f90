@@ -95,11 +95,8 @@ contains
     use mod_grd, only: &
        GRD_rdgz
     use mod_gmtr, only: &
-       GMTR_P_var,    &
        GMTR_P_var_pl, &
-       GMTR_T_var,    &
        GMTR_T_var_pl, &
-       GMTR_A_var,    &
        GMTR_A_var_pl
     use mod_oprt, only: &
        OPRT_nstart, &

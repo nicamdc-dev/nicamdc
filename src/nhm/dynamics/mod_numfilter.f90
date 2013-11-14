@@ -139,9 +139,6 @@ contains
     use mod_grd, only: &
        GRD_gz,   &
        GRD_gzh
-    use mod_gmtr, only: &
-       GMTR_area,    &
-       GMTR_area_pl
     implicit none
 
     ! rayleigh damping
@@ -719,7 +716,6 @@ contains
        RAIR  => CNST_RAIR,     &
        GAMMA => CNST_GAMMA
     use mod_grd, only: &
-       GRD_htop, &
        GRD_gz
     use mod_gmtr, only: &
        GMTR_area,    &
@@ -1165,23 +1161,17 @@ contains
        ADM_lall,    &
        ADM_lall_pl
     use mod_cnst, only: &
-       CNST_CV, &
-       CNST_PI
+       CNST_CV
     use mod_comm, only: &
        COMM_data_transfer
     use mod_time, only: &
        TIME_DTL
     use mod_grd, only: &
        GRD_htop, &
-       GRD_afac, &
-       GRD_bfac, &
-       GRD_gz,   &
-       GRD_gzh
+       GRD_gz
     use mod_vmtr, only: &
        VMTR_GSGAM2,     &
        VMTR_GSGAM2_pl,  &
-       VMTR_GSGAM2H,    &
-       VMTR_GSGAM2H_pl, &
        VMTR_C2Wfact,    &
        VMTR_C2Wfact_pl
     use mod_runconf, only: &
@@ -1633,9 +1623,7 @@ contains
        CNST_CV
     use mod_grd, only: &
        GRD_rdgz,  &
-       GRD_rdgzh, &
-       GRD_afac,  &
-       GRD_bfac
+       GRD_rdgzh
     use mod_oprt, only: &
        OPRT_horizontalize_vec
     use mod_vmtr, only: &
@@ -2103,15 +2091,10 @@ contains
        ADM_kmax,    &
        ADM_lall,    &
        ADM_lall_pl
-    use mod_cnst, only: &
-       CNST_RAIR, &
-       CNST_GAMMA
-    use mod_grd, only:  &
-       GRD_rdgzh
-    use mod_time, only: &
-       TIME_DTS
     use mod_comm, only: &
        COMM_data_transfer
+    use mod_grd, only:  &
+       GRD_rdgzh
     use mod_oprt, only: &
        OPRT_horizontalize_vec, &
        OPRT_divdamp
