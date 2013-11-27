@@ -361,8 +361,7 @@ call STOP_COLLECTION( rapname )
   subroutine DEBUG_rapreport
     use mod_adm, only: &
        ADM_COMM_WORLD, &
-       ADM_prc_all,        &
-       ADM_prc_me
+       ADM_prc_all
     implicit none
 
     real(8) :: sendbuf(1)
@@ -443,7 +442,7 @@ call STOP_COLLECTION( rapname )
                         recvbuf,              &
                         1,                    &
                         MPI_DOUBLE_PRECISION, &
-                        ADM_COMM_WORLD,   &
+                        ADM_COMM_WORLD,       &
                         ierr                  )
 
     globalavg = sum( recvbuf(:) ) / real(ADM_prc_all,kind=8)
@@ -466,7 +465,7 @@ call STOP_COLLECTION( rapname )
                         recvbuf,              &
                         1,                    &
                         MPI_DOUBLE_PRECISION, &
-                        ADM_COMM_WORLD,   &
+                        ADM_COMM_WORLD,       &
                         ierr                  )
 
     globalsum = sum( recvbuf(:) )

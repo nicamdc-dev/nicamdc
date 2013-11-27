@@ -1191,8 +1191,7 @@ contains
        CNST_PI,      &
        CNST_ERADIUS, &
        CNST_EOHM,    &
-       CNST_EGRAV,   &
-       CNST_RAIR
+       CNST_EGRAV
     implicit none
 
     real(8), parameter :: u00 = 35.D0

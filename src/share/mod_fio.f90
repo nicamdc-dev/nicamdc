@@ -21,6 +21,8 @@ module mod_fio
   !++ Used modules
   !
   use mod_debug
+  use mod_adm, only: &
+     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -134,12 +136,11 @@ contains
   !-----------------------------------------------------------------------------
   subroutine FIO_setup
     use mod_adm, only : &
-      ADM_LOG_FID,   &
-      ADM_prc_me,    &
-      ADM_prc_tab,   &
-      ADM_glevel,    &
-      ADM_rlevel,    &
-      ADM_lall
+       ADM_prc_tab, &
+       ADM_prc_me,  &
+       ADM_glevel,  &
+       ADM_rlevel,  &
+       ADM_lall
     implicit none
 
     integer, allocatable :: prc_tab(:)
@@ -174,14 +175,13 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine FIO_getfid( &
-      fid,      &
-      basename, &
-      rwtype,   &
-      pkg_desc, &
-      pkg_note  )
+       fid,      &
+       basename, &
+       rwtype,   &
+       pkg_desc, &
+       pkg_note  )
     use mod_adm, only : &
-      ADM_LOG_FID, &
-      ADM_prc_me
+       ADM_prc_me
     implicit none
 
     integer,          intent(out) :: fid
@@ -235,19 +235,18 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine FIO_input( &
-      var,           &
-      basename,      &
-      varname,       &
-      layername,     &
-      k_start,       &
-      k_end,         &
-      step,          &
-      allow_missingq ) !--- optional
+       var,           &
+       basename,      &
+       varname,       &
+       layername,     &
+       k_start,       &
+       k_end,         &
+       step,          &
+       allow_missingq ) !--- optional
     use mod_adm, only : &
-      ADM_proc_stop, &
-      ADM_LOG_FID, &
-      ADM_gall,    &
-      ADM_lall
+       ADM_proc_stop, &
+       ADM_gall,      &
+       ADM_lall
     implicit none
 
     real(8),          intent(out) :: var(:,:,:)
@@ -335,24 +334,23 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine FIO_seek( &
-      start_step,       &
-      num_of_step,      &
-      data_date,        &
-      prec,             &
-      basename,         &
-      varname,          &
-      layername,        &
-      k_start,          &
-      k_end,            &
-      ctime,            &
-      cdate,            &
-      opt_periodic_year )
-    use mod_adm, only : &
-      ADM_proc_stop, &
-      ADM_LOG_FID
-    use mod_calendar, only :&
-      calendar_ss2yh, &
-      calendar_yh2ss
+       start_step,       &
+       num_of_step,      &
+       data_date,        &
+       prec,             &
+       basename,         &
+       varname,          &
+       layername,        &
+       k_start,          &
+       k_end,            &
+       ctime,            &
+       cdate,            &
+       opt_periodic_year )
+    use mod_adm, only: &
+       ADM_proc_stop
+    use mod_calendar, only: &
+       calendar_ss2yh, &
+       calendar_yh2ss
     implicit none
 
     integer,          intent(inout) :: start_step
@@ -437,29 +435,27 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine FIO_output( &
-      var,       &
-      basename,  &
-      pkg_desc,  &
-      pkg_note,  &
-      varname,   &
-      data_desc, &
-      data_note, &
-      unit,      &
-      dtype,     &
-      layername, &
-      k_start,   &
-      k_end,     &
-      step,      &
-      t_start,   &
-      t_end      )
-    use mod_adm, only : &
-      ADM_proc_stop, &
-      ADM_LOG_FID, &
-      ADM_prc_me, &
-      ADM_gall,   &
-      ADM_lall
-    use mod_cnst, only : &
-      CNST_UNDEF4
+       var,       &
+       basename,  &
+       pkg_desc,  &
+       pkg_note,  &
+       varname,   &
+       data_desc, &
+       data_note, &
+       unit,      &
+       dtype,     &
+       layername, &
+       k_start,   &
+       k_end,     &
+       step,      &
+       t_start,   &
+       t_end      )
+    use mod_adm, only: &
+       ADM_proc_stop, &
+       ADM_gall,      &
+       ADM_lall
+    use mod_cnst, only: &
+       CNST_UNDEF4
     implicit none
 
     real(8),          intent(in) :: var(:,:,:)
@@ -539,8 +535,7 @@ contains
   !-----------------------------------------------------------------------------
   subroutine FIO_finalize
     use mod_adm, only : &
-      ADM_LOG_FID, &
-      ADM_prc_me
+       ADM_prc_me
     implicit none
 
     character(LEN=FIO_HLONG) :: fname
