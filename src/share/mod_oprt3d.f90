@@ -156,7 +156,7 @@ contains
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++++OPRT3D_divdamp')
+    call DEBUG_rapstart('OPRT3D divdamp')
 
     ! boundary condition
     rhogw_vm(:,ADM_kmin  ) = 0.D0
@@ -378,7 +378,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('++++OPRT3D_divdamp')
+    call DEBUG_rapend('OPRT3D divdamp')
 
     return
   end subroutine OPRT3D_divdamp

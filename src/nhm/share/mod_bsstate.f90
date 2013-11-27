@@ -151,8 +151,8 @@ contains
     use mod_adm, only :  &
          ADM_LOG_FID,    &
          ADM_CTL_FID,    &
-         ADM_LALL_PL,    &
-         ADM_GALL_PL,    &
+         ADM_lall_pl,    &
+         ADM_gall_pl,    &
          ADM_lall,       &
          ADM_kall,       &
          ADM_gall
@@ -205,17 +205,17 @@ contains
     th_ref=0.0d0
     !--- allocation of the basic variables
     allocate(rho_bs(ADM_gall,ADM_kall,ADM_lall))
-    allocate(rho_bs_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL))
+    allocate(rho_bs_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
     allocate(pre_bs(ADM_gall,ADM_kall,ADM_lall))
-    allocate(pre_bs_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL))
+    allocate(pre_bs_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
     allocate(tem_bs(ADM_gall,ADM_kall,ADM_lall))
-    allocate(tem_bs_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL))
+    allocate(tem_bs_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
     allocate(th_bs(ADM_gall,ADM_kall,ADM_lall))
-    allocate(th_bs_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL))
+    allocate(th_bs_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
     allocate(qv_bs(ADM_gall,ADM_kall,ADM_lall))
-    allocate(qv_bs_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL))
+    allocate(qv_bs_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
     allocate(phi(ADM_gall,ADM_kall,ADM_lall))
-    allocate(phi_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL))
+    allocate(phi_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
     !
     ! add by kgoto
     ! initialize
@@ -810,157 +810,137 @@ contains
   end subroutine ooyama_reference
 
   !-----------------------------------------------------------------------------
+  !> generation of basic state from reference state
   subroutine set_basicstate
-    !------
-    !------ generation of basic state from reference state
-    !------
-    !
-    use mod_cnst, only : &
-         CNST_EGRAV,     &
-         CNST_RVAP
-    use mod_adm, only :  &
-         ADM_LALL_PL,    &
-         ADM_GALL_PL,    &
-         ADM_lall,       &
-         ADM_kall,       &
-         ADM_gall,       &
-         ADM_prc_pl,     &
-         ADM_prc_me
-    use mod_grd, only :  &
-         GRD_Z,          &
-         GRD_vz,         &
-         GRD_vz_pl
-    use mod_vintrpl, only : &
-         VINTRPL_zstar_level
-    use mod_bndcnd, only :  &
-         bndcnd_thermo
-    use mod_thrmdyn, only : &
-         thrmdyn_th,        &
-         thrmdyn_rho,       &
-         thrmdyn_qd
-    use mod_runconf, only : &
-         TRC_VMAX,          &
-         I_QV
-    !
+    use mod_cnst, only: &
+       CNST_EGRAV
+    use mod_adm, only: &
+       ADM_prc_pl,  &
+       ADM_prc_me,  &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall
+    use mod_grd, only: &
+       GRD_Z,     &
+       GRD_vz,    &
+       GRD_vz_pl
+    use mod_vintrpl, only: &
+       VINTRPL_zstar_level
+    use mod_bndcnd, only: &
+       bndcnd_thermo
+    use mod_thrmdyn, only: &
+       thrmdyn_th,  &
+       thrmdyn_rho, &
+       thrmdyn_qd
+    use mod_runconf, only: &
+       TRC_VMAX, &
+       I_QV
     implicit none
-    !
-    integer :: k,l
-    !
-    !---  pot. temp. ( dummy )
-    real(8) :: qd(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: qd_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: q(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
-    real(8) :: q_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,TRC_VMAX)
-    !
+
+    real(8) :: q    (ADM_gall   ,ADM_kall,TRC_VMAX)
+    real(8) :: q_pl (ADM_gall_pl,ADM_kall,TRC_VMAX)
+    real(8) :: qd   (ADM_gall   ,ADM_kall)
+    real(8) :: qd_pl(ADM_gall_pl,ADM_kall)
+
+    integer :: k, l
+    !---------------------------------------------------------------------------
+
     !--- calculation of geo-potential
-    phi(:,:,:)    = CNST_EGRAV * GRD_vz(:,:,:,GRD_Z)
-    if ( ADM_prc_me==ADM_prc_pl) then
+    phi(:,:,:) = CNST_EGRAV * GRD_vz(:,:,:,GRD_Z)
+    if ( ADM_prc_me == ADM_prc_pl ) then
        phi_pl(:,:,:) = CNST_EGRAV * GRD_vz_pl(:,:,:,GRD_Z)
     endif
-    !
-    if ( ref_type=='NOBASE') then
-       return
-    endif
-    !
-    do k=1, ADM_kall
-       pre_bs(:,k,:) = pre_ref(k)
-       pre_bs_pl(:,k,:) = pre_ref(k)
-       tem_bs(:,k,:) = tem_ref(k)
-       tem_bs_pl(:,k,:) = tem_ref(k)
-       qv_bs(:,k,:) = qv_ref(k)
-       qv_bs_pl(:,k,:) = qv_ref(k)
+
+    if( ref_type == 'NOBASE' ) return
+
+    do l = 1, ADM_lall
+    do k = 1, ADM_kall
+       pre_bs(:,k,l) = pre_ref(k)
+       tem_bs(:,k,l) = tem_ref(k)
+       qv_bs (:,k,l) = qv_ref (k)
     enddo
-    !
+    enddo
+
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       do l = 1, ADM_lall_pl
+       do k = 1, ADM_kall
+          pre_bs_pl(:,k,l) = pre_ref(k)
+          tem_bs_pl(:,k,l) = tem_ref(k)
+          qv_bs_pl (:,k,l) = qv_ref (k)
+       enddo
+       enddo
+    endif
+
     !-- from z-level to zstar-level
     call VINTRPL_zstar_level( pre_bs, pre_bs_pl, .false. )
     call VINTRPL_zstar_level( tem_bs, tem_bs_pl, .false. )
-    call VINTRPL_zstar_level( qv_bs, qv_bs_pl, .false. )
-    !
-    !--- Setting of mass concentration
-    !--- Note :: The basic state is "dry" and TKE=0
-    q = 0.0D0
-    q_pl = 0.0D0
-    q(:,:,:,I_QV) = qv_bs(:,:,:)
-    q_pl(:,:,:,I_QV) = qv_bs_pl(:,:,:)
-    do l=1, ADM_lall
-       call thrmdyn_qd( &
-            ADM_gall,   & !--- IN
-            qd(:,:,l),  & !--- OUT  : dry mass concentration
-            q(:,:,l,:)  & !--- IN  : mass concentration
-            )
-    enddo
-    if ( ADM_prc_me==ADM_prc_pl) then
-       do l=1, ADM_lall_pl
-          call thrmdyn_qd(   &
-               ADM_gall_pl,  & !--- in
-               qd_pl(:,:,l), & !--- OUT  : dry mass concentration
-               q_pl(:,:,l,:) & !--- IN  : mass concentration
-               )
-       enddo
-    endif
-    !
-    !--- calculation of density
-    do l=1, ADM_lall
-       call thrmdyn_rho(   &
-            ADM_gall,      & !--- in
-            rho_bs(:,:,l), & !--- out
-            pre_bs(:,:,l), & !--- in
-            tem_bs(:,:,l), & !--- in
-            qd(:,:,l),     & !--- in
-            q(:,:,l,:)     & !--- in
-            )
-    enddo
-    if ( ADM_prc_me==ADM_prc_pl) then
-       do l=1, ADM_lall_pl
-          call thrmdyn_rho(      &
-               ADM_gall_pl,      & !--- in
-               rho_bs_pl(:,:,l), & !--- out
-               pre_bs_pl(:,:,l), & !--- in
-               tem_bs_pl(:,:,l), & !--- in
-               qd_pl(:,:,l),     & !--- in
-               q_pl(:,:,l,:)     & !--- in
-               )
-       enddo
-    endif
-    !
-    !--- set boundary conditions of basic state
-    do l=1, ADM_lall
-       call bndcnd_thermo( &
-            ADM_gall,      & !--- in
-            tem_bs(:,:,l), & !--- inout
-            rho_bs(:,:,l), & !--- inout
-            pre_bs(:,:,l), & !--- inout
-            phi(:,:,l)     & !--- in
-            )
-       call thrmdyn_th(    &
-            ADM_gall,      &
-            th_bs(:,:,l),  &  !--- OUT : potential temperature
-            tem_bs(:,:,l), &  !--- IN  : temperature
-            pre_bs(:,:,l)  &  !--- IN  : pressure
-            )
+    call VINTRPL_zstar_level( qv_bs,  qv_bs_pl,  .false. )
+
+    do l = 1, ADM_lall
+       !--- Setting of mass concentration
+       !--- Note :: The basic state is "dry" and TKE=0
+       q(:,:,:)    = 0.D0
+       q(:,:,I_QV) = qv_bs(:,:,l)
+
+       call thrmdyn_qd( ADM_gall, & ! [IN]
+                        qd(:,:),  & ! [OUT]
+                        q (:,:,:) ) ! [IN]
+
+       !--- calculation of density
+       call thrmdyn_rho( ADM_gall,      & ! [IN]
+                         rho_bs(:,:,l), & ! [OUT]
+                         pre_bs(:,:,l), & ! [IN]
+                         tem_bs(:,:,l), & ! [IN]
+                         qd    (:,:),   & ! [IN]
+                         q     (:,:,:)  ) ! [IN]
+
+       !--- set boundary conditions of basic state
+       call bndcnd_thermo( ADM_gall,      & ! [IN]
+                           tem_bs(:,:,l), & ! [INOUT]
+                           rho_bs(:,:,l), & ! [INOUT]
+                           pre_bs(:,:,l), & ! [INOUT]
+                           phi   (:,:,l)  ) ! [IN]
+
+       call thrmdyn_th( ADM_gall,      & ! [IN]
+                        th_bs (:,:,l), & ! [OUT]
+                        tem_bs(:,:,l), & ! [IN]
+                        pre_bs(:,:,l)  ) ! [IN]
     enddo
 
-    if ( ADM_prc_me==ADM_prc_pl) then
-       do l=1, ADM_lall_pl
-          call bndcnd_thermo(    &
-               ADM_gall_pl,      & !--- in
-               tem_bs_pl(:,:,l), & !--- inout
-               rho_bs_pl(:,:,l), & !--- inout
-               pre_bs_pl(:,:,l), & !--- inout
-               phi_pl(:,:,l)     & !--- in
-               )
-          call thrmdyn_th(       &
-               ADM_gall_pl,      &
-               th_bs_pl(:,:,l),  &  !--- OUT : potential temperature
-               tem_bs_pl(:,:,l), &  !--- IN  : temperature
-               pre_bs_pl(:,:,l)  &  !--- IN  : pressure
-               )
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       do l = 1, ADM_lall_pl
+          q_pl(:,:,:)    = 0.D0
+          q_pl(:,:,I_QV) = qv_bs_pl(:,:,l)
+
+          call thrmdyn_qd( ADM_gall_pl, & ! [IN]
+                           qd_pl(:,:),  & ! [OUT]
+                           q_pl (:,:,:) ) ! [IN]
+
+          call thrmdyn_rho( ADM_gall_pl,      & ! [IN]
+                            rho_bs_pl(:,:,l), & ! [OUT]
+                            pre_bs_pl(:,:,l), & ! [IN]
+                            tem_bs_pl(:,:,l), & ! [IN]
+                            qd_pl    (:,:),   & ! [IN]
+                            q_pl     (:,:,:)  ) ! [IN]
+
+          call bndcnd_thermo( ADM_gall_pl,      & ! [IN]
+                              tem_bs_pl(:,:,l), & ! [INOUT]
+                              rho_bs_pl(:,:,l), & ! [INOUT]
+                              pre_bs_pl(:,:,l), & ! [INOUT]
+                              phi_pl   (:,:,l)  ) ! [IN]
+
+          call thrmdyn_th( ADM_gall_pl,      & ! [IN]
+                           th_bs_pl (:,:,l), & ! [OUT]
+                           tem_bs_pl(:,:,l), & ! [IN]
+                           pre_bs_pl(:,:,l)  ) ! [IN]
        enddo
     endif
-    !
+
     return
-    !
   end subroutine set_basicstate
+
   !-----------------------------------------------------------------------------
   subroutine bsstate_output_ref( basename )
     !

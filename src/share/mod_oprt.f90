@@ -151,6 +151,22 @@ contains
     write(ADM_LOG_FID,*)
     write(ADM_LOG_FID,*) '+++ Module[oprt]/Category[common share]'
 
+    ! dummy call
+    call DEBUG_rapstart('OPRT divergence')
+    call DEBUG_rapend  ('OPRT divergence')
+    call DEBUG_rapstart('OPRT gradient')
+    call DEBUG_rapend  ('OPRT gradient')
+    call DEBUG_rapstart('OPRT laplacian')
+    call DEBUG_rapend  ('OPRT laplacian')
+    call DEBUG_rapstart('OPRT diffusion')
+    call DEBUG_rapend  ('OPRT diffusion')
+    call DEBUG_rapstart('OPRT horizontalize_vec')
+    call DEBUG_rapend  ('OPRT horizontalize_vec')
+    call DEBUG_rapstart('OPRT divdamp')
+    call DEBUG_rapend  ('OPRT divdamp')
+    call DEBUG_rapstart('OPRT3D divdamp')
+    call DEBUG_rapend  ('OPRT3D divdamp')
+
     OPRT_nstart = suf(ADM_gmin,ADM_gmin)
     OPRT_nend   = suf(ADM_gmax,ADM_gmax)
 
@@ -1580,50 +1596,71 @@ contains
     integer :: n, k, l, v
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++++OPRT_divergence')
+    call DEBUG_rapstart('OPRT divergence')
 
-    !$acc data present_or_copyin(cdiv,vx,vy,vz) copyout(scl)
     !$acc kernels
-    !$acc loop seq
     do l = 1, ADM_lall
-    !$acc loop gang vector(32)
     do k = ADM_kmin, ADM_kmax
-    !$acc loop gang vector(32) private(ij,ip1j,ijp1,ip1jp1,im1j,ijm1,im1jm1)
-    do n = OPRT_nstart, OPRT_nend
-       ij     = n
-       ip1j   = n + 1
-       ijp1   = n     + ADM_gall_1d
-       ip1jp1 = n + 1 + ADM_gall_1d
-       im1j   = n - 1
-       ijm1   = n     - ADM_gall_1d
-       im1jm1 = n - 1 - ADM_gall_1d
+       do n = OPRT_nstart, OPRT_nend
+          ij     = n
+          ip1j   = n + 1
+          ijp1   = n     + ADM_gall_1d
+          ip1jp1 = n + 1 + ADM_gall_1d
+          im1j   = n - 1
+          ijm1   = n     - ADM_gall_1d
+          im1jm1 = n - 1 - ADM_gall_1d
 
-       scl(n,k,l) = ( cdiv(0,n,l,1) * vx(ij    ,k,l) &
-                    + cdiv(1,n,l,1) * vx(ip1j  ,k,l) &
-                    + cdiv(2,n,l,1) * vx(ip1jp1,k,l) &
-                    + cdiv(3,n,l,1) * vx(ijp1  ,k,l) &
-                    + cdiv(4,n,l,1) * vx(im1j  ,k,l) &
-                    + cdiv(5,n,l,1) * vx(im1jm1,k,l) &
-                    + cdiv(6,n,l,1) * vx(ijm1  ,k,l) &
-                    + cdiv(0,n,l,2) * vy(ij    ,k,l) &
-                    + cdiv(1,n,l,2) * vy(ip1j  ,k,l) &
-                    + cdiv(2,n,l,2) * vy(ip1jp1,k,l) &
-                    + cdiv(3,n,l,2) * vy(ijp1  ,k,l) &
-                    + cdiv(4,n,l,2) * vy(im1j  ,k,l) &
-                    + cdiv(5,n,l,2) * vy(im1jm1,k,l) &
-                    + cdiv(6,n,l,2) * vy(ijm1  ,k,l) &
-                    + cdiv(0,n,l,3) * vz(ij    ,k,l) &
-                    + cdiv(1,n,l,3) * vz(ip1j  ,k,l) &
-                    + cdiv(2,n,l,3) * vz(ip1jp1,k,l) &
-                    + cdiv(3,n,l,3) * vz(ijp1  ,k,l) &
-                    + cdiv(4,n,l,3) * vz(im1j  ,k,l) &
-                    + cdiv(5,n,l,3) * vz(im1jm1,k,l) &
-                    + cdiv(6,n,l,3) * vz(ijm1  ,k,l) ) * mfact
-    enddo
+          scl(n,k,l) = cdiv(0,n,l,1) * vx(ij    ,k,l) &
+                     + cdiv(1,n,l,1) * vx(ip1j  ,k,l) &
+                     + cdiv(2,n,l,1) * vx(ip1jp1,k,l) &
+                     + cdiv(3,n,l,1) * vx(ijp1  ,k,l) &
+                     + cdiv(4,n,l,1) * vx(im1j  ,k,l) &
+                     + cdiv(5,n,l,1) * vx(im1jm1,k,l) &
+                     + cdiv(6,n,l,1) * vx(ijm1  ,k,l)
+       enddo
+
+       do n = OPRT_nstart, OPRT_nend
+          ij     = n
+          ip1j   = n + 1
+          ijp1   = n     + ADM_gall_1d
+          ip1jp1 = n + 1 + ADM_gall_1d
+          im1j   = n - 1
+          ijm1   = n     - ADM_gall_1d
+          im1jm1 = n - 1 - ADM_gall_1d
+
+          scl(n,k,l) = scl(n,k,l)                     &
+                     + cdiv(0,n,l,2) * vy(ij    ,k,l) &
+                     + cdiv(1,n,l,2) * vy(ip1j  ,k,l) &
+                     + cdiv(2,n,l,2) * vy(ip1jp1,k,l) &
+                     + cdiv(3,n,l,2) * vy(ijp1  ,k,l) &
+                     + cdiv(4,n,l,2) * vy(im1j  ,k,l) &
+                     + cdiv(5,n,l,2) * vy(im1jm1,k,l) &
+                     + cdiv(6,n,l,2) * vy(ijm1  ,k,l)
+       enddo
+
+       do n = OPRT_nstart, OPRT_nend
+          ij     = n
+          ip1j   = n + 1
+          ijp1   = n     + ADM_gall_1d
+          ip1jp1 = n + 1 + ADM_gall_1d
+          im1j   = n - 1
+          ijm1   = n     - ADM_gall_1d
+          im1jm1 = n - 1 - ADM_gall_1d
+
+          scl(n,k,l) = scl(n,k,l)                     &
+                     + cdiv(0,n,l,3) * vz(ij    ,k,l) &
+                     + cdiv(1,n,l,3) * vz(ip1j  ,k,l) &
+                     + cdiv(2,n,l,3) * vz(ip1jp1,k,l) &
+                     + cdiv(3,n,l,3) * vz(ijp1  ,k,l) &
+                     + cdiv(4,n,l,3) * vz(im1j  ,k,l) &
+                     + cdiv(5,n,l,3) * vz(im1jm1,k,l) &
+                     + cdiv(6,n,l,3) * vz(ijm1  ,k,l)
+
+          scl(n,k,l) = scl(n,k,l) * mfact
+       enddo
     enddo
     enddo
     !$acc end kernels
-    !$acc end data
 
     if ( ADM_have_pl ) then
        n = ADM_gslf_pl
@@ -1642,7 +1679,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('++++OPRT_divergence')
+    call DEBUG_rapend('OPRT divergence')
 
     return
   end subroutine OPRT_divergence
@@ -1685,52 +1722,67 @@ contains
     integer :: n, k, l, v
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++++OPRT_gradient')
+    call DEBUG_rapstart('OPRT gradient')
 
-    !!$acc data present_or_copyin(cgrad,scl) copyout(vx,vy,vz)
-    !!$acc kernels
-    !!$acc loop seq
+    !$acc kernels
     do l = 1, ADM_lall
-    !!$acc loop gang vector(32)
     do k = ADM_kmin, ADM_kmax
-    !!$acc loop gang vector(32) private(ij,ip1j,ijp1,ip1jp1,im1j,ijm1,im1jm1)
-    do n = OPRT_nstart, OPRT_nend
-       ij     = n
-       ip1j   = n + 1
-       ijp1   = n     + ADM_gall_1d
-       ip1jp1 = n + 1 + ADM_gall_1d
-       im1j   = n - 1
-       ijm1   = n     - ADM_gall_1d
-       im1jm1 = n - 1 - ADM_gall_1d
+       do n = OPRT_nstart, OPRT_nend
+          ij     = n
+          ip1j   = n + 1
+          ijp1   = n     + ADM_gall_1d
+          ip1jp1 = n + 1 + ADM_gall_1d
+          im1j   = n - 1
+          ijm1   = n     - ADM_gall_1d
+          im1jm1 = n - 1 - ADM_gall_1d
 
-       vx(n,k,l) = ( cgrad(0,ij,l,1) * scl(ij    ,k,l) &
-                   + cgrad(1,ij,l,1) * scl(ip1j  ,k,l) &
-                   + cgrad(2,ij,l,1) * scl(ip1jp1,k,l) &
-                   + cgrad(3,ij,l,1) * scl(ijp1  ,k,l) &
-                   + cgrad(4,ij,l,1) * scl(im1j  ,k,l) &
-                   + cgrad(5,ij,l,1) * scl(im1jm1,k,l) &
-                   + cgrad(6,ij,l,1) * scl(ijm1  ,k,l) ) * mfact
+          vx(n,k,l) = ( cgrad(0,ij,l,1) * scl(ij    ,k,l) &
+                      + cgrad(1,ij,l,1) * scl(ip1j  ,k,l) &
+                      + cgrad(2,ij,l,1) * scl(ip1jp1,k,l) &
+                      + cgrad(3,ij,l,1) * scl(ijp1  ,k,l) &
+                      + cgrad(4,ij,l,1) * scl(im1j  ,k,l) &
+                      + cgrad(5,ij,l,1) * scl(im1jm1,k,l) &
+                      + cgrad(6,ij,l,1) * scl(ijm1  ,k,l) ) * mfact
+       enddo
 
-       vy(n,k,l) = ( cgrad(0,ij,l,2) * scl(ij    ,k,l) &
-                   + cgrad(1,ij,l,2) * scl(ip1j  ,k,l) &
-                   + cgrad(2,ij,l,2) * scl(ip1jp1,k,l) &
-                   + cgrad(3,ij,l,2) * scl(ijp1  ,k,l) &
-                   + cgrad(4,ij,l,2) * scl(im1j  ,k,l) &
-                   + cgrad(5,ij,l,2) * scl(im1jm1,k,l) &
-                   + cgrad(6,ij,l,2) * scl(ijm1  ,k,l) ) * mfact
+       do n = OPRT_nstart, OPRT_nend
+          ij     = n
+          ip1j   = n + 1
+          ijp1   = n     + ADM_gall_1d
+          ip1jp1 = n + 1 + ADM_gall_1d
+          im1j   = n - 1
+          ijm1   = n     - ADM_gall_1d
+          im1jm1 = n - 1 - ADM_gall_1d
 
-       vz(n,k,l) = ( cgrad(0,ij,l,3) * scl(ij    ,k,l) &
-                   + cgrad(1,ij,l,3) * scl(ip1j  ,k,l) &
-                   + cgrad(2,ij,l,3) * scl(ip1jp1,k,l) &
-                   + cgrad(3,ij,l,3) * scl(ijp1  ,k,l) &
-                   + cgrad(4,ij,l,3) * scl(im1j  ,k,l) &
-                   + cgrad(5,ij,l,3) * scl(im1jm1,k,l) &
-                   + cgrad(6,ij,l,3) * scl(ijm1  ,k,l) ) * mfact
+          vy(n,k,l) = ( cgrad(0,ij,l,2) * scl(ij    ,k,l) &
+                      + cgrad(1,ij,l,2) * scl(ip1j  ,k,l) &
+                      + cgrad(2,ij,l,2) * scl(ip1jp1,k,l) &
+                      + cgrad(3,ij,l,2) * scl(ijp1  ,k,l) &
+                      + cgrad(4,ij,l,2) * scl(im1j  ,k,l) &
+                      + cgrad(5,ij,l,2) * scl(im1jm1,k,l) &
+                      + cgrad(6,ij,l,2) * scl(ijm1  ,k,l) ) * mfact
+       enddo
+
+       do n = OPRT_nstart, OPRT_nend
+          ij     = n
+          ip1j   = n + 1
+          ijp1   = n     + ADM_gall_1d
+          ip1jp1 = n + 1 + ADM_gall_1d
+          im1j   = n - 1
+          ijm1   = n     - ADM_gall_1d
+          im1jm1 = n - 1 - ADM_gall_1d
+
+          vz(n,k,l) = ( cgrad(0,ij,l,3) * scl(ij    ,k,l) &
+                      + cgrad(1,ij,l,3) * scl(ip1j  ,k,l) &
+                      + cgrad(2,ij,l,3) * scl(ip1jp1,k,l) &
+                      + cgrad(3,ij,l,3) * scl(ijp1  ,k,l) &
+                      + cgrad(4,ij,l,3) * scl(im1j  ,k,l) &
+                      + cgrad(5,ij,l,3) * scl(im1jm1,k,l) &
+                      + cgrad(6,ij,l,3) * scl(ijm1  ,k,l) ) * mfact
+       enddo
     enddo
     enddo
-    enddo
-    !!$acc end kernels
-    !!$acc end data
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        n = ADM_gslf_pl
@@ -1753,7 +1805,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('++++OPRT_gradient')
+    call DEBUG_rapend('OPRT gradient')
 
     return
   end subroutine OPRT_gradient
@@ -1790,15 +1842,11 @@ contains
     integer :: n, k, l, v
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++++OPRT_laplacian')
+    call DEBUG_rapstart('OPRT laplacian')
 
-    !!$acc data present_or_copyin(clap,scl) copyout(dscl)
-    !!$acc kernels
-    !!$acc loop seq
+    !$acc kernels
     do l = 1, ADM_lall
-    !!$acc loop gang vector(32)
     do k = ADM_kmin, ADM_kmax
-    !!$acc loop gang vector(32) private(ij,ip1j,ijp1,ip1jp1,im1j,ijm1,im1jm1)
     do n = OPRT_nstart, OPRT_nend
        ij     = n
        ip1j   = n + 1
@@ -1818,8 +1866,7 @@ contains
     enddo
     enddo
     enddo
-    !!$acc end kernels
-    !!$acc end data
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        n = ADM_gslf_pl
@@ -1836,7 +1883,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('++++OPRT_laplacian')
+    call DEBUG_rapend('OPRT laplacian')
 
     return
   end subroutine OPRT_laplacian
@@ -1897,20 +1944,15 @@ contains
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++++OPRT_diffusion')
+    call DEBUG_rapstart('OPRT diffusion')
 
-    !!$acc data present_or_copyin(cinterp_TN,cinterp_TRA,cinterp_HN,cinterp_PRA,scl,kh) copyout(dscl) &
-    !!$acc&     create(vxt,vyt,vzt,flux)
-    !!$acc kernels
-    !!$acc loop seq
+    !$acc kernels
     do l = 1, ADM_lall
-    !!$acc loop gang vector(32)
     do k = 1, ADM_kall
 
        nstart = suf(ADM_gmin-1,ADM_gmin-1)
        nend   = suf(ADM_gmax  ,ADM_gmax  )
 
-       !!$acc loop gang vector(32) private(ij,ip1j,ijp1,ip1jp1,im1j,ijm1,im1jm1)
        do n = nstart, nend
           ij     = n
           ip1j   = n + 1
@@ -1933,7 +1975,6 @@ contains
                         + u3 * cinterp_TN(AIJ,3,ij  ,l) ) * cinterp_TRA(TI,ij,l)
        enddo
 
-       !!$acc loop gang vector(32) private(ij,ip1j,ijp1,ip1jp1,im1j,ijm1,im1jm1)
        do n = nstart, nend
           ij     = n
           ijp1   = n     + ADM_gall_1d
@@ -1965,7 +2006,6 @@ contains
        nstart = suf(ADM_gmin-1,ADM_gmin  )
        nend   = suf(ADM_gmax  ,ADM_gmax  )
 
-       !!$acc loop gang vector(32) private(ij,ip1j,ijp1,ip1jp1,im1j,ijm1,im1jm1)
        do n = nstart, nend
           ij     = n
           ip1j   = n + 1
@@ -1983,7 +2023,6 @@ contains
        nstart = suf(ADM_gmin-1,ADM_gmin-1)
        nend   = suf(ADM_gmax  ,ADM_gmax  )
 
-       !!$acc loop gang vector(32) private(ij,ip1j,ijp1,ip1jp1,im1j,ijm1,im1jm1)
        do n = nstart, nend
           ij     = n
           ip1jp1 = n + 1 + ADM_gall_1d
@@ -2013,7 +2052,6 @@ contains
           flux(suf(ADM_gmin,ADM_gmin-1),AJ) = 0.D0
        endif
 
-       !!$acc loop gang vector(32) private(ij,ip1j,ijp1,ip1jp1,im1j,ijm1,im1jm1)
        do n = OPRT_nstart, OPRT_nend
           ij     = n
           im1j   = n - 1
@@ -2027,8 +2065,7 @@ contains
 
     enddo
     enddo
-    !!$acc end kernels
-    !!$acc end data
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        n = ADM_gslf_pl
@@ -2080,7 +2117,7 @@ contains
 
     endif
 
-    call DEBUG_rapend('++++OPRT_diffusion')
+    call DEBUG_rapend('OPRT diffusion')
 
     return
   end subroutine OPRT_diffusion
@@ -2118,7 +2155,7 @@ contains
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++++OPRT_horizontalize_vec')
+    call DEBUG_rapstart('OPRT horizontalize_vec')
 
     do l = 1, ADM_lall
     do k = ADM_kmin, ADM_kmax
@@ -2150,7 +2187,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('++++OPRT_horizontalize_vec')
+    call DEBUG_rapend('OPRT horizontalize_vec')
 
     return
   end subroutine OPRT_horizontalize_vec
@@ -2213,7 +2250,7 @@ contains
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++++OPRT_vorticity')
+    call DEBUG_rapstart('OPRT vorticity')
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
@@ -2357,7 +2394,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('++++OPRT_vorticity')
+    call DEBUG_rapend('OPRT vorticity')
 
     return
   end subroutine OPRT_vorticity
@@ -2421,20 +2458,15 @@ contains
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++++OPRT_divdamp')
+    call DEBUG_rapstart('OPRT divdamp')
 
-    !!$acc data present_or_copyin(cinterp_TN,cinterp_TRA,cinterp_HN,cinterp_PRA,vx,vy,vz) &
-    !!$acc&     copyout(grdx,grdy,grdz) create(sclt)
-    !!$acc kernels
-    !!$acc loop seq
+    !$acc kernels
     do l = 1, ADM_lall
-       !!$acc loop gang vector(32)
        do k = ADM_kmin, ADM_kmax
 
           nstart = suf(ADM_gmin-1,ADM_gmin-1)
           nend   = suf(ADM_gmax  ,ADM_gmax  )
 
-          !!$acc loop gang vector(32) private(ij,ip1j,ijp1,ip1jp1,im1j,ijm1,im1jm1)
           do n = nstart, nend
              ij     = n
              ip1j   = n + 1
@@ -2464,7 +2496,6 @@ contains
                           ) * 0.5D0 * cinterp_TRA(TJ,ij,l)
           enddo
 
-          !!$acc loop gang vector(32) private(ij,ip1j,ijp1,ip1jp1,im1j,ijm1,im1jm1)
           do n = OPRT_nstart, OPRT_nend
              ij     = n
              im1j   = n - 1
@@ -2536,8 +2567,7 @@ contains
        grdz   (:,ADM_kmin-1,l) = 0.D0
        grdz   (:,ADM_kmax+1,l) = 0.D0
     enddo
-    !!$acc end kernels
-    !!$acc end data
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        n = ADM_GSLF_PL
@@ -2584,7 +2614,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('++++OPRT_divdamp')
+    call DEBUG_rapend('OPRT divdamp')
 
     return
   end subroutine OPRT_divdamp
