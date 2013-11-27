@@ -5,9 +5,8 @@
 ##### for computation
 
 FFLAGS_FAST  = -Kfast,parallel,auto,ocl,preex,array_private,noalias=s,mfunc=2 \
-               -Kparallel_iteration=16,instance=16,dynamic_iteration          \
                -Qi -Qt -X03 -Ncompdisp -Koptmsg=1 -Cpp                        \
-               -Kprefetch_cache_level=all,prefetch_iteration_L2=50 -Ksimd
+               -Kdynamic_iteration,simd
 
 FFLAGS_DEBUG = -O0 \
                -Qi -Qt -X03 -v03s -v03d -v03o -Ncompdisp -Koptmsg=1 -Cpp \
@@ -23,8 +22,8 @@ PERF_MONIT = -Ntl_trt -D_FIPP_ -U_FAPP_
 #PERF_MONIT = -Ntl_trt -U_FIPP_ -D_FAPP_
 
 FC     = mpifrtpx
-#FFLAGS = $(FFLAGS_FAST) $(PERF_MONIT) $(RDMA)
-FFLAGS = $(FFLAGS_DEBUG) $(PERF_MONIT) $(RDMA)
+FFLAGS = $(FFLAGS_FAST) $(PERF_MONIT) $(RDMA)
+#FFLAGS = $(FFLAGS_DEBUG) $(PERF_MONIT) $(RDMA)
 
 MODDIROPT ?= -M
 

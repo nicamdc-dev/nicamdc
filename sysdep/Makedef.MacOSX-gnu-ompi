@@ -17,8 +17,8 @@ FFLAGS_DEBUG = -cpp -O0 -m64 \
 #              -fcheck=all \
 
 FC     = openmpif90
-#FFLAGS = $(FFLAGS_FAST)
-FFLAGS = $(FFLAGS_DEBUG)
+FFLAGS = $(FFLAGS_FAST)
+#FFLAGS = $(FFLAGS_DEBUG)
 
 MODDIROPT ?= -J
 

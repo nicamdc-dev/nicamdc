@@ -112,7 +112,7 @@ contains
        VMTR_RGAMH_pl,   &
        VMTR_RGSH,       &
        VMTR_RGSH_pl,    &
-       VMTR_C2Wfact_Gz,    &
+       VMTR_C2Wfact_Gz, &
        VMTR_C2Wfact_Gz_pl
     implicit none
 

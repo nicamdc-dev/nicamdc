@@ -16,8 +16,8 @@ FFLAGS_DEBUG = -O0 -m64                                                     \
                -g -fbacktrace -fbounds-check -fall-intrinsics
 
 FC     = mpif90
-#FFLAGS = $(FFLAGS_FAST)
-FFLAGS = $(FFLAGS_DEBUG)
+FFLAGS = $(FFLAGS_FAST)
+#FFLAGS = $(FFLAGS_DEBUG)
 FFLAGS += -I/usr/lib64/mpi/gcc/openmpi/lib64 -x f95-cpp-input
 
 # if gcc < 4.5: -M, else if gcc >= 4.6: -J

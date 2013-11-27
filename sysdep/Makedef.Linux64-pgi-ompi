@@ -17,8 +17,8 @@ FFLAGS_DEBUG = -Mpreprocess -O0 -m64             \
                -mcmodel=medium -Minfo
 
 FC     = mpif90
-#FFLAGS = $(FFLAGS_FAST)
-FFLAGS = $(FFLAGS_DEBUG)
+FFLAGS = $(FFLAGS_FAST)
+#FFLAGS = $(FFLAGS_DEBUG)
 
 ifneq ($(ENABLE_OPENMP),)
       FFLAGS += -openmp -openmp-report

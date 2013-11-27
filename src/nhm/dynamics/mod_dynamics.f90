@@ -373,17 +373,17 @@ contains
        f_TEND   (:,:,:,:) = 0.D0
        f_TEND_pl(:,:,:,:) = 0.D0
 
-       call src_tracer_advection( TRC_VMAX,                                        & ! [IN]
-                                  PROGq(:,:,:,:),        PROGq_pl(:,:,:,:),        & ! [INOUT]
-                                  PROG0(:,:,:,I_RHOG),   PROG0_pl(:,:,:,I_RHOG),   & ! [IN]
-                                  PROG0(:,:,:,I_rhog),   PROG0_pl(:,:,:,I_rhog),   & ! [IN]
-                                  PROG0(:,:,:,I_rhogvx), PROG0_pl(:,:,:,I_rhogvx), & ! [IN]
-                                  PROG0(:,:,:,I_rhogvy), PROG0_pl(:,:,:,I_rhogvy), & ! [IN]
-                                  PROG0(:,:,:,I_rhogvz), PROG0_pl(:,:,:,I_rhogvz), & ! [IN]
-                                  PROG0(:,:,:,I_rhogw),  PROG0_pl(:,:,:,I_rhogw),  & ! [IN]
-                                  f_TEND(:,:,:,I_RHOG),  f_TEND_pl(:,:,:,I_RHOG),  & ! [IN]
-                                  TIME_DTL,                                        & ! [IN]
-                                  THUBURN_LIM                                      ) ! [IN] [add] 20130613 R.Yoshida
+       call src_tracer_advection( TRC_VMAX,                                          & ! [IN]
+                                  PROGq (:,:,:,:),        PROGq_pl (:,:,:,:),        & ! [INOUT]
+                                  PROG0 (:,:,:,I_RHOG),   PROG0_pl (:,:,:,I_RHOG),   & ! [IN]
+                                  PROG  (:,:,:,I_rhog),   PROG_pl  (:,:,:,I_rhog),   & ! [IN]
+                                  PROG  (:,:,:,I_rhogvx), PROG_pl  (:,:,:,I_rhogvx), & ! [IN]
+                                  PROG  (:,:,:,I_rhogvy), PROG_pl  (:,:,:,I_rhogvy), & ! [IN]
+                                  PROG  (:,:,:,I_rhogvz), PROG_pl  (:,:,:,I_rhogvz), & ! [IN]
+                                  PROG  (:,:,:,I_rhogw),  PROG_pl  (:,:,:,I_rhogw),  & ! [IN]
+                                  f_TEND(:,:,:,I_RHOG),   f_TEND_pl(:,:,:,I_RHOG),   & ! [IN]
+                                  TIME_DTL,                                          & ! [IN]
+                                  THUBURN_LIM                                        ) ! [IN] [add] 20130613 R.Yoshida
 
        call DEBUG_rapend  ('+++Tracer Advection')
 
