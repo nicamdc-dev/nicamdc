@@ -328,6 +328,7 @@ contains
 #ifdef _FAPP_
 call START_COLLECTION( rapname )
 #endif
+    !write(ADM_LOG_FID,*) "Enter ",rapname,DEBUG_rapnstr(id)
 
     return
   end subroutine DEBUG_rapstart

@@ -86,7 +86,14 @@ program prg_driver
   use mod_gmtr, only: &
      GMTR_setup
   use mod_oprt, only: &
-     OPRT_setup
+     OPRT_setup,  &
+     cdiv,        &
+     cgrad,       &
+     clap,        &
+     cinterp_TN,  &
+     cinterp_HN,  &
+     cinterp_TRA, &
+     cinterp_PRA
   use mod_vmtr, only: &
      VMTR_setup
   use mod_extdata, only: &
@@ -208,6 +215,8 @@ program prg_driver
      write(*,*) '##### finish setup     #####'
   endif
 
+  !!$acc data copyin(cdiv,cgrad,clap,cinterp_TN,cinterp_HN,cinterp_TRA,cinterp_PRA)
+
   call DEBUG_rapend('Setup ALL')
 
   !#############################################################################
@@ -266,6 +275,8 @@ program prg_driver
   call fipp_stop()
 #endif
   !#############################################################################
+
+  !!$acc end data
 
   call DEBUG_rapend('Total')
   call DEBUG_rapreport
