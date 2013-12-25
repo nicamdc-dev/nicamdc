@@ -17,6 +17,7 @@ module mod_dycoretest
   !      -----------------------------------------------------------------------
   !      0.00      12-10-19   Imported from mod_restart.f90 of NICAM
   !      0.01      13-06-12   Test cases in DCMIP2012 were imported
+  !      0.02      13-12-25   PS Distribution Method of JW06 is added
   !
   !      -----------------------------------------------------------------------
   !
@@ -370,33 +371,54 @@ contains
     real(8) :: vy_local(kdim)
     real(8) :: vz_local(kdim)
 
-    logical :: signal ! if ture, continue iteration
-    logical :: pertb  ! if ture, with perturbation
-    logical :: rebalance ! if ture, with geostophic wind rebalance
+    logical :: signal       ! if true, continue iteration
+    logical :: pertb        ! if true, with perturbation
+    logical :: rebalance    ! if true, with geostophic wind rebalance
+    logical :: psgm         ! if true, PS Gradient Method
+    logical :: eta_limit    ! if true, value of eta is limited upto 1.0
     integer :: n, l, k, itr, K0
     !---------------------------------------------------------------------------
 
     K0 = ADM_KNONE
 
     DIAG_var(:,:,:,:) = 0.D0
+    eta_limit = .true.
 
     select case( trim(test_case) )
     case ('1', '4-1')  ! with perturbation
        write(ADM_LOG_FID,*) "Jablonowski Initialize - case 1: with perturbation (no rebalance)"
        pertb = .true.
        rebalance = .false.
+       psgm = .false.
     case ('2', '4-2')  ! without perturbation
        write(ADM_LOG_FID,*) "Jablonowski Initialize - case 2: without perturbation (no rebalance)"
        pertb = .false.
        rebalance = .false.
+       psgm = .false.
     case ('3')  ! with perturbation & with rebalance
        write(ADM_LOG_FID,*) "Jablonowski Initialize - case 3: with perturbation (with rebalance)"
        pertb = .true.
        rebalance = .true.
+       psgm = .false.
     case ('4')  ! without perturbation & with rebalance
        write(ADM_LOG_FID,*) "Jablonowski Initialize - case 4: without perturbation (with rebalance)"
        pertb = .false.
        rebalance = .true.
+       psgm = .false.
+    case ('5')  ! with perturbation & with rebalance (PS Distribution Method)
+       write(ADM_LOG_FID,*) "Jablonowski Initialize - PS Distribution Method: with perturbation (with rebalance)"
+       write(ADM_LOG_FID,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
+       pertb = .true.
+       rebalance = .true.
+       psgm = .true.
+       eta_limit = .false.
+    case ('6')  ! without perturbation & with rebalance (PS Distribution Method)
+       write(ADM_LOG_FID,*) "Jablonowski Initialize - PS Distribution Method: without perturbation (with rebalance)"
+       write(ADM_LOG_FID,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
+       pertb = .false.
+       rebalance = .true.
+       psgm = .true.
+       eta_limit = .false.
     case default
        write(ADM_LOG_FID,*) "Unknown test_case: '"//trim(test_case)//"' specified."
        write(ADM_LOG_FID,*) "Force changed to case 1 (with perturbation)"
@@ -422,7 +444,7 @@ contains
           if( itr == 1 ) then
              eta(:,:) = 1.D-7 ! This initial value is recommended by Jablonowsky.
           else
-             call eta_vert_coord_NW( kdim, itr, z_local, tmp, geo, eta, signal )
+             call eta_vert_coord_NW( kdim, itr, z_local, tmp, geo, eta_limit, eta, signal )
           endif
 
           call steady_state( kdim, lat, eta, wix, wiy, tmp, geo )
@@ -437,6 +459,7 @@ contains
 
        call geo2prs     ( kdim, tmp, geo, prs )
        call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
+       if(psgm) call ps_estimation ( kdim, lat, tmp, geo, prs )
 
        do k=1, kdim
           DIAG_var(n,k,l,1) = prs(k)
@@ -451,6 +474,14 @@ contains
 
     if(rebalance) call geost_rebalance( ijdim, kdim, lall, 5, DIAG_var(:,:,:,1:5) )
     if(pertb) call perturbation( ijdim, kdim, lall, 5, DIAG_var(:,:,:,1:5) )
+
+    write (ADM_LOG_FID,*) " |            Vertical Coordinate used in JBW initialization              |"
+    write (ADM_LOG_FID,*) " |------------------------------------------------------------------------|"
+    do k=1, kdim
+       write (ADM_LOG_FID,'(3X,"(k=",I3,") HGT:",F8.2," [m]",2X,"PRS: ",F9.2," [Pa]",2X,"GH: ",F8.2," [m]",2X,"ETA: ",F9.5)') &
+       k, z_local(k), prs(k), geo(k)/9.80665d0, eta(k,1)
+    enddo
+    write (ADM_LOG_FID,*) " |------------------------------------------------------------------------|"
 
     return
   end subroutine jbw_init
@@ -836,13 +867,14 @@ contains
   !-----------------------------------------------------------------------------
   ! eta vertical coordinate by Newton Method
   subroutine eta_vert_coord_NW( &
-      kdim,   &  !--- IN : # of z dimension
-      itr,    &  !--- IN : iteration number
-      z,      &  !--- IN : z-height vertical coordinate
-      tmp,    &  !--- IN : guessed temperature
-      geo,    &  !--- IN : guessed geopotential
-      eta,    &  !--- INOUT : eta level vertical coordinate
-      signal  )  !--- INOUT : iteration signal
+      kdim,      &  !--- IN : # of z dimension
+      itr,       &  !--- IN : iteration number
+      z,         &  !--- IN : z-height vertical coordinate
+      tmp,       &  !--- IN : guessed temperature
+      geo,       &  !--- IN : guessed geopotential
+      eta_limit, &  !--- IN : eta limitation flag
+      eta,       &  !--- INOUT : eta level vertical coordinate
+      signal     )  !--- INOUT : iteration signal
     !
     implicit none
     integer, intent(in) :: itr
@@ -850,6 +882,7 @@ contains
     real(PRCS_D), intent(in) :: z(kdim)
     real(PRCS_D), intent(in) :: geo(kdim), tmp(kdim)
     real(PRCS_D), intent(inout) :: eta(kdim,2)
+    logical, intent(in) :: eta_limit
     logical, intent(inout) :: signal
     integer :: k
     real(PRCS_D) :: diffmax, diff(kdim)
@@ -859,15 +892,19 @@ contains
        F(k) = -g*z(k) + geo(k)
        Feta(k) = -1.D0 * ( Rd/eta(k,1) ) * tmp(k)
        eta(k,2) = eta(k,1) - ( F(k)/Feta(k) )
-       if(eta(k,2) > 1.D0) eta(k,2) = 1.D0     ! not allow over 1.0 for eta
+       if (eta_limit) then                     ! [add] for PSDM (2013/12/20 R.Yoshida)
+          if(eta(k,2) > 1.D0) eta(k,2) = 1.D0   ! not allow over 1.0 for eta
+       endif
        if(eta(k,2) < 0.D0) eta(k,2) = 1.D-20
        diff(k) = abs( eta(k,2) - eta(k,1) )
     enddo
     !
     eta(:,1) = eta(:,2)
     diffmax = maxval(diff)
-    if (message) write (*, '("| Eta  ",I4,": -- MAX: ",F23.20,3X,"MIN: ",F23.20)') itr, maxval(eta(:,1)), minval(eta(:,1))
-    if (message) write (*, '("| Diff ",I4,": -- MAX: ",F23.20,3X,"MIN: ",F23.20)') itr, diffmax, minval(diff)
+    if (message) write (ADM_LOG_FID, '("| Eta  ",I4,": -- MAX: ",F23.20,3X,"MIN: ",F23.20)') &
+                 itr, maxval(eta(:,1)), minval(eta(:,1))
+    if (message) write (ADM_LOG_FID, '("| Diff ",I4,": -- MAX: ",F23.20,3X,"MIN: ",F23.20)') &
+                 itr, diffmax, minval(diff)
     !
     if(diffmax < eps) then
        signal = .false.
@@ -994,6 +1031,91 @@ contains
     !
     return
   end subroutine geo2prs
+  !-----------------------------------------------------------------------------
+  !
+  !-----------------------------------------------------------------------------
+  ! estimation ps distribution by using topography
+  subroutine ps_estimation( &
+      kdim,   &  !--- IN : # of z dimension
+      lat,  &  !--- IN : latitude information
+      tmp,  &  !--- IN : temperature
+      geo,  &  !--- IN : geopotential height at full height
+      prs   )  !--- INOUT : pressure
+    use mod_adm, only :  &
+       ADM_lall,         &
+       ADM_gall,         &
+       ADM_gall_pl,      &
+       ADM_lall_pl,      &
+       ADM_KNONE,        &
+       ADM_prc_me,       &
+       ADM_prc_pl,       &
+       ADM_LOG_FID
+    use mod_cnst, only: &
+       CNST_PI,      &
+       CNST_ERADIUS, &
+       CNST_EOHM,    &
+       CNST_EGRAV
+    implicit none
+    integer, intent(in) :: kdim
+    real(PRCS_D), intent(in) :: lat
+    real(PRCS_D), intent(in) :: tmp(kdim)
+    real(PRCS_D), intent(in) :: geo(kdim)
+    real(PRCS_D), intent(inout) :: prs(kdim)
+
+    integer :: k
+    real(PRCS_D), parameter :: prs0 = 1.D+5
+    real(PRCS_D) :: lat0
+    real(PRCS_D) :: hgt0, hgt1
+    real(PRCS_D) :: cs32ev, f1, f2
+    real(PRCS_D) :: eta, eta_v, tmp0, work1, work2
+    real(PRCS_D) :: dZ, dT, e
+    !-----
+
+    cs32ev = ( cos( (1.D0-0.252D0) * CNST_PI * 0.5D0 ) )**1.5D0
+    e = exp(1.D0)
+
+    ! temperature at z=0m
+    lat0 = 0.691590985442682
+    eta = 1.0d0
+    work1 = pi/2.D0
+    eta_v = (eta - eta0)*(work1)
+    work2 = Rd*ganma/g
+    tmp0 = t0 * eta**work2
+    work2 = 3.D0/4.D0 * ( pi*u0 / Rd )
+    tmp0 = tmp0                                           &
+           + work2*eta * sin(eta_v) * (cos(eta_v))**0.5d0  &
+           * ( ( -2.D0 * (sin(lat0))**6.D0 * (cos(lat0)**2.D0 + 1.D0/3.D0) + 10.D0/63.D0 )   &
+           * 2.D0*u0*(cos(eta_v))**1.5d0                   &
+           + ( 8.D0/5.D0 * (cos(lat0))**3.D0 * ((sin(lat0))**2.D0 + 2.D0/3.D0) - pi/4.D0 ) &
+           * a*omega )
+    hgt0 = 0.D0
+
+    ! topography calculation (imported from mod_grd.f90)
+    f1 = 10.D0/63.D0 - 2.D0 * sin(lat)**6 * ( cos(lat)**2 + 1.D0/3.D0 )
+    f2 = 1.6D0 * cos(lat)**3 * ( sin(lat)**2 + 2.D0/3.D0 ) - 0.25D0 * CNST_PI
+    hgt1 = -1.D0 * u0 * cs32ev * ( f1*u0*cs32ev + f2*CNST_ERADIUS*CNST_EOHM ) / CNST_EGRAV
+
+    ! ps estimation
+    f1 = ( Rd*tmp(1) ) / ( Rd*tmp(1) + CNST_EGRAV*hgt1 )
+    f2 = ( prs0 + (prs0 / (Rd*tmp0))*CNST_EGRAV*hgt0 )
+    prs(1) = f1 * f2
+
+    ! guess pressure field upper k=0
+    do k=2, kdim
+       dZ = ( geo(k) - geo(k-1) )/g
+       dT = ( tmp(k) + tmp(k-1) )/2.D0
+       prs(k) = prs(k-1) * e**( -1.D0 * dZ * (g/(Rd*dT)) )
+    enddo
+
+    if (message) then
+       write (*,'(A)') "| ----- Pressure (Final Guess) -----"
+       do k=1, kdim
+          write(ADM_LOG_FID, '("| K(",I3,") -- ",F20.13)') k, prs(k)
+       enddo
+    endif
+
+    return
+  end subroutine ps_estimation
   !-----------------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------------
