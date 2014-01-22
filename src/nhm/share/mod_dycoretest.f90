@@ -17,7 +17,6 @@ module mod_dycoretest
   !      -----------------------------------------------------------------------
   !      0.00      12-10-19   Imported from mod_restart.f90 of NICAM
   !      0.01      13-06-12   Test cases in DCMIP2012 were imported
-  !      0.02      13-12-25   PS Distribution Method of JW06 is added
   !
   !      -----------------------------------------------------------------------
   !
@@ -50,7 +49,7 @@ module mod_dycoretest
   !++ Public parameters
   !
   ! physical parameters configurations
-  real(8), private, save :: kai                    ! temporal value
+  real(8), private, save :: Kap                    ! temporal value
   real(8), private, save :: d2r                    ! Degree to Radian
   real(8), private, save :: r2d                    ! Radian to Degree
   real(8), private, save :: eps = 1.D-14           ! minimum value
@@ -137,7 +136,7 @@ contains
     integer :: ierr
     !---------------------------------------------------------------------------
 
-    kai = Rd / Cp
+    Kap = Rd / Cp
     d2r = pi/180.D0
     r2d = 180.D0/pi
 
@@ -184,6 +183,10 @@ contains
     elseif( init_type == "Gravitywave" ) then
 
        call gravwave_init( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
+
+    elseif( init_type == "Tomita2004" ) then
+
+       call tomita_init( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
 
     else
        write(ADM_LOG_FID,*) 'xxx Invalid input_io_mode. STOP.'
@@ -370,12 +373,14 @@ contains
     real(8) :: vx_local(kdim)
     real(8) :: vy_local(kdim)
     real(8) :: vz_local(kdim)
+    real(8) :: u(kdim)
+    real(8) :: v(kdim)
 
     logical :: signal       ! if true, continue iteration
     logical :: pertb        ! if true, with perturbation
-    logical :: rebalance    ! if true, with geostophic wind rebalance
     logical :: psgm         ! if true, PS Gradient Method
     logical :: eta_limit    ! if true, value of eta is limited upto 1.0
+    logical :: logout       ! log output switch for Pressure Convert
     integer :: n, l, k, itr, K0
     !---------------------------------------------------------------------------
 
@@ -383,40 +388,26 @@ contains
 
     DIAG_var(:,:,:,:) = 0.D0
     eta_limit = .true.
+    psgm = .false.
+    logout = .true.
 
     select case( trim(test_case) )
     case ('1', '4-1')  ! with perturbation
        write(ADM_LOG_FID,*) "Jablonowski Initialize - case 1: with perturbation (no rebalance)"
        pertb = .true.
-       rebalance = .false.
-       psgm = .false.
     case ('2', '4-2')  ! without perturbation
        write(ADM_LOG_FID,*) "Jablonowski Initialize - case 2: without perturbation (no rebalance)"
        pertb = .false.
-       rebalance = .false.
-       psgm = .false.
-    case ('3')  ! with perturbation & with rebalance
-       write(ADM_LOG_FID,*) "Jablonowski Initialize - case 3: with perturbation (with rebalance)"
-       pertb = .true.
-       rebalance = .true.
-       psgm = .false.
-    case ('4')  ! without perturbation & with rebalance
-       write(ADM_LOG_FID,*) "Jablonowski Initialize - case 4: without perturbation (with rebalance)"
-       pertb = .false.
-       rebalance = .true.
-       psgm = .false.
-    case ('5')  ! with perturbation & with rebalance (PS Distribution Method)
-       write(ADM_LOG_FID,*) "Jablonowski Initialize - PS Distribution Method: with perturbation (with rebalance)"
+    case ('3')  ! with perturbation (PS Distribution Method)
+       write(ADM_LOG_FID,*) "Jablonowski Initialize - PS Distribution Method: with perturbation"
        write(ADM_LOG_FID,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
        pertb = .true.
-       rebalance = .true.
        psgm = .true.
        eta_limit = .false.
-    case ('6')  ! without perturbation & with rebalance (PS Distribution Method)
-       write(ADM_LOG_FID,*) "Jablonowski Initialize - PS Distribution Method: without perturbation (with rebalance)"
+    case ('4')  ! without perturbation (PS Distribution Method)
+       write(ADM_LOG_FID,*) "Jablonowski Initialize - PS Distribution Method: without perturbation"
        write(ADM_LOG_FID,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
        pertb = .false.
-       rebalance = .true.
        psgm = .true.
        eta_limit = .false.
     case default
@@ -457,9 +448,17 @@ contains
           stop
        endif
 
-       call geo2prs     ( kdim, tmp, geo, prs )
+       if (prsph) then
+          call prs_phi_profile( kdim, nlat, eta, latphi, prsphi )
+          prsph = .false.
+       endif
+
+       call geo2prs ( kdim, lat, tmp, geo, wix, prs, logout )
+       logout = .false.
+
+       if(psgm) call ps_estimation ( kdim, lat, eta(:,1), tmp, geo, wix, prs )
+
        call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
-       if(psgm) call ps_estimation ( kdim, lat, tmp, geo, prs )
 
        do k=1, kdim
           DIAG_var(n,k,l,1) = prs(k)
@@ -472,14 +471,13 @@ contains
     enddo
     enddo
 
-    if(rebalance) call geost_rebalance( ijdim, kdim, lall, 5, DIAG_var(:,:,:,1:5) )
-    if(pertb) call perturbation( ijdim, kdim, lall, 5, DIAG_var(:,:,:,1:5) )
+    if (pertb) call perturbation( ijdim, kdim, lall, 5, DIAG_var(:,:,:,1:5) )
 
     write (ADM_LOG_FID,*) " |            Vertical Coordinate used in JBW initialization              |"
     write (ADM_LOG_FID,*) " |------------------------------------------------------------------------|"
     do k=1, kdim
        write (ADM_LOG_FID,'(3X,"(k=",I3,") HGT:",F8.2," [m]",2X,"PRS: ",F9.2," [Pa]",2X,"GH: ",F8.2," [m]",2X,"ETA: ",F9.5)') &
-       k, z_local(k), prs(k), geo(k)/9.80665d0, eta(k,1)
+       k, z_local(k), prs(k), geo(k)/g, eta(k,1)
     enddo
     write (ADM_LOG_FID,*) " |------------------------------------------------------------------------|"
 
@@ -865,6 +863,95 @@ contains
   !-----------------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------------
+  subroutine tomita_init( &
+       ijdim,      &
+       kdim,       &
+       lall,       &
+       DIAG_var    )
+    use mod_misc, only: &
+       MISC_get_latlon
+    use mod_adm, only: &
+       ADM_KNONE,      &
+       ADM_NSYS
+    use mod_grd, only: &
+       GRD_vz,         &
+       GRD_x,          &
+       GRD_x_pl,       &
+       GRD_XDIR,       &
+       GRD_YDIR,       &
+       GRD_ZDIR,       &
+       GRD_Z,          &
+       GRD_ZH
+    use mod_runconf, only: &
+       TRC_vmax
+    implicit none
+
+    integer, intent(in)  :: ijdim
+    integer, intent(in)  :: kdim
+    integer, intent(in)  :: lall
+    real(8), intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+
+    ! work paramters
+    real(PRCS_D) :: lat, lon                 ! latitude, longitude on Icosahedral grid
+    real(PRCS_D) :: prs(kdim),   tmp(kdim)   ! pressure & temperature in ICO-grid field
+    real(PRCS_D) :: wix(kdim),   wiy(kdim)   ! zonal/meridional wind components in ICO-grid field
+
+    real(8) :: z_local (kdim)
+    real(8) :: vx_local(kdim)
+    real(8) :: vy_local(kdim)
+    real(8) :: vz_local(kdim)
+
+    integer :: n, l, k, K0
+    logical :: logout
+    !---------------------------------------------------------------------------
+
+    K0 = ADM_KNONE
+    logout = .true.
+
+    DIAG_var(:,:,:,:) = 0.D0
+
+    write(ADM_LOG_FID,*) "Qian98 Like Mountain Wave Exp. (Tomita and Satoh 2004)"
+
+    do l = 1, lall
+    do n = 1, ijdim
+       z_local(1) = GRD_vz(n,2,l,GRD_ZH)
+       do k = 2, kdim
+          z_local(k) = GRD_vz(n,k,l,GRD_Z)
+       enddo
+
+       call MISC_get_latlon( lat, lon,               &
+                             GRD_x(n,K0,l,GRD_XDIR), &
+                             GRD_x(n,K0,l,GRD_YDIR), &
+                             GRD_x(n,K0,l,GRD_ZDIR)  )
+
+       call tomita_2004( kdim, lat, z_local, wix, wiy, tmp, prs, logout )
+       logout = .false.
+       call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
+
+       do k=1, kdim
+          DIAG_var(n,k,l,1) = prs(k)
+          DIAG_var(n,k,l,2) = tmp(k)
+          DIAG_var(n,k,l,3) = vx_local(k)
+          DIAG_var(n,k,l,4) = vy_local(k)
+          DIAG_var(n,k,l,5) = vz_local(k)
+       enddo
+
+    enddo
+    enddo
+
+    write (ADM_LOG_FID,*) " |            Vertical Coordinate used in JBW initialization              |"
+    write (ADM_LOG_FID,*) " |------------------------------------------------------------------------|"
+    do k=1, kdim
+       write (ADM_LOG_FID,'(3X,"(k=",I3,") HGT:",F8.2," [m]",2X,"PRS: ",F9.2," [Pa]")') &
+       k, z_local(k), prs(k)
+    enddo
+    write (ADM_LOG_FID,*) " |------------------------------------------------------------------------|"
+
+    return
+  end subroutine tomita_init
+  !-----------------------------------------------------------------------------
+  !
+  !-----------------------------------------------------------------------------
   ! eta vertical coordinate by Newton Method
   subroutine eta_vert_coord_NW( &
       kdim,      &  !--- IN : # of z dimension
@@ -919,7 +1006,7 @@ contains
   !-----------------------------------------------------------------------------
   ! calculation of steady state
   subroutine steady_state( &
-      kdim,   &  !--- IN : # of z dimension
+      kdim, &  !--- IN : # of z dimension
       lat,  &  !--- IN : latitude information
       eta,  &  !--- IN : eta level vertical coordinate
       wix,  &  !--- INOUT : zonal wind component
@@ -946,27 +1033,27 @@ contains
        eta_v = (eta(k,1) - eta0)*(work1)
        wix(k) = u0 * (cos(eta_v))**1.5d0 * (sin(2.D0*lat))**2.D0
        !
-      !if( etaS >= eta(k,1) .and. eta(k,1) >= etaT ) then  ! not allow over 1.0 for eta
-        if( eta(k,1) >= etaT ) then
-           tmp(k) = t0 * eta(k,1)**work2
-           geo(k) = t0*g/ganma * ( 1.D0 - eta(k,1)**work2 )
-        elseif( eta(k,1) < etaT ) then
-           tmp(k) = t0 * eta(k,1)**work2 + delT*(etaT - eta(k,1))**5.D0
-           !
-           geo(k) = t0*g/ganma * ( 1.D0 - eta(k,1)**work2 ) - Rd * delT *                              &
-                   ( ( log(eta(k,1)/etaT) + 137.D0/60.D0 )*etaT**5.D0 - 5.D0*(etaT**4.D0)*eta(k,1)     &
-                     + 5.D0*(etaT**3.D0)*(eta(k,1)**2.D0) - (10.D0/3.D0)*(etaT**2.D0)*(eta(k,1)**3.D0) &
-                     + (5.D0/4.D0)*etaT*(eta(k,1)**4.D0) - (1.D0/5.D0)*(eta(k,1)**5.D0)                &
-                   )
-        else
-           write (ADM_LOG_FID,'(A)') "|-- ETA BOUNDARY ERROR: [steady state calc.]"
-           write (ADM_LOG_FID,'("|-- (",I3,")  eta: ",F10.4)') k, eta(k,1)
-           stop
-        endif
-      !else
-      !   write (ADM_LOG_FID,'(A)') "|-- OVER 1.0 for eta: [steady state calc.]"
-      !   stop
-      !endif
+       !if( etaS >= eta(k,1) .and. eta(k,1) >= etaT ) then  ! not allow over 1.0 for eta
+       if( eta(k,1) >= etaT ) then
+          tmp(k) = t0 * eta(k,1)**work2
+          geo(k) = t0*g/ganma * ( 1.D0 - eta(k,1)**work2 )
+       elseif( eta(k,1) < etaT ) then
+          tmp(k) = t0 * eta(k,1)**work2 + delT*(etaT - eta(k,1))**5.D0
+          !
+          geo(k) = t0*g/ganma * ( 1.D0 - eta(k,1)**work2 ) - Rd * delT *                              &
+                  ( ( log(eta(k,1)/etaT) + 137.D0/60.D0 )*etaT**5.D0 - 5.D0*(etaT**4.D0)*eta(k,1)     &
+                    + 5.D0*(etaT**3.D0)*(eta(k,1)**2.D0) - (10.D0/3.D0)*(etaT**2.D0)*(eta(k,1)**3.D0) &
+                    + (5.D0/4.D0)*etaT*(eta(k,1)**4.D0) - (1.D0/5.D0)*(eta(k,1)**5.D0)                &
+                  )
+       else
+          write (ADM_LOG_FID,'(A)') "|-- ETA BOUNDARY ERROR: [steady state calc.]"
+          write (ADM_LOG_FID,'("|-- (",I3,")  eta: ",F10.4)') k, eta(k,1)
+          stop
+       endif
+       !else
+       !   write (ADM_LOG_FID,'(A)') "|-- OVER 1.0 for eta: [steady state calc.]"
+       !   stop
+       !endif
        !
     enddo
     !
@@ -1001,34 +1088,74 @@ contains
   ! convert geopotential height to pressure
   subroutine geo2prs( &
       kdim,   &  !--- IN : # of z dimension
-      tmp,  &  !--- IN : temperature
-      geo,  &  !--- IN : geopotential height at full height
-      prs   )  !--- INOUT : pressure
+      lat,    &  !--- IN : latitude
+      tmp,    &  !--- IN : temperature
+      geo,    &  !--- IN : geopotential height at full height
+      wix,    &  !--- IN : zonal wind
+      prs,    &  !--- INOUT : pressure
+      logout  )  !--- IN : switch of log output
     !
     implicit none
     integer :: k
     integer, intent(in) :: kdim
+    real(PRCS_D), intent(in) :: lat
     real(PRCS_D), intent(in) :: tmp(kdim)
     real(PRCS_D), intent(in) :: geo(kdim)
+    real(PRCS_D), intent(in) :: wix(kdim)
     real(PRCS_D), intent(inout) :: prs(kdim)
-    real(PRCS_D) :: dZ, dT, e
+    logical, intent(in) :: logout
 
-    e = exp(1.D0)
+    real(PRCS_D) :: dz, uave
+    real(PRCS_D) :: f_cf(3), rho(3)
+    logical :: nicamcore = .true.
+    !-----
+
     prs(1) = p0
-    ! guess pressure field upper k=0
+
+    ! first guess upper bottom level
     do k=2, kdim
-       dZ = ( geo(k) - geo(k-1) )/g
-       dT = ( tmp(k) + tmp(k-1) )/2.D0
-       prs(k) = prs(k-1) * e**( -1.D0 * dZ * (g/(Rd*dT)) )
+       dz = (geo(k) - geo(k-1))/g
+       if (nicamcore) then
+          uave = (wix(k) + wix(k-1)) * 0.5D0
+          f_cf(1) = 2.D0*omega*uave*cos(lat) + (uave**2.D0)/a
+       else
+          f_cf(1) = 0.D0
+       endif
+
+       prs(k) = prs(k-1) * ( 1.D0 + dz*(f_cf(1) - g)/(2.D0*Rd*tmp(k-1)) ) &
+                         / ( 1.D0 - dz*(f_cf(1) - g)/(2.D0*Rd*tmp(k)) )
     enddo
-    !
+
+    ! final guess
+    do k=kdim-2, 1
+       dz = (geo(k+2) - geo(k))/g
+       if (nicamcore) then
+          uave = (wix(k) + wix(k-1)) * 0.5D0
+          f_cf(1) = 2.D0*omega*wix(k+2)*cos(lat) + (wix(k+2)**2.D0)/a
+          f_cf(2) = 2.D0*omega*wix(k+1)*cos(lat) + (wix(k+1)**2.D0)/a
+          f_cf(3) = 2.D0*omega*wix( k )*cos(lat) + (wix( k )**2.D0)/a
+       else
+          f_cf(:) = 0.D0
+       endif
+       rho(1) = prs(k+2) / ( Rd*tmp(k+2) )
+       rho(2) = prs(k+1) / ( Rd*tmp(k+1) )
+       rho(3) = prs( k ) / ( Rd*tmp( k) )
+
+       prs(k) = prs(k+1) - ( &
+                               (1.D0/3.D0) * rho(1) * ( f_cf(1) - g ) &
+                             + (4.D0/3.D0) * rho(2) * ( f_cf(2) - g ) &
+                             + (1.D0/3.D0) * rho(3) * ( f_cf(3) - g ) &
+                           ) * dz
+    enddo
+
+    if (logout) write(ADM_LOG_FID, *) " | diff(guess - p0): ", (prs(1) - p0)
     if (message) then
-       write (*,'(A)') "| ----- Pressure (Final Guess) -----"
+       write (ADM_LOG_FID,'(A)') "| ----- Pressure (Final Guess) -----"
        do k=1, kdim
           write(ADM_LOG_FID, '("| K(",I3,") -- ",F20.13)') k, prs(k)
        enddo
     endif
-    !
+
     return
   end subroutine geo2prs
   !-----------------------------------------------------------------------------
@@ -1038,73 +1165,92 @@ contains
   subroutine ps_estimation( &
       kdim,   &  !--- IN : # of z dimension
       lat,  &  !--- IN : latitude information
+      eta,  &  !--- IN : eta coordinate
       tmp,  &  !--- IN : temperature
       geo,  &  !--- IN : geopotential height at full height
+      wix,  &  !--- IN : zonal wind speed
       prs   )  !--- INOUT : pressure
     use mod_adm, only :  &
-       ADM_lall,         &
-       ADM_gall,         &
-       ADM_gall_pl,      &
-       ADM_lall_pl,      &
-       ADM_KNONE,        &
-       ADM_prc_me,       &
-       ADM_prc_pl,       &
        ADM_LOG_FID
-    use mod_cnst, only: &
-       CNST_PI,      &
-       CNST_ERADIUS, &
-       CNST_EOHM,    &
-       CNST_EGRAV
     implicit none
     integer, intent(in) :: kdim
     real(PRCS_D), intent(in) :: lat
+    real(PRCS_D), intent(in) :: eta(kdim)
     real(PRCS_D), intent(in) :: tmp(kdim)
     real(PRCS_D), intent(in) :: geo(kdim)
+    real(PRCS_D), intent(in) :: wix(kdim)
     real(PRCS_D), intent(inout) :: prs(kdim)
 
     integer :: k
-    real(PRCS_D), parameter :: prs0 = 1.D+5
-    real(PRCS_D) :: lat0
-    real(PRCS_D) :: hgt0, hgt1
+    real(PRCS_D), parameter :: lat0 = 0.691590985442682
     real(PRCS_D) :: cs32ev, f1, f2
-    real(PRCS_D) :: eta, eta_v, tmp0, work1, work2
-    real(PRCS_D) :: dZ, dT, e
+    real(PRCS_D) :: eta_v, tmp0, tmp1, ux1, ux2, hgt0, hgt1
+    real(PRCS_D) :: dz, uave
+    real(PRCS_D) :: f_cf(3), rho(3)
+    logical :: nicamcore = .true.
     !-----
 
-    cs32ev = ( cos( (1.D0-0.252D0) * CNST_PI * 0.5D0 ) )**1.5D0
-    e = exp(1.D0)
+    ! temperature at bottom of eta-grid
+    tmp0 = t0
+    tmp1 = tmp(1)
 
-    ! temperature at z=0m
-    lat0 = 0.691590985442682
-    eta = 1.0d0
-    work1 = pi/2.D0
-    eta_v = (eta - eta0)*(work1)
-    work2 = Rd*ganma/g
-    tmp0 = t0 * eta**work2
-    work2 = 3.D0/4.D0 * ( pi*u0 / Rd )
-    tmp0 = tmp0                                           &
-           + work2*eta * sin(eta_v) * (cos(eta_v))**0.5d0  &
-           * ( ( -2.D0 * (sin(lat0))**6.D0 * (cos(lat0)**2.D0 + 1.D0/3.D0) + 10.D0/63.D0 )   &
-           * 2.D0*u0*(cos(eta_v))**1.5d0                   &
-           + ( 8.D0/5.D0 * (cos(lat0))**3.D0 * ((sin(lat0))**2.D0 + 2.D0/3.D0) - pi/4.D0 ) &
-           * a*omega )
-    hgt0 = 0.D0
+    ! wind speed at bottom of eta-grid
+    eta_v = (eta(1) - eta0)*(pi*0.5D0)
+    ux1 = (u0 * cos(eta_v)**1.5d0) * (sin(2.D0*lat0))**2.D0
+    ux2 = wix(1)
 
     ! topography calculation (imported from mod_grd.f90)
+    cs32ev = ( cos( (1.D0-0.252D0) * pi * 0.5D0 ) )**1.5D0
     f1 = 10.D0/63.D0 - 2.D0 * sin(lat)**6 * ( cos(lat)**2 + 1.D0/3.D0 )
-    f2 = 1.6D0 * cos(lat)**3 * ( sin(lat)**2 + 2.D0/3.D0 ) - 0.25D0 * CNST_PI
-    hgt1 = -1.D0 * u0 * cs32ev * ( f1*u0*cs32ev + f2*CNST_ERADIUS*CNST_EOHM ) / CNST_EGRAV
+    f2 = 1.6D0 * cos(lat)**3 * ( sin(lat)**2 + 2.D0/3.D0 ) - 0.25D0 * pi
+    hgt1 = -1.D0 * u0 * cs32ev * ( f1*u0*cs32ev + f2*a*omega ) / g
+    hgt0 = 0.D0
 
     ! ps estimation
-    f1 = ( Rd*tmp(1) ) / ( Rd*tmp(1) + CNST_EGRAV*hgt1 )
-    f2 = ( prs0 + (prs0 / (Rd*tmp0))*CNST_EGRAV*hgt0 )
-    prs(1) = f1 * f2
+    dz = hgt1 - hgt0
+    if (nicamcore) then
+       uave = (ux1 + ux2) * 0.5D0
+       f_cf(1) = 2.D0*omega*uave*cos(lat) + (uave**2.D0)/a
+    else
+       f_cf(1) = 0.D0
+    endif
+    prs(1) = p0 * ( 1.D0 + dz*(f_cf(1) - g)/(2.D0*Rd*tmp0) ) &
+                / ( 1.D0 - dz*(f_cf(1) - g)/(2.D0*Rd*tmp1) )
 
-    ! guess pressure field upper k=0
+    ! first guess upper bottom level
     do k=2, kdim
-       dZ = ( geo(k) - geo(k-1) )/g
-       dT = ( tmp(k) + tmp(k-1) )/2.D0
-       prs(k) = prs(k-1) * e**( -1.D0 * dZ * (g/(Rd*dT)) )
+       dz = (geo(k) - geo(k-1))/g
+       if (nicamcore) then
+          uave = (wix(k) + wix(k-1)) * 0.5D0
+          f_cf(1) = 2.D0*omega*uave*cos(lat) + (uave**2.D0)/a
+       else
+          f_cf(1) = 0.D0
+       endif
+
+       prs(k) = prs(k-1) * ( 1.D0 + dz*(f_cf(1) - g)/(2.D0*Rd*tmp(k-1)) ) &
+                         / ( 1.D0 - dz*(f_cf(1) - g)/(2.D0*Rd*tmp(k)) )
+    enddo
+
+    ! final guess
+    do k=kdim-2, 1
+       dz = (geo(k+2) - geo(k))/g
+       if (nicamcore) then
+          uave = (wix(k) + wix(k-1)) * 0.5D0
+          f_cf(1) = 2.D0*omega*wix(k+2)*cos(lat) + (wix(k+2)**2.D0)/a
+          f_cf(2) = 2.D0*omega*wix(k+1)*cos(lat) + (wix(k+1)**2.D0)/a
+          f_cf(3) = 2.D0*omega*wix( k )*cos(lat) + (wix( k )**2.D0)/a
+       else
+          f_cf(:) = 0.D0
+       endif
+       rho(1) = prs(k+2) / ( Rd*tmp(k+2) )
+       rho(2) = prs(k+1) / ( Rd*tmp(k+1) )
+       rho(3) = prs( k ) / ( Rd*tmp( k) )
+
+       prs(k) = prs(k+1) - ( &
+                               (1.D0/3.D0) * rho(1) * ( f_cf(1) - g ) &
+                             + (4.D0/3.D0) * rho(2) * ( f_cf(2) - g ) &
+                             + (1.D0/3.D0) * rho(3) * ( f_cf(3) - g ) &
+                           ) * dz
     enddo
 
     if (message) then
@@ -1119,195 +1265,76 @@ contains
   !-----------------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------------
-  ! Reproduce zonal wind by geostophic wind balance
-  subroutine geost_rebalance( &
-      ijdim,    &  !--- IN : # of ij dimension
+  ! estimation ps distribution by using topography
+  subroutine tomita_2004( &
       kdim,     &  !--- IN : # of z dimension
-      lall,     &  !--- IN : # of region
-      vmax,     &  !--- IN : # of variables
-      DIAG_var  )  !--- INOUT : variables container
-    use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
-       K0       => ADM_KNONE,   &
-       ijdim_pl => ADM_gall_pl, &
-       lall_pl  => ADM_lall_pl
-    use mod_comm, only: &
-       COMM_data_transfer, &
-       COMM_var, &
-       COMM_Stat_max
-    use mod_grd, only: &
-       GRD_x,      &
-       GRD_x_pl,   &
-       GRD_XDIR,   &
-       GRD_YDIR,   &
-       GRD_ZDIR
-    use mod_misc, only: &
-       MISC_get_latlon
-    use mod_vmtr, only: &
-       VMTR_GSGAM2,     &
-       VMTR_GSGAM2_pl
-    use mod_src, only: &
-       src_gradient,              &
-       I_SRC_default,             &
-       I_SRC_horizontal
-    !
+      lat,      &  !--- IN : latitude
+      z_local,  &  !--- IN : z vertical coordinate
+      wix,      &  !--- INOUT : zonal wind field
+      wiy,      &  !--- INOUT : meridional wind field
+      tmp,      &  !--- INOUT : temperature
+      prs,      &  !--- INOUT : pressure
+      logout    )  !--- IN : log output switch
+    use mod_adm, only :  &
+       ADM_LOG_FID
     implicit none
-    integer, intent(in) :: ijdim, kdim, lall, vmax
-    real(8), intent(inout) :: DIAG_var(ijdim,kdim,lall,vmax)
+    integer, intent(in) :: kdim
+    real(PRCS_D), intent(in) :: lat
+    real(PRCS_D), intent(in) :: z_local(kdim)
+    real(PRCS_D), intent(inout) :: wix(kdim)
+    real(PRCS_D), intent(inout) :: wiy(kdim)
+    real(PRCS_D), intent(inout) :: tmp(kdim)
+    real(PRCS_D), intent(inout) :: prs(kdim)
+    logical, intent(in) :: logout
 
-    integer, parameter :: ID_prs = 1
-    integer, parameter :: ID_tmp = 2
-    integer, parameter :: ID_vx  = 3
-    integer, parameter :: ID_vy  = 4
-    integer, parameter :: ID_vz  = 5
-    integer :: n, k, l
-    real(8) :: lat, lon
-    real(8) :: f, rho
-    real(8) :: ws, max_ws, global_max_ws, fit_fact
-    real(8) :: pre_bs, pre_bs_pl
-    real(8) :: unit_east(3)
-    real(8), parameter :: thres_f = 1.0d-12
-    real(8), allocatable :: DIAG_var_pl(:,:,:,:)
-    real(8), allocatable :: pregd(:,:,:), pregd_pl(:,:,:)
-    real(8), allocatable :: pgf(:,:,:,:), pgf_pl(:,:,:,:)
-    real(8), allocatable :: pgfz(:,:,:), pgfz_pl(:,:,:)
+    integer :: i, k
+    real(PRCS_D) :: g1, g2, Gphi, Gzero, Pphi
+    real(PRCS_D), parameter :: N = 0.0187D0        ! Brunt-Vaisala Freq.
+    real(PRCS_D), parameter :: prs0 = 1.D5         ! pressure at the equator [Pa]
+    real(PRCS_D), parameter :: ux0 = 40.D0         ! zonal wind at the equator [ms-1]
+    real(PRCS_D) :: N2                              ! Square of Brunt-Vaisala Freq.
+    real(PRCS_D) :: work
     !-----
-    allocate( DIAG_var_pl(ijdim_pl,kdim,lall_pl,vmax) )
-    allocate( pregd(ijdim,kdim,lall) )
-    allocate( pregd_pl(ijdim_pl,kdim,lall_pl) )
-    allocate( pgf(ijdim,kdim,lall,3) )
-    allocate( pgf_pl(ijdim_pl,kdim,lall_pl,3) )
-    allocate( pgfz(ijdim,kdim,lall) )
-    allocate( pgfz_pl(ijdim_pl,kdim,lall_pl) )
 
-    pre_bs    = 0.0d0
-    pre_bs_pl = 0.0d0
-
-    write (ADM_LOG_FID,*) " Re-Balance Geostophic Wind ---[ original ]---"
-    write (ADM_LOG_FID,*) "  vx - max:",maxval(DIAG_var(:,:,:,ID_vx)), "  min:",minval(DIAG_var(:,:,:,ID_vx))
-    write (ADM_LOG_FID,*) "  vy - max:",maxval(DIAG_var(:,:,:,ID_vx)), "  min:",minval(DIAG_var(:,:,:,ID_vx))
-
-    !--- fill HALO (to make DIAG_var_pl)
-    call COMM_var( DIAG_var, DIAG_var_pl, kdim, vmax )
-    pregd(:,:,:)    = ( DIAG_var(:,:,:,ID_prs)    - pre_bs )    * VMTR_GSGAM2(:,:,:)
-    pregd_pl(:,:,:) = ( DIAG_var_pl(:,:,:,ID_prs) - pre_bs_pl ) * VMTR_GSGAM2_pl(:,:,:)
-
-    !--- take pressure gradient force
-    call src_gradient( pregd,        pregd_pl,         & !--- [IN]
-                       pgf(:,:,:,1),  pgf_pl(:,:,:,1),  & !--- [OUT]
-                       pgf(:,:,:,2),  pgf_pl(:,:,:,2),  & !--- [OUT]
-                       pgf(:,:,:,3),  pgf_pl(:,:,:,3),  & !--- [OUT]
-                       pgfz(:,:,:),   pgfz_pl(:,:,:),   & !--- [OUT]
-                       I_SRC_horizontal                 ) !--- [IN]
-    write (ADM_LOG_FID,*) "  pgf (x) - max:",maxval(pgf(:,:,:,1)), "  min:",minval(pgf(:,:,:,1))
-
-    !--- geostophic wind
-    do l = 1, lall
-    do n = 1, ijdim
-       call MISC_get_latlon( lat, lon,              &
-                             GRD_x(n,K0,l,GRD_XDIR), &
-                             GRD_x(n,K0,l,GRD_YDIR), &
-                             GRD_x(n,K0,l,GRD_ZDIR)  )
-       unit_east  = Sp_Unit_East(lon)
-       f = 2.0d0 * omega * sin(lat)
-
-       do k = 2, kdim
-          rho = DIAG_var(n,k,l,ID_prs) / ( Rd*DIAG_var(n,k,l,ID_tmp) )
-
-          ! x-direction
-          if(abs(f) > thres_f) then
-             DIAG_var(n,k,l,ID_vx) = (-1.0d0/f) * (1.0d0/rho) * (  pgf(n,k,l,3)*unit_east(1) &
-                                                                 + pgf(n,k,l,2)*sign(1.0d0,lat) )
-          else
-             DIAG_var(n,k,l,ID_vx) = 0.0d0
-          endif
-
-          ! y-direction
-          if(abs(f) > thres_f) then
-             DIAG_var(n,k,l,ID_vy) = (-1.0d0/f) * (1.0d0/rho) * (  pgf(n,k,l,3)*unit_east(2) &
-                                                                 + pgf(n,k,l,1)*sign(1.0d0,lat*(-1)) )
-          else
-             DIAG_var(n,k,l,ID_vy) = 0.0d0
-          endif
-       enddo
-    enddo
-    enddo
-    DIAG_var(:,1,:,ID_vx) = DIAG_var(:,2,:,ID_vx)
-    DIAG_var(:,1,:,ID_vy) = DIAG_var(:,2,:,ID_vy)
-
-    if ( ADM_prc_me == ADM_prc_pl ) then
-       do l = 1, lall_pl
-       do n = 1, ijdim_pl
-          call MISC_get_latlon( lat, lon,               &
-                                GRD_x_pl(n,K0,l,GRD_XDIR), &
-                                GRD_x_pl(n,K0,l,GRD_YDIR), &
-                                GRD_x_pl(n,K0,l,GRD_ZDIR)  )
-          unit_east  = Sp_Unit_East(lon)
-          f = 2.0d0 * omega * sin(lat)
-
-          do k = 2, kdim
-             rho = DIAG_var_pl(n,k,l,ID_prs) / ( Rd*DIAG_var_pl(n,k,l,ID_tmp) )
-
-             ! x-direction
-             if(abs(f) > thres_f) then
-                DIAG_var_pl(n,k,l,ID_vx) = (-1.0d0/f) * (1.0d0/rho) * (  pgf_pl(n,k,l,3)*unit_east(1) &
-                                                                       + pgf_pl(n,k,l,2)*sign(1.0d0,lat) )
-             else
-                DIAG_var_pl(n,k,l,ID_vx) = 0.0d0
-             endif
-
-             ! y-direction
-             if(abs(f) > thres_f) then
-                DIAG_var_pl(n,k,l,ID_vy) = (-1.0d0/f) * (1.0d0/rho) * (  pgf_pl(n,k,l,3)*unit_east(2) &
-                                                                       + pgf_pl(n,k,l,1)*sign(1.0d0,lat*(-1)) )
-             else
-                DIAG_var_pl(n,k,l,ID_vy) = 0.0d0
-             endif
-          enddo
-       enddo
-       enddo
-       DIAG_var_pl(:,1,:,ID_vx) = DIAG_var_pl(:,2,:,ID_vx)
-       DIAG_var_pl(:,1,:,ID_vy) = DIAG_var_pl(:,2,:,ID_vy)
+    if (logout) then
+       write(ADM_LOG_FID, '("| == Tomita 2004 Mountain Wave Exp.  ( Z levels:", I4, ")")') kdim
+       write(ADM_LOG_FID, '("| -- Brunt-Vaisala Freq.:", F20.10)') N
+       write(ADM_LOG_FID, '("| -- Earth Angular Velocity:", F20.10)') omega
+       write(ADM_LOG_FID, '("| -- Earth Radius:", F20.10)') a
+       write(ADM_LOG_FID, '("| -- Earth Gravity Accel.:", F20.10)') g
     endif
 
-    !--- fill HALO
-    call COMM_data_transfer( DIAG_var, DIAG_var_pl )
+    N2 = N**2.D0
+    work = (N2*a) / (4.D0*g*Kap)
 
-    write (ADM_LOG_FID,*) " Re-Balance Geostophic Wind ---[ calc ]---"
-    write (ADM_LOG_FID,*) "  vx - max:",maxval(DIAG_var(:,:,:,ID_vx)), "  min:",minval(DIAG_var(:,:,:,ID_vx))
-    write (ADM_LOG_FID,*) "  vy - max:",maxval(DIAG_var(:,:,:,ID_vx)), "  min:",minval(DIAG_var(:,:,:,ID_vx))
+    g1 =   2.D0 * ( 3.D0 + 4.D0*cos(2.D0*zero) + cos(4.D0*zero) ) * (ux0**4.D0)   &
+        +  8.D0 * ( 3.D0 + 4.D0*cos(2.D0*zero) + cos(4.D0*zero) ) * (ux0**3.D0)*a*omega   &
+        +  8.D0 * ( 3.D0 + 4.D0*cos(2.D0*zero) + cos(4.D0*zero) ) * (ux0**2.D0)*(a**2.D0)*(omega**2.D0)   &
+        - 16.D0 * ( 1.D0 + cos(2.D0*zero) ) * (ux0**2.D0)*a*g   &
+        - 32.D0 * ( 1.D0 + cos(2.D0*zero) ) * ux0*(a**2.D0)*g*omega   &
+        + 16.D0 * (a**2.D0) * (g**2.D0)
+    g2 = (ux0**4.D0) + 4.D0*a*omega*(ux0**3.D0) + 4.D0*(a**2.D0)*(omega**2.D0)*(ux0**2.D0)
+    Gzero = ( g1 / g2 )**work
 
-    !--- evaluate max windspeed setting
-    max_ws = 1.0d-14
-    do l = 1, lall
-    do n = 1, ijdim
-    do k = 1, kdim
-        ws = sqrt(DIAG_var(n,k,l,ID_vx)**2 + DIAG_var(n,k,l,ID_vy)**2)
-        if( max_ws < ws ) max_ws = ws
+    g1 =   2.D0 * ( 3.D0 + 4.D0*cos(2.D0*lat) + cos(4.D0*lat) ) * (ux0**4.D0)   &
+        +  8.D0 * ( 3.D0 + 4.D0*cos(2.D0*lat) + cos(4.D0*lat) ) * (ux0**3.D0)*a*omega   &
+        +  8.D0 * ( 3.D0 + 4.D0*cos(2.D0*lat) + cos(4.D0*lat) ) * (ux0**2.D0)*(a**2.D0)*(omega**2.D0)   &
+        - 16.D0 * ( 1.D0 + cos(2.D0*lat) ) * (ux0**2.D0)*a*g   &
+        - 32.D0 * ( 1.D0 + cos(2.D0*lat) ) * ux0*(a**2.D0)*g*omega   &
+        + 16.D0 * (a**2.D0) * (g**2.D0)
+    g2 = (ux0**4.D0) + 4.D0*a*omega*(ux0**3.D0) + 4.D0*(a**2.D0)*(omega**2.D0)*(ux0**2.D0)
+    Gphi = ( g1 / g2 )**work
+
+    Pphi = prs0 * ( Gzero / Gphi )
+
+    do k=1, kdim
+       wix(k) = ux0 * cos(lat)
+       prs(k) = Pphi * exp( (-1.D0*N2*z_local(k)) / (g*Kap) )
+       tmp(k) = (g * Kap * ( g - (wix(k)**2.D0)/a - 2.D0*omega*wix(k)*cos(lat) )) / (N2*Rd)
     enddo
-    enddo
-    enddo
-    call COMM_Stat_max( max_ws, global_max_ws )
-    fit_fact = abs( u0 / global_max_ws )
-    write (ADM_LOG_FID,*) "  JBW Re-Balance: Fitting - max windspeed:",global_max_ws
-    write (ADM_LOG_FID,*) "  JBW Re-Balance: Fitting - fitting factor:",fit_fact
-    DIAG_var(:,:,:,ID_vx) = DIAG_var(:,:,:,ID_vx) * fit_fact
-    DIAG_var(:,:,:,ID_vy) = DIAG_var(:,:,:,ID_vy) * fit_fact
-    if ( ADM_prc_me == ADM_prc_pl ) then
-       DIAG_var_pl(:,:,:,ID_vx) = DIAG_var_pl(:,:,:,ID_vx) * fit_fact
-       DIAG_var_pl(:,:,:,ID_vy) = DIAG_var_pl(:,:,:,ID_vy) * fit_fact
-    endif
 
-    write (ADM_LOG_FID,*) " Re-Balance Geostophic Wind ---[ fitted ]---"
-    write (ADM_LOG_FID,*) "  vx - max:",maxval(DIAG_var(:,:,:,ID_vx)), "  min:",minval(DIAG_var(:,:,:,ID_vx))
-    write (ADM_LOG_FID,*) "  vy - max:",maxval(DIAG_var(:,:,:,ID_vx)), "  min:",minval(DIAG_var(:,:,:,ID_vx))
-    write (ADM_LOG_FID,*) "  vz - force to zero"
-
-    deallocate( DIAG_var_pl, pregd, pregd_pl )
-    deallocate( pgf, pgf_pl, pgfz, pgfz_pl )
     return
-  end subroutine geost_rebalance
+  end subroutine tomita_2004
   !-----------------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------------
