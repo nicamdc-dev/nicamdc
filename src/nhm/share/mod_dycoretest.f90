@@ -104,7 +104,6 @@ module mod_dycoretest
   private :: eta_vert_coord_NW
   private :: steady_state
   private :: geo2prs
-  private :: geost_rebalance
   private :: perturbation
   private :: conv_vxvyvz
   private :: Sp_Unit_East
@@ -446,11 +445,6 @@ contains
        if ( itr > itrmax ) then
           write(ADM_LOG_FID,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
           stop
-       endif
-
-       if (prsph) then
-          call prs_phi_profile( kdim, nlat, eta, latphi, prsphi )
-          prsph = .false.
        endif
 
        call geo2prs ( kdim, lat, tmp, geo, wix, prs, logout )
