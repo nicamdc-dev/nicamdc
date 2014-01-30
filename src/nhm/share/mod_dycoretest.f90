@@ -17,6 +17,7 @@ module mod_dycoretest
   !      -----------------------------------------------------------------------
   !      0.00      12-10-19   Imported from mod_restart.f90 of NICAM
   !      0.01      13-06-12   Test cases in DCMIP2012 were imported
+  !      0.02      14-01-28   Test case in Tomita and Satoh 2004 was imported
   !
   !      -----------------------------------------------------------------------
   !
@@ -99,13 +100,17 @@ module mod_dycoretest
   private :: tracer_init
   private :: mountwave_init
   private :: gravwave_init
+  private :: tomita_init
   private :: sphere_xyz_to_lon
   private :: sphere_xyz_to_lat
   private :: eta_vert_coord_NW
   private :: steady_state
   private :: geo2prs
+  private :: ps_estimation
   private :: perturbation
+  private :: tomita_2004
   private :: conv_vxvyvz
+  private :: simpson
   private :: Sp_Unit_East
   private :: Sp_Unit_North
   !
@@ -125,12 +130,16 @@ contains
 
     real(8), intent(out) :: DIAG_var(ADM_gall,ADM_kall,ADM_lall,6+TRC_VMAX)
 
+    real(8) :: eps_geo2prs = 1.D-2
     character(len=ADM_NSYS) :: init_type
     character(len=ADM_NSYS) :: test_case
+    logical :: nicamcore = .true.
 
     namelist / DYCORETESTPARAM / &
-       init_type, &
-       test_case
+       init_type,   &
+       test_case,   &
+       eps_geo2prs, &
+       nicamcore
 
     integer :: ierr
     !---------------------------------------------------------------------------
@@ -169,7 +178,7 @@ contains
 
     elseif( init_type == "Jablonowski" ) then
 
-       call jbw_init( ADM_gall, ADM_kall, ADM_lall, test_case, DIAG_var(:,:,:,:) )
+       call jbw_init( ADM_gall, ADM_kall, ADM_lall, test_case, eps_geo2prs, nicamcore, DIAG_var(:,:,:,:) )
 
     elseif( init_type == "Traceradvection" ) then
 
@@ -333,11 +342,13 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine jbw_init( &
-       ijdim,      &
-       kdim,       &
-       lall,       &
-       test_case,  &
-       DIAG_var    )
+       ijdim,        &
+       kdim,         &
+       lall,         &
+       test_case,    &
+       eps_geo2prs,  &
+       nicamcore,    &
+       DIAG_var      )
     use mod_misc, only: &
        MISC_get_latlon
     use mod_adm, only: &
@@ -360,7 +371,9 @@ contains
     integer, intent(in)  :: kdim
     integer, intent(in)  :: lall
     character(len=ADM_NSYS), intent(in) :: test_case
+    real(8), intent(in) :: eps_geo2prs
     real(8), intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+    logical, intent(in) :: nicamcore
 
     ! work paramters
     real(PRCS_D) :: lat, lon                 ! latitude, longitude on Icosahedral grid
@@ -374,6 +387,7 @@ contains
     real(8) :: vz_local(kdim)
     real(8) :: u(kdim)
     real(8) :: v(kdim)
+    real(8) :: ps
 
     logical :: signal       ! if true, continue iteration
     logical :: pertb        ! if true, with perturbation
@@ -414,6 +428,8 @@ contains
        write(ADM_LOG_FID,*) "Force changed to case 1 (with perturbation)"
        pertb = .true.
     end select
+    write(ADM_LOG_FID,*) " | eps for geo2prs: ", eps_geo2prs
+    write(ADM_LOG_FID,*) " | nicamcore switch for geo2prs: ", nicamcore
 
     do l = 1, lall
     do n = 1, ijdim
@@ -447,10 +463,13 @@ contains
           stop
        endif
 
-       call geo2prs ( kdim, lat, tmp, geo, wix, prs, logout )
+       if (psgm) then
+          call ps_estimation ( kdim, lat, eta(:,1), tmp, geo, wix, ps, nicamcore )
+          call geo2prs ( kdim, ps, lat, tmp, geo, wix, prs, eps_geo2prs, nicamcore, logout )
+       else
+          call geo2prs ( kdim, p0, lat, tmp, geo, wix, prs, eps_geo2prs, nicamcore, logout )
+       endif
        logout = .false.
-
-       if(psgm) call ps_estimation ( kdim, lat, eta(:,1), tmp, geo, wix, prs )
 
        call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
@@ -946,6 +965,79 @@ contains
   !-----------------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------------
+  ! estimation ps distribution by using topography
+  subroutine tomita_2004( &
+      kdim,     &  !--- IN : # of z dimension
+      lat,      &  !--- IN : latitude
+      z_local,  &  !--- IN : z vertical coordinate
+      wix,      &  !--- INOUT : zonal wind field
+      wiy,      &  !--- INOUT : meridional wind field
+      tmp,      &  !--- INOUT : temperature
+      prs,      &  !--- INOUT : pressure
+      logout    )  !--- IN : log output switch
+    use mod_adm, only :  &
+       ADM_LOG_FID
+    implicit none
+    integer, intent(in) :: kdim
+    real(PRCS_D), intent(in) :: lat
+    real(PRCS_D), intent(in) :: z_local(kdim)
+    real(PRCS_D), intent(inout) :: wix(kdim)
+    real(PRCS_D), intent(inout) :: wiy(kdim)
+    real(PRCS_D), intent(inout) :: tmp(kdim)
+    real(PRCS_D), intent(inout) :: prs(kdim)
+    logical, intent(in) :: logout
+
+    integer :: i, k
+    real(PRCS_D) :: g1, g2, Gphi, Gzero, Pphi
+    real(PRCS_D), parameter :: N = 0.0187D0        ! Brunt-Vaisala Freq.
+    real(PRCS_D), parameter :: prs0 = 1.D5         ! pressure at the equator [Pa]
+    real(PRCS_D), parameter :: ux0 = 40.D0         ! zonal wind at the equator [ms-1]
+    real(PRCS_D) :: N2                              ! Square of Brunt-Vaisala Freq.
+    real(PRCS_D) :: work
+    !-----
+
+    if (logout) then
+       write(ADM_LOG_FID, '("| == Tomita 2004 Mountain Wave Exp.  ( Z levels:", I4, ")")') kdim
+       write(ADM_LOG_FID, '("| -- Brunt-Vaisala Freq.:", F20.10)') N
+       write(ADM_LOG_FID, '("| -- Earth Angular Velocity:", F20.10)') omega
+       write(ADM_LOG_FID, '("| -- Earth Radius:", F20.10)') a
+       write(ADM_LOG_FID, '("| -- Earth Gravity Accel.:", F20.10)') g
+    endif
+
+    N2 = N**2.D0
+    work = (N2*a) / (4.D0*g*Kap)
+
+    g1 =   2.D0 * ( 3.D0 + 4.D0*cos(2.D0*zero) + cos(4.D0*zero) ) * (ux0**4.D0)   &
+        +  8.D0 * ( 3.D0 + 4.D0*cos(2.D0*zero) + cos(4.D0*zero) ) * (ux0**3.D0)*a*omega   &
+        +  8.D0 * ( 3.D0 + 4.D0*cos(2.D0*zero) + cos(4.D0*zero) ) * (ux0**2.D0)*(a**2.D0)*(omega**2.D0)   &
+        - 16.D0 * ( 1.D0 + cos(2.D0*zero) ) * (ux0**2.D0)*a*g   &
+        - 32.D0 * ( 1.D0 + cos(2.D0*zero) ) * ux0*(a**2.D0)*g*omega   &
+        + 16.D0 * (a**2.D0) * (g**2.D0)
+    g2 = (ux0**4.D0) + 4.D0*a*omega*(ux0**3.D0) + 4.D0*(a**2.D0)*(omega**2.D0)*(ux0**2.D0)
+    Gzero = ( g1 / g2 )**work
+
+    g1 =   2.D0 * ( 3.D0 + 4.D0*cos(2.D0*lat) + cos(4.D0*lat) ) * (ux0**4.D0)   &
+        +  8.D0 * ( 3.D0 + 4.D0*cos(2.D0*lat) + cos(4.D0*lat) ) * (ux0**3.D0)*a*omega   &
+        +  8.D0 * ( 3.D0 + 4.D0*cos(2.D0*lat) + cos(4.D0*lat) ) * (ux0**2.D0)*(a**2.D0)*(omega**2.D0)   &
+        - 16.D0 * ( 1.D0 + cos(2.D0*lat) ) * (ux0**2.D0)*a*g   &
+        - 32.D0 * ( 1.D0 + cos(2.D0*lat) ) * ux0*(a**2.D0)*g*omega   &
+        + 16.D0 * (a**2.D0) * (g**2.D0)
+    g2 = (ux0**4.D0) + 4.D0*a*omega*(ux0**3.D0) + 4.D0*(a**2.D0)*(omega**2.D0)*(ux0**2.D0)
+    Gphi = ( g1 / g2 )**work
+
+    Pphi = prs0 * ( Gzero / Gphi )
+
+    do k=1, kdim
+       wix(k) = ux0 * cos(lat)
+       prs(k) = Pphi * exp( (-1.D0*N2*z_local(k)) / (g*Kap) )
+       tmp(k) = (g * Kap * ( g - (wix(k)**2.D0)/a - 2.D0*omega*wix(k)*cos(lat) )) / (N2*Rd)
+    enddo
+
+    return
+  end subroutine tomita_2004
+  !-----------------------------------------------------------------------------
+  !
+  !-----------------------------------------------------------------------------
   ! eta vertical coordinate by Newton Method
   subroutine eta_vert_coord_NW( &
       kdim,      &  !--- IN : # of z dimension
@@ -1081,32 +1173,41 @@ contains
   !-----------------------------------------------------------------------------
   ! convert geopotential height to pressure
   subroutine geo2prs( &
-      kdim,   &  !--- IN : # of z dimension
-      lat,    &  !--- IN : latitude
-      tmp,    &  !--- IN : temperature
-      geo,    &  !--- IN : geopotential height at full height
-      wix,    &  !--- IN : zonal wind
-      prs,    &  !--- INOUT : pressure
-      logout  )  !--- IN : switch of log output
+      kdim,         &  !--- IN : # of z dimension
+      ps,           &  !--- IN : surface pressure
+      lat,          &  !--- IN : latitude
+      tmp,          &  !--- IN : temperature
+      geo,          &  !--- IN : geopotential height at full height
+      wix,          &  !--- IN : zonal wind
+      prs,          &  !--- IN : pressure
+      eps_geo2prs,  &  !--- IN : eps
+      nicamcore,    &  !--- IN : nicamcore switch
+      logout        )  !--- IN : switch of log output
     !
     implicit none
-    integer :: k
     integer, intent(in) :: kdim
+    real(PRCS_D), intent(in) :: ps
     real(PRCS_D), intent(in) :: lat
     real(PRCS_D), intent(in) :: tmp(kdim)
     real(PRCS_D), intent(in) :: geo(kdim)
     real(PRCS_D), intent(in) :: wix(kdim)
     real(PRCS_D), intent(inout) :: prs(kdim)
+    real(PRCS_D), intent(in) :: eps_geo2prs
+    logical, intent(in) :: nicamcore
     logical, intent(in) :: logout
 
-    real(PRCS_D) :: dz, uave
+    integer :: i, k
+    integer, parameter :: limit = 400
+    real(PRCS_D) :: dz, uave, diff
     real(PRCS_D) :: f_cf(3), rho(3)
-    logical :: nicamcore = .true.
+    real(PRCS_D) :: pp(kdim)
+    logical :: iteration = .true.
+    logical :: do_iter = .true.
     !-----
 
-    prs(1) = p0
+    pp(1) = ps
 
-    ! first guess upper bottom level
+    ! first guess (upward: trapezoid)
     do k=2, kdim
        dz = (geo(k) - geo(k-1))/g
        if (nicamcore) then
@@ -1116,33 +1217,59 @@ contains
           f_cf(1) = 0.D0
        endif
 
-       prs(k) = prs(k-1) * ( 1.D0 + dz*(f_cf(1) - g)/(2.D0*Rd*tmp(k-1)) ) &
-                         / ( 1.D0 - dz*(f_cf(1) - g)/(2.D0*Rd*tmp(k)) )
+       pp(k) = pp(k-1) * ( 1.D0 + dz*(f_cf(1) - g)/(2.D0*Rd*tmp(k-1)) ) &
+                       / ( 1.D0 - dz*(f_cf(1) - g)/(2.D0*Rd*tmp(k)) )
     enddo
+    prs(:) = pp(:)
+    ! first guess (downward: simpson)
+    do k=kdim-2, 1, -1
+       pp(k) = simpson( prs(k+2), prs(k+1), prs(k), tmp(k+2), tmp(k+1), tmp(k), &
+               wix(k+2), wix(k+1), wix(k), geo(k+2), geo(k), lat, .true., nicamcore )
+    enddo
+    pp(1) = ps
+    prs(:) = pp(:)
 
-    ! final guess
-    do k=kdim-2, 1
-       dz = (geo(k+2) - geo(k))/g
-       if (nicamcore) then
-          uave = (wix(k) + wix(k-1)) * 0.5D0
-          f_cf(1) = 2.D0*omega*wix(k+2)*cos(lat) + (wix(k+2)**2.D0)/a
-          f_cf(2) = 2.D0*omega*wix(k+1)*cos(lat) + (wix(k+1)**2.D0)/a
-          f_cf(3) = 2.D0*omega*wix( k )*cos(lat) + (wix( k )**2.D0)/a
-       else
-          f_cf(:) = 0.D0
+    ! iteration (simpson)
+    if (iteration) then
+    do i=1, limit
+       prs(1) = ps
+       do k=3, kdim        ! upward
+          pp(k) = simpson( prs(k), prs(k-1), prs(k-2), tmp(k), tmp(k-1), tmp(k-2), &
+                  wix(k), wix(k-1), wix(k-2), geo(k), geo(k-2), lat, .false., nicamcore )
+       enddo
+       prs(:) = pp(:)
+       do k=kdim-2, 1, -1  ! downward
+          pp(k) = simpson( prs(k+2), prs(k+1), prs(k), tmp(k+2), tmp(k+1), tmp(k), &
+                  wix(k+2), wix(k+1), wix(k), geo(k+2), geo(k), lat, .true., nicamcore )
+       enddo
+       prs(:) = pp(:)
+       diff = pp(1) - ps
+
+       if ( abs(diff) < eps_geo2prs ) then
+          do_iter = .false.
+          exit
        endif
-       rho(1) = prs(k+2) / ( Rd*tmp(k+2) )
-       rho(2) = prs(k+1) / ( Rd*tmp(k+1) )
-       rho(3) = prs( k ) / ( Rd*tmp( k) )
-
-       prs(k) = prs(k+1) - ( &
-                               (1.D0/3.D0) * rho(1) * ( f_cf(1) - g ) &
-                             + (4.D0/3.D0) * rho(2) * ( f_cf(2) - g ) &
-                             + (1.D0/3.D0) * rho(3) * ( f_cf(3) - g ) &
-                           ) * dz
     enddo
+    else
+       write(ADM_LOG_FID,*) 'ETA ITERATION SKIPPED'
+       do_iter = .false.
+    endif
 
-    if (logout) write(ADM_LOG_FID, *) " | diff(guess - p0): ", (prs(1) - p0)
+    if (do_iter) then
+       write(ADM_LOG_FID,*) 'ETA ITERATION ERROR: NOT CONVERGED at GEO2PRS', diff
+       stop
+    endif
+
+    ! fininalize
+    prs(1) = ps
+    pp(1) = ps
+    do k=3, kdim        ! upward
+       pp(k) = simpson( prs(k), prs(k-1), prs(k-2), tmp(k), tmp(k-1), tmp(k-2), &
+               wix(k), wix(k-1), wix(k-2), geo(k), geo(k-2), lat, .false., nicamcore )
+    enddo
+    prs(:) = pp(:)
+
+    if (logout) write(ADM_LOG_FID, *) " | diff (guess - ps) : ", diff, "[Pa]  --  itr times: ", (i-1)
     if (message) then
        write (ADM_LOG_FID,'(A)') "| ----- Pressure (Final Guess) -----"
        do k=1, kdim
@@ -1163,7 +1290,8 @@ contains
       tmp,  &  !--- IN : temperature
       geo,  &  !--- IN : geopotential height at full height
       wix,  &  !--- IN : zonal wind speed
-      prs   )  !--- INOUT : pressure
+      ps,   &  !--- OUT : surface pressure
+      nicamcore )  !--- IN : nicamcore switch
     use mod_adm, only :  &
        ADM_LOG_FID
     implicit none
@@ -1173,15 +1301,16 @@ contains
     real(PRCS_D), intent(in) :: tmp(kdim)
     real(PRCS_D), intent(in) :: geo(kdim)
     real(PRCS_D), intent(in) :: wix(kdim)
-    real(PRCS_D), intent(inout) :: prs(kdim)
+    real(PRCS_D), intent(out) :: ps
+    logical, intent(in) :: nicamcore
 
     integer :: k
     real(PRCS_D), parameter :: lat0 = 0.691590985442682
     real(PRCS_D) :: cs32ev, f1, f2
-    real(PRCS_D) :: eta_v, tmp0, tmp1, ux1, ux2, hgt0, hgt1
+    real(PRCS_D) :: eta_v, tmp0, tmp1
+    real(PRCS_D) :: ux1, ux2, hgt0, hgt1
     real(PRCS_D) :: dz, uave
     real(PRCS_D) :: f_cf(3), rho(3)
-    logical :: nicamcore = .true.
     !-----
 
     ! temperature at bottom of eta-grid
@@ -1208,127 +1337,11 @@ contains
     else
        f_cf(1) = 0.D0
     endif
-    prs(1) = p0 * ( 1.D0 + dz*(f_cf(1) - g)/(2.D0*Rd*tmp0) ) &
-                / ( 1.D0 - dz*(f_cf(1) - g)/(2.D0*Rd*tmp1) )
-
-    ! first guess upper bottom level
-    do k=2, kdim
-       dz = (geo(k) - geo(k-1))/g
-       if (nicamcore) then
-          uave = (wix(k) + wix(k-1)) * 0.5D0
-          f_cf(1) = 2.D0*omega*uave*cos(lat) + (uave**2.D0)/a
-       else
-          f_cf(1) = 0.D0
-       endif
-
-       prs(k) = prs(k-1) * ( 1.D0 + dz*(f_cf(1) - g)/(2.D0*Rd*tmp(k-1)) ) &
-                         / ( 1.D0 - dz*(f_cf(1) - g)/(2.D0*Rd*tmp(k)) )
-    enddo
-
-    ! final guess
-    do k=kdim-2, 1
-       dz = (geo(k+2) - geo(k))/g
-       if (nicamcore) then
-          uave = (wix(k) + wix(k-1)) * 0.5D0
-          f_cf(1) = 2.D0*omega*wix(k+2)*cos(lat) + (wix(k+2)**2.D0)/a
-          f_cf(2) = 2.D0*omega*wix(k+1)*cos(lat) + (wix(k+1)**2.D0)/a
-          f_cf(3) = 2.D0*omega*wix( k )*cos(lat) + (wix( k )**2.D0)/a
-       else
-          f_cf(:) = 0.D0
-       endif
-       rho(1) = prs(k+2) / ( Rd*tmp(k+2) )
-       rho(2) = prs(k+1) / ( Rd*tmp(k+1) )
-       rho(3) = prs( k ) / ( Rd*tmp( k) )
-
-       prs(k) = prs(k+1) - ( &
-                               (1.D0/3.D0) * rho(1) * ( f_cf(1) - g ) &
-                             + (4.D0/3.D0) * rho(2) * ( f_cf(2) - g ) &
-                             + (1.D0/3.D0) * rho(3) * ( f_cf(3) - g ) &
-                           ) * dz
-    enddo
-
-    if (message) then
-       write (*,'(A)') "| ----- Pressure (Final Guess) -----"
-       do k=1, kdim
-          write(ADM_LOG_FID, '("| K(",I3,") -- ",F20.13)') k, prs(k)
-       enddo
-    endif
+    ps = p0 * ( 1.D0 + dz*(f_cf(1) - g)/(2.D0*Rd*tmp0) ) &
+            / ( 1.D0 - dz*(f_cf(1) - g)/(2.D0*Rd*tmp1) )
 
     return
   end subroutine ps_estimation
-  !-----------------------------------------------------------------------------
-  !
-  !-----------------------------------------------------------------------------
-  ! estimation ps distribution by using topography
-  subroutine tomita_2004( &
-      kdim,     &  !--- IN : # of z dimension
-      lat,      &  !--- IN : latitude
-      z_local,  &  !--- IN : z vertical coordinate
-      wix,      &  !--- INOUT : zonal wind field
-      wiy,      &  !--- INOUT : meridional wind field
-      tmp,      &  !--- INOUT : temperature
-      prs,      &  !--- INOUT : pressure
-      logout    )  !--- IN : log output switch
-    use mod_adm, only :  &
-       ADM_LOG_FID
-    implicit none
-    integer, intent(in) :: kdim
-    real(PRCS_D), intent(in) :: lat
-    real(PRCS_D), intent(in) :: z_local(kdim)
-    real(PRCS_D), intent(inout) :: wix(kdim)
-    real(PRCS_D), intent(inout) :: wiy(kdim)
-    real(PRCS_D), intent(inout) :: tmp(kdim)
-    real(PRCS_D), intent(inout) :: prs(kdim)
-    logical, intent(in) :: logout
-
-    integer :: i, k
-    real(PRCS_D) :: g1, g2, Gphi, Gzero, Pphi
-    real(PRCS_D), parameter :: N = 0.0187D0        ! Brunt-Vaisala Freq.
-    real(PRCS_D), parameter :: prs0 = 1.D5         ! pressure at the equator [Pa]
-    real(PRCS_D), parameter :: ux0 = 40.D0         ! zonal wind at the equator [ms-1]
-    real(PRCS_D) :: N2                              ! Square of Brunt-Vaisala Freq.
-    real(PRCS_D) :: work
-    !-----
-
-    if (logout) then
-       write(ADM_LOG_FID, '("| == Tomita 2004 Mountain Wave Exp.  ( Z levels:", I4, ")")') kdim
-       write(ADM_LOG_FID, '("| -- Brunt-Vaisala Freq.:", F20.10)') N
-       write(ADM_LOG_FID, '("| -- Earth Angular Velocity:", F20.10)') omega
-       write(ADM_LOG_FID, '("| -- Earth Radius:", F20.10)') a
-       write(ADM_LOG_FID, '("| -- Earth Gravity Accel.:", F20.10)') g
-    endif
-
-    N2 = N**2.D0
-    work = (N2*a) / (4.D0*g*Kap)
-
-    g1 =   2.D0 * ( 3.D0 + 4.D0*cos(2.D0*zero) + cos(4.D0*zero) ) * (ux0**4.D0)   &
-        +  8.D0 * ( 3.D0 + 4.D0*cos(2.D0*zero) + cos(4.D0*zero) ) * (ux0**3.D0)*a*omega   &
-        +  8.D0 * ( 3.D0 + 4.D0*cos(2.D0*zero) + cos(4.D0*zero) ) * (ux0**2.D0)*(a**2.D0)*(omega**2.D0)   &
-        - 16.D0 * ( 1.D0 + cos(2.D0*zero) ) * (ux0**2.D0)*a*g   &
-        - 32.D0 * ( 1.D0 + cos(2.D0*zero) ) * ux0*(a**2.D0)*g*omega   &
-        + 16.D0 * (a**2.D0) * (g**2.D0)
-    g2 = (ux0**4.D0) + 4.D0*a*omega*(ux0**3.D0) + 4.D0*(a**2.D0)*(omega**2.D0)*(ux0**2.D0)
-    Gzero = ( g1 / g2 )**work
-
-    g1 =   2.D0 * ( 3.D0 + 4.D0*cos(2.D0*lat) + cos(4.D0*lat) ) * (ux0**4.D0)   &
-        +  8.D0 * ( 3.D0 + 4.D0*cos(2.D0*lat) + cos(4.D0*lat) ) * (ux0**3.D0)*a*omega   &
-        +  8.D0 * ( 3.D0 + 4.D0*cos(2.D0*lat) + cos(4.D0*lat) ) * (ux0**2.D0)*(a**2.D0)*(omega**2.D0)   &
-        - 16.D0 * ( 1.D0 + cos(2.D0*lat) ) * (ux0**2.D0)*a*g   &
-        - 32.D0 * ( 1.D0 + cos(2.D0*lat) ) * ux0*(a**2.D0)*g*omega   &
-        + 16.D0 * (a**2.D0) * (g**2.D0)
-    g2 = (ux0**4.D0) + 4.D0*a*omega*(ux0**3.D0) + 4.D0*(a**2.D0)*(omega**2.D0)*(ux0**2.D0)
-    Gphi = ( g1 / g2 )**work
-
-    Pphi = prs0 * ( Gzero / Gphi )
-
-    do k=1, kdim
-       wix(k) = ux0 * cos(lat)
-       prs(k) = Pphi * exp( (-1.D0*N2*z_local(k)) / (g*Kap) )
-       tmp(k) = (g * Kap * ( g - (wix(k)**2.D0)/a - 2.D0*omega*wix(k)*cos(lat) )) / (N2*Rd)
-    enddo
-
-    return
-  end subroutine tomita_2004
   !-----------------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------------
@@ -1430,6 +1443,66 @@ contains
     !
     return
   end subroutine conv_vxvyvz
+  !-----------------------------------------------------------------------------
+  !
+  !-----------------------------------------------------------------------------
+  function simpson( &
+      pin1,        &  !--- IN : pressure (top)
+      pin2,        &  !--- IN : pressure (middle)
+      pin3,        &  !--- IN : pressure (bottom)
+      t1,          &  !--- IN : temperature (top)
+      t2,          &  !--- IN : temperature (middle)
+      t3,          &  !--- IN : temperature (bottom)
+      u1,          &  !--- IN : zonal wind (top)
+      u2,          &  !--- IN : zonal wind (middle)
+      u3,          &  !--- IN : zonal wind (bottom)
+      geo1,        &  !--- IN : geopotential (top)
+      geo3,        &  !--- IN : geopotential (bottom)
+      lat,         &  !--- IN : latitude
+      downward,    &  !--- IN : downward switch
+      nicamcore )  &  !--- IN : nicamcore switch
+      result (pout)
+    !
+    implicit none
+    real(PRCS_D), intent(in) :: pin1, pin2, pin3
+    real(PRCS_D), intent(in) :: t1, t2, t3
+    real(PRCS_D), intent(in) :: u1, u2, u3
+    real(PRCS_D), intent(in) :: geo1, geo3, lat
+    logical, intent(in) :: downward
+    logical, intent(in) :: nicamcore
+    !
+    real(PRCS_D) :: dz, pout
+    real(PRCS_D) :: f_cf(3), rho(3)
+    !
+    dz = ( (geo1 - geo3)/g )*0.5D0
+    !
+    if (nicamcore) then
+       f_cf(1) = 2.D0*omega*u1*cos(lat) + (u1**2.D0)/a
+       f_cf(2) = 2.D0*omega*u2*cos(lat) + (u2**2.D0)/a
+       f_cf(3) = 2.D0*omega*u3*cos(lat) + (u3**2.D0)/a
+    else
+       f_cf(:) = 0.D0
+    endif
+    rho(1) = pin1 / ( Rd*t1 )
+    rho(2) = pin2 / ( Rd*t2 )
+    rho(3) = pin3 / ( Rd*t3 )
+    !
+    if (downward) then
+       pout = pin1 - ( &
+                         (1.D0/3.D0) * rho(1) * ( f_cf(1) - g ) &
+                       + (4.D0/3.D0) * rho(2) * ( f_cf(2) - g ) &
+                       + (1.D0/3.D0) * rho(3) * ( f_cf(3) - g ) &
+                     ) * dz
+    else
+       pout = pin3 + ( &
+                         (1.D0/3.D0) * rho(1) * ( f_cf(1) - g ) &
+                       + (4.D0/3.D0) * rho(2) * ( f_cf(2) - g ) &
+                       + (1.D0/3.D0) * rho(3) * ( f_cf(3) - g ) &
+                     ) * dz
+    endif
+    !
+    return
+  end function simpson
   !-----------------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------------
