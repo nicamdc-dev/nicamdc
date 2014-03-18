@@ -1201,7 +1201,7 @@ contains
     real(PRCS_D) :: dz, uave, diff
     real(PRCS_D) :: f_cf(3), rho(3)
     real(PRCS_D) :: pp(kdim)
-    logical :: iteration = .true.
+    logical :: iteration = .false.
     logical :: do_iter = .true.
     !-----
 
@@ -1220,13 +1220,6 @@ contains
        pp(k) = pp(k-1) * ( 1.D0 + dz*(f_cf(1) - g)/(2.D0*Rd*tmp(k-1)) ) &
                        / ( 1.D0 - dz*(f_cf(1) - g)/(2.D0*Rd*tmp(k)) )
     enddo
-    prs(:) = pp(:)
-    ! first guess (downward: simpson)
-    do k=kdim-2, 1, -1
-       pp(k) = simpson( prs(k+2), prs(k+1), prs(k), tmp(k+2), tmp(k+1), tmp(k), &
-               wix(k+2), wix(k+1), wix(k), geo(k+2), geo(k), lat, .true., nicamcore )
-    enddo
-    pp(1) = ps
     prs(:) = pp(:)
 
     ! iteration (simpson)
@@ -1251,7 +1244,7 @@ contains
        endif
     enddo
     else
-       write(ADM_LOG_FID,*) 'ETA ITERATION SKIPPED'
+       !write(ADM_LOG_FID,*) 'ETA ITERATION SKIPPED'
        do_iter = .false.
     endif
 
@@ -1269,7 +1262,13 @@ contains
     enddo
     prs(:) = pp(:)
 
-    if (logout) write(ADM_LOG_FID, *) " | diff (guess - ps) : ", diff, "[Pa]  --  itr times: ", (i-1)
+    if (logout) then
+       if (iteration) then
+          write(ADM_LOG_FID, *) " | diff (guess - ps) : ", diff, "[Pa]  --  itr times: ", (i-1)
+       else
+          write(ADM_LOG_FID, *) " | no iteration in geo2prs"
+       endif
+    endif
     if (message) then
        write (ADM_LOG_FID,'(A)') "| ----- Pressure (Final Guess) -----"
        do k=1, kdim
@@ -1306,6 +1305,7 @@ contains
 
     integer :: k
     real(PRCS_D), parameter :: lat0 = 0.691590985442682
+    real(PRCS_D), parameter :: eta1 = 1.0D0
     real(PRCS_D) :: cs32ev, f1, f2
     real(PRCS_D) :: eta_v, tmp0, tmp1
     real(PRCS_D) :: ux1, ux2, hgt0, hgt1
@@ -1313,12 +1313,18 @@ contains
     real(PRCS_D) :: f_cf(3), rho(3)
     !-----
 
+    eta_v = (eta1 - eta0)*(pi*0.5D0)
+
     ! temperature at bottom of eta-grid
-    tmp0 = t0
+    tmp0 = t0                                                   &
+           + (3.D0/4.D0 * (pi*u0/Rd))*eta1 * sin(eta_v) * (cos(eta_v))**0.5d0                &
+           * ( ( -2.D0 * (sin(lat0))**6.D0 * (cos(lat0)**2.D0 + 1.D0/3.D0) + 10.D0/63.D0 )   &
+                * 2.D0*u0*(cos(eta_v))**1.5d0                   &
+                + ( 8.D0/5.D0 * (cos(lat0))**3.D0 * ((sin(lat0))**2.D0 + 2.D0/3.D0) - pi/4.D0 ) &
+                * a*omega  )
     tmp1 = tmp(1)
 
     ! wind speed at bottom of eta-grid
-    eta_v = (eta(1) - eta0)*(pi*0.5D0)
     ux1 = (u0 * cos(eta_v)**1.5d0) * (sin(2.D0*lat0))**2.D0
     ux2 = wix(1)
 
