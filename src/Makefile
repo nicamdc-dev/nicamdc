@@ -91,17 +91,17 @@ MODS =	\
 	mod_mkgrd.o
 
 $(PRJ1): prg_$(PRJ1).o $(LIBDIR)/$(LIBNAME)
-	$(LD) $(LFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $^
 $(PRJ2): prg_$(PRJ2).o $(LIBDIR)/$(LIBNAME)
-	$(LD) $(LFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $^
 $(PRJ3): prg_$(PRJ3).o $(LIBDIR)/$(LIBNAME)
-	$(LD) $(LFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $^
 $(PRJ4): prg_$(PRJ4).o $(LIBDIR)/$(LIBNAME)
-	$(LD) $(LFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $^
 $(PRJ5): prg_$(PRJ5).o $(LIBDIR)/$(LIBNAME)
-	$(LD) $(LFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $^
 $(PRJ6): prg_$(PRJ6).o $(LIBDIR)/$(LIBNAME)
-	$(LD) $(LFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $^
 
 prg_$(PRJ1).o : prg_$(PRJ1).f90 $(LIBNAME)
 prg_$(PRJ2).o : prg_$(PRJ2).f90 $(LIBNAME)

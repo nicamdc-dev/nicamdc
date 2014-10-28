@@ -28,13 +28,13 @@ $(LIBDIR)/$(LIBNAME):
 	$(MAKE) -C $(TOPDIR)/src || exit 1
 
 $(PRJ13): prg_$(PRJ13).o $(MODS_TOOL) $(LIBDIR)/$(LIBNAME)
-	$(LD) $(LFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $^
 $(PRJ26): prg_$(PRJ26).o $(MODS_TOOL) $(LIBDIR)/$(LIBNAME)
-	$(LD) $(LFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $^
 $(PRJ30): prg_$(PRJ30).o $(MODS_TOOL) $(LIBDIR)/$(LIBNAME)
-	$(LD) $(LFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $^
 $(PRJ37): prg_$(PRJ37).o $(MODS_TOOL) $(LIBDIR)/$(LIBNAME)
-	$(LD) $(LFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $^
 
 prg_$(PRJ13).o	: prg_$(PRJ13).f90 $(LIBDIR)/$(LIBNAME)
 prg_$(PRJ26).o	: prg_$(PRJ26).f90 $(LIBDIR)/$(LIBNAME)

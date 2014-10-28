@@ -26,7 +26,7 @@ CC     = openmpicc
 CFLAGS = -O3 -m64
 
 LD     = $(FC)
-LFLAGS = $(FFLAGS)
+LDFLAGS = $(FFLAGS)
 
 ###### NetCDF library
 NETCDF_INCLUDE ?= -I/opt/local/include

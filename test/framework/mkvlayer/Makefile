@@ -58,7 +58,7 @@ $(BINDIR)/$(PRJ): $(PRJ)
 	@echo; echo "##### $< is Installed Successfully #####"; echo
 
 $(PRJ) : $(PRJ).o
-	$(LD) $(LFLAGS) -o $@ $^ $(MODS)
+	$(LD) $(LDFLAGS) -o $@ $^ $(MODS)
 
 .SUFFIXES: .o .f90 .c
 .f90.o:
