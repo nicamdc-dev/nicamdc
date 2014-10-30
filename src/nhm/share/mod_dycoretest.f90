@@ -35,20 +35,58 @@ module mod_dycoretest
      test2_schaer_mountain,        &
      test3_gravity_wave
   use mod_cnst, only: &
-     Rd    => CNST_RAIR,    &  ! ideal gas constant of dry air
-     Cp    => CNST_CP,      &  ! heat capacity of const. pressure
-     g     => CNST_EGRAV,   &  ! gravity accelaration [ms^-2]
-     a     => CNST_ERADIUS, &  ! mean radis of the earth [m]
-     omega => CNST_EOHM,    &  ! rotation of the earth [s^-1]
-     pi    => CNST_PI
-  !
+     pi    => CNST_PI,      &
+     a     => CNST_ERADIUS, &
+     omega => CNST_EOHM,    &
+     g     => CNST_EGRAV,   &
+     Rd    => CNST_RAIR,    &
+     Cp    => CNST_CP,      &
+     KAPPA => CNST_KAPPA,   &
+     PRE00 => CNST_PRE00
   !-----------------------------------------------------------------------------
   implicit none
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public parameters
+  !++ Public procedure
   !
+  public :: dycore_input
+
+  !-----------------------------------------------------------------------------
+  !
+  !++ Public parameters & variables
+  !
+  character(len=ADM_NSYS), public, save :: DCTEST_type = '' !
+  character(len=ADM_NSYS), public, save :: DCTEST_case = '' !
+
+  !-----------------------------------------------------------------------------
+  !
+  !++ Private procedures
+  !
+  private :: hs_init
+  private :: jbw_init
+  private :: tracer_init
+  private :: mountwave_init
+  private :: gravwave_init
+  private :: tomita_init
+
+  private :: tomita_2004
+  private :: eta_vert_coord_NW
+  private :: steady_state
+  private :: geo2prs
+  private :: ps_estimation
+  private :: perturbation
+  private :: conv_vxvyvz
+  private :: simpson
+
+  private :: Sp_Unit_East
+  private :: Sp_Unit_North
+
+  !-----------------------------------------------------------------------------
+  !
+  !++ Private parameters & variables
+  !
+
   ! physical parameters configurations
   real(8), private, save :: Kap                    ! temporal value
   real(8), private, save :: d2r                    ! Degree to Radian
@@ -56,8 +94,6 @@ module mod_dycoretest
   real(8), private, save :: eps = 1.D-14           ! minimum value
   real(8), private, save :: zero = 0.D0            ! zero
 
-  ! test configurations
-  integer, private, parameter :: PRCS_D = 8
   ! for Held and Suarez
   real(8), private, save :: deltaT = 60.D0
   real(8), private, save :: deltaTh = 10.D0
@@ -78,46 +114,10 @@ module mod_dycoretest
   integer, private, parameter :: itrmax = 100       ! # of iteration maximum
 
   !-----------------------------------------------------------------------------
-  !
-  !++ Public procedure
-  !
-  public :: dycore_input
-  !
-  !-----------------------------------------------------------------------------
-  !
-  !++ Private parameters
-  !
-  !-----------------------------------------------------------------------------
-  !
-  !++ Private variables
-  !
-  !-----------------------------------------------------------------------------
-  !
-  !++ Private procedures
-  !
-  private :: hs_init
-  private :: jbw_init
-  private :: tracer_init
-  private :: mountwave_init
-  private :: gravwave_init
-  private :: tomita_init
-  private :: sphere_xyz_to_lon
-  private :: sphere_xyz_to_lat
-  private :: eta_vert_coord_NW
-  private :: steady_state
-  private :: geo2prs
-  private :: ps_estimation
-  private :: perturbation
-  private :: tomita_2004
-  private :: conv_vxvyvz
-  private :: simpson
-  private :: Sp_Unit_East
-  private :: Sp_Unit_North
-  !
-  !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  subroutine dycore_input( DIAG_var )
+  subroutine dycore_input( &
+       DIAG_var )
     use mod_adm, only: &
        ADM_CTL_FID,   &
        ADM_proc_stop, &
@@ -130,9 +130,9 @@ contains
 
     real(8), intent(out) :: DIAG_var(ADM_gall,ADM_kall,ADM_lall,6+TRC_VMAX)
 
+    character(len=ADM_NSYS) :: init_type   = ''
+    character(len=ADM_NSYS) :: test_case   = ''
     real(8) :: eps_geo2prs = 1.D-2
-    character(len=ADM_NSYS) :: init_type
-    character(len=ADM_NSYS) :: test_case
     logical :: nicamcore = .true.
 
     namelist / DYCORETESTPARAM / &
@@ -162,44 +162,46 @@ contains
     endif
     write(ADM_LOG_FID,DYCORETESTPARAM)
 
+    DCTEST_type = init_type
+    DCTEST_case = test_case
+
     write(ADM_LOG_FID,*) '*** type: ', trim(init_type)
-
-    if (      init_type == "Jablonowski"     &
-         .OR. init_type == "Traceradvection" &
-         .OR. init_type == "Mountainwave"    ) then
-
-       write(ADM_LOG_FID,*) '*** test case: ', trim(test_case)
-
-    endif
-
-    if ( init_type == "Heldsuarez" ) then
+    select case(init_type)
+    case ('Heldsuarez')
 
        call hs_init ( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
 
-    elseif( init_type == "Jablonowski" ) then
+    case ('Jablonowski')
 
+       write(ADM_LOG_FID,*) '*** test case  : ', trim(test_case)
+       write(ADM_LOG_FID,*) '*** eps_geo2prs= ', eps_geo2prs
+       write(ADM_LOG_FID,*) '*** nicamcore  = ', nicamcore
        call jbw_init( ADM_gall, ADM_kall, ADM_lall, test_case, eps_geo2prs, nicamcore, DIAG_var(:,:,:,:) )
 
-    elseif( init_type == "Traceradvection" ) then
+    case ('Traceradvection')
 
+       write(ADM_LOG_FID,*) '*** test case: ', trim(test_case)
        call tracer_init( ADM_gall, ADM_kall, ADM_lall, test_case, DIAG_var(:,:,:,:) )
 
-    elseif( init_type == "Mountainwave" ) then
+    case ('Mountainwave')
 
+       write(ADM_LOG_FID,*) '*** test case: ', trim(test_case)
        call mountwave_init( ADM_gall, ADM_kall, ADM_lall, test_case, DIAG_var(:,:,:,:) )
 
-    elseif( init_type == "Gravitywave" ) then
+    case ('Gravitywave')
 
        call gravwave_init( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
 
-    elseif( init_type == "Tomita2004" ) then
+    case ('Tomita2004')
 
        call tomita_init( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
 
-    else
-       write(ADM_LOG_FID,*) 'xxx Invalid input_io_mode. STOP.'
+    case default
+
+       write(ADM_LOG_FID,*) 'xxx Invalid init_type. STOP.'
        call ADM_proc_stop
-    endif
+
+    end select
 
     return
   end subroutine dycore_input
@@ -210,24 +212,15 @@ contains
        kdim,    &
        lall,    &
        DIAG_var )
-    use mod_misc, only: &
-       MISC_get_latlon
     use mod_adm, only: &
-       ADM_KNONE, &
        ADM_kmin,  &
        ADM_kmax
-    use mod_cnst, only: &
-       GRAV  => CNST_EGRAV, &
-       RAIR  => CNST_RAIR,  &
-       KAPPA => CNST_KAPPA, &
-       PRE00 => CNST_PRE00
     use mod_grd, only: &
-       GRD_XDIR, &
-       GRD_YDIR, &
-       GRD_ZDIR, &
        GRD_Z,    &
-       GRD_x,    &
        GRD_vz
+    use mod_gmtr, only: &
+       GMTR_lat, &
+       GMTR_lon
     use mod_runconf, only: &
        TRC_vmax
     implicit none
@@ -241,9 +234,12 @@ contains
     real(8) :: pre_sfc, tem_sfc
     real(8) :: pre_save
 
-    real(8) :: dT, f, df
+    real(8), parameter :: deltaT  = 60.D0
+    real(8), parameter :: deltaTh = 10.D0
+    real(8), parameter :: eps_hs  = 1.D-7
+
+    real(8) :: f, df
     real(8) :: lat, lon
-    real(8) :: eps_hs = 1.0d-7
 
     integer :: n, k, l, itr
     !---------------------------------------------------------------------------
@@ -258,10 +254,8 @@ contains
           dz(k) = GRD_vz(n,k,l,GRD_Z) - GRD_vz(n,k-1,l,GRD_Z)
        enddo
 
-       call MISC_get_latlon( lat, lon,                      &
-                             GRD_x(n,ADM_KNONE,l,GRD_XDIR), &
-                             GRD_x(n,ADM_KNONE,l,GRD_YDIR), &
-                             GRD_x(n,ADM_KNONE,l,GRD_ZDIR)  )
+       lat = GMTR_lat(n,l)
+       lon = GMTR_lon(n,l)
 
        pre_sfc = PRE00
 !       tem_sfc = 300.D0
@@ -277,7 +271,7 @@ contains
        do itr = 1, itrmax
           pre_save = pre(k) ! save
 
-          f  = log(pre(k)/pre_sfc) / dz(k) + GRAV / ( RAIR * 0.5D0 * (tem(k)+tem_sfc) )
+          f  = log(pre(k)/pre_sfc) / dz(k) + g / ( Rd * 0.5D0 * (tem(k)+tem_sfc) )
           df = 1.D0 / (pre(k)*dz(k))
 
           pre(k) = pre(k) - f / df
@@ -307,7 +301,7 @@ contains
           do itr = 1, itrmax
              pre_save = pre(k) ! save
 
-             f  = log(pre(k)/pre(k-1)) / dz(k) + GRAV / ( RAIR * 0.5D0 * (tem(k)+tem(k-1)) )
+             f  = log(pre(k)/pre(k-1)) / dz(k) + g / ( Rd * 0.5D0 * (tem(k)+tem(k-1)) )
              df = 1.D0 / (pre(k)*dz(k))
 
              pre(k) = pre(k) - f / df
@@ -349,20 +343,17 @@ contains
        eps_geo2prs,  &
        nicamcore,    &
        DIAG_var      )
-    use mod_misc, only: &
-       MISC_get_latlon
     use mod_adm, only: &
-       ADM_KNONE,      &
-       ADM_NSYS
+       ADM_proc_stop, &
+       ADM_kmin,      &
+       ADM_kmax
     use mod_grd, only: &
-       GRD_vz,         &
-       GRD_x,          &
-       GRD_x_pl,       &
-       GRD_XDIR,       &
-       GRD_YDIR,       &
-       GRD_ZDIR,       &
        GRD_Z,          &
-       GRD_ZH
+       GRD_ZH, &
+       GRD_vz
+    use mod_gmtr, only: &
+       GMTR_lat, &
+       GMTR_lon
     use mod_runconf, only: &
        TRC_vmax
     implicit none
@@ -370,16 +361,16 @@ contains
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
     integer, intent(in)  :: lall
-    character(len=ADM_NSYS), intent(in) :: test_case
+    character(len=*), intent(in)  :: test_case
     real(8), intent(in) :: eps_geo2prs
+    logical,          intent(in)  :: nicamcore
     real(8), intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
-    logical, intent(in) :: nicamcore
 
     ! work paramters
-    real(PRCS_D) :: lat, lon                 ! latitude, longitude on Icosahedral grid
-    real(PRCS_D) :: eta(kdim,2), geo(kdim)   ! eta & geopotential in ICO-grid field
-    real(PRCS_D) :: prs(kdim),   tmp(kdim)   ! pressure & temperature in ICO-grid field
-    real(PRCS_D) :: wix(kdim),   wiy(kdim)   ! zonal/meridional wind components in ICO-grid field
+    real(8) :: lat, lon                 ! latitude, longitude on Icosahedral grid
+    real(8) :: eta(kdim,2), geo(kdim)   ! eta & geopotential in ICO-grid field
+    real(8) :: prs(kdim),   tmp(kdim)   ! pressure & temperature in ICO-grid field
+    real(8) :: wix(kdim),   wiy(kdim)   ! zonal/meridional wind components in ICO-grid field
 
     real(8) :: z_local (kdim)
     real(8) :: vx_local(kdim)
@@ -394,12 +385,12 @@ contains
     logical :: psgm         ! if true, PS Gradient Method
     logical :: eta_limit    ! if true, value of eta is limited upto 1.0
     logical :: logout       ! log output switch for Pressure Convert
-    integer :: n, l, k, itr, K0
+
+    integer :: n, k, l, itr
     !---------------------------------------------------------------------------
 
-    K0 = ADM_KNONE
-
     DIAG_var(:,:,:,:) = 0.D0
+
     eta_limit = .true.
     psgm = .false.
     logout = .true.
@@ -433,15 +424,13 @@ contains
 
     do l = 1, lall
     do n = 1, ijdim
-       z_local(1) = GRD_vz(n,2,l,GRD_ZH)
-       do k = 2, kdim
+       z_local(ADM_kmin-1) = GRD_vz(n,2,l,GRD_ZH)
+       do k = ADM_kmin, ADM_kmax+1
           z_local(k) = GRD_vz(n,k,l,GRD_Z)
        enddo
 
-       call MISC_get_latlon( lat, lon,               &
-                             GRD_x(n,K0,l,GRD_XDIR), &
-                             GRD_x(n,K0,l,GRD_YDIR), &
-                             GRD_x(n,K0,l,GRD_ZDIR)  )
+       lat = GMTR_lat(n,l)
+       lon = GMTR_lon(n,l)
 
        signal = .true.
        ! iteration -----
@@ -459,8 +448,9 @@ contains
        enddo
 
        if ( itr > itrmax ) then
+          write(*          ,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
           write(ADM_LOG_FID,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
-          stop
+          call ADM_proc_stop
        endif
 
        if (psgm) then
@@ -496,8 +486,7 @@ contains
 
     return
   end subroutine jbw_init
-  !-----------------------------------------------------------------------------
-  !
+
   !-----------------------------------------------------------------------------
   subroutine tracer_init( &
      ijdim,      &
@@ -505,25 +494,14 @@ contains
      lall,       &
      test_case,  &
      DIAG_var    )
-    use mod_misc, only: &
-       MISC_get_latlon, &
-       MISC_get_distance
     use mod_adm, only: &
-       ADM_KNONE,      &
-       ADM_NSYS,       &
-       ADM_proc_stop
-    use mod_cnst, only: &
-       CNST_PI, &
-       CNST_ERADIUS
+       ADM_proc_stop, &
+       ADM_kmin,      &
+       ADM_kmax
     use mod_grd, only: &
-       GRD_vz,         &
-       GRD_x,          &
-       GRD_x_pl,       &
-       GRD_XDIR,       &
-       GRD_YDIR,       &
-       GRD_ZDIR,       &
        GRD_Z,          &
-       GRD_ZH
+       GRD_ZH, &
+       GRD_vz
     use mod_gmtr, only: &
        GMTR_lon, &
        GMTR_lat
@@ -540,101 +518,126 @@ contains
     character(len=ADM_NSYS), intent(in) :: test_case
     real(8), intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-    ! work paramters
-    real(8) :: lat, lon                  ! latitude, longitude on Icosahedral grid
-    real(8) :: prs(kdim),   tmp(kdim)    ! pressure & temperature in ICO-grid field
-    real(8) :: wix(kdim),   wiy(kdim)    ! zonal/meridional wind components in ICO-grid field
-    real(8) :: wiz(kdim)                 ! vertical wind components in ICO-grid field
-    real(8) :: q(kdim),     rho(kdim)    ! Qvapor and rho in ICO-grid field
-    real(8) :: q1(kdim), q2(kdim)        ! passive tracer in ICO-grid field
-    real(8) :: q3(kdim), q4(kdim)        ! passive tracer in ICO-grid field
-
-    real(8) :: z_local (kdim)
-    real(8) :: vx_local(kdim)
-    real(8) :: vy_local(kdim)
-    real(8) :: vz_local(kdim)
-
-    integer :: I_passive1, I_passive2
-    integer :: I_passive3, I_passive4
-    integer :: n, l, k, K0
-
-    logical :: fault = .true.
-    logical :: hybrid_eta = .false.
-    real(8) :: hyam, hybm, phis, ps
     integer, parameter :: zcoords = 1
+
+    real(8) :: lon     ! longitude            [rad]
+    real(8) :: lat     ! latitude             [rad]
+    real(8) :: z(kdim) ! Height               [m]
+    real(8) :: p(kdim) ! pressure             [Pa]
+    real(8) :: u(kdim) ! zonal      wind      [m/s]
+    real(8) :: v(kdim) ! meridional wind      [m/s]
+    real(8) :: w(kdim) ! vertical   wind      [m/s]
+    real(8) :: t(kdim) ! temperature          [K]
+    real(8) :: phis    ! surface geopotential [m2/s2], not in use
+    real(8) :: ps      ! surface pressure     [Pa]   , not in use
+    real(8) :: rho     ! density              [kg/m3], not in use
+    real(8) :: q       ! specific humidity    [kg/kg], not in use
+
+    real(8) :: q1(kdim) ! passive tracer       [kg/kg]
+    real(8) :: q2(kdim) ! passive tracer       [kg/kg]
+    real(8) :: q3(kdim) ! passive tracer       [kg/kg]
+    real(8) :: q4(kdim) ! passive tracer       [kg/kg]
+
+    real(8) :: vx(kdim)
+    real(8) :: vy(kdim)
+    real(8) :: vz(kdim)
+
+    integer :: I_pasv1, I_pasv2
+    integer :: I_pasv3, I_pasv4
+    integer :: n, k, l
     !---------------------------------------------------------------------------
-
-    hyam = 0.0d0
-    hybm = 0.0d0
-    fault = .false.
-    hybrid_eta = .false.
-
-    K0 = ADM_KNONE
 
     DIAG_var(:,:,:,:) = 0.D0
 
-    I_passive1 = 6 + NCHEM_STR + chemvar_getid( "passive1" ) - 1
-    I_passive2 = 6 + NCHEM_STR + chemvar_getid( "passive2" ) - 1
-    I_passive3 = 6 + NCHEM_STR + chemvar_getid( "passive3" ) - 1
-    I_passive4 = 6 + NCHEM_STR + chemvar_getid( "passive4" ) - 1
+    I_pasv1 = 6 + NCHEM_STR + chemvar_getid( "passive1" ) - 1
+    I_pasv2 = 6 + NCHEM_STR + chemvar_getid( "passive2" ) - 1
+    I_pasv3 = 6 + NCHEM_STR + chemvar_getid( "passive3" ) - 1
+    I_pasv4 = 6 + NCHEM_STR + chemvar_getid( "passive4" ) - 1
 
     do l = 1, lall
     do n = 1, ijdim
-       z_local(1) = GRD_vz(n,2,l,GRD_ZH)
-       do k = 2, kdim
-          z_local(k) = GRD_vz(n,k,l,GRD_Z)
+       z(ADM_kmin-1) = GRD_vz(n,ADM_kmin,l,GRD_ZH)
+       do k = ADM_kmin, ADM_kmax+1
+          z(k) = GRD_vz(n,k,l,GRD_Z)
        enddo
+       p(:) = 0.D0
 
-       call MISC_get_latlon( lat, lon,               &
-                             GRD_x(n,K0,l,GRD_XDIR), &
-                             GRD_x(n,K0,l,GRD_YDIR), &
-                             GRD_x(n,K0,l,GRD_ZDIR)  )
+       lat = GMTR_lat(n,l)
+       lon = GMTR_lon(n,l)
 
-       select case( trim(test_case) )
-       ! DCMIP: TEST CASE 11 - Pure Advection - 3D deformational flow
-       case ('1', '1-1')
+       select case(test_case)
+       case ('1', '1-1') ! DCMIP: TEST CASE 11 - Pure Advection - 3D deformational flow
+
           do k=1, kdim
-             call test1_advection_deformation (lon, lat, prs(k), z_local(k), zcoords,    &
-                                                wix(k), wiy(k), wiz(k), tmp(k), phis, ps, &
-                                                rho(k), q(k), q1(k), q2(k), q3(k), q4(k)  )
+             call test1_advection_deformation( lon,     & ! [IN]
+                                               lat,     & ! [IN]
+                                               p(k),    & ! [INOUT]
+                                               z(k),    & ! [IN]
+                                               zcoords, & ! [IN]
+                                               u(k),    & ! [OUT]
+                                               v(k),    & ! [OUT]
+                                               w(k),    & ! [OUT]
+                                               t(k),    & ! [OUT]
+                                               phis,    & ! [OUT]
+                                               ps,      & ! [OUT]
+                                               rho,     & ! [OUT]
+                                               q,       & ! [OUT]
+                                               q1(k),   & ! [OUT]
+                                               q2(k),   & ! [OUT]
+                                               q3(k),   & ! [OUT]
+                                               q4(k)    ) ! [OUT]
           enddo
-       ! DCMIP: TEST CASE 12 - Pure Advection - 3D HADLEY-like flow
-       case ('2', '1-2')
+
+       case ('2', '1-2') ! DCMIP: TEST CASE 12 - Pure Advection - 3D HADLEY-like flow
+
           do k=1, kdim
-             call test1_advection_hadley (lon, lat, prs(k), z_local(k), zcoords,    &
-                                           wix(k), wiy(k), wiz(k), tmp(k), phis, ps, &
-                                           rho(k), q(k), q1(k)  )
-             q2(k) = 0.0d0
-             q3(k) = 0.0d0
-             q4(k) = 0.0d0
+             call test1_advection_hadley( lon,     & ! [IN]
+                                          lat,     & ! [IN]
+                                          p(k),    & ! [INOUT]
+                                          z(k),    & ! [IN]
+                                          zcoords, & ! [IN]
+                                          u(k),    & ! [OUT]
+                                          v(k),    & ! [OUT]
+                                          w(k),    & ! [OUT]
+                                          t(k),    & ! [OUT]
+                                          phis,    & ! [OUT]
+                                          ps,      & ! [OUT]
+                                          rho,     & ! [OUT]
+                                          q,       & ! [OUT]
+                                          q1(k)    ) ! [OUT]
+
+             q2(k) = 0.D0
+             q3(k) = 0.D0
+             q4(k) = 0.D0
           enddo
+
        case default
-          write(ADM_LOG_FID,*) "Unknown test_case: '"//trim(test_case)//"' specified."
+          write(*          ,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
+          write(ADM_LOG_FID,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
           call ADM_proc_stop
        end select
 
-       call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
+       call conv_vxvyvz( kdim, lat, lon, u, v, vx, vy, vz )
 
        do k=1, kdim
-          DIAG_var(n,k,l,1) = prs(k)
-          DIAG_var(n,k,l,2) = tmp(k)
-          DIAG_var(n,k,l,3) = vx_local(k)
-          DIAG_var(n,k,l,4) = vy_local(k)
-          DIAG_var(n,k,l,5) = vz_local(k)
-          DIAG_var(n,k,l,6) = wiz(k)
-          !DIAG_var(n,k,l,XXXXXXXXX) = q(k)  ! this has not prepared yet (20130612)
-          DIAG_var(n,k,l,I_passive1) = q1(k)
-          DIAG_var(n,k,l,I_passive2) = q2(k)
-          DIAG_var(n,k,l,I_passive3) = q3(k)
-          DIAG_var(n,k,l,I_passive4) = q4(k)
+          DIAG_var(n,k,l,1) = p (k)
+          DIAG_var(n,k,l,2) = t (k)
+          DIAG_var(n,k,l,3) = vx(k)
+          DIAG_var(n,k,l,4) = vy(k)
+          DIAG_var(n,k,l,5) = vz(k)
+          DIAG_var(n,k,l,6) = w (k)
+
+          DIAG_var(n,k,l,I_pasv1) = q1(k)
+          DIAG_var(n,k,l,I_pasv2) = q2(k)
+          DIAG_var(n,k,l,I_pasv3) = q3(k)
+          DIAG_var(n,k,l,I_pasv4) = q4(k)
        enddo
     enddo
     enddo
 
     return
   end subroutine tracer_init
-  !-----------------------------------------------------------------------------
-  !
+
   !-----------------------------------------------------------------------------
   subroutine mountwave_init( &
      ijdim,      &
@@ -649,9 +652,6 @@ contains
        ADM_KNONE,      &
        ADM_NSYS,       &
        ADM_proc_stop
-    use mod_cnst, only: &
-       CNST_PI, &
-       CNST_ERADIUS
     use mod_grd, only: &
        GRD_vz,         &
        GRD_x,          &
@@ -689,7 +689,7 @@ contains
     real(8) :: vy_local(kdim)
     real(8) :: vz_local(kdim)
 
-    integer :: I_passive1
+    integer :: I_pasv1
     integer :: n, l, k, K0
 
     integer :: shear
@@ -708,7 +708,7 @@ contains
 
     DIAG_var(:,:,:,:) = 0.D0
 
-    I_passive1 = 6 + chemvar_getid( "passive1" ) + NCHEM_STR - 1
+    I_pasv1 = 6 + chemvar_getid( "passive1" ) + NCHEM_STR - 1
 
     do l = 1, lall
     do n = 1, ijdim
@@ -760,46 +760,33 @@ contains
           DIAG_var(n,k,l,4) = vy_local(k)
           DIAG_var(n,k,l,5) = vz_local(k)
           DIAG_var(n,k,l,6) = wiz(k)
-          DIAG_var(n,k,l,I_passive1) = q(k)
+          DIAG_var(n,k,l,I_pasv1) = q(k)
        enddo
     enddo
     enddo
 
     return
   end subroutine mountwave_init
-  !-----------------------------------------------------------------------------
-  !
+
   !-----------------------------------------------------------------------------
   subroutine gravwave_init( &
      ijdim,   &
      kdim,    &
      lall,    &
      DIAG_var )
-    use mod_misc, only: &
-       MISC_get_latlon, &
-       MISC_get_distance
     use mod_adm, only: &
-       ADM_KNONE
-    use mod_cnst, only: &
-       CNST_PI, &
-       CNST_ERADIUS
+       ADM_proc_stop, &
+       ADM_kmin,      &
+       ADM_kmax
     use mod_grd, only: &
-       GRD_vz,         &
-       GRD_x,          &
-       GRD_x_pl,       &
-       GRD_XDIR,       &
-       GRD_YDIR,       &
-       GRD_ZDIR,       &
        GRD_Z,          &
-       GRD_ZH
+       GRD_ZH, &
+       GRD_vz
     use mod_gmtr, only: &
        GMTR_lon, &
        GMTR_lat
     use mod_runconf, only: &
-       TRC_vmax, &
-       NCHEM_STR
-    use mod_chemvar, only: &
-       chemvar_getid
+       TRC_vmax
     implicit none
 
     integer, intent(in)    :: ijdim
@@ -807,74 +794,73 @@ contains
     integer, intent(in)    :: lall
     real(8), intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-    ! work paramters
-    real(8) :: lat, lon                 ! latitude, longitude on Icosahedral grid
-    real(8) :: prs(kdim),   tmp(kdim)   ! pressure & temperature in ICO-grid field
-    real(8) :: wix(kdim),   wiy(kdim)   ! zonal/meridional wind components in ICO-grid field
-    real(8) :: wiz(kdim)                ! vertical wind components in ICO-grid field
-    real(8) :: q(kdim),     rho(kdim)   ! tracer and rho in ICO-grid field
-
-    real(8) :: z_local (kdim)
-    real(8) :: vx_local(kdim)
-    real(8) :: vy_local(kdim)
-    real(8) :: vz_local(kdim)
-
-    integer :: I_passive1
-    integer :: n, l, k, K0
-
-    logical :: fault = .true.
-    logical :: hybrid_eta = .false.
-    real(8) :: hyam, hybm, phis, ps
     integer, parameter :: zcoords = 1
+
+    real(8) :: lon     ! longitude            [rad]
+    real(8) :: lat     ! latitude             [rad]
+    real(8) :: z(kdim) ! Height               [m]
+    real(8) :: p(kdim) ! pressure             [Pa]
+    real(8) :: u(kdim) ! zonal      wind      [m/s]
+    real(8) :: v(kdim) ! meridional wind      [m/s]
+    real(8) :: w(kdim) ! vertical   wind      [m/s]
+    real(8) :: t(kdim) ! temperature          [K]
+    real(8) :: phis    ! surface geopotential [m2/s2], not in use
+    real(8) :: ps      ! surface pressure     [Pa]   , not in use
+    real(8) :: rho     ! density              [kg/m3], not in use
+    real(8) :: q       ! specific humidity    [kg/kg], not in use
+
+    real(8) :: vx(kdim)
+    real(8) :: vy(kdim)
+    real(8) :: vz(kdim)
+
+    integer :: n, k, l
     !---------------------------------------------------------------------------
-
-    hyam = 0.0d0
-    hybm = 0.0d0
-    fault = .false.
-    hybrid_eta = .false.
-
-    K0 = ADM_KNONE
 
     DIAG_var(:,:,:,:) = 0.D0
 
-    I_passive1 = 6 + chemvar_getid( "passive1" ) + NCHEM_STR - 1
-
     do l = 1, lall
     do n = 1, ijdim
-       z_local(1) = GRD_vz(n,2,l,GRD_ZH)
-       do k = 2, kdim
-          z_local(k) = GRD_vz(n,k,l,GRD_Z)
+       z(ADM_kmin-1) = GRD_vz(n,ADM_kmin,l,GRD_ZH)
+       do k = ADM_kmin, ADM_kmax+1
+          z(k) = GRD_vz(n,k,l,GRD_Z)
        enddo
+       p(:) = 0.D0
 
-       call MISC_get_latlon( lat, lon,               &
-                             GRD_x(n,K0,l,GRD_XDIR), &
-                             GRD_x(n,K0,l,GRD_YDIR), &
-                             GRD_x(n,K0,l,GRD_ZDIR)  )
+       lat = GMTR_lat(n,l)
+       lon = GMTR_lon(n,l)
 
        do k=1, kdim
-          call test3_gravity_wave (lon, lat, prs(k), z_local(k), zcoords, &
-                   wix(k), wiy(k), wiz(k), tmp(k), phis, &
-                   ps, rho(k), q(k) )
+          call test3_gravity_wave( lon,     & ! [IN]
+                                   lat,     & ! [IN]
+                                   p(k),    & ! [INOUT]
+                                   z(k),    & ! [IN]
+                                   zcoords, & ! [IN]
+                                   u(k),    & ! [OUT]
+                                   v(k),    & ! [OUT]
+                                   w(k),    & ! [OUT]
+                                   t(k),    & ! [OUT]
+                                   phis,    & ! [OUT]
+                                   ps,      & ! [OUT]
+                                   rho,     & ! [OUT]
+                                   q        ) ! [OUT]
        enddo
 
-       call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
+       call conv_vxvyvz( kdim, lat, lon, u, v, vx, vy, vz )
 
        do k=1, kdim
-          DIAG_var(n,k,l,1) = prs(k)
-          DIAG_var(n,k,l,2) = tmp(k)
-          DIAG_var(n,k,l,3) = vx_local(k)
-          DIAG_var(n,k,l,4) = vy_local(k)
-          DIAG_var(n,k,l,5) = vz_local(k)
-          DIAG_var(n,k,l,6) = wiz(k)
-          DIAG_var(n,k,l,I_passive1) = q(k)
+          DIAG_var(n,k,l,1) = p (k)
+          DIAG_var(n,k,l,2) = t (k)
+          DIAG_var(n,k,l,3) = vx(k)
+          DIAG_var(n,k,l,4) = vy(k)
+          DIAG_var(n,k,l,5) = vz(k)
+          DIAG_var(n,k,l,6) = w (k)
        enddo
     enddo
     enddo
 
     return
   end subroutine gravwave_init
-  !-----------------------------------------------------------------------------
-  !
+
   !-----------------------------------------------------------------------------
   subroutine tomita_init( &
        ijdim,      &
@@ -905,9 +891,9 @@ contains
     real(8), intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
     ! work paramters
-    real(PRCS_D) :: lat, lon                 ! latitude, longitude on Icosahedral grid
-    real(PRCS_D) :: prs(kdim),   tmp(kdim)   ! pressure & temperature in ICO-grid field
-    real(PRCS_D) :: wix(kdim),   wiy(kdim)   ! zonal/meridional wind components in ICO-grid field
+    real(8) :: lat, lon                 ! latitude, longitude on Icosahedral grid
+    real(8) :: prs(kdim),   tmp(kdim)   ! pressure & temperature in ICO-grid field
+    real(8) :: wix(kdim),   wiy(kdim)   ! zonal/meridional wind components in ICO-grid field
 
     real(8) :: z_local (kdim)
     real(8) :: vx_local(kdim)
@@ -962,8 +948,7 @@ contains
 
     return
   end subroutine tomita_init
-  !-----------------------------------------------------------------------------
-  !
+
   !-----------------------------------------------------------------------------
   ! estimation ps distribution by using topography
   subroutine tomita_2004( &
@@ -979,21 +964,21 @@ contains
        ADM_LOG_FID
     implicit none
     integer, intent(in) :: kdim
-    real(PRCS_D), intent(in) :: lat
-    real(PRCS_D), intent(in) :: z_local(kdim)
-    real(PRCS_D), intent(inout) :: wix(kdim)
-    real(PRCS_D), intent(inout) :: wiy(kdim)
-    real(PRCS_D), intent(inout) :: tmp(kdim)
-    real(PRCS_D), intent(inout) :: prs(kdim)
+    real(8), intent(in) :: lat
+    real(8), intent(in) :: z_local(kdim)
+    real(8), intent(inout) :: wix(kdim)
+    real(8), intent(inout) :: wiy(kdim)
+    real(8), intent(inout) :: tmp(kdim)
+    real(8), intent(inout) :: prs(kdim)
     logical, intent(in) :: logout
 
     integer :: i, k
-    real(PRCS_D) :: g1, g2, Gphi, Gzero, Pphi
-    real(PRCS_D), parameter :: N = 0.0187D0        ! Brunt-Vaisala Freq.
-    real(PRCS_D), parameter :: prs0 = 1.D5         ! pressure at the equator [Pa]
-    real(PRCS_D), parameter :: ux0 = 40.D0         ! zonal wind at the equator [ms-1]
-    real(PRCS_D) :: N2                              ! Square of Brunt-Vaisala Freq.
-    real(PRCS_D) :: work
+    real(8) :: g1, g2, Gphi, Gzero, Pphi
+    real(8), parameter :: N = 0.0187D0        ! Brunt-Vaisala Freq.
+    real(8), parameter :: prs0 = 1.D5         ! pressure at the equator [Pa]
+    real(8), parameter :: ux0 = 40.D0         ! zonal wind at the equator [ms-1]
+    real(8) :: N2                              ! Square of Brunt-Vaisala Freq.
+    real(8) :: work
     !-----
 
     if (logout) then
@@ -1035,8 +1020,7 @@ contains
 
     return
   end subroutine tomita_2004
-  !-----------------------------------------------------------------------------
-  !
+
   !-----------------------------------------------------------------------------
   ! eta vertical coordinate by Newton Method
   subroutine eta_vert_coord_NW( &
@@ -1052,14 +1036,14 @@ contains
     implicit none
     integer, intent(in) :: itr
     integer, intent(in) :: kdim
-    real(PRCS_D), intent(in) :: z(kdim)
-    real(PRCS_D), intent(in) :: geo(kdim), tmp(kdim)
-    real(PRCS_D), intent(inout) :: eta(kdim,2)
+    real(8), intent(in) :: z(kdim)
+    real(8), intent(in) :: geo(kdim), tmp(kdim)
+    real(8), intent(inout) :: eta(kdim,2)
     logical, intent(in) :: eta_limit
     logical, intent(inout) :: signal
     integer :: k
-    real(PRCS_D) :: diffmax, diff(kdim)
-    real(PRCS_D) :: F(kdim), Feta(kdim)
+    real(8) :: diffmax, diff(kdim)
+    real(8) :: F(kdim), Feta(kdim)
     !
     do k=1, kdim
        F(k) = -g*z(k) + geo(k)
@@ -1087,8 +1071,7 @@ contains
     !
     return
   end subroutine eta_vert_coord_NW
-  !-----------------------------------------------------------------------------
-  !
+
   !-----------------------------------------------------------------------------
   ! calculation of steady state
   subroutine steady_state( &
@@ -1103,14 +1086,14 @@ contains
     implicit none
     integer :: k
     integer, intent(in) :: kdim
-    real(PRCS_D), intent(in) :: lat
-    real(PRCS_D), intent(in) :: eta(kdim,2)
-    real(PRCS_D), intent(inout) :: wix(kdim)
-    real(PRCS_D), intent(inout) :: wiy(kdim)
-    real(PRCS_D), intent(inout) :: tmp(kdim)
-    real(PRCS_D), intent(inout) :: geo(kdim)
-    real(PRCS_D) :: eta_v
-    real(PRCS_D) :: work1, work2
+    real(8), intent(in) :: lat
+    real(8), intent(in) :: eta(kdim,2)
+    real(8), intent(inout) :: wix(kdim)
+    real(8), intent(inout) :: wiy(kdim)
+    real(8), intent(inout) :: tmp(kdim)
+    real(8), intent(inout) :: geo(kdim)
+    real(8) :: eta_v
+    real(8) :: work1, work2
     !
     ! ---------- horizontal mean
     work1 = pi/2.D0
@@ -1168,8 +1151,7 @@ contains
     !
     return
   end subroutine steady_state
-  !-----------------------------------------------------------------------------
-  !
+
   !-----------------------------------------------------------------------------
   ! convert geopotential height to pressure
   subroutine geo2prs( &
@@ -1186,21 +1168,21 @@ contains
     !
     implicit none
     integer, intent(in) :: kdim
-    real(PRCS_D), intent(in) :: ps
-    real(PRCS_D), intent(in) :: lat
-    real(PRCS_D), intent(in) :: tmp(kdim)
-    real(PRCS_D), intent(in) :: geo(kdim)
-    real(PRCS_D), intent(in) :: wix(kdim)
-    real(PRCS_D), intent(inout) :: prs(kdim)
-    real(PRCS_D), intent(in) :: eps_geo2prs
+    real(8), intent(in) :: ps
+    real(8), intent(in) :: lat
+    real(8), intent(in) :: tmp(kdim)
+    real(8), intent(in) :: geo(kdim)
+    real(8), intent(in) :: wix(kdim)
+    real(8), intent(inout) :: prs(kdim)
+    real(8), intent(in) :: eps_geo2prs
     logical, intent(in) :: nicamcore
     logical, intent(in) :: logout
 
     integer :: i, k
     integer, parameter :: limit = 400
-    real(PRCS_D) :: dz, uave, diff
-    real(PRCS_D) :: f_cf(3), rho(3)
-    real(PRCS_D) :: pp(kdim)
+    real(8) :: dz, uave, diff
+    real(8) :: f_cf(3), rho(3)
+    real(8) :: pp(kdim)
     logical :: iteration = .false.
     logical :: do_iter = .true.
     !-----
@@ -1278,8 +1260,7 @@ contains
 
     return
   end subroutine geo2prs
-  !-----------------------------------------------------------------------------
-  !
+
   !-----------------------------------------------------------------------------
   ! estimation ps distribution by using topography
   subroutine ps_estimation( &
@@ -1295,22 +1276,22 @@ contains
        ADM_LOG_FID
     implicit none
     integer, intent(in) :: kdim
-    real(PRCS_D), intent(in) :: lat
-    real(PRCS_D), intent(in) :: eta(kdim)
-    real(PRCS_D), intent(in) :: tmp(kdim)
-    real(PRCS_D), intent(in) :: geo(kdim)
-    real(PRCS_D), intent(in) :: wix(kdim)
-    real(PRCS_D), intent(out) :: ps
+    real(8), intent(in) :: lat
+    real(8), intent(in) :: eta(kdim)
+    real(8), intent(in) :: tmp(kdim)
+    real(8), intent(in) :: geo(kdim)
+    real(8), intent(in) :: wix(kdim)
+    real(8), intent(out) :: ps
     logical, intent(in) :: nicamcore
 
     integer :: k
-    real(PRCS_D), parameter :: lat0 = 0.691590985442682
+    real(8), parameter :: lat0 = 0.691590985442682
+    real(8) :: cs32ev, f1, f2
+    real(8) :: eta_v, tmp0, tmp1
+    real(8) :: ux1, ux2, hgt0, hgt1
+    real(8) :: dz, uave
+    real(8) :: f_cf(3), rho(3)
     real(PRCS_D), parameter :: eta1 = 1.0D0
-    real(PRCS_D) :: cs32ev, f1, f2
-    real(PRCS_D) :: eta_v, tmp0, tmp1
-    real(PRCS_D) :: ux1, ux2, hgt0, hgt1
-    real(PRCS_D) :: dz, uave
-    real(PRCS_D) :: f_cf(3), rho(3)
     !-----
 
     eta_v = (eta1 - eta0)*(pi*0.5D0)
@@ -1348,8 +1329,7 @@ contains
 
     return
   end subroutine ps_estimation
-  !-----------------------------------------------------------------------------
-  !
+
   !-----------------------------------------------------------------------------
   ! setting perturbation
   subroutine perturbation( &
@@ -1372,8 +1352,6 @@ contains
     integer, intent(in) :: ijdim, kdim, lall, vmax
     real(8), intent(inout) :: DIAG_var(ijdim,kdim,lall,vmax)
 
-    integer, parameter :: ID_prs = 1
-    integer, parameter :: ID_tmp = 2
     integer, parameter :: ID_vx  = 3
     integer, parameter :: ID_vy  = 4
     integer, parameter :: ID_vz  = 5
@@ -1411,8 +1389,7 @@ contains
     !
     return
   end subroutine perturbation
-  !-----------------------------------------------------------------------------
-  !
+
   !-----------------------------------------------------------------------------
   subroutine conv_vxvyvz( &
       kdim, &  !--- IN : # of z dimension
@@ -1426,15 +1403,16 @@ contains
     !
     implicit none
     integer, intent(in) :: kdim
-    real(PRCS_D), intent(in) :: lat, lon
-    real(PRCS_D), intent(in) :: wix(kdim)
-    real(PRCS_D), intent(in) :: wiy(kdim)
-    real(PRCS_D), intent(inout) :: vx1d(kdim)
-    real(PRCS_D), intent(inout) :: vy1d(kdim)
-    real(PRCS_D), intent(inout) :: vz1d(kdim)
+    real(8), intent(in)    :: lat
+    real(8), intent(in)    :: lon
+    real(8), intent(in)    :: wix(kdim)
+    real(8), intent(in)    :: wiy(kdim)
+    real(8), intent(inout) :: vx1d(kdim)
+    real(8), intent(inout) :: vy1d(kdim)
+    real(8), intent(inout) :: vz1d(kdim)
     !
     integer :: k
-    real(PRCS_D) :: unit_east(3), unit_north(3)
+    real(8) :: unit_east(3), unit_north(3)
     !
     ! imported from NICAM/nhm/mkinit/prg_mkinit_ncep.f90 (original written by H.Miura)
     ! *** compute vx, vy, vz as 1-dimensional variables
@@ -1449,8 +1427,7 @@ contains
     !
     return
   end subroutine conv_vxvyvz
-  !-----------------------------------------------------------------------------
-  !
+
   !-----------------------------------------------------------------------------
   function simpson( &
       pin1,        &  !--- IN : pressure (top)
@@ -1470,18 +1447,19 @@ contains
       result (pout)
     !
     implicit none
-    real(PRCS_D), intent(in) :: pin1, pin2, pin3
-    real(PRCS_D), intent(in) :: t1, t2, t3
-    real(PRCS_D), intent(in) :: u1, u2, u3
-    real(PRCS_D), intent(in) :: geo1, geo3, lat
+    real(8), intent(in) :: pin1, pin2, pin3
+    real(8), intent(in) :: t1, t2, t3
+    real(8), intent(in) :: u1, u2, u3
+    real(8), intent(in) :: geo1, geo3, lat
     logical, intent(in) :: downward
     logical, intent(in) :: nicamcore
     !
-    real(PRCS_D) :: dz, pout
-    real(PRCS_D) :: f_cf(3), rho(3)
-    !
-    dz = ( (geo1 - geo3)/g )*0.5D0
-    !
+    real(8) :: dz, pout
+    real(8) :: f_cf(3), rho(3)
+    !---------------------------------------------------------------------------
+
+    dz = (geo1-geo3) / g * 0.5D0
+
     if (nicamcore) then
        f_cf(1) = 2.D0*omega*u1*cos(lat) + (u1**2.D0)/a
        f_cf(2) = 2.D0*omega*u2*cos(lat) + (u2**2.D0)/a
@@ -1492,98 +1470,48 @@ contains
     rho(1) = pin1 / ( Rd*t1 )
     rho(2) = pin2 / ( Rd*t2 )
     rho(3) = pin3 / ( Rd*t3 )
-    !
+
     if (downward) then
-       pout = pin1 - ( &
-                         (1.D0/3.D0) * rho(1) * ( f_cf(1) - g ) &
+       pout = pin1 - ( (1.D0/3.D0) * rho(1) * ( f_cf(1) - g ) &
                        + (4.D0/3.D0) * rho(2) * ( f_cf(2) - g ) &
-                       + (1.D0/3.D0) * rho(3) * ( f_cf(3) - g ) &
-                     ) * dz
+                     + (1.D0/3.D0) * rho(3) * ( f_cf(3) - g ) ) * dz
     else
-       pout = pin3 + ( &
-                         (1.D0/3.D0) * rho(1) * ( f_cf(1) - g ) &
+       pout = pin3 + ( (1.D0/3.D0) * rho(1) * ( f_cf(1) - g ) &
                        + (4.D0/3.D0) * rho(2) * ( f_cf(2) - g ) &
-                       + (1.D0/3.D0) * rho(3) * ( f_cf(3) - g ) &
-                     ) * dz
+                     + (1.D0/3.D0) * rho(3) * ( f_cf(3) - g ) ) * dz
     endif
-    !
+
     return
   end function simpson
-  !-----------------------------------------------------------------------------
-  !
-  !-----------------------------------------------------------------------------
-  function sphere_xyz_to_lon (xyz) result (lon)  !(x,y,z) to longitude [-pi,pi].
-    real(PRCS_D),intent(in) :: xyz(3) !< (x,y,z)
-    real(PRCS_D) :: lon !< longitude [rad]
-    real(PRCS_D) :: proj
-    !
-    proj=sqrt (xyz(1)*xyz(1) + xyz(2)*xyz(2))
-    if (proj<eps) then
-       lon=0.0_PRCS_D       !# pole points
-    else
-       lon=atan2 (xyz(2),xyz(1))
-    end if
-    return
-  end function sphere_xyz_to_lon
-  !-----------------------------------------------------------------------------
-  !
-  !-----------------------------------------------------------------------------
-  function sphere_xyz_to_lat (xyz) result (lat)  !(x,y,z) to latitude [-pi/2,pi/2].
-    real(PRCS_D),intent(in) :: xyz(3) !< (x,y,z)
-    real(PRCS_D) :: lat !< latitude [rad]
-    real(PRCS_D) :: proj
-    !
-    proj=sqrt (xyz(1)*xyz(1) + xyz(2)*xyz(2))
-    if (proj<eps) then
-       lat=sign (0.5_PRCS_D*pi,xyz(3))       !# pole points
-    else
-       lat=atan (xyz(3)/proj)
-    end if
-    return
-  end function sphere_xyz_to_lat
-  !-----------------------------------------------------------------------------
-  !
+
   !-----------------------------------------------------------------------------
   function Sp_Unit_East( lon ) result( unit_east )
-    ! imported from prg_mkinit_ncep.f90 (original written by H.Miura)
-    ! ------
-    ! Compute local eastward unit vector (unit_east)
-    ! in the Cartesian coordinate system
-    ! given longitude (lon) of a position.
-    !
     implicit none
-    real(PRCS_D), intent(in) :: lon  ! [ rad ]
-    real(PRCS_D) :: unit_east(3)
-    !
-    unit_east(1) = - sin( lon )    ! --- x-direction
-    unit_east(2) =   cos( lon )    ! --- y-direction
-    unit_east(3) = 0.0_PRCS_D      ! --- z-direction
+
+    real(8), intent(in) :: lon ! [rad]
+    real(8)             :: unit_east(3)
+    !---------------------------------------------------------------------------
+
+    unit_east(1) = -sin(lon) ! x-direction
+    unit_east(2) =  cos(lon) ! y-direction
+    unit_east(3) = 0.D0      ! z-direction
+
     return
   end function Sp_Unit_East
-  !-----------------------------------------------------------------------------
-  !
+
   !-----------------------------------------------------------------------------
   function Sp_Unit_North( lon, lat ) result( unit_north )
-    ! imported from prg_mkinit_ncep.f90 (original written by H.Miura)
-    ! ------
-    ! Compute local northward unit vector (unit_north)
-    ! in the Cartesian coordinate system
-    ! given longitude (lon) and latitude (lat) of a position.
-    !
     implicit none
-    real(PRCS_D), intent(in) :: lon, lat  ! [ rad ]
-    real(PRCS_D) :: unit_north(3)
-    !
-    unit_north(1) = - sin( lat ) * cos( lon )    ! --- x-direction
-    unit_north(2) = - sin( lat ) * sin( lon )    ! --- y-direction
-    unit_north(3) =   cos( lat )                 ! --- z-direction
+
+    real(8), intent(in) :: lon, lat ! [rad]
+    real(8)             :: unit_north(3)
+    !---------------------------------------------------------------------------
+
+    unit_north(1) = -sin(lat) * cos(lon) ! x-direction
+    unit_north(2) = -sin(lat) * sin(lon) ! y-direction
+    unit_north(3) =  cos(lat)            ! z-direction
+
     return
   end function Sp_Unit_North
-  !-----------------------------------------------------------------------------
-  !
-  !
-  !  "subroutine surface_height" was moved to share/mod_grd.f90
-  !-----------------------------------------------------------------------------
-  !
+
 end module mod_dycoretest
-!-------------------------------------------------------------------------------
