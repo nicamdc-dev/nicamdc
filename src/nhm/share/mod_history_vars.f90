@@ -81,6 +81,7 @@ module mod_history_vars
   logical, private, save :: out_omg       = .false.
   logical, private, save :: out_hgt       = .false.
   logical, private, save :: out_th        = .false.
+  logical, private, save :: out_th_prime  = .false.
   logical, private, save :: out_rh        = .false.
 
   logical, private, save :: out_cld_frac  = .false.
@@ -118,6 +119,7 @@ contains
        if(      item_save(n) == 'ml_omg'             ) out_omg       = .true.
        if(      item_save(n) == 'ml_hgt'             ) out_hgt       = .true.
        if(      item_save(n) == 'ml_th'              ) out_th        = .true.
+       if(      item_save(n) == 'ml_th_prime'        ) out_th_prime  = .true.
        if(      item_save(n) == 'ml_rh'              ) out_rh        = .true.
 
        if(      item_save(n) == 'sl_cld_frac'        ) out_cld_frac  = .true.
@@ -159,6 +161,8 @@ contains
   !----------------------------------------------------------------------
   subroutine history_vars
     use mod_adm, only: &
+       ADM_prc_me,  &
+       ADM_prc_pl,  &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kall,    &
@@ -191,6 +195,7 @@ contains
          GTL_output_var2,       &
          GTL_output_var2_da,    &
          GTL_generate_uv,       &
+       GTL_global_sum_eachlayer, &
          GTL_clip_region_1layer , &  ! [add] 2010.08.20 C.Kodama
        GTL_max, &
        GTL_min
@@ -331,6 +336,13 @@ contains
     real(8) :: hgt (ADM_gall,ADM_kall,ADM_lall)
     real(8) :: th  (ADM_gall,ADM_kall,ADM_lall)
 !    real(8) :: rh  (ADM_gall,ADM_kall,ADM_lall)
+
+    real(8) :: one      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8) :: one_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8) :: th_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8) :: area_prof(ADM_kall)
+    real(8) :: th_prof  (ADM_kall)
+    real(8) :: th_prime (ADM_gall,ADM_kall,ADM_lall)
 
     real(8) :: q_clw     (ADM_gall,ADM_kall,ADM_lall)
     real(8) :: q_cli     (ADM_gall,ADM_kall,ADM_lall)
@@ -490,7 +502,7 @@ contains
     endif
 
     !--- potential temperature
-    if (out_th) then
+    if ( out_th ) then
        do l = 1, ADM_lall
           call thrmdyn_th( ADM_gall,   & ! [IN]
                            th (:,:,l), & ! [OUT]
@@ -498,6 +510,39 @@ contains
                            pre(:,:,l)  ) ! [IN]
 
           call history_in( 'ml_th', th(:,:,l) )
+       enddo
+    endif
+
+    if ( out_th_prime ) then
+       one   (:,:,:) = 1.D0
+       one_pl(:,:,:) = 1.D0
+
+       call GTL_global_sum_eachlayer( one, one_pl, area_prof )
+
+       do l = 1, ADM_lall
+          call thrmdyn_th( ADM_gall,   & ! [IN]
+                           th (:,:,l), & ! [OUT]
+                           tem(:,:,l), & ! [IN]
+                           pre(:,:,l)  ) ! [IN]
+       enddo
+
+       if ( ADM_prc_me == ADM_prc_pl ) then
+          do l = 1, ADM_lall_pl
+             call thrmdyn_th( ADM_gall_pl,   & ! [IN]
+                              th_pl (:,:,l), & ! [OUT]
+                              tem_pl(:,:,l), & ! [IN]
+                              pre_pl(:,:,l)  ) ! [IN]
+          enddo
+       endif
+
+       call GTL_global_sum_eachlayer( th, th_pl, th_prof )
+
+       do l = 1, ADM_lall
+          do k = 1, ADM_kall
+             th_prime(:,k,l) = th(:,k,l) - th_prof(k) / area_prof(k)
+          enddo
+
+          call history_in( 'ml_th_prime', th_prime(:,:,l) )
        enddo
     endif
 
