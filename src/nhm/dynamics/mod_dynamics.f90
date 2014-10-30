@@ -387,8 +387,7 @@ contains
 
        call DEBUG_rapend  ('+++Tracer Advection')
 
-       call forcing_update( PROG0(:,:,:,:), PROG0_pl(:,:,:,:), & ! [IN]
-                            PROG (:,:,:,:), PROG_pl (:,:,:,:)  ) ! [INOUT]
+       call forcing_update( PROG(:,:,:,:), PROG_pl(:,:,:,:) ) ! [INOUT]
     endif
 
     !---------------------------------------------------------------------------

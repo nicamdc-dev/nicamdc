@@ -41,6 +41,10 @@ module mod_forcing_driver
   !
   !++ Private parameters & variables
   !
+  integer, private, parameter :: nmax_TEND     = 7
+  integer, private, parameter :: nmax_PROG     = 6
+  integer, private, parameter :: nmax_v_mean_c = 5
+
   integer, private, parameter :: I_RHOG     = 1 ! Density x G^{1/2} x gamma^2
   integer, private, parameter :: I_RHOGVX   = 2 ! Density x G^{1/2} x gamma^2 x Horizontal velocity (X-direction)
   integer, private, parameter :: I_RHOGVY   = 3 ! Density x G^{1/2} x gamma^2 x Horizontal velocity (Y-direction)
@@ -48,11 +52,7 @@ module mod_forcing_driver
   integer, private, parameter :: I_RHOGW    = 5 ! Density x G^{1/2} x gamma^2 x Vertical   velocity
   integer, private, parameter :: I_RHOGE    = 6 ! Density x G^{1/2} x gamma^2 x Internal Energy
   integer, private, parameter :: I_RHOGETOT = 7 ! Density x G^{1/2} x gamma^2 x Total Energy
-  !
-  integer, private, parameter :: nmax_TEND     = 7
-  integer, private, parameter :: nmax_PROG     = 6
-  integer, private, parameter :: nmax_v_mean_c = 5
-  !
+
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
@@ -259,8 +259,7 @@ contains
   ! [add; original by H.Miura] 20130613 R.Yoshida
   !-----------------------------------------------------------------------------
   subroutine forcing_update( &
-       PROG0, PROG0_pl,  &
-       PROG,  PROG_pl    )
+       PROG, PROG_pl )
     use mod_adm, only: &
        ADM_prc_me,  &
        ADM_prc_pl,  &
@@ -268,13 +267,12 @@ contains
        ADM_gall_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
-       ADM_kall,    &
-       ADM_kmax,    &
-       ADM_kmin,    &
-       ADM_proc_stop   ! R.Yoshida 13/06/12 [add]
+       ADM_kall
     use mod_time, only: &
        TIME_DTL
     use mod_grd, only: &
+       GRD_Z,    &
+       GRD_ZH,   &
        GRD_vz,   &
        GRD_vz_pl
     use mod_gmtr, only: &
@@ -282,174 +280,125 @@ contains
        GMTR_lon_pl, &
        GMTR_lat,    &
        GMTR_lat_pl
-    use mod_runconf, only: &
-       RUNNAME,      & ! R.Yoshida 13/06/13 [add]
-       TRC_ADV_TYPE
+    use mod_dycoretest, only: &
+       DCTEST_type, &
+       DCTEST_case
     use mod_af_trcadv, only: & ![add] 20130612 R.Yoshida
        test11_velocity, &
        test12_velocity
     implicit none
 
-    !--- prognostic variables (save)
-    real(8), intent(in) :: PROG0     (ADM_gall,   ADM_kall,ADM_lall,   nmax_PROG)
-    real(8), intent(in) :: PROG0_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_PROG)
-    !--- prognostic variables
-    real(8), intent(inout) :: PROG      (ADM_gall,   ADM_kall,ADM_lall,   nmax_PROG)
-    real(8), intent(inout) :: PROG_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_PROG)
+    real(8), intent(inout) :: PROG    (ADM_gall,   ADM_kall,ADM_lall,   nmax_PROG) ! prognostic variables
+    real(8), intent(inout) :: PROG_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_PROG)
 
-    !--- horizontal velocity_x  ( physical )
-    real(8) :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8) :: vx     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_x
+    real(8) :: vx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8) :: vy     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_y
+    real(8) :: vy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8) :: vz     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_z
+    real(8) :: vz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8) :: w      (ADM_gall,   ADM_kall,ADM_lall   ) ! vertical velocity
+    real(8) :: w_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    !--- horizontal velocity_y  ( physical )
-    real(8) :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), save :: time = 0.D0 ! for tracer advection test  [add; original by H.Miura] 20130612 R.Yoshida
 
-    !--- horizontal velocity_z  ( physical )
-    real(8) :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-
-    !--- vertical velocity ( physical )
-    real(8) :: w   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: w_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-
-    !--- density deviation from the base state ( G^{1/2} X gamma2 )
-    real(8) :: rhogd   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rhogd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-
-    integer :: ij, k ,l
-
-    ! for tracer advection test  [add; original by H.Miura] 20130612 R.Yoshida
-
-    real(8), save :: time=0.d0
-
-
-    !--- reset density
-    rhogd(:,:,:)    = PROG0(:,:,:,I_rhog)
-    rhogd_pl(:,:,:) = PROG0_pl(:,:,:,I_rhog)
-
-
+    integer :: n, k ,l
+    !---------------------------------------------------------------------------
 
     !--- update velocity
+    time = time + TIME_DTL
 
-    time=time+TIME_DTL
+    if ( DCTEST_type == 'Traceradvection' .AND. DCTEST_case == '1' ) then
 
-    vx=0.d0; vx_pl=0.d0
-
-    vy=0.d0; vy_pl=0.d0
-
-    vz=0.d0; vz_pl=0.d0
-
-    w=0.d0
-
-    select case (RUNNAME)
-    !------------------------------------------------------------------------
-
-    case ("TRCADV-1")
-
-       do l=1,ADM_lall
-
-       do k=ADM_kmin-1,ADM_kmax+1
-
+       do l = 1, ADM_lall
+       do k = 1, ADM_kall
+       do n = 1, ADM_gall
           ! full (1): u,v
-
           ! half (2): w
+          call test11_velocity( time,                   & ![IN]
+                                GMTR_lon(n,l),          & ![IN]
+                                GMTR_lat(n,l),          & ![IN]
+                                GRD_vz  (n,k,l,GRD_Z ), & ![IN]
+                                GRD_vz  (n,k,l,GRD_ZH), & ![IN]
+                                vx      (n,k,l),        & ![OUT]
+                                vy      (n,k,l),        & ![OUT]
+                                vz      (n,k,l),        & ![OUT]
+                                w       (n,k,l)         ) ![OUT]
+       enddo
+       enddo
+       enddo
 
-          do ij=1,ADM_gall
+       if ( ADM_prc_me == ADM_prc_pl ) then
+          do l = 1, ADM_lall_pl
+          do k = 1, ADM_kall
+          do n = 1, ADM_gall_pl
+             call test11_velocity( time,                      & ![IN]
+                                   GMTR_lon_pl(n,l),          & ![IN]
+                                   GMTR_lat_pl(n,l),          & ![IN]
+                                   GRD_vz_pl  (n,k,l,GRD_Z ), & ![IN]
+                                   GRD_vz_pl  (n,k,l,GRD_ZH), & ![IN]
+                                   vx_pl      (n,k,l),        & ![OUT]
+                                   vy_pl      (n,k,l),        & ![OUT]
+                                   vz_pl      (n,k,l),        & ![OUT]
+                                   w_pl       (n,k,l)         ) ![OUT]
+          enddo
+          enddo
+          enddo
+       endif
 
-             call test11_velocity (time,GMTR_lon(ij,l),GMTR_lat(ij,l),GRD_vz(ij,k,l,1),GRD_vz(ij,k,l,2), &
+    elseif( DCTEST_type == 'Traceradvection' .AND. DCTEST_case == '2' ) then
 
-                                   vx(ij,k,l),vy(ij,k,l),vz(ij,k,l),w(ij,k,l))
-
-          end do
-
-       end do
-
-       end do
-
-
-
-       if(ADM_prc_me==ADM_prc_pl) then
-
-          do l=1,ADM_lall_pl
-
-          do k=ADM_kmin-1,ADM_kmax+1
-
-          do ij=1,ADM_GALL_PL
-
-             call test11_velocity (time,GMTR_lon_pl(ij,l),GMTR_lat_pl(ij,l),GRD_vz_pl(ij,k,l,1),GRD_vz_pl(ij,k,l,2), &
-
-                                   vx_pl(ij,k,l),vy_pl(ij,k,l),vz_pl(ij,k,l),w_pl(ij,k,l))
-
-          end do
-
-          end do
-
-          end do
-
-       end if
-
-    !------------------------------------------------------------------------
-
-    case ("TRCADV-2")
-
-       do l=1,ADM_lall
-
-       do k=ADM_kmin-1,ADM_kmax+1
-
+       do l = 1, ADM_lall
+       do k = 1, ADM_kall
+       do n = 1, ADM_gall
           ! full (1): u,v
-
           ! half (2): w
+          call test12_velocity( time,                   & ![IN]
+                                GMTR_lon(n,l),          & ![IN]
+                                GMTR_lat(n,l),          & ![IN]
+                                GRD_vz  (n,k,l,GRD_Z ), & ![IN]
+                                GRD_vz  (n,k,l,GRD_ZH), & ![IN]
+                                vx      (n,k,l),        & ![OUT]
+                                vy      (n,k,l),        & ![OUT]
+                                vz      (n,k,l),        & ![OUT]
+                                w       (n,k,l)         ) ![OUT]
+       enddo
+       enddo
+       enddo
 
-          do ij=1,ADM_gall
+       if ( ADM_prc_me == ADM_prc_pl ) then
+          do l = 1, ADM_lall_pl
+          do k = 1, ADM_kall
+          do n = 1, ADM_gall_pl
+             call test12_velocity( time,                      & ![IN]
+                                   GMTR_lon_pl(n,l),          & ![IN]
+                                   GMTR_lat_pl(n,l),          & ![IN]
+                                   GRD_vz_pl  (n,k,l,GRD_Z ), & ![IN]
+                                   GRD_vz_pl  (n,k,l,GRD_ZH), & ![IN]
+                                   vx_pl      (n,k,l),        & ![OUT]
+                                   vy_pl      (n,k,l),        & ![OUT]
+                                   vz_pl      (n,k,l),        & ![OUT]
+                                   w_pl       (n,k,l)         ) ![OUT]
+          enddo
+          enddo
+          enddo
+       endif
 
-             call test12_velocity (time,GMTR_lon(ij,l),GMTR_lat(ij,l),GRD_vz(ij,k,l,1),GRD_vz(ij,k,l,2), &
+    endif
 
-                                   vx(ij,k,l),vy(ij,k,l),vz(ij,k,l),w(ij,k,l))
+    PROG(:,:,:,I_RHOGVX) = vx(:,:,:) * PROG(:,:,:,I_RHOG)
+    PROG(:,:,:,I_RHOGVY) = vy(:,:,:) * PROG(:,:,:,I_RHOG)
+    PROG(:,:,:,I_RHOGVZ) = vz(:,:,:) * PROG(:,:,:,I_RHOG)
+    PROG(:,:,:,I_RHOGW ) = w (:,:,:) * PROG(:,:,:,I_RHOG)
 
-          end do
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       PROG_pl(:,:,:,I_RHOGVX) = vx_pl(:,:,:) * PROG_pl(:,:,:,I_RHOG)
+       PROG_pl(:,:,:,I_RHOGVY) = vy_pl(:,:,:) * PROG_pl(:,:,:,I_RHOG)
+       PROG_pl(:,:,:,I_RHOGVZ) = vz_pl(:,:,:) * PROG_pl(:,:,:,I_RHOG)
+       PROG_pl(:,:,:,I_RHOGW ) = w_pl (:,:,:) * PROG_pl(:,:,:,I_RHOG)
+    endif
 
-       end do
-
-       end do
-
-
-
-       if(ADM_prc_me==ADM_prc_pl) then
-
-          do l=1,ADM_lall_pl
-
-          do k=ADM_kmin-1,ADM_kmax+1
-
-          do ij=1,ADM_GALL_PL
-
-             call test12_velocity (time,GMTR_lon_pl(ij,l),GMTR_lat_pl(ij,l),GRD_vz_pl(ij,k,l,1),GRD_vz_pl(ij,k,l,2), &
-
-                                   vx_pl(ij,k,l),vy_pl(ij,k,l),vz_pl(ij,k,l),w_pl(ij,k,l))
-
-          end do
-
-          end do
-
-          end do
-
-       end if
-
-    !------------------------------------------------------------------------
-
-    end select
-    !
-
-    PROG(:,:,:,I_RHOGVX)=vx(:,:,:)*rhogd(:,:,:); PROG_pl(:,:,:,I_RHOGVX)=vx_pl(:,:,:)*rhogd_pl(:,:,:)
-
-    PROG(:,:,:,I_RHOGVY)=vy(:,:,:)*rhogd(:,:,:); PROG_pl(:,:,:,I_RHOGVY)=vy_pl(:,:,:)*rhogd_pl(:,:,:)
-
-    PROG(:,:,:,I_RHOGVZ)=vz(:,:,:)*rhogd(:,:,:); PROG_pl(:,:,:,I_RHOGVZ)=vz_pl(:,:,:)*rhogd_pl(:,:,:)
-
-    PROG(:,:,:,I_RHOGW) =w(:,:,:) *rhogd(:,:,:); PROG_pl(:,:,:,I_RHOGW) =w_pl(:,:,:) *rhogd_pl(:,:,:)
-    !
     return
   end subroutine forcing_update
-  !
+
 end module mod_forcing_driver
-!-------------------------------------------------------------------------------
