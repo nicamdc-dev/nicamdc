@@ -7,7 +7,6 @@ ZL=${4}
 VGRID=${5}
 TOPDIR=${6}
 BINNAME=${7}
-RUNCONF=${8}
 
 # System specific
 MPIEXEC="scan mpiexec"
@@ -30,17 +29,6 @@ res2d=GL${GL}RL${RL}
 res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
-
-if [ ${NMPI} -gt 36864 ]; then
-   rscgrp="huge"
-elif [ ${NMPI} -gt 384 ]; then
-   rscgrp="large"
-else
-   rscgrp="small"
-fi
-
-outdir=${dir3d}
-cd ${outdir}
 
 cat << EOF1 > run.sh
 #! /bin/bash -x

@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpiexec"
+MPIEXEC="mpirun -np ${NMPI}"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -30,33 +30,15 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-# for AICS-FX10
-if [ ${NMPI} -gt 96 ]; then
-   rscgrp="huge"
-elif [ ${NMPI} -gt 24 ]; then
-   rscgrp="large"
-else
-   rscgrp="large"
-fi
-PROF="fipp -C -Srange -Ihwm -d prof"
-
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for FX10
+# ------ FOR Linux64 & pgi C&fortran & openmpi -----
 #
 ################################################################################
-#PJM --rsc-list "rscgrp=${rscgrp}"
-#PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=05:00:00"
-#PJM -j
-#PJM -s
-#
-. /work/system/Env_base
-#
-export PARALLEL=16
-export OMP_NUM_THREADS=16
+export FORT_FMT_RECL=400
+
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
@@ -69,11 +51,9 @@ do
 done
 
 cat << EOF2 >> run.sh
-rm -rf ./prof
-mkdir -p ./prof
 
 # run
-${PROF} ${MPIEXEC} ./${BINNAME} || exit
+${MPIEXEC} ./${BINNAME} || exit
 
 ################################################################################
 EOF2
@@ -83,19 +63,11 @@ cat << EOFICO2LL1 > ico2ll.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for FX10
+# ------ FOR Linux64 & pgi C&fortran & openmpi -----
 #
 ################################################################################
-#PJM --rsc-list "rscgrp=${rscgrp}"
-#PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=01:00:00"
-#PJM -j
-#PJM -s
-#
-. /work/system/Env_base
-#
-export PARALLEL=16
-export OMP_NUM_THREADS=16
+export FORT_FMT_RECL=400
+
 
 ln -sv ${TOPDIR}/bin/fio_ico2ll_mpi .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .

@@ -7,7 +7,6 @@ ZL=${4}
 VGRID=${5}
 TOPDIR=${6}
 BINNAME=${7}
-RUNCONF=${8}
 
 # System specific
 MPIEXEC="mpirun -np ${NMPI}"
@@ -31,14 +30,11 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-outdir=${dir3d}
-cd ${outdir}
-
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ FOR Linux64 & intel C&fortran & mpich2 -----
+# ------ FOR Linux64 & pgi C&fortran & mpich2 -----
 #
 ################################################################################
 export FORT_FMT_RECL=400
@@ -67,7 +63,7 @@ cat << EOFICO2LL1 > ico2ll.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ FOR Linux64 & intel C&fortran & mpich2 -----
+# ------ FOR Linux64 & pgi C&fortran & mpich2 -----
 #
 ################################################################################
 export FORT_FMT_RECL=400

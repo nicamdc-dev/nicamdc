@@ -7,7 +7,6 @@ ZL=${4}
 VGRID=${5}
 TOPDIR=${6}
 BINNAME=${7}
-RUNCONF=${8}
 
 # System specific
 MPIEXEC="mpiexec"
@@ -38,9 +37,6 @@ elif [ ${NMPI} -gt 384 ]; then
 else
    rscgrp="small"
 fi
-
-outdir=${dir3d}
-cd ${outdir}
 
 cat << EOF1 > run.sh
 #! /bin/bash -x

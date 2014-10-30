@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="openmpirun -np ${NMPI}"
+MPIEXEC="mpiexec -np ${NMPI}"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -29,9 +29,6 @@ res2d=GL${GL}RL${RL}
 res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
-
-outdir=${dir3d}
-cd ${outdir}
 
 cat << EOF1 > run.sh
 #! /bin/bash -x

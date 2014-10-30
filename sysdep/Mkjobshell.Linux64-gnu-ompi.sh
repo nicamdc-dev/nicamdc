@@ -7,7 +7,6 @@ ZL=${4}
 VGRID=${5}
 TOPDIR=${6}
 BINNAME=${7}
-RUNCONF=${8}
 
 # System specific
 MPIEXEC="mpirun -np ${NMPI}"
@@ -31,9 +30,6 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-outdir=${dir3d}
-cd ${outdir}
-
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
@@ -42,7 +38,7 @@ cat << EOF1 > run.sh
 #
 ################################################################################
 export FORT_FMT_RECL=400
-
+export GFORTRAN_UNBUFFERED_ALL=Y
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
@@ -71,7 +67,7 @@ cat << EOFICO2LL1 > ico2ll.sh
 #
 ################################################################################
 export FORT_FMT_RECL=400
-
+export GFORTRAN_UNBUFFERED_ALL=Y
 
 ln -sv ${TOPDIR}/bin/fio_ico2ll_mpi .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .

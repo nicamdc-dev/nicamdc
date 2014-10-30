@@ -1,0 +1,28 @@
+################################################################################
+#
+# Common Makefile for each test (Please include this file)
+#
+################################################################################
+
+build:
+	$(MAKE) -C $(TOPDIR)/src || exit 1
+
+makedir:
+	mkdir -p $(BUILD_DIR)
+
+run: jobshell
+	$(JOBSUB) run.sh
+
+jobshell:
+	@if [ -f ../Mkjobshell.$(SCALE_SYS).sh ]; then \
+		sh ../Mkjobshell.$(NICAM_SYS).sh $(glevel) $(rlevel) $(nmpi) $(zlayer) $(vgrid) $(TOPDIR) $(exename); \
+	else \
+		sh $(TOPDIR)/sysdep/Mkjobshell.$(NICAM_SYS).sh $(glevel) $(rlevel) $(nmpi) $(zlayer) $(vgrid) $(TOPDIR) $(exename); \
+	fi
+
+
+
+.PHONY: clean
+
+clean:
+	$(MAKE) -C $(TOPDIR)/src allclean
