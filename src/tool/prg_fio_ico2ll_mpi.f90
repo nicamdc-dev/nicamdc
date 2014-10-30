@@ -6,7 +6,7 @@
 program fio_ico2ll_mpi
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
+  !++ Description:
   !       This program converts from data on dataicosahedral grid (new I/O format)
   !       to that on latitude-longitude grid.
   !       (some part of source code is imported from ico2ll.f90)
@@ -16,8 +16,8 @@ program fio_ico2ll_mpi
   !++ Contributer of ico2ll.f90 : M.Satoh, S.Iga, Y.Niwa, H.Tomita, T.Mitsui,
   !                               W.Yanase,  H.Taniguchi, Y.Yamada
   !
-  !++ History: 
-  !      Version   Date      Comment 
+  !++ History:
+  !      Version   Date      Comment
   !      -----------------------------------------------------------------------
   !      0.90      11-09-07  H.Yashiro : [NEW] partially imported from ico2ll.f90
   !      0.95      12-04-19  H.Yashiro : [mod] deal large record length
@@ -144,8 +144,8 @@ program fio_ico2ll_mpi
   ! ico data information
   integer, allocatable :: ifid(:)
   integer, allocatable :: prc_tab_C(:)
-  type(headerinfo) hinfo 
-  type(datainfo)   dinfo 
+  type(headerinfo) hinfo
+  type(datainfo)   dinfo
 
   integer                                :: num_of_data
   integer                                :: nvar
@@ -535,7 +535,7 @@ program fio_ico2ll_mpi
         !--- open output file
         outbase = trim(outfile_dir)//'/'//trim(outfile_prefix)//trim(var_name(v))
         ofid = MISC_get_available_fid()
- 
+
         if ( .not. devide_template ) then
            if (output_grads) then
               write(fid_log,*) 'Output: ', trim(outbase)//'.grd'
@@ -700,7 +700,13 @@ program fio_ico2ll_mpi
               write(ofid,rec=irec) lldata_total(:,:,:)
               irec = irec + 1
            elseif(output_gtool) then
-              write(var_gthead(25,v),'(I16)') int( nowsec/3600,kind=4 )
+              if ( nowsec < 2*365*24*60*60 ) then ! short term
+                 write(var_gthead(25,v),'(I16)') int(nowsec,kind=4)
+                 write(var_gthead(26,v),'(A16)') 'SEC             '
+                 write(var_gthead(28,v),'(I16)') int(var_dt(v),kind=4)
+              else
+                 write(var_gthead(25,v),'(I16)') int( nowsec/60,kind=4 )
+              endif
               write(var_gthead(27,v),'(A16)') calendar_ss2cc_gtool(nowsec)
               gthead(:) = var_gthead(:,v)
 
@@ -839,7 +845,7 @@ contains
     integer(8),         intent(in) :: dt
     logical,            intent(in) :: lon_swap
     logical,            intent(in) :: devide_template
- 
+
     real(8) :: pi
     real(8) :: temp(imax)
 
@@ -940,7 +946,7 @@ contains
     real(8),                   intent( in) :: alt(kmax)
     integer(8),                intent( in) :: dt
     logical,                   intent( in) :: lon_swap
- 
+
     character(LEN=16) :: axhead(64)
     character(LEN=16) :: hitem
     character(LEN=32) :: htitle
@@ -983,8 +989,8 @@ contains
     write(gthead(15),'(A16)'  ) htitle(17:32)
     write(gthead(16),'(A16)'  ) unit
 
-    write(gthead(26),'(A16)'  ) 'HOUR            '
-    write(gthead(28),'(I16)'  ) int(dt/3600,kind=4)
+    write(gthead(26),'(A16)'  ) 'MIN             '
+    write(gthead(28),'(I16)'  ) int(dt/60,kind=4)
     write(gthead(29),'(A16)'  ) gt_axisx ! from info file
     write(gthead(30),'(I16)'  ) 1
     write(gthead(31),'(I16)'  ) imax
@@ -1002,7 +1008,7 @@ contains
     write(gthead(43),'(E16.7)') real(-99.9E+33,4)
     write(gthead(44),'(I16)'  ) 1
     write(gthead(46),'(I16)'  ) 0
-    write(gthead(47),'(E16.7)') 0. 
+    write(gthead(47),'(E16.7)') 0.
     write(gthead(48),'(I16)'  ) 0
     write(gthead(60),'(A16)'  ) kdate
     write(gthead(62),'(A16)'  ) kdate
@@ -1029,7 +1035,7 @@ contains
     write(axhead(39),'(E16.7)') -999.0
     write(axhead(44),'(I16)'  ) 1
     write(axhead(46),'(I16)'  ) 0
-    write(axhead(47),'(E16.7)') 0. 
+    write(axhead(47),'(E16.7)') 0.
     write(axhead(48),'(I16)'  ) 0
     write(axhead(60),'(A16)'  ) kdate
     write(axhead(62),'(A16)'  ) kdate
