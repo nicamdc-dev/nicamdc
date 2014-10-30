@@ -1345,12 +1345,6 @@ contains
        allocate( Mu_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) )
        allocate( Ml   (ADM_gall,   ADM_kall,ADM_lall   ) )
        allocate( Ml_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-       Mc   (:,:,:) = 0.D0
-       Mc_pl(:,:,:) = 0.D0
-       Mu   (:,:,:) = 0.D0
-       Mu_pl(:,:,:) = 0.D0
-       Ml   (:,:,:) = 0.D0
-       Ml_pl(:,:,:) = 0.D0
 
        allocate( A2_o     (ADM_gall,   ADM_kall,ADM_lall   ) )
        allocate( A2_o_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
@@ -1365,75 +1359,83 @@ contains
        alfa   = real(NON_HYDRO_ALPHA,kind=8)
        ACVovR = alfa * CNST_CV / CNST_RAIR
 
-       do l = 1, ADM_lall
-          do k = ADM_kmin, ADM_kmax
-             do ij = 1, ADM_gall
-                A2_o  (ij,k,l) = VMTR_RGSGAM2(ij,k,l) * GRD_rdgz(k)
-                CooCip(ij,k,l) = GCVovR * VMTR_RGAM2H(ij,k,l) * VMTR_GAM2H(ij,k+1,l)
-                CooCim(ij,k,l) = GCVovR * VMTR_RGAM2H(ij,k,l) * VMTR_GAM2H(ij,k-1,l)
-                D2    (ij,k,l) = ACVovR / ( dt*dt ) / VMTR_RGSH(ij,k,l)
-             enddo
-          enddo
+       do l  = 1, ADM_lall
+       do k  = ADM_kmin, ADM_kmax
+       do ij = 1, ADM_gall
+          A2_o  (ij,k,l) = VMTR_RGSGAM2(ij,k,l) * GRD_rdgz(k)
+          CooCip(ij,k,l) = GCVovR * VMTR_RGAM2H(ij,k,l) * VMTR_GAM2H(ij,k+1,l)
+          CooCim(ij,k,l) = GCVovR * VMTR_RGAM2H(ij,k,l) * VMTR_GAM2H(ij,k-1,l)
+          D2    (ij,k,l) = ACVovR / ( dt*dt ) / VMTR_RGSH(ij,k,l)
+       enddo
+       enddo
        enddo
 
        if ( ADM_prc_me == ADM_prc_pl ) then
           do l = 1, ADM_lall_pl
-             do k = ADM_kmin, ADM_kmax
-                do ij = 1, ADM_gall_pl
-                   A2_o_pl  (ij,k,l) = VMTR_RGSGAM2_pl(ij,k,l) * GRD_rdgz(k)
-                   CooCip_pl(ij,k,l) = GCVovR * VMTR_RGAM2H_pl(ij,k,l) * VMTR_GAM2H_pl(ij,k+1,l)
-                   CooCim_pl(ij,k,l) = GCVovR * VMTR_RGAM2H_pl(ij,k,l) * VMTR_GAM2H_pl(ij,k-1,l)
-                   D2_pl    (ij,k,l) = ACVovR / ( dt*dt ) / VMTR_RGSH_pl(ij,k,l)
-                enddo
-             enddo
+          do k = ADM_kmin, ADM_kmax
+          do ij = 1, ADM_gall_pl
+             A2_o_pl  (ij,k,l) = VMTR_RGSGAM2_pl(ij,k,l) * GRD_rdgz(k)
+             CooCip_pl(ij,k,l) = GCVovR * VMTR_RGAM2H_pl(ij,k,l) * VMTR_GAM2H_pl(ij,k+1,l)
+             CooCim_pl(ij,k,l) = GCVovR * VMTR_RGAM2H_pl(ij,k,l) * VMTR_GAM2H_pl(ij,k-1,l)
+             D2_pl    (ij,k,l) = ACVovR / ( dt*dt ) / VMTR_RGSH_pl(ij,k,l)
+          enddo
+          enddo
           enddo
        endif
 
     endif ! only once
 
     do l = 1, ADM_lall
-       do k  = ADM_kmin+1, ADM_kmax
+    do k = ADM_kmin+1, ADM_kmax
        do ij = 1, ADM_gall
           Mc(ij,k,l) = D2(ij,k,l) &
                      + GRD_rdgzh(k) * ( ( A2_o(ij,k,l)+A2_o(ij,k-1,l) )       &
                                       * VMTR_GAM2H(ij,k,l) * eth(ij,k,l)      &
                                       - 0.5D0 * ( GRD_dfac(k)-GRD_cfac(k-1) ) &
                                       * ( g_tilde(ij,k,l)+GCVovR )            )
+       enddo
 
+       do ij = 1, ADM_gall
           Mu(ij,k,l) = -GRD_rdgzh(k) * ( A2_o(ij,k,l)                         &
                                        * VMTR_GAM2H(ij,k+1,l) * eth(ij,k+1,l) &
                                        + 0.5D0 * GRD_cfac(k)                  &
                                        * ( g_tilde(ij,k+1,l)+CooCip(ij,k,l) ) )
+       enddo
 
+       do ij = 1, ADM_gall
           Ml(ij,k,l) = -GRD_rdgzh(k) * ( A2_o(ij,k,l)                         &
                                        * VMTR_GAM2H(ij,k-1,l) * eth(ij,k-1,l) &
                                        - 0.5D0 * GRD_dfac(k-1)                &
                                        * ( g_tilde(ij,k-1,l)+CooCim(ij,k,l) ) )
        enddo
-       enddo
+    enddo
     enddo
 
     if ( ADM_prc_me == ADM_prc_pl ) then
        do l = 1, ADM_lall_pl
-          do k  = ADM_kmin+1, ADM_kmax
+       do k = ADM_kmin+1, ADM_kmax
           do ij = 1, ADM_gall_pl
              Mc_pl(ij,k,l) = D2_pl(ij,k,l) &
                            + GRD_rdgzh(k) * ( ( A2_o_pl(ij,k,l)+A2_o_pl(ij,k-1,l) )  &
                                             * VMTR_GAM2H_pl(ij,k,l) * eth_pl(ij,k,l) &
                                             - 0.5D0 * ( GRD_dfac(k)-GRD_cfac(k-1) )  &
                                             * ( g_tilde_pl(ij,k,l)+GCVovR )          )
+          enddo
 
+          do ij = 1, ADM_gall_pl
              Mu_pl(ij,k,l) = -GRD_rdgzh(k) * ( A2_o_pl(ij,k,l)                            &
                                              * VMTR_GAM2H_pl(ij,k+1,l) * eth_pl(ij,k+1,l) &
                                              + 0.5D0 * GRD_cfac(k)                        &
                                              * ( g_tilde_pl(ij,k+1,l)+CooCip_pl(ij,k,l) ) )
+          enddo
 
+          do ij = 1, ADM_gall_pl
              Ml_pl(ij,k,l) = -GRD_rdgzh(k) * ( A2_o_pl(ij,k,l)                            &
                                              * VMTR_GAM2H_pl(ij,k-1,l) * eth_pl(ij,k-1,l) &
                                              - 0.5D0 * GRD_dfac(k-1)                      &
                                              * ( g_tilde_pl(ij,k-1,l)+CooCim_pl(ij,k,l) ) )
           enddo
-          enddo
+       enddo
        enddo
     endif
 

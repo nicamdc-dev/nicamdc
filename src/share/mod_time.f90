@@ -152,6 +152,8 @@ contains
           TIME_sstep_max = 3
         case('RK4')
           TIME_sstep_max = 4
+        case('TRCADV')
+          TIME_sstep_max = 0
        case default
           write(*,*) 'xxx Invalid TIME_INTEG_TYPE! STOP.'
        endselect
@@ -159,7 +161,7 @@ contains
     else
        TIME_sstep_max = sstep_max
     endif
-    TIME_dts = TIME_dtl / real(TIME_sstep_max,kind=8)
+    TIME_dts = TIME_dtl / max(real(TIME_sstep_max,kind=8),1.D0)
 
     if ( start_date(1) == -999 ) start_date(1) = start_year
     if ( start_date(2) == -999 ) start_date(2) = start_month

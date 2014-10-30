@@ -204,7 +204,7 @@ contains
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
-    sum(k) = 0.D0
+    sum(:) = 0.D0
     do l = 1, ADM_lall
     do k = 1, ADM_kall
     do n = 1, ADM_IooJoo_nmax
@@ -224,7 +224,6 @@ contains
        enddo
        enddo
     endif
-
 
     call COMM_Stat_sum_eachlayer( ADM_kall, sum(:), sum_g(:) )
 
@@ -254,7 +253,7 @@ contains
     !---------------------------------------------------------------------------
 
     if ( first ) then
-       !--- calc gloval volume at first time
+       !--- calc global volume at first time
        one   (:,:,:) = 1.D0
        one_pl(:,:,:) = 1.D0
 

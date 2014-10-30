@@ -3167,7 +3167,7 @@ contains
                MPI_DOUBLE_PRECISION, & !--- type
                ADM_rgn2prc(ADM_rgnid_npl_mng)-1, & !--- source rank
                ADM_NPL,              & !--- tag
-               ADM_COMM_WORLD,   & !--- world
+               ADM_COMM_WORLD,       & !--- world
                ireq(3),                 & !--- request id
                ierr)                   !--- error id
        end if
@@ -3179,7 +3179,7 @@ contains
                MPI_DOUBLE_PRECISION, & !--- type
                ADM_rgn2prc(ADM_rgnid_spl_mng)-1, & !--- srouce rank
                ADM_SPL,              & !--- tag
-               ADM_COMM_WORLD,   & !--- world
+               ADM_COMM_WORLD,       & !--- world
                ireq(4),                 & !--- request id
                ierr)                   !--- error id
        end if
@@ -3198,7 +3198,7 @@ contains
                   MPI_DOUBLE_PRECISION, & !--- type
                   ADM_prc_npl-1,        & !--- dest rank
                   ADM_NPL,              & !--- tag
-                  ADM_COMM_WORLD,   & !--- world
+                  ADM_COMM_WORLD,       & !--- world
                   ireq(1),                 & !--- request id
                   ierr)                   !--- error id
           end if
@@ -3213,7 +3213,7 @@ contains
                   MPI_DOUBLE_PRECISION, & !--- type
                   ADM_prc_spl-1,        & !--- dest rank
                   ADM_SPL,              & !--- tag
-                  ADM_COMM_WORLD,   & !--- world
+                  ADM_COMM_WORLD,       & !--- world
                   ireq(2),                 & !--- request id
                   ierr)                   !--- error id
           end if
@@ -3634,7 +3634,6 @@ contains
     integer :: ierr
     !---------------------------------------------------------------------------
 
-
     if ( COMM_pl ) then
        sendbuf(1) = localsum
 
@@ -3644,7 +3643,7 @@ contains
                            recvbuf,              &
                            1,                    &
                            MPI_DOUBLE_PRECISION, &
-                           ADM_COMM_WORLD,   &
+                           ADM_COMM_WORLD,       &
                            ierr                  )
 
        globalsum = sum( recvbuf(:) )
@@ -3667,44 +3666,43 @@ contains
     real(8), intent(in)  :: localsum (kall)
     real(8), intent(out) :: globalsum(kall)
 
-    real(8) :: gathersum(ADM_prc_all,kall)
-
+    real(8) :: sendbuf(kall)
     integer :: displs (ADM_prc_all)
-    integer :: rcounts(ADM_prc_all)
+    integer :: counts (ADM_prc_all)
+    real(8) :: recvbuf(kall,ADM_prc_all)
 
     integer :: ierr
     integer :: k, p
     !---------------------------------------------------------------------------
 
-    do k = 1, kall
-       gathersum(ADM_prc_me,k) = localsum(k)
-    enddo
-
     do p = 1, ADM_prc_all
-       displs (p) = (p-1) * ADM_prc_all + 1
-       rcounts(p) = 1
+       displs(p) = (p-1) * kall
+       counts(p) = kall
     enddo
 
     if ( COMM_pl ) then
-       call MPI_Allgatherv( MPI_IN_PLACE,         &
-                            1,                    &
+       sendbuf(:) = localsum(:)
+
+       call MPI_Allgatherv( sendbuf,              &
+                            kall,                 &
                             MPI_DOUBLE_PRECISION, &
-                            gathersum(1,1),       &
-                            rcounts,              &
+                            recvbuf,              &
+                            counts,               &
                             displs,               &
                             MPI_DOUBLE_PRECISION, &
-                            ADM_COMM_WORLD,   &
+                            ADM_COMM_WORLD,       &
                             ierr                  )
 
        do k = 1, kall
-          globalsum(k) = sum( gathersum(:,k) )
+          globalsum(k) = sum( recvbuf(k,:) )
        enddo
     else
        do k = 1, kall
-          globalsum = gathersum(ADM_prc_me,k)
+          globalsum(k) = localsum(k)
        enddo
     endif
 
+    return
   end subroutine COMM_Stat_sum_eachlayer
 
   !-----------------------------------------------------------------------------
@@ -3733,7 +3731,7 @@ contains
                            recvbuf,              &
                            1,                    &
                            MPI_DOUBLE_PRECISION, &
-                           ADM_COMM_WORLD,   &
+                           ADM_COMM_WORLD,       &
                            ierr                  )
 
        globalavg = sum( recvbuf(:) ) / real(ADM_prc_all,kind=8)
@@ -3771,7 +3769,7 @@ contains
                         recvbuf,              &
                         1,                    &
                         MPI_DOUBLE_PRECISION, &
-                        ADM_COMM_WORLD,   &
+                        ADM_COMM_WORLD,       &
                         ierr                  )
 
     globalmax = maxval( recvbuf(:) )
@@ -3806,7 +3804,7 @@ contains
                         recvbuf,              &
                         1,                    &
                         MPI_DOUBLE_PRECISION, &
-                        ADM_COMM_WORLD,   &
+                        ADM_COMM_WORLD,       &
                         ierr                  )
 
     globalmin = minval( recvbuf(:) )

@@ -30,52 +30,21 @@ module mod_cnst
   !
   !++ Public parameters & variables
   !
-  !======  Earth parameters ======
-  !
-  !------ Radius of the Earth
-!  real(8), public, save :: CNST_ERADIUS  = 6.37122D+6 [mod] 20120704 H.Yashiro
-  real(8), public, save :: CNST_ERADIUS = 6371000.D0
-  !<----- unit : [m]
-  !
-  !------ Angular velocity of the Earth
-!  real(8), public, save :: CNST_EOHM     = 7.292D-5 [mod] 20120704 H.Yashiro
-  real(8), public, save :: CNST_EOHM = 7.292115D-5
-  !<----- unit : [/s]
-  !
-  !------ Gravitational accerlaration of the Earth
-!  real(8), public, save :: CNST_EGRAV    = 9.80616D0 [mod] 20120704 H.Yashiro
-  real(8), public, save :: CNST_EGRAV    = 9.79764D0
-  !<----- unit : [m/s^2]
-  !
-  !====== Gas parameters ======
-  !
-  !------ Gas constant of air
-  real(8), public, save :: CNST_RAIR     = 287.04D0
-  !
-  !------ Gas constant of vapor
-  real(8), public, save :: CNST_RVAP     = 461.50D0
-  !
-  !------ Specific heat of air (consant pressure)
-  real(8), public, save :: CNST_CP       = 1004.6D0
-  !
-  !------ Specific heat of vapor (consant pressure)
-!  real(8), public, save :: CNST_CPV      = 1850.0D0 [mod] 20120704 H.Yashiro
-  real(8), public, save :: CNST_CPV      = 1846.0D0
-  !
-  !------ Specific heat of water
-  real(8), public, save :: CNST_CL   = 4218.0D0
-  !
-  !------ Specific heat of ice
-  real(8), public, save :: CNST_CI   = 2006.0D0
-  !
-  !------ Specific heat of air (consant volume)
-  real(8), public, save :: CNST_CV
-  !<----- calculated in sub[CNST_setup].
-  !
-  !------ Specific heat of vapor (consant volume)
-  real(8), public, save :: CNST_CVV
-  !<----- calculated in sub[CNST_setup].
-  !
+  real(8), public, save :: CNST_ERADIUS = 6.37122D+6 ! Radius of the Earth [m]
+  real(8), public, save :: CNST_EOHM    = 7.292D-5   ! Angular velocity of the Earth [/s]
+  real(8), public, save :: CNST_EGRAV   = 9.80616D0  ! Gravitational accerlaration of the Earth [m/s2]
+
+  real(8), public, save :: CNST_RAIR    =  287.0D0   ! Gas constant of air
+  real(8), public, save :: CNST_RVAP    =  461.5D0   ! Gas constant of vapor
+
+  real(8), public, save :: CNST_CP      = 1004.5D0   ! Specific heat of air (consant pressure)
+  real(8), public, save :: CNST_CV                   ! Specific heat of air (consant volume)
+
+  real(8), public, save :: CNST_CPV     = 1846.0D0   ! Specific heat of vapor (consant pressure)
+  real(8), public, save :: CNST_CVV                  ! Specific heat of vapor (consant volume)
+  real(8), public, save :: CNST_CL      = 4218.0D0   ! Specific heat of water
+  real(8), public, save :: CNST_CI      = 2006.0D0   ! Specific heat of ice
+
   !------ cp/cv
   real(8), public, save :: CNST_GAMMA
   !<----- calculated in sub[CNST_setup].
