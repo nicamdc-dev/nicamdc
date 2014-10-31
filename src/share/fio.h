@@ -123,6 +123,10 @@ extern int32_t fio_put_commoninfo( int32_t fmode,
                                    int32_t num_of_rgn,
                                    int32_t rgnid[]        );
 
+/** put common informtation from file *********************************/
+extern int32_t fio_put_commoninfo_fromfile( int32_t fid,
+                                            int32_t endiantype );
+
 /** add new file structure ********************************************/
 static int32_t fio_new_finfo( void );                     /*<internal>*/
 

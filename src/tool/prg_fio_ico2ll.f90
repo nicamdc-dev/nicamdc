@@ -6,7 +6,7 @@
 program fio_ico2ll
   !-----------------------------------------------------------------------------
   !
-  !++ Description:
+  !++ Description: 
   !       This program converts from data on dataicosahedral grid (new I/O format)
   !       to that on latitude-longitude grid.
   !       (some part of source code is imported from ico2ll.f90)
@@ -14,13 +14,18 @@ program fio_ico2ll
   !++ Current Corresponding Author : H.Yashiro
   !
   !++ Contributer of ico2ll.f90 : M.Satoh, S.Iga, Y.Niwa, H.Tomita, T.Mitsui,
-  !                               W.Yanase,  H.Taniguchi, Y.Yamada
+  !                               W.Yanase,  H.Taniguchi, Y.Yamada, C.Kodama
   !
-  !++ History:
-  !      Version   Date      Comment
+  !++ History: 
+  !      Version   Date      Comment 
   !      -----------------------------------------------------------------------
   !      0.90      11-09-07  H.Yashiro : [NEW] partially imported from ico2ll.f90
   !      0.95      12-04-19  H.Yashiro : [mod] deal large record length
+  !      0.96      13-04-18  C.Kodama  : [mod] support NetCDF output
+  !                                            and reduce number of opened file at once
+  !                                            (thanks to Yamada-san)
+  !      0.97      14-05.09  C.Kodama  : [add] option var_comp_table_file
+
   !      -----------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------------
@@ -56,6 +61,12 @@ program fio_ico2ll
     MNG_PALL,            &
     MNG_prc_rnum,        &
     MNG_prc_tab
+  use mod_netcdf, only : &      ! [add] 13-04-18
+       netcdf_handler,        &
+       netcdf_open_for_write, &
+       netcdf_write,          &
+       netcdf_close
+  !---------------------------------
   !-----------------------------------------------------------------------------
   implicit none
   !-----------------------------------------------------------------------------
@@ -89,32 +100,36 @@ program fio_ico2ll
   logical                   :: devide_template     = .false.
   logical                   :: output_grads        = .true.
   logical                   :: output_gtool        = .false.
+  logical                   :: output_netcdf       = .false.   ! [add] 13-04-18
   logical                   :: datainfo_nodep_pe   = .false.   !   <- can be .true. if data header do not depend on pe.
   character(LEN=FIO_HSHORT) :: selectvar(max_nvar) = ''
   character(LEN=FIO_HSHORT) :: large_memory_var(max_nvar) = '' ! [add] 13-04-18
+  character(LEN=FIO_HLONG)  :: var_comp_table_file = ''        ! [add] 14-05-09
 
   logical                   :: help = .false.
 
-  namelist /OPTION/ glevel,            &
-                    rlevel,            &
-                    grid_topology,     &
-                    complete,          &
-                    mnginfo,           &
-                    layerfile_dir,     &
-                    llmap_base,        &
-                    infile,            &
-                    step_str,          &
-                    step_end,          &
-                    outfile_dir,       &
-                    outfile_prefix,    &
-                    outfile_rec,       &
-                    lon_swap,          &
-                    devide_template,   &
-                    output_grads,      &
-                    output_gtool,      &
-                    datainfo_nodep_pe, &  ! [add] 13-04-18
-                    selectvar,         &
-                    large_memory_var,  &  ! [add] 13-04-18
+  namelist /OPTION/ glevel,              &
+                    rlevel,              &
+                    grid_topology,       &
+                    complete,            &
+                    mnginfo,             &
+                    layerfile_dir,       &
+                    llmap_base,          &
+                    infile,              &
+                    step_str,            &
+                    step_end,            &
+                    outfile_dir,         &
+                    outfile_prefix,      &
+                    outfile_rec,         &
+                    lon_swap,            &
+                    devide_template,     &
+                    output_grads,        &
+                    output_gtool,        &
+                    output_netcdf,       &  ! [add] 13-04-18
+                    datainfo_nodep_pe,   &  ! [add] 13-04-18
+                    selectvar,           &
+                    large_memory_var,    &  ! [add] 13-04-18
+                    var_comp_table_file, &  ! [add] 14-05-09
                     help
   !-----------------------------------------------------------------------------
   character(LEN=FIO_HLONG) :: infname   = ""
@@ -140,8 +155,8 @@ program fio_ico2ll
   ! ico data information
   integer, allocatable :: ifid(:)
   integer, allocatable :: prc_tab_C(:)
-  type(headerinfo) hinfo
-  type(datainfo)   dinfo
+  type(headerinfo) hinfo 
+  type(datainfo)   dinfo 
 
   integer                                :: num_of_data
   integer                                :: nvar
@@ -157,9 +172,13 @@ program fio_ico2ll
   real(8),                   allocatable :: var_zgrid(:,:)
   ! header
   character(LEN=16),         allocatable :: var_gthead(:,:)
+  ! NetCDF handler
+  type(netcdf_handler)                   :: nc              ! [add] 13-04-18
+  character(LEN=1024)                    :: nc_time_units   ! [add] 13-04-18
+  character(LEN=4)                       :: date_str_tmp(6) ! [add] 13-04-18
 
   ! ico data
-  integer              :: GALL
+  integer              :: GALL 
   real(4), allocatable :: data4allrgn(:)
   real(8), allocatable :: data8allrgn(:)
   real(4), allocatable :: icodata4(:,:,:)
@@ -214,6 +233,8 @@ program fio_ico2ll
      output_grads    = .false.
      devide_template = .false.
      outfile_rec = 1
+  else if(output_netcdf) then
+     output_grads   = .false.
   endif
 
   if ( trim(selectvar(1)) /= '' ) then
@@ -318,7 +339,7 @@ program fio_ico2ll
      !write(*,*) v, trim(large_memory_var(v)), len_trim(large_memory_var(v))
      call fio_register_vname_tmpdata( trim(large_memory_var(v)), &
           len_trim(large_memory_var(v)) )
-  end do
+  enddo
 
   do p = 1, MNG_PALL
      write(*,*) 'p=', p
@@ -341,7 +362,7 @@ program fio_ico2ll
 
      call fio_register_file(ifid(p),trim(infname))
      call fio_fopen(ifid(p),FIO_FREAD)
-
+     
      ! <-- [add] C.Kodama 13.04.18
      if( datainfo_nodep_pe .and. p > 1 ) then
         ! assume that datainfo do not depend on pe.
@@ -355,9 +376,9 @@ program fio_ico2ll
      else
         ! normal way to read pkginfo and datainfo
         call fio_read_allinfo( ifid(p) )
-     end if
+     endif
      ! -->
-
+     
      if ( p == 1 ) then ! only once
         allocate( hinfo%rgnid(MNG_prc_rnum(p)) )
 
@@ -460,7 +481,7 @@ program fio_ico2ll
      !--- open output file
      outbase = trim(outfile_dir)//'/'//trim(outfile_prefix)//trim(var_name(v))
      ofid = MISC_get_available_fid()
-
+ 
      num_of_step = min(step_end,var_nstep(v)) - step_str + 1  ! [mov] 13-04-18
 
      if (.not. devide_template) then
@@ -505,6 +526,61 @@ program fio_ico2ll
                                  var_dt(v),           &
                                  lon_swap             )
 
+        elseif(output_netcdf) then ! [add] 13-04-18 C.Kodama
+           write(*,*) 'Output: ', trim(outbase)//'.nc'
+
+           call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=8) )
+           do j=1, 6
+              write( date_str_tmp(j), '(I4)' ) date_str(j)
+              date_str_tmp(j) = adjustl( date_str_tmp(j) )
+              if( j == 1 ) then
+                 write( date_str_tmp(j), '(2A)' ) &
+                      ('0',i=1,4-len_trim(date_str_tmp(j))), trim(date_str_tmp(j))
+              else
+                 write( date_str_tmp(j), '(2A)' ) &
+                      ('0',i=1,2-len_trim(date_str_tmp(j))), trim(date_str_tmp(j))
+              endif
+           enddo
+           write( nc_time_units, '(6(A,A))' ) &
+                'minutes since ', trim(date_str_tmp(1)), &
+                '-',              trim(date_str_tmp(2)), &
+                '-',              trim(date_str_tmp(3)), &
+                ' ',              trim(date_str_tmp(4)), &
+                ':',              trim(date_str_tmp(5)), &
+                ':',              trim(date_str_tmp(6))
+           write(*,*) 'nc_time_units=', trim(nc_time_units)
+
+           allocate(lon_tmp(imax))
+           if(lon_swap) then  ! low_swap == .true. is not checked yet.
+              lon_tmp(1:imax/2)      = ( lon(imax/2+1:imax)   ) * 180.D0 / pi
+              lon_tmp(imax/2+1:imax) = ( lon(1:imax/2) + 2*pi ) * 180.D0 / pi
+           else
+              lon_tmp(:) = lon(:) * 180.D0 / pi
+           endif
+
+           call netcdf_open_for_write( &
+                nc, &
+                ncfile=trim(outbase)//'.nc', &
+                count=(/  imax, jmax, kmax, 1 /), &
+                title='NICAM data output', &
+                imax=imax, &
+                jmax=jmax, &
+                kmax=kmax, &
+                tmax=num_of_step, &
+                lon=lon_tmp, &
+                lat=(/ ( lat(j) * 180.D0 / pi, j=1, jmax ) /), &
+                lev=var_zgrid(1:kmax,v), &
+                time=(/ (  real(t-1,8)*real(var_dt(v),8)/real(60.0,8), t=1, num_of_step ) /), &
+                lev_units='m', &
+                time_units=trim(nc_time_units), &
+                var_name=trim(var_name(v)), &
+                var_desc=trim(var_desc(v)), &
+                var_units=trim(var_unit(v)), &
+                var_missing=CNST_UNDEF4, &
+                var_comp_table_file=var_comp_table_file & ! [add] 14-05-08
+           )
+           deallocate(lon_tmp)
+
         endif
      endif
 
@@ -528,7 +604,7 @@ program fio_ico2ll
                  access = 'direct',         &
                  recl   = recsize,          &
                  status = 'unknown'         )
-           irec = 1
+           irec = 1 
         endif
 
         step = t-1 + step_str
@@ -562,14 +638,14 @@ program fio_ico2ll
                  call fio_read_data_tmpdata(ifid(p),did,data4allrgn(:))
               else
                  call fio_read_data(ifid(p),did,data4allrgn(:))
-              end if
+              endif
 
            elseif( dinfo%datatype == FIO_REAL8 ) then
               if ( trim(large_memory_var(1)) /= '' ) then
                  call fio_read_data_tmpdata(ifid(p),did,data8allrgn(:))
               else
                  call fio_read_data(ifid(p),did,data8allrgn(:))
-              end if
+              endif
 
               data4allrgn(:) = real(data8allrgn(:),kind=4)
               where( data8allrgn(:) == CNST_UNDEF )
@@ -612,7 +688,7 @@ program fio_ico2ll
         !--- swap longitude
         if (lon_swap) then
            allocate( temp(imax,jmax) )
-           do k = 1, kmax ! Mod 07.03.29 T.Mitsui saving memory
+           do k = 1, kmax ! Mod 07.03.29 T.Mitsui saving memory 
               temp(1:imax/2,     :) = lldata(imax/2+1:imax,:,k)
               temp(imax/2+1:imax,:) = lldata(1:imax/2     ,:,k)
               lldata(:,:,k)         = temp(:,:)
@@ -637,6 +713,12 @@ program fio_ico2ll
 
            write(ofid) gthead(:)
            write(ofid) lldata(:,:,:)
+
+        elseif(output_netcdf) then ! [add] 13.04.18 C.Kodama
+           call netcdf_write( nc, lldata, t=t )
+!           do k=1,kmax
+!              call netcdf_write( nc, lldata(:,:,k), k=k, t=t)
+!           enddo
         endif
 
         !--- close output file
@@ -668,6 +750,8 @@ program fio_ico2ll
                            var_dt(v),           &
                            lon_swap,            &
                            devide_template      )
+     elseif(output_netcdf) then ! [add] 13.04.18 C.Kodama
+        call netcdf_close( nc )
      endif
 
   enddo ! variable LOOP
@@ -739,7 +823,7 @@ contains
       devide_template )
     implicit none
 
-    character(LEN=128), intent(in) :: outfile_dir
+    character(LEN=256), intent(in) :: outfile_dir  ! 14-05-09: 128->256
     character(LEN=16),  intent(in) :: outfile_prefix
     character(LEN=16),  intent(in) :: varname
     integer,            intent(in) :: imax
@@ -753,7 +837,7 @@ contains
     integer(8),         intent(in) :: dt
     logical,            intent(in) :: lon_swap
     logical,            intent(in) :: devide_template
-
+ 
     real(8) :: pi
     real(8) :: temp(imax)
 
@@ -784,7 +868,7 @@ contains
 
        write(fid,'(A)')      'TITLE NICAM data output'
        write(fid,'(A)')      'OPTIONS BIG_ENDIAN '
-       write(fid,'(A,E12.5)') 'UNDEF ', real( -99.9E+33, kind=4 )
+       write(fid,'(A,E12.5)') 'UNDEF ', CNST_UNDEF4
 
        write(fid,'(A,I5,A)') 'XDEF ', imax, ' LEVELS'
        if (lon_swap) then
@@ -854,7 +938,7 @@ contains
     real(8),                   intent( in) :: alt(kmax)
     integer(8),                intent( in) :: dt
     logical,                   intent( in) :: lon_swap
-
+ 
     character(LEN=16) :: axhead(64)
     character(LEN=16) :: hitem
     character(LEN=32) :: htitle
@@ -909,14 +993,14 @@ contains
     write(gthead(36),'(I16)'  ) 1
     write(gthead(37),'(I16)'  ) kmax
     write(gthead(38),'(A16)'  ) 'UR4'
-    write(gthead(39),'(E16.7)') real(-99.9E+33,4)
-    write(gthead(40),'(E16.7)') real(-99.9E+33,4)
-    write(gthead(41),'(E16.7)') real(-99.9E+33,4)
-    write(gthead(42),'(E16.7)') real(-99.9E+33,4)
-    write(gthead(43),'(E16.7)') real(-99.9E+33,4)
+    write(gthead(39),'(E16.7)') CNST_UNDEF4
+    write(gthead(40),'(E16.7)') CNST_UNDEF4
+    write(gthead(41),'(E16.7)') CNST_UNDEF4
+    write(gthead(42),'(E16.7)') CNST_UNDEF4
+    write(gthead(43),'(E16.7)') CNST_UNDEF4
     write(gthead(44),'(I16)'  ) 1
     write(gthead(46),'(I16)'  ) 0
-    write(gthead(47),'(E16.7)') 0.
+    write(gthead(47),'(E16.7)') 0. 
     write(gthead(48),'(I16)'  ) 0
     write(gthead(60),'(A16)'  ) kdate
     write(gthead(62),'(A16)'  ) kdate
@@ -943,7 +1027,7 @@ contains
     write(axhead(39),'(E16.7)') -999.0
     write(axhead(44),'(I16)'  ) 1
     write(axhead(46),'(I16)'  ) 0
-    write(axhead(47),'(E16.7)') 0.
+    write(axhead(47),'(E16.7)') 0. 
     write(axhead(48),'(I16)'  ) 0
     write(axhead(60),'(A16)'  ) kdate
     write(axhead(62),'(A16)'  ) kdate

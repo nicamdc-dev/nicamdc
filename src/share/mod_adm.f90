@@ -53,7 +53,7 @@ module mod_adm
   !====== Basic definition & information ======
   !
   !------ Log file ID & Control file ID
-  integer, public, parameter :: ADM_LOG_FID = 30
+  integer, public, save      :: ADM_LOG_FID = 6 ! default is STDOUT
   integer, public, parameter :: ADM_CTL_FID = 35
   !
   !------ Identifier for single computation or parallel computation
@@ -100,6 +100,7 @@ module mod_adm
   !
   !------ Communication world for NICAM
   integer, public, save      :: ADM_COMM_WORLD
+  logical, public, save      :: ADM_MPI_alive = .false.
   !
   !------ Master process
   integer, public, parameter :: ADM_prc_run_master = 1
@@ -114,11 +115,11 @@ module mod_adm
   integer, public, save      :: ADM_prc_pl
   !
   !------ Process ID which have the pole regions.
-  integer, public,  save     :: ADM_prc_npl
-  integer, public,  save     :: ADM_prc_spl
-  integer, public,  save     :: ADM_prc_nspl(ADM_NPL:ADM_SPL)
+  integer, public, save      :: ADM_prc_npl
+  integer, public, save      :: ADM_prc_spl
+  integer, public, save      :: ADM_prc_nspl(ADM_NPL:ADM_SPL)
 
-  logical, public,  save     :: ADM_have_pl
+  logical, public, save      :: ADM_have_pl
 
   !
   !====== Information for processes-region relationship ======
@@ -150,8 +151,7 @@ module mod_adm
   !<-----
   !
   !------ Maximum number of vertex linkage
-  !integer, public, parameter :: ADM_VLINK_NMAX=5 ! S.Iga 100607
-  integer, public,                     save :: ADM_VLINK_NMAX ! S.Iga 100607
+  integer, public,                     save :: ADM_VLINK_NMAX
   !
   !------ Table of n-vertex-link(?) at the region vertex
   integer, public, allocatable,        save :: ADM_rgn_vnum(:,:)
@@ -379,29 +379,44 @@ contains
   !>
   !> Description of the subroutine ADM_proc_init
   !>
-  subroutine ADM_proc_init( rtype )
+  !-----------------------------------------------------------------------------
+  subroutine ADM_proc_init( &
+       rtype )
+#ifdef JCUP
+    use jsp_nicam, only: &
+       jsp_n_init, &
+       jsp_n_get_my_mpi
+#endif
     implicit none
 
-    integer, intent(in) :: rtype ! multi or single processor?
+    integer, intent(in) :: rtype
 
-    integer :: my_rank
     integer :: ierr
+    integer :: my_rank
+    integer :: my_comm, my_group
     !---------------------------------------------------------------------------
 
     ADM_run_type = rtype
 
     if ( rtype == ADM_MULTI_PRC ) then
 
+#ifdef JCUP
+       call jsp_n_init("./nhm_driver.cnf")
+       call jsp_n_get_my_mpi(my_comm, my_group, ADM_prc_all, my_rank)
+       ADM_COMM_WORLD = my_comm
+#else
        call MPI_Init(ierr)
        call MPI_Comm_size(MPI_COMM_WORLD, ADM_prc_all, ierr)
-       call MPI_Comm_rank(MPI_COMM_WORLD, my_rank,     ierr)
+       call MPI_Comm_rank(MPI_COMM_WORLD, my_rank, ierr)
+       ADM_COMM_WORLD = MPI_COMM_WORLD
+#endif
+       ADM_mpi_alive  = .true.
 
-       call MPI_Comm_split(MPI_COMM_WORLD, 0, my_rank, ADM_COMM_WORLD,ierr)
-
-       call MPI_Barrier(MPI_COMM_WORLD,ierr)
     else
+
        ADM_prc_all = 1
        my_rank     = 0
+
     endif
 
     ADM_prc_me = my_rank + 1
@@ -468,7 +483,8 @@ contains
        param_fname, &
        msg_base     )
     use mod_misc, only: &
-       MISC_make_idstr
+       MISC_make_idstr, &
+       MISC_get_available_fid
     implicit none
 
     character(LEN=*), intent(in) :: param_fname ! namelist file name
@@ -503,6 +519,7 @@ contains
     if( present(msg_base) ) msg = msg_base ! [add] H.Yashiro 20110701
 
     !--- open message file
+    ADM_LOG_FID = MISC_get_available_fid()
     call MISC_make_idstr(fname,trim(msg),'pe',ADM_prc_me)
     open( unit = ADM_LOG_FID, &
           file = trim(fname), &
@@ -1272,6 +1289,23 @@ contains
 
     return
   end subroutine output_info
+
+  !-----------------------------------------------------------------------------
+  !> Get MPI time
+  !> @return time
+  function ADM_MPItime() result(time)
+    implicit none
+
+    real(8) :: time
+    !---------------------------------------------------------------------------
+
+    if ( ADM_mpi_alive ) then
+       time = real(MPI_WTIME(), kind=8)
+    else
+       call cpu_time(time)
+    endif
+
+  end function ADM_MPItime
 
 end module mod_adm
 !-------------------------------------------------------------------------------

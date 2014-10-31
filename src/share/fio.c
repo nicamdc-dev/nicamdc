@@ -239,6 +239,33 @@ int32_t fio_put_commoninfo( int32_t fmode,
   return(SUCCESS_CODE);
 }
 
+/** put common informtation from file *********************************/
+int32_t fio_put_commoninfo_fromfile( int32_t fid,
+                                     int32_t endiantype )
+{
+  int32_t i;
+
+  /* exchange endian? */
+  if ( endiantype!=system_endiantype ) {
+    system_ednchg = 1;
+  }
+
+  fio_read_pkginfo( fid );
+
+  common.fmode         = finfo[fid].header.fmode;
+  common.endiantype    = endiantype;
+  common.grid_topology = finfo[fid].header.grid_topology;
+  common.glevel        = finfo[fid].header.glevel;
+  common.rlevel        = finfo[fid].header.rlevel;
+  common.num_of_rgn    = finfo[fid].header.num_of_rgn;
+  common.rgnid         = (int32_t *)malloc(common.num_of_rgn*sizeof(int32_t));
+  for( i=0; i<common.num_of_rgn; i++ ) {
+    common.rgnid[i] = finfo[fid].header.rgnid[i];
+  }
+
+  return(SUCCESS_CODE);
+}
+
 /** add new file structure ********************************************/
 static int32_t fio_new_finfo( void )
 {

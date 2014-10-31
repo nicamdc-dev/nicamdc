@@ -42,6 +42,10 @@ extern void fio_put_commoninfo_( int32_t *fmode,
                                  int32_t *num_of_rgn,
                                  int32_t *rgnid          );
 
+/** put common informtation from file *********************************/
+extern void fio_put_commoninfo_fromfile_( int32_t *fid,
+                                          int32_t *endiantype );
+
 /** put package information (full) ************************************/
 extern void fio_put_pkginfo_( int32_t *fid,
                               headerinfo_t *hinfo );
