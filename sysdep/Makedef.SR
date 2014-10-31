@@ -1,0 +1,57 @@
+#
+# ------ FOR HITACHI SR-series (AIX) -----
+#
+
+FFLAGS_FAST  = -cpp -Oss -64 -noparallel -model=M1 \
+               -i,P,L,EU -nolimit -declchk         \
+               -loglist
+
+FFLAGS_DEBUG = -cpp -O0  -64 -noparallel -model=M1 \
+               -i,P,L,EU -nolimit -declchk         \
+               -loglist                            \
+               -stackinit=nan -negativezero        \
+               -g -debug -boundarycheck -s,TRACE
+               
+FC     = mpif90
+FFLAGS = $(FFLAGS_FAST) -D_NOF2003
+#FFLAGS = $(FFLAGS_DEBUG) -D_NOF2003
+
+CC     = mpicc
+CFLAGS = -lp64 -Os +Op -64 -noparallel
+
+##### Special Options #####
+
+# Performance monitor
+# disable
+PERF_MONIT =
+# ftrace
+#PERF_MONIT = -pmfunc
+
+FFLAGS += $(PERF_MONIT)
+CFLAGS += $(PERF_MONIT)
+
+ifeq ($(ENABLE_OPENMP),T)
+	FFLAGS += -omp
+endif
+
+ifeq ($(ENABLE_NETCDF),T)
+	NETCDF_INCLUDE ?= -I/usr/local/include
+	NETCDF_LIBS    ?= -L/usr/local/lib -lpnetcdf
+	FFLAGS += $(NETCDF_INCLUDE)
+endif
+
+###########################
+
+MODDIROPT ?= -moddir=$(BUILD_DIR)
+OBJDIR    ?= $(BUILD_DIR)
+
+LD     = $(FC)
+LFLAGS = $(FFLAGS) -lm
+
+INSTALL = cp -f
+AR      = ar
+ARFLAGS = r
+RANLIB  = ranlib
+
+##### OBJECT_MODE setting for AIX 
+export OBJECT_MODE=64

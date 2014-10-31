@@ -1,18 +1,23 @@
 #
-# ------ FOR K computer -----
+# ------ FOR K computer, FX10 -----
 #
 
-##### for computation
-
-FFLAGS_FAST  = -Kfast,parallel,auto,ocl,preex,array_private,noalias=s,mfunc=2 \
-               -Kparallel_iteration=8,instance=8,dynamic_iteration                   \
-               -Qi -Qt -X03 -Ncompdisp -Koptmsg=1 -Cpp                               \
-               -Kprefetch_cache_level=all,prefetch_iteration_L2=50 -Ksimd
+FFLAGS_FAST  = -Kfast,parallel,auto,ocl,preex,array_private,mfunc=2 \
+               -Qi -Qt -X03 -Ncompdisp -Koptmsg=1 -Cpp              \
+               -Ksimd
 
 FFLAGS_DEBUG = -O0 \
                -Qi -Qt -X03 -v03s -v03d -v03o -Ncompdisp -Koptmsg=1 -Cpp \
                -Ec -Eg -Ha -He -Hf -Ho -Hs -Hu -Hx -Ncheck_global
-#               -DDEBUG
+
+FC     = mpifrtpx
+FFLAGS = $(FFLAGS_FAST)
+#FFLAGS = $(FFLAGS_DEBUG)
+
+CC     = mpifccpx
+CFLAGS = -Kfast,parallel,ocl,preex,array_private,region_extension,restp=all -Qt -Ksimd $(PERF_MONIT)
+
+##### Special Options #####
 
 # Performance monitor
 # disable
@@ -22,22 +27,27 @@ PERF_MONIT = -Ntl_notrt -U_FIPP_ -U_FAPP_
 # fapp
 #PERF_MONIT = -Ntl_trt -U_FIPP_ -D_FAPP_
 
-FC     = mpifrtpx
-FFLAGS = $(FFLAGS_FAST) $(PERF_MONIT) $(RDMA)
-#FFLAGS = $(FFLAGS_DEBUG) $(PERF_MONIT) $(RDMA)
+FFLAGS += $(PERF_MONIT)
+CFLAGS += $(PERF_MONIT)
 
-MODDIROPT ?= -M
+ifeq ($(ENABLE_OPENMP),T)
+	FFLAGS += -Kopenmp
+endif
 
-CC     = mpifccpx
-CFLAGS = -Kfast,parallel,ocl,preex,array_private,region_extension,restp=all -Ksimd $(PERF_MONIT)
+ifeq ($(ENABLE_NETCDF),T)
+	NETCDF_INCLUDE ?= -I/opt/aics/netcdf/k-serial-noszip/include
+	NETCDF_LIBS    ?= -L/opt/aics/netcdf/k-serial-noszip/lib-static -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm
+	FFLAGS += $(NETCDF_INCLUDE)
+endif
+
+###########################
+
+MODDIROPT ?= -M $(BUILD_DIR)
+OBJDIR    ?= $(BUILD_DIR)
 
 LD     = $(FC)
-LDFLAGS = $(FFLAGS)
+LFLAGS = $(FFLAGS)
 
-NETCDF_INCLUDE ?= -I/data/share005/cross-K/include
-NETCDF_LIBS    ?= -L/data/share005/cross-K/lib -lnetcdf -lhdf5_hl -lhdf5 -lsz -lz
-
-##### for frontend
 INSTALL = install
 AR      = ar
 ARFLAGS = r
