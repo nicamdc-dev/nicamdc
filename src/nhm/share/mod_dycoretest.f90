@@ -1291,7 +1291,7 @@ contains
     real(8) :: ux1, ux2, hgt0, hgt1
     real(8) :: dz, uave
     real(8) :: f_cf(3), rho(3)
-    real(PRCS_D), parameter :: eta1 = 1.0D0
+    real(8), parameter :: eta1 = 1.0D0
     !-----
 
     eta_v = (eta1 - eta0)*(pi*0.5D0)
