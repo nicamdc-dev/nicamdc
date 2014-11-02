@@ -15,12 +15,12 @@
     hgrid_io_mode = "ADVANCED",
     hgrid_fname   = "boundary_GL05RL00",
     VGRID_fname   = "vgrid60_200m_dcmip.dat",
-    topo_fname    = "NONE",
+    topo_io_mode  = "IDEAL",
 /
 
 &TIMEPARAM
     DTL         = 1200.D0,
-    INTEG_TYPE  = "TRCADV",
+    INTEG_TYPE  = "RK3",
     LSTEP_MAX   = 864,
     start_year  = 1000,
     start_month = 1,
@@ -28,9 +28,10 @@
 /
 
 &RUNCONFPARAM
-    RUNNAME     = 'DCMIP2012-11',
-    THUBURN_LIM = .true.
-    CHEM_TYPE   = 'PASSIVE',
+    RUNNAME        = 'DCMIP2012-13',
+    NDIFF_LOCATION = 'IN_LARGE_STEP2',
+    THUBURN_LIM    = .true.
+    CHEM_TYPE      = 'PASSIVE',
 /
 
 &BSSTATEPARAM
@@ -40,14 +41,26 @@
 &RESTARTPARAM
     input_io_mode     = 'IDEAL',
     output_io_mode    = 'ADVANCED',
-    output_basename   = 'restart_all_GL05RL00z60',
+    output_basename   = 'restart_all_GL05RL00z40',
     restart_layername = 'ZS60_200m_DCMIP',
 /
 
-##### DCMIP 2012 Test 1-1: 3D Deformational Flow
+##### DCMIP 2012 Test 1-3: 2D transport of thin cloud-like tracer in the presence of orography
 &DYCORETESTPARAM
     init_type = 'Traceradvection',
-    test_case = '1-1'
+    test_case = '1-3'
+/
+
+&IDEALTOPOPARAM
+    topo_type = 'Schar_Moderate',
+/
+
+&IDEALTOPOPARAM_Schar_Moderate
+    center_lon =  270.D0,
+    center_lat =    0.D0,
+    H0         = 2000.D0,
+    Rm_deg     =  135.D0,
+    QSIm_deg   = 11.25D0,
 /
 
 &CNSTPARAM
@@ -62,12 +75,12 @@
 &NUMFILTERPARAM
     hdiff_type        = 'DIRECT',
     lap_order_hdiff   = 2,
-    gamma_h           = 1.28D16,
+    gamma_h           = 1.20D16,
     Kh_coef_minlim    = 0.D0,
     Kh_coef_maxlim    = 9.9D99,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
-    alpha_d           = 1.28D16,
+    alpha_d           = 1.20D16,
 /
 
 &EMBUDGETPARAM
@@ -78,7 +91,7 @@
 &NMHISD
     output_io_mode   = 'ADVANCED' ,
     histall_fname    = 'history'  ,
-    hist3D_layername = 'Z60_200m_DCMIP' ,
+    hist3D_layername = 'Z60_200m_DCMIP',
     DIRECT_ACCESS    = .true.     ,
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
@@ -93,5 +106,7 @@
 &NMHIST item='ml_passive2', file='pasv2', ktype='3D' /
 &NMHIST item='ml_passive3', file='pasv3', ktype='3D' /
 &NMHIST item='ml_passive4', file='pasv4', ktype='3D' /
+&NMHIST item='ml_pres',     file='p',     ktype='3D' /
+&NMHIST item='sl_ps',       file='ps',    ktype='2D' /
 
 ################################################################################

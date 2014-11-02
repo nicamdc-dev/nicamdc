@@ -4,25 +4,61 @@
 #
 ################################################################################
 
-build:
-	$(MAKE) -C $(TOPDIR)/src || exit 1
+ifeq ($(origin SYSDEP_DIR), undefined)
+   SYSDEP_DIR = $(TOPDIR)/sysdep
+endif
 
-makedir:
+ifeq ($(origin BINNAME), undefined)
+   BINNAME = nhm_driver
+endif
+
+BUILD_DIR    := $(PWD)/.libs
+NICAM_BINDIR  = $(PWD)
+
+include $(SYSDEP_DIR)/Makedef.$(SCALE_SYS)
+include $(TOPDIR)/Mkinclude
+
+all:
+	$(MAKE) build
+	$(MAKE) tools
+
+build:
 	mkdir -p $(BUILD_DIR)
+	$(MAKE) -C $(TOPDIR)/src nhm NICAM_BINDIR=$(NICAM_BINDIR) \
+                                BUILD_DIR=$(BUILD_DIR)       \
+                                SYSDEP_DIR=$(SYSDEP_DIR)
+
+tools:
+	mkdir -p $(BUILD_DIR)
+	$(MAKE) -C $(TOPDIR)/src BUILD_DIR=$(BUILD_DIR)   \
+                            SYSDEP_DIR=$(SYSDEP_DIR)
 
 run: jobshell
 	$(JOBSUB) run.sh
 
 jobshell:
-	@if [ -f ../Mkjobshell.$(SCALE_SYS).sh ]; then \
-		sh ../Mkjobshell.$(NICAM_SYS).sh $(glevel) $(rlevel) $(nmpi) $(zlayer) $(vgrid) $(TOPDIR) $(exename); \
+	@if [ -f ../Mkjobshell.$(NICAM_SYS).sh ]; then \
+		sh ../Mkjobshell.$(NICAM_SYS).sh $(glevel) $(rlevel) $(nmpi) $(zlayer) $(vgrid) $(TOPDIR) $(BINNAME); \
 	else \
-		sh $(TOPDIR)/sysdep/Mkjobshell.$(NICAM_SYS).sh $(glevel) $(rlevel) $(nmpi) $(zlayer) $(vgrid) $(TOPDIR) $(exename); \
+		sh $(TOPDIR)/sysdep/Mkjobshell.$(NICAM_SYS).sh $(glevel) $(rlevel) $(nmpi) $(zlayer) $(vgrid) $(TOPDIR) $(BINNAME); \
 	fi
 
 
 
-.PHONY: clean
+.PHONY: allclean distclean clean
+
+allclean: distclean clean
+	$(MAKE) -C $(TOPDIR)/src allclean NICAM_BINDIR=$(NICAM_BINDIR) \
+                                     BUILD_DIR=$(BUILD_DIR)       \
+                                     SYSDEP_DIR=$(SYSDEP_DIR)
+
+distclean: clean
+	$(MAKE) -C $(TOPDIR)/src allclean NICAM_BINDIR=$(NICAM_BINDIR) \
+                                     BUILD_DIR=$(BUILD_DIR)       \
+                                     SYSDEP_DIR=$(SYSDEP_DIR)
+	rm -f run.sh
 
 clean:
-	$(MAKE) -C $(TOPDIR)/src allclean
+	$(MAKE) -C $(TOPDIR)/src clean NICAM_BINDIR=$(NICAM_BINDIR) \
+                                  BUILD_DIR=$(BUILD_DIR)       \
+                                  SYSDEP_DIR=$(SYSDEP_DIR)

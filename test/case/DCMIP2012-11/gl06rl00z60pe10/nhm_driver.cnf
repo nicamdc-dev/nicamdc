@@ -5,7 +5,7 @@
 ################################################################################
 
 &ADMPARAM
-    glevel      = 5,
+    glevel      = 6,
     rlevel      = 0,
     vlayer      = 60,
     rgnmngfname = "rl00-prc10.info",
@@ -13,15 +13,15 @@
 
 &GRDPARAM
     hgrid_io_mode = "ADVANCED",
-    hgrid_fname   = "boundary_GL05RL00",
+    hgrid_fname   = "boundary_GL06RL00",
     VGRID_fname   = "vgrid60_200m_dcmip.dat",
     topo_fname    = "NONE",
 /
 
 &TIMEPARAM
-    DTL         = 1200.D0,
+    DTL         = 600.D0,
     INTEG_TYPE  = "TRCADV",
-    LSTEP_MAX   = 864,
+    LSTEP_MAX   = 1728,
     start_year  = 1000,
     start_month = 1,
     start_day   = 1,
@@ -40,7 +40,7 @@
 &RESTARTPARAM
     input_io_mode     = 'IDEAL',
     output_io_mode    = 'ADVANCED',
-    output_basename   = 'restart_all_GL05RL00z60',
+    output_basename   = 'restart_all_GL06RL00z60',
     restart_layername = 'ZS60_200m_DCMIP',
 /
 
@@ -62,17 +62,17 @@
 &NUMFILTERPARAM
     hdiff_type        = 'DIRECT',
     lap_order_hdiff   = 2,
-    gamma_h           = 1.28D16,
+    gamma_h           = 1.6D15,
     Kh_coef_minlim    = 0.D0,
     Kh_coef_maxlim    = 9.9D99,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
-    alpha_d           = 1.28D16,
+    alpha_d           = 1.6D15,
 /
 
 &EMBUDGETPARAM
     MNT_ON   = .true.,
-    MNT_INTV = 72    ,
+    MNT_INTV = 144   ,
 /
 
 &NMHISD
@@ -82,7 +82,7 @@
     DIRECT_ACCESS    = .true.     ,
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
-    step             = 72         ,
+    step             = 144        ,
     doout_step0      = .true.     ,
 /
 

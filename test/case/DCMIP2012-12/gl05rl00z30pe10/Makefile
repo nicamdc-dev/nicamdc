@@ -17,8 +17,8 @@ ORG_SRCS    =
 glevel      = 5
 rlevel      = 0
 nmpi        = 10
-zlayer      = 60
-vgrid       = vgrid60_200m_dcmip.dat
+zlayer      = 30
+vgrid       = vgrid30_400m_dcmip.dat
 
 
 
