@@ -134,7 +134,9 @@ module mod_cnst
   !
   !------ Definition of PI
   real(8), public, save :: CNST_PI = 3.14159265358979323846D0
-  !
+
+  real(8), public, save :: CNST_D2R
+
   !------ Allowable minimum value
   real(8), public, parameter :: CNST_EPS_ZERO = 1.0D-99
   !
@@ -175,27 +177,28 @@ contains
        ADM_proc_stop
     implicit none
 
-    !--- Parameters to be controled
-    real(8) :: earth_radius      !--- Earth radius
-    real(8) :: earth_angvel      !--- Anguler velocity of the earth
-    real(8) :: earth_gravity     !--- Gravitational accelaration
-    real(8) :: gas_cnst          !--- Gas constant of dry air
-    real(8) :: gas_cnst_vap      !--- Gas constant of water vapour
-    real(8) :: specific_heat_pre !--- Specific heat of air( const pre )
-    real(8) :: specific_heat_pre_vap !--- Specific heat of water vapour ( const pre )
-    real(8) :: latent_heat_vap   !--- latent heat of vaporization LH0 ( 0 deg )
-    real(8) :: latent_heat_sub   !--- latent heat of sublimation LHS0 ( 0 deg )
+    real(8) :: earth_radius               ! Earth radius
+    real(8) :: earth_angvel               ! Anguler velocity of the earth
+    real(8) :: small_planet_factor = 1.D0 ! small planet factor
+    real(8) :: earth_gravity              ! Gravitational accelaration
+    real(8) :: gas_cnst                   ! Gas constant of dry air
+    real(8) :: gas_cnst_vap               ! Gas constant of water vapour
+    real(8) :: specific_heat_pre          ! Specific heat of air( const pre )
+    real(8) :: specific_heat_pre_vap      ! Specific heat of water vapour ( const pre )
+    real(8) :: latent_heat_vap            ! latent heat of vaporization LH0 ( 0 deg )
+    real(8) :: latent_heat_sub            ! latent heat of sublimation LHS0 ( 0 deg )
 
     namelist / CNSTPARAM / &
-         earth_radius,     & !--- earth radius
-         earth_angvel,     & !--- anguler velocity of the earth
-         earth_gravity,    & !--- gravitational accelaration
-         gas_cnst,         & !--- gas constant of dry air ( Rd )
-         gas_cnst_vap,     & !--- gas constant of water vapour
-         specific_heat_pre,& !--- specific heat of air ( Cp )
-         specific_heat_pre_vap,&  !--- specific heat of water vapour
-         latent_heat_vap,  &
-         latent_heat_sub
+       earth_radius,          &
+       earth_angvel,          &
+       small_planet_factor,   &
+       earth_gravity,         &
+       gas_cnst,              &
+       gas_cnst_vap,          &
+       specific_heat_pre,     &
+       specific_heat_pre_vap, &
+       latent_heat_vap,       &
+       latent_heat_sub
 
     integer :: ierr
     !---------------------------------------------------------------------------
@@ -225,8 +228,8 @@ contains
     endif
     write(ADM_LOG_FID,CNSTPARAM)
 
-    CNST_ERADIUS = earth_radius
-    CNST_EOHM    = earth_angvel
+    CNST_ERADIUS = earth_radius / small_planet_factor
+    CNST_EOHM    = earth_angvel * small_planet_factor
     CNST_EGRAV   = earth_gravity
     CNST_RAIR    = gas_cnst
     CNST_RVAP    = gas_cnst_vap
@@ -237,6 +240,7 @@ contains
 
     !--- calculate other parameters
     CNST_PI    = 4.D0 * atan( 1.D0 )
+    CNST_D2R   = CNST_PI / 180.D0
 
     CNST_CV    = CNST_CP - CNST_RAIR
     CNST_GAMMA = CNST_CP / CNST_CV
