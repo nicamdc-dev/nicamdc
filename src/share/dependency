@@ -13,6 +13,7 @@ MODS_SHARE =	\
 	fiof.o	\
 	mod_comm.o	\
 	mod_grd.o	\
+	mod_ideal_topo.o	\
 	mod_gmtr.o	\
 	$(mod_oprt).o	\
 	$(mod_oprt3d).o	\
@@ -31,7 +32,8 @@ fio.o	: fio.c fio.h fio_def.h
 fiof.o	: fiof.c fiof.h fio.h fio_def.h
 mod_fio.o	: mod_fio.f90 mod_adm.o mod_debug.o mod_calendar.o mod_cnst.o fio.o fiof.o
 mod_comm.o	: mod_comm.f90 mod_adm.o mod_debug.o mod_cnst.o
-mod_grd.o	: mod_grd.f90 mod_adm.o mod_debug.o mod_cnst.o mod_comm.o $(mod_misc).o mod_fio.o
+mod_grd.o	: mod_grd.f90 mod_adm.o mod_debug.o mod_cnst.o mod_comm.o $(mod_misc).o mod_fio.o mod_ideal_topo.o
+mod_ideal_topo.o	: mod_ideal_topo.f90 mod_adm.o mod_cnst.o
 mod_gmtr.o	: mod_gmtr.f90 mod_adm.o mod_debug.o mod_comm.o $(mod_misc).o mod_grd.o mod_cnst.o
 $(mod_oprt).o	: $(mod_oprt).f90 mod_adm.o mod_debug.o mod_grd.o mod_gmtr.o mod_comm.o mod_cnst.o
 $(mod_oprt3d).o	: $(mod_oprt3d).f90 mod_adm.o mod_debug.o mod_grd.o mod_gmtr.o mod_vmtr.o

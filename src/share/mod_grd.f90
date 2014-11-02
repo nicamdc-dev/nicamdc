@@ -187,26 +187,19 @@ module mod_grd
   !
   !++ Private parameters & variables
   !
-  character(len=ADM_MAXFNAME), private, save :: hgrid_fname     = ''       ! Horizontal grid file
+  character(len=ADM_NSYS),     private :: hgrid_io_mode   = 'LEGACY' ! [add] H.Yashiro 20110819
+  character(len=ADM_NSYS),     private :: topo_io_mode    = 'LEGACY' ! [add] H.Yashiro 20110819
+  character(len=ADM_MAXFNAME), private :: hgrid_fname     = ''       ! Horizontal grid file
+  character(len=ADM_MAXFNAME), private :: topo_fname      = ''       ! Topographical data file
 
-  character(len=ADM_MAXFNAME), private, save :: topo_fname      = ''       ! Topographical data file
-  character(len=ADM_MAXFNAME), private, save :: toposd_fname    = ''       ! Standard deviation of topog. data file
-  character(len=ADM_MAXFNAME), private, save :: vegeindex_fname = ''       ! Vegetation index data file
+  character(len=ADM_MAXFNAME), private :: vgrid_fname     = ''       ! Vertical grid file
+  character(len=ADM_NSYS),     private :: vgrid_scheme    = 'LINEAR' ! Vertical coordinate scheme
+  real(8),                     private :: h_efold         = 10000.D0 ! [m]
+  real(8),                     private :: hflat           =  -999.D0 ! [m]
+  logical,                     private :: output_vgrid    = .false.
 
-  character(len=ADM_MAXFNAME), private, save :: vgrid_fname     = ''       ! Vertical grid file
-  character(len=ADM_NSYS),     private, save :: vgrid_scheme    = 'LINEAR' ! Vertical coordinate scheme
-  real(8),                     private, save :: h_efold         = 10000.D0 ! [m]
-  real(8),                     private, save :: hflat           =  -999.D0 ! [m]
-
-  logical,                     private, save :: hgrid_comm_flg  = .true.   ! [add] T.Ohno 110722
-  real(8),                     private, save :: triangle_size   = 0.D0     ! [add] T.Ohno 110722 length of sides of triangle
-
-  logical,                     private, save :: da_access_hgrid    = .false.
-  logical,                     private, save :: topo_direct_access = .false.  ! [add] H.Yashiro 20110819
-  character(len=ADM_NSYS),     private, save :: hgrid_io_mode      = 'LEGACY' ! [add] H.Yashiro 20110819
-  character(len=ADM_NSYS),     private, save :: topo_io_mode       = 'LEGACY' ! [add] H.Yashiro 20110819
-
-  logical,                     private, save :: output_vgrid       = .false.
+  logical,                     private :: hgrid_comm_flg  = .true.   ! [add] T.Ohno 110722
+  real(8),                     private :: triangle_size   = 0.D0     ! [add] T.Ohno 110722 length of sides of triangle
 
   !-----------------------------------------------------------------------------
 contains
@@ -244,26 +237,22 @@ contains
          CNST_ERADIUS, &
          CNST_UNDEF
     use mod_comm, only :  &
-         COMM_data_transfer, &
-         COMM_var ! [add] H.Yashiro 20110819
+         COMM_data_transfer
     implicit none
 
     namelist / GRDPARAM / &
-        vgrid_fname,     & !--- vertical grid file-name
-        hgrid_fname,     & !--- horizontal grid basename
-        topo_fname,      & !--- topography basename
-        toposd_fname,    & !--- standard deviation of topography basename
-        vegeindex_fname, & !--- vegetation index basename
-        vgrid_scheme,    & !--- verical grid scheme
-        h_efold,         & !--- efolding height for hybrid vertical grid.
-        hflat,           &
-        output_vgrid,    & !--- output verical grid file?
-        hgrid_comm_flg,  & !--- communicate GRD_x           ! [add] T.Ohno 110722
-        triangle_size,   & !--- length of sides of triangle ! [add] T.Ohno 110722
-        GRD_grid_type,   & !--- grid type                   ! [add] T.Ohno 110722
-        da_access_hgrid, &
-        hgrid_io_mode,   & !--- io type(hgrid) [add] H.Yashiro 20110819
-        topo_io_mode       !--- io type(topo)  [add] H.Yashiro 20110819
+        GRD_grid_type,  & !--- grid type                   ! [add] T.Ohno 110722
+        hgrid_io_mode,  & !--- io type(hgrid) [add] H.Yashiro 20110819
+        topo_io_mode,   & !--- io type(topo)  [add] H.Yashiro 20110819
+        hgrid_fname,    & !--- horizontal grid basename
+        topo_fname,     & !--- topography basename
+        vgrid_fname,    & !--- vertical grid file-name
+        vgrid_scheme,   & !--- verical grid scheme
+        h_efold,        & !--- efolding height for hybrid vertical grid.
+        hflat,          &
+        output_vgrid,   & !--- output verical grid file?
+        hgrid_comm_flg, & !--- communicate GRD_x           ! [add] T.Ohno 110722
+        triangle_size     !--- length of sides of triangle ! [add] T.Ohno 110722
 
     integer :: n,k,l
     integer :: ierr
@@ -337,33 +326,13 @@ contains
     call GRD_scaling(fac_scale)
     ! [mod] T.Ohno 110722 <==
 
-
-    !------ allocation, initialization, and
-    !------ reading of surface height, standard deviation, vegetation index
-    allocate(GRD_zs   (ADM_gall,   K0,ADM_lall,   GRD_ZSFC:GRD_VEGINDX))
-    allocate(GRD_zs_pl(ADM_gall_pl,K0,ADM_lall_pl,GRD_ZSFC:GRD_VEGINDX))
+    !------ reading of surface height
+    allocate(GRD_zs   (ADM_gall,   K0,ADM_lall,   GRD_ZSFC))
+    allocate(GRD_zs_pl(ADM_gall_pl,K0,ADM_lall_pl,GRD_ZSFC))
     GRD_zs   (:,:,:,:) = 0.D0
     GRD_zs_pl(:,:,:,:) = 0.D0
 
-    ! -> [add] R.Yoshida 20121020
-    if ( trim(topo_fname) == 'Jablonowski' ) then
-       call GRD_jbw_init_topo
-    elseif ( trim(topo_fname) == 'Mountainwave' ) then
-       call GRD_mwave_init_topo
-    else
-       call GRD_input_topograph(topo_fname,GRD_ZSFC)
-    endif
-    ! <- [add] R.Yoshida 20121020
-
-    call GRD_input_topograph(toposd_fname,   GRD_ZSD)
-    call GRD_input_topograph(vegeindex_fname,GRD_VEGINDX)
-
-    !--- data transfer for GRD_zs
-    if (topo_direct_access) then ! [add] H.Yashiro 20110819
-       call COMM_var( GRD_zs, GRD_zs_pl, K0, 3 )
-    else
-       call COMM_data_transfer(GRD_zs,GRD_zs_pl)
-    endif
+    call GRD_input_topograph(topo_fname)
 
     !
     !--- < setting the vertical coordinate > ---
@@ -911,11 +880,11 @@ contains
   !> Description of the subroutine GRD_input_topograph
   !>
   subroutine GRD_input_topograph( &
-       basename, &
-       i_var     )
+       basename )
     use mod_misc,  only: &
-       MISC_make_idstr,&
-       MISC_get_available_fid
+       MISC_make_idstr,        &
+       MISC_get_available_fid, &
+       MISC_get_latlon
     use mod_adm, only: &
        ADM_LOG_FID, &
        ADM_prc_tab, &
@@ -926,27 +895,31 @@ contains
        ADM_KNONE
     use mod_fio, only: &
        FIO_input
+    use mod_comm, only :  &
+       COMM_var
+    use mod_ideal_topo, only: &
+       IDEAL_topo
     implicit none
 
     character(len=*), intent(in) :: basename
-    integer,          intent(in) :: i_var
 
-    character(len=16) :: varname(3)
-    data varname / 'topo', 'topo_stddev', 'vegeindex' /
+    real(8) :: lat(ADM_gall,ADM_KNONE,ADM_lall)
+    real(8) :: lon(ADM_gall,ADM_KNONE,ADM_lall)
 
     character(len=128) :: fname
-    integer            :: ierr
-    integer            :: l, rgnid, fid
+    integer            :: g, l, rgnid
+    integer            :: ierr, fid
     !---------------------------------------------------------------------------
 
     if ( topo_io_mode == 'ADVANCED' ) then
-       topo_direct_access = .true.
 
-       call FIO_input(GRD_zs(:,:,:,i_var),basename,varname(i_var),'ZSSFC1',1,1,1)
+       if ( basename /= 'NONE' ) then
+          call FIO_input(GRD_zs(:,:,:,GRD_ZSFC),basename,'topo','ZSSFC1',1,1,1)
+       endif
 
     elseif( topo_io_mode == 'LEGACY' ) then
 
-       if ( topo_direct_access ) then !--- direct access ( defalut )
+       if ( basename /= 'NONE' ) then
           do l = 1, ADM_lall
              rgnid = ADM_prc_tab(l,ADM_prc_me)
              call MISC_make_idstr(fname,trim(basename),'rgn',rgnid)
@@ -959,38 +932,33 @@ contains
                    recl   = ADM_gall*8,    &
                    status = 'old'          )
 
-                read(fid,rec=1) GRD_zs(:,ADM_KNONE,l,i_var)
+                read(fid,rec=1) GRD_zs(:,ADM_KNONE,l,GRD_ZSFC)
 
              close(fid)
           enddo
-       else !--- sequential access
-          do l = 1, ADM_lall
-             rgnid = ADM_prc_tab(l,ADM_prc_me)
-             call MISC_make_idstr(fname,trim(basename),'rgn',rgnid)
-             fid = MISC_get_available_fid()
+       endif
 
-             open(fid,file=trim(fname),status='old',form='unformatted',iostat=ierr)
-                if ( ierr /= 0 ) then
-                   write(ADM_LOG_FID,*) 'Msg : Sub[GRD_input_topograph]/Mod[grid]'
-                   write(ADM_LOG_FID,*) '   *** No topographical file. Number :', i_var
-                   return
-                endif
+    elseif( topo_io_mode == 'IDEAL' ) then
 
-                read(fid) GRD_zs(:,ADM_KNONE,l,i_var)
-             close(fid)
-          enddo
+       write(ADM_LOG_FID,*) '*** make ideal topography'
 
-          if ( ADM_prc_me == ADM_prc_pl ) then
-             fname = trim(basename)//'.pl'
-             fid = MISC_get_available_fid()
+       do l = 1, ADM_lall
+       do g = 1, ADM_gall
+          call MISC_get_latlon( lat  (g,ADM_KNONE,l),          &
+                                lon  (g,ADM_KNONE,l),          &
+                                GRD_x(g,ADM_KNONE,l,GRD_XDIR), &
+                                GRD_x(g,ADM_KNONE,l,GRD_YDIR), &
+                                GRD_x(g,ADM_KNONE,l,GRD_ZDIR)  )
+       enddo
+       enddo
 
-             open(fid,file=trim(fname),status='old',form='unformatted')
-                read(fid) GRD_zs_pl(:,:,:,i_var)
-             close(fid)
-          endif
-       endif !--- direct/sequencial
+       call IDEAL_topo( lat   (:,:,:),         & !--- [IN]
+                        lon   (:,:,:),         & !--- [IN]
+                        GRD_zs(:,:,:,GRD_ZSFC) ) !--- [OUT]
 
     endif !--- io_mode
+
+    call COMM_var( GRD_zs, GRD_zs_pl, ADM_KNONE, 1 )
 
     return
   end subroutine GRD_input_topograph
@@ -1170,172 +1138,6 @@ contains
 
     return
   end subroutine GRD_gen_plgrid
-
-  !-----------------------------------------------------------------------------
-  ! [ADD] R.Yoshida 20121020
-  ! imported from ENDGame UK Met.office.
-  !-----------------------------------------------------------------------------
-  subroutine GRD_jbw_init_topo()
-    use mod_misc, only : &
-       MISC_get_latlon
-    use mod_adm, only :  &
-       ADM_lall,         &
-       ADM_gall,         &
-       ADM_gall_pl,      &
-       ADM_lall_pl,      &
-       ADM_KNONE,        &
-       ADM_prc_me,       &
-       ADM_prc_pl,       &
-       ADM_LOG_FID
-    use mod_cnst, only: &
-       CNST_PI,      &
-       CNST_ERADIUS, &
-       CNST_EOHM,    &
-       CNST_EGRAV
-    implicit none
-
-    real(8), parameter :: u00 = 35.D0
-
-    real(8) :: cs32ev, f1, f2
-    real(8) :: lat, lon
-    real(8) :: rsurf  (ADM_gall   ,ADM_lall   ) ! surface height in ICO-grid
-    real(8) :: rsurf_p(ADM_gall_pl,ADM_lall_pl) ! surface height in ICO-grid for pole region
-
-    integer :: n, l, k0
-    !---------------------------------------------------------------------------
-
-    k0 = ADM_KNONE
-
-    cs32ev = ( cos( (1.D0-0.252D0) * CNST_PI * 0.5D0 ) )**1.5D0
-
-    ! for globe
-    do l = 1, ADM_lall
-    do n = 1, ADM_gall
-       call MISC_get_latlon( lat, lon,               &
-                             GRD_x(n,k0,l,GRD_XDIR), &
-                             GRD_x(n,k0,l,GRD_YDIR), &
-                             GRD_x(n,k0,l,GRD_ZDIR)  )
-
-       f1 = 10.D0/63.D0 - 2.D0 * sin(lat)**6 * ( cos(lat)**2 + 1.D0/3.D0 )
-       f2 = 1.6D0 * cos(lat)**3 * ( sin(lat)**2 + 2.D0/3.D0 ) - 0.25D0 * CNST_PI
-
-       rsurf(n,l) = u00 * cs32ev * ( f1*u00*cs32ev + f2*CNST_ERADIUS*CNST_EOHM ) / CNST_EGRAV
-    enddo
-    enddo
-
-    do l=1, ADM_lall
-    do n=1, ADM_gall
-       GRD_zs(n,k0,l,GRD_ZSFC) = rsurf(n,l)
-    enddo
-    enddo
-
-    ! for pole region
-    if ( ADM_prc_me == ADM_prc_pl ) then
-       do l = 1, ADM_lall_pl
-       do n = 1, ADM_gall_pl
-          call MISC_get_latlon( lat, lon,                  &
-                                GRD_x_pl(n,k0,l,GRD_XDIR), &
-                                GRD_x_pl(n,k0,l,GRD_YDIR), &
-                                GRD_x_pl(n,k0,l,GRD_ZDIR)  )
-
-          f1 = 10.D0/63.D0 - 2.D0 * sin(lat)**6 * ( cos(lat)**2 + 1.D0/3.D0 )
-          f2 = 1.6D0 * cos(lat)**3 * ( sin(lat)**2 + 2.D0/3.D0 ) - 0.25D0 * CNST_PI
-
-          rsurf_p(n,l) = u00 * cs32ev * ( f1*u00*cs32ev + f2*CNST_ERADIUS*CNST_EOHM ) / CNST_EGRAV
-       enddo
-       enddo
-
-       do l=1, ADM_lall_pl
-       do n=1, ADM_gall_pl
-          GRD_zs_pl(n,k0,l,GRD_ZSFC) = rsurf_p(n,l)
-       enddo
-       enddo
-    endif
-
-    write(ADM_LOG_FID,*) 'Msg : Sub[GRD_input_topograph]/Mod[grid]'
-    write(ADM_LOG_FID, '("   *** Topography for JBW: -- MAX: ",F9.3,2X,"MIN: ",F9.3)') &
-           maxval(GRD_zs(:,:,:,GRD_ZSFC)), minval(GRD_zs(:,:,:,GRD_ZSFC))
-
-    return
-  end subroutine GRD_jbw_init_topo
-
-  !-----------------------------------------------------------------------------
-  ! [ADD] R.Yoshida 20130328
-  ! mountain of dcmip 2012 setting
-  !-----------------------------------------------------------------------------
-  subroutine GRD_mwave_init_topo()
-    use mod_misc, only : &
-       MISC_get_latlon
-    use mod_adm, only :  &
-       ADM_lall,         &
-       ADM_gall,         &
-       ADM_gall_pl,      &
-       ADM_lall_pl,      &
-       ADM_KNONE,        &
-       ADM_prc_me,       &
-       ADM_prc_pl,       &
-       ADM_LOG_FID
-    use mod_cnst, only: &
-       CNST_PI
-    implicit none
-
-    ! <DCMIP-13>
-    real(8),parameter :: FAI_M   =0.d0
-    real(8),parameter :: H_ZERO  = 250.d0
-    real(8),parameter :: QSI  = 4000.d0
-    real(8),parameter :: a_ref  = 6371220.0D0
-    real(8),parameter :: X_reduce  = 500.d0
-    real(8),parameter :: HALF_WIDTH = 5000.0d0
-
-    real(8) :: dist_m, aa, bb, LAMBDA_M
-    real(8) :: lat, lon
-    integer :: n, l, K0
-    !---------------------------------------------------------------------------
-
-    LAMBDA_M=CNST_PI/4.d0
-    K0 = ADM_KNONE
-
-    ! for globe
-    do l=1, ADM_lall
-    do n=1, ADM_gall
-       call MISC_get_latlon( lat, lon,              &
-                             GRD_x(n,K0,l,GRD_XDIR), &
-                             GRD_x(n,K0,l,GRD_YDIR), &
-                             GRD_x(n,K0,l,GRD_ZDIR)  )
-
-        dist_m = (a_ref/X_reduce)*acos (sin (FAI_M)*sin (lat)  &
-                    +cos (FAI_M)*cos (lat)*cos (lon-LAMBDA_M))
-
-        aa = exp(- (dist_m)**2.0 / HALF_WIDTH**2.0d0)
-        bb = cos(CNST_PI*dist_m/QSI)**2.0d0
-        GRD_zs(n,ADM_KNONE,l,GRD_ZSFC) = H_ZERO * aa * bb   ! equation (76) in dcmip reference
-    enddo
-    enddo
-
-    ! for pole region
-    if ( ADM_prc_me==ADM_prc_pl ) then
-       do l=1, ADM_lall_pl
-       do n=1, ADM_gall_pl
-          call MISC_get_latlon( lat, lon,              &
-                                GRD_x(n,K0,l,GRD_XDIR), &
-                                GRD_x(n,K0,l,GRD_YDIR), &
-                                GRD_x(n,K0,l,GRD_ZDIR)  )
-
-           dist_m = (a_ref/X_reduce)*acos (sin (FAI_M)*sin (lat)&
-                       +cos (FAI_M)*cos (lat)*cos (lon-LAMBDA_M))
-
-           aa = exp(- (dist_m)**2.0 / HALF_WIDTH**2.0d0)
-           bb = cos(CNST_PI*dist_m/QSI)**2.0d0
-           GRD_zs_pl(n,ADM_KNONE,l,GRD_ZSFC) = H_ZERO * aa * bb   ! equation (76) in dcmip reference
-       enddo
-       enddo
-    endif
-
-    write(ADM_LOG_FID,*) 'Msg : Sub[GRD_input_topograph]/Mod[grid]'
-    write (ADM_LOG_FID, '("   *** Topography for mwave: -- MAX: ",F9.3,2X,"MIN: ",F9.3)') &
-           maxval(GRD_zs(:,:,:,GRD_ZSFC)), minval(GRD_zs(:,:,:,GRD_ZSFC))
-    return
-  end subroutine GRD_mwave_init_topo
 
 end module mod_grd
 !-------------------------------------------------------------------------------
