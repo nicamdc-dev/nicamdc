@@ -1,10 +1,10 @@
 VPATH_TOOL = tool:
-PRJ_TOOL   = $(NICAM_BINDIR)/$(PRJ_TOOL01) \
-             $(NICAM_BINDIR)/$(PRJ_TOOL02) \
-             $(NICAM_BINDIR)/$(PRJ_TOOL03) \
-             $(NICAM_BINDIR)/$(PRJ_TOOL04) \
-             $(NICAM_BINDIR)/$(PRJ_TOOL05) \
-             $(NICAM_BINDIR)/$(PRJ_TOOL06)
+PRJ_TOOL   = $(PRJ_TOOL01) \
+             $(PRJ_TOOL02) \
+             $(PRJ_TOOL03) \
+             $(PRJ_TOOL04) \
+             $(PRJ_TOOL05) \
+             $(PRJ_TOOL06)
 LIB_TOOL   = libnicamtool.a
 
 PRJ_TOOL01 = fio_dump

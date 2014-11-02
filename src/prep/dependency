@@ -1,9 +1,9 @@
 VPATH_PREP = prep/mkgrid:prep/mkmnginfo:prep/mkllmap:prep/mkvlayer:
-PRJ_PREP   = $(NICAM_BINDIR)/$(PRJ_PREP01) \
-             $(NICAM_BINDIR)/$(PRJ_PREP02) \
-             $(NICAM_BINDIR)/$(PRJ_PREP03) \
-             $(NICAM_BINDIR)/$(PRJ_PREP04) \
-             $(NICAM_BINDIR)/$(PRJ_PREP05)
+PRJ_PREP   = $(PRJ_PREP01) \
+             $(PRJ_PREP02) \
+             $(PRJ_PREP03) \
+             $(PRJ_PREP04) \
+             $(PRJ_PREP05)
 LIB_PREP   = libnicamprep.a
 
 PRJ_PREP01 = mkmnginfo

@@ -8,6 +8,8 @@ TOPDIR      = $(abspath ..)
 BUILD_DIR   = ./.libs
 SYSDEP_DIR  = ../sysdep
 
+VPATH = $(BUILD_DIR)
+
 include $(SYSDEP_DIR)/Makedef.$(NICAM_SYS)
 include $(TOPDIR)/Mkinclude
 
@@ -49,12 +51,11 @@ makedir:
 
 makelib: makedir $(addprefix $(NICAM_LIBDIR)/,$(LIBS))
 
-makebin: makedir $(PRJS)
+makebin: makedir $(addprefix $(NICAM_BINDIR)/,$(PRJS))
 
-nhm:        makedir $(PRJ_NHM)
-nhm_mkinit: makedir $(PRJ_MKINIT)
-prep:       makedir $(PRJ_PREP)
-tool:       makedir $(PRJ_TOOL)
+nhm    : makedir $(addprefix $(NICAM_BINDIR)/,$(PRJ_NHM))
+prep   : makedir $(addprefix $(NICAM_BINDIR)/,$(PRJ_PREP))
+tool   : makedir $(addprefix $(NICAM_BINDIR)/,$(PRJ_TOOL))
 
 cleandir:
 	-rm $(NICAM_LIBDIR)/*
@@ -65,15 +66,15 @@ clean:
 	rm -f *~ *.mod *.o *.lst *.L
 	cd $(BUILD_DIR); rm -f $(LIBS) $(PRJS); rm -f *~ *.mod *.o *.lst *.L
 
-.SUFFIXES: .o .f90 .c
-.f90.o:
+.SUFFIXES: .o .f90 .c .mod
+%.o : %.f90
 	$(FC) $(FFLAGS) -I$(BUILD_DIR) $(MODDIROPT) -o $(OBJDIR)/$@ -c $<
-.c.o:
-	$(CC) $(CFLAGS) -o $(BUILD_DIR)/$@ -c $<
+%.o : %.c
+	$(CC) $(CFLAGS) -o $(OBJDIR)/$@ -c $<
 
-%.o: %.mod
+%.o : %.mod
 
-%.mod: %.f90
-	make $(patsubst %.f90,%.o,$<)
+%.mod : %.f90
+	$(MAKE) $(patsubst %.f90,%.o,$<)
 
-.PHONY : clean cleandir allclean share prep nhm nhm_mkinit tool
+.PHONY : clean cleandir allclean share prep nhm tool
