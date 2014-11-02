@@ -51,6 +51,8 @@ MODULE dcmip_initial_conditions_test_1_2_3
   !
   !
   !=======================================================================
+  use mod_adm, only: &
+     ADM_LOG_FID
 
   IMPLICIT NONE
 

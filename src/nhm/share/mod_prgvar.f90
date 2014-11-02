@@ -1203,13 +1203,8 @@ contains
     write(ADM_LOG_FID,*)
     write(ADM_LOG_FID,*) '====== data range check : diagnostic variables ======'
     do nq = 1, DIAG_vmax0
-       val_max = GTL_max( DIAG_var   (:,:,:,nq),       &
-                          DIAG_var_pl(:,:,:,nq),       &
-                          ADM_kall, ADM_kmin, ADM_kmax )
-       val_min = GTL_min( DIAG_var   (:,:,:,nq),       &
-                          DIAG_var_pl(:,:,:,nq),       &
-                          ADM_kall, ADM_kmin, ADM_kmax )
-
+       val_max = GTL_max( DIAG_var(:,:,:,nq), DIAG_var_pl(:,:,:,nq), ADM_kall, ADM_kmin, ADM_kmax )
+       val_min = GTL_min( DIAG_var(:,:,:,nq), DIAG_var_pl(:,:,:,nq), ADM_kall, ADM_kmin, ADM_kmax )
        write(ADM_LOG_FID,'(1x,A,A16,2(A,1PE24.17))') '--- ', DIAG_name(nq), ': max=', val_max, ', min=', val_min
     enddo
 
@@ -1231,59 +1226,14 @@ contains
        write(ADM_LOG_FID,'(1x,A,A16,2(A,1PE24.17))') '--- ', TRC_name(nq),  ': max=', val_max, ', min=', val_min
     enddo
 
-!    if ( trim(ISOTOPE) == "ON" ) then ! [add] K.Yoshimura 20110414
-!       do nq = 1, ISO_MAX/2
-!          DIAG_var(:,:,:,ISO_STR +5+nq) = DIAG_var(:,:,:,6+nq) * 0.99D0
-!          DIAG_var(:,:,:,ISO_STR2+5+nq) = DIAG_var(:,:,:,6+nq) * 0.92D0
-!       enddo
-!    endif
-
     call cnvvar_diag2prg( PRG_var (:,:,:,:), PRG_var_pl (:,:,:,:), & !--- [OUT]
                           DIAG_var(:,:,:,:), DIAG_var_pl(:,:,:,:)  ) !--- [IN]
-
-
-    ! [Add] 09/04/14 T.Mitsui
-    ! "option is chosen" and "QI is tracer"
-    if ( I_QI <= 0 ) then
-       if ( opt_diag_qi ) then
-          call diag_qi( ADM_gall,              & !--- [IN]
-                        ADM_kall,              & !--- [IN]
-                        ADM_lall,              & !--- [IN]
-                        DIAG_var(:,:,:,I_tem), & !--- [IN]
-                        DIAG_var(:,:,:,I_QC),  & !--- [INOUT]
-                        DIAG_var(:,:,:,I_QI),  & !--- [INOUT]
-                        PRG_var (:,:,:,I_QC),  & !--- [INOUT]
-                        PRG_var (:,:,:,I_QI)   ) !--- [INOUT]
-          if ( opt_2moment_water ) then
-             if ( I_NI <= 0 ) then
-                flag_diagnose_number(I_NI) = .true.
-             endif
-          endif
-       endif
-    endif
-
-    ![Add] 09/08/18 T.Mitsui
-    ! qc and qi are converted into qv and temperature is modified.
-    if ( opt_qcqi_to_qv )then
-       call convert_qcqi_to_qv( ADM_gall,                             & !--- [IN]
-                                ADM_kall,                             & !--- [IN]
-                                ADM_lall,                             & !--- [IN]
-                                TRC_vmax,                             & !--- [IN]
-                                DIAG_var(:,:,:,I_tem),                & !--- [INOUT]
-                                DIAG_var(:,:,:,I_qstr:I_qend),        & !--- [INOUT]
-                                PRG_var (:,:,:,I_RHOGQstr:I_RHOGQend) ) !--- [INOUT]
-    endif
 
     write(ADM_LOG_FID,*)
     write(ADM_LOG_FID,*) '====== data range check : prognostic variables ======'
     do nq = 1, DIAG_vmax0
-       val_max = GTL_max( PRG_var   (:,:,:,nq),        &
-                          PRG_var_pl(:,:,:,nq),        &
-                          ADM_kall, ADM_kmin, ADM_kmax )
-       val_min = GTL_min( PRG_var   (:,:,:,nq),        &
-                          PRG_var_pl(:,:,:,nq),        &
-                          ADM_kall, ADM_kmin, ADM_kmax )
-
+       val_max = GTL_max( PRG_var(:,:,:,nq), PRG_var_pl(:,:,:,nq), ADM_kall, ADM_kmin, ADM_kmax )
+       val_min = GTL_min( PRG_var(:,:,:,nq), PRG_var_pl(:,:,:,nq), ADM_kall, ADM_kmin, ADM_kmax )
        write(ADM_LOG_FID,'(1x,A,A16,2(A,1PE24.17))') '--- ', PRG_name(nq), ': max=', val_max, ', min=', val_min
     enddo
 
@@ -1823,188 +1773,6 @@ contains
 
     return
   end subroutine cnvvar_prg2diag
-
-  !-----------------------------------------------------------------------------
-  ! 09/04/14 [Add] T.Mitsui
-  ! GCMs, including Reanalysis data, diagnose qi with qc and temperature implicitly
-  ! and qi is never provided by them.
-  ! Here we diagnose qi without release of latent heat.
-  ! This assumption is equivalent with treatment of GCMs who never predict qi.
-  !
-  ! Therefore we should diagnose in this module before calculating rhoge
-  ! because we should keep coservation laws for mass and energy.
-  subroutine diag_qi( &
-       gall, kall, lall, & ! in
-       tem,                   & ! in
-       qc, qi, rhogqc, rhogqi ) ! inout
-    use mod_adm, only: &
-       ADM_CTL_FID,  &
-       ADM_LOG_FID
-    implicit none
-
-    integer, intent(in)    :: gall
-    integer, intent(in)    :: kall
-    integer, intent(in)    :: lall
-    real(8), intent(in)    :: tem(gall,kall,lall)
-    real(8), intent(inout) :: qc(gall,kall,lall)
-    real(8), intent(inout) :: qi(gall,kall,lall)
-    real(8), intent(inout) :: rhogqc(gall,kall,lall)
-    real(8), intent(inout) :: rhogqi(gall,kall,lall)
-    ! Reference: MIROC4.1, G98, Rogers and Yau(1989)(book) and so on.
-    ! -15deg. is the most effective temperature of Bergeron process
-    real(8), save :: tem_low = 258.15d0
-    !   0deg. is begining of Bergeron process
-    real(8), save :: tem_up  = 273.15d0
-    !
-    real(8), parameter :: dtem_min=0.1d0
-    real(8), parameter :: tem_low_min = 173.15d0
-    !
-    namelist /nm_restart_diag_qi/ &
-         tem_low, tem_up
-    !
-    real(8) :: r_dtem
-    real(8) :: liquid_ratio
-    !
-    real(8) :: qc_pre(gall,kall,lall)
-    real(8) :: rhogqc_pre(gall,kall,lall)
-    real(8) :: dqc(gall,kall,lall)
-    real(8) :: drhogqc(gall,kall,lall)
-    !
-    integer :: ij,k,l
-    !---------------------------------------------------------------------------
-
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=nm_restart_diag_qi,end=100)
-100 continue
-    ! 09/04/14 [Add] T.Mitsui, filter
-    tem_low =  max(tem_low_min, min(tem_low, tem_up-dtem_min))
-    tem_up  =  max(tem_up, tem_low+dtem_min)
-    write(ADM_LOG_FID,nml=nm_restart_diag_qi)
-    !
-    r_dtem = 1.d0/(tem_up - tem_low)
-    qc_pre(:,:,:)     = qc(:,:,:)
-    rhogqc_pre(:,:,:) = rhogqc(:,:,:)
-    !
-    do l=1, lall
-       do k=1, kall
-          do ij=1, gall
-             ! ratio=1 => all water,  ratio=0 => all ice.
-             liquid_ratio  = min(1.d0, max(0.d0, (tem(ij,k,l)-tem_low)*r_dtem))
-             dqc(ij,k,l)     = (liquid_ratio-1.d0)*qc(ij,k,l)
-             drhogqc(ij,k,l) = (liquid_ratio-1.d0)*rhogqc(ij,k,l)
-             !
-             qc(ij,k,l)      = qc(ij,k,l)     + dqc(ij,k,l)
-             qi(ij,k,l)      = qi(ij,k,l)     - dqc(ij,k,l)
-             rhogqc(ij,k,l)  = rhogqc(ij,k,l) + drhogqc(ij,k,l)
-             rhogqi(ij,k,l)  = rhogqi(ij,k,l) - drhogqc(ij,k,l)
-          end do
-       end do
-    end do
-    !
-    write(ADM_LOG_FID,'(a)') "*** Diagnosis of QI, check max and min value "
-    do k=1, kall
-       write(ADM_LOG_FID,'(a,i5)') "Layer number  = ", k
-       write(ADM_LOG_FID,'(a,2f16.6)') "tem(max,min)  = ",maxval(tem(:,k,:)), minval(tem(:,k,:))
-       write(ADM_LOG_FID,'(a,e16.6,a,e16.6)') "qc(pre) max   =",maxval(qc_pre(:,k,:)),&
-                                              " => qc(post) max   =" , maxval(qc(:,k,:))
-       write(ADM_LOG_FID,'(a,e16.6,a,e16.6)') "qc(pre) min   =",minval(qc_pre(:,k,:)),&
-                                              " => qc(post) min   =" , minval(qc(:,k,:))
-       write(ADM_LOG_FID,'(a,e16.6,a,e16.6)') "dqc     min   =",minval(dqc(:,k,:)),&
-                                              ",   qi(post) max   =" , maxval(qi(:,k,:))
-    enddo
-
-    return
-  end subroutine diag_qi
-
-  !-----------------------------------------------------------------------------
-  ! [Add] 09/08/18 T.MItsui. convert qc and qi into qv(immediate evaporation).
-  subroutine convert_qcqi_to_qv( &
-       ijdim, kdim, lall, nqmax, &
-       tem, q, rhogq )
-    use mod_runconf, only: &
-         I_QV, I_QC, I_QI, &
-         I_NC, I_NI,       &
-         NQW_STR, NQW_END, &
-         opt_2moment_water
-    use mod_cnst, only: &
-         CNST_LH00,     &
-         CNST_LHF00,    &
-         CNST_CVV,      &
-         CNST_CL,       &
-         CNST_CI
-    use mod_thrmdyn, only: &
-         thrmdyn_cv
-    implicit none
-    !
-    integer, intent(in) :: ijdim
-    integer, intent(in) :: kdim
-    integer, intent(in) :: lall
-    integer, intent(in) :: nqmax
-    real(8), intent(inout) :: tem(ijdim,kdim,lall)
-    real(8), intent(inout) :: q(ijdim,kdim,lall,nqmax)
-    real(8), intent(inout) :: rhogq(ijdim,kdim,lall,nqmax)
-    !
-    real(8) :: qd(ijdim,kdim)
-    real(8) :: cva(ijdim,kdim)
-    real(8) :: dqv(ijdim,kdim), dqi(ijdim,kdim)
-    real(8) :: drhogqv(ijdim,kdim)
-    real(8) :: drhoe(ijdim,kdim)
-    !
-    integer :: l_region,nq
-    !---------------------------------------------------------------------------
-
-    do l_region=1,lall
-       qd(:,:) = 1.d0
-       do nq=NQW_STR, NQW_END
-          qd(:,:) = qd(:,:) - q(:,:,l_region,nq)
-       end do
-       call thrmdyn_cv( &
-            ijdim,      & !--- in
-            cva,        & !--- out
-            q,qd        ) !--- in
-       !
-       if( NQW_END >= I_QI )then
-          dqv(:,:)     =   q(:,:,l_region,I_QC) + q(:,:,l_region,I_QI)
-          dqi(:,:)     = - q(:,:,l_region,I_QI)
-          drhogqv(:,:) = rhogq(:,:,l_region,I_QC) + rhogq(:,:,l_region,I_QI)
-          drhoe(:,:)   = -CNST_LH00*dqv(:,:) + CNST_LHF00*dqi(:,:) &
-               - (CNST_CVV*tem(:,:,l_region)-CNST_CL*tem(:,:,l_region))*dqv(:,:) &
-               - (CNST_CI *tem(:,:,l_region)-CNST_CL*tem(:,:,l_region))*dqi(:,:)
-          !
-          tem(:,:,l_region)    = tem(:,:,l_region) + drhoe(:,:)/cva(:,:)
-          q(:,:,l_region,I_QV) = q(:,:,l_region,I_QV) + dqv(:,:)
-          q(:,:,l_region,I_QC) = 0.d0
-          q(:,:,l_region,I_QI) = 0.d0
-          rhogq(:,:,l_region,I_QV) = rhogq(:,:,l_region,I_QV) + drhogqv(:,:)
-          rhogq(:,:,l_region,I_QC) = 0.d0
-          rhogq(:,:,l_region,I_QI) = 0.d0
-          if( opt_2moment_water )then
-             q(:,:,l_region,I_NC)     = 0.d0
-             q(:,:,l_region,I_NI)     = 0.d0
-             rhogq(:,:,l_region,I_NC) = 0.d0
-             rhogq(:,:,l_region,I_NI) = 0.d0
-          end if
-       else
-          dqv(:,:)     = q(:,:,l_region,I_QC)
-          drhogqv(:,:) = rhogq(:,:,l_region,I_QC)
-          !
-          drhoe(:,:)   = -CNST_LH00*dqv(:,:) &
-               - (CNST_CVV*tem(:,:,l_region)-CNST_CL*tem(:,:,l_region))*dqv(:,:)
-          !
-          tem(:,:,l_region)    = tem(:,:,l_region) + drhoe(:,:)/cva(:,:)
-          q(:,:,l_region,I_QV) = q(:,:,l_region,I_QV) + dqv(:,:)
-          q(:,:,l_region,I_QC) = 0.d0
-          rhogq(:,:,l_region,I_QV) = rhogq(:,:,l_region,I_QV) + drhogqv(:,:)
-          rhogq(:,:,l_region,I_QC) = 0.d0
-          if( opt_2moment_water )then
-             q(:,:,l_region,I_NC) = 0.d0
-             rhogq(:,:,l_region,I_NC) = 0.d0
-          end if
-       end if
-    end do
-
-    return
-  end subroutine convert_qcqi_to_qv
 
 end module mod_prgvar
 !-------------------------------------------------------------------------------
