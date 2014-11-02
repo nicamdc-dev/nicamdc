@@ -124,8 +124,10 @@ contains
        lon, &
        Zsfc )
     use mod_adm, only: &
-       ADM_KNONE, &
-       ADM_lall,  &
+       ADM_CTL_FID,   &
+       ADM_proc_stop, &
+       ADM_KNONE,     &
+       ADM_lall,      &
        ADM_gall
     use mod_cnst, only: &
        PI     => CNST_PI,      &
@@ -156,7 +158,22 @@ contains
     real(8) :: distance, mask
 
     integer :: g, l, K0
+    integer :: ierr
     !---------------------------------------------------------------------------
+
+    !--- read parameters
+    write(ADM_LOG_FID,*)
+    write(ADM_LOG_FID,*) '+++ Module[topo Schar Moderate]/Category[nhm ideal]'
+    rewind(ADM_CTL_FID)
+    read(ADM_CTL_FID,nml=IDEALTOPOPARAM_Schar_Moderate,iostat=ierr)
+    if ( ierr < 0 ) then
+       write(ADM_LOG_FID,*) '*** IDEALTOPOPARAM_Schar_Moderate is not specified. use default.'
+    elseif( ierr > 0 ) then
+       write(*,          *) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Moderate. STOP.'
+       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Moderate. STOP.'
+       call ADM_proc_stop
+    endif
+    write(ADM_LOG_FID,nml=IDEALTOPOPARAM_Schar_Moderate)
 
     K0 = ADM_KNONE
 
@@ -194,8 +211,10 @@ contains
        lon, &
        Zsfc )
     use mod_adm, only: &
-       ADM_KNONE, &
-       ADM_lall,  &
+       ADM_CTL_FID,   &
+       ADM_proc_stop, &
+       ADM_KNONE,     &
+       ADM_lall,      &
        ADM_gall
     use mod_cnst, only: &
        PI     => CNST_PI,      &
@@ -226,7 +245,22 @@ contains
     real(8) :: distance
 
     integer :: g, l, K0
+    integer :: ierr
     !---------------------------------------------------------------------------
+
+    !--- read parameters
+    write(ADM_LOG_FID,*)
+    write(ADM_LOG_FID,*) '+++ Module[topo Schar Steep]/Category[nhm ideal]'
+    rewind(ADM_CTL_FID)
+    read(ADM_CTL_FID,nml=IDEALTOPOPARAM_Schar_Steep,iostat=ierr)
+    if ( ierr < 0 ) then
+       write(ADM_LOG_FID,*) '*** IDEALTOPOPARAM_Schar_Steep is not specified. use default.'
+    elseif( ierr > 0 ) then
+       write(*,          *) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Steep. STOP.'
+       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Steep. STOP.'
+       call ADM_proc_stop
+    endif
+    write(ADM_LOG_FID,nml=IDEALTOPOPARAM_Schar_Steep)
 
     K0 = ADM_KNONE
 
