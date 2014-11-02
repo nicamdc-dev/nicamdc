@@ -678,8 +678,6 @@ contains
 
        do l = 1, lall
        do n = 1, ijdim
-          gc = GRD_gz(k)
-
           z(ADM_kmin-1) = GRD_vz(n,ADM_kmin,l,GRD_ZH)
           do k = ADM_kmin, ADM_kmax+1
              z(k) = GRD_vz(n,k,l,GRD_Z)
@@ -690,6 +688,8 @@ contains
           lon = GMTR_lon(n,l)
 
           do k=1, kdim
+             gc = GRD_gz(k)
+
              call test1_advection_orography(lon,        & ! [IN]
                                             lat,        & ! [IN]
                                             p(k),       & ! [INOUT]

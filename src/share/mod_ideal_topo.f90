@@ -140,18 +140,18 @@ contains
     real(8) :: center_lon =  270.D0 ! Longitude of Schar-type mountain center point [deg]
     real(8) :: center_lat =    0.D0 ! Latitude  of Schar-type mountain center point [deg]
     real(8) :: H0         = 2000.D0 ! Maximum Schar-type mountain height [m]
-    real(8) :: Rm         =  135.D0 ! Schar-type mountain radius     [deg]
-    real(8) :: QSIm       = 11.25D0 ! Schar-type mountain wavelength [deg]
+    real(8) :: Rm_deg     =  135.D0 ! Schar-type mountain radius     [deg]
+    real(8) :: QSIm_deg   = 11.25D0 ! Schar-type mountain wavelength [deg]
 
     namelist / IDEALTOPOPARAM_Schar_Moderate / &
        center_lon, &
        center_lat, &
        H0,         &
-       Rm,         &
-       QSIm
+       Rm_deg,     &
+       QSIm_deg
 
     real(8) :: LAMBDA,  PHI
-    real(8) :: LAMBDAm, PHIm
+    real(8) :: LAMBDAm, PHIm, Rm, QSIm
     real(8) :: sinPHIm, cosPHIm
     real(8) :: distance, mask
 
@@ -162,6 +162,8 @@ contains
 
     LAMBDAm = center_lon * D2R ! [deg]->[rad]
     PHIm    = center_lat * D2R ! [deg]->[rad]
+    Rm      = Rm_deg     * D2R ! [deg]->[rad]
+    QSIm    = QSIm_deg   * D2R ! [deg]->[rad]
     sinPHIm = sin(PHIm)
     cosPHIm = cos(PHIm)
 
@@ -170,8 +172,8 @@ contains
        LAMBDA = lon(g,K0,l)
        PHI    = lat(g,K0,l)
 
-       distance = RADIUS * acos( sinPHIm * sin(PHI)                       &
-                               + cosPHIm * cos(PHI) * cos(LAMBDA-LAMBDAm) )
+       distance = acos( sinPHIm * sin(PHI)                       &
+                      + cosPHIm * cos(PHI) * cos(LAMBDA-LAMBDAm) )
 
        mask = 0.5D0 - sign(0.5D0,distance-Rm) ! if distance > Rm, mask = 0
 

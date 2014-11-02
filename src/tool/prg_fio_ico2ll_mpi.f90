@@ -261,10 +261,7 @@ program fio_ico2ll_mpi
      stop
   endif
 
-  if    (output_grads) then
-     call DEBUG_rapstart('+FILE O GRADS')
-     call DEBUG_rapend  ('+FILE O GRADS')
-  elseif(output_gtool) then
+  if    (output_gtool) then
      output_grads    = .false.
      devide_template = .false.
      outfile_rec     = 1
@@ -278,7 +275,11 @@ program fio_ico2ll_mpi
      output_gtool    = .false.
      call DEBUG_rapstart('+FILE O NETCDF')
      call DEBUG_rapend  ('+FILE O NETCDF')
+  elseif(output_grads) then
+     call DEBUG_rapstart('+FILE O GRADS')
+     call DEBUG_rapend  ('+FILE O GRADS')
   endif
+
 
   if ( trim(selectvar(1)) /= '' ) then
      allvar = .false.
