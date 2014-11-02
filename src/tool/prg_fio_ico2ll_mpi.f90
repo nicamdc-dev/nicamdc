@@ -37,8 +37,10 @@ program fio_ico2ll_mpi
   use mpi
   use mod_debug
   use mod_adm, only: &
-     ADM_LOG_FID, &
-     ADM_mpi_alive
+     ADM_LOG_FID,    &
+     ADM_mpi_alive,  &
+     ADM_COMM_WORLD, &
+     ADM_prc_all
   use mod_misc, only: &
      MISC_get_available_fid, &
      MISC_make_idstr
@@ -259,16 +261,23 @@ program fio_ico2ll_mpi
      stop
   endif
 
-  if (output_gtool) then
+  if    (output_grads) then
+     call DEBUG_rapstart('+FILE O GRADS')
+     call DEBUG_rapend  ('+FILE O GRADS')
+  elseif(output_gtool) then
      output_grads    = .false.
      devide_template = .false.
      outfile_rec     = 1
      output_netcdf   = .false.
+     call DEBUG_rapstart('+FILE O GTOOL')
+     call DEBUG_rapend  ('+FILE O GTOOL')
   elseif(output_netcdf) then
      output_grads    = .false.
      devide_template = .false.
      outfile_rec     = 1
      output_gtool    = .false.
+     call DEBUG_rapstart('+FILE O NETCDF')
+     call DEBUG_rapend  ('+FILE O NETCDF')
   endif
 
   if ( trim(selectvar(1)) /= '' ) then
@@ -291,7 +300,9 @@ program fio_ico2ll_mpi
   call MPI_Comm_size(MPI_COMM_WORLD, prc_nall,   ierr)
   call MPI_Comm_rank(MPI_COMM_WORLD, prc_myrank, ierr)
   call MPI_Barrier(MPI_COMM_WORLD,ierr)
-  ADM_mpi_alive = .true.
+  ADM_mpi_alive  = .true.
+  ADM_COMM_WORLD = MPI_COMM_WORLD
+  ADM_prc_all    = prc_nall
 
   call DEBUG_rapstart('FIO_ICO2LL_MPI')
 
