@@ -36,8 +36,10 @@ module mod_adm
   !
   public :: ADM_proc_init
   public :: ADM_proc_stop
+  public :: ADM_proc_finish
   public :: ADM_setup
   public :: ADM_mk_suffix
+  public :: ADM_MPItime
 
   !-----------------------------------------------------------------------------
   !
@@ -426,54 +428,73 @@ contains
   end subroutine ADM_proc_init
 
   !-----------------------------------------------------------------------------
-  !>
-  !> Description of the subroutine ADM_proc_stop
-  !>
+  !> Abort MPI process
   subroutine ADM_proc_stop
     implicit none
 
-    character(len=ADM_NSYS) :: request
-    integer                 :: ierr
+    integer :: ierr
     !---------------------------------------------------------------------------
 
     ! flush 1kbyte
     write(ADM_LOG_FID,'(32A32)') '                                '
 
-    if ( ADM_run_type == ADM_MULTI_PRC ) then
-       write(ADM_LOG_FID,*)
-       write(ADM_LOG_FID,*) 'MPI process going to STOP...'
-
-       request='STOP'
-       call MPI_BCAST( request,              & !--- starting address
-                       ADM_NSYS,             & !--- number of array
-                       MPI_CHARACTER,        & !--- type
-                       ADM_prc_run_master-1, & !--- source rank
-                       MPI_COMM_WORLD,       & !--- world
-                       ierr                  ) !--- error id
-
-       call MPI_Barrier(MPI_COMM_WORLD,ierr)
-
-       write(ADM_LOG_FID,*) 'MPI process has normally finished.'
-       write(ADM_LOG_FID,*) '############################################################'
-       call MPI_Finalize(ierr)
-
-       close(ADM_CTL_FID)
-       close(ADM_LOG_FID)
-
-       stop
-    else
-       write(ADM_LOG_FID,*)
-       write(ADM_LOG_FID,*) 'Serial process stopeed.'
-       write(ADM_LOG_FID,*) '############################################################'
-
-       close(ADM_CTL_FID)
-       close(ADM_LOG_FID)
-
-       stop
+    write(ADM_LOG_FID,*) '+++ Abort MPI'
+    if ( ADM_prc_me == ADM_prc_run_master ) then
+       write(*,*) '+++ Abort MPI'
     endif
 
-    return
+    close(ADM_LOG_FID)
+    close(ADM_CTL_FID)
+
+    ! Abort MPI
+    call MPI_Abort(MPI_COMM_WORLD, 1, ierr)
+
+    stop
   end subroutine ADM_proc_stop
+
+  !-----------------------------------------------------------------------------
+  !> Finish MPI process
+  subroutine ADM_proc_finish
+#ifdef JCUP
+    use jsp_nicam, only: &
+       jsp_n_finish,         &
+       jsp_n_is_io_coupled,  &
+       jsp_n_is_coco_coupled
+#endif
+    implicit none
+
+    character(ADM_NSYS) :: request = 'STOP'
+    integer :: ierr
+    !---------------------------------------------------------------------------
+
+    if ( ADM_run_type == ADM_MULTI_PRC ) then
+
+       write(ADM_LOG_FID,*)
+       write(ADM_LOG_FID,*) '+++ finalize MPI'
+       call MPI_Barrier(ADM_COMM_WORLD,ierr)
+
+#ifdef JCUP
+       if (      jsp_n_is_io_coupled()   &
+            .OR. jsp_n_is_coco_coupled() ) then
+          call jsp_n_finish()
+       else
+          call MPI_Finalize(ierr)
+       endif
+#else
+       call MPI_Finalize(ierr)
+#endif
+
+       write(ADM_LOG_FID,*) '*** MPI is peacefully finalized'
+    else
+       write(ADM_LOG_FID,*)
+       write(ADM_LOG_FID,*) '+++ stop serial process.'
+    endif
+
+    close(ADM_LOG_FID)
+    close(ADM_CTL_FID)
+
+    return
+  end subroutine ADM_proc_finish
 
   !-----------------------------------------------------------------------------
   !>

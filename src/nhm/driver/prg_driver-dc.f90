@@ -64,23 +64,16 @@ program prg_driver
      ADM_prc_run_master, &
      ADM_proc_init,      &
      ADM_proc_stop,      &
+     ADM_proc_finish,    &
      ADM_setup
-  use mod_fio, only: &
-     FIO_setup
-  use mod_comm, only: &
-     COMM_setup
   use mod_cnst, only: &
      CNST_setup
   use mod_calendar, only: &
      calendar_setup
-  use mod_time, only: &
-     TIME_setup,     &
-     TIME_report,    &
-     TIME_advance,   &
-     TIME_LSTEP_MAX, &
-     TIME_CSTEP,     &
-     TIME_CTIME,     &
-     TIME_DTL
+  use mod_fio, only: &
+     FIO_setup
+  use mod_comm, only: &
+     COMM_setup
   use mod_grd, only: &
      GRD_setup
   use mod_gmtr, only: &
@@ -96,11 +89,18 @@ program prg_driver
      cinterp_PRA
   use mod_vmtr, only: &
      VMTR_setup
+  use mod_time, only: &
+     TIME_setup,     &
+     TIME_report,    &
+     TIME_advance,   &
+     TIME_LSTEP_MAX, &
+     TIME_CSTEP,     &
+     TIME_CTIME,     &
+     TIME_DTL
   use mod_extdata, only: &
      extdata_setup
   use mod_runconf, only: &
-     runconf_setup, &
-     FLAG_NUDGING
+     runconf_setup
   use mod_prgvar, only: &
      prgvar_setup,            &
      restart_input_basename,  &
@@ -112,10 +112,10 @@ program prg_driver
      diagvar_restart_output
   use mod_sfcvar, only: &
      sfcvar_setup
-  use mod_dynamics, only : &
+  use mod_dynamics, only: &
      dynamics_setup, &
      dynamics_step
-  use mod_forcing_driver, only : &
+  use mod_forcing_driver, only: &
      forcing_setup, &
      forcing_step
   use mod_history, only: &
@@ -282,7 +282,7 @@ program prg_driver
   call DEBUG_rapreport
 
   !--- all processes stop
-  call ADM_proc_stop
+  call ADM_proc_finish
 
   stop
 end program prg_driver

@@ -29,6 +29,7 @@ module mod_forcing_driver
   public :: forcing_setup
   public :: forcing_step
   public :: forcing_update
+
   !-----------------------------------------------------------------------------
   !
   !++ Public parameters & variables
@@ -280,7 +281,7 @@ contains
        GMTR_lon_pl, &
        GMTR_lat,    &
        GMTR_lat_pl
-    use mod_dycoretest, only: &
+    use mod_ideal_init, only: &
        DCTEST_type, &
        DCTEST_case
     use mod_af_trcadv, only: & ![add] 20130612 R.Yoshida
@@ -308,7 +309,7 @@ contains
     !--- update velocity
     time = time + TIME_DTL
 
-    if ( DCTEST_type == 'Traceradvection' .AND. DCTEST_case == '1' ) then
+    if ( DCTEST_type == 'Traceradvection' .AND. DCTEST_case == '1-1' ) then
 
        do l = 1, ADM_lall
        do k = 1, ADM_kall
@@ -346,7 +347,7 @@ contains
           enddo
        endif
 
-    elseif( DCTEST_type == 'Traceradvection' .AND. DCTEST_case == '2' ) then
+    elseif( DCTEST_type == 'Traceradvection' .AND. DCTEST_case == '1-2' ) then
 
        do l = 1, ADM_lall
        do k = 1, ADM_kall

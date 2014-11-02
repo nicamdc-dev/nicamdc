@@ -3,7 +3,7 @@
 !+  Module of Dynamical Core Test initial condition
 !
 !-------------------------------------------------------------------------------
-module mod_dycoretest
+module mod_ideal_init
   !-----------------------------------------------------------------------------
   !
   !++ Description:
@@ -28,11 +28,9 @@ module mod_dycoretest
   use mod_adm, only: &
      ADM_LOG_FID,  &
      ADM_NSYS
-  use mod_dcmip, only: &
-     test1_advection_deformation,  &
-     test1_advection_hadley,       &
-     test2_steady_state_mountain,  &
-     test2_schaer_mountain,        &
+  use dcmip_initial_conditions_test_1_2_3, only: &
+     test2_steady_state_mountain, &
+     test2_schaer_mountain,       &
      test3_gravity_wave
   use mod_cnst, only: &
      pi    => CNST_PI,      &
@@ -167,6 +165,12 @@ contains
 
     write(ADM_LOG_FID,*) '*** type: ', trim(init_type)
     select case(init_type)
+!    case ('DCMIP2012-11','DCMIP2012-12','DCMIP2012-13' &
+!          'DCMIP2012-200','DCMIP2012-21','DCMIP2012-22')
+
+!       write(ADM_LOG_FID,*) '*** test case: ', trim(test_case)
+!       call IDEAL_init_DCMIP2012( ADM_gall, ADM_kall, ADM_lall, init_type, DIAG_var(:,:,:,:) )
+
     case ('Heldsuarez')
 
        call hs_init ( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
@@ -489,17 +493,20 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine tracer_init( &
-     ijdim,      &
-     kdim,       &
-     lall,       &
-     test_case,  &
-     DIAG_var    )
+       ijdim,      &
+       kdim,       &
+       lall,       &
+       test_case,  &
+       DIAG_var    )
     use mod_adm, only: &
        ADM_proc_stop, &
        ADM_kmin,      &
        ADM_kmax
+    use mod_cnst, only: &
+       UNDEF => CNST_UNDEF
     use mod_grd, only: &
-       GRD_Z,          &
+       GRD_gz, &
+       GRD_Z,  &
        GRD_ZH, &
        GRD_vz
     use mod_gmtr, only: &
@@ -510,15 +517,17 @@ contains
        NCHEM_STR
     use mod_chemvar, only: &
        chemvar_getid
+    use dcmip_initial_conditions_test_1_2_3, only: &
+       test1_advection_deformation, &
+       test1_advection_hadley,      &
+       test1_advection_orography
     implicit none
 
-    integer, intent(in)    :: ijdim
-    integer, intent(in)    :: kdim
-    integer, intent(in)    :: lall
-    character(len=ADM_NSYS), intent(in) :: test_case
-    real(8), intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
-
-    integer, parameter :: zcoords = 1
+    integer,                 intent(in)    :: ijdim
+    integer,                 intent(in)    :: kdim
+    integer,                 intent(in)    :: lall
+    character(len=ADM_NSYS), intent(in)    :: test_case
+    real(8),                 intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
     real(8) :: lon     ! longitude            [rad]
     real(8) :: lat     ! latitude             [rad]
@@ -542,6 +551,13 @@ contains
     real(8) :: vy(kdim)
     real(8) :: vz(kdim)
 
+    logical, parameter :: hybrid_eta = .false. ! dont use hybrid sigma-p (eta) coordinate
+    integer, parameter :: zcoords    = 1       ! if zcoords = 1, then we use z and output p
+    integer, parameter :: cfv        = 2       ! if cfv = 2 then our velocities follow Gal-Chen coordinates and we need to specify w
+    real(8)            :: hyam       = UNDEF   ! dont use hybrid sigma-p (eta) coordinate
+    real(8)            :: hybm       = UNDEF   ! dont use hybrid sigma-p (eta) coordinate
+    real(8)            :: gc                   ! bar{z} for Gal-Chen coordinate
+
     integer :: I_pasv1, I_pasv2
     integer :: I_pasv3, I_pasv4
     integer :: n, k, l
@@ -554,19 +570,19 @@ contains
     I_pasv3 = 6 + NCHEM_STR + chemvar_getid( "passive3" ) - 1
     I_pasv4 = 6 + NCHEM_STR + chemvar_getid( "passive4" ) - 1
 
-    do l = 1, lall
-    do n = 1, ijdim
-       z(ADM_kmin-1) = GRD_vz(n,ADM_kmin,l,GRD_ZH)
-       do k = ADM_kmin, ADM_kmax+1
-          z(k) = GRD_vz(n,k,l,GRD_Z)
-       enddo
-       p(:) = 0.D0
+    select case(test_case)
+    case ('1', '1-1') ! DCMIP 2012 Test 1-1: 3D Deformational Flow
 
-       lat = GMTR_lat(n,l)
-       lon = GMTR_lon(n,l)
+       do l = 1, lall
+       do n = 1, ijdim
+          z(ADM_kmin-1) = GRD_vz(n,ADM_kmin,l,GRD_ZH)
+          do k = ADM_kmin, ADM_kmax+1
+             z(k) = GRD_vz(n,k,l,GRD_Z)
+          enddo
+          p(:) = 0.D0
 
-       select case(test_case)
-       case ('1', '1-1') ! DCMIP: TEST CASE 11 - Pure Advection - 3D deformational flow
+          lat = GMTR_lat(n,l)
+          lon = GMTR_lon(n,l)
 
           do k=1, kdim
              call test1_advection_deformation( lon,     & ! [IN]
@@ -588,7 +604,36 @@ contains
                                                q4(k)    ) ! [OUT]
           enddo
 
-       case ('2', '1-2') ! DCMIP: TEST CASE 12 - Pure Advection - 3D HADLEY-like flow
+          call conv_vxvyvz( kdim, lat, lon, u(:), v(:), vx(:), vy(:), vz(:) )
+
+          do k=1, kdim
+             DIAG_var(n,k,l,1) = p (k)
+             DIAG_var(n,k,l,2) = t (k)
+             DIAG_var(n,k,l,3) = vx(k)
+             DIAG_var(n,k,l,4) = vy(k)
+             DIAG_var(n,k,l,5) = vz(k)
+             DIAG_var(n,k,l,6) = w (k)
+
+             DIAG_var(n,k,l,I_pasv1) = q1(k)
+             DIAG_var(n,k,l,I_pasv2) = q2(k)
+             DIAG_var(n,k,l,I_pasv3) = q3(k)
+             DIAG_var(n,k,l,I_pasv4) = q4(k)
+          enddo
+       enddo
+       enddo
+
+    case ('2', '1-2') ! DCMIP 2012 Test 1-2: Hadley-like Meridional Circulation
+
+       do l = 1, lall
+       do n = 1, ijdim
+          z(ADM_kmin-1) = GRD_vz(n,ADM_kmin,l,GRD_ZH)
+          do k = ADM_kmin, ADM_kmax+1
+             z(k) = GRD_vz(n,k,l,GRD_Z)
+          enddo
+          p(:) = 0.D0
+
+          lat = GMTR_lat(n,l)
+          lon = GMTR_lon(n,l)
 
           do k=1, kdim
              call test1_advection_hadley( lon,     & ! [IN]
@@ -611,29 +656,87 @@ contains
              q4(k) = 0.D0
           enddo
 
-       case default
-          write(*          ,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
-          write(ADM_LOG_FID,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
-          call ADM_proc_stop
-       end select
+          call conv_vxvyvz( kdim, lat, lon, u(:), v(:), vx(:), vy(:), vz(:) )
 
-       call conv_vxvyvz( kdim, lat, lon, u, v, vx, vy, vz )
+          do k=1, kdim
+             DIAG_var(n,k,l,1) = p (k)
+             DIAG_var(n,k,l,2) = t (k)
+             DIAG_var(n,k,l,3) = vx(k)
+             DIAG_var(n,k,l,4) = vy(k)
+             DIAG_var(n,k,l,5) = vz(k)
+             DIAG_var(n,k,l,6) = w (k)
 
-       do k=1, kdim
-          DIAG_var(n,k,l,1) = p (k)
-          DIAG_var(n,k,l,2) = t (k)
-          DIAG_var(n,k,l,3) = vx(k)
-          DIAG_var(n,k,l,4) = vy(k)
-          DIAG_var(n,k,l,5) = vz(k)
-          DIAG_var(n,k,l,6) = w (k)
-
-          DIAG_var(n,k,l,I_pasv1) = q1(k)
-          DIAG_var(n,k,l,I_pasv2) = q2(k)
-          DIAG_var(n,k,l,I_pasv3) = q3(k)
-          DIAG_var(n,k,l,I_pasv4) = q4(k)
+             DIAG_var(n,k,l,I_pasv1) = q1(k)
+             DIAG_var(n,k,l,I_pasv2) = q2(k)
+             DIAG_var(n,k,l,I_pasv3) = q3(k)
+             DIAG_var(n,k,l,I_pasv4) = q4(k)
+          enddo
        enddo
-    enddo
-    enddo
+       enddo
+
+    case ('3', '1-3') ! DCMIP 2012 Test 1-3: Horizontal advection of thin cloud-like tracers in the presence of orography
+
+       do l = 1, lall
+       do n = 1, ijdim
+          gc = GRD_gz(k)
+
+          z(ADM_kmin-1) = GRD_vz(n,ADM_kmin,l,GRD_ZH)
+          do k = ADM_kmin, ADM_kmax+1
+             z(k) = GRD_vz(n,k,l,GRD_Z)
+          enddo
+          p(:) = 0.D0
+
+          lat = GMTR_lat(n,l)
+          lon = GMTR_lon(n,l)
+
+          do k=1, kdim
+             call test1_advection_orography(lon,        & ! [IN]
+                                            lat,        & ! [IN]
+                                            p(k),       & ! [INOUT]
+                                            z(k),       & ! [IN]
+                                            zcoords,    & ! [IN]
+                                            cfv,        & ! [IN]
+                                            hybrid_eta, & ! [IN]
+                                            hyam,       & ! [IN]
+                                            hybm,       & ! [IN]
+                                            gc,         & ! [IN]
+                                            u(k),       & ! [OUT]
+                                            v(k),       & ! [OUT]
+                                            w(k),       & ! [OUT]
+                                            t(k),       & ! [OUT]
+                                            phis,       & ! [OUT]
+                                            ps,         & ! [OUT]
+                                            rho,        & ! [OUT]
+                                            q,          & ! [OUT]
+                                            q1(k),      & ! [OUT]
+                                            q2(k),      & ! [OUT]
+                                            q3(k),      & ! [OUT]
+                                            q4(k)       ) ! [OUT]
+          enddo
+
+          call conv_vxvyvz( kdim, lat, lon, u(:), v(:), vx(:), vy(:), vz(:) )
+
+          do k=1, kdim
+             DIAG_var(n,k,l,1) = p (k)
+             DIAG_var(n,k,l,2) = t (k)
+             DIAG_var(n,k,l,3) = vx(k)
+             DIAG_var(n,k,l,4) = vy(k)
+             DIAG_var(n,k,l,5) = vz(k)
+             DIAG_var(n,k,l,6) = w (k)
+
+             DIAG_var(n,k,l,I_pasv1) = q1(k)
+             DIAG_var(n,k,l,I_pasv2) = q2(k)
+             DIAG_var(n,k,l,I_pasv3) = q3(k)
+             DIAG_var(n,k,l,I_pasv4) = q4(k)
+          enddo
+       enddo
+       enddo
+
+    case default
+       write(*          ,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
+       write(ADM_LOG_FID,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
+       call ADM_proc_stop
+    end select
 
     return
   end subroutine tracer_init
@@ -1514,4 +1617,4 @@ contains
     return
   end function Sp_Unit_North
 
-end module mod_dycoretest
+end module mod_ideal_init

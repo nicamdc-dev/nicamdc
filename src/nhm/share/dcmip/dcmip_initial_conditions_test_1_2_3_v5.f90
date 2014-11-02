@@ -54,6 +54,13 @@ MODULE dcmip_initial_conditions_test_1_2_3
 
   IMPLICIT NONE
 
+  public :: test1_advection_deformation
+  public :: test1_advection_hadley
+  public :: test1_advection_orography
+  public :: test2_steady_state_mountain
+  public :: test2_schaer_mountain
+  public :: test3_gravity_wave
+
 !-----------------------------------------------------------------------
 !     Physical Parameters
 !-----------------------------------------------------------------------

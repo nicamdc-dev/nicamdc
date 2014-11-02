@@ -1094,7 +1094,7 @@ contains
        I_QC,     &
        I_QI,     &
        I_NI
-    use mod_dycoretest, only :  & ! [add] R.Yoshida 20121019
+    use mod_ideal_init, only :  & ! [add] R.Yoshida 20121019
        dycore_input
     implicit none
 
