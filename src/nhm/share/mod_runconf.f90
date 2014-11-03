@@ -86,7 +86,7 @@ module mod_runconf
   !--- Dynamics
   integer,                 public, save :: NON_HYDRO_ALPHA    = 1 ! Nonhydrostatic/hydrostatic flag
   character(len=ADM_NSYS), public, save :: TRC_ADV_TYPE       = 'MIURA2004'
-  character(len=ADM_NSYS), public, save :: NDIFF_LOCATION     = 'IN_LARGE_STEP'
+  character(len=ADM_NSYS), public, save :: NDIFF_LOCATION     = 'IN_LARGE_STEP2'
   logical,                 public, save :: FLAG_NUDGING       = .false.
   logical,                 public, save :: THUBURN_LIM        = .true.  ! [add] 20130613 R.Yoshida
 
