@@ -78,7 +78,7 @@ contains
 
     !--- read parameters
     write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[ideal topo]/Category[nhm ideal]'
+    write(ADM_LOG_FID,*) '+++ Module[ideal topo]/Category[common share]'
     rewind(ADM_CTL_FID)
     read(ADM_CTL_FID,nml=IDEALTOPOPARAM,iostat=ierr)
     if ( ierr < 0 ) then
@@ -163,7 +163,7 @@ contains
 
     !--- read parameters
     write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[topo Schar Moderate]/Category[nhm ideal]'
+    write(ADM_LOG_FID,*) '+++ Module[topo Schar Moderate]/Category[common share]'
     rewind(ADM_CTL_FID)
     read(ADM_CTL_FID,nml=IDEALTOPOPARAM_Schar_Moderate,iostat=ierr)
     if ( ierr < 0 ) then
@@ -250,7 +250,7 @@ contains
 
     !--- read parameters
     write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[topo Schar Steep]/Category[nhm ideal]'
+    write(ADM_LOG_FID,*) '+++ Module[topo Schar Steep]/Category[common share]'
     rewind(ADM_CTL_FID)
     read(ADM_CTL_FID,nml=IDEALTOPOPARAM_Schar_Steep,iostat=ierr)
     if ( ierr < 0 ) then

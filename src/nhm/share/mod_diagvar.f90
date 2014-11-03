@@ -400,7 +400,7 @@ contains
           write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist NM_CP_CHIKIRA_SETUP. STOP.'
           call ADM_proc_stop
        endif
-       write(ADM_LOG_FID,NM_CP_CHIKIRA_SETUP)
+       write(ADM_LOG_FID,nml=NM_CP_CHIKIRA_SETUP)
        write(ADM_LOG_FID,*) '# CHIKIRA scheme: NCTP=', NCTP
 
        I_STA_NLAYER = I_END_NLAYER + 1
@@ -472,7 +472,7 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist DIAGVARPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,DIAGVARPARAM)
+    write(ADM_LOG_FID,nml=DIAGVARPARAM)
 
     ! -> [add] H.Yashiro 20110819
     if ( input_io_mode == 'ADVANCED' ) then

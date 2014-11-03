@@ -182,48 +182,40 @@ module mod_sgs
 contains
   !-----------------------------------------------------------------------------
   subroutine sgs_setup
-    !
-    use mod_adm, only :  &
-       ADM_ctl_fid
-    !
+    use mod_adm, only: &
+       ADM_CTL_FID, &
+       ADM_proc_stop
     implicit none
-    !
-    integer :: ierr
 
     namelist / SMGPARAM / &
-         dep_hgrid,             & !--- depnedency of horzontal grid size
-         K_coef_minlim,        & !--- K_coef (minimum limit)
-         K_coef_maxlim,        & !--- K_coef (maximum limit)
-         LENGTH_maxlim,       & !---
-         SMG_CS,                & !--- Smagorinsky constant
-         stratos_effect                 !--- stratos effect (default: false)
-!         DEEP_EFFECT
-    !
-!    integer :: k,l,n
-    !
+       dep_hgrid,     & !--- depnedency of horzontal grid size
+       K_coef_minlim, & !--- K_coef (minimum limit)
+       K_coef_maxlim, & !--- K_coef (maximum limit)
+       LENGTH_maxlim, & !---
+       SMG_CS,        & !--- Smagorinsky constant
+       stratos_effect   !--- stratos effect (default: false)
+
+    integer :: ierr
+    !---------------------------------------------------------------------------
+
+    !--- read parameters
+    write(ADM_LOG_FID,*)
+    write(ADM_LOG_FID,*) '+++ Module[SGS turbulence]/Category[nhm dynamics]'
     rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=SMGPARAM,iostat = ierr)
-    if(ierr<0) then
-       write(ADM_LOG_FID,*) &
-            'Msg : Sub[smg_setup]/Mod[smg]'
-       write(ADM_LOG_FID,*) &
-            ' *** Not found namelist.'
-       write(ADM_LOG_FID,*) &
-            ' *** Use default values.'
-    else if(ierr>0) then
-       write(*,*) &
-            'Msg : Sub[smg_setup]/Mod[smg]'
-       write(*,*) &
-            ' *** WARNING : Not appropriate names in namelist!! CHECK!!'
-    end if
-    !
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=SMGPARAM,iostat = ierr)
+    read(ADM_CTL_FID,nml=SMGPARAM,iostat=ierr)
+    if ( ierr < 0 ) then
+       write(ADM_LOG_FID,*) '*** SMGPARAM is not specified. use default.'
+    elseif( ierr > 0 ) then
+       write(*,          *) 'xxx Not appropriate names in namelist SMGPARAM. STOP.'
+       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist SMGPARAM. STOP.'
+       call ADM_proc_stop
+    endif
     write(ADM_LOG_FID,nml=SMGPARAM)
 
-    call tb_smg_oprt_init()
+    call tb_smg_oprt_init
 
   end subroutine sgs_setup
+
   !-----------------------------------------------------------------------------
   subroutine sgs_smagorinsky(&
        nl,&

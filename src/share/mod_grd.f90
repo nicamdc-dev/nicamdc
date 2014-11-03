@@ -279,7 +279,7 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist GRDPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,GRDPARAM)
+    write(ADM_LOG_FID,nml=GRDPARAM)
 
     K0 = ADM_KNONE
 

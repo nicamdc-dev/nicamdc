@@ -135,7 +135,7 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist TIMEPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,TIMEPARAM)
+    write(ADM_LOG_FID,nml=TIMEPARAM)
 
     !--- rewrite
     TIME_integ_type = integ_type

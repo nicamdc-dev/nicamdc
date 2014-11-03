@@ -252,7 +252,7 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist LATLONPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,LATLONPARAM)
+    write(ADM_LOG_FID,nml=LATLONPARAM)
 
     d2r    = CNST_PI / 180.D0
     latmax = latmax_deg * d2r

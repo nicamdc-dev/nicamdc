@@ -195,7 +195,7 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist RESTARTPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,RESTARTPARAM)
+    write(ADM_LOG_FID,nml=RESTARTPARAM)
 
     restart_input_basename  = input_basename
     restart_output_basename = output_basename

@@ -271,7 +271,7 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist NMHISD. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,NMHISD)
+    write(ADM_LOG_FID,nml=NMHISD)
 
     ! nonsence restore
     step_def        = step

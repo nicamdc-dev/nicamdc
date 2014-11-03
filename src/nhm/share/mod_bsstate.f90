@@ -24,9 +24,10 @@ module mod_bsstate
   !
   !++ Used modules
   !
-  use mod_adm, only :  &
-       ADM_MAXFNAME,   &
-       ADM_NSYS
+  use mod_adm, only: &
+     ADM_LOG_FID,  &
+     ADM_MAXFNAME, &
+     ADM_NSYS
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -140,54 +141,43 @@ module mod_bsstate
 contains
   !-----------------------------------------------------------------------------
   subroutine bsstate_setup
-    !------
-    !------ Setup routine of this module
-    !------    1. read the parameters.
-    !------    2. allocate the memory for basic state variables.
-    !------    3. set the reference state.
-    !------    4. set the basic state.
-    !------
-    !
-    use mod_adm, only :  &
-         ADM_LOG_FID,    &
-         ADM_CTL_FID,    &
-         ADM_lall_pl,    &
-         ADM_gall_pl,    &
-         ADM_lall,       &
-         ADM_kall,       &
-         ADM_gall
-    !
+    use mod_adm, only: &
+       ADM_CTL_FID,   &
+       ADM_proc_stop, &
+       ADM_lall,      &
+       ADM_lall_pl,   &
+       ADM_kall,      &
+       ADM_gall_pl,   &
+       ADM_gall
     implicit none
-    !
-    integer :: ierr
-    !
+
     namelist / BSSTATEPARAM / &
-         ref_type,            & !--- type of basic state
-         ZT,                  & !--- if z>ZT, equi-temperature
-         pre_g,               & !--- reference pressure
-         tem_g,               & !--- reference temperature
-         TGAMMA,              & !--- lapse rate when ref_type='TEM'.
-         th_g,                & !--- reference potential temp. for when ref_type='TH'
-         BV_freq,             & !--- Vaisala freq when ref_type='TH'
-         ref_fname              !--- in/output base name if necessary.
-    !
-    !--- reading the parameters
+         ref_type, & !--- type of basic state
+         ZT,       & !--- if z>ZT, equi-temperature
+         pre_g,    & !--- reference pressure
+         tem_g,    & !--- reference temperature
+         TGAMMA,   & !--- lapse rate when ref_type='TEM'.
+         th_g,     & !--- reference potential temp. for when ref_type='TH'
+         BV_freq,  & !--- Vaisala freq when ref_type='TH'
+         ref_fname   !--- in/output base name if necessary.
+
+    integer :: ierr
+    !---------------------------------------------------------------------------
+
+    !--- read parameters
+    write(ADM_LOG_FID,*)
+    write(ADM_LOG_FID,*) '+++ Module[basic state]/Category[nhm share]'
     rewind(ADM_CTL_FID)
     read(ADM_CTL_FID,nml=BSSTATEPARAM,iostat=ierr)
-    if ( ierr<0) then
-       write(ADM_LOG_FID,*) &
-            'Msg : Sub[bsstate_setup_setup]/Mod[bsstate]'
-       write(ADM_LOG_FID,*) &
-            ' *** Not found namelist.'
-       write(ADM_LOG_FID,*) &
-            ' *** Use default values.'
-    else if ( ierr>0) then
-       write(*,*) &
-            'Msg : Sub[bsstate_setup_setup]/Mod[bsstate]'
-       write(*,*) &
-            ' *** WARNING : Not appropriate names in namelist!! CHECK!!'
+    if ( ierr < 0 ) then
+       write(ADM_LOG_FID,*) '*** BSSTATEPARAM is not specified. use default.'
+    elseif( ierr > 0 ) then
+       write(*,          *) 'xxx Not appropriate names in namelist BSSTATEPARAM. STOP.'
+       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist BSSTATEPARAM. STOP.'
+       call ADM_proc_stop
     endif
-    !
+    write(ADM_LOG_FID,nml=BSSTATEPARAM)
+
     !--- allocation of reference variables
     allocate(phi_ref(ADM_kall))
     allocate(rho_ref(ADM_kall))

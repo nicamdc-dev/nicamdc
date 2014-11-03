@@ -104,7 +104,7 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist EMBUDGETPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,EMBUDGETPARAM)
+    write(ADM_LOG_FID,nml=EMBUDGETPARAM)
 
     if(.not.MNT_ON) return
 

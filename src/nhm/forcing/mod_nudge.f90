@@ -146,21 +146,23 @@ contains
 
     integer :: k0, k1
     integer :: g, k, l
+
     integer :: ierr
     !---------------------------------------------------------------------------
 
+    !--- read parameters
+    write(ADM_LOG_FID,*)
+    write(ADM_LOG_FID,*) '+++ Module[nudging]/Category[nhm forcing]'
     rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID, nml=NUDGEPARAM, iostat=ierr)
+    read(ADM_CTL_FID,nml=NUDGEPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) 'MSG : Sub[NUDGE]/Mod[nhm share]'
-       write(ADM_LOG_FID,*) ' *** Not found namelist NUDGEPARAM! STOP!!'
-       call ADM_proc_stop
+       write(ADM_LOG_FID,*) '*** NUDGEPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,*) 'MSG : Sub[NUDGE]/Mod[nhm share]'
-       write(*,*) ' *** WARNING : Not appropriate names in namelist! STOP!!'
+       write(*,          *) 'xxx Not appropriate names in namelist NUDGEPARAM. STOP.'
+       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist NUDGEPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID, nml=NUDGEPARAM)
+    write(ADM_LOG_FID,nml=NUDGEPARAM)
 
     NDG_VMAX = 0
 

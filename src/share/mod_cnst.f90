@@ -226,7 +226,7 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist CNSTPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,CNSTPARAM)
+    write(ADM_LOG_FID,nml=CNSTPARAM)
 
     CNST_ERADIUS = earth_radius / small_planet_factor
     CNST_EOHM    = earth_angvel * small_planet_factor

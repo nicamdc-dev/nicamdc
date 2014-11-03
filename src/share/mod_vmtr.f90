@@ -231,7 +231,7 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist VMTRPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,VMTRPARAM)
+    write(ADM_LOG_FID,nml=VMTRPARAM)
 
     !--- initialization
     allocate( VMTR_GSGAM2     (ADM_gall,   ADM_kall,ADM_lall   ) )

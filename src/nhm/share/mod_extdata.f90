@@ -200,7 +200,7 @@ contains
           info(np)%kall = nlayer
        else
           write(ADM_LOG_FID,*) 'Msg : Sub[extdata_setup]/Mod[mod_extdata]'
-          write(ADM_LOG_FID,*) '---- ERROR! : invlalid type of layer_type.', trim(layer_type)
+          write(ADM_LOG_FID,*) 'xxx invlalid type of layer_type.', trim(layer_type)
           call ADM_proc_stop
        endif
 

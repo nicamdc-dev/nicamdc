@@ -407,42 +407,41 @@ contains
        max_hallo_num,    & !--- IN : number of hallo regions
        debug             ) !--- IN : debug flag
     use mod_adm, only :    &
-         !--- public parameters
-         ADM_w,          &
-         ADM_e,          &
-         ADM_n,          &
-         ADM_s,          &
-         ADM_sw,         &
-         ADM_nw,         &
-         ADM_ne,         &
-         ADM_se,         &
-         ADM_rid,        &
-         ADM_dir,        &
-         ADM_vlink_nmax, &
-         ADM_rgn_nmax_pl,&
-         ADM_npl,        &
-         ADM_spl,        &
-         ADM_gslf_pl,    &
-         ADM_prc_all,    &
-         ADM_prc_rnum,   &
-         ADM_prc_tab,    &
-         ADM_prc_me,     &
-         ADM_rgn_nmax,   &
-         ADM_rgn_etab,   &
-         ADM_rgn_vnum,   &
-         ADM_rgn_vtab,   &
-         ADM_rgn_vtab_pl,&
-         ADM_gmin,       &
-         ADM_gmax,       &
-         ADM_gall_1d,    &
-         ADM_lall,       &
-         ADM_kall,       &
-         ADM_prc_nspl,   &
-         ADM_comm_world,&
-         ADM_rgn2prc,& !(20101207)added by teraim
-         !--- For namelist.
-         ADM_CTL_FID,    &  !Iga(061008)
-         ADM_LOG_FID        !Iga(061008)
+       ADM_w,           &
+       ADM_e,           &
+       ADM_n,           &
+       ADM_s,           &
+       ADM_sw,          &
+       ADM_nw,          &
+       ADM_ne,          &
+       ADM_se,          &
+       ADM_rid,         &
+       ADM_dir,         &
+       ADM_vlink_nmax,  &
+       ADM_rgn_nmax_pl, &
+       ADM_npl,         &
+       ADM_spl,         &
+       ADM_gslf_pl,     &
+       ADM_prc_all,     &
+       ADM_prc_rnum,    &
+       ADM_prc_tab,     &
+       ADM_prc_me,      &
+       ADM_rgn_nmax,    &
+       ADM_rgn_etab,    &
+       ADM_rgn_vnum,    &
+       ADM_rgn_vtab,    &
+       ADM_rgn_vtab_pl, &
+       ADM_gmin,        &
+       ADM_gmax,        &
+       ADM_gall_1d,     &
+       ADM_lall,        &
+       ADM_kall,        &
+       ADM_prc_nspl,    &
+       ADM_comm_world,  &
+       ADM_rgn2prc,     &
+       ADM_CTL_FID,     &
+       ADM_LOG_FID,     &
+       ADM_proc_stop
     implicit none
 
     integer,intent(in),optional :: max_hallo_num
@@ -450,10 +449,7 @@ contains
 
     integer :: i,j,l,n,m,p,q
     integer :: rgnid
-    integer :: ierr
-    !
-    !integer :: nn,t,n1,n2,n3,n4,n5,n6
-    !
+
     integer::lr,mr
     integer::ls,ms
     integer::nr,nc,ns
@@ -476,54 +472,44 @@ contains
          opt_check_varmax,   & ! check option of varmax [Add] T.Mitsui 07/11/07
          opt_comm_dbg,       & ! debug option of comm_data_transfer [Add] S.Iga 0909XX
          opt_comm_barrier      ! debug option of comm_data_transfer [Add] S.Iga 0909XX
-    !
-    max_comm_r2p=ADM_vlink_nmax*2!S.Iga100607
-    max_comm_p2r=ADM_vlink_nmax*2!S.Iga100607
-    max_comm=max_comm_r2r+max_comm_r2p+max_comm_p2r!S.Iga100607
 
-    !--- < reading parameters > ---
-    !
+    integer :: ierr
+    !---------------------------------------------------------------------------
+
+    !--- read parameters
+    write(ADM_LOG_FID,*)
+    write(ADM_LOG_FID,*) '+++ Module[comm]/Category[common share]'
     rewind(ADM_CTL_FID)
     read(ADM_CTL_FID,nml=COMMPARAM,iostat=ierr)
-    if(ierr<0) then
-       write(ADM_LOG_FID,*) &
-            'Msg : Sub[COMM_setup]/Mod[comm]'
-       write(ADM_LOG_FID,*) &
-            ' *** No namelist in paramter file.'
-       write(ADM_LOG_FID,*) &
-            ' *** Use default values.'
-    else if(ierr>0) then
-       write(*,*) &
-            'Msg : Sub[COMM_setup]/Mod[comm]'
-       write(*,*) &
-            ' *** WARNING : Not appropriate names in namelist!! CHECK!!'
-    end if
-    write(ADM_LOG_FID,COMMPARAM)
-    ! <== Iga(061008)
+    if ( ierr < 0 ) then
+       write(ADM_LOG_FID,*) '*** COMMPARAM is not specified. use default.'
+    elseif( ierr > 0 ) then
+       write(*,          *) 'xxx Not appropriate names in namelist COMMPARAM. STOP.'
+       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist COMMPARAM. STOP.'
+       call ADM_proc_stop
+    endif
+    write(ADM_LOG_FID,nml=COMMPARAM)
 
     if (present(max_hallo_num)) then
        halomax=max_hallo_num
     else
        halomax=1
     endif
-    !    if (present(max_k_num)) then
-    !      kmax=max_k_num
-    !    else
-    !      kmax=ADM_kall
-    !    endif
+
+    max_comm_r2p=ADM_vlink_nmax*2!S.Iga100607
+    max_comm_p2r=ADM_vlink_nmax*2!S.Iga100607
+    max_comm=max_comm_r2r+max_comm_r2p+max_comm_p2r!S.Iga100607
+
     kmax=ADM_kall
-    !
+
     allocate(prc_tab_rev(ptr_prcid:ptr_lrgnid,ADM_rgn_nmax))
-    !
+
     do p=1,ADM_prc_all
        do n=1,ADM_prc_rnum(p)
           prc_tab_rev(ptr_prcid,ADM_prc_tab(n,p))=p
           prc_tab_rev(ptr_lrgnid,ADM_prc_tab(n,p))=n
        end do
     end do
-
-!    if (ADM_prc_me.eq.1)   write(*,*) 'ADM_prc_tab',ADM_prc_tab
-!    if (ADM_prc_me.eq.1)   write(*,*) 'prc_tab_rev', prc_tab_rev
 
     if(ADM_prc_nspl(ADM_npl) < 0 .and. ADM_prc_nspl(ADM_spl) <0 ) comm_pl = .false. ! T.Ohno 110721
 

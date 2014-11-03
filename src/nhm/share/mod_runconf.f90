@@ -222,7 +222,7 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist RUNCONFPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,RUNCONFPARAM)
+    write(ADM_LOG_FID,nml=RUNCONFPARAM)
 
     call RUNCONF_component_setup
 

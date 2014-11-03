@@ -201,8 +201,8 @@ contains
 
     real(8) :: global_area, global_grid
 
-    integer :: ierr
     integer :: k
+    integer :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -217,7 +217,7 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist NUMFILTERPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,NUMFILTERPARAM)
+    write(ADM_LOG_FID,nml=NUMFILTERPARAM)
 
     global_area = 4.D0 * PI * ERADIUS * ERADIUS
     global_grid = 10.D0 * 4.D0**ADM_GLEVEL

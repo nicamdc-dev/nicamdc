@@ -105,7 +105,7 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist BNDCNDPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,BNDCNDPARAM)
+    write(ADM_LOG_FID,nml=BNDCNDPARAM)
 
     if    ( BND_TYPE_M_TOP == 'RIGID' ) then
        write(ADM_LOG_FID,*) '*** Boundary setting type (momentum,    top   ) : rigid'

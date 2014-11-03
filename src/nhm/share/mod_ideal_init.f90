@@ -158,7 +158,7 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist DYCORETESTPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,DYCORETESTPARAM)
+    write(ADM_LOG_FID,nml=DYCORETESTPARAM)
 
     DCTEST_type = init_type
     DCTEST_case = test_case
