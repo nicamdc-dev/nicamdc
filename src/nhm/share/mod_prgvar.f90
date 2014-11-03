@@ -114,14 +114,10 @@ module mod_prgvar
 
   integer, private, save :: TRC_vmax_input ! number of input tracer variables
 
-  character(len=ADM_MAXFNAME), private, save :: layername            = ''       ! [add] H.Yashiro 20110826
-  character(len=ADM_MAXFNAME), private, save :: input_io_mode        = 'LEGACY' ! [add] H.Yashiro 20110819
-  character(len=ADM_MAXFNAME), private, save :: output_io_mode       = 'LEGACY' ! [add] H.Yashiro 20110819
-  logical,                     private, save :: input_direct_access  = .true.
-  logical,                     private, save :: output_direct_access = .true.
-  logical,                     private, save :: allow_missingq       = .false.  ! [add] H.Yashiro 20110906
-  logical,                     private, save :: opt_diag_qi          = .false.
-  logical,                     private, save :: opt_qcqi_to_qv       = .false.  ! [Add] 09/08/18 T.Mitsui
+  character(len=ADM_MAXFNAME), private, save :: layername      = ''
+  character(len=ADM_MAXFNAME), private, save :: input_io_mode  = 'ADVANCED'
+  character(len=ADM_MAXFNAME), private, save :: output_io_mode = 'ADVANCED'
+  logical,                     private, save :: allow_missingq = .false.
 
   !-----------------------------------------------------------------------------
 contains
@@ -160,18 +156,14 @@ contains
     character(len=ADM_MAXFNAME) :: output_basename   = 'restart'
     character(len=ADM_MAXFNAME) :: restart_layername = ''
 
-    namelist / RESTARTPARAM /  &
-         TRC_vmax_input,       &
-         input_basename,       &
-         output_basename,      &
-         restart_layername,    & !--- [add] H.Yashiro 20110826
-         input_io_mode,        & !--- [add] H.Yashiro 20110819
-         output_io_mode,       & !--- [add] H.Yashiro 20110819
-         input_direct_access,  &
-         output_direct_access, &
-         allow_missingq,       & !--- [add] H.Yashiro 20110906
-         opt_diag_qi,          & !--- option to diagnose qi by temperature, 09/04/14 T.Mitsui
-         opt_qcqi_to_qv          !--- option to convert qc and qi into qv,  09/08/18 T.Mitsui
+    namelist / RESTARTPARAM / &
+       TRC_vmax_input,    &
+       input_basename,    &
+       output_basename,   &
+       restart_layername, &
+       input_io_mode,     &
+       output_io_mode,    &
+       allow_missingq
 
     logical, allocatable :: flag_exist(:) ! [Add] 08/04/12 T.Mitsui
 
@@ -1114,91 +1106,48 @@ contains
     write(ADM_LOG_FID,*)
     write(ADM_LOG_FID,*) '*** read restart/initial data'
 
-    ! -> [add]&[Mod] H.Yashiro 20110819
     if ( input_io_mode == 'ADVANCED' ) then
 
        do nq = 1, DIAG_vmax0
-          call FIO_input(DIAG_var(:,:,:,nq),basename,DIAG_name(nq), &
-                         layername,1,ADM_kall,1                     )
+          call FIO_input( DIAG_var(:,:,:,nq),basename,DIAG_name(nq), &
+                          layername,1,ADM_kall,1                     )
        enddo
 
        do nq = 1, TRC_vmax_input
-          call FIO_input(DIAG_var(:,:,:,DIAG_vmax0+nq),basename,TRC_name(nq), &
-                         layername,1,ADM_kall,1,                              &
-                         allow_missingq=allow_missingq                        )
+          call FIO_input( DIAG_var(:,:,:,DIAG_vmax0+nq),basename,TRC_name(nq), &
+                          layername,1,ADM_kall,1,                              &
+                          allow_missingq=allow_missingq                        )
        enddo
-
-       call COMM_var( DIAG_var, DIAG_var_pl, ADM_kall, DIAG_vmax )
 
     elseif( input_io_mode == 'LEGACY' ) then
 
-       if ( input_direct_access ) then !--- direct access ( defalut )
+       do l = 1, ADM_lall
+          rgnid = ADM_prc_tab(l,ADM_prc_me)
+          call MISC_make_idstr(fname,trim(basename),'rgn',rgnid)
+          fid = MISC_get_available_fid()
+          open( unit   = fid,                 &
+                file   = trim(fname),         &
+                form   = 'unformatted',       &
+                access = 'direct',            &
+                recl   = ADM_gall*ADM_kall*8, &
+                status = 'old'                )
 
-          do l = 1, ADM_lall
-             rgnid = ADM_prc_tab(l,ADM_prc_me)
-             call MISC_make_idstr(fname,trim(basename),'rgn',rgnid)
-             fid = MISC_get_available_fid()
-             open( unit   = fid,                 &
-                   file   = trim(fname),         &
-                   form   = 'unformatted',       &
-                   access = 'direct',            &
-                   recl   = ADM_gall*ADM_kall*8, &
-                   status = 'old'                )
-
-             do nq = 1, DIAG_vmax0+TRC_vmax_input
-                read(fid,rec=nq) DIAG_var(:,:,l,nq)
-             enddo
-
-             close(fid)
+          do nq = 1, DIAG_vmax0+TRC_vmax_input
+             read(fid,rec=nq) DIAG_var(:,:,l,nq)
           enddo
 
-          call COMM_var( DIAG_var, DIAG_var_pl, ADM_kall, DIAG_vmax )
+          close(fid)
+       enddo
 
-       else !--- sequential access
-
-          do l = 1, ADM_lall
-             rgnid = ADM_prc_tab(l,ADM_prc_me)
-             call MISC_make_idstr(fname,trim(basename),'rgn',rgnid)
-             fid = MISC_get_available_fid()
-             open( unit   = fid,                 &
-                   file   = trim(fname),         &
-                   form   = 'unformatted',       &
-                   access = 'sequential',        &
-                   status = 'old'                )
-
-             do nq = 1, DIAG_vmax0+TRC_vmax_input
-                read(fid) DIAG_var(:,:,l,nq)
-             enddo
-
-             close(fid)
-          enddo
-
-          if ( ADM_prc_me == ADM_prc_pl ) then
-             fname = trim(basename)//'.pl'
-             fid = MISC_get_available_fid()
-             open( unit   = fid,                 &
-                   file   = trim(fname),         &
-                   form   = 'unformatted',       &
-                   access = 'sequential',        &
-                   status = 'old'                )
-
-             do nq = 1, DIAG_vmax0+TRC_vmax_input
-                read(fid) DIAG_var_pl(:,:,:,nq)
-             enddo
-
-             close(fid)
-          endif
-       endif !--- direct/sequencial
     elseif( input_io_mode == 'IDEAL' ) then
 
        write(ADM_LOG_FID,*) '*** make ideal initials'
 
        call dycore_input( DIAG_var(:,:,:,:) ) !--- [OUT]
 
-       call COMM_var( DIAG_var, DIAG_var_pl, ADM_kall, DIAG_vmax )
-
     endif !--- io_mode
-    ! <- [add]&[Mod] H.Yashiro 20110819
+
+    call COMM_var( DIAG_var, DIAG_var_pl, ADM_kall, DIAG_vmax )
 
     write(ADM_LOG_FID,*)
     write(ADM_LOG_FID,*) '====== data range check : diagnostic variables ======'
@@ -1353,7 +1302,6 @@ contains
        write(ADM_LOG_FID,'(1x,A,A16,2(A,1PE24.17))') '--- ', TRC_name(nq),  ': max=', val_max, ', min=', val_min
     enddo
 
-    ! -> [add] H.Yashiro 20110819
     if ( output_io_mode == 'ADVANCED' ) then
 
        do nq = 1, DIAG_vmax0
@@ -1368,65 +1316,25 @@ contains
 
     elseif( output_io_mode == 'LEGACY' ) then
 
-       if ( output_direct_access ) then !--- direct access ( defalut )
+       do l = 1, ADM_lall
+          rgnid = ADM_prc_tab(l,ADM_prc_me)
+          call MISC_make_idstr(fname,trim(basename),'rgn',rgnid)
+          fid = MISC_get_available_fid()
+          open( unit   = fid,                 &
+                file   = trim(fname),         &
+                form   = 'unformatted',       &
+                access = 'direct',            &
+                recl   = ADM_gall*ADM_kall*8, &
+                status = 'unknown'            )
 
-          do l = 1, ADM_lall
-             rgnid = ADM_prc_tab(l,ADM_prc_me)
-             call MISC_make_idstr(fname,trim(basename),'rgn',rgnid)
-             fid = MISC_get_available_fid()
-             open( unit   = fid,                 &
-                   file   = trim(fname),         &
-                   form   = 'unformatted',       &
-                   access = 'direct',            &
-                   recl   = ADM_gall*ADM_kall*8, &
-                   status = 'unknown'            )
-
-             do nq = 1, DIAG_vmax
-                write(fid,rec=nq) DIAG_var(:,:,l,nq)
-             enddo
-
-             close(fid)
+          do nq = 1, DIAG_vmax
+             write(fid,rec=nq) DIAG_var(:,:,l,nq)
           enddo
 
-       else !--- sequential access
-
-          do l = 1, ADM_lall
-             rgnid = ADM_prc_tab(l,ADM_prc_me)
-             call MISC_make_idstr(fname,trim(basename),'rgn',rgnid)
-             fid = MISC_get_available_fid()
-             open( unit   = fid,                 &
-                   file   = trim(fname),         &
-                   form   = 'unformatted',       &
-                   access = 'sequential',        &
-                   status = 'unknown'            )
-
-             do nq = 1, DIAG_vmax
-                write(fid) DIAG_var(:,:,l,nq)
-             enddo
-
-             close(fid)
-          enddo
-
-          if ( ADM_prc_me == ADM_prc_pl ) then
-             fname = trim(basename)//'.pl'
-             fid = misc_get_available_fid()
-             open( unit   = fid,                 &
-                   file   = trim(fname),         &
-                   form   = 'unformatted',       &
-                   access = 'sequential',        &
-                   status = 'unknown'            )
-
-             do nq = 1, DIAG_vmax
-                write(fid) DIAG_var_pl(:,:,:,nq)
-             enddo
-
-             close(fid)
-          endif
-
-       endif !--- direct/sequencial
+          close(fid)
+       enddo
 
     endif  !--- io_mode
-    ! <- [add] H.Yashiro 20110819
 
     return
   end subroutine restart_output

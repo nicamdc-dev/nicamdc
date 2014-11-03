@@ -191,12 +191,10 @@ contains
          GMTR_P_JY,             &
          GMTR_P_JZ,             &
          GMTR_P_LAT
-    use mod_gtl, only :         &
-         GTL_output_var2,       &
-         GTL_output_var2_da,    &
-         GTL_generate_uv,       &
+    use mod_gtl, only: &
+       GTL_generate_uv,          &
        GTL_global_sum_eachlayer, &
-         GTL_clip_region_1layer , &  ! [add] 2010.08.20 C.Kodama
+       GTL_clip_region_1layer,   &  ! [add] 2010.08.20 C.Kodama
        GTL_max, &
        GTL_min
     use mod_vmtr, only :        &
