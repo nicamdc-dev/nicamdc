@@ -79,79 +79,111 @@ module mod_runconf
   !
   !++ Public parameters & variables
   !
-  character(len=ADM_NSYS), public, save :: RUNNAME = ''
+  character(len=ADM_NSYS), public :: RUNNAME = ''
 
   !---< Component Selector >---
 
   !--- Dynamics
-  integer,                 public, save :: NON_HYDRO_ALPHA    = 1 ! Nonhydrostatic/hydrostatic flag
-  character(len=ADM_NSYS), public, save :: TRC_ADV_TYPE       = 'MIURA2004'
-  character(len=ADM_NSYS), public, save :: NDIFF_LOCATION     = 'IN_LARGE_STEP2'
-  logical,                 public, save :: FLAG_NUDGING       = .false.
-  logical,                 public, save :: THUBURN_LIM        = .true.  ! [add] 20130613 R.Yoshida
+  integer,                 public :: NON_HYDRO_ALPHA    = 1 ! Nonhydrostatic/hydrostatic flag
+  character(len=ADM_NSYS), public :: TRC_ADV_TYPE       = 'MIURA2004'
+  character(len=ADM_NSYS), public :: NDIFF_LOCATION     = 'IN_LARGE_STEP2'
+  logical,                 public :: FLAG_NUDGING       = .false.
+  logical,                 public :: THUBURN_LIM        = .true.  ! [add] 20130613 R.Yoshida
 
   !--- Physics
-  character(len=ADM_NSYS), public, save :: RAIN_TYPE          = 'DRY'
-  logical,                 public, save :: opt_2moment_water  = .false.
+  character(len=ADM_NSYS), public :: RAIN_TYPE          = 'DRY'
+  logical,                 public :: opt_2moment_water  = .false.
 
-  character(len=ADM_NSYS), public, save :: CP_TYPE            = 'NONE'
-  character(len=ADM_NSYS), public, save :: MP_TYPE            = 'NONE'
-  character(len=ADM_NSYS), public, save :: RD_TYPE            = 'NONE'
-  character(len=ADM_NSYS), public, save :: SF_TYPE            = 'DEFAULT'
-  character(len=ADM_NSYS), public, save :: ROUGHNESS_SEA_TYPE = 'DEFAULT'
-  character(len=ADM_NSYS), public, save :: OCEAN_TYPE         = 'NONE'
-  character(len=ADM_NSYS), public, save :: RIV_TYPE           = 'NONE'
-  character(len=ADM_NSYS), public, save :: LAND_TYPE          = 'NONE'
-  character(len=ADM_NSYS), public, save :: TB_TYPE            = 'NONE'
-  character(len=ADM_NSYS), public, save :: AE_TYPE            = 'NONE'
-  character(len=ADM_NSYS), public, save :: CHEM_TYPE          = 'NONE'
-  character(len=ADM_NSYS), public, save :: GWD_TYPE           = 'NONE'
-  character(len=ADM_NSYS), public, save :: AF_TYPE            = 'NONE'
+  character(len=ADM_NSYS), public :: CP_TYPE            = 'NONE'
+  character(len=ADM_NSYS), public :: MP_TYPE            = 'NONE'
+  character(len=ADM_NSYS), public :: RD_TYPE            = 'NONE'
+  character(len=ADM_NSYS), public :: SF_TYPE            = 'DEFAULT'
+  character(len=ADM_NSYS), public :: ROUGHNESS_SEA_TYPE = 'DEFAULT'
+  character(len=ADM_NSYS), public :: OCEAN_TYPE         = 'NONE'
+  character(len=ADM_NSYS), public :: RIV_TYPE           = 'NONE'
+  character(len=ADM_NSYS), public :: LAND_TYPE          = 'NONE'
+  character(len=ADM_NSYS), public :: TB_TYPE            = 'NONE'
+  character(len=ADM_NSYS), public :: AE_TYPE            = 'NONE'
+  character(len=ADM_NSYS), public :: CHEM_TYPE          = 'NONE'
+  character(len=ADM_NSYS), public :: GWD_TYPE           = 'NONE'
+  character(len=ADM_NSYS), public :: AF_TYPE            = 'NONE'
 
-  character(len=ADM_NSYS), public, save :: OUT_FILE_TYPE      = 'DEFAULT'
+  character(len=ADM_NSYS), public :: OUT_FILE_TYPE      = 'DEFAULT'
 
-  character(len=16),       public, allocatable, save :: TRC_name(:) ! short name  of tracer [add] H.Yashiro 20110819
-  character(len=ADM_NSYS), public, allocatable, save :: WLABEL  (:) ! description of tracer
+  !---< tracer ID setting >---
 
-  integer, public, save :: TRC_vmax =  0 ! total number of tracers
+  integer, public            :: PRG_vmax        ! total number of prognostic variables
+  integer, public, parameter :: PRG_vmax0  = 6
 
-  integer, public, save :: NQW_MAX  =  0 ! subtotal number of water mass tracers
-  integer, public, save :: NQW_STR  = -1 ! start index of water mass tracers
-  integer, public, save :: NQW_END  = -1 ! end   index of water mass tracers
-  integer, public, save :: I_QV     = -1  ! Water vapor
-  integer, public, save :: I_QC     = -1  ! Cloud water
-  integer, public, save :: I_QR     = -1  ! Rain
-  integer, public, save :: I_QI     = -1  ! Ice
-  integer, public, save :: I_QS     = -1  ! Snow
-  integer, public, save :: I_QG     = -1  ! Graupel
+  integer, public, parameter :: I_RHOG     =  1 ! Density x G^{1/2}
+  integer, public, parameter :: I_RHOGVX   =  2 ! Density x G^{1/2} x Horizontal velocity (X-direction)
+  integer, public, parameter :: I_RHOGVY   =  3 ! Density x G^{1/2} x Horizontal velocity (Y-direction)
+  integer, public, parameter :: I_RHOGVZ   =  4 ! Density x G^{1/2} x Horizontal velocity (Z-direction)
+  integer, public, parameter :: I_RHOGW    =  5 ! Density x G^{1/2} x Vertical   velocity
+  integer, public, parameter :: I_RHOGE    =  6 ! Density x G^{1/2} x Energy
+  integer, public, parameter :: I_RHOGQstr =  7 ! tracers
+  integer, public            :: I_RHOGQend = -1 !
 
-  integer, public, save :: NNW_MAX  =  0 ! subtotal number of water number tracers
-  integer, public, save :: NNW_STR  = -1 ! start index of water number tracers
-  integer, public, save :: NNW_END  = -1 ! end   index of water number tracers
-  integer, public, save :: I_NC     = -1  ! Cloud water (number)
-  integer, public, save :: I_NR     = -1  ! Rain        (number)
-  integer, public, save :: I_NI     = -1  ! Ice         (number)
-  integer, public, save :: I_NS     = -1  ! Snow        (number)
-  integer, public, save :: I_NG     = -1  ! Graupel     (number)
+  character(len=16), public  :: PRG_name(PRG_vmax0)
+  data PRG_name / 'rhog', 'rhogvx', 'rhogvy', 'rhogvz', 'rhogw', 'rhoge' /
 
-  integer, public, save :: NTB_MAX  =  0 ! subtotal number of turbulent tracers
-  integer, public, save :: I_TKE    = -1 ! turbulence kinetic energy
-  integer, public, save :: I_QKEp   = -1
-  integer, public, save :: I_TSQp   = -1
-  integer, public, save :: I_QSQp   = -1
-  integer, public, save :: I_COVp   = -1
+  integer, public            :: DIAG_vmax       ! total number of diagnostic variables
+  integer, public, parameter :: DIAG_vmax0 = 6
 
-  integer, public, save :: NCHEM_MAX  =  0 ! subtotal number of chemical (or general purpose) tracers
-  integer, public, save :: NCHEM_STR  = -1 ! start index of chemical (or general purpose) tracers
-  integer, public, save :: NCHEM_END  = -1 ! end   index of chemical (or general purpose) tracers
+  integer, public, parameter :: I_pre      =  1 ! Pressure
+  integer, public, parameter :: I_tem      =  2 ! Temperature
+  integer, public, parameter :: I_vx       =  3 ! Horizontal velocity (X-direction)
+  integer, public, parameter :: I_vy       =  4 ! Horizontal velocity (Y-direction)
+  integer, public, parameter :: I_vz       =  5 ! Horizontal velocity (Z-direction)
+  integer, public, parameter :: I_w        =  6 ! Vertical   velocity
+  integer, public, parameter :: I_qstr     =  7 ! tracers
+  integer, public            :: I_qend     = -1 !
+
+  character(len=16), public  :: DIAG_name(DIAG_vmax0)
+  data DIAG_name / 'pre', 'tem', 'vx', 'vy', 'vz', 'w' /
+
+  integer, public            :: TRC_vmax   =  0 ! total number of tracers
+
+  character(len=16),       public, allocatable :: TRC_name(:) ! short name  of tracer [add] H.Yashiro 20110819
+  character(len=ADM_NSYS), public, allocatable :: WLABEL  (:) ! description of tracer
+
+  integer, public            :: NQW_MAX    =  0 ! subtotal number of water mass tracers
+  integer, public            :: NQW_STR    = -1 ! start index of water mass tracers
+  integer, public            :: NQW_END    = -1 ! end   index of water mass tracers
+  integer, public            :: I_QV       = -1 ! Water vapor
+  integer, public            :: I_QC       = -1 ! Cloud water
+  integer, public            :: I_QR       = -1 ! Rain
+  integer, public            :: I_QI       = -1 ! Ice
+  integer, public            :: I_QS       = -1 ! Snow
+  integer, public            :: I_QG       = -1 ! Graupel
+
+  integer, public            :: NNW_MAX    =  0 ! subtotal number of water number tracers
+  integer, public            :: NNW_STR    = -1 ! start index of water number tracers
+  integer, public            :: NNW_END    = -1 ! end   index of water number tracers
+  integer, public            :: I_NC       = -1 ! Cloud water (number)
+  integer, public            :: I_NR       = -1 ! Rain        (number)
+  integer, public            :: I_NI       = -1 ! Ice         (number)
+  integer, public            :: I_NS       = -1 ! Snow        (number)
+  integer, public            :: I_NG       = -1 ! Graupel     (number)
+
+  integer, public            :: NTB_MAX    =  0 ! subtotal number of turbulent tracers
+  integer, public            :: I_TKE      = -1 ! turbulence kinetic energy
+  integer, public            :: I_QKEp     = -1
+  integer, public            :: I_TSQp     = -1
+  integer, public            :: I_QSQp     = -1
+  integer, public            :: I_COVp     = -1
+
+  integer, public            :: NCHEM_MAX  =  0 ! subtotal number of chemical (or general purpose) tracers
+  integer, public            :: NCHEM_STR  = -1 ! start index of chemical (or general purpose) tracers
+  integer, public            :: NCHEM_END  = -1 ! end   index of chemical (or general purpose) tracers
 
   !--- specific heat of water on const pressure
-  real(8), public, allocatable, save :: CVW(:)
-  real(8), public, allocatable, save :: CPW(:)
+  real(8), public, allocatable :: CVW(:)
+  real(8), public, allocatable :: CPW(:)
   !--- Latent heat
-  real(8), public, save      :: LHV
-  real(8), public, save      :: LHF
-  real(8), public, save      :: LHS
+  real(8), public            :: LHV
+  real(8), public            :: LHF
+  real(8), public            :: LHS
   !--- No. of band for rad.
   integer, public, parameter :: NRBND     = 3
   integer, public, parameter :: NRBND_VIS = 1
@@ -394,6 +426,12 @@ contains
           enddo
        endif
     enddo
+
+    PRG_vmax   = PRG_vmax0  + TRC_vmax
+    I_RHOGQend = PRG_vmax
+
+    DIAG_vmax  = DIAG_vmax0 + TRC_vmax
+    I_qend     = DIAG_vmax
 
     write(ADM_LOG_FID,*)
     write(ADM_LOG_FID,*) '*** Prognostic Tracers'

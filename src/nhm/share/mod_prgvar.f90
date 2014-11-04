@@ -33,6 +33,25 @@ module mod_prgvar
      ADM_LOG_FID,  &
      ADM_MAXFNAME, &
      ADM_NSYS
+  use mod_runconf, only: &
+     PRG_vmax0,  &
+     I_RHOG,     &
+     I_RHOGVX,   &
+     I_RHOGVY,   &
+     I_RHOGVZ,   &
+     I_RHOGW,    &
+     I_RHOGE,    &
+     I_RHOGQstr, &
+     I_RHOGQend, &
+     DIAG_vmax0, &
+     I_pre,      &
+     I_tem,      &
+     I_vx,       &
+     I_vy,       &
+     I_vz,       &
+     I_w,        &
+     I_qstr,     &
+     I_qend
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -63,54 +82,18 @@ module mod_prgvar
   !
   !++ Private procedures
   !
-  private :: cnvvar_prg2diag
-  private :: cnvvar_diag2prg
-
   !-----------------------------------------------------------------------------
   !
   !++ Private parameters & variables
   !
-  integer, private, parameter :: PRG_vmax0 = 6
+  real(8), private, allocatable :: PRG_var   (:,:,:,:) ! container
+  real(8), private, allocatable :: PRG_var_pl(:,:,:,:)
 
-  integer, private, parameter :: I_RHOG     =  1 ! Density x G^{1/2}
-  integer, private, parameter :: I_RHOGVX   =  2 ! Density x G^{1/2} x Horizontal velocity (X-direction)
-  integer, private, parameter :: I_RHOGVY   =  3 ! Density x G^{1/2} x Horizontal velocity (Y-direction)
-  integer, private, parameter :: I_RHOGVZ   =  4 ! Density x G^{1/2} x Horizontal velocity (Z-direction)
-  integer, private, parameter :: I_RHOGW    =  5 ! Density x G^{1/2} x Vertical   velocity
-  integer, private, parameter :: I_RHOGE    =  6 ! Density x G^{1/2} x Energy
+  real(8), private, allocatable :: PRG_var1   (:,:,:,:) ! container
+  real(8), private, allocatable :: PRG_var1_pl(:,:,:,:)
 
-  integer, private, save      :: I_RHOGQstr =  7 ! tracers
-  integer, private, save      :: I_RHOGQend = -1 !
-
-  character(len=16), private, save :: PRG_name(PRG_vmax0)
-  data PRG_name / 'rhog', 'rhogvx', 'rhogvy', 'rhogvz', 'rhogw', 'rhoge' /
-
-  integer, private, parameter :: DIAG_vmax0 = 6
-
-  integer, private, parameter :: I_pre  =  1 ! Pressure
-  integer, private, parameter :: I_tem  =  2 ! Temperature
-  integer, private, parameter :: I_vx   =  3 ! Horizontal velocity (X-direction)
-  integer, private, parameter :: I_vy   =  4 ! Horizontal velocity (Y-direction)
-  integer, private, parameter :: I_vz   =  5 ! Horizontal velocity (Z-direction)
-  integer, private, parameter :: I_w    =  6 ! Vertical   velocity
-
-  integer, private, save      :: I_qstr =  7 ! tracers
-  integer, private, save      :: I_qend = -1 !
-
-  character(len=16), private, save :: DIAG_name(DIAG_vmax0)
-  data DIAG_name / 'pre', 'tem', 'vx', 'vy', 'vz', 'w' /
-
-  integer, private,              save :: PRG_vmax  ! total number of prognostic variables
-  integer, private,              save :: DIAG_vmax
-
-  real(8), private, allocatable, save :: PRG_var   (:,:,:,:) ! container
-  real(8), private, allocatable, save :: PRG_var_pl(:,:,:,:)
-
-  real(8), private, allocatable, save :: PRG_var1   (:,:,:,:) ! container
-  real(8), private, allocatable, save :: PRG_var1_pl(:,:,:,:)
-
-  real(8), private, allocatable, save :: DIAG_var   (:,:,:,:) ! container
-  real(8), private, allocatable, save :: DIAG_var_pl(:,:,:,:)
+  real(8), private, allocatable :: DIAG_var   (:,:,:,:) ! container
+  real(8), private, allocatable :: DIAG_var_pl(:,:,:,:)
 
   integer, private, save :: TRC_vmax_input ! number of input tracer variables
 
@@ -136,20 +119,9 @@ contains
        ADM_lall,      &
        ADM_lall_pl
     use mod_runconf, only: &
-       TRC_vmax,             &
-       TRC_name,             &
-       opt_2moment_water,    &
-       RAIN_TYPE,            &
-       I_QC,                 &
-       I_QR,                 &
-       I_QI,                 &
-       I_QS,                 &
-       I_QG,                 &
-       I_NC,                 &
-       I_NR,                 &
-       I_NI,                 &
-       I_NS,                 &
-       I_NG
+       PRG_vmax,  &
+       DIAG_vmax, &
+       TRC_vmax
     implicit none
 
     character(len=ADM_MAXFNAME) :: input_basename    = ''
@@ -165,12 +137,7 @@ contains
        output_io_mode,    &
        allow_missingq
 
-    logical, allocatable :: flag_exist(:) ! [Add] 08/04/12 T.Mitsui
-
-    logical :: flag_diagnose_number(TRC_vmax)
-
     integer :: ierr
-    integer :: nq
     !---------------------------------------------------------------------------
 
     TRC_vmax_input = TRC_vmax
@@ -193,61 +160,7 @@ contains
     restart_output_basename = output_basename
     layername               = restart_layername
 
-    PRG_vmax   = PRG_vmax0  + TRC_vmax
-    I_RHOGQend = PRG_vmax
-
-    DIAG_vmax  = DIAG_vmax0 + TRC_vmax
-    I_qend     = DIAG_vmax
-
-    allocate( flag_exist(TRC_vmax) )
-    flag_exist(:) = .true.
-
-    if ( TRC_vmax_input < TRC_vmax ) then
-       flag_exist(TRC_vmax_input+1:TRC_vmax) = .false. ! 08/04/12 T.Mitsui
-
-       ! 08/04/12 T.Mitsui, mp_xxxx should set
-       ! default value of Nx corresponding to qx
-       if ( opt_2moment_water ) then
-          if    ( trim(RAIN_TYPE) == "CLOUD_PARAM" ) then
-
-             ! in CLOUD-PARAM framework, we use QC instead of QI
-             if( flag_exist(I_QC) .AND. (.NOT. flag_exist(I_NC)) ) flag_diagnose_number(I_NC) = .true.
-             if( flag_exist(I_QC) .AND. (.NOT. flag_exist(I_NI)) ) flag_diagnose_number(I_NI) = .true.
-
-          elseif( trim(RAIN_TYPE) == "WARM" ) then
-
-             ! in warm rain framework, we use QC instead of QI
-             if( flag_exist(I_QC) .AND. (.NOT. flag_exist(I_NC)) ) flag_diagnose_number(I_NC) = .true.
-             if( flag_exist(I_QR) .AND. (.NOT. flag_exist(I_NR)) ) flag_diagnose_number(I_NR) = .true.
-             if( flag_exist(I_QC) .AND. (.NOT. flag_exist(I_NI)) ) flag_diagnose_number(I_NI) = .true.
-
-          elseif( trim(RAIN_TYPE) == "COLD" ) then
-
-             if( flag_exist(I_QC) .AND. (.NOT. flag_exist(I_NC)) ) flag_diagnose_number(I_NC) = .true.
-             if( flag_exist(I_QR) .AND. (.NOT. flag_exist(I_NR)) ) flag_diagnose_number(I_NR) = .true.
-             if( flag_exist(I_QI) .AND. (.NOT. flag_exist(I_NI)) ) flag_diagnose_number(I_NI) = .true.
-             if( flag_exist(I_QS) .AND. (.NOT. flag_exist(I_NS)) ) flag_diagnose_number(I_NS) = .true.
-             if( flag_exist(I_QG) .AND. (.NOT. flag_exist(I_NG)) ) flag_diagnose_number(I_NG) = .true.
-
-          endif
-       endif
-    endif
-
     write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '--- Restart treatment for tracers'
-    if ( allow_missingq ) then
-       write(ADM_LOG_FID,*) '*** Allow missing tracer in restart file.'
-       write(ADM_LOG_FID,*) '*** Value will set to zero for missing tracer.'
-    endif
-    write(ADM_LOG_FID,*) '|========================================'
-    write(ADM_LOG_FID,*) '    varname         :read?     :diagnose?'
-    do nq = 1, TRC_vmax
-       write(ADM_LOG_FID,'(1x,A,A16,A,L1,A,L1)') '--- ', TRC_name(nq), ':',&
-                          flag_exist(nq),          '        :', &
-                          flag_diagnose_number(nq)
-    enddo
-
-    ! -> [add] H.Yashiro 20110819
     write(ADM_LOG_FID,*) '*** io_mode for restart, input : ', trim(input_io_mode)
     if    ( input_io_mode == 'ADVANCED' ) then
     elseif( input_io_mode == 'LEGACY'   ) then
@@ -264,7 +177,11 @@ contains
        write(ADM_LOG_FID,*) 'xxx Invalid output_io_mode. STOP'
        call ADM_proc_stop
     endif
-    ! <- [add] H.Yashiro 20110819
+
+    if ( allow_missingq ) then
+       write(ADM_LOG_FID,*) '*** Allow missing tracer in restart file.'
+       write(ADM_LOG_FID,*) '*** Value will set to zero for missing tracer.'
+    endif
 
     allocate( PRG_var    (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax) )
     allocate( PRG_var_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,PRG_vmax) )
@@ -432,9 +349,6 @@ contains
   end subroutine prgvar_get
 
   !----------------------------------------------------------------------------
-  !>
-  !> 08/04/12 [Add] T.Mitsui, only tracer Q is not used here
-  !>
   subroutine prgvar_get_noq( &
        rhog,   rhog_pl,   &
        rhogvx, rhogvx_pl, &
@@ -534,6 +448,8 @@ contains
        VMTR_RGSGAM2_pl
     use mod_runconf, only: &
        TRC_vmax
+    use mod_cnvvar, only: &
+       cnvvar_prg2diag
     implicit none
 
     real(8), intent(out) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
@@ -914,6 +830,8 @@ contains
        VMTR_RGSGAM2
     use mod_runconf, only: &
        TRC_vmax
+    use mod_cnvvar, only: &
+       cnvvar_prg2diag
     implicit none
 
     real(8), intent(out) :: rhog  (ADM_IopJop_nmax,ADM_kall,ADM_lall)
@@ -1004,6 +922,7 @@ contains
        COMM_data_transfer, &
        COMM_var
     use mod_runconf, only: &
+       PRG_vmax, &
        TRC_vmax
     implicit none
 
@@ -1080,12 +999,13 @@ contains
        GTL_max, &
        GTL_min
     use mod_runconf, only: &
-       opt_2moment_water,    &
-       TRC_vmax, &
-       TRC_name, &
-       I_QC,     &
-       I_QI,     &
-       I_NI
+       PRG_name,  &
+       DIAG_vmax, &
+       DIAG_name, &
+       TRC_vmax,  &
+       TRC_name
+    use mod_cnvvar, only: &
+       cnvvar_diag2prg
     use mod_ideal_init, only :  & ! [add] R.Yoshida 20121019
        dycore_input
     implicit none
@@ -1096,8 +1016,6 @@ contains
 
     real(8) :: val_max, val_min
     logical :: nonzero
-
-    logical :: flag_diagnose_number(TRC_vmax)
 
     integer :: fid
     integer :: l, rgnid, nq
@@ -1180,7 +1098,7 @@ contains
 
     write(ADM_LOG_FID,*)
     write(ADM_LOG_FID,*) '====== data range check : prognostic variables ======'
-    do nq = 1, DIAG_vmax0
+    do nq = 1, PRG_vmax0
        val_max = GTL_max( PRG_var(:,:,:,nq), PRG_var_pl(:,:,:,nq), ADM_kall, ADM_kmin, ADM_kmax )
        val_min = GTL_min( PRG_var(:,:,:,nq), PRG_var_pl(:,:,:,nq), ADM_kall, ADM_kmin, ADM_kmax )
        write(ADM_LOG_FID,'(1x,A,A16,2(A,1PE24.17))') '--- ', PRG_name(nq), ': max=', val_max, ', min=', val_min
@@ -1231,10 +1149,14 @@ contains
     use mod_gtl, only: &
        GTL_max, &
        GTL_min
-    use mod_runconf, only : &
-       TRC_vmax, &
-       TRC_name, &
+    use mod_runconf, only: &
+       DIAG_vmax, &
+       DIAG_name, &
+       TRC_vmax,  &
+       TRC_name,  &
        WLABEL
+    use mod_cnvvar, only: &
+       cnvvar_prg2diag
     implicit none
 
     character(len=ADM_MAXFNAME), intent(in) :: basename
@@ -1338,349 +1260,6 @@ contains
 
     return
   end subroutine restart_output
-
-  !-----------------------------------------------------------------------------
-  subroutine cnvvar_diag2prg( &
-       prg,  prg_pl, & !--- [OUT]
-       diag, diag_pl ) !--- [IN]
-    use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
-       ADM_gall,    &
-       ADM_gall_pl, &
-       ADM_lall,    &
-       ADM_lall_pl, &
-       ADM_kall
-    use mod_vmtr, only: &
-       VMTR_GSGAM2,     &
-       VMTR_GSGAM2_pl,  &
-       VMTR_C2Wfact,    &
-       VMTR_C2Wfact_pl
-    use mod_runconf, only: &
-       TRC_vmax, &
-       NQW_STR,  &
-       NQW_END
-    use mod_thrmdyn, only: &
-       THRMDYN_qd_ijkl,  &
-       THRMDYN_rho_ijkl, &
-       THRMDYN_ein_ijkl
-    implicit none
-
-    real(8), intent(out) :: prg    (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax )
-    real(8), intent(out) :: prg_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,PRG_vmax )
-    real(8), intent(in)  :: diag   (ADM_gall,   ADM_kall,ADM_lall,   DIAG_vmax)
-    real(8), intent(in)  :: diag_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,DIAG_vmax)
-
-    real(8) :: qd       (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: qd_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: ein      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: ein_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-
-    real(8) :: rhog_h   (ADM_gall,   ADM_kall)
-    real(8) :: rhog_h_pl(ADM_gall_pl,ADM_kall)
-
-    integer :: n, k, l, iv
-    !---------------------------------------------------------------------------
-
-    !--- calculation of dry mass concentration
-    call THRMDYN_qd_ijkl ( ADM_gall, ADM_kall, ADM_lall, & !--- [IN]
-                           TRC_vmax, NQW_STR, NQW_END,   & !--- [IN]
-                           qd  (:,:,:),                  & !--- [OUT]
-                           diag(:,:,:,I_qstr:I_qend)     ) !--- [IN]
-
-    !--- calculation  of density
-    call THRMDYN_rho_ijkl( ADM_gall, ADM_kall, ADM_lall, & !--- [IN]
-                           rho(:,:,:),                   & !--- [OUT]
-                           diag(:,:,:,I_pre),            & !--- [IN]
-                           diag(:,:,:,I_tem),            & !--- [IN]
-                           qd  (:,:,:),                  & !--- [IN]
-                           diag(:,:,:,I_qstr)            ) !--- [IN]
-
-    !--- calculation of internal energy
-    call THRMDYN_ein_ijkl( ADM_gall, ADM_kall, ADM_lall, & !--- [IN]
-                           TRC_vmax, NQW_STR, NQW_END,   & !--- [IN]
-                           ein(:,:,:),                   & !--- [OUT]
-                           diag(:,:,:,I_tem),            & !--- [IN]
-                           qd  (:,:,:),                  & !--- [IN]
-                           diag(:,:,:,I_qstr:I_qend)     ) !--- [IN]
-
-    do l = 1, ADM_lall
-    do k = 1, ADM_kall
-    do n = 1, ADM_gall
-       prg(n,k,l,I_RHOG  ) = rho(n,k,l) * VMTR_GSGAM2(n,k,l)
-       prg(n,k,l,I_RHOGVX) = prg(n,k,l,I_RHOG) * diag(n,k,l,I_vx)
-       prg(n,k,l,I_RHOGVY) = prg(n,k,l,I_RHOG) * diag(n,k,l,I_vy)
-       prg(n,k,l,I_RHOGVZ) = prg(n,k,l,I_RHOG) * diag(n,k,l,I_vz)
-       prg(n,k,l,I_RHOGE ) = prg(n,k,l,I_RHOG) * ein (n,k,l)
-    enddo
-    enddo
-    enddo
-
-    do iv = 1, TRC_vmax
-    do l  = 1, ADM_lall
-    do k  = 1, ADM_kall
-    do n  = 1, ADM_gall
-       prg(n,k,l,PRG_vmax0+iv) = prg(n,k,l,I_RHOG) * diag(n,k,l,DIAG_vmax0+iv)
-    enddo
-    enddo
-    enddo
-    enddo
-
-    do l = 1, ADM_lall
-       !------ interpolation of rhog_h
-       do k = 2, ADM_kall
-       do n = 1, ADM_gall
-          rhog_h(n,k) = ( VMTR_C2Wfact(1,n,k,l) * prg(n,k  ,l,I_RHOG) &
-                        + VMTR_C2Wfact(2,n,k,l) * prg(n,k-1,l,I_RHOG) )
-       enddo
-       enddo
-       do n = 1, ADM_gall
-          rhog_h(n,1) = rhog_h(n,2)
-       enddo
-
-       do k = 1, ADM_kall
-       do n = 1, ADM_gall
-          prg(n,k,l,I_RHOGW) = rhog_h(n,k) * diag(n,k,l,I_w)
-       enddo
-       enddo
-    enddo
-
-    if ( ADM_prc_me == ADM_prc_pl ) then
-
-       !--- calculation of dry mass concentration
-       call THRMDYN_qd_ijkl ( ADM_gall_pl, ADM_kall, ADM_lall_pl, & !--- [IN]
-                              TRC_vmax, NQW_STR, NQW_END,         & !--- [IN]
-                              qd_pl  (:,:,:),                     & !--- [OUT]
-                              diag_pl(:,:,:,I_qstr:I_qend)        ) !--- [IN]
-
-       !--- calculation  of density
-       call THRMDYN_rho_ijkl( ADM_gall_pl, ADM_kall, ADM_lall_pl, & !--- [IN]
-                              rho_pl(:,:,:),                      & !--- [OUT]
-                              diag_pl(:,:,:,I_pre),               & !--- [IN]
-                              diag_pl(:,:,:,I_tem),               & !--- [IN]
-                              qd_pl  (:,:,:),                     & !--- [IN]
-                              diag_pl(:,:,:,I_qstr)               ) !--- [IN]
-
-       !--- calculation of internal energy
-       call THRMDYN_ein_ijkl( ADM_gall_pl, ADM_kall, ADM_lall_pl, & !--- [IN]
-                              TRC_vmax, NQW_STR, NQW_END,         & !--- [IN]
-                              ein_pl(:,:,:),                      & !--- [OUT]
-                              diag_pl(:,:,:,I_tem),               & !--- [IN]
-                              qd_pl  (:,:,:),                     & !--- [IN]
-                              diag_pl(:,:,:,I_qstr:I_qend)        ) !--- [IN]
-
-       do l = 1, ADM_lall_pl
-       do k = 1, ADM_kall
-       do n = 1, ADM_gall_pl
-          prg_pl(n,k,l,I_RHOG  ) = rho_pl(n,k,l) * VMTR_GSGAM2_pl(n,k,l)
-          prg_pl(n,k,l,I_RHOGVX) = prg_pl(n,k,l,I_RHOG) * diag_pl(n,k,l,I_vx)
-          prg_pl(n,k,l,I_RHOGVY) = prg_pl(n,k,l,I_RHOG) * diag_pl(n,k,l,I_vy)
-          prg_pl(n,k,l,I_RHOGVZ) = prg_pl(n,k,l,I_RHOG) * diag_pl(n,k,l,I_vz)
-          prg_pl(n,k,l,I_RHOGE ) = prg_pl(n,k,l,I_RHOG) * ein_pl (n,k,l)
-       enddo
-       enddo
-       enddo
-
-       do iv = 1, TRC_vmax
-       do l  = 1, ADM_lall_pl
-       do k  = 1, ADM_kall
-       do n  = 1, ADM_gall_pl
-          prg_pl(n,k,l,PRG_vmax0+iv) = prg_pl(n,k,l,I_RHOG) * diag_pl(n,k,l,DIAG_vmax0+iv)
-       enddo
-       enddo
-       enddo
-       enddo
-
-       do l = 1, ADM_lall_pl
-          !------ interpolation of rhog_h
-          do k = 2, ADM_kall
-          do n = 1, ADM_gall_pl
-             rhog_h_pl(n,k) = ( VMTR_C2Wfact_pl(1,n,k,l) * prg_pl(n,k  ,l,I_RHOG) &
-                              + VMTR_C2Wfact_pl(2,n,k,l) * prg_pl(n,k-1,l,I_RHOG) )
-          enddo
-          enddo
-          do n = 1, ADM_gall_pl
-             rhog_h_pl(n,1) = rhog_h_pl(n,2)
-          enddo
-
-          do k = 1, ADM_kall
-          do n = 1, ADM_gall_pl
-             prg_pl(n,k,l,I_RHOGW) = rhog_h_pl(n,k) * diag_pl(n,k,l,I_w)
-          enddo
-          enddo
-       enddo
-
-    endif
-
-    return
-  end subroutine cnvvar_diag2prg
-
-  !-----------------------------------------------------------------------------
-  subroutine cnvvar_prg2diag(&
-       prg,  prg_pl, & !--- [OUT]
-       diag, diag_pl ) !--- [IN]
-    use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
-       ADM_gall,    &
-       ADM_gall_pl, &
-       ADM_lall,    &
-       ADM_lall_pl, &
-       ADM_kall
-    use mod_vmtr, only : &
-       VMTR_RGSGAM2,    &
-       VMTR_RGSGAM2_pl, &
-       VMTR_C2Wfact,    &
-       VMTR_C2Wfact_pl
-    use mod_runconf, only: &
-       TRC_vmax, &
-       NQW_STR,  &
-       NQW_END
-    use mod_thrmdyn, only: &
-       THRMDYN_qd_ijkl,    &
-       THRMDYN_tempre_ijkl
-    implicit none
-
-    real(8), intent(in)  :: prg    (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax )
-    real(8), intent(in)  :: prg_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,PRG_vmax )
-    real(8), intent(out) :: diag   (ADM_gall,   ADM_kall,ADM_lall,   DIAG_vmax)
-    real(8), intent(out) :: diag_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,DIAG_vmax)
-
-    real(8) :: qd       (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: qd_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: ein      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: ein_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-
-    real(8) :: rhog_h   (ADM_gall,   ADM_kall)
-    real(8) :: rhog_h_pl(ADM_gall_pl,ADM_kall)
-
-    integer :: n, k, l, iv
-    !---------------------------------------------------------------------------
-
-    do l = 1, ADM_lall
-    do k = 1, ADM_kall
-    do n = 1, ADM_gall
-       rho (n,k,l)      = prg(n,k,l,I_RHOG  ) * VMTR_RGSGAM2(n,k,l)
-       diag(n,k,l,I_vx) = prg(n,k,l,I_RHOGVX) / prg(n,k,l,I_RHOG)
-       diag(n,k,l,I_vy) = prg(n,k,l,I_RHOGVY) / prg(n,k,l,I_RHOG)
-       diag(n,k,l,I_vz) = prg(n,k,l,I_RHOGVZ) / prg(n,k,l,I_RHOG)
-       ein (n,k,l)      = prg(n,k,l,I_RHOGE ) / prg(n,k,l,I_RHOG)
-    enddo
-    enddo
-    enddo
-
-    do iv = 1, TRC_vmax
-    do l  = 1, ADM_lall
-    do k  = 1, ADM_kall
-    do n  = 1, ADM_gall
-       diag(n,k,l,DIAG_vmax0+iv) = prg(n,k,l,PRG_vmax0+iv) / prg(n,k,l,I_RHOG)
-    enddo
-    enddo
-    enddo
-    enddo
-
-    !--- calculation of dry mass concentration
-    call THRMDYN_qd_ijkl ( ADM_gall, ADM_kall, ADM_lall, & !--- [IN]
-                           TRC_vmax, NQW_STR, NQW_END,   & !--- [IN]
-                           qd  (:,:,:),                  & !--- [OUT]
-                           diag(:,:,:,I_qstr:I_qend)     ) !--- [IN]
-
-    !--- calculation of tem, pre
-    call THRMDYN_tempre_ijkl( ADM_gall, ADM_kall, ADM_lall, & !--- [IN]
-                              TRC_vmax, NQW_STR, NQW_END,   & !--- [IN]
-                              diag(:,:,:,I_tem),            & !--- [OUT]
-                              diag(:,:,:,I_pre),            & !--- [OUT]
-                              ein(:,:,:),                   & !--- [IN]
-                              rho(:,:,:),                   & !--- [IN]
-                              qd  (:,:,:),                  & !--- [IN]
-                              diag(:,:,:,I_qstr:I_qend)     ) !--- [IN]
-
-    do l = 1, ADM_lall
-       !------ interpolation of rhog_h
-       do k = 2, ADM_kall
-       do n = 1, ADM_gall
-          rhog_h(n,k) = ( VMTR_C2Wfact(1,n,k,l) * prg(n,k  ,l,I_RHOG) &
-                        + VMTR_C2Wfact(2,n,k,l) * prg(n,k-1,l,I_RHOG) )
-       enddo
-       enddo
-       do n = 1, ADM_gall
-          rhog_h(n,1) = rhog_h(n,2)
-       enddo
-
-       do k = 1, ADM_kall
-       do n = 1, ADM_gall
-          diag(n,k,l,I_w) = prg(n,k,l,I_RHOGW) / rhog_h(n,k)
-       enddo
-       enddo
-    enddo
-
-    if ( ADM_prc_me == ADM_prc_pl ) then
-
-       do l = 1, ADM_lall_pl
-       do k = 1, ADM_kall
-       do n = 1, ADM_gall_pl
-          rho_pl (n,k,l)      = prg_pl(n,k,l,I_RHOG  ) * VMTR_RGSGAM2_pl(n,k,l)
-          diag_pl(n,k,l,I_vx) = prg_pl(n,k,l,I_RHOGVX) / prg_pl(n,k,l,I_RHOG)
-          diag_pl(n,k,l,I_vy) = prg_pl(n,k,l,I_RHOGVY) / prg_pl(n,k,l,I_RHOG)
-          diag_pl(n,k,l,I_vz) = prg_pl(n,k,l,I_RHOGVZ) / prg_pl(n,k,l,I_RHOG)
-          ein_pl (n,k,l)      = prg_pl(n,k,l,I_RHOGE ) / prg_pl(n,k,l,I_RHOG)
-       enddo
-       enddo
-       enddo
-
-       do iv = 1, TRC_vmax
-       do l  = 1, ADM_lall_pl
-       do k  = 1, ADM_kall
-       do n  = 1, ADM_gall_pl
-          diag_pl(n,k,l,DIAG_vmax0+iv) = prg_pl(n,k,l,PRG_vmax0+iv) / prg_pl(n,k,l,I_RHOG)
-       enddo
-       enddo
-       enddo
-       enddo
-
-       !--- calculation of dry mass concentration
-       call THRMDYN_qd_ijkl ( ADM_gall_pl, ADM_kall, ADM_lall_pl, & !--- [IN]
-                              TRC_vmax, NQW_STR, NQW_END,         & !--- [IN]
-                              qd_pl  (:,:,:),                     & !--- [OUT]
-                              diag_pl(:,:,:,I_qstr:I_qend)        ) !--- [IN]
-
-       !--- calculation of tem, pre
-       call THRMDYN_tempre_ijkl( ADM_gall_pl, ADM_kall, ADM_lall_pl, & !--- [IN]
-                                 TRC_vmax, NQW_STR, NQW_END,         & !--- [IN]
-                                 diag_pl(:,:,:,I_tem),               & !--- [OUT]
-                                 diag_pl(:,:,:,I_pre),               & !--- [OUT]
-                                 ein_pl(:,:,:),                      & !--- [IN]
-                                 rho_pl(:,:,:),                      & !--- [IN]
-                                 qd_pl  (:,:,:),                     & !--- [IN]
-                                 diag_pl(:,:,:,I_qstr:I_qend)        ) !--- [IN]
-
-       do l = 1, ADM_lall_pl
-          !------ interpolation of rhog_h
-          do k = 2, ADM_kall
-          do n = 1, ADM_gall_pl
-             rhog_h_pl(n,k) = ( VMTR_C2Wfact_pl(1,n,k,l) * prg_pl(n,k  ,l,I_RHOG) &
-                              + VMTR_C2Wfact_pl(2,n,k,l) * prg_pl(n,k-1,l,I_RHOG) )
-          enddo
-          enddo
-          do n = 1, ADM_gall_pl
-             rhog_h_pl(n,1) = rhog_h_pl(n,2)
-          enddo
-
-          do k = 1, ADM_kall
-          do n = 1, ADM_gall_pl
-             diag_pl(n,k,l,I_w) = prg_pl(n,k,l,I_RHOGW) / rhog_h_pl(n,k)
-          enddo
-          enddo
-       enddo
-
-    endif
-
-    return
-  end subroutine cnvvar_prg2diag
 
 end module mod_prgvar
 !-------------------------------------------------------------------------------
