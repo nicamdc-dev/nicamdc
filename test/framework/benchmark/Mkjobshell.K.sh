@@ -47,7 +47,7 @@ cat << EOF1 > run.sh
 ################################################################################
 #PJM --rsc-list "rscgrp=${rscgrp}"
 #PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=02:00:00"
+#PJM --rsc-list "elapse=00:30:00"
 #PJM --stg-transfiles all
 #PJM --mpi "use-rankdir"
 #PJM --stgin  "rank=* ${TOPDIR}/bin/${BINNAME}           %r:./"
@@ -56,6 +56,7 @@ cat << EOF1 > run.sh
 #PJM --stgin  "rank=* ${TOPDIR}/data/grid/vgrid/${VGRID} %r:./"
 #PJM --stgin  "rank=* ${TOPDIR}/data/grid/boundary/${dir2d}/boundary_${res2d}.pe%06r %r:./"
 #PJM --stgout "rank=* %r:./*           ./"
+#PJM --stgout "rank=* %r:./prof/* ./prof/"
 #PJM -j
 #PJM -s
 #
@@ -65,8 +66,10 @@ export PARALLEL=8
 export OMP_NUM_THREADS=8
 #export fu08bf=1
 
+rm -rf ./prof
+
 # run
-${MPIEXEC} ./${BINNAME} || exit
+fipp -C -Srange -Ihwm -d prof ${MPIEXEC} ./${BINNAME} || exit
 
 ################################################################################
 EOF1
