@@ -14,10 +14,10 @@
 &GRDPARAM
     hgrid_io_mode = "ADVANCED",
     hgrid_fname   = "boundary_GL05RL00",
-    VGRID_fname   = "vgrid40_45000-st.dat",
-    topo_fname    = "Jablonowski",
+    VGRID_fname   = "vgrid40_stretch_45km.dat",
     vgrid_scheme  = "HYBRID",
     h_efold       = 40000,
+    topo_io_mode  = "IDEAL",
 /
 
 &TIMEPARAM
@@ -32,7 +32,7 @@
 /
 
 &RUNCONFPARAM
-    RUNNAME        = 'Jablonowski',
+    RUNNAME        = 'ICOMEX_JW',
     NDIFF_LOCATION = 'IN_LARGE_STEP2',
 /
 
@@ -47,7 +47,7 @@
     restart_layername = 'ZSALL42T',
 /
 
-##### Jablonowski Baroclinic Wave test
+##### ICOMEX Test case: Jablonowski Baroclinic Wave
 # test_case = 1: with initial perturbation
 #             2: without initial perturbation
 &DYCORETESTPARAM
@@ -55,12 +55,17 @@
     test_case = '1'
 /
 
+&IDEALTOPOPARAM
+    topo_type = 'JW',
+/
+
 &CNSTPARAM
-    earth_radius      = 6.371229D6,
-    earth_angvel      = 7.29212D-5,
-    earth_gravity     = 9.80616D0,
-    gas_cnst          = 287.D0,
-    specific_heat_pre = 1004.5D0,
+    earth_radius        = 6.37122D+6,
+    earth_angvel        =   7.292D-5,
+    small_planet_factor =      1.D0,
+    earth_gravity       = 9.80616D0,
+    gas_cnst            =   287.0D0,
+    specific_heat_pre   =  1004.5D0,
 /
 
 &NUMFILTERPARAM
