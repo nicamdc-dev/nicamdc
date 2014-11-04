@@ -22,13 +22,14 @@ program prg_mkllmap
   !
   !++ Used modules (shared)
   !
-  use mod_adm, only : &
-     ADM_MULTI_PRC, &
-     ADM_proc_init, &
-     ADM_proc_stop, &
-     ADM_setup,     &
-     ADM_LOG_FID,   &
-     ADM_CTL_FID,   &
+  use mod_adm, only: &
+     ADM_MULTI_PRC,   &
+     ADM_proc_init,   &
+     ADM_proc_stop,   &
+     ADM_proc_finish, &
+     ADM_setup,       &
+     ADM_LOG_FID,     &
+     ADM_CTL_FID,     &
      ADM_MAXFNAME
   use mod_fio, only: &
      FIO_setup
@@ -94,7 +95,7 @@ program prg_mkllmap
   endif
 
 
-  call ADM_proc_stop
+  call ADM_proc_finish
 
 end program prg_mkllmap
 !-------------------------------------------------------------------------------

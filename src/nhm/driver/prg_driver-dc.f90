@@ -63,7 +63,6 @@ program prg_driver
      ADM_prc_me,         &
      ADM_prc_run_master, &
      ADM_proc_init,      &
-     ADM_proc_stop,      &
      ADM_proc_finish,    &
      ADM_setup
   use mod_cnst, only: &
