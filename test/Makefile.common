@@ -47,18 +47,12 @@ jobshell:
 
 .PHONY: allclean distclean clean
 
-allclean: distclean clean
-	$(MAKE) -C $(TOPDIR)/src allclean NICAM_BINDIR=$(NICAM_BINDIR) \
-                                     BUILD_DIR=$(BUILD_DIR)       \
-                                     SYSDEP_DIR=$(SYSDEP_DIR)
-
-distclean: clean
+allclean:
 	$(MAKE) -C $(TOPDIR)/src allclean NICAM_BINDIR=$(NICAM_BINDIR) \
                                      BUILD_DIR=$(BUILD_DIR)       \
                                      SYSDEP_DIR=$(SYSDEP_DIR)
 	rm -f run.sh
 
 clean:
-	$(MAKE) -C $(TOPDIR)/src clean NICAM_BINDIR=$(NICAM_BINDIR) \
-                                  BUILD_DIR=$(BUILD_DIR)       \
+	$(MAKE) -C $(TOPDIR)/src clean BUILD_DIR=$(BUILD_DIR)       \
                                   SYSDEP_DIR=$(SYSDEP_DIR)

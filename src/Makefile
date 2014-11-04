@@ -58,8 +58,8 @@ prep   : makedir $(addprefix $(NICAM_BINDIR)/,$(PRJ_PREP))
 tool   : makedir $(addprefix $(NICAM_BINDIR)/,$(PRJ_TOOL))
 
 cleandir:
-	-rm $(NICAM_LIBDIR)/*
-	-rm $(NICAM_BINDIR)/*
+	-rm -f $(addprefix $(NICAM_LIBDIR)/,$(LIBS))
+	-rm -f $(addprefix $(NICAM_BINDIR)/,$(PRJS))
 
 clean:
 	rm -f $(LIBS) $(PRJS)
