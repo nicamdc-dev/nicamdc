@@ -1685,12 +1685,10 @@ contains
   end subroutine OPRT_divergence
 
   !-----------------------------------------------------------------------------
+  !> horizontal gradient operator
   subroutine OPRT_gradient( &
-       vx,  vx_pl,  &
-       vy,  vy_pl,  &
-       vz,  vz_pl,  &
-       scl, scl_pl, &
-       mfact        )
+       scl,  scl_pl, &
+       grad, grad_pl )
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -1702,105 +1700,58 @@ contains
        ADM_gslf_pl, &
        ADM_gmax_pl, &
        ADM_kmin,    &
-       ADM_kmax
+       ADM_kmax,    &
+       ADM_nxyz
     implicit none
 
-    real(8), intent(in)  :: scl   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: scl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: vx    (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(out) :: vx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: vy    (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(out) :: vy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: vz    (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(out) :: vz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: mfact
+    real(8), intent(in)  :: scl    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: scl_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(out) :: grad   (ADM_gall   ,ADM_kall,ADM_lall   ,ADM_nxyz)
+    real(8), intent(out) :: grad_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,ADM_nxyz)
 
     integer :: ij
     integer :: ip1j, ijp1, ip1jp1
     integer :: im1j, ijm1, im1jm1
 
-    integer :: n, k, l, v
+    integer :: n, k, l, v, d
     !---------------------------------------------------------------------------
 
     call DEBUG_rapstart('OPRT gradient')
 
-    !$acc kernels
+    do d = 1, ADM_nxyz
     do l = 1, ADM_lall
     do k = ADM_kmin, ADM_kmax
-       do n = OPRT_nstart, OPRT_nend
-          ij     = n
-          ip1j   = n + 1
-          ijp1   = n     + ADM_gall_1d
-          ip1jp1 = n + 1 + ADM_gall_1d
-          im1j   = n - 1
-          ijm1   = n     - ADM_gall_1d
-          im1jm1 = n - 1 - ADM_gall_1d
+    do n = OPRT_nstart, OPRT_nend
+       ij     = n
+       ip1j   = n + 1
+       ijp1   = n     + ADM_gall_1d
+       ip1jp1 = n + 1 + ADM_gall_1d
+       im1j   = n - 1
+       ijm1   = n     - ADM_gall_1d
+       im1jm1 = n - 1 - ADM_gall_1d
 
-          vx(n,k,l) = ( cgrad(0,ij,l,1) * scl(ij    ,k,l) &
-                      + cgrad(1,ij,l,1) * scl(ip1j  ,k,l) &
-                      + cgrad(2,ij,l,1) * scl(ip1jp1,k,l) &
-                      + cgrad(3,ij,l,1) * scl(ijp1  ,k,l) &
-                      + cgrad(4,ij,l,1) * scl(im1j  ,k,l) &
-                      + cgrad(5,ij,l,1) * scl(im1jm1,k,l) &
-                      + cgrad(6,ij,l,1) * scl(ijm1  ,k,l) ) * mfact
-       enddo
-
-       do n = OPRT_nstart, OPRT_nend
-          ij     = n
-          ip1j   = n + 1
-          ijp1   = n     + ADM_gall_1d
-          ip1jp1 = n + 1 + ADM_gall_1d
-          im1j   = n - 1
-          ijm1   = n     - ADM_gall_1d
-          im1jm1 = n - 1 - ADM_gall_1d
-
-          vy(n,k,l) = ( cgrad(0,ij,l,2) * scl(ij    ,k,l) &
-                      + cgrad(1,ij,l,2) * scl(ip1j  ,k,l) &
-                      + cgrad(2,ij,l,2) * scl(ip1jp1,k,l) &
-                      + cgrad(3,ij,l,2) * scl(ijp1  ,k,l) &
-                      + cgrad(4,ij,l,2) * scl(im1j  ,k,l) &
-                      + cgrad(5,ij,l,2) * scl(im1jm1,k,l) &
-                      + cgrad(6,ij,l,2) * scl(ijm1  ,k,l) ) * mfact
-       enddo
-
-       do n = OPRT_nstart, OPRT_nend
-          ij     = n
-          ip1j   = n + 1
-          ijp1   = n     + ADM_gall_1d
-          ip1jp1 = n + 1 + ADM_gall_1d
-          im1j   = n - 1
-          ijm1   = n     - ADM_gall_1d
-          im1jm1 = n - 1 - ADM_gall_1d
-
-          vz(n,k,l) = ( cgrad(0,ij,l,3) * scl(ij    ,k,l) &
-                      + cgrad(1,ij,l,3) * scl(ip1j  ,k,l) &
-                      + cgrad(2,ij,l,3) * scl(ip1jp1,k,l) &
-                      + cgrad(3,ij,l,3) * scl(ijp1  ,k,l) &
-                      + cgrad(4,ij,l,3) * scl(im1j  ,k,l) &
-                      + cgrad(5,ij,l,3) * scl(im1jm1,k,l) &
-                      + cgrad(6,ij,l,3) * scl(ijm1  ,k,l) ) * mfact
-       enddo
+       grad(n,k,l,d) = ( cgrad(0,ij,l,d) * scl(ij    ,k,l) &
+                       + cgrad(1,ij,l,d) * scl(ip1j  ,k,l) &
+                       + cgrad(2,ij,l,d) * scl(ip1jp1,k,l) &
+                       + cgrad(3,ij,l,d) * scl(ijp1  ,k,l) &
+                       + cgrad(4,ij,l,d) * scl(im1j  ,k,l) &
+                       + cgrad(5,ij,l,d) * scl(im1jm1,k,l) &
+                       + cgrad(6,ij,l,d) * scl(ijm1  ,k,l) )
     enddo
     enddo
-    !$acc end kernels
+    enddo
+    enddo
 
     if ( ADM_have_pl ) then
        n = ADM_gslf_pl
+       do d = 1, ADM_nxyz
        do l = 1, ADM_lall_pl
        do k = ADM_kmin, ADM_kmax
-          vx_pl(n,k,l) = 0.D0
-          vy_pl(n,k,l) = 0.D0
-          vz_pl(n,k,l) = 0.D0
-
+          grad_pl(n,k,l,d) = 0.D0
           do v = ADM_gslf_pl, ADM_gmax_pl
-             vx_pl(n,k,l) = vx_pl(n,k,l) + cgrad_pl(v-1,n,l,1) * scl_pl(v,k,l)
-             vy_pl(n,k,l) = vy_pl(n,k,l) + cgrad_pl(v-1,n,l,2) * scl_pl(v,k,l)
-             vz_pl(n,k,l) = vz_pl(n,k,l) + cgrad_pl(v-1,n,l,3) * scl_pl(v,k,l)
+             grad_pl(n,k,l,d) = grad_pl(n,k,l,d) + cgrad_pl(v-1,n,l,d) * scl_pl(v,k,l)
           enddo
-
-          vx_pl(n,k,l) = vx_pl(n,k,l) * mfact
-          vy_pl(n,k,l) = vy_pl(n,k,l) * mfact
-          vz_pl(n,k,l) = vz_pl(n,k,l) * mfact
+       enddo
        enddo
        enddo
     endif

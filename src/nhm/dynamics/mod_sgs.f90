@@ -286,70 +286,70 @@ contains
     implicit none
     !
     integer, intent(in) :: nl
-    real(8), intent(in) :: rho(ADM_gall,ADM_kall,ADM_lall)
+    real(8), intent(in) :: rho   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(in) :: rho_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(in) :: rhog(ADM_gall,ADM_kall,ADM_lall)
+    real(8), intent(in) :: rhog   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(in) :: rhog_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     real(8), intent(in) :: rhogq(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
     real(8), intent(in) :: rhogq_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,TRC_VMAX)
     !
-    real(8), intent(in) :: vx(ADM_gall,ADM_kall,ADM_lall)
+    real(8), intent(in) :: vx   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(in) :: vx_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(in) :: vy(ADM_gall,ADM_kall,ADM_lall)
+    real(8), intent(in) :: vy   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(in) :: vy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(in) :: vz(ADM_gall,ADM_kall,ADM_lall)
+    real(8), intent(in) :: vz   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(in) :: vz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(in) :: w(ADM_gall,ADM_kall,ADM_lall)
+    real(8), intent(in) :: w   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(in) :: w_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(in) :: tem(ADM_gall,ADM_kall,ADM_lall)
+    real(8), intent(in) :: tem   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(in) :: tem_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     real(8), intent(in) :: q(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
     real(8), intent(in) :: q_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,TRC_VMAX)
     !
-    real(8), intent(inout) :: frhog(ADM_gall,ADM_kall,ADM_lall)
+    real(8), intent(inout) :: frhog   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(inout) :: frhog_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(inout) :: frhogvx(ADM_gall,ADM_kall,ADM_lall)
+    real(8), intent(inout) :: frhogvx   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(inout) :: frhogvx_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(inout) :: frhogvy(ADM_gall,ADM_kall,ADM_lall)
+    real(8), intent(inout) :: frhogvy   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(inout) :: frhogvy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(inout) :: frhogvz(ADM_gall,ADM_kall,ADM_lall)
+    real(8), intent(inout) :: frhogvz   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(inout) :: frhogvz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
 
-    real(8), intent(inout) :: frhogw(ADM_gall,ADM_kall,ADM_lall)
+    real(8), intent(inout) :: frhogw   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(inout) :: frhogw_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(inout) :: frhoge(ADM_gall,ADM_kall,ADM_lall)
+    real(8), intent(inout) :: frhoge   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(inout) :: frhoge_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8), intent(inout) :: frhogetot(ADM_gall,ADM_kall,ADM_lall)
+    real(8), intent(inout) :: frhogetot   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(inout) :: frhogetot_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     real(8), intent(inout) :: frhogq(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
     real(8), intent(inout) :: frhogq_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,TRC_VMAX)
 
     !full level growth late
-    real(8) :: grhogvx(ADM_gall,ADM_kall,ADM_lall)
+    real(8) :: grhogvx   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8) :: grhogvx_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: grhogvy(ADM_gall,ADM_kall,ADM_lall)
+    real(8) :: grhogvy   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8) :: grhogvy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: grhogvz(ADM_gall,ADM_kall,ADM_lall)
+    real(8) :: grhogvz   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8) :: grhogvz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-!    real(8) :: grhogw(ADM_gall,ADM_kall,ADM_lall)
+!    real(8) :: grhogw   (ADM_gall   ,ADM_kall,ADM_lall   )
 !    real(8) :: grhogw_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: grhoge(ADM_gall,ADM_kall,ADM_lall)
+    real(8) :: grhoge   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8) :: grhoge_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-!    real(8) :: grhogetot(ADM_gall,ADM_kall,ADM_lall)
+!    real(8) :: grhogetot   (ADM_gall   ,ADM_kall,ADM_lall   )
 !    real(8) :: grhogetot_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     real(8) :: grhogq(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
     real(8) :: grhogq_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,TRC_VMAX)
     !half level growth late
-    real(8) :: grhogvxh(ADM_gall,ADM_kall,ADM_lall)
+    real(8) :: grhogvxh   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8) :: grhogvxh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: grhogvyh(ADM_gall,ADM_kall,ADM_lall)
+    real(8) :: grhogvyh   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8) :: grhogvyh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: grhogvzh(ADM_gall,ADM_kall,ADM_lall)
+    real(8) :: grhogvzh   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8) :: grhogvzh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     !
-    real(8), intent(in) :: potem(ADM_gall,ADM_kall,ADM_lall)
+    real(8), intent(in) :: potem   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(in) :: potem_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: pi(ADM_gall,ADM_kall,ADM_lall)
+    real(8) :: pi   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8) :: pi_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     !
 !    integer :: p, id
@@ -359,32 +359,32 @@ contains
     real(8) :: del_xyz2, SMG_CS2, LENGTH_maxlim2
     real(8)::sij(ADM_gall,ADM_kall,ADM_lall,3,3)           ! full level
     real(8)::sij_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,3,3)  ! full level
-    real(8)::sijsij(ADM_gall,ADM_kall,ADM_lall)           ! full level
-    real(8)::sijsij_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)  ! full level
-    real(8)::sijsijh(ADM_gall,ADM_kall,ADM_lall)           ! half level
-    real(8)::sijsijh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)  ! half level
+    real(8)::sijsij   (ADM_gall   ,ADM_kall,ADM_lall   )           ! full level
+    real(8)::sijsij_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! full level
+    real(8)::sijsijh   (ADM_gall   ,ADM_kall,ADM_lall   )           ! half level
+    real(8)::sijsijh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! half level
     real(8)::sijh(ADM_gall,ADM_kall,ADM_lall,3,3)
     real(8)::sijh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,3,3)  ! partial ui / partial xj
     !
     !------ diffusion coefficient
-    real(8)::K_coef(ADM_gall,ADM_kall,ADM_lall)            ! full level
+    real(8)::K_coef   (ADM_gall   ,ADM_kall,ADM_lall   )            ! full level
     real(8)::K_coef_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)            ! full level
-    real(8)::K_coefh(ADM_gall,ADM_kall,ADM_lall)            ! half level
+    real(8)::K_coefh   (ADM_gall   ,ADM_kall,ADM_lall   )            ! half level
     real(8)::K_coefh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)            ! half level
     !
-    real(8)::abs_vxh(ADM_gall,ADM_kall,ADM_lall)            ! half level
-    real(8)::abs_vxh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)   ! half level
-    real(8)::abs_vyh(ADM_gall,ADM_kall,ADM_lall)            ! half level
-    real(8)::abs_vyh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)   ! half level
-    real(8)::abs_vzh(ADM_gall,ADM_kall,ADM_lall)            ! half level
-    real(8)::abs_vzh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)   ! half level
+    real(8)::abs_vxh   (ADM_gall   ,ADM_kall,ADM_lall   )            ! half level
+    real(8)::abs_vxh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)   ! half level
+    real(8)::abs_vyh   (ADM_gall   ,ADM_kall,ADM_lall   )            ! half level
+    real(8)::abs_vyh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)   ! half level
+    real(8)::abs_vzh   (ADM_gall   ,ADM_kall,ADM_lall   )            ! half level
+    real(8)::abs_vzh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)   ! half level
     !
-    real(8)::abs_vx(ADM_gall,ADM_kall,ADM_lall)            ! full level
-    real(8)::abs_vx_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)   ! full level
-    real(8)::abs_vy(ADM_gall,ADM_kall,ADM_lall)            ! full level
-    real(8)::abs_vy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)   ! full level
-    real(8)::abs_vz(ADM_gall,ADM_kall,ADM_lall)            ! full level
-    real(8)::abs_vz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)   ! full level
+    real(8)::abs_vx   (ADM_gall   ,ADM_kall,ADM_lall   )            ! full level
+    real(8)::abs_vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)   ! full level
+    real(8)::abs_vy   (ADM_gall   ,ADM_kall,ADM_lall   )            ! full level
+    real(8)::abs_vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)   ! full level
+    real(8)::abs_vz   (ADM_gall   ,ADM_kall,ADM_lall   )            ! full level
+    real(8)::abs_vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)   ! full level
 
     ! tensor
     real(8)::uijh(ADM_gall,ADM_kall,ADM_lall,3,3)
@@ -399,20 +399,20 @@ contains
     real(8) :: stratosh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
 
     !
-!    real(8) :: fq(ADM_gall,ADM_kall,ADM_lall)
+!    real(8) :: fq   (ADM_gall   ,ADM_kall,ADM_lall   )
 !    real(8) :: fq_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
 !    real(8) :: wrk(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
 !    real(8) :: wrk_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,TRC_VMAX)
 !    real(8) :: wrkh(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
 !    real(8) :: wrkh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,TRC_VMAX)
     !
-!    real(8) :: rhoh(ADM_gall,ADM_kall,ADM_lall)  ! rho at half level
-!    real(8) :: rhoh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)  ! rho at half level
-    real(8) :: pih(ADM_gall,ADM_kall,ADM_lall)
+!    real(8) :: rhoh   (ADM_gall   ,ADM_kall,ADM_lall   )  ! rho at half level
+!    real(8) :: rhoh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! rho at half level
+    real(8) :: pih   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8) :: pih_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
 
-!    real(8) :: rho_K_Cp_PI(ADM_gall,ADM_kall,ADM_lall)
-!    real(8) :: rho_K_Cp_PIh(ADM_gall,ADM_kall,ADM_lall)
+!    real(8) :: rho_K_Cp_PI   (ADM_gall   ,ADM_kall,ADM_lall   )
+!    real(8) :: rho_K_Cp_PIh   (ADM_gall   ,ADM_kall,ADM_lall   )
 !    real(8) :: rho_K_Cp_PI_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
 !    real(8) :: rho_K_Cp_PIh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
 
@@ -536,58 +536,38 @@ contains
     uij_pl=0.d0
 
     ! x
-    call Gradient3dfh(        &
-         uij(:,:,:,1,1),uij_pl(:,:,:,1,1),&
-         uij(:,:,:,1,2),uij_pl(:,:,:,1,2),&
-         uij(:,:,:,1,3),uij_pl(:,:,:,1,3),&
-         uijh(:,:,:,1,1),uijh_pl(:,:,:,1,1),&
-         uijh(:,:,:,1,2),uijh_pl(:,:,:,1,2),&
-         uijh(:,:,:,1,3),uijh_pl(:,:,:,1,3),&
-         abs_vx(:,:,:), abs_vx_pl(:,:,:),          &
-         abs_vxh(:,:,:), abs_vxh_pl(:,:,:),          &
-         .true.&
-          )
+    call Gradient3dfh( abs_vx (:,:,:),     abs_vx_pl (:,:,:),     & ! [IN]
+                       abs_vxh(:,:,:),     abs_vxh_pl(:,:,:),     & ! [IN]
+                       uij    (:,:,:,1,:), uij_pl    (:,:,:,1,:), & ! [OUT]
+                       uijh   (:,:,:,1,:), uijh_pl   (:,:,:,1,:), & ! [OUT]
+                       input_sclh = .true.                        ) ! [IN]
 
     ! y
-    call Gradient3dfh(        &
-         uij(:,:,:,2,1),uij_pl(:,:,:,2,1),&
-         uij(:,:,:,2,2),uij_pl(:,:,:,2,2),&
-         uij(:,:,:,2,3),uij_pl(:,:,:,2,3),&
-         uijh(:,:,:,2,1),uijh_pl(:,:,:,2,1),&
-         uijh(:,:,:,2,2),uijh_pl(:,:,:,2,2),&
-         uijh(:,:,:,2,3),uijh_pl(:,:,:,2,3),&
-         abs_vy(:,:,:), abs_vy_pl(:,:,:),          &
-         abs_vyh(:,:,:), abs_vyh_pl(:,:,:),          &
-         .true.&
-          )
+    call Gradient3dfh( abs_vy (:,:,:),     abs_vy_pl (:,:,:),     & ! [IN]
+                       abs_vyh(:,:,:),     abs_vyh_pl(:,:,:),     & ! [IN]
+                       uij    (:,:,:,2,:), uij_pl    (:,:,:,2,:), & ! [OUT]
+                       uijh   (:,:,:,2,:), uijh_pl   (:,:,:,2,:), & ! [OUT]
+                       input_sclh = .true.                        ) ! [IN]
 
     ! z
-    call Gradient3dfh(        &
-         uij(:,:,:,3,1),uij_pl(:,:,:,3,1),&
-         uij(:,:,:,3,2),uij_pl(:,:,:,3,2),&
-         uij(:,:,:,3,3),uij_pl(:,:,:,3,3),&
-         uijh(:,:,:,3,1),uijh_pl(:,:,:,3,1),&
-         uijh(:,:,:,3,2),uijh_pl(:,:,:,3,2),&
-         uijh(:,:,:,3,3),uijh_pl(:,:,:,3,3),&
-         abs_vz(:,:,:), abs_vz_pl(:,:,:),          &
-         abs_vzh(:,:,:), abs_vzh_pl(:,:,:),          &
-         .true.&
-          )
+    call Gradient3dfh( abs_vz (:,:,:),     abs_vz_pl (:,:,:),     & ! [IN]
+                       abs_vzh(:,:,:),     abs_vzh_pl(:,:,:),     & ! [IN]
+                       uij    (:,:,:,3,:), uij_pl    (:,:,:,3,:), & ! [OUT]
+                       uijh   (:,:,:,3,:), uijh_pl   (:,:,:,3,:), & ! [OUT]
+                       input_sclh = .true.                        ) ! [IN]
 
-    do l=1,ADM_lall
-       if (dbgfirst)then
-
-          call history_in('uij11',uij(:,:,l,1,1))
+    if ( dbgfirst ) then
+       do l = 1, ADM_lall
+          call history_in('uij11' ,uij (:,:,l,1,1))
           call history_in('uijh11',uijh(:,:,l,1,1))
-          call history_in('uij21',uij(:,:,l,2,1))
+          call history_in('uij21' ,uij (:,:,l,2,1))
           call history_in('uijh21',uijh(:,:,l,2,1))
-          call history_in('uij31',uij(:,:,l,3,1))
+          call history_in('uij31' ,uij (:,:,l,3,1))
           call history_in('uijh31',uijh(:,:,l,3,1))
-          call history_in('uij13',uij(:,:,l,1,3))
+          call history_in('uij13' ,uij (:,:,l,1,3))
           call history_in('uijh13',uijh(:,:,l,1,3))
-
-       endif
-    enddo
+       enddo
+    endif
 
     do i=1,3
        do j=1,3
@@ -794,36 +774,22 @@ contains
 
     !============================= (4) calculate gradient3D for q and potem ============================
     ! here, i assume d rhog = 0 (i.e. nothing to do with frhog)
-    !
+
     ! q
-    do nq=1, TRC_VMAX
-
-       call Gradient3dfh(        &
-            var(:,:,:,GRD_XDIR,nq+IMAX),var_pl(:,:,:,GRD_XDIR,nq+IMAX),&  ! output
-            var(:,:,:,GRD_YDIR,nq+IMAX),var_pl(:,:,:,GRD_YDIR,nq+IMAX),&  ! output
-            var(:,:,:,GRD_ZDIR,nq+IMAX),var_pl(:,:,:,GRD_ZDIR,nq+IMAX),&  ! output
-            varh(:,:,:,GRD_XDIR,nq+IMAX),varh_pl(:,:,:,GRD_XDIR,nq+IMAX),&  ! output
-            varh(:,:,:,GRD_YDIR,nq+IMAX),varh_pl(:,:,:,GRD_YDIR,nq+IMAX),&  ! output
-            varh(:,:,:,GRD_ZDIR,nq+IMAX),varh_pl(:,:,:,GRD_ZDIR,nq+IMAX),&  ! output
-            q(:,:,:,nq), q_pl(:,:,:,nq),          & ! input
-            q(:,:,:,nq), q_pl(:,:,:,nq),          & ! dummy(not used)
-            input_sclh=.false.                &
-            )
-
+    do nq = 1, TRC_VMAX
+       call Gradient3dfh( q   (:,:,:,nq)       , q_pl   (:,:,:,nq),        & ! input
+                          q   (:,:,:,nq)       , q_pl   (:,:,:,nq),        & ! dummy(not used)
+                          var (:,:,:,:,nq+IMAX), var_pl (:,:,:,:,nq+IMAX), & ! output
+                          varh(:,:,:,:,nq+IMAX), varh_pl(:,:,:,:,nq+IMAX), & ! output
+                          input_sclh = .false.                             )
     enddo
 
     ! theta
-    call Gradient3dfh(        &
-         var(:,:,:,GRD_XDIR,ipotem),var_pl(:,:,:,GRD_XDIR,ipotem),&  ! output
-         var(:,:,:,GRD_YDIR,ipotem),var_pl(:,:,:,GRD_YDIR,ipotem),&  ! output
-         var(:,:,:,GRD_ZDIR,ipotem),var_pl(:,:,:,GRD_ZDIR,ipotem),&  ! output
-         varh(:,:,:,GRD_XDIR,ipotem),varh_pl(:,:,:,GRD_XDIR,ipotem),&  ! output
-         varh(:,:,:,GRD_YDIR,ipotem),varh_pl(:,:,:,GRD_YDIR,ipotem),&  ! output
-         varh(:,:,:,GRD_ZDIR,ipotem),varh_pl(:,:,:,GRD_ZDIR,ipotem),&  ! output
-         potem(:,:,:), potem_pl(:,:,:),          & ! input
-         potem(:,:,:), potem_pl(:,:,:),          & ! dummy(not used)
-         input_sclh=.false.               &
-          )
+    call Gradient3dfh( potem(:,:,:),          potem_pl(:,:,:),          & ! input
+                       potem(:,:,:),          potem_pl(:,:,:),          & ! dummy(not used)
+                       var  (:,:,:,:,ipotem), var_pl  (:,:,:,:,ipotem), & ! output
+                       varh (:,:,:,:,ipotem), varh_pl (:,:,:,:,ipotem), & ! output
+                       input_sclh = .false.                             )
 
     !============================= (5) calculate inside the divergence and communicate ============================
     !
@@ -1041,33 +1007,33 @@ contains
     integer::k
 
     if(first)then  ! --> why is it needed?
-       allocate(smg_oprt_cxh(ADM_gall,ADM_kall,ADM_lall))
+       allocate(smg_oprt_cxh   (ADM_gall   ,ADM_kall,ADM_lall   ))
        allocate(smg_oprt_cxh_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
-       allocate(smg_oprt_cyh(ADM_gall,ADM_kall,ADM_lall))
+       allocate(smg_oprt_cyh   (ADM_gall   ,ADM_kall,ADM_lall   ))
        allocate(smg_oprt_cyh_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
-       allocate(smg_oprt_czh(ADM_gall,ADM_kall,ADM_lall))
+       allocate(smg_oprt_czh   (ADM_gall   ,ADM_kall,ADM_lall   ))
        allocate(smg_oprt_czh_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
-       allocate(smg_oprt_cx(ADM_gall,ADM_kall,ADM_lall))
+       allocate(smg_oprt_cx   (ADM_gall   ,ADM_kall,ADM_lall   ))
        allocate(smg_oprt_cx_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
-       allocate(smg_oprt_cy(ADM_gall,ADM_kall,ADM_lall))
+       allocate(smg_oprt_cy   (ADM_gall   ,ADM_kall,ADM_lall   ))
        allocate(smg_oprt_cy_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
-       allocate(smg_oprt_cz(ADM_gall,ADM_kall,ADM_lall))
+       allocate(smg_oprt_cz   (ADM_gall   ,ADM_kall,ADM_lall   ))
        allocate(smg_oprt_cz_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
-       allocate(smg_oprt_rgamH(ADM_gall,ADM_kall,ADM_lall))
+       allocate(smg_oprt_rgamH   (ADM_gall   ,ADM_kall,ADM_lall   ))
        allocate(smg_oprt_rgamH_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
-       allocate(smg_oprt_rgam(ADM_gall,ADM_kall,ADM_lall))
+       allocate(smg_oprt_rgam   (ADM_gall   ,ADM_kall,ADM_lall   ))
        allocate(smg_oprt_rgam_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
-!       allocate(smg_oprt_GzGz(ADM_gall,ADM_kall,ADM_lall))
+!       allocate(smg_oprt_GzGz   (ADM_gall   ,ADM_kall,ADM_lall   ))
 !       allocate(smg_oprt_GzGz_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
-!       allocate(smg_oprt_GzGzh(ADM_gall,ADM_kall,ADM_lall))
+!       allocate(smg_oprt_GzGzh   (ADM_gall   ,ADM_kall,ADM_lall   ))
 !       allocate(smg_oprt_GzGzh_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
-       allocate(smg_oprt_gsqrt(ADM_gall,ADM_kall,ADM_lall))
+       allocate(smg_oprt_gsqrt   (ADM_gall   ,ADM_kall,ADM_lall   ))
        allocate(smg_oprt_gsqrt_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
-       allocate(smg_oprt_gsqrtH(ADM_gall,ADM_kall,ADM_lall))
+       allocate(smg_oprt_gsqrtH   (ADM_gall   ,ADM_kall,ADM_lall   ))
        allocate(smg_oprt_gsqrtH_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
-       allocate(smg_oprt_GAM(ADM_gall,ADM_kall,ADM_lall))
+       allocate(smg_oprt_GAM   (ADM_gall   ,ADM_kall,ADM_lall   ))
        allocate(smg_oprt_GAM_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
-       allocate(smg_oprt_GAMH(ADM_gall,ADM_kall,ADM_lall))
+       allocate(smg_oprt_GAMH   (ADM_gall   ,ADM_kall,ADM_lall   ))
        allocate(smg_oprt_GAMH_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
 
        allocate(var(ADM_gall,ADM_kall,ADM_lall,GRD_XDIR:GRD_ZDIR,IMAX+TRC_VMAX))
@@ -1142,206 +1108,129 @@ contains
 
     return
   end subroutine tb_smg_oprt_init
+
   !-----------------------------------------------------------------------------------------
   ! gradient3d hybrid routine (full and half)
   subroutine Gradient3dfh(  &
-       vx, vx_pl,                  & !out (full level tensor component)
-       vy, vy_pl,                  & !out (full level tensor component)
-       vz, vz_pl,                  & !out (full level tensor component)
-       vxh, vxh_pl,                  & !out (half level tensor component)
-       vyh, vyh_pl,                  & !out (half level tensor component)
-       vzh, vzh_pl,                  & !out (half level tensor component)
-       scl, scl_pl,                  & !in (full level velocity)
-       sclh, sclh_pl,              & !in (half level velocity)
-       input_sclh                & !in optional ( input half level scl, or not )
-       )
-    ! note that vx, vy, vz are not velocity but just vector.
+       scl,  scl_pl,  &
+       sclh, sclh_pl, &
+       vh,   vh_pl,   &
+       vhh,  vhh_pl,  &
+       input_sclh     )
+    use mod_adm, only: &
+       ADM_prc_me,  &
+       ADM_prc_pl,  &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_kmin,    &
+       ADM_kmax,    &
+       ADM_nxyz
+    use mod_grd, only: &
+       GRD_XDIR, &
+       GRD_YDIR, &
+       GRD_ZDIR
     use mod_oprt, only:&
-         OPRT_gradient
+       OPRT_gradient
     implicit none
 
-    real(8),intent(in)::sclh(ADM_gall,ADM_kall,ADM_lall)          ! half level
-    real(8),intent(in)::sclh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL) ! half level
-    real(8),intent(in)::scl(ADM_gall,ADM_kall,ADM_lall)            ! full level
-    real(8),intent(in)::scl_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)   ! full level
+    real(8), intent(in)  :: sclh   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: sclh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)  :: scl    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: scl_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+
+    real(8), intent(out) :: vh     (ADM_gall   ,ADM_kall,ADM_lall   ,ADM_nxyz)
+    real(8), intent(out) :: vh_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,ADM_nxyz)
+    real(8), intent(out) :: vhh    (ADM_gall   ,ADM_kall,ADM_lall   ,ADM_nxyz)
+    real(8), intent(out) :: vhh_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,ADM_nxyz)
     !
-    ! horizontal gradient
-    real(8),intent(out)::vx(ADM_gall,ADM_kall,ADM_lall)           ! half level
-    real(8),intent(out)::vy(ADM_gall,ADM_kall,ADM_lall)           ! half level
-    real(8),intent(out)::vz(ADM_gall,ADM_kall,ADM_lall)           ! half level
-    real(8),intent(out)::vx_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)  ! half level
-    real(8),intent(out)::vy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)  ! half level
-    real(8),intent(out)::vz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)  ! half level
-    !
-    real(8),intent(out)::vxh(ADM_gall,ADM_kall,ADM_lall)           ! half level
-    real(8),intent(out)::vyh(ADM_gall,ADM_kall,ADM_lall)           ! half level
-    real(8),intent(out)::vzh(ADM_gall,ADM_kall,ADM_lall)           ! half level
-    real(8),intent(out)::vxh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)  ! half level
-    real(8),intent(out)::vyh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)  ! half level
-    real(8),intent(out)::vzh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)  ! half level
-    !
-    logical,intent(in),optional::input_sclh
-    logical ::input_sclh_in!=.true.
+    logical, intent(in), optional :: input_sclh
+
+    logical :: input_sclh_in ! =.true.
 
     integer::k,i,l
+    !-----------------------------------------------------------------------------------------
 
-    if (.not.present(input_sclh)) input_sclh_in=.true.
-    if (present(input_sclh)) input_sclh_in=input_sclh
-
-    !initial
-    vx=0.D0 ! needed because halo region is not written in oprt_gradient
-    vy=0.D0 ! needed because halo region is not written in oprt_gradient
-    vz=0.D0 ! needed because halo region is not written in oprt_gradient
-    vx_pl=0.D0 ! needed because halo region is not written in oprt_gradient
-    vy_pl=0.D0 ! needed because halo region is not written in oprt_gradient
-    vz_pl=0.D0 ! needed because halo region is not written in oprt_gradient
-    vxh=0.D0 ! needed because halo region is not written in oprt_gradient
-    vyh=0.D0 ! needed because halo region is not written in oprt_gradient
-    vzh=0.D0 ! needed because halo region is not written in oprt_gradient
-    vxh_pl=0.D0 ! needed because halo region is not written in oprt_gradient
-    vyh_pl=0.D0 ! needed because halo region is not written in oprt_gradient
-    vzh_pl=0.D0 ! needed because halo region is not written in oprt_gradient
-
+    if( .not. present(input_sclh) ) input_sclh_in = .true.
+    if(       present(input_sclh) ) input_sclh_in = input_sclh
 
     ! horizontal gradient for full
-    call OPRT_gradient(&
-       vx, vx_pl,                  &
-       vy, vy_pl,                  &
-       vz, vz_pl,                  &
-       scl, scl_pl,              &
-       mfact=1.D0)
+    call OPRT_gradient( scl, scl_pl, &
+                        vh,  vh_pl   )
+
     ! horizontal gradient for half
-    if (input_sclh_in) then
-!       write(*,*) 'input!'
-       call OPRT_gradient(&
-            vxh, vxh_pl,                  &
-            vyh, vyh_pl,                  &
-            vzh, vzh_pl,                  &
-            sclh, sclh_pl,             &
-            mfact=1.D0)
+    if ( input_sclh_in ) then
+       call OPRT_gradient( sclh, sclh_pl, &
+                           vhh,  vhh_pl   )
     else
-       do k=ADM_kmin+1,ADM_kmax
-          vxh(:,k,:)=(vx(:,k,:)+vx(:,k-1,:))/2
-          vyh(:,k,:)=(vy(:,k,:)+vy(:,k-1,:))/2
-          vzh(:,k,:)=(vz(:,k,:)+vz(:,k-1,:))/2
+       vhh(:,ADM_kmin,:,:) = vh(:,ADM_kmin,:,:)
+       do k = ADM_kmin+1, ADM_kmax
+          vhh(:,k,:,:) = ( vh(:,k,:,:) + vh(:,k-1,:,:) ) * 0.5D0
        enddo
-       k=ADM_kmin
-       vxh(:,k,:)=(vx(:,k,:))! not used effectively
-       vyh(:,k,:)=(vy(:,k,:))! not used effectively
-       vzh(:,k,:)=(vz(:,k,:))! not used effectively
-       if(ADM_prc_me==ADM_prc_pl) then
-          do k=ADM_kmin+1,ADM_kmax
-             vxh_pl(:,k,:)=(vx_pl(:,k,:)+vx_pl(:,k-1,:))/2
-             vyh_pl(:,k,:)=(vy_pl(:,k,:)+vy_pl(:,k-1,:))/2
-             vzh_pl(:,k,:)=(vz_pl(:,k,:)+vz_pl(:,k-1,:))/2
+
+       if ( ADM_prc_me == ADM_prc_pl ) then
+          vhh_pl(:,ADM_kmin,:,:) = vh_pl(:,ADM_kmin,:,:)
+          do k = ADM_kmin+1, ADM_kmax
+             vhh_pl(:,k,:,:) = ( vh_pl(:,k,:,:) + vh_pl(:,k-1,:,:) ) * 0.5D0
           enddo
-          k=ADM_kmin
-          vxh_pl(:,k,:)=(vx_pl(:,k,:))! not used effectively
-          vyh_pl(:,k,:)=(vy_pl(:,k,:))! not used effectively
-          vzh_pl(:,k,:)=(vz_pl(:,k,:))! not used effectively
        endif
     endif
 
+    !-----< Add vertical gradient >-----
 
-    !full level ---------------------------------------------------------------------
-    vx(:,ADM_kmin:ADM_kmax,:)=vx(:,ADM_kmin:ADM_kmax,:) * smg_oprt_rgam(:,ADM_kmin:ADM_kmax,:)
-    vy(:,ADM_kmin:ADM_kmax,:)=vy(:,ADM_kmin:ADM_kmax,:) * smg_oprt_rgam(:,ADM_kmin:ADM_kmax,:)
-    vz(:,ADM_kmin:ADM_kmax,:)=vz(:,ADM_kmin:ADM_kmax,:) * smg_oprt_rgam(:,ADM_kmin:ADM_kmax,:)
+    !--- full level
 
-
-    do l=1,ADM_lall
-           if (input_sclh_in)call history_in('scl',scl(:,:,l))
-           if (input_sclh_in)call history_in('hogevx',vx(:,:,l))
+    vh(:,ADM_kmin:ADM_kmax,:,GRD_XDIR) = vh(:,ADM_kmin:ADM_kmax,:,GRD_XDIR) * smg_oprt_rgam(:,ADM_kmin:ADM_kmax,:)
+    vh(:,ADM_kmin:ADM_kmax,:,GRD_YDIR) = vh(:,ADM_kmin:ADM_kmax,:,GRD_YDIR) * smg_oprt_rgam(:,ADM_kmin:ADM_kmax,:)
+    vh(:,ADM_kmin:ADM_kmax,:,GRD_ZDIR) = vh(:,ADM_kmin:ADM_kmax,:,GRD_ZDIR) * smg_oprt_rgam(:,ADM_kmin:ADM_kmax,:)
+    do k = ADM_kmin, ADM_kmax-1
+       vh(:,k,:,GRD_XDIR) = vh(:,k,:,GRD_XDIR) + ( sclh(:,k+1,:) - sclh(:,k,:) ) * smg_oprt_cx(:,k,:)
+       vh(:,k,:,GRD_YDIR) = vh(:,k,:,GRD_YDIR) + ( sclh(:,k+1,:) - sclh(:,k,:) ) * smg_oprt_cy(:,k,:)
+       vh(:,k,:,GRD_ZDIR) = vh(:,k,:,GRD_ZDIR) + ( sclh(:,k+1,:) - sclh(:,k,:) ) * smg_oprt_cz(:,k,:)
     enddo
+    ! vertical gradient at k=kmax is ignored
 
-    do k=ADM_kmin,ADM_kmax-1
-       ! add vertical gradient
-!       if (ADM_prc_me.eq.1) write(*,*) 'fb',k, vx(200,k,1)
-       vx(:,k,:)=vx(:,k,:)+(sclh(:,k+1,:)-sclh(:,k,:)) * smg_oprt_cx(:,k,:)
-       vy(:,k,:)=vy(:,k,:)+(sclh(:,k+1,:)-sclh(:,k,:)) * smg_oprt_cy(:,k,:)
-       vz(:,k,:)=vz(:,k,:)+(sclh(:,k+1,:)-sclh(:,k,:)) * smg_oprt_cz(:,k,:)
-!       if (ADM_prc_me.eq.1) write(*,*) 'f',k, (sclh(200,k+1,1)-sclh(200,k,1)) * smg_oprt_cx(200,k,1),vx(200,k,1)
-    enddo
-    k=ADM_kmax ! vertical gradient at k=kmax is ignored
-    vx(:,k,:)=vx(:,k,:)!+(sclh(:,k,:)-0) * smg_oprt_cx(:,k,:)
-    vy(:,k,:)=vy(:,k,:)!+(sclh(:,k,:)-0) * smg_oprt_cy(:,k,:)
-    vz(:,k,:)=vz(:,k,:)!+(sclh(:,k,:)-0) * smg_oprt_cz(:,k,:)
-
-
-!    do l=1,ADM_lall
-!           if (input_sclh_in)call history_in('dscl',(cshift(sclh(:,:,l),1,2)-sclh(:,:,l)) * smg_oprt_cx(:,k,:))
-!    enddo
-
-
-    !
-    if(ADM_prc_me==ADM_prc_pl) then
-       vx_pl(:,ADM_kmin:ADM_kmax,:)=vx_pl(:,ADM_kmin:ADM_kmax,:) * smg_oprt_rgam_pl(:,ADM_kmin:ADM_kmax,:)
-       vy_pl(:,ADM_kmin:ADM_kmax,:)=vy_pl(:,ADM_kmin:ADM_kmax,:) * smg_oprt_rgam_pl(:,ADM_kmin:ADM_kmax,:)
-       vz_pl(:,ADM_kmin:ADM_kmax,:)=vz_pl(:,ADM_kmin:ADM_kmax,:) * smg_oprt_rgam_pl(:,ADM_kmin:ADM_kmax,:)
-       do k=ADM_kmin,ADM_kmax-1
-          vx_pl(:,k,:)=vx_pl(:,k,:)+(sclh_pl(:,k+1,:)-sclh_pl(:,k,:)) * smg_oprt_cx_pl(:,k,:)
-          vy_pl(:,k,:)=vy_pl(:,k,:)+(sclh_pl(:,k+1,:)-sclh_pl(:,k,:)) * smg_oprt_cy_pl(:,k,:)
-          vz_pl(:,k,:)=vz_pl(:,k,:)+(sclh_pl(:,k+1,:)-sclh_pl(:,k,:)) * smg_oprt_cz_pl(:,k,:)
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       vh_pl(:,ADM_kmin:ADM_kmax,:,GRD_XDIR) = vh_pl(:,ADM_kmin:ADM_kmax,:,GRD_XDIR) * smg_oprt_rgam_pl(:,ADM_kmin:ADM_kmax,:)
+       vh_pl(:,ADM_kmin:ADM_kmax,:,GRD_YDIR) = vh_pl(:,ADM_kmin:ADM_kmax,:,GRD_YDIR) * smg_oprt_rgam_pl(:,ADM_kmin:ADM_kmax,:)
+       vh_pl(:,ADM_kmin:ADM_kmax,:,GRD_ZDIR) = vh_pl(:,ADM_kmin:ADM_kmax,:,GRD_ZDIR) * smg_oprt_rgam_pl(:,ADM_kmin:ADM_kmax,:)
+       do k = ADM_kmin, ADM_kmax-1
+          vh_pl(:,k,:,GRD_XDIR) = vh_pl(:,k,:,GRD_XDIR) + ( sclh_pl(:,k+1,:) - sclh_pl(:,k,:) ) * smg_oprt_cx_pl(:,k,:)
+          vh_pl(:,k,:,GRD_YDIR) = vh_pl(:,k,:,GRD_YDIR) + ( sclh_pl(:,k+1,:) - sclh_pl(:,k,:) ) * smg_oprt_cy_pl(:,k,:)
+          vh_pl(:,k,:,GRD_ZDIR) = vh_pl(:,k,:,GRD_ZDIR) + ( sclh_pl(:,k+1,:) - sclh_pl(:,k,:) ) * smg_oprt_cz_pl(:,k,:)
        enddo
-       k=ADM_kmax  ! vertical gradient at k=kmax is ignored
-       vx_pl(:,k,:)=vx_pl(:,k,:)!+(sclh_pl(:,k,:)-0) * smg_oprt_cx_pl(:,k,:)
-       vy_pl(:,k,:)=vy_pl(:,k,:)!+(sclh_pl(:,k,:)-0) * smg_oprt_cy_pl(:,k,:)
-       vz_pl(:,k,:)=vz_pl(:,k,:)!+(sclh_pl(:,k,:)-0) * smg_oprt_cz_pl(:,k,:)
+       ! vertical gradient at k=kmax is ignored
     endif
 
+    !--- half level
 
-    !half level ------------------------------------------------------------------
-    !
-    vxh(:,ADM_kmin:ADM_kmax,:)=vxh(:,ADM_kmin:ADM_kmax,:) * smg_oprt_rgamH(:,ADM_kmin:ADM_kmax,:)
-    vyh(:,ADM_kmin:ADM_kmax,:)=vyh(:,ADM_kmin:ADM_kmax,:) * smg_oprt_rgamH(:,ADM_kmin:ADM_kmax,:)
-    vzh(:,ADM_kmin:ADM_kmax,:)=vzh(:,ADM_kmin:ADM_kmax,:) * smg_oprt_rgamH(:,ADM_kmin:ADM_kmax,:)
-    do l=1,ADM_lall
-           if (input_sclh_in)call history_in('sclh',sclh(:,:,l))
-           if (input_sclh_in)call history_in('hogevxh',vxh(:,:,l))
+    vhh(:,ADM_kmin:ADM_kmax,:,GRD_XDIR) = vhh(:,ADM_kmin:ADM_kmax,:,GRD_XDIR) * smg_oprt_rgamH(:,ADM_kmin:ADM_kmax,:)
+    vhh(:,ADM_kmin:ADM_kmax,:,GRD_YDIR) = vhh(:,ADM_kmin:ADM_kmax,:,GRD_YDIR) * smg_oprt_rgamH(:,ADM_kmin:ADM_kmax,:)
+    vhh(:,ADM_kmin:ADM_kmax,:,GRD_ZDIR) = vhh(:,ADM_kmin:ADM_kmax,:,GRD_ZDIR) * smg_oprt_rgamH(:,ADM_kmin:ADM_kmax,:)
+    do k = ADM_kmin+1, ADM_kmax
+       vhh(:,k,:,GRD_XDIR) = vhh(:,k,:,GRD_XDIR) + ( scl(:,k,:) - scl(:,k-1,:) ) * smg_oprt_cxh(:,k,:)
+       vhh(:,k,:,GRD_YDIR) = vhh(:,k,:,GRD_YDIR) + ( scl(:,k,:) - scl(:,k-1,:) ) * smg_oprt_cyh(:,k,:)
+       vhh(:,k,:,GRD_ZDIR) = vhh(:,k,:,GRD_ZDIR) + ( scl(:,k,:) - scl(:,k-1,:) ) * smg_oprt_czh(:,k,:)
     enddo
+    ! vertical gradient at k=kmax is ignored
 
-    do k=ADM_kmin+1,ADM_kmax
-       ! add vertical gradient
-!       if (ADM_prc_me.eq.1) write(*,*) 'hb',k, vxh(200,k,1)
-       vxh(:,k,:)=vxh(:,k,:)+(scl(:,k,:)-scl(:,k-1,:)) * smg_oprt_cxh(:,k,:)
-       vyh(:,k,:)=vyh(:,k,:)+(scl(:,k,:)-scl(:,k-1,:)) * smg_oprt_cyh(:,k,:)
-       vzh(:,k,:)=vzh(:,k,:)+(scl(:,k,:)-scl(:,k-1,:)) * smg_oprt_czh(:,k,:)
-!       if (ADM_prc_me.eq.1) write(*,*) 'h',k, (scl(200,k+1,1)-scl(200,k,1)) * smg_oprt_cx(200,k,1),vxh(200,k,1)
-    enddo
-    k=ADM_kmin ! ground level (not used effectively)
-    vxh(:,k,:)=vxh(:,k,:)!+(scl(:,k,:)-0) * smg_oprt_cxh(:,k,:)
-    vyh(:,k,:)=vyh(:,k,:)!+(scl(:,k,:)-0) * smg_oprt_cyh(:,k,:)
-    vzh(:,k,:)=vzh(:,k,:)!+(scl(:,k,:)-0) * smg_oprt_czh(:,k,:)
-    !
-    do l=1,ADM_lall
-!           if (input_sclh_in)call history_in('dsclh',(cshift(scl(:,:,l),1,2)-scl(:,:,l)) * smg_oprt_cxh(:,k,:))
-    enddo
-
-    if(ADM_prc_me==ADM_prc_pl) then
-       vxh_pl(:,ADM_kmin:ADM_kmax,:)=vxh_pl(:,ADM_kmin:ADM_kmax,:) * smg_oprt_rgamH_pl(:,ADM_kmin:ADM_kmax,:)
-       vyh_pl(:,ADM_kmin:ADM_kmax,:)=vyh_pl(:,ADM_kmin:ADM_kmax,:) * smg_oprt_rgamH_pl(:,ADM_kmin:ADM_kmax,:)
-       vzh_pl(:,ADM_kmin:ADM_kmax,:)=vzh_pl(:,ADM_kmin:ADM_kmax,:) * smg_oprt_rgamH_pl(:,ADM_kmin:ADM_kmax,:)
-       do k=ADM_kmin+1,ADM_kmax
-          vxh_pl(:,k,:)=vxh_pl(:,k,:)+(scl_pl(:,k,:)-scl_pl(:,k-1,:)) * smg_oprt_cxh_pl(:,k,:)
-          vyh_pl(:,k,:)=vyh_pl(:,k,:)+(scl_pl(:,k,:)-scl_pl(:,k-1,:)) * smg_oprt_cyh_pl(:,k,:)
-          vzh_pl(:,k,:)=vzh_pl(:,k,:)+(scl_pl(:,k,:)-scl_pl(:,k-1,:)) * smg_oprt_czh_pl(:,k,:)
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       vhh_pl(:,ADM_kmin:ADM_kmax,:,GRD_XDIR) = vhh_pl(:,ADM_kmin:ADM_kmax,:,GRD_XDIR) * smg_oprt_rgamH_pl(:,ADM_kmin:ADM_kmax,:)
+       vhh_pl(:,ADM_kmin:ADM_kmax,:,GRD_YDIR) = vhh_pl(:,ADM_kmin:ADM_kmax,:,GRD_YDIR) * smg_oprt_rgamH_pl(:,ADM_kmin:ADM_kmax,:)
+       vhh_pl(:,ADM_kmin:ADM_kmax,:,GRD_ZDIR) = vhh_pl(:,ADM_kmin:ADM_kmax,:,GRD_ZDIR) * smg_oprt_rgamH_pl(:,ADM_kmin:ADM_kmax,:)
+       do k = ADM_kmin+1, ADM_kmax
+          vhh_pl(:,k,:,GRD_XDIR) = vhh_pl(:,k,:,GRD_XDIR) + ( scl_pl(:,k,:) - scl_pl(:,k-1,:) ) * smg_oprt_cxh_pl(:,k,:)
+          vhh_pl(:,k,:,GRD_YDIR) = vhh_pl(:,k,:,GRD_YDIR) + ( scl_pl(:,k,:) - scl_pl(:,k-1,:) ) * smg_oprt_cyh_pl(:,k,:)
+          vhh_pl(:,k,:,GRD_ZDIR) = vhh_pl(:,k,:,GRD_ZDIR) + ( scl_pl(:,k,:) - scl_pl(:,k-1,:) ) * smg_oprt_czh_pl(:,k,:)
        enddo
-       k=ADM_kmin ! ground level (not used effectively)
-       vxh_pl(:,k,:)=vxh_pl(:,k,:)!+(scl_pl(:,k,:)-0) * smg_oprt_cxh_pl(:,k,:)
-       vyh_pl(:,k,:)=vyh_pl(:,k,:)!+(scl_pl(:,k,:)-0) * smg_oprt_cyh_pl(:,k,:)
-       vzh_pl(:,k,:)=vzh_pl(:,k,:)!+(scl_pl(:,k,:)-0) * smg_oprt_czh_pl(:,k,:)
+       ! vertical gradient at k=kmax is ignored
     endif
-
-!    call dbgmx('grad3d_vx',vx)
-!    call dbgmx('grad3d_vxh',vxh)
-!    call dbgmx('grad3d_vy',vy)
-!    call dbgmx('grad3d_vyh',vyh)
-!    call dbgmx('grad3d_vz',vz)
-!    call dbgmx('grad3d_vzh',vzh)
-!    call dbgmx('grad3d_vx_pl',vx_pl)
 
     return
   end subroutine Gradient3dfh
+
   !-------------------------------------------------------------------------------
   ! gsqrt * gam^2 * div3d  (full and half)
   subroutine gsqrt_Div3dfh(  &
@@ -1373,46 +1262,46 @@ contains
 !         vmtr_gam_pl
 
     implicit none
-    real(8),intent(out)::sclh(ADM_gall,ADM_kall,ADM_lall)          ! half level
-    real(8),intent(out)::sclh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL) ! half level
-    real(8),intent(out)::scl(ADM_gall,ADM_kall,ADM_lall)            ! full level
-    real(8),intent(out)::scl_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)   ! full level
+    real(8),intent(out)::sclh   (ADM_gall   ,ADM_kall,ADM_lall   )          ! half level
+    real(8),intent(out)::sclh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) ! half level
+    real(8),intent(out)::scl   (ADM_gall   ,ADM_kall,ADM_lall   )            ! full level
+    real(8),intent(out)::scl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)   ! full level
     !
     ! horizontal gradient
-    real(8),intent(in)::vx(ADM_gall,ADM_kall,ADM_lall)           ! full level
-    real(8),intent(in)::vy(ADM_gall,ADM_kall,ADM_lall)           ! full level
-    real(8),intent(in)::vz(ADM_gall,ADM_kall,ADM_lall)           ! full level
-    real(8),intent(in)::vx_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)  ! full level
-    real(8),intent(in)::vy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)  ! full level
-    real(8),intent(in)::vz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)  ! full level
-    real(8),intent(in)::vxh(ADM_gall,ADM_kall,ADM_lall)           ! half level
-    real(8),intent(in)::vyh(ADM_gall,ADM_kall,ADM_lall)           ! half level
-    real(8),intent(in)::vzh(ADM_gall,ADM_kall,ADM_lall)           ! half level
-    real(8),intent(in)::vxh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)  ! half level
-    real(8),intent(in)::vyh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)  ! half level
-    real(8),intent(in)::vzh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)  ! half level
+    real(8),intent(in)::vx   (ADM_gall   ,ADM_kall,ADM_lall   )           ! full level
+    real(8),intent(in)::vy   (ADM_gall   ,ADM_kall,ADM_lall   )           ! full level
+    real(8),intent(in)::vz   (ADM_gall   ,ADM_kall,ADM_lall   )           ! full level
+    real(8),intent(in)::vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! full level
+    real(8),intent(in)::vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! full level
+    real(8),intent(in)::vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! full level
+    real(8),intent(in)::vxh   (ADM_gall   ,ADM_kall,ADM_lall   )           ! half level
+    real(8),intent(in)::vyh   (ADM_gall   ,ADM_kall,ADM_lall   )           ! half level
+    real(8),intent(in)::vzh   (ADM_gall   ,ADM_kall,ADM_lall   )           ! half level
+    real(8),intent(in)::vxh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! half level
+    real(8),intent(in)::vyh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! half level
+    real(8),intent(in)::vzh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! half level
     !
     logical,intent(in),optional::output_sclh
     logical ::output_sclh_in=.true.
 
     integer::k,i,l
 
-    real(8)::tmp(ADM_gall,ADM_kall,ADM_lall)
+    real(8)::tmp   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8)::tmp_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8)::tmph(ADM_gall,ADM_kall,ADM_lall)
+    real(8)::tmph   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8)::tmph_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8)::tmp_vx(ADM_gall,ADM_kall,ADM_lall)
+    real(8)::tmp_vx   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8)::tmp_vx_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8)::tmp_vy(ADM_gall,ADM_kall,ADM_lall)
+    real(8)::tmp_vy   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8)::tmp_vy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8)::tmp_vz(ADM_gall,ADM_kall,ADM_lall)
+    real(8)::tmp_vz   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8)::tmp_vz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     !
-    real(8)::tmp_vxh(ADM_gall,ADM_kall,ADM_lall)
+    real(8)::tmp_vxh   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8)::tmp_vxh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8)::tmp_vyh(ADM_gall,ADM_kall,ADM_lall)
+    real(8)::tmp_vyh   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8)::tmp_vyh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8)::tmp_vzh(ADM_gall,ADM_kall,ADM_lall)
+    real(8)::tmp_vzh   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8)::tmp_vzh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
 
     if (present(output_sclh)) output_sclh_in=output_sclh

@@ -1046,11 +1046,8 @@ contains
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
-    call OPRT_gradient( gradq(:,:,:,XDIR), gradq_pl(:,:,:,XDIR), & ![OUT]
-                        gradq(:,:,:,YDIR), gradq_pl(:,:,:,YDIR), & ![OUT]
-                        gradq(:,:,:,ZDIR), gradq_pl(:,:,:,ZDIR), & ![OUT]
-                        q  (:,:,:),        q_pl  (:,:,:),        & ![IN]
-                        mfact = 1.D0                             ) ![IN]
+    call OPRT_gradient( q    (:,:,:),   q_pl    (:,:,:),  & ![IN]
+                        gradq(:,:,:,:), gradq_pl(:,:,:,:) ) ![OUT]
 
     call COMM_data_transfer( gradq(:,:,:,:), gradq_pl(:,:,:,:) )
 

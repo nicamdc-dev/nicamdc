@@ -329,6 +329,8 @@ module mod_adm
   !<----- ADM_ImpJmp(ADM_ImpJmp_nmax,ADM_GIJ_nmax)
   !<-----
 
+  integer, public, parameter :: ADM_nxyz = 3 ! dimension of the spacial vector
+
   !=========== For New Grid (XTMS) start    <= S.Iga100607
   !
   !------ Horizontal Grid type
