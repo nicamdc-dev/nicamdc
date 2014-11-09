@@ -88,8 +88,8 @@ contains
        numfilter_setup
     use mod_nudge, only: &
        NDG_setup
-    use mod_sgs, only: &
-       sgs_setup
+!    use mod_sgs, only: &
+!       sgs_setup
     implicit none
     !---------------------------------------------------------------------------
 
@@ -150,7 +150,7 @@ contains
     if( FLAG_NUDGING ) call NDG_setup
 
     !---< sub-grid scale dynamics module setup >---
-    call sgs_setup
+!    call sgs_setup
 
     return
   end subroutine dynamics_setup
@@ -228,8 +228,8 @@ contains
     use mod_nudge, only: & ! Y.Niwa add 08/09/09
        NDG_update_reference, &
        NDG_apply_uvtp
-    use mod_sgs, only: &
-       sgs_smagorinsky
+!    use mod_sgs, only: &
+!       sgs_smagorinsky
     use mod_vi, only: &
        vi_small_step
     use mod_src_tracer, only: &
@@ -678,27 +678,27 @@ contains
           endif
        endif
 
-       if ( TB_TYPE == 'SMG' ) then ! Smagorinksy-type SGS model [add] A.Noda 10/11/29
-          call sgs_smagorinsky( nl,                                                      &
-                                rho,                       rho_pl,                       & ! [IN]
-                                PROG(:,:,:,I_RHOG  ),      PROG_pl(:,:,:,I_RHOG  ),      & ! [IN]
-                                PROGq(:,:,:,:),            PROGq_pl(:,:,:,:  ),          & ! [IN]
-                                vx,                        vx_pl,                        & ! [IN]
-                                vy,                        vy_pl,                        & ! [IN]
-                                vz,                        vz_pl,                        & ! [IN]
-                                w,                         w_pl,                         & ! [IN]
-                                tem,                       tem_pl,                       & ! [IN]
-                                q,                         q_pl,                         & ! [IN]
-                                th,                        th_pl,                        & ! [IN]
-                                f_TEND (:,:,:,I_RHOG    ), f_TEND_pl (:,:,:,I_RHOG    ), & ! [INOUT]
-                                f_TEND (:,:,:,I_RHOGVX  ), f_TEND_pl (:,:,:,I_RHOGVX  ), & ! [INOUT]
-                                f_TEND (:,:,:,I_RHOGVY  ), f_TEND_pl (:,:,:,I_RHOGVY  ), & ! [INOUT]
-                                f_TEND (:,:,:,I_RHOGVZ  ), f_TEND_pl (:,:,:,I_RHOGVZ  ), & ! [INOUT]
-                                f_TEND (:,:,:,I_RHOGW   ), f_TEND_pl (:,:,:,I_RHOGW   ), & ! [INOUT]
-                                f_TEND (:,:,:,I_RHOGE   ), f_TEND_pl (:,:,:,I_RHOGE   ), & ! [INOUT]
-                                f_TEND (:,:,:,I_RHOGETOT), f_TEND_pl (:,:,:,I_RHOGETOT), & ! [INOUT]
-                                f_TENDq(:,:,:,:),          f_TENDq_pl(:,:,:,:)           ) ! [INOUT]
-       endif
+!       if ( TB_TYPE == 'SMG' ) then ! Smagorinksy-type SGS model [add] A.Noda 10/11/29
+!          call sgs_smagorinsky( nl,                                                      &
+!                                rho,                       rho_pl,                       & ! [IN]
+!                                PROG(:,:,:,I_RHOG  ),      PROG_pl(:,:,:,I_RHOG  ),      & ! [IN]
+!                                PROGq(:,:,:,:),            PROGq_pl(:,:,:,:  ),          & ! [IN]
+!                                vx,                        vx_pl,                        & ! [IN]
+!                                vy,                        vy_pl,                        & ! [IN]
+!                                vz,                        vz_pl,                        & ! [IN]
+!                                w,                         w_pl,                         & ! [IN]
+!                                tem,                       tem_pl,                       & ! [IN]
+!                                q,                         q_pl,                         & ! [IN]
+!                                th,                        th_pl,                        & ! [IN]
+!                                f_TEND (:,:,:,I_RHOG    ), f_TEND_pl (:,:,:,I_RHOG    ), & ! [INOUT]
+!                                f_TEND (:,:,:,I_RHOGVX  ), f_TEND_pl (:,:,:,I_RHOGVX  ), & ! [INOUT]
+!                                f_TEND (:,:,:,I_RHOGVY  ), f_TEND_pl (:,:,:,I_RHOGVY  ), & ! [INOUT]
+!                                f_TEND (:,:,:,I_RHOGVZ  ), f_TEND_pl (:,:,:,I_RHOGVZ  ), & ! [INOUT]
+!                                f_TEND (:,:,:,I_RHOGW   ), f_TEND_pl (:,:,:,I_RHOGW   ), & ! [INOUT]
+!                                f_TEND (:,:,:,I_RHOGE   ), f_TEND_pl (:,:,:,I_RHOGE   ), & ! [INOUT]
+!                                f_TEND (:,:,:,I_RHOGETOT), f_TEND_pl (:,:,:,I_RHOGETOT), & ! [INOUT]
+!                                f_TENDq(:,:,:,:),          f_TENDq_pl(:,:,:,:)           ) ! [INOUT]
+!       endif
 
        !--- Nudging routines [add] Y.Niwa 08/09/09
        if ( FLAG_NUDGING ) then
