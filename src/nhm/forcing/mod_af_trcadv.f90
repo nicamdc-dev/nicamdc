@@ -88,13 +88,6 @@ contains
     real(8), parameter :: omega0  = 23000.D0*pi/tau  ! Velocity Magnitude
     real(8), parameter :: T0      = 300.D0           ! temperature
     real(8), parameter :: H       = Rd * T0 / g      ! scale height
-    real(8), parameter :: RR      = 1.D0 / 2.D0      ! horizontal half width divided by 'a'
-    real(8), parameter :: ZZ      = 1000.D0          ! vertical half width
-    real(8), parameter :: z0      = 5000.D0          ! center point in z
-    real(8), parameter :: lambda0 = 5.D0*pi/6.D0     ! center point in longitudes
-    real(8), parameter :: lambda1 = 7.D0*pi/6.D0     ! center point in longitudes
-    real(8), parameter :: phi0    = 0.D0             ! center point in latitudes
-    real(8), parameter :: phi1    = 0.D0
     real(8), parameter :: p0      = 100000.D0        ! reference pressure (Pa)
 
     real(8) :: u ! Zonal wind      [m/s]
@@ -174,7 +167,6 @@ contains
     real(8), parameter :: K    = 5.D0            ! number of Hadley-like cells
     real(8), parameter :: z1   = 2000.D0         ! position of lower tracer bound (m), changed in v5
     real(8), parameter :: z2   = 5000.D0         ! position of upper tracer bound (m), changed in v5
-    real(8), parameter :: z0   = 0.5D0*(z1+z2)   ! midpoint (m)
     real(8), parameter :: ztop = 12000.D0        ! model top (m)
     real(8), parameter :: p0   = 100000.D0       ! reference pressure (Pa)
 

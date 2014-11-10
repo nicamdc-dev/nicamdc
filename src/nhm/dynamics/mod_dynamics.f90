@@ -56,13 +56,13 @@ module mod_dynamics
   !
   !++ Private parameters & variables
   !
-  integer, private, parameter :: I_RHOG     = 1 ! Density x G^{1/2} x gamma^2
-  integer, private, parameter :: I_RHOGVX   = 2 ! Density x G^{1/2} x gamma^2 x Horizontal velocity (X-direction)
-  integer, private, parameter :: I_RHOGVY   = 3 ! Density x G^{1/2} x gamma^2 x Horizontal velocity (Y-direction)
-  integer, private, parameter :: I_RHOGVZ   = 4 ! Density x G^{1/2} x gamma^2 x Horizontal velocity (Z-direction)
-  integer, private, parameter :: I_RHOGW    = 5 ! Density x G^{1/2} x gamma^2 x Vertical   velocity
-  integer, private, parameter :: I_RHOGE    = 6 ! Density x G^{1/2} x gamma^2 x Internal Energy
-  integer, private, parameter :: I_RHOGETOT = 7 ! Density x G^{1/2} x gamma^2 x Total Energy
+  integer, private, parameter :: I_RHOG     = 1 ! Density x G^1/2 x gamma^2
+  integer, private, parameter :: I_RHOGVX   = 2 ! Density x G^1/2 x gamma^2 x Horizontal velocity (X-direction)
+  integer, private, parameter :: I_RHOGVY   = 3 ! Density x G^1/2 x gamma^2 x Horizontal velocity (Y-direction)
+  integer, private, parameter :: I_RHOGVZ   = 4 ! Density x G^1/2 x gamma^2 x Horizontal velocity (Z-direction)
+  integer, private, parameter :: I_RHOGW    = 5 ! Density x G^1/2 x gamma^2 x Vertical   velocity
+  integer, private, parameter :: I_RHOGE    = 6 ! Density x G^1/2 x gamma^2 x Internal Energy
+  integer, private, parameter :: I_RHOGETOT = 7 ! Density x G^1/2 x gamma^2 x Total Energy
 
   integer, private, save :: num_of_iteration_lstep    ! number of large steps ( 0-4 )
   integer, private, save :: num_of_iteration_sstep(4) ! number of small steps in each of large steps
@@ -78,8 +78,7 @@ contains
        TIME_INTEG_TYPE, &
        TIME_SSTEP_MAX
     use mod_runconf, only: &
-       TRC_ADV_TYPE, &
-       FLAG_NUDGING
+       TRC_ADV_TYPE
     use mod_bsstate, only: &
        bsstate_setup
     use mod_bndcnd, only: &
@@ -149,7 +148,7 @@ contains
     call numfilter_setup
 
     !---< nudging module setup >---
-    if( FLAG_NUDGING ) call NDG_setup
+    call NDG_setup
 
     !---< sub-grid scale dynamics module setup >---
 !    call sgs_setup
@@ -317,11 +316,11 @@ contains
     real(8) :: th   (ADM_gall,   ADM_kall,ADM_lall   )
     real(8) :: th_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    !--- density deviation from the base state ( G^{1/2} X gamma2 )
+    !--- density deviation from the base state ( G^1/2 X gamma2 )
     real(8) :: rhogd   (ADM_gall,   ADM_kall,ADM_lall   )
     real(8) :: rhogd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    !--- pressure deviation from the base state ( G^{1/2} X gamma2 )
+    !--- pressure deviation from the base state ( G^1/2 X gamma2 )
     real(8) :: pregd   (ADM_gall,   ADM_kall,ADM_lall   )
     real(8) :: pregd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 

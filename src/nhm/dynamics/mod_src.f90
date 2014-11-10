@@ -352,13 +352,13 @@ contains
        GRD_bfac
     implicit none
 
-    real(8), intent(in)  :: rhogvx     (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vx ( gam2 X G^{1/2} )
+    real(8), intent(in)  :: rhogvx     (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vx ( G^1/2 x gam2 )
     real(8), intent(in)  :: rhogvx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogvy     (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vy ( gam2 X G^{1/2} )
+    real(8), intent(in)  :: rhogvy     (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vy ( G^1/2 x gam2 )
     real(8), intent(in)  :: rhogvy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogvz     (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vz ( gam2 X G^{1/2} )
+    real(8), intent(in)  :: rhogvz     (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vz ( G^1/2 x gam2 )
     real(8), intent(in)  :: rhogvz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogw      (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*w  ( gam2 X G^{1/2} )
+    real(8), intent(in)  :: rhogw      (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*w  ( G^1/2 x gam2 )
     real(8), intent(in)  :: rhogw_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(in)  :: scl        (ADM_gall,   ADM_kall,ADM_lall   ) ! scalar
     real(8), intent(in)  :: scl_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -368,13 +368,13 @@ contains
                                      ! I_SRC_default    : horizontal & vertical convergence
                                      ! I_SRC_horizontal : horizontal convergence
 
-    real(8) :: rhogvxscl   (ADM_gall,   ADM_kall,ADM_lall   ) ! scalar * rho*Vx ( gam2 X G^{1/2} )
+    real(8) :: rhogvxscl   (ADM_gall,   ADM_kall,ADM_lall   ) ! scalar * rho*Vx ( G^1/2 x gam2 )
     real(8) :: rhogvxscl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhogvyscl   (ADM_gall,   ADM_kall,ADM_lall   ) ! scalar * rho*Vy ( gam2 X G^{1/2} )
+    real(8) :: rhogvyscl   (ADM_gall,   ADM_kall,ADM_lall   ) ! scalar * rho*Vy ( G^1/2 x gam2 )
     real(8) :: rhogvyscl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhogvzscl   (ADM_gall,   ADM_kall,ADM_lall   ) ! scalar * rho*Vz ( gam2 X G^{1/2} )
+    real(8) :: rhogvzscl   (ADM_gall,   ADM_kall,ADM_lall   ) ! scalar * rho*Vz ( G^1/2 x gam2 )
     real(8) :: rhogvzscl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhogwscl    (ADM_gall,   ADM_kall,ADM_lall   ) ! scalar * rho*w  ( gam2 X G^{1/2} )
+    real(8) :: rhogwscl    (ADM_gall,   ADM_kall,ADM_lall   ) ! scalar * rho*w  ( G^1/2 x gam2 )
     real(8) :: rhogwscl_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     integer :: k, l
@@ -472,13 +472,13 @@ contains
        OPRT_divergence
     implicit none
 
-    real(8), intent(in)  :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vx ( gam2 X G^{1/2} )
+    real(8), intent(in)  :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vx ( G^1/2 x gam2 )
     real(8), intent(in)  :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vy ( gam2 X G^{1/2} )
+    real(8), intent(in)  :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vy ( G^1/2 x gam2 )
     real(8), intent(in)  :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vz ( gam2 X G^{1/2} )
+    real(8), intent(in)  :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vz ( G^1/2 x gam2 )
     real(8), intent(in)  :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*w  ( gam2 X G^{1/2} )
+    real(8), intent(in)  :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*w  ( G^1/2 x gam2 )
     real(8), intent(in)  :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(out) :: grhog    (ADM_gall,   ADM_kall,ADM_lall   ) ! source
     real(8), intent(out) :: grhog_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -636,7 +636,7 @@ contains
        OPRT_horizontalize_vec
     implicit none
 
-    real(8), intent(in)  :: P        (ADM_gall   ,ADM_kall,ADM_lall   )          ! phi * G^{1/2} * gamma^2
+    real(8), intent(in)  :: P        (ADM_gall   ,ADM_kall,ADM_lall   )          ! phi * G^1/2 * gamma^2
     real(8), intent(in)  :: P_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(out) :: Pgrad    (ADM_gall   ,ADM_kall,ADM_lall   ,ADM_nxyz) ! horizontal gradient
     real(8), intent(out) :: Pgrad_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,ADM_nxyz)

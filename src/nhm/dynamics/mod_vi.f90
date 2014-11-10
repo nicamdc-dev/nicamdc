@@ -181,18 +181,18 @@ contains
        I_SRC_horizontal
     implicit none
 
-    real(8), intent(inout) :: rhog     (ADM_gall   ,ADM_kall,ADM_lall   ) ! density ( gam2 X G^{1/2} )
-    real(8), intent(inout) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: rhogvx   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*Vx  ( gam2 X G^{1/2} )
-    real(8), intent(inout) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: rhogvy   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*Vy  ( gam2 X G^{1/2} )
-    real(8), intent(inout) :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: rhogvz   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*Vz  ( gam2 X G^{1/2} )
-    real(8), intent(inout) :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: rhogw    (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*w   ( gam2 X G^{1/2} )
-    real(8), intent(inout) :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: rhoge    (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*ein ( gam2 X G^{1/2} )
-    real(8), intent(inout) :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(inout) :: rhog           (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho     ( G^1/2 x gam2 )
+    real(8), intent(inout) :: rhog_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(inout) :: rhogvx         (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*Vx  ( G^1/2 x gam2 )
+    real(8), intent(inout) :: rhogvx_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(inout) :: rhogvy         (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*Vy  ( G^1/2 x gam2 )
+    real(8), intent(inout) :: rhogvy_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(inout) :: rhogvz         (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*Vz  ( G^1/2 x gam2 )
+    real(8), intent(inout) :: rhogvz_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(inout) :: rhogw          (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*w   ( G^1/2 x gam2 )
+    real(8), intent(inout) :: rhogw_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(inout) :: rhoge          (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*Ein ( G^1/2 x gam2 )
+    real(8), intent(inout) :: rhoge_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !
     real(8), intent(in)    :: vx             (ADM_gall   ,ADM_kall,ADM_lall   ) ! Vh_x
     real(8), intent(in)    :: vx_pl          (ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -1150,7 +1150,7 @@ contains
     endif
 
     !---------------------------------------------------------------------------
-    ! energy correction by ETOT scheme (Satoh,2002)
+    ! energy correction by Etotal (Satoh,2002)
     !---------------------------------------------------------------------------
 
     ! prognostic variables ( large step + split (t=n+1) )
@@ -1256,9 +1256,9 @@ contains
        NON_HYDRO_ALPHA
     implicit none
 
-    real(8), intent(in) :: eth       (ADM_gall   ,ADM_kall,ADM_lall   ) ! enthalpy at the h-lev
+    real(8), intent(in) :: eth       (ADM_gall   ,ADM_kall,ADM_lall   ) ! enthalpy at the half lev
     real(8), intent(in) :: eth_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in) :: g_tilde   (ADM_gall   ,ADM_kall,ADM_lall   ) ! effective gravitation at the h-lev
+    real(8), intent(in) :: g_tilde   (ADM_gall   ,ADM_kall,ADM_lall   ) ! effective gravitation at the half lev
     real(8), intent(in) :: g_tilde_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(in) :: dt
 
@@ -1405,21 +1405,21 @@ contains
        NON_HYDRO_ALPHA
     implicit none
 
-    real(8), intent(inout) :: rhogw_new   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*w (split) ( gam2 X G^{1/2} )
+    real(8), intent(inout) :: rhogw_new   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*w          ( G^1/2 x gam2 )
     real(8), intent(inout) :: rhogw_new_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8), intent(in)    :: rhogw   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*w    (split) ( gam2 X G^{1/2} )
-    real(8), intent(in)    :: rhogw_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: preg    (ADM_gall   ,ADM_kall,ADM_lall   ) ! pertub p (split) ( gam2 X G^{1/2} )
-    real(8), intent(in)    :: preg_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: rhog    (ADM_gall   ,ADM_kall,ADM_lall   ) ! rhod     (split) ( gam2 X G^{1/2} )
-    real(8), intent(in)    :: rhog_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: Sr      (ADM_gall   ,ADM_kall,ADM_lall   ) ! source term for rho at the int-lev
-    real(8), intent(in)    :: Sr_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: Sw      (ADM_gall   ,ADM_kall,ADM_lall   ) ! source term for rhow at the h-lev
-    real(8), intent(in)    :: Sw_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: Sp      (ADM_gall   ,ADM_kall,ADM_lall   ) ! source term for p at the int-lev
-    real(8), intent(in)    :: Sp_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)    :: rhogw       (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*w          ( G^1/2 x gam2 )
+    real(8), intent(in)    :: rhogw_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)    :: preg        (ADM_gall   ,ADM_kall,ADM_lall   ) ! pressure prime ( G^1/2 x gam2 )
+    real(8), intent(in)    :: preg_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)    :: rhog        (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho            ( G^1/2 x gam2 )
+    real(8), intent(in)    :: rhog_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)    :: Sr          (ADM_gall   ,ADM_kall,ADM_lall   ) ! source term for rho  at the full level
+    real(8), intent(in)    :: Sr_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)    :: Sw          (ADM_gall   ,ADM_kall,ADM_lall   ) ! source term for rhow at the half level
+    real(8), intent(in)    :: Sw_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)    :: Sp          (ADM_gall   ,ADM_kall,ADM_lall   ) ! source term for pres at the full level
+    real(8), intent(in)    :: Sp_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(in)    :: dt
 
     real(8) :: Sall    (ADM_gall,   ADM_kall)
@@ -1491,7 +1491,7 @@ contains
        enddo
        enddo
 
-       !--- return value ( gam2 X G^{1/2} )
+       !--- return value ( G^1/2 x gam2 )
        do k = ADM_kmin, ADM_kmax+1
        do g = 1, ADM_gall
           rhogw_new(g,k,l) = rhogw_new(g,k,l) * VMTR_GSGAM2H(g,k,l)
@@ -1551,7 +1551,7 @@ contains
           enddo
           enddo
 
-          !--- return value ( gam2 X G^{1/2} )
+          !--- return value ( G^1/2 x gam2 )
           do k = ADM_kmin, ADM_kmax+1
           do g = 1, ADM_gall_pl
              rhogw_new_pl(g,k,l) = rhogw_new_pl(g,k,l) * VMTR_GSGAM2H_pl(g,k,l)

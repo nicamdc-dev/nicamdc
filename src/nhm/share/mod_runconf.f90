@@ -115,12 +115,12 @@ module mod_runconf
   integer, public            :: PRG_vmax        ! total number of prognostic variables
   integer, public, parameter :: PRG_vmax0  = 6
 
-  integer, public, parameter :: I_RHOG     =  1 ! Density x G^{1/2}
-  integer, public, parameter :: I_RHOGVX   =  2 ! Density x G^{1/2} x Horizontal velocity (X-direction)
-  integer, public, parameter :: I_RHOGVY   =  3 ! Density x G^{1/2} x Horizontal velocity (Y-direction)
-  integer, public, parameter :: I_RHOGVZ   =  4 ! Density x G^{1/2} x Horizontal velocity (Z-direction)
-  integer, public, parameter :: I_RHOGW    =  5 ! Density x G^{1/2} x Vertical   velocity
-  integer, public, parameter :: I_RHOGE    =  6 ! Density x G^{1/2} x Energy
+  integer, public, parameter :: I_RHOG     =  1 ! Density x G^1/2
+  integer, public, parameter :: I_RHOGVX   =  2 ! Density x G^1/2 x Horizontal velocity (X-direction)
+  integer, public, parameter :: I_RHOGVY   =  3 ! Density x G^1/2 x Horizontal velocity (Y-direction)
+  integer, public, parameter :: I_RHOGVZ   =  4 ! Density x G^1/2 x Horizontal velocity (Z-direction)
+  integer, public, parameter :: I_RHOGW    =  5 ! Density x G^1/2 x Vertical   velocity
+  integer, public, parameter :: I_RHOGE    =  6 ! Density x G^1/2 x Energy
   integer, public, parameter :: I_RHOGQstr =  7 ! tracers
   integer, public            :: I_RHOGQend = -1 !
 

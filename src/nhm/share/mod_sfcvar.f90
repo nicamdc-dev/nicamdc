@@ -876,7 +876,6 @@ contains
        mdim1, mdim2       &  !--- IN
        )
     use mod_adm, only :     &
-         ADM_LOG_FID,       &
          ADM_KNONE,         &
          ADM_gall,          &
          ADM_gall_pl,       &
@@ -927,17 +926,10 @@ contains
   end subroutine sfcvar_set2
 
   !-----------------------------------------------------------------------------
-  subroutine sfcvar_comm( &
-       comm_type )
-    use mod_adm, only: &
-       ADM_COMM_WORLD
+  subroutine sfcvar_comm
     use mod_comm, only: &
        COMM_var
     implicit none
-
-    integer, intent(in) :: comm_type
-
-    integer :: ierr
     !---------------------------------------------------------------------------
 
     call COMM_var( sfcvar, sfcvar_pl, KSUM, DIAG_MAX )

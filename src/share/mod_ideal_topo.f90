@@ -130,9 +130,8 @@ contains
        ADM_lall,      &
        ADM_gall
     use mod_cnst, only: &
-       PI     => CNST_PI,      &
-       D2R    => CNST_D2R,     &
-       RADIUS => CNST_ERADIUS
+       PI     => CNST_PI, &
+       D2R    => CNST_D2R
     implicit none
 
     real(8), intent(in)  :: lat (ADM_gall,ADM_KNONE,ADM_lall)

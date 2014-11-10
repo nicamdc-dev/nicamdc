@@ -198,12 +198,7 @@ contains
        GTL_max, &
        GTL_min
     use mod_vmtr, only :        &
-         VMTR_GSGAM2,           &
-         VMTR_GSGAM2_pl,        &
-         VMTR_GSGAM2H,          &
-         VMTR_GSGAM2H_pl,       &
-         VMTR_VOLUME,           &
-         VMTR_VOLUME_pl
+       VMTR_VOLUME
     use mod_prgvar, only :     &
          prgvar_get_withdiag
     use mod_sfcvar, only :    &

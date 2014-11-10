@@ -45,7 +45,7 @@ jobshell:
 
 
 
-.PHONY: allclean distclean clean
+.PHONY: allclean clean
 
 allclean:
 	$(MAKE) -C $(TOPDIR)/src allclean NICAM_BINDIR=$(NICAM_BINDIR) \

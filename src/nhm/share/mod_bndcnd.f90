@@ -326,7 +326,7 @@ contains
     !---------------------------------------------------------------------------
 
     select case( trim(BND_TYPE_M_TOP) )
-    case('RIGID') ! rhow / G^{1/2} = 0.D0
+    case('RIGID') ! rhow / G^1/2 = 0.D0
        rhogw(:,kmax+1) = 0.D0
     case('FREE')
        k = kmax+1
@@ -341,7 +341,7 @@ contains
     endselect
 
     select case( trim(BND_TYPE_M_BOTTOM) )
-    case('RIGID') ! rhow / G^{1/2} = 0.D0
+    case('RIGID') ! rhow / G^1/2 = 0.D0
        rhogw(:,kmin  ) = 0.D0
     case('FREE')
        k = kmin

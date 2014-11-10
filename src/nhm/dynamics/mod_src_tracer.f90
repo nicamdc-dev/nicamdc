@@ -79,13 +79,13 @@ contains
   !----------------------------------------------------------------------------------
   subroutine src_tracer_advection( &
        vmax,                        & !--- IN    : number of tracers
-       rhogq,       rhogq_pl,       & !--- INOUT : rhogq   ( gam2 X G^{1/2} )
-       rhog_in,     rhog_in_pl,     & !--- IN    : rho(old)( gam2 X G^{1/2} )
-       rhog_mean,   rhog_mean_pl,   & !--- IN    : rho     ( gam2 X G^{1/2} )
-       rhogvx_mean, rhogvx_mean_pl, & !--- IN    : rho*Vx  ( gam2 X G^{1/2} )
-       rhogvy_mean, rhogvy_mean_pl, & !--- IN    : rho*Vy  ( gam2 X G^{1/2} )
-       rhogvz_mean, rhogvz_mean_pl, & !--- IN    : rho*Vz  ( gam2 X G^{1/2} )
-       rhogw_mean,  rhogw_mean_pl,  & !--- IN    : rho*w   ( gam2 X G^{1/2} )
+       rhogq,       rhogq_pl,       & !--- INOUT : rhogq   ( G^1/2 x gam2 )
+       rhog_in,     rhog_in_pl,     & !--- IN    : rho(old)( G^1/2 x gam2 )
+       rhog_mean,   rhog_mean_pl,   & !--- IN    : rho     ( G^1/2 x gam2 )
+       rhogvx_mean, rhogvx_mean_pl, & !--- IN    : rho*Vx  ( G^1/2 x gam2 )
+       rhogvy_mean, rhogvy_mean_pl, & !--- IN    : rho*Vy  ( G^1/2 x gam2 )
+       rhogvz_mean, rhogvz_mean_pl, & !--- IN    : rho*Vz  ( G^1/2 x gam2 )
+       rhogw_mean,  rhogw_mean_pl,  & !--- IN    : rho*w   ( G^1/2 x gam2 )
        frhog,       frhog_pl,       & !--- IN    : hyperviscosity tendency for rhog
        dt,                          & !--- IN    : delta t
        thubern_lim                  ) !--- IN    : switch of thubern limiter

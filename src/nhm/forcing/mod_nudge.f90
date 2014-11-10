@@ -101,6 +101,8 @@ contains
     use mod_vmtr, only: &
        VMTR_GSGAM2,    &
        VMTR_GSGAM2_pl
+    use mod_runconf, only: &
+       FLAG_NUDGING
     implicit none
 
     integer :: NDG_kmin0 = -1
@@ -149,6 +151,8 @@ contains
 
     integer :: ierr
     !---------------------------------------------------------------------------
+
+    if( .NOT. FLAG_NUDGING ) return
 
     !--- read parameters
     write(ADM_LOG_FID,*)

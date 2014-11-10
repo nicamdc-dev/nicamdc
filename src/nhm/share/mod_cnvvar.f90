@@ -436,22 +436,22 @@ contains
        VMTR_W2Cfact_pl
     implicit none
 
-    real(8), intent(in)  :: rhog      (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^{1/2} X gamma2 )
+    real(8), intent(in)  :: rhog      (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 )
     real(8), intent(in)  :: rhog_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogvx    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^{1/2} X gamma2 ) X vx
+    real(8), intent(in)  :: rhogvx    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vx
     real(8), intent(in)  :: rhogvx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogvy    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^{1/2} X gamma2 ) X vy
+    real(8), intent(in)  :: rhogvy    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vy
     real(8), intent(in)  :: rhogvy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogvz    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^{1/2} X gamma2 ) X vz
+    real(8), intent(in)  :: rhogvz    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vz
     real(8), intent(in)  :: rhogvz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogw     (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^{1/2} X gamma2 ) X w
+    real(8), intent(in)  :: rhogw     (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X w
     real(8), intent(in)  :: rhogw_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: rhogkin   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^{1/2} X gamma2 ) X kin
+    real(8), intent(out) :: rhogkin   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X kin
     real(8), intent(out) :: rhogkin_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: rhogkin_h   (ADM_gall,   ADM_kall) ! rho X ( G^{1/2} X gamma2 ) X kin (horizontal)
+    real(8) :: rhogkin_h   (ADM_gall,   ADM_kall) ! rho X ( G^1/2 X gamma2 ) X kin (horizontal)
     real(8) :: rhogkin_h_pl(ADM_gall_pl,ADM_kall)
-    real(8) :: rhogkin_v   (ADM_gall,   ADM_kall) ! rho X ( G^{1/2} X gamma2 ) X kin (vertical)
+    real(8) :: rhogkin_v   (ADM_gall,   ADM_kall) ! rho X ( G^1/2 X gamma2 ) X kin (vertical)
     real(8) :: rhogkin_v_pl(ADM_gall_pl,ADM_kall)
 
     integer :: n, k, l

@@ -395,9 +395,11 @@ contains
 
     integer, intent(in) :: rtype
 
-    integer :: ierr
-    integer :: my_rank
+#ifdef JCUP
     integer :: my_comm, my_group
+#endif
+    integer :: my_rank
+    integer :: ierr
     !---------------------------------------------------------------------------
 
     ADM_run_type = rtype
@@ -465,7 +467,6 @@ contains
 #endif
     implicit none
 
-    character(ADM_NSYS) :: request = 'STOP'
     integer :: ierr
     !---------------------------------------------------------------------------
 
