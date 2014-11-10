@@ -89,15 +89,11 @@ module mod_diagvar
        ADM_GSLF_PL,       &
        ADM_NPL,           &
        ADM_SPL,           &
-       ADM_COMM_WORLD,&
        ADM_rgn2prc,       &
        ADM_proc_stop,     &
        ADM_NSYS
-  use mod_comm, only : &
-       COMM_data_transfer
-
   implicit none
-  !
+
   integer, public, save ::  DIAG_VMAX
   integer, private      ::  I_STA
   integer, private      ::  I_END
@@ -1225,17 +1221,13 @@ contains
   end subroutine diagvar_set_in_nlayer_region
 
   !-----------------------------------------------------------------------------
-  subroutine diagvar_comm( &
-       comm_type )
+  subroutine diagvar_comm
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_lall,      &
+       ADM_kall, &
        ADM_KNONE
     use mod_comm, only: &
        COMM_var
     implicit none
-
-    integer, intent(in) :: comm_type
     !---------------------------------------------------------------------------
 
     call COMM_var( diagvar, diagvar_pl, ADM_kall, DIAG_VMAX )
@@ -1306,9 +1298,7 @@ contains
     ! <- [add] H.Yashiro 20110819
     !---------------------------------------------------------------------------
 
-    !
-    ! [Add] 08/05/30 T.Mitsui
-    call diagvar_comm( comm_type=2 )
+    call diagvar_comm
 
 !   if (RAIN_TYPE/='CLOUD_PARAM') return
 !   if (RAIN_TYPE=='CLOUD_PARAM')then        ! 07/07/05 A.T.Noda

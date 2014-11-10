@@ -672,8 +672,7 @@ contains
          ADM_lall_pl,       &
          ADM_gall_1d,       &
          adm_prc_me,        &
-         adm_prc_pl,        &
-         ADM_COMM_WORLD
+         adm_prc_pl
     use mod_comm, only :    &
          COMM_data_transfer
     !

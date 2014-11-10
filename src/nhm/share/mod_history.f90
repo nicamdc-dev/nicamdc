@@ -769,7 +769,6 @@ contains
        calendar_ss2yh, &
        Calendar_SS2CC
     use mod_comm, only : &
-       COMM_data_transfer, &
        COMM_var
     use mod_fio, only: &
        FIO_output

@@ -245,8 +245,6 @@ contains
     !------                    : (:,:,:)
     !------
     !
-    use mod_adm, only : &
-         ADM_COMM_WORLD
     use mod_gmtr, only :  &
          GMTR_area,&
          GMTR_area_pl
@@ -844,9 +842,9 @@ contains
 
     do ivar=IVX,IMAX+TRC_VMAX
 
-       call comm_data_transfer(var(:,:,:,:,ivar),var_pl(:,:,:,:,ivar))
+       call COMM_data_transfer(var(:,:,:,:,ivar),var_pl(:,:,:,:,ivar))
 
-       call comm_data_transfer(varh(:,:,:,:,ivar),varh_pl(:,:,:,:,ivar))
+       call COMM_data_transfer(varh(:,:,:,:,ivar),varh_pl(:,:,:,:,ivar))
 
     enddo
 

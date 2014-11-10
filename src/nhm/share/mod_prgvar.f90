@@ -919,7 +919,6 @@ contains
        ADM_gmax,        &
        ADM_gmin
     use mod_comm, only: &
-       COMM_data_transfer, &
        COMM_var
     use mod_runconf, only: &
        PRG_vmax, &

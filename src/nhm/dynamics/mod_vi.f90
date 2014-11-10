@@ -61,22 +61,12 @@ module mod_vi
   !
   !++ Private parameters & variables
   !
-  integer, private, parameter :: vmax_split2 = 6
-  integer, private, parameter :: vmax_mean_c = 5
-
-  integer, private, parameter :: I_rhogvx = 1
-  integer, private, parameter :: I_rhogvy = 2
-  integer, private, parameter :: I_rhogvz = 3
-  integer, private, parameter :: I_rhog   = 4
-  integer, private, parameter :: I_rhogw  = 5
-  integer, private, parameter :: I_rhoge  = 6
-
-  real(8), private, allocatable, save :: Mc   (:,:,:)
-  real(8), private, allocatable, save :: Mc_pl(:,:,:)
-  real(8), private, allocatable, save :: Ml   (:,:,:)
-  real(8), private, allocatable, save :: Ml_pl(:,:,:)
-  real(8), private, allocatable, save :: Mu   (:,:,:)
-  real(8), private, allocatable, save :: Mu_pl(:,:,:)
+  real(8), private, allocatable :: Mc   (:,:,:)
+  real(8), private, allocatable :: Mc_pl(:,:,:)
+  real(8), private, allocatable :: Ml   (:,:,:)
+  real(8), private, allocatable :: Ml_pl(:,:,:)
+  real(8), private, allocatable :: Mu   (:,:,:)
+  real(8), private, allocatable :: Mu_pl(:,:,:)
 
   !-----------------------------------------------------------------------------
 contains
@@ -235,8 +225,8 @@ contains
     real(8), intent(inout) :: rhoge_split    (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(inout) :: rhoge_split_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8), intent(out)   :: v_mean_c       (ADM_gall   ,ADM_kall,ADM_lall   ,vmax_mean_c) ! mean_flux for tracer advection
-    real(8), intent(out)   :: v_mean_c_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,vmax_mean_c)
+    real(8), intent(out)   :: v_mean_c       (ADM_gall   ,ADM_kall,ADM_lall   ,5) ! mean_flux for tracer advection
+    real(8), intent(out)   :: v_mean_c_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,5)
 
     integer, intent(in)    :: num_of_itr
     real(8), intent(in)    :: dt
@@ -310,10 +300,10 @@ contains
     real(8) :: preg_prim_split_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- for communication
-    real(8) :: v_split2   (ADM_gall   ,ADM_kall,ADM_lall   ,vmax_split2)
-    real(8) :: v_split2_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,vmax_split2)
-    logical :: comm_flag1(vmax_split2)
-    logical :: comm_flag2(vmax_split2)
+    real(8) :: v_split2_vh   (ADM_gall   ,ADM_kall,ADM_lall   ,3)
+    real(8) :: v_split2_vh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
+    real(8) :: v_split2_we   (ADM_gall   ,ADM_kall,ADM_lall   ,3)
+    real(8) :: v_split2_we_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
 
     real(8) :: rweight_itr
 
@@ -322,18 +312,6 @@ contains
     integer :: i, j, suf
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
-
-    !--- comm_flag1 ( rhogvx_split2, rhogvy_split2, rhogvz_split2 )
-    comm_flag1(:) = .false.
-    comm_flag1(I_rhogvx) = .true.
-    comm_flag1(I_rhogvy) = .true.
-    comm_flag1(I_rhogvz) = .true.
-
-    !--- comm_flag2 ( rhog_split2, rhogw_split2, rhoge_split2 )
-    comm_flag2(:) = .false.
-    comm_flag2(I_rhog)  = .true.
-    comm_flag2(I_rhogw) = .true.
-    comm_flag2(I_rhoge) = .true.
 
     !--- full level -> half level
     do l = 1, ADM_lall
@@ -510,17 +488,17 @@ contains
     !--- initialization of mean mass flux
     rweight_itr = 1.D0 / real(num_of_itr,kind=8)
 
-    v_mean_c(:,:,:,I_rhogvx) = rhogvx(:,:,:)
-    v_mean_c(:,:,:,I_rhogvy) = rhogvy(:,:,:)
-    v_mean_c(:,:,:,I_rhogvz) = rhogvz(:,:,:)
-    v_mean_c(:,:,:,I_rhogw)  = rhogw (:,:,:)
-    v_mean_c(:,:,:,I_rhog)   = rhog  (:,:,:)
+    v_mean_c(:,:,:,1) = rhogvx(:,:,:)
+    v_mean_c(:,:,:,2) = rhogvy(:,:,:)
+    v_mean_c(:,:,:,3) = rhogvz(:,:,:)
+    v_mean_c(:,:,:,4) = rhog  (:,:,:)
+    v_mean_c(:,:,:,5) = rhogw (:,:,:)
 
-    v_mean_c_pl(:,:,:,I_rhogvx) = rhogvx_pl(:,:,:)
-    v_mean_c_pl(:,:,:,I_rhogvy) = rhogvy_pl(:,:,:)
-    v_mean_c_pl(:,:,:,I_rhogvz) = rhogvz_pl(:,:,:)
-    v_mean_c_pl(:,:,:,I_rhogw)  = rhogw_pl (:,:,:)
-    v_mean_c_pl(:,:,:,I_rhog)   = rhog_pl  (:,:,:)
+    v_mean_c_pl(:,:,:,1) = rhogvx_pl(:,:,:)
+    v_mean_c_pl(:,:,:,2) = rhogvy_pl(:,:,:)
+    v_mean_c_pl(:,:,:,3) = rhogvz_pl(:,:,:)
+    v_mean_c_pl(:,:,:,4) = rhog_pl  (:,:,:)
+    v_mean_c_pl(:,:,:,5) = rhogw_pl (:,:,:)
 
     !---------------------------------------------------------------------------
     !
@@ -665,88 +643,88 @@ contains
        do l = 1, ADM_lall
           do k = 1, ADM_kall
           do g = 1, ADM_gall
-             v_split2(g,k,l,I_rhogvx) = rhogvx_split(g,k,l) + dt * drhogvx(g,k,l)
-             v_split2(g,k,l,I_rhogvy) = rhogvy_split(g,k,l) + dt * drhogvy(g,k,l)
-             v_split2(g,k,l,I_rhogvz) = rhogvz_split(g,k,l) + dt * drhogvz(g,k,l)
+             v_split2_vh(g,k,l,1) = rhogvx_split(g,k,l) + dt * drhogvx(g,k,l)
+             v_split2_vh(g,k,l,2) = rhogvy_split(g,k,l) + dt * drhogvy(g,k,l)
+             v_split2_vh(g,k,l,3) = rhogvz_split(g,k,l) + dt * drhogvz(g,k,l)
           enddo
           enddo
 
-          call BNDCND_rhovxvyvz( ADM_gall,                 & !--- [IN]
-                                 rhog(:,:,l),              & !--- [IN]
-                                 v_split2(:,:,l,I_rhogvx), & !--- [INOUT]
-                                 v_split2(:,:,l,I_rhogvy), & !--- [INOUT]
-                                 v_split2(:,:,l,I_rhogvz)  ) !--- [INOUT]
+          call BNDCND_rhovxvyvz( ADM_gall,             & !--- [IN]
+                                 rhog(:,:,l),          & !--- [IN]
+                                 v_split2_vh(:,:,l,1), & !--- [INOUT]
+                                 v_split2_vh(:,:,l,2), & !--- [INOUT]
+                                 v_split2_vh(:,:,l,3)  ) !--- [INOUT]
        enddo
 
        if ( ADM_prc_me == ADM_prc_pl ) then
           do l = 1, ADM_lall_pl
              do k = 1, ADM_kall
              do g = 1, ADM_gall_pl
-                v_split2_pl(g,k,l,I_rhogvx) = rhogvx_split_pl(g,k,l) + dt * drhogvx_pl(g,k,l)
-                v_split2_pl(g,k,l,I_rhogvy) = rhogvy_split_pl(g,k,l) + dt * drhogvy_pl(g,k,l)
-                v_split2_pl(g,k,l,I_rhogvz) = rhogvz_split_pl(g,k,l) + dt * drhogvz_pl(g,k,l)
+                v_split2_vh_pl(g,k,l,1) = rhogvx_split_pl(g,k,l) + dt * drhogvx_pl(g,k,l)
+                v_split2_vh_pl(g,k,l,2) = rhogvy_split_pl(g,k,l) + dt * drhogvy_pl(g,k,l)
+                v_split2_vh_pl(g,k,l,3) = rhogvz_split_pl(g,k,l) + dt * drhogvz_pl(g,k,l)
              enddo
              enddo
 
-             call BNDCND_rhovxvyvz( ADM_gall_pl,                 & !--- [IN]
-                                    rhog_pl(:,:,l),              & !--- [IN]
-                                    v_split2_pl(:,:,l,I_rhogvx), & !--- [INOUT]
-                                    v_split2_pl(:,:,l,I_rhogvy), & !--- [INOUT]
-                                    v_split2_pl(:,:,l,I_rhogvz)  ) !--- [INOUT]
+             call BNDCND_rhovxvyvz( ADM_gall_pl,             & !--- [IN]
+                                    rhog_pl(:,:,l),          & !--- [IN]
+                                    v_split2_vh_pl(:,:,l,1), & !--- [INOUT]
+                                    v_split2_vh_pl(:,:,l,2), & !--- [INOUT]
+                                    v_split2_vh_pl(:,:,l,3)  ) !--- [INOUT]
           enddo
        endif
 
        !--- communication of horizontal momentum
-       call COMM_data_transfer(v_split2,v_split2_pl,trn=comm_flag1)
+       call COMM_data_transfer( v_split2_vh, v_split2_vh_pl )
 
        do l = 1, ADM_lall
        do k = 1, ADM_kall
-          v_split2(suf(ADM_gall_1d,1),k,l,I_rhogvx) = v_split2(suf(ADM_gmax+1,ADM_gmin),k,l,I_rhogvx)
-          v_split2(suf(1,ADM_gall_1d),k,l,I_rhogvx) = v_split2(suf(ADM_gmin,ADM_gmax+1),k,l,I_rhogvx)
-          v_split2(suf(ADM_gall_1d,1),k,l,I_rhogvy) = v_split2(suf(ADM_gmax+1,ADM_gmin),k,l,I_rhogvy)
-          v_split2(suf(1,ADM_gall_1d),k,l,I_rhogvy) = v_split2(suf(ADM_gmin,ADM_gmax+1),k,l,I_rhogvy)
-          v_split2(suf(ADM_gall_1d,1),k,l,I_rhogvz) = v_split2(suf(ADM_gmax+1,ADM_gmin),k,l,I_rhogvz)
-          v_split2(suf(1,ADM_gall_1d),k,l,I_rhogvz) = v_split2(suf(ADM_gmin,ADM_gmax+1),k,l,I_rhogvz)
+          v_split2_vh(suf(ADM_gall_1d,1),k,l,1) = v_split2_vh(suf(ADM_gmax+1,ADM_gmin),k,l,1)
+          v_split2_vh(suf(1,ADM_gall_1d),k,l,1) = v_split2_vh(suf(ADM_gmin,ADM_gmax+1),k,l,1)
+          v_split2_vh(suf(ADM_gall_1d,1),k,l,2) = v_split2_vh(suf(ADM_gmax+1,ADM_gmin),k,l,2)
+          v_split2_vh(suf(1,ADM_gall_1d),k,l,2) = v_split2_vh(suf(ADM_gmin,ADM_gmax+1),k,l,2)
+          v_split2_vh(suf(ADM_gall_1d,1),k,l,3) = v_split2_vh(suf(ADM_gmax+1,ADM_gmin),k,l,3)
+          v_split2_vh(suf(1,ADM_gall_1d),k,l,3) = v_split2_vh(suf(ADM_gmin,ADM_gmax+1),k,l,3)
        enddo
        enddo
 
        !--- 2nd small step : vertical implicit : rhog, rhogw, preg_prim: next step
-       call vi_path2( v_split2(:,:,:,I_rhog),   v_split2_pl(:,:,:,I_rhog),   & !--- [OUT]
-                      v_split2(:,:,:,I_rhogvx), v_split2_pl(:,:,:,I_rhogvx), & !--- [IN]
-                      v_split2(:,:,:,I_rhogvy), v_split2_pl(:,:,:,I_rhogvy), & !--- [IN]
-                      v_split2(:,:,:,I_rhogvz), v_split2_pl(:,:,:,I_rhogvz), & !--- [IN]
-                      v_split2(:,:,:,I_rhogw),  v_split2_pl(:,:,:,I_rhogw),  & !--- [OUT]
-                      v_split2(:,:,:,I_rhoge),  v_split2_pl(:,:,:,I_rhoge),  & !--- [OUT]
-                      rhog_split,               rhog_split_pl,               & !--- [IN]
-                      rhogvx_split,             rhogvx_split_pl,             & !--- [IN]
-                      rhogvy_split,             rhogvy_split_pl,             & !--- [IN]
-                      rhogvz_split,             rhogvz_split_pl,             & !--- [IN]
-                      rhogw_split,              rhogw_split_pl,              & !--- [IN]
-                      rhoge_split,              rhoge_split_pl,              & !--- [IN]
-                      preg_prim_split,          preg_prim_split_pl,          & !--- [IN]
-                      rhog,                     rhog_pl,                     & !--- [IN]
-                      rhogvx,                   rhogvx_pl,                   & !--- [IN]
-                      rhogvy,                   rhogvy_pl,                   & !--- [IN]
-                      rhogvz,                   rhogvz_pl,                   & !--- [IN]
-                      rhogw,                    rhogw_pl,                    & !--- [IN]
-                      eth,                      eth_pl,                      & !--- [IN]
-                      grhog,                    grhog_pl,                    & !--- [IN]
-                      drhogw,                   drhogw_pl,                   & !--- [IN]
-                      grhoge,                   grhoge_pl,                   & !--- [IN]
-                      grhogetot0,               grhogetot0_pl,               & !--- [IN]
-                      dt                                                     ) !--- [IN]
+       call vi_path2( v_split2_we(:,:,:,1), v_split2_we_pl(:,:,:,1), & !--- [OUT]
+                      v_split2_we(:,:,:,2), v_split2_we_pl(:,:,:,2), & !--- [OUT]
+                      v_split2_we(:,:,:,3), v_split2_we_pl(:,:,:,3), & !--- [OUT]
+                      v_split2_vh(:,:,:,1), v_split2_vh_pl(:,:,:,1), & !--- [IN]
+                      v_split2_vh(:,:,:,2), v_split2_vh_pl(:,:,:,2), & !--- [IN]
+                      v_split2_vh(:,:,:,3), v_split2_vh_pl(:,:,:,3), & !--- [IN]
+                      rhog_split,           rhog_split_pl,           & !--- [IN]
+                      rhogvx_split,         rhogvx_split_pl,         & !--- [IN]
+                      rhogvy_split,         rhogvy_split_pl,         & !--- [IN]
+                      rhogvz_split,         rhogvz_split_pl,         & !--- [IN]
+                      rhogw_split,          rhogw_split_pl,          & !--- [IN]
+                      rhoge_split,          rhoge_split_pl,          & !--- [IN]
+                      preg_prim_split,      preg_prim_split_pl,      & !--- [IN]
+                      rhog,                 rhog_pl,                 & !--- [IN]
+                      rhogvx,               rhogvx_pl,               & !--- [IN]
+                      rhogvy,               rhogvy_pl,               & !--- [IN]
+                      rhogvz,               rhogvz_pl,               & !--- [IN]
+                      rhogw,                rhogw_pl,                & !--- [IN]
+                      eth,                  eth_pl,                  & !--- [IN]
+                      grhog,                grhog_pl,                & !--- [IN]
+                      drhogw,               drhogw_pl,               & !--- [IN]
+                      grhoge,               grhoge_pl,               & !--- [IN]
+                      grhogetot0,           grhogetot0_pl,           & !--- [IN]
+                      dt                                             ) !--- [IN]
 
        !--- communication of rhog, rhogw, and rhoge
-       call COMM_data_transfer(v_split2,v_split2_pl,trn=comm_flag2)
+       call COMM_data_transfer( v_split2_we, v_split2_we_pl )
 
        do l = 1, ADM_lall
        do k = 1, ADM_kall
-          v_split2(suf(ADM_gall_1d,1),k,l,I_rhog ) = v_split2(suf(ADM_gmax+1,ADM_gmin),k,l,I_rhog )
-          v_split2(suf(1,ADM_gall_1d),k,l,I_rhog ) = v_split2(suf(ADM_gmin,ADM_gmax+1),k,l,I_rhog )
-          v_split2(suf(ADM_gall_1d,1),k,l,I_rhogw) = v_split2(suf(ADM_gmax+1,ADM_gmin),k,l,I_rhogw)
-          v_split2(suf(1,ADM_gall_1d),k,l,I_rhogw) = v_split2(suf(ADM_gmin,ADM_gmax+1),k,l,I_rhogw)
-          v_split2(suf(ADM_gall_1d,1),k,l,I_rhoge) = v_split2(suf(ADM_gmax+1,ADM_gmin),k,l,I_rhoge)
-          v_split2(suf(1,ADM_gall_1d),k,l,I_rhoge) = v_split2(suf(ADM_gmin,ADM_gmax+1),k,l,I_rhoge)
+          v_split2_we(suf(ADM_gall_1d,1),k,l,1) = v_split2_we(suf(ADM_gmax+1,ADM_gmin),k,l,1)
+          v_split2_we(suf(1,ADM_gall_1d),k,l,1) = v_split2_we(suf(ADM_gmin,ADM_gmax+1),k,l,1)
+          v_split2_we(suf(ADM_gall_1d,1),k,l,2) = v_split2_we(suf(ADM_gmax+1,ADM_gmin),k,l,2)
+          v_split2_we(suf(1,ADM_gall_1d),k,l,2) = v_split2_we(suf(ADM_gmin,ADM_gmax+1),k,l,2)
+          v_split2_we(suf(ADM_gall_1d,1),k,l,3) = v_split2_we(suf(ADM_gmax+1,ADM_gmin),k,l,3)
+          v_split2_we(suf(1,ADM_gall_1d),k,l,3) = v_split2_we(suf(ADM_gmin,ADM_gmax+1),k,l,3)
        enddo
        enddo
 
@@ -754,12 +732,12 @@ contains
        do l = 1, ADM_lall
        do k = 1, ADM_kall
        do g = 1, ADM_gall
-          rhog_split  (g,k,l) = v_split2(g,k,l,I_rhog)
-          rhogvx_split(g,k,l) = v_split2(g,k,l,I_rhogvx)
-          rhogvy_split(g,k,l) = v_split2(g,k,l,I_rhogvy)
-          rhogvz_split(g,k,l) = v_split2(g,k,l,I_rhogvz)
-          rhogw_split (g,k,l) = v_split2(g,k,l,I_rhogw)
-          rhoge_split (g,k,l) = v_split2(g,k,l,I_rhoge)
+          rhogvx_split(g,k,l) = v_split2_vh(g,k,l,1)
+          rhogvy_split(g,k,l) = v_split2_vh(g,k,l,2)
+          rhogvz_split(g,k,l) = v_split2_vh(g,k,l,3)
+          rhog_split  (g,k,l) = v_split2_we(g,k,l,1)
+          rhogw_split (g,k,l) = v_split2_we(g,k,l,2)
+          rhoge_split (g,k,l) = v_split2_we(g,k,l,3)
        enddo
        enddo
        enddo
@@ -768,11 +746,11 @@ contains
        do l = 1, ADM_lall
        do k = 1, ADM_kall
        do g = 1, ADM_gall
-          v_mean_c(g,k,l,I_rhog)   = v_mean_c(g,k,l,I_rhog)   + rhog_split  (g,k,l) * rweight_itr
-          v_mean_c(g,k,l,I_rhogvx) = v_mean_c(g,k,l,I_rhogvx) + rhogvx_split(g,k,l) * rweight_itr
-          v_mean_c(g,k,l,I_rhogvy) = v_mean_c(g,k,l,I_rhogvy) + rhogvy_split(g,k,l) * rweight_itr
-          v_mean_c(g,k,l,I_rhogvz) = v_mean_c(g,k,l,I_rhogvz) + rhogvz_split(g,k,l) * rweight_itr
-          v_mean_c(g,k,l,I_rhogw)  = v_mean_c(g,k,l,I_rhogw)  + rhogw_split (g,k,l) * rweight_itr
+          v_mean_c(g,k,l,1) = v_mean_c(g,k,l,1) + rhogvx_split(g,k,l) * rweight_itr
+          v_mean_c(g,k,l,2) = v_mean_c(g,k,l,2) + rhogvy_split(g,k,l) * rweight_itr
+          v_mean_c(g,k,l,3) = v_mean_c(g,k,l,3) + rhogvz_split(g,k,l) * rweight_itr
+          v_mean_c(g,k,l,4) = v_mean_c(g,k,l,4) + rhog_split  (g,k,l) * rweight_itr
+          v_mean_c(g,k,l,5) = v_mean_c(g,k,l,5) + rhogw_split (g,k,l) * rweight_itr
        enddo
        enddo
        enddo
@@ -782,12 +760,12 @@ contains
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do g = 1, ADM_gall_pl
-             rhog_split_pl(g,k,l)   = v_split2_pl(g,k,l,I_rhog)
-             rhogvx_split_pl(g,k,l) = v_split2_pl(g,k,l,I_rhogvx)
-             rhogvy_split_pl(g,k,l) = v_split2_pl(g,k,l,I_rhogvy)
-             rhogvz_split_pl(g,k,l) = v_split2_pl(g,k,l,I_rhogvz)
-             rhogw_split_pl(g,k,l)  = v_split2_pl(g,k,l,I_rhogw)
-             rhoge_split_pl(g,k,l)  = v_split2_pl(g,k,l,I_rhoge)
+             rhogvx_split_pl(g,k,l) = v_split2_vh_pl(g,k,l,1)
+             rhogvy_split_pl(g,k,l) = v_split2_vh_pl(g,k,l,2)
+             rhogvz_split_pl(g,k,l) = v_split2_vh_pl(g,k,l,3)
+             rhog_split_pl  (g,k,l) = v_split2_we_pl(g,k,l,1)
+             rhogw_split_pl (g,k,l) = v_split2_we_pl(g,k,l,2)
+             rhoge_split_pl (g,k,l) = v_split2_we_pl(g,k,l,3)
           enddo
           enddo
           enddo
@@ -796,11 +774,11 @@ contains
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do g = 1, ADM_gall_pl
-             v_mean_c_pl(g,k,l,I_rhog)   = v_mean_c_pl(g,k,l,I_rhog)   + rhog_split_pl  (g,k,l) * rweight_itr
-             v_mean_c_pl(g,k,l,I_rhogvx) = v_mean_c_pl(g,k,l,I_rhogvx) + rhogvx_split_pl(g,k,l) * rweight_itr
-             v_mean_c_pl(g,k,l,I_rhogvy) = v_mean_c_pl(g,k,l,I_rhogvy) + rhogvy_split_pl(g,k,l) * rweight_itr
-             v_mean_c_pl(g,k,l,I_rhogvz) = v_mean_c_pl(g,k,l,I_rhogvz) + rhogvz_split_pl(g,k,l) * rweight_itr
-             v_mean_c_pl(g,k,l,I_rhogw)  = v_mean_c_pl(g,k,l,I_rhogw)  + rhogw_split_pl (g,k,l) * rweight_itr
+             v_mean_c_pl(g,k,l,1) = v_mean_c_pl(g,k,l,1) + rhogvx_split_pl(g,k,l) * rweight_itr
+             v_mean_c_pl(g,k,l,2) = v_mean_c_pl(g,k,l,2) + rhogvy_split_pl(g,k,l) * rweight_itr
+             v_mean_c_pl(g,k,l,3) = v_mean_c_pl(g,k,l,3) + rhogvz_split_pl(g,k,l) * rweight_itr
+             v_mean_c_pl(g,k,l,4) = v_mean_c_pl(g,k,l,4) + rhog_split_pl  (g,k,l) * rweight_itr
+             v_mean_c_pl(g,k,l,5) = v_mean_c_pl(g,k,l,5) + rhogw_split_pl (g,k,l) * rweight_itr
           enddo
           enddo
           enddo
@@ -850,11 +828,11 @@ contains
   !-----------------------------------------------------------------------------
   subroutine vi_path2( &
        rhog_split2,   rhog_split2_pl,   & !--- [OUT]
+       rhogw_split2,  rhogw_split2_pl,  & !--- [OUT]
+       rhoge_split2,  rhoge_split2_pl,  & !--- [OUT]
        rhogvx_split2, rhogvx_split2_pl, & !--- [IN]
        rhogvy_split2, rhogvy_split2_pl, & !--- [IN]
        rhogvz_split2, rhogvz_split2_pl, & !--- [IN]
-       rhogw_split2,  rhogw_split2_pl,  & !--- [OUT]
-       rhoge_split2,  rhoge_split2_pl,  & !--- [OUT]
        rhog_split,    rhog_split_pl,    & !--- [IN]
        rhogvx_split,  rhogvx_split_pl,  & !--- [IN]
        rhogvy_split,  rhogvy_split_pl,  & !--- [IN]
@@ -904,16 +882,16 @@ contains
 
     real(8), intent(out) :: rhog_split2       (ADM_gall   ,ADM_kall,ADM_lall   ) ! prognostic vars (split, at n step)
     real(8), intent(out) :: rhog_split2_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(out) :: rhogw_split2      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(out) :: rhogw_split2_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(out) :: rhoge_split2      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(out) :: rhoge_split2_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(in)  :: rhogvx_split2     (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(in)  :: rhogvx_split2_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(in)  :: rhogvy_split2     (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(in)  :: rhogvy_split2_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(in)  :: rhogvz_split2     (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8), intent(in)  :: rhogvz_split2_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: rhogw_split2      (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(out) :: rhogw_split2_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: rhoge_split2      (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(out) :: rhoge_split2_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     real(8), intent(in)  :: rhog_split        (ADM_gall   ,ADM_kall,ADM_lall   ) ! prognostic vars (split, at n step)
     real(8), intent(in)  :: rhog_split_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
