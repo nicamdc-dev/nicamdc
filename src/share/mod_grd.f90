@@ -84,11 +84,11 @@ module mod_grd
   !<-----                  1:ADM_KNONE,      &  --- vertical
   !<-----                  1:ADM_lall_pl,    &  --- pole regions
   !<-----                  GRD_XDIR:GRD_ZDIR)   --- three components
-  !<-----           ___
+  !<-----          .___.
   !<-----         /     \
-  !<-----        <   p   >
+  !<-----        .   p   .
   !<-----         \ ___ /
-  !<-----
+  !<-----          '   '
 
   !------ Grid points ( CELL CORNER )
   real(8), public, allocatable, save :: GRD_xt   (:,:,:,:,:)
@@ -109,6 +109,26 @@ module mod_grd
   !<-----        p       p
   !<-----         \ ___ /
   !<-----          p   p
+
+  !------ Grid points ( CELL ARC )
+  real(8), public, allocatable, save :: GRD_xr   (:,:,:,:,:)
+  real(8), public, allocatable, save :: GRD_xr_pl(:,:,:,:)
+  !<-----
+  !<-----         GRD_xr(1:ADM_gall,         &  --- horizontal
+  !<-----                1:ADM_KNONE,        &  --- vertical
+  !<-----                1:ADM_lall,         &  --- local region
+  !<-----                ADM_TI:ADM_TJ,      &  --- upper / middle / lower arc
+  !<-----                GRD_XDIR:GRD_ZDIR)     --- three components
+  !<-----
+  !<-----         GRD_xr_pl(1:ADM_gall_pl,   &  --- horizontal
+  !<-----                  1:ADM_KNONE,      &  --- vertical
+  !<-----                  1:ADM_lall_pl,    &  --- pole regions
+  !<-----                  GRD_XDIR:GRD_ZDIR)   --- three components
+  !<-----          ._p_.
+  !<-----         p     p
+  !<-----        .       .
+  !<-----         p _ _ p
+  !<-----          ' p '
 
   real(8), public, allocatable, save :: GRD_e   (:,:,:) ! unscaled GRD_x (=unit vector)
   real(8), public, allocatable, save :: GRD_e_pl(:,:,:)
@@ -219,6 +239,8 @@ contains
          ADM_gall_pl,    &
          ADM_TI,         &
          ADM_TJ,         &
+         ADM_AI,         &
+         ADM_AJ,         &
          ADM_GSLF_PL,    &
          ADM_KNONE,      &
          ADM_VNONE,      &
@@ -325,6 +347,15 @@ contains
 
     call GRD_scaling(fac_scale)
     ! [mod] T.Ohno 110722 <==
+
+    !------ allocation and make additional of horizontal grid points
+    !------ ( cell ARC )
+    allocate( GRD_xr   (ADM_gall   ,K0,ADM_lall   ,ADM_AI:ADM_AJ,GRD_XDIR:GRD_ZDIR) )
+    allocate( GRD_xr_pl(ADM_gall_pl,K0,ADM_lall_pl,              GRD_XDIR:GRD_ZDIR) )
+    GRD_xr   (:,:,:,:,:) = CNST_UNDEF
+    GRD_xr_pl(:,:,:,:)   = CNST_UNDEF
+
+    call GRD_makearc
 
     !------ reading of surface height
     allocate(GRD_zs   (ADM_gall,   K0,ADM_lall,   GRD_ZSFC))
@@ -889,7 +920,6 @@ contains
        ADM_LOG_FID, &
        ADM_prc_tab, &
        ADM_prc_me,  &
-       ADM_PRC_PL,  &
        ADM_lall,    &
        ADM_gall,    &
        ADM_KNONE
@@ -908,7 +938,7 @@ contains
 
     character(len=128) :: fname
     integer            :: g, l, rgnid
-    integer            :: ierr, fid
+    integer            :: fid
     !---------------------------------------------------------------------------
 
     if ( topo_io_mode == 'ADVANCED' ) then
@@ -1138,6 +1168,93 @@ contains
 
     return
   end subroutine GRD_gen_plgrid
+
+  subroutine GRD_makearc
+    use mod_adm, only: &
+       ADM_have_pl,    &
+       ADM_TI,         &
+       ADM_TJ,         &
+       ADM_AI,         &
+       ADM_AIJ,        &
+       ADM_AJ,         &
+       ADM_lall,       &
+       ADM_lall_pl,    &
+       ADM_KNONE,      &
+       ADM_gall_1d,    &
+       ADM_gmin,       &
+       ADM_gmax,       &
+       ADM_gslf_pl,    &
+       ADM_gmin_pl,    &
+       ADM_gmax_pl
+    implicit none
+
+    integer :: ij
+    integer :: im1j, ijm1
+
+    integer :: nstart,nend
+    integer :: n, l, v, K0
+
+    integer :: suf,i,j
+    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+    !---------------------------------------------------------------------------
+
+    K0 = ADM_KNONE
+
+    do l = 1, ADM_lall
+       nstart = suf(ADM_gmin-1,ADM_gmin  )
+       nend   = suf(ADM_gmax  ,ADM_gmax  )
+
+       do n = nstart, nend
+          ij     = n
+          ijm1   = n     - ADM_gall_1d
+
+          GRD_xr(n,K0,l,ADM_AI ,GRD_XDIR) = 0.5D0 * ( GRD_xt(ijm1,K0,l,ADM_TJ,GRD_XDIR) + GRD_xt(ij,K0,l,ADM_TI,GRD_XDIR) )
+          GRD_xr(n,K0,l,ADM_AI ,GRD_YDIR) = 0.5D0 * ( GRD_xt(ijm1,K0,l,ADM_TJ,GRD_YDIR) + GRD_xt(ij,K0,l,ADM_TI,GRD_YDIR) )
+          GRD_xr(n,K0,l,ADM_AI ,GRD_ZDIR) = 0.5D0 * ( GRD_xt(ijm1,K0,l,ADM_TJ,GRD_ZDIR) + GRD_xt(ij,K0,l,ADM_TI,GRD_ZDIR) )
+       enddo
+
+       nstart = suf(ADM_gmin-1,ADM_gmin-1)
+       nend   = suf(ADM_gmax  ,ADM_gmax  )
+
+       do n = nstart, nend
+          ij     = n
+
+          GRD_xr(n,K0,l,ADM_AIJ,GRD_XDIR) = 0.5D0 * ( GRD_xt(ij,K0,l,ADM_TI,GRD_XDIR) + GRD_xt(ij,K0,l,ADM_TJ,GRD_XDIR) )
+          GRD_xr(n,K0,l,ADM_AIJ,GRD_YDIR) = 0.5D0 * ( GRD_xt(ij,K0,l,ADM_TI,GRD_YDIR) + GRD_xt(ij,K0,l,ADM_TJ,GRD_YDIR) )
+          GRD_xr(n,K0,l,ADM_AIJ,GRD_ZDIR) = 0.5D0 * ( GRD_xt(ij,K0,l,ADM_TI,GRD_ZDIR) + GRD_xt(ij,K0,l,ADM_TJ,GRD_ZDIR) )
+       enddo
+
+       nstart = suf(ADM_gmin  ,ADM_gmin-1)
+       nend   = suf(ADM_gmax  ,ADM_gmax  )
+
+       do n = nstart, nend
+          ij     = n
+          im1j   = n - 1
+
+          GRD_xr(n,K0,l,ADM_AJ ,GRD_XDIR) = 0.5D0 * ( GRD_xt(ij,K0,l,ADM_TJ,GRD_XDIR) + GRD_xt(im1j,K0,l,ADM_TI,GRD_XDIR) )
+          GRD_xr(n,K0,l,ADM_AJ ,GRD_YDIR) = 0.5D0 * ( GRD_xt(ij,K0,l,ADM_TJ,GRD_YDIR) + GRD_xt(im1j,K0,l,ADM_TI,GRD_YDIR) )
+          GRD_xr(n,K0,l,ADM_AJ ,GRD_ZDIR) = 0.5D0 * ( GRD_xt(ij,K0,l,ADM_TJ,GRD_ZDIR) + GRD_xt(im1j,K0,l,ADM_TI,GRD_ZDIR) )
+       enddo
+    enddo
+
+    if ( ADM_have_pl ) then
+       n = ADM_gslf_pl
+
+       do l = 1, ADM_lall_pl
+          do v = ADM_gmin_pl, ADM_gmax_pl
+             ij   = v
+             ijm1 = v - 1
+             if( ijm1 == ADM_gmin_pl - 1 ) ijm1 = ADM_gmax_pl
+
+             GRD_xr_pl(v,K0,l,GRD_XDIR) = 0.5D0 * (GRD_xt_pl(ijm1,K0,l,GRD_XDIR)+GRD_xt_pl(ij,K0,l,GRD_XDIR))
+             GRD_xr_pl(v,K0,l,GRD_YDIR) = 0.5D0 * (GRD_xt_pl(ijm1,K0,l,GRD_YDIR)+GRD_xt_pl(ij,K0,l,GRD_YDIR))
+             GRD_xr_pl(v,K0,l,GRD_ZDIR) = 0.5D0 * (GRD_xt_pl(ijm1,K0,l,GRD_ZDIR)+GRD_xt_pl(ij,K0,l,GRD_ZDIR))
+          enddo
+       enddo
+    endif
+
+    return
+  end subroutine GRD_makearc
 
 end module mod_grd
 !-------------------------------------------------------------------------------

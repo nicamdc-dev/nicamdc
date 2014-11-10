@@ -90,6 +90,8 @@ contains
        NDG_setup
 !    use mod_sgs, only: &
 !       sgs_setup
+    use mod_vi, only: &
+       vi_setup
     implicit none
     !---------------------------------------------------------------------------
 
@@ -152,6 +154,9 @@ contains
     !---< sub-grid scale dynamics module setup >---
 !    call sgs_setup
 
+    !---< vertical implicit module setup >---
+    call vi_setup
+
     return
   end subroutine dynamics_setup
 
@@ -185,8 +190,8 @@ contains
        VMTR_GSGAM2_pl,     &
        VMTR_PHI,           &
        VMTR_PHI_pl,        &
-       VMTR_C2Wfact_Gz,    &
-       VMTR_C2Wfact_Gz_pl, &
+       VMTR_C2WfactGz,    &
+       VMTR_C2WfactGz_pl, &
        VMTR_C2Wfact,       &
        VMTR_C2Wfact_pl
     use mod_comm, only: &
@@ -446,7 +451,7 @@ contains
                            VMTR_GSGAM2    (:,:,l),   & ! [IN]
                            VMTR_PHI       (:,:,l),   & ! [IN]
                            VMTR_C2Wfact   (:,:,:,l), & ! [IN]
-                           VMTR_C2Wfact_Gz(:,:,:,l)  ) ! [IN]
+                           VMTR_C2WfactGz(:,:,:,l)  ) ! [IN]
 
           call thrmdyn_th( ADM_gall, th(:,:,l), tem(:,:,l), pre(:,:,l) )
 
@@ -508,7 +513,7 @@ contains
                               VMTR_GSGAM2_pl    (:,:,l),   & ! [IN]
                               VMTR_PHI_pl       (:,:,l),   & ! [IN]
                               VMTR_C2Wfact_pl   (:,:,:,l), & ! [IN]
-                              VMTR_C2Wfact_Gz_pl(:,:,:,l)  ) ! [IN]
+                              VMTR_C2WfactGz_pl(:,:,:,l)  ) ! [IN]
 
              call thrmdyn_th ( ADM_gall_pl, th_pl (:,:,l), tem_pl(:,:,l), pre_pl(:,:,l) )
              call thrmdyn_eth( ADM_gall_pl, eth_pl(:,:,l), ein_pl(:,:,l), pre_pl(:,:,l), rho_pl(:,:,l) )

@@ -56,9 +56,6 @@ module mod_src_tracer
   !++ Public procedure
   !
   public :: src_tracer_advection
-  public :: vertical_limiter_thuburn
-  public :: horizontal_flux
-  public :: horizontal_limiter_thuburn
 
   !-----------------------------------------------------------------------------
   !
@@ -68,21 +65,18 @@ module mod_src_tracer
   !
   !++ Private procedures
   !
+  private :: horizontal_flux
+  private :: horizontal_remap
+  private :: vertical_limiter_thuburn
+  private :: horizontal_limiter_thuburn
+
   !-----------------------------------------------------------------------------
   !
   !++ Private parameters & variables
   !
-  real(8), private, allocatable, save :: local_t_var   (:,:,:,:,:)
-  real(8), private, allocatable, save :: local_t_var_pl(:,:,:,:)
-
-  real(8), private, allocatable, save :: GRD_xr   (:,:,:,:,:)
-  real(8), private, allocatable, save :: GRD_xr_pl(:,:,:,:)
-
   !-----------------------------------------------------------------------------
 contains
   !----------------------------------------------------------------------------------
-  ! Y.Niwa add 080124
-  ! This routine is revised version of src_tracer_advection
   subroutine src_tracer_advection( &
        vmax,                        & !--- IN    : number of tracers
        rhogq,       rhogq_pl,       & !--- INOUT : rhogq   ( gam2 X G^{1/2} )
@@ -117,13 +111,13 @@ contains
        GRD_afac, &
        GRD_bfac
     use mod_vmtr, only: &
-       VMTR_C2Wfact_Gz,    &
-       VMTR_C2Wfact_Gz_pl, &
-       VMTR_RGSH,          &
-       VMTR_RGSH_pl,       &
-       VMTR_RGAM,          &
-       VMTR_RGAM_pl,       &
-       VMTR_RGAMH,         &
+       VMTR_C2WfactGz,    &
+       VMTR_C2WfactGz_pl, &
+       VMTR_RGSQRTH,      &
+       VMTR_RGSQRTH_pl,   &
+       VMTR_RGAM,         &
+       VMTR_RGAM_pl,      &
+       VMTR_RGAMH,        &
        VMTR_RGAMH_pl
     implicit none
 
@@ -204,14 +198,14 @@ contains
 
        do k = ADM_kmin+1, ADM_kmax
        do n = 1, ADM_gall
-          flx_v(n,k,l) = ( ( VMTR_C2Wfact_Gz(1,n,k,l) * rhogvx_mean(n,k  ,l) &
-                           + VMTR_C2Wfact_Gz(2,n,k,l) * rhogvx_mean(n,k-1,l) &
-                           + VMTR_C2Wfact_Gz(3,n,k,l) * rhogvy_mean(n,k  ,l) &
-                           + VMTR_C2Wfact_Gz(4,n,k,l) * rhogvy_mean(n,k-1,l) &
-                           + VMTR_C2Wfact_Gz(5,n,k,l) * rhogvz_mean(n,k  ,l) &
-                           + VMTR_C2Wfact_Gz(6,n,k,l) * rhogvz_mean(n,k-1,l) &
-                           ) * VMTR_RGAMH(n,k,l)                             & ! horizontal contribution
-                         + rhogw_mean(n,k,l) * VMTR_RGSH(n,k,l)              & ! vertical   contribution
+          flx_v(n,k,l) = ( ( VMTR_C2WfactGz(1,n,k,l) * rhogvx_mean(n,k  ,l) &
+                           + VMTR_C2WfactGz(2,n,k,l) * rhogvx_mean(n,k-1,l) &
+                           + VMTR_C2WfactGz(3,n,k,l) * rhogvy_mean(n,k  ,l) &
+                           + VMTR_C2WfactGz(4,n,k,l) * rhogvy_mean(n,k-1,l) &
+                           + VMTR_C2WfactGz(5,n,k,l) * rhogvz_mean(n,k  ,l) &
+                           + VMTR_C2WfactGz(6,n,k,l) * rhogvz_mean(n,k-1,l) &
+                           ) * VMTR_RGAMH(n,k,l)                            & ! horizontal contribution
+                         + rhogw_mean(n,k,l) * VMTR_RGSQRTH(n,k,l)          & ! vertical   contribution
                          ) * 0.5D0 * dt
        enddo
        enddo
@@ -236,14 +230,14 @@ contains
 
           do k = ADM_kmin+1, ADM_kmax
           do n = 1, ADM_gall_pl
-             flx_v_pl(n,k,l) = ( ( VMTR_C2Wfact_Gz_pl(1,n,k,l) * rhogvx_mean_pl(n,k  ,l) &
-                                 + VMTR_C2Wfact_Gz_pl(2,n,k,l) * rhogvx_mean_pl(n,k-1,l) &
-                                 + VMTR_C2Wfact_Gz_pl(3,n,k,l) * rhogvy_mean_pl(n,k  ,l) &
-                                 + VMTR_C2Wfact_Gz_pl(4,n,k,l) * rhogvy_mean_pl(n,k-1,l) &
-                                 + VMTR_C2Wfact_Gz_pl(5,n,k,l) * rhogvz_mean_pl(n,k  ,l) &
-                                 + VMTR_C2Wfact_Gz_pl(6,n,k,l) * rhogvz_mean_pl(n,k-1,l) &
-                                 ) * VMTR_RGAMH_pl(n,k,l)                                & ! horizontal contribution
-                               + rhogw_mean_pl(n,k,l) * VMTR_RGSH_pl(n,k,l)              & ! vertical   contribution
+             flx_v_pl(n,k,l) = ( ( VMTR_C2WfactGz_pl(1,n,k,l) * rhogvx_mean_pl(n,k  ,l) &
+                                 + VMTR_C2WfactGz_pl(2,n,k,l) * rhogvx_mean_pl(n,k-1,l) &
+                                 + VMTR_C2WfactGz_pl(3,n,k,l) * rhogvy_mean_pl(n,k  ,l) &
+                                 + VMTR_C2WfactGz_pl(4,n,k,l) * rhogvy_mean_pl(n,k-1,l) &
+                                 + VMTR_C2WfactGz_pl(5,n,k,l) * rhogvz_mean_pl(n,k  ,l) &
+                                 + VMTR_C2WfactGz_pl(6,n,k,l) * rhogvz_mean_pl(n,k-1,l) &
+                                 ) * VMTR_RGAMH_pl(n,k,l)                               & ! horizontal contribution
+                               + rhogw_mean_pl(n,k,l) * VMTR_RGSQRTH_pl(n,k,l)          & ! vertical   contribution
                                ) * 0.5D0 * dt
           enddo
           enddo
@@ -654,24 +648,20 @@ contains
        ADM_gmax,       &
        ADM_gslf_pl,    &
        ADM_gmin_pl,    &
-       ADM_gmax_pl,    &
-       ADM_kmin,       &
-       ADM_kmax
+       ADM_gmax_pl
     use mod_cnst, only: &
        CNST_UNDEF, &
        CNST_EPS_ZERO
-    use mod_comm, only: &
-       COMM_data_transfer
     use mod_grd, only: &
-       GRD_xt,   &
-       GRD_xt_pl
+       GRD_xr,   &
+       GRD_xr_pl
     use mod_gmtr, only: &
        GMTR_P_var_pl, &
        GMTR_T_var,    &
        GMTR_T_var_pl, &
        GMTR_A_var_pl
     use mod_oprt, only: &
-       cinterp_HN,    &
+       cinterp_HN,  &
        cinterp_PRA
     implicit none
 
@@ -708,94 +698,9 @@ contains
     integer :: nstart,nend
     integer :: n, k, l, v
 
-    logical, save :: first = .true.  ! Y.Niwa add 080130
-
     integer :: suf,i,j
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
-
-    if ( first ) then
-       first = .false.
-
-       allocate( local_t_var   (ADM_gall   ,k0,ADM_lall   ,TI:TJ,W1:W3) )
-       allocate( local_t_var_pl(ADM_gall_pl,k0,ADM_lall_pl,      W1:W3) )
-       local_t_var   (:,:,:,:,:) = CNST_UNDEF
-       local_t_var_pl(:,:,:,:)   = CNST_UNDEF
-
-       allocate( GRD_xr   (ADM_gall   ,k0,ADM_lall   ,AI:AJ,XDIR:ZDIR) )
-       allocate( GRD_xr_pl(ADM_gall_pl,k0,ADM_lall_pl,      XDIR:ZDIR) )
-       GRD_xr   (:,:,:,:,:) = CNST_UNDEF
-       GRD_xr_pl(:,:,:,:)   = CNST_UNDEF
-
-       do l = 1, ADM_lall
-          do n = 1, ADM_gall
-             local_t_var(n,k0,l,TI,W1) = GMTR_t_var(n,k0,l,TI,W1)
-             local_t_var(n,k0,l,TI,W2) = GMTR_t_var(n,k0,l,TI,W2)
-             local_t_var(n,k0,l,TI,W3) = GMTR_t_var(n,k0,l,TI,W3)
-
-             local_t_var(n,k0,l,TJ,W1) = GMTR_t_var(n,k0,l,TJ,W1)
-             local_t_var(n,k0,l,TJ,W2) = GMTR_t_var(n,k0,l,TJ,W2)
-             local_t_var(n,k0,l,TJ,W3) = GMTR_t_var(n,k0,l,TJ,W3)
-          enddo
-
-          nstart = suf(ADM_gmin-1,ADM_gmin  )
-          nend   = suf(ADM_gmax  ,ADM_gmax  )
-
-          do n = nstart, nend
-             ij     = n
-             ijm1   = n     - ADM_gall_1d
-
-             GRD_xr(n,k0,l,AI ,XDIR) = 0.5D0 * ( GRD_xt(ijm1,k0,l,TJ,XDIR) + GRD_xt(ij,k0,l,TI,XDIR) )
-             GRD_xr(n,k0,l,AI ,YDIR) = 0.5D0 * ( GRD_xt(ijm1,k0,l,TJ,YDIR) + GRD_xt(ij,k0,l,TI,YDIR) )
-             GRD_xr(n,k0,l,AI ,ZDIR) = 0.5D0 * ( GRD_xt(ijm1,k0,l,TJ,ZDIR) + GRD_xt(ij,k0,l,TI,ZDIR) )
-          enddo
-
-          nstart = suf(ADM_gmin-1,ADM_gmin-1)
-          nend   = suf(ADM_gmax  ,ADM_gmax  )
-
-          do n = nstart, nend
-             ij     = n
-
-             GRD_xr(n,k0,l,AIJ,XDIR) = 0.5D0 * ( GRD_xt(ij,k0,l,TI,XDIR) + GRD_xt(ij,k0,l,TJ,XDIR) )
-             GRD_xr(n,k0,l,AIJ,YDIR) = 0.5D0 * ( GRD_xt(ij,k0,l,TI,YDIR) + GRD_xt(ij,k0,l,TJ,YDIR) )
-             GRD_xr(n,k0,l,AIJ,ZDIR) = 0.5D0 * ( GRD_xt(ij,k0,l,TI,ZDIR) + GRD_xt(ij,k0,l,TJ,ZDIR) )
-          enddo
-
-          nstart = suf(ADM_gmin  ,ADM_gmin-1)
-          nend   = suf(ADM_gmax  ,ADM_gmax  )
-
-          do n = nstart, nend
-             ij     = n
-             im1j   = n - 1
-
-             GRD_xr(n,k0,l,AJ ,XDIR) = 0.5D0 * ( GRD_xt(ij,k0,l,TJ,XDIR) + GRD_xt(im1j,k0,l,TI,XDIR) )
-             GRD_xr(n,k0,l,AJ ,YDIR) = 0.5D0 * ( GRD_xt(ij,k0,l,TJ,YDIR) + GRD_xt(im1j,k0,l,TI,YDIR) )
-             GRD_xr(n,k0,l,AJ ,ZDIR) = 0.5D0 * ( GRD_xt(ij,k0,l,TJ,ZDIR) + GRD_xt(im1j,k0,l,TI,ZDIR) )
-          enddo
-       enddo
-
-       if ( ADM_have_pl ) then
-          n = ADM_gslf_pl
-
-          do l = 1, ADM_lall_pl
-             do v = ADM_gmin_pl, ADM_gmax_pl
-                local_t_var_pl(v,k0,l,W1) = GMTR_t_var_pl(v,k0,l,W1)
-                local_t_var_pl(v,k0,l,W2) = GMTR_t_var_pl(v,k0,l,W2)
-                local_t_var_pl(v,k0,l,W3) = GMTR_t_var_pl(v,k0,l,W3)
-             enddo
-
-             do v = ADM_gmin_pl, ADM_gmax_pl
-                ij   = v
-                ijm1 = v - 1
-                if( ijm1 == ADM_gmin_pl - 1 ) ijm1 = ADM_gmax_pl
-
-                GRD_xr_pl(v,k0,l,XDIR) = 0.5D0 * (GRD_xt_pl(ijm1,k0,l,XDIR)+GRD_xt_pl(ij,k0,l,XDIR))
-                GRD_xr_pl(v,k0,l,YDIR) = 0.5D0 * (GRD_xt_pl(ijm1,k0,l,YDIR)+GRD_xt_pl(ij,k0,l,YDIR))
-                GRD_xr_pl(v,k0,l,ZDIR) = 0.5D0 * (GRD_xt_pl(ijm1,k0,l,ZDIR)+GRD_xt_pl(ij,k0,l,ZDIR))
-             enddo
-          enddo
-       endif
-    endif
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
@@ -808,18 +713,18 @@ contains
           ip1j   = n + 1
           ip1jp1 = n + 1 + ADM_gall_1d
 
-          rhot  (n,TI) = rho  (ij    ,k,l) * local_t_var(n,k0,l,TI,W1) &
-                       + rho  (ip1j  ,k,l) * local_t_var(n,k0,l,TI,W2) &
-                       + rho  (ip1jp1,k,l) * local_t_var(n,k0,l,TI,W3)
-          rhovxt(n,TI) = rhovx(ij    ,k,l) * GMTR_T_var(n,k0,l,TI,W1) &
-                       + rhovx(ip1j  ,k,l) * GMTR_T_var(n,k0,l,TI,W2) &
-                       + rhovx(ip1jp1,k,l) * GMTR_T_var(n,k0,l,TI,W3)
-          rhovyt(n,TI) = rhovy(ij    ,k,l) * GMTR_T_var(n,k0,l,TI,W1) &
-                       + rhovy(ip1j  ,k,l) * GMTR_T_var(n,k0,l,TI,W2) &
-                       + rhovy(ip1jp1,k,l) * GMTR_T_var(n,k0,l,TI,W3)
-          rhovzt(n,TI) = rhovz(ij    ,k,l) * GMTR_T_var(n,k0,l,TI,W1) &
-                       + rhovz(ip1j  ,k,l) * GMTR_T_var(n,k0,l,TI,W2) &
-                       + rhovz(ip1jp1,k,l) * GMTR_T_var(n,k0,l,TI,W3)
+          rhot  (n,TI) = rho  (ij    ,k,l) * GMTR_T_var(n,K0,l,TI,W1) &
+                       + rho  (ip1j  ,k,l) * GMTR_T_var(n,K0,l,TI,W2) &
+                       + rho  (ip1jp1,k,l) * GMTR_T_var(n,K0,l,TI,W3)
+          rhovxt(n,TI) = rhovx(ij    ,k,l) * GMTR_T_var(n,K0,l,TI,W1) &
+                       + rhovx(ip1j  ,k,l) * GMTR_T_var(n,K0,l,TI,W2) &
+                       + rhovx(ip1jp1,k,l) * GMTR_T_var(n,K0,l,TI,W3)
+          rhovyt(n,TI) = rhovy(ij    ,k,l) * GMTR_T_var(n,K0,l,TI,W1) &
+                       + rhovy(ip1j  ,k,l) * GMTR_T_var(n,K0,l,TI,W2) &
+                       + rhovy(ip1jp1,k,l) * GMTR_T_var(n,K0,l,TI,W3)
+          rhovzt(n,TI) = rhovz(ij    ,k,l) * GMTR_T_var(n,K0,l,TI,W1) &
+                       + rhovz(ip1j  ,k,l) * GMTR_T_var(n,K0,l,TI,W2) &
+                       + rhovz(ip1jp1,k,l) * GMTR_T_var(n,K0,l,TI,W3)
        enddo
 
        do n = nstart, nend
@@ -827,18 +732,18 @@ contains
           ijp1   = n     + ADM_gall_1d
           ip1jp1 = n + 1 + ADM_gall_1d
 
-          rhot  (n,TJ) = rho  (ij    ,k,l) * local_t_var(n,k0,l,TJ,W1) &
-                       + rho  (ip1jp1,k,l) * local_t_var(n,k0,l,TJ,W2) &
-                       + rho  (ijp1  ,k,l) * local_t_var(n,k0,l,TJ,W3)
-          rhovxt(n,TJ) = rhovx(ij    ,k,l) * GMTR_T_var(n,k0,l,TJ,W1) &
-                       + rhovx(ip1jp1,k,l) * GMTR_T_var(n,k0,l,TJ,W2) &
-                       + rhovx(ijp1  ,k,l) * GMTR_T_var(n,k0,l,TJ,W3)
-          rhovyt(n,TJ) = rhovy(ij    ,k,l) * GMTR_T_var(n,k0,l,TJ,W1) &
-                       + rhovy(ip1jp1,k,l) * GMTR_T_var(n,k0,l,TJ,W2) &
-                       + rhovy(ijp1  ,k,l) * GMTR_T_var(n,k0,l,TJ,W3)
-          rhovzt(n,TJ) = rhovz(ij    ,k,l) * GMTR_T_var(n,k0,l,TJ,W1) &
-                       + rhovz(ip1jp1,k,l) * GMTR_T_var(n,k0,l,TJ,W2) &
-                       + rhovz(ijp1  ,k,l) * GMTR_T_var(n,k0,l,TJ,W3)
+          rhot  (n,TJ) = rho  (ij    ,k,l) * GMTR_T_var(n,K0,l,TJ,W1) &
+                       + rho  (ip1jp1,k,l) * GMTR_T_var(n,K0,l,TJ,W2) &
+                       + rho  (ijp1  ,k,l) * GMTR_T_var(n,K0,l,TJ,W3)
+          rhovxt(n,TJ) = rhovx(ij    ,k,l) * GMTR_T_var(n,K0,l,TJ,W1) &
+                       + rhovx(ip1jp1,k,l) * GMTR_T_var(n,K0,l,TJ,W2) &
+                       + rhovx(ijp1  ,k,l) * GMTR_T_var(n,K0,l,TJ,W3)
+          rhovyt(n,TJ) = rhovy(ij    ,k,l) * GMTR_T_var(n,K0,l,TJ,W1) &
+                       + rhovy(ip1jp1,k,l) * GMTR_T_var(n,K0,l,TJ,W2) &
+                       + rhovy(ijp1  ,k,l) * GMTR_T_var(n,K0,l,TJ,W3)
+          rhovzt(n,TJ) = rhovz(ij    ,k,l) * GMTR_T_var(n,K0,l,TJ,W1) &
+                       + rhovz(ip1jp1,k,l) * GMTR_T_var(n,K0,l,TJ,W2) &
+                       + rhovz(ijp1  ,k,l) * GMTR_T_var(n,K0,l,TJ,W3)
        enddo
 
        if ( ADM_have_sgp(l) ) then
@@ -872,9 +777,9 @@ contains
 
           rrhoa2 = 1.D0 / max( rhot(ijm1,TJ) + rhot(ij,TI), CNST_EPS_ZERO ) ! doubled
 
-          GRD_xc(n,k,l,AI,XDIR) = GRD_xr(n,k0,l,AI,XDIR) - (rhovxt(ijm1,TJ)+rhovxt(ij,TI)) * rrhoa2 * dt * 0.5D0
-          GRD_xc(n,k,l,AI,YDIR) = GRD_xr(n,k0,l,AI,YDIR) - (rhovyt(ijm1,TJ)+rhovyt(ij,TI)) * rrhoa2 * dt * 0.5D0
-          GRD_xc(n,k,l,AI,ZDIR) = GRD_xr(n,k0,l,AI,ZDIR) - (rhovzt(ijm1,TJ)+rhovzt(ij,TI)) * rrhoa2 * dt * 0.5D0
+          GRD_xc(n,k,l,AI,XDIR) = GRD_xr(n,K0,l,AI,XDIR) - (rhovxt(ijm1,TJ)+rhovxt(ij,TI)) * rrhoa2 * dt * 0.5D0
+          GRD_xc(n,k,l,AI,YDIR) = GRD_xr(n,K0,l,AI,YDIR) - (rhovyt(ijm1,TJ)+rhovyt(ij,TI)) * rrhoa2 * dt * 0.5D0
+          GRD_xc(n,k,l,AI,ZDIR) = GRD_xr(n,K0,l,AI,ZDIR) - (rhovzt(ijm1,TJ)+rhovzt(ij,TI)) * rrhoa2 * dt * 0.5D0
        enddo
 
        nstart = suf(ADM_gmin-1,ADM_gmin-1)
@@ -897,9 +802,9 @@ contains
 
           rrhoa2 = 1.D0 / max( rhot(ij,TI) + rhot(ij,TJ), CNST_EPS_ZERO ) ! doubled
 
-          GRD_xc(n,k,l,AIJ,XDIR) = GRD_xr(n,k0,l,AIJ,XDIR) - (rhovxt(ij,TI)+rhovxt(ij,TJ)) * rrhoa2 * dt * 0.5D0
-          GRD_xc(n,k,l,AIJ,YDIR) = GRD_xr(n,k0,l,AIJ,YDIR) - (rhovyt(ij,TI)+rhovyt(ij,TJ)) * rrhoa2 * dt * 0.5D0
-          GRD_xc(n,k,l,AIJ,ZDIR) = GRD_xr(n,k0,l,AIJ,ZDIR) - (rhovzt(ij,TI)+rhovzt(ij,TJ)) * rrhoa2 * dt * 0.5D0
+          GRD_xc(n,k,l,AIJ,XDIR) = GRD_xr(n,K0,l,AIJ,XDIR) - (rhovxt(ij,TI)+rhovxt(ij,TJ)) * rrhoa2 * dt * 0.5D0
+          GRD_xc(n,k,l,AIJ,YDIR) = GRD_xr(n,K0,l,AIJ,YDIR) - (rhovyt(ij,TI)+rhovyt(ij,TJ)) * rrhoa2 * dt * 0.5D0
+          GRD_xc(n,k,l,AIJ,ZDIR) = GRD_xr(n,K0,l,AIJ,ZDIR) - (rhovzt(ij,TI)+rhovzt(ij,TJ)) * rrhoa2 * dt * 0.5D0
        enddo
 
        nstart = suf(ADM_gmin  ,ADM_gmin-1)
@@ -924,9 +829,9 @@ contains
 
           rrhoa2 = 1.D0 / max( rhot(ij,TJ) + rhot(im1j,TI), CNST_EPS_ZERO ) ! doubled
 
-          GRD_xc(n,k,l,AJ,XDIR) = GRD_xr(n,k0,l,AJ,XDIR) - (rhovxt(ij,TJ)+rhovxt(im1j,TI)) * rrhoa2 * dt * 0.5D0
-          GRD_xc(n,k,l,AJ,YDIR) = GRD_xr(n,k0,l,AJ,YDIR) - (rhovyt(ij,TJ)+rhovyt(im1j,TI)) * rrhoa2 * dt * 0.5D0
-          GRD_xc(n,k,l,AJ,ZDIR) = GRD_xr(n,k0,l,AJ,ZDIR) - (rhovzt(ij,TJ)+rhovzt(im1j,TI)) * rrhoa2 * dt * 0.5D0
+          GRD_xc(n,k,l,AJ,XDIR) = GRD_xr(n,K0,l,AJ,XDIR) - (rhovxt(ij,TJ)+rhovxt(im1j,TI)) * rrhoa2 * dt * 0.5D0
+          GRD_xc(n,k,l,AJ,YDIR) = GRD_xr(n,K0,l,AJ,YDIR) - (rhovyt(ij,TJ)+rhovyt(im1j,TI)) * rrhoa2 * dt * 0.5D0
+          GRD_xc(n,k,l,AJ,ZDIR) = GRD_xr(n,K0,l,AJ,ZDIR) - (rhovzt(ij,TJ)+rhovzt(im1j,TI)) * rrhoa2 * dt * 0.5D0
        enddo
 
        if ( ADM_have_sgp(l) ) then
@@ -947,18 +852,18 @@ contains
              ijp1 = v + 1
              if( ijp1 == ADM_gmax_pl + 1 ) ijp1 = ADM_gmin_pl
 
-             rhot_pl  (v) = rho_pl  (n   ,k,l) * local_T_var_pl(ij,k0,l,W1) &
-                          + rho_pl  (ij  ,k,l) * local_T_var_pl(ij,k0,l,W2) &
-                          + rho_pl  (ijp1,k,l) * local_T_var_pl(ij,k0,l,W3)
-             rhovxt_pl(v) = rhovx_pl(n   ,k,l) * GMTR_T_var_pl(ij,k0,l,W1) &
-                          + rhovx_pl(ij  ,k,l) * GMTR_T_var_pl(ij,k0,l,W2) &
-                          + rhovx_pl(ijp1,k,l) * GMTR_T_var_pl(ij,k0,l,W3)
-             rhovyt_pl(v) = rhovy_pl(n   ,k,l) * GMTR_T_var_pl(ij,k0,l,W1) &
-                          + rhovy_pl(ij  ,k,l) * GMTR_T_var_pl(ij,k0,l,W2) &
-                          + rhovy_pl(ijp1,k,l) * GMTR_T_var_pl(ij,k0,l,W3)
-             rhovzt_pl(v) = rhovz_pl(n   ,k,l) * GMTR_T_var_pl(ij,k0,l,W1) &
-                          + rhovz_pl(ij  ,k,l) * GMTR_T_var_pl(ij,k0,l,W2) &
-                          + rhovz_pl(ijp1,k,l) * GMTR_T_var_pl(ij,k0,l,W3)
+             rhot_pl  (v) = rho_pl  (n   ,k,l) * GMTR_T_var_pl(ij,K0,l,W1) &
+                          + rho_pl  (ij  ,k,l) * GMTR_T_var_pl(ij,K0,l,W2) &
+                          + rho_pl  (ijp1,k,l) * GMTR_T_var_pl(ij,K0,l,W3)
+             rhovxt_pl(v) = rhovx_pl(n   ,k,l) * GMTR_T_var_pl(ij,K0,l,W1) &
+                          + rhovx_pl(ij  ,k,l) * GMTR_T_var_pl(ij,K0,l,W2) &
+                          + rhovx_pl(ijp1,k,l) * GMTR_T_var_pl(ij,K0,l,W3)
+             rhovyt_pl(v) = rhovy_pl(n   ,k,l) * GMTR_T_var_pl(ij,K0,l,W1) &
+                          + rhovy_pl(ij  ,k,l) * GMTR_T_var_pl(ij,K0,l,W2) &
+                          + rhovy_pl(ijp1,k,l) * GMTR_T_var_pl(ij,K0,l,W3)
+             rhovzt_pl(v) = rhovz_pl(n   ,k,l) * GMTR_T_var_pl(ij,K0,l,W1) &
+                          + rhovz_pl(ij  ,k,l) * GMTR_T_var_pl(ij,K0,l,W2) &
+                          + rhovz_pl(ijp1,k,l) * GMTR_T_var_pl(ij,K0,l,W3)
           enddo
 
           do v = ADM_gmin_pl, ADM_gmax_pl
@@ -966,11 +871,11 @@ contains
              ijm1 = v - 1
              if( ijm1 == ADM_gmin_pl - 1 ) ijm1 = ADM_gmax_pl
 
-             flux = 0.5D0 * ( (rhovxt_pl(ijm1)+rhovxt_pl(ij)) * GMTR_A_var_pl(ij,k0,l,HNX) &
-                            + (rhovyt_pl(ijm1)+rhovyt_pl(ij)) * GMTR_A_var_pl(ij,k0,l,HNY) &
-                            + (rhovzt_pl(ijm1)+rhovzt_pl(ij)) * GMTR_A_var_pl(ij,k0,l,HNZ) )
+             flux = 0.5D0 * ( (rhovxt_pl(ijm1)+rhovxt_pl(ij)) * GMTR_A_var_pl(ij,K0,l,HNX) &
+                            + (rhovyt_pl(ijm1)+rhovyt_pl(ij)) * GMTR_A_var_pl(ij,K0,l,HNY) &
+                            + (rhovzt_pl(ijm1)+rhovzt_pl(ij)) * GMTR_A_var_pl(ij,K0,l,HNZ) )
 
-             flx_h_pl(v,k,l) = flux * GMTR_P_var_pl(n,k0,l,P_RAREA) * dt
+             flx_h_pl(v,k,l) = flux * GMTR_P_var_pl(n,K0,l,P_RAREA) * dt
           enddo
 
           do v = ADM_gmin_pl, ADM_gmax_pl
@@ -980,9 +885,9 @@ contains
 
              rrhoa2 = 1.D0 / max( rhot_pl(ijm1) + rhot_pl(ij), CNST_EPS_ZERO ) ! doubled
 
-             GRD_xc_pl(v,k,l,XDIR) = GRD_xr_pl(v,k0,l,XDIR) - (rhovxt_pl(ijm1)+rhovxt_pl(ij)) * rrhoa2 * dt * 0.5D0
-             GRD_xc_pl(v,k,l,YDIR) = GRD_xr_pl(v,k0,l,YDIR) - (rhovyt_pl(ijm1)+rhovyt_pl(ij)) * rrhoa2 * dt * 0.5D0
-             GRD_xc_pl(v,k,l,ZDIR) = GRD_xr_pl(v,k0,l,ZDIR) - (rhovzt_pl(ijm1)+rhovzt_pl(ij)) * rrhoa2 * dt * 0.5D0
+             GRD_xc_pl(v,k,l,XDIR) = GRD_xr_pl(v,K0,l,XDIR) - (rhovxt_pl(ijm1)+rhovxt_pl(ij)) * rrhoa2 * dt * 0.5D0
+             GRD_xc_pl(v,k,l,YDIR) = GRD_xr_pl(v,K0,l,YDIR) - (rhovyt_pl(ijm1)+rhovyt_pl(ij)) * rrhoa2 * dt * 0.5D0
+             GRD_xc_pl(v,k,l,ZDIR) = GRD_xr_pl(v,K0,l,ZDIR) - (rhovzt_pl(ijm1)+rhovzt_pl(ij)) * rrhoa2 * dt * 0.5D0
           enddo
 
        enddo
@@ -1061,13 +966,13 @@ contains
           ij     = n
           ip1j   = n + 1
 
-          q_ap = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(ij    ,k,l,AI ,XDIR) - GRD_x(ij    ,k0,l,XDIR) ) &
-                               + gradq(ij    ,k,l,YDIR) * ( GRD_xc(ij    ,k,l,AI ,YDIR) - GRD_x(ij    ,k0,l,YDIR) ) &
-                               + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(ij    ,k,l,AI ,ZDIR) - GRD_x(ij    ,k0,l,ZDIR) )
+          q_ap = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(ij    ,k,l,AI ,XDIR) - GRD_x(ij    ,K0,l,XDIR) ) &
+                               + gradq(ij    ,k,l,YDIR) * ( GRD_xc(ij    ,k,l,AI ,YDIR) - GRD_x(ij    ,K0,l,YDIR) ) &
+                               + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(ij    ,k,l,AI ,ZDIR) - GRD_x(ij    ,K0,l,ZDIR) )
 
-          q_am = q(ip1j  ,k,l) + gradq(ip1j  ,k,l,XDIR) * ( GRD_xc(ij    ,k,l,AI ,XDIR) - GRD_x(ip1j  ,k0,l,XDIR) ) &
-                               + gradq(ip1j  ,k,l,YDIR) * ( GRD_xc(ij    ,k,l,AI ,YDIR) - GRD_x(ip1j  ,k0,l,YDIR) ) &
-                               + gradq(ip1j  ,k,l,ZDIR) * ( GRD_xc(ij    ,k,l,AI ,ZDIR) - GRD_x(ip1j  ,k0,l,ZDIR) )
+          q_am = q(ip1j  ,k,l) + gradq(ip1j  ,k,l,XDIR) * ( GRD_xc(ij    ,k,l,AI ,XDIR) - GRD_x(ip1j  ,K0,l,XDIR) ) &
+                               + gradq(ip1j  ,k,l,YDIR) * ( GRD_xc(ij    ,k,l,AI ,YDIR) - GRD_x(ip1j  ,K0,l,YDIR) ) &
+                               + gradq(ip1j  ,k,l,ZDIR) * ( GRD_xc(ij    ,k,l,AI ,ZDIR) - GRD_x(ip1j  ,K0,l,ZDIR) )
 
           q_a(1,n,k,l) = (      cmask(1,n,k,l) ) * q_am &
                        + ( 1.D0-cmask(1,n,k,l) ) * q_ap
@@ -1077,13 +982,13 @@ contains
           ij     = n
           ip1jp1 = n + 1 + ADM_gall_1d
 
-          q_ap = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(ij    ,k,l,AIJ,XDIR) - GRD_x(ij    ,k0,l,XDIR) ) &
-                               + gradq(ij    ,k,l,YDIR) * ( GRD_xc(ij    ,k,l,AIJ,YDIR) - GRD_x(ij    ,k0,l,YDIR) ) &
-                               + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(ij    ,k,l,AIJ,ZDIR) - GRD_x(ij    ,k0,l,ZDIR) )
+          q_ap = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(ij    ,k,l,AIJ,XDIR) - GRD_x(ij    ,K0,l,XDIR) ) &
+                               + gradq(ij    ,k,l,YDIR) * ( GRD_xc(ij    ,k,l,AIJ,YDIR) - GRD_x(ij    ,K0,l,YDIR) ) &
+                               + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(ij    ,k,l,AIJ,ZDIR) - GRD_x(ij    ,K0,l,ZDIR) )
 
-          q_am = q(ip1jp1,k,l) + gradq(ip1jp1,k,l,XDIR) * ( GRD_xc(ij    ,k,l,AIJ,XDIR) - GRD_x(ip1jp1,k0,l,XDIR) ) &
-                               + gradq(ip1jp1,k,l,YDIR) * ( GRD_xc(ij    ,k,l,AIJ,YDIR) - GRD_x(ip1jp1,k0,l,YDIR) ) &
-                               + gradq(ip1jp1,k,l,ZDIR) * ( GRD_xc(ij    ,k,l,AIJ,ZDIR) - GRD_x(ip1jp1,k0,l,ZDIR) )
+          q_am = q(ip1jp1,k,l) + gradq(ip1jp1,k,l,XDIR) * ( GRD_xc(ij    ,k,l,AIJ,XDIR) - GRD_x(ip1jp1,K0,l,XDIR) ) &
+                               + gradq(ip1jp1,k,l,YDIR) * ( GRD_xc(ij    ,k,l,AIJ,YDIR) - GRD_x(ip1jp1,K0,l,YDIR) ) &
+                               + gradq(ip1jp1,k,l,ZDIR) * ( GRD_xc(ij    ,k,l,AIJ,ZDIR) - GRD_x(ip1jp1,K0,l,ZDIR) )
 
           q_a(2,n,k,l) = (      cmask(2,n,k,l) ) * q_am &
                        + ( 1.D0-cmask(2,n,k,l) ) * q_ap
@@ -1093,13 +998,13 @@ contains
           ij     = n
           ijp1   = n     + ADM_gall_1d
 
-          q_ap = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(ij    ,k,l,AJ ,XDIR) - GRD_x(ij    ,k0,l,XDIR) ) &
-                               + gradq(ij    ,k,l,YDIR) * ( GRD_xc(ij    ,k,l,AJ ,YDIR) - GRD_x(ij    ,k0,l,YDIR) ) &
-                               + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(ij    ,k,l,AJ ,ZDIR) - GRD_x(ij    ,k0,l,ZDIR) )
+          q_ap = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(ij    ,k,l,AJ ,XDIR) - GRD_x(ij    ,K0,l,XDIR) ) &
+                               + gradq(ij    ,k,l,YDIR) * ( GRD_xc(ij    ,k,l,AJ ,YDIR) - GRD_x(ij    ,K0,l,YDIR) ) &
+                               + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(ij    ,k,l,AJ ,ZDIR) - GRD_x(ij    ,K0,l,ZDIR) )
 
-          q_am = q(ijp1  ,k,l) + gradq(ijp1  ,k,l,XDIR) * ( GRD_xc(ij    ,k,l,AJ ,XDIR) - GRD_x(ijp1  ,k0,l,XDIR) ) &
-                               + gradq(ijp1  ,k,l,YDIR) * ( GRD_xc(ij    ,k,l,AJ ,YDIR) - GRD_x(ijp1  ,k0,l,YDIR) ) &
-                               + gradq(ijp1  ,k,l,ZDIR) * ( GRD_xc(ij    ,k,l,AJ ,ZDIR) - GRD_x(ijp1  ,k0,l,ZDIR) )
+          q_am = q(ijp1  ,k,l) + gradq(ijp1  ,k,l,XDIR) * ( GRD_xc(ij    ,k,l,AJ ,XDIR) - GRD_x(ijp1  ,K0,l,XDIR) ) &
+                               + gradq(ijp1  ,k,l,YDIR) * ( GRD_xc(ij    ,k,l,AJ ,YDIR) - GRD_x(ijp1  ,K0,l,YDIR) ) &
+                               + gradq(ijp1  ,k,l,ZDIR) * ( GRD_xc(ij    ,k,l,AJ ,ZDIR) - GRD_x(ijp1  ,K0,l,ZDIR) )
 
           q_a(3,n,k,l) = (      cmask(3,n,k,l) ) * q_am &
                        + ( 1.D0-cmask(3,n,k,l) ) * q_ap
@@ -1112,13 +1017,13 @@ contains
           ij     = n
           im1j   = n - 1
 
-          q_ap = q(im1j  ,k,l) + gradq(im1j  ,k,l,XDIR) * ( GRD_xc(im1j  ,k,l,AI ,XDIR) - GRD_x(im1j  ,k0,l,XDIR) ) &
-                               + gradq(im1j  ,k,l,YDIR) * ( GRD_xc(im1j  ,k,l,AI ,YDIR) - GRD_x(im1j  ,k0,l,YDIR) ) &
-                               + gradq(im1j  ,k,l,ZDIR) * ( GRD_xc(im1j  ,k,l,AI ,ZDIR) - GRD_x(im1j  ,k0,l,ZDIR) )
+          q_ap = q(im1j  ,k,l) + gradq(im1j  ,k,l,XDIR) * ( GRD_xc(im1j  ,k,l,AI ,XDIR) - GRD_x(im1j  ,K0,l,XDIR) ) &
+                               + gradq(im1j  ,k,l,YDIR) * ( GRD_xc(im1j  ,k,l,AI ,YDIR) - GRD_x(im1j  ,K0,l,YDIR) ) &
+                               + gradq(im1j  ,k,l,ZDIR) * ( GRD_xc(im1j  ,k,l,AI ,ZDIR) - GRD_x(im1j  ,K0,l,ZDIR) )
 
-          q_am = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(im1j  ,k,l,AI ,XDIR) - GRD_x(ij    ,k0,l,XDIR) ) &
-                               + gradq(ij    ,k,l,YDIR) * ( GRD_xc(im1j  ,k,l,AI ,YDIR) - GRD_x(ij    ,k0,l,YDIR) ) &
-                               + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(im1j  ,k,l,AI ,ZDIR) - GRD_x(ij    ,k0,l,ZDIR) )
+          q_am = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(im1j  ,k,l,AI ,XDIR) - GRD_x(ij    ,K0,l,XDIR) ) &
+                               + gradq(ij    ,k,l,YDIR) * ( GRD_xc(im1j  ,k,l,AI ,YDIR) - GRD_x(ij    ,K0,l,YDIR) ) &
+                               + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(im1j  ,k,l,AI ,ZDIR) - GRD_x(ij    ,K0,l,ZDIR) )
 
           q_a(4,n,k,l) = (      cmask(4,n,k,l) ) * q_am &
                        + ( 1.D0-cmask(4,n,k,l) ) * q_ap
@@ -1131,13 +1036,13 @@ contains
           ij     = n
           im1jm1 = n - 1 - ADM_gall_1d
 
-          q_ap = q(im1jm1,k,l) + gradq(im1jm1,k,l,XDIR) * ( GRD_xc(im1jm1,k,l,AIJ,XDIR) - GRD_x(im1jm1,k0,l,XDIR) ) &
-                               + gradq(im1jm1,k,l,YDIR) * ( GRD_xc(im1jm1,k,l,AIJ,YDIR) - GRD_x(im1jm1,k0,l,YDIR) ) &
-                               + gradq(im1jm1,k,l,ZDIR) * ( GRD_xc(im1jm1,k,l,AIJ,ZDIR) - GRD_x(im1jm1,k0,l,ZDIR) )
+          q_ap = q(im1jm1,k,l) + gradq(im1jm1,k,l,XDIR) * ( GRD_xc(im1jm1,k,l,AIJ,XDIR) - GRD_x(im1jm1,K0,l,XDIR) ) &
+                               + gradq(im1jm1,k,l,YDIR) * ( GRD_xc(im1jm1,k,l,AIJ,YDIR) - GRD_x(im1jm1,K0,l,YDIR) ) &
+                               + gradq(im1jm1,k,l,ZDIR) * ( GRD_xc(im1jm1,k,l,AIJ,ZDIR) - GRD_x(im1jm1,K0,l,ZDIR) )
 
-          q_am = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(im1jm1,k,l,AIJ,XDIR) - GRD_x(ij    ,k0,l,XDIR) ) &
-                               + gradq(ij    ,k,l,YDIR) * ( GRD_xc(im1jm1,k,l,AIJ,YDIR) - GRD_x(ij    ,k0,l,YDIR) ) &
-                               + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(im1jm1,k,l,AIJ,ZDIR) - GRD_x(ij    ,k0,l,ZDIR) )
+          q_am = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(im1jm1,k,l,AIJ,XDIR) - GRD_x(ij    ,K0,l,XDIR) ) &
+                               + gradq(ij    ,k,l,YDIR) * ( GRD_xc(im1jm1,k,l,AIJ,YDIR) - GRD_x(ij    ,K0,l,YDIR) ) &
+                               + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(im1jm1,k,l,AIJ,ZDIR) - GRD_x(ij    ,K0,l,ZDIR) )
 
           q_a(5,n,k,l) = (      cmask(5,n,k,l) ) * q_am &
                        + ( 1.D0-cmask(5,n,k,l) ) * q_ap
@@ -1150,13 +1055,13 @@ contains
           ij     = n
           ijm1   = n     - ADM_gall_1d
 
-          q_ap = q(ijm1  ,k,l) + gradq(ijm1  ,k,l,XDIR) * ( GRD_xc(ijm1,k,l,AJ ,XDIR) - GRD_x(ijm1  ,k0,l,XDIR) ) &
-                               + gradq(ijm1  ,k,l,YDIR) * ( GRD_xc(ijm1,k,l,AJ ,YDIR) - GRD_x(ijm1  ,k0,l,YDIR) ) &
-                               + gradq(ijm1  ,k,l,ZDIR) * ( GRD_xc(ijm1,k,l,AJ ,ZDIR) - GRD_x(ijm1  ,k0,l,ZDIR) )
+          q_ap = q(ijm1  ,k,l) + gradq(ijm1  ,k,l,XDIR) * ( GRD_xc(ijm1,k,l,AJ ,XDIR) - GRD_x(ijm1  ,K0,l,XDIR) ) &
+                               + gradq(ijm1  ,k,l,YDIR) * ( GRD_xc(ijm1,k,l,AJ ,YDIR) - GRD_x(ijm1  ,K0,l,YDIR) ) &
+                               + gradq(ijm1  ,k,l,ZDIR) * ( GRD_xc(ijm1,k,l,AJ ,ZDIR) - GRD_x(ijm1  ,K0,l,ZDIR) )
 
-          q_am = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(ijm1,k,l,AJ ,XDIR) - GRD_x(ij    ,k0,l,XDIR) ) &
-                               + gradq(ij    ,k,l,YDIR) * ( GRD_xc(ijm1,k,l,AJ ,YDIR) - GRD_x(ij    ,k0,l,YDIR) ) &
-                               + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(ijm1,k,l,AJ ,ZDIR) - GRD_x(ij    ,k0,l,ZDIR) )
+          q_am = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(ijm1,k,l,AJ ,XDIR) - GRD_x(ij    ,K0,l,XDIR) ) &
+                               + gradq(ij    ,k,l,YDIR) * ( GRD_xc(ijm1,k,l,AJ ,YDIR) - GRD_x(ij    ,K0,l,YDIR) ) &
+                               + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(ijm1,k,l,AJ ,ZDIR) - GRD_x(ij    ,K0,l,ZDIR) )
 
           q_a(6,n,k,l) = (      cmask(6,n,k,l) ) * q_am &
                        + ( 1.D0-cmask(6,n,k,l) ) * q_ap
@@ -1170,13 +1075,13 @@ contains
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
        do v = ADM_gmin_pl, ADM_gmax_pl
-          q_ap = q_pl(n,k,l) + gradq_pl(n,k,l,XDIR) * ( GRD_xc_pl(v,k,l,XDIR) - GRD_x_pl(n,k0,l,XDIR) ) &
-                             + gradq_pl(n,k,l,YDIR) * ( GRD_xc_pl(v,k,l,YDIR) - GRD_x_pl(n,k0,l,YDIR) ) &
-                             + gradq_pl(n,k,l,ZDIR) * ( GRD_xc_pl(v,k,l,ZDIR) - GRD_x_pl(n,k0,l,ZDIR) )
+          q_ap = q_pl(n,k,l) + gradq_pl(n,k,l,XDIR) * ( GRD_xc_pl(v,k,l,XDIR) - GRD_x_pl(n,K0,l,XDIR) ) &
+                             + gradq_pl(n,k,l,YDIR) * ( GRD_xc_pl(v,k,l,YDIR) - GRD_x_pl(n,K0,l,YDIR) ) &
+                             + gradq_pl(n,k,l,ZDIR) * ( GRD_xc_pl(v,k,l,ZDIR) - GRD_x_pl(n,K0,l,ZDIR) )
 
-          q_am = q_pl(v,k,l) + gradq_pl(v,k,l,XDIR) * ( GRD_xc_pl(v,k,l,XDIR) - GRD_x_pl(v,k0,l,XDIR) ) &
-                             + gradq_pl(v,k,l,YDIR) * ( GRD_xc_pl(v,k,l,YDIR) - GRD_x_pl(v,k0,l,YDIR) ) &
-                             + gradq_pl(v,k,l,ZDIR) * ( GRD_xc_pl(v,k,l,ZDIR) - GRD_x_pl(v,k0,l,ZDIR) )
+          q_am = q_pl(v,k,l) + gradq_pl(v,k,l,XDIR) * ( GRD_xc_pl(v,k,l,XDIR) - GRD_x_pl(v,K0,l,XDIR) ) &
+                             + gradq_pl(v,k,l,YDIR) * ( GRD_xc_pl(v,k,l,YDIR) - GRD_x_pl(v,K0,l,YDIR) ) &
+                             + gradq_pl(v,k,l,ZDIR) * ( GRD_xc_pl(v,k,l,ZDIR) - GRD_x_pl(v,K0,l,ZDIR) )
 
           q_a_pl(v,k,l) = (      cmask_pl(v,k,l) ) * q_am &
                         + ( 1.D0-cmask_pl(v,k,l) ) * q_ap

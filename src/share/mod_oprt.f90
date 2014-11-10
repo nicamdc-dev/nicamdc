@@ -1598,7 +1598,6 @@ contains
 
     call DEBUG_rapstart('OPRT divergence')
 
-    !$acc kernels
     do l = 1, ADM_lall
     do k = ADM_kmin, ADM_kmax
        do n = OPRT_nstart, OPRT_nend
@@ -1660,7 +1659,6 @@ contains
        enddo
     enddo
     enddo
-    !$acc end kernels
 
     if ( ADM_have_pl ) then
        n = ADM_gslf_pl
@@ -1718,9 +1716,11 @@ contains
 
     call DEBUG_rapstart('OPRT gradient')
 
+!OCL SERIAL
     do d = 1, ADM_nxyz
     do l = 1, ADM_lall
-    do k = ADM_kmin, ADM_kmax
+!OCL PARALLEL
+    do k = 1, ADM_kall
     do n = OPRT_nstart, OPRT_nend
        ij     = n
        ip1j   = n + 1
@@ -1746,7 +1746,7 @@ contains
        n = ADM_gslf_pl
        do d = 1, ADM_nxyz
        do l = 1, ADM_lall_pl
-       do k = ADM_kmin, ADM_kmax
+       do k = 1, ADM_kall
           grad_pl(n,k,l,d) = 0.D0
           do v = ADM_gslf_pl, ADM_gmax_pl
              grad_pl(n,k,l,d) = grad_pl(n,k,l,d) + cgrad_pl(v-1,n,l,d) * scl_pl(v,k,l)
@@ -1795,7 +1795,6 @@ contains
 
     call DEBUG_rapstart('OPRT laplacian')
 
-    !$acc kernels
     do l = 1, ADM_lall
     do k = ADM_kmin, ADM_kmax
     do n = OPRT_nstart, OPRT_nend
@@ -1817,7 +1816,6 @@ contains
     enddo
     enddo
     enddo
-    !$acc end kernels
 
     if ( ADM_have_pl ) then
        n = ADM_gslf_pl
@@ -1897,7 +1895,6 @@ contains
 
     call DEBUG_rapstart('OPRT diffusion')
 
-    !$acc kernels
     do l = 1, ADM_lall
     do k = 1, ADM_kall
 
@@ -1987,7 +1984,6 @@ contains
        nstart = suf(ADM_gmin  ,ADM_gmin-1)
        nend   = suf(ADM_gmax  ,ADM_gmax  )
 
-       !!$acc loop gang vector(32) private(ij,ip1j,ijp1,ip1jp1,im1j,ijm1,im1jm1)
        do n = nstart, nend
           ij     = n
           ijp1   = n     + ADM_gall_1d
@@ -2016,7 +2012,6 @@ contains
 
     enddo
     enddo
-    !$acc end kernels
 
     if ( ADM_have_pl ) then
        n = ADM_gslf_pl
@@ -2411,7 +2406,6 @@ contains
 
     call DEBUG_rapstart('OPRT divdamp')
 
-    !$acc kernels
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kmax
 
@@ -2518,7 +2512,6 @@ contains
        grdz   (:,ADM_kmin-1,l) = 0.D0
        grdz   (:,ADM_kmax+1,l) = 0.D0
     enddo
-    !$acc end kernels
 
     if ( ADM_have_pl ) then
        n = ADM_GSLF_PL
