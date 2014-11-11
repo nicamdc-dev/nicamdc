@@ -1,23 +1,34 @@
 #! /bin/bash -x
 
-# Arguments
-BINDIR=${1}
-INITNAME=${2}
-BINNAME=${3}
-INITCONF=${4}
-RUNCONF=${5}
-TPROC=${6}
-DATDIR=${7}
-DATPARAM=(`echo ${8} | tr -s ',' ' '`)
-DATDISTS=(`echo ${9} | tr -s ',' ' '`)
+GLEV=${1}
+RLEV=${2}
+NMPI=${3}
+ZL=${4}
+VGRID=${5}
+TOPDIR=${6}
+BINNAME=${7}
 
 # System specific
 MPIEXEC="mpiexec"
 
-array=( `echo ${TPROC} | tr -s 'x' ' '`)
-x=${array[0]}
-y=${array[1]:-1}
-let xy="${x} * ${y}"
+GL=`printf %02d ${GLEV}`
+RL=`printf %02d ${RLEV}`
+if   [ ${NMPI} -ge 10000 ]; then
+	NP=`printf %05d ${NMPI}`
+elif [ ${NMPI} -ge 1000 ]; then
+	NP=`printf %04d ${NMPI}`
+elif [ ${NMPI} -ge 100 ]; then
+	NP=`printf %03d ${NMPI}`
+else
+	NP=`printf %02d ${NMPI}`
+fi
+
+dir2d=gl${GL}rl${RL}pe${NP}
+dir3d=gl${GL}rl${RL}z${ZL}pe${NP}
+res2d=GL${GL}RL${RL}
+res3d=GL${GL}RL${RL}z${ZL}
+
+MNGINFO=rl${RL}-prc${NP}.info
 
 # for Oakleaf-FX
 # if [ ${xy} -gt 480 ]; then
@@ -33,18 +44,16 @@ let xy="${x} * ${y}"
 # fi
 
 # for AICS-FX10
-if [ ${xy} -gt 96 ]; then
+if [ ${NMPI} -gt 96 ]; then
    rscgrp="huge"
-elif [ ${xy} -gt 24 ]; then
+elif [ ${NMPI} -gt 24 ]; then
    rscgrp="large"
 else
-#   rscgrp="interact"
    rscgrp="large"
 fi
+PROF="fipp -C -Srange -Ihwm -d prof"
 
-# Generate run.sh
-
-cat << EOF1 > ./run.sh
+cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
@@ -52,8 +61,8 @@ cat << EOF1 > ./run.sh
 #
 ################################################################################
 #PJM --rsc-list "rscgrp=${rscgrp}"
-#PJM --rsc-list "node=${TPROC}"
-#PJM --rsc-list "elapse=12:00:00"
+#PJM --rsc-list "node=${NMPI}"
+#PJM --rsc-list "elapse=02:00:00"
 #PJM -j
 #PJM -s
 #
@@ -63,45 +72,67 @@ export PARALLEL=16
 export OMP_NUM_THREADS=16
 #export fu08bf=1
 
-rm -rf ./prof
-mkdir -p ./prof
+
+ln -sv ${TOPDIR}/bin/${BINNAME} .
+ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
+ln -sv ${TOPDIR}/data/grid/vgrid/${VGRID} .
 EOF1
 
-if [ ! ${DATPARAM[0]} = "" ]; then
-   for f in ${DATPARAM[@]}
-   do
-         if [ -f ${DATDIR}/${f} ]; then
-            echo "ln -svf ${DATDIR}/${f} ." >> ./run.sh
-         else
-            echo "datafile does not found! : ${DATDIR}/${f}"
-            exit 1
-         fi
-   done
-fi
+for f in $( ls ${TOPDIR}/data/grid/boundary/${dir2d} )
+do
+   echo "ln -sv ${TOPDIR}/data/grid/boundary/${dir2d}/${f} ." >> run.sh
+done
 
-if [ ! ${DATDISTS[0]} = "" ]; then
-   for prc in `seq 1 ${TPROC}`
-   do
-      let "prcm1 = ${prc} - 1"
-      PE=`printf %06d ${prcm1}`
-      for f in ${DATDISTS[@]}
-      do
-         if [ -f ${DATDIR}/${f}.pe${PE} ]; then
-            echo "ln -svf ${DATDIR}/${f}.pe${PE} ." >> ./run.sh
-         else
-            echo "datafile does not found! : ${DATDIR}/${f}.pe${PE}"
-            exit 1
-         fi
-      done
-   done
-fi
-
-
-cat << EOF2 >> ./run.sh
+cat << EOF2 >> run.sh
 
 # run
-${MPIEXEC} ${BINDIR}/${INITNAME} ${INITCONF} || exit
-fipp -C -Srange -Ihwm -d prof ${MPIEXEC} ${BINDIR}/${BINNAME}  ${RUNCONF}  || exit
+${PROF} ${MPIEXEC} ./${BINNAME} || exit
 
 ################################################################################
 EOF2
+
+
+cat << EOFICO2LL1 > ico2ll.sh
+#! /bin/bash -x
+################################################################################
+#
+# for FX10
+#
+################################################################################
+#PJM --rsc-list "rscgrp=${rscgrp}"
+#PJM --rsc-list "node=${NMPI}"
+#PJM --rsc-list "elapse=00:30:00"
+#PJM -j
+#PJM -s
+#
+. /work/system/Env_base
+#
+export PARALLEL=16
+export OMP_NUM_THREADS=16
+#export fu08bf=1
+
+ln -sv ${TOPDIR}/bin/fio_ico2ll_mpi .
+ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
+ln -sv ${TOPDIR}/data/zaxis .
+EOFICO2LL1
+
+for f in $( ls ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/ )
+do
+   echo "ln -sv ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/${f} ." >> ico2ll.sh
+done
+
+cat << EOFICO2LL2 >> ico2ll.sh
+
+# run
+${MPIEXEC} ./fio_ico2ll_mpi \
+history \
+glevel=${GLEV} \
+rlevel=${RLEV} \
+mnginfo="./${MNGINFO}" \
+layerfile_dir="./zaxis" \
+llmap_base="./llmap" \
+-lon_swap \
+-comm_smallchunk
+
+################################################################################
+EOFICO2LL2

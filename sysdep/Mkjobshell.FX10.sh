@@ -30,6 +30,19 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
+# for Oakleaf-FX
+# if [ ${xy} -gt 480 ]; then
+#    rscgrp="x-large"
+# elif [ ${xy} -gt 372 ]; then
+#    rscgrp="large"
+# elif [ ${xy} -gt 216 ]; then
+#    rscgrp="medium"
+# elif [ ${xy} -gt 12 ]; then
+#    rscgrp="small"
+# else
+#    rscgrp="short"
+# fi
+
 # for AICS-FX10
 if [ ${NMPI} -gt 96 ]; then
    rscgrp="huge"
@@ -38,7 +51,6 @@ elif [ ${NMPI} -gt 24 ]; then
 else
    rscgrp="large"
 fi
-PROF="fipp -C -Srange -Ihwm -d prof"
 
 cat << EOF1 > run.sh
 #! /bin/bash -x
@@ -49,7 +61,7 @@ cat << EOF1 > run.sh
 ################################################################################
 #PJM --rsc-list "rscgrp=${rscgrp}"
 #PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=05:00:00"
+#PJM --rsc-list "elapse=02:00:00"
 #PJM -j
 #PJM -s
 #
@@ -57,6 +69,8 @@ cat << EOF1 > run.sh
 #
 export PARALLEL=16
 export OMP_NUM_THREADS=16
+#export fu08bf=1
+
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
@@ -73,7 +87,7 @@ rm -rf ./prof
 mkdir -p ./prof
 
 # run
-${PROF} ${MPIEXEC} ./${BINNAME} || exit
+${MPIEXEC} ./${BINNAME} || exit
 
 ################################################################################
 EOF2
@@ -88,7 +102,7 @@ cat << EOFICO2LL1 > ico2ll.sh
 ################################################################################
 #PJM --rsc-list "rscgrp=${rscgrp}"
 #PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=01:00:00"
+#PJM --rsc-list "elapse=00:30:00"
 #PJM -j
 #PJM -s
 #
@@ -96,6 +110,7 @@ cat << EOFICO2LL1 > ico2ll.sh
 #
 export PARALLEL=16
 export OMP_NUM_THREADS=16
+#export fu08bf=1
 
 ln -sv ${TOPDIR}/bin/fio_ico2ll_mpi .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .

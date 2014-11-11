@@ -62,11 +62,9 @@ do
 done
 
 cat << EOF2 >> run.sh
-rm -rf ./prof
-mkdir -p ./prof
 
 # run
-${PROF} ${MPIEXEC} ./${BINNAME} || exit
+${MPIEXEC} ./${BINNAME} || exit
 
 ################################################################################
 EOF2
@@ -76,7 +74,7 @@ cat << EOFICO2LL1 > ico2ll.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for FX10
+# for K on interactive job
 #
 ################################################################################
 #PJM --rsc-list "rscgrp=${rscgrp}"
@@ -89,6 +87,7 @@ cat << EOFICO2LL1 > ico2ll.sh
 #
 export PARALLEL=16
 export OMP_NUM_THREADS=16
+#export fu08bf=1
 
 ln -sv ${TOPDIR}/bin/fio_ico2ll_mpi .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
