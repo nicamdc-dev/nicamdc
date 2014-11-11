@@ -64,6 +64,7 @@ cat << EOF1 > run.sh
 export PARALLEL=8
 export OMP_NUM_THREADS=8
 #export fu08bf=1
+export XOS_MMM_L_ARENA_FREE=2
 
 # run
 ${MPIEXEC} ./${BINNAME} || exit

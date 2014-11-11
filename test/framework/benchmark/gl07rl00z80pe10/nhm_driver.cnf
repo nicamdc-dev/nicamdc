@@ -5,23 +5,21 @@
 ################################################################################
 
 &ADMPARAM
-    glevel      = 5,
+    glevel      = 7,
     rlevel      = 0,
-    vlayer      = 40,
+    vlayer      = 80,
     rgnmngfname = "rl00-prc10.info",
 /
 
 &GRDPARAM
     hgrid_io_mode = "ADVANCED",
-    hgrid_fname   = "boundary_GL05RL00",
-    VGRID_fname   = "vgrid40_stretch_45km.dat",
-    vgrid_scheme  = "HYBRID",
-    h_efold       = 40000,
+    hgrid_fname   = "boundary_GL07RL00",
+    VGRID_fname   = "vgrid80_24000-300m.dat",
     topo_io_mode  = "IDEAL",
 /
 
 &TIMEPARAM
-    DTL         = 1200.D0,
+    DTL         = 300.D0,
     INTEG_TYPE  = "RK3",
     LSTEP_MAX   = 10,
     SSTEP_MAX   = 6,
@@ -43,8 +41,8 @@
 &RESTARTPARAM
     input_io_mode     = 'IDEAL',
     output_io_mode    = 'ADVANCED',
-    output_basename   = 'restart_all_GL05RL00z40',
-    restart_layername = 'ZSALL42T',
+    output_basename   = 'restart_all_GL07RL00z80',
+    restart_layername = 'ZSALL82',
 /
 
 ##### ICOMEX Test case: Jablonowski Baroclinic Wave
@@ -71,12 +69,12 @@
 &NUMFILTERPARAM
     hdiff_type        = 'DIRECT',
     lap_order_hdiff   = 2,
-    gamma_h           = 1.20D16,
+    gamma_h           = 1.875D14,
     Kh_coef_minlim    = 0.D0,
     Kh_coef_maxlim    = 9.9D99,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
-    alpha_d           = 1.20D16,
+    alpha_d           = 1.875D14,
 /
 
 &EMBUDGETPARAM
@@ -87,7 +85,7 @@
 &NMHISD
     output_io_mode   = 'ADVANCED' ,
     histall_fname    = 'history'  ,
-    hist3D_layername = 'ZSDEF40T',
+    hist3D_layername = 'ZSDEF80'  ,
     DIRECT_ACCESS    = .true.     ,
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,

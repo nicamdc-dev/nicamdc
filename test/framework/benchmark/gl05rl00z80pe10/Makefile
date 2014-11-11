@@ -17,8 +17,8 @@ ORG_SRCS    =
 glevel      = 5
 rlevel      = 0
 nmpi        = 10
-zlayer      = 40
-vgrid       = vgrid40_stretch_45km.dat
+zlayer      = 80
+vgrid       = vgrid80_24000-300m.dat
 
 
 
