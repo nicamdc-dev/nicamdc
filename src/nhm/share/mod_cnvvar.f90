@@ -454,25 +454,25 @@ contains
     real(8) :: rhogkin_v   (ADM_gall,   ADM_kall) ! rho X ( G^1/2 X gamma2 ) X kin (vertical)
     real(8) :: rhogkin_v_pl(ADM_gall_pl,ADM_kall)
 
-    integer :: n, k, l
+    integer :: g, k, l
     !---------------------------------------------------------------------------
 
     do l = 1, ADM_lall
        !--- horizontal kinetic energy
        do k = ADM_kmin, ADM_kmax
-       do n = 1, ADM_gall
-          rhogkin_h(n,k) = 0.5D0 * ( rhogvx(n,k,l) * rhogvx(n,k,l) &
-                                   + rhogvy(n,k,l) * rhogvy(n,k,l) &
-                                   + rhogvz(n,k,l) * rhogvz(n,k,l) ) / rhog(n,k,l)
+       do g = 1, ADM_gall
+          rhogkin_h(g,k) = 0.5D0 * ( rhogvx(g,k,l) * rhogvx(g,k,l) &
+                                   + rhogvy(g,k,l) * rhogvy(g,k,l) &
+                                   + rhogvz(g,k,l) * rhogvz(g,k,l) ) / rhog(g,k,l)
        enddo
        enddo
 
        !--- vertical kinetic energy
        do k = ADM_kmin+1, ADM_kmax
-       do n = 1, ADM_gall
-          rhogkin_v(n,k) = 0.5D0 * ( rhogw(n,k,l) * rhogw(n,k,l) ) &
-                         / ( VMTR_C2Wfact(1,n,k,l) * rhog(n,k  ,l) &
-                           + VMTR_C2Wfact(2,n,k,l) * rhog(n,k-1,l) )
+       do g = 1, ADM_gall
+          rhogkin_v(g,k) = 0.5D0 * ( rhogw(g,k,l) * rhogw(g,k,l) ) &
+                         / ( VMTR_C2Wfact(1,g,k,l) * rhog(g,k  ,l) &
+                           + VMTR_C2Wfact(2,g,k,l) * rhog(g,k-1,l) )
        enddo
        enddo
        rhogkin_v(:,ADM_kmin  ) = 0.D0
@@ -480,10 +480,10 @@ contains
 
        !--- total kinetic energy
        do k = ADM_kmin, ADM_kmax
-       do n = 1, ADM_gall
-          rhogkin(n,k,l) = rhogkin_h(n,k)                             & ! horizontal
-                         + ( VMTR_W2Cfact(1,n,k,l) * rhogkin_v(n,k+1) & ! vertical
-                           + VMTR_W2Cfact(2,n,k,l) * rhogkin_v(n,k  ) )
+       do g = 1, ADM_gall
+          rhogkin(g,k,l) = rhogkin_h(g,k)                             & ! horizontal
+                         + ( VMTR_W2Cfact(1,g,k,l) * rhogkin_v(g,k+1) & ! vertical
+                           + VMTR_W2Cfact(2,g,k,l) * rhogkin_v(g,k  ) )
        enddo
        enddo
        rhogkin(:,ADM_kmin-1,l) = 0.D0
@@ -494,19 +494,19 @@ contains
        do l = 1, ADM_lall_pl
           !--- horizontal kinetic energy
           do k = ADM_kmin, ADM_kmax
-          do n = 1, ADM_gall_pl
-             rhogkin_h_pl(n,k) = 0.5D0 * ( rhogvx_pl(n,k,l) * rhogvx_pl(n,k,l) &
-                                         + rhogvy_pl(n,k,l) * rhogvy_pl(n,k,l) &
-                                         + rhogvz_pl(n,k,l) * rhogvz_pl(n,k,l) ) / rhog_pl(n,k,l)
+          do g = 1, ADM_gall_pl
+             rhogkin_h_pl(g,k) = 0.5D0 * ( rhogvx_pl(g,k,l) * rhogvx_pl(g,k,l) &
+                                         + rhogvy_pl(g,k,l) * rhogvy_pl(g,k,l) &
+                                         + rhogvz_pl(g,k,l) * rhogvz_pl(g,k,l) ) / rhog_pl(g,k,l)
           enddo
           enddo
 
           !--- vertical kinetic energy
           do k = ADM_kmin+1, ADM_kmax
-          do n = 1, ADM_gall_pl
-             rhogkin_v_pl(n,k) = 0.5D0 * ( rhogw_pl(n,k,l) * rhogw_pl(n,k,l) ) &
-                               / ( VMTR_C2Wfact_pl(1,n,k,l) * rhog_pl(n,k  ,l) &
-                                 + VMTR_C2Wfact_pl(2,n,k,l) * rhog_pl(n,k-1,l) )
+          do g = 1, ADM_gall_pl
+             rhogkin_v_pl(g,k) = 0.5D0 * ( rhogw_pl(g,k,l) * rhogw_pl(g,k,l) ) &
+                               / ( VMTR_C2Wfact_pl(1,g,k,l) * rhog_pl(g,k  ,l) &
+                                 + VMTR_C2Wfact_pl(2,g,k,l) * rhog_pl(g,k-1,l) )
           enddo
           enddo
           rhogkin_v_pl(:,ADM_kmin  ) = 0.D0
@@ -514,10 +514,10 @@ contains
 
           !--- total kinetic energy
           do k = ADM_kmin, ADM_kmax
-          do n = 1, ADM_gall_pl
-             rhogkin_pl(n,k,l) = rhogkin_h_pl(n,k)                                & ! horizontal
-                               + ( VMTR_W2Cfact_pl(1,n,k,l) * rhogkin_v_pl(n,k+1) & ! vertical
-                                 + VMTR_W2Cfact_pl(2,n,k,l) * rhogkin_v_pl(n,k  ) )
+          do g = 1, ADM_gall_pl
+             rhogkin_pl(g,k,l) = rhogkin_h_pl(g,k)                                & ! horizontal
+                               + ( VMTR_W2Cfact_pl(1,g,k,l) * rhogkin_v_pl(g,k+1) & ! vertical
+                                 + VMTR_W2Cfact_pl(2,g,k,l) * rhogkin_v_pl(g,k  ) )
           enddo
           enddo
           rhogkin_pl(:,ADM_kmin-1,l) = 0.D0

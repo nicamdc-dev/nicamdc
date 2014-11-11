@@ -708,8 +708,10 @@ contains
     enddo
     enddo
 
+!OCL SERIAL
     do d = 1, ADM_nxyz
     do l = 1, ADM_lall
+!OCL PARALLEL
        do k = ADM_kmin, ADM_kmax
        do g = 1, ADM_gall
           Pgrad(g,k,l,d) = Pgrad(g,k,l,d) + ( P_vmh(g,k+1,l,d) - P_vmh(g,k,l,d) ) * GRD_rdgz(k)
