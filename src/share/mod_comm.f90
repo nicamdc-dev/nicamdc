@@ -63,7 +63,6 @@ module mod_comm
   !
   public :: COMM_setup
   public :: COMM_data_transfer
-  public :: COMM_data_transfer_nopl ! T.Ohno 110721
   public :: COMM_var
   public :: COMM_Stat_sum
   public :: COMM_Stat_sum_eachlayer
@@ -148,47 +147,47 @@ module mod_comm
   !--------------------------------------------------
   !  for send
   !--------------------------------------------------
-  integer,allocatable,private,save::nsmax(:,:)
+  integer,allocatable,public,save::nsmax(:,:)
   integer,allocatable,public,save::sendinfo(:,:,:,:)
   integer,allocatable,public,save::sendlist(:,:,:,:)
-  integer,allocatable,private,save::nsmax_pl(:,:)
-  integer,allocatable,private,save::sendinfo_pl(:,:,:,:)
-  integer,allocatable,private,save::sendlist_pl(:,:,:,:)
+  integer,allocatable,public,save::nsmax_pl(:,:)
+  integer,allocatable,public,save::sendinfo_pl(:,:,:,:)
+  integer,allocatable,public,save::sendlist_pl(:,:,:,:)
   !
   !--------------------------------------------------
   !  for copy
   !--------------------------------------------------
-  integer,allocatable,private,save::ncmax_r2r(:)
-  integer,allocatable,private,save::copyinfo_r2r(:,:,:)
-  integer,allocatable,private,save::recvlist_r2r(:,:,:)
-  integer,allocatable,private,save::sendlist_r2r(:,:,:)
+  integer,allocatable,public,save::ncmax_r2r(:)
+  integer,allocatable,public,save::copyinfo_r2r(:,:,:)
+  integer,allocatable,public,save::recvlist_r2r(:,:,:)
+  integer,allocatable,public,save::sendlist_r2r(:,:,:)
   !--------------------------------------------------
-  integer,allocatable,private,save::ncmax_r2p(:)
-  integer,allocatable,private,save::copyinfo_r2p(:,:,:)
-  integer,allocatable,private,save::recvlist_r2p(:,:,:)
-  integer,allocatable,private,save::sendlist_r2p(:,:,:)
+  integer,allocatable,public,save::ncmax_r2p(:)
+  integer,allocatable,public,save::copyinfo_r2p(:,:,:)
+  integer,allocatable,public,save::recvlist_r2p(:,:,:)
+  integer,allocatable,public,save::sendlist_r2p(:,:,:)
   !--------------------------------------------------
-  integer,allocatable,private,save::ncmax_p2r(:)
-  integer,allocatable,private,save::copyinfo_p2r(:,:,:)
-  integer,allocatable,private,save::recvlist_p2r(:,:,:)
-  integer,allocatable,private,save::sendlist_p2r(:,:,:)
+  integer,allocatable,public,save::ncmax_p2r(:)
+  integer,allocatable,public,save::copyinfo_p2r(:,:,:)
+  integer,allocatable,public,save::recvlist_p2r(:,:,:)
+  integer,allocatable,public,save::sendlist_p2r(:,:,:)
   !--------------------------------------------------
-  integer,allocatable,private,save::ncmax_sgp(:)
-  integer,allocatable,private,save::copyinfo_sgp(:,:,:)
-  integer,allocatable,private,save::recvlist_sgp(:,:,:)
-  integer,allocatable,private,save::sendlist_sgp(:,:,:)
+  integer,allocatable,public,save::ncmax_sgp(:)
+  integer,allocatable,public,save::copyinfo_sgp(:,:,:)
+  integer,allocatable,public,save::recvlist_sgp(:,:,:)
+  integer,allocatable,public,save::sendlist_sgp(:,:,:)
   !--------------------------------------------------
   !
   !--------------------------------------------------
   !  for recv
   !--------------------------------------------------
-  integer,allocatable,private,save::nrmax(:,:)
+  integer,allocatable,public,save::nrmax(:,:)
   integer,allocatable,public,save::recvinfo(:,:,:,:)
   integer,allocatable,public,save::recvlist(:,:,:,:)
   integer,allocatable,private,save::lrmax_pl(:)
-  integer,allocatable,private,save::nrmax_pl(:,:)
-  integer,allocatable,private,save::recvinfo_pl(:,:,:,:)
-  integer,allocatable,private,save::recvlist_pl(:,:,:,:)
+  integer,allocatable,public,save::nrmax_pl(:,:)
+  integer,allocatable,public,save::recvinfo_pl(:,:,:,:)
+  integer,allocatable,public,save::recvlist_pl(:,:,:,:)
   !--------------------------------------------------
   !
   integer,allocatable,private::temp_sendorder(:,:)
@@ -204,12 +203,20 @@ module mod_comm
   integer,allocatable,private,save::sendtag(:,:)
   integer,allocatable,private,save::somax(:)
   integer,allocatable,private,save::destrank(:,:)
-  real(8),allocatable,public,save::sendbuf(:,:)
+#ifdef _ACCCUDA
+  real(8),allocatable,public,save,pinned::sendbuf(:,:)    ! openacc
+#else
+  real(8),allocatable,public,save::sendbuf(:,:)    ! openacc
+#endif
   integer,allocatable,private,save::rsize(:,:)
   integer,allocatable,private,save::recvtag(:,:)
   integer,allocatable,private,save::romax(:)
   integer,allocatable,private,save::sourcerank(:,:)
-  real(8),allocatable,public,save::recvbuf(:,:)
+#ifdef _ACCCUDA
+  real(8),allocatable,public,save,pinned::recvbuf(:,:)    ! openacc
+#else
+  real(8),allocatable,public,save::recvbuf(:,:)    ! openacc
+#endif
   !
   integer,allocatable,private,save::n_nspl(:,:)
   !
@@ -310,21 +317,18 @@ module mod_comm
   real(8),private,save::size_total= 0.D0
   real(8),private,save::comm_count= 0.D0
   real(8),private::t(0:12)
-  !
-  !(20101207)added by teraim
-  type type_tempsb
-    integer::num
-    ! 2011/12/14 [Mod] T.Seiki
-!!$ integer,allocatable::col(:)
-!!$ integer,allocatable::val(:)
-    integer,pointer :: col(:)
-    integer,pointer :: val(:)
-  end type
-  type(type_tempsb),allocatable::tempsb(:)
-  integer,parameter::max_size=10 ! This is not optimal value.
-  !
-  logical, public, save :: comm_pl = .true. ! T.Ohno 110721
 
+  type type_tempsb
+    integer          :: num
+    integer, pointer :: col(:)
+    integer, pointer :: val(:)
+  end type
+
+  type(type_tempsb),allocatable::tempsb(:)
+
+  integer, parameter :: max_size = 10 ! This is not optimal value.
+
+  logical, public :: comm_pl = .true. ! T.Ohno 110721
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
@@ -372,21 +376,7 @@ contains
       endif
     endif
   end subroutine
-  !(20101207) added by teraim
-  subroutine show_tempsb
-    use mod_adm, only : ADM_rgn_nmax
-    implicit none
-    integer::i,j
-    !
-    write(*,*)"show"
-    do i=1, ADM_rgn_nmax+2
-      do j=1, max_size
-        if(tempsb(i)%val(j) > 0) then
-          write(*,*)"(i,j)=",i,j," : show_list=(",i,tempsb(i)%col(j),tempsb(i)%val(j),")"
-        endif
-      enddo
-    enddo
-  end subroutine
+
   !(20101207) added by teraim
   subroutine get_tempsb(icol, irow, ret)
     implicit none
@@ -402,6 +392,7 @@ contains
       endif
     enddo
   end subroutine
+
   !-----------------------------------------------------------------------------
   subroutine COMM_setup( &
        max_hallo_num,    & !--- IN : number of hallo regions
@@ -2340,184 +2331,11 @@ contains
     return
     !
   end subroutine output_info
-  !-----------------------------------------------------------------------------
-  subroutine output_time
-    use mod_adm, only :    &
-         !--- public parameters
-         ADM_log_fid,    &
-         !--- public variables
-         ADM_prc_all,    &
-         ADM_COMM_world
-    !
-    implicit none
-    !
-    real(8)::           &
-         ave_time_total,   &
-         ave_time_pre ,    &
-         ave_time_bar1,    &
-         ave_time_bar2,    &
-         ave_time_sbuf,    &
-         ave_time_recv,    &
-         ave_time_send,    &
-         ave_time_copy,    &
-         ave_time_wait,    &
-         ave_time_rbuf,    &
-         ave_time_copy_sgp
-    real(8)::           &
-         min_time_total,   &
-         min_time_pre ,    &
-         min_time_bar1,    &
-         min_time_bar2,    &
-         min_time_sbuf,    &
-         min_time_recv,    &
-         min_time_send,    &
-         min_time_copy,    &
-         min_time_wait,    &
-         min_time_rbuf,    &
-         min_time_copy_sgp
-    real(8)::           &
-         max_time_total,   &
-         max_time_pre ,    &
-         max_time_bar1,    &
-         max_time_bar2,    &
-         max_time_sbuf,    &
-         max_time_recv,    &
-         max_time_send,    &
-         max_time_copy,    &
-         max_time_wait,    &
-         max_time_rbuf,    &
-         max_time_copy_sgp
-    real(8)::           &
-         ave_size_total,   &
-         min_size_total,   &
-         max_size_total
-    real(8)::           &
-         ave_comm_count,   &
-         min_comm_count,   &
-         max_comm_count
-    integer::ierr
-    !
-    write(ADM_log_fid,*)
-    write(ADM_log_fid,*) &
-         'msg : sub[output_time]/mod[comm]'
-    write(ADM_log_fid,*) &
-         'version : comm.f90.test5.2.1_wtime'
-    write(ADM_log_fid,*) &
-         '---------------------------------------&
-         &       commnication time               &
-         &---------------------------------------'
-    !
-    call MPI_reduce(time_total,ave_time_total,1,MPI_double_precision,MPI_sum,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_pre ,ave_time_pre ,1,MPI_double_precision,MPI_sum,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_bar1,ave_time_bar1,1,MPI_double_precision,MPI_sum,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_bar2,ave_time_bar2,1,MPI_double_precision,MPI_sum,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_sbuf,ave_time_sbuf,1,MPI_double_precision,MPI_sum,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_recv ,ave_time_recv ,1,MPI_double_precision,MPI_sum,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_send ,ave_time_send ,1,MPI_double_precision,MPI_sum,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_copy,ave_time_copy,1,MPI_double_precision,MPI_sum,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_wait,ave_time_wait,1,MPI_double_precision,MPI_sum,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_rbuf,ave_time_rbuf,1,MPI_double_precision,MPI_sum,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_copy_sgp,ave_time_copy_sgp,1,MPI_double_precision,MPI_sum,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_total ,min_time_total ,1,MPI_double_precision,MPI_min,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_pre ,min_time_pre ,1,MPI_double_precision,MPI_min,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_bar1,min_time_bar1,1,MPI_double_precision,MPI_min,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_bar2,min_time_bar2,1,MPI_double_precision,MPI_min,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_sbuf,min_time_sbuf,1,MPI_double_precision,MPI_min,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_recv,min_time_recv ,1,MPI_double_precision,MPI_min,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_send,min_time_send ,1,MPI_double_precision,MPI_min,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_copy,min_time_copy,1,MPI_double_precision,MPI_min,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_wait,min_time_wait,1,MPI_double_precision,MPI_min,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_rbuf,min_time_rbuf,1,MPI_double_precision,MPI_min,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_copy_sgp,min_time_copy_sgp,1,MPI_double_precision,MPI_min,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_total ,max_time_total ,1,MPI_double_precision,MPI_max,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_pre ,max_time_pre ,1,MPI_double_precision,MPI_max,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_bar1,max_time_bar1,1,MPI_double_precision,MPI_max,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_bar2,max_time_bar2,1,MPI_double_precision,MPI_max,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_sbuf,max_time_sbuf,1,MPI_double_precision,MPI_max,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_recv,max_time_recv ,1,MPI_double_precision,MPI_max,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_send,max_time_send ,1,MPI_double_precision,MPI_max,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_copy,max_time_copy,1,MPI_double_precision,MPI_max,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_wait,max_time_wait,1,MPI_double_precision,MPI_max,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_rbuf,max_time_rbuf,1,MPI_double_precision,MPI_max,0,ADM_COMM_world,ierr)
-    call MPI_reduce(time_copy_sgp,max_time_copy_sgp,1,MPI_double_precision,MPI_max,0,ADM_COMM_world,ierr)
-    !-----
-    call MPI_reduce(size_total,ave_size_total,1,MPI_double_precision,MPI_sum,0,ADM_COMM_world,ierr)
-    call MPI_reduce(size_total,min_size_total,1,MPI_double_precision,MPI_min,0,ADM_COMM_world,ierr)
-    call MPI_reduce(size_total,max_size_total,1,MPI_double_precision,MPI_max,0,ADM_COMM_world,ierr)
-    call MPI_reduce(comm_count,ave_comm_count,1,MPI_double_precision,MPI_sum,0,ADM_COMM_world,ierr)
-    call MPI_reduce(comm_count,min_comm_count,1,MPI_double_precision,MPI_min,0,ADM_COMM_world,ierr)
-    call MPI_reduce(comm_count,max_comm_count,1,MPI_double_precision,MPI_max,0,ADM_COMM_world,ierr)
-    write(ADM_log_fid,*) "------- Using unit in the following tables is msec & KB -------"
-    !-----
-    write(ADM_log_fid,*) "---------  average by comm_call_count[",comm_call_count,"] --------"
-    write(ADM_log_fid,'(a,1e11.4)') "time_pre      =",1000*time_pre /comm_call_count
-    write(ADM_log_fid,'(a,1e11.4)') "time_bar1     =",1000*time_bar1/comm_call_count
-    write(ADM_log_fid,'(a,1e11.4)') "time_recv     =",1000*time_recv/comm_call_count
-    write(ADM_log_fid,'(a,1e11.4)') "time_sbuf     =",1000*time_sbuf/comm_call_count
-    write(ADM_log_fid,'(a,1e11.4)') "time_send     =",1000*time_send/comm_call_count
-    write(ADM_log_fid,'(a,1e11.4)') "time_copy     =",1000*time_copy/comm_call_count
-    write(ADM_log_fid,'(a,1e11.4)') "time_wait     =",1000*time_wait/comm_call_count
-    write(ADM_log_fid,'(a,1e11.4)') "time_rbuf     =",1000*time_rbuf/comm_call_count
-    write(ADM_log_fid,'(a,1e11.4)') "time_copy_sgp =",1000*time_copy_sgp/comm_call_count
-    write(ADM_log_fid,'(a,1e11.4)') "time_bar2     =",1000*time_bar2/comm_call_count
-    write(ADM_log_fid,'(a,1e11.4)') "time_total    =",1000*time_total/comm_call_count
-    write(ADM_log_fid,'(a,1f11.4)') "size_total    =",size_total*8/1024/comm_call_count
-    write(ADM_log_fid,'(a,1f11.4)') "comm_count    =",comm_count/comm_call_count
-    !-----
-    if (rank_me==0) then
-       write(ADM_log_fid,*) "---------  average  by ADM_prc_all & comm_call_count --------"
-       write(ADM_log_fid,'(a,1e11.4)') "ave_time_pre      =",1000*ave_time_pre /ADM_prc_all/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "ave_time_bar1     =",1000*ave_time_bar1/ADM_prc_all/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "ave_time_recv     =",1000*ave_time_recv/ADM_prc_all/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "ave_time_sbuf     =",1000*ave_time_sbuf/ADM_prc_all/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "ave_time_send     =",1000*ave_time_send/ADM_prc_all/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "ave_time_copy     =",1000*ave_time_copy/ADM_prc_all/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "ave_time_wait     =",1000*ave_time_wait/ADM_prc_all/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "ave_time_rbuf     =",1000*ave_time_rbuf/ADM_prc_all/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "ave_time_copy_sgp =",1000*ave_time_copy_sgp/ADM_prc_all/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "ave_time_bar2     =",1000*ave_time_bar2/ADM_prc_all/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "ave_time_total    =",1000*ave_time_total/ADM_prc_all/comm_call_count
-       write(ADM_log_fid,'(a,1f11.4)') "ave_size_total    =",ave_size_total*8/1024/ADM_prc_all/comm_call_count
-       write(ADM_log_fid,'(a,1f11.4)') "ave_comm_count    =",ave_comm_count/ADM_prc_all/comm_call_count
-       write(ADM_log_fid,*) "---------  minimum  --------"
-       write(ADM_log_fid,'(a,1e11.4)') "min_time_pre      =",1000*min_time_pre/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "min_time_bar1     =",1000*min_time_bar1/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "min_time_recv     =",1000*min_time_recv/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "min_time_sbuf     =",1000*min_time_sbuf/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "min_time_send     =",1000*min_time_send/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "min_time_copy     =",1000*min_time_copy/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "min_time_wait     =",1000*min_time_wait/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "min_time_rbuf     =",1000*min_time_rbuf/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "min_time_copy_sgp =",1000*min_time_copy_sgp/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "min_time_bar2     =",1000*min_time_bar2/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "min_time_total    =",1000*min_time_total/comm_call_count
-       write(ADM_log_fid,'(a,1f11.4)') "min_size_total    =",min_size_total*8/1024/comm_call_count
-       write(ADM_log_fid,'(a,1f11.4)') "min_comm_count    =",min_comm_count/comm_call_count
-       write(ADM_log_fid,*) "---------  maximum  --------"
-       write(ADM_log_fid,'(a,1e11.4)') "max_time_pre      =",1000*max_time_pre/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "max_time_bar1     =",1000*max_time_bar1/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "max_time_recv     =",1000*max_time_recv/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "max_time_sbuf     =",1000*max_time_sbuf/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "max_time_send     =",1000*max_time_send/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "max_time_copy     =",1000*max_time_copy/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "max_time_wait     =",1000*max_time_wait/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "max_time_rbuf     =",1000*max_time_rbuf/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "max_time_copy_sgp =",1000*max_time_copy_sgp/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "max_time_bar2     =",1000*max_time_bar2/comm_call_count
-       write(ADM_log_fid,'(a,1e11.4)') "max_time_total    =",1000*max_time_total/comm_call_count
-       write(ADM_log_fid,'(a,1f11.4)') "max_size_total    =",max_size_total*8/1024/comm_call_count
-       write(ADM_log_fid,'(a,1f11.4)') "max_comm_count    =",max_comm_count/comm_call_count
-       write(ADM_log_fid,*) "----------------------------"
-    endif
-    !
-    !call ADM_proc_stop
-    return
-    !
-  end subroutine output_time
+
   !-----------------------------------------------------------------------------
   subroutine COMM_data_transfer(&
-       var,    &
-       var_pl  )
+       var,   &
+       var_pl )
     use mod_adm, only: &
        ADM_COMM_world, &
        ADM_proc_stop,  &
@@ -2542,6 +2360,19 @@ contains
     integer :: sl, so, sb, ss
     integer :: rl, ro, rb, rs
     integer :: cl, scl, cs
+
+    integer :: max_ssize
+    integer :: max_rsize
+    integer :: max_nsmax,max_nsmax_pl
+    integer :: max_nrmax,max_nrmax_pl
+    integer :: max_ss, max_ss_pl
+    integer :: max_rs, max_rs_pl
+    integer :: max_cs_r2r, max_cs_r2p, max_cs_p2r, max_cs_sgp
+    integer :: cur_somax, cur_romax
+    integer :: cur_ncmax_r2r, cur_ncmax_r2p, cur_ncmax_p2r, cur_ncmax_sgp
+    integer :: cur_ssize, cur_rsize
+    integer :: cur_nsmax, cur_nsmax_pl
+    integer :: cur_nrmax, cur_nrmax_pl
     !---------------------------------------------------------------------------
 
     if ( opt_comm_barrier ) then
@@ -2549,6 +2380,8 @@ contains
        call MPI_BARRIER( ADM_COMM_world, ierr )
        call DEBUG_rapend  ('Node imbalance adjustment')
     endif
+
+    !$acc wait
 
     call DEBUG_rapstart('COMM data_transfer')
 
@@ -2566,6 +2399,72 @@ contains
        endif
     endif
 
+    max_rsize    = 1
+    max_nrmax    = 0
+    max_nrmax_pl = 0
+    max_rs       = 0
+    max_rs_pl    = 0
+    do ro = 1, romax(1)
+       max_rsize    = max( max_rsize,    rsize   (ro,1) )
+       max_nrmax    = max( max_nrmax,    nrmax   (ro,1) )
+       max_nrmax_pl = max( max_nrmax_pl, nrmax_pl(ro,1) )
+
+       do nr = 1, nrmax(ro,1)
+          max_rs = max( max_rs, recvinfo(SIZE_COMM,nr,ro,1) )
+       enddo
+
+       do nr = 1, nrmax_pl(ro,1)
+          max_rs_pl = max( max_rs_pl, recvinfo_pl(SIZE_COMM,nr,ro,1) )
+       enddo
+    enddo
+    max_rsize = max_rsize * cmax
+
+    max_ssize    = 1
+    max_nsmax    = 0
+    max_nsmax_pl = 0
+    max_ss       = 0
+    max_ss_pl    = 0
+    do so = 1, somax(1)
+       max_ssize    = max( max_ssize,    ssize   (so,1) )
+       max_nsmax    = max( max_nsmax,    nsmax   (so,1) )
+       max_nsmax_pl = max( max_nsmax_pl, nsmax_pl(so,1) )
+
+       do ns = 1, nsmax(so,1)
+          max_ss = max( max_ss, sendinfo(SIZE_COMM,ns,so,1) )
+       enddo
+
+       do ns = 1, nsmax_pl(so,1)
+          max_ss_pl = max( max_ss_pl, sendinfo_pl(SIZE_COMM,ns,so,1) )
+       enddo
+    enddo
+    max_ssize = max_ssize * cmax
+
+    max_cs_r2r = 0
+    max_cs_r2p = 0
+    max_cs_p2r = 0
+    max_cs_sgp = 0
+    do nc = 1, ncmax_r2r(1)
+       max_cs_r2r = max( max_cs_r2r, copyinfo_r2r(SIZE_COPY,nc,1) )
+    enddo
+    do nc = 1, ncmax_r2p(1)
+       max_cs_r2p = max( max_cs_r2p, copyinfo_r2p(SIZE_COPY,nc,1) )
+    enddo
+    do nc = 1, ncmax_p2r(1)
+       max_cs_p2r = max( max_cs_p2r, copyinfo_p2r(SIZE_COPY,nc,1) )
+    enddo
+    do nc = 1, ncmax_sgp(1)
+       max_cs_sgp = max( max_cs_sgp, copyinfo_sgp(SIZE_COPY,nc,1) )
+    enddo
+
+    cur_somax     = somax(1)
+    cur_romax     = romax(1)
+    cur_ncmax_r2r = ncmax_r2r(1)
+    cur_ncmax_r2p = ncmax_r2p(1)
+    cur_ncmax_p2r = ncmax_p2r(1)
+    cur_ncmax_sgp = ncmax_sgp(1)
+
+    !$acc data present(var) pcopy(var_pl) pcopyin(clist) async(0)
+
     !-----------------------------------------
     ! call MPI_IRECV
     !-----------------------------------------
@@ -2580,44 +2479,78 @@ contains
                        ierr                  )
     enddo
 
-    do so = 1, somax(1)
+    !$acc data &
+    !$acc& pcopyin(sendlist,sendlist_pl) &
+    !$acc& pcopyin(sendinfo,sendinfo_pl) &
+    !$acc& pcopyin(nsmax,nsmax_pl) async(0)
+
+    !$acc wait
+
+    do so = 1, cur_somax
+       cur_ssize    = ssize   (so,1) * cmax
+       cur_nsmax    = nsmax   (so,1)
+       cur_nsmax_pl = nsmax_pl(so,1)
+
+       !$acc kernels copyout(sendbuf(1:cur_ssize,so)) async(so)
+
        !-----------------------------------------
-       !  var -> sendbuf
+       ! var -> sendbuf
        !-----------------------------------------
-       do ns = 1, nsmax(so,1)
-          ss = sendinfo(SIZE_COMM  ,ns,so,1)
-          sl = sendinfo(LRGNID_COMM,ns,so,1)
-          sb = sendinfo(BASE_COMM  ,ns,so,1) * cmax
-          do m = 1, varmax
-          do k = 1, kmax
-          do n = 1, ss
-             sendbuf(n+(k-1)*ss+(m-1)*ss*kmax+sb,so) = var(sendlist(n,ns,so,1),k,sl,m)
-          enddo
-          enddo
-          enddo
+       !$acc loop independent gang
+       do m = 1, varmax
+       !$acc loop independent gang vector(8)
+       do k = 1, kmax
+       !$acc loop independent gang
+       do ns = 1, cur_nsmax
+       !$acc loop independent vector(32)
+       do n = 1, max_ss
+          if ( ns <= nsmax(so,1) ) then
+             ss = sendinfo(SIZE_COMM  ,ns,so,1)
+             sl = sendinfo(LRGNID_COMM,ns,so,1)
+             sb = sendinfo(BASE_COMM  ,ns,so,1) * cmax
+             if ( n <= ss ) then
+                sendbuf(n+(k-1)*ss+(m-1)*ss*kmax+sb,so) = var(sendlist(n,ns,so,1),k,sl,m)
+             endif
+          endif
+       enddo
+       enddo
+       enddo
        enddo
 
        !-----------------------------------------
        !  var_pl -> sendbuf
        !-----------------------------------------
-       do ns = 1, nsmax_pl(so,1)
-          ss = sendinfo_pl(SIZE_COMM  ,ns,so,1)
-          sl = sendinfo_pl(LRGNID_COMM,ns,so,1)
-          sb = sendinfo_pl(BASE_COMM  ,ns,so,1) * cmax
-          do m = 1, varmax
-          do k = 1, kmax
-          do n = 1, ss
-             sendbuf(n+(k-1)*ss+(m-1)*ss*kmax+sb,so) = var_pl(sendlist_pl(n,ns,so,1),k,sl,m)
-          enddo
-          enddo
-          enddo
+       !$acc loop independent gang
+       do m = 1, varmax
+       !$acc loop independent gang vector(8)
+       do k = 1, kmax
+       !$acc loop independent gang
+       do ns = 1, cur_nsmax_pl
+       !$acc loop independent vector(32)
+       do n = 1, max_ss_pl
+          if ( ns <= nsmax_pl(so,1) ) then
+             ss = sendinfo_pl(SIZE_COMM  ,ns,so,1)
+             sl = sendinfo_pl(LRGNID_COMM,ns,so,1)
+             sb = sendinfo_pl(BASE_COMM  ,ns,so,1) * cmax
+             if ( n <= ss ) then
+                sendbuf(n+(k-1)*ss+(m-1)*ss*kmax+sb,so) = var_pl(sendlist_pl(n,ns,so,1),k,sl,m)
+             endif
+          endif
        enddo
+       enddo
+       enddo
+       enddo
+
+       !$acc end kernels
     enddo
+
+    !$acc end data
 
     !-----------------------------------------
     ! call MPI_ISEND
     !-----------------------------------------
     do so = 1, somax(1)
+       !$acc wait(so)
        call MPI_ISEND( sendbuf(1,so),        &
                        ssize(so,1)*cmax,     &
                        MPI_DOUBLE_PRECISION, &
@@ -2628,53 +2561,82 @@ contains
                        ierr                  )
     enddo
 
+    !$acc wait
+
     !---------------------------------------------------
     !  var -> var (region to region copy in same rank)
     !---------------------------------------------------
-    do nc = 1, ncmax_r2r(1)
+    !$acc kernels present(var) &
+    !$acc& pcopyin(recvlist_r2r,sendlist_r2r,copyinfo_r2r) async(0)
+    !$acc loop independent gang
+    do m = 1, varmax
+    !$acc loop independent gang
+    do nc = 1, cur_ncmax_r2r
+    !$acc loop independent gang vector(8)
+    do k = 1, kmax
+    !$acc loop independent vector(32)
+    do n = 1, max_cs_r2r
        cs  = copyinfo_r2r(SIZE_COPY      ,nc,1)
        cl  = copyinfo_r2r(LRGNID_COPY    ,nc,1)
        scl = copyinfo_r2r(SRC_LRGNID_COPY,nc,1)
-       do m = 1, varmax
-       do k = 1, kmax
-       do n = 1, cs
-          var(recvlist_r2r(n,nc,1),k,cl,m) = var(sendlist_r2r(n,nc,1),k,scl,m)
-       enddo
-       enddo
-       enddo
+       if ( n <= cs ) then
+          var(recvlist_r2r(n,nc,1),k,cl ,m) = var(sendlist_r2r(n,nc,1),k,scl,m)
+       endif
     enddo
+    enddo
+    enddo
+    enddo
+    !$acc end kernels
 
     !------------------------------------------
     !  var -> var_pl ( data copy in same rank)
     !------------------------------------------
-    do nc = 1, ncmax_r2p(1)
+    !$acc kernels present(var,var_pl) &
+    !$acc& pcopyin(recvlist_r2p,sendlist_r2p,copyinfo_r2p) async(0)
+    !$acc loop independent gang
+    do m = 1, varmax
+    !$acc loop independent gang
+    do nc = 1, cur_ncmax_r2p
+    !$acc loop independent gang vector(8)
+    do k = 1, kmax
+    !$acc loop independent vector(32)
+    do n = 1, max_cs_r2p
        cs  = copyinfo_r2p(SIZE_COPY      ,nc,1)
        cl  = copyinfo_r2p(LRGNID_COPY    ,nc,1)
        scl = copyinfo_r2p(SRC_LRGNID_COPY,nc,1)
-       do m = 1, varmax
-       do k = 1, kmax
-       do n = 1, cs
+       if ( n <= cs ) then
           var_pl(recvlist_r2p(n,nc,1),k,cl,m) = var(sendlist_r2p(n,nc,1),k,scl,m)
-       enddo
-       enddo
-       enddo
+       endif
     enddo
+    enddo
+    enddo
+    enddo
+    !$acc end kernels
 
     !-----------------------------------------
     !  var_pl -> var (data copy in same rank)
     !-----------------------------------------
-    do nc = 1, ncmax_p2r(1)
+    !$acc kernels present(var,var_pl) &
+    !$acc& pcopyin(recvlist_p2r,sendlist_p2r,copyinfo_p2r) async(0)
+    !$acc loop independent gang
+    do m = 1, varmax
+    !$acc loop independent gang
+    do nc = 1, cur_ncmax_p2r
+    !$acc loop independent gang vector(8)
+    do k = 1, kmax
+    !$acc loop independent vector(32)
+    do n = 1, max_cs_p2r
        cs  = copyinfo_p2r(SIZE_COPY      ,nc,1)
        cl  = copyinfo_p2r(LRGNID_COPY    ,nc,1)
        scl = copyinfo_p2r(SRC_LRGNID_COPY,nc,1)
-       do m = 1, varmax
-       do k = 1, kmax
-       do n = 1, cs
+       if ( n <= cs ) then
           var(recvlist_p2r(n,nc,1),k,cl,m) = var_pl(sendlist_p2r(n,nc,1),k,scl,m)
-       enddo
-       enddo
-       enddo
+       endif
     enddo
+    enddo
+    enddo
+    enddo
+    !$acc end kernels
 
     acount = romax(1) + somax(1)
 
@@ -2684,56 +2646,101 @@ contains
        call MPI_BARRIER(ADM_COMM_world,ierr)
     endif
 
-    do ro = 1, romax(1)
+    !$acc data pcopyin(recvlist,recvlist_pl) &
+    !$acc& pcopyin(recvinfo,recvinfo_pl) &
+    !$acc& pcopyin(nrmax,nrmax_pl) async(0)
+
+    !$acc wait
+
+    do ro = 1, cur_romax
+       cur_rsize    = rsize(ro,1)*cmax
+       cur_nrmax    = nrmax(ro,1)
+       cur_nrmax_pl = nrmax_pl(ro,1)
+
+       !$acc kernels copyin(recvbuf(1:cur_rsize,ro)) async(ro)
+
        !-----------------------------------------
        !  recvbuf -> var ( recieve in region )
        !-----------------------------------------
-       do nr = 1, nrmax(ro,1)
-          rs = recvinfo(SIZE_COMM  ,nr,ro,1)
-          rl = recvinfo(LRGNID_COMM,nr,ro,1)
-          rb = recvinfo(BASE_COMM  ,nr,ro,1) * cmax
-          do m = 1, varmax
-          do k = 1, kmax
-          do n = 1, rs
-             var(recvlist(n,nr,ro,1),k,rl,m) = recvbuf(n+(k-1)*rs+(m-1)*rs*kmax+rb,ro)
-          enddo
-          enddo
-          enddo
+       !$acc loop independent gang
+       do m = 1, varmax
+       !$acc loop independent gang vector(8)
+       do k = 1, kmax
+       !$acc loop independent gang
+       do nr = 1, cur_nrmax
+       !$acc loop independent vector(32)
+       do n = 1, max_rs
+          if ( nr <= nrmax(ro,1) ) then
+             rs = recvinfo(SIZE_COMM  ,nr,ro,1)
+             rl = recvinfo(LRGNID_COMM,nr,ro,1)
+             rb = recvinfo(BASE_COMM  ,nr,ro,1) * cmax
+             if ( n <= rs ) then
+                var(recvlist(n,nr,ro,1),k,rl,m) = recvbuf(n+(k-1)*rs+(m-1)*rs*kmax+rb,ro)
+             endif
+          endif
+       enddo
+       enddo
+       enddo
        enddo
 
        !-----------------------------------------
        !  recvbuf -> var_pl ( recieve in pole )
        !-----------------------------------------
-       do nr = 1, nrmax_pl(ro,1)
-          rs = recvinfo_pl(SIZE_COMM  ,nr,ro,1)
-          rl = recvinfo_pl(LRGNID_COMM,nr,ro,1)
-          rb = recvinfo_pl(BASE_COMM  ,nr,ro,1) * cmax
-          do m = 1, varmax
-          do k = 1, kmax
-          do n = 1, rs
-             var_pl(recvlist_pl(n,nr,ro,1),k,rl,m) = recvbuf(n+(k-1)*rs+(m-1)*rs*kmax+rb,ro)
-          enddo
-          enddo
-          enddo
+       !$acc loop independent gang
+       do m = 1, varmax
+       !$acc loop independent gang vector(8)
+       do k = 1, kmax
+       !$acc loop independent gang
+       do nr = 1, cur_nrmax_pl
+       !$acc loop independent vector(32)
+       do n = 1, max_rs_pl
+          if ( nr <= nrmax_pl(ro,1) ) then
+             rs = recvinfo_pl(SIZE_COMM  ,nr,ro,1)
+             rl = recvinfo_pl(LRGNID_COMM,nr,ro,1)
+             rb = recvinfo_pl(BASE_COMM  ,nr,ro,1) * cmax
+             if ( n <= rs ) then
+                var_pl(recvlist_pl(n,nr,ro,1),k,rl,m) = recvbuf(n+(k-1)*rs+(m-1)*rs*kmax+rb,ro)
+             endif
+          endif
        enddo
+       enddo
+       enddo
+       enddo
+
+       !$acc end kernels
     enddo
+
+    !$acc wait
+    !$acc end data
 
     !-----------------------------------------
     !  copy data around singular point
     !-----------------------------------------
-    do nc = 1, ncmax_sgp(1)
+    !$acc kernels present(var) &
+    !$acc& pcopyin(recvlist_sgp,sendlist_sgp,copyinfo_sgp) async(0)
+    !$acc loop independent gang
+    do m = 1, varmax
+    !$acc loop independent gang
+    do nc = 1, cur_ncmax_sgp
+    !$acc loop independent gang vector(8)
+    do k = 1, kmax
+    !$acc loop independent vector(32)
+    do n = 1, max_cs_sgp
        cs  = copyinfo_sgp(SIZE_COPY      ,nc,1)
        cl  = copyinfo_sgp(LRGNID_COPY    ,nc,1)
        scl = copyinfo_sgp(SRC_LRGNID_COPY,nc,1)
-       do m = 1, varmax
-       do k = 1, kmax
-       do n = 1, cs
+       if ( n <= cs ) then
           var(recvlist_sgp(n,nc,1),k,cl ,m) = var(sendlist_sgp(n,nc,1),k,scl,m)
-       enddo
-       enddo
-       enddo
-
+       endif
     enddo
+    enddo
+    enddo
+    enddo
+    !$acc end kernels
+
+    !$acc end data
+
+    !$acc wait
 
     call DEBUG_rapend('COMM data_transfer')
 
@@ -2742,49 +2749,47 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine COMM_var( &
-       var,            & !--- INOUT : variables
-       var_pl,         & !--- INOUT : variables at poles
-       KNUM,           & !--- IN : number of layers
-       NNUM            ) !--- IN : number of variables
-    use mod_adm, only :     &
-         ADM_gall_pl,       &
-         ADM_lall_pl,       &
-         ADM_prc_me,        &
-         ADM_gall,          &
-         ADM_gmin,          &
-         ADM_gmax,          &
-         ADM_lall,          &
-         ADM_gall_1d,       &
-         ADM_rgnid_npl_mng, &
-         ADM_rgnid_spl_mng, &
-         ADM_prc_tab,       &
-         ADM_prc_npl,       &
-         ADM_prc_spl,       &
-         ADM_GSLF_PL,       &
-         ADM_NPL,           &
-         ADM_SPL,           &
-         ADM_COMM_WORLD,&
-         ADM_rgn2prc
-    !
+       var,    &
+       var_pl, &
+       knum,   &
+       nnum    )
+    use mod_adm, only: &
+       ADM_COMM_WORLD,     &
+       ADM_prc_tab,        &
+       ADM_rgn2prc,        &
+       ADM_prc_me,         &
+       ADM_NPL,            &
+       ADM_SPL,            &
+       ADM_prc_npl,        &
+       ADM_prc_spl,        &
+       ADM_rgnid_npl_mng,  &
+       ADM_rgnid_spl_mng,  &
+       ADM_gall,           &
+       ADM_gall_pl,        &
+       ADM_lall,           &
+       ADM_lall_pl,        &
+       ADM_gall_1d,        &
+       ADM_gmin,           &
+       ADM_gmax,           &
+       ADM_GSLF_PL
     implicit none
 
-    integer, intent(in) :: KNUM
-    integer, intent(in) :: NNUM
-    real(8), intent(inout) :: var(ADM_gall,KNUM,ADM_lall,NNUM)
-    real(8), intent(inout) :: var_pl(ADM_gall_pl,KNUM,ADM_lall_pl,NNUM)
+    integer, intent(in)    :: knum
+    integer, intent(in)    :: nnum
+    real(8), intent(inout) :: var   (ADM_gall,   knum,ADM_lall,   nnum)
+    real(8), intent(inout) :: var_pl(ADM_gall_pl,knum,ADM_lall_pl,nnum)
 
-    integer :: ireq(4),istat(MPI_STATUS_SIZE),ierr
-    integer :: l
-    !
-    real(8) :: v_npl(KNUM,NNUM)
-    real(8) :: v_spl(KNUM,NNUM)
-!!! FIX 20111024:s
-    real(8) :: v_npl_recv(KNUM,NNUM)
-    real(8) :: v_spl_recv(KNUM,NNUM)
-!!! FIX 20111024:e
-    !
-    integer :: rgnid
-    !
+    real(8) :: v_npl_send(knum,nnum)
+    real(8) :: v_spl_send(knum,nnum)
+    real(8) :: v_npl_recv(knum,nnum)
+    real(8) :: v_spl_recv(knum,nnum)
+
+    integer :: ireq(4)
+    integer :: istat(MPI_STATUS_SIZE)
+
+    integer :: ierr
+    integer :: k, l, n, rgnid
+
     integer :: i,j,suf
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
@@ -2797,94 +2802,118 @@ contains
 
     call DEBUG_rapstart('COMM var')
 
-    if ( comm_pl ) then ! T.Ohno 110721
+    !$acc data present(var)
+
+    if( comm_pl ) then ! T.Ohno 110721
 
        !--- recv pole value
-       if(ADM_prc_me==ADM_prc_npl) then
-          call MPI_IRECV(            &
-               v_npl_recv,                & !--- starting address
-               KNUM * NNUM,          & !--- number of array
-               MPI_DOUBLE_PRECISION, & !--- type
-               ADM_rgn2prc(ADM_rgnid_npl_mng)-1, & !--- source rank
-               ADM_NPL,              & !--- tag
-               ADM_COMM_WORLD,       & !--- world
-               ireq(3),                 & !--- request id
-               ierr)                   !--- error id
-       end if
-       !
-       if(ADM_prc_me==ADM_prc_spl) then
-          call MPI_IRECV(            &
-               v_spl_recv,                & !--- starting address
-               KNUM * NNUM,          & !--- number of array
-               MPI_DOUBLE_PRECISION, & !--- type
-               ADM_rgn2prc(ADM_rgnid_spl_mng)-1, & !--- srouce rank
-               ADM_SPL,              & !--- tag
-               ADM_COMM_WORLD,       & !--- world
-               ireq(4),                 & !--- request id
-               ierr)                   !--- error id
-       end if
+       !--- north pole
+       if ( ADM_prc_me == ADM_prc_npl ) then
+          call MPI_IRECV( v_npl_recv,                       &
+                          knum * nnum,                      &
+                          MPI_DOUBLE_PRECISION,             &
+                          ADM_rgn2prc(ADM_rgnid_npl_mng)-1, &
+                          ADM_NPL,                          &
+                          ADM_COMM_WORLD,                   &
+                          ireq(3),                          &
+                          ierr                              )
+       endif
+
+       !--- south pole
+       if ( ADM_prc_me == ADM_prc_spl ) then
+          call MPI_IRECV( v_spl_recv,                       &
+                          knum * nnum,                      &
+                          MPI_DOUBLE_PRECISION,             &
+                          ADM_rgn2prc(ADM_rgnid_spl_mng)-1, &
+                          ADM_SPL,                          &
+                          ADM_COMM_WORLD,                   &
+                          ireq(4),                          &
+                          ierr                              )
+       endif
 
        !--- send pole value
-       do l=1,ADM_lall
-          rgnid=ADM_prc_tab(l,ADM_prc_me)
-          !
-          !--- north pole
-          if(rgnid==ADM_rgnid_npl_mng) then
-             v_npl(1:KNUM,1:NNUM)&
-                  = var(suf(ADM_gmin,ADM_gmax+1),1:KNUM,l,1:NNUM)
-             call MPI_ISEND(            &
-                  v_npl,                & !--- starting address
-                  KNUM * NNUM,          & !--- number of array
-                  MPI_DOUBLE_PRECISION, & !--- type
-                  ADM_prc_npl-1,        & !--- dest rank
-                  ADM_NPL,              & !--- tag
-                  ADM_COMM_WORLD,       & !--- world
-                  ireq(1),                 & !--- request id
-                  ierr)                   !--- error id
-          end if
-          !
-          !--- south pole
-          if(rgnid==ADM_rgnid_spl_mng) then
-             v_spl(1:KNUM,1:NNUM)&
-                  = var(suf(ADM_gmax+1,ADM_gmin),1:KNUM,l,1:NNUM)
-             call MPI_ISEND(            &
-                  v_spl,                & !--- starting address
-                  KNUM * NNUM,          & !--- number of array
-                  MPI_DOUBLE_PRECISION, & !--- type
-                  ADM_prc_spl-1,        & !--- dest rank
-                  ADM_SPL,              & !--- tag
-                  ADM_COMM_WORLD,       & !--- world
-                  ireq(2),                 & !--- request id
-                  ierr)                   !--- error id
-          end if
-       end do
+       do l = 1, ADM_lall
+          rgnid = ADM_prc_tab(l,ADM_prc_me)
 
-       do l=1,ADM_lall
-          rgnid=ADM_prc_tab(l,ADM_prc_me)
-          !
           !--- north pole
-          if(rgnid==ADM_rgnid_npl_mng) then
-             call MPI_WAIT(ireq(1),istat,ierr)
-          end if
-          !
-          !--- south pole
-          if(rgnid==ADM_rgnid_spl_mng) then
-             call MPI_WAIT(ireq(2),istat,ierr)
-          end if
-       end do
+          if ( rgnid == ADM_rgnid_npl_mng ) then
+             !$acc kernels copyout(v_npl_send) pcopyin(var) async(0)
+             do n = 1, nnum
+             do k = 1, knum
+                v_npl_send(k,n) = var(suf(ADM_gmin,ADM_gmax+1),k,l,n)
+             enddo
+             enddo
+             !$acc end kernels
 
-       if(ADM_prc_me==ADM_prc_npl) then
+             !$acc wait
+
+             call MPI_ISEND( v_npl_send,           &
+                             knum * nnum,          &
+                             MPI_DOUBLE_PRECISION, &
+                             ADM_prc_npl-1,        &
+                             ADM_NPL,              &
+                             ADM_COMM_WORLD,       &
+                             ireq(1),              &
+                             ierr                  )
+          endif
+
+          !--- south pole
+          if ( rgnid == ADM_rgnid_spl_mng ) then
+             !$acc kernels copyout(v_spl_send) pcopyin(var) async(0)
+             do n = 1, nnum
+             do k = 1, knum
+                v_spl_send(k,n) = var(suf(ADM_gmax+1,ADM_gmin),k,l,n)
+             enddo
+             enddo
+             !$acc end kernels
+
+             !$acc wait
+
+             call MPI_ISEND( v_spl_send,           &
+                             knum * nnum,          &
+                             MPI_DOUBLE_PRECISION, &
+                             ADM_prc_spl-1,        &
+                             ADM_SPL,              &
+                             ADM_COMM_WORLD,       &
+                             ireq(2),              &
+                             ierr                  )
+          endif
+
+       enddo
+
+       do l = 1, ADM_lall
+          rgnid = ADM_prc_tab(l,ADM_prc_me)
+
+          !--- north pole
+          if( rgnid == ADM_rgnid_npl_mng ) call MPI_WAIT(ireq(1),istat,ierr)
+
+          !--- south pole
+          if( rgnid == ADM_rgnid_spl_mng ) call MPI_WAIT(ireq(2),istat,ierr)
+       enddo
+
+       if ( ADM_prc_me == ADM_prc_npl ) then
           call MPI_WAIT(ireq(3),istat,ierr)
-          var_pl(ADM_GSLF_PL,1:KNUM,ADM_NPL,1:NNUM) &
-               = v_npl_recv(1:KNUM,1:NNUM)
-       end if
-       !
-       if(ADM_prc_me==ADM_prc_spl) then
-          call MPI_WAIT(ireq(4),istat,ierr)
-          var_pl(ADM_GSLF_PL,:,ADM_SPL,:) = v_spl_recv(:,:)
-       end if
 
-    end if
+          do n = 1, nnum
+          do k = 1, knum
+             var_pl(ADM_GSLF_PL,k,ADM_NPL,n) = v_npl_recv(k,n)
+          enddo
+          enddo
+       endif
+
+       if ( ADM_prc_me == ADM_prc_spl ) then
+          call MPI_WAIT(ireq(4),istat,ierr)
+
+          do n = 1, nnum
+          do k = 1, knum
+             var_pl(ADM_GSLF_PL,k,ADM_SPL,n) = v_spl_recv(k,n)
+          enddo
+          enddo
+       endif
+
+    endif
+
+    !$acc end data
 
     call COMM_data_transfer(var,var_pl)
 
@@ -2895,365 +2924,6 @@ contains
 
     return
   end subroutine COMM_var
-
-  !-----------------------------------------------------------------------------
-  ! [add] T.Ohno 110721
-  subroutine COMM_data_transfer_nopl(&
-       var,                     & !--- INOUT : variables comminicated.
-       trn,                     & !--- IN : commnucation flag for each variable
-       hallo_num)                 !--- IN : number of hallo
-    use mod_adm, only :      &
-         ADM_proc_stop,      & ! [add] C.Kodama 2011.04.26
-         ADM_vlink_nmax,     &
-         ADM_lall,           &
-         ADM_COMM_world, &
-         ADM_kall
-    implicit none
-    !
-    real(8),intent(inout)::var(:,:,:,:)
-    !
-    logical,intent(in),optional::trn(:)
-    !
-    integer,intent(in),optional::hallo_num
-    !
-    integer :: shp(4)
-    integer :: varmax
-    integer :: cmax
-    integer::halo
-
-    integer :: acount
-    integer :: areq(2*(ADM_lall*max_comm_r2r+ADM_vlink_nmax*4))
-    integer :: stat(MPI_status_size,2*(ADM_lall*max_comm_r2r+ADM_vlink_nmax*4))
-    integer :: ierr
-    !
-    integer :: k,m,n
-    integer :: nr,nc,ns
-    integer :: sl,so,sb,ss
-    integer :: rl,ro,rb,rs
-    integer :: cl,scl,cs
-!    integer :: i_dbg !iga
-    logical :: dbg_ierr !iga
-  !=============================================================================
-    !
-    ! --- pre-process
-    !
-    comm_call_count=comm_call_count+1
-    !
-    t(0)=MPI_wtime()
-    !
-    shp=shape(var)
-    kmax = shp(2)
-    !
-    if (present(trn)) then
-       varmax=0
-!cdir novector
-       do n=1,shp(4)
-          if(trn(n)) then
-             varmax=varmax+1
-             clist(varmax)=n
-          endif
-       enddo
-    else
-       varmax=shp(4)
-!cdir novector
-       do n=1,varmax
-          clist(n)=n
-       enddo
-    endif
-    !
-    if (present(hallo_num)) then
-       halo=hallo_num
-    else
-       halo=1
-    endif
-
-    if (halo.ne.1) then
-       write(ADM_log_fid,*) 'halo=',halo
-    endif
-
-    !
-    cmax=varmax*kmax
-    ! [Add] 07/11/07 T.Mitsui for check of varmax
-    if( opt_check_varmax ) then
-       ! <- [rep] C.Kodama 2011.04.26
-       if ( cmax > max_varmax * ADM_kall ) then
-          write(ADM_LOG_FID,*)  'error: cmax >  max_varmax * ADM_kall, stop!'
-          write(ADM_LOG_FID,*)  'cmax=', cmax, 'max_varmax*ADM_kall=', max_varmax*ADM_kall
-          call ADM_proc_stop
-       end if
-       ! ->
-    end if
-    !
-    t(1)=MPI_wtime()
-    time_pre=time_pre+(t(1)-t(0))
-    t(2)=MPI_wtime()
-    time_bar1=time_bar1+(t(2)-t(1))
-    !-----------------------------------------
-    ! call MPI_isend
-    !-----------------------------------------
-    if (opt_comm_dbg) then !iga
-       sendbuf(:,:)= dbg_sendbuf_init
-       recvbuf(:,:)= dbg_recvbuf_init
-       if (somax(halo)>(ADM_lall*max_comm_r2r+ADM_vlink_nmax*4)) then
-          write(ADM_log_fid,*) 'somax inconsistency'
-          write(ADM_log_fid,*) somax(halo),(ADM_lall*max_comm_r2r+ADM_vlink_nmax*4)
-       endif
-    endif
-
-
-    do ro=1,romax(halo)
-       !
-       if (opt_comm_dbg) then
-          if (rsize(ro,halo)*cmax > size(recvbuf(:,ro)) ) then
-             write(ADM_log_fid,*) 'ro',ro,'buf-dim=',shape(recvbuf),'rsize=',rsize(ro,halo),'cmax=',cmax
-          endif
-       endif
-       !
-       call MPI_irecv(recvbuf(1,ro)              &
-            ,rsize(ro,halo)*cmax        &
-            ,MPI_double_precision       &
-            ,sourcerank(ro,halo)        &
-            ,recvtag(ro,halo)           &
-            ,ADM_COMM_world         &
-            ,areq(ro)                   &
-            ,ierr)
-       !
-       if (opt_comm_dbg) then
-          if (ierr.ne.0) then
-             write(ADM_log_fid,*) 'MPI_irecv info start=='
-             write(ADM_log_fid,*) 'ierr=',ierr
-             write(ADM_log_fid,*) 'ro=',ro
-             write(ADM_log_fid,*) 'rsize=',rsize(ro,halo)
-             write(ADM_log_fid,*) 'cmax=',cmax
-             write(ADM_log_fid,*) 'areq=',areq(ro)
-             write(ADM_log_fid,*) 'MPI_irecv info end=='
-          endif
-          ! [fix] 12/03/26 T.Seiki
-!!$       dbg_areq_save(:,1)=areq(:)
-          dbg_areq_save(ro,1)=areq(ro)
-       endif
-    enddo
-
-    t(3)=MPI_wtime()
-    time_recv=time_recv+(t(3)-t(2))
-    !-----------------------------------------
-    !  var -> sendbuf
-    !-----------------------------------------
-    do so=1,somax(halo)
-
-
-
-       t(4)=MPI_wtime()
-       do ns=1,nsmax(so,halo)
-          ss=sendinfo(SIZE_COMM,ns,so,halo)
-          sl=sendinfo(LRGNID_COMM,ns,so,halo)
-          sb=sendinfo(BASE_COMM,ns,so,halo)*cmax
-          do m=1,varmax
-!cdir outerunroll=8
-             do k=1,kmax
-                do n=1,ss
-                   sendbuf(n+(k-1)*ss+(m-1)*ss*kmax+sb,so) &
-                        =var(sendlist(n,ns,so,halo),k,sl,clist(m))
-                enddo
-             enddo
-          enddo
-
-
-       enddo
-       !-----------------------------------------
-       t(5)=MPI_wtime()
-       time_sbuf=time_sbuf+(t(5)-t(4))
-
-
-       !-----------------------------------------
-       !
-       !-----------------------------------------
-       ! call MPI_isend
-       !-----------------------------------------
-
-       if (opt_comm_dbg) then
-          if (ssize(so,halo)*cmax>size(sendbuf(:,so))) then
-             write(ADM_log_fid,*) 'so',so,'buf-dim=',shape(sendbuf),'rsize=',ssize(so,halo),'cmax=',cmax
-          endif
-       endif
-
-       call MPI_isend(sendbuf(1,so)              &
-            ,ssize(so,halo)*cmax        &
-            ,MPI_double_precision       &
-            ,destrank(so,halo)          &
-            ,sendtag(so,halo)           &
-            ,ADM_COMM_world             &
-            ,areq(so+romax(halo))       &
-            ,ierr)
-       if (opt_comm_dbg) then
-          if (ierr.ne.0) then
-             write(ADM_log_fid,*) 'MPI_isend info start=='
-             write(ADM_log_fid,*) 'ierr=',ierr
-             write(ADM_log_fid,*) 'so=',so
-             write(ADM_log_fid,*) 'ssize=',ssize(so,halo)
-             write(ADM_log_fid,*) 'cmax=',cmax
-             write(ADM_log_fid,*) 'areq=',areq(so+romax(halo))
-             write(ADM_log_fid,*) 'MPI_isend info end=='
-          endif
-          ! [fix] 12/03/26 T.Seiki
-!!$       dbg_areq_save(:,2)=areq(:)
-          dbg_areq_save(so+romax(halo),2)=areq(so+romax(halo))
-       endif
-
-
-       t(6)=MPI_wtime()
-       time_send=time_send+(t(6)-t(5))
-       size_total=size_total+ssize(so,halo)*cmax
-       comm_count=comm_count+1
-    enddo !loop so
-    !-----------------------------------------
-    !
-    t(7)=MPI_wtime()
-    !---------------------------------------------------
-    !  var -> var (region to region copy in same rank)
-    !---------------------------------------------------
-    do nc=1,ncmax_r2r(halo)
-       cs=copyinfo_r2r(SIZE_COPY,nc,halo)
-       cl=copyinfo_r2r(LRGNID_COPY,nc,halo)
-       scl=copyinfo_r2r(SRC_LRGNID_COPY,nc,halo)
-       do m=1,varmax
-!cdir outerunroll=8
-          do k=1,kmax
-             do n=1,cs
-                var(recvlist_r2r(n,nc,halo),k,cl ,clist(m)) &
-                     =var(sendlist_r2r(n,nc,halo),k,scl,clist(m))
-             enddo
-          enddo
-       enddo
-
-    enddo
-    !-----------------------------------------
-    !
-    !-----------------------------------------
-    t(8)=MPI_wtime()
-    time_copy=time_copy+(t(8)-t(7))
-    acount=romax(halo)+somax(halo)
-    call MPI_waitall(acount,areq,stat,ierr)
-
-    t(9)=MPI_wtime()
-    time_wait=time_wait+(t(9)-t(8))
-
-    if (opt_comm_dbg) then  !================== dbg start
-       if (ierr.ne.0) then
-          write(ADM_log_fid,*) 'MPI_wait info start=='
-          write(ADM_log_fid,*) 'ierr=',ierr
-          write(ADM_log_fid,*) 'acount=',acount
-          write(ADM_log_fid,*) 'stat=',stat(:,1:acount)
-          write(ADM_log_fid,*) 'areq=',areq(1:acount)
-          write(ADM_log_fid,*) 'MPI_wait info end=='
-       endif
-       if (acount > size(areq)) then
-          write(ADM_log_fid,*) 'acount, size(areq)',acount,size(areq)
-       endif
-       ! [fix] 12/03/26 T.Seiki
-!!$    dbg_areq_save(:,3)=areq(:)
-       dbg_areq_save(1:acount,3)=areq(1:acount)
-    endif  !=================================== dbg end
-
-    if (opt_comm_dbg) then  !================== dbg start
-       dbg_ierr=.false.
-       do ro=1,romax(halo)
-          do n=1,rsize(ro,halo)*cmax
-             if (recvbuf(n,ro) == dbg_recvbuf_init) then
-                dbg_ierr=.true.
-             endif
-             if (recvbuf(n,ro) == dbg_sendbuf_init) then
-                dbg_ierr=.true.
-             endif
-          enddo
-       enddo
-       if (dbg_ierr) then
-          write(ADM_log_fid,*) 'communication is not completed!'
-          write(ADM_log_fid,*) 'dbg_tcount=',dbg_tcount
-          write(ADM_log_fid,*) 'romax=',romax,'rsize=',rsize(ro,halo),'cmax=',cmax
-          do ro=1,romax(halo)
-             do n=1,rsize(ro,halo)*cmax
-                if (recvbuf(n,ro) == dbg_recvbuf_init) then
-                   write(ADM_log_fid,*) 'n=',n,'ro=',ro,'recvbuf=',recvbuf(n,ro)
-                endif
-             enddo
-          enddo
-          write(ADM_log_fid,*) 'areq after irecv:',dbg_areq_save(1:acount,1)
-          write(ADM_log_fid,*) 'areq after isend',dbg_areq_save(1:acount,2)
-          write(ADM_log_fid,*) 'areq after waitall',dbg_areq_save(1:acount,3)
-
-          write(ADM_log_fid,*) 'ierr of MPI_waitall=',ierr
-          write(ADM_log_fid,*) 'acount of MPI_waitall=',acount
-          write(ADM_log_fid,*) 'stat of MPI_waitall=',stat(:,1:acount)
-
-       endif
-       dbg_tcount=dbg_tcount+1
-    endif  !=================================== dbg end
-
-
-    if  (opt_comm_barrier) then
-       call MPI_barrier(ADM_COMM_world,ierr)
-       if (ierr.ne.0) then
-          write(ADM_log_fid,*) 'MPI_barriert info start=='
-          write(ADM_log_fid,*) 'ierr=',ierr
-          write(ADM_log_fid,*) 'MPI_barrier info end=='
-       endif
-    endif
-
-
-    !-----------------------------------------
-    !
-    do ro=1,romax(halo)
-       !-----------------------------------------
-       !  recvbuf -> var ( recieve in region )
-       !-----------------------------------------
-       do nr=1,nrmax(ro,halo)
-          rs=recvinfo(SIZE_COMM,nr,ro,halo)
-          rl=recvinfo(LRGNID_COMM,nr,ro,halo)
-          rb=recvinfo(BASE_COMM,nr,ro,halo)*cmax
-          do m=1,varmax
-!cdir outerunroll=8
-             do k=1,kmax
-                do n=1,rs
-                   var(recvlist(n,nr,ro,halo),k,rl,clist(m)) &
-                        =recvbuf(n+(k-1)*rs+(m-1)*rs*kmax+rb,ro)
-                enddo
-             enddo
-          enddo
-       enddo
-    enddo !loop ro
-    t(10)=MPI_wtime()
-    time_rbuf=time_rbuf+(t(10)-t(9))
-
-    !-----------------------------------------
-    !
-    !-----------------------------------------
-    !  copy data around singular point
-    !-----------------------------------------
-    do nc=1,ncmax_sgp(halo)
-       cs=copyinfo_sgp(SIZE_COPY,nc,halo)
-       cl=copyinfo_sgp(LRGNID_COPY,nc,halo)
-       scl=copyinfo_sgp(SRC_LRGNID_COPY,nc,halo)
-       do m=1,varmax
-!cdir outerunroll=8
-          do k=1,kmax
-             do n=1,cs
-                var(recvlist_sgp(n,nc,halo),k,cl ,clist(m)) &
-                     =var(sendlist_sgp(n,nc,halo),k,scl,clist(m))
-             enddo
-          enddo
-       enddo
-
-    enddo
-    t(11)=MPI_wtime()
-    time_copy_sgp=time_copy_sgp+(t(11)-t(10))
-    !!
-    !call MPI_barrier(ADM_COMM_world,ierr)
-    t(12)=MPI_wtime()
-    time_bar2=time_bar2+(t(12)-t(11))
-    time_total=time_total+(t(12)-t(0))
-    !
-  end subroutine COMM_data_transfer_nopl
 
   !-----------------------------------------------------------------------------
   subroutine COMM_Stat_sum( localsum, globalsum )
