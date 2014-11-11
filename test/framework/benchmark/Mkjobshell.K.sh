@@ -37,6 +37,7 @@ elif [ ${NMPI} -gt 384 ]; then
 else
    rscgrp="small"
 fi
+PROF="fipp -C -Srange -Ihwm -d prof"
 
 cat << EOF1 > run.sh
 #! /bin/bash -x
@@ -70,7 +71,7 @@ export XOS_MMM_L_ARENA_FREE=2
 rm -rf ./prof
 
 # run
-fipp -C -Srange -Ihwm -d prof ${MPIEXEC} ./${BINNAME} || exit
+${PROF} ${MPIEXEC} ./${BINNAME} || exit
 
 ################################################################################
 EOF1

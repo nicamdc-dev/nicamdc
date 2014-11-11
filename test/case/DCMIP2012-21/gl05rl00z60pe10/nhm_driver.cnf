@@ -19,9 +19,9 @@
 /
 
 &TIMEPARAM
-    DTL         = 2.D0,
+    DTL         = 1.D0,
     INTEG_TYPE  = "RK3",
-    LSTEP_MAX   = 3600,
+    LSTEP_MAX   = 7200,
     start_year  = 1000,
     start_month = 1,
     start_day   = 1,
@@ -63,7 +63,7 @@
 
 &CNSTPARAM
     earth_radius        = 6.37122D+6,
-    earth_angvel        =   7.292D-5,
+    earth_angvel        =      0.D0,
     small_planet_factor =    500.D0,
     earth_gravity       = 9.80616D0,
     gas_cnst            =   287.0D0,
@@ -73,17 +73,17 @@
 &NUMFILTERPARAM
     hdiff_type        = 'DIRECT',
     lap_order_hdiff   = 2,
-    gamma_h           = 1.28D16,
+    gamma_h           = 9.0D7,
     Kh_coef_minlim    = 0.D0,
     Kh_coef_maxlim    = 9.9D99,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
-    alpha_d           = 1.28D16,
+    alpha_d           = 9.0D7,
 /
 
 &EMBUDGETPARAM
     MNT_ON   = .true.,
-    MNT_INTV = 50    ,
+    MNT_INTV = 100   ,
 /
 
 &NMHISD
@@ -93,7 +93,7 @@
     DIRECT_ACCESS    = .true.     ,
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
-    step             = 50         ,
+    step             = 100        ,
     doout_step0      = .true.     ,
 /
 

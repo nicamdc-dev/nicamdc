@@ -84,6 +84,8 @@ do
 done
 
 cat << EOF2 >> run.sh
+rm -rf ./prof
+mkdir -p ./prof
 
 # run
 ${PROF} ${MPIEXEC} ./${BINNAME} || exit
