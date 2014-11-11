@@ -1697,8 +1697,6 @@ contains
        ADM_gall_1d, &
        ADM_gslf_pl, &
        ADM_gmax_pl, &
-       ADM_kmin,    &
-       ADM_kmax,    &
        ADM_nxyz
     implicit none
 

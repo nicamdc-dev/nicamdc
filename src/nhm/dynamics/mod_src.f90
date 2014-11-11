@@ -511,19 +511,17 @@ contains
        vertical_flag = 0.D0
     endif
 
-    !--- Horizontal flux
-    rhogvx_vm(:,:,:) = rhogvx(:,:,:) * VMTR_RGAM(:,:,:)
-    rhogvy_vm(:,:,:) = rhogvy(:,:,:) * VMTR_RGAM(:,:,:)
-    rhogvz_vm(:,:,:) = rhogvz(:,:,:) * VMTR_RGAM(:,:,:)
-
-    if ( ADM_prc_me == ADM_prc_pl ) then
-       rhogvx_vm_pl(:,:,:) = rhogvx_pl(:,:,:) * VMTR_RGAM_pl(:,:,:)
-       rhogvy_vm_pl(:,:,:) = rhogvy_pl(:,:,:) * VMTR_RGAM_pl(:,:,:)
-       rhogvz_vm_pl(:,:,:) = rhogvz_pl(:,:,:) * VMTR_RGAM_pl(:,:,:)
-    endif
-
-    !--- Vertical flux
     do l = 1, ADM_lall
+       !--- Horizontal flux
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
+          rhogvx_vm(g,k,l) = rhogvx(g,k,l) * VMTR_RGAM(g,k,l)
+          rhogvy_vm(g,k,l) = rhogvy(g,k,l) * VMTR_RGAM(g,k,l)
+          rhogvz_vm(g,k,l) = rhogvz(g,k,l) * VMTR_RGAM(g,k,l)
+       enddo
+       enddo
+
+       !--- Vertical flux
        do k = ADM_kmin+1, ADM_kmax
        do g = 1, ADM_gall
           rhogw_vmh(g,k,l) = ( VMTR_C2WfactGz(1,g,k,l) * rhogvx(g,k  ,l) &
@@ -536,13 +534,24 @@ contains
                            + vertical_flag * rhogw(g,k,l) * VMTR_RGSQRTH(g,k,l) ! vertical   contribution
        enddo
        enddo
-
-       rhogw_vmh(:,ADM_kmin  ,l) = 0.D0
-       rhogw_vmh(:,ADM_kmax+1,l) = 0.D0
+       do g = 1, ADM_gall
+          rhogw_vmh(g,ADM_kmin  ,l) = 0.D0
+          rhogw_vmh(g,ADM_kmax+1,l) = 0.D0
+       enddo
     enddo
 
     if ( ADM_prc_me == ADM_prc_pl ) then
        do l = 1, ADM_lall_pl
+          !--- Horizontal flux
+          do k = 1, ADM_kall
+          do g = 1, ADM_gall_pl
+             rhogvx_vm_pl(g,k,l) = rhogvx_pl(g,k,l) * VMTR_RGAM_pl(g,k,l)
+             rhogvy_vm_pl(g,k,l) = rhogvy_pl(g,k,l) * VMTR_RGAM_pl(g,k,l)
+             rhogvz_vm_pl(g,k,l) = rhogvz_pl(g,k,l) * VMTR_RGAM_pl(g,k,l)
+          enddo
+          enddo
+
+          !--- Vertical flux
           do k = ADM_kmin+1, ADM_kmax
           do g = 1, ADM_gall_pl
              rhogw_vmh_pl(g,k,l) = ( VMTR_C2WfactGz_pl(1,g,k,l) * rhogvx_pl(g,k  ,l) &
@@ -555,9 +564,10 @@ contains
                                  + vertical_flag * rhogw_pl(g,k,l) * VMTR_RGSQRTH_pl(g,k,l) ! vertical   contribution
           enddo
           enddo
-
-          rhogw_vmh_pl(:,ADM_kmin  ,l) = 0.D0
-          rhogw_vmh_pl(:,ADM_kmax+1,l) = 0.D0
+          do g = 1, ADM_gall_pl
+             rhogw_vmh_pl(g,ADM_kmin  ,l) = 0.D0
+             rhogw_vmh_pl(g,ADM_kmax+1,l) = 0.D0
+          enddo
        enddo
     endif
 
