@@ -433,9 +433,9 @@ contains
 
           do k  = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
-             drhoge_pw_pl(:,:,:) = vx_pl(:,:,:) * dpgrad_pl(:,:,:,GRD_XDIR)          &
-                                 + vy_pl(:,:,:) * dpgrad_pl(:,:,:,GRD_YDIR)          &
-                                 + vz_pl(:,:,:) * dpgrad_pl(:,:,:,GRD_ZDIR)          &
+             drhoge_pw_pl(g,k,l) = vx_pl(g,k,l) * dpgrad_pl(g,k,l,GRD_XDIR)          &
+                                 + vy_pl(g,k,l) * dpgrad_pl(g,k,l,GRD_YDIR)          &
+                                 + vz_pl(g,k,l) * dpgrad_pl(g,k,l,GRD_ZDIR)          &
                                  + VMTR_W2Cfact_pl(1,g,k,l) * drhoge_pwh_pl(g,k+1,l) &
                                  + VMTR_W2Cfact_pl(2,g,k,l) * drhoge_pwh_pl(g,k,  l)
           enddo
