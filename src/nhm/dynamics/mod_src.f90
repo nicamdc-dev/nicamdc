@@ -65,7 +65,7 @@ module mod_src
   !
   !++ Private parameters & variables
   !
-  logical, private, parameter :: first_layer_remedy = .true.
+  logical, private, parameter :: first_layer_remedy = .false.
 
   !-----------------------------------------------------------------------------
 contains
@@ -828,7 +828,7 @@ contains
     if ( gradtype == I_SRC_default ) then
 
        do l = 1, ADM_lall
-          do k = ADM_kmin, ADM_kmax+1
+          do k = ADM_kmin+1, ADM_kmax
           do g = 1, ADM_gall
              Pgradw(g,k,l) = VMTR_GAM2H(g,k,l) * ( P(g,k  ,l) * VMTR_RGSGAM2(g,k  ,l) &
                                                  - P(g,k-1,l) * VMTR_RGSGAM2(g,k-1,l) &
@@ -838,12 +838,14 @@ contains
 
           do g = 1, ADM_gall
              Pgradw(g,ADM_kmin-1,l) = 0.D0
+             Pgradw(g,ADM_kmin  ,l) = 0.D0
+             Pgradw(g,ADM_kmax+1,l) = 0.D0
           enddo
        enddo
 
        if ( ADM_prc_me == ADM_prc_pl ) then
           do l = 1, ADM_lall_pl
-             do k = ADM_kmin, ADM_kmax+1
+             do k = ADM_kmin+1, ADM_kmax
              do g = 1, ADM_gall_pl
                 Pgradw_pl(g,k,l) = VMTR_GAM2H_pl(g,k,l) * ( P_pl(g,k  ,l) * VMTR_RGSGAM2_pl(g,k  ,l) &
                                                           - P_pl(g,k-1,l) * VMTR_RGSGAM2_pl(g,k-1,l) &
@@ -853,6 +855,8 @@ contains
 
              do g = 1, ADM_gall_pl
                 Pgradw_pl(g,ADM_kmin-1,l) = 0.D0
+                Pgradw_pl(g,ADM_kmin  ,l) = 0.D0
+                Pgradw_pl(g,ADM_kmax+1,l) = 0.D0
              enddo
           enddo
        endif
@@ -905,7 +909,7 @@ contains
     call DEBUG_rapstart('____src_buoyancy')
 
     do l = 1, ADM_lall
-       do k = ADM_kmin, ADM_kmax+1
+       do k = ADM_kmin+1, ADM_kmax
        do g = 1, ADM_gall
           buoiw(g,k,l) = -CNST_EGRAV * ( VMTR_C2Wfact(1,g,k,l) * rhog(g,k  ,l) &
                                        + VMTR_C2Wfact(2,g,k,l) * rhog(g,k-1,l) )
@@ -914,12 +918,14 @@ contains
 
        do g = 1, ADM_gall
           buoiw(g,ADM_kmin-1,l) = 0.D0
+          buoiw(g,ADM_kmin  ,l) = 0.D0
+          buoiw(g,ADM_kmax+1,l) = 0.D0
        enddo
     enddo
 
     if ( ADM_prc_me == ADM_prc_pl ) then
        do l = 1, ADM_lall_pl
-          do k = ADM_kmin, ADM_kmax+1
+          do k = ADM_kmin+1, ADM_kmax
           do g = 1, ADM_gall_pl
              buoiw_pl(g,k,l) = -CNST_EGRAV * ( VMTR_C2Wfact_pl(1,g,k,l) * rhog_pl(g,k  ,l) &
                                              + VMTR_C2Wfact_pl(2,g,k,l) * rhog_pl(g,k-1,l) )
@@ -928,6 +934,8 @@ contains
 
           do g = 1, ADM_gall_pl
              buoiw_pl(g,ADM_kmin-1,l) = 0.D0
+             buoiw_pl(g,ADM_kmin  ,l) = 0.D0
+             buoiw_pl(g,ADM_kmax+1,l) = 0.D0
           enddo
        enddo
     endif

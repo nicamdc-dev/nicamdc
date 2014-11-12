@@ -2205,6 +2205,7 @@ contains
           do k = ADM_kmin+1, ADM_kmax
              gdvz(:,k,l) = divdamp_coef_v * ( cnv(:,k,l) - cnv(:,k-1,l) ) * GRD_rdgzh(k)
           enddo
+          gdvz(:,ADM_kmin-1,l) = 0.D0
           gdvz(:,ADM_kmin  ,l) = 0.D0
           gdvz(:,ADM_kmax+1,l) = 0.D0
        enddo
@@ -2214,6 +2215,7 @@ contains
              do k = ADM_kmin+1, ADM_kmax
                 gdvz_pl(:,k,l) = divdamp_coef_v * ( cnv_pl(:,k,l) - cnv_pl(:,k-1,l) ) * GRD_rdgzh(k)
              enddo
+             gdvz_pl(:,ADM_kmin-1,l) = 0.D0
              gdvz_pl(:,ADM_kmin  ,l) = 0.D0
              gdvz_pl(:,ADM_kmax+1,l) = 0.D0
           enddo
