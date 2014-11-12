@@ -40,7 +40,7 @@
     input_io_mode     = 'IDEAL',
     output_io_mode    = 'ADVANCED',
     output_basename   = 'restart_all_GL05RL00z60',
-    restart_layername = 'ZS60_500m_DCMIP.txt',
+    restart_layername = 'ZS60_500m_DCMIP',
 /
 
 ##### DCMIP 2012 Test 1-1: 3D Deformational Flow
@@ -89,7 +89,7 @@
 &NMHISD
     output_io_mode   = 'ADVANCED' ,
     histall_fname    = 'history'  ,
-    hist3D_layername = 'Z60_500m_DCMIP.txt',
+    hist3D_layername = 'Z60_500m_DCMIP',
     DIRECT_ACCESS    = .true.     ,
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
