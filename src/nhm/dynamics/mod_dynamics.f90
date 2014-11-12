@@ -185,13 +185,13 @@ contains
        TIME_SPLIT,      &
        TIME_CTIME
     use mod_vmtr, only: &
-       VMTR_GSGAM2,        &
-       VMTR_GSGAM2_pl,     &
-       VMTR_PHI,           &
-       VMTR_PHI_pl,        &
+       VMTR_GSGAM2,       &
+       VMTR_GSGAM2_pl,    &
+       VMTR_PHI,          &
+       VMTR_PHI_pl,       &
        VMTR_C2WfactGz,    &
        VMTR_C2WfactGz_pl, &
-       VMTR_C2Wfact,       &
+       VMTR_C2Wfact,      &
        VMTR_C2Wfact_pl
     use mod_comm, only: &
        COMM_data_transfer
@@ -450,7 +450,7 @@ contains
                            VMTR_GSGAM2    (:,:,l),   & ! [IN]
                            VMTR_PHI       (:,:,l),   & ! [IN]
                            VMTR_C2Wfact   (:,:,:,l), & ! [IN]
-                           VMTR_C2WfactGz(:,:,:,l)  ) ! [IN]
+                           VMTR_C2WfactGz(:,:,:,l)   ) ! [IN]
 
           call thrmdyn_th( ADM_gall, th(:,:,l), tem(:,:,l), pre(:,:,l) )
 
@@ -512,7 +512,7 @@ contains
                               VMTR_GSGAM2_pl    (:,:,l),   & ! [IN]
                               VMTR_PHI_pl       (:,:,l),   & ! [IN]
                               VMTR_C2Wfact_pl   (:,:,:,l), & ! [IN]
-                              VMTR_C2WfactGz_pl(:,:,:,l)  ) ! [IN]
+                              VMTR_C2WfactGz_pl(:,:,:,l)   ) ! [IN]
 
              call thrmdyn_th ( ADM_gall_pl, th_pl (:,:,l), tem_pl(:,:,l), pre_pl(:,:,l) )
              call thrmdyn_eth( ADM_gall_pl, eth_pl(:,:,l), ein_pl(:,:,l), pre_pl(:,:,l), rho_pl(:,:,l) )
@@ -807,16 +807,16 @@ contains
           if ( nl == num_of_iteration_lstep ) then
 
              call src_tracer_advection( TRC_VMAX,                                              & ! [IN]
-                                     PROGq(:,:,:,:),           PROGq_pl(:,:,:,:),           & ! [INOUT]
-                                     PROG0(:,:,:,I_RHOG),      PROG0_pl(:,:,:,I_RHOG),      & ! [IN]
-                                     v_mean_c(:,:,:,I_rhog),   v_mean_c_pl(:,:,:,I_rhog),   & ! [IN]
-                                     v_mean_c(:,:,:,I_rhogvx), v_mean_c_pl(:,:,:,I_rhogvx), & ! [IN]
-                                     v_mean_c(:,:,:,I_rhogvy), v_mean_c_pl(:,:,:,I_rhogvy), & ! [IN]
-                                     v_mean_c(:,:,:,I_rhogvz), v_mean_c_pl(:,:,:,I_rhogvz), & ! [IN]
-                                     v_mean_c(:,:,:,I_rhogw),  v_mean_c_pl(:,:,:,I_rhogw),  & ! [IN]
-                                     f_TEND (:,:,:,I_RHOG),    f_TEND_pl (:,:,:,I_RHOG),    & ! [IN]
-                                     TIME_DTL,                                              & ! [IN]
-                                     THUBURN_LIM                                            ) ! [IN]  ![add] 20130613 R.Yoshida
+                                        PROGq(:,:,:,:),           PROGq_pl(:,:,:,:),           & ! [INOUT]
+                                        PROG0(:,:,:,I_RHOG),      PROG0_pl(:,:,:,I_RHOG),      & ! [IN]
+                                        v_mean_c(:,:,:,I_rhog),   v_mean_c_pl(:,:,:,I_rhog),   & ! [IN]
+                                        v_mean_c(:,:,:,I_rhogvx), v_mean_c_pl(:,:,:,I_rhogvx), & ! [IN]
+                                        v_mean_c(:,:,:,I_rhogvy), v_mean_c_pl(:,:,:,I_rhogvy), & ! [IN]
+                                        v_mean_c(:,:,:,I_rhogvz), v_mean_c_pl(:,:,:,I_rhogvz), & ! [IN]
+                                        v_mean_c(:,:,:,I_rhogw),  v_mean_c_pl(:,:,:,I_rhogw),  & ! [IN]
+                                        f_TEND (:,:,:,I_RHOG),    f_TEND_pl (:,:,:,I_RHOG),    & ! [IN]
+                                        TIME_DTL,                                              & ! [IN]
+                                        THUBURN_LIM                                            ) ! [IN]  ![add] 20130613 R.Yoshida
 
              PROGq(:,:,:,:) = PROGq(:,:,:,:) + TIME_DTL * f_TENDq(:,:,:,:) ! update rhogq by viscosity
 
