@@ -3,6 +3,7 @@ PRJ_SHARE   =
 LIB_SHARE   = libnicamshare.a
 
 MODS_SHARE =	\
+	mod_precision.o	\
 	$(mod_misc).o	\
 	mod_adm.o	\
 	mod_debug.o	\
@@ -23,25 +24,26 @@ MODS_SHARE =	\
 	mod_vintrpl.o	\
 	mod_latlon.o
 
-$(mod_misc).o	: $(mod_misc).f90
-mod_adm.o	: mod_adm.f90 $(mod_misc).o
-mod_debug.o	: mod_debug.f90 mod_adm.o
-mod_cnst.o	: mod_cnst.f90 mod_adm.o mod_debug.o
-mod_calendar.o	: mod_calendar.f90 mod_adm.o mod_debug.o
+mod_precision.o	: mod_precision.f90
+$(mod_misc).o	: $(mod_misc).f90 mod_precision.o
+mod_adm.o	: mod_adm.f90 mod_precision.o $(mod_misc).o
+mod_debug.o	: mod_debug.f90 mod_precision.o mod_adm.o
+mod_cnst.o	: mod_cnst.f90 mod_precision.o mod_adm.o mod_debug.o
+mod_calendar.o	: mod_calendar.f90 mod_precision.o mod_adm.o mod_debug.o
 fio.o	: fio.c fio.h fio_def.h
 fiof.o	: fiof.c fiof.h fio.h fio_def.h
-mod_fio.o	: mod_fio.f90 mod_adm.o mod_debug.o mod_calendar.o mod_cnst.o fio.o fiof.o
-mod_comm.o	: mod_comm.f90 mod_adm.o mod_debug.o mod_cnst.o
-mod_grd.o	: mod_grd.f90 mod_adm.o mod_debug.o mod_cnst.o mod_comm.o $(mod_misc).o mod_fio.o mod_ideal_topo.o
-mod_ideal_topo.o	: mod_ideal_topo.f90 mod_adm.o mod_cnst.o
-mod_gmtr.o	: mod_gmtr.f90 mod_adm.o mod_debug.o mod_comm.o $(mod_misc).o mod_grd.o mod_cnst.o
-$(mod_oprt).o	: $(mod_oprt).f90 mod_adm.o mod_debug.o mod_grd.o mod_gmtr.o mod_comm.o mod_cnst.o
-$(mod_oprt3d).o	: $(mod_oprt3d).f90 mod_adm.o mod_debug.o mod_grd.o mod_gmtr.o mod_vmtr.o
-mod_vmtr.o	: mod_vmtr.f90 mod_adm.o mod_debug.o mod_grd.o mod_comm.o mod_gmtr.o $(mod_oprt).o mod_cnst.o
-mod_time.o	: mod_time.f90 mod_adm.o mod_debug.o mod_calendar.o
-mod_gtl.o	: mod_gtl.f90 mod_adm.o mod_debug.o mod_comm.o mod_gmtr.o mod_vmtr.o mod_cnst.o $(mod_misc).o mod_grd.o
-mod_vintrpl.o	: mod_vintrpl.f90 mod_adm.o mod_debug.o mod_grd.o mod_cnst.o
-mod_latlon.o	: mod_latlon.f90 mod_adm.o mod_debug.o mod_cnst.o $(mod_misc).o mod_grd.o $(mod_oprt).o mod_comm.o mod_gmtr.o
+mod_fio.o	: mod_fio.f90 mod_precision.o mod_adm.o mod_debug.o mod_calendar.o mod_cnst.o fio.o fiof.o
+mod_comm.o	: mod_comm.f90 mod_precision.o mod_adm.o mod_debug.o mod_cnst.o
+mod_grd.o	: mod_grd.f90 mod_precision.o mod_adm.o mod_debug.o mod_cnst.o mod_comm.o $(mod_misc).o mod_fio.o mod_ideal_topo.o
+mod_ideal_topo.o	: mod_ideal_topo.f90 mod_precision.o mod_adm.o mod_debug.o mod_cnst.o
+mod_gmtr.o	: mod_gmtr.f90 mod_precision.o mod_adm.o mod_debug.o mod_comm.o $(mod_misc).o mod_grd.o mod_cnst.o
+$(mod_oprt).o	: $(mod_oprt).f90 mod_precision.o mod_adm.o mod_debug.o mod_grd.o mod_gmtr.o mod_comm.o mod_cnst.o
+$(mod_oprt3d).o	: $(mod_oprt3d).f90 mod_precision.o mod_adm.o mod_debug.o mod_grd.o mod_gmtr.o mod_vmtr.o
+mod_vmtr.o	: mod_vmtr.f90 mod_precision.o mod_adm.o mod_debug.o mod_grd.o mod_comm.o mod_gmtr.o $(mod_oprt).o mod_cnst.o
+mod_time.o	: mod_time.f90 mod_precision.o mod_adm.o mod_debug.o mod_calendar.o
+mod_gtl.o	: mod_gtl.f90 mod_precision.o mod_adm.o mod_debug.o mod_comm.o mod_gmtr.o mod_vmtr.o mod_cnst.o $(mod_misc).o mod_grd.o
+mod_vintrpl.o	: mod_vintrpl.f90 mod_precision.o mod_adm.o mod_debug.o mod_grd.o mod_cnst.o
+mod_latlon.o	: mod_latlon.f90 mod_precision.o mod_adm.o mod_debug.o mod_cnst.o $(mod_misc).o mod_grd.o $(mod_oprt).o mod_comm.o mod_gmtr.o
 
 $(NICAM_LIBDIR)/$(LIB_SHARE): $(BUILD_DIR)/$(LIB_SHARE)
 	$(INSTALL) $< $@
