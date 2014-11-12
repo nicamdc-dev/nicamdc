@@ -1072,7 +1072,7 @@ contains
 
     if( .NOT. NUMFILTER_DOrayleigh ) return
 
-    call DEBUG_rapstart('++++numfilter_rayleigh_damping')
+    call DEBUG_rapstart('____numfilter_rayleigh_damping')
 
     rhog   (:,:,:) = rho   (:,:,:) * VMTR_GSGAM2   (:,:,:)
     rhog_pl(:,:,:) = rho_pl(:,:,:) * VMTR_GSGAM2_pl(:,:,:)
@@ -1127,7 +1127,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('++++numfilter_rayleigh_damping')
+    call DEBUG_rapend('____numfilter_rayleigh_damping')
 
     return
   end subroutine numfilter_rayleigh_damping
@@ -1254,7 +1254,7 @@ contains
     integer :: g, k, l, nq, p
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++++numfilter_hdiffusion')
+    call DEBUG_rapstart('____numfilter_hdiffusion')
 
 
     if ( hdiff_nonlinear ) then
@@ -1586,7 +1586,7 @@ contains
 
     endif ! apply filter to tracer?
 
-    call DEBUG_rapend('++++numfilter_hdiffusion')
+    call DEBUG_rapend('____numfilter_hdiffusion')
 
     return
   end subroutine numfilter_hdiffusion
@@ -1693,7 +1693,7 @@ contains
 
     if( .NOT. NUMFILTER_DOverticaldiff ) return
 
-    call DEBUG_rapstart('++++numfilter_vdiffusion')
+    call DEBUG_rapstart('____numfilter_vdiffusion')
 
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kmax+1
@@ -2065,7 +2065,7 @@ contains
                                  frhogvy, frhogvy_pl, & !--- [INOUT]
                                  frhogvz, frhogvz_pl  ) !--- [INOUT]
 
-    call DEBUG_rapend('++++numfilter_vdiffusion')
+    call DEBUG_rapend('____numfilter_vdiffusion')
 
     return
   end subroutine numfilter_vdiffusion
@@ -2133,7 +2133,7 @@ contains
     integer :: k, l, p
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++++numfilter_divdamp')
+    call DEBUG_rapstart('____numfilter_divdamp')
 
     if ( .NOT. NUMFILTER_DOdivdamp ) then
        gdx    (:,:,:) = 0.D0
@@ -2144,7 +2144,7 @@ contains
        gdz_pl (:,:,:) = 0.D0
        gdvz   (:,:,:) = 0.D0
        gdvz_pl(:,:,:) = 0.D0
-       call DEBUG_rapend('++++numfilter_divdamp')
+       call DEBUG_rapend('____numfilter_divdamp')
        return
     endif
 
@@ -2224,7 +2224,7 @@ contains
        gdvz_pl(:,:,:) = 0.D0
     endif
 
-    call DEBUG_rapend('++++numfilter_divdamp')
+    call DEBUG_rapend('____numfilter_divdamp')
 
     return
   end subroutine numfilter_divdamp
@@ -2275,7 +2275,7 @@ contains
     integer :: p
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++++numfilter_divdamp_2d')
+    call DEBUG_rapstart('____numfilter_divdamp_2d')
 
     if ( .NOT. NUMFILTER_DOdivdamp_2d ) then
        gdx   (:,:,:) = 0.D0
@@ -2284,7 +2284,7 @@ contains
        gdy_pl(:,:,:) = 0.D0
        gdz   (:,:,:) = 0.D0
        gdz_pl(:,:,:) = 0.D0
-       call DEBUG_rapend('++++numfilter_divdamp_2d')
+       call DEBUG_rapend('____numfilter_divdamp_2d')
        return
     endif
 
@@ -2332,7 +2332,7 @@ contains
                                  gdy(:,:,:), gdy_pl(:,:,:), & !--- [INOUT]
                                  gdz(:,:,:), gdz_pl(:,:,:)  ) !--- [INOUT]
 
-    call DEBUG_rapend('++++numfilter_divdamp_2d')
+    call DEBUG_rapend('____numfilter_divdamp_2d')
 
     return
   end subroutine numfilter_divdamp_2d

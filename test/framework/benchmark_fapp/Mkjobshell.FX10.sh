@@ -51,6 +51,11 @@ elif [ ${NMPI} -gt 24 ]; then
 else
    rscgrp="large"
 fi
+PROF1="fapp -C -Ihwm -Hevent=Cache        -d prof_cache -L 10"
+PROF2="fapp -C -Ihwm -Hevent=Instructions -d prof_inst  -L 10"
+PROF3="fapp -C -Ihwm -Hevent=MEM_access   -d prof_mem   -L 10"
+PROF4="fapp -C -Ihwm -Hevent=Performance  -d prof_perf  -L 10"
+PROF5="fapp -C -Ihwm -Hevent=Statistics   -d prof       -L 10"
 
 cat << EOF1 > run.sh
 #! /bin/bash -x
@@ -83,9 +88,19 @@ do
 done
 
 cat << EOF2 >> run.sh
+rm -rf ./prof*
+mkdir -p ./prof_cache
+mkdir -p ./prof_inst
+mkdir -p ./prof_mem
+mkdir -p ./prof_perf
+mkdir -p ./prof
 
 # run
-${MPIEXEC} ./${BINNAME} || exit
+${PROF1} ${MPIEXEC} ./${BINNAME} || exit
+${PROF2} ${MPIEXEC} ./${BINNAME} || exit
+${PROF3} ${MPIEXEC} ./${BINNAME} || exit
+${PROF4} ${MPIEXEC} ./${BINNAME} || exit
+${PROF5} ${MPIEXEC} ./${BINNAME} || exit
 
 ################################################################################
 EOF2

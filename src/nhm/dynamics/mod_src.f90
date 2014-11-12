@@ -163,7 +163,7 @@ contains
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++++src_advection_convergence_m')
+    call DEBUG_rapstart('____src_advection_convergence_m')
 
     !---< merge horizontal velocity & vertical velocity >
 
@@ -322,7 +322,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('++++src_advection_convergence_m')
+    call DEBUG_rapend('____src_advection_convergence_m')
 
     return
   end subroutine src_advection_convergence_momentum
@@ -380,7 +380,7 @@ contains
     integer :: k, l
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++++src_advection_convergence')
+    call DEBUG_rapstart('____src_advection_convergence')
 
     ! rhogvh * scl
     rhogvxscl(:,:,:) = rhogvx(:,:,:) * scl(:,:,:)
@@ -429,7 +429,7 @@ contains
                                grhogscl,  grhogscl_pl,  & ! [OUT]
                                fluxtype                 ) ! [IN]
 
-    call DEBUG_rapend('++++src_advection_convergence')
+    call DEBUG_rapend('____src_advection_convergence')
 
     return
   end subroutine src_advection_convergence
@@ -503,7 +503,7 @@ contains
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++++src_flux_convergence')
+    call DEBUG_rapstart('____src_flux_convergence')
 
     if ( fluxtype == I_SRC_default ) then ! Default
        vertical_flag = 1.D0
@@ -601,7 +601,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('++++src_flux_convergence')
+    call DEBUG_rapend('____src_flux_convergence')
 
     return
   end subroutine src_flux_convergence
@@ -664,7 +664,7 @@ contains
     integer :: g, k, l, d
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++++src_pres_gradient')
+    call DEBUG_rapstart('____src_pres_gradient')
 
     !---< horizontal gradient, horizontal contribution >---
 
@@ -817,7 +817,7 @@ contains
 
     endif
 
-    call DEBUG_rapend('++++src_pres_gradient')
+    call DEBUG_rapend('____src_pres_gradient')
 
     return
   end subroutine src_pres_gradient
@@ -853,7 +853,7 @@ contains
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++++src_buoyancy')
+    call DEBUG_rapstart('____src_buoyancy')
 
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kall
@@ -883,7 +883,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('++++src_buoyancy')
+    call DEBUG_rapend('____src_buoyancy')
 
     return
   end subroutine src_buoyancy

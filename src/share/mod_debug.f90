@@ -324,7 +324,8 @@ contains
     !write(ADM_LOG_FID,*) rapname, DEBUG_rapnstr(id)
 
 #ifdef _FAPP_
-call START_COLLECTION( rapname )
+    call fapp_start( rapname, id, 1 )
+    !call START_COLLECTION( rapname )
 #endif
 
     return
@@ -347,7 +348,8 @@ call START_COLLECTION( rapname )
     DEBUG_rapnend(id) = DEBUG_rapnend(id) + 1
 
 #ifdef _FAPP_
-call STOP_COLLECTION( rapname )
+    call fapp_stop( rapname, id, 1 )
+    !call STOP_COLLECTION( rapname )
 #endif
 
     return

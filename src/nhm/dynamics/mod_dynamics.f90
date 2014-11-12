@@ -349,7 +349,7 @@ contains
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++Dynamics')
+    call DEBUG_rapstart('__Dynamics')
 
     !--- get from prg0
     call prgvar_get( PROG(:,:,:,I_RHOG),   PROG_pl(:,:,:,I_RHOG),   & ! [OUT]
@@ -372,7 +372,7 @@ contains
 
     if ( TIME_INTEG_TYPE == 'TRCADV' ) then  ! TRC-ADV Test Bifurcation
 
-       call DEBUG_rapstart('+++Tracer Advection')
+       call DEBUG_rapstart('___Tracer_Advection')
 
        f_TEND   (:,:,:,:) = 0.D0
        f_TEND_pl(:,:,:,:) = 0.D0
@@ -389,7 +389,7 @@ contains
                                   TIME_DTL,                                          & ! [IN]
                                   THUBURN_LIM                                        ) ! [IN] [add] 20130613 R.Yoshida
 
-       call DEBUG_rapend  ('+++Tracer Advection')
+       call DEBUG_rapend  ('___Tracer_Advection')
 
        call forcing_update( PROG(:,:,:,:), PROG_pl(:,:,:,:) ) ! [INOUT]
     endif
@@ -546,7 +546,7 @@ contains
        !------------------------------------------------------------------------
        !> LARGE step
        !------------------------------------------------------------------------
-       call DEBUG_rapstart('+++Large step')
+       call DEBUG_rapstart('___Large_step')
 
        !--- calculation of advection tendency including Coriolis force
        call src_advection_convergence_momentum( vx,                     vx_pl,                     & ! [IN]
@@ -737,11 +737,11 @@ contains
        g_TEND   (:,:,:,:) = g_TEND   (:,:,:,:) + f_TEND   (:,:,:,:)
        g_TEND_pl(:,:,:,:) = g_TEND_pl(:,:,:,:) + f_TEND_pl(:,:,:,:)
 
-       call DEBUG_rapend  ('+++Large step')
+       call DEBUG_rapend  ('___Large_step')
        !------------------------------------------------------------------------
        !> SMALL step
        !------------------------------------------------------------------------
-       call DEBUG_rapstart('+++Small step')
+       call DEBUG_rapstart('___Small_step')
 
        if ( nl /= 1 ) then ! update split values
           PROG_split   (:,:,:,:) = PROG0   (:,:,:,:) - PROG   (:,:,:,:)
@@ -794,12 +794,12 @@ contains
                            small_step_ite,                                            & ! [IN]
                            small_step_dt                                              ) ! [IN]
 
-       call DEBUG_rapend  ('+++Small step')
+       call DEBUG_rapend  ('___Small_step')
 
        !------------------------------------------------------------------------
        !>  Tracer advection
        !------------------------------------------------------------------------
-       call DEBUG_rapstart('+++Tracer Advection')
+       call DEBUG_rapstart('___Tracer_Advection')
        do_tke_correction = .false.
 
        if ( TRC_ADV_TYPE == 'MIURA2004' ) then
@@ -868,7 +868,7 @@ contains
 
        endif
 
-       call DEBUG_rapend  ('+++Tracer Advection')
+       call DEBUG_rapend  ('___Tracer_Advection')
 
        !--- TKE fixer [comment] 2011/08/16 M.Satoh: need this fixer for every small time steps
        if ( do_tke_correction ) then
@@ -916,7 +916,7 @@ contains
                      PROGq(:,:,:,:),       PROGq_pl(:,:,:,:),       & ! [IN]
                      0                                              ) ! [IN]
 
-    call DEBUG_rapend  ('++Dynamics')
+    call DEBUG_rapend  ('__Dynamics')
 
     return
   end subroutine dynamics_step

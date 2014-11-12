@@ -152,20 +152,20 @@ contains
     write(ADM_LOG_FID,*) '+++ Module[oprt]/Category[common share]'
 
     ! dummy call
-    call DEBUG_rapstart('OPRT divergence')
-    call DEBUG_rapend  ('OPRT divergence')
-    call DEBUG_rapstart('OPRT gradient')
-    call DEBUG_rapend  ('OPRT gradient')
-    call DEBUG_rapstart('OPRT laplacian')
-    call DEBUG_rapend  ('OPRT laplacian')
-    call DEBUG_rapstart('OPRT diffusion')
-    call DEBUG_rapend  ('OPRT diffusion')
-    call DEBUG_rapstart('OPRT horizontalize_vec')
-    call DEBUG_rapend  ('OPRT horizontalize_vec')
-    call DEBUG_rapstart('OPRT divdamp')
-    call DEBUG_rapend  ('OPRT divdamp')
-    call DEBUG_rapstart('OPRT3D divdamp')
-    call DEBUG_rapend  ('OPRT3D divdamp')
+    call DEBUG_rapstart('OPRT_divergence')
+    call DEBUG_rapend  ('OPRT_divergence')
+    call DEBUG_rapstart('OPRT_gradient')
+    call DEBUG_rapend  ('OPRT_gradient')
+    call DEBUG_rapstart('OPRT_laplacian')
+    call DEBUG_rapend  ('OPRT_laplacian')
+    call DEBUG_rapstart('OPRT_diffusion')
+    call DEBUG_rapend  ('OPRT_diffusion')
+    call DEBUG_rapstart('OPRT_horizontalize_vec')
+    call DEBUG_rapend  ('OPRT_horizontalize_vec')
+    call DEBUG_rapstart('OPRT_divdamp')
+    call DEBUG_rapend  ('OPRT_divdamp')
+    call DEBUG_rapstart('OPRT3D_divdamp')
+    call DEBUG_rapend  ('OPRT3D_divdamp')
 
     OPRT_nstart = suf(ADM_gmin,ADM_gmin)
     OPRT_nend   = suf(ADM_gmax,ADM_gmax)
@@ -1596,7 +1596,7 @@ contains
     integer :: n, k, l, v
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('OPRT divergence')
+    call DEBUG_rapstart('OPRT_divergence')
 
     do l = 1, ADM_lall
     do k = ADM_kmin, ADM_kmax
@@ -1677,7 +1677,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('OPRT divergence')
+    call DEBUG_rapend('OPRT_divergence')
 
     return
   end subroutine OPRT_divergence
@@ -1712,7 +1712,7 @@ contains
     integer :: n, k, l, v, d
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('OPRT gradient')
+    call DEBUG_rapstart('OPRT_gradient')
 
 !OCL SERIAL
     do d = 1, ADM_nxyz
@@ -1754,7 +1754,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('OPRT gradient')
+    call DEBUG_rapend('OPRT_gradient')
 
     return
   end subroutine OPRT_gradient
@@ -1791,7 +1791,7 @@ contains
     integer :: n, k, l, v
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('OPRT laplacian')
+    call DEBUG_rapstart('OPRT_laplacian')
 
     do l = 1, ADM_lall
     do k = ADM_kmin, ADM_kmax
@@ -1830,7 +1830,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('OPRT laplacian')
+    call DEBUG_rapend('OPRT_laplacian')
 
     return
   end subroutine OPRT_laplacian
@@ -1891,7 +1891,7 @@ contains
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('OPRT diffusion')
+    call DEBUG_rapstart('OPRT_diffusion')
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
@@ -2061,7 +2061,7 @@ contains
 
     endif
 
-    call DEBUG_rapend('OPRT diffusion')
+    call DEBUG_rapend('OPRT_diffusion')
 
     return
   end subroutine OPRT_diffusion
@@ -2099,7 +2099,7 @@ contains
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('OPRT horizontalize_vec')
+    call DEBUG_rapstart('OPRT_horizontalize_vec')
 
     do l = 1, ADM_lall
     do k = ADM_kmin, ADM_kmax
@@ -2131,7 +2131,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('OPRT horizontalize_vec')
+    call DEBUG_rapend('OPRT_horizontalize_vec')
 
     return
   end subroutine OPRT_horizontalize_vec
@@ -2194,7 +2194,7 @@ contains
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('OPRT vorticity')
+    call DEBUG_rapstart('OPRT_vorticity')
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
@@ -2338,7 +2338,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('OPRT vorticity')
+    call DEBUG_rapend('OPRT_vorticity')
 
     return
   end subroutine OPRT_vorticity
@@ -2402,7 +2402,7 @@ contains
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('OPRT divdamp')
+    call DEBUG_rapstart('OPRT_divdamp')
 
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kmax
@@ -2556,7 +2556,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('OPRT divdamp')
+    call DEBUG_rapend('OPRT_divdamp')
 
     return
   end subroutine OPRT_divdamp

@@ -147,7 +147,7 @@ program prg_driver
   endif
 
   call DEBUG_rapstart('Total')
-  call DEBUG_rapstart('Setup ALL')
+  call DEBUG_rapstart('Setup_ALL')
 
   !---< cnst module setup >---
   call CNST_setup
@@ -216,13 +216,13 @@ program prg_driver
 
   !!$acc data copyin(cdiv,cgrad,clap,cinterp_TN,cinterp_HN,cinterp_TRA,cinterp_PRA)
 
-  call DEBUG_rapend('Setup ALL')
+  call DEBUG_rapend('Setup_ALL')
 
   !#############################################################################
 #ifdef _FIPP_
   call fipp_start()
 #endif
-  call DEBUG_rapstart('Main ALL')
+  call DEBUG_rapstart('Main_ALL')
 
   write(ADM_LOG_FID,*) '##### start  main loop #####'
   if ( ADM_prc_me == ADM_prc_run_master ) then
@@ -242,12 +242,12 @@ program prg_driver
 
   do n = 1, TIME_LSTEP_MAX
 
-     call DEBUG_rapstart('+Atmos')
+     call DEBUG_rapstart('_Atmos')
      call dynamics_step
      call forcing_step
-     call DEBUG_rapend  ('+Atmos')
+     call DEBUG_rapend  ('_Atmos')
 
-     call DEBUG_rapstart('+History')
+     call DEBUG_rapstart('_History')
      call history_vars
      call TIME_advance
 
@@ -260,7 +260,7 @@ program prg_driver
         call restart_output( restart_output_basename )
         call diagvar_restart_output ( cdate )
      endif
-     call DEBUG_rapend  ('+History')
+     call DEBUG_rapend  ('_History')
 
   enddo
 
@@ -269,7 +269,7 @@ program prg_driver
      write(*,*) '##### finish main loop #####'
   endif
 
-  call DEBUG_rapend('Main ALL')
+  call DEBUG_rapend('Main_ALL')
 #ifdef _FIPP_
   call fipp_stop()
 #endif

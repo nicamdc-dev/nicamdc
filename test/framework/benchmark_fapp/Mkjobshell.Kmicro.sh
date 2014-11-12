@@ -30,45 +30,35 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-# for Oakleaf-FX
-# if [ ${xy} -gt 480 ]; then
-#    rscgrp="x-large"
-# elif [ ${xy} -gt 372 ]; then
-#    rscgrp="large"
-# elif [ ${xy} -gt 216 ]; then
-#    rscgrp="medium"
-# elif [ ${xy} -gt 12 ]; then
-#    rscgrp="small"
-# else
-#    rscgrp="short"
-# fi
-
 # for AICS-FX10
-if [ ${NMPI} -gt 96 ]; then
-   rscgrp="huge"
-elif [ ${NMPI} -gt 24 ]; then
-   rscgrp="large"
+if [ ${NMPI} -gt 1152 ]; then
+   rscgrp="invalid"
 else
-   rscgrp="large"
+   rscgrp="micro"
 fi
+PROF1="fapp -C -Ihwm -Hevent=Cache        -d prof_cache -L 10"
+PROF2="fapp -C -Ihwm -Hevent=Instructions -d prof_inst  -L 10"
+PROF3="fapp -C -Ihwm -Hevent=MEM_access   -d prof_mem   -L 10"
+PROF4="fapp -C -Ihwm -Hevent=Performance  -d prof_perf  -L 10"
+PROF5="fapp -C -Ihwm -Hevent=Statistics   -d prof       -L 10"
 
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for FX10
+# for K micro
 #
 ################################################################################
 #PJM --rsc-list "rscgrp=${rscgrp}"
 #PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=02:00:00"
+#PJM --rsc-list "elapse=00:29:00"
 #PJM -j
 #PJM -s
 #
 . /work/system/Env_base
 #
-export PARALLEL=16
-export OMP_NUM_THREADS=16
+export PARALLEL=8
+export OMP_NUM_THREADS=8
 #export fu08bf=1
 export XOS_MMM_L_ARENA_FREE=2
 
@@ -83,9 +73,19 @@ do
 done
 
 cat << EOF2 >> run.sh
+rm -rf ./prof*
+mkdir -p ./prof_cache
+mkdir -p ./prof_inst
+mkdir -p ./prof_mem
+mkdir -p ./prof_perf
+mkdir -p ./prof
 
 # run
-${MPIEXEC} ./${BINNAME} || exit
+${PROF1} ${MPIEXEC} ./${BINNAME} || exit
+${PROF2} ${MPIEXEC} ./${BINNAME} || exit
+${PROF3} ${MPIEXEC} ./${BINNAME} || exit
+${PROF4} ${MPIEXEC} ./${BINNAME} || exit
+${PROF5} ${MPIEXEC} ./${BINNAME} || exit
 
 ################################################################################
 EOF2
@@ -95,19 +95,19 @@ cat << EOFICO2LL1 > ico2ll.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for FX10
+# for K micro
 #
 ################################################################################
 #PJM --rsc-list "rscgrp=${rscgrp}"
 #PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=00:30:00"
+#PJM --rsc-list "elapse=00:29:00"
 #PJM -j
 #PJM -s
 #
 . /work/system/Env_base
 #
-export PARALLEL=16
-export OMP_NUM_THREADS=16
+export PARALLEL=8
+export OMP_NUM_THREADS=8
 #export fu08bf=1
 
 ln -sv ${TOPDIR}/bin/fio_ico2ll_mpi .

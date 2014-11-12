@@ -189,7 +189,7 @@ contains
     !---------------------------------------------------------------------------
     ! Vertical Advection (fractioanl step) : 1st
     !---------------------------------------------------------------------------
-    call DEBUG_rapstart('++++Vertical Adv.')
+    call DEBUG_rapstart('____Vertical_Adv')
 
     do l = 1, ADM_lall
        rrhog(:,:,l) = 1.D0 / rhog_in(:,:,l)
@@ -353,11 +353,11 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('++++Vertical Adv.')
+    call DEBUG_rapend('____Vertical_Adv')
     !---------------------------------------------------------------------------
     ! Horizontal advection by MIURA scheme
     !---------------------------------------------------------------------------
-    call DEBUG_rapstart('++++Horizontal Adv.')
+    call DEBUG_rapstart('____Horizontal_Adv')
 
     do l = 1, ADM_lall
        rrhog(:,:,l) = 1.D0 / rhog(:,:,l)
@@ -518,11 +518,11 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('++++Horizontal Adv.')
+    call DEBUG_rapend('____Horizontal_Adv')
     !---------------------------------------------------------------------------
     ! Vertical Advection (fractioanl step) : 2nd
     !---------------------------------------------------------------------------
-    call DEBUG_rapstart('++++Vertical Adv.')
+    call DEBUG_rapstart('____Vertical_Adv')
 
     do l = 1, ADM_lall
 
@@ -620,7 +620,7 @@ contains
        endif
     enddo ! tracer q LOOP
 
-    call DEBUG_rapend('++++Vertical Adv.')
+    call DEBUG_rapend('____Vertical_Adv')
 
     return
   end subroutine src_tracer_advection

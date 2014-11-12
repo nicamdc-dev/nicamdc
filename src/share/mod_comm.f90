@@ -2376,14 +2376,14 @@ contains
     !---------------------------------------------------------------------------
 
     if ( opt_comm_barrier ) then
-       call DEBUG_rapstart('Node imbalance adjustment')
+       call DEBUG_rapstart('COMM_barrier')
        call MPI_BARRIER( ADM_COMM_world, ierr )
-       call DEBUG_rapend  ('Node imbalance adjustment')
+       call DEBUG_rapend  ('COMM_barrier')
     endif
 
     !$acc wait
 
-    call DEBUG_rapstart('COMM data_transfer')
+    call DEBUG_rapstart('COMM_data_transfer')
 
     shp    = shape(var)
     kmax   = shp(2)
@@ -2742,7 +2742,7 @@ contains
 
     !$acc wait
 
-    call DEBUG_rapend('COMM data_transfer')
+    call DEBUG_rapend('COMM_data_transfer')
 
     return
   end subroutine COMM_data_transfer
@@ -2795,12 +2795,12 @@ contains
     !---------------------------------------------------------------------------
 
     if ( opt_comm_barrier ) then
-       call DEBUG_rapstart('Node imbalance adjustment')
+       call DEBUG_rapstart('COMM_barrier')
        call MPI_BARRIER( ADM_COMM_world, ierr )
-       call DEBUG_rapend  ('Node imbalance adjustment')
+       call DEBUG_rapend  ('COMM_barrier')
     endif
 
-    call DEBUG_rapstart('COMM var')
+    call DEBUG_rapstart('COMM_var')
 
     !$acc data present(var)
 
@@ -2920,7 +2920,7 @@ contains
     var(suf(ADM_gall_1d,1),:,:,:) = var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
     var(suf(1,ADM_gall_1d),:,:,:) = var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
 
-    call DEBUG_rapend('COMM var')
+    call DEBUG_rapend('COMM_var')
 
     return
   end subroutine COMM_var

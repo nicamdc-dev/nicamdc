@@ -147,10 +147,10 @@ contains
     !---------------------------------------------------------------------------
 
     ! dummy call
-    call DEBUG_rapstart('FILEIO in')
-    call DEBUG_rapend  ('FILEIO in')
-    call DEBUG_rapstart('FILEIO out')
-    call DEBUG_rapend  ('FILEIO out')
+    call DEBUG_rapstart('FILEIO_in')
+    call DEBUG_rapend  ('FILEIO_in')
+    call DEBUG_rapstart('FILEIO_out')
+    call DEBUG_rapend  ('FILEIO_out')
 
     allocate( prc_tab(ADM_lall) )
     ! [fix] 20120201 T.Seiki
@@ -264,7 +264,7 @@ contains
     integer :: did, fid
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('FILEIO in')
+    call DEBUG_rapstart('FILEIO_in')
 
     !--- search/register file
     call FIO_getfid( fid, basename, FIO_FREAD, "", "" )
@@ -327,7 +327,7 @@ contains
 
     endif
 
-    call DEBUG_rapend('FILEIO in')
+    call DEBUG_rapend('FILEIO_in')
 
     return
   end subroutine FIO_input
@@ -371,7 +371,7 @@ contains
     integer :: i
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('FILEIO in')
+    call DEBUG_rapstart('FILEIO_in')
 
     !--- search/register file
     call FIO_getfid( fid, basename, FIO_FREAD, "", "" )
@@ -428,7 +428,7 @@ contains
        endif
     enddo
 
-    call DEBUG_rapend('FILEIO in')
+    call DEBUG_rapend('FILEIO_in')
 
     return
   end subroutine FIO_seek
@@ -478,7 +478,7 @@ contains
     integer :: did, fid
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('FILEIO out')
+    call DEBUG_rapstart('FILEIO_out')
 
     !--- search/register file
     call FIO_getfid( fid, basename, FIO_FWRITE, pkg_desc, pkg_note )
@@ -527,7 +527,7 @@ contains
        call ADM_proc_stop
     endif
 
-    call DEBUG_rapend('FILEIO out')
+    call DEBUG_rapend('FILEIO_out')
 
     return
   end subroutine FIO_output

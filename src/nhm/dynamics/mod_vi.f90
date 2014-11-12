@@ -969,7 +969,7 @@ contains
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++++vi_path2')
+    call DEBUG_rapstart('____vi_path2')
 
     ! calc rhogkin ( previous )
     call cnvvar_rhokin_ijkl( rhog,     rhog_pl,    & !--- [IN]
@@ -1192,7 +1192,7 @@ contains
                                 - rhog_split2_pl    (:,:,:) ) * phi_pl(:,:,:)
     endif
 
-    call DEBUG_rapend('++++vi_path2')
+    call DEBUG_rapend('____vi_path2')
 
     return
   end subroutine vi_path2
@@ -1270,7 +1270,7 @@ contains
     !                * ( B(:,k-1,:) + C_o(:,k,:) * C_i(:,k-1,:) )
     ! end do
 
-    call DEBUG_rapstart('++++vi_rhow_update_matrix')
+    call DEBUG_rapstart('____vi_rhow_update_matrix')
 
     GCVovR   = CNST_EGRAV * CNST_CV / CNST_RAIR
     ACVovRt2 = real(NON_HYDRO_ALPHA,kind=8) * CNST_CV / CNST_RAIR / ( dt*dt )
@@ -1335,7 +1335,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('++++vi_rhow_update_matrix')
+    call DEBUG_rapend('____vi_rhow_update_matrix')
 
     return
   end subroutine vi_rhow_update_matrix
@@ -1413,7 +1413,7 @@ contains
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('++++vi_rhow')
+    call DEBUG_rapstart('____vi_rhow')
 
     alfa = real(NON_HYDRO_ALPHA,kind=8)
     CVovRt2 = CNST_CV / CNST_RAIR / (dt*dt)
@@ -1538,7 +1538,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('++++vi_rhow')
+    call DEBUG_rapend('____vi_rhow')
 
     return
   end subroutine vi_rhow
