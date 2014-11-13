@@ -147,11 +147,11 @@ contains
        write(ADM_LOG_FID,*) 'TIME_integ_type is ', trim(TIME_integ_type)
        select case(TIME_integ_type)
        case('RK2')
-          TIME_sstep_max = 2
-       case('RK3')
-          TIME_sstep_max = 3
-        case('RK4')
           TIME_sstep_max = 4
+       case('RK3')
+          TIME_sstep_max = 6
+        case('RK4')
+          TIME_sstep_max = 8
         case('TRCADV')
           TIME_sstep_max = 0
        case default
