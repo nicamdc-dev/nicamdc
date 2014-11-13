@@ -7,27 +7,28 @@
 &ADMPARAM
     glevel      = 7,
     rlevel      = 0,
-    vlayer      = 94,
+    vlayer      = 120,
     rgnmngfname = "rl00-prc10.info",
 /
 
 &GRDPARAM
     hgrid_io_mode = "ADVANCED",
     hgrid_fname   = "boundary_GL07RL00",
-    VGRID_fname   = "vgrid94.dat",
-    topo_io_mode  = "IDEAL",
+    VGRID_fname   = "vgrid120_100m_dcmip.dat",
+    topo_fname    = "NONE",
 /
 
 &TIMEPARAM
     DTL         = 300.D0,
-    INTEG_TYPE  = "RK3",
-    LSTEP_MAX   = 10,
+    INTEG_TYPE  = "TRCADV",
+    LSTEP_MAX   = 288,
     start_date  = 0000,1,1,0,0,0
 /
 
 &RUNCONFPARAM
-    RUNNAME        = 'ICOMEX_JW',
-    NDIFF_LOCATION = 'IN_LARGE_STEP2',
+    RUNNAME     = 'DCMIP2012-12',
+    THUBURN_LIM = .true.
+    CHEM_TYPE   = 'PASSIVE',
 /
 
 &BSSTATEPARAM
@@ -37,20 +38,14 @@
 &RESTARTPARAM
     input_io_mode     = 'IDEAL',
     output_io_mode    = 'ADVANCED',
-    output_basename   = 'restart_all_GL07RL00z80',
-    restart_layername = 'ZSALL96',
+    output_basename   = 'restart_all_GL07RL00z120',
+    restart_layername = 'ZS120_100m_DCMIP',
 /
 
-##### ICOMEX Test case: Jablonowski Baroclinic Wave
-# test_case = 1: with initial perturbation
-#             2: without initial perturbation
+##### DCMIP 2012 Test 1-2: 3D Hadley-like meridional circulation
 &DYCORETESTPARAM
-    init_type = 'Jablonowski',
-    test_case = '1'
-/
-
-&IDEALTOPOPARAM
-    topo_type = 'JW',
+    init_type = 'Traceradvection',
+    test_case = '1-2'
 /
 
 &CNSTPARAM
@@ -75,29 +70,23 @@
 
 &EMBUDGETPARAM
     MNT_ON   = .true.,
-    MNT_INTV = 72    ,
+    MNT_INTV = 12    ,
 /
 
 &NMHISD
     output_io_mode   = 'ADVANCED' ,
     histall_fname    = 'history'  ,
-    hist3D_layername = 'ZSDEF94'  ,
+    hist3D_layername = 'Z120_100m_DCMIP',
     DIRECT_ACCESS    = .true.     ,
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
-    step             = 72         ,
+    step             = 12         ,
     doout_step0      = .true.     ,
 /
 
-&NMHIST item='ml_u',     file='u',    ktype='3D' /
-&NMHIST item='ml_v',     file='v',    ktype='3D' /
-&NMHIST item='ml_w',     file='w',    ktype='3D' /
-&NMHIST item='ml_pres',  file='prs',  ktype='3D' /
-&NMHIST item='ml_tem',   file='t',    ktype='3D' /
-&NMHIST item='sl_ps',    file='ps',   ktype='2D' /
-&NMHIST item='sl_u850',  file='u850', ktype='2D' /
-&NMHIST item='sl_v850',  file='v850', ktype='2D' /
-&NMHIST item='sl_w850',  file='w850', ktype='2D' /
-&NMHIST item='sl_t850',  file='t850', ktype='2D' /
+&NMHIST item='ml_u',        file='u',     ktype='3D' /
+&NMHIST item='ml_v',        file='v',     ktype='3D' /
+&NMHIST item='ml_w',        file='w',     ktype='3D' /
+&NMHIST item='ml_passive1', file='pasv1', ktype='3D' /
 
 ################################################################################

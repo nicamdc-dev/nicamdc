@@ -20,16 +20,15 @@
 
 &TIMEPARAM
     DTL         = 1200.D0,
-    INTEG_TYPE  = "RK3",
+    INTEG_TYPE  = "TRCADV",
     LSTEP_MAX   = 864,
     start_date  = 0000,1,1,0,0,0
 /
 
 &RUNCONFPARAM
-    RUNNAME        = 'DCMIP2012-13',
-    NDIFF_LOCATION = 'IN_LARGE_STEP2',
-    THUBURN_LIM    = .true.
-    CHEM_TYPE      = 'PASSIVE',
+    RUNNAME     = 'DCMIP2012-13',
+    THUBURN_LIM = .true.
+    CHEM_TYPE   = 'PASSIVE',
 /
 
 &BSSTATEPARAM

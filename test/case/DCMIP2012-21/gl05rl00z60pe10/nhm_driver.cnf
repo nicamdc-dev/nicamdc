@@ -19,15 +19,15 @@
 /
 
 &TIMEPARAM
-    DTL         = 1.D0,
+    DTL         = 2.D0,
     INTEG_TYPE  = "RK3",
-    LSTEP_MAX   = 7200,
+    LSTEP_MAX   = 3600,
     start_date  = 0000,1,1,0,0,0
 /
 
 &RUNCONFPARAM
-    RUNNAME     = 'DCMIP2012-21',
-    THUBURN_LIM = .true.
+    RUNNAME         = 'DCMIP2012-21',
+    NDIFF_LOCATION  = 'IN_LARGE_STEP2',
 /
 
 &BSSTATEPARAM
@@ -71,17 +71,17 @@
 &NUMFILTERPARAM
     hdiff_type        = 'DIRECT',
     lap_order_hdiff   = 2,
-    gamma_h           = 9.0D7,
+    gamma_h           = 9.00D7,
     Kh_coef_minlim    = 0.D0,
     Kh_coef_maxlim    = 9.9D99,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
-    alpha_d           = 9.0D7,
+    alpha_d           = 9.00D7,
 /
 
 &EMBUDGETPARAM
     MNT_ON   = .true.,
-    MNT_INTV = 100   ,
+    MNT_INTV = 50    ,
 /
 
 &NMHISD
@@ -91,12 +91,13 @@
     DIRECT_ACCESS    = .true.     ,
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
-    step             = 100        ,
+    step             = 50         ,
     doout_step0      = .true.     ,
 /
 
 &NMHIST item='ml_u',        file='u',     ktype='3D' /
 &NMHIST item='ml_v',        file='v',     ktype='3D' /
 &NMHIST item='ml_w',        file='w',     ktype='3D' /
+&NMHIST item='ml_tem',      file='t',     ktype='3D' /
 
 ################################################################################

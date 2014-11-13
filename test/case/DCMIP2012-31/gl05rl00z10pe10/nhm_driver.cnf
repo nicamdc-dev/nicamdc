@@ -19,7 +19,7 @@
 /
 
 &VMTRPARAM
-    deep = .true.,
+    deep = .false.,
 /
 
 &TIMEPARAM
@@ -32,7 +32,7 @@
 &RUNCONFPARAM
     RUNNAME         = 'DCMIP2012-31',
     NDIFF_LOCATION  = 'IN_LARGE_STEP2',
-    NON_HYDRO_ALPHA = 1,
+    NON_HYDRO_ALPHA = 0,
 /
 
 &BSSTATEPARAM
@@ -63,12 +63,12 @@
 &NUMFILTERPARAM
     hdiff_type        = 'DIRECT',
     lap_order_hdiff   = 2,
-    gamma_h           = 6.0D9,
+    gamma_h           = 7.0D8,
     Kh_coef_minlim    = 0.D0,
     Kh_coef_maxlim    = 9.9D99,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
-    alpha_d           = 6.0D9,
+    alpha_d           = 7.0D8,
 /
 
 &EMBUDGETPARAM

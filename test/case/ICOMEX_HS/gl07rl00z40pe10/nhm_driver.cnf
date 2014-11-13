@@ -7,27 +7,28 @@
 &ADMPARAM
     glevel      = 7,
     rlevel      = 0,
-    vlayer      = 94,
+    vlayer      = 40,
     rgnmngfname = "rl00-prc10.info",
 /
 
 &GRDPARAM
     hgrid_io_mode = "ADVANCED",
     hgrid_fname   = "boundary_GL07RL00",
-    VGRID_fname   = "vgrid94.dat",
-    topo_io_mode  = "IDEAL",
+    VGRID_fname   = "vgrid40_600m_24km.dat",
+    topo_fname    = "NONE",
 /
 
 &TIMEPARAM
-    DTL         = 300.D0,
+    DTL         = 360.D0,
     INTEG_TYPE  = "RK3",
-    LSTEP_MAX   = 10,
+    LSTEP_MAX   = 24000,
     start_date  = 0000,1,1,0,0,0
 /
 
 &RUNCONFPARAM
-    RUNNAME        = 'ICOMEX_JW',
+    RUNNAME        = 'ICOMEX_HS',
     NDIFF_LOCATION = 'IN_LARGE_STEP2',
+    AF_TYPE        = 'HELD-SUAREZ',
 /
 
 &BSSTATEPARAM
@@ -37,20 +38,13 @@
 &RESTARTPARAM
     input_io_mode     = 'IDEAL',
     output_io_mode    = 'ADVANCED',
-    output_basename   = 'restart_all_GL07RL00z80',
-    restart_layername = 'ZSALL96',
+    output_basename   = 'restart_all_GL07RL00z40',
+    restart_layername = 'ZSALL42',
 /
 
-##### ICOMEX Test case: Jablonowski Baroclinic Wave
-# test_case = 1: with initial perturbation
-#             2: without initial perturbation
+##### ICOMEX Test case: Held-Suarez test
 &DYCORETESTPARAM
-    init_type = 'Jablonowski',
-    test_case = '1'
-/
-
-&IDEALTOPOPARAM
-    topo_type = 'JW',
+    init_type = 'Heldsuarez',
 /
 
 &CNSTPARAM
@@ -75,17 +69,17 @@
 
 &EMBUDGETPARAM
     MNT_ON   = .true.,
-    MNT_INTV = 72    ,
+    MNT_INTV = 2400  ,
 /
 
 &NMHISD
     output_io_mode   = 'ADVANCED' ,
     histall_fname    = 'history'  ,
-    hist3D_layername = 'ZSDEF94'  ,
+    hist3D_layername = 'ZSDEF40'  ,
     DIRECT_ACCESS    = .true.     ,
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
-    step             = 72         ,
+    step             = 2400       ,
     doout_step0      = .true.     ,
 /
 
@@ -95,9 +89,5 @@
 &NMHIST item='ml_pres',  file='prs',  ktype='3D' /
 &NMHIST item='ml_tem',   file='t',    ktype='3D' /
 &NMHIST item='sl_ps',    file='ps',   ktype='2D' /
-&NMHIST item='sl_u850',  file='u850', ktype='2D' /
-&NMHIST item='sl_v850',  file='v850', ktype='2D' /
-&NMHIST item='sl_w850',  file='w850', ktype='2D' /
-&NMHIST item='sl_t850',  file='t850', ktype='2D' /
 
 ################################################################################

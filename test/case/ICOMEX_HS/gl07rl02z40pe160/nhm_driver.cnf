@@ -6,29 +6,29 @@
 
 &ADMPARAM
     glevel      = 7,
-    rlevel      = 1,
-    vlayer      = 120,
-    rgnmngfname = "rl01-prc40.info",
+    rlevel      = 2,
+    vlayer      = 40,
+    rgnmngfname = "rl02-prc160.info",
 /
 
 &GRDPARAM
     hgrid_io_mode = "ADVANCED",
-    hgrid_fname   = "boundary_GL07RL01",
-    VGRID_fname   = "vgrid120_100m_dcmip.dat",
+    hgrid_fname   = "boundary_GL07RL02",
+    VGRID_fname   = "vgrid40_600m_24km.dat",
     topo_fname    = "NONE",
 /
 
 &TIMEPARAM
     DTL         = 300.D0,
-    INTEG_TYPE  = "TRCADV",
-    LSTEP_MAX   = 288,
+    INTEG_TYPE  = "RK3",
+    LSTEP_MAX   = 288000,
     start_date  = 0000,1,1,0,0,0
 /
 
 &RUNCONFPARAM
-    RUNNAME     = 'DCMIP2012-12',
-    THUBURN_LIM = .true.
-    CHEM_TYPE   = 'PASSIVE',
+    RUNNAME        = 'ICOMEX_HS',
+    NDIFF_LOCATION = 'IN_LARGE_STEP2',
+    AF_TYPE        = 'HELD-SUAREZ',
 /
 
 &BSSTATEPARAM
@@ -36,18 +36,14 @@
 /
 
 &RESTARTPARAM
-    input_io_mode     = 'IDEAL',
+    input_io_mode     = 'ADVANCED',
     output_io_mode    = 'ADVANCED',
-    output_basename   = 'restart_all_GL07RL01z120',
-    restart_layername = 'ZS120_100m_DCMIP',
+    input_basename    = 'init_all_GL07RL02z40',
+    output_basename   = 'restart_all_GL07RL02z40',
+    restart_layername = 'ZSALL42',
 /
 
-##### DCMIP 2012 Test 1-2: 3D Hadley-like meridional circulation
-&DYCORETESTPARAM
-    init_type = 'Traceradvection',
-    test_case = '1-2'
-/
-
+##### ICOMEX Test case: Held-Suarez test
 &CNSTPARAM
     earth_radius        = 6.37122D+6,
     earth_angvel        =   7.292D-5,
@@ -60,33 +56,35 @@
 &NUMFILTERPARAM
     hdiff_type        = 'DIRECT',
     lap_order_hdiff   = 2,
-    gamma_h           = 2.0D14,
+    gamma_h           = 2.00D14,
     Kh_coef_minlim    = 0.D0,
     Kh_coef_maxlim    = 9.9D99,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
-    alpha_d           = 2.0D14,
+    alpha_d           = 2.00D14,
 /
 
 &EMBUDGETPARAM
     MNT_ON   = .true.,
-    MNT_INTV = 12    ,
+    MNT_INTV = 2880   ,
 /
 
 &NMHISD
     output_io_mode   = 'ADVANCED' ,
     histall_fname    = 'history'  ,
-    hist3D_layername = 'Z120_100m_DCMIP',
+    hist3D_layername = 'ZSDEF40'  ,
     DIRECT_ACCESS    = .true.     ,
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
-    step             = 12         ,
+    step             = 2880       ,
     doout_step0      = .true.     ,
 /
 
-&NMHIST item='ml_u',        file='u',     ktype='3D' /
-&NMHIST item='ml_v',        file='v',     ktype='3D' /
-&NMHIST item='ml_w',        file='w',     ktype='3D' /
-&NMHIST item='ml_passive1', file='pasv1', ktype='3D' /
+&NMHIST item='ml_u',     file='u',    ktype='3D' /
+&NMHIST item='ml_v',     file='v',    ktype='3D' /
+&NMHIST item='ml_w',     file='w',    ktype='3D' /
+&NMHIST item='ml_pres',  file='prs',  ktype='3D' /
+&NMHIST item='ml_tem',   file='t',    ktype='3D' /
+&NMHIST item='sl_ps',    file='ps',   ktype='2D' /
 
 ################################################################################

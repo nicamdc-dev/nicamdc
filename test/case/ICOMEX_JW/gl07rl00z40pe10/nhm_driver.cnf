@@ -7,21 +7,23 @@
 &ADMPARAM
     glevel      = 7,
     rlevel      = 0,
-    vlayer      = 94,
+    vlayer      = 40,
     rgnmngfname = "rl00-prc10.info",
 /
 
 &GRDPARAM
     hgrid_io_mode = "ADVANCED",
     hgrid_fname   = "boundary_GL07RL00",
-    VGRID_fname   = "vgrid94.dat",
+    VGRID_fname   = "vgrid40_stretch_45km.dat",
+    vgrid_scheme  = "HYBRID",
+    h_efold       = 40000,
     topo_io_mode  = "IDEAL",
 /
 
 &TIMEPARAM
     DTL         = 300.D0,
     INTEG_TYPE  = "RK3",
-    LSTEP_MAX   = 10,
+    LSTEP_MAX   = 3168,
     start_date  = 0000,1,1,0,0,0
 /
 
@@ -37,8 +39,8 @@
 &RESTARTPARAM
     input_io_mode     = 'IDEAL',
     output_io_mode    = 'ADVANCED',
-    output_basename   = 'restart_all_GL07RL00z80',
-    restart_layername = 'ZSALL96',
+    output_basename   = 'restart_all_GL07RL00z40',
+    restart_layername = 'ZSALL42T',
 /
 
 ##### ICOMEX Test case: Jablonowski Baroclinic Wave
@@ -75,17 +77,17 @@
 
 &EMBUDGETPARAM
     MNT_ON   = .true.,
-    MNT_INTV = 72    ,
+    MNT_INTV = 288   ,
 /
 
 &NMHISD
     output_io_mode   = 'ADVANCED' ,
     histall_fname    = 'history'  ,
-    hist3D_layername = 'ZSDEF94'  ,
+    hist3D_layername = 'ZSDEF40T',
     DIRECT_ACCESS    = .true.     ,
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
-    step             = 72         ,
+    step             = 288         ,
     doout_step0      = .true.     ,
 /
 

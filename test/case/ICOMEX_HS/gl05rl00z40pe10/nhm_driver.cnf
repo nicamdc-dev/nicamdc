@@ -21,7 +21,7 @@
 &TIMEPARAM
     DTL         = 1200.D0,
     INTEG_TYPE  = "RK3",
-    LSTEP_MAX   = 21600,
+    LSTEP_MAX   = 72000,
     start_date  = 0000,1,1,0,0,0
 /
 
@@ -36,17 +36,14 @@
 /
 
 &RESTARTPARAM
-    input_io_mode     = 'IDEAL',
+    input_io_mode     = 'ADVANCED',
     output_io_mode    = 'ADVANCED',
+    input_basename    = 'init_all_GL05RL00z40',
     output_basename   = 'restart_all_GL05RL00z40',
     restart_layername = 'ZSALL42',
 /
 
 ##### ICOMEX Test case: Held-Suarez test
-&DYCORETESTPARAM
-    init_type = 'Heldsuarez',
-/
-
 &CNSTPARAM
     earth_radius        = 6.37122D+6,
     earth_angvel        =   7.292D-5,

@@ -60,8 +60,12 @@ cat << EOF1 > run.sh
 #PJM --stgin  "rank=* ${TOPDIR}/data/mnginfo/${MNGINFO}  %r:./"
 #PJM --stgin  "rank=* ${TOPDIR}/data/grid/vgrid/${VGRID} %r:./"
 #PJM --stgin  "rank=* ${TOPDIR}/data/grid/boundary/${dir2d}/boundary_${res2d}.pe%06r %r:./"
-#PJM --stgout "rank=* %r:./*           ./"
-#PJM --stgout "rank=* %r:./prof/* ./prof/"
+#PJM --stgout "rank=* %r:./*            ./"
+#PJM --stgout "rank=* %r:./prof_cache/* ./prof_cache/"
+#PJM --stgout "rank=* %r:./prof_inst/*  ./prof_inst/"
+#PJM --stgout "rank=* %r:./prof_mem/*   ./prof_mem/"
+#PJM --stgout "rank=* %r:./prof_perf/*  ./prof_perf/"
+#PJM --stgout "rank=* %r:./prof/*       ./prof/"
 #PJM -j
 #PJM -s
 #
