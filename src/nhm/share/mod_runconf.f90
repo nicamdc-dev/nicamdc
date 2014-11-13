@@ -288,6 +288,7 @@ contains
     use mod_adm, only: &
        ADM_proc_stop
     use mod_chemvar, only: &
+       CHEMVAR_setup, &
        CHEM_TRC_vmax, &
        CHEM_TRC_name, &
        CHEM_TRC_desc
@@ -370,8 +371,9 @@ contains
     TRC_vmax = TRC_vmax + NTB_MAX
 
     !--- Tracer for chemistry
-    if (      CHEM_TYPE == 'PASSIVE' &
-         .OR. CHEM_TYPE == 'CHASER'  )then
+    call CHEMVAR_setup
+
+    if ( CHEM_TYPE == 'PASSIVE' )then
        NCHEM_MAX = CHEM_TRC_vmax
        NCHEM_STR = TRC_vmax + min(1,NCHEM_MAX)
        NCHEM_END = TRC_vmax + NCHEM_MAX

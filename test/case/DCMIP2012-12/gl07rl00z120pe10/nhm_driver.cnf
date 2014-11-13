@@ -31,6 +31,10 @@
     CHEM_TYPE   = 'PASSIVE',
 /
 
+&CHEMVARPARAM
+    CHEM_TRC_vmax = 1,
+/
+
 &BSSTATEPARAM
     ref_type = 'NOBASE',
 /
@@ -84,9 +88,9 @@
     doout_step0      = .true.     ,
 /
 
-&NMHIST item='ml_u',        file='u',     ktype='3D' /
-&NMHIST item='ml_v',        file='v',     ktype='3D' /
-&NMHIST item='ml_w',        file='w',     ktype='3D' /
-&NMHIST item='ml_passive1', file='pasv1', ktype='3D' /
+&NMHIST item='ml_u',          file='u',     ktype='3D' /
+&NMHIST item='ml_v',          file='v',     ktype='3D' /
+&NMHIST item='ml_w',          file='w',     ktype='3D' /
+&NMHIST item='ml_passive001', file='pasv1', ktype='3D' /
 
 ################################################################################

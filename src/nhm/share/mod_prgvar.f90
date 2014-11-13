@@ -162,9 +162,10 @@ contains
 
     write(ADM_LOG_FID,*)
     write(ADM_LOG_FID,*) '*** io_mode for restart, input : ', trim(input_io_mode)
-    if    ( input_io_mode == 'ADVANCED' ) then
-    elseif( input_io_mode == 'LEGACY'   ) then
-    elseif( input_io_mode == 'IDEAL'    ) then
+    if    ( input_io_mode == 'ADVANCED'     ) then
+    elseif( input_io_mode == 'LEGACY'       ) then
+    elseif( input_io_mode == 'IDEAL'        ) then
+    elseif( input_io_mode == 'IDEAL_TRACER' ) then
     else
        write(ADM_LOG_FID,*) 'xxx Invalid input_io_mode. STOP.'
        call ADM_proc_stop
@@ -1006,7 +1007,8 @@ contains
     use mod_cnvvar, only: &
        cnvvar_diag2prg
     use mod_ideal_init, only :  & ! [add] R.Yoshida 20121019
-       dycore_input
+       dycore_input, &
+       tracer_input
     implicit none
 
     character(len=ADM_MAXFNAME), intent(in) :: basename
@@ -1061,6 +1063,17 @@ contains
        write(ADM_LOG_FID,*) '*** make ideal initials'
 
        call dycore_input( DIAG_var(:,:,:,:) ) !--- [OUT]
+
+    elseif( input_io_mode == 'IDEAL_TRACER' ) then
+
+       do nq = 1, DIAG_vmax0
+          call FIO_input( DIAG_var(:,:,:,nq),basename,DIAG_name(nq), &
+                          layername,1,ADM_kall,1                     )
+       enddo
+
+       write(ADM_LOG_FID,*) '*** make ideal initials for tracer'
+
+       call tracer_input( DIAG_var(:,:,:,DIAG_vmax0+1:DIAG_vmax0+TRC_vmax) ) !--- [OUT]
 
     endif !--- io_mode
 

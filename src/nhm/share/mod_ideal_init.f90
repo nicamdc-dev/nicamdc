@@ -49,6 +49,7 @@ module mod_ideal_init
   !++ Public procedure
   !
   public :: dycore_input
+  public :: tracer_input
 
   !-----------------------------------------------------------------------------
   !
@@ -209,6 +210,87 @@ contains
 
     return
   end subroutine dycore_input
+
+  !-----------------------------------------------------------------------------
+  subroutine tracer_input( &
+       TRC_var )
+    use mod_adm, only: &
+       ADM_gall,  &
+       ADM_kall,  &
+       ADM_KNONE, &
+       ADM_lall
+    use mod_random, only: &
+       RANDOM_get
+    use mod_cnst, only: &
+       CNST_D2R, &
+       CNST_PI
+    use mod_gmtr, only: &
+       GMTR_lon, &
+       GMTR_lat
+    use mod_runconf, only: &
+       TRC_vmax
+    implicit none
+
+    real(8), intent(out) :: TRC_var(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
+
+    real(8) :: random(ADM_gall,ADM_kall,ADM_lall)
+    integer :: deg
+
+    integer :: g, k, l, nq, K0
+    !---------------------------------------------------------------------------
+
+    K0 = ADM_KNONE
+
+    do nq = 1, TRC_VMAX
+       call RANDOM_get( random(:,:,:) )
+
+       if ( nq == 1 ) then ! vapor (dummy for thermodynamics)
+          do l = 1, ADM_lall
+          do k = 1, ADM_kall
+          do g = 1, ADM_gall
+             TRC_var(g,k,l,nq) = 0.D0
+          enddo
+          enddo
+          enddo
+       elseif( nq == 2 ) then
+          do l = 1, ADM_lall
+          do k = 1, ADM_kall
+          do g = 1, ADM_gall
+             deg = nint( GMTR_lon(g,l) / CNST_D2R )
+             if ( mod(deg,10) == 0 ) then
+                TRC_var(g,k,l,nq) = real(ADM_kall-k+1,kind=8)
+             else
+                TRC_var(g,k,l,nq) = 0.D0
+             endif
+          enddo
+          enddo
+          enddo
+       elseif( nq == 3 ) then
+          do l = 1, ADM_lall
+          do k = 1, ADM_kall
+          do g = 1, ADM_gall
+             deg = nint( GMTR_lat(g,l) / CNST_D2R )
+             if ( mod(deg,10) == 0 ) then
+                TRC_var(g,k,l,nq) = real(ADM_kall-k+1,kind=8)
+             else
+                TRC_var(g,k,l,nq) = 0.D0
+             endif
+          enddo
+          enddo
+          enddo
+       else
+          do l = 1, ADM_lall
+          do k = 1, ADM_kall
+          do g = 1, ADM_gall
+             TRC_var(g,k,l,nq) = random(g,k,l) * exp(real(nq,kind=8)/10.D0)
+          enddo
+          enddo
+          enddo
+       endif
+    enddo
+
+    return
+  end subroutine tracer_input
 
   !-----------------------------------------------------------------------------
   subroutine hs_init( &
@@ -565,10 +647,10 @@ contains
 
     DIAG_var(:,:,:,:) = 0.D0
 
-    I_pasv1 = 6 + NCHEM_STR + chemvar_getid( "passive1" ) - 1
-    I_pasv2 = 6 + NCHEM_STR + chemvar_getid( "passive2" ) - 1
-    I_pasv3 = 6 + NCHEM_STR + chemvar_getid( "passive3" ) - 1
-    I_pasv4 = 6 + NCHEM_STR + chemvar_getid( "passive4" ) - 1
+    I_pasv1 = 6 + NCHEM_STR + chemvar_getid( "passive001" ) - 1
+    I_pasv2 = 6 + NCHEM_STR + chemvar_getid( "passive002" ) - 1
+    I_pasv3 = 6 + NCHEM_STR + chemvar_getid( "passive003" ) - 1
+    I_pasv4 = 6 + NCHEM_STR + chemvar_getid( "passive004" ) - 1
 
     select case(test_case)
     case ('1', '1-1') ! DCMIP 2012 Test 1-1: 3D Deformational Flow
@@ -811,7 +893,7 @@ contains
 
     DIAG_var(:,:,:,:) = 0.D0
 
-    I_pasv1 = 6 + chemvar_getid( "passive1" ) + NCHEM_STR - 1
+    I_pasv1 = 6 + chemvar_getid( "passive001" ) + NCHEM_STR - 1
 
     do l = 1, lall
     do n = 1, ijdim
