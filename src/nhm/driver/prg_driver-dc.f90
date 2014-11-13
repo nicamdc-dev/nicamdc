@@ -65,6 +65,8 @@ program prg_driver
      ADM_proc_init,      &
      ADM_proc_finish,    &
      ADM_setup
+  use mod_random, only: &
+     RANDOM_setup
   use mod_cnst, only: &
      CNST_setup
   use mod_calendar, only: &
@@ -148,6 +150,9 @@ program prg_driver
 
   call DEBUG_rapstart('Total')
   call DEBUG_rapstart('Setup_ALL')
+
+  !---< radom module setup >---
+  call RANDOM_setup
 
   !---< cnst module setup >---
   call CNST_setup
