@@ -22,11 +22,7 @@
     DTL         = 1200.D0,
     INTEG_TYPE  = "RK3",
     LSTEP_MAX   = 10,
-    SSTEP_MAX   = 6,
-    SPLIT       = .true.,
-    start_year  = 1000,
-    start_month = 1,
-    start_day   = 1,
+    start_date  = 0000,1,1,0,0,0
 /
 
 &RUNCONFPARAM

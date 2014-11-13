@@ -19,12 +19,10 @@
 /
 
 &TIMEPARAM
-    DTL         = 900.D0,
+    DTL         = 1200.D0,
     INTEG_TYPE  = "RK3",
-    LSTEP_MAX   = 124800,
-    start_year  = 1000,
-    start_month = 1,
-    start_day   = 1,
+    LSTEP_MAX   = 21600,
+    start_date  = 0000,1,1,0,0,0
 /
 
 &RUNCONFPARAM
@@ -71,7 +69,7 @@
 
 &EMBUDGETPARAM
     MNT_ON   = .true.,
-    MNT_INTV = 960   ,
+    MNT_INTV = 720   ,
 /
 
 &NMHISD
@@ -81,7 +79,7 @@
     DIRECT_ACCESS    = .true.     ,
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
-    step             = 960        ,
+    step             = 720        ,
     doout_step0      = .true.     ,
 /
 

@@ -22,9 +22,7 @@
     DTL         = 600.D0,
     INTEG_TYPE  = "TRCADV",
     LSTEP_MAX   = 144,
-    start_year  = 1000,
-    start_month = 1,
-    start_day   = 1,
+    start_date  = 0000,1,1,0,0,0
 /
 
 &RUNCONFPARAM
