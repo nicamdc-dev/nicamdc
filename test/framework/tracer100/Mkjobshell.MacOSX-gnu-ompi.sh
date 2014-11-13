@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="scan mpiexec"
+MPIEXEC="mpiexec -np ${NMPI}"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -34,22 +34,11 @@ cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for K on interactive job
+# ------ FOR MacOSX & gfortran4.6 & OpenMPI1.6 -----
 #
 ################################################################################
-#PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=00:30:00"
-#PJM --sparam "wait-time=unlimited"
-#PJM -s
-#
-. /work/system/Env_base
-. /work/aics_apps/scalasca/Env_scalasca
-#
-export PARALLEL=8
-export OMP_NUM_THREADS=8
-export SCAN_ANALYZE_OPTS="-i -s"
-export EPK_TITLE=PROF
-export fu30bf=1
+export FORT_FMT_RECL=400
+export GFORTRAN_UNBUFFERED_ALL=Y
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
@@ -59,6 +48,11 @@ EOF1
 for f in $( ls ${TOPDIR}/data/grid/boundary/${dir2d} )
 do
    echo "ln -sv ${TOPDIR}/data/grid/boundary/${dir2d}/${f} ." >> run.sh
+done
+
+for f in $( ls ${TOPDIR}/data/initial/HS_spinup_300day/${dir3d} )
+do
+   echo "ln -sv ${TOPDIR}/data/initial/HS_spinup_300day/${dir3d}/${f} ./${f/restart/init}" >> run.sh
 done
 
 cat << EOF2 >> run.sh
@@ -74,20 +68,11 @@ cat << EOFICO2LL1 > ico2ll.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for K on interactive job
+# ------ FOR MacOSX & gfortran4.6 & OpenMPI1.6 -----
 #
 ################################################################################
-#PJM --rsc-list "rscgrp=${rscgrp}"
-#PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=00:30:00"
-#PJM -j
-#PJM -s
-#
-. /work/system/Env_base
-#
-export PARALLEL=16
-export OMP_NUM_THREADS=16
-#export fu08bf=1
+export FORT_FMT_RECL=400
+export GFORTRAN_UNBUFFERED_ALL=Y
 
 ln -sv ${TOPDIR}/bin/fio_ico2ll_mpi .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
@@ -111,6 +96,16 @@ layerfile_dir="./zaxis" \
 llmap_base="./llmap" \
 -lon_swap \
 -comm_smallchunk
+
+${MPIEXEC} ./fio_ico2ll_mpi \
+history \
+glevel=${GLEV} \
+rlevel=${RLEV} \
+mnginfo="./${MNGINFO}" \
+layerfile_dir="./zaxis" \
+llmap_base="./llmap" \
+-lon_swap \
+-comm_smallchunk -output_gtool
 
 ################################################################################
 EOFICO2LL2

@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="scan mpiexec"
+MPIEXEC="mpiexec"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -30,76 +30,80 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
+if [ ${NMPI} -gt 36864 ]; then
+   rscgrp="huge"
+elif [ ${NMPI} -gt 384 ]; then
+   rscgrp="large"
+else
+   rscgrp="small"
+fi
+PROF="fipp -C -Srange -Ihwm -d prof"
+
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for K on interactive job
+# for K computer
 #
 ################################################################################
+#PJM --rsc-list "rscgrp=${rscgrp}"
 #PJM --rsc-list "node=${NMPI}"
 #PJM --rsc-list "elapse=00:30:00"
-#PJM --sparam "wait-time=unlimited"
+#PJM --stg-transfiles all
+#PJM --mpi "use-rankdir"
+#PJM --stgin  "rank=* ${TOPDIR}/bin/${BINNAME}           %r:./"
+#PJM --stgin  "rank=* ./nhm_driver.cnf                   %r:./"
+#PJM --stgin  "rank=* ${TOPDIR}/data/mnginfo/${MNGINFO}  %r:./"
+#PJM --stgin  "rank=* ${TOPDIR}/data/grid/vgrid/${VGRID} %r:./"
+#PJM --stgin  "rank=* ${TOPDIR}/data/grid/boundary/${dir2d}/boundary_${res2d}.pe%06r %r:./"
+#PJM --stgin  "rank=* ${TOPDIR}/data/initial/HS_spinup_300day/${dir3d}/restart_all_${res3d}.pe%06r %r:./init_all_${res3d}.pe%06r"
+#PJM --stgout "rank=* %r:./*           ./"
+#PJM --stgout "rank=* %r:./prof/* ./prof/"
+#PJM -j
 #PJM -s
 #
 . /work/system/Env_base
-. /work/aics_apps/scalasca/Env_scalasca
 #
 export PARALLEL=8
 export OMP_NUM_THREADS=8
-export SCAN_ANALYZE_OPTS="-i -s"
-export EPK_TITLE=PROF
-export fu30bf=1
+#export fu08bf=1
+export XOS_MMM_L_ARENA_FREE=2
 
-ln -sv ${TOPDIR}/bin/${BINNAME} .
-ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
-ln -sv ${TOPDIR}/data/grid/vgrid/${VGRID} .
-EOF1
-
-for f in $( ls ${TOPDIR}/data/grid/boundary/${dir2d} )
-do
-   echo "ln -sv ${TOPDIR}/data/grid/boundary/${dir2d}/${f} ." >> run.sh
-done
-
-cat << EOF2 >> run.sh
+rm -rf ./prof
 
 # run
-${MPIEXEC} ./${BINNAME} || exit
+${PROF} ${MPIEXEC} ./${BINNAME} || exit
 
 ################################################################################
-EOF2
+EOF1
 
 
 cat << EOFICO2LL1 > ico2ll.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for K on interactive job
+# for K computer
 #
 ################################################################################
 #PJM --rsc-list "rscgrp=${rscgrp}"
 #PJM --rsc-list "node=${NMPI}"
 #PJM --rsc-list "elapse=00:30:00"
+#PJM --stg-transfiles all
+#PJM --mpi "use-rankdir"
+#PJM --stgin  "rank=* ${TOPDIR}/bin/fio_ico2ll_mpi      %r:./"
+#PJM --stgin  "rank=* ${TOPDIR}/data/mnginfo/${MNGINFO} %r:./"
+#PJM --stgin  "rank=* ${TOPDIR}/data/zaxis/*            %r:./"
+#PJM --stgin  "rank=* ./history.pe%06r                  %r:./"
+#PJM --stgin  "rank=* ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/llmap.* %r:./"
+#PJM --stgout "rank=* %r:./*           ./"
 #PJM -j
 #PJM -s
 #
 . /work/system/Env_base
 #
-export PARALLEL=16
-export OMP_NUM_THREADS=16
-#export fu08bf=1
-
-ln -sv ${TOPDIR}/bin/fio_ico2ll_mpi .
-ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
-ln -sv ${TOPDIR}/data/zaxis .
-EOFICO2LL1
-
-for f in $( ls ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/ )
-do
-   echo "ln -sv ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/${f} ." >> ico2ll.sh
-done
-
-cat << EOFICO2LL2 >> ico2ll.sh
+export PARALLEL=8
+export OMP_NUM_THREADS=8
+export fu08bf=1
 
 # run
 ${MPIEXEC} ./fio_ico2ll_mpi \
@@ -107,10 +111,10 @@ history \
 glevel=${GLEV} \
 rlevel=${RLEV} \
 mnginfo="./${MNGINFO}" \
-layerfile_dir="./zaxis" \
+layerfile_dir="./." \
 llmap_base="./llmap" \
 -lon_swap \
 -comm_smallchunk
 
 ################################################################################
-EOFICO2LL2
+EOFICO2LL1

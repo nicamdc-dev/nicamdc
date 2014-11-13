@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="scan mpiexec"
+MPIEXEC="mpiexec"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -30,26 +30,37 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
+# for AICS-FX10
+if [ ${NMPI} -gt 1152 ]; then
+   rscgrp="invalid"
+else
+   rscgrp="micro"
+fi
+PROF1="fapp -C -Ihwm -Hevent=Cache        -d prof_cache -L 10"
+PROF2="fapp -C -Ihwm -Hevent=Instructions -d prof_inst  -L 10"
+PROF3="fapp -C -Ihwm -Hevent=MEM_access   -d prof_mem   -L 10"
+PROF4="fapp -C -Ihwm -Hevent=Performance  -d prof_perf  -L 10"
+PROF5="fapp -C -Ihwm -Hevent=Statistics   -d prof       -L 10"
+
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for K on interactive job
+# for K micro
 #
 ################################################################################
+#PJM --rsc-list "rscgrp=${rscgrp}"
 #PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=00:30:00"
-#PJM --sparam "wait-time=unlimited"
+#PJM --rsc-list "elapse=00:29:00"
+#PJM -j
 #PJM -s
 #
 . /work/system/Env_base
-. /work/aics_apps/scalasca/Env_scalasca
 #
 export PARALLEL=8
 export OMP_NUM_THREADS=8
-export SCAN_ANALYZE_OPTS="-i -s"
-export EPK_TITLE=PROF
-export fu30bf=1
+#export fu08bf=1
+export XOS_MMM_L_ARENA_FREE=2
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
@@ -61,10 +72,25 @@ do
    echo "ln -sv ${TOPDIR}/data/grid/boundary/${dir2d}/${f} ." >> run.sh
 done
 
+for f in $( ls ${TOPDIR}/data/initial/HS_spinup_300day/${dir3d} )
+do
+   echo "ln -sv ${TOPDIR}/data/initial/HS_spinup_300day/${dir3d}/${f} ./${f/restart/init}" >> run.sh
+done
+
 cat << EOF2 >> run.sh
+rm -rf ./prof*
+mkdir -p ./prof_cache
+mkdir -p ./prof_inst
+mkdir -p ./prof_mem
+mkdir -p ./prof_perf
+mkdir -p ./prof
 
 # run
-${MPIEXEC} ./${BINNAME} || exit
+${PROF1} ${MPIEXEC} ./${BINNAME} || exit
+${PROF2} ${MPIEXEC} ./${BINNAME} || exit
+${PROF3} ${MPIEXEC} ./${BINNAME} || exit
+${PROF4} ${MPIEXEC} ./${BINNAME} || exit
+${PROF5} ${MPIEXEC} ./${BINNAME} || exit
 
 ################################################################################
 EOF2
@@ -74,19 +100,19 @@ cat << EOFICO2LL1 > ico2ll.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for K on interactive job
+# for K micro
 #
 ################################################################################
 #PJM --rsc-list "rscgrp=${rscgrp}"
 #PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=00:30:00"
+#PJM --rsc-list "elapse=00:29:00"
 #PJM -j
 #PJM -s
 #
 . /work/system/Env_base
 #
-export PARALLEL=16
-export OMP_NUM_THREADS=16
+export PARALLEL=8
+export OMP_NUM_THREADS=8
 #export fu08bf=1
 
 ln -sv ${TOPDIR}/bin/fio_ico2ll_mpi .

@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="scan mpiexec"
+MPIEXEC="mpiexec"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -30,26 +30,48 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
+# for Oakleaf-FX
+# if [ ${xy} -gt 480 ]; then
+#    rscgrp="x-large"
+# elif [ ${xy} -gt 372 ]; then
+#    rscgrp="large"
+# elif [ ${xy} -gt 216 ]; then
+#    rscgrp="medium"
+# elif [ ${xy} -gt 12 ]; then
+#    rscgrp="small"
+# else
+#    rscgrp="short"
+# fi
+
+# for AICS-FX10
+if [ ${NMPI} -gt 96 ]; then
+   rscgrp="huge"
+elif [ ${NMPI} -gt 24 ]; then
+   rscgrp="large"
+else
+   rscgrp="large"
+fi
+PROF="fipp -C -Srange -Ihwm -d prof"
+
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for K on interactive job
+# for FX10
 #
 ################################################################################
+#PJM --rsc-list "rscgrp=${rscgrp}"
 #PJM --rsc-list "node=${NMPI}"
 #PJM --rsc-list "elapse=00:30:00"
-#PJM --sparam "wait-time=unlimited"
+#PJM -j
 #PJM -s
 #
 . /work/system/Env_base
-. /work/aics_apps/scalasca/Env_scalasca
 #
-export PARALLEL=8
-export OMP_NUM_THREADS=8
-export SCAN_ANALYZE_OPTS="-i -s"
-export EPK_TITLE=PROF
-export fu30bf=1
+export PARALLEL=16
+export OMP_NUM_THREADS=16
+#export fu08bf=1
+export XOS_MMM_L_ARENA_FREE=2
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
@@ -61,10 +83,17 @@ do
    echo "ln -sv ${TOPDIR}/data/grid/boundary/${dir2d}/${f} ." >> run.sh
 done
 
+for f in $( ls ${TOPDIR}/data/initial/HS_spinup_300day/${dir3d} )
+do
+   echo "ln -sv ${TOPDIR}/data/initial/HS_spinup_300day/${dir3d}/${f} ./${f/restart/init}" >> run.sh
+done
+
 cat << EOF2 >> run.sh
+rm -rf ./prof
+mkdir -p ./prof
 
 # run
-${MPIEXEC} ./${BINNAME} || exit
+${PROF} ${MPIEXEC} ./${BINNAME} || exit
 
 ################################################################################
 EOF2
@@ -74,7 +103,7 @@ cat << EOFICO2LL1 > ico2ll.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for K on interactive job
+# for FX10
 #
 ################################################################################
 #PJM --rsc-list "rscgrp=${rscgrp}"
