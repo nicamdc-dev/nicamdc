@@ -416,25 +416,29 @@ contains
     ! rhogw * scl at half level
     if ( fluxtype == I_SRC_default ) then
 
-!OCL SERIAL
        do l = 1, ADM_lall
-!OCL PARALLEL
-       do k = 1, ADM_kall
-       do g = 1, ADM_gall
-          rhogwscl(g,k,l) = rhogw(g,k,l) * 0.5D0 * ( GRD_afac(k) * scl(g,k,  l) &
-                                                   + GRD_bfac(k) * scl(g,k-1,l) )
-       enddo
-       enddo
+          do k = ADM_kmin, ADM_kmax+1
+          do g = 1, ADM_gall
+             rhogwscl(g,k,l) = rhogw(g,k,l) * 0.5D0 * ( GRD_afac(k) * scl(g,k,  l) &
+                                                      + GRD_bfac(k) * scl(g,k-1,l) )
+          enddo
+          enddo
+          do g = 1, ADM_gall
+             rhogwscl(g,ADM_kmin-1,l) = 0.D0
+          enddo
        enddo
 
        if ( ADM_prc_me == ADM_prc_pl ) then
           do l = 1, ADM_lall_pl
-          do k = 1, ADM_kall
-          do g = 1, ADM_gall_pl
-             rhogwscl_pl(g,k,l) = rhogw_pl(g,k,l) * 0.5D0 * ( GRD_afac(k) * scl_pl(g,k  ,l) &
-                                                            + GRD_bfac(k) * scl_pl(g,k-1,l) )
-          enddo
-          enddo
+             do k = ADM_kmin, ADM_kmax+1
+             do g = 1, ADM_gall_pl
+                rhogwscl_pl(g,k,l) = rhogw_pl(g,k,l) * 0.5D0 * ( GRD_afac(k) * scl_pl(g,k  ,l) &
+                                                               + GRD_bfac(k) * scl_pl(g,k-1,l) )
+             enddo
+             enddo
+             do g = 1, ADM_gall_pl
+                rhogwscl_pl(g,ADM_kmin-1,l) = 0.D0
+             enddo
           enddo
        endif
 

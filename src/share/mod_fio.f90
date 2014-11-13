@@ -295,6 +295,7 @@ contains
 
              var(:,k_start:k_end,:) = 0.D0
 
+             call DEBUG_rapend('FILEIO_in')
              return
           endif
        endif
