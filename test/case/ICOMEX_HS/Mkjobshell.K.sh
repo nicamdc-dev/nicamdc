@@ -92,6 +92,7 @@ cat << EOFICO2LL1 > ico2ll.sh
 #PJM --stgin  "rank=* ./history.pe%06r                  %r:./"
 #PJM --stgin  "rank=* ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/llmap.* %r:./"
 #PJM --stgout "rank=* %r:./*           ./"
+#PJM --stgout "rank=0 ../*             ./"
 #PJM -j
 #PJM -s
 #
@@ -109,6 +110,7 @@ rlevel=${RLEV} \
 mnginfo="./${MNGINFO}" \
 layerfile_dir="./." \
 llmap_base="./llmap" \
+outfile_dir="../" \
 -lon_swap \
 -comm_smallchunk
 
