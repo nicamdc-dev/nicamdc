@@ -17,6 +17,7 @@ module mod_forcing_driver
   !
   !++ Used modules
   !
+  use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID
   !-----------------------------------------------------------------------------
@@ -58,22 +59,28 @@ module mod_forcing_driver
 contains
   !-----------------------------------------------------------------------------
   subroutine forcing_setup
+    use mod_adm, only: &
+       ADM_proc_stop
     use mod_runconf, only: &
        AF_TYPE
     use mod_af_heldsuarez, only: &
-       af_heldsuarez_init
+       AF_heldsuarez_init
     implicit none
-
     !---------------------------------------------------------------------------
 
+    write(ADM_LOG_FID,*)
+    write(ADM_LOG_FID,*) '+++ Module[forcing]/Category[nhm]'
+
+    write(ADM_LOG_FID,*) '+++ Artificial forcing type: ', trim(AF_TYPE)
     select case(AF_TYPE)
     case('NONE')
        !--- do nothing
     case('HELD-SUAREZ')
-       call af_heldsuarez_init
+       write(ADM_LOG_FID,*) '+++ HELD-SUAREZ'
+       call AF_heldsuarez_init
     case default
-       write(*,*) 'Msg : Sub[af_init]/Mod[af_driver]'
-       write(*,*) ' *** WARNING : Not appropriate names in namelist!! CHECK!!'
+       write(ADM_LOG_FID,*) 'xxx unsupported forcing type! STOP.'
+       call ADM_proc_stop
     end select
 
     return
@@ -110,7 +117,7 @@ contains
     use mod_bndcnd, only: &
        bndcnd_thermo
     use mod_af_heldsuarez, only: &
-       af_HeldSuarez
+       AF_heldsuarez
     use mod_history, only: &
        history_in
     implicit none
@@ -150,6 +157,8 @@ contains
 
     integer :: l, nq
     !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('__Forcing')
 
     call GTL_clip_region(VMTR_GSGAM2 (:,:,:),gsgam2, 1,ADM_kall)
     call GTL_clip_region(VMTR_GSGAM2H(:,:,:),gsgam2h,1,ADM_kall)
@@ -195,7 +204,7 @@ contains
     enddo
 
     ! forcing
-    select case(trim(AF_TYPE))
+    select case(AF_TYPE)
     case('HELD-SUAREZ')
 
        do l = 1, ADM_lall
@@ -254,11 +263,13 @@ contains
                         rhoge,  & ! [IN]
                         rhogq   ) ! [IN]
 
+    call DEBUG_rapend  ('__Forcing')
+
     return
   end subroutine forcing_step
 
-  ! [add; original by H.Miura] 20130613 R.Yoshida
   !-----------------------------------------------------------------------------
+  ! [add; original by H.Miura] 20130613 R.Yoshida
   subroutine forcing_update( &
        PROG, PROG_pl )
     use mod_adm, only: &
@@ -305,6 +316,8 @@ contains
 
     integer :: n, k ,l
     !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('__Forcing')
 
     !--- update velocity
     time = time + TIME_DTL
@@ -398,6 +411,8 @@ contains
        PROG_pl(:,:,:,I_RHOGVZ) = vz_pl(:,:,:) * PROG_pl(:,:,:,I_RHOG)
        PROG_pl(:,:,:,I_RHOGW ) = w_pl (:,:,:) * PROG_pl(:,:,:,I_RHOG)
     endif
+
+    call DEBUG_rapend  ('__Forcing')
 
     return
   end subroutine forcing_update

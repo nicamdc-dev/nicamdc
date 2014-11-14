@@ -702,6 +702,8 @@ contains
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
+    call DEBUG_rapstart('____Horizontal_Adv_flux')
+
     do l = 1, ADM_lall
     do k = 1, ADM_kall
 
@@ -894,6 +896,8 @@ contains
        enddo
     endif
 
+    call DEBUG_rapend  ('____Horizontal_Adv_flux')
+
     return
   end subroutine horizontal_flux
 
@@ -950,6 +954,8 @@ contains
     integer :: suf,i,j
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('____Horizontal_Adv_remap')
 
     call OPRT_gradient( q    (:,:,:),   q_pl    (:,:,:),  & ![IN]
                         gradq(:,:,:,:), gradq_pl(:,:,:,:) ) ![OUT]
@@ -1090,6 +1096,8 @@ contains
        enddo
     endif
 
+    call DEBUG_rapend  ('____Horizontal_Adv_remap')
+
     return
   end subroutine horizontal_remap
 
@@ -1144,6 +1152,8 @@ contains
 
     integer :: n, k, l
     !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('____Vertical_Adv_limiter')
 
     do l = 1, ADM_lall
        Qin_min(:,:,:) =  CNST_MAX_REAL
@@ -1275,6 +1285,8 @@ contains
        enddo
     endif
 
+    call DEBUG_rapend  ('____Vertical_Adv_limiter')
+
     return
   end subroutine vertical_limiter_thuburn
 
@@ -1347,6 +1359,8 @@ contains
     integer :: suf,i,j
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('____Horizontal_Adv_limiter')
 
     !---< (i) define inflow bounds, eq.(32)&(33) >---
     do l = 1, ADM_lall
@@ -1667,6 +1681,8 @@ contains
        enddo
        enddo
     endif
+
+    call DEBUG_rapend  ('____Horizontal_Adv_limiter')
 
     return
   end subroutine horizontal_limiter_thuburn

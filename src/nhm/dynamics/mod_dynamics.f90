@@ -355,6 +355,8 @@ contains
 
     call DEBUG_rapstart('__Dynamics')
 
+    call DEBUG_rapstart('___Pre_Post')
+
     large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=8)
 
     !--- get from prg0
@@ -377,6 +379,8 @@ contains
        PROGq0   (:,:,:,:) = PROGq   (:,:,:,:)
        PROGq0_pl(:,:,:,:) = PROGq_pl(:,:,:,:)
     endif
+
+    call DEBUG_rapend  ('___Pre_Post')
 
     if ( TIME_INTEG_TYPE == 'TRCADV' ) then  ! TRC-ADV Test Bifurcation
 
@@ -408,6 +412,8 @@ contains
     !
     !---------------------------------------------------------------------------
     do nl = 1, num_of_iteration_lstep
+
+       call DEBUG_rapstart('___Pre_Post')
 
        !---< Generate diagnostic values and set the boudary conditions
        rho(:,:,:) = PROG(:,:,:,I_RHOG  ) / VMTR_GSGAM2(:,:,:)
@@ -551,6 +557,7 @@ contains
 
        endif
 
+       call DEBUG_rapend  ('___Pre_Post')
        !------------------------------------------------------------------------
        !> LARGE step
        !------------------------------------------------------------------------
@@ -877,6 +884,8 @@ contains
 
        call DEBUG_rapend  ('___Tracer_Advection')
 
+       call DEBUG_rapstart('___Pre_Post')
+
        !--- TKE fixer [comment] 2011/08/16 M.Satoh: need this fixer for every small time steps
        if ( do_tke_correction ) then
           do l = 1, ADM_lall
@@ -912,9 +921,13 @@ contains
           PROG(suf(1,ADM_gall_1d),:,:,:) = PROG(suf(ADM_gmin,ADM_gmax+1),:,:,:)
        endif
 
+       call DEBUG_rapend  ('___Pre_Post')
+
     enddo !--- large step
 
     enddo !--- divided step for dynamics
+
+    call DEBUG_rapstart('___Pre_Post')
 
     call prgvar_set( PROG(:,:,:,I_RHOG),   PROG_pl(:,:,:,I_RHOG),   & ! [IN]
                      PROG(:,:,:,I_RHOGVX), PROG_pl(:,:,:,I_RHOGVX), & ! [IN]
@@ -924,6 +937,8 @@ contains
                      PROG(:,:,:,I_RHOGE),  PROG_pl(:,:,:,I_RHOGE),  & ! [IN]
                      PROGq(:,:,:,:),       PROGq_pl(:,:,:,:),       & ! [IN]
                      0                                              ) ! [IN]
+
+    call DEBUG_rapend  ('___Pre_Post')
 
     call DEBUG_rapend  ('__Dynamics')
 

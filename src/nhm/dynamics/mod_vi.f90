@@ -53,9 +53,9 @@ module mod_vi
   !
   !++ Private procedures
   !
-  private :: vi_path2
+  private :: vi_main
   private :: vi_rhow_update_matrix
-  private :: vi_rhow
+  private :: vi_rhow_solver
 
   !-----------------------------------------------------------------------------
   !
@@ -313,6 +313,8 @@ contains
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
+    call DEBUG_rapstart('____vi_path0')
+
     !--- full level -> half level
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kmax+1
@@ -496,12 +498,16 @@ contains
     v_mean_c_pl(:,:,:,4) = rhog_pl  (:,:,:)
     v_mean_c_pl(:,:,:,5) = rhogw_pl (:,:,:)
 
+    call DEBUG_rapend  ('____vi_path0')
+
     !---------------------------------------------------------------------------
     !
     !> Start small step iteration
     !
     !---------------------------------------------------------------------------
     do ns = 1, num_of_itr
+
+       call DEBUG_rapstart('____vi_path1')
 
        !---< calculation of preg_prim(*) from rhog(*) & rhoge(*)
        do l = 1, ADM_lall
@@ -541,6 +547,7 @@ contains
        endif
 
        if ( TIME_SPLIT ) then
+
           !---< Calculation of source term for Vh(vx,vy,vz) and w (splited)
 
           !--- divergence damping
@@ -607,9 +614,6 @@ contains
           endif
 
        else !--- NO-SPLITING
-          !---------------------------------------------------------------------
-          ! vi_path1 is skipped
-          !---------------------------------------------------------------------
 
           !------ sum of tendency ( large step )
 !OCL SERIAL
@@ -641,6 +645,10 @@ contains
           endif
 
        endif ! Split/Non-split
+
+       call DEBUG_rapend  ('____vi_path1')
+
+       call DEBUG_rapstart('____vi_path2')
 
        !--- treatment for boundary condition
 
@@ -678,7 +686,7 @@ contains
        enddo
 
        !--- 2nd small step : vertical implicit : rhog, rhogw, preg_prim: next step
-       call vi_path2( variation_we(:,:,:,1), variation_we_pl(:,:,:,1), & !--- [OUT]
+       call vi_main( variation_we(:,:,:,1), variation_we_pl(:,:,:,1), & !--- [OUT]
                       variation_we(:,:,:,2), variation_we_pl(:,:,:,2), & !--- [OUT]
                       variation_we(:,:,:,3), variation_we_pl(:,:,:,3), & !--- [OUT]
                       variation_vh(:,:,:,1), variation_vh_pl(:,:,:,1), & !--- [IN]
@@ -719,6 +727,8 @@ contains
           variation_we(suf(1,ADM_gall_1d),k,l,3) = variation_we(suf(ADM_gmin,ADM_gmax+1),k,l,3)
        enddo
        enddo
+
+       call DEBUG_rapend  ('____vi_path2')
 
        do l = 1, ADM_lall
           do k = 1, ADM_kall
@@ -812,7 +822,7 @@ contains
   end subroutine vi_small_step
 
   !-----------------------------------------------------------------------------
-  subroutine vi_path2( &
+  subroutine vi_main( &
        rhog_split1,      rhog_split1_pl,      & !--- [OUT]
        rhogw_split1,     rhogw_split1_pl,     & !--- [OUT]
        rhoge_split1,     rhoge_split1_pl,     & !--- [OUT]
@@ -955,8 +965,6 @@ contains
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('____vi_path2')
-
     ! calc rhogkin ( previous )
     call cnvvar_rhokin_ijkl( rhog0,    rhog0_pl,   & !--- [IN]
                              rhogvx0,  rhogvx0_pl, & !--- [IN]
@@ -1093,14 +1101,14 @@ contains
     endif
 
     !---< vertical implicit : solved by tridiagonal matrix
-    call vi_rhow( rhogw_split1,     rhogw_split1_pl,     & !--- [INOUT]
-                  rhogw_split0,     rhogw_split0_pl,     & !--- [IN]
-                  preg_prim_split0, preg_prim_split0_pl, & !--- [IN]
-                  rhog_split0,      rhog_split0_pl,      & !--- [IN]
-                  grhog1,           grhog1_pl,           & !--- [IN]
-                  grhogw,           grhogw_pl,           & !--- [IN]
-                  gpre,             gpre_pl,             & !--- [IN]
-                  dt                                     ) !--- [IN]
+    call vi_rhow_solver( rhogw_split1,     rhogw_split1_pl,     & !--- [INOUT]
+                         rhogw_split0,     rhogw_split0_pl,     & !--- [IN]
+                         preg_prim_split0, preg_prim_split0_pl, & !--- [IN]
+                         rhog_split0,      rhog_split0_pl,      & !--- [IN]
+                         grhog1,           grhog1_pl,           & !--- [IN]
+                         grhogw,           grhogw_pl,           & !--- [IN]
+                         gpre,             gpre_pl,             & !--- [IN]
+                         dt                                     ) !--- [IN]
 
     !--- < rhog integration > ---
     call src_flux_convergence( rhogvx_split1, rhogvx_split1_pl, & !--- [IN]
@@ -1196,10 +1204,8 @@ contains
                                 - rhog_split1_pl(:,:,:) ) * phi_pl(:,:,:)
     endif
 
-    call DEBUG_rapend('____vi_path2')
-
     return
-  end subroutine vi_path2
+  end subroutine vi_main
 
   !-----------------------------------------------------------------------------
   subroutine vi_rhow_update_matrix( &
@@ -1353,7 +1359,7 @@ contains
   end subroutine vi_rhow_update_matrix
 
   !-----------------------------------------------------------------------------
-  subroutine vi_rhow( &
+  subroutine vi_rhow_solver( &
        rhogw,  rhogw_pl,  & !--- [INOUT]
        rhogw0, rhogw0_pl, & !--- [IN]
        preg0,  preg0_pl,  & !--- [IN]
@@ -1425,7 +1431,7 @@ contains
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('____vi_rhow')
+    call DEBUG_rapstart('____vi_rhow_solver')
 
     alfa = real(NON_HYDRO_ALPHA,kind=8)
     CVovRt2 = CVdry / Rdry / (dt*dt)
@@ -1544,10 +1550,10 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('____vi_rhow')
+    call DEBUG_rapend('____vi_rhow_solver')
 
     return
-  end subroutine vi_rhow
+  end subroutine vi_rhow_solver
 
 end module mod_vi
 !-------------------------------------------------------------------------------
