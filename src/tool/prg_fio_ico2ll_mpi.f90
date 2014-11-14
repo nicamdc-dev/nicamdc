@@ -111,10 +111,10 @@ program fio_ico2ll_mpi
   logical                   :: output_grads        = .true.
   logical                   :: output_gtool        = .false.
   logical                   :: output_netcdf       = .false.   ! [add] 13-04-18
-  logical                   :: datainfo_nodep_pe   = .false.   !   <- can be .true. if data header do not depend on pe.
+  logical                   :: datainfo_nodep_pe   = .true.    ! <- can be .true. if data header do not depend on pe.
   character(LEN=FIO_HSHORT) :: selectvar(max_nvar) = ''
-  integer                   :: nlim_llgrid         = 100000 ! limit number of lat-lon grid in 1 ico region
-  logical                   :: comm_smallchunk     = .false. ! apply MPI_Allreduce for each k-layer?
+  integer                   :: nlim_llgrid         = 10000000  ! limit number of lat-lon grid in 1 ico region
+  logical                   :: comm_smallchunk     = .true.    ! apply MPI_Allreduce for each k-layer?
 
   logical                   :: help = .false.
 
