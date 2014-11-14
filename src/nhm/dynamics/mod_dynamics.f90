@@ -79,18 +79,18 @@ contains
        TIME_SSTEP_MAX
     use mod_runconf, only: &
        TRC_ADV_TYPE
-    use mod_bsstate, only: &
-       bsstate_setup
     use mod_bndcnd, only: &
        bndcnd_setup
+    use mod_bsstate, only: &
+       bsstate_setup
     use mod_numfilter, only: &
        numfilter_setup
-    use mod_nudge, only: &
-       NDG_setup
-!    use mod_sgs, only: &
-!       sgs_setup
     use mod_vi, only: &
        vi_setup
+!    use mod_sgs, only: &
+!       sgs_setup
+    use mod_nudge, only: &
+       NDG_setup
     implicit none
     !---------------------------------------------------------------------------
 
@@ -147,14 +147,14 @@ contains
     !---< numerical filter module setup >---
     call numfilter_setup
 
+    !---< vertical implicit module setup >---
+    call vi_setup
+
     !---< nudging module setup >---
     call NDG_setup
 
     !---< sub-grid scale dynamics module setup >---
 !    call sgs_setup
-
-    !---< vertical implicit module setup >---
-    call vi_setup
 
     return
   end subroutine dynamics_setup
@@ -178,12 +178,8 @@ contains
        CNST_RAIR, &
        CNST_RVAP, &
        CNST_CV
-    use mod_time, only: &
-       TIME_INTEG_TYPE, &
-       TIME_DTL,        &
-       TIME_DTS,        &
-       TIME_SPLIT,      &
-       TIME_CTIME
+    use mod_comm, only: &
+       COMM_data_transfer
     use mod_vmtr, only: &
        VMTR_GSGAM2,       &
        VMTR_GSGAM2_pl,    &
@@ -193,8 +189,12 @@ contains
        VMTR_C2WfactGz_pl, &
        VMTR_C2Wfact,      &
        VMTR_C2Wfact_pl
-    use mod_comm, only: &
-       COMM_data_transfer
+    use mod_time, only: &
+       TIME_INTEG_TYPE, &
+       TIME_DTL,        &
+       TIME_DTS,        &
+       TIME_SPLIT,      &
+       TIME_CTIME
     use mod_runconf, only: &
        TRC_VMAX,       &
        I_QV,           &
@@ -202,75 +202,78 @@ contains
        NQW_STR,        &
        NQW_END,        &
        CVW,            &
+       DYN_DIV_NUM,    &
        NDIFF_LOCATION, &
        TRC_ADV_TYPE,   &
        FLAG_NUDGING,   &
        TB_TYPE,        &
        THUBURN_LIM       ! R.Yoshida 13/06/13 [add]
-    use mod_thrmdyn, only: &
-       thrmdyn_th, &
-       thrmdyn_eth
-    use mod_bndcnd, only: &
-       bndcnd_all
-    use mod_bsstate, only: &
-       pre_bs, pre_bs_pl, &
-       tem_bs, tem_bs_pl, &
-       rho_bs, rho_bs_pl
     use mod_prgvar, only: &
        prgvar_set, &
        prgvar_get
+    use mod_bndcnd, only: &
+       bndcnd_all
+    use mod_bsstate, only: &
+       rho_bs,    &
+       rho_bs_pl, &
+       tem_bs,    &
+       tem_bs_pl, &
+       pre_bs,    &
+       pre_bs_pl
+    use mod_thrmdyn, only: &
+       thrmdyn_th, &
+       thrmdyn_eth
+    use mod_numfilter, only: &
+       NUMFILTER_DOrayleigh,       &
+       NUMFILTER_DOverticaldiff,   &
+       numfilter_rayleigh_damping, &
+       numfilter_hdiffusion,       &
+       numfilter_vdiffusion
     use mod_src, only: &
        src_advection_convergence_momentum, &
        src_advection_convergence,          &
        I_SRC_default
-    use mod_numfilter, only: &
-       NUMFILTER_DOrayleigh,       & ! [add] H.Yashiro 20120530
-       NUMFILTER_DOverticaldiff,   & ! [add] H.Yashiro 20120530
-       numfilter_rayleigh_damping, &
-       numfilter_hdiffusion,       &
-       numfilter_vdiffusion
+    use mod_src_tracer, only: &
+       src_tracer_advection
+    use mod_vi, only: &
+       vi_small_step
+    use mod_forcing_driver, only: &
+       forcing_update ! R.Yoshida 13/06/13 [add]
+!    use mod_sgs, only: &
+!       sgs_smagorinsky
     use mod_nudge, only: & ! Y.Niwa add 08/09/09
        NDG_update_reference, &
        NDG_apply_uvtp
-!    use mod_sgs, only: &
-!       sgs_smagorinsky
-    use mod_vi, only: &
-       vi_small_step
-    use mod_src_tracer, only: &
-       src_tracer_advection
-    use mod_forcing_driver, only: &
-       forcing_update ! R.Yoshida 13/06/13 [add]
     implicit none
 
     integer, parameter :: nmax_TEND     = 7
     integer, parameter :: nmax_PROG     = 6
-    integer, parameter :: nmax_v_mean_c = 5
 
-    real(8) :: g_TEND    (ADM_gall,   ADM_kall,ADM_lall,   nmax_TEND) !--- tendency
-    real(8) :: g_TEND_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_TEND)
-    real(8) :: g_TENDq   (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  !--- tendency of q
-    real(8) :: g_TENDq_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(8) :: g_TEND       (ADM_gall,   ADM_kall,ADM_lall,   nmax_TEND) !--- tendency
+    real(8) :: g_TEND_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_TEND)
+    real(8) :: g_TENDq      (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  !--- tendency of q
+    real(8) :: g_TENDq_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    real(8) :: f_TEND    (ADM_gall,   ADM_kall,ADM_lall,   nmax_TEND) !--- forcing tendency
-    real(8) :: f_TEND_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_TEND)
-    real(8) :: f_TENDq   (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  !--- forcing tendency of q
-    real(8) :: f_TENDq_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(8) :: f_TEND       (ADM_gall,   ADM_kall,ADM_lall,   nmax_TEND) !--- forcing tendency
+    real(8) :: f_TEND_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_TEND)
+    real(8) :: f_TENDq      (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  !--- forcing tendency of q
+    real(8) :: f_TENDq_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    real(8) :: PROG0     (ADM_gall,   ADM_kall,ADM_lall,   nmax_PROG) !--- prognostic variables (save)
-    real(8) :: PROG0_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_PROG)
-    real(8) :: PROGq0    (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  !--- tracer variables (save)
-    real(8) :: PROGq0_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(8) :: PROG0        (ADM_gall,   ADM_kall,ADM_lall,   nmax_PROG) !--- prognostic variables (save)
+    real(8) :: PROG0_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_PROG)
+    real(8) :: PROGq0       (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  !--- tracer variables (save)
+    real(8) :: PROGq0_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    real(8) :: PROG      (ADM_gall,   ADM_kall,ADM_lall,   nmax_PROG) !--- prognostic variables
-    real(8) :: PROG_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_PROG)
-    real(8) :: PROGq     (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  !--- tracer variables
-    real(8) :: PROGq_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(8) :: PROG         (ADM_gall,   ADM_kall,ADM_lall,   nmax_PROG) !--- prognostic variables
+    real(8) :: PROG_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_PROG)
+    real(8) :: PROGq        (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  !--- tracer variables
+    real(8) :: PROGq_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
     real(8) :: PROG_split   (ADM_gall,   ADM_kall,ADM_lall,   nmax_PROG) !--- prognostic variables (split)
     real(8) :: PROG_split_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_PROG)
 
-    real(8) :: v_mean_c   (ADM_gall,   ADM_kall,ADM_lall   ,nmax_v_mean_c)
-    real(8) :: v_mean_c_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_v_mean_c)
+    real(8) :: v_mean_c     (ADM_gall,   ADM_kall,ADM_lall   ,5)
+    real(8) :: v_mean_c_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,5)
 
     !--- density ( physical )
     real(8) :: rho   (ADM_gall,   ADM_kall,ADM_lall   )
@@ -338,18 +341,21 @@ contains
     real(8)            :: TKEg_corr
 
     integer :: small_step_ite
+    real(8) :: large_step_dt
     real(8) :: small_step_dt
 
     logical :: ndg_TEND_out
     logical :: do_tke_correction
 
-    integer :: g, k ,l, nq, nl
+    integer :: g, k ,l, nq, nl, ndyn
 
     integer :: i, j, suf
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
     call DEBUG_rapstart('__Dynamics')
+
+    large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=8)
 
     !--- get from prg0
     call prgvar_get( PROG(:,:,:,I_RHOG),   PROG_pl(:,:,:,I_RHOG),   & ! [OUT]
@@ -360,6 +366,8 @@ contains
                      PROG(:,:,:,I_RHOGE),  PROG_pl(:,:,:,I_RHOGE),  & ! [OUT]
                      PROGq(:,:,:,:),       PROGq_pl(:,:,:,:),       & ! [OUT]
                      0                                              ) ! [IN]
+
+    do ndyn = 1, DYN_DIV_NUM
 
     !--- save
     PROG0   (:,:,:,:) = PROG   (:,:,:,:)
@@ -380,13 +388,13 @@ contains
        call src_tracer_advection( TRC_VMAX,                                          & ! [IN]
                                   PROGq (:,:,:,:),        PROGq_pl (:,:,:,:),        & ! [INOUT]
                                   PROG0 (:,:,:,I_RHOG),   PROG0_pl (:,:,:,I_RHOG),   & ! [IN]
-                                  PROG  (:,:,:,I_rhog),   PROG_pl  (:,:,:,I_rhog),   & ! [IN]
-                                  PROG  (:,:,:,I_rhogvx), PROG_pl  (:,:,:,I_rhogvx), & ! [IN]
-                                  PROG  (:,:,:,I_rhogvy), PROG_pl  (:,:,:,I_rhogvy), & ! [IN]
-                                  PROG  (:,:,:,I_rhogvz), PROG_pl  (:,:,:,I_rhogvz), & ! [IN]
-                                  PROG  (:,:,:,I_rhogw),  PROG_pl  (:,:,:,I_rhogw),  & ! [IN]
+                                  PROG  (:,:,:,I_RHOG  ), PROG_pl  (:,:,:,I_RHOG  ), & ! [IN]
+                                  PROG  (:,:,:,I_RHOGVX), PROG_pl  (:,:,:,I_RHOGVX), & ! [IN]
+                                  PROG  (:,:,:,I_RHOGVY), PROG_pl  (:,:,:,I_RHOGVY), & ! [IN]
+                                  PROG  (:,:,:,I_RHOGVZ), PROG_pl  (:,:,:,I_RHOGVZ), & ! [IN]
+                                  PROG  (:,:,:,I_RHOGW ), PROG_pl  (:,:,:,I_RHOGW ), & ! [IN]
                                   f_TEND(:,:,:,I_RHOG),   f_TEND_pl(:,:,:,I_RHOG),   & ! [IN]
-                                  TIME_DTL,                                          & ! [IN]
+                                  large_step_dt,                                     & ! [IN]
                                   THUBURN_LIM                                        ) ! [IN] [add] 20130613 R.Yoshida
 
        call DEBUG_rapend  ('___Tracer_Advection')
@@ -704,7 +712,6 @@ contains
 !                                f_TENDq(:,:,:,:),          f_TENDq_pl(:,:,:,:)           ) ! [INOUT]
 !       endif
 
-       !--- Nudging routines [add] Y.Niwa 08/09/09
        if ( FLAG_NUDGING ) then
 
           if ( nl == 1 ) then
@@ -762,7 +769,7 @@ contains
           small_step_dt  = TIME_DTS
        else
           small_step_ite = 1
-          small_step_dt  = TIME_DTL / (num_of_iteration_lstep+1-nl)
+          small_step_dt  = large_step_dt / (num_of_iteration_lstep-nl+1)
        endif
 
        call vi_small_step( PROG(:,:,:,I_RHOG  ),       PROG_pl(:,:,:,I_RHOG  ),       & ! [INOUT] prognostic variables
@@ -807,24 +814,24 @@ contains
           if ( nl == num_of_iteration_lstep ) then
 
              call src_tracer_advection( TRC_VMAX,                                              & ! [IN]
-                                        PROGq(:,:,:,:),           PROGq_pl(:,:,:,:),           & ! [INOUT]
-                                        PROG0(:,:,:,I_RHOG),      PROG0_pl(:,:,:,I_RHOG),      & ! [IN]
-                                        v_mean_c(:,:,:,I_rhog),   v_mean_c_pl(:,:,:,I_rhog),   & ! [IN]
-                                        v_mean_c(:,:,:,I_rhogvx), v_mean_c_pl(:,:,:,I_rhogvx), & ! [IN]
-                                        v_mean_c(:,:,:,I_rhogvy), v_mean_c_pl(:,:,:,I_rhogvy), & ! [IN]
-                                        v_mean_c(:,:,:,I_rhogvz), v_mean_c_pl(:,:,:,I_rhogvz), & ! [IN]
-                                        v_mean_c(:,:,:,I_rhogw),  v_mean_c_pl(:,:,:,I_rhogw),  & ! [IN]
-                                        f_TEND (:,:,:,I_RHOG),    f_TEND_pl (:,:,:,I_RHOG),    & ! [IN]
-                                        TIME_DTL,                                              & ! [IN]
+                                        PROGq   (:,:,:,:),        PROGq_pl   (:,:,:,:),        & ! [INOUT]
+                                        PROG0   (:,:,:,I_RHOG  ), PROG0_pl   (:,:,:,I_RHOG  ), & ! [IN]
+                                        v_mean_c(:,:,:,I_RHOG  ), v_mean_c_pl(:,:,:,I_RHOG  ), & ! [IN]
+                                        v_mean_c(:,:,:,I_RHOGVX), v_mean_c_pl(:,:,:,I_RHOGVX), & ! [IN]
+                                        v_mean_c(:,:,:,I_RHOGVY), v_mean_c_pl(:,:,:,I_RHOGVY), & ! [IN]
+                                        v_mean_c(:,:,:,I_RHOGVZ), v_mean_c_pl(:,:,:,I_RHOGVZ), & ! [IN]
+                                        v_mean_c(:,:,:,I_RHOGW ), v_mean_c_pl(:,:,:,I_RHOGW ), & ! [IN]
+                                        f_TEND  (:,:,:,I_RHOG  ), f_TEND_pl  (:,:,:,I_RHOG  ), & ! [IN]
+                                        large_step_dt,                                         & ! [IN]
                                         THUBURN_LIM                                            ) ! [IN]  ![add] 20130613 R.Yoshida
 
-             PROGq(:,:,:,:) = PROGq(:,:,:,:) + TIME_DTL * f_TENDq(:,:,:,:) ! update rhogq by viscosity
+             PROGq(:,:,:,:) = PROGq(:,:,:,:) + large_step_dt * f_TENDq(:,:,:,:) ! update rhogq by viscosity
 
              PROGq(:,ADM_kmin-1,:,:) = 0.D0
              PROGq(:,ADM_kmax+1,:,:) = 0.D0
 
              if ( ADM_prc_pl == ADM_prc_me ) then
-                PROGq_pl(:,:,:,:) = PROGq_pl(:,:,:,:) + TIME_DTL * f_TENDq_pl(:,:,:,:)
+                PROGq_pl(:,:,:,:) = PROGq_pl(:,:,:,:) + large_step_dt * f_TENDq_pl(:,:,:,:)
 
                 PROGq_pl(:,ADM_kmin-1,:,:) = 0.D0
                 PROGq_pl(:,ADM_kmax+1,:,:) = 0.D0
@@ -839,12 +846,12 @@ contains
 
           do nq = 1, TRC_VMAX
 
-             call src_advection_convergence( v_mean_c(:,:,:,I_rhogvx), v_mean_c_pl(:,:,:,I_rhogvx), & ! [IN]
-                                             v_mean_c(:,:,:,I_rhogvy), v_mean_c_pl(:,:,:,I_rhogvy), & ! [IN]
-                                             v_mean_c(:,:,:,I_rhogvz), v_mean_c_pl(:,:,:,I_rhogvz), & ! [IN]
-                                             v_mean_c(:,:,:,I_rhogw),  v_mean_c_pl(:,:,:,I_rhogw),  & ! [IN]
-                                             q(:,:,:,nq),              q_pl(:,:,:,nq),              & ! [IN]
-                                             g_TENDq(:,:,:,nq),        g_TENDq_pl(:,:,:,nq),        & ! [OUT]
+             call src_advection_convergence( v_mean_c(:,:,:,I_RHOGVX), v_mean_c_pl(:,:,:,I_RHOGVX), & ! [IN]
+                                             v_mean_c(:,:,:,I_RHOGVY), v_mean_c_pl(:,:,:,I_RHOGVY), & ! [IN]
+                                             v_mean_c(:,:,:,I_RHOGVZ), v_mean_c_pl(:,:,:,I_RHOGVZ), & ! [IN]
+                                             v_mean_c(:,:,:,I_RHOGW ), v_mean_c_pl(:,:,:,I_RHOGW ), & ! [IN]
+                                             q       (:,:,:,nq),       q_pl       (:,:,:,nq),       & ! [IN]
+                                             g_TENDq (:,:,:,nq),       g_TENDq_pl (:,:,:,nq),       & ! [OUT]
                                              I_SRC_default                                          ) ! [IN]  [mod] H.Yashiro 20120530
 
              PROGq(:,:,:,:) = PROGq0(:,:,:,:)                                                                   &
@@ -906,6 +913,8 @@ contains
        endif
 
     enddo !--- large step
+
+    enddo !--- divided step for dynamics
 
     call prgvar_set( PROG(:,:,:,I_RHOG),   PROG_pl(:,:,:,I_RHOG),   & ! [IN]
                      PROG(:,:,:,I_RHOGVX), PROG_pl(:,:,:,I_RHOGVX), & ! [IN]

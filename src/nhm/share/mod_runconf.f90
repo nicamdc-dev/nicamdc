@@ -85,6 +85,7 @@ module mod_runconf
 
   !--- Dynamics
   integer,                 public :: NON_HYDRO_ALPHA    = 1 ! Nonhydrostatic/hydrostatic flag
+  integer,                 public :: DYN_DIV_NUM        = 1
   character(len=ADM_NSYS), public :: TRC_ADV_TYPE       = 'MIURA2004'
   character(len=ADM_NSYS), public :: NDIFF_LOCATION     = 'IN_LARGE_STEP2'
   logical,                 public :: FLAG_NUDGING       = .false.
@@ -220,6 +221,7 @@ contains
     namelist /RUNCONFPARAM/ &
        RUNNAME,            &
        NON_HYDRO_ALPHA,    &
+       DYN_DIV_NUM,        &
        TRC_ADV_TYPE,       &
        NDIFF_LOCATION,     &
        FLAG_NUDGING,       &
