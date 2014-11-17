@@ -56,6 +56,7 @@ program prg_driver
   !
   !++ Used modules
   !
+  use mod_precision
   use mod_debug
   use mod_adm, only: &
      ADM_MULTI_PRC,      &

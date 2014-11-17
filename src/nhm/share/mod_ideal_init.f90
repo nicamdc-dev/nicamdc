@@ -25,8 +25,10 @@ module mod_ideal_init
   !
   !++ Used modules
   !
+  use mod_precision
+  use mod_debug
   use mod_adm, only: &
-     ADM_LOG_FID,  &
+     ADM_LOG_FID, &
      ADM_NSYS
   use dcmip_initial_conditions_test_1_2_3, only: &
      test2_steady_state_mountain, &

@@ -26,9 +26,12 @@ module mod_extdata
   !
   !++ Used modules
   !
-  use mod_adm, only : &
-    ADM_MAXFNAME, &
-    ADM_NSYS
+  use mod_precision
+  use mod_debug
+  use mod_adm, only: &
+     ADM_LOG_FID,  &
+     ADM_MAXFNAME, &
+     ADM_NSYS
   !-----------------------------------------------------------------------------
   implicit none
   private

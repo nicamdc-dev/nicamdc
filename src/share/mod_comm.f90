@@ -49,10 +49,10 @@ module mod_comm
   !++ Used modules
   !
   use mpi
+  use mod_precision
   use mod_debug
   use mod_adm, only: &
-     ADM_LOG_FID, &
-     ADM_vlink_nmax
+     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private

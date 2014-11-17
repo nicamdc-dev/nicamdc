@@ -27,14 +27,16 @@ Program prg_mkmnginfo
   !
   !++ Used modules
   !
-  Use mod_adm, Only :  &
-       !--- Public parameters
-       ADM_RID,        &
-       ADM_DIR,        &
-       ADM_SW,         &
-       ADM_NW,         &
-       ADM_NE,         &
-       ADM_SE
+  use mod_precision
+  use mod_debug
+  use mod_adm, only: &
+     ADM_LOG_FID, &
+     ADM_RID,     &
+     ADM_DIR,     &
+     ADM_SW,      &
+     ADM_NW,      &
+     ADM_NE,      &
+     ADM_SE
   !-----------------------------------------------------------------------------
   Implicit None
   !-----------------------------------------------------------------------------

@@ -63,12 +63,15 @@ module mod_diagvar
   !
   !++ Used modules
   !
-  use mod_adm, only : &
-       ADM_MAXFNAME,  &
-       ADM_LOG_FID,       &
+  use mod_precision
+  use mod_debug
+  use mod_adm, only: &
+     ADM_LOG_FID,  &
+     ADM_MAXFNAME, &
+     ADM_NSYS,     &
        ADM_CTL_FID,       &
-       ADM_GALL_PL,       &
-       ADM_LALL_PL,       &
+       ADM_gall_pl,       &
+       ADM_lall_pl,       &
        ADM_prc_me,        &
        ADM_prc_pl,        &
        ADM_kall,          &

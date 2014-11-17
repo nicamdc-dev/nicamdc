@@ -25,6 +25,15 @@ module mod_thrmdyn
   !
   !++ Used modules
   !
+  use mod_precision
+  use mod_debug
+  use mod_adm, only: &
+     ADM_LOG_FID,      &
+     ADM_MAXFNAME,     &
+     ADM_NSYS,         &
+     kdim => ADM_kall, &
+     kmin => ADM_kmin, &
+     kmax => ADM_kmax
   use mod_cnst, only: &
      Rdry  => CNST_RAIR,  &
      CPdry => CNST_CP,    &

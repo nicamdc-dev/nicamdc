@@ -49,6 +49,7 @@ program ico2ll
   !
   !++ Used modules (shared)
   !
+  use mod_precision
   use mod_misc
   use mod_cnst, only : &
        CNST_UNDEF,     & ! 05/12/21 M.Satoh

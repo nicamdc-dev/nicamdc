@@ -14,6 +14,8 @@ module mod_time
   !
   !++ Used modules
   !
+  use mod_precision
+  use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID, &
      ADM_NSYS

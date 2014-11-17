@@ -35,6 +35,7 @@ module mod_netcdf
   !
   !++ Used modules
   use netcdf  ! need NetCDF4/HDF5
+  use mod_precision
   !-----------------------------------------------------------------------------
   implicit none
   private

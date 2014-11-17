@@ -16,6 +16,7 @@ module mod_debug
   !++ Used modules
   !
   use mpi
+  use mod_precision
   use mod_adm, only: &
      ADM_LOG_FID, &
      ADM_NSYS,    &

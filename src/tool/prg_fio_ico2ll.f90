@@ -32,6 +32,7 @@ program fio_ico2ll
   !
   !++ Used modules
   !
+  use mod_precision
   use mod_misc, only : &
     MISC_get_available_fid, &
     MISC_make_idstr

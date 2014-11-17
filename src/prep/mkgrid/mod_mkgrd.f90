@@ -17,10 +17,12 @@ module mod_mkgrd
   !
   !++ Used modules
   !
+  use mod_precision
+  use mod_debug
   use mod_adm, only: &
-     ADM_LOG_FID, &
-     ADM_NSYS,    &
-     ADM_MAXFNAME
+     ADM_LOG_FID,  &
+     ADM_MAXFNAME, &
+     ADM_NSYS
   use mod_grd, only: &
      GRD_XDIR, &
      GRD_YDIR, &

@@ -1,6 +1,7 @@
 ! dummy module
 
 module mod_netcdf
+  use mod_precision
   implicit none
   private
   !

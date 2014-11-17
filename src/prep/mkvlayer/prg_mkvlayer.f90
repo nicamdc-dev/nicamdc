@@ -22,6 +22,7 @@ program prg_mkvlayer
   !
   !++ Used modules ( shared )
   !
+  use mod_precision
   !=============================================================================
   integer, parameter :: kdum=1
   integer, parameter :: fid=11

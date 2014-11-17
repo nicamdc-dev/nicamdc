@@ -29,9 +29,9 @@ mod_precision.o	: mod_precision.f90
 $(mod_misc).o	: $(mod_misc).f90 mod_precision.o
 mod_adm.o	: mod_adm.f90 mod_precision.o $(mod_misc).o
 mod_debug.o	: mod_debug.f90 mod_precision.o mod_adm.o
-mod_random.o	: mod_random.f90 mod_precision.o mod_adm.o
-mod_cnst.o	: mod_cnst.f90 mod_precision.o mod_adm.o
-mod_calendar.o	: mod_calendar.f90 mod_precision.o mod_adm.o
+mod_random.o	: mod_random.f90 mod_precision.o mod_adm.o mod_debug.o
+mod_cnst.o	: mod_cnst.f90 mod_precision.o mod_adm.o mod_debug.o
+mod_calendar.o	: mod_calendar.f90 mod_precision.o mod_adm.o mod_debug.o
 fio.o	: fio.c fio.h fio_def.h
 fiof.o	: fiof.c fiof.h fio.h fio_def.h
 mod_fio.o	: mod_fio.f90 mod_precision.o mod_adm.o mod_debug.o mod_calendar.o mod_cnst.o fio.o fiof.o

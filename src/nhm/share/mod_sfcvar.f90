@@ -37,9 +37,10 @@ module mod_sfcvar
   !
   !++ Used modules
   !
-  use mpi
-  use mod_adm, only :     &
-       ADM_LOG_FID
+  use mod_precision
+  use mod_debug
+  use mod_adm, only: &
+     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private
