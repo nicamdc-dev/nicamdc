@@ -150,11 +150,11 @@ contains
     !---< vertical implicit module setup >---
     call vi_setup
 
-    !---< nudging module setup >---
-    call NDG_setup
-
     !---< sub-grid scale dynamics module setup >---
 !    call sgs_setup
+
+    !---< nudging module setup >---
+    call NDG_setup
 
     return
   end subroutine dynamics_setup
