@@ -15,7 +15,7 @@ endif
 BUILD_DIR    := $(PWD)/.libs
 NICAM_BINDIR  = $(PWD)
 
-include $(SYSDEP_DIR)/Makedef.$(SCALE_SYS)
+include $(SYSDEP_DIR)/Makedef.$(NICAM_SYS)
 include $(TOPDIR)/Mkinclude
 
 all:

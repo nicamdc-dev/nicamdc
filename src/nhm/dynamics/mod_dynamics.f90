@@ -369,7 +369,11 @@ contains
                      PROGq(:,:,:,:),       PROGq_pl(:,:,:,:),       & ! [OUT]
                      0                                              ) ! [IN]
 
+    call DEBUG_rapend  ('___Pre_Post')
+
     do ndyn = 1, DYN_DIV_NUM
+
+    call DEBUG_rapstart('___Pre_Post')
 
     !--- save
     PROG0   (:,:,:,:) = PROG   (:,:,:,:)

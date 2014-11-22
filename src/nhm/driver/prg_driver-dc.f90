@@ -285,7 +285,7 @@ program prg_driver
   call DEBUG_rapend('Total')
   call DEBUG_rapreport
 
-  !--- all processes stop
+  !--- finalize all process
   call ADM_proc_finish
 
   stop
