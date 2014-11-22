@@ -37,7 +37,8 @@ elif [ ${NMPI} -gt 384 ]; then
 else
    rscgrp="small"
 fi
-PROF="fipp -C -Srange -Ihwm -d prof"
+PROF1="fipp -C -Srange -Ihwm,nocall -d prof"
+PROF2="fipp -C -Srange -Inohwm,call -d prof_call"
 
 cat << EOF1 > run.sh
 #! /bin/bash -x
@@ -57,7 +58,8 @@ cat << EOF1 > run.sh
 #PJM --stgin  "rank=* ${TOPDIR}/data/grid/vgrid/${VGRID} %r:./"
 #PJM --stgin  "rank=* ${TOPDIR}/data/grid/boundary/${dir2d}/boundary_${res2d}.pe%06r %r:./"
 #PJM --stgout "rank=* %r:./*           ./"
-#PJM --stgout "rank=* %r:./prof/* ./prof/"
+#PJM --stgout "rank=* %r:./prof/*      ./prof/"
+#PJM --stgout "rank=* %r:./prof_call/* ./prof_call/"
 #PJM -j
 #PJM -s
 #
@@ -69,9 +71,13 @@ export OMP_NUM_THREADS=8
 export XOS_MMM_L_ARENA_FREE=2
 
 rm -rf ./prof
+rm -rf ./prof_call
+mkdir -p ./prof
+mkdir -p ./prof_call
 
 # run
-${PROF} ${MPIEXEC} ./${BINNAME} || exit
+${PROF1} ${MPIEXEC} ./${BINNAME} || exit
+${PROF2} ${MPIEXEC} ./${BINNAME} || exit
 
 ################################################################################
 EOF1

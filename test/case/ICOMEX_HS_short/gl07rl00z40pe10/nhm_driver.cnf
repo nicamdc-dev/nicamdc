@@ -6,14 +6,14 @@
 
 &ADMPARAM
     glevel      = 7,
-    rlevel      = 2,
+    rlevel      = 0,
     vlayer      = 40,
-    rgnmngfname = "rl02-prc160.info",
+    rgnmngfname = "rl00-prc10.info",
 /
 
 &GRDPARAM
     hgrid_io_mode = "ADVANCED",
-    hgrid_fname   = "boundary_GL07RL02",
+    hgrid_fname   = "boundary_GL07RL00",
     VGRID_fname   = "vgrid40_600m_24km.dat",
     topo_fname    = "NONE",
 /
@@ -21,7 +21,7 @@
 &TIMEPARAM
     DTL         = 360.D0,
     INTEG_TYPE  = "RK3",
-    LSTEP_MAX   = 240000,
+    LSTEP_MAX   = 24000,
     start_date  = 0000,1,1,0,0,0
 /
 
@@ -36,14 +36,17 @@
 /
 
 &RESTARTPARAM
-    input_io_mode     = 'ADVANCED',
+    input_io_mode     = 'IDEAL',
     output_io_mode    = 'ADVANCED',
-    input_basename    = 'init_all_GL07RL02z40',
-    output_basename   = 'restart_all_GL07RL02z40',
+    output_basename   = 'restart_all_GL07RL00z40',
     restart_layername = 'ZSALL42',
 /
 
 ##### ICOMEX Test case: Held-Suarez test
+&DYCORETESTPARAM
+    init_type = 'Heldsuarez',
+/
+
 &CNSTPARAM
     earth_radius        = 6.37122D+6,
     earth_angvel        =   7.292D-5,
@@ -66,7 +69,7 @@
 
 &EMBUDGETPARAM
     MNT_ON   = .true.,
-    MNT_INTV = 2400   ,
+    MNT_INTV = 2400  ,
 /
 
 &NMHISD

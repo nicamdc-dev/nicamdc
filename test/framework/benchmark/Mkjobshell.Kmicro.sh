@@ -36,7 +36,8 @@ if [ ${NMPI} -gt 1152 ]; then
 else
    rscgrp="micro"
 fi
-PROF="fipp -C -Srange -Ihwm -d prof"
+PROF1="fipp -C -Srange -Ihwm,nocall -d prof"
+PROF2="fipp -C -Srange -Inohwm,call -d prof_call"
 
 cat << EOF1 > run.sh
 #! /bin/bash -x
@@ -70,10 +71,13 @@ done
 
 cat << EOF2 >> run.sh
 rm -rf ./prof
+rm -rf ./prof_call
 mkdir -p ./prof
+mkdir -p ./prof_call
 
 # run
-${PROF} ${MPIEXEC} ./${BINNAME} || exit
+${PROF1} ${MPIEXEC} ./${BINNAME} || exit
+${PROF2} ${MPIEXEC} ./${BINNAME} || exit
 
 ################################################################################
 EOF2
