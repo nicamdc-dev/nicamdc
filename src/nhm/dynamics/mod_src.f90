@@ -86,8 +86,7 @@ contains
        grhogvz, grhogvz_pl, &
        grhogw,  grhogw_pl   )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_gall,    &
@@ -96,7 +95,7 @@ contains
        ADM_kmin,    &
        ADM_kmax
     use mod_cnst, only: &
-       CNST_EOHM
+       OHM => CNST_EOHM
     use mod_grd, only: &
        GRD_XDIR,   &
        GRD_YDIR,   &
@@ -187,7 +186,7 @@ contains
        enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
@@ -242,8 +241,8 @@ contains
        !---< coriolis force >
        do k = ADM_kmin, ADM_kmax
        do g = 1, ADM_gall
-          dvvx(g,k,l) = dvvx(g,k,l) - 2.D0 * rhog(g,k,l) * ( -CNST_EOHM * vvy(g,k,l) )
-          dvvy(g,k,l) = dvvy(g,k,l) - 2.D0 * rhog(g,k,l) * (  CNST_EOHM * vvx(g,k,l) )
+          dvvx(g,k,l) = dvvx(g,k,l) - 2.D0 * rhog(g,k,l) * ( -OHM * vvy(g,k,l) )
+          dvvy(g,k,l) = dvvy(g,k,l) - 2.D0 * rhog(g,k,l) * (  OHM * vvx(g,k,l) )
        enddo
        enddo
 
@@ -282,13 +281,13 @@ contains
        enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
           !---< coriolis force >
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
-             dvvx_pl(g,k,l) = dvvx_pl(g,k,l) - 2.D0 * rhog_pl(g,k,l) * ( -CNST_EOHM * vvy_pl(g,k,l) )
-             dvvy_pl(g,k,l) = dvvy_pl(g,k,l) - 2.D0 * rhog_pl(g,k,l) * (  CNST_EOHM * vvx_pl(g,k,l) )
+             dvvx_pl(g,k,l) = dvvx_pl(g,k,l) - 2.D0 * rhog_pl(g,k,l) * ( -OHM * vvy_pl(g,k,l) )
+             dvvy_pl(g,k,l) = dvvy_pl(g,k,l) - 2.D0 * rhog_pl(g,k,l) * (  OHM * vvx_pl(g,k,l) )
           enddo
           enddo
 
@@ -344,12 +343,11 @@ contains
        grhogscl, grhogscl_pl, &
        fluxtype               )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
-       ADM_gall,    &
-       ADM_gall_pl, &
+       ADM_have_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
@@ -401,7 +399,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
        do g = 1, ADM_gall_pl
@@ -428,7 +426,7 @@ contains
           enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
              do k = ADM_kmin, ADM_kmax+1
              do g = 1, ADM_gall_pl
@@ -454,7 +452,7 @@ contains
        enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do g = 1, ADM_gall_pl
@@ -493,12 +491,11 @@ contains
        grhog,  grhog_pl,  &
        fluxtype           )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
-       ADM_gall,    &
-       ADM_gall_pl, &
+       ADM_have_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
@@ -585,7 +582,7 @@ contains
        enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
           !--- Horizontal flux
           do k = 1, ADM_kall
@@ -638,7 +635,7 @@ contains
        enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
@@ -667,8 +664,7 @@ contains
        Pgradw, Pgradw_pl, &
        gradtype          )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_gall,    &
@@ -711,8 +707,8 @@ contains
 
     real(8) :: P_vm    (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8) :: P_vm_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: P_vmh   (ADM_gall   ,ADM_kall,ADM_lall   ,GRD_XDIR:GRD_ZDIR)
-    real(8) :: P_vmh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,GRD_XDIR:GRD_ZDIR)
+    real(8) :: P_vmh   (ADM_gall   ,ADM_kall,ADM_lall   ,ADM_nxyz)
+    real(8) :: P_vmh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,ADM_nxyz)
 
     integer :: g, k, l, d
     !---------------------------------------------------------------------------
@@ -731,7 +727,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl) then
+    if ( ADM_have_pl) then
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
        do g = 1, ADM_gall_pl
@@ -784,7 +780,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
        do k = ADM_kmin, ADM_kmax+1
        do g = 1, ADM_gall_pl
@@ -847,7 +843,7 @@ contains
           enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
              do k = ADM_kmin+1, ADM_kmax
              do g = 1, ADM_gall_pl
@@ -868,7 +864,7 @@ contains
     elseif( gradtype == I_SRC_horizontal ) then
 
        Pgradw(:,:,:) = 0.D0
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           Pgradw_pl(:,:,:) = 0.D0
        endif
 
@@ -886,8 +882,7 @@ contains
        rhog,  rhog_pl, &
        buoiw, buoiw_pl )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_gall,    &
@@ -896,7 +891,7 @@ contains
        ADM_kmin,    &
        ADM_kmax
     use mod_cnst, only: &
-       CNST_EGRAV
+       GRAV => CNST_EGRAV
     use mod_vmtr, only: &
        VMTR_C2Wfact,    &
        VMTR_C2Wfact_pl
@@ -915,8 +910,8 @@ contains
     do l = 1, ADM_lall
        do k = ADM_kmin+1, ADM_kmax
        do g = 1, ADM_gall
-          buoiw(g,k,l) = -CNST_EGRAV * ( VMTR_C2Wfact(1,g,k,l) * rhog(g,k  ,l) &
-                                       + VMTR_C2Wfact(2,g,k,l) * rhog(g,k-1,l) )
+          buoiw(g,k,l) = -GRAV * ( VMTR_C2Wfact(1,g,k,l) * rhog(g,k  ,l) &
+                                 + VMTR_C2Wfact(2,g,k,l) * rhog(g,k-1,l) )
        enddo
        enddo
 
@@ -927,12 +922,12 @@ contains
        enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
           do k = ADM_kmin+1, ADM_kmax
           do g = 1, ADM_gall_pl
-             buoiw_pl(g,k,l) = -CNST_EGRAV * ( VMTR_C2Wfact_pl(1,g,k,l) * rhog_pl(g,k  ,l) &
-                                             + VMTR_C2Wfact_pl(2,g,k,l) * rhog_pl(g,k-1,l) )
+             buoiw_pl(g,k,l) = -GRAV * ( VMTR_C2Wfact_pl(1,g,k,l) * rhog_pl(g,k  ,l) &
+                                       + VMTR_C2Wfact_pl(2,g,k,l) * rhog_pl(g,k-1,l) )
           enddo
           enddo
 

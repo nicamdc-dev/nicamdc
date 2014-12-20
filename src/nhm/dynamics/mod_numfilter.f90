@@ -56,13 +56,13 @@ module mod_numfilter
   !
   !++ Public parameters & variables
   !
-  logical, public, save :: NUMFILTER_DOrayleigh            = .false. ! use rayleigh damping?
-  logical, public, save :: NUMFILTER_DOhorizontaldiff      = .false. ! use horizontal diffusion?
-  logical, public, save :: NUMFILTER_DOhorizontaldiff_lap1 = .false. ! use horizontal 1st-order damping? (for upper layer)
-  logical, public, save :: NUMFILTER_DOverticaldiff        = .false. ! use vertical diffusion?
-  logical, public, save :: NUMFILTER_DOdivdamp             = .false. ! use 3D divergence damping?
-  logical, public, save :: NUMFILTER_DOdivdamp_v           = .false. ! use 3D divergence damping for vertical velocity?
-  logical, public, save :: NUMFILTER_DOdivdamp_2d          = .false. ! use 2D divergence damping?
+  logical, public :: NUMFILTER_DOrayleigh            = .false. ! use rayleigh damping?
+  logical, public :: NUMFILTER_DOhorizontaldiff      = .false. ! use horizontal diffusion?
+  logical, public :: NUMFILTER_DOhorizontaldiff_lap1 = .false. ! use horizontal 1st-order damping? (for upper layer)
+  logical, public :: NUMFILTER_DOverticaldiff        = .false. ! use vertical diffusion?
+  logical, public :: NUMFILTER_DOdivdamp             = .false. ! use 3D divergence damping?
+  logical, public :: NUMFILTER_DOdivdamp_v           = .false. ! use 3D divergence damping for vertical velocity?
+  logical, public :: NUMFILTER_DOdivdamp_2d          = .false. ! use 2D divergence damping?
 
   !-----------------------------------------------------------------------------
   !
@@ -80,49 +80,49 @@ module mod_numfilter
   !
   !++ Private parameters & variables
   !
-  real(8), private, allocatable, save :: rayleigh_coef  (:)             ! Rayleigh damping coefficient at cell center
-  real(8), private, allocatable, save :: rayleigh_coef_h(:)             ! Rayleigh damping coefficient at cell wall
-  logical, private,              save :: rayleigh_damp_only_w = .false. ! damp only w?
+  real(8), private, allocatable :: rayleigh_coef  (:)             ! Rayleigh damping coefficient at cell center
+  real(8), private, allocatable :: rayleigh_coef_h(:)             ! Rayleigh damping coefficient at cell wall
+  logical, private              :: rayleigh_damp_only_w = .false. ! damp only w?
 
-  real(8), private, allocatable, save :: Kh_coef   (:,:,:)              ! horizontal diffusion coefficient at cell center
-  real(8), private, allocatable, save :: Kh_coef_pl(:,:,:)
-  integer, private,              save :: lap_order_hdiff = 2            ! laplacian order
-  real(8), private,              save :: hdiff_fact_rho  = 1.D-2
-  real(8), private,              save :: hdiff_fact_q    = 0.D0
-  real(8), private,              save :: Kh_coef_minlim  = 0.D0
-  real(8), private,              save :: Kh_coef_maxlim  = 1.D99
+  real(8), private, allocatable :: Kh_coef   (:,:,:)              ! horizontal diffusion coefficient at cell center
+  real(8), private, allocatable :: Kh_coef_pl(:,:,:)
+  integer, private              :: lap_order_hdiff = 2            ! laplacian order
+  real(8), private              :: hdiff_fact_rho  = 1.D-2
+  real(8), private              :: hdiff_fact_q    = 0.D0
+  real(8), private              :: Kh_coef_minlim  = 0.D0
+  real(8), private              :: Kh_coef_maxlim  = 1.D99
 
-  logical, private,              save :: hdiff_nonlinear = .false.
-  real(8), private,              save :: ZD_hdiff_nl     = 25000.D0     ! hight for decay of nonlinear diffusion
+  logical, private              :: hdiff_nonlinear = .false.
+  real(8), private              :: ZD_hdiff_nl     = 25000.D0     ! hight for decay of nonlinear diffusion
 
-  real(8), private, allocatable, save :: Kh_coef_lap1   (:,:,:)         ! Kh_coef but 1st order laplacian
-  real(8), private, allocatable, save :: Kh_coef_lap1_pl(:,:,:)
+  real(8), private, allocatable :: Kh_coef_lap1   (:,:,:)         ! Kh_coef but 1st order laplacian
+  real(8), private, allocatable :: Kh_coef_lap1_pl(:,:,:)
 
-  real(8), private, allocatable, save :: Kv_coef  (:)                   ! vertical diffusion coefficient at cell center
-  real(8), private, allocatable, save :: Kv_coef_h(:)                   ! vertical diffusion coefficient at cell wall
+  real(8), private, allocatable :: Kv_coef  (:)                   ! vertical diffusion coefficient at cell center
+  real(8), private, allocatable :: Kv_coef_h(:)                   ! vertical diffusion coefficient at cell wall
 
-  real(8), private, allocatable, save :: divdamp_coef   (:,:,:)         ! divergence damping coefficient at cell center
-  real(8), private, allocatable, save :: divdamp_coef_pl(:,:,:)
-  integer, private,              save :: lap_order_divdamp = 2          ! laplacian order
-  real(8), private,              save :: divdamp_coef_v    = 0.D0
+  real(8), private, allocatable :: divdamp_coef   (:,:,:)         ! divergence damping coefficient at cell center
+  real(8), private, allocatable :: divdamp_coef_pl(:,:,:)
+  integer, private              :: lap_order_divdamp = 2          ! laplacian order
+  real(8), private              :: divdamp_coef_v    = 0.D0
 
-  real(8), private, allocatable, save :: divdamp_2d_coef   (:,:,:)      ! divergence damping coefficient at cell center
-  real(8), private, allocatable, save :: divdamp_2d_coef_pl(:,:,:)
-  integer, private,              save :: lap_order_divdamp_2d = 1       ! laplacian order
+  real(8), private, allocatable :: divdamp_2d_coef   (:,:,:)      ! divergence damping coefficient at cell center
+  real(8), private, allocatable :: divdamp_2d_coef_pl(:,:,:)
+  integer, private              :: lap_order_divdamp_2d = 1       ! laplacian order
 
-  logical, private,              save :: dep_hgrid = .false.            ! depend on the horizontal grid spacing?
-  real(8), private,              save :: AREA_ave                       ! averaged grid area
+  logical, private              :: dep_hgrid = .false.            ! depend on the horizontal grid spacing?
+  real(8), private              :: AREA_ave                       ! averaged grid area
 
-  logical, private,              save :: smooth_1var = .true.           ! should be false for stretched grid [add] S.Iga 20120721
+  logical, private              :: smooth_1var = .true.           ! should be false for stretched grid [add] S.Iga 20120721
 
-  logical, private,              save :: deep_effect = .false.
-  real(8), private, allocatable, save :: Kh_deep_factor       (:)
-  real(8), private, allocatable, save :: Kh_deep_factor_h     (:)
-  real(8), private, allocatable, save :: Kh_lap1_deep_factor  (:)
-  real(8), private, allocatable, save :: Kh_lap1_deep_factor_h(:)
-  real(8), private, allocatable, save :: divdamp_deep_factor  (:)
+  logical, private              :: deep_effect = .false.
+  real(8), private, allocatable :: Kh_deep_factor       (:)
+  real(8), private, allocatable :: Kh_deep_factor_h     (:)
+  real(8), private, allocatable :: Kh_lap1_deep_factor  (:)
+  real(8), private, allocatable :: Kh_lap1_deep_factor_h(:)
+  real(8), private, allocatable :: divdamp_deep_factor  (:)
 
-  logical, private,              save :: debug = .false.
+  logical, private              :: debug = .false.
 
   !-----------------------------------------------------------------------------
 contains
@@ -134,8 +134,8 @@ contains
        ADM_GLEVEL,    &
        ADM_kall
     use mod_cnst, only: &
-       PI      => CNST_PI, &
-       ERADIUS => CNST_ERADIUS
+       PI     => CNST_PI, &
+       RADIUS => CNST_ERADIUS
     use mod_grd, only: &
        GRD_gz,   &
        GRD_gzh
@@ -167,37 +167,37 @@ contains
     real(8)                 :: ZD_d_2d         = 25000.D0             ! lower limit of divergence damping [m]
 
     namelist / NUMFILTERPARAM / &
-         alpha_r,              &
-         ZD,                   &
-         rayleigh_damp_only_w, &
-         hdiff_type,           &
-         lap_order_hdiff,      &
-         gamma_h,              &
-         tau_h,                &
-         ZD_hdiff_nl,          &
-         hdiff_fact_rho,       &
-         hdiff_fact_q,         &
-         Kh_coef_minlim,       &
-         Kh_coef_maxlim,       &
-         hdiff_type_lap1,      &
-         gamma_h_lap1,         &
-         tau_h_lap1,           &
-         ZD_hdiff_lap1,        &
-         gamma_v,              &
-         divdamp_type,         &
-         lap_order_divdamp,    &
-         alpha_d,              &
-         tau_d,                &
-         alpha_dv,             &
-         divdamp_2d_type,      &
-         lap_order_divdamp_2d, &
-         alpha_d_2d,           &
-         tau_d_2d,             &
-         ZD_d_2d,              &
-         dep_hgrid,            &
-         smooth_1var,          &
-         deep_effect,          &
-         debug
+       alpha_r,              &
+       ZD,                   &
+       rayleigh_damp_only_w, &
+       hdiff_type,           &
+       lap_order_hdiff,      &
+       gamma_h,              &
+       tau_h,                &
+       ZD_hdiff_nl,          &
+       hdiff_fact_rho,       &
+       hdiff_fact_q,         &
+       Kh_coef_minlim,       &
+       Kh_coef_maxlim,       &
+       hdiff_type_lap1,      &
+       gamma_h_lap1,         &
+       tau_h_lap1,           &
+       ZD_hdiff_lap1,        &
+       gamma_v,              &
+       divdamp_type,         &
+       lap_order_divdamp,    &
+       alpha_d,              &
+       tau_d,                &
+       alpha_dv,             &
+       divdamp_2d_type,      &
+       lap_order_divdamp_2d, &
+       alpha_d_2d,           &
+       tau_d_2d,             &
+       ZD_d_2d,              &
+       dep_hgrid,            &
+       smooth_1var,          &
+       deep_effect,          &
+       debug
 
     real(8) :: global_area, global_grid
 
@@ -219,7 +219,7 @@ contains
     endif
     write(ADM_LOG_FID,nml=NUMFILTERPARAM)
 
-    global_area = 4.D0 * PI * ERADIUS * ERADIUS
+    global_area = 4.D0 * PI * RADIUS * RADIUS
     global_grid = 10.D0 * 4.D0**ADM_GLEVEL
     AREA_ave = global_area / global_grid
 
@@ -271,11 +271,11 @@ contains
        write(ADM_LOG_FID,*) 'xxx this feature is tentatively suspended. stop.'
        call ADM_proc_stop
        do k = 1, ADM_kall
-          Kh_deep_factor       (k) = ( (GRD_gz (k)+ERADIUS) / ERADIUS )**(2*lap_order_hdiff)
-          Kh_deep_factor_h     (k) = ( (GRD_gzh(k)+ERADIUS) / ERADIUS )**(2*lap_order_hdiff)
-          Kh_lap1_deep_factor  (k) = ( (GRD_gz (k)+ERADIUS) / ERADIUS )**2
-          Kh_lap1_deep_factor_h(k) = ( (GRD_gzh(k)+ERADIUS) / ERADIUS )**2
-          divdamp_deep_factor  (k) = ( (GRD_gz (k)+ERADIUS) / ERADIUS )**(2*lap_order_divdamp)
+          Kh_deep_factor       (k) = ( (GRD_gz (k)+RADIUS) / RADIUS )**(2*lap_order_hdiff)
+          Kh_deep_factor_h     (k) = ( (GRD_gzh(k)+RADIUS) / RADIUS )**(2*lap_order_hdiff)
+          Kh_lap1_deep_factor  (k) = ( (GRD_gz (k)+RADIUS) / RADIUS )**2
+          Kh_lap1_deep_factor_h(k) = ( (GRD_gzh(k)+RADIUS) / RADIUS )**2
+          divdamp_deep_factor  (k) = ( (GRD_gz (k)+RADIUS) / RADIUS )**(2*lap_order_divdamp)
        enddo
     endif
 
@@ -356,8 +356,7 @@ contains
        tau_lap1,        &
        zlimit_lap1      )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_gall,    &
@@ -425,7 +424,7 @@ contains
           enddo
           enddo
 
-          if ( ADM_prc_me == ADM_prc_pl ) then
+          if ( ADM_have_pl ) then
              do l = 1, ADM_lall_pl
              do k = 1, ADM_kall
                 Kh_coef_pl(:,k,l) = gamma / TIME_DTL * GMTR_area_pl(:,l)**lap_order
@@ -448,7 +447,7 @@ contains
           enddo
           enddo
 
-          if ( ADM_prc_me == ADM_prc_pl ) then
+          if ( ADM_have_pl ) then
              do l = 1, ADM_lall_pl
              do k = 1, ADM_kall
                 Kh_coef_pl(:,k,l) = ( sqrt(GMTR_area_pl(:,l))/PI )**(2*lap_order) / ( tau+EPS )
@@ -490,7 +489,7 @@ contains
              enddo
              enddo
 
-             if ( ADM_prc_me == ADM_prc_pl ) then
+             if ( ADM_have_pl ) then
                 do l = 1, ADM_lall_pl
                 do k = 1, ADM_kall
                    e_fold_time_pl(:,k,l) = ( sqrt(GMTR_area_pl(:,l))/PI )**(2*lap_order) &
@@ -543,7 +542,7 @@ contains
           enddo
           enddo
 
-          if ( ADM_prc_me == ADM_prc_pl ) then
+          if ( ADM_have_pl ) then
              do l = 1, ADM_lall_pl
              do k = 1, ADM_kall
                 Kh_coef_lap1_pl(:,k,l) = gamma_lap1 / TIME_DTL * GMTR_area_pl(:,l)
@@ -568,7 +567,7 @@ contains
           enddo
           enddo
 
-          if ( ADM_prc_me == ADM_prc_pl ) then
+          if ( ADM_have_pl ) then
              do l = 1, ADM_lall_pl
              do k = 1, ADM_kall
                 Kh_coef_lap1_pl(:,k,l) = ( sqrt(GMTR_area_pl(:,l))/PI )**2 / ( tau_lap1+EPS )
@@ -591,7 +590,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
           Kh_coef_lap1_pl(:,k,l) = Kh_coef_lap1_pl(:,k,l) * fact(k)
@@ -609,7 +608,7 @@ contains
           enddo
           enddo
 
-          if ( ADM_prc_me == ADM_prc_pl ) then
+          if ( ADM_have_pl ) then
              do l = 1, ADM_lall_pl
              do k = 1, ADM_kall
                 e_fold_time_pl(:,k,l) = ( sqrt(GMTR_area_pl(:,l))/PI )**2 / ( Kh_coef_lap1_pl(:,k,l)+EPS )
@@ -701,8 +700,7 @@ contains
        tau,          &
        alpha_v       )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_gall,    &
@@ -779,7 +777,7 @@ contains
              divdamp_coef(:,k,l) = ( sqrt(GMTR_area(:,l))/PI )**(2*lap_order) / ( tau+EPS )
           enddo
           enddo
-          if ( ADM_prc_me == ADM_prc_pl ) then
+          if ( ADM_have_pl ) then
              do l = 1, ADM_lall_pl
              do k = 1, ADM_kall
                 divdamp_coef_pl(:,k,l) = ( sqrt(GMTR_area_pl(:,l))/PI )**(2*lap_order) / ( tau+EPS )
@@ -817,7 +815,7 @@ contains
 
           e_fold_time_pl(:,:,:) = 0.D0
 
-          if ( ADM_prc_me == ADM_prc_pl ) then
+          if ( ADM_have_pl ) then
              do l = 1, ADM_lall_pl
              do k = 1, ADM_kall
                 e_fold_time_pl(:,k,l) = ( sqrt(GMTR_area_pl(:,l))/PI )**(2*lap_order) &
@@ -858,8 +856,7 @@ contains
        tau,          &
        zlimit        )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_gall,    &
@@ -938,7 +935,7 @@ contains
              divdamp_2d_coef(:,k,l) = ( sqrt(GMTR_area(:,l))/PI )**(2*lap_order) / ( tau+EPS )
           enddo
           enddo
-          if ( ADM_prc_me == ADM_prc_pl ) then
+          if ( ADM_have_pl ) then
              do l = 1, ADM_lall_pl
              do k = 1, ADM_kall
                 divdamp_2d_coef_pl(:,k,l) = ( sqrt(GMTR_area_pl(:,l))/PI )**(2*lap_order) / ( tau+EPS )
@@ -964,7 +961,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
           divdamp_2d_coef_pl(:,k,l) = divdamp_2d_coef_pl(:,k,l) * fact(k)
@@ -983,7 +980,7 @@ contains
           enddo
           enddo
 
-          if ( ADM_prc_me == ADM_prc_pl ) then
+          if ( ADM_have_pl ) then
              do l = 1, ADM_lall_pl
              do k = 1, ADM_kall
                 e_fold_time_pl(:,k,l) = ( sqrt(GMTR_area_pl(:,l))/PI )**(2*lap_order_divdamp) &
@@ -1025,12 +1022,11 @@ contains
        frhogvz, frhogvz_pl, &
        frhogw,  frhogw_pl   )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
-       ADM_lall_pl, &
+       ADM_have_pl, &
        ADM_lall,    &
-       ADM_gall_pl, &
+       ADM_lall_pl, &
        ADM_gall,    &
+       ADM_gall_pl, &
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
@@ -1065,7 +1061,7 @@ contains
 
     real(8) :: coef
 
-    integer :: n, k, l
+    integer :: g, k, l
     !---------------------------------------------------------------------------
 
     if( .NOT. NUMFILTER_DOrayleigh ) return
@@ -1078,25 +1074,25 @@ contains
     if ( .NOT. rayleigh_damp_only_w ) then
        do l = 1, ADM_lall
        do k = 1, ADM_kall
-       do n = 1, ADM_gall
-          coef = rayleigh_coef(k) * rhog(n,k,l)
+       do g = 1, ADM_gall
+          coef = rayleigh_coef(k) * rhog(g,k,l)
 
-          frhogvx(n,k,l) = frhogvx(n,k,l) - coef * vx(n,k,l)
-          frhogvy(n,k,l) = frhogvy(n,k,l) - coef * vy(n,k,l)
-          frhogvz(n,k,l) = frhogvz(n,k,l) - coef * vz(n,k,l)
+          frhogvx(g,k,l) = frhogvx(g,k,l) - coef * vx(g,k,l)
+          frhogvy(g,k,l) = frhogvy(g,k,l) - coef * vy(g,k,l)
+          frhogvz(g,k,l) = frhogvz(g,k,l) - coef * vz(g,k,l)
        enddo
        enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
-          do n = 1, ADM_gall_pl
-             coef = rayleigh_coef(k) * rhog_pl(n,k,l)
+          do g = 1, ADM_gall_pl
+             coef = rayleigh_coef(k) * rhog_pl(g,k,l)
 
-             frhogvx_pl(n,k,l) = frhogvx_pl(n,k,l) - coef * vx_pl(n,k,l)
-             frhogvy_pl(n,k,l) = frhogvy_pl(n,k,l) - coef * vy_pl(n,k,l)
-             frhogvz_pl(n,k,l) = frhogvz_pl(n,k,l) - coef * vz_pl(n,k,l)
+             frhogvx_pl(g,k,l) = frhogvx_pl(g,k,l) - coef * vx_pl(g,k,l)
+             frhogvy_pl(g,k,l) = frhogvy_pl(g,k,l) - coef * vy_pl(g,k,l)
+             frhogvz_pl(g,k,l) = frhogvz_pl(g,k,l) - coef * vz_pl(g,k,l)
           enddo
           enddo
           enddo
@@ -1105,21 +1101,21 @@ contains
 
     do l = 1, ADM_lall
     do k = ADM_kmin, ADM_kmax+1
-    do n = 1, ADM_gall
-       frhogw(n,k,l) = frhogw(n,k,l) &
-                     - rayleigh_coef_h(k) * w(n,k,l) * ( VMTR_C2Wfact(1,n,k,l) * rhog(n,k  ,l) &
-                                                       + VMTR_C2Wfact(2,n,k,l) * rhog(n,k-1,l) )
+    do g = 1, ADM_gall
+       frhogw(g,k,l) = frhogw(g,k,l) &
+                     - rayleigh_coef_h(k) * w(g,k,l) * ( VMTR_C2Wfact(1,g,k,l) * rhog(g,k  ,l) &
+                                                       + VMTR_C2Wfact(2,g,k,l) * rhog(g,k-1,l) )
     enddo
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
        do k = ADM_kmin, ADM_kmax+1
-       do n = 1, ADM_gall_pl
-          frhogw_pl(n,k,l) = frhogw_pl(n,k,l) &
-                           - rayleigh_coef_h(k) * w_pl(n,k,l) * ( VMTR_C2Wfact_pl(1,n,k,l) * rho_pl(n,k  ,l) &
-                                                                + VMTR_C2Wfact_pl(2,n,k,l) * rho_pl(n,k-1,l) )
+       do g = 1, ADM_gall_pl
+          frhogw_pl(g,k,l) = frhogw_pl(g,k,l) &
+                           - rayleigh_coef_h(k) * w_pl(g,k,l) * ( VMTR_C2Wfact_pl(1,g,k,l) * rhog_pl(g,k  ,l) &
+                                                                + VMTR_C2Wfact_pl(2,g,k,l) * rhog_pl(g,k-1,l) )
        enddo
        enddo
        enddo
@@ -1149,36 +1145,35 @@ contains
        frhogetot, frhogetot_pl, &
        frhogq,    frhogq_pl     )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kall,    &
        ADM_kmin,    &
-       ADM_kmax,    &
-       ADM_lall,    &
-       ADM_lall_pl
+       ADM_kmax
     use mod_cnst, only: &
-       CNST_CV
+       CVdry => CNST_CV
     use mod_comm, only: &
        COMM_data_transfer
-    use mod_time, only: &
-       TIME_DTL
     use mod_grd, only: &
        GRD_htop, &
        GRD_gz
+    use mod_oprt, only: &
+       OPRT_horizontalize_vec, &
+       OPRT_laplacian,         &
+       OPRT_diffusion
     use mod_vmtr, only: &
        VMTR_GSGAM2,     &
        VMTR_GSGAM2_pl,  &
        VMTR_C2Wfact,    &
        VMTR_C2Wfact_pl
+    use mod_time, only: &
+       TIME_DTL
     use mod_runconf, only: &
        TRC_VMAX,    &
        TRC_ADV_TYPE
-    use mod_oprt, only: &
-       OPRT_horizontalize_vec, &
-       OPRT_laplacian,         &
-       OPRT_diffusion
     use mod_bsstate, only: &
        rho_bs,   &
        rho_bs_pl
@@ -1329,25 +1324,25 @@ contains
 
           if ( hdiff_nonlinear ) then
              do l = 1, ADM_lall
-                do k = 1, ADM_kall
-                do g = 1, ADM_gall
-                   d2T_dx2 = abs(vtmp(g,k,l,5)) / T0 * AREA_ave
-                   coef    = cfact * ( AREA_ave * AREA_ave ) / TIME_DTL * d2T_dx2
+             do k = 1, ADM_kall
+             do g = 1, ADM_gall
+                d2T_dx2 = abs(vtmp(g,k,l,5)) / T0 * AREA_ave
+                coef    = cfact * ( AREA_ave * AREA_ave ) / TIME_DTL * d2T_dx2
 
-                   KH_coef(g,k,l) = max( min( coef, Kh_max(k) ), Kh_coef_minlim )
-                enddo
-                enddo
+                KH_coef(g,k,l) = max( min( coef, Kh_max(k) ), Kh_coef_minlim )
+             enddo
+             enddo
              enddo
 
              do l = 1, ADM_lall_pl
-                do k = 1, ADM_kall
-                do g = 1, ADM_gall_pl
-                   d2T_dx2 = abs(vtmp_pl(g,k,l,5)) / T0 * AREA_ave
-                   coef    = cfact * ( AREA_ave * AREA_ave ) / TIME_DTL * d2T_dx2
+             do k = 1, ADM_kall
+             do g = 1, ADM_gall_pl
+                d2T_dx2 = abs(vtmp_pl(g,k,l,5)) / T0 * AREA_ave
+                coef    = cfact * ( AREA_ave * AREA_ave ) / TIME_DTL * d2T_dx2
 
-                   KH_coef_pl(g,k,l) = max( min( coef, Kh_max(k) ), Kh_coef_minlim )
-                enddo
-                enddo
+                KH_coef_pl(g,k,l) = max( min( coef, Kh_max(k) ), Kh_coef_minlim )
+             enddo
+             enddo
              enddo
 
              do l = 1, ADM_lall
@@ -1368,8 +1363,8 @@ contains
              KH_coef_h_pl(:,:,:) = KH_coef_pl(:,:,:)
           endif ! nonlinear1
 
-          wk   (:,:,:) = rhog   (:,:,:) * CNST_CV * KH_coef   (:,:,:)
-          wk_pl(:,:,:) = rhog_pl(:,:,:) * CNST_CV * KH_coef_pl(:,:,:)
+          wk   (:,:,:) = rhog   (:,:,:) * CVdry * KH_coef   (:,:,:)
+          wk_pl(:,:,:) = rhog_pl(:,:,:) * CVdry * KH_coef_pl(:,:,:)
 
           call OPRT_diffusion( vtmp2(:,:,:,5), vtmp2_pl(:,:,:,5), & ! [OUT]
                                vtmp (:,:,:,5), vtmp_pl (:,:,:,5), & ! [IN]
@@ -1422,8 +1417,8 @@ contains
                             vtmp_lap1(:,:,:,4), vtmp_lap1_pl(:,:,:,4), & ! [IN]
                             mfact=1.D0                                 ) ! [IN]
 
-       wk   (:,:,:) = rhog   (:,:,:) * CNST_CV * KH_coef_lap1   (:,:,:)
-       wk_pl(:,:,:) = rhog_pl(:,:,:) * CNST_CV * KH_coef_lap1_pl(:,:,:)
+       wk   (:,:,:) = rhog   (:,:,:) * CVdry * KH_coef_lap1   (:,:,:)
+       wk_pl(:,:,:) = rhog_pl(:,:,:) * CVdry * KH_coef_lap1_pl(:,:,:)
 
        call OPRT_diffusion( vtmp2    (:,:,:,5), vtmp2_pl    (:,:,:,5), & ! [OUT]
                             vtmp_lap1(:,:,:,5), vtmp_lap1_pl(:,:,:,5), & ! [IN]
@@ -1471,7 +1466,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
        do k = ADM_kmin, ADM_kmax
           frhogvx_pl  (:,k,l) = frhogvx_pl  (:,k,l) - ( vtmp_pl     (:,k,l,1) * KH_coef_pl     (:,k,l) &
@@ -1572,7 +1567,7 @@ contains
        enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           do nq = 1, TRC_VMAX
           do l  = 1, ADM_lall_pl
           do k  = ADM_kmin, ADM_kmax
@@ -1608,17 +1603,16 @@ contains
        frhogetot, frhogetot_pl, &
        frhogq,    frhogq_pl     )
     use mod_adm, only: &
-       ADM_gall,    &
-       ADM_kall,    &
+       ADM_have_pl, &
        ADM_lall,    &
-       ADM_gall_pl, &
        ADM_lall_pl, &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
     use mod_cnst, only: &
-       CNST_CV
+       CVdry => CNST_CV
     use mod_grd, only: &
        GRD_rdgz,  &
        GRD_rdgzh
@@ -1686,7 +1680,7 @@ contains
 
     real(8) :: coef
 
-    integer :: n, k, l, nq, p
+    integer :: g, k, l, nq, p
     !---------------------------------------------------------------------------
 
     if( .NOT. NUMFILTER_DOverticaldiff ) return
@@ -1695,20 +1689,20 @@ contains
 
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kmax+1
-       do n = 1, ADM_gall
-          rhog_h(n,k,l) = ( VMTR_C2Wfact(1,n,k,l) * rho(n,k,  l) * VMTR_GSGAM2(n,k,  l) &
-                          + VMTR_C2Wfact(2,n,k,l) * rho(n,k-1,l) * VMTR_GSGAM2(n,k-1,l) )
+       do g = 1, ADM_gall
+          rhog_h(g,k,l) = ( VMTR_C2Wfact(1,g,k,l) * rho(g,k,  l) * VMTR_GSGAM2(g,k,  l) &
+                          + VMTR_C2Wfact(2,g,k,l) * rho(g,k-1,l) * VMTR_GSGAM2(g,k-1,l) )
        enddo
        enddo
        rhog_h(:,ADM_kmin-1,l) = rhog_h(:,ADM_kmin,l)
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
           do k = ADM_kmin, ADM_kmax+1
-          do n = 1, ADM_gall_pl
-             rhog_h_pl(n,k,l) = ( VMTR_C2Wfact_pl(1,n,k,  l) * rho_pl(n,k  ,l) * VMTR_GSGAM2_pl(n,k,  l) &
-                                + VMTR_C2Wfact_pl(2,n,k-1,l) * rho_pl(n,k-1,l) * VMTR_GSGAM2_pl(n,k-1,l) )
+          do g = 1, ADM_gall_pl
+             rhog_h_pl(g,k,l) = ( VMTR_C2Wfact_pl(1,g,k,  l) * rho_pl(g,k  ,l) * VMTR_GSGAM2_pl(g,k,  l) &
+                                + VMTR_C2Wfact_pl(2,g,k-1,l) * rho_pl(g,k-1,l) * VMTR_GSGAM2_pl(g,k-1,l) )
           enddo
           enddo
           rhog_h_pl(:,ADM_kmin-1,l) = rhog_h_pl(:,ADM_kmin,l)
@@ -1848,7 +1842,7 @@ contains
           flux(:,k,l,I_VX ) = coef * ( vtmp0(:,k,l,I_VX )-vtmp0(:,k-1,l,I_VX ) ) * rhog_h(:,k,l)
           flux(:,k,l,I_VY ) = coef * ( vtmp0(:,k,l,I_VY )-vtmp0(:,k-1,l,I_VY ) ) * rhog_h(:,k,l)
           flux(:,k,l,I_VZ ) = coef * ( vtmp0(:,k,l,I_VZ )-vtmp0(:,k-1,l,I_VZ ) ) * rhog_h(:,k,l)
-          flux(:,k,l,I_TEM) = coef * ( vtmp0(:,k,l,I_TEM)-vtmp0(:,k-1,l,I_TEM) ) * rhog_h(:,k,l) * CNST_CV
+          flux(:,k,l,I_TEM) = coef * ( vtmp0(:,k,l,I_TEM)-vtmp0(:,k-1,l,I_TEM) ) * rhog_h(:,k,l) * CVdry
           do nq = 1, TRC_VMAX
              flux(:,k,l,nq+vmax) = coef * ( vtmp0(:,k,l,nq+vmax) - vtmp0(:,k-1,l,nq+vmax) )
           enddo
@@ -1878,7 +1872,7 @@ contains
        enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
 
        vtmp0_pl(:,:,:,I_RHO) = rho_pl(:,:,:)
        vtmp0_pl(:,:,:,I_VX ) = vx_pl (:,:,:)
@@ -2021,7 +2015,7 @@ contains
              flux_pl(:,k,l,I_VZ ) = ( vtmp0_pl(:,k,l,I_VZ )-vtmp0_pl(:,k-1,l,I_VZ ) ) * GRD_rdgzh(k) &
                                   * Kv_coef_h(k) * rhog_h_pl(:,k,l)
              flux_pl(:,k,l,I_TEM) = ( vtmp0_pl(:,k,l,I_TEM)-vtmp0_pl(:,k-1,l,I_TEM) ) * GRD_rdgzh(k) &
-                                  * Kv_coef_h(k) * rhog_h_pl(:,k,l) * CNST_CV
+                                  * Kv_coef_h(k) * rhog_h_pl(:,k,l) * CVdry
              do nq = 1, TRC_VMAX
                 flux_pl(:,k,l,nq+vmax) = ( vtmp0_pl(:,k,l,nq+vmax)-vtmp0_pl(:,k-1,l,nq+vmax) ) * GRD_rdgzh(k) &
                                        * Kv_coef_h(k) * rhog_h_pl(:,k,l)
@@ -2080,15 +2074,14 @@ contains
        gdz,    gdz_pl,    &
        gdvz,   gdvz_pl    )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kall,    &
        ADM_kmin,    &
-       ADM_kmax,    &
-       ADM_lall,    &
-       ADM_lall_pl
+       ADM_kmax
     use mod_comm, only: &
        COMM_data_transfer
     use mod_grd, only:  &
@@ -2180,7 +2173,7 @@ contains
     gdy(:,:,:) = divdamp_coef(:,:,:) * vtmp2(:,:,:,2)
     gdz(:,:,:) = divdamp_coef(:,:,:) * vtmp2(:,:,:,3)
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        gdx_pl(:,:,:) = divdamp_coef_pl(:,:,:) * vtmp2_pl(:,:,:,1)
        gdy_pl(:,:,:) = divdamp_coef_pl(:,:,:) * vtmp2_pl(:,:,:,2)
        gdz_pl(:,:,:) = divdamp_coef_pl(:,:,:) * vtmp2_pl(:,:,:,3)
@@ -2208,7 +2201,7 @@ contains
           gdvz(:,ADM_kmax+1,l) = 0.D0
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
              do k = ADM_kmin+1, ADM_kmax
                 gdvz_pl(:,k,l) = divdamp_coef_v * ( cnv_pl(:,k,l) - cnv_pl(:,k-1,l) ) * GRD_rdgzh(k)
@@ -2239,13 +2232,12 @@ contains
        gdy,    gdy_pl,    &
        gdz,    gdz_pl     )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
-       ADM_kall,    &
-       ADM_lall,    &
-       ADM_lall_pl
+       ADM_kall
     use mod_comm, only: &
        COMM_data_transfer
     use mod_oprt, only: &
@@ -2296,6 +2288,7 @@ contains
                        rhogvy(:,:,:),  rhogvy_pl(:,:,:),  & ! [IN]
                        rhogvz(:,:,:),  rhogvz_pl(:,:,:),  & ! [IN]
                        mfact=1.D0                         ) ! [IN]
+
     if ( lap_order_divdamp_2d > 1 ) then
        do p = 1, lap_order_divdamp_2d-1
 
@@ -2322,7 +2315,7 @@ contains
     gdy(:,:,:) = divdamp_2d_coef(:,:,:) * vtmp2(:,:,:,2)
     gdz(:,:,:) = divdamp_2d_coef(:,:,:) * vtmp2(:,:,:,3)
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        gdx_pl(:,:,:) = divdamp_2d_coef_pl(:,:,:) * vtmp2_pl(:,:,:,1)
        gdy_pl(:,:,:) = divdamp_2d_coef_pl(:,:,:) * vtmp2_pl(:,:,:,2)
        gdz_pl(:,:,:) = divdamp_2d_coef_pl(:,:,:) * vtmp2_pl(:,:,:,3)
@@ -2342,12 +2335,11 @@ contains
   subroutine numfilter_smooth_1var( &
        s, s_pl )
     use mod_adm, only: &
-       ADM_prc_me,     &
-       ADM_prc_pl,     &
-       ADM_lall,       &
-       ADM_lall_pl,    &
-       ADM_gall,       &
-       ADM_gall_pl,    &
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
        ADM_kall
     use mod_comm, only: &
        COMM_data_transfer
@@ -2379,7 +2371,7 @@ contains
 
        vtmp_pl(:,:,:,:) = 0.D0
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           vtmp_pl(:,:,:,1) = s_pl(:,:,:)
        endif
 
@@ -2405,7 +2397,7 @@ contains
        enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
              s_pl(:,k,l) = s_pl(:,k,l) - ggamma_h * GMTR_area_pl(:,l)**2 * vtmp_pl(:,k,l,1)
@@ -2425,6 +2417,8 @@ contains
     return
   end subroutine numfilter_smooth_1var
 
+  !-----------------------------------------------------------------------------
+  !> calc height factor
   subroutine height_factor( &
        kdim,          &
        z,             &
@@ -2432,7 +2426,7 @@ contains
        z_bottomlimit, &
        factor         )
     use mod_cnst, only: &
-       CNST_PI
+       PI => CNST_PI
     implicit none
 
     integer, intent(in)  :: kdim          ! number of vertical grid
@@ -2449,7 +2443,7 @@ contains
     do k = 1, kdim
        sw = 0.5D0 + sign( 0.5D0, z(k)-z_bottomlimit )
 
-       factor(k) = sw * 0.5D0 * ( 1.D0 - cos( CNST_PI * (z(k)-z_bottomlimit) / (z_top-z_bottomlimit)) )
+       factor(k) = sw * 0.5D0 * ( 1.D0 - cos( PI * (z(k)-z_bottomlimit) / (z_top-z_bottomlimit)) )
     enddo
 
     return
