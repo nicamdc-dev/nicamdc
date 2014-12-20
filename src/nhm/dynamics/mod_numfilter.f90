@@ -713,8 +713,7 @@ contains
     use mod_cnst, only: &
        PI    => CNST_PI,       &
        EPS   => CNST_EPS_ZERO, &
-       RAIR  => CNST_RAIR,     &
-       GAMMA => CNST_GAMMA
+       SOUND => CNST_SOUND
     use mod_grd, only: &
        GRD_gz
     use mod_gmtr, only: &
@@ -764,7 +763,7 @@ contains
 
        ! alpha_d is a non-dimensional number.
        ! alpha_d * (c_s)^p * dt^{2p-1}
-       coef = alpha * ( GAMMA * RAIR * 273.D0 )**lap_order * TIME_DTS**(2*lap_order-1)
+       coef = alpha * ( SOUND * SOUND )**lap_order * TIME_DTS**(2*lap_order-1)
 
        divdamp_coef   (:,:,:) = coef
        divdamp_coef_pl(:,:,:) = coef
@@ -844,7 +843,7 @@ contains
 
     if( alpha_v > 0.D0 ) NUMFILTER_DOdivdamp_v = .true.
 
-    divdamp_coef_v = -alpha_v * GAMMA * RAIR * 273.D0 * TIME_DTS
+    divdamp_coef_v = -alpha_v * SOUND * SOUND * TIME_DTS
 
     return
   end subroutine numfilter_divdamp_setup
@@ -871,8 +870,7 @@ contains
     use mod_cnst, only: &
        PI    => CNST_PI,       &
        EPS   => CNST_EPS_ZERO, &
-       RAIR  => CNST_RAIR,     &
-       GAMMA => CNST_GAMMA
+       SOUND => CNST_SOUND
     use mod_grd, only: &
        GRD_htop, &
        GRD_gz
@@ -924,7 +922,7 @@ contains
 
        ! alpha is the non-dimensional number.
        ! alpha * (c_s)^p * dt^{2p-1}
-       coef = alpha * ( GAMMA * RAIR * 273.D0 )**lap_order * TIME_DTS**(2*lap_order-1)
+       coef = alpha * ( SOUND * SOUND )**lap_order * TIME_DTS**(2*lap_order-1)
 
        divdamp_2d_coef   (:,:,:) = coef
        divdamp_2d_coef_pl(:,:,:) = coef
