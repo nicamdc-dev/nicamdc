@@ -859,12 +859,12 @@ contains
        Rdry  => CNST_RAIR, &
        CVdry => CNST_CV
     use mod_vmtr, only: &
+       VMTR_PHI,          &
+       VMTR_PHI_pl,       &
        VMTR_C2WfactGz,    &
        VMTR_C2WfactGz_pl
     use mod_time, only: &
        TIME_SPLIT
-    use mod_bsstate, only: &
-       phi, phi_pl
     use mod_bndcnd, only: &
        BNDCND_rhow
     use mod_cnvvar, only: &
@@ -1169,12 +1169,12 @@ contains
     !--- calculate ( h + v^{2}/2 + phi )
     ethtot0(:,:,:) = eth0(:,:,:)                    &
                    + rhogkin0(:,:,:) / rhog0(:,:,:) &
-                   + phi(:,:,:)
+                   + VMTR_PHI(:,:,:)
 
     if ( ADM_prc_me == ADM_prc_pl ) then
        ethtot0_pl(:,:,:) = eth0_pl(:,:,:)                       &
                          + rhogkin0_pl(:,:,:) / rhog0_pl(:,:,:) &
-                         + phi_pl(:,:,:)
+                         + VMTR_PHI_pl(:,:,:)
     endif
 
     !--- advection convergence for eth + kin + phi
@@ -1186,22 +1186,22 @@ contains
                                     drhogetot, drhogetot_pl, & !--- [OUT]
                                     I_SRC_default            ) !--- [IN]
 
-    rhoge_split1(:,:,:) = rhoge_split0 (:,:,:)                & ! t=n
-                        + ( grhogetot  (:,:,:)                & ! tendency of total energy (num.diff+smg+nudge)
-                          + drhogetot  (:,:,:) ) * dt         & ! tendency of total energy (adv.conv.)
-                        + ( rhogkin10  (:,:,:)                & ! kinetic   energy (t=n)
-                          - rhogkin11  (:,:,:) )              & ! kinetic   energy (t=n+1)
-                        + ( rhog_split0(:,:,:)                & ! potential energy (diff,t=n)
-                          - rhog_split1(:,:,:) ) * phi(:,:,:)   ! potential energy (diff,t=n+1)
+    rhoge_split1(:,:,:) = rhoge_split0 (:,:,:)                     & ! t=n
+                        + ( grhogetot  (:,:,:)                     & ! tendency of total energy (num.diff+smg+nudge)
+                          + drhogetot  (:,:,:) ) * dt              & ! tendency of total energy (adv.conv.)
+                        + ( rhogkin10  (:,:,:)                     & ! kinetic   energy (t=n)
+                          - rhogkin11  (:,:,:) )                   & ! kinetic   energy (t=n+1)
+                        + ( rhog_split0(:,:,:)                     & ! potential energy (diff,t=n)
+                          - rhog_split1(:,:,:) ) * VMTR_PHI(:,:,:)   ! potential energy (diff,t=n+1)
 
     if ( ADM_prc_me == ADM_prc_pl ) then
-       rhoge_split1_pl(:,:,:) = rhoge_split0_pl (:,:,:)                   &
-                              + ( grhogetot_pl  (:,:,:)                   &
-                                + drhogetot_pl  (:,:,:) ) * dt            &
-                              + ( rhogkin10_pl  (:,:,:)                   &
-                                - rhogkin11_pl  (:,:,:) )                 &
-                              + ( rhog_split0_pl(:,:,:)                   &
-                                - rhog_split1_pl(:,:,:) ) * phi_pl(:,:,:)
+       rhoge_split1_pl(:,:,:) = rhoge_split0_pl (:,:,:)                        &
+                              + ( grhogetot_pl  (:,:,:)                        &
+                                + drhogetot_pl  (:,:,:) ) * dt                 &
+                              + ( rhogkin10_pl  (:,:,:)                        &
+                                - rhogkin11_pl  (:,:,:) )                      &
+                              + ( rhog_split0_pl(:,:,:)                        &
+                                - rhog_split1_pl(:,:,:) ) * VMTR_PHI_pl(:,:,:)
     endif
 
     return

@@ -198,6 +198,7 @@ contains
        GTL_max, &
        GTL_min
     use mod_vmtr, only :        &
+       VMTR_PHI,    &
        VMTR_VOLUME
     use mod_prgvar, only :     &
          prgvar_get_withdiag
@@ -267,8 +268,6 @@ contains
          NRDIR,             &
          NRDIR_DIRECT,      &
          NRDIR_DIFFUSE
-    use mod_bsstate, only : &
-         phi, phi_pl
     use mod_thrmdyn, only : &
          thrmdyn_th
     use mod_bndcnd, only : &
@@ -415,11 +414,11 @@ contains
                               q,      q_pl       ) ! [OUT]
 
     do l = 1, ADM_lall
-       call bndcnd_thermo( ADM_gall,   & ! [IN]
-                           tem(:,:,l), & ! [INOUT]
-                           rho(:,:,l), & ! [INOUT]
-                           pre(:,:,l), & ! [INOUT]
-                           phi(:,:,l)  ) ! [IN]
+       call bndcnd_thermo( ADM_gall,        & ! [IN]
+                           tem     (:,:,l), & ! [INOUT]
+                           rho     (:,:,l), & ! [INOUT]
+                           pre     (:,:,l), & ! [INOUT]
+                           VMTR_PHI(:,:,l)  ) ! [IN]
     enddo
 
     !--- density, temperature & pressure

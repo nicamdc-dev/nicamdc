@@ -62,8 +62,8 @@ module mod_bsstate
   real(8),allocatable, public, save :: qv_bs_pl(:,:,:)
   !
   !--- geo-potential ( g X z )
-  real(8),allocatable, public, save :: phi(:,:,:)
-  real(8),allocatable, public, save :: phi_pl(:,:,:)
+  real(8),allocatable, private, save :: phi(:,:,:)
+  real(8),allocatable, private, save :: phi_pl(:,:,:)
   !
   !--- Basic state type
   character(ADM_NSYS), public, save :: ref_type = 'NOBASE'

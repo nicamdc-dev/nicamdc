@@ -45,6 +45,8 @@ module mod_cnst
   real(8), public, save :: CNST_CL      = 4218.0D0   ! Specific heat of water
   real(8), public, save :: CNST_CI      = 2006.0D0   ! Specific heat of ice
 
+  real(8), public, save :: CNST_SOUND                ! Speed of sound at 0C, dry
+
   !------ cp/cv
   real(8), public, save :: CNST_GAMMA
   !<----- calculated in sub[CNST_setup].
@@ -204,15 +206,15 @@ contains
     !---------------------------------------------------------------------------
 
     !--- initialization of controled parameters
-    earth_radius = CNST_ERADIUS
-    earth_angvel = CNST_EOHM
-    earth_gravity   = CNST_EGRAV
-    gas_cnst    = CNST_RAIR
-    gas_cnst_vap = CNST_RVAP
-    specific_heat_pre      = CNST_CP
-    specific_heat_pre_vap  = CNST_CPV
-    latent_heat_vap = CNST_LH0
-    latent_heat_sub = CNST_LHS0
+    earth_radius          = CNST_ERADIUS
+    earth_angvel          = CNST_EOHM
+    earth_gravity         = CNST_EGRAV
+    gas_cnst              = CNST_RAIR
+    gas_cnst_vap          = CNST_RVAP
+    specific_heat_pre     = CNST_CP
+    specific_heat_pre_vap = CNST_CPV
+    latent_heat_vap       = CNST_LH0
+    latent_heat_sub       = CNST_LHS0
 
     !--- read parameters
     write(ADM_LOG_FID,*)
@@ -243,6 +245,7 @@ contains
     CNST_D2R   = CNST_PI / 180.D0
 
     CNST_CV    = CNST_CP - CNST_RAIR
+    CNST_SOUND = sqrt( CNST_CP * CNST_RAIR / ( CNST_CP - CNST_RAIR ) * CNST_TEM00 )
     CNST_GAMMA = CNST_CP / CNST_CV
     CNST_KAPPA = CNST_RAIR / CNST_CP
     CNST_RHO00 = CNST_PRE00 / CNST_RAIR / CNST_TEM00
@@ -270,6 +273,7 @@ contains
     write(ADM_LOG_FID,*) '--- Gas constant of vapor                    : ', CNST_RVAP
     write(ADM_LOG_FID,*) '--- Specific heat of air (consant pressure)  : ', CNST_CP
     write(ADM_LOG_FID,*) '--- Specific heat of air (consant volume)    : ', CNST_CV
+    write(ADM_LOG_FID,*) '--- Speed of sound at 0C                     : ', CNST_SOUND
     write(ADM_LOG_FID,*) '--- Rair/Cp                                  : ', CNST_KAPPA
     write(ADM_LOG_FID,*) '--- Surface pressure                         : ', CNST_PRES0
     write(ADM_LOG_FID,*) '--- Standard pressure                        : ', CNST_PRE00

@@ -89,23 +89,23 @@ contains
        frhog,       frhog_pl,       & !--- IN    : hyperviscosity tendency for rhog
        dt,                          & !--- IN    : delta t
        thubern_lim                  ) !--- IN    : switch of thubern limiter
-    use mod_adm, only :  &
-       ADM_have_pl,    &
-       ADM_lall,       &
-       ADM_lall_pl,    &
-       ADM_gall,       &
-       ADM_gall_pl,    &
-       ADM_kall,       &
-       ADM_gall_1d,    &
-       ADM_gmin,       &
-       ADM_gmax,       &
-       ADM_gslf_pl,    &
-       ADM_gmin_pl,    &
-       ADM_gmax_pl,    &
-       ADM_kmin,       &
-       ADM_kmax
+    use mod_adm, only: &
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_kmin,    &
+       ADM_kmax,    &
+       ADM_gall_1d, &
+       ADM_gmin,    &
+       ADM_gmax,    &
+       ADM_gslf_pl, &
+       ADM_gmin_pl, &
+       ADM_gmax_pl
     use mod_cnst, only: &
-       CNST_EPS_ZERO
+       EPS => CNST_EPS_ZERO
     use mod_grd, only: &
        GRD_rdgz, &
        GRD_afac, &
@@ -143,8 +143,6 @@ contains
 
     real(8) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
     real(8) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rrhog    (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rrhog_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8) :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
     real(8) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8) :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
@@ -173,14 +171,14 @@ contains
     real(8) :: cmask    (6,ADM_gall,   ADM_kall,ADM_lall   ) ! upwind direction mask
     real(8) :: cmask_pl (  ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8) :: GRD_xc   (ADM_gall,   ADM_kall,ADM_lall,   AI:AJ,XDIR:ZDIR) ! mass centroid position
-    real(8) :: GRD_xc_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,XDIR:ZDIR)
+    real(8) :: GRD_xc_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,      XDIR:ZDIR)
 
     real(8), parameter :: b1 = 0.D0
     real(8), parameter :: b2 = 1.D0
     real(8), parameter :: b3 = 1.D0 - (b1+b2)
 
     integer :: nstart, nend
-    integer :: n, k, l, v, iq
+    integer :: g, k, l, v, iq
 
     integer :: suf, i, j
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
@@ -192,66 +190,82 @@ contains
     call DEBUG_rapstart('____Vertical_Adv')
 
     do l = 1, ADM_lall
-       rrhog(:,:,l) = 1.D0 / rhog_in(:,:,l)
-
-       d(:,:,l) = b1 * frhog(:,:,l) * rrhog(:,:,l) * dt
-
        do k = ADM_kmin+1, ADM_kmax
-       do n = 1, ADM_gall
-          flx_v(n,k,l) = ( ( VMTR_C2WfactGz(1,n,k,l) * rhogvx_mean(n,k  ,l) &
-                           + VMTR_C2WfactGz(2,n,k,l) * rhogvx_mean(n,k-1,l) &
-                           + VMTR_C2WfactGz(3,n,k,l) * rhogvy_mean(n,k  ,l) &
-                           + VMTR_C2WfactGz(4,n,k,l) * rhogvy_mean(n,k-1,l) &
-                           + VMTR_C2WfactGz(5,n,k,l) * rhogvz_mean(n,k  ,l) &
-                           + VMTR_C2WfactGz(6,n,k,l) * rhogvz_mean(n,k-1,l) &
-                           ) * VMTR_RGAMH(n,k,l)                            & ! horizontal contribution
-                         + rhogw_mean(n,k,l) * VMTR_RGSQRTH(n,k,l)          & ! vertical   contribution
+       do g = 1, ADM_gall
+          flx_v(g,k,l) = ( ( VMTR_C2WfactGz(1,g,k,l) * rhogvx_mean(g,k  ,l) &
+                           + VMTR_C2WfactGz(2,g,k,l) * rhogvx_mean(g,k-1,l) &
+                           + VMTR_C2WfactGz(3,g,k,l) * rhogvy_mean(g,k  ,l) &
+                           + VMTR_C2WfactGz(4,g,k,l) * rhogvy_mean(g,k-1,l) &
+                           + VMTR_C2WfactGz(5,g,k,l) * rhogvz_mean(g,k  ,l) &
+                           + VMTR_C2WfactGz(6,g,k,l) * rhogvz_mean(g,k-1,l) &
+                           ) * VMTR_RGAMH(g,k,l)                            & ! horizontal contribution
+                         + rhogw_mean(g,k,l) * VMTR_RGSQRTH(g,k,l)          & ! vertical   contribution
                          ) * 0.5D0 * dt
        enddo
        enddo
-       flx_v(:,ADM_kmin,  l) = 0.D0
-       flx_v(:,ADM_kmax+1,l) = 0.D0
+       do g = 1, ADM_gall
+          flx_v(g,ADM_kmin,  l) = 0.D0
+          flx_v(g,ADM_kmax+1,l) = 0.D0
+       enddo
 
        do k = ADM_kmin, ADM_kmax
-          ck(:,k,l,1) = -flx_v(:,k  ,l) * rrhog(:,k,l) * GRD_rdgz(k)
-          ck(:,k,l,2) =  flx_v(:,k+1,l) * rrhog(:,k,l) * GRD_rdgz(k)
+       do g = 1, ADM_gall
+          d(g,k,l) = b1 * frhog(g,k,l) / rhog_in(g,k,l) * dt
+
+          ck(g,k,l,1) = -flx_v(g,k  ,l) / rhog_in(g,k,l) * GRD_rdgz(k)
+          ck(g,k,l,2) =  flx_v(g,k+1,l) / rhog_in(g,k,l) * GRD_rdgz(k)
        enddo
-       ck(:,ADM_kmin-1,l,1) = 0.D0
-       ck(:,ADM_kmin-1,l,2) = 0.D0
-       ck(:,ADM_kmax+1,l,1) = 0.D0
-       ck(:,ADM_kmax+1,l,2) = 0.D0
+       enddo
+
+       do g = 1, ADM_gall
+          d(g,ADM_kmin-1,l) = b1 * frhog(g,ADM_kmin-1,l) / rhog_in(g,ADM_kmin-1,l) * dt
+          d(g,ADM_kmax+1,l) = b1 * frhog(g,ADM_kmax+1,l) / rhog_in(g,ADM_kmax+1,l) * dt
+
+          ck(g,ADM_kmin-1,l,1) = 0.D0
+          ck(g,ADM_kmin-1,l,2) = 0.D0
+          ck(g,ADM_kmax+1,l,1) = 0.D0
+          ck(g,ADM_kmax+1,l,2) = 0.D0
+       enddo
     enddo
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
-          rrhog_pl(:,:,l) = 1.D0 / rhog_in_pl(:,:,l)
-
-          d_pl(:,:,l) = b1 * frhog_pl(:,:,l) * rrhog_pl(:,:,l) * dt
-
           do k = ADM_kmin+1, ADM_kmax
-          do n = 1, ADM_gall_pl
-             flx_v_pl(n,k,l) = ( ( VMTR_C2WfactGz_pl(1,n,k,l) * rhogvx_mean_pl(n,k  ,l) &
-                                 + VMTR_C2WfactGz_pl(2,n,k,l) * rhogvx_mean_pl(n,k-1,l) &
-                                 + VMTR_C2WfactGz_pl(3,n,k,l) * rhogvy_mean_pl(n,k  ,l) &
-                                 + VMTR_C2WfactGz_pl(4,n,k,l) * rhogvy_mean_pl(n,k-1,l) &
-                                 + VMTR_C2WfactGz_pl(5,n,k,l) * rhogvz_mean_pl(n,k  ,l) &
-                                 + VMTR_C2WfactGz_pl(6,n,k,l) * rhogvz_mean_pl(n,k-1,l) &
-                                 ) * VMTR_RGAMH_pl(n,k,l)                               & ! horizontal contribution
-                               + rhogw_mean_pl(n,k,l) * VMTR_RGSQRTH_pl(n,k,l)          & ! vertical   contribution
+          do g = 1, ADM_gall_pl
+             flx_v_pl(g,k,l) = ( ( VMTR_C2WfactGz_pl(1,g,k,l) * rhogvx_mean_pl(g,k  ,l) &
+                                 + VMTR_C2WfactGz_pl(2,g,k,l) * rhogvx_mean_pl(g,k-1,l) &
+                                 + VMTR_C2WfactGz_pl(3,g,k,l) * rhogvy_mean_pl(g,k  ,l) &
+                                 + VMTR_C2WfactGz_pl(4,g,k,l) * rhogvy_mean_pl(g,k-1,l) &
+                                 + VMTR_C2WfactGz_pl(5,g,k,l) * rhogvz_mean_pl(g,k  ,l) &
+                                 + VMTR_C2WfactGz_pl(6,g,k,l) * rhogvz_mean_pl(g,k-1,l) &
+                                 ) * VMTR_RGAMH_pl(g,k,l)                               & ! horizontal contribution
+                               + rhogw_mean_pl(g,k,l) * VMTR_RGSQRTH_pl(g,k,l)          & ! vertical   contribution
                                ) * 0.5D0 * dt
           enddo
           enddo
-          flx_v_pl(:,ADM_kmin,  l) = 0.D0
-          flx_v_pl(:,ADM_kmax+1,l) = 0.D0
+          do g = 1, ADM_gall_pl
+             flx_v_pl(g,ADM_kmin,  l) = 0.D0
+             flx_v_pl(g,ADM_kmax+1,l) = 0.D0
+          enddo
 
           do k = ADM_kmin, ADM_kmax
-             ck_pl(:,k,l,1) = -flx_v_pl(:,k  ,l) * rrhog_pl(:,k,l) * GRD_rdgz(k)
-             ck_pl(:,k,l,2) =  flx_v_pl(:,k+1,l) * rrhog_pl(:,k,l) * GRD_rdgz(k)
+          do g = 1, ADM_gall_pl
+             d_pl(g,k,l) = b1 * frhog_pl(g,k,l) / rhog_in_pl(g,k,l) * dt
+
+             ck_pl(g,k,l,1) = -flx_v_pl(g,k  ,l) / rhog_in_pl(g,k,l) * GRD_rdgz(k)
+             ck_pl(g,k,l,2) =  flx_v_pl(g,k+1,l) / rhog_in_pl(g,k,l) * GRD_rdgz(k)
           enddo
-          ck_pl(:,ADM_kmin-1,l,1) = 0.D0
-          ck_pl(:,ADM_kmin-1,l,2) = 0.D0
-          ck_pl(:,ADM_kmax+1,l,1) = 0.D0
-          ck_pl(:,ADM_kmax+1,l,2) = 0.D0
+          enddo
+
+          do g = 1, ADM_gall_pl
+             d_pl(g,ADM_kmin-1,l) = b1 * frhog_pl(g,ADM_kmin-1,l) / rhog_in_pl(g,ADM_kmin-1,l) * dt
+             d_pl(g,ADM_kmax+1,l) = b1 * frhog_pl(g,ADM_kmax+1,l) / rhog_in_pl(g,ADM_kmax+1,l) * dt
+
+             ck_pl(g,ADM_kmin-1,l,1) = 0.D0
+             ck_pl(g,ADM_kmin-1,l,2) = 0.D0
+             ck_pl(g,ADM_kmax+1,l,1) = 0.D0
+             ck_pl(g,ADM_kmax+1,l,2) = 0.D0
+          enddo
        enddo
     endif
 
@@ -259,7 +273,7 @@ contains
     do iq = 1, vmax
 
        do l = 1, ADM_lall
-          q(:,:,l) = rhogq(:,:,l,iq) * rrhog(:,:,l)
+          q(:,:,l) = rhogq(:,:,l,iq) / rhog_in(:,:,l)
 
           do k = ADM_kmin, ADM_kmax+1
              q_h(:,k,l) = 0.5D0 * ( GRD_afac(k) * q(:,k,  l) &
@@ -270,7 +284,7 @@ contains
 
        if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
-             q_pl(:,:,l) = rhogq_pl(:,:,l,iq) * rrhog_pl(:,:,l)
+             q_pl(:,:,l) = rhogq_pl(:,:,l,iq) / rhog_in_pl(:,:,l)
 
              do k = ADM_kmin, ADM_kmax+1
                 q_h_pl(:,k,l) = 0.5D0 * ( GRD_afac(k) * q_pl(:,k,  l) &
@@ -293,9 +307,9 @@ contains
           q_h(:,ADM_kmax+1,l) = 0.D0
 
           do k = ADM_kmin, ADM_kmax
-          do n = 1, ADM_gall
-             rhogq(n,k,l,iq) = rhogq(n,k,l,iq) - ( flx_v(n,k+1,l)*q_h(n,k+1,l) &
-                                                 - flx_v(n,k,  l)*q_h(n,k,  l) &
+          do g = 1, ADM_gall
+             rhogq(g,k,l,iq) = rhogq(g,k,l,iq) - ( flx_v(g,k+1,l) * q_h(g,k+1,l) &
+                                                 - flx_v(g,k,  l) * q_h(g,k,  l) &
                                                  ) * GRD_rdgz(k)
           enddo
           enddo
@@ -307,9 +321,9 @@ contains
              q_h_pl(:,ADM_kmax+1,l) = 0.D0
 
              do k = ADM_kmin, ADM_kmax
-             do n = 1, ADM_gall_pl
-                rhogq_pl(n,k,l,iq) = rhogq_pl(n,k,l,iq) - ( flx_v_pl(n,k+1,l)*q_h_pl(n,k+1,l) &
-                                                          - flx_v_pl(n,k,  l)*q_h_pl(n,k,  l) &
+             do g = 1, ADM_gall_pl
+                rhogq_pl(g,k,l,iq) = rhogq_pl(g,k,l,iq) - ( flx_v_pl(g,k+1,l)*q_h_pl(g,k+1,l) &
+                                                          - flx_v_pl(g,k,  l)*q_h_pl(g,k,  l) &
                                                           ) * GRD_rdgz(k)
              enddo
              enddo
@@ -321,11 +335,11 @@ contains
     !--- update rhog
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kmax
-       do n = 1, ADM_gall
-          rhog(n,k,l) = rhog_in(n,k,l) - ( flx_v(n,k+1,l) &
-                                         - flx_v(n,k  ,l) &
+       do g = 1, ADM_gall
+          rhog(g,k,l) = rhog_in(g,k,l) - ( flx_v(g,k+1,l) &
+                                         - flx_v(g,k  ,l) &
                                          ) * GRD_rdgz(k)  &
-                                       + b1 * frhog(n,k,l) * dt
+                                       + b1 * frhog(g,k,l) * dt
        enddo
        enddo
 
@@ -340,11 +354,11 @@ contains
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
           do k = ADM_kmin, ADM_kmax
-          do n = 1, ADM_gall_pl
-             rhog_pl(n,k,l) = rhog_in_pl(n,k,l) - ( flx_v_pl(n,k+1,l) &
-                                                  - flx_v_pl(n,k  ,l) &
+          do g = 1, ADM_gall_pl
+             rhog_pl(g,k,l) = rhog_in_pl(g,k,l) - ( flx_v_pl(g,k+1,l) &
+                                                  - flx_v_pl(g,k  ,l) &
                                                   ) * GRD_rdgz(k)     &
-                                                + b1 * frhog_pl(n,k,l) * dt
+                                                + b1 * frhog_pl(g,k,l) * dt
           enddo
           enddo
 
@@ -360,9 +374,7 @@ contains
     call DEBUG_rapstart('____Horizontal_Adv')
 
     do l = 1, ADM_lall
-       rrhog(:,:,l) = 1.D0 / rhog(:,:,l)
-
-       d(:,:,l) = b2 * frhog(:,:,l) * rrhog(:,:,l) * dt
+       d(:,:,l) = b2 * frhog(:,:,l) / rhog(:,:,l) * dt
 
        rhogvx(:,:,l) = rhogvx_mean(:,:,l) * VMTR_RGAM(:,:,l)
        rhogvy(:,:,l) = rhogvy_mean(:,:,l) * VMTR_RGAM(:,:,l)
@@ -371,9 +383,7 @@ contains
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
-          rrhog_pl(:,:,l) = 1.D0 / rhog_pl(:,:,l)
-
-          d_pl(:,:,l) = b2 * frhog_pl(:,:,l) * rrhog_pl(:,:,l) * dt
+          d_pl(:,:,l) = b2 * frhog_pl(:,:,l) / rhog_pl(:,:,l) * dt
 
           rhogvx_pl(:,:,l) = rhogvx_mean_pl(:,:,l) * VMTR_RGAM_pl(:,:,l)
           rhogvy_pl(:,:,l) = rhogvy_mean_pl(:,:,l) * VMTR_RGAM_pl(:,:,l)
@@ -392,34 +402,34 @@ contains
     !--- Courant number
     do l = 1, ADM_lall
     do k = 1, ADM_kall
-    do n = 1, ADM_gall
-       ch(1,n,k,l) = flx_h(1,n,k,l) * rrhog(n,k,l)
-       ch(2,n,k,l) = flx_h(2,n,k,l) * rrhog(n,k,l)
-       ch(3,n,k,l) = flx_h(3,n,k,l) * rrhog(n,k,l)
-       ch(4,n,k,l) = flx_h(4,n,k,l) * rrhog(n,k,l)
-       ch(5,n,k,l) = flx_h(5,n,k,l) * rrhog(n,k,l)
-       ch(6,n,k,l) = flx_h(6,n,k,l) * rrhog(n,k,l)
+    do g = 1, ADM_gall
+       ch(1,g,k,l) = flx_h(1,g,k,l) / rhog(g,k,l)
+       ch(2,g,k,l) = flx_h(2,g,k,l) / rhog(g,k,l)
+       ch(3,g,k,l) = flx_h(3,g,k,l) / rhog(g,k,l)
+       ch(4,g,k,l) = flx_h(4,g,k,l) / rhog(g,k,l)
+       ch(5,g,k,l) = flx_h(5,g,k,l) / rhog(g,k,l)
+       ch(6,g,k,l) = flx_h(6,g,k,l) / rhog(g,k,l)
 
        ! c <= 0(incoming), cmask = 1
-       cmask(1,n,k,l) = 0.5D0 - sign(0.5D0,ch(1,n,k,l)-CNST_EPS_ZERO)
-       cmask(2,n,k,l) = 0.5D0 - sign(0.5D0,ch(2,n,k,l)-CNST_EPS_ZERO)
-       cmask(3,n,k,l) = 0.5D0 - sign(0.5D0,ch(3,n,k,l)-CNST_EPS_ZERO)
-       cmask(4,n,k,l) = 0.5D0 - sign(0.5D0,ch(4,n,k,l)-CNST_EPS_ZERO)
-       cmask(5,n,k,l) = 0.5D0 - sign(0.5D0,ch(5,n,k,l)-CNST_EPS_ZERO)
-       cmask(6,n,k,l) = 0.5D0 - sign(0.5D0,ch(6,n,k,l)-CNST_EPS_ZERO)
+       cmask(1,g,k,l) = 0.5D0 - sign(0.5D0,ch(1,g,k,l)-EPS)
+       cmask(2,g,k,l) = 0.5D0 - sign(0.5D0,ch(2,g,k,l)-EPS)
+       cmask(3,g,k,l) = 0.5D0 - sign(0.5D0,ch(3,g,k,l)-EPS)
+       cmask(4,g,k,l) = 0.5D0 - sign(0.5D0,ch(4,g,k,l)-EPS)
+       cmask(5,g,k,l) = 0.5D0 - sign(0.5D0,ch(5,g,k,l)-EPS)
+       cmask(6,g,k,l) = 0.5D0 - sign(0.5D0,ch(6,g,k,l)-EPS)
     enddo
     enddo
     enddo
 
     if ( ADM_have_pl ) then
-       n = ADM_gslf_pl
+       g = ADM_gslf_pl
 
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
        do v = ADM_gmin_pl, ADM_gmax_pl
-          ch_pl(v,k,l) = flx_h_pl(v,k,l) * rrhog_pl(n,k,l)
+          ch_pl(v,k,l) = flx_h_pl(v,k,l) / rhog_pl(g,k,l)
 
-          cmask_pl(v,k,l) = 0.5D0 - sign(0.5D0,ch_pl(v,k,l)-CNST_EPS_ZERO)
+          cmask_pl(v,k,l) = 0.5D0 - sign(0.5D0,ch_pl(v,k,l)-EPS)
        enddo
        enddo
        enddo
@@ -427,9 +437,9 @@ contains
 
     do iq = 1, vmax
 
-       q(:,:,:) = rhogq(:,:,:,iq) * rrhog(:,:,:)
+       q(:,:,:) = rhogq(:,:,:,iq) / rhog(:,:,:)
        if ( ADM_have_pl ) then
-          q_pl(:,:,:) = rhogq_pl(:,:,:,iq) * rrhog_pl(:,:,:)
+          q_pl(:,:,:) = rhogq_pl(:,:,:,iq) / rhog_pl(:,:,:)
        endif
 
        ! calculate q at cell face, upwind side
@@ -453,13 +463,13 @@ contains
           nend   = suf(ADM_gmax,ADM_gmax)
 
           do k = 1, ADM_kall
-          do n = nstart, nend
-             rhogq(n,k,l,iq) = rhogq(n,k,l,iq) - ( flx_h(1,n,k,l) * q_a(1,n,k,l) &
-                                                 + flx_h(2,n,k,l) * q_a(2,n,k,l) &
-                                                 + flx_h(3,n,k,l) * q_a(3,n,k,l) &
-                                                 + flx_h(4,n,k,l) * q_a(4,n,k,l) &
-                                                 + flx_h(5,n,k,l) * q_a(5,n,k,l) &
-                                                 + flx_h(6,n,k,l) * q_a(6,n,k,l) )
+          do g = nstart, nend
+             rhogq(g,k,l,iq) = rhogq(g,k,l,iq) - ( flx_h(1,g,k,l) * q_a(1,g,k,l) &
+                                                 + flx_h(2,g,k,l) * q_a(2,g,k,l) &
+                                                 + flx_h(3,g,k,l) * q_a(3,g,k,l) &
+                                                 + flx_h(4,g,k,l) * q_a(4,g,k,l) &
+                                                 + flx_h(5,g,k,l) * q_a(5,g,k,l) &
+                                                 + flx_h(6,g,k,l) * q_a(6,g,k,l) )
           enddo
           enddo
 
@@ -470,12 +480,12 @@ contains
        enddo
 
        if ( ADM_have_pl ) then
-          n = ADM_gslf_pl
+          g = ADM_gslf_pl
 
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do v = ADM_gmin_pl, ADM_gmax_pl
-             rhogq_pl(n,k,l,iq) = rhogq_pl(n,k,l,iq) - flx_h_pl(v,k,l) * q_a_pl(v,k,l)
+             rhogq_pl(g,k,l,iq) = rhogq_pl(g,k,l,iq) - flx_h_pl(v,k,l) * q_a_pl(v,k,l)
           enddo
           enddo
           enddo
@@ -489,13 +499,13 @@ contains
        nend   = suf(ADM_gmax,ADM_gmax)
 
        do k = 1, ADM_kall
-       do n = nstart, nend
-          rhog(n,k,l)= rhog(n,k,l) - ( flx_h(1,n,k,l) &
-                                     + flx_h(2,n,k,l) &
-                                     + flx_h(3,n,k,l) &
-                                     + flx_h(4,n,k,l) &
-                                     + flx_h(5,n,k,l) &
-                                     + flx_h(6,n,k,l) ) + b2 * frhog(n,k,l) * dt
+       do g = nstart, nend
+          rhog(g,k,l)= rhog(g,k,l) - ( flx_h(1,g,k,l) &
+                                     + flx_h(2,g,k,l) &
+                                     + flx_h(3,g,k,l) &
+                                     + flx_h(4,g,k,l) &
+                                     + flx_h(5,g,k,l) &
+                                     + flx_h(6,g,k,l) ) + b2 * frhog(g,k,l) * dt
        enddo
        enddo
 
@@ -506,14 +516,14 @@ contains
     enddo
 
     if ( ADM_have_pl ) then
-       n = ADM_gslf_pl
+       g = ADM_gslf_pl
 
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
           do v = ADM_gmin_pl, ADM_gmax_pl
-             rhog_pl(n,k,l)= rhog_pl(n,k,l) - flx_h_pl(v,k,l)
+             rhog_pl(g,k,l)= rhog_pl(g,k,l) - flx_h_pl(v,k,l)
           enddo
-          rhog_pl(n,k,l)= rhog_pl(n,k,l) + b2 * frhog_pl(n,k,l) * dt
+          rhog_pl(g,k,l)= rhog_pl(g,k,l) + b2 * frhog_pl(g,k,l) * dt
        enddo
        enddo
     endif
@@ -525,14 +535,11 @@ contains
     call DEBUG_rapstart('____Vertical_Adv')
 
     do l = 1, ADM_lall
-
-       rrhog(:,:,l) = 1.D0 / rhog(:,:,l)
-
-       d(:,:,l) = b3 * frhog(:,:,l) * dt * rrhog(:,:,l)
+       d(:,:,l) = b3 * frhog(:,:,l) * dt / rhog(:,:,l)
 
        do k = ADM_kmin, ADM_kmax
-          ck(:,k,l,1) = -flx_v(:,k  ,l) * rrhog(:,k,l) * GRD_rdgz(k)
-          ck(:,k,l,2) =  flx_v(:,k+1,l) * rrhog(:,k,l) * GRD_rdgz(k)
+          ck(:,k,l,1) = -flx_v(:,k  ,l) / rhog(:,k,l) * GRD_rdgz(k)
+          ck(:,k,l,2) =  flx_v(:,k+1,l) / rhog(:,k,l) * GRD_rdgz(k)
        enddo
        ck(:,ADM_kmin-1,l,1) = 0.D0
        ck(:,ADM_kmin-1,l,2) = 0.D0
@@ -542,14 +549,11 @@ contains
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
-
-          rrhog_pl(:,:,l) = 1.D0 / rhog_pl(:,:,l)
-
-          d_pl(:,:,l) = b3 * frhog_pl(:,:,l) * dt * rrhog_pl(:,:,l)
+          d_pl(:,:,l) = b3 * frhog_pl(:,:,l) * dt / rhog_pl(:,:,l)
 
           do k = ADM_kmin, ADM_kmax
-             ck_pl(:,k,l,1) = -flx_v_pl(:,k  ,l) * rrhog_pl(:,k,l) * GRD_rdgz(k)
-             ck_pl(:,k,l,2) =  flx_v_pl(:,k+1,l) * rrhog_pl(:,k,l) * GRD_rdgz(k)
+             ck_pl(:,k,l,1) = -flx_v_pl(:,k  ,l) / rhog_pl(:,k,l) * GRD_rdgz(k)
+             ck_pl(:,k,l,2) =  flx_v_pl(:,k+1,l) / rhog_pl(:,k,l) * GRD_rdgz(k)
           enddo
           ck_pl(:,ADM_kmin-1,l,1) = 0.D0
           ck_pl(:,ADM_kmin-1,l,2) = 0.D0
@@ -562,7 +566,7 @@ contains
     do iq = 1, vmax
 
        do l = 1, ADM_lall
-          q(:,:,l) = rhogq(:,:,l,iq) * rrhog(:,:,l)
+          q(:,:,l) = rhogq(:,:,l,iq) / rhog(:,:,l)
 
           do k = ADM_kmin, ADM_kmax+1
              q_h(:,k,l) = 0.5D0 * ( GRD_afac(k) * q(:,k,  l) &
@@ -573,7 +577,7 @@ contains
 
        if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
-             q_pl(:,:,l) = rhogq_pl(:,:,l,iq) * rrhog_pl(:,:,l)
+             q_pl(:,:,l) = rhogq_pl(:,:,l,iq) / rhog_pl(:,:,l)
 
              do k = ADM_kmin, ADM_kmax+1
                 q_h_pl(:,k,l) = 0.5D0 * ( GRD_afac(k) * q_pl(:,k,  l) &
@@ -596,9 +600,9 @@ contains
           q_h(:,ADM_kmax+1,l) = 0.D0
 
           do k = ADM_kmin, ADM_kmax
-          do n = 1, ADM_gall
-             rhogq(n,k,l,iq) = rhogq(n,k,l,iq) - ( flx_v(n,k+1,l)*q_h(n,k+1,l) &
-                                                 - flx_v(n,k,  l)*q_h(n,k,  l) &
+          do g = 1, ADM_gall
+             rhogq(g,k,l,iq) = rhogq(g,k,l,iq) - ( flx_v(g,k+1,l)*q_h(g,k+1,l) &
+                                                 - flx_v(g,k,  l)*q_h(g,k,  l) &
                                                  ) * GRD_rdgz(k)
           enddo
           enddo
@@ -610,9 +614,9 @@ contains
              q_h_pl(:,ADM_kmax+1,l) = 0.D0
 
              do k = ADM_kmin, ADM_kmax
-             do n = 1, ADM_gall_pl
-                rhogq_pl(n,k,l,iq) = rhogq_pl(n,k,l,iq) - ( flx_v_pl(n,k+1,l)*q_h_pl(n,k+1,l) &
-                                                          - flx_v_pl(n,k,  l)*q_h_pl(n,k,  l) &
+             do g = 1, ADM_gall_pl
+                rhogq_pl(g,k,l,iq) = rhogq_pl(g,k,l,iq) - ( flx_v_pl(g,k+1,l)*q_h_pl(g,k+1,l) &
+                                                          - flx_v_pl(g,k,  l)*q_h_pl(g,k,  l) &
                                                           ) * GRD_rdgz(k)
              enddo
              enddo
@@ -650,8 +654,8 @@ contains
        ADM_gmin_pl,    &
        ADM_gmax_pl
     use mod_cnst, only: &
-       CNST_UNDEF, &
-       CNST_EPS_ZERO
+       UNDEF => CNST_UNDEF, &
+       EPS   => CNST_EPS_ZERO
     use mod_grd, only: &
        GRD_xr,   &
        GRD_xr_pl
@@ -777,7 +781,7 @@ contains
           ij     = n
           ijm1   = n     - ADM_gall_1d
 
-          rrhoa2 = 1.D0 / max( rhot(ijm1,TJ) + rhot(ij,TI), CNST_EPS_ZERO ) ! doubled
+          rrhoa2 = 1.D0 / max( rhot(ijm1,TJ) + rhot(ij,TI), EPS ) ! doubled
 
           GRD_xc(n,k,l,AI,XDIR) = GRD_xr(n,K0,l,AI,XDIR) - (rhovxt(ijm1,TJ)+rhovxt(ij,TI)) * rrhoa2 * dt * 0.5D0
           GRD_xc(n,k,l,AI,YDIR) = GRD_xr(n,K0,l,AI,YDIR) - (rhovyt(ijm1,TJ)+rhovyt(ij,TI)) * rrhoa2 * dt * 0.5D0
@@ -802,7 +806,7 @@ contains
        do n = nstart, nend
           ij     = n
 
-          rrhoa2 = 1.D0 / max( rhot(ij,TI) + rhot(ij,TJ), CNST_EPS_ZERO ) ! doubled
+          rrhoa2 = 1.D0 / max( rhot(ij,TI) + rhot(ij,TJ), EPS ) ! doubled
 
           GRD_xc(n,k,l,AIJ,XDIR) = GRD_xr(n,K0,l,AIJ,XDIR) - (rhovxt(ij,TI)+rhovxt(ij,TJ)) * rrhoa2 * dt * 0.5D0
           GRD_xc(n,k,l,AIJ,YDIR) = GRD_xr(n,K0,l,AIJ,YDIR) - (rhovyt(ij,TI)+rhovyt(ij,TJ)) * rrhoa2 * dt * 0.5D0
@@ -829,7 +833,7 @@ contains
           ij     = n
           im1j   = n - 1
 
-          rrhoa2 = 1.D0 / max( rhot(ij,TJ) + rhot(im1j,TI), CNST_EPS_ZERO ) ! doubled
+          rrhoa2 = 1.D0 / max( rhot(ij,TJ) + rhot(im1j,TI), EPS ) ! doubled
 
           GRD_xc(n,k,l,AJ,XDIR) = GRD_xr(n,K0,l,AJ,XDIR) - (rhovxt(ij,TJ)+rhovxt(im1j,TI)) * rrhoa2 * dt * 0.5D0
           GRD_xc(n,k,l,AJ,YDIR) = GRD_xr(n,K0,l,AJ,YDIR) - (rhovyt(ij,TJ)+rhovyt(im1j,TI)) * rrhoa2 * dt * 0.5D0
@@ -885,7 +889,7 @@ contains
              ijm1 = v - 1
              if( ijm1 == ADM_gmin_pl - 1 ) ijm1 = ADM_gmax_pl
 
-             rrhoa2 = 1.D0 / max( rhot_pl(ijm1) + rhot_pl(ij), CNST_EPS_ZERO ) ! doubled
+             rrhoa2 = 1.D0 / max( rhot_pl(ijm1) + rhot_pl(ij), EPS ) ! doubled
 
              GRD_xc_pl(v,k,l,XDIR) = GRD_xr_pl(v,K0,l,XDIR) - (rhovxt_pl(ijm1)+rhovxt_pl(ij)) * rrhoa2 * dt * 0.5D0
              GRD_xc_pl(v,k,l,YDIR) = GRD_xr_pl(v,K0,l,YDIR) - (rhovyt_pl(ijm1)+rhovyt_pl(ij)) * rrhoa2 * dt * 0.5D0

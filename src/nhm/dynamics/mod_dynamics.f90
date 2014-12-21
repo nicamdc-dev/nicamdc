@@ -64,8 +64,8 @@ module mod_dynamics
   integer, private, parameter :: I_RHOGE    = 6 ! Density x G^1/2 x gamma^2 x Internal Energy
   integer, private, parameter :: I_RHOGETOT = 7 ! Density x G^1/2 x gamma^2 x Total Energy
 
-  integer, private, save :: num_of_iteration_lstep    ! number of large steps ( 0-4 )
-  integer, private, save :: num_of_iteration_sstep(4) ! number of small steps in each of large steps
+  integer, private :: num_of_iteration_lstep    ! number of large steps ( 0-4 )
+  integer, private :: num_of_iteration_sstep(4) ! number of small steps in each of large steps
 
   !-----------------------------------------------------------------------------
 contains
@@ -164,20 +164,20 @@ contains
     use mod_adm, only: &
        ADM_prc_me,  &
        ADM_prc_pl,  &
-       ADM_gall,    &
-       ADM_gall_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_kall,    &
+       ADM_gall,    &
+       ADM_gall_pl, &
        ADM_gall_1d, &
        ADM_gmax,    &
        ADM_gmin,    &
        ADM_kmax,    &
        ADM_kmin
     use mod_cnst, only: &
-       CNST_RAIR, &
-       CNST_RVAP, &
-       CNST_CV
+       Rdry  => CNST_RAIR, &
+       Rvap  => CNST_RVAP, &
+       CVdry => CNST_CV
     use mod_comm, only: &
        COMM_data_transfer
     use mod_vmtr, only: &
@@ -206,7 +206,7 @@ contains
        NDIFF_LOCATION, &
        TRC_ADV_TYPE,   &
        FLAG_NUDGING,   &
-       TB_TYPE,        &
+!       TB_TYPE,        &
        THUBURN_LIM       ! R.Yoshida 13/06/13 [add]
     use mod_prgvar, only: &
        prgvar_set, &
@@ -233,10 +233,10 @@ contains
        src_advection_convergence_momentum, &
        src_advection_convergence,          &
        I_SRC_default
-    use mod_src_tracer, only: &
-       src_tracer_advection
     use mod_vi, only: &
        vi_small_step
+    use mod_src_tracer, only: &
+       src_tracer_advection
     use mod_forcing_driver, only: &
        forcing_update ! R.Yoshida 13/06/13 [add]
 !    use mod_sgs, only: &
@@ -436,10 +436,10 @@ contains
           cv(:,:,:) = cv(:,:,:) + q(:,:,:,nq) * CVW(nq)
           qd(:,:,:) = qd(:,:,:) - q(:,:,:,nq)
        enddo
-       cv(:,:,:) = cv(:,:,:) + qd(:,:,:) * CNST_CV
+       cv(:,:,:) = cv(:,:,:) + qd(:,:,:) * CVdry
 
        tem(:,:,:) = ein(:,:,:) / cv(:,:,:)
-       pre(:,:,:) = rho(:,:,:) * tem(:,:,:) * ( qd(:,:,:)*CNST_RAIR + q(:,:,:,I_QV)*CNST_RVAP )
+       pre(:,:,:) = rho(:,:,:) * tem(:,:,:) * ( qd(:,:,:)*Rdry + q(:,:,:,I_QV)*Rvap )
 
        do l = 1, ADM_lall
           do k = ADM_kmin+1, ADM_kmax
@@ -498,10 +498,10 @@ contains
              cv_pl(:,:,:) = cv_pl(:,:,:) + q_pl(:,:,:,nq) * CVW(nq)
              qd_pl(:,:,:) = qd_pl(:,:,:) - q_pl(:,:,:,nq)
           enddo
-          cv_pl(:,:,:) = cv_pl(:,:,:) + qd_pl(:,:,:) * CNST_CV
+          cv_pl(:,:,:) = cv_pl(:,:,:) + qd_pl(:,:,:) * CVdry
 
           tem_pl(:,:,:) = ein_pl(:,:,:) / cv_pl(:,:,:)
-          pre_pl(:,:,:) = rho_pl(:,:,:) * tem_pl(:,:,:) * ( qd_pl(:,:,:)*CNST_RAIR + q_pl(:,:,:,I_QV)*CNST_RVAP )
+          pre_pl(:,:,:) = rho_pl(:,:,:) * tem_pl(:,:,:) * ( qd_pl(:,:,:)*Rdry + q_pl(:,:,:,I_QV)*Rvap )
 
           do l = 1, ADM_lall_pl
              do k = ADM_kmin+1, ADM_kmax
