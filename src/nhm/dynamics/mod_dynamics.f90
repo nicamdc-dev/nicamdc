@@ -216,8 +216,6 @@ contains
     use mod_bsstate, only: &
        rho_bs,    &
        rho_bs_pl, &
-       tem_bs,    &
-       tem_bs_pl, &
        pre_bs,    &
        pre_bs_pl
     use mod_thrmdyn, only: &
@@ -326,10 +324,6 @@ contains
     !--- pressure deviation from the base state ( G^1/2 X gamma2 )
     real(8) :: pregd   (ADM_gall,   ADM_kall,ADM_lall   )
     real(8) :: pregd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-
-    !--- temperature deviation from the base state ( physical )
-    real(8) :: temd   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: temd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- temporary variables
     real(8) :: qd   (ADM_gall,   ADM_kall,ADM_lall   )
@@ -475,10 +469,9 @@ contains
           call thrmdyn_eth( ADM_gall, eth(:,:,l), ein(:,:,l), pre(:,:,l), rho(:,:,l) )
        enddo ! region LOOP
 
-       !--- perturbations ( pred, rhod, temd )
+       !--- perturbations ( pre, rho with metrics )
        pregd(:,:,:) = ( pre(:,:,:) - pre_bs(:,:,:) ) * VMTR_GSGAM2(:,:,:)
        rhogd(:,:,:) = ( rho(:,:,:) - rho_bs(:,:,:) ) * VMTR_GSGAM2(:,:,:)
-       temd (:,:,:) =   tem(:,:,:) - tem_bs(:,:,:)
 
        if ( ADM_prc_me == ADM_prc_pl ) then
 
@@ -538,7 +531,6 @@ contains
 
           pregd_pl(:,:,:) = ( pre_pl(:,:,:) - pre_bs_pl(:,:,:) ) * VMTR_GSGAM2_pl(:,:,:)
           rhogd_pl(:,:,:) = ( rho_pl(:,:,:) - rho_bs_pl(:,:,:) ) * VMTR_GSGAM2_pl(:,:,:)
-          temd_pl (:,:,:) =   tem_pl(:,:,:) - tem_bs_pl(:,:,:)
        else
 
           rho_pl(:,:,:) = 0.D0
@@ -557,7 +549,6 @@ contains
 
           pregd_pl(:,:,:) = 0.D0
           rhogd_pl(:,:,:) = 0.D0
-          temd_pl (:,:,:) = 0.D0
 
        endif
 
@@ -593,112 +584,83 @@ contains
        if ( NDIFF_LOCATION == 'IN_LARGE_STEP' ) then
 
           if ( nl == 1 ) then ! only first step
-             f_TEND    (:,:,:,:) = 0.D0
-             f_TEND_pl (:,:,:,:) = 0.D0
-             f_TENDq   (:,:,:,:) = 0.D0
-             f_TENDq_pl(:,:,:,:) = 0.D0
-
              !------ numerical diffusion
-             call numfilter_hdiffusion( rho,                       rho_pl,                       & ! [IN]
-                                        vx,                        vx_pl,                        & ! [IN]
-                                        vy,                        vy_pl,                        & ! [IN]
-                                        vz,                        vz_pl,                        & ! [IN]
-                                        w,                         w_pl,                         & ! [IN]
-                                        temd,                      temd_pl,                      & ! [IN]
-                                        q,                         q_pl,                         & ! [IN]
-                                        f_TEND (:,:,:,I_RHOG    ), f_TEND_pl (:,:,:,I_RHOG    ), & ! [INOUT]
-                                        f_TEND (:,:,:,I_RHOGVX  ), f_TEND_pl (:,:,:,I_RHOGVX  ), & ! [INOUT]
-                                        f_TEND (:,:,:,I_RHOGVY  ), f_TEND_pl (:,:,:,I_RHOGVY  ), & ! [INOUT]
-                                        f_TEND (:,:,:,I_RHOGVZ  ), f_TEND_pl (:,:,:,I_RHOGVZ  ), & ! [INOUT]
-                                        f_TEND (:,:,:,I_RHOGW   ), f_TEND_pl (:,:,:,I_RHOGW   ), & ! [INOUT]
-                                        f_TEND (:,:,:,I_RHOGE   ), f_TEND_pl (:,:,:,I_RHOGE   ), & ! [INOUT]
-                                        f_TEND (:,:,:,I_RHOGETOT), f_TEND_pl (:,:,:,I_RHOGETOT), & ! [INOUT]
-                                        f_TENDq(:,:,:,:),          f_TENDq_pl(:,:,:,:)           ) ! [INOUT]
+             call numfilter_hdiffusion( PROG(:,:,:,I_RHOG), PROG_pl(:,:,:,I_RHOG), & ! [IN]
+                                        rho,                rho_pl,                & ! [IN]
+                                        vx,                 vx_pl,                 & ! [IN]
+                                        vy,                 vy_pl,                 & ! [IN]
+                                        vz,                 vz_pl,                 & ! [IN]
+                                        w,                  w_pl,                  & ! [IN]
+                                        tem,                tem_pl,                & ! [IN]
+                                        q,                  q_pl,                  & ! [IN]
+                                        f_TEND,             f_TEND_pl,             & ! [OUT]
+                                        f_TENDq,            f_TENDq_pl             ) ! [OUT]
 
              if ( NUMFILTER_DOverticaldiff ) then ! numerical diffusion (vertical)
-                call numfilter_vdiffusion( rho,                       rho_pl,                       & ! [IN]
-                                           vx,                        vx_pl,                        & ! [IN]
-                                           vy,                        vy_pl,                        & ! [IN]
-                                           vz,                        vz_pl,                        & ! [IN]
-                                           w,                         w_pl,                         & ! [IN]
-                                           temd,                      temd_pl,                      & ! [IN]
-                                           q,                         q_pl,                         & ! [IN]
-                                           f_TEND (:,:,:,I_RHOG    ), f_TEND_pl (:,:,:,I_RHOG    ), & ! [INOUT]
-                                           f_TEND (:,:,:,I_RHOGVX  ), f_TEND_pl (:,:,:,I_RHOGVX  ), & ! [INOUT]
-                                           f_TEND (:,:,:,I_RHOGVY  ), f_TEND_pl (:,:,:,I_RHOGVY  ), & ! [INOUT]
-                                           f_TEND (:,:,:,I_RHOGVZ  ), f_TEND_pl (:,:,:,I_RHOGVZ  ), & ! [INOUT]
-                                           f_TEND (:,:,:,I_RHOGW   ), f_TEND_pl (:,:,:,I_RHOGW   ), & ! [INOUT]
-                                           f_TEND (:,:,:,I_RHOGE   ), f_TEND_pl (:,:,:,I_RHOGE   ), & ! [INOUT]
-                                           f_TEND (:,:,:,I_RHOGETOT), f_TEND_pl (:,:,:,I_RHOGETOT), & ! [INOUT]
-                                           f_TENDq(:,:,:,:),          f_TENDq_pl(:,:,:,:)           ) ! [INOUT]
+                call numfilter_vdiffusion( PROG(:,:,:,I_RHOG), PROG_pl(:,:,:,I_RHOG), & ! [IN]
+                                           rho,                rho_pl,                & ! [IN]
+                                           vx,                 vx_pl,                 & ! [IN]
+                                           vy,                 vy_pl,                 & ! [IN]
+                                           vz,                 vz_pl,                 & ! [IN]
+                                           w,                  w_pl,                  & ! [IN]
+                                           tem,                tem_pl,                & ! [IN]
+                                           q,                  q_pl,                  & ! [IN]
+                                           f_TEND,             f_TEND_pl,             & ! [INOUT]
+                                           f_TENDq,            f_TENDq_pl             ) ! [INOUT]
              endif
 
              if ( NUMFILTER_DOrayleigh ) then ! rayleigh damping
-                call numfilter_rayleigh_damping( rho,                       rho_pl,                       & ! [IN]
-                                                 vx,                        vx_pl,                        & ! [IN]
-                                                 vy,                        vy_pl,                        & ! [IN]
-                                                 vz,                        vz_pl,                        & ! [IN]
-                                                 w,                         w_pl,                         & ! [IN]
-                                                 f_TEND (:,:,:,I_RHOGVX  ), f_TEND_pl (:,:,:,I_RHOGVX  ), & ! [INOUT]
-                                                 f_TEND (:,:,:,I_RHOGVY  ), f_TEND_pl (:,:,:,I_RHOGVY  ), & ! [INOUT]
-                                                 f_TEND (:,:,:,I_RHOGVZ  ), f_TEND_pl (:,:,:,I_RHOGVZ  ), & ! [INOUT]
-                                                 f_TEND (:,:,:,I_RHOGW   ), f_TEND_pl (:,:,:,I_RHOGW   )  ) ! [INOUT]
+                call numfilter_rayleigh_damping( PROG  (:,:,:,I_RHOG  ), PROG_pl  (:,:,:,I_RHOG  ), & ! [IN]
+                                                 vx,                     vx_pl,                     & ! [IN]
+                                                 vy,                     vy_pl,                     & ! [IN]
+                                                 vz,                     vz_pl,                     & ! [IN]
+                                                 w,                      w_pl,                      & ! [IN]
+                                                 f_TEND(:,:,:,I_RHOGVX), f_TEND_pl(:,:,:,I_RHOGVX), & ! [INOUT]
+                                                 f_TEND(:,:,:,I_RHOGVY), f_TEND_pl(:,:,:,I_RHOGVY), & ! [INOUT]
+                                                 f_TEND(:,:,:,I_RHOGVZ), f_TEND_pl(:,:,:,I_RHOGVZ), & ! [INOUT]
+                                                 f_TEND(:,:,:,I_RHOGW ), f_TEND_pl(:,:,:,I_RHOGW )  ) ! [INOUT]
              endif
-
           endif
 
        elseif( NDIFF_LOCATION == 'IN_LARGE_STEP2' ) then
-          f_TEND    (:,:,:,:) = 0.D0
-          f_TEND_pl (:,:,:,:) = 0.D0
-          f_TENDq   (:,:,:,:) = 0.D0
-          f_TENDq_pl(:,:,:,:) = 0.D0
 
           !------ numerical diffusion
-          call numfilter_hdiffusion( rho,                       rho_pl,                       & ! [IN]
-                                     vx,                        vx_pl,                        & ! [IN]
-                                     vy,                        vy_pl,                        & ! [IN]
-                                     vz,                        vz_pl,                        & ! [IN]
-                                     w,                         w_pl,                         & ! [IN]
-                                     temd,                      temd_pl,                      & ! [IN]
-                                     q,                         q_pl,                         & ! [IN]
-                                     f_TEND (:,:,:,I_RHOG    ), f_TEND_pl (:,:,:,I_RHOG    ), & ! [INOUT]
-                                     f_TEND (:,:,:,I_RHOGVX  ), f_TEND_pl (:,:,:,I_RHOGVX  ), & ! [INOUT]
-                                     f_TEND (:,:,:,I_RHOGVY  ), f_TEND_pl (:,:,:,I_RHOGVY  ), & ! [INOUT]
-                                     f_TEND (:,:,:,I_RHOGVZ  ), f_TEND_pl (:,:,:,I_RHOGVZ  ), & ! [INOUT]
-                                     f_TEND (:,:,:,I_RHOGW   ), f_TEND_pl (:,:,:,I_RHOGW   ), & ! [INOUT]
-                                     f_TEND (:,:,:,I_RHOGE   ), f_TEND_pl (:,:,:,I_RHOGE   ), & ! [INOUT]
-                                     f_TEND (:,:,:,I_RHOGETOT), f_TEND_pl (:,:,:,I_RHOGETOT), & ! [INOUT]
-                                     f_TENDq(:,:,:,:),          f_TENDq_pl(:,:,:,:)           ) ! [INOUT]
+          call numfilter_hdiffusion( PROG(:,:,:,I_RHOG), PROG_pl(:,:,:,I_RHOG), & ! [IN]
+                                     rho,                rho_pl,                & ! [IN]
+                                     vx,                 vx_pl,                 & ! [IN]
+                                     vy,                 vy_pl,                 & ! [IN]
+                                     vz,                 vz_pl,                 & ! [IN]
+                                     w,                  w_pl,                  & ! [IN]
+                                     tem,                tem_pl,                & ! [IN]
+                                     q,                  q_pl,                  & ! [IN]
+                                     f_TEND,             f_TEND_pl,             & ! [OUT]
+                                     f_TENDq,            f_TENDq_pl             ) ! [OUT]
 
           if ( NUMFILTER_DOverticaldiff ) then ! numerical diffusion (vertical)
-             call numfilter_vdiffusion( rho,                       rho_pl,                       & ! [IN]
-                                        vx,                        vx_pl,                        & ! [IN]
-                                        vy,                        vy_pl,                        & ! [IN]
-                                        vz,                        vz_pl,                        & ! [IN]
-                                        w,                         w_pl,                         & ! [IN]
-                                        temd,                      temd_pl,                      & ! [IN]
-                                        q,                         q_pl,                         & ! [IN]
-                                        f_TEND (:,:,:,I_RHOG    ), f_TEND_pl (:,:,:,I_RHOG    ), & ! [INOUT]
-                                        f_TEND (:,:,:,I_RHOGVX  ), f_TEND_pl (:,:,:,I_RHOGVX  ), & ! [INOUT]
-                                        f_TEND (:,:,:,I_RHOGVY  ), f_TEND_pl (:,:,:,I_RHOGVY  ), & ! [INOUT]
-                                        f_TEND (:,:,:,I_RHOGVZ  ), f_TEND_pl (:,:,:,I_RHOGVZ  ), & ! [INOUT]
-                                        f_TEND (:,:,:,I_RHOGW   ), f_TEND_pl (:,:,:,I_RHOGW   ), & ! [INOUT]
-                                        f_TEND (:,:,:,I_RHOGE   ), f_TEND_pl (:,:,:,I_RHOGE   ), & ! [INOUT]
-                                        f_TEND (:,:,:,I_RHOGETOT), f_TEND_pl (:,:,:,I_RHOGETOT), & ! [INOUT]
-                                        f_TENDq(:,:,:,:),          f_TENDq_pl(:,:,:,:)           ) ! [INOUT]
+             call numfilter_vdiffusion( PROG(:,:,:,I_RHOG), PROG_pl(:,:,:,I_RHOG), & ! [IN]
+                                        rho,                rho_pl,                & ! [IN]
+                                        vx,                 vx_pl,                 & ! [IN]
+                                        vy,                 vy_pl,                 & ! [IN]
+                                        vz,                 vz_pl,                 & ! [IN]
+                                        w,                  w_pl,                  & ! [IN]
+                                        tem,                tem_pl,                & ! [IN]
+                                        q,                  q_pl,                  & ! [IN]
+                                        f_TEND,             f_TEND_pl,             & ! [INOUT]
+                                        f_TENDq,            f_TENDq_pl             ) ! [INOUT]
           endif
 
           if ( NUMFILTER_DOrayleigh ) then ! rayleigh damping
-             call numfilter_rayleigh_damping( rho,                       rho_pl,                       & ! [IN]
-                                              vx,                        vx_pl,                        & ! [IN]
-                                              vy,                        vy_pl,                        & ! [IN]
-                                              vz,                        vz_pl,                        & ! [IN]
-                                              w,                         w_pl,                         & ! [IN]
-                                              f_TEND (:,:,:,I_RHOGVX  ), f_TEND_pl (:,:,:,I_RHOGVX  ), & ! [INOUT]
-                                              f_TEND (:,:,:,I_RHOGVY  ), f_TEND_pl (:,:,:,I_RHOGVY  ), & ! [INOUT]
-                                              f_TEND (:,:,:,I_RHOGVZ  ), f_TEND_pl (:,:,:,I_RHOGVZ  ), & ! [INOUT]
-                                              f_TEND (:,:,:,I_RHOGW   ), f_TEND_pl (:,:,:,I_RHOGW   )  ) ! [INOUT]
+             call numfilter_rayleigh_damping( PROG  (:,:,:,I_RHOG  ), PROG_pl  (:,:,:,I_RHOG  ), & ! [IN]
+                                              vx,                     vx_pl,                     & ! [IN]
+                                              vy,                     vy_pl,                     & ! [IN]
+                                              vz,                     vz_pl,                     & ! [IN]
+                                              w,                      w_pl,                      & ! [IN]
+                                              f_TEND(:,:,:,I_RHOGVX), f_TEND_pl(:,:,:,I_RHOGVX), & ! [INOUT]
+                                              f_TEND(:,:,:,I_RHOGVY), f_TEND_pl(:,:,:,I_RHOGVY), & ! [INOUT]
+                                              f_TEND(:,:,:,I_RHOGVZ), f_TEND_pl(:,:,:,I_RHOGVZ), & ! [INOUT]
+                                              f_TEND(:,:,:,I_RHOGW ), f_TEND_pl(:,:,:,I_RHOGW )  ) ! [INOUT]
           endif
+
        endif
 
 !       if ( TB_TYPE == 'SMG' ) then ! Smagorinksy-type SGS model [add] A.Noda 10/11/29

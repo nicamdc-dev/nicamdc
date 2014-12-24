@@ -80,6 +80,14 @@ module mod_numfilter
   !
   !++ Private parameters & variables
   !
+  integer, private, parameter :: I_RHOG     = 1 ! Density x G^1/2 x gamma^2
+  integer, private, parameter :: I_RHOGVX   = 2 ! Density x G^1/2 x gamma^2 x Horizontal velocity (X-direction)
+  integer, private, parameter :: I_RHOGVY   = 3 ! Density x G^1/2 x gamma^2 x Horizontal velocity (Y-direction)
+  integer, private, parameter :: I_RHOGVZ   = 4 ! Density x G^1/2 x gamma^2 x Horizontal velocity (Z-direction)
+  integer, private, parameter :: I_RHOGW    = 5 ! Density x G^1/2 x gamma^2 x Vertical   velocity
+  integer, private, parameter :: I_RHOGE    = 6 ! Density x G^1/2 x gamma^2 x Internal Energy
+  integer, private, parameter :: I_RHOGETOT = 7 ! Density x G^1/2 x gamma^2 x Total Energy
+
   real(8), private, allocatable :: rayleigh_coef  (:)             ! Rayleigh damping coefficient at cell center
   real(8), private, allocatable :: rayleigh_coef_h(:)             ! Rayleigh damping coefficient at cell wall
   logical, private              :: rayleigh_damp_only_w = .false. ! damp only w?
@@ -1012,7 +1020,7 @@ contains
   !-----------------------------------------------------------------------------
   !> Rayleigh damping
   subroutine numfilter_rayleigh_damping( &
-       rho,     rho_pl,     &
+       rhog,    rhog_pl,    &
        vx,      vx_pl,      &
        vy,      vy_pl,      &
        vz,      vz_pl,      &
@@ -1031,14 +1039,12 @@ contains
        ADM_kmin,    &
        ADM_kmax
     use mod_vmtr, only: &
-       VMTR_GSGAM2,     &
-       VMTR_GSGAM2_pl,  &
        VMTR_C2Wfact,    &
        VMTR_C2Wfact_pl
     implicit none
 
-    real(8), intent(in)    :: rho       (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: rho_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)    :: rhog      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8), intent(in)    :: rhog_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(in)    :: vx        (ADM_gall,   ADM_kall,ADM_lall   )
     real(8), intent(in)    :: vx_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(in)    :: vy        (ADM_gall,   ADM_kall,ADM_lall   )
@@ -1056,20 +1062,13 @@ contains
     real(8), intent(inout) :: frhogw    (ADM_gall,   ADM_kall,ADM_lall   )
     real(8), intent(inout) :: frhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: rhog   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rhog_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-
     real(8) :: coef
-
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
     if( .NOT. NUMFILTER_DOrayleigh ) return
 
     call DEBUG_rapstart('____numfilter_rayleigh_damping')
-
-    rhog   (:,:,:) = rho   (:,:,:) * VMTR_GSGAM2   (:,:,:)
-    rhog_pl(:,:,:) = rho_pl(:,:,:) * VMTR_GSGAM2_pl(:,:,:)
 
     if ( .NOT. rayleigh_damp_only_w ) then
        do l = 1, ADM_lall
@@ -1129,21 +1128,16 @@ contains
   !-----------------------------------------------------------------------------
   !> horizontal numerical diffusion
   subroutine numfilter_hdiffusion( &
-       rho,       rho_pl,       &
-       vx,        vx_pl,        &
-       vy,        vy_pl,        &
-       vz,        vz_pl,        &
-       w,         w_pl,         &
-       temd,      temd_pl,      &
-       q,         q_pl,         &
-       frhog,     frhog_pl,     &
-       frhogvx,   frhogvx_pl,   &
-       frhogvy,   frhogvy_pl,   &
-       frhogvz,   frhogvz_pl,   &
-       frhogw,    frhogw_pl,    &
-       frhoge,    frhoge_pl,    &
-       frhogetot, frhogetot_pl, &
-       frhogq,    frhogq_pl     )
+       rhog,       rhog_pl,      &
+       rho,        rho_pl,       &
+       vx,         vx_pl,        &
+       vy,         vy_pl,        &
+       vz,         vz_pl,        &
+       w,          w_pl,         &
+       tem,        tem_pl,       &
+       q,          q_pl,         &
+       tendency,   tendency_pl,  &
+       tendency_q, tendency_q_pl )
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -1165,8 +1159,6 @@ contains
        OPRT_laplacian,         &
        OPRT_diffusion
     use mod_vmtr, only: &
-       VMTR_GSGAM2,     &
-       VMTR_GSGAM2_pl,  &
        VMTR_C2Wfact,    &
        VMTR_C2Wfact_pl
     use mod_time, only: &
@@ -1175,40 +1167,32 @@ contains
        TRC_VMAX,    &
        TRC_ADV_TYPE
     use mod_bsstate, only: &
-       rho_bs,   &
-       rho_bs_pl
+       rho_bs,    &
+       rho_bs_pl, &
+       tem_bs,    &
+       tem_bs_pl
     implicit none
 
-    real(8), intent(in)    :: rho         (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: rho_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: vx          (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: vx_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: vy          (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: vy_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: vz          (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: vz_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: w           (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: w_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: temd        (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: temd_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: q           (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
-    real(8), intent(in)    :: q_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
-    real(8), intent(inout) :: frhog       (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhog_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogvx     (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogvx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogvy     (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogvy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogvz     (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogvz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogw      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogw_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhoge      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhoge_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogetot   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogetot_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogq      (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
-    real(8), intent(inout) :: frhogq_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(8), intent(in)  :: rhog         (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: rhog_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)  :: rho          (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: rho_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)  :: vx           (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: vx_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)  :: vy           (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: vy_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)  :: vz           (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: vz_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)  :: w            (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: w_pl         (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)  :: tem          (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8), intent(in)  :: tem_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)  :: q            (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
+    real(8), intent(in)  :: q_pl         (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(8), intent(out) :: tendency     (ADM_gall,   ADM_kall,ADM_lall   ,7)
+    real(8), intent(out) :: tendency_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,7)
+    real(8), intent(out) :: tendency_q   (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
+    real(8), intent(out) :: tendency_q_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
     real(8) :: KH_coef_h        (ADM_gall,   ADM_kall,ADM_lall   )
     real(8) :: KH_coef_h_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -1232,8 +1216,6 @@ contains
 
     real(8) :: wk       (ADM_gall,   ADM_kall,ADM_lall   )
     real(8) :: wk_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8) :: rhog_h   (ADM_gall,   ADM_kall,ADM_lall   )
     real(8) :: rhog_h_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
@@ -1257,9 +1239,6 @@ contains
                  + (        fact(:) ) * Kh_coef_minlim
     endif
 
-    rhog   (:,:,:) = rho   (:,:,:) * VMTR_GSGAM2   (:,:,:)
-    rhog_pl(:,:,:) = rho_pl(:,:,:) * VMTR_GSGAM2_pl(:,:,:)
-
     rhog_h(:,ADM_kmin,:) = 0.D0
     do l = 1, ADM_lall
     do k = ADM_kmin+1, ADM_kmax
@@ -1280,19 +1259,19 @@ contains
     enddo
     enddo
 
-    vtmp   (:,:,:,1) = vx     (:,:,:)
-    vtmp   (:,:,:,2) = vy     (:,:,:)
-    vtmp   (:,:,:,3) = vz     (:,:,:)
-    vtmp   (:,:,:,4) = w      (:,:,:)
-    vtmp   (:,:,:,5) = temd   (:,:,:)
-    vtmp   (:,:,:,6) = rho    (:,:,:) - rho_bs   (:,:,:)
+    vtmp   (:,:,:,1) = vx    (:,:,:)
+    vtmp   (:,:,:,2) = vy    (:,:,:)
+    vtmp   (:,:,:,3) = vz    (:,:,:)
+    vtmp   (:,:,:,4) = w     (:,:,:)
+    vtmp   (:,:,:,5) = tem   (:,:,:) - tem_bs   (:,:,:)
+    vtmp   (:,:,:,6) = rho   (:,:,:) - rho_bs   (:,:,:)
 
-    vtmp_pl(:,:,:,1) = vx_pl  (:,:,:)
-    vtmp_pl(:,:,:,2) = vy_pl  (:,:,:)
-    vtmp_pl(:,:,:,3) = vz_pl  (:,:,:)
-    vtmp_pl(:,:,:,4) = w_pl   (:,:,:)
-    vtmp_pl(:,:,:,5) = temd_pl(:,:,:)
-    vtmp_pl(:,:,:,6) = rho_pl (:,:,:) - rho_bs_pl(:,:,:)
+    vtmp_pl(:,:,:,1) = vx_pl (:,:,:)
+    vtmp_pl(:,:,:,2) = vy_pl (:,:,:)
+    vtmp_pl(:,:,:,3) = vz_pl (:,:,:)
+    vtmp_pl(:,:,:,4) = w_pl  (:,:,:)
+    vtmp_pl(:,:,:,5) = tem_pl(:,:,:) - tem_bs_pl(:,:,:)
+    vtmp_pl(:,:,:,6) = rho_pl(:,:,:) - rho_bs_pl(:,:,:)
 
     ! copy beforehand
     if ( NUMFILTER_DOhorizontaldiff_lap1 ) then
@@ -1447,50 +1426,54 @@ contains
 
     !--- Update tendency
     do l = 1, ADM_lall
-    do k = ADM_kmin, ADM_kmax
-       frhogvx  (:,k,l) = frhogvx  (:,k,l) - ( vtmp     (:,k,l,1) * KH_coef     (:,k,l) &
-                                             + vtmp_lap1(:,k,l,1) * KH_coef_lap1(:,k,l) &
-                                             ) * rhog(:,k,l)
-       frhogvy  (:,k,l) = frhogvy  (:,k,l) - ( vtmp     (:,k,l,2) * KH_coef     (:,k,l) &
-                                             + vtmp_lap1(:,k,l,2) * KH_coef_lap1(:,k,l) &
-                                             ) * rhog(:,k,l)
-       frhogvz  (:,k,l) = frhogvz  (:,k,l) - ( vtmp     (:,k,l,3) * KH_coef     (:,k,l) &
-                                             + vtmp_lap1(:,k,l,3) * KH_coef_lap1(:,k,l) &
-                                             ) * rhog(:,k,l)
-       frhogw   (:,k,l) = frhogw   (:,k,l) - ( vtmp     (:,k,l,4) * KH_coef_h     (:,k,l) &
-                                             + vtmp_lap1(:,k,l,4) * KH_coef_lap1_h(:,k,l) &
-                                             ) * rhog_h(:,k,l)
-       frhoge   (:,k,l) = frhoge   (:,k,l) - ( vtmp(:,k,l,5) + vtmp_lap1(:,k,l,5) )
-       frhogetot(:,k,l) = frhogetot(:,k,l) - ( vtmp(:,k,l,5) + vtmp_lap1(:,k,l,5) )
-       frhog    (:,k,l) = frhog    (:,k,l) - ( vtmp(:,k,l,6) + vtmp_lap1(:,k,l,6) )
+    do k = 1, ADM_kall
+       do g = 1, ADM_gall
+          tendency(g,k,l,I_RHOGVX) = - ( vtmp     (g,k,l,1) * KH_coef     (g,k,l) &
+                                       + vtmp_lap1(g,k,l,1) * KH_coef_lap1(g,k,l) ) * rhog(g,k,l)
+          tendency(g,k,l,I_RHOGVY) = - ( vtmp     (g,k,l,2) * KH_coef     (g,k,l) &
+                                       + vtmp_lap1(g,k,l,2) * KH_coef_lap1(g,k,l) ) * rhog(g,k,l)
+          tendency(g,k,l,I_RHOGVZ) = - ( vtmp     (g,k,l,3) * KH_coef     (g,k,l) &
+                                       + vtmp_lap1(g,k,l,3) * KH_coef_lap1(g,k,l) ) * rhog(g,k,l)
+          tendency(g,k,l,I_RHOGW ) = - ( vtmp     (g,k,l,4) * KH_coef_h     (g,k,l) &
+                                       + vtmp_lap1(g,k,l,4) * KH_coef_lap1_h(g,k,l) ) * rhog_h(g,k,l)
+       enddo
+
+       do g = 1, ADM_gall
+          tendency(g,k,l,I_RHOGE   ) = - ( vtmp(g,k,l,5) + vtmp_lap1(g,k,l,5) )
+          tendency(g,k,l,I_RHOGETOT) = - ( vtmp(g,k,l,5) + vtmp_lap1(g,k,l,5) )
+          tendency(g,k,l,I_RHOG    ) = - ( vtmp(g,k,l,6) + vtmp_lap1(g,k,l,6) )
+       enddo
     enddo
     enddo
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
-       do k = ADM_kmin, ADM_kmax
-          frhogvx_pl  (:,k,l) = frhogvx_pl  (:,k,l) - ( vtmp_pl     (:,k,l,1) * KH_coef_pl     (:,k,l) &
-                                                      + vtmp_lap1_pl(:,k,l,1) * KH_coef_lap1_pl(:,k,l) &
-                                                      ) * rhog_pl(:,k,l)
-          frhogvy_pl  (:,k,l) = frhogvy_pl  (:,k,l) - ( vtmp_pl     (:,k,l,2) * KH_coef_pl     (:,k,l) &
-                                                      + vtmp_lap1_pl(:,k,l,2) * KH_coef_lap1_pl(:,k,l) &
-                                                      ) * rhog_pl(:,k,l)
-          frhogvz_pl  (:,k,l) = frhogvz_pl  (:,k,l) - ( vtmp_pl     (:,k,l,3) * KH_coef_pl     (:,k,l) &
-                                                      + vtmp_lap1_pl(:,k,l,3) * KH_coef_lap1_pl(:,k,l) &
-                                                      ) * rhog_pl(:,k,l)
-          frhogw_pl   (:,k,l) = frhogw_pl   (:,k,l) - ( vtmp_pl     (:,k,l,4) * KH_coef_h_pl     (:,k,l) &
-                                                      + vtmp_lap1_pl(:,k,l,4) * KH_coef_lap1_h_pl(:,k,l) &
-                                                      ) * rhog_h_pl(:,k,l)
-          frhoge_pl   (:,k,l) = frhoge_pl   (:,k,l) - ( vtmp_pl(:,k,l,5) + vtmp_lap1_pl(:,k,l,5) )
-          frhogetot_pl(:,k,l) = frhogetot_pl(:,k,l) - ( vtmp_pl(:,k,l,5) + vtmp_lap1_pl(:,k,l,5) )
-          frhog_pl    (:,k,l) = frhog_pl    (:,k,l) - ( vtmp_pl(:,k,l,6) + vtmp_lap1_pl(:,k,l,6) )
+       do k = 1, ADM_kall
+          do g = 1, ADM_gall_pl
+             tendency_pl(g,k,l,I_RHOGVX) = - ( vtmp_pl     (g,k,l,1) * KH_coef_pl     (g,k,l) &
+                                             + vtmp_lap1_pl(g,k,l,1) * KH_coef_lap1_pl(g,k,l) ) * rhog_pl(g,k,l)
+             tendency_pl(g,k,l,I_RHOGVY) = - ( vtmp_pl     (g,k,l,2) * KH_coef_pl     (g,k,l) &
+                                             + vtmp_lap1_pl(g,k,l,2) * KH_coef_lap1_pl(g,k,l) ) * rhog_pl(g,k,l)
+             tendency_pl(g,k,l,I_RHOGVZ) = - ( vtmp_pl     (g,k,l,3) * KH_coef_pl     (g,k,l) &
+                                             + vtmp_lap1_pl(g,k,l,3) * KH_coef_lap1_pl(g,k,l) ) * rhog_pl(g,k,l)
+             tendency_pl(g,k,l,I_RHOGW ) = - ( vtmp_pl     (g,k,l,4) * KH_coef_h_pl     (g,k,l) &
+                                             + vtmp_lap1_pl(g,k,l,4) * KH_coef_lap1_h_pl(g,k,l) ) * rhog_h_pl(g,k,l)
+          enddo
+
+          do g = 1, ADM_gall_pl
+             tendency_pl(g,k,l,I_RHOGE   ) = - ( vtmp_pl(g,k,l,5) + vtmp_lap1_pl(g,k,l,5) )
+             tendency_pl(g,k,l,I_RHOGETOT) = - ( vtmp_pl(g,k,l,5) + vtmp_lap1_pl(g,k,l,5) )
+             tendency_pl(g,k,l,I_RHOG    ) = - ( vtmp_pl(g,k,l,6) + vtmp_lap1_pl(g,k,l,6) )
+          enddo
        enddo
        enddo
+    else
+       tendency_pl(:,:,:,:) = 0.D0
     endif
 
-    call OPRT_horizontalize_vec( frhogvx(:,:,:), frhogvx_pl(:,:,:), & !--- [INOUT]
-                                 frhogvy(:,:,:), frhogvy_pl(:,:,:), & !--- [INOUT]
-                                 frhogvz(:,:,:), frhogvz_pl(:,:,:)  ) !--- [INOUT]
+    call OPRT_horizontalize_vec( tendency(:,:,:,I_RHOGVX), tendency_pl(:,:,:,I_RHOGVX), & !--- [INOUT]
+                                 tendency(:,:,:,I_RHOGVY), tendency_pl(:,:,:,I_RHOGVY), & !--- [INOUT]
+                                 tendency(:,:,:,I_RHOGVZ), tendency_pl(:,:,:,I_RHOGVZ)  ) !--- [INOUT]
 
     !---------------------------------------------------------------------------
     ! For tracer
@@ -1562,7 +1545,7 @@ contains
        do nq = 1, TRC_VMAX
        do l  = 1, ADM_lall
        do k  = ADM_kmin, ADM_kmax
-          frhogq(:,k,l,nq) = frhogq(:,k,l,nq) - ( qtmp(:,k,l,nq) + qtmp_lap1(:,k,l,nq) )
+          tendency_q(:,k,l,nq) = - ( qtmp(:,k,l,nq) + qtmp_lap1(:,k,l,nq) )
        enddo
        enddo
        enddo
@@ -1571,12 +1554,16 @@ contains
           do nq = 1, TRC_VMAX
           do l  = 1, ADM_lall_pl
           do k  = ADM_kmin, ADM_kmax
-             frhogq_pl(:,k,l,nq) = frhogq_pl(:,k,l,nq) - ( qtmp_pl(:,k,l,nq) + qtmp_lap1_pl(:,k,l,nq) )
+             tendency_q_pl(:,k,l,nq) = - ( qtmp_pl(:,k,l,nq) + qtmp_lap1_pl(:,k,l,nq) )
           enddo
           enddo
           enddo
+       else
+          tendency_q_pl(:,:,:,:) = 0.D0
        endif
-
+    else
+       tendency_q   (:,:,:,:) = 0.D0
+       tendency_q_pl(:,:,:,:) = 0.D0
     endif ! apply filter to tracer?
 
     call DEBUG_rapend('____numfilter_hdiffusion')
@@ -1587,21 +1574,16 @@ contains
   !-----------------------------------------------------------------------------
   !> vertical numerical diffusion
   subroutine numfilter_vdiffusion( &
-       rho,       rho_pl,       &
-       vx,        vx_pl,        &
-       vy,        vy_pl,        &
-       vz,        vz_pl,        &
-       w,         w_pl,         &
-       tem,       tem_pl,       &
-       q,         q_pl,         &
-       frhog,     frhog_pl,     &
-       frhogvx,   frhogvx_pl,   &
-       frhogvy,   frhogvy_pl,   &
-       frhogvz,   frhogvz_pl,   &
-       frhogw,    frhogw_pl,    &
-       frhoge,    frhoge_pl,    &
-       frhogetot, frhogetot_pl, &
-       frhogq,    frhogq_pl     )
+       rhog,       rhog_pl,      &
+       rho,        rho_pl,       &
+       vx,         vx_pl,        &
+       vy,         vy_pl,        &
+       vz,         vz_pl,        &
+       w,          w_pl,         &
+       tem,        tem_pl,       &
+       q,          q_pl,         &
+       tendency,   tendency_pl,  &
+       tendency_q, tendency_q_pl )
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -1619,54 +1601,47 @@ contains
     use mod_oprt, only: &
        OPRT_horizontalize_vec
     use mod_vmtr, only: &
-       VMTR_GSGAM2,     &
-       VMTR_GSGAM2_pl,  &
        VMTR_GSGAM2H,    &
        VMTR_GSGAM2H_pl, &
        VMTR_C2Wfact,    &
        VMTR_C2Wfact_pl
     use mod_runconf, only: &
        TRC_VMAX
+    use mod_bsstate, only: &
+       rho_bs,    &
+       rho_bs_pl, &
+       tem_bs,    &
+       tem_bs_pl
     implicit none
 
-    real(8), intent(in)    :: rho         (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: rho_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: vx          (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: vx_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: vy          (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: vy_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: vz          (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: vz_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: w           (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: w_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: tem         (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: tem_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: q           (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
-    real(8), intent(in)    :: q_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
-    real(8), intent(inout) :: frhog       (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhog_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogvx     (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogvx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogvy     (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogvy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogvz     (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogvz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogw      (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogw_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhoge      (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhoge_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogetot   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogetot_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogq      (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
-    real(8), intent(inout) :: frhogq_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(8), intent(in)    :: rhog         (ADM_gall,   ADM_kall,ADM_lall   )
+    real(8), intent(in)    :: rhog_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)    :: rho          (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)    :: rho_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)    :: vx           (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)    :: vx_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)    :: vy           (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)    :: vy_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)    :: vz           (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)    :: vz_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)    :: w            (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)    :: w_pl         (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)    :: tem          (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(in)    :: tem_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8), intent(in)    :: q            (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
+    real(8), intent(in)    :: q_pl         (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(8), intent(inout) :: tendency     (ADM_gall,   ADM_kall,ADM_lall   ,7)
+    real(8), intent(inout) :: tendency_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,7)
+    real(8), intent(inout) :: tendency_q   (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
+    real(8), intent(inout) :: tendency_q_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
     integer, parameter :: vmax  = 6
-    integer, parameter :: I_RHO = 1
-    integer, parameter :: I_VX  = 2
-    integer, parameter :: I_VY  = 3
-    integer, parameter :: I_VZ  = 4
-    integer, parameter :: I_W   = 5
-    integer, parameter :: I_TEM = 6
+    integer, parameter :: I_VX  = 1
+    integer, parameter :: I_VY  = 2
+    integer, parameter :: I_VZ  = 3
+    integer, parameter :: I_W   = 4
+    integer, parameter :: I_TEM = 5
+    integer, parameter :: I_RHO = 6
 
     real(8) :: rhog_h   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(8) :: rhog_h_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -1675,10 +1650,8 @@ contains
     real(8) :: flux_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,vmax+TRC_VMAX)
     real(8) :: vtmp0   (ADM_gall   ,ADM_kall,ADM_lall   ,vmax+TRC_VMAX)
     real(8) :: vtmp0_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,vmax+TRC_VMAX)
-    real(8) :: vtmp2   (ADM_gall   ,ADM_kall,ADM_lall   ,vmax+TRC_VMAX)
-    real(8) :: vtmp2_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,vmax+TRC_VMAX)
-
-    real(8) :: coef
+    real(8) :: vtmp1   (ADM_gall   ,ADM_kall,ADM_lall   ,vmax+TRC_VMAX)
+    real(8) :: vtmp1_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,vmax+TRC_VMAX)
 
     integer :: g, k, l, nq, p
     !---------------------------------------------------------------------------
@@ -1690,8 +1663,8 @@ contains
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kmax+1
        do g = 1, ADM_gall
-          rhog_h(g,k,l) = ( VMTR_C2Wfact(1,g,k,l) * rho(g,k,  l) * VMTR_GSGAM2(g,k,  l) &
-                          + VMTR_C2Wfact(2,g,k,l) * rho(g,k-1,l) * VMTR_GSGAM2(g,k-1,l) )
+          rhog_h(g,k,l) = ( VMTR_C2Wfact(1,g,k,l) * rhog(g,k,  l) &
+                          + VMTR_C2Wfact(2,g,k,l) * rhog(g,k-1,l) )
        enddo
        enddo
        rhog_h(:,ADM_kmin-1,l) = rhog_h(:,ADM_kmin,l)
@@ -1701,250 +1674,262 @@ contains
        do l = 1, ADM_lall_pl
           do k = ADM_kmin, ADM_kmax+1
           do g = 1, ADM_gall_pl
-             rhog_h_pl(g,k,l) = ( VMTR_C2Wfact_pl(1,g,k,  l) * rho_pl(g,k  ,l) * VMTR_GSGAM2_pl(g,k,  l) &
-                                + VMTR_C2Wfact_pl(2,g,k-1,l) * rho_pl(g,k-1,l) * VMTR_GSGAM2_pl(g,k-1,l) )
+             rhog_h_pl(g,k,l) = ( VMTR_C2Wfact_pl(1,g,k,  l) * rhog_pl(g,k  ,l) &
+                                + VMTR_C2Wfact_pl(2,g,k-1,l) * rhog_pl(g,k-1,l) )
           enddo
           enddo
           rhog_h_pl(:,ADM_kmin-1,l) = rhog_h_pl(:,ADM_kmin,l)
        enddo
     endif
 
-    vtmp0(:,:,:,I_RHO) = rho(:,:,:)
     vtmp0(:,:,:,I_VX ) = vx (:,:,:)
     vtmp0(:,:,:,I_VY ) = vy (:,:,:)
     vtmp0(:,:,:,I_VZ ) = vz (:,:,:)
-    vtmp0(:,:,:,I_TEM) = tem(:,:,:)
+    vtmp0(:,:,:,I_W  ) = w  (:,:,:)
+    vtmp0(:,:,:,I_TEM) = tem(:,:,:) - tem_bs(:,:,:)
+    vtmp0(:,:,:,I_RHO) = rho(:,:,:) - rho_bs(:,:,:)
     do nq = 1, TRC_VMAX
        vtmp0(:,:,:,vmax+nq) = rho(:,:,:) * q(:,:,:,nq)
     enddo
-    vtmp0(:,:,:,I_W) = w(:,:,:)
 
     !--- bottom boundary
-    vtmp0(:,ADM_kmin-1,:,I_RHO) = 3.D0 * vtmp0(:,ADM_kmin  ,:,I_RHO) &
-                                - 3.D0 * vtmp0(:,ADM_kmin+1,:,I_RHO) &
-                                + 1.D0 * vtmp0(:,ADM_kmin+2,:,I_RHO)
     vtmp0(:,ADM_kmin-1,:,I_VX ) = vtmp0(:,ADM_kmin,:,I_VX)
     vtmp0(:,ADM_kmin-1,:,I_VY ) = vtmp0(:,ADM_kmin,:,I_VY)
     vtmp0(:,ADM_kmin-1,:,I_VZ ) = vtmp0(:,ADM_kmin,:,I_VZ)
+    vtmp0(:,ADM_kmin  ,:,I_W  ) = 0.D0
     vtmp0(:,ADM_kmin-1,:,I_TEM) = 3.D0 * vtmp0(:,ADM_kmin  ,:,I_TEM) &
                                 - 3.D0 * vtmp0(:,ADM_kmin+1,:,I_TEM) &
                                 + 1.D0 * vtmp0(:,ADM_kmin+2,:,I_TEM)
+    vtmp0(:,ADM_kmin-1,:,I_RHO) = 3.D0 * vtmp0(:,ADM_kmin  ,:,I_RHO) &
+                                - 3.D0 * vtmp0(:,ADM_kmin+1,:,I_RHO) &
+                                + 1.D0 * vtmp0(:,ADM_kmin+2,:,I_RHO)
+
+    !--- top boundary
+    vtmp0(:,ADM_kmax+1,:,I_VX ) = vtmp0(:,ADM_kmax,:,I_VX)
+    vtmp0(:,ADM_kmax+1,:,I_VY ) = vtmp0(:,ADM_kmax,:,I_VY)
+    vtmp0(:,ADM_kmax+1,:,I_VZ ) = vtmp0(:,ADM_kmax,:,I_VZ)
+    vtmp0(:,ADM_kmax+1,:,I_W  ) = 0.D0
+    vtmp0(:,ADM_kmax+1,:,I_TEM) = 3.D0 * vtmp0(:,ADM_kmax  ,:,I_TEM) &
+                                - 3.D0 * vtmp0(:,ADM_kmax-1,:,I_TEM) &
+                                + 1.D0 * vtmp0(:,ADM_kmax-2,:,I_TEM)
+    vtmp0(:,ADM_kmax+1,:,I_RHO) = 3.D0 * vtmp0(:,ADM_kmax  ,:,I_RHO) &
+                                - 3.D0 * vtmp0(:,ADM_kmax-1,:,I_RHO) &
+                                + 1.D0 * vtmp0(:,ADM_kmax-2,:,I_RHO)
+
     do nq = 1, TRC_VMAX
        vtmp0(:,ADM_kmin-1,:,vmax+nq) = 3.D0 * vtmp0(:,ADM_kmin  ,:,vmax+nq) &
                                      - 3.D0 * vtmp0(:,ADM_kmin+1,:,vmax+nq) &
                                      + 1.D0 * vtmp0(:,ADM_kmin+2,:,vmax+nq)
+       vtmp0(:,ADM_kmax+1,:,vmax+nq) = 3.D0 * vtmp0(:,ADM_kmax  ,:,vmax+nq) &
+                                     - 3.D0 * vtmp0(:,ADM_kmax-1,:,vmax+nq) &
+                                     + 1.D0 * vtmp0(:,ADM_kmax-2,:,vmax+nq)
     enddo
-    vtmp0(:,ADM_kmin  ,:,I_W  ) = 0.D0
-
-    !--- top boundary
-    vtmp0(:,ADM_kmax+1,:,I_RHO) = 3.D0 * vtmp0(:,ADM_kmax  ,:,I_RHO) &
-                                - 3.D0 * vtmp0(:,ADM_kmax-1,:,I_RHO) &
-                                + 1.D0 * vtmp0(:,ADM_kmax-2,:,I_RHO)
-    vtmp0(:,ADM_kmax+1,:,I_VX ) = vtmp0(:,ADM_kmax,:,I_VX)
-    vtmp0(:,ADM_kmax+1,:,I_VY ) = vtmp0(:,ADM_kmax,:,I_VY)
-    vtmp0(:,ADM_kmax+1,:,I_VZ ) = vtmp0(:,ADM_kmax,:,I_VZ)
-    vtmp0(:,ADM_kmax+1,:,I_TEM) = 3.D0 * vtmp0(:,ADM_kmax  ,:,I_TEM) &
-                                - 3.D0 * vtmp0(:,ADM_kmax-1,:,I_TEM) &
-                                + 1.D0 * vtmp0(:,ADM_kmax-2,:,I_TEM)
-    do nq = 1, TRC_VMAX
-       vtmp0(:,ADM_kmax+1,:,nq+vmax) = 3.D0 * vtmp0(:,ADM_kmax  ,:,nq+vmax) &
-                                     - 3.D0 * vtmp0(:,ADM_kmax-1,:,nq+vmax) &
-                                     + 1.D0 * vtmp0(:,ADM_kmax-2,:,nq+vmax)
-    enddo
-    vtmp0(:,ADM_kmax+1,:,I_W  ) = 0.D0
 
     do l = 1, ADM_lall
        do p = 1, 2
           do k = ADM_kmin, ADM_kmax
-             vtmp2(:,k,l,I_RHO) = ( ( vtmp0(:,k+1,l,I_RHO) - vtmp0(:,k  ,l,I_RHO) ) * GRD_rdgzh(k+1) &
-                                  - ( vtmp0(:,k  ,l,I_RHO) - vtmp0(:,k-1,l,I_RHO) ) * GRD_rdgzh(k)   &
-                                  ) * GRD_rdgz(k)
-             vtmp2(:,k,l,I_VX ) = ( ( vtmp0(:,k+1,l,I_VX ) - vtmp0(:,k  ,l,I_VX ) ) * GRD_rdgzh(k+1) &
+             vtmp1(:,k,l,I_VX ) = ( ( vtmp0(:,k+1,l,I_VX ) - vtmp0(:,k  ,l,I_VX ) ) * GRD_rdgzh(k+1) &
                                   - ( vtmp0(:,k  ,l,I_VX ) - vtmp0(:,k-1,l,I_VX ) ) * GRD_rdgzh(k)   &
                                   ) * GRD_rdgz(k)
-             vtmp2(:,k,l,I_VY ) = ( ( vtmp0(:,k+1,l,I_VY ) - vtmp0(:,k  ,l,I_VY ) ) * GRD_rdgzh(k+1) &
+             vtmp1(:,k,l,I_VY ) = ( ( vtmp0(:,k+1,l,I_VY ) - vtmp0(:,k  ,l,I_VY ) ) * GRD_rdgzh(k+1) &
                                   - ( vtmp0(:,k  ,l,I_VY ) - vtmp0(:,k-1,l,I_VY ) ) * GRD_rdgzh(k)   &
                                   ) * GRD_rdgz(k)
-             vtmp2(:,k,l,I_VZ ) = ( ( vtmp0(:,k+1,l,I_VZ ) - vtmp0(:,k  ,l,I_VZ ) ) * GRD_rdgzh(k+1) &
+             vtmp1(:,k,l,I_VZ ) = ( ( vtmp0(:,k+1,l,I_VZ ) - vtmp0(:,k  ,l,I_VZ ) ) * GRD_rdgzh(k+1) &
                                   - ( vtmp0(:,k  ,l,I_VZ ) - vtmp0(:,k-1,l,I_VZ ) ) * GRD_rdgzh(k)   &
                                   ) * GRD_rdgz(k)
-             vtmp2(:,k,l,I_TEM) = ( ( vtmp0(:,k+1,l,I_TEM) - vtmp0(:,k  ,l,I_TEM) ) * GRD_rdgzh(k+1) &
+             vtmp1(:,k,l,I_TEM) = ( ( vtmp0(:,k+1,l,I_TEM) - vtmp0(:,k  ,l,I_TEM) ) * GRD_rdgzh(k+1) &
                                   - ( vtmp0(:,k  ,l,I_TEM) - vtmp0(:,k-1,l,I_TEM) ) * GRD_rdgzh(k)   &
                                   ) * GRD_rdgz(k)
+             vtmp1(:,k,l,I_RHO) = ( ( vtmp0(:,k+1,l,I_RHO) - vtmp0(:,k  ,l,I_RHO) ) * GRD_rdgzh(k+1) &
+                                  - ( vtmp0(:,k  ,l,I_RHO) - vtmp0(:,k-1,l,I_RHO) ) * GRD_rdgzh(k)   &
+                                  ) * GRD_rdgz(k)
              do nq = 1, TRC_VMAX
-                vtmp2(:,k,l,nq+vmax) = ( ( vtmp0(:,k+1,l,nq+vmax) - vtmp0(:,k  ,l,nq+vmax) ) * GRD_rdgzh(k+1) &
-                                       - ( vtmp0(:,k  ,l,nq+vmax) - vtmp0(:,k-1,l,nq+vmax) ) * GRD_rdgzh(k)   &
+                vtmp1(:,k,l,vmax+nq) = ( ( vtmp0(:,k+1,l,vmax+nq) - vtmp0(:,k  ,l,vmax+nq) ) * GRD_rdgzh(k+1) &
+                                       - ( vtmp0(:,k  ,l,vmax+nq) - vtmp0(:,k-1,l,vmax+nq) ) * GRD_rdgzh(k)   &
                                        )  * GRD_rdgz(k)
              enddo
           enddo
 
           do k = ADM_kmin+1, ADM_kmax
-             vtmp2(:,k,l,I_W) = ( ( vtmp0(:,k+1,l,I_W) - vtmp0(:,k  ,l,I_W) ) * GRD_rdgz(k)   &
+             vtmp1(:,k,l,I_W) = ( ( vtmp0(:,k+1,l,I_W) - vtmp0(:,k  ,l,I_W) ) * GRD_rdgz(k)   &
                                 - ( vtmp0(:,k  ,l,I_W) - vtmp0(:,k-1,l,I_W) ) * GRD_rdgz(k-1) &
                                 ) * GRD_rdgzh(k)
           enddo
 
           if ( p == 1 ) then
              !--- bottom boundary
-             vtmp2(:,ADM_kmin-1,l,I_RHO) = vtmp2(:,ADM_kmin,l,I_RHO) * 2.D0 - vtmp2(:,ADM_kmin+1,l,I_RHO)
-             vtmp2(:,ADM_kmin-1,l,I_VX ) = vtmp2(:,ADM_kmin,l,I_VX )
-             vtmp2(:,ADM_kmin-1,l,I_VY ) = vtmp2(:,ADM_kmin,l,I_VY )
-             vtmp2(:,ADM_kmin-1,l,I_VZ ) = vtmp2(:,ADM_kmin,l,I_VZ )
-             vtmp2(:,ADM_kmin-1,l,I_TEM) = vtmp2(:,ADM_kmin,l,I_TEM) * 2.D0 - vtmp2(:,ADM_kmin+1,l,I_TEM)
-             do nq = 1, TRC_VMAX
-                vtmp2(:,ADM_kmin-1,l,nq+vmax) = 2.D0 * vtmp2(:,ADM_kmin,l,nq+vmax) - vtmp2(:,ADM_kmin+1,l,nq+vmax)
-             enddo
-             vtmp2(:,ADM_kmin,l,I_W) = vtmp2(:,ADM_kmin+1,l,I_W)
+             vtmp1(:,ADM_kmin-1,l,I_VX ) = vtmp1(:,ADM_kmin  ,l,I_VX )
+             vtmp1(:,ADM_kmin-1,l,I_VY ) = vtmp1(:,ADM_kmin  ,l,I_VY )
+             vtmp1(:,ADM_kmin-1,l,I_VZ ) = vtmp1(:,ADM_kmin  ,l,I_VZ )
+             vtmp1(:,ADM_kmin  ,l,I_W  ) = vtmp1(:,ADM_kmin+1,l,I_W  )
+             vtmp1(:,ADM_kmin-1,l,I_TEM) = vtmp1(:,ADM_kmin  ,l,I_TEM) * 2.D0 - vtmp1(:,ADM_kmin+1,l,I_TEM)
+             vtmp1(:,ADM_kmin-1,l,I_RHO) = vtmp1(:,ADM_kmin  ,l,I_RHO) * 2.D0 - vtmp1(:,ADM_kmin+1,l,I_RHO)
 
              !--- top boundary
-             vtmp2(:,ADM_kmax+1,l,I_RHO) = vtmp2(:,ADM_kmax,l,I_RHO) * 2.D0 - vtmp2(:,ADM_kmax-1,l,I_RHO)
-             vtmp2(:,ADM_kmax+1,l,I_VX ) = vtmp2(:,ADM_kmax,l,I_VX )
-             vtmp2(:,ADM_kmax+1,l,I_VY ) = vtmp2(:,ADM_kmax,l,I_VY )
-             vtmp2(:,ADM_kmax+1,l,I_VZ ) = vtmp2(:,ADM_kmax,l,I_VZ )
-             vtmp2(:,ADM_kmax+1,l,I_TEM) = vtmp2(:,ADM_kmax,l,I_TEM) * 2.D0 - vtmp2(:,ADM_kmax-1,l,I_TEM)
-             do nq = 1, TRC_VMAX
-                vtmp2(:,ADM_kmax+1,l,nq+vmax) = 2.D0 * vtmp2(:,ADM_kmax,l,nq+vmax) - vtmp2(:,ADM_kmax-1,l,nq+vmax)
-             enddo
-             vtmp2(:,ADM_kmax+1,l,I_W) = vtmp2(:,ADM_kmax,l,I_W)
+             vtmp1(:,ADM_kmax+1,l,I_VX ) = vtmp1(:,ADM_kmax,l,I_VX )
+             vtmp1(:,ADM_kmax+1,l,I_VY ) = vtmp1(:,ADM_kmax,l,I_VY )
+             vtmp1(:,ADM_kmax+1,l,I_VZ ) = vtmp1(:,ADM_kmax,l,I_VZ )
+             vtmp1(:,ADM_kmax+1,l,I_W  ) = vtmp1(:,ADM_kmax,l,I_W  )
+             vtmp1(:,ADM_kmax+1,l,I_TEM) = vtmp1(:,ADM_kmax,l,I_TEM) * 2.D0 - vtmp1(:,ADM_kmax-1,l,I_TEM)
+             vtmp1(:,ADM_kmax+1,l,I_RHO) = vtmp1(:,ADM_kmax,l,I_RHO) * 2.D0 - vtmp1(:,ADM_kmax-1,l,I_RHO)
 
-             vtmp0(:,:,l,:) = vtmp2(:,:,l,:)
+             do nq = 1, TRC_VMAX
+                vtmp1(:,ADM_kmin-1,l,vmax+nq) = 2.D0 * vtmp1(:,ADM_kmin,l,vmax+nq) - vtmp1(:,ADM_kmin+1,l,vmax+nq)
+                vtmp1(:,ADM_kmax+1,l,vmax+nq) = 2.D0 * vtmp1(:,ADM_kmax,l,vmax+nq) - vtmp1(:,ADM_kmax-1,l,vmax+nq)
+             enddo
+
+             vtmp0(:,:,l,:) = vtmp1(:,:,l,:)
           elseif( p == 2 ) then
              !--- bottom boundary
-             vtmp2(:,ADM_kmin-1,l,I_RHO) = vtmp2(:,ADM_kmin,l,I_RHO)
-             vtmp2(:,ADM_kmin-1,l,I_VX ) = vtmp2(:,ADM_kmin,l,I_VX )
-             vtmp2(:,ADM_kmin-1,l,I_VY ) = vtmp2(:,ADM_kmin,l,I_VY )
-             vtmp2(:,ADM_kmin-1,l,I_VZ ) = vtmp2(:,ADM_kmin,l,I_VZ )
-             vtmp2(:,ADM_kmin-1,l,I_TEM) = vtmp2(:,ADM_kmin,l,I_TEM)
-             do nq = 1, TRC_VMAX
-                vtmp2(:,ADM_kmin-1,l,nq+vmax) = vtmp2(:,ADM_kmin,l,nq+vmax)
-             enddo
-             vtmp2(:,ADM_kmin,l,I_W) = vtmp2(:,ADM_kmin+1,l,I_W)
+             vtmp1(:,ADM_kmin-1,l,I_VX ) = vtmp1(:,ADM_kmin  ,l,I_VX )
+             vtmp1(:,ADM_kmin-1,l,I_VY ) = vtmp1(:,ADM_kmin  ,l,I_VY )
+             vtmp1(:,ADM_kmin-1,l,I_VZ ) = vtmp1(:,ADM_kmin  ,l,I_VZ )
+             vtmp1(:,ADM_kmin  ,l,I_W  ) = vtmp1(:,ADM_kmin+1,l,I_W  )
+             vtmp1(:,ADM_kmin-1,l,I_TEM) = vtmp1(:,ADM_kmin  ,l,I_TEM)
+             vtmp1(:,ADM_kmin-1,l,I_RHO) = vtmp1(:,ADM_kmin  ,l,I_RHO)
 
              !--- top boundary
-             vtmp2(:,ADM_kmax+1,l,I_RHO) = vtmp2(:,ADM_kmax,l,I_RHO)
-             vtmp2(:,ADM_kmax+1,l,I_VX ) = vtmp2(:,ADM_kmax,l,I_VX )
-             vtmp2(:,ADM_kmax+1,l,I_VY ) = vtmp2(:,ADM_kmax,l,I_VY )
-             vtmp2(:,ADM_kmax+1,l,I_VZ ) = vtmp2(:,ADM_kmax,l,I_VZ )
-             vtmp2(:,ADM_kmax+1,l,I_TEM) = vtmp2(:,ADM_kmax,l,I_TEM)
-             do nq = 1, TRC_VMAX
-                vtmp2(:,ADM_kmax+1,l,nq+vmax) = vtmp2(:,ADM_kmax,l,nq+vmax)
-             enddo
-             vtmp2(:,ADM_kmax+1,l,I_W) = vtmp2(:,ADM_kmax,l,I_W)
+             vtmp1(:,ADM_kmax+1,l,I_VX ) = vtmp1(:,ADM_kmax,l,I_VX )
+             vtmp1(:,ADM_kmax+1,l,I_VY ) = vtmp1(:,ADM_kmax,l,I_VY )
+             vtmp1(:,ADM_kmax+1,l,I_VZ ) = vtmp1(:,ADM_kmax,l,I_VZ )
+             vtmp1(:,ADM_kmax+1,l,I_W  ) = vtmp1(:,ADM_kmax,l,I_W  )
+             vtmp1(:,ADM_kmax+1,l,I_TEM) = vtmp1(:,ADM_kmax,l,I_TEM)
+             vtmp1(:,ADM_kmax+1,l,I_RHO) = vtmp1(:,ADM_kmax,l,I_RHO)
 
-             vtmp0(:,:,l,:) = vtmp2(:,:,l,:)
+             do nq = 1, TRC_VMAX
+                vtmp1(:,ADM_kmin-1,l,vmax+nq) = vtmp1(:,ADM_kmin,l,vmax+nq)
+                vtmp1(:,ADM_kmax+1,l,vmax+nq) = vtmp1(:,ADM_kmax,l,vmax+nq)
+             enddo
+
+             vtmp0(:,:,l,:) = vtmp1(:,:,l,:)
           endif
        enddo
 
        do k = ADM_kmin, ADM_kmax+1
-          coef = Kv_coef_h(k) * GRD_rdgzh(k)
-
-          flux(:,k,l,I_RHO) = coef * ( vtmp0(:,k,l,I_RHO)-vtmp0(:,k-1,l,I_RHO) ) * VMTR_GSGAM2H(:,k,l)
-          flux(:,k,l,I_VX ) = coef * ( vtmp0(:,k,l,I_VX )-vtmp0(:,k-1,l,I_VX ) ) * rhog_h(:,k,l)
-          flux(:,k,l,I_VY ) = coef * ( vtmp0(:,k,l,I_VY )-vtmp0(:,k-1,l,I_VY ) ) * rhog_h(:,k,l)
-          flux(:,k,l,I_VZ ) = coef * ( vtmp0(:,k,l,I_VZ )-vtmp0(:,k-1,l,I_VZ ) ) * rhog_h(:,k,l)
-          flux(:,k,l,I_TEM) = coef * ( vtmp0(:,k,l,I_TEM)-vtmp0(:,k-1,l,I_TEM) ) * rhog_h(:,k,l) * CVdry
-          do nq = 1, TRC_VMAX
-             flux(:,k,l,nq+vmax) = coef * ( vtmp0(:,k,l,nq+vmax) - vtmp0(:,k-1,l,nq+vmax) )
-          enddo
+       do g = 1, ADM_gall
+          flux(g,k,l,I_VX ) = Kv_coef_h(k) * ( vtmp0(g,k,l,I_VX )-vtmp0(g,k-1,l,I_VX ) ) * GRD_rdgzh(k) * rhog_h(g,k,l)
+          flux(g,k,l,I_VY ) = Kv_coef_h(k) * ( vtmp0(g,k,l,I_VY )-vtmp0(g,k-1,l,I_VY ) ) * GRD_rdgzh(k) * rhog_h(g,k,l)
+          flux(g,k,l,I_VZ ) = Kv_coef_h(k) * ( vtmp0(g,k,l,I_VZ )-vtmp0(g,k-1,l,I_VZ ) ) * GRD_rdgzh(k) * rhog_h(g,k,l)
+          flux(g,k,l,I_TEM) = Kv_coef_h(k) * ( vtmp0(g,k,l,I_TEM)-vtmp0(g,k-1,l,I_TEM) ) * GRD_rdgzh(k) * rhog_h(g,k,l) * CVdry
+          flux(g,k,l,I_RHO) = Kv_coef_h(k) * ( vtmp0(g,k,l,I_RHO)-vtmp0(g,k-1,l,I_RHO) ) * GRD_rdgzh(k) * VMTR_GSGAM2H(g,k,l)
+       enddo
        enddo
 
        do k = ADM_kmin, ADM_kmax
-          coef = Kv_coef(k) * GRD_rdgz(k)
+       do g = 1, ADM_gall
+          flux(g,k,l,I_W) = Kv_coef(k) * ( vtmp0(g,k+1,l,I_W)-vtmp0(g,k,l,I_W) ) * GRD_rdgz(k) * rhog(g,k,l)
+       enddo
+       enddo
 
-          flux(:,k,l,I_W) = coef * ( vtmp0(:,k+1,l,I_W)-vtmp0(:,k,l,I_W) ) * rho(:,k,l) * VMTR_GSGAM2(:,k,l)
+       do nq = 1, TRC_VMAX
+       do k = ADM_kmin, ADM_kmax+1
+       do g = 1, ADM_gall
+          flux(g,k,l,vmax+nq) = Kv_coef_h(k) * ( vtmp0(g,k,l,vmax+nq) - vtmp0(g,k-1,l,vmax+nq) ) * GRD_rdgzh(k)
+       enddo
+       enddo
        enddo
 
        !--- update tendency
        do k = ADM_kmin, ADM_kmax
-          frhog    (:,k,l) = frhog    (:,k,l) + ( flux(:,k+1,l,I_RHO) - flux(:,k,l,I_RHO) ) * GRD_rdgz(k)
-          frhogvx  (:,k,l) = frhogvx  (:,k,l) + ( flux(:,k+1,l,I_VX ) - flux(:,k,l,I_VX ) ) * GRD_rdgz(k)
-          frhogvy  (:,k,l) = frhogvy  (:,k,l) + ( flux(:,k+1,l,I_VY ) - flux(:,k,l,I_VY ) ) * GRD_rdgz(k)
-          frhogvz  (:,k,l) = frhogvz  (:,k,l) + ( flux(:,k+1,l,I_VZ ) - flux(:,k,l,I_VZ ) ) * GRD_rdgz(k)
-          frhoge   (:,k,l) = frhoge   (:,k,l) + ( flux(:,k+1,l,I_TEM) - flux(:,k,l,I_TEM) ) * GRD_rdgz(k)
-          frhogetot(:,k,l) = frhogetot(:,k,l) + ( flux(:,k+1,l,I_TEM) - flux(:,k,l,I_TEM) ) * GRD_rdgz(k)
-          do nq = 1, TRC_VMAX
-             frhogq(:,k,l,nq) = frhogq(:,k,l,nq) + ( flux(:,k+1,l,nq+vmax) - flux(:,k,l,nq+vmax) ) * GRD_rdgz(k)
-          enddo
+       do g = 1, ADM_gall
+          tendency(g,k,l,I_RHOG    ) = tendency(g,k,l,I_RHOG    ) + ( flux(g,k+1,l,I_RHO) - flux(g,k,l,I_RHO) ) * GRD_rdgz(k)
+          tendency(g,k,l,I_RHOGVX  ) = tendency(g,k,l,I_RHOGVX  ) + ( flux(g,k+1,l,I_VX ) - flux(g,k,l,I_VX ) ) * GRD_rdgz(k)
+          tendency(g,k,l,I_RHOGVY  ) = tendency(g,k,l,I_RHOGVY  ) + ( flux(g,k+1,l,I_VY ) - flux(g,k,l,I_VY ) ) * GRD_rdgz(k)
+          tendency(g,k,l,I_RHOGVZ  ) = tendency(g,k,l,I_RHOGVZ  ) + ( flux(g,k+1,l,I_VZ ) - flux(g,k,l,I_VZ ) ) * GRD_rdgz(k)
+          tendency(g,k,l,I_RHOGE   ) = tendency(g,k,l,I_RHOGE   ) + ( flux(g,k+1,l,I_TEM) - flux(g,k,l,I_TEM) ) * GRD_rdgz(k)
+          tendency(g,k,l,I_RHOGETOT) = tendency(g,k,l,I_RHOGETOT) + ( flux(g,k+1,l,I_TEM) - flux(g,k,l,I_TEM) ) * GRD_rdgz(k)
+       enddo
        enddo
 
        do k = ADM_kmin+1, ADM_kmax
-          frhogw(:,k,l) = frhogw(:,k,l) + ( flux(:,k,l,I_W) - flux(:,k-1,l,I_W) ) * GRD_rdgzh(k)
+       do g = 1, ADM_gall
+          tendency(g,k,l,I_RHOGW) = tendency(g,k,l,I_RHOGW) + ( flux(g,k,l,I_W) - flux(g,k-1,l,I_W) ) * GRD_rdgzh(k)
+       enddo
+       enddo
+
+       do nq = 1, TRC_VMAX
+       do k = ADM_kmin, ADM_kmax
+       do g = 1, ADM_gall
+          tendency_q(g,k,l,nq) = tendency_q(g,k,l,nq) + ( flux(g,k+1,l,vmax+nq) - flux(g,k,l,vmax+nq) ) * GRD_rdgz(k)
+       enddo
+       enddo
        enddo
     enddo
 
     if ( ADM_have_pl ) then
 
-       vtmp0_pl(:,:,:,I_RHO) = rho_pl(:,:,:)
        vtmp0_pl(:,:,:,I_VX ) = vx_pl (:,:,:)
        vtmp0_pl(:,:,:,I_VY ) = vy_pl (:,:,:)
        vtmp0_pl(:,:,:,I_VZ ) = vz_pl (:,:,:)
-       vtmp0_pl(:,:,:,I_TEM) = tem_pl(:,:,:)
+       vtmp0_pl(:,:,:,I_W  ) = w_pl  (:,:,:)
+       vtmp0_pl(:,:,:,I_TEM) = tem_pl(:,:,:) - tem_bs_pl(:,:,:)
+       vtmp0_pl(:,:,:,I_RHO) = rho_pl(:,:,:) - rho_bs_pl(:,:,:)
+
        do nq = 1, TRC_VMAX
           vtmp0_pl(:,:,:,vmax+nq) = rho_pl(:,:,:) * q_pl(:,:,:,nq)
        enddo
-       vtmp0_pl(:,:,:,I_W) = w_pl(:,:,:)
 
        !--- bottom boundary
-       vtmp0_pl(:,ADM_kmin-1,:,I_RHO) = 3.D0 * vtmp0_pl(:,ADM_kmin  ,:,I_RHO) &
-                                      - 3.D0 * vtmp0_pl(:,ADM_kmin+1,:,I_RHO) &
-                                      + 1.D0 * vtmp0_pl(:,ADM_kmin+2,:,I_RHO)
        vtmp0_pl(:,ADM_kmin-1,:,I_VX ) = vtmp0_pl(:,ADM_kmin,:,I_VX)
        vtmp0_pl(:,ADM_kmin-1,:,I_VY ) = vtmp0_pl(:,ADM_kmin,:,I_VY)
        vtmp0_pl(:,ADM_kmin-1,:,I_VZ ) = vtmp0_pl(:,ADM_kmin,:,I_VZ)
+       vtmp0_pl(:,ADM_kmin  ,:,I_W  ) = 0.D0
        vtmp0_pl(:,ADM_kmin-1,:,I_TEM) = 3.D0 * vtmp0_pl(:,ADM_kmin  ,:,I_TEM) &
                                       - 3.D0 * vtmp0_pl(:,ADM_kmin+1,:,I_TEM) &
                                       + 1.D0 * vtmp0_pl(:,ADM_kmin+2,:,I_TEM)
+       vtmp0_pl(:,ADM_kmin-1,:,I_RHO) = 3.D0 * vtmp0_pl(:,ADM_kmin  ,:,I_RHO) &
+                                      - 3.D0 * vtmp0_pl(:,ADM_kmin+1,:,I_RHO) &
+                                      + 1.D0 * vtmp0_pl(:,ADM_kmin+2,:,I_RHO)
+
+       !--- top boundary
+       vtmp0_pl(:,ADM_kmax+1,:,I_VX ) = vtmp0_pl(:,ADM_kmax,:,I_VX)
+       vtmp0_pl(:,ADM_kmax+1,:,I_VY ) = vtmp0_pl(:,ADM_kmax,:,I_VY)
+       vtmp0_pl(:,ADM_kmax+1,:,I_VZ ) = vtmp0_pl(:,ADM_kmax,:,I_VZ)
+       vtmp0_pl(:,ADM_kmax+1,:,I_W  ) = 0.D0
+       vtmp0_pl(:,ADM_kmax+1,:,I_TEM) = 3.D0 * vtmp0_pl(:,ADM_kmax  ,:,I_TEM) &
+                                      - 3.D0 * vtmp0_pl(:,ADM_kmax-1,:,I_TEM) &
+                                      + 1.D0 * vtmp0_pl(:,ADM_kmax-2,:,I_TEM)
+       vtmp0_pl(:,ADM_kmax+1,:,I_RHO) = 3.D0 * vtmp0_pl(:,ADM_kmax  ,:,I_RHO) &
+                                      - 3.D0 * vtmp0_pl(:,ADM_kmax-1,:,I_RHO) &
+                                      + 1.D0 * vtmp0_pl(:,ADM_kmax-2,:,I_RHO)
+
        do nq = 1, TRC_VMAX
           vtmp0_pl(:,ADM_kmin-1,:,vmax+nq) = 3.D0 * vtmp0_pl(:,ADM_kmin  ,:,vmax+nq) &
                                            - 3.D0 * vtmp0_pl(:,ADM_kmin+1,:,vmax+nq) &
                                            + 1.D0 * vtmp0_pl(:,ADM_kmin+2,:,vmax+nq)
+          vtmp0_pl(:,ADM_kmax+1,:,vmax+nq) = 3.D0 * vtmp0_pl(:,ADM_kmax  ,:,vmax+nq) &
+                                           - 3.D0 * vtmp0_pl(:,ADM_kmax-1,:,vmax+nq) &
+                                           + 1.D0 * vtmp0_pl(:,ADM_kmax-2,:,vmax+nq)
        enddo
-       vtmp0_pl(:,ADM_kmin,:,I_W) = 0.D0
-
-       !--- top boundary
-       vtmp0_pl(:,ADM_kmax+1,:,I_RHO) = 3.D0 * vtmp0_pl(:,ADM_kmax  ,:,I_RHO) &
-                                      - 3.D0 * vtmp0_pl(:,ADM_kmax-1,:,I_RHO) &
-                                      + 1.D0 * vtmp0_pl(:,ADM_kmax-2,:,I_RHO)
-       vtmp0_pl(:,ADM_kmax+1,:,I_VX) = vtmp0_pl(:,ADM_kmax,:,I_VX)
-       vtmp0_pl(:,ADM_kmax+1,:,I_VY) = vtmp0_pl(:,ADM_kmax,:,I_VY)
-       vtmp0_pl(:,ADM_kmax+1,:,I_VZ) = vtmp0_pl(:,ADM_kmax,:,I_VZ)
-       vtmp0_pl(:,ADM_kmax+1,:,I_TEM) = 3.D0 * vtmp0_pl(:,ADM_kmax  ,:,I_TEM) &
-                                      - 3.D0 * vtmp0_pl(:,ADM_kmax-1,:,I_TEM) &
-                                      + 1.D0 * vtmp0_pl(:,ADM_kmax-2,:,I_TEM)
-       do nq = 1, TRC_VMAX
-          vtmp0_pl(:,ADM_kmax+1,:,nq+vmax) = 3.D0 * vtmp0_pl(:,ADM_kmax  ,:,nq+vmax) &
-                                           - 3.D0 * vtmp0_pl(:,ADM_kmax-1,:,nq+vmax) &
-                                           + 1.D0 * vtmp0_pl(:,ADM_kmax-2,:,nq+vmax)
-       enddo
-       vtmp0_pl(:,ADM_kmax+1,:,I_W) = 0.D0
 
        do l = 1, ADM_lall
           do p = 1, 2
              do k = ADM_kmin, ADM_kmax
-                vtmp2_pl(:,k,l,I_RHO) = ( ( vtmp0_pl(:,k+1,l,I_RHO)-vtmp0_pl(:,k,l,I_RHO) ) * GRD_rdgzh(k+1) &
-                                        - ( vtmp0_pl(:,k,l,I_RHO)-vtmp0_pl(:,k-1,l,I_RHO) ) * GRD_rdgzh(k) &
+                vtmp1_pl(:,k,l,I_VX ) = ( ( vtmp0_pl(:,k+1,l,I_VX )-vtmp0_pl(:,k  ,l,I_VX ) ) * GRD_rdgzh(k+1) &
+                                        - ( vtmp0_pl(:,k  ,l,I_VX )-vtmp0_pl(:,k-1,l,I_VX ) ) * GRD_rdgzh(k  ) &
                                         ) * GRD_rdgz(k)
-                vtmp2_pl(:,k,l,I_VX ) = ( ( vtmp0_pl(:,k+1,l,I_VX)-vtmp0_pl(:,k,l,I_VX) ) * GRD_rdgzh(k+1) &
-                                        - ( vtmp0_pl(:,k,l,I_VX)-vtmp0_pl(:,k-1,l,I_VX) ) * GRD_rdgzh(k) &
+                vtmp1_pl(:,k,l,I_VY ) = ( ( vtmp0_pl(:,k+1,l,I_VY )-vtmp0_pl(:,k  ,l,I_VY ) ) * GRD_rdgzh(k+1) &
+                                        - ( vtmp0_pl(:,k  ,l,I_VY )-vtmp0_pl(:,k-1,l,I_VY ) ) * GRD_rdgzh(k  ) &
                                         ) * GRD_rdgz(k)
-                vtmp2_pl(:,k,l,I_VY ) = ( ( vtmp0_pl(:,k+1,l,I_VY)-vtmp0_pl(:,k,l,I_VY) ) * GRD_rdgzh(k+1) &
-                                        - ( vtmp0_pl(:,k,l,I_VY)-vtmp0_pl(:,k-1,l,I_VY) ) * GRD_rdgzh(k) &
+                vtmp1_pl(:,k,l,I_VZ ) = ( ( vtmp0_pl(:,k+1,l,I_VZ )-vtmp0_pl(:,k  ,l,I_VZ ) ) * GRD_rdgzh(k+1) &
+                                        - ( vtmp0_pl(:,k  ,l,I_VZ )-vtmp0_pl(:,k-1,l,I_VZ ) ) * GRD_rdgzh(k  ) &
                                         ) * GRD_rdgz(k)
-                vtmp2_pl(:,k,l,I_VZ ) = ( ( vtmp0_pl(:,k+1,l,I_VZ)-vtmp0_pl(:,k,l,I_VZ) ) * GRD_rdgzh(k+1) &
-                                        - ( vtmp0_pl(:,k,l,I_VZ)-vtmp0_pl(:,k-1,l,I_VZ) ) * GRD_rdgzh(k) &
+                vtmp1_pl(:,k,l,I_TEM) = ( ( vtmp0_pl(:,k+1,l,I_TEM)-vtmp0_pl(:,k  ,l,I_TEM) ) * GRD_rdgzh(k+1) &
+                                        - ( vtmp0_pl(:,k  ,l,I_TEM)-vtmp0_pl(:,k-1,l,I_TEM) ) * GRD_rdgzh(k  ) &
                                         ) * GRD_rdgz(k)
-                vtmp2_pl(:,k,l,I_TEM) = ( ( vtmp0_pl(:,k+1,l,I_TEM)-vtmp0_pl(:,k,l,I_TEM) ) * GRD_rdgzh(k+1) &
-                                        - ( vtmp0_pl(:,k,l,I_TEM)-vtmp0_pl(:,k-1,l,I_TEM) ) * GRD_rdgzh(k) &
+                vtmp1_pl(:,k,l,I_RHO) = ( ( vtmp0_pl(:,k+1,l,I_RHO)-vtmp0_pl(:,k  ,l,I_RHO) ) * GRD_rdgzh(k+1) &
+                                        - ( vtmp0_pl(:,k  ,l,I_RHO)-vtmp0_pl(:,k-1,l,I_RHO) ) * GRD_rdgzh(k  ) &
                                         ) * GRD_rdgz(k)
+
                 do nq = 1, TRC_VMAX
-                   vtmp2_pl(:,k,l,nq+vmax) = ( ( vtmp0_pl(:,k+1,l,nq+vmax)-vtmp0_pl(:,k,l,nq+vmax) ) * GRD_rdgzh(k+1) &
-                                             - ( vtmp0_pl(:,k,l,nq+vmax)-vtmp0_pl(:,k-1,l,nq+vmax) ) * GRD_rdgzh(k) &
+                   vtmp1_pl(:,k,l,vmax+nq) = ( ( vtmp0_pl(:,k+1,l,vmax+nq)-vtmp0_pl(:,k  ,l,vmax+nq) ) * GRD_rdgzh(k+1) &
+                                             - ( vtmp0_pl(:,k  ,l,vmax+nq)-vtmp0_pl(:,k-1,l,vmax+nq) ) * GRD_rdgzh(k  ) &
                                              )  * GRD_rdgz(k)
                 enddo
              enddo
 
              do k = ADM_kmin+1, ADM_kmax
-                vtmp2_pl(:,k,l,I_W) = ( ( vtmp0_pl(:,k+1,l,I_W)-vtmp0_pl(:,k  ,l,I_W) ) * GRD_rdgz(k  ) &
+                vtmp1_pl(:,k,l,I_W) = ( ( vtmp0_pl(:,k+1,l,I_W)-vtmp0_pl(:,k  ,l,I_W) ) * GRD_rdgz(k  ) &
                                       - ( vtmp0_pl(:,k  ,l,I_W)-vtmp0_pl(:,k-1,l,I_W) ) * GRD_rdgz(k-1) &
                                       ) * GRD_rdgzh(k)
              enddo
@@ -1952,110 +1937,124 @@ contains
              if ( p == 1 ) then
 
                 !--- bottom boundary
-                vtmp2_pl(:,ADM_kmin-1,l,I_RHO) = 2.D0 * vtmp2_pl(:,ADM_kmin  ,l,I_RHO) &
-                                               - 1.D0 * vtmp2_pl(:,ADM_kmin+1,l,I_RHO)
-                vtmp2_pl(:,ADM_kmin-1,l,I_VX ) = vtmp2_pl(:,ADM_kmin,l,I_VX)
-                vtmp2_pl(:,ADM_kmin-1,l,I_VY ) = vtmp2_pl(:,ADM_kmin,l,I_VY)
-                vtmp2_pl(:,ADM_kmin-1,l,I_VZ ) = vtmp2_pl(:,ADM_kmin,l,I_VZ)
-                vtmp2_pl(:,ADM_kmin-1,l,I_TEM) = 2.D0 * vtmp2_pl(:,ADM_kmin  ,l,I_TEM) &
-                                               - 1.D0 * vtmp2_pl(:,ADM_kmin+1,l,I_TEM)
-                do nq = 1, TRC_VMAX
-                   vtmp2_pl(:,ADM_kmin-1,l,nq+vmax) = 2.D0 * vtmp2_pl(:,ADM_kmin  ,l,nq+vmax) &
-                                                    - 1.D0 * vtmp2_pl(:,ADM_kmin+1,l,nq+vmax)
-                enddo
-                vtmp2_pl(:,ADM_kmin,l,I_W) = vtmp2_pl(:,ADM_kmin+1,l,I_W)
+                vtmp1_pl(:,ADM_kmin-1,l,I_VX ) = vtmp1_pl(:,ADM_kmin  ,l,I_VX )
+                vtmp1_pl(:,ADM_kmin-1,l,I_VY ) = vtmp1_pl(:,ADM_kmin  ,l,I_VY )
+                vtmp1_pl(:,ADM_kmin-1,l,I_VZ ) = vtmp1_pl(:,ADM_kmin  ,l,I_VZ )
+                vtmp1_pl(:,ADM_kmin  ,l,I_W  ) = vtmp1_pl(:,ADM_kmin+1,l,I_W  )
+                vtmp1_pl(:,ADM_kmin-1,l,I_TEM) = vtmp1_pl(:,ADM_kmin  ,l,I_TEM) * 2.D0 - vtmp1_pl(:,ADM_kmin+1,l,I_TEM)
+                vtmp1_pl(:,ADM_kmin-1,l,I_RHO) = vtmp1_pl(:,ADM_kmin  ,l,I_RHO) * 2.D0 - vtmp1_pl(:,ADM_kmin+1,l,I_RHO)
 
                 !--- top boundary
-                vtmp2_pl(:,ADM_kmax+1,l,I_RHO) = 2.D0 * vtmp2_pl(:,ADM_kmax  ,l,I_RHO) &
-                                               - 1.D0 * vtmp2_pl(:,ADM_kmax-1,l,I_RHO)
-                vtmp2_pl(:,ADM_kmax+1,l,I_VX ) = vtmp2_pl(:,ADM_kmax,l,I_VX)
-                vtmp2_pl(:,ADM_kmax+1,l,I_VY ) = vtmp2_pl(:,ADM_kmax,l,I_VY)
-                vtmp2_pl(:,ADM_kmax+1,l,I_VZ ) = vtmp2_pl(:,ADM_kmax,l,I_VZ)
-                vtmp2_pl(:,ADM_kmax+1,l,I_TEM) = 2.D0 * vtmp2_pl(:,ADM_kmax  ,l,I_TEM) &
-                                               - 1.D0 * vtmp2_pl(:,ADM_kmax-1,l,I_TEM)
+                vtmp1_pl(:,ADM_kmax+1,l,I_VX ) = vtmp1_pl(:,ADM_kmax,l,I_VX )
+                vtmp1_pl(:,ADM_kmax+1,l,I_VY ) = vtmp1_pl(:,ADM_kmax,l,I_VY )
+                vtmp1_pl(:,ADM_kmax+1,l,I_VZ ) = vtmp1_pl(:,ADM_kmax,l,I_VZ )
+                vtmp1_pl(:,ADM_kmax+1,l,I_W  ) = vtmp1_pl(:,ADM_kmax,l,I_W  )
+                vtmp1_pl(:,ADM_kmax+1,l,I_TEM) = vtmp1_pl(:,ADM_kmax,l,I_TEM) * 2.D0 - vtmp1_pl(:,ADM_kmax-1,l,I_TEM)
+                vtmp1_pl(:,ADM_kmax+1,l,I_RHO) = vtmp1_pl(:,ADM_kmax,l,I_RHO) * 2.D0 - vtmp1_pl(:,ADM_kmax-1,l,I_RHO)
+
                 do nq = 1, TRC_VMAX
-                   vtmp2_pl(:,ADM_kmax+1,l,nq+vmax) = 2.D0 * vtmp2_pl(:,ADM_kmax  ,l,nq+vmax) &
-                                                    - 1.D0 * vtmp2_pl(:,ADM_kmax-1,l,nq+vmax)
+                   vtmp1_pl(:,ADM_kmin-1,l,vmax+nq) = 2.D0 * vtmp1_pl(:,ADM_kmin  ,l,vmax+nq) &
+                                                    - 1.D0 * vtmp1_pl(:,ADM_kmin+1,l,vmax+nq)
+                   vtmp1_pl(:,ADM_kmax+1,l,vmax+nq) = 2.D0 * vtmp1_pl(:,ADM_kmax  ,l,vmax+nq) &
+                                                    - 1.D0 * vtmp1_pl(:,ADM_kmax-1,l,vmax+nq)
                 enddo
-                vtmp2_pl(:,ADM_kmax+1,l,I_W) = vtmp2_pl(:,ADM_kmax,l,I_W)
 
              elseif( p == 2 ) then
 
-                vtmp2_pl(:,ADM_kmin-1,l,I_RHO) = vtmp2_pl(:,ADM_kmin,l,I_RHO)
-                vtmp2_pl(:,ADM_kmin-1,l,I_VX ) = vtmp2_pl(:,ADM_kmin,l,I_VX )
-                vtmp2_pl(:,ADM_kmin-1,l,I_VY ) = vtmp2_pl(:,ADM_kmin,l,I_VY )
-                vtmp2_pl(:,ADM_kmin-1,l,I_VZ ) = vtmp2_pl(:,ADM_kmin,l,I_VZ )
-                vtmp2_pl(:,ADM_kmin-1,l,I_TEM) = vtmp2_pl(:,ADM_kmin,l,I_TEM)
-                do nq = 1, TRC_VMAX
-                   vtmp2_pl(:,ADM_kmin-1,l,nq+vmax) = vtmp2_pl(:,ADM_kmin,l,nq+vmax)
-                enddo
-                vtmp2_pl(:,ADM_kmin,l,I_W) = vtmp2_pl(:,ADM_kmin+1,l,I_W)
+                vtmp1_pl(:,ADM_kmin-1,l,I_VX ) = vtmp1_pl(:,ADM_kmin  ,l,I_VX )
+                vtmp1_pl(:,ADM_kmin-1,l,I_VY ) = vtmp1_pl(:,ADM_kmin  ,l,I_VY )
+                vtmp1_pl(:,ADM_kmin-1,l,I_VZ ) = vtmp1_pl(:,ADM_kmin  ,l,I_VZ )
+                vtmp1_pl(:,ADM_kmin  ,l,I_W  ) = vtmp1_pl(:,ADM_kmin+1,l,I_W  )
+                vtmp1_pl(:,ADM_kmin-1,l,I_TEM) = vtmp1_pl(:,ADM_kmin  ,l,I_TEM)
+                vtmp1_pl(:,ADM_kmin-1,l,I_RHO) = vtmp1_pl(:,ADM_kmin  ,l,I_RHO)
 
-                vtmp2_pl(:,ADM_kmax+1,l,I_RHO) = vtmp2_pl(:,ADM_kmax,l,I_RHO)
-                vtmp2_pl(:,ADM_kmax+1,l,I_VX ) = vtmp2_pl(:,ADM_kmax,l,I_VX )
-                vtmp2_pl(:,ADM_kmax+1,l,I_VY ) = vtmp2_pl(:,ADM_kmax,l,I_VY )
-                vtmp2_pl(:,ADM_kmax+1,l,I_VZ ) = vtmp2_pl(:,ADM_kmax,l,I_VZ )
-                vtmp2_pl(:,ADM_kmax+1,l,I_TEM) = vtmp2_pl(:,ADM_kmax,l,I_TEM)
+                vtmp1_pl(:,ADM_kmax+1,l,I_VX ) = vtmp1_pl(:,ADM_kmax,l,I_VX )
+                vtmp1_pl(:,ADM_kmax+1,l,I_VY ) = vtmp1_pl(:,ADM_kmax,l,I_VY )
+                vtmp1_pl(:,ADM_kmax+1,l,I_VZ ) = vtmp1_pl(:,ADM_kmax,l,I_VZ )
+                vtmp1_pl(:,ADM_kmax+1,l,I_W  ) = vtmp1_pl(:,ADM_kmax,l,I_W  )
+                vtmp1_pl(:,ADM_kmax+1,l,I_TEM) = vtmp1_pl(:,ADM_kmax,l,I_TEM)
+                vtmp1_pl(:,ADM_kmax+1,l,I_RHO) = vtmp1_pl(:,ADM_kmax,l,I_RHO)
+
                 do nq = 1, TRC_VMAX
-                   vtmp2_pl(:,ADM_kmax+1,l,nq+vmax) = vtmp2_pl(:,ADM_kmax,l,nq+vmax)
+                   vtmp1_pl(:,ADM_kmin-1,l,vmax+nq) = vtmp1_pl(:,ADM_kmin,l,vmax+nq)
+                   vtmp1_pl(:,ADM_kmax+1,l,vmax+nq) = vtmp1_pl(:,ADM_kmax,l,vmax+nq)
                 enddo
-                vtmp2_pl(:,ADM_kmax+1,l,I_W) = vtmp2_pl(:,ADM_kmax,l,I_W)
 
              endif
           enddo
-          vtmp0_pl(:,:,:,:) = vtmp2_pl(:,:,:,:)
+          vtmp0_pl(:,:,:,:) = vtmp1_pl(:,:,:,:)
 
           do k = ADM_kmin, ADM_kmax+1
-             flux_pl(:,k,l,I_RHO) = ( vtmp0_pl(:,k,l,I_RHO)-vtmp0_pl(:,k-1,l,I_RHO) ) * GRD_rdgzh(k) &
-                                  * Kv_coef_h(k) * VMTR_GSGAM2H_pl(:,k,l)
-             flux_pl(:,k,l,I_VX ) = ( vtmp0_pl(:,k,l,I_VX )-vtmp0_pl(:,k-1,l,I_VX ) ) * GRD_rdgzh(k) &
-                                  * Kv_coef_h(k) * rhog_h_pl(:,k,l)
-             flux_pl(:,k,l,I_VY ) = ( vtmp0_pl(:,k,l,I_VY )-vtmp0_pl(:,k-1,l,I_VY ) ) * GRD_rdgzh(k) &
-                                  * Kv_coef_h(k)  * rhog_h_pl(:,k,l)
-             flux_pl(:,k,l,I_VZ ) = ( vtmp0_pl(:,k,l,I_VZ )-vtmp0_pl(:,k-1,l,I_VZ ) ) * GRD_rdgzh(k) &
-                                  * Kv_coef_h(k) * rhog_h_pl(:,k,l)
-             flux_pl(:,k,l,I_TEM) = ( vtmp0_pl(:,k,l,I_TEM)-vtmp0_pl(:,k-1,l,I_TEM) ) * GRD_rdgzh(k) &
-                                  * Kv_coef_h(k) * rhog_h_pl(:,k,l) * CVdry
-             do nq = 1, TRC_VMAX
-                flux_pl(:,k,l,nq+vmax) = ( vtmp0_pl(:,k,l,nq+vmax)-vtmp0_pl(:,k-1,l,nq+vmax) ) * GRD_rdgzh(k) &
-                                       * Kv_coef_h(k) * rhog_h_pl(:,k,l)
-             enddo
+          do g = 1, ADM_gall
+             flux_pl(g,k,l,I_VX ) = Kv_coef_h(k) * ( vtmp0_pl(g,k,l,I_VX )-vtmp0_pl(g,k-1,l,I_VX ) ) &
+                                  * GRD_rdgzh(k) * rhog_h_pl(g,k,l)
+             flux_pl(g,k,l,I_VY ) = Kv_coef_h(k) * ( vtmp0_pl(g,k,l,I_VY )-vtmp0_pl(g,k-1,l,I_VY ) ) &
+                                  * GRD_rdgzh(k) * rhog_h_pl(g,k,l)
+             flux_pl(g,k,l,I_VZ ) = Kv_coef_h(k) * ( vtmp0_pl(g,k,l,I_VZ )-vtmp0_pl(g,k-1,l,I_VZ ) ) &
+                                  * GRD_rdgzh(k) * rhog_h_pl(g,k,l)
+             flux_pl(g,k,l,I_TEM) = Kv_coef_h(k) * ( vtmp0_pl(g,k,l,I_TEM)-vtmp0_pl(g,k-1,l,I_TEM) ) &
+                                  * GRD_rdgzh(k) * rhog_h_pl(g,k,l) * CVdry
+             flux_pl(g,k,l,I_RHO) = Kv_coef_h(k) * ( vtmp0_pl(g,k,l,I_RHO)-vtmp0_pl(g,k-1,l,I_RHO) ) &
+                                  * GRD_rdgzh(k) * VMTR_GSGAM2H_pl(g,k,l)
+          enddo
           enddo
 
           do k = ADM_kmin, ADM_kmax
-             flux_pl(:,k,l,I_W) = ( vtmp0_pl(:,k+1,l,I_W)-vtmp0_pl(:,k,l,I_W) ) * GRD_rdgz(k)&
-                                * Kv_coef(k) * rho_pl(:,k,l) * VMTR_GSGAM2_pl(:,k,l)
+          do g = 1, ADM_gall
+             flux_pl(g,k,l,I_W) = Kv_coef(k) * ( vtmp0_pl(g,k+1,l,I_W)-vtmp0_pl(g,k,l,I_W) ) &
+                                * GRD_rdgz(k) * rhog_pl(g,k,l)
+          enddo
+          enddo
+
+          do nq = 1, TRC_VMAX
+          do k = ADM_kmin, ADM_kmax+1
+          do g = 1, ADM_gall
+             flux_pl(g,k,l,vmax+nq) = Kv_coef_h(k) * ( vtmp0_pl(g,k,l,vmax+nq)-vtmp0_pl(g,k-1,l,vmax+nq) ) &
+                                    * GRD_rdgzh(k) * rhog_h_pl(g,k,l)
+          enddo
+          enddo
           enddo
 
           !--- update tendency
           do k = ADM_kmin, ADM_kmax
-             frhog_pl    (:,k,l) = frhog_pl(:,k,l) &
-                                 + ( flux_pl(:,k+1,l,I_RHO)-flux_pl(:,k,l,I_RHO) ) * GRD_rdgz(k)
-             frhogvx_pl  (:,k,l) = frhogvx_pl(:,k,l) &
-                                 + ( flux_pl(:,k+1,l,I_VX )-flux_pl(:,k,l,I_VX ) ) * GRD_rdgz(k)
-             frhogvy_pl  (:,k,l) = frhogvy_pl(:,k,l) &
-                                 + ( flux_pl(:,k+1,l,I_VY )-flux_pl(:,k,l,I_VY ) ) * GRD_rdgz(k)
-             frhogvz_pl  (:,k,l) = frhogvz_pl(:,k,l) &
-                                 + ( flux_pl(:,k+1,l,I_VZ )-flux_pl(:,k,l,I_VZ ) ) * GRD_rdgz(k)
-             frhoge_pl   (:,k,l) = frhoge_pl(:,k,l) &
-                                 + ( flux_pl(:,k+1,l,I_TEM)-flux_pl(:,k,l,I_TEM) ) * GRD_rdgz(k)
-             frhogetot_pl(:,k,l) = frhogetot_pl(:,k,l) &
-                                 + ( flux_pl(:,k+1,l,I_TEM)-flux_pl(:,k,l,I_TEM) ) * GRD_rdgz(k)
-             do nq = 1, TRC_VMAX
-                frhogq_pl(:,k,l,nq) = frhogq_pl(:,k,l,nq) &
-                                    + ( flux_pl(:,k+1,l,nq+vmax)-flux_pl(:,k,l,nq+vmax) ) * GRD_rdgz(k)
-             enddo
+          do g = 1, ADM_gall
+             tendency_pl(g,k,l,I_RHOG    ) = tendency_pl(g,k,l,I_RHOG    ) &
+                                           + ( flux_pl(g,k+1,l,I_RHO) - flux_pl(g,k,l,I_RHO) ) * GRD_rdgz(k)
+             tendency_pl(g,k,l,I_RHOGVX  ) = tendency_pl(g,k,l,I_RHOGVX  ) &
+                                           + ( flux_pl(g,k+1,l,I_VX ) - flux_pl(g,k,l,I_VX ) ) * GRD_rdgz(k)
+             tendency_pl(g,k,l,I_RHOGVY  ) = tendency_pl(g,k,l,I_RHOGVY  ) &
+                                           + ( flux_pl(g,k+1,l,I_VY ) - flux_pl(g,k,l,I_VY ) ) * GRD_rdgz(k)
+             tendency_pl(g,k,l,I_RHOGVZ  ) = tendency_pl(g,k,l,I_RHOGVZ  ) &
+                                           + ( flux_pl(g,k+1,l,I_VZ ) - flux_pl(g,k,l,I_VZ ) ) * GRD_rdgz(k)
+             tendency_pl(g,k,l,I_RHOGE   ) = tendency_pl(g,k,l,I_RHOGE   ) &
+                                           + ( flux_pl(g,k+1,l,I_TEM) - flux_pl(g,k,l,I_TEM) ) * GRD_rdgz(k)
+             tendency_pl(g,k,l,I_RHOGETOT) = tendency_pl(g,k,l,I_RHOGETOT) &
+                                           + ( flux_pl(g,k+1,l,I_TEM) - flux_pl(g,k,l,I_TEM) ) * GRD_rdgz(k)
           enddo
+          enddo
+
           do k = ADM_kmin+1, ADM_kmax
-             frhogw_pl(:,k,l) = frhogw_pl(:,k,l) &
-                              + ( flux_pl(:,k,l,I_W)-flux_pl(:,k-1,l,I_W) ) * GRD_rdgzh(k)
+          do g = 1, ADM_gall
+             tendency_pl(g,k,l,I_RHOGW) = tendency_pl(g,k,l,I_RHOGW) &
+                                        + ( flux_pl(g,k,l,I_W) - flux_pl(g,k-1,l,I_W) ) * GRD_rdgzh(k)
           enddo
+          enddo
+
+          do nq = 1, TRC_VMAX
+          do k = ADM_kmin, ADM_kmax
+          do g = 1, ADM_gall
+             tendency_q_pl(g,k,l,nq) = tendency_q_pl(g,k,l,nq) &
+                                     + ( flux_pl(g,k+1,l,vmax+nq) - flux_pl(g,k,l,vmax+nq) ) * GRD_rdgz(k)
+          enddo
+          enddo
+          enddo
+
        enddo
     endif
 
-    call OPRT_horizontalize_vec( frhogvx, frhogvx_pl, & !--- [INOUT]
-                                 frhogvy, frhogvy_pl, & !--- [INOUT]
-                                 frhogvz, frhogvz_pl  ) !--- [INOUT]
+    call OPRT_horizontalize_vec( tendency(:,:,:,I_RHOGVX), tendency_pl(:,:,:,I_RHOGVX), & !--- [INOUT]
+                                 tendency(:,:,:,I_RHOGVY), tendency_pl(:,:,:,I_RHOGVY), & !--- [INOUT]
+                                 tendency(:,:,:,I_RHOGVZ), tendency_pl(:,:,:,I_RHOGVZ)  ) !--- [INOUT]
 
     call DEBUG_rapend('____numfilter_vdiffusion')
 
