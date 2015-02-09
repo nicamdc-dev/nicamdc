@@ -243,7 +243,6 @@ contains
          ADM_AJ,         &
          ADM_GSLF_PL,    &
          ADM_KNONE,      &
-         ADM_VNONE,      &
          ADM_prc_me,     &
          ADM_lall,       &
          ADM_kall,       &
@@ -508,11 +507,11 @@ contains
              do k = ADM_kmin-1, ADM_kmax+1
                 do n = nstart,nend
                    GRD_vz(n,k,l,GRD_Z)  = GRD_gz(k)                              &
-                                        + GRD_zs(n,K0,l,ADM_VNONE)               &
+                                        + GRD_zs(n,K0,l,1)               &
                                         * sinh( (GRD_htop-GRD_gz(k)) / h_efold ) &
                                         / sinh(  GRD_htop            / h_efold )
                    GRD_vz(n,k,l,GRD_ZH) = GRD_gzh(k)                              &
-                                        + GRD_zs(n,K0,l,ADM_VNONE)                &
+                                        + GRD_zs(n,K0,l,1)                &
                                         * sinh( (GRD_htop-GRD_gzh(k)) / h_efold ) &
                                         / sinh(  GRD_htop             / h_efold )
                 enddo
@@ -525,11 +524,11 @@ contains
              do l = 1, ADM_lall_pl
                 do k = ADM_kmin-1, ADM_kmax+1
                    GRD_vz_pl(n,k,l,GRD_Z)  = GRD_gz(k)                              &
-                                           + GRD_zs_pl(n,K0,l,ADM_VNONE)            &
+                                           + GRD_zs_pl(n,K0,l,1)            &
                                            * sinh( (GRD_htop-GRD_gz(k)) / h_efold ) &
                                            / sinh(  GRD_htop            / h_efold )
                    GRD_vz_pl(n,k,l,GRD_ZH) = GRD_gzh(k)                              &
-                                           + GRD_zs_pl(n,K0,l,ADM_VNONE)             &
+                                           + GRD_zs_pl(n,K0,l,1)             &
                                            * sinh( (GRD_htop-GRD_gzh(k)) / h_efold ) &
                                            / sinh(  GRD_htop             / h_efold )
                 enddo

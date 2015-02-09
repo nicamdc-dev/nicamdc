@@ -311,8 +311,7 @@ contains
     use mod_adm, only: &
        kdim => ADM_kall, &
        kmin => ADM_kmin, &
-       kmax => ADM_kmax, &
-       ADM_VMISS
+       kmax => ADM_kmax
     implicit none
 
     integer, intent(in)    :: ijdim
@@ -355,7 +354,7 @@ contains
        enddo
     endselect
 
-    rhogw(:,1:kmin-1) = ADM_VMISS
+    rhogw(:,1:kmin-1) = 0.D0
 
     return
   end subroutine BNDCND_rhow
