@@ -43,3 +43,7 @@ else
 	VPATH += tool/extra:
 	mod_netcdf := mod_nonetcdf
 endif
+
+ifeq ($(ENABLE_FIXEDINDEX),T)
+	FFLAGS += -D_FIXEDINDEX_ -I$(SRCDIR)/include
+endif
