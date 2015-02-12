@@ -15,6 +15,10 @@
     max_varmax = 110,
 /
 
+&RANDOMPARAM
+    RANDOM_FIX = .true.,
+/
+
 &GRDPARAM
     hgrid_io_mode = "ADVANCED",
     hgrid_fname   = "boundary_GL05RL00",

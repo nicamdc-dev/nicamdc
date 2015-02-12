@@ -32,7 +32,7 @@
 /
 
 &CHEMVARPARAM
-    CHEM_TRC_vmax = 1,
+    CHEM_TRC_vmax = 4,
 /
 
 &BSSTATEPARAM
