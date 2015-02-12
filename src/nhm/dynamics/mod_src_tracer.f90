@@ -344,8 +344,8 @@ contains
        enddo
 
        do k = ADM_kmin, ADM_kmax
-          rhog(suf(ADM_gall_1d,1),k,l) = rhog(suf(ADM_gmax+1,ADM_gmin),k,l)
-          rhog(suf(1,ADM_gall_1d),k,l) = rhog(suf(ADM_gmin,ADM_gmax+1),k,l)
+          rhog(suf(ADM_gmax+1,ADM_gmin-1),k,l) = rhog(suf(ADM_gmax+1,ADM_gmin),k,l)
+          rhog(suf(ADM_gmin-1,ADM_gmax+1),k,l) = rhog(suf(ADM_gmin,ADM_gmax+1),k,l)
        enddo
        rhog(:,ADM_kmin-1,l) = rhog_in(:,ADM_kmin,l)
        rhog(:,ADM_kmax+1,l) = rhog_in(:,ADM_kmax,l)
@@ -474,8 +474,8 @@ contains
           enddo
 
           do k = 1, ADM_kall
-             rhog(suf(ADM_gall_1d,1),k,l) = rhog(suf(ADM_gmax+1,ADM_gmin),k,l)
-             rhog(suf(1,ADM_gall_1d),k,l) = rhog(suf(ADM_gmin,ADM_gmax+1),k,l)
+             rhog(suf(ADM_gmax+1,ADM_gmin-1),k,l) = rhog(suf(ADM_gmax+1,ADM_gmin),k,l)
+             rhog(suf(ADM_gmin-1,ADM_gmax+1),k,l) = rhog(suf(ADM_gmin,ADM_gmax+1),k,l)
           enddo
        enddo
 
@@ -510,8 +510,8 @@ contains
        enddo
 
        do k = 1, ADM_kall
-          rhog(suf(ADM_gall_1d,1),k,l) = rhog(suf(ADM_gmax+1,ADM_gmin),k,l)
-          rhog(suf(1,ADM_gall_1d),k,l) = rhog(suf(ADM_gmin,ADM_gmax+1),k,l)
+          rhog(suf(ADM_gmax+1,ADM_gmin-1),k,l) = rhog(suf(ADM_gmax+1,ADM_gmin),k,l)
+          rhog(suf(ADM_gmin-1,ADM_gmax+1),k,l) = rhog(suf(ADM_gmin,ADM_gmax+1),k,l)
        enddo
     enddo
 
@@ -588,10 +588,10 @@ contains
        endif
 
        if ( thubern_lim ) then
-          call vertical_limiter_thuburn( q_h(:,:,:),   q_h_pl(:,:,:),   & ! [INOUT]
-                                         q  (:,:,:),   q_pl  (:,:,:),   & ! [IN]
-                                         d  (:,:,:),   d_pl  (:,:,:),   & ! [IN]
-                                         ck (:,:,:,:), ck_pl (:,:,:,:)  ) ! [IN]
+          call vertical_limiter_thuburn( q_h(:,:,:),   q_h_pl(:,:,:),  & ! [INOUT]
+                                         q  (:,:,:),   q_pl  (:,:,:),  & ! [IN]
+                                         d  (:,:,:),   d_pl  (:,:,:),  & ! [IN]
+                                         ck (:,:,:,:), ck_pl (:,:,:,:) ) ! [IN]
        endif
 
        !--- update rhogq
@@ -769,9 +769,9 @@ contains
           ijm1   = n     - ADM_gall_1d
           ip1j   = n + 1
 
-          flux = 0.5D0 * ( (rhovxt(ijm1,TJ)+rhovxt(ij,TI)) * cinterp_HN(AI ,1,ij,l) &
-                         + (rhovyt(ijm1,TJ)+rhovyt(ij,TI)) * cinterp_HN(AI ,2,ij,l) &
-                         + (rhovzt(ijm1,TJ)+rhovzt(ij,TI)) * cinterp_HN(AI ,3,ij,l) )
+          flux = 0.5D0 * ( (rhovxt(ijm1,TJ)+rhovxt(ij,TI)) * cinterp_HN(ij,l,AI ,1) &
+                         + (rhovyt(ijm1,TJ)+rhovyt(ij,TI)) * cinterp_HN(ij,l,AI ,2) &
+                         + (rhovzt(ijm1,TJ)+rhovzt(ij,TI)) * cinterp_HN(ij,l,AI ,3) )
 
           flx_h(1,ij  ,k,l) =  flux * cinterp_PRA(ij  ,l) * dt
           flx_h(4,ip1j,k,l) = -flux * cinterp_PRA(ip1j,l) * dt
@@ -795,9 +795,9 @@ contains
           ij     = n
           ip1jp1 = n + 1 + ADM_gall_1d
 
-          flux = 0.5D0 * ( (rhovxt(ij,TI)+rhovxt(ij,TJ)) * cinterp_HN(AIJ,1,ij,l) &
-                         + (rhovyt(ij,TI)+rhovyt(ij,TJ)) * cinterp_HN(AIJ,2,ij,l) &
-                         + (rhovzt(ij,TI)+rhovzt(ij,TJ)) * cinterp_HN(AIJ,3,ij,l) )
+          flux = 0.5D0 * ( (rhovxt(ij,TI)+rhovxt(ij,TJ)) * cinterp_HN(ij,l,AIJ,1) &
+                         + (rhovyt(ij,TI)+rhovyt(ij,TJ)) * cinterp_HN(ij,l,AIJ,2) &
+                         + (rhovzt(ij,TI)+rhovzt(ij,TJ)) * cinterp_HN(ij,l,AIJ,3) )
 
           flx_h(2,ij    ,k,l) =  flux * cinterp_PRA(ij    ,l) * dt
           flx_h(5,ip1jp1,k,l) = -flux * cinterp_PRA(ip1jp1,l) * dt
@@ -821,9 +821,9 @@ contains
           im1j   = n - 1
           ijp1   = n     + ADM_gall_1d
 
-          flux = 0.5D0 * ( (rhovxt(ij,TJ)+rhovxt(im1j,TI)) * cinterp_HN(AJ ,1,ij,l) &
-                         + (rhovyt(ij,TJ)+rhovyt(im1j,TI)) * cinterp_HN(AJ ,2,ij,l) &
-                         + (rhovzt(ij,TJ)+rhovzt(im1j,TI)) * cinterp_HN(AJ ,3,ij,l) )
+          flux = 0.5D0 * ( (rhovxt(ij,TJ)+rhovxt(im1j,TI)) * cinterp_HN(ij,l,AJ ,1) &
+                         + (rhovyt(ij,TJ)+rhovyt(im1j,TI)) * cinterp_HN(ij,l,AJ ,2) &
+                         + (rhovzt(ij,TJ)+rhovzt(im1j,TI)) * cinterp_HN(ij,l,AJ ,3) )
 
           flx_h(3,ij  ,k,l) =  flux * cinterp_PRA(ij  ,l) * dt
           flx_h(6,ijp1,k,l) = -flux * cinterp_PRA(ijp1,l) * dt
@@ -1121,8 +1121,8 @@ contains
        ADM_kmin,    &
        ADM_kmax
     use mod_cnst, only: &
-       CNST_MAX_REAL, &
-       CNST_EPS_ZERO
+       BIG => CNST_MAX_REAL, &
+       EPS => CNST_EPS_ZERO
     implicit none
 
     real(8), intent(inout) :: q_h   (ADM_gall,   ADM_kall,ADM_lall   )
@@ -1134,24 +1134,17 @@ contains
     real(8), intent(in)    :: ck    (ADM_gall,   ADM_kall,ADM_lall   ,2)
     real(8), intent(in)    :: ck_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,2)
 
-    real(8) :: Qin_min    (ADM_gall,   ADM_kall,2)
-    real(8) :: Qin_min_pl (ADM_gall_pl,ADM_kall,2)
-    real(8) :: Qin_max    (ADM_gall,   ADM_kall,2)
-    real(8) :: Qin_max_pl (ADM_gall_pl,ADM_kall,2)
-
     real(8) :: Qout_min   (ADM_gall,   ADM_kall)
-    real(8) :: Qout_min_pl(ADM_gall_pl,ADM_kall)
     real(8) :: Qout_max   (ADM_gall,   ADM_kall)
+    real(8) :: Qout_min_pl(ADM_gall_pl,ADM_kall)
     real(8) :: Qout_max_pl(ADM_gall_pl,ADM_kall)
 
-    real(8) :: qnext_min, qnext_min_pl
-    real(8) :: qnext_max, qnext_max_pl
-    real(8) :: Cin,       Cin_pl
-    real(8) :: Cout,      Cout_pl
-    real(8) :: CQin_min,  CQin_min_pl
-    real(8) :: CQin_max,  CQin_max_pl
-
-    real(8) :: mask, mask1, mask2
+    real(8) :: Qin_minL, Qin_maxL
+    real(8) :: Qin_minU, Qin_maxU
+    real(8) :: qnext_min, qnext_max
+    real(8) :: Cin, Cout
+    real(8) :: CQin_min, CQin_max
+    real(8) :: inflagL, inflagU
     real(8) :: zerosw
 
     integer :: n, k, l
@@ -1160,44 +1153,31 @@ contains
     call DEBUG_rapstart('____Vertical_Adv_limiter')
 
     do l = 1, ADM_lall
-       Qin_min(:,:,:) =  CNST_MAX_REAL
-       Qin_max(:,:,:) = -CNST_MAX_REAL
 
-       do k = ADM_kmin, ADM_kmax+1
-       do n = 1,ADM_gall
-          if ( ck(n,k,l,1) > 0.D0 ) then ! incoming
-             Qin_min(n,k-1,2) = min( q(n,k,l), q(n,k-1,l) )
-             Qin_max(n,k-1,2) = max( q(n,k,l), q(n,k-1,l) )
-          else ! outgoing
-             Qin_min(n,k  ,1) = min( q(n,k,l), q(n,k-1,l) )
-             Qin_max(n,k  ,1) = max( q(n,k,l), q(n,k-1,l) )
-          endif
-       enddo
-       enddo
-
-       do k = 1, ADM_kall
+       do k = ADM_kmin, ADM_kmax
        do n = 1, ADM_gall
+          inflagL = 0.5D0 - sign(0.5D0, ck(n,k  ,l,1)) ! incoming flux: flag=1
+          inflagU = 0.5D0 - sign(0.5D0,-ck(n,k+1,l,1)) ! incoming flux: flag=1
 
-          qnext_min = min( Qin_min(n,k,1), Qin_min(n,k,2) )
-          if( qnext_min ==  CNST_MAX_REAL ) qnext_min = q(n,k,l)
+          Qin_minL = min( q(n,k,l), q(n,k-1,l) ) + ( 1.D0-inflagL ) * BIG
+          Qin_minU = min( q(n,k,l), q(n,k+1,l) ) + ( 1.D0-inflagU ) * BIG
+          Qin_maxL = max( q(n,k,l), q(n,k-1,l) ) - ( 1.D0-inflagL ) * BIG
+          Qin_maxU = max( q(n,k,l), q(n,k+1,l) ) - ( 1.D0-inflagU ) * BIG
 
-          qnext_max = max( Qin_max(n,k,1), Qin_max(n,k,2) )
-          if( qnext_max == -CNST_MAX_REAL ) qnext_max = q(n,k,l)
+          qnext_min = min( Qin_minL, Qin_minU, q(n,k,l) )
+          qnext_max = max( Qin_maxL, Qin_maxU, q(n,k,l) )
 
-          mask1 = 0.5D0 - sign(0.5D0,ck(n,k,l,1)-CNST_EPS_ZERO)
-          mask2 = 0.5D0 - sign(0.5D0,ck(n,k,l,2)-CNST_EPS_ZERO)
+          Cin      = (      inflagL ) * ( ck(n,k,l,1) ) &
+                   + (      inflagU ) * ( ck(n,k,l,2) )
+          Cout     = ( 1.D0-inflagL ) * ( ck(n,k,l,1) ) &
+                   + ( 1.D0-inflagU ) * ( ck(n,k,l,2) )
 
-          Cin  = (      mask1 ) * ck(n,k,l,1) &
-               + (      mask2 ) * ck(n,k,l,2)
-          Cout = ( 1.D0-mask1 ) * ck(n,k,l,1) &
-               + ( 1.D0-mask2 ) * ck(n,k,l,2)
+          CQin_max = (      inflagL ) * ( ck(n,k,l,1) * Qin_maxL ) &
+                   + (      inflagU ) * ( ck(n,k,l,2) * Qin_maxU )
+          CQin_min = (      inflagL ) * ( ck(n,k,l,1) * Qin_minL ) &
+                   + (      inflagU ) * ( ck(n,k,l,2) * Qin_minU )
 
-          CQin_max = mask1 * ( ck(n,k,l,1) * Qin_max(n,k,1) ) &
-                   + mask2 * ( ck(n,k,l,2) * Qin_max(n,k,2) )
-          CQin_min = mask1 * ( ck(n,k,l,1) * Qin_min(n,k,1) ) &
-                   + mask2 * ( ck(n,k,l,2) * Qin_min(n,k,2) )
-
-          zerosw = 0.5D0 - sign(0.5D0,abs(Cout)-CNST_EPS_ZERO) ! if Cout = 0, sw = 1
+          zerosw = 0.5D0 - sign(0.5D0,abs(Cout)-EPS) ! if Cout = 0, sw = 1
 
           Qout_min(n,k) = ( q(n,k,l) - CQin_max - qnext_max*(1.D0-Cin-Cout+d(n,k,l)) ) &
                         / ( Cout + zerosw ) * ( 1.D0 - zerosw )                        &
@@ -1205,19 +1185,15 @@ contains
           Qout_max(n,k) = ( q(n,k,l) - CQin_min - qnext_min*(1.D0-Cin-Cout+d(n,k,l)) ) &
                         / ( Cout + zerosw ) * ( 1.D0 - zerosw )                        &
                         + q(n,k,l) * zerosw
-
        enddo
        enddo
 
-       do k = ADM_kmin, ADM_kmax+1
+       do k = ADM_kmin+1, ADM_kmax
        do n = 1, ADM_gall
-          mask = 0.5D0 - sign(0.5D0,ck(n,k,l,1)-CNST_EPS_ZERO)
+          inflagL = 0.5D0 - sign(0.5D0,ck(n,k,l,1)) ! incoming flux: flag=1
 
-          q_h(n,k,l) = (      mask ) * min( max( q_h(n,k,l), Qin_min(n,k  ,1) ), Qin_max(n,k  ,1) ) &
-                     + ( 1.D0-mask ) * min( max( q_h(n,k,l), Qin_min(n,k-1,2) ), Qin_max(n,k-1,2) )
-
-          q_h(n,k,l) = (      mask ) * max( min( q_h(n,k,l), Qout_max(n,k-1) ), Qout_min(n,k-1) ) &
-                     + ( 1.D0-mask ) * max( min( q_h(n,k,l), Qout_max(n,k  ) ), Qout_min(n,k  ) )
+          q_h(n,k,l) = (      inflagL ) * max( min( q_h(n,k,l), Qout_max(n,k-1) ), Qout_min(n,k-1) ) &
+                     + ( 1.D0-inflagL ) * max( min( q_h(n,k,l), Qout_max(n,k  ) ), Qout_min(n,k  ) )
        enddo
        enddo
 
@@ -1225,64 +1201,47 @@ contains
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
-          Qin_min_pl(:,:,:) =  CNST_MAX_REAL
-          Qin_max_pl(:,:,:) = -CNST_MAX_REAL
 
-          do k = ADM_kmin, ADM_kmax+1
+          do k = ADM_kmin, ADM_kmax
           do n = 1, ADM_gall_pl
-             if ( ck_pl(n,k,l,1) > 0.D0 ) then
-                Qin_min_pl(n,k-1,2) = min( q_pl(n,k,l), q_pl(n,k-1,l) )
-                Qin_max_pl(n,k-1,2) = max( q_pl(n,k,l), q_pl(n,k-1,l) )
-             else
-                Qin_min_pl(n,k,  1) = min( q_pl(n,k,l), q_pl(n,k-1,l) )
-                Qin_max_pl(n,k,  1) = max( q_pl(n,k,l), q_pl(n,k-1,l) )
-             endif
-          enddo
-          enddo
+             inflagL = 0.5D0 - sign(0.5D0, ck_pl(n,k  ,l,1)) ! incoming flux: flag=1
+             inflagU = 0.5D0 - sign(0.5D0,-ck_pl(n,k+1,l,1)) ! incoming flux: flag=1
 
-          do k = 1, ADM_kall
-          do n = 1, ADM_gall_pl
+             Qin_minL = min( q_pl(n,k,l), q_pl(n,k-1,l) ) + ( 1.D0-inflagL ) * BIG
+             Qin_minU = min( q_pl(n,k,l), q_pl(n,k+1,l) ) + ( 1.D0-inflagU ) * BIG
+             Qin_maxL = max( q_pl(n,k,l), q_pl(n,k-1,l) ) - ( 1.D0-inflagL ) * BIG
+             Qin_maxU = max( q_pl(n,k,l), q_pl(n,k+1,l) ) - ( 1.D0-inflagU ) * BIG
 
-             qnext_min_pl = min( Qin_min_pl(n,k,1), Qin_min_pl(n,k,2) )
-             if( qnext_min_pl ==  CNST_MAX_REAL ) qnext_min_pl = q_pl(n,k,l)
-             qnext_min_pl = max( 0.D0, qnext_min_pl)
+             qnext_min = min( Qin_minL, Qin_minU, q_pl(n,k,l) )
+             qnext_max = max( Qin_maxL, Qin_maxU, q_pl(n,k,l) )
 
-             qnext_max_pl = max( Qin_max_pl(n,k,1), Qin_max_pl(n,k,2) )
-             if( qnext_max_pl == -CNST_MAX_REAL ) qnext_max_pl = q_pl(n,k,l)
+             Cin      = (      inflagL ) * ( ck_pl(n,k  ,l,1) ) &
+                      + (      inflagU ) * ( ck_pl(n,k+1,l,2) )
+             Cout     = ( 1.D0-inflagL ) * ( ck_pl(n,k  ,l,1) ) &
+                      + ( 1.D0-inflagU ) * ( ck_pl(n,k+1,l,2) )
 
-             mask1 = 0.5D0 - sign( 0.5D0, ck_pl(n,k,l,1) )
-             mask2 = 0.5D0 - sign( 0.5D0, ck_pl(n,k,l,2) )
+             CQin_max = (      inflagL ) * ( ck_pl(n,k  ,l,1) * Qin_maxL ) &
+                      + (      inflagU ) * ( ck_pl(n,k+1,l,2) * Qin_maxU )
+             CQin_min = (      inflagL ) * ( ck_pl(n,k  ,l,1) * Qin_minL ) &
+                      + (      inflagU ) * ( ck_pl(n,k+1,l,2) * Qin_minU )
 
-             Cin_pl  = (      mask1 ) * ck_pl(n,k,l,1) &
-                     + (      mask2 ) * ck_pl(n,k,l,2)
-             Cout_pl = ( 1.D0-mask1 ) * ck_pl(n,k,l,1) &
-                     + ( 1.D0-mask2 ) * ck_pl(n,k,l,2)
+             zerosw = 0.5D0 - sign(0.5D0,abs(Cout)-EPS) ! if Cout = 0, sw = 1
 
-             CQin_max_pl = mask1 * ( ck_pl(n,k,l,1) * Qin_max_pl(n,k,1) ) &
-                         + mask2 * ( ck_pl(n,k,l,2) * Qin_max_pl(n,k,2) )
-             CQin_min_pl = mask1 * ( ck_pl(n,k,l,1) * Qin_min_pl(n,k,1) ) &
-                         + mask2 * ( ck_pl(n,k,l,2) * Qin_min_pl(n,k,2) )
-
-             zerosw = 0.5D0 - sign(0.5D0,abs(Cout_pl)-CNST_EPS_ZERO) ! if Cout_pl = 0, sw = 1
-
-             Qout_min_pl(n,k) = ( q_pl(n,k,l) - CQin_max_pl - qnext_max_pl*(1.D0-Cin_pl-Cout_pl+d_pl(n,k,l)) ) &
-                              / ( Cout_pl + zerosw ) * ( 1.D0 - zerosw )                                       &
+             Qout_min_pl(n,k) = ( q_pl(n,k,l) - CQin_max - qnext_max*(1.D0-Cin-Cout+d_pl(n,k,l)) ) &
+                              / ( Cout + zerosw ) * ( 1.D0 - zerosw )                              &
                               + q_pl(n,k,l) * zerosw
-             Qout_max_pl(n,k) = ( q_pl(n,k,l) - CQin_min_pl - qnext_min_pl*(1.D0-Cin_pl-Cout_pl+d_pl(n,k,l)) ) &
-                              / ( Cout_pl + zerosw ) * ( 1.D0 - zerosw )                                       &
+             Qout_max_pl(n,k) = ( q_pl(n,k,l) - CQin_min - qnext_min*(1.D0-Cin-Cout+d_pl(n,k,l)) ) &
+                              / ( Cout + zerosw ) * ( 1.D0 - zerosw )                              &
                               + q_pl(n,k,l) * zerosw
           enddo
           enddo
 
-          do k = ADM_kmin, ADM_kmax+1
+          do k = ADM_kmin+1, ADM_kmax
           do n = 1, ADM_gall_pl
-             mask = 0.5D0 - sign( 0.5D0, ck_pl(n,k,l,1) )
+             inflagL = 0.5D0 - sign(0.5D0,ck_pl(n,k,l,1)) ! incoming flux: flag=1
 
-             q_h_pl(n,k,l) = (      mask ) * min( max( q_h_pl(n,k,l), Qin_min_pl(n,k  ,1) ), Qin_max_pl(n,k  ,1) ) &
-                           + ( 1.D0-mask ) * min( max( q_h_pl(n,k,l), Qin_min_pl(n,k-1,2) ), Qin_max_pl(n,k-1,2) )
-
-             q_h_pl(n,k,l) = (      mask ) * max( min( q_h_pl(n,k,l), Qout_max_pl(n,k-1) ), Qout_min_pl(n,k-1) ) &
-                           + ( 1.D0-mask ) * max( min( q_h_pl(n,k,l), Qout_max_pl(n,k  ) ), Qout_min_pl(n,k  ) )
+             q_h_pl(n,k,l) = (      inflagL ) * max( min( q_h_pl(n,k,l), Qout_max_pl(n,k-1) ), Qout_min_pl(n,k-1) ) &
+                           + ( 1.D0-inflagL ) * max( min( q_h_pl(n,k,l), Qout_max_pl(n,k  ) ), Qout_min_pl(n,k  ) )
           enddo
           enddo
 
