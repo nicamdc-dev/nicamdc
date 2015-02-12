@@ -282,8 +282,7 @@ contains
          grd_zs,                &
          grd_zs_pl,             &
          GRD_vz,                &
-         GRD_Z,                 &
-         GRD_VEGINDX              ! [add] 2010.08.20 C.Kodama
+         GRD_Z
     use mod_history, only : &
        history_in
     implicit none

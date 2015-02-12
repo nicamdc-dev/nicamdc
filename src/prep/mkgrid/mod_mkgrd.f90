@@ -75,7 +75,7 @@ module mod_mkgrd
   logical, private :: MKGRD_DOSHRINK    = .false.
   logical, private :: MKGRD_DOROTATE    = .false.
 
-  real(8), private :: MKGRD_spring_beta      = 1.15D0 ! parameter beta for spring dynamics 
+  real(8), private :: MKGRD_spring_beta      = 1.15D0 ! parameter beta for spring dynamics
   real(8), private :: MKGRD_prerotation_tilt =   0.D0 ! [deg]
   real(8), private :: MKGRD_stretch_alpha    = 1.00D0 ! parameter alpha for stretch
   integer, private :: MKGRD_shrink_level     =      0 ! shrink level (only for 1-diamond experiment)
@@ -133,11 +133,13 @@ contains
     endif
     write(ADM_LOG_FID,nml=PARAM_MKGRD)
 
+#ifndef _FIXEDINDEX_
     allocate( GRD_x    (ADM_gall,   ADM_KNONE,ADM_lall,   dir_vindex) )
     allocate( GRD_x_pl (ADM_gall_pl,ADM_KNONE,ADM_lall_pl,dir_vindex) )
 
     allocate( GRD_xt   (ADM_gall,   ADM_KNONE,ADM_lall,   ADM_TI:ADM_TJ,dir_vindex) )
     allocate( GRD_xt_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              dir_vindex) )
+#endif
 
     return
   end subroutine MKGRD_setup
@@ -1034,7 +1036,7 @@ contains
              len(:) = 0.D0
              ang(:) = 0.D0
              do m = 1, 5
-                ! vector length of Pm->Pm-1, Pm->Pm+1 
+                ! vector length of Pm->Pm-1, Pm->Pm+1
                 call MISC_3dvec_dot( len(m), p(:,m), p(:,m-1), p(:,m), p(:,m-1) )
                 len(m) = sqrt( len(m) )
 
@@ -1077,7 +1079,7 @@ contains
              len(:) = 0.D0
              ang(:) = 0.D0
              do m = 1, 6
-                ! vector length of Pm->Pm-1, Pm->Pm+1 
+                ! vector length of Pm->Pm-1, Pm->Pm+1
                 call MISC_3dvec_dot( len(m), p(:,m), p(:,m-1), p(:,m), p(:,m-1) )
                 len(m) = sqrt( len(m) )
 

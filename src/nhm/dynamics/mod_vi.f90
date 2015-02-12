@@ -35,6 +35,12 @@ module mod_vi
   use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID
+  use mod_adm, only: &
+     ADM_lall,    &
+     ADM_lall_pl, &
+     ADM_gall,    &
+     ADM_gall_pl, &
+     ADM_kall
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -61,12 +67,21 @@ module mod_vi
   !
   !++ Private parameters & variables
   !
+#ifdef _FIXEDINDEX_
+  real(8), private              :: Mc   (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(8), private              :: Mc_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(8), private              :: Ml   (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(8), private              :: Ml_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(8), private              :: Mu   (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(8), private              :: Mu_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+#else
   real(8), private, allocatable :: Mc   (:,:,:)
   real(8), private, allocatable :: Mc_pl(:,:,:)
   real(8), private, allocatable :: Ml   (:,:,:)
   real(8), private, allocatable :: Ml_pl(:,:,:)
   real(8), private, allocatable :: Mu   (:,:,:)
   real(8), private, allocatable :: Mu_pl(:,:,:)
+#endif
 
   !-----------------------------------------------------------------------------
 contains
@@ -81,12 +96,14 @@ contains
     implicit none
     !---------------------------------------------------------------------------
 
+#ifndef _FIXEDINDEX_
     allocate( Mc   (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( Mc_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) )
     allocate( Mu   (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( Mu_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) )
     allocate( Ml   (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( Ml_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) )
+#endif
 
     return
   end subroutine vi_setup
@@ -676,12 +693,12 @@ contains
        do l = 1, ADM_lall
 !OCL PARALLEL
        do k = 1, ADM_kall
-          variation_vh(suf(ADM_gall_1d,1),k,l,1) = variation_vh(suf(ADM_gmax+1,ADM_gmin),k,l,1)
-          variation_vh(suf(1,ADM_gall_1d),k,l,1) = variation_vh(suf(ADM_gmin,ADM_gmax+1),k,l,1)
-          variation_vh(suf(ADM_gall_1d,1),k,l,2) = variation_vh(suf(ADM_gmax+1,ADM_gmin),k,l,2)
-          variation_vh(suf(1,ADM_gall_1d),k,l,2) = variation_vh(suf(ADM_gmin,ADM_gmax+1),k,l,2)
-          variation_vh(suf(ADM_gall_1d,1),k,l,3) = variation_vh(suf(ADM_gmax+1,ADM_gmin),k,l,3)
-          variation_vh(suf(1,ADM_gall_1d),k,l,3) = variation_vh(suf(ADM_gmin,ADM_gmax+1),k,l,3)
+          variation_vh(suf(ADM_gmax+1,ADM_gmin-1),k,l,1) = variation_vh(suf(ADM_gmax+1,ADM_gmin),k,l,1)
+          variation_vh(suf(ADM_gmin-1,ADM_gmax+1),k,l,1) = variation_vh(suf(ADM_gmin,ADM_gmax+1),k,l,1)
+          variation_vh(suf(ADM_gmax+1,ADM_gmin-1),k,l,2) = variation_vh(suf(ADM_gmax+1,ADM_gmin),k,l,2)
+          variation_vh(suf(ADM_gmin-1,ADM_gmax+1),k,l,2) = variation_vh(suf(ADM_gmin,ADM_gmax+1),k,l,2)
+          variation_vh(suf(ADM_gmax+1,ADM_gmin-1),k,l,3) = variation_vh(suf(ADM_gmax+1,ADM_gmin),k,l,3)
+          variation_vh(suf(ADM_gmin-1,ADM_gmax+1),k,l,3) = variation_vh(suf(ADM_gmin,ADM_gmax+1),k,l,3)
        enddo
        enddo
 
@@ -719,12 +736,12 @@ contains
        do l = 1, ADM_lall
 !OCL PARALLEL
        do k = 1, ADM_kall
-          variation_we(suf(ADM_gall_1d,1),k,l,1) = variation_we(suf(ADM_gmax+1,ADM_gmin),k,l,1)
-          variation_we(suf(1,ADM_gall_1d),k,l,1) = variation_we(suf(ADM_gmin,ADM_gmax+1),k,l,1)
-          variation_we(suf(ADM_gall_1d,1),k,l,2) = variation_we(suf(ADM_gmax+1,ADM_gmin),k,l,2)
-          variation_we(suf(1,ADM_gall_1d),k,l,2) = variation_we(suf(ADM_gmin,ADM_gmax+1),k,l,2)
-          variation_we(suf(ADM_gall_1d,1),k,l,3) = variation_we(suf(ADM_gmax+1,ADM_gmin),k,l,3)
-          variation_we(suf(1,ADM_gall_1d),k,l,3) = variation_we(suf(ADM_gmin,ADM_gmax+1),k,l,3)
+          variation_we(suf(ADM_gmax+1,ADM_gmin-1),k,l,1) = variation_we(suf(ADM_gmax+1,ADM_gmin),k,l,1)
+          variation_we(suf(ADM_gmin-1,ADM_gmax+1),k,l,1) = variation_we(suf(ADM_gmin,ADM_gmax+1),k,l,1)
+          variation_we(suf(ADM_gmax+1,ADM_gmin-1),k,l,2) = variation_we(suf(ADM_gmax+1,ADM_gmin),k,l,2)
+          variation_we(suf(ADM_gmin-1,ADM_gmax+1),k,l,2) = variation_we(suf(ADM_gmin,ADM_gmax+1),k,l,2)
+          variation_we(suf(ADM_gmax+1,ADM_gmin-1),k,l,3) = variation_we(suf(ADM_gmax+1,ADM_gmin),k,l,3)
+          variation_we(suf(ADM_gmin-1,ADM_gmax+1),k,l,3) = variation_we(suf(ADM_gmin,ADM_gmax+1),k,l,3)
        enddo
        enddo
 

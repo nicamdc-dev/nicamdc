@@ -18,6 +18,19 @@ module mod_vmtr
   !
   !++ Used modules
   !
+  use mod_adm, only: &
+     ADM_LOG_FID
+  use mod_adm, only: &
+     ADM_TI,      &
+     ADM_TJ,      &
+     ADM_AI,      &
+     ADM_AIJ,     &
+     ADM_AJ,      &
+     ADM_lall,    &
+     ADM_lall_pl, &
+     ADM_gall,    &
+     ADM_gall_pl, &
+     ADM_kall
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -46,61 +59,73 @@ module mod_vmtr
   integer, public, parameter :: I_a_GZZH = 5
   integer, public, parameter :: I_b_GZZH = 6
 
-  !--- Gamma^2 at the full level
-  real(8), public, allocatable :: VMTR_GAM2   (:,:,:)
-  real(8), public, allocatable :: VMTR_GAM2_pl(:,:,:)
+#ifdef _FIXEDINDEX_
+  real(8), public              :: VMTR_GAM2        (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(8), public              :: VMTR_GAM2_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(8), public              :: VMTR_GAM2H       (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(8), public              :: VMTR_GAM2H_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(8), public              :: VMTR_GSGAM2      (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(8), public              :: VMTR_GSGAM2_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(8), public              :: VMTR_GSGAM2H     (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(8), public              :: VMTR_GSGAM2H_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-  !--- Gamma^2 at the half level
-  real(8), public, allocatable :: VMTR_GAM2H   (:,:,:)
-  real(8), public, allocatable :: VMTR_GAM2H_pl(:,:,:)
+  real(8), public              :: VMTR_RGSQRTH     (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(8), public              :: VMTR_RGSQRTH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(8), public              :: VMTR_RGAM        (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(8), public              :: VMTR_RGAM_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(8), public              :: VMTR_RGAMH       (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(8), public              :: VMTR_RGAMH_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(8), public              :: VMTR_RGSGAM2     (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(8), public              :: VMTR_RGSGAM2_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(8), public              :: VMTR_RGSGAM2H    (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(8), public              :: VMTR_RGSGAM2H_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-  !--- G^1/2 X Gamma^2 at the full level
-  real(8), public, allocatable :: VMTR_GSGAM2   (:,:,:)
-  real(8), public, allocatable :: VMTR_GSGAM2_pl(:,:,:)
+  real(8), public              :: VMTR_W2Cfact     (2,ADM_gall,   ADM_kall,ADM_lall   )
+  real(8), public              :: VMTR_W2Cfact_pl  (2,ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(8), public              :: VMTR_C2Wfact     (2,ADM_gall,   ADM_kall,ADM_lall   )
+  real(8), public              :: VMTR_C2Wfact_pl  (2,ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(8), public              :: VMTR_C2WfactGz   (6,ADM_gall,   ADM_kall,ADM_lall   )
+  real(8), public              :: VMTR_C2WfactGz_pl(6,ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-  !--- G^1/2 X Gamma^2 at the half level
-  real(8), public, allocatable :: VMTR_GSGAM2H   (:,:,:)
-  real(8), public, allocatable :: VMTR_GSGAM2H_pl(:,:,:)
+  real(8), public              :: VMTR_VOLUME      (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(8), public              :: VMTR_VOLUME_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-  !--- 1 / G^1/2 at the half level
-  real(8), public, allocatable :: VMTR_RGSQRTH   (:,:,:)
-  real(8), public, allocatable :: VMTR_RGSQRTH_pl(:,:,:)
+  real(8), public              :: VMTR_PHI         (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(8), public              :: VMTR_PHI_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+#else
+  real(8), public, allocatable :: VMTR_GAM2        (:,:,:)   ! Gamma^2 at the full level
+  real(8), public, allocatable :: VMTR_GAM2_pl     (:,:,:)
+  real(8), public, allocatable :: VMTR_GAM2H       (:,:,:)   ! Gamma^2 at the half level
+  real(8), public, allocatable :: VMTR_GAM2H_pl    (:,:,:)
+  real(8), public, allocatable :: VMTR_GSGAM2      (:,:,:)   ! G^1/2 X Gamma^2 at the full level
+  real(8), public, allocatable :: VMTR_GSGAM2_pl   (:,:,:)
+  real(8), public, allocatable :: VMTR_GSGAM2H     (:,:,:)   ! G^1/2 X Gamma^2 at the half level
+  real(8), public, allocatable :: VMTR_GSGAM2H_pl  (:,:,:)
 
-  !--- 1 / Gamma at the integer level
-  real(8), public, allocatable :: VMTR_RGAM   (:,:,:)
-  real(8), public, allocatable :: VMTR_RGAM_pl(:,:,:)
+  real(8), public, allocatable :: VMTR_RGSQRTH     (:,:,:)   ! 1 / G^1/2 at the half level
+  real(8), public, allocatable :: VMTR_RGSQRTH_pl  (:,:,:)
+  real(8), public, allocatable :: VMTR_RGAM        (:,:,:)   ! 1 / Gamma at the integer level
+  real(8), public, allocatable :: VMTR_RGAM_pl     (:,:,:)
+  real(8), public, allocatable :: VMTR_RGAMH       (:,:,:)   ! 1 / Gamma at the half level
+  real(8), public, allocatable :: VMTR_RGAMH_pl    (:,:,:)
+  real(8), public, allocatable :: VMTR_RGSGAM2     (:,:,:)   ! 1 / (G^1/2 X Gamma^2) at the full level
+  real(8), public, allocatable :: VMTR_RGSGAM2_pl  (:,:,:)
+  real(8), public, allocatable :: VMTR_RGSGAM2H    (:,:,:)   ! 1 / (G^1/2 X Gamma^2) at the half level
+  real(8), public, allocatable :: VMTR_RGSGAM2H_pl (:,:,:)
 
-  !--- 1 / Gamma at the half level
-  real(8), public, allocatable :: VMTR_RGAMH   (:,:,:)
-  real(8), public, allocatable :: VMTR_RGAMH_pl(:,:,:)
-
-  !--- 1 / (G^1/2 X Gamma^2) at the full level
-  real(8), public, allocatable :: VMTR_RGSGAM2   (:,:,:)
-  real(8), public, allocatable :: VMTR_RGSGAM2_pl(:,:,:)
-
-  !--- 1 / (G^1/2 X Gamma^2) at the half level
-  real(8), public, allocatable :: VMTR_RGSGAM2H   (:,:,:)
-  real(8), public, allocatable :: VMTR_RGSGAM2H_pl(:,:,:)
-
-  !--- volume at the full level
-  real(8), public, allocatable :: VMTR_VOLUME   (:,:,:)
-  real(8), public, allocatable :: VMTR_VOLUME_pl(:,:,:)
-
-  !--- geopotential at the full level
-  real(8), public, allocatable :: VMTR_PHI   (:,:,:)
-  real(8), public, allocatable :: VMTR_PHI_pl(:,:,:)
-
-  !--- factor for half to full level
-  real(8), public, allocatable :: VMTR_W2Cfact   (:,:,:,:)
-  real(8), public, allocatable :: VMTR_W2Cfact_pl(:,:,:,:)
-
-  !--- factor for full to half level
-  real(8), public, allocatable :: VMTR_C2Wfact   (:,:,:,:)
-  real(8), public, allocatable :: VMTR_C2Wfact_pl(:,:,:,:)
-
-  !--- factor for full to half level with Gz
-  real(8), public, allocatable :: VMTR_C2WfactGz   (:,:,:,:)
+  real(8), public, allocatable :: VMTR_W2Cfact     (:,:,:,:) ! factor for half to full level
+  real(8), public, allocatable :: VMTR_W2Cfact_pl  (:,:,:,:)
+  real(8), public, allocatable :: VMTR_C2Wfact     (:,:,:,:) ! factor for full to half level
+  real(8), public, allocatable :: VMTR_C2Wfact_pl  (:,:,:,:)
+  real(8), public, allocatable :: VMTR_C2WfactGz   (:,:,:,:) ! factor for full to half level with Gz
   real(8), public, allocatable :: VMTR_C2WfactGz_pl(:,:,:,:)
+
+  real(8), public, allocatable :: VMTR_VOLUME      (:,:,:)   ! volume at the full level
+  real(8), public, allocatable :: VMTR_VOLUME_pl   (:,:,:)
+
+  real(8), public, allocatable :: VMTR_PHI         (:,:,:)   ! geopotential at the full level
+  real(8), public, allocatable :: VMTR_PHI_pl      (:,:,:)
+#endif
 
   !-----------------------------------------------------------------------------
   !
@@ -110,52 +135,44 @@ module mod_vmtr
   !
   !++ Private parameters & variables
   !
-  logical, private, save :: deep = .false.
+  logical, private :: deep = .false.
 
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !>
-  !> Setup the vertical metrics
-  !>
+  !> Setup
   subroutine VMTR_setup
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_LOG_FID,   &
        ADM_CTL_FID,   &
+       ADM_proc_stop, &
        ADM_prc_me,    &
        ADM_prc_pl,    &
-       ADM_gall,      &
-       ADM_gall_pl,   &
-       ADM_lall,      &
-       ADM_lall_pl,   &
-       ADM_kall,      &
-       ADM_kmin,      &
-       ADM_kmax,      &
-       ADM_KNONE,     &
+       ADM_gall_1d,   &
        ADM_gmin,      &
-       ADM_gall_1d
+       ADM_gmax,      &
+       ADM_KNONE,     &
+       ADM_kmin,      &
+       ADM_kmax
     use mod_cnst, only: &
-       CNST_ERADIUS, &
        CNST_EGRAV
     use mod_comm, only: &
        COMM_data_transfer
     use mod_grd, only: &
-       GRD_Z,     &
-       GRD_ZH,    &
-       GRD_vz,    &
-       GRD_vz_pl, &
-       GRD_dgz,   &
-       GRD_dgzh,  &
-       GRD_afac,  &
-       GRD_bfac,  &
-       GRD_cfac,  &
-       GRD_dfac,  &
+       GRD_Z,        &
+       GRD_ZH,       &
+       GRD_dgz,      &
+       GRD_dgzh,     &
+       GRD_vz,       &
+       GRD_vz_pl,    &
+       GRD_afac,     &
+       GRD_bfac,     &
+       GRD_cfac,     &
+       GRD_dfac,     &
+       GRD_rscale,   &
        GRD_grid_type
     use mod_gmtr, only: &
-       GMTR_P_AREA,  &
-       GMTR_P_var,   &
-       GMTR_P_var_pl
+       GMTR_area,   &
+       GMTR_area_pl
     use mod_oprt, only: &
        OPRT_gradient,         &
        OPRT_horizontalize_vec
@@ -170,8 +187,8 @@ contains
     integer, parameter :: JY      = 5
     integer, parameter :: JZ      = 6
 
-    real(8) :: var      (ADM_gall,   ADM_kall,ADM_lall,   var_max)
-    real(8) :: var_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,var_max)
+    real(8) :: var   (ADM_gall,   ADM_kall,ADM_lall,   var_max)
+    real(8) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,var_max)
 
     !--- G^1/2
     real(8) :: GSQRT    (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -203,9 +220,6 @@ contains
 
     integer :: ierr
     integer :: g, k, l
-
-    integer :: i, j, suf
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -222,7 +236,7 @@ contains
     endif
     write(ADM_LOG_FID,nml=VMTRPARAM)
 
-    !--- initialization
+#ifndef _FIXEDINDEX_
     allocate( VMTR_GAM2        (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_GAM2_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
     allocate( VMTR_GAM2H       (ADM_gall,   ADM_kall,ADM_lall   ) )
@@ -243,12 +257,6 @@ contains
     allocate( VMTR_RGSGAM2H    (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_RGSGAM2H_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
 
-    allocate( VMTR_VOLUME      (ADM_gall,   ADM_kall,ADM_lall   ) )
-    allocate( VMTR_VOLUME_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-
-    allocate( VMTR_PHI         (ADM_gall,   ADM_kall,ADM_lall   ) )
-    allocate( VMTR_PHI_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-
     allocate( VMTR_W2Cfact     (2,ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_W2Cfact_pl  (2,ADM_gall_pl,ADM_kall,ADM_lall_pl) )
     allocate( VMTR_C2Wfact     (2,ADM_gall,   ADM_kall,ADM_lall   ) )
@@ -256,11 +264,20 @@ contains
     allocate( VMTR_C2WfactGz   (6,ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_C2WfactGz_pl(6,ADM_gall_pl,ADM_kall,ADM_lall_pl) )
 
+    allocate( VMTR_VOLUME      (ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( VMTR_VOLUME_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
+
+    allocate( VMTR_PHI         (ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( VMTR_PHI_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
+#endif
+
     !--- if 1 layer model( shallow water model ),
     if ( ADM_kall == ADM_KNONE ) then
 
-       VMTR_VOLUME   (:,:,:) = GMTR_P_var   (:,:,:,GMTR_P_AREA)
-       VMTR_VOLUME_pl(:,:,:) = GMTR_P_var_pl(:,:,:,GMTR_P_AREA)
+       do k = 1, ADM_kall
+          VMTR_VOLUME   (:,k,:) = GMTR_area   (:,:)
+          VMTR_VOLUME_pl(:,k,:) = GMTR_area_pl(:,:)
+       enddo
 
        return
     endif
@@ -287,8 +304,8 @@ contains
     !--- fill HALO
     call COMM_data_transfer( var, var_pl )
 
-    var(suf(1,ADM_gall_1d),:,:,:) = var(suf(ADM_gmin,ADM_gmin),:,:,:)
-    var(suf(ADM_gall_1d,1),:,:,:) = var(suf(ADM_gmin,ADM_gmin),:,:,:)
+    var(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
+    var(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
 
 
 
@@ -321,8 +338,8 @@ contains
        do l = 1, ADM_lall
        do k = 1, ADM_kall
        do g = 1, ADM_gall
-          GAM (g,k,l) = 1.D0 + GRD_vz(g,k,l,GRD_Z)  / CNST_ERADIUS
-          GAMH(g,k,l) = 1.D0 + GRD_vz(g,k,l,GRD_ZH) / CNST_ERADIUS
+          GAM (g,k,l) = 1.D0 + GRD_vz(g,k,l,GRD_Z)  / GRD_rscale
+          GAMH(g,k,l) = 1.D0 + GRD_vz(g,k,l,GRD_ZH) / GRD_rscale
        enddo
        enddo
        enddo
@@ -427,11 +444,9 @@ contains
     do l = 1, ADM_lall
     do k = 1, ADM_kall
     do g = 1, ADM_gall
-       VMTR_VOLUME(g,k,l) = GMTR_P_var(g,ADM_KNONE,l,GMTR_P_AREA) &
-                          * VMTR_GSGAM2(g,k,l)                    &
-                          * GRD_dgz(k)
+       VMTR_VOLUME(g,k,l) = GMTR_area(g,l) * VMTR_GSGAM2(g,k,l) * GRD_dgz(k)
 
-       VMTR_PHI(g,k,l) = GRD_vz(g,k,l,GRD_Z) * CNST_EGRAV
+       VMTR_PHI   (g,k,l) = GRD_vz(g,k,l,GRD_Z) * CNST_EGRAV
     enddo
     enddo
     enddo
@@ -468,8 +483,8 @@ contains
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do g = 1, ADM_gall_pl
-             GAM_pl (g,k,l) = 1.D0 + GRD_vz_pl(g,k,l,GRD_Z)  / CNST_ERADIUS
-             GAMH_pl(g,k,l) = 1.D0 + GRD_vz_pl(g,k,l,GRD_ZH) / CNST_ERADIUS
+             GAM_pl (g,k,l) = 1.D0 + GRD_vz_pl(g,k,l,GRD_Z)  / GRD_rscale
+             GAMH_pl(g,k,l) = 1.D0 + GRD_vz_pl(g,k,l,GRD_ZH) / GRD_rscale
           enddo
           enddo
           enddo
@@ -574,11 +589,9 @@ contains
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
        do g = 1, ADM_gall_pl
-          VMTR_VOLUME_pl(g,k,l) = GMTR_P_var_pl(g,ADM_KNONE,l,GMTR_P_AREA) &
-                                * VMTR_GSGAM2_pl(g,k,l)                    &
-                                * GRD_dgz(k)
+          VMTR_VOLUME_pl(g,k,l) = GMTR_area_pl(g,l) * VMTR_GSGAM2_pl(g,k,l) * GRD_dgz(k)
 
-          VMTR_PHI_pl(g,k,l) = GRD_vz_pl(g,k,l,GRD_Z) * CNST_EGRAV
+          VMTR_PHI_pl   (g,k,l) = GRD_vz_pl(g,k,l,GRD_Z) * CNST_EGRAV
        enddo
        enddo
        enddo
@@ -587,6 +600,19 @@ contains
 
     return
   end subroutine VMTR_setup
+
+  !-----------------------------------------------------------------------------
+  integer function suf(i,j)
+    use mod_adm, only: &
+       ADM_gall_1d
+    implicit none
+
+    integer :: i, j
+    !---------------------------------------------------------------------------
+
+    suf = ADM_gall_1d * (j-1) + i
+
+  end function suf
 
 end module mod_vmtr
 !-------------------------------------------------------------------------------

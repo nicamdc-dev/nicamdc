@@ -633,7 +633,7 @@ contains
                              dvy, dvy_pl, & ! [IN]
                              dvz, dvz_pl  ) ! [IN]
 
-       dtem(:,:,:) = dein_pl(:,:,:) / CNST_CV
+       dtem(:,:,:) = dein(:,:,:) / CNST_CV
 
        do l = 1, ADM_lall
           call history_in('nudge_du',   du  (:,:,l))
