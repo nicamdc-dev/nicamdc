@@ -883,8 +883,8 @@ contains
        if ( nl /= num_of_iteration_lstep ) then
           call COMM_data_transfer( PROG, PROG_pl )
 
-          PROG(suf(ADM_gall_1d,1),:,:,:) = PROG(suf(ADM_gmax+1,ADM_gmin),:,:,:)
-          PROG(suf(1,ADM_gall_1d),:,:,:) = PROG(suf(ADM_gmin,ADM_gmax+1),:,:,:)
+          PROG(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = PROG(suf(ADM_gmax+1,ADM_gmin),:,:,:)
+          PROG(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = PROG(suf(ADM_gmin,ADM_gmax+1),:,:,:)
        endif
 
        call DEBUG_rapend  ('___Pre_Post')

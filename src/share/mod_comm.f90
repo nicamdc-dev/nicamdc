@@ -2917,8 +2917,8 @@ contains
 
     call COMM_data_transfer(var,var_pl)
 
-    var(suf(ADM_gall_1d,1),:,:,:) = var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
-    var(suf(1,ADM_gall_1d),:,:,:) = var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
+    var(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
+    var(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
 
     call DEBUG_rapend('COMM_var')
 

@@ -672,8 +672,8 @@ contains
        ! communication
        call COMM_data_transfer( PRG_var, PRG_var_pl )
 
-       PRG_var(suf(ADM_gall_1d,1),:,:,:) = PRG_var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
-       PRG_var(suf(1,ADM_gall_1d),:,:,:) = PRG_var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
+       PRG_var(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = PRG_var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
+       PRG_var(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = PRG_var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
 
     elseif( num == 1 ) then
 
@@ -730,8 +730,8 @@ contains
        ! communication
        call COMM_data_transfer( PRG_var1, PRG_var1_pl )
 
-       PRG_var1(suf(ADM_gall_1d,1),:,:,:) = PRG_var1(suf(ADM_gmax+1,ADM_gmin),:,:,:)
-       PRG_var1(suf(1,ADM_gall_1d),:,:,:) = PRG_var1(suf(ADM_gmin,ADM_gmax+1),:,:,:)
+       PRG_var1(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = PRG_var1(suf(ADM_gmax+1,ADM_gmin),:,:,:)
+       PRG_var1(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = PRG_var1(suf(ADM_gmin,ADM_gmax+1),:,:,:)
 
     endif
 
@@ -971,8 +971,8 @@ contains
     ! communication
     call COMM_var( PRG_var, PRG_var_pl, ADM_kall, PRG_vmax )
 
-    PRG_var(suf(ADM_gall_1d,1),:,:,:) = PRG_var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
-    PRG_var(suf(1,ADM_gall_1d),:,:,:) = PRG_var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
+    PRG_var(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = PRG_var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
+    PRG_var(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = PRG_var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
 
     return
   end subroutine prgvar_set_in

@@ -531,9 +531,9 @@ contains
             = sv_pl(1:ADM_gall_pl,ADM_KNONE,1:ADM_lall_pl)
     end if
     !
-    sfcvar(suf(ADM_gall_1d,1),KSTR(vid),:,1) &
+    sfcvar(suf(ADM_gmax+1,ADM_gmin-1),KSTR(vid),:,1) &
          = sfcvar(suf(ADM_gmax+1,ADM_gmin),KSTR(vid),:,1)
-    sfcvar(suf(1,ADM_gall_1d),KSTR(vid),:,1) &
+    sfcvar(suf(ADM_gmin-1,ADM_gmax+1),KSTR(vid),:,1) &
          = sfcvar(suf(ADM_gmin,ADM_gmax+1),KSTR(vid),:,1)
     !
     return
@@ -607,9 +607,9 @@ contains
        end do
     end do
     !
-    sfcvar(suf(ADM_gall_1d,1),KSTR(vid),:,1) &
+    sfcvar(suf(ADM_gmax+1,ADM_gmin-1),KSTR(vid),:,1) &
          = sfcvar(suf(ADM_gmax+1,ADM_gmin),KSTR(vid),:,1)
-    sfcvar(suf(1,ADM_gall_1d),KSTR(vid),:,1) &
+    sfcvar(suf(ADM_gmin-1,ADM_gmax+1),KSTR(vid),:,1) &
          = sfcvar(suf(ADM_gmin,ADM_gmax+1),KSTR(vid),:,1)
     !
   end subroutine sfcvar_set_in
@@ -713,8 +713,8 @@ contains
           call COMM_data_transfer(sfcvar(:,:,:,:),sfcvar_pl(:,:,:,:))
        endif
 
-       sfcvar(suf(ADM_gall_1d,1),:,:,:) = sfcvar(suf(ADM_gmax+1,ADM_gmin),:,:,:)
-       sfcvar(suf(1,ADM_gall_1d),:,:,:) = sfcvar(suf(ADM_gmin,ADM_gmax+1),:,:,:)
+       sfcvar(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = sfcvar(suf(ADM_gmax+1,ADM_gmin),:,:,:)
+       sfcvar(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = sfcvar(suf(ADM_gmin,ADM_gmax+1),:,:,:)
     endif
 
     return
@@ -759,9 +759,9 @@ contains
           end do
        end do
     end do
-    sfcvar(suf(ADM_gall_1d,1),KSTR(vid):KEND(vid),:,1) &
+    sfcvar(suf(ADM_gmax+1,ADM_gmin-1),KSTR(vid):KEND(vid),:,1) &
          = sfcvar(suf(ADM_gmax+1,ADM_gmin),KSTR(vid):KEND(vid),:,1)
-    sfcvar(suf(1,ADM_gall_1d),KSTR(vid):KEND(vid),:,1) &
+    sfcvar(suf(ADM_gmin-1,ADM_gmax+1),KSTR(vid):KEND(vid),:,1) &
          = sfcvar(suf(ADM_gmin,ADM_gmax+1),KSTR(vid):KEND(vid),:,1)
     !
   end subroutine sfcvar_set1_in
@@ -861,9 +861,9 @@ contains
           end do
        end do
     end do
-    sfcvar(suf(ADM_gall_1d,1),KSTR(vid):KEND(vid),:,1) &
+    sfcvar(suf(ADM_gmax+1,ADM_gmin-1),KSTR(vid):KEND(vid),:,1) &
          = sfcvar(suf(ADM_gmax+1,ADM_gmin),KSTR(vid):KEND(vid),:,1)
-    sfcvar(suf(1,ADM_gall_1d),KSTR(vid):KEND(vid),:,1) &
+    sfcvar(suf(ADM_gmin-1,ADM_gmax+1),KSTR(vid):KEND(vid),:,1) &
          = sfcvar(suf(ADM_gmin,ADM_gmax+1),KSTR(vid):KEND(vid),:,1)
     !
   end subroutine sfcvar_set2_in

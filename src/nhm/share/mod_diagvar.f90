@@ -805,8 +805,8 @@ contains
        diagvar_pl(1:ADM_gall_pl,:,:,vid)   = dv_pl(1:ADM_gall_pl,:,:)
     endif
     !
-    diagvar(suf(ADM_gall_1d,1),:,:,vid) = diagvar(suf(ADM_gmax+1,ADM_gmin),:,:,vid)
-    diagvar(suf(1,ADM_gall_1d),:,:,vid) = diagvar(suf(ADM_gmin,ADM_gmax+1),:,:,vid)
+    diagvar(suf(ADM_gmax+1,ADM_gmin-1),:,:,vid) = diagvar(suf(ADM_gmax+1,ADM_gmin),:,:,vid)
+    diagvar(suf(ADM_gmin-1,ADM_gmax+1),:,:,vid) = diagvar(suf(ADM_gmin,ADM_gmax+1),:,:,vid)
     !
     return
     !
@@ -878,8 +878,8 @@ contains
        end do
     end do
     !
-    diagvar(suf(ADM_gall_1d,1),:,:,vid) = diagvar(suf(ADM_gmax+1,ADM_gmin),:,:,vid)
-    diagvar(suf(1,ADM_gall_1d),:,:,vid) = diagvar(suf(ADM_gmin,ADM_gmax+1),:,:,vid)
+    diagvar(suf(ADM_gmax+1,ADM_gmin-1),:,:,vid) = diagvar(suf(ADM_gmax+1,ADM_gmin),:,:,vid)
+    diagvar(suf(ADM_gmin-1,ADM_gmax+1),:,:,vid) = diagvar(suf(ADM_gmin,ADM_gmax+1),:,:,vid)
     !
   end subroutine diagvar_set_in
 
@@ -951,9 +951,9 @@ contains
        end do
     end do
     !
-    diagvar(suf(ADM_gall_1d,1),:,l_region,vid) &
+    diagvar(suf(ADM_gmax+1,ADM_gmin-1),:,l_region,vid) &
          = diagvar(suf(ADM_gmax+1,ADM_gmin),:,l_region,vid)
-    diagvar(suf(1,ADM_gall_1d),:,l_region,vid) &
+    diagvar(suf(ADM_gmin-1,ADM_gmax+1),:,l_region,vid) &
          = diagvar(suf(ADM_gmin,ADM_gmax+1),:,l_region,vid)
     !
   end subroutine diagvar_set_in_region
@@ -1053,9 +1053,9 @@ contains
        end do
     end do
     !
-    diagvar1(suf(ADM_gall_1d,1),:,:,vid) &
+    diagvar1(suf(ADM_gmax+1,ADM_gmin-1),:,:,vid) &
          = diagvar1(suf(ADM_gmax+1,ADM_gmin),:,:,vid)
-    diagvar1(suf(1,ADM_gall_1d),:,:,vid) &
+    diagvar1(suf(ADM_gmin-1,ADM_gmax+1),:,:,vid) &
          = diagvar1(suf(ADM_gmin,ADM_gmax+1),:,:,vid)
     !
   end subroutine diagvar_set_in_1layer
@@ -1120,14 +1120,14 @@ contains
        diagvar1(nn,ADM_KNONE,l_region,vid) = sv(n)
     end do
     !
-!!$    diagvar1(suf(ADM_gall_1d,1),:,:,vid) &
+!!$    diagvar1(suf(ADM_gmax+1,ADM_gmin-1),:,:,vid) &
 !!$         = diagvar1(suf(ADM_gmax+1,ADM_gmin),:,:,vid)
-!!$    diagvar1(suf(1,ADM_gall_1d),:,:,vid) &
+!!$    diagvar1(suf(ADM_gmin-1,ADM_gmax+1),:,:,vid) &
 !!$         = diagvar1(suf(ADM_gmin,ADM_gmax+1),:,:,vid)
     ! 2010.5.5. M. Satoh [mod]
-    diagvar1(suf(ADM_gall_1d,1),:,l_region,vid) &
+    diagvar1(suf(ADM_gmax+1,ADM_gmin-1),:,l_region,vid) &
          = diagvar1(suf(ADM_gmax+1,ADM_gmin),:,l_region,vid)
-    diagvar1(suf(1,ADM_gall_1d),:,l_region,vid) &
+    diagvar1(suf(ADM_gmin-1,ADM_gmax+1),:,l_region,vid) &
          = diagvar1(suf(ADM_gmin,ADM_gmax+1),:,l_region,vid)
     !
   end subroutine diagvar_set_in_1layer_region
@@ -1206,9 +1206,9 @@ contains
              diagvarn(nn,ksta+k-1,l_region,1) = sv(n,k)
           end do
        end do
-       diagvarn(suf(ADM_gall_1d,1),ksta:kend,l_region,1) &
+       diagvarn(suf(ADM_gmax+1,ADM_gmin-1),ksta:kend,l_region,1) &
             = diagvar(suf(ADM_gmax+1,ADM_gmin),ksta:kend,l_region,1)
-       diagvarn(suf(1,ADM_gall_1d),ksta:kend,l_region,1) &
+       diagvarn(suf(ADM_gmin-1,ADM_gmax+1),ksta:kend,l_region,1) &
             = diagvar(suf(ADM_gmin,ADM_gmax+1),ksta:kend,l_region,1)
     else
        write(ADM_LOG_FID,*) "*** Error, DIAGVAR illegal diag_vmax_nlayer", &

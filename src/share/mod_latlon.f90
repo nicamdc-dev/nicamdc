@@ -177,8 +177,8 @@ contains
     !--- communication of point data
     call COMM_data_transfer( GMTR_P_ll, GMTR_P_ll_pl )
     ! fill unused grid (dummy)
-    GMTR_P_ll(suf(ADM_gall_1d,1),:,:,:) = GMTR_P_ll(suf(ADM_gmax+1,ADM_gmin),:,:,:)
-    GMTR_P_ll(suf(1,ADM_gall_1d),:,:,:) = GMTR_P_ll(suf(ADM_gmin,ADM_gmax+1),:,:,:)
+    GMTR_P_ll(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = GMTR_P_ll(suf(ADM_gmax+1,ADM_gmin),:,:,:)
+    GMTR_P_ll(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = GMTR_P_ll(suf(ADM_gmin,ADM_gmax+1),:,:,:)
 
     return
   end subroutine LATLON_ico_setup
