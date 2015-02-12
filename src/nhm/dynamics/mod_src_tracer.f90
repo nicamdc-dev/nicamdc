@@ -913,17 +913,17 @@ contains
        cmask,  cmask_pl, &
        GRD_xc, GRD_xc_pl )
     use mod_adm, only: &
-       ADM_have_pl,    &
-       ADM_lall,       &
-       ADM_lall_pl,    &
-       ADM_gall,       &
-       ADM_gall_pl,    &
-       ADM_kall,       &
-       ADM_gall_1d,    &
-       ADM_gmin,       &
-       ADM_gmax,       &
-       ADM_gslf_pl,    &
-       ADM_gmin_pl,    &
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_gall_1d, &
+       ADM_gmin,    &
+       ADM_gmax,    &
+       ADM_gslf_pl, &
+       ADM_gmin_pl, &
        ADM_gmax_pl
     use mod_comm, only: &
        COMM_data_transfer
@@ -946,13 +946,20 @@ contains
     real(8)  :: gradq   (ADM_gall   ,ADM_kall,ADM_lall   ,XDIR:ZDIR) ! grad(q)
     real(8)  :: gradq_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,XDIR:ZDIR)
 
+    real(8) :: q_ap1(ADM_gall), q_am1(ADM_gall)
+    real(8) :: q_ap2(ADM_gall), q_am2(ADM_gall)
+    real(8) :: q_ap3(ADM_gall), q_am3(ADM_gall)
+    real(8) :: q_ap4(ADM_gall), q_am4(ADM_gall)
+    real(8) :: q_ap5(ADM_gall), q_am5(ADM_gall)
+    real(8) :: q_ap6(ADM_gall), q_am6(ADM_gall)
     real(8) :: q_ap, q_am
 
     integer :: ij
     integer :: ip1j, ijp1, ip1jp1
     integer :: im1j, ijm1, im1jm1
 
-    integer :: nstart,nend
+    integer :: kall, gall_1d
+    integer :: nstart1, nstart2, nstart3, nstart4, nend
     integer :: n, k, l, v
 
     integer :: suf,i,j
@@ -966,117 +973,202 @@ contains
 
     call COMM_data_transfer( gradq(:,:,:,:), gradq_pl(:,:,:,:) )
 
+    kall    = ADM_kall
+    gall_1d = ADM_gall_1d
+
+    nstart1 = suf(ADM_gmin-1,ADM_gmin-1)
+    nstart2 = suf(ADM_gmin  ,ADM_gmin-1)
+    nstart3 = suf(ADM_gmin  ,ADM_gmin  )
+    nstart4 = suf(ADM_gmin-1,ADM_gmin  )
+    nend    = suf(ADM_gmax  ,ADM_gmax  )
+
     ! interpolated Q at cell arc
     do l = 1, ADM_lall
-    do k = 1, ADM_kall
-       nstart = suf(ADM_gmin-1,ADM_gmin-1)
-       nend   = suf(ADM_gmax  ,ADM_gmax  )
 
-       do n = nstart, nend
-          ij     = n
-          ip1j   = n + 1
+       !$omp parallel default(none),private(n,k,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1), &
+       !$omp shared(q,gradq,GRD_xc,GRD_x,l,kall,gall_1d,nstart1,nstart2,nstart3,nstart4,nend, &
+       !$omp q_a,cmask,q_ap1,q_am1,q_ap2,q_am2,q_ap3,q_am3,q_ap4,q_am4,q_ap5,q_am5,q_ap6,q_am6)
+       do k = 1, kall
 
-          q_ap = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(ij    ,k,l,AI ,XDIR) - GRD_x(ij    ,K0,l,XDIR) ) &
-                               + gradq(ij    ,k,l,YDIR) * ( GRD_xc(ij    ,k,l,AI ,YDIR) - GRD_x(ij    ,K0,l,YDIR) ) &
-                               + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(ij    ,k,l,AI ,ZDIR) - GRD_x(ij    ,K0,l,ZDIR) )
+          !$omp do
+          do n = nstart1, nend
+             ij = n
 
-          q_am = q(ip1j  ,k,l) + gradq(ip1j  ,k,l,XDIR) * ( GRD_xc(ij    ,k,l,AI ,XDIR) - GRD_x(ip1j  ,K0,l,XDIR) ) &
-                               + gradq(ip1j  ,k,l,YDIR) * ( GRD_xc(ij    ,k,l,AI ,YDIR) - GRD_x(ip1j  ,K0,l,YDIR) ) &
-                               + gradq(ip1j  ,k,l,ZDIR) * ( GRD_xc(ij    ,k,l,AI ,ZDIR) - GRD_x(ip1j  ,K0,l,ZDIR) )
+             q_ap1(n) = q(ij,k,l) + gradq(ij,k,l,XDIR) * ( GRD_xc(ij,k,l,AI,XDIR) - GRD_x(ij,K0,l,XDIR) ) &
+                                  + gradq(ij,k,l,YDIR) * ( GRD_xc(ij,k,l,AI,YDIR) - GRD_x(ij,K0,l,YDIR) ) &
+                                  + gradq(ij,k,l,ZDIR) * ( GRD_xc(ij,k,l,AI,ZDIR) - GRD_x(ij,K0,l,ZDIR) )
+          enddo
+          !$omp end do nowait
 
-          q_a(1,n,k,l) = (      cmask(1,n,k,l) ) * q_am &
-                       + ( 1.D0-cmask(1,n,k,l) ) * q_ap
+          !$omp do
+          do n = nstart1, nend
+             ij   = n
+             ip1j = n + 1
+
+             q_am1(n) = q(ip1j,k,l) + gradq(ip1j,k,l,XDIR) * ( GRD_xc(ij,k,l,AI,XDIR) - GRD_x(ip1j,K0,l,XDIR) ) &
+                                    + gradq(ip1j,k,l,YDIR) * ( GRD_xc(ij,k,l,AI,YDIR) - GRD_x(ip1j,K0,l,YDIR) ) &
+                                    + gradq(ip1j,k,l,ZDIR) * ( GRD_xc(ij,k,l,AI,ZDIR) - GRD_x(ip1j,K0,l,ZDIR) )
+          enddo
+          !$omp end do nowait
+
+          !$omp do
+          do n = nstart1, nend
+             ij = n
+
+             q_ap2(n) = q(ij,k,l) + gradq(ij,k,l,XDIR) * ( GRD_xc(ij,k,l,AIJ,XDIR) - GRD_x(ij,K0,l,XDIR) ) &
+                                  + gradq(ij,k,l,YDIR) * ( GRD_xc(ij,k,l,AIJ,YDIR) - GRD_x(ij,K0,l,YDIR) ) &
+                                  + gradq(ij,k,l,ZDIR) * ( GRD_xc(ij,k,l,AIJ,ZDIR) - GRD_x(ij,K0,l,ZDIR) )
+          enddo
+          !$omp end do nowait
+
+          !$omp do
+          do n = nstart1, nend
+             ij     = n
+             ip1jp1 = n + 1 + gall_1d
+
+             q_am2(n) = q(ip1jp1,k,l) + gradq(ip1jp1,k,l,XDIR) * ( GRD_xc(ij,k,l,AIJ,XDIR) - GRD_x(ip1jp1,K0,l,XDIR) ) &
+                                      + gradq(ip1jp1,k,l,YDIR) * ( GRD_xc(ij,k,l,AIJ,YDIR) - GRD_x(ip1jp1,K0,l,YDIR) ) &
+                                      + gradq(ip1jp1,k,l,ZDIR) * ( GRD_xc(ij,k,l,AIJ,ZDIR) - GRD_x(ip1jp1,K0,l,ZDIR) )
+          enddo
+          !$omp end do nowait
+
+          !$omp do
+          do n = nstart1, nend
+             ij = n
+
+             q_ap3(n) = q(ij,k,l) + gradq(ij,k,l,XDIR) * ( GRD_xc(ij,k,l,AJ,XDIR) - GRD_x(ij,K0,l,XDIR) ) &
+                                  + gradq(ij,k,l,YDIR) * ( GRD_xc(ij,k,l,AJ,YDIR) - GRD_x(ij,K0,l,YDIR) ) &
+                                  + gradq(ij,k,l,ZDIR) * ( GRD_xc(ij,k,l,AJ,ZDIR) - GRD_x(ij,K0,l,ZDIR) )
+          enddo
+          !$omp end do nowait
+
+          !$omp do
+          do n = nstart1, nend
+             ij   = n
+             ijp1 = n + gall_1d
+
+             q_am3(n) = q(ijp1,k,l) + gradq(ijp1,k,l,XDIR) * ( GRD_xc(ij,k,l,AJ,XDIR) - GRD_x(ijp1,K0,l,XDIR) ) &
+                                    + gradq(ijp1,k,l,YDIR) * ( GRD_xc(ij,k,l,AJ,YDIR) - GRD_x(ijp1,K0,l,YDIR) ) &
+                                    + gradq(ijp1,k,l,ZDIR) * ( GRD_xc(ij,k,l,AJ,ZDIR) - GRD_x(ijp1,K0,l,ZDIR) )
+          enddo
+          !$omp end do nowait
+
+          !$omp do
+          do n = nstart1, nstart2
+             q_ap4(n) = 0.D0
+          enddo
+          !$omp end do nowait
+
+          !$omp do
+          do n = nstart2, nend
+             ij   = n
+             im1j = n - 1
+
+             q_ap4(n) = q(im1j,k,l) + gradq(im1j,k,l,XDIR) * ( GRD_xc(im1j,k,l,AI,XDIR) - GRD_x(im1j,K0,l,XDIR) ) &
+                                    + gradq(im1j,k,l,YDIR) * ( GRD_xc(im1j,k,l,AI,YDIR) - GRD_x(im1j,K0,l,YDIR) ) &
+                                    + gradq(im1j,k,l,ZDIR) * ( GRD_xc(im1j,k,l,AI,ZDIR) - GRD_x(im1j,K0,l,ZDIR) )
+          enddo
+          !$omp end do nowait
+
+          !$omp do
+          do n = nstart1, nstart2
+             q_am4(n) = 0.D0
+          enddo
+          !$omp end do nowait
+
+          !$omp do
+          do n = nstart2, nend
+             ij = n
+
+             q_am4(n) = q(ij,k,l) + gradq(ij,k,l,XDIR) * ( GRD_xc(im1j,k,l,AI,XDIR) - GRD_x(ij,K0,l,XDIR) ) &
+                                  + gradq(ij,k,l,YDIR) * ( GRD_xc(im1j,k,l,AI,YDIR) - GRD_x(ij,K0,l,YDIR) ) &
+                                  + gradq(ij,k,l,ZDIR) * ( GRD_xc(im1j,k,l,AI,ZDIR) - GRD_x(ij,K0,l,ZDIR) )
+          enddo
+          !$omp end do nowait
+
+          !$omp do
+          do n = nstart1, nstart3
+             q_ap5(n) = 0.D0
+          enddo
+          !$omp end do nowait
+
+          !$omp do
+          do n = nstart3, nend
+             ij     = n
+             im1jm1 = n - 1 - gall_1d
+
+             q_ap5(n) = q(im1jm1,k,l) + gradq(im1jm1,k,l,XDIR) * ( GRD_xc(im1jm1,k,l,AIJ,XDIR) - GRD_x(im1jm1,K0,l,XDIR) ) &
+                                      + gradq(im1jm1,k,l,YDIR) * ( GRD_xc(im1jm1,k,l,AIJ,YDIR) - GRD_x(im1jm1,K0,l,YDIR) ) &
+                                      + gradq(im1jm1,k,l,ZDIR) * ( GRD_xc(im1jm1,k,l,AIJ,ZDIR) - GRD_x(im1jm1,K0,l,ZDIR) )
+          enddo
+          !$omp end do nowait
+
+          !$omp do
+          do n = nstart1, nstart3
+             q_am5(n) = 0.D0
+          enddo
+          !$omp end do nowait
+
+          !$omp do
+          do n = nstart3, nend
+             ij = n
+
+             q_am5(n) = q(ij,k,l) + gradq(ij,k,l,XDIR) * ( GRD_xc(im1jm1,k,l,AIJ,XDIR) - GRD_x(ij,K0,l,XDIR) ) &
+                                  + gradq(ij,k,l,YDIR) * ( GRD_xc(im1jm1,k,l,AIJ,YDIR) - GRD_x(ij,K0,l,YDIR) ) &
+                                  + gradq(ij,k,l,ZDIR) * ( GRD_xc(im1jm1,k,l,AIJ,ZDIR) - GRD_x(ij,K0,l,ZDIR) )
+          enddo
+          !$omp end do nowait
+
+          !$omp do
+          do n = nstart1, nstart4
+             q_ap6(n) = 0.D0
+          enddo
+          !$omp end do nowait
+
+          !$omp do
+          do n = nstart4, nend
+             ij   = n
+             ijm1 = n - gall_1d
+
+             q_ap6(n) = q(ijm1,k,l) + gradq(ijm1,k,l,XDIR) * ( GRD_xc(ijm1,k,l,AJ,XDIR) - GRD_x(ijm1,K0,l,XDIR) ) &
+                                    + gradq(ijm1,k,l,YDIR) * ( GRD_xc(ijm1,k,l,AJ,YDIR) - GRD_x(ijm1,K0,l,YDIR) ) &
+                                    + gradq(ijm1,k,l,ZDIR) * ( GRD_xc(ijm1,k,l,AJ,ZDIR) - GRD_x(ijm1,K0,l,ZDIR) )
+          enddo
+          !$omp end do nowait
+
+          !$omp do
+          do n = nstart1, nstart4
+             q_am6(n) = 0.D0
+          enddo
+          !$omp end do nowait
+
+          !$omp do
+          do n = nstart4, nend
+             ij = n
+
+             q_am6(n) = q(ij,k,l) + gradq(ij,k,l,XDIR) * ( GRD_xc(ijm1,k,l,AJ,XDIR) - GRD_x(ij,K0,l,XDIR) ) &
+                                  + gradq(ij,k,l,YDIR) * ( GRD_xc(ijm1,k,l,AJ,YDIR) - GRD_x(ij,K0,l,YDIR) ) &
+                                  + gradq(ij,k,l,ZDIR) * ( GRD_xc(ijm1,k,l,AJ,ZDIR) - GRD_x(ij,K0,l,ZDIR) )
+          enddo
+
+          !$omp do
+          do n = nstart1, nend
+             q_a(1,n,k,l) = (      cmask(1,n,k,l) ) * q_am1(n) &
+                          + ( 1.D0-cmask(1,n,k,l) ) * q_ap1(n)
+             q_a(2,n,k,l) = (      cmask(2,n,k,l) ) * q_am2(n) &
+                          + ( 1.D0-cmask(2,n,k,l) ) * q_ap2(n)
+             q_a(3,n,k,l) = (      cmask(3,n,k,l) ) * q_am3(n) &
+                          + ( 1.D0-cmask(3,n,k,l) ) * q_ap3(n)
+             q_a(4,n,k,l) = (      cmask(4,n,k,l) ) * q_am4(n) &
+                          + ( 1.D0-cmask(4,n,k,l) ) * q_ap4(n)
+             q_a(5,n,k,l) = (      cmask(5,n,k,l) ) * q_am5(n) &
+                          + ( 1.D0-cmask(5,n,k,l) ) * q_ap5(n)
+             q_a(6,n,k,l) = (      cmask(6,n,k,l) ) * q_am6(n) &
+                          + ( 1.D0-cmask(6,n,k,l) ) * q_ap6(n)
+          enddo
+
        enddo
-
-       do n = nstart, nend
-          ij     = n
-          ip1jp1 = n + 1 + ADM_gall_1d
-
-          q_ap = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(ij    ,k,l,AIJ,XDIR) - GRD_x(ij    ,K0,l,XDIR) ) &
-                               + gradq(ij    ,k,l,YDIR) * ( GRD_xc(ij    ,k,l,AIJ,YDIR) - GRD_x(ij    ,K0,l,YDIR) ) &
-                               + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(ij    ,k,l,AIJ,ZDIR) - GRD_x(ij    ,K0,l,ZDIR) )
-
-          q_am = q(ip1jp1,k,l) + gradq(ip1jp1,k,l,XDIR) * ( GRD_xc(ij    ,k,l,AIJ,XDIR) - GRD_x(ip1jp1,K0,l,XDIR) ) &
-                               + gradq(ip1jp1,k,l,YDIR) * ( GRD_xc(ij    ,k,l,AIJ,YDIR) - GRD_x(ip1jp1,K0,l,YDIR) ) &
-                               + gradq(ip1jp1,k,l,ZDIR) * ( GRD_xc(ij    ,k,l,AIJ,ZDIR) - GRD_x(ip1jp1,K0,l,ZDIR) )
-
-          q_a(2,n,k,l) = (      cmask(2,n,k,l) ) * q_am &
-                       + ( 1.D0-cmask(2,n,k,l) ) * q_ap
-       enddo
-
-       do n = nstart, nend
-          ij     = n
-          ijp1   = n     + ADM_gall_1d
-
-          q_ap = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(ij    ,k,l,AJ ,XDIR) - GRD_x(ij    ,K0,l,XDIR) ) &
-                               + gradq(ij    ,k,l,YDIR) * ( GRD_xc(ij    ,k,l,AJ ,YDIR) - GRD_x(ij    ,K0,l,YDIR) ) &
-                               + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(ij    ,k,l,AJ ,ZDIR) - GRD_x(ij    ,K0,l,ZDIR) )
-
-          q_am = q(ijp1  ,k,l) + gradq(ijp1  ,k,l,XDIR) * ( GRD_xc(ij    ,k,l,AJ ,XDIR) - GRD_x(ijp1  ,K0,l,XDIR) ) &
-                               + gradq(ijp1  ,k,l,YDIR) * ( GRD_xc(ij    ,k,l,AJ ,YDIR) - GRD_x(ijp1  ,K0,l,YDIR) ) &
-                               + gradq(ijp1  ,k,l,ZDIR) * ( GRD_xc(ij    ,k,l,AJ ,ZDIR) - GRD_x(ijp1  ,K0,l,ZDIR) )
-
-          q_a(3,n,k,l) = (      cmask(3,n,k,l) ) * q_am &
-                       + ( 1.D0-cmask(3,n,k,l) ) * q_ap
-       enddo
-
-       nstart = suf(ADM_gmin  ,ADM_gmin-1)
-       nend   = suf(ADM_gmax  ,ADM_gmax  )
-
-       do n = nstart, nend
-          ij     = n
-          im1j   = n - 1
-
-          q_ap = q(im1j  ,k,l) + gradq(im1j  ,k,l,XDIR) * ( GRD_xc(im1j  ,k,l,AI ,XDIR) - GRD_x(im1j  ,K0,l,XDIR) ) &
-                               + gradq(im1j  ,k,l,YDIR) * ( GRD_xc(im1j  ,k,l,AI ,YDIR) - GRD_x(im1j  ,K0,l,YDIR) ) &
-                               + gradq(im1j  ,k,l,ZDIR) * ( GRD_xc(im1j  ,k,l,AI ,ZDIR) - GRD_x(im1j  ,K0,l,ZDIR) )
-
-          q_am = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(im1j  ,k,l,AI ,XDIR) - GRD_x(ij    ,K0,l,XDIR) ) &
-                               + gradq(ij    ,k,l,YDIR) * ( GRD_xc(im1j  ,k,l,AI ,YDIR) - GRD_x(ij    ,K0,l,YDIR) ) &
-                               + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(im1j  ,k,l,AI ,ZDIR) - GRD_x(ij    ,K0,l,ZDIR) )
-
-          q_a(4,n,k,l) = (      cmask(4,n,k,l) ) * q_am &
-                       + ( 1.D0-cmask(4,n,k,l) ) * q_ap
-       enddo
-
-       nstart = suf(ADM_gmin  ,ADM_gmin  )
-       nend   = suf(ADM_gmax  ,ADM_gmax  )
-
-       do n = nstart, nend
-          ij     = n
-          im1jm1 = n - 1 - ADM_gall_1d
-
-          q_ap = q(im1jm1,k,l) + gradq(im1jm1,k,l,XDIR) * ( GRD_xc(im1jm1,k,l,AIJ,XDIR) - GRD_x(im1jm1,K0,l,XDIR) ) &
-                               + gradq(im1jm1,k,l,YDIR) * ( GRD_xc(im1jm1,k,l,AIJ,YDIR) - GRD_x(im1jm1,K0,l,YDIR) ) &
-                               + gradq(im1jm1,k,l,ZDIR) * ( GRD_xc(im1jm1,k,l,AIJ,ZDIR) - GRD_x(im1jm1,K0,l,ZDIR) )
-
-          q_am = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(im1jm1,k,l,AIJ,XDIR) - GRD_x(ij    ,K0,l,XDIR) ) &
-                               + gradq(ij    ,k,l,YDIR) * ( GRD_xc(im1jm1,k,l,AIJ,YDIR) - GRD_x(ij    ,K0,l,YDIR) ) &
-                               + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(im1jm1,k,l,AIJ,ZDIR) - GRD_x(ij    ,K0,l,ZDIR) )
-
-          q_a(5,n,k,l) = (      cmask(5,n,k,l) ) * q_am &
-                       + ( 1.D0-cmask(5,n,k,l) ) * q_ap
-       enddo
-
-       nstart = suf(ADM_gmin-1,ADM_gmin  )
-       nend   = suf(ADM_gmax  ,ADM_gmax  )
-
-       do n = nstart, nend
-          ij     = n
-          ijm1   = n     - ADM_gall_1d
-
-          q_ap = q(ijm1  ,k,l) + gradq(ijm1  ,k,l,XDIR) * ( GRD_xc(ijm1,k,l,AJ ,XDIR) - GRD_x(ijm1  ,K0,l,XDIR) ) &
-                               + gradq(ijm1  ,k,l,YDIR) * ( GRD_xc(ijm1,k,l,AJ ,YDIR) - GRD_x(ijm1  ,K0,l,YDIR) ) &
-                               + gradq(ijm1  ,k,l,ZDIR) * ( GRD_xc(ijm1,k,l,AJ ,ZDIR) - GRD_x(ijm1  ,K0,l,ZDIR) )
-
-          q_am = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(ijm1,k,l,AJ ,XDIR) - GRD_x(ij    ,K0,l,XDIR) ) &
-                               + gradq(ij    ,k,l,YDIR) * ( GRD_xc(ijm1,k,l,AJ ,YDIR) - GRD_x(ij    ,K0,l,YDIR) ) &
-                               + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(ijm1,k,l,AJ ,ZDIR) - GRD_x(ij    ,K0,l,ZDIR) )
-
-          q_a(6,n,k,l) = (      cmask(6,n,k,l) ) * q_am &
-                       + ( 1.D0-cmask(6,n,k,l) ) * q_ap
-       enddo
-    enddo
+       !$omp end parallel
     enddo
 
     if ( ADM_have_pl ) then
