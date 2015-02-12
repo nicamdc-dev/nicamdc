@@ -317,7 +317,7 @@ contains
     use mod_prgvar, only: &
        prgvar_get_withdiag
     use mod_cnvvar, only: &
-       cnvvar_rhokin_ijkl
+       cnvvar_rhogkin
     use mod_thrmdyn, only: &
        THRMDYN_qd_ijkl
     implicit none
@@ -530,12 +530,12 @@ contains
     rhophi_sum = GTL_global_sum( tmp, tmp_pl )
 
     !--- kinetic energy
-    call cnvvar_rhokin_ijkl( rhog,   rhog_pl,   & !--- [IN]
-                             rhogvx, rhogvx_pl, & !--- [IN]
-                             rhogvy, rhogvy_pl, & !--- [IN]
-                             rhogvz, rhogvz_pl, & !--- [IN]
-                             rhogw,  rhogw_pl,  & !--- [IN]
-                             tmp,    tmp_pl     ) !--- [OUT]
+    call cnvvar_rhogkin( rhog,   rhog_pl,   & !--- [IN]
+                         rhogvx, rhogvx_pl, & !--- [IN]
+                         rhogvy, rhogvy_pl, & !--- [IN]
+                         rhogvz, rhogvz_pl, & !--- [IN]
+                         rhogw,  rhogw_pl,  & !--- [IN]
+                         tmp,    tmp_pl     ) !--- [OUT]
 
     tmp(:,:,:) = tmp(:,:,:) *  VMTR_RGSGAM2(:,:,:)
     if ( ADM_prc_me == ADM_prc_pl ) then

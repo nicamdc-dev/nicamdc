@@ -18,6 +18,7 @@ module mod_cnvvar
   !
   !++ Used modules
   !
+  use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID
   use mod_runconf, only: &
@@ -48,7 +49,7 @@ module mod_cnvvar
   !
   public :: cnvvar_prg2diag
   public :: cnvvar_diag2prg
-  public :: cnvvar_rhokin_ijkl
+  public :: cnvvar_rhogkin
 
   !-----------------------------------------------------------------------------
   !
@@ -412,7 +413,7 @@ contains
   end subroutine cnvvar_diag2prg
 
   !-----------------------------------------------------------------------------
-  subroutine cnvvar_rhokin_ijkl( &
+  subroutine cnvvar_rhogkin( &
        rhog,    rhog_pl,   &
        rhogvx,  rhogvx_pl, &
        rhogvy,  rhogvy_pl, &
@@ -456,6 +457,8 @@ contains
 
     integer :: g, k, l
     !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('cnvvar_rhogkin')
 
     do l = 1, ADM_lall
        !--- horizontal kinetic energy
@@ -525,8 +528,10 @@ contains
        enddo
     endif
 
+    call DEBUG_rapend('cnvvar_rhogkin')
+
     return
-  end subroutine cnvvar_rhokin_ijkl
+  end subroutine cnvvar_rhogkin
 
 end module mod_cnvvar
 !-------------------------------------------------------------------------------

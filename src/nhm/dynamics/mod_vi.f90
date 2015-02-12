@@ -885,7 +885,7 @@ contains
     use mod_bndcnd, only: &
        BNDCND_rhow
     use mod_cnvvar, only: &
-       cnvvar_rhokin_ijkl
+       cnvvar_rhogkin
     use mod_src, only: &
        src_flux_convergence,      &
        src_advection_convergence, &
@@ -983,12 +983,12 @@ contains
     !---------------------------------------------------------------------------
 
     ! calc rhogkin ( previous )
-    call cnvvar_rhokin_ijkl( rhog0,    rhog0_pl,   & !--- [IN]
-                             rhogvx0,  rhogvx0_pl, & !--- [IN]
-                             rhogvy0,  rhogvy0_pl, & !--- [IN]
-                             rhogvz0,  rhogvz0_pl, & !--- [IN]
-                             rhogw0,   rhogw0_pl,  & !--- [IN]
-                             rhogkin0, rhogkin0_pl ) !--- [OUT]
+    call cnvvar_rhogkin( rhog0,    rhog0_pl,   & !--- [IN]
+                         rhogvx0,  rhogvx0_pl, & !--- [IN]
+                         rhogvy0,  rhogvy0_pl, & !--- [IN]
+                         rhogvz0,  rhogvz0_pl, & !--- [IN]
+                         rhogw0,   rhogw0_pl,  & !--- [IN]
+                         rhogkin0, rhogkin0_pl ) !--- [OUT]
 
     ! prognostic variables ( previous + split (t=n) )
 !OCL SERIAL
@@ -1020,12 +1020,12 @@ contains
     endif
 
     ! calc rhogkin ( previous + split(t=n) )
-    call cnvvar_rhokin_ijkl( rhog1,     rhog1_pl,    & !--- [IN]
-                             rhogvx1,   rhogvx1_pl,  & !--- [IN]
-                             rhogvy1,   rhogvy1_pl,  & !--- [IN]
-                             rhogvz1,   rhogvz1_pl,  & !--- [IN]
-                             rhogw1,    rhogw1_pl,   & !--- [IN]
-                             rhogkin10, rhogkin10_pl ) !--- [OUT]
+    call cnvvar_rhogkin( rhog1,     rhog1_pl,    & !--- [IN]
+                         rhogvx1,   rhogvx1_pl,  & !--- [IN]
+                         rhogvy1,   rhogvy1_pl,  & !--- [IN]
+                         rhogvz1,   rhogvz1_pl,  & !--- [IN]
+                         rhogw1,    rhogw1_pl,   & !--- [IN]
+                         rhogkin10, rhogkin10_pl ) !--- [OUT]
 
     !---------------------------------------------------------------------------
     ! update drhog & drhoge
@@ -1176,12 +1176,12 @@ contains
     endif
 
     ! calc rhogkin ( previous + split(t=n+1) )
-    call cnvvar_rhokin_ijkl( rhog1,     rhog1_pl,    & !--- [IN]
-                             rhogvx1,   rhogvx1_pl,  & !--- [IN]
-                             rhogvy1,   rhogvy1_pl,  & !--- [IN]
-                             rhogvz1,   rhogvz1_pl,  & !--- [IN]
-                             rhogw1,    rhogw1_pl,   & !--- [IN]
-                             rhogkin11, rhogkin11_pl ) !--- [OUT]
+    call cnvvar_rhogkin( rhog1,     rhog1_pl,    & !--- [IN]
+                         rhogvx1,   rhogvx1_pl,  & !--- [IN]
+                         rhogvy1,   rhogvy1_pl,  & !--- [IN]
+                         rhogvz1,   rhogvz1_pl,  & !--- [IN]
+                         rhogw1,    rhogw1_pl,   & !--- [IN]
+                         rhogkin11, rhogkin11_pl ) !--- [OUT]
 
     !--- calculate ( h + v^{2}/2 + phi )
     ethtot0(:,:,:) = eth0(:,:,:)                    &
