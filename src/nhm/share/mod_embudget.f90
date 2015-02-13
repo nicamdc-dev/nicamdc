@@ -319,7 +319,7 @@ contains
     use mod_cnvvar, only: &
        cnvvar_rhogkin
     use mod_thrmdyn, only: &
-       THRMDYN_qd_ijkl
+       THRMDYN_qd
     implicit none
 
     real(8) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
@@ -392,32 +392,34 @@ contains
     integer :: nq
     !---------------------------------------------------------------------------
 
-    call prgvar_get_withdiag( rhog,   rhog_pl,   & !--- [OUT]
-                              rhogvx, rhogvx_pl, & !--- [OUT]
-                              rhogvy, rhogvy_pl, & !--- [OUT]
-                              rhogvz, rhogvz_pl, & !--- [OUT]
-                              rhogw,  rhogw_pl,  & !--- [OUT]
-                              rhoge,  rhoge_pl,  & !--- [OUT]
-                              rhogq,  rhogq_pl,  & !--- [OUT]
-                              rho,    rho_pl,    & !--- [OUT]
-                              pre,    pre_pl,    & !--- [OUT]
-                              tem,    tem_pl,    & !--- [OUT]
-                              vx,     vx_pl,     & !--- [OUT]
-                              vy,     vy_pl,     & !--- [OUT]
-                              vz,     vz_pl,     & !--- [OUT]
-                              w,      w_pl,      & !--- [OUT]
-                              q,      q_pl       ) !--- [OUT]
+    call prgvar_get_withdiag( rhog,   rhog_pl,   & ! [OUT]
+                              rhogvx, rhogvx_pl, & ! [OUT]
+                              rhogvy, rhogvy_pl, & ! [OUT]
+                              rhogvz, rhogvz_pl, & ! [OUT]
+                              rhogw,  rhogw_pl,  & ! [OUT]
+                              rhoge,  rhoge_pl,  & ! [OUT]
+                              rhogq,  rhogq_pl,  & ! [OUT]
+                              rho,    rho_pl,    & ! [OUT]
+                              pre,    pre_pl,    & ! [OUT]
+                              tem,    tem_pl,    & ! [OUT]
+                              vx,     vx_pl,     & ! [OUT]
+                              vy,     vy_pl,     & ! [OUT]
+                              vz,     vz_pl,     & ! [OUT]
+                              w,      w_pl,      & ! [OUT]
+                              q,      q_pl       ) ! [OUT]
 
-    call THRMDYN_qd_ijkl( ADM_gall, ADM_kall, ADM_lall, & !--- [IN]
-                          TRC_vmax, NQW_STR, NQW_END,   & !--- [IN]
-                          qd(:,:,:),                    & !--- [OUT]
-                          q (:,:,:,:)                   ) !--- [IN]
+    call THRMDYN_qd( ADM_gall,    & ! [IN]
+                     ADM_kall,    & ! [IN]
+                     ADM_lall,    & ! [IN]
+                     q (:,:,:,:), & ! [IN]
+                     qd(:,:,:)    ) ! [OUT]
 
     if ( ADM_prc_me == ADM_prc_pl ) then
-       call THRMDYN_qd_ijkl ( ADM_gall_pl, ADM_kall, ADM_lall_pl, & !--- [IN]
-                              TRC_vmax, NQW_STR, NQW_END,         & !--- [IN]
-                              qd_pl(:,:,:),                       & !--- [OUT]
-                              q_pl (:,:,:,:)                      ) !--- [IN]
+       call THRMDYN_qd( ADM_gall_pl,    & ! [IN]
+                        ADM_kall,       & ! [IN]
+                        ADM_lall_pl,    & ! [IN]
+                        q_pl (:,:,:,:), & ! [IN]
+                        qd_pl(:,:,:)    ) ! [OUT]
     endif
 
     !----- Mass budget

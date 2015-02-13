@@ -269,7 +269,7 @@ contains
          NRDIR_DIRECT,      &
          NRDIR_DIFFUSE
     use mod_thrmdyn, only : &
-         thrmdyn_th
+         THRMDYN_th
     use mod_bndcnd, only : &
          bndcnd_thermo
     use mod_diagvar, only : &
@@ -494,12 +494,14 @@ contains
 
     !--- potential temperature
     if ( out_th ) then
-       do l = 1, ADM_lall
-          call thrmdyn_th( ADM_gall,   & ! [IN]
-                           th (:,:,l), & ! [OUT]
-                           tem(:,:,l), & ! [IN]
-                           pre(:,:,l)  ) ! [IN]
+       call THRMDYN_th( ADM_gall,   & ! [IN]
+                        ADM_kall,   & ! [IN]
+                        ADM_lall,   & ! [IN]
+                        tem(:,:,:), & ! [IN]
+                        pre(:,:,:), & ! [IN]
+                        th (:,:,:)  ) ! [OUT]
 
+       do l = 1, ADM_lall
           call history_in( 'ml_th', th(:,:,l) )
        enddo
     endif
@@ -510,20 +512,20 @@ contains
 
        call GTL_global_sum_eachlayer( one, one_pl, area_prof )
 
-       do l = 1, ADM_lall
-          call thrmdyn_th( ADM_gall,   & ! [IN]
-                           th (:,:,l), & ! [OUT]
-                           tem(:,:,l), & ! [IN]
-                           pre(:,:,l)  ) ! [IN]
-       enddo
+       call THRMDYN_th( ADM_gall,   & ! [IN]
+                        ADM_kall,   & ! [IN]
+                        ADM_lall,   & ! [IN]
+                        tem(:,:,:), & ! [IN]
+                        pre(:,:,:), & ! [IN]
+                        th (:,:,:)  ) ! [OUT]
 
        if ( ADM_prc_me == ADM_prc_pl ) then
-          do l = 1, ADM_lall_pl
-             call thrmdyn_th( ADM_gall_pl,   & ! [IN]
-                              th_pl (:,:,l), & ! [OUT]
-                              tem_pl(:,:,l), & ! [IN]
-                              pre_pl(:,:,l)  ) ! [IN]
-          enddo
+          call THRMDYN_th( ADM_gall_pl,   & ! [IN]
+                           ADM_kall,      & ! [IN]
+                           ADM_lall_pl,   & ! [IN]
+                           tem_pl(:,:,:), & ! [IN]
+                           pre_pl(:,:,:), & ! [IN]
+                           th_pl (:,:,:)  ) ! [OUT]
        endif
 
        call GTL_global_sum_eachlayer( th, th_pl, th_prof )

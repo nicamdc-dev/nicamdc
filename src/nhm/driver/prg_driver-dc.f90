@@ -307,6 +307,33 @@ program prg_driver
      write(*,*) '##### start  main loop #####'
   endif
 
+  !$acc data &
+  !$acc& pcopyin(ADM_prc_tab,ADM_rgn_vnum,ADM_IopJop) &
+  !$acc& pcopyin(sendlist,sendlist_pl) &
+  !$acc& pcopyin(sendinfo,sendinfo_pl) &
+  !$acc& pcopyin(recvlist,recvlist_pl) &
+  !$acc& pcopyin(recvinfo,recvinfo_pl) &
+  !$acc& pcopyin(recvlist_r2r,sendlist_r2r) &
+  !$acc& pcopyin(recvlist_sgp,sendlist_sgp) &
+  !$acc& pcopyin(recvlist_r2p,sendlist_r2p) &
+  !$acc& pcopyin(recvlist_p2r,sendlist_p2r) &
+  !$acc& pcopyin(copyinfo_r2r,copyinfo_sgp,copyinfo_r2p,copyinfo_p2r) &
+  !$acc& pcopyin(nsmax,nsmax_pl,nrmax,nrmax_pl) &
+  !$acc& pcopyin(ncmax_r2r,ncmax_sgp,ncmax_r2p,ncmax_p2r) &
+  !$acc& pcopyin(GRD_rdgz,GRD_rdgzh,GRD_x,GRD_xt,GRD_vz,GRD_zs) &
+  !$acc& pcopyin(GMTR_P_var,GMTR_T_var,GMTR_A_var) &
+  !$acc& pcopyin(cdiv,cgrad,clap,cinterp_TN,cinterp_HN,cinterp_TRA,cinterp_PRA) &
+  !$acc& pcopyin(VMTR_GAM2,VMTR_GAM2H,VMTR_GSGAM2,VMTR_GSGAM2H) &
+  !$acc& pcopyin(VMTR_RGSQRTH,VMTR_RGAM,VMTR_RGAMH,VMTR_RGSGAM2,VMTR_RGSGAM2H) &
+  !$acc& pcopyin(VMTR_W2Cfact,VMTR_C2Wfact,VMTR_C2WfactGz,VMTR_PHI) &
+  !$acc& pcopyin(CVW) &
+  !$acc& pcopyin(sfcvar,KSTR) &
+  !$acc& pcopyin(rho_bs,pre_bs,tem_bs) &
+  !$acc& pcopyin(divdamp_coef,Kh_coef,Kh_coef_lap1) &
+  !$acc& pcopyin(Mc,Mu,Ml) &
+  !$acc& pcopyin(ksumstr,cnvpre_klev,cnvpre_fac1,cnvpre_fac2) &
+  !$acc& pcopy  (PRG_var,PRG_var1,DIAG_var)
+
   !--- history output at initial time
   if ( HIST_output_step0 ) then
      TIME_CSTEP = TIME_CSTEP - 1
@@ -342,6 +369,7 @@ program prg_driver
 
   enddo
 
+  !$acc end data
   write(ADM_LOG_FID,*) '##### finish main loop #####'
   if ( ADM_prc_me == ADM_prc_run_master ) then
      write(*,*) '##### finish main loop #####'

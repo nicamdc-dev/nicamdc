@@ -89,8 +89,7 @@ contains
        NQW_STR,   &
        NQW_END
     use mod_thrmdyn, only: &
-       THRMDYN_qd_ijkl,    &
-       THRMDYN_tempre_ijkl
+       THRMDYN_tempre
     implicit none
 
     real(8), intent(in)  :: prg    (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax )
@@ -98,13 +97,10 @@ contains
     real(8), intent(out) :: diag   (ADM_gall,   ADM_kall,ADM_lall,   DIAG_vmax)
     real(8), intent(out) :: diag_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,DIAG_vmax)
 
-    real(8) :: qd       (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: qd_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
     real(8) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8) :: ein      (ADM_gall,   ADM_kall,ADM_lall   )
     real(8) :: ein_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-
     real(8) :: rhog_h   (ADM_gall,   ADM_kall)
     real(8) :: rhog_h_pl(ADM_gall_pl,ADM_kall)
 
@@ -133,21 +129,14 @@ contains
     enddo
     enddo
 
-    !--- calculation of dry mass concentration
-    call THRMDYN_qd_ijkl( ADM_gall, ADM_kall, ADM_lall, & !--- [IN]
-                          TRC_vmax, NQW_STR, NQW_END,   & !--- [IN]
-                          qd  (:,:,:),                  & !--- [OUT]
-                          diag(:,:,:,I_qstr:I_qend)     ) !--- [IN]
-
-    !--- calculation of tem, pre
-    call THRMDYN_tempre_ijkl( ADM_gall, ADM_kall, ADM_lall, & !--- [IN]
-                              TRC_vmax, NQW_STR, NQW_END,   & !--- [IN]
-                              diag(:,:,:,I_tem),            & !--- [OUT]
-                              diag(:,:,:,I_pre),            & !--- [OUT]
-                              ein(:,:,:),                   & !--- [IN]
-                              rho(:,:,:),                   & !--- [IN]
-                              qd  (:,:,:),                  & !--- [IN]
-                              diag(:,:,:,I_qstr:I_qend)     ) !--- [IN]
+    call THRMDYN_tempre( ADM_gall,                  & ! [IN]
+                         ADM_kall,                  & ! [IN]
+                         ADM_lall,                  & ! [IN]
+                         ein (:,:,:),               & ! [IN]
+                         rho (:,:,:),               & ! [IN]
+                         diag(:,:,:,I_qstr:I_qend), & ! [IN]
+                         diag(:,:,:,I_tem),         & ! [OUT]
+                         diag(:,:,:,I_pre)          ) ! [OUT]
 
     do l = 1, ADM_lall
        !------ interpolation of rhog_h
@@ -192,21 +181,14 @@ contains
        enddo
        enddo
 
-       !--- calculation of dry mass concentration
-       call THRMDYN_qd_ijkl ( ADM_gall_pl, ADM_kall, ADM_lall_pl, & !--- [IN]
-                              TRC_vmax, NQW_STR, NQW_END,         & !--- [IN]
-                              qd_pl  (:,:,:),                     & !--- [OUT]
-                              diag_pl(:,:,:,I_qstr:I_qend)        ) !--- [IN]
-
-       !--- calculation of tem, pre
-       call THRMDYN_tempre_ijkl( ADM_gall_pl, ADM_kall, ADM_lall_pl, & !--- [IN]
-                                 TRC_vmax, NQW_STR, NQW_END,         & !--- [IN]
-                                 diag_pl(:,:,:,I_tem),               & !--- [OUT]
-                                 diag_pl(:,:,:,I_pre),               & !--- [OUT]
-                                 ein_pl(:,:,:),                      & !--- [IN]
-                                 rho_pl(:,:,:),                      & !--- [IN]
-                                 qd_pl  (:,:,:),                     & !--- [IN]
-                                 diag_pl(:,:,:,I_qstr:I_qend)        ) !--- [IN]
+       call THRMDYN_tempre( ADM_gall_pl,                  & ! [IN]
+                            ADM_kall,                     & ! [IN]
+                            ADM_lall_pl,                  & ! [IN]
+                            ein_pl (:,:,:),               & ! [IN]
+                            rho_pl (:,:,:),               & ! [IN]
+                            diag_pl(:,:,:,I_qstr:I_qend), & ! [IN]
+                            diag_pl(:,:,:,I_tem),         & ! [OUT]
+                            diag_pl(:,:,:,I_pre)          ) ! [OUT]
 
        do l = 1, ADM_lall_pl
           !------ interpolation of rhog_h
@@ -256,9 +238,7 @@ contains
        NQW_STR,   &
        NQW_END
     use mod_thrmdyn, only: &
-       THRMDYN_qd_ijkl,  &
-       THRMDYN_rho_ijkl, &
-       THRMDYN_ein_ijkl
+       THRMDYN_rhoein
     implicit none
 
     real(8), intent(out) :: prg    (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax )
@@ -266,40 +246,24 @@ contains
     real(8), intent(in)  :: diag   (ADM_gall,   ADM_kall,ADM_lall,   DIAG_vmax)
     real(8), intent(in)  :: diag_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,DIAG_vmax)
 
-    real(8) :: qd       (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: qd_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
     real(8) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8) :: ein      (ADM_gall,   ADM_kall,ADM_lall   )
     real(8) :: ein_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-
     real(8) :: rhog_h   (ADM_gall,   ADM_kall)
     real(8) :: rhog_h_pl(ADM_gall_pl,ADM_kall)
 
     integer :: n, k, l, iv
     !---------------------------------------------------------------------------
 
-    !--- calculation of dry mass concentration
-    call THRMDYN_qd_ijkl ( ADM_gall, ADM_kall, ADM_lall, & !--- [IN]
-                           TRC_vmax, NQW_STR, NQW_END,   & !--- [IN]
-                           qd  (:,:,:),                  & !--- [OUT]
-                           diag(:,:,:,I_qstr:I_qend)     ) !--- [IN]
-
-    !--- calculation  of density
-    call THRMDYN_rho_ijkl( ADM_gall, ADM_kall, ADM_lall, & !--- [IN]
-                           rho(:,:,:),                   & !--- [OUT]
-                           diag(:,:,:,I_pre),            & !--- [IN]
-                           diag(:,:,:,I_tem),            & !--- [IN]
-                           qd  (:,:,:),                  & !--- [IN]
-                           diag(:,:,:,I_qstr)            ) !--- [IN]
-
-    !--- calculation of internal energy
-    call THRMDYN_ein_ijkl( ADM_gall, ADM_kall, ADM_lall, & !--- [IN]
-                           TRC_vmax, NQW_STR, NQW_END,   & !--- [IN]
-                           ein(:,:,:),                   & !--- [OUT]
-                           diag(:,:,:,I_tem),            & !--- [IN]
-                           qd  (:,:,:),                  & !--- [IN]
-                           diag(:,:,:,I_qstr:I_qend)     ) !--- [IN]
+    call THRMDYN_rhoein( ADM_gall,                  & ! [IN]
+                         ADM_kall,                  & ! [IN]
+                         ADM_lall,                  & ! [IN]
+                         diag(:,:,:,I_tem),         & ! [IN]
+                         diag(:,:,:,I_pre),         & ! [IN]
+                         diag(:,:,:,I_qstr:I_qend), & ! [IN]
+                         rho (:,:,:),               & ! [OUT]
+                         ein (:,:,:)                ) ! [OUT]
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
@@ -344,27 +308,14 @@ contains
 
     if ( ADM_prc_me == ADM_prc_pl ) then
 
-       !--- calculation of dry mass concentration
-       call THRMDYN_qd_ijkl ( ADM_gall_pl, ADM_kall, ADM_lall_pl, & !--- [IN]
-                              TRC_vmax, NQW_STR, NQW_END,         & !--- [IN]
-                              qd_pl  (:,:,:),                     & !--- [OUT]
-                              diag_pl(:,:,:,I_qstr:I_qend)        ) !--- [IN]
-
-       !--- calculation  of density
-       call THRMDYN_rho_ijkl( ADM_gall_pl, ADM_kall, ADM_lall_pl, & !--- [IN]
-                              rho_pl(:,:,:),                      & !--- [OUT]
-                              diag_pl(:,:,:,I_pre),               & !--- [IN]
-                              diag_pl(:,:,:,I_tem),               & !--- [IN]
-                              qd_pl  (:,:,:),                     & !--- [IN]
-                              diag_pl(:,:,:,I_qstr)               ) !--- [IN]
-
-       !--- calculation of internal energy
-       call THRMDYN_ein_ijkl( ADM_gall_pl, ADM_kall, ADM_lall_pl, & !--- [IN]
-                              TRC_vmax, NQW_STR, NQW_END,         & !--- [IN]
-                              ein_pl(:,:,:),                      & !--- [OUT]
-                              diag_pl(:,:,:,I_tem),               & !--- [IN]
-                              qd_pl  (:,:,:),                     & !--- [IN]
-                              diag_pl(:,:,:,I_qstr:I_qend)        ) !--- [IN]
+       call THRMDYN_rhoein( ADM_gall_pl,                  & ! [IN]
+                            ADM_kall,                     & ! [IN]
+                            ADM_lall_pl,                  & ! [IN]
+                            diag_pl(:,:,:,I_tem),         & ! [IN]
+                            diag_pl(:,:,:,I_pre),         & ! [IN]
+                            diag_pl(:,:,:,I_qstr:I_qend), & ! [IN]
+                            rho_pl (:,:,:),               & ! [OUT]
+                            ein_pl (:,:,:)                ) ! [OUT]
 
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall

@@ -821,18 +821,18 @@ contains
     use mod_bndcnd, only: &
        bndcnd_thermo
     use mod_thrmdyn, only: &
-       thrmdyn_th,  &
-       thrmdyn_rho, &
-       thrmdyn_qd
+       THRMDYN_qd,  &
+       THRMDYN_rho, &
+       THRMDYN_th
     use mod_runconf, only: &
        TRC_VMAX, &
        I_QV
     implicit none
 
-    real(8) :: q    (ADM_gall   ,ADM_kall,TRC_VMAX)
-    real(8) :: q_pl (ADM_gall_pl,ADM_kall,TRC_VMAX)
-    real(8) :: qd   (ADM_gall   ,ADM_kall)
-    real(8) :: qd_pl(ADM_gall_pl,ADM_kall)
+    real(8) :: q_bs    (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
+    real(8) :: q_bs_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(8) :: qd_bs   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8) :: qd_bs_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     integer :: k, l
     !---------------------------------------------------------------------------
@@ -868,64 +868,75 @@ contains
     call VINTRPL_zstar_level( tem_bs, tem_bs_pl, .false. )
     call VINTRPL_zstar_level( qv_bs,  qv_bs_pl,  .false. )
 
+    !--- Setting of mass concentration [Note] The basic state is "dry" and TKE=0
+    q_bs(:,:,:,:)    = 0.D0
+    q_bs(:,:,:,I_QV) = qv_bs(:,:,:)
+
+    call THRMDYN_qd( ADM_gall,       & ! [IN]
+                     ADM_kall,       & ! [IN]
+                     ADM_lall,       & ! [IN]
+                     q_bs (:,:,:,:), & ! [IN]
+                     qd_bs(:,:,:)    ) ! [OUT]
+
+    call THRMDYN_rho( ADM_gall,        & ! [IN]
+                      ADM_kall,        & ! [IN]
+                      ADM_lall,        & ! [IN]
+                      tem_bs(:,:,:),   & ! [IN]
+                      pre_bs(:,:,:),   & ! [IN]
+                      qd_bs (:,:,:),   & ! [IN]
+                      q_bs  (:,:,:,:), & ! [IN]
+                      rho_bs(:,:,:)    ) ! [OUT]
+
+    !--- set boundary conditions of basic state
     do l = 1, ADM_lall
-       !--- Setting of mass concentration
-       !--- Note :: The basic state is "dry" and TKE=0
-       q(:,:,:)    = 0.D0
-       q(:,:,I_QV) = qv_bs(:,:,l)
-
-       call thrmdyn_qd( ADM_gall, & ! [IN]
-                        qd(:,:),  & ! [OUT]
-                        q (:,:,:) ) ! [IN]
-
-       !--- calculation of density
-       call thrmdyn_rho( ADM_gall,      & ! [IN]
-                         rho_bs(:,:,l), & ! [OUT]
-                         pre_bs(:,:,l), & ! [IN]
-                         tem_bs(:,:,l), & ! [IN]
-                         qd    (:,:),   & ! [IN]
-                         q     (:,:,:)  ) ! [IN]
-
-       !--- set boundary conditions of basic state
        call bndcnd_thermo( ADM_gall,      & ! [IN]
                            tem_bs(:,:,l), & ! [INOUT]
                            rho_bs(:,:,l), & ! [INOUT]
                            pre_bs(:,:,l), & ! [INOUT]
                            phi   (:,:,l)  ) ! [IN]
-
-       call thrmdyn_th( ADM_gall,      & ! [IN]
-                        th_bs (:,:,l), & ! [OUT]
-                        tem_bs(:,:,l), & ! [IN]
-                        pre_bs(:,:,l)  ) ! [IN]
     enddo
 
+    call THRMDYN_th( ADM_gall,      & ! [IN]
+                     ADM_kall,      & ! [IN]
+                     ADM_lall,      & ! [IN]
+                     tem_bs(:,:,:), & ! [IN]
+                     pre_bs(:,:,:), & ! [IN]
+                     th_bs (:,:,:)  ) ! [OUT]
+
     if ( ADM_prc_me == ADM_prc_pl ) then
+       q_bs_pl(:,:,:,:)    = 0.D0
+       q_bs_pl(:,:,:,I_QV) = qv_bs_pl(:,:,:)
+
+       call THRMDYN_qd( ADM_gall_pl,       & ! [IN]
+                        ADM_kall,          & ! [IN]
+                        ADM_lall_pl,       & ! [IN]
+                        q_bs_pl (:,:,:,:), & ! [IN]
+                        qd_bs_pl(:,:,:)    ) ! [OUT]
+
+       call THRMDYN_rho( ADM_gall_pl,        & ! [IN]
+                         ADM_kall,           & ! [IN]
+                         ADM_lall_pl,        & ! [IN]
+                         tem_bs_pl(:,:,:),   & ! [IN]
+                         pre_bs_pl(:,:,:),   & ! [IN]
+                         qd_bs_pl (:,:,:),   & ! [IN]
+                         q_bs_pl  (:,:,:,:), & ! [IN]
+                         rho_bs_pl(:,:,:)    ) ! [OUT]
+
+
        do l = 1, ADM_lall_pl
-          q_pl(:,:,:)    = 0.D0
-          q_pl(:,:,I_QV) = qv_bs_pl(:,:,l)
-
-          call thrmdyn_qd( ADM_gall_pl, & ! [IN]
-                           qd_pl(:,:),  & ! [OUT]
-                           q_pl (:,:,:) ) ! [IN]
-
-          call thrmdyn_rho( ADM_gall_pl,      & ! [IN]
-                            rho_bs_pl(:,:,l), & ! [OUT]
-                            pre_bs_pl(:,:,l), & ! [IN]
-                            tem_bs_pl(:,:,l), & ! [IN]
-                            qd_pl    (:,:),   & ! [IN]
-                            q_pl     (:,:,:)  ) ! [IN]
-
           call bndcnd_thermo( ADM_gall_pl,      & ! [IN]
                               tem_bs_pl(:,:,l), & ! [INOUT]
                               rho_bs_pl(:,:,l), & ! [INOUT]
                               pre_bs_pl(:,:,l), & ! [INOUT]
                               phi_pl   (:,:,l)  ) ! [IN]
-
-          call thrmdyn_th( ADM_gall_pl,      & ! [IN]
-                           th_bs_pl (:,:,l), & ! [OUT]
-                           tem_bs_pl(:,:,l), & ! [IN]
-                           pre_bs_pl(:,:,l)  ) ! [IN]
        enddo
+
+       call THRMDYN_th( ADM_gall_pl,      & ! [IN]
+                        ADM_kall,         & ! [IN]
+                        ADM_lall_pl,      & ! [IN]
+                        tem_bs_pl(:,:,:), & ! [IN]
+                        pre_bs_pl(:,:,:), & ! [IN]
+                        th_bs_pl (:,:,:)  ) ! [OUT]
     endif
 
     return

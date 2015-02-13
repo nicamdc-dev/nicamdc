@@ -1031,126 +1031,125 @@ contains
   end subroutine history_timeinfo
 
   !-----------------------------------------------------------------------------
-  subroutine get_log_pres  ! Y.Niwa add 071130
-    !
-    use mod_adm, only : &
-         ADM_gall,  &
-         ADM_kall,  &
-         ADM_kmax,  &
-         ADM_kmin,  &
-         ADM_lall,  &
-         ADM_GALL_PL, &
-         ADM_LALL_PL, &
-         ADM_KNONE
-    use mod_runconf, only : &
-         nqmax => TRC_VMAX
-    use mod_thrmdyn, only :    &
-         thrmdyn_tempre,   &
-         thrmdyn_qd
-    use mod_vmtr, only :        &
-         VMTR_GSGAM2
-    use mod_sfcvar, only :    &
-         sfcvar_get,          &
-         I_PRE_SFC
-    use mod_prgvar, only :     &
-         prgvar_get
-    !
+  subroutine get_log_pres
+    use mod_adm, only: &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_KNONE,   &
+       ADM_kmax,    &
+       ADM_kmin
+    use mod_vmtr, only: &
+       VMTR_GSGAM2
+    use mod_runconf, only: &
+       TRC_VMAX
+    use mod_prgvar, only: &
+       prgvar_get
+    use mod_sfcvar, only: &
+       sfcvar_get, &
+       I_PRE_SFC
+    use mod_thrmdyn, only: &
+       THRMDYN_tempre
     implicit none
-    !
-    integer :: l, nq, ij, kk, k
-    real(8) :: rhog(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: rhogvx(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: rhogvy(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: rhogvz(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: rhogw(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: rhoge(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: rhogq(ADM_gall,ADM_kall,ADM_lall,nqmax)
-    real(8) :: rhogq_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,nqmax)
-    !
-    real(8) :: q(ADM_gall,ADM_kall,nqmax)
-    real(8) :: rho(ADM_gall,ADM_kall)
-    real(8) :: pre(ADM_gall,ADM_kall)
-    real(8) :: tem(ADM_gall,ADM_kall)
-    real(8) :: rgrho(ADM_gall,ADM_kall)
-    real(8) :: ein(ADM_gall,ADM_kall)
-    real(8) :: qd(ADM_gall,ADM_kall)
-    real(8) :: v2d_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL)
-    real(8) :: v3d_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: v3d2_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: v3d3_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: v3d4_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: v3d5_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: v3d6_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: pre_sfc(ADM_gall,ADM_KNONE,ADM_lall)
-    integer, parameter :: num = 0
 
-    real(8) :: lpres_sfc(ADM_gall,ADM_lall)
-    real(8) :: lpres(ADM_gall,ADM_kall)
+    real(8) :: rhog     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8) :: rhogvx   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8) :: rhogvy   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8) :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8) :: rhogvz   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8) :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8) :: rhogw    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8) :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8) :: rhoge    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8) :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(8) :: rhogq    (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
+    real(8) :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    call prgvar_get(         &
-         rhog,   v3d_pl,   &  !--- out
-         rhogvx, v3d2_pl,  &  !--- out
-         rhogvy, v3d3_pl,  &  !--- out
-         rhogvz, v3d4_pl,  &  !--- out
-         rhogw,  v3d5_pl,  &  !--- out
-         rhoge,  v3d6_pl,  &  !--- out
-         rhogq,  rhogq_pl, &  !--- out
-         num )                !--- in
+    real(8) :: pre_sfc   (ADM_gall   ,ADM_KNONE,ADM_lall   )
+    real(8) :: pre_sfc_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
 
-    call sfcvar_get(           &
-         pre_sfc, v2d_pl,      &  !--- out
-         vid = I_PRE_SFC       &  !--- in
-         )
-    lpres_sfc(:,:) = log(pre_sfc(:,ADM_KNONE,:))
+    real(8) :: rho(ADM_gall,ADM_kall,ADM_lall)
+    real(8) :: ein(ADM_gall,ADM_kall,ADM_lall)
+    real(8) :: q  (ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
+    real(8) :: tem(ADM_gall,ADM_kall,ADM_lall)
+    real(8) :: pre(ADM_gall,ADM_kall,ADM_lall)
+
+    real(8) :: lpres_sfc(ADM_gall)
+    real(8) :: lpres    (ADM_gall,ADM_kall)
+
+    integer :: g, k, l, nq, kk
+    !---------------------------------------------------------------------------
 
     cnvpre_fac1(:,:,:) = 0.D0
     cnvpre_fac2(:,:,:) = 0.D0
     cnvpre_klev(:,:,:) = -1
 
-    !--- calculation of tem, pre, and th
-    do l=1, ADM_lall
+    call prgvar_get( rhog,   rhog_pl,   &
+                     rhogvx, rhogvx_pl, &
+                     rhogvy, rhogvy_pl, &
+                     rhogvz, rhogvz_pl, &
+                     rhogw,  rhogw_pl,  &
+                     rhoge,  rhoge_pl,  &
+                     rhogq,  rhogq_pl,  &
+                     0                  )
 
-       rgrho(:,:) = 1.0d0/rhog(:,:,l)
-       ein(:,:) = rhoge(:,:,l) * rgrho(:,:)
+    call sfcvar_get( pre_sfc, pre_sfc_pl, vid=I_PRE_SFC )
 
-       do nq=1, nqmax
-          q(:,:,nq) = rhogq(:,:,l,nq) * rgrho(:,:)
+    do l = 1, ADM_lall
+    do k = 1, ADM_kall
+    do g = 1, ADM_gall
+       rho(g,k,l) = rhog (g,k,l) / VMTR_GSGAM2(g,k,l)
+       ein(g,k,l) = rhoge(g,k,l) / rhog(g,k,l)
+    enddo
+    enddo
+    enddo
+
+    do nq = 1, TRC_VMAX
+    do l = 1, ADM_lall
+    do k = 1, ADM_kall
+    do g = 1, ADM_gall
+       q(g,k,l,nq) = rhogq(g,k,l,nq) / rhog(g,k,l)
+    enddo
+    enddo
+    enddo
+    enddo
+
+    call THRMDYN_tempre( ADM_gall,     & ! [IN]
+                         ADM_kall,     & ! [IN]
+                         ADM_lall,     & ! [IN]
+                         ein(:,:,:),   & ! [IN]
+                         rho(:,:,:),   & ! [IN]
+                         q  (:,:,:,:), & ! [IN]
+                         tem(:,:,:),   & ! [OUT]
+                         pre(:,:,:)    ) ! [OUT]
+
+    do l = 1, ADM_lall
+       lpres_sfc(:)   = log( pre_sfc(:,ADM_KNONE,l) )
+       lpres    (:,:) = log( pre(:,:,l) )
+
+       do kk = 1, npreslev
+       do g  = 1, ADM_gall
+
+          if ( lpres_sfc(g) >= pres_levs_ln(kk) ) then
+
+             do k = ADM_kmin, ADM_kmax
+                if( pres_levs_ln(kk) > lpres(g,k) ) exit
+             enddo
+
+             if( k == ADM_kmin )     k = ADM_kmin + 1 ! extrapolation
+             if( k == ADM_kmax + 1 ) k = ADM_kmax     ! extrapolation
+
+             cnvpre_klev(g,kk,l) = k
+             cnvpre_fac1(g,kk,l) = ( lpres(g,k) - pres_levs_ln(kk)   ) / ( lpres(g,k) - lpres(g,k-1) )
+             cnvpre_fac2(g,kk,l) = ( pres_levs_ln(kk) - lpres(g,k-1) ) / ( lpres(g,k) - lpres(g,k-1) )
+
+          endif
        enddo
-
-       call thrmdyn_qd( ADM_gall, qd, q )
-
-       rho(:,:) = rhog(:,:,l)/VMTR_GSGAM2(:,:,l)
-       call thrmdyn_tempre( &
-            ADM_gall,       &
-            tem,            &  !--- out
-            pre,            &  !--- out
-            ein,            &  !--- in
-            rho,            &  !--- in
-            qd,             &  !--- in
-            q )                !--- in
-
-       lpres(:,:) = log(pre(:,:))
-
-       do kk=1, npreslev
-          do ij=1, ADM_gall
-             if(lpres_sfc(ij,l) < pres_levs_ln(kk)) then
-                !cnvpre_klev(ij,kk,l) = -1
-             else
-                do k=ADM_kmin, ADM_kmax
-                   if( pres_levs_ln(kk) > lpres(ij,k) ) exit
-                enddo
-
-                if( k == ADM_kmin )     k = ADM_kmin + 1 ! extrapolation
-                if( k == ADM_kmax + 1 ) k = ADM_kmax     ! extrapolation
-
-                cnvpre_klev(ij,kk,l) = k
-                cnvpre_fac1(ij,kk,l) = ( lpres(ij,k) - pres_levs_ln(kk) ) / ( lpres(ij,k) - lpres(ij,k-1) )
-                cnvpre_fac2(ij,kk,l) = ( pres_levs_ln(kk) - lpres(ij,k-1) ) / ( lpres(ij,k) - lpres(ij,k-1) )
-
-             endif
-          enddo
        enddo
-
     enddo
 
     return
