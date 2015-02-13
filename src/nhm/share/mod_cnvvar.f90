@@ -153,8 +153,8 @@ contains
        !------ interpolation of rhog_h
        do k = 2, ADM_kall
        do n = 1, ADM_gall
-          rhog_h(n,k) = ( VMTR_C2Wfact(1,n,k,l) * prg(n,k  ,l,I_RHOG) &
-                        + VMTR_C2Wfact(2,n,k,l) * prg(n,k-1,l,I_RHOG) )
+          rhog_h(n,k) = ( VMTR_C2Wfact(n,k,1,l) * prg(n,k  ,l,I_RHOG) &
+                        + VMTR_C2Wfact(n,k,2,l) * prg(n,k-1,l,I_RHOG) )
        enddo
        enddo
        do n = 1, ADM_gall
@@ -212,8 +212,8 @@ contains
           !------ interpolation of rhog_h
           do k = 2, ADM_kall
           do n = 1, ADM_gall_pl
-             rhog_h_pl(n,k) = ( VMTR_C2Wfact_pl(1,n,k,l) * prg_pl(n,k  ,l,I_RHOG) &
-                              + VMTR_C2Wfact_pl(2,n,k,l) * prg_pl(n,k-1,l,I_RHOG) )
+             rhog_h_pl(n,k) = ( VMTR_C2Wfact_pl(n,k,1,l) * prg_pl(n,k  ,l,I_RHOG) &
+                              + VMTR_C2Wfact_pl(n,k,2,l) * prg_pl(n,k-1,l,I_RHOG) )
           enddo
           enddo
           do n = 1, ADM_gall_pl
@@ -327,8 +327,8 @@ contains
        !------ interpolation of rhog_h
        do k = 2, ADM_kall
        do n = 1, ADM_gall
-          rhog_h(n,k) = ( VMTR_C2Wfact(1,n,k,l) * prg(n,k  ,l,I_RHOG) &
-                        + VMTR_C2Wfact(2,n,k,l) * prg(n,k-1,l,I_RHOG) )
+          rhog_h(n,k) = ( VMTR_C2Wfact(n,k,1,l) * prg(n,k  ,l,I_RHOG) &
+                        + VMTR_C2Wfact(n,k,2,l) * prg(n,k-1,l,I_RHOG) )
        enddo
        enddo
        do n = 1, ADM_gall
@@ -392,8 +392,8 @@ contains
           !------ interpolation of rhog_h
           do k = 2, ADM_kall
           do n = 1, ADM_gall_pl
-             rhog_h_pl(n,k) = ( VMTR_C2Wfact_pl(1,n,k,l) * prg_pl(n,k  ,l,I_RHOG) &
-                              + VMTR_C2Wfact_pl(2,n,k,l) * prg_pl(n,k-1,l,I_RHOG) )
+             rhog_h_pl(n,k) = ( VMTR_C2Wfact_pl(n,k,1,l) * prg_pl(n,k  ,l,I_RHOG) &
+                              + VMTR_C2Wfact_pl(n,k,2,l) * prg_pl(n,k-1,l,I_RHOG) )
           enddo
           enddo
           do n = 1, ADM_gall_pl
@@ -474,8 +474,8 @@ contains
        do k = ADM_kmin+1, ADM_kmax
        do g = 1, ADM_gall
           rhogkin_v(g,k) = 0.5D0 * ( rhogw(g,k,l) * rhogw(g,k,l) ) &
-                         / ( VMTR_C2Wfact(1,g,k,l) * rhog(g,k  ,l) &
-                           + VMTR_C2Wfact(2,g,k,l) * rhog(g,k-1,l) )
+                         / ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k  ,l) &
+                           + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
        enddo
        enddo
        rhogkin_v(:,ADM_kmin  ) = 0.D0
@@ -485,8 +485,8 @@ contains
        do k = ADM_kmin, ADM_kmax
        do g = 1, ADM_gall
           rhogkin(g,k,l) = rhogkin_h(g,k)                             & ! horizontal
-                         + ( VMTR_W2Cfact(1,g,k,l) * rhogkin_v(g,k+1) & ! vertical
-                           + VMTR_W2Cfact(2,g,k,l) * rhogkin_v(g,k  ) )
+                         + ( VMTR_W2Cfact(g,k,1,l) * rhogkin_v(g,k+1) & ! vertical
+                           + VMTR_W2Cfact(g,k,2,l) * rhogkin_v(g,k  ) )
        enddo
        enddo
        rhogkin(:,ADM_kmin-1,l) = 0.D0
@@ -508,8 +508,8 @@ contains
           do k = ADM_kmin+1, ADM_kmax
           do g = 1, ADM_gall_pl
              rhogkin_v_pl(g,k) = 0.5D0 * ( rhogw_pl(g,k,l) * rhogw_pl(g,k,l) ) &
-                               / ( VMTR_C2Wfact_pl(1,g,k,l) * rhog_pl(g,k  ,l) &
-                                 + VMTR_C2Wfact_pl(2,g,k,l) * rhog_pl(g,k-1,l) )
+                               / ( VMTR_C2Wfact_pl(g,k,1,l) * rhog_pl(g,k  ,l) &
+                                 + VMTR_C2Wfact_pl(g,k,2,l) * rhog_pl(g,k-1,l) )
           enddo
           enddo
           rhogkin_v_pl(:,ADM_kmin  ) = 0.D0
@@ -519,8 +519,8 @@ contains
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
              rhogkin_pl(g,k,l) = rhogkin_h_pl(g,k)                                & ! horizontal
-                               + ( VMTR_W2Cfact_pl(1,g,k,l) * rhogkin_v_pl(g,k+1) & ! vertical
-                                 + VMTR_W2Cfact_pl(2,g,k,l) * rhogkin_v_pl(g,k  ) )
+                               + ( VMTR_W2Cfact_pl(g,k,1,l) * rhogkin_v_pl(g,k+1) & ! vertical
+                                 + VMTR_W2Cfact_pl(g,k,2,l) * rhogkin_v_pl(g,k  ) )
           enddo
           enddo
           rhogkin_pl(:,ADM_kmin-1,l) = 0.D0

@@ -595,8 +595,8 @@ contains
        do l = 1, ADM_lall
        do k = ADM_kmin,ADM_kmax+1
        do g = 1, ADM_gall
-          rhog_h = ( VMTR_C2Wfact(1,g,k,l) * rhog(g,k  ,l) &
-                   + VMTR_C2Wfact(2,g,k,l) * rhog(g,k-1,l) )
+          rhog_h = ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k  ,l) &
+                   + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
 
           NDG_ref_w = NDG_ref(g,k,l,I_w) * VMTR_GSGAM2H(g,k,l) / ( rhog_h * CNST_EGRAV )
 
@@ -611,8 +611,8 @@ contains
           do l = 1, ADM_lall_pl
           do k = ADM_kmin,ADM_kmax+1
           do g = 1, ADM_gall_pl
-             rhog_h = ( VMTR_C2Wfact_pl(1,g,k,l) * rhog_pl(g,k  ,l) &
-                      + VMTR_C2Wfact_pl(2,g,k,l) * rhog_pl(g,k-1,l) )
+             rhog_h = ( VMTR_C2Wfact_pl(g,k,1,l) * rhog_pl(g,k  ,l) &
+                      + VMTR_C2Wfact_pl(g,k,2,l) * rhog_pl(g,k-1,l) )
 
              NDG_ref_w = NDG_ref_pl(g,k,l,I_w) * VMTR_GSGAM2H_pl(g,k,l) / ( rhog_h * CNST_EGRAV )
 

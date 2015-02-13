@@ -438,31 +438,31 @@ contains
        do l = 1, ADM_lall
           do k = ADM_kmin+1, ADM_kmax
           do g = 1, ADM_gall
-             w(g,k,l) = PROG(g,k,l,I_RHOGW) / ( VMTR_C2Wfact(1,g,k,l) * PROG(g,k  ,l,I_RHOG) &
-                                              + VMTR_C2Wfact(2,g,k,l) * PROG(g,k-1,l,I_RHOG) )
+             w(g,k,l) = PROG(g,k,l,I_RHOGW) / ( VMTR_C2Wfact(g,k,1,l) * PROG(g,k  ,l,I_RHOG) &
+                                              + VMTR_C2Wfact(g,k,2,l) * PROG(g,k-1,l,I_RHOG) )
           enddo
           enddo
 
           !--- boundary conditions
-          call bndcnd_all( ADM_gall,                 & ! [IN]
-                           rho (:,:,l),              & ! [INOUT]
-                           vx  (:,:,l),              & ! [INOUT]
-                           vy  (:,:,l),              & ! [INOUT]
-                           vz  (:,:,l),              & ! [INOUT]
-                           w   (:,:,l),              & ! [INOUT]
-                           ein (:,:,l),              & ! [INOUT]
-                           tem (:,:,l),              & ! [INOUT]
-                           pre (:,:,l),              & ! [INOUT]
-                           PROG(:,:,l,I_RHOG),       & ! [INOUT]
-                           PROG(:,:,l,I_RHOGVX),     & ! [INOUT]
-                           PROG(:,:,l,I_RHOGVY),     & ! [INOUT]
-                           PROG(:,:,l,I_RHOGVZ),     & ! [INOUT]
-                           PROG(:,:,l,I_RHOGW),      & ! [INOUT]
-                           PROG(:,:,l,I_RHOGE),      & ! [INOUT]
-                           VMTR_GSGAM2    (:,:,l),   & ! [IN]
-                           VMTR_PHI       (:,:,l),   & ! [IN]
-                           VMTR_C2Wfact   (:,:,:,l), & ! [IN]
-                           VMTR_C2WfactGz(:,:,:,l)   ) ! [IN]
+          call bndcnd_all( ADM_gall,                & ! [IN]
+                           rho (:,:,l),             & ! [INOUT]
+                           vx  (:,:,l),             & ! [INOUT]
+                           vy  (:,:,l),             & ! [INOUT]
+                           vz  (:,:,l),             & ! [INOUT]
+                           w   (:,:,l),             & ! [INOUT]
+                           ein (:,:,l),             & ! [INOUT]
+                           tem (:,:,l),             & ! [INOUT]
+                           pre (:,:,l),             & ! [INOUT]
+                           PROG(:,:,l,I_RHOG),      & ! [INOUT]
+                           PROG(:,:,l,I_RHOGVX),    & ! [INOUT]
+                           PROG(:,:,l,I_RHOGVY),    & ! [INOUT]
+                           PROG(:,:,l,I_RHOGVZ),    & ! [INOUT]
+                           PROG(:,:,l,I_RHOGW),     & ! [INOUT]
+                           PROG(:,:,l,I_RHOGE),     & ! [INOUT]
+                           VMTR_GSGAM2   (:,:,l),   & ! [IN]
+                           VMTR_PHI      (:,:,l),   & ! [IN]
+                           VMTR_C2Wfact  (:,:,:,l), & ! [IN]
+                           VMTR_C2WfactGz(:,:,:,l)  ) ! [IN]
 
           call thrmdyn_th( ADM_gall, th(:,:,l), tem(:,:,l), pre(:,:,l) )
 
@@ -499,31 +499,31 @@ contains
           do l = 1, ADM_lall_pl
              do k = ADM_kmin+1, ADM_kmax
              do g = 1, ADM_gall_pl
-                w_pl(g,k,l) = PROG_pl(g,k,l,I_RHOGW) / ( VMTR_C2Wfact_pl(1,g,k,l) * PROG_pl(g,k  ,l,I_RHOG) &
-                                                       + VMTR_C2Wfact_pl(2,g,k,l) * PROG_pl(g,k-1,l,I_RHOG) )
+                w_pl(g,k,l) = PROG_pl(g,k,l,I_RHOGW) / ( VMTR_C2Wfact_pl(g,k,1,l) * PROG_pl(g,k  ,l,I_RHOG) &
+                                                       + VMTR_C2Wfact_pl(g,k,2,l) * PROG_pl(g,k-1,l,I_RHOG) )
              enddo
              enddo
 
              !--- boundary conditions
-             call bndcnd_all( ADM_gall_pl,                 & ! [IN]
-                              rho_pl (:,:,l),              & ! [INOUT]
-                              vx_pl  (:,:,l),              & ! [INOUT]
-                              vy_pl  (:,:,l),              & ! [INOUT]
-                              vz_pl  (:,:,l),              & ! [INOUT]
-                              w_pl   (:,:,l),              & ! [INOUT]
-                              ein_pl (:,:,l),              & ! [INOUT]
-                              tem_pl (:,:,l),              & ! [INOUT]
-                              pre_pl (:,:,l),              & ! [INOUT]
-                              PROG_pl(:,:,l,I_RHOG  ),     & ! [INOUT]
-                              PROG_pl(:,:,l,I_RHOGVX),     & ! [INOUT]
-                              PROG_pl(:,:,l,I_RHOGVY),     & ! [INOUT]
-                              PROG_pl(:,:,l,I_RHOGVZ),     & ! [INOUT]
-                              PROG_pl(:,:,l,I_RHOGW ),     & ! [INOUT]
-                              PROG_pl(:,:,l,I_RHOGE ),     & ! [INOUT]
-                              VMTR_GSGAM2_pl    (:,:,l),   & ! [IN]
-                              VMTR_PHI_pl       (:,:,l),   & ! [IN]
-                              VMTR_C2Wfact_pl   (:,:,:,l), & ! [IN]
-                              VMTR_C2WfactGz_pl(:,:,:,l)   ) ! [IN]
+             call bndcnd_all( ADM_gall_pl,                & ! [IN]
+                              rho_pl (:,:,l),             & ! [INOUT]
+                              vx_pl  (:,:,l),             & ! [INOUT]
+                              vy_pl  (:,:,l),             & ! [INOUT]
+                              vz_pl  (:,:,l),             & ! [INOUT]
+                              w_pl   (:,:,l),             & ! [INOUT]
+                              ein_pl (:,:,l),             & ! [INOUT]
+                              tem_pl (:,:,l),             & ! [INOUT]
+                              pre_pl (:,:,l),             & ! [INOUT]
+                              PROG_pl(:,:,l,I_RHOG  ),    & ! [INOUT]
+                              PROG_pl(:,:,l,I_RHOGVX),    & ! [INOUT]
+                              PROG_pl(:,:,l,I_RHOGVY),    & ! [INOUT]
+                              PROG_pl(:,:,l,I_RHOGVZ),    & ! [INOUT]
+                              PROG_pl(:,:,l,I_RHOGW ),    & ! [INOUT]
+                              PROG_pl(:,:,l,I_RHOGE ),    & ! [INOUT]
+                              VMTR_GSGAM2_pl   (:,:,l),   & ! [IN]
+                              VMTR_PHI_pl      (:,:,l),   & ! [IN]
+                              VMTR_C2Wfact_pl  (:,:,:,l), & ! [IN]
+                              VMTR_C2WfactGz_pl(:,:,:,l)  ) ! [IN]
 
              call thrmdyn_th ( ADM_gall_pl, th_pl (:,:,l), tem_pl(:,:,l), pre_pl(:,:,l) )
              call thrmdyn_eth( ADM_gall_pl, eth_pl(:,:,l), ein_pl(:,:,l), pre_pl(:,:,l), rho_pl(:,:,l) )

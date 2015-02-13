@@ -168,12 +168,12 @@ contains
     do l = 1, ADM_lall
        do k = ADM_kmin+1, ADM_kmax
        do g = 1, ADM_gall
-          rhogw_vm(g,k) = ( VMTR_C2WfactGz(1,g,k,l) * rhogvx(g,k  ,l) &
-                          + VMTR_C2WfactGz(2,g,k,l) * rhogvx(g,k-1,l) &
-                          + VMTR_C2WfactGz(3,g,k,l) * rhogvy(g,k  ,l) &
-                          + VMTR_C2WfactGz(4,g,k,l) * rhogvy(g,k-1,l) &
-                          + VMTR_C2WfactGz(5,g,k,l) * rhogvz(g,k  ,l) &
-                          + VMTR_C2WfactGz(6,g,k,l) * rhogvz(g,k-1,l) &
+          rhogw_vm(g,k) = ( VMTR_C2WfactGz(g,k,1,l) * rhogvx(g,k  ,l) &
+                          + VMTR_C2WfactGz(g,k,2,l) * rhogvx(g,k-1,l) &
+                          + VMTR_C2WfactGz(g,k,3,l) * rhogvy(g,k  ,l) &
+                          + VMTR_C2WfactGz(g,k,4,l) * rhogvy(g,k-1,l) &
+                          + VMTR_C2WfactGz(g,k,5,l) * rhogvz(g,k  ,l) &
+                          + VMTR_C2WfactGz(g,k,6,l) * rhogvz(g,k-1,l) &
                           ) * VMTR_RGAMH(g,k,l)                       & ! horizontal contribution
                         + rhogw(g,k,l) * VMTR_RGSQRTH(g,k,l)            ! vertical   contribution
        enddo
@@ -329,12 +329,12 @@ contains
        do l = 1, ADM_lall_pl
           do k = ADM_kmin+1, ADM_kmax
           do g = 1, ADM_gall_pl
-             rhogw_vm_pl(g,k) = ( VMTR_C2WfactGz_pl(1,g,k,l) * rhogvx_pl(g,k  ,l) &
-                                + VMTR_C2WfactGz_pl(2,g,k,l) * rhogvx_pl(g,k-1,l) &
-                                + VMTR_C2WfactGz_pl(3,g,k,l) * rhogvy_pl(g,k  ,l) &
-                                + VMTR_C2WfactGz_pl(4,g,k,l) * rhogvy_pl(g,k-1,l) &
-                                + VMTR_C2WfactGz_pl(5,g,k,l) * rhogvz_pl(g,k  ,l) &
-                                + VMTR_C2WfactGz_pl(6,g,k,l) * rhogvz_pl(g,k-1,l) &
+             rhogw_vm_pl(g,k) = ( VMTR_C2WfactGz_pl(g,k,1,l) * rhogvx_pl(g,k  ,l) &
+                                + VMTR_C2WfactGz_pl(g,k,2,l) * rhogvx_pl(g,k-1,l) &
+                                + VMTR_C2WfactGz_pl(g,k,3,l) * rhogvy_pl(g,k  ,l) &
+                                + VMTR_C2WfactGz_pl(g,k,4,l) * rhogvy_pl(g,k-1,l) &
+                                + VMTR_C2WfactGz_pl(g,k,5,l) * rhogvz_pl(g,k  ,l) &
+                                + VMTR_C2WfactGz_pl(g,k,6,l) * rhogvz_pl(g,k-1,l) &
                                 ) * VMTR_RGAMH_pl(g,k,l)                          & ! horizontal contribution
                               + rhogw_pl(g,k,l) * VMTR_RGSQRTH_pl(g,k,l)            ! vertical   contribution
           enddo

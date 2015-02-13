@@ -336,8 +336,8 @@ contains
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kmax+1
        do g = 1, ADM_gall
-          rhog_h(g,k,l) = ( VMTR_C2Wfact(1,g,k,l) * rhog(g,k,  l) &
-                          + VMTR_C2Wfact(2,g,k,l) * rhog(g,k-1,l) )
+          rhog_h(g,k,l) = ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k,  l) &
+                          + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
           eth_h (g,k,l) = 0.5D0 * ( GRD_afac(k) * eth(g,k,  l) &
                                   + GRD_bfac(k) * eth(g,k-1,l) )
        enddo
@@ -352,8 +352,8 @@ contains
        do l = 1, ADM_lall_pl
           do k = ADM_kmin, ADM_kmax+1
           do g = 1, ADM_gall_pl
-             rhog_h_pl(g,k,l) = ( VMTR_C2Wfact_pl(1,g,k,l) * rhog_pl(g,k,  l) &
-                                + VMTR_C2Wfact_pl(2,g,k,l) * rhog_pl(g,k-1,l) )
+             rhog_h_pl(g,k,l) = ( VMTR_C2Wfact_pl(g,k,1,l) * rhog_pl(g,k,  l) &
+                                + VMTR_C2Wfact_pl(g,k,2,l) * rhog_pl(g,k-1,l) )
              eth_h_pl (g,k,l) = 0.5D0 * ( GRD_afac(k) * eth_pl(g,k,  l) &
                                         + GRD_bfac(k) * eth_pl(g,k-1,l) )
           enddo
@@ -427,8 +427,8 @@ contains
           drhoge_pw(g,k,l) = ( vx(g,k,l) * dpgrad(g,k,l,GRD_XDIR)          &
                              + vy(g,k,l) * dpgrad(g,k,l,GRD_YDIR)          &
                              + vz(g,k,l) * dpgrad(g,k,l,GRD_ZDIR)          ) &
-                           + ( VMTR_W2Cfact(1,g,k,l) * drhoge_pwh(g,k+1,l) &
-                             + VMTR_W2Cfact(2,g,k,l) * drhoge_pwh(g,k,  l) )
+                           + ( VMTR_W2Cfact(g,k,1,l) * drhoge_pwh(g,k+1,l) &
+                             + VMTR_W2Cfact(g,k,2,l) * drhoge_pwh(g,k,  l) )
        enddo
        enddo
        do g = 1, ADM_gall
@@ -451,8 +451,8 @@ contains
              drhoge_pw_pl(g,k,l) = ( vx_pl(g,k,l) * dpgrad_pl(g,k,l,GRD_XDIR)          &
                                    + vy_pl(g,k,l) * dpgrad_pl(g,k,l,GRD_YDIR)          &
                                    + vz_pl(g,k,l) * dpgrad_pl(g,k,l,GRD_ZDIR)          ) &
-                                 + ( VMTR_W2Cfact_pl(1,g,k,l) * drhoge_pwh_pl(g,k+1,l) &
-                                   + VMTR_W2Cfact_pl(2,g,k,l) * drhoge_pwh_pl(g,k,  l) )
+                                 + ( VMTR_W2Cfact_pl(g,k,1,l) * drhoge_pwh_pl(g,k+1,l) &
+                                   + VMTR_W2Cfact_pl(g,k,2,l) * drhoge_pwh_pl(g,k,  l) )
           enddo
           enddo
           do g = 1, ADM_gall_pl

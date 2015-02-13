@@ -1102,8 +1102,8 @@ contains
     do k = ADM_kmin, ADM_kmax+1
     do g = 1, ADM_gall
        frhogw(g,k,l) = frhogw(g,k,l) &
-                     - rayleigh_coef_h(k) * w(g,k,l) * ( VMTR_C2Wfact(1,g,k,l) * rhog(g,k  ,l) &
-                                                       + VMTR_C2Wfact(2,g,k,l) * rhog(g,k-1,l) )
+                     - rayleigh_coef_h(k) * w(g,k,l) * ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k  ,l) &
+                                                       + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
     enddo
     enddo
     enddo
@@ -1113,8 +1113,8 @@ contains
        do k = ADM_kmin, ADM_kmax+1
        do g = 1, ADM_gall_pl
           frhogw_pl(g,k,l) = frhogw_pl(g,k,l) &
-                           - rayleigh_coef_h(k) * w_pl(g,k,l) * ( VMTR_C2Wfact_pl(1,g,k,l) * rhog_pl(g,k  ,l) &
-                                                                + VMTR_C2Wfact_pl(2,g,k,l) * rhog_pl(g,k-1,l) )
+                           - rayleigh_coef_h(k) * w_pl(g,k,l) * ( VMTR_C2Wfact_pl(g,k,1,l) * rhog_pl(g,k  ,l) &
+                                                                + VMTR_C2Wfact_pl(g,k,2,l) * rhog_pl(g,k-1,l) )
        enddo
        enddo
        enddo
@@ -1243,8 +1243,8 @@ contains
     do l = 1, ADM_lall
     do k = ADM_kmin+1, ADM_kmax
     do g = 1, ADM_gall
-       rhog_h(g,k,l) = ( VMTR_C2Wfact(1,g,k,l) * rhog(g,k,  l) &
-                       + VMTR_C2Wfact(2,g,k,l) * rhog(g,k-1,l) )
+       rhog_h(g,k,l) = ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k  ,l) &
+                       + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
     enddo
     enddo
     enddo
@@ -1253,8 +1253,8 @@ contains
     do l = 1, ADM_lall_pl
     do k = ADM_kmin+1, ADM_kmax
     do g = 1, ADM_gall_pl
-       rhog_h_pl(g,k,l) = ( VMTR_C2Wfact_pl(1,g,k,l) * rhog_pl(g,k,  l) &
-                          + VMTR_C2Wfact_pl(2,g,k,l) * rhog_pl(g,k-1,l) )
+       rhog_h_pl(g,k,l) = ( VMTR_C2Wfact_pl(g,k,1,l) * rhog_pl(g,k  ,l) &
+                          + VMTR_C2Wfact_pl(g,k,2,l) * rhog_pl(g,k-1,l) )
     enddo
     enddo
     enddo
@@ -1663,8 +1663,8 @@ contains
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kmax+1
        do g = 1, ADM_gall
-          rhog_h(g,k,l) = ( VMTR_C2Wfact(1,g,k,l) * rhog(g,k,  l) &
-                          + VMTR_C2Wfact(2,g,k,l) * rhog(g,k-1,l) )
+          rhog_h(g,k,l) = ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k  ,l) &
+                          + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
        enddo
        enddo
        rhog_h(:,ADM_kmin-1,l) = rhog_h(:,ADM_kmin,l)
@@ -1674,8 +1674,8 @@ contains
        do l = 1, ADM_lall_pl
           do k = ADM_kmin, ADM_kmax+1
           do g = 1, ADM_gall_pl
-             rhog_h_pl(g,k,l) = ( VMTR_C2Wfact_pl(1,g,k,  l) * rhog_pl(g,k  ,l) &
-                                + VMTR_C2Wfact_pl(2,g,k-1,l) * rhog_pl(g,k-1,l) )
+             rhog_h_pl(g,k,l) = ( VMTR_C2Wfact_pl(g,k,1,l) * rhog_pl(g,k  ,l) &
+                                + VMTR_C2Wfact_pl(g,k,2,l) * rhog_pl(g,k-1,l) )
           enddo
           enddo
           rhog_h_pl(:,ADM_kmin-1,l) = rhog_h_pl(:,ADM_kmin,l)
