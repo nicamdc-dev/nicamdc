@@ -75,6 +75,10 @@ module mod_prgvar
   !
   !++ Public parameters & variables
   !
+  real(8), public, allocatable :: PRG_var (:,:,:,:)
+  real(8), public, allocatable :: PRG_var1(:,:,:,:)
+  real(8), public, allocatable :: DIAG_var(:,:,:,:)
+
   character(len=ADM_MAXFNAME), public, save :: restart_input_basename  = ''
   character(len=ADM_MAXFNAME), public, save :: restart_output_basename = ''
 
@@ -86,13 +90,8 @@ module mod_prgvar
   !
   !++ Private parameters & variables
   !
-  real(8), private, allocatable :: PRG_var   (:,:,:,:) ! container
-  real(8), private, allocatable :: PRG_var_pl(:,:,:,:)
-
-  real(8), private, allocatable :: PRG_var1   (:,:,:,:) ! container
+  real(8), private, allocatable :: PRG_var_pl (:,:,:,:)
   real(8), private, allocatable :: PRG_var1_pl(:,:,:,:)
-
-  real(8), private, allocatable :: DIAG_var   (:,:,:,:) ! container
   real(8), private, allocatable :: DIAG_var_pl(:,:,:,:)
 
   integer, private, save :: TRC_vmax_input ! number of input tracer variables

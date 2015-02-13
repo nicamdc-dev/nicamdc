@@ -80,14 +80,7 @@ program prg_driver
   use mod_gmtr, only: &
      GMTR_setup
   use mod_oprt, only: &
-     OPRT_setup,  &
-     cdiv,        &
-     cgrad,       &
-     clap,        &
-     cinterp_TN,  &
-     cinterp_HN,  &
-     cinterp_TRA, &
-     cinterp_PRA
+     OPRT_setup
   use mod_vmtr, only: &
      VMTR_setup
   use mod_time, only: &
@@ -129,6 +122,87 @@ program prg_driver
   use mod_embudget, only: &
      embudget_setup, &
      embudget_monitor
+
+  !##### OpenACC (for data copy) #####
+  use mod_adm, only: &
+     ADM_prc_tab,  &
+     ADM_rgn_vnum, &
+     ADM_IopJop
+  use mod_comm, only: &
+     sendlist,     sendlist_pl,  &
+     sendinfo,     sendinfo_pl,  &
+     recvlist,     recvlist_pl,  &
+     recvinfo,     recvinfo_pl,  &
+     recvlist_r2r, sendlist_r2r, &
+     recvlist_r2p, sendlist_r2p, &
+     recvlist_p2r, sendlist_p2r, &
+     recvlist_sgp, sendlist_sgp, &
+     copyinfo_r2r, copyinfo_sgp, &
+     copyinfo_r2p, copyinfo_p2r, &
+     nsmax,        nsmax_pl,     &
+     nrmax,        nrmax_pl,     &
+     ncmax_r2r,    ncmax_sgp,    &
+     ncmax_r2p,    ncmax_p2r
+  use mod_grd, only: &
+     GRD_x,     &
+     GRD_xt,    &
+     GRD_zs,    &
+     GRD_rdgz,  &
+     GRD_rdgzh, &
+     GRD_vz
+  use mod_gmtr, only: &
+     GMTR_P_var, &
+     GMTR_T_var, &
+     GMTR_A_var
+  use mod_oprt, only: &
+     cdiv,        &
+     cgrad,       &
+     clap,        &
+     cinterp_TN,  &
+     cinterp_HN,  &
+     cinterp_TRA, &
+     cinterp_PRA
+  use mod_vmtr, only: &
+     VMTR_GAM2,      &
+     VMTR_GAM2H,     &
+     VMTR_GSGAM2,    &
+     VMTR_GSGAM2H,   &
+     VMTR_RGSQRTH,   &
+     VMTR_RGAM,      &
+     VMTR_RGAMH,     &
+     VMTR_RGSGAM2,   &
+     VMTR_RGSGAM2H,  &
+     VMTR_W2Cfact,   &
+     VMTR_C2Wfact,   &
+     VMTR_C2WfactGz, &
+     VMTR_PHI
+  use mod_runconf, only: &
+     CVW
+  use mod_prgvar, only: &
+     PRG_var,  &
+     PRG_var1, &
+     DIAG_var
+  use mod_sfcvar, only: &
+     sfcvar, &
+     KSTR
+  use mod_bsstate, only: &
+     rho_bs, &
+     pre_bs, &
+     tem_bs
+  use mod_numfilter, only: &
+     Kh_coef,      &
+     Kh_coef_lap1, &
+     divdamp_coef
+  use mod_vi, only : &
+     Mc, &
+     Ml, &
+     Mu
+  use mod_history, only: &
+     ksumstr,     &
+     cnvpre_klev, &
+     cnvpre_fac1, &
+     cnvpre_fac2
+  !##### OpenACC #####
   implicit none
 
   character(len=14) :: cdate
@@ -219,7 +293,6 @@ program prg_driver
      write(*,*) '##### finish setup     #####'
   endif
 
-  !!$acc data copyin(cdiv,cgrad,clap,cinterp_TN,cinterp_HN,cinterp_TRA,cinterp_PRA)
 
   call DEBUG_rapend('Setup_ALL')
 
@@ -279,8 +352,6 @@ program prg_driver
   call fipp_stop()
 #endif
   !#############################################################################
-
-  !!$acc end data
 
   call DEBUG_rapend('Total')
   call DEBUG_rapreport

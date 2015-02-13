@@ -184,15 +184,15 @@ module mod_sfcvar
   !
   !++ Private variables
   !
-  real(8), allocatable, private,  save :: sfcvar(:,:,:,:)
-  real(8), allocatable, private,  save :: sfcvar_pl(:,:,:,:)
-  integer, allocatable, private,  save :: KMAX(:)
-  integer, allocatable, private,  save :: KSTR(:)
-  integer, allocatable, private,  save :: KEND(:)
-  integer, private,  save :: KSUM
-  !
+  real(8), allocatable, public  :: sfcvar   (:,:,:,:)
+  real(8), allocatable, private :: sfcvar_pl(:,:,:,:)
+  integer, allocatable, private :: KMAX(:)
+  integer, allocatable, public  :: KSTR(:)
+  integer, allocatable, private :: KEND(:)
+  integer, private              :: KSUM
+
   integer :: i
-  !
+
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------

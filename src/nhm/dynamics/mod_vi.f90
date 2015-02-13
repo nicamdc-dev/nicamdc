@@ -68,18 +68,18 @@ module mod_vi
   !++ Private parameters & variables
   !
 #ifdef _FIXEDINDEX_
-  real(8), private              :: Mc   (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(8), public               :: Mc   (ADM_gall   ,ADM_kall,ADM_lall   )
   real(8), private              :: Mc_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-  real(8), private              :: Ml   (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(8), public               :: Ml   (ADM_gall   ,ADM_kall,ADM_lall   )
   real(8), private              :: Ml_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-  real(8), private              :: Mu   (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(8), public               :: Mu   (ADM_gall   ,ADM_kall,ADM_lall   )
   real(8), private              :: Mu_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 #else
-  real(8), private, allocatable :: Mc   (:,:,:)
+  real(8), public,  allocatable :: Mc   (:,:,:)
   real(8), private, allocatable :: Mc_pl(:,:,:)
-  real(8), private, allocatable :: Ml   (:,:,:)
+  real(8), public,  allocatable :: Ml   (:,:,:)
   real(8), private, allocatable :: Ml_pl(:,:,:)
-  real(8), private, allocatable :: Mu   (:,:,:)
+  real(8), public,  allocatable :: Mu   (:,:,:)
   real(8), private, allocatable :: Mu_pl(:,:,:)
 #endif
 

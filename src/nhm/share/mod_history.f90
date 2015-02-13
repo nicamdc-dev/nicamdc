@@ -70,55 +70,55 @@ module mod_history
   !
   integer, private, parameter :: HIST_req_limit = 1000
 
-  character(len=ADM_MAXFNAME), private, save :: HIST_io_fname  = ''
-  character(len=ADM_NSYS),     private, save :: HIST_io_desc   = ''
-  integer,                     private, save :: HIST_dtype     = -1
-  character(len=ADM_MAXFNAME), private, save :: output_path    = ''
-  character(len=ADM_NSYS),     private, save :: histall_fname  = ''
-  character(len=ADM_MAXFNAME), private, save :: output_io_mode != 'LEGACY'
-  logical,                     private, save :: direct_access  = .false.
-  integer,                     private, save :: output_size    = 4
-  integer,                     private, save :: npreslev       = 1
-  real(8),                     private, save :: pres_levs(60)  != CNST_PRE00
-  logical,                     private, save :: check_flag     = .true.
+  character(len=ADM_MAXFNAME), private :: HIST_io_fname  = ''
+  character(len=ADM_NSYS),     private :: HIST_io_desc   = ''
+  integer,                     private :: HIST_dtype     = -1
+  character(len=ADM_MAXFNAME), private :: output_path    = ''
+  character(len=ADM_NSYS),     private :: histall_fname  = ''
+  character(len=ADM_MAXFNAME), private :: output_io_mode != 'LEGACY'
+  logical,                     private :: direct_access  = .false.
+  integer,                     private :: output_size    = 4
+  integer,                     private :: npreslev       = 1
+  real(8),                     private :: pres_levs(60)  != CNST_PRE00
+  logical,                     private :: check_flag     = .true.
 
-  integer,                     private, save :: ksum
-  logical,                     private, save :: calc_pressure = .false.
+  integer,                     private :: ksum
+  logical,                     private :: calc_pressure = .false.
 
-  character(len=ADM_MAXFNAME), private, allocatable, save :: file_save (:)
-  character(len=ADM_NSYS),     private, allocatable, save :: desc_save (:)
-  character(len=ADM_NSYS),     private, allocatable, save :: unit_save (:)
-  integer,                     private, allocatable, save :: step_save (:)
-  character(len=ADM_NSYS),     private, allocatable, save :: ktype_save(:)
-  integer,                     private, allocatable, save :: kstr_save (:)
-  integer,                     private, allocatable, save :: kend_save (:)
-  integer,                     private, allocatable, save :: kmax_save (:)
-  character(len=ADM_NSYS),     private, allocatable, save :: output_type_save  (:)
-  logical,                     private, allocatable, save :: out_prelev_save   (:)
-  logical,                     private, allocatable, save :: out_vintrpl_save  (:)
-  logical,                     private, allocatable, save :: opt_wgrid_save    (:)
-  logical,                     private, allocatable, save :: opt_lagintrpl_save(:)
+  character(len=ADM_MAXFNAME), private, allocatable :: file_save (:)
+  character(len=ADM_NSYS),     private, allocatable :: desc_save (:)
+  character(len=ADM_NSYS),     private, allocatable :: unit_save (:)
+  integer,                     private, allocatable :: step_save (:)
+  character(len=ADM_NSYS),     private, allocatable :: ktype_save(:)
+  integer,                     private, allocatable :: kstr_save (:)
+  integer,                     private, allocatable :: kend_save (:)
+  integer,                     private, allocatable :: kmax_save (:)
+  character(len=ADM_NSYS),     private, allocatable :: output_type_save  (:)
+  logical,                     private, allocatable :: out_prelev_save   (:)
+  logical,                     private, allocatable :: out_vintrpl_save  (:)
+  logical,                     private, allocatable :: opt_wgrid_save    (:)
+  logical,                     private, allocatable :: opt_lagintrpl_save(:)
 
-  character(len=ADM_NSYS),     private, allocatable, save :: lname_save   (:)
-  integer,                     private, allocatable, save :: tmax_save    (:)
-  real(8),                     private, allocatable, save :: tstr_save    (:)
-  real(8),                     private, allocatable, save :: tend_save    (:)
-  integer,                     private, allocatable, save :: month_old    (:)
-  integer,                     private, allocatable, save :: l_region_save(:)
+  character(len=ADM_NSYS),     private, allocatable :: lname_save   (:)
+  integer,                     private, allocatable :: tmax_save    (:)
+  real(8),                     private, allocatable :: tstr_save    (:)
+  real(8),                     private, allocatable :: tend_save    (:)
+  integer,                     private, allocatable :: month_old    (:)
+  integer,                     private, allocatable :: l_region_save(:)
 
-  integer,                     private, allocatable, save :: ksumstr  (:)
-  integer,                     private, allocatable, save :: ksumend  (:)
-  real(8),                     private, allocatable, save :: tsum_save(:,:)
-  logical,                     private, allocatable, save :: flag_save(:)
+  integer,                     public,  allocatable :: ksumstr  (:)
+  integer,                     private, allocatable :: ksumend  (:)
+  real(8),                     private, allocatable :: tsum_save(:,:)
+  logical,                     private, allocatable :: flag_save(:)
 
-  real(8),                     private, allocatable, save :: v_save   (:,:,:,:)
-  real(8),                     private, allocatable, save :: v_save_pl(:,:,:,:)
-  real(8),                     private, allocatable, save :: zlev_save(:)
+  real(8),                     public,  allocatable :: v_save   (:,:,:,:)
+  real(8),                     private, allocatable :: v_save_pl(:,:,:,:)
+  real(8),                     private, allocatable :: zlev_save(:)
 
-  real(8),                     private, allocatable, save :: pres_levs_ln(:)
-  integer,                     private, allocatable, save :: cnvpre_klev(:,:,:)
-  real(8),                     private, allocatable, save :: cnvpre_fac1(:,:,:)
-  real(8),                     private, allocatable, save :: cnvpre_fac2(:,:,:)
+  real(8),                     private, allocatable :: pres_levs_ln(:)
+  integer,                     public,  allocatable :: cnvpre_klev(:,:,:)
+  real(8),                     public,  allocatable :: cnvpre_fac1(:,:,:)
+  real(8),                     public,  allocatable :: cnvpre_fac2(:,:,:)
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------

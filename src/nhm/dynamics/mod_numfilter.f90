@@ -88,11 +88,11 @@ module mod_numfilter
   integer, private, parameter :: I_RHOGE    = 6 ! Density x G^1/2 x gamma^2 x Internal Energy
   integer, private, parameter :: I_RHOGETOT = 7 ! Density x G^1/2 x gamma^2 x Total Energy
 
-  real(8), private, allocatable :: rayleigh_coef  (:)             ! Rayleigh damping coefficient at cell center
+  real(8), public,  allocatable :: rayleigh_coef  (:)             ! Rayleigh damping coefficient at cell center
   real(8), private, allocatable :: rayleigh_coef_h(:)             ! Rayleigh damping coefficient at cell wall
   logical, private              :: rayleigh_damp_only_w = .false. ! damp only w?
 
-  real(8), private, allocatable :: Kh_coef   (:,:,:)              ! horizontal diffusion coefficient at cell center
+  real(8), public,  allocatable :: Kh_coef   (:,:,:)              ! horizontal diffusion coefficient at cell center
   real(8), private, allocatable :: Kh_coef_pl(:,:,:)
   integer, private              :: lap_order_hdiff = 2            ! laplacian order
   real(8), private              :: hdiff_fact_rho  = 1.D-2
@@ -103,18 +103,18 @@ module mod_numfilter
   logical, private              :: hdiff_nonlinear = .false.
   real(8), private              :: ZD_hdiff_nl     = 25000.D0     ! hight for decay of nonlinear diffusion
 
-  real(8), private, allocatable :: Kh_coef_lap1   (:,:,:)         ! Kh_coef but 1st order laplacian
+  real(8), public,  allocatable :: Kh_coef_lap1   (:,:,:)         ! Kh_coef but 1st order laplacian
   real(8), private, allocatable :: Kh_coef_lap1_pl(:,:,:)
 
-  real(8), private, allocatable :: Kv_coef  (:)                   ! vertical diffusion coefficient at cell center
+  real(8), public,  allocatable :: Kv_coef  (:)                   ! vertical diffusion coefficient at cell center
   real(8), private, allocatable :: Kv_coef_h(:)                   ! vertical diffusion coefficient at cell wall
 
-  real(8), private, allocatable :: divdamp_coef   (:,:,:)         ! divergence damping coefficient at cell center
+  real(8), public,  allocatable :: divdamp_coef   (:,:,:)         ! divergence damping coefficient at cell center
   real(8), private, allocatable :: divdamp_coef_pl(:,:,:)
   integer, private              :: lap_order_divdamp = 2          ! laplacian order
   real(8), private              :: divdamp_coef_v    = 0.D0
 
-  real(8), private, allocatable :: divdamp_2d_coef   (:,:,:)      ! divergence damping coefficient at cell center
+  real(8), public,  allocatable :: divdamp_2d_coef   (:,:,:)      ! divergence damping coefficient at cell center
   real(8), private, allocatable :: divdamp_2d_coef_pl(:,:,:)
   integer, private              :: lap_order_divdamp_2d = 1       ! laplacian order
 
