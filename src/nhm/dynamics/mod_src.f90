@@ -617,8 +617,7 @@ contains
     call OPRT_divergence( div_rhogvh, div_rhogvh_pl, & ! [OUT]
                           rhogvx_vm,  rhogvx_vm_pl,  & ! [IN]
                           rhogvy_vm,  rhogvy_vm_pl,  & ! [IN]
-                          rhogvz_vm,  rhogvz_vm_pl,  & ! [IN]
-                          mfact=1.D0                 ) ! [IN]
+                          rhogvz_vm,  rhogvz_vm_pl   ) ! [IN]
 
     !--- Total flux convergence
     do l = 1, ADM_lall
