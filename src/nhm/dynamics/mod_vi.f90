@@ -1497,15 +1497,16 @@ contains
        !--- backward
        do k = ADM_kmax-1, ADM_kmin+1, -1
        do g = 1, ADM_gall
-          rhogw(g,k,l) = rhogw(g,k,l) - gamma(g,k+1) * rhogw(g,k+1,l)
+          rhogw(g,k  ,l) = rhogw(g,k  ,l) - gamma(g,k+1) * rhogw(g,k+1,l)
+          rhogw(g,k+1,l) = rhogw(g,k+1,l) * VMTR_GSGAM2H(g,k+1,l) ! return value ( G^1/2 x gam2 )
        enddo
        enddo
 
-       !--- return value ( G^1/2 x gam2 )
-       do k = ADM_kmin, ADM_kmax+1
+       ! boundary treatment
        do g = 1, ADM_gall
-          rhogw(g,k,l) = rhogw(g,k,l) * VMTR_GSGAM2H(g,k,l)
-       enddo
+          rhogw(g,ADM_kmin  ,l) = rhogw(g,ADM_kmin  ,l) * VMTR_GSGAM2H(g,ADM_kmin  ,l)
+          rhogw(g,ADM_kmin+1,l) = rhogw(g,ADM_kmin+1,l) * VMTR_GSGAM2H(g,ADM_kmin+1,l)
+          rhogw(g,ADM_kmax+1,l) = rhogw(g,ADM_kmax+1,l) * VMTR_GSGAM2H(g,ADM_kmax+1,l)
        enddo
     enddo
 
