@@ -93,15 +93,17 @@ contains
        ADM_gall_pl, &
        ADM_kall,    &
        ADM_kmin,    &
-       ADM_kmax
+       ADM_kmax,    &
+       ADM_KNONE
     use mod_cnst, only: &
        OHM => CNST_EOHM
     use mod_grd, only: &
+       GRD_rscale, &
        GRD_XDIR,   &
        GRD_YDIR,   &
        GRD_ZDIR,   &
-       GRD_e,      &
-       GRD_e_pl,   &
+       GRD_x,      &
+       GRD_x_pl,   &
        GRD_cfac,   &
        GRD_dfac
     use mod_vmtr, only: &
@@ -170,9 +172,9 @@ contains
           wc = 0.5D0 * ( GRD_cfac(k) * w(g,k+1,l) &
                        + GRD_dfac(k) * w(g,k  ,l) )
 
-          vvx(g,k,l) = vx(g,k,l) + wc * GRD_e(g,l,GRD_XDIR)
-          vvy(g,k,l) = vy(g,k,l) + wc * GRD_e(g,l,GRD_YDIR)
-          vvz(g,k,l) = vz(g,k,l) + wc * GRD_e(g,l,GRD_ZDIR)
+          vvx(g,k,l) = vx(g,k,l) + wc * GRD_x(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
+          vvy(g,k,l) = vy(g,k,l) + wc * GRD_x(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
+          vvz(g,k,l) = vz(g,k,l) + wc * GRD_x(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
        enddo
        enddo
 
@@ -193,9 +195,9 @@ contains
              wc = 0.5D0 * ( GRD_cfac(k) * w_pl(g,k+1,l) &
                           + GRD_dfac(k) * w_pl(g,k  ,l) )
 
-             vvx_pl(g,k,l) = vx_pl(g,k,l) + wc * GRD_e_pl(g,l,GRD_XDIR)
-             vvy_pl(g,k,l) = vy_pl(g,k,l) + wc * GRD_e_pl(g,l,GRD_YDIR)
-             vvz_pl(g,k,l) = vz_pl(g,k,l) + wc * GRD_e_pl(g,l,GRD_ZDIR)
+             vvx_pl(g,k,l) = vx_pl(g,k,l) + wc * GRD_x_pl(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
+             vvy_pl(g,k,l) = vy_pl(g,k,l) + wc * GRD_x_pl(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
+             vvz_pl(g,k,l) = vz_pl(g,k,l) + wc * GRD_x_pl(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
           enddo
           enddo
 
@@ -249,13 +251,13 @@ contains
        !---< horizontalize & separate vertical velocity >
        do k = ADM_kmin, ADM_kmax
        do g = 1, ADM_gall
-          prd = dvvx(g,k,l) * GRD_e(g,l,GRD_XDIR) &
-              + dvvy(g,k,l) * GRD_e(g,l,GRD_YDIR) &
-              + dvvz(g,k,l) * GRD_e(g,l,GRD_ZDIR)
+          prd = dvvx(g,k,l) * GRD_x(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale &
+              + dvvy(g,k,l) * GRD_x(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale &
+              + dvvz(g,k,l) * GRD_x(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
 
-          grhogvx(g,k,l) = dvvx(g,k,l) - prd * GRD_e(g,l,GRD_XDIR)
-          grhogvy(g,k,l) = dvvy(g,k,l) - prd * GRD_e(g,l,GRD_YDIR)
-          grhogvz(g,k,l) = dvvz(g,k,l) - prd * GRD_e(g,l,GRD_ZDIR)
+          grhogvx(g,k,l) = dvvx(g,k,l) - prd * GRD_x(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
+          grhogvy(g,k,l) = dvvy(g,k,l) - prd * GRD_x(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
+          grhogvz(g,k,l) = dvvz(g,k,l) - prd * GRD_x(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
 
           grhogwc(g,k,l) = prd * real(NON_HYDRO_ALPHA,kind=8)
        enddo
@@ -294,13 +296,13 @@ contains
           !---< horizontalize & separate vertical velocity >
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
-             prd = dvvx_pl(g,k,l) * GRD_e_pl(g,l,GRD_XDIR)  &
-                 + dvvy_pl(g,k,l) * GRD_e_pl(g,l,GRD_YDIR)  &
-                 + dvvz_pl(g,k,l) * GRD_e_pl(g,l,GRD_ZDIR)
+             prd = dvvx_pl(g,k,l) * GRD_x_pl(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale &
+                 + dvvy_pl(g,k,l) * GRD_x_pl(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale &
+                 + dvvz_pl(g,k,l) * GRD_x_pl(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
 
-             grhogvx_pl(g,k,l) = dvvx_pl(g,k,l) - prd * GRD_e_pl(g,l,GRD_XDIR)
-             grhogvy_pl(g,k,l) = dvvy_pl(g,k,l) - prd * GRD_e_pl(g,l,GRD_YDIR)
-             grhogvz_pl(g,k,l) = dvvz_pl(g,k,l) - prd * GRD_e_pl(g,l,GRD_ZDIR)
+             grhogvx_pl(g,k,l) = dvvx_pl(g,k,l) - prd * GRD_x_pl(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
+             grhogvy_pl(g,k,l) = dvvy_pl(g,k,l) - prd * GRD_x_pl(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
+             grhogvz_pl(g,k,l) = dvvz_pl(g,k,l) - prd * GRD_x_pl(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
 
              grhogwc_pl(g,k,l) = prd * real(NON_HYDRO_ALPHA,kind=8)
           enddo

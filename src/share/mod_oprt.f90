@@ -2156,13 +2156,15 @@ contains
        ADM_gall_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
-       ADM_kall
+       ADM_kall,    &
+       ADM_KNONE
     use mod_grd, only: &
-       GRD_XDIR, &
-       GRD_YDIR, &
-       GRD_ZDIR, &
-       GRD_e,    &
-       GRD_e_pl
+       GRD_rscale, &
+       GRD_XDIR,   &
+       GRD_YDIR,   &
+       GRD_ZDIR,   &
+       GRD_x,      &
+       GRD_x_pl
     implicit none
 
     real(8), intent(inout) :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
@@ -2183,13 +2185,13 @@ contains
 !OCL PARALLEL
     do k = 1, ADM_kall
     do g = 1, ADM_gall
-       prd = vx(g,k,l) * GRD_e(g,l,GRD_XDIR) &
-           + vy(g,k,l) * GRD_e(g,l,GRD_YDIR) &
-           + vz(g,k,l) * GRD_e(g,l,GRD_ZDIR)
+       prd = vx(g,k,l) * GRD_x(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale &
+           + vy(g,k,l) * GRD_x(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale &
+           + vz(g,k,l) * GRD_x(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
 
-       vx(g,k,l) = vx(g,k,l) - prd * GRD_e(g,l,GRD_XDIR)
-       vy(g,k,l) = vy(g,k,l) - prd * GRD_e(g,l,GRD_YDIR)
-       vz(g,k,l) = vz(g,k,l) - prd * GRD_e(g,l,GRD_ZDIR)
+       vx(g,k,l) = vx(g,k,l) - prd * GRD_x(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
+       vy(g,k,l) = vy(g,k,l) - prd * GRD_x(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
+       vz(g,k,l) = vz(g,k,l) - prd * GRD_x(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
     enddo
     enddo
     enddo
@@ -2198,13 +2200,13 @@ contains
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
        do g = 1, ADM_gall_pl
-          prd = vx_pl(g,k,l) * GRD_e_pl(g,l,GRD_XDIR) &
-              + vy_pl(g,k,l) * GRD_e_pl(g,l,GRD_YDIR) &
-              + vz_pl(g,k,l) * GRD_e_pl(g,l,GRD_ZDIR)
+          prd = vx_pl(g,k,l) * GRD_x_pl(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale &
+              + vy_pl(g,k,l) * GRD_x_pl(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale &
+              + vz_pl(g,k,l) * GRD_x_pl(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
 
-          vx_pl(g,k,l) = vx_pl(g,k,l) - prd * GRD_e_pl(g,l,GRD_XDIR)
-          vy_pl(g,k,l) = vy_pl(g,k,l) - prd * GRD_e_pl(g,l,GRD_YDIR)
-          vz_pl(g,k,l) = vz_pl(g,k,l) - prd * GRD_e_pl(g,l,GRD_ZDIR)
+          vx_pl(g,k,l) = vx_pl(g,k,l) - prd * GRD_x_pl(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
+          vy_pl(g,k,l) = vy_pl(g,k,l) - prd * GRD_x_pl(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
+          vz_pl(g,k,l) = vz_pl(g,k,l) - prd * GRD_x_pl(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
        enddo
        enddo
        enddo

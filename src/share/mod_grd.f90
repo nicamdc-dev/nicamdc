@@ -144,9 +144,6 @@ module mod_grd
   real(8), public              :: GRD_xt_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              ADM_nxyz)
   real(8), public              :: GRD_xr   (ADM_gall   ,ADM_KNONE,ADM_lall   ,ADM_AI:ADM_AJ,ADM_nxyz)
   real(8), public              :: GRD_xr_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              ADM_nxyz)
-
-  real(8), public              :: GRD_e    (ADM_gall   ,ADM_lall   ,ADM_nxyz)
-  real(8), public              :: GRD_e_pl (ADM_gall_pl,ADM_lall_pl,ADM_nxyz)
 #else
   real(8), public, allocatable :: GRD_x    (:,:,:,:)
   real(8), public, allocatable :: GRD_x_pl (:,:,:,:)
@@ -154,9 +151,6 @@ module mod_grd
   real(8), public, allocatable :: GRD_xt_pl(:,:,:,:)
   real(8), public, allocatable :: GRD_xr   (:,:,:,:,:)
   real(8), public, allocatable :: GRD_xr_pl(:,:,:,:)
-
-  real(8), public, allocatable :: GRD_e    (:,:,:) ! unit vector
-  real(8), public, allocatable :: GRD_e_pl (:,:,:)
 #endif
 
 
@@ -323,9 +317,6 @@ contains
     allocate( GRD_xt_pl(ADM_gall_pl,K0,ADM_lall_pl,              ADM_nxyz) )
     allocate( GRD_xr   (ADM_gall   ,K0,ADM_lall   ,ADM_AI:ADM_AJ,ADM_nxyz) )
     allocate( GRD_xr_pl(ADM_gall_pl,K0,ADM_lall_pl,              ADM_nxyz) )
-
-    allocate( GRD_e    (ADM_gall   ,   ADM_lall   ,              ADM_nxyz) )
-    allocate( GRD_e_pl (ADM_gall_pl,   ADM_lall_pl,              ADM_nxyz) )
 #endif
     GRD_x    (:,:,:,:)   = CNST_UNDEF
     GRD_x_pl (:,:,:,:)   = CNST_UNDEF
@@ -340,10 +331,6 @@ contains
 
     ! data transfer for GRD_x (note: do not communicate GRD_xt)
     if( hgrid_comm_flg ) call COMM_data_transfer(GRD_x,GRD_x_pl) ! [mod] T.Ohno 110722
-
-    ! save unscaled grid points as the unit vector
-    GRD_e   (:,:,:) = GRD_x   (:,K0,:,:)
-    GRD_e_pl(:,:,:) = GRD_x_pl(:,K0,:,:)
 
     ! scaling
     if ( trim(GRD_grid_type) == 'ON_PLANE' ) then
