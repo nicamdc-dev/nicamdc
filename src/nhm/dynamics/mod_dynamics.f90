@@ -123,7 +123,7 @@ contains
        num_of_iteration_sstep(3) = TIME_SSTEP_MAX / 2
        num_of_iteration_sstep(4) = TIME_SSTEP_MAX
 
-    case('TRCADV') ! R.Yoshida 13/06/13 [add]
+    case('TRCADV')
        write(ADM_LOG_FID,*) '+++ Offline tracer experiment'
 
        num_of_iteration_lstep    = 0
@@ -209,7 +209,7 @@ contains
        TRC_ADV_TYPE,   &
        FLAG_NUDGING,   &
 !       TB_TYPE,        &
-       THUBURN_LIM       ! R.Yoshida 13/06/13 [add]
+       THUBURN_LIM
     use mod_prgvar, only: &
        prgvar_set, &
        prgvar_get
@@ -238,10 +238,10 @@ contains
     use mod_src_tracer, only: &
        src_tracer_advection
     use mod_forcing_driver, only: &
-       forcing_update ! R.Yoshida 13/06/13 [add]
+       forcing_update
 !    use mod_sgs, only: &
 !       sgs_smagorinsky
-    use mod_nudge, only: & ! Y.Niwa add 08/09/09
+    use mod_nudge, only: &
        NDG_update_reference, &
        NDG_apply_uvtp
     !##### OpenACC (for data copy) #####
@@ -274,8 +274,8 @@ contains
     real(8) :: PROG_split   (ADM_gall,   ADM_kall,ADM_lall,   6)         ! prognostic variables (split)
     real(8) :: PROG_split_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
 
-    real(8) :: v_mean_c     (ADM_gall,   ADM_kall,ADM_lall   ,5)
-    real(8) :: v_mean_c_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,5)
+    real(8) :: PROG_mean    (ADM_gall,   ADM_kall,ADM_lall   ,5)
+    real(8) :: PROG_mean_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,5)
 
     !--- density ( physical )
     real(8) :: rho   (ADM_gall,   ADM_kall,ADM_lall   )
@@ -357,7 +357,7 @@ contains
     call DEBUG_rapstart('__Dynamics')
 
     !$acc  data &
-    !$acc& create(PROG,PROGq,g_TEND,g_TENDq,f_TEND,f_TENDq,PROG0,PROGq0,PROG_split,v_mean_c) &
+    !$acc& create(PROG,PROGq,g_TEND,g_TENDq,f_TEND,f_TENDq,PROG0,PROGq0,PROG_split,PROG_mean) &
     !$acc& create(rho,vx,vy,vz,w,ein,tem,pre,eth,th,rhogd,pregd,q,qd,cv) &
     !$acc& pcopy(PRG_var,PRG_var1)
 
@@ -415,7 +415,7 @@ contains
                                   PROG  (:,:,:,I_RHOGW ), PROG_pl  (:,:,:,I_RHOGW ), & ! [IN]
                                   f_TEND(:,:,:,I_RHOG),   f_TEND_pl(:,:,:,I_RHOG),   & ! [IN]
                                   large_step_dt,                                     & ! [IN]
-                                  THUBURN_LIM                                        ) ! [IN] [add] 20130613 R.Yoshida
+                                  THUBURN_LIM                                        ) ! [IN]
 
        call DEBUG_rapend  ('___Tracer_Advection')
 
@@ -741,7 +741,7 @@ contains
 
        endif
 
-!       if ( TB_TYPE == 'SMG' ) then ! Smagorinksy-type SGS model [add] A.Noda 10/11/29
+!       if ( TB_TYPE == 'SMG' ) then ! Smagorinksy-type SGS model
 !          call sgs_smagorinsky( nl,                                                      &
 !                                rho,                       rho_pl,                       & ! [IN]
 !                                PROG(:,:,:,I_RHOG  ),      PROG_pl(:,:,:,I_RHOG  ),      & ! [IN]
@@ -855,13 +855,12 @@ contains
                            PROG_split(:,:,:,I_RHOGVZ), PROG_split_pl(:,:,:,I_RHOGVZ), & ! [INOUT]
                            PROG_split(:,:,:,I_RHOGW ), PROG_split_pl(:,:,:,I_RHOGW ), & ! [INOUT]
                            PROG_split(:,:,:,I_RHOGE ), PROG_split_pl(:,:,:,I_RHOGE ), & ! [INOUT]
-                           v_mean_c,                   v_mean_c_pl,                   & ! [OUT] mean value
+                           PROG_mean,                  PROG_mean_pl,                  & ! [OUT] mean value
                            small_step_ite,                                            & ! [IN]
                            small_step_dt                                              ) ! [IN]
 
        !$acc wait
        call DEBUG_rapend  ('___Small_step')
-
        !------------------------------------------------------------------------
        !>  Tracer advection
        !------------------------------------------------------------------------
@@ -872,17 +871,17 @@ contains
 
           if ( nl == num_of_iteration_lstep ) then
 
-             call src_tracer_advection( TRC_VMAX,                                              & ! [IN]
-                                        PROGq   (:,:,:,:),        PROGq_pl   (:,:,:,:),        & ! [INOUT]
-                                        PROG0   (:,:,:,I_RHOG  ), PROG0_pl   (:,:,:,I_RHOG  ), & ! [IN]
-                                        v_mean_c(:,:,:,I_RHOG  ), v_mean_c_pl(:,:,:,I_RHOG  ), & ! [IN]
-                                        v_mean_c(:,:,:,I_RHOGVX), v_mean_c_pl(:,:,:,I_RHOGVX), & ! [IN]
-                                        v_mean_c(:,:,:,I_RHOGVY), v_mean_c_pl(:,:,:,I_RHOGVY), & ! [IN]
-                                        v_mean_c(:,:,:,I_RHOGVZ), v_mean_c_pl(:,:,:,I_RHOGVZ), & ! [IN]
-                                        v_mean_c(:,:,:,I_RHOGW ), v_mean_c_pl(:,:,:,I_RHOGW ), & ! [IN]
-                                        f_TEND  (:,:,:,I_RHOG  ), f_TEND_pl  (:,:,:,I_RHOG  ), & ! [IN]
-                                        large_step_dt,                                         & ! [IN]
-                                        THUBURN_LIM                                            ) ! [IN]  ![add] 20130613 R.Yoshida
+             call src_tracer_advection( TRC_VMAX,                                                & ! [IN]
+                                        PROGq    (:,:,:,:),        PROGq_pl    (:,:,:,:),        & ! [INOUT]
+                                        PROG0    (:,:,:,I_RHOG  ), PROG0_pl    (:,:,:,I_RHOG  ), & ! [IN]
+                                        PROG_mean(:,:,:,I_RHOG  ), PROG_mean_pl(:,:,:,I_RHOG  ), & ! [IN]
+                                        PROG_mean(:,:,:,I_RHOGVX), PROG_mean_pl(:,:,:,I_RHOGVX), & ! [IN]
+                                        PROG_mean(:,:,:,I_RHOGVY), PROG_mean_pl(:,:,:,I_RHOGVY), & ! [IN]
+                                        PROG_mean(:,:,:,I_RHOGVZ), PROG_mean_pl(:,:,:,I_RHOGVZ), & ! [IN]
+                                        PROG_mean(:,:,:,I_RHOGW ), PROG_mean_pl(:,:,:,I_RHOGW ), & ! [IN]
+                                        f_TEND   (:,:,:,I_RHOG  ), f_TEND_pl   (:,:,:,I_RHOG  ), & ! [IN]
+                                        large_step_dt,                                           & ! [IN]
+                                        THUBURN_LIM                                              ) ! [IN]
 
              !$acc kernels pcopy(PROGq) pcopyin(f_TENDq) async(0)
              PROGq(:,:,:,:) = PROGq(:,:,:,:) + large_step_dt * f_TENDq(:,:,:,:) ! update rhogq by viscosity
@@ -909,13 +908,13 @@ contains
 
           do nq = 1, TRC_VMAX
 
-             call src_advection_convergence( v_mean_c(:,:,:,I_RHOGVX), v_mean_c_pl(:,:,:,I_RHOGVX), & ! [IN]
-                                             v_mean_c(:,:,:,I_RHOGVY), v_mean_c_pl(:,:,:,I_RHOGVY), & ! [IN]
-                                             v_mean_c(:,:,:,I_RHOGVZ), v_mean_c_pl(:,:,:,I_RHOGVZ), & ! [IN]
-                                             v_mean_c(:,:,:,I_RHOGW ), v_mean_c_pl(:,:,:,I_RHOGW ), & ! [IN]
-                                             q       (:,:,:,nq),       q_pl       (:,:,:,nq),       & ! [IN]
-                                             g_TENDq (:,:,:,nq),       g_TENDq_pl (:,:,:,nq),       & ! [OUT]
-                                             I_SRC_default                                          ) ! [IN]  [mod] H.Yashiro 20120530
+             call src_advection_convergence( PROG_mean(:,:,:,I_RHOGVX), PROG_mean_pl(:,:,:,I_RHOGVX), & ! [IN]
+                                             PROG_mean(:,:,:,I_RHOGVY), PROG_mean_pl(:,:,:,I_RHOGVY), & ! [IN]
+                                             PROG_mean(:,:,:,I_RHOGVZ), PROG_mean_pl(:,:,:,I_RHOGVZ), & ! [IN]
+                                             PROG_mean(:,:,:,I_RHOGW ), PROG_mean_pl(:,:,:,I_RHOGW ), & ! [IN]
+                                             q        (:,:,:,nq),       q_pl        (:,:,:,nq),       & ! [IN]
+                                             g_TENDq  (:,:,:,nq),       g_TENDq_pl  (:,:,:,nq),       & ! [OUT]
+                                             I_SRC_default                                            ) ! [IN]
 
              !$acc kernels pcopy(PROGq) pcopyin(PROGq0,g_TENDq,f_TENDq) async(0)
              PROGq(:,:,:,:) = PROGq0(:,:,:,:)                                                                   &
