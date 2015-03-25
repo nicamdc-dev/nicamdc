@@ -65,6 +65,11 @@ module mod_sfcvar
   !
   !++ Public variables
   !
+  integer, public, parameter :: INDEX_LAND    =  2
+  integer, public, parameter :: INDEX_LANDICE =  1
+  integer, public, parameter :: INDEX_SEA     =  0
+  integer, public, parameter :: INDEX_SEAICE  = -1
+
   !-----------------------------------------------------------------------------
   !
   !++ Public procedures
@@ -73,125 +78,88 @@ module mod_sfcvar
   !
   !++ Public & Private parameters
   !
-  !--- index of surface
-  integer, public, parameter :: INDEX_LAND = 2
-  integer, public, parameter :: INDEX_LANDICE = 1
-  integer, public, parameter :: INDEX_SEA = 0
-  integer, public, parameter :: INDEX_SEAICE = -1
-!!$  integer, public, parameter :: INDEX_MIXEDLAYER = -2
-  !
   integer, private, parameter :: DIAG_MAX = 1
 
-  integer,   public, save        :: I_PRECIP_TOT
-  integer,   public, save        :: I_PRECIP_CP
-  integer,   public, save        :: I_PRECIP_MP
-  !
-  integer,   public, save        :: I_OLR
-  integer,   public, save        :: I_EVAP_SFC
-  !
-  integer,   public, save        :: I_PRE_SFC
-  integer,   public, save        :: I_TEM_SFC
-  integer,   public, save        :: I_TH_SFC
-  integer,   public, save        :: I_RHO_SFC
+  integer, public :: I_PRECIP_TOT
+  integer, public :: I_PRECIP_CP
+  integer, public :: I_PRECIP_MP
+  integer, public :: I_OLR
+  integer, public :: I_EVAP_SFC
+  integer, public :: I_PRE_SFC
+  integer, public :: I_TEM_SFC
+  integer, public :: I_TH_SFC
+  integer, public :: I_RHO_SFC
+  integer, public :: I_RCOSZ
+  integer, public :: I_RFLUXS_SU
+  integer, public :: I_RFLUXS_SD
+  integer, public :: I_RFLUXS_LU
+  integer, public :: I_RFLUXS_LD
+  integer, public :: I_RFLUX_TOA_SU
+  integer, public :: I_RFLUX_TOA_SD
+  integer, public :: I_RFLUX_TOA_LU
+  integer, public :: I_RFLUX_TOA_LD
+  integer, public :: I_RFLUX_TOA_SU_C
+  integer, public :: I_RFLUX_TOA_SD_C
+  integer, public :: I_RFLUX_TOA_LU_C
+  integer, public :: I_RFLUX_TOA_LD_C
+  integer, public :: I_QV_SFC
+  integer, public :: I_QC_SFC
+  integer, public :: I_QR_SFC
+  integer, public :: I_SH_FLUX_SFC
+  integer, public :: I_LH_FLUX_SFC
+  integer, public :: I_TAUX_SFC
+  integer, public :: I_TAUY_SFC
+  integer, public :: I_TAUZ_SFC
+  integer, public :: I_VX10
+  integer, public :: I_VY10
+  integer, public :: I_VZ10
+  integer, public :: I_T2
+  integer, public :: I_Q2
+  integer, public :: I_CEV
+  integer, public :: I_CUMFRC
+  integer, public :: I_ALBEDO_SFC
+  integer, public :: I_PRECIP
+  integer, public :: I_PRECIP_ENERGY
+  integer, public :: I_PRECIP_ENERGY_CP
+  integer, public :: I_PRECIP_ENERGY_MP
+  integer, public :: I_PRECIP_EIN
+  integer, public :: I_PRECIP_EIN_CP
+  integer, public :: I_PRECIP_EIN_MP
+  integer, public :: I_PRECIP_LH
+  integer, public :: I_PRECIP_LH_CP
+  integer, public :: I_PRECIP_LH_MP
+  integer, public :: I_PRECIP_PHI
+  integer, public :: I_PRECIP_PHI_CP
+  integer, public :: I_PRECIP_PHI_MP
+  integer, public :: I_PRECIP_KIN
+  integer, public :: I_PRECIP_KIN_CP
+  integer, public :: I_PRECIP_KIN_MP
+  integer, public :: I_EVAP_ENERGY
+  integer, public :: I_EVAP_EIN
+  integer, public :: I_EVAP_LH
+  integer, public :: I_EVAP_PHI
+  integer, public :: I_EVAP_KIN
+  integer, public :: I_SFCRAD_ENERGY
+  integer, public :: I_TOARAD_ENERGY
+  integer, public :: I_VFRICTION
 
-  integer,   public, save        :: I_RCOSZ
-  integer,   public, save        :: I_RFLUXS_SU
-  integer,   public, save        :: I_RFLUXS_SD
-  integer,   public, save        :: I_RFLUXS_LU
-  integer,   public, save        :: I_RFLUXS_LD
-
-  integer,   public, save        :: I_RFLUX_TOA_SU
-  integer,   public, save        :: I_RFLUX_TOA_SD
-  integer,   public, save        :: I_RFLUX_TOA_LU
-  integer,   public, save        :: I_RFLUX_TOA_LD
-  !
-  integer,   public, save        :: I_RFLUX_TOA_SU_C
-  integer,   public, save        :: I_RFLUX_TOA_SD_C
-  integer,   public, save        :: I_RFLUX_TOA_LU_C
-  integer,   public, save        :: I_RFLUX_TOA_LD_C
-  !
-  integer,   public, save        :: I_QV_SFC
-  integer,   public, save        :: I_QC_SFC
-  integer,   public, save        :: I_QR_SFC
-!!$  integer,   public, save        :: I_TKE_SFC ! 07/05/08 :H.Tomita
-  !
-  integer,   public, save        :: I_SH_FLUX_SFC
-  integer,   public, save        :: I_LH_FLUX_SFC
-  integer,   public, save        :: I_TAUX_SFC
-  integer,   public, save        :: I_TAUY_SFC
-  integer,   public, save        :: I_TAUZ_SFC
-
-  integer,   public, save        :: I_VX10
-  integer,   public, save        :: I_VY10
-  integer,   public, save        :: I_VZ10
-  integer,   public, save        :: I_T2
-  integer,   public, save        :: I_Q2
-  !
-  integer,   public, save        :: I_CEV  ! 07/07/23 K.Suzuki add for SPRINTARS
-  !
-  ! 05/10/21 M.Satoh set default value: zero
-  integer,   public, save        :: I_CUMFRC = 0
-  !
-  ! 04/11/19 M.Satoh
-  !integer,   public, save        :: I_INDEX_SFC
-
-  ! 04/11/30 M.Satoh
-  integer,   public, save        :: I_ALBEDO_SFC
-
-  integer,   public, save        :: I_PRECIP
-  !
-  integer,   public, save        :: I_PRECIP_ENERGY
-  integer,   public, save        :: I_PRECIP_ENERGY_CP
-  integer,   public, save        :: I_PRECIP_ENERGY_MP
-  integer,   public, save        :: I_PRECIP_EIN
-  integer,   public, save        :: I_PRECIP_EIN_CP
-  integer,   public, save        :: I_PRECIP_EIN_MP
-  integer,   public, save        :: I_PRECIP_LH
-  integer,   public, save        :: I_PRECIP_LH_CP
-  integer,   public, save        :: I_PRECIP_LH_MP
-  integer,   public, save        :: I_PRECIP_PHI
-  integer,   public, save        :: I_PRECIP_PHI_CP
-  integer,   public, save        :: I_PRECIP_PHI_MP
-  integer,   public, save        :: I_PRECIP_KIN
-  integer,   public, save        :: I_PRECIP_KIN_CP
-  integer,   public, save        :: I_PRECIP_KIN_MP
-  !
-  integer,   public, save        :: I_EVAP_ENERGY
-  integer,   public, save        :: I_EVAP_EIN
-  integer,   public, save        :: I_EVAP_LH
-  integer,   public, save        :: I_EVAP_PHI
-  integer,   public, save        :: I_EVAP_KIN
-  !
-  integer,   public, save        :: I_SFCRAD_ENERGY
-  integer,   public, save        :: I_TOARAD_ENERGY
-  integer,   public, save        :: I_VFRICTION ! [Add] 12/03/28 T.Seiki
-  integer, allocatable, private,  save :: NVAR(:)
-  !
-  !--- total number of diagnostic variables
-  ! 04/11/19 M.Satoh
-  integer,   private, save        :: I_ALL
-! integer,   private, save        :: NVAR_ALL ! 05/10/28 M.Satoh not used
-
-! integer,   private, save        :: VMISS = -999.0d30 ! 10/05/17 M.Satoh
-  real(8),   private, save        :: VMISS = -999.0d30 ! 10/05/27 A.T.Noda
-
-  !--- precipatation flux
-
-!!$  integer, allocatable, public,  save :: index_sfc(:,:,:)
-!!$  integer, allocatable, public,  save :: index_sfc_pl(:,:,:)
-  !
   !-----------------------------------------------------------------------------
   !
   !++ Private variables
   !
-  real(8), allocatable, public  :: sfcvar   (:,:,:,:)
-  real(8), allocatable, private :: sfcvar_pl(:,:,:,:)
-  integer, allocatable, private :: KMAX(:)
-  integer, allocatable, public  :: KSTR(:)
-  integer, allocatable, private :: KEND(:)
+  integer, allocatable, private :: NVAR(:)
+
+  integer, private :: I_ALL
+
+  real(8), public , allocatable :: sfcvar   (:,:,:,:)
+  real(8), private, allocatable :: sfcvar_pl(:,:,:,:)
+
+  integer, private, allocatable :: KMAX(:)
+  integer, public , allocatable :: KSTR(:)
+  integer, private, allocatable :: KEND(:)
   integer, private              :: KSUM
 
-  integer :: i
+  real(8), private :: VMISS = -999.D30
 
   !-----------------------------------------------------------------------------
 contains

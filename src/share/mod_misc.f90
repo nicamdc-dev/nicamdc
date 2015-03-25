@@ -60,7 +60,7 @@ module mod_misc
   logical, private, parameter :: NSTR_ZERO_START = .true.
 
   !--- digit of separated file
-  integer, private, save      :: NSTR_MAX_DIGIT  = 5
+  integer, private            :: NSTR_MAX_DIGIT  = 5
   !
   !<----  if running on ES,
   !<----      NSTR_ZERO_START = .TRUE.

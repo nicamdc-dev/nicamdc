@@ -51,7 +51,7 @@ module mod_extdata
   !
   !++ Private parameters & variables
   !
-  integer, private, save      :: max_extdata            !--- max number of external data
+  integer, private            :: max_extdata            !--- max number of external data
   integer, private, parameter :: max_num_of_data = 2500 !--- max time step num
 
   !--- type definition of information of external data
@@ -76,7 +76,7 @@ module mod_extdata
      real(8), pointer        :: v_pl(:,:,:,:)     !--- data stoarege for poler region
   end type extdatainfo
 
-  type(extdatainfo), allocatable, private, save :: info(:)
+  type(extdatainfo), allocatable, private :: info(:)
 
   !-----------------------------------------------------------------------------
 contains

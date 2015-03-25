@@ -6,17 +6,17 @@
 Program prg_mkmnginfo
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
+  !++ Description:
   !       This program makes managing infomation file for paralell computation.
-  !       
-  ! 
+  !
+  !
   !++ Current Corresponding Author : H.Tomita
-  ! 
-  !++ History: 
-  !      Version   Date       Comment 
+  !
+  !++ History:
+  !      Version   Date       Comment
   !      -----------------------------------------------------------------------
   !      0.00      04-02-17   Imported from igdc-4.34
-  !      0.01      07-10-22   T.Mitsui:change value of nmax_mng 
+  !      0.01      07-10-22   T.Mitsui:change value of nmax_mng
   !                10-06-07   S.Iga: new grid (Iga 2010) is implemented
   !                11-07-21   T.Ohno: two new hgrid systems are added.
   !                           * Modified lines for '1DMD-ON-SPHERE' are added
@@ -25,7 +25,7 @@ Program prg_mkmnginfo
   !
   !-----------------------------------------------------------------------------
   !
-  !++ Used modules 
+  !++ Used modules
   !
   Use mod_adm, Only :  &
        !--- Public parameters
@@ -58,8 +58,8 @@ Program prg_mkmnginfo
   character(128) :: MAPPING_TYPE = '' ! [add] C.Kodama 2011/12/14
                                       ! ''        : standard
                                       ! 'K-TERAI' : TERAI Mapping for K-Computer
-  integer,save::  XTMS_K= 6 ! S.Iga100607 (it is not used for icosahedral)
-  integer,save::  XTMS_MLCP_S= 1 ! only for MLCP  S.Iga100607
+  integer ::  XTMS_K= 6 ! S.Iga100607 (it is not used for icosahedral)
+  integer ::  XTMS_MLCP_S= 1 ! only for MLCP  S.Iga100607
   namelist / mkmnginfo_cnf / &
        XTMS_K,   & !--- S.Iga100607
        XTMS_MLCP_S,   & !--- S.Iga100607
@@ -84,7 +84,7 @@ Program prg_mkmnginfo
      call generate_mngtab_periodic_1dmd(rlevel,prc_num,output_fname) ! T.Ohno 110721
   elseif (trim(HGRID_SYSTEM).eq.'1DMD-ON-SPHERE') then ! M.Hara 110721
      call generate_mngtab_1dmd_on_sphere(rlevel,prc_num,output_fname) ! M.Hara 110721
-  else !S.Iga100607   
+  else !S.Iga100607
      Call generate_mngtab(rlevel,prc_num,output_fname)  !icosahedral
   endif!S.Iga100607
   !
@@ -309,15 +309,15 @@ Contains
        nw=rgn_tab(:,ADM_NW,l)
        ne=rgn_tab(:,ADM_NE,l)
        se=rgn_tab(:,ADM_SE,l)
-       Write(fid,nml=rgn_link_info) 
+       Write(fid,nml=rgn_link_info)
     End Do
     num_of_proc=nmax_prc
-    Write(fid,nml=proc_info) 
+    Write(fid,nml=proc_info)
     Do m=1,nmax_prc
        peid=m
        num_of_mng=mngrgn(m)
        mng_rgnid=prc_tab(:,m)
-       Write(fid,nml=rgn_mng_info) 
+       Write(fid,nml=rgn_mng_info)
     End Do
     !
     Close(fid)
@@ -341,7 +341,7 @@ Contains
     Integer :: k,m,p
     Integer :: rgnlen
 !    Integer, Parameter :: nmax_dmd=24!10
-    Integer,save :: nmax_dmd=-1
+    Integer :: nmax_dmd=-1
     ![Mod] 07.10.22 T.Mitsui
 !!$    Integer, Parameter :: nmax_mng=2048
     !
@@ -609,15 +609,15 @@ Contains
        nw=rgn_tab(:,ADM_NW,l)
        ne=rgn_tab(:,ADM_NE,l)
        se=rgn_tab(:,ADM_SE,l)
-       Write(fid,nml=rgn_link_info) 
+       Write(fid,nml=rgn_link_info)
     End Do
     num_of_proc=nmax_prc
-    Write(fid,nml=proc_info) 
+    Write(fid,nml=proc_info)
     Do m=1,nmax_prc
        peid=m
        num_of_mng=mngrgn(m)
        mng_rgnid=prc_tab(:,m)
-       Write(fid,nml=rgn_mng_info) 
+       Write(fid,nml=rgn_mng_info)
     End Do
     !
     Close(fid)
@@ -712,7 +712,7 @@ Contains
 
     do i=ADM_SW,ADM_SE
        do d=1,nmax_dmd
-          if (dmd_data(i,d)<1) then 
+          if (dmd_data(i,d)<1) then
              dmd_data(i,d)=dmd_data(i,d)+nmax_dmd
           elseif (dmd_data(i,d)>nmax_dmd) then
              dmd_data(i,d)=dmd_data(i,d)-nmax_dmd
@@ -812,7 +812,7 @@ Contains
                          d_nb=dmd_data(ADM_SE,d)
                          edgid_nb=ADM_SW
                       Else
-                         i_nb=1  
+                         i_nb=1
                          j_nb=j
                          d_nb=dmd_data(ADM_SE,d)
                          edgid_nb=ADM_NW
@@ -862,15 +862,15 @@ Contains
        nw=rgn_tab(:,ADM_NW,l)
        ne=rgn_tab(:,ADM_NE,l)
        se=rgn_tab(:,ADM_SE,l)
-       Write(fid,nml=rgn_link_info) 
+       Write(fid,nml=rgn_link_info)
     End Do
     num_of_proc=nmax_prc
-    Write(fid,nml=proc_info) 
+    Write(fid,nml=proc_info)
     Do m=1,nmax_prc
        peid=m
        num_of_mng=mngrgn(m)
        mng_rgnid=prc_tab(:,m)
-       Write(fid,nml=rgn_mng_info) 
+       Write(fid,nml=rgn_mng_info)
     End Do
     !
     Close(fid)
@@ -1090,15 +1090,15 @@ Contains
        nw=rgn_tab(:,ADM_NW,l)
        ne=rgn_tab(:,ADM_NE,l)
        se=rgn_tab(:,ADM_SE,l)
-       Write(fid,nml=rgn_link_info) 
+       Write(fid,nml=rgn_link_info)
     End Do
     num_of_proc=nmax_prc
-    Write(fid,nml=proc_info) 
+    Write(fid,nml=proc_info)
     Do m=1,nmax_prc
        peid=m
        num_of_mng=mngrgn(m)
        mng_rgnid=prc_tab(:,m)
-       Write(fid,nml=rgn_mng_info) 
+       Write(fid,nml=rgn_mng_info)
     End Do
     !
     Close(fid)
@@ -1250,15 +1250,15 @@ Contains
        nw    = rgn_tab(:,ADM_NW,l)
        ne    = rgn_tab(:,ADM_NE,l)
        se    = rgn_tab(:,ADM_SE,l)
-       Write(fid,nml=rgn_link_info) 
+       Write(fid,nml=rgn_link_info)
     End Do
     num_of_proc=nmax_prc
-    Write(fid,nml=proc_info) 
+    Write(fid,nml=proc_info)
     Do m=1,nmax_prc
        peid=m
        num_of_mng=mngrgn(m)
        mng_rgnid=prc_tab(:,m)
-       Write(fid,nml=rgn_mng_info) 
+       Write(fid,nml=rgn_mng_info)
     End Do
     !
     Close(fid)
@@ -1269,48 +1269,48 @@ Contains
 !!$ [Add] 11.07,01 M.Hara
     use mod_adm, only: &
          nmax_mng => PRC_RGN_NMAX
-    Implicit None 
-    !    
+    Implicit None
+    !
     Integer, Intent(in) :: rl
     Integer, intent(in) :: nmax_prc
     Character(len=*), Intent(in) :: fname
-    !    
+    !
     Integer :: i,j,d
     Integer :: i_nb,j_nb,d_nb,edgid_nb
     Integer :: l,l_nb
     Integer :: k,m,p
     Integer :: rgnlen
     Integer, Parameter :: nmax_dmd=10
-    !    
+    !
     Integer :: all_rgn
-    !    
+    !
     Integer, Allocatable :: rgn_tab(:,:,:)
     Integer, Allocatable :: mngrgn(:)
     Integer, Allocatable :: prc_tab(:,:)
-    !    
+    !
     Integer,Parameter :: fid=20
-    !    
+    !
     Integer :: num_of_rgn
     Namelist / rgn_info / num_of_rgn
-    !    
+    !
     Integer :: rgnid
-    Integer :: & 
+    Integer :: &
          sw(ADM_RID:ADM_DIR),&
          nw(ADM_RID:ADM_DIR),&
          ne(ADM_RID:ADM_DIR),&
          se(ADM_RID:ADM_DIR)
     Namelist / rgn_link_info / rgnid, sw, nw, ne, se
-    !    
+    !
     Integer :: num_of_proc
     Namelist /proc_info/ num_of_proc
-    !    
-    Integer :: peid 
+    !
+    Integer :: peid
     Integer :: num_of_mng
     Integer :: mng_rgnid(nmax_mng)
     Namelist /rgn_mng_info/ peid, num_of_mng,mng_rgnid
-    !    
+    !
     Integer :: dmd_data(ADM_SW:ADM_SE,nmax_dmd)
-    !    
+    !
     dmd_data(ADM_SW:ADM_SE, 1)=(/ 6, 5, 2,10/)
 
     !

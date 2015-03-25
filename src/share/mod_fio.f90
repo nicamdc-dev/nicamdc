@@ -41,44 +41,44 @@ module mod_fio
   !++ Public parameters & variables
   !
   !--- character length
-  integer, parameter, public :: FIO_HSHORT =  16
-  integer, parameter, public :: FIO_HMID   =  64
-  integer, parameter, public :: FIO_HLONG  = 256
+  integer, public, parameter :: FIO_HSHORT =  16
+  integer, public, parameter :: FIO_HMID   =  64
+  integer, public, parameter :: FIO_HLONG  = 256
 
   !--- data type
-  integer, parameter, public :: FIO_REAL4    = 0
-  integer, parameter, public :: FIO_REAL8    = 1
-  integer, parameter, public :: FIO_INTEGER4 = 2
-  integer, parameter, public :: FIO_INTEGER8 = 3
+  integer, public, parameter :: FIO_REAL4    = 0
+  integer, public, parameter :: FIO_REAL8    = 1
+  integer, public, parameter :: FIO_INTEGER4 = 2
+  integer, public, parameter :: FIO_INTEGER8 = 3
 
   !--- data endian
-  integer, parameter, public :: FIO_UNKNOWN_ENDIAN = 0
-  integer, parameter, public :: FIO_LITTLE_ENDIAN  = 1
-  integer, parameter, public :: FIO_BIG_ENDIAN     = 2
+  integer, public, parameter :: FIO_UNKNOWN_ENDIAN = 0
+  integer, public, parameter :: FIO_LITTLE_ENDIAN  = 1
+  integer, public, parameter :: FIO_BIG_ENDIAN     = 2
 
   !--- topology
-  integer, parameter, public :: FIO_ICOSAHEDRON = 0
-  integer, parameter, public :: FIO_IGA_LCP     = 1
-  integer, parameter, public :: FIO_IGA_MLCP    = 2
+  integer, public, parameter :: FIO_ICOSAHEDRON = 0
+  integer, public, parameter :: FIO_IGA_LCP     = 1
+  integer, public, parameter :: FIO_IGA_MLCP    = 2
 
   !--- file mode (partial or complete)
-  integer, parameter, public :: FIO_SPLIT_FILE = 0
-  integer, parameter, public :: FIO_INTEG_FILE = 1
+  integer, public, parameter :: FIO_SPLIT_FILE = 0
+  integer, public, parameter :: FIO_INTEG_FILE = 1
 
   !--- proccessor type
-  integer, parameter, public :: FIO_SINGLE_PROC = 0
-  integer, parameter, public :: FIO_MULTI_PROC  = 1
+  integer, public, parameter :: FIO_SINGLE_PROC = 0
+  integer, public, parameter :: FIO_MULTI_PROC  = 1
 
   !--- action type
-  integer, parameter, public :: FIO_FREAD   = 0
-  integer, parameter, public :: FIO_FWRITE  = 1
-  integer, parameter, public :: FIO_FAPPEND = 2 ! [add] H.Yashiro 20110907 overwrite mode
+  integer, public, parameter :: FIO_FREAD   = 0
+  integer, public, parameter :: FIO_FWRITE  = 1
+  integer, public, parameter :: FIO_FAPPEND = 2
 
   !--- data dump type
-  integer, parameter, public :: FIO_DUMP_OFF      = 0
-  integer, parameter, public :: FIO_DUMP_HEADER   = 1
-  integer, parameter, public :: FIO_DUMP_ALL      = 2
-  integer, parameter, public :: FIO_DUMP_ALL_MORE = 3
+  integer, public, parameter :: FIO_DUMP_OFF      = 0
+  integer, public, parameter :: FIO_DUMP_HEADER   = 1
+  integer, public, parameter :: FIO_DUMP_ALL      = 2
+  integer, public, parameter :: FIO_DUMP_ALL_MORE = 3
 
   !--- struct for package infomation
   type, public :: headerinfo
@@ -92,8 +92,6 @@ module mod_fio
      integer                  :: glevel
      integer                  :: rlevel
      integer                  :: num_of_rgn
-     ! [Mod] 2011/12/14, T.Seiki
-!!$  integer,allocatable      :: rgnid(:)
      integer, pointer         :: rgnid(:)
   endtype headerinfo
 
@@ -120,16 +118,16 @@ module mod_fio
   !
   !++ Private parameters & variables
   !
-  integer,             parameter, private :: FIO_nmaxfile = 64
-  character(LEN=FIO_HLONG), save, private :: FIO_fname_list(FIO_nmaxfile)
-  integer,                  save, private :: FIO_fid_list  (FIO_nmaxfile)
-  integer,                  save, private :: FIO_fid_count = 1
+  integer,                  private, parameter :: FIO_nmaxfile = 64
+  character(LEN=FIO_HLONG), private            :: FIO_fname_list(FIO_nmaxfile)
+  integer,                  private            :: FIO_fid_list  (FIO_nmaxfile)
+  integer,                  private            :: FIO_fid_count = 1
 
   type(headerinfo), private :: hinfo
   type(datainfo),   private :: dinfo
 
   integer, private, parameter :: max_num_of_data = 2500 !--- max time step num
-  integer, parameter, private :: preclist(0:3) = (/ 4, 8, 4, 8 /)
+  integer, private, parameter :: preclist(0:3) = (/ 4, 8, 4, 8 /)
 
   !-----------------------------------------------------------------------------
 contains
@@ -153,8 +151,6 @@ contains
     call DEBUG_rapend  ('FILEIO_out')
 
     allocate( prc_tab(ADM_lall) )
-    ! [fix] 20120201 T.Seiki
-    !!$ prc_tab(:) = ADM_prc_tab(:,ADM_prc_me)-1
     prc_tab(1:ADM_lall) = ADM_prc_tab(1:ADM_lall,ADM_prc_me)-1
 
     call fio_syscheck()
@@ -191,7 +187,7 @@ contains
     character(LEN=*), intent( in) :: pkg_note
 
     character(LEN=FIO_HSHORT) :: rwname(0:2)
-    data rwname / 'READ','WRITE','APPEND' / ! [fix] H.Yashiro 20110912
+    data rwname / 'READ','WRITE','APPEND' /
 
     character(LEN=FIO_HLONG) :: fname
     integer                  :: n
@@ -287,7 +283,7 @@ contains
 
     !--- verify
     if ( did == -1 ) then
-       if ( present(allow_missingq) ) then ! [bugfix] H.Yashiro 20110912
+       if ( present(allow_missingq) ) then
           if ( allow_missingq ) then
              write(ADM_LOG_FID,*) '*** [INPUT]/[FIO] data not found! : ', &
                                   'varname= ',trim(varname),', step=',step

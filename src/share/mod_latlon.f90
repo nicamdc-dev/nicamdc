@@ -47,6 +47,16 @@ module mod_latlon
   !
   !++ Public parameters & variables
   !
+  integer, public, parameter :: GMTR_P_nmax_var = 2
+  integer, public, parameter :: GMTR_P_LAT = 1
+  integer, public, parameter :: GMTR_P_LON = 2
+
+  real(8), public, allocatable :: GMTR_P_ll   (:,:,:,:)
+  real(8), public, allocatable :: GMTR_P_ll_pl(:,:,:,:)
+
+  character(len=ADM_NSYS),  public :: polygon_type = 'ON_SPHERE' ! triangle is fit to the sphere
+  !                                                  'ON_PLANE'  ! triangle is treated as 2D
+
   !-----------------------------------------------------------------------------
   !
   !++ Private procedure
@@ -60,51 +70,42 @@ module mod_latlon
   !
   !++ Private parameters & variables
   !
-  integer, public, parameter :: GMTR_P_nmax_var = 2
-  integer, public, parameter :: GMTR_P_LAT = 1
-  integer, public, parameter :: GMTR_P_LON = 2
-
-  real(8), public, allocatable, save :: GMTR_P_ll   (:,:,:,:)
-  real(8), public, allocatable, save :: GMTR_P_ll_pl(:,:,:,:)
-
-  character(len=ADM_NSYS),  public, save :: polygon_type = 'ON_SPHERE' ! triangle is fit to the sphere
-  !                                                        'ON_PLANE'  ! triangle is treated as 2D
-
-  character(len=ADM_NSYS), private, save :: latlon_type = 'EQUIDIST' ! grid type ( equidist or gaussian )
-  integer,                 private, save :: imax        = 360        ! number of longitude
-  integer,                 private, save :: jmax        = 180        ! number of latitude
-  real(8),                 private, save :: lonmin      = -999.D0    ! minimun longitude of region window in deg
-  real(8),                 private, save :: lonmax      = -999.D0    ! maximun longitude of region window in deg
-  real(8),                 private, save :: latmin      = -999.D0    ! minimun latitude of region window in deg
-  real(8),                 private, save :: latmax      = -999.D0    ! maximun latitude of region window in deg
-  logical,                 private, save :: lon_offset  = .true.     ! logitude offset
-  real(8),                 private, save :: polar_limit = -999.D0    ! search all longitude if abs(lat) > polar_limit
+  character(len=ADM_NSYS), private :: latlon_type = 'EQUIDIST' ! grid type ( equidist or gaussian )
+  integer,                 private :: imax        = 360        ! number of longitude
+  integer,                 private :: jmax        = 180        ! number of latitude
+  real(8),                 private :: lonmin      = -999.D0    ! minimun longitude of region window in deg
+  real(8),                 private :: lonmax      = -999.D0    ! maximun longitude of region window in deg
+  real(8),                 private :: latmin      = -999.D0    ! minimun latitude of region window in deg
+  real(8),                 private :: latmax      = -999.D0    ! maximun latitude of region window in deg
+  logical,                 private :: lon_offset  = .true.     ! logitude offset
+  real(8),                 private :: polar_limit = -999.D0    ! search all longitude if abs(lat) > polar_limit
 
   character(len=ADM_MAXFNAME), private :: SAMPLE_OUT_BASENAME = ''
   character(len=ADM_NSYS),     private :: SAMPLE_io_mode      = 'ADVANCED'
 
-  character(len=ADM_NSYS),     private, save :: output_lldata_type = 'mkllmap'
+  character(len=ADM_NSYS),     private :: output_lldata_type = 'mkllmap'
 
-  real(8), private, allocatable, save :: lat(:)
-  real(8), private, allocatable, save :: lon(:)
+  real(8), private, allocatable :: lat(:)
+  real(8), private, allocatable :: lon(:)
 
-  integer,              private, save :: nmax_llgrid
-  integer, private, allocatable, save :: nmax_llgrid_rgn(:)
+  integer, private              :: nmax_llgrid
+  integer, private, allocatable :: nmax_llgrid_rgn(:)
 
-  integer, private, allocatable, save :: lon_index(:)
-  integer, private, allocatable, save :: lat_index(:)
-  integer, private, allocatable, save :: l_index  (:)
-  integer, private, allocatable, save :: t_index  (:)
-  integer, private, allocatable, save :: n1_index (:)
-  integer, private, allocatable, save :: n2_index (:)
-  integer, private, allocatable, save :: n3_index (:)
-  real(8), private, allocatable, save :: w1       (:)
-  real(8), private, allocatable, save :: w2       (:)
-  real(8), private, allocatable, save :: w3       (:)
+  integer, private, allocatable :: lon_index(:)
+  integer, private, allocatable :: lat_index(:)
+  integer, private, allocatable :: l_index  (:)
+  integer, private, allocatable :: t_index  (:)
+  integer, private, allocatable :: n1_index (:)
+  integer, private, allocatable :: n2_index (:)
+  integer, private, allocatable :: n3_index (:)
+  real(8), private, allocatable :: w1       (:)
+  real(8), private, allocatable :: w2       (:)
+  real(8), private, allocatable :: w3       (:)
 
-  logical, private,              save :: debug = .false.
-  real(4), private, allocatable, save :: checkmap   (:,:)
-  real(4), private, allocatable, save :: checkmapsum(:,:)
+  real(4), private, allocatable :: checkmap   (:,:)
+  real(4), private, allocatable :: checkmapsum(:,:)
+
+  logical, private :: debug = .false.
   !-----------------------------------------------------------------------------
 contains
 

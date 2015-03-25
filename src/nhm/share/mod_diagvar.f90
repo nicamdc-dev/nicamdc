@@ -94,87 +94,75 @@ module mod_diagvar
        ADM_NSYS
   implicit none
 
-  integer, public, save ::  DIAG_VMAX
+  integer, public ::  DIAG_VMAX
   integer, private      ::  I_STA
   integer, private      ::  I_END
 
   ! [Add] 10.04.26 M.Satoh
-  integer, public, save ::  DIAG_VMAX_1LAYER
+  integer, public ::  DIAG_VMAX_1LAYER
   integer, private      ::  I_STA_1LAYER ! 2010.5.5 M.Satoh [add]
   integer, private      ::  I_END_1LAYER
 
   ! [Add] 11.07.25 M.Satoh
-  integer, public, save ::  DIAG_VMAX_NLAYER
+  integer, public ::  DIAG_VMAX_NLAYER
   integer, private      ::  I_STA_NLAYER
   integer, private      ::  I_END_NLAYER
-  integer, public, save ::  DIAG_KTOT_NLAYER
+  integer, public ::  DIAG_KTOT_NLAYER
 
-  ! only for CP_TYPE == CLOUD_PARAM
-  ! 07/12/05 [Mod] T.Mitsui
-!!$  integer, private,save ::  I_CLOUD_PARAM_VMAX ! 11/08/16b M.Satoh [del]
-  integer, public, save ::  I_CUMCLW       = -999
-  integer, public, save ::  I_GDCLW        = -999
-  integer, public, save ::  I_GDCFRC       = -999
-  integer, public, save ::  I_CBMFX        = -999
-  integer, public, save ::  I_RHOGQV_CONV  = -999
-  integer, public, save ::  I_QV_DYN_TEND  = -999 ! 11/08/16 M.Satoh
-  integer, public, save ::  I_QV_TB_TEND  = -999  ! 11/08/16 M.Satoh
-!!$  integer, public, save ::  I_RHOGQV_CONV_TB = -999 ! 10/05/06 M.Satoh
-  integer, public, save ::  I_EVAP_SFC     = -999 ! 10/05/22 M.Satoh
-  integer, public, save ::  I_SH_FLUX_SFC  = -999 ! 2011/08/16b M.Satoh
+  integer, public ::  I_CUMCLW       = -999
+  integer, public ::  I_GDCLW        = -999
+  integer, public ::  I_GDCFRC       = -999
+  integer, public ::  I_CBMFX        = -999
+  integer, public ::  I_RHOGQV_CONV  = -999
+  integer, public ::  I_QV_DYN_TEND  = -999 ! 11/08/16 M.Satoh
+  integer, public ::  I_QV_TB_TEND  = -999  ! 11/08/16 M.Satoh
+!!$  integer, public ::  I_RHOGQV_CONV_TB = -999 ! 10/05/06 M.Satoh
+  integer, public ::  I_EVAP_SFC     = -999 ! 10/05/22 M.Satoh
+  integer, public ::  I_SH_FLUX_SFC  = -999 ! 2011/08/16b M.Satoh
   ! 11/08/16 M.Satoh
   !   I_CBMFX_CHIKIRA is specific to Chikira scheme,
   !   while I_CBMFX is generic for any cumulus parameterization.
   !   The variable for I_CBMFX_CHIKIRA has NCTP layers,
   !   while the variable for I_CBMFX has ADM_kall layers.
-  integer, public, save ::  I_CBMFX_CHIKIRA = -999 ! 11/08/16 M.Satoh
-  ! only for TB_TYPE == MY2MOIST
-  ! 07/12/05 [Mod] T.Mitsui
-!!$  integer, private, parameter :: I_MY2MOIST_VMAX = 7
-! integer, private,save ::  I_MY2MOIST_VMAX
-  integer, private,save ::  I_TURB_VMAX
-  integer, public, save ::  I_QKEd         = -999
-  integer, public, save ::  I_TSQd         = -999
-  integer, public, save ::  I_QSQd         = -999
-  integer, public, save ::  I_COVd         = -999
-  integer, public, save ::  I_CFRACP       = -999
-  integer, public, save ::  I_QCLWB        = -999
-  integer, public, save ::  I_QCLIB        = -999
-  ! only for AE_TYPE == SPRINTARS
-  ! 07/12/05 [Mod] T.Mitsui
-!!$  integer, private, parameter :: I_SPRINTARS_VMAX = 1
-  integer, private,save ::  I_SPRINTARS_VMAX
-  integer, public, save ::  I_DFE          = -999
-  ! 07/12/05 [Add] T.Mitsui
-  ! for Cloudmicrophysics
-  integer, private,save ::  I_MP_VMAX
-  integer, public, save ::  I_UNCCN        = -999
+  integer, public ::  I_CBMFX_CHIKIRA = -999 ! 11/08/16 M.Satoh
 
-  ! 10/04/26 [Add] M.Satoh
-  ! for roughness_seq_yqw
-!!$  integer, private,save ::  I_ROUGHNESS_SEA_MAX    ! 10/05/05 [add] M.Satoh; 11/08/16 M.Satoh [del]
-  integer, public, save ::  I_ROUGHNESS_SEA = -999 ! 10/04/26 [add] M.Satoh
+  integer, private ::  I_TURB_VMAX
+  integer, public ::  I_QKEd         = -999
+  integer, public ::  I_TSQd         = -999
+  integer, public ::  I_QSQd         = -999
+  integer, public ::  I_COVd         = -999
+  integer, public ::  I_CFRACP       = -999
+  integer, public ::  I_QCLWB        = -999
+  integer, public ::  I_QCLIB        = -999
+
+  integer, private ::  I_SPRINTARS_VMAX
+  integer, public ::  I_DFE          = -999
+
+  integer, private ::  I_MP_VMAX
+  integer, public ::  I_UNCCN        = -999
+
+  integer, public ::  I_ROUGHNESS_SEA = -999 ! 10/04/26 [add] M.Satoh
   !
-  real(8), public, allocatable, save :: diagvar(:,:,:,:)
-  real(8), public, allocatable, save :: diagvar_pl(:,:,:,:)
+  real(8), public, allocatable :: diagvar(:,:,:,:)
+  real(8), public, allocatable :: diagvar_pl(:,:,:,:)
 
-  real(8), public, allocatable, save :: diagvar1(:,:,:,:) ! 10/04/26 [add] M.Satoh
-  real(8), public, allocatable, save :: diagvar1_pl(:,:,:,:) ! 10/04/26 [add] M.Satoh
-  real(8), public, allocatable, save :: diagvarn(:,:,:,:) ! 11/08/16 [add] M.Satoh
-  real(8), public, allocatable, save :: diagvarn_pl(:,:,:,:) ! 11/08/16 [add] M.Satoh
+  real(8), public, allocatable :: diagvar1(:,:,:,:) ! 10/04/26 [add] M.Satoh
+  real(8), public, allocatable :: diagvar1_pl(:,:,:,:) ! 10/04/26 [add] M.Satoh
+  real(8), public, allocatable :: diagvarn(:,:,:,:) ! 11/08/16 [add] M.Satoh
+  real(8), public, allocatable :: diagvarn_pl(:,:,:,:) ! 11/08/16 [add] M.Satoh
   !
   integer, private, parameter :: DIAG_VMAX_DEF = 256 ! 2010/05/05 M.Satoh [add]
-  character(len=ADM_NSYS), public, save :: &
+  character(len=ADM_NSYS), public :: &
        diag_cname(DIAG_VMAX_DEF)             ! 07/12/05 [Add] T.Mitsui
-  character(len=ADM_NSYS), public, save :: &
+  character(len=ADM_NSYS), public :: &
        diag_cname_1layer(DIAG_VMAX_DEF)      ! 10/04/29 [Add] M.Satoh
-  character(len=ADM_NSYS), public, save :: &
+  character(len=ADM_NSYS), public :: &
        diag_cname_nlayer(DIAG_VMAX_DEF)      ! 11/08/16 [Add] M.Satoh
-  integer, public, save :: &
+  integer, public :: &
        diag_knum_nlayer(DIAG_VMAX_DEF)       ! 11/08/16 [Add] M.Satoh
-  integer, public, save :: &
+  integer, public :: &
        diag_ksta_nlayer(DIAG_VMAX_DEF)       ! 11/08/16 [Add] M.Satoh
-  integer, public, save :: &
+  integer, public :: &
        diag_kend_nlayer(DIAG_VMAX_DEF)       ! 11/08/16 [Add] M.Satoh
   !
   public :: diagvar_setup
@@ -195,32 +183,32 @@ module mod_diagvar
   public :: diagvar_checkvalues
   public :: diagvar_restart_output
 
-  character(LEN=ADM_MAXFNAME), private, save :: output_basename = '' ! [add] H.Yashiro 20120512
+  character(LEN=ADM_MAXFNAME), private :: output_basename = '' ! [add] H.Yashiro 20120512
   ! [Add] 2012/06/07 T.Seiki, for multi-job system with LEGACY formatted data
-  character(ADM_MAXFNAME), private, save  :: output_basename_CBMFX = ''
-  character(ADM_MAXFNAME), private, save  :: output_basename_MP    = ''
-  character(ADM_MAXFNAME), private, save  :: output_basename_QV_TB_TEND = ''
-  character(ADM_MAXFNAME), private, save  :: output_basename_EVAP_SFC = ''
-  character(ADM_MAXFNAME), private, save  :: output_basename_SH_FLUX_SFC = ''
-  character(ADM_MAXFNAME), private, save  :: output_basename_ROUGHNESS_SEA = ''
-  character(ADM_MAXFNAME), private, save  :: output_basename_CBMFX_CHIKIRA = ''
+  character(ADM_MAXFNAME), private  :: output_basename_CBMFX = ''
+  character(ADM_MAXFNAME), private  :: output_basename_MP    = ''
+  character(ADM_MAXFNAME), private  :: output_basename_QV_TB_TEND = ''
+  character(ADM_MAXFNAME), private  :: output_basename_EVAP_SFC = ''
+  character(ADM_MAXFNAME), private  :: output_basename_SH_FLUX_SFC = ''
+  character(ADM_MAXFNAME), private  :: output_basename_ROUGHNESS_SEA = ''
+  character(ADM_MAXFNAME), private  :: output_basename_CBMFX_CHIKIRA = ''
 
-  character(ADM_MAXFNAME), private, save  :: CBMFX_fname = 'NONE'
-  character(ADM_MAXFNAME), private, save  :: TB_fname    = 'NONE' ! 07/07/05 A.T.Noda
-  character(ADM_MAXFNAME), private, save  :: MP_fname    = 'NONE' ! 07/12/05  T.Mitsui
-  character(ADM_MAXFNAME), private, save  :: QV_TB_TEND_fname = 'NONE' ! 11/08/16 M.Satoh
-!!$  character(ADM_MAXFNAME), private, save  :: RHOGQV_CONV_TB_fname = 'NONE' ! 10/05/06  M.Satoh
-  character(ADM_MAXFNAME), private, save  :: EVAP_SFC_fname = 'NONE' ! 10/05/22  M.Satoh
-  character(ADM_MAXFNAME), private, save  :: SH_FLUX_SFC_fname = 'NONE' ! 11/08/16b  M.Satoh
-  character(ADM_MAXFNAME), private, save  :: ROUGHNESS_SEA_fname = 'NONE' ! 10/04/28 M.Satoh
-  character(ADM_MAXFNAME), private, save  :: CBMFX_CHIKIRA_fname = 'NONE' ! 11/08/16 M.Satoh
+  character(ADM_MAXFNAME), private  :: CBMFX_fname = 'NONE'
+  character(ADM_MAXFNAME), private  :: TB_fname    = 'NONE' ! 07/07/05 A.T.Noda
+  character(ADM_MAXFNAME), private  :: MP_fname    = 'NONE' ! 07/12/05  T.Mitsui
+  character(ADM_MAXFNAME), private  :: QV_TB_TEND_fname = 'NONE' ! 11/08/16 M.Satoh
+!!$  character(ADM_MAXFNAME), private  :: RHOGQV_CONV_TB_fname = 'NONE' ! 10/05/06  M.Satoh
+  character(ADM_MAXFNAME), private  :: EVAP_SFC_fname = 'NONE' ! 10/05/22  M.Satoh
+  character(ADM_MAXFNAME), private  :: SH_FLUX_SFC_fname = 'NONE' ! 11/08/16b  M.Satoh
+  character(ADM_MAXFNAME), private  :: ROUGHNESS_SEA_fname = 'NONE' ! 10/04/28 M.Satoh
+  character(ADM_MAXFNAME), private  :: CBMFX_CHIKIRA_fname = 'NONE' ! 11/08/16 M.Satoh
 
-  logical, private, save :: input_direct_access = .false.
-  logical, private, save :: output_direct_access = .false.
+  logical, private :: input_direct_access = .false.
+  logical, private :: output_direct_access = .false.
 
-  character(LEN=ADM_MAXFNAME), private, save :: input_io_mode     = 'ADVANCED' ! [add] H.Yashiro 20110819
-  character(LEN=ADM_MAXFNAME), private, save :: output_io_mode    = 'ADVANCED' ! [add] H.Yashiro 20110819
-  character(LEN=ADM_MAXFNAME), private, save :: restart_layername = ''         ! [add] H.Yashiro 20110826
+  character(LEN=ADM_MAXFNAME), private :: input_io_mode     = 'ADVANCED' ! [add] H.Yashiro 20110819
+  character(LEN=ADM_MAXFNAME), private :: output_io_mode    = 'ADVANCED' ! [add] H.Yashiro 20110819
+  character(LEN=ADM_MAXFNAME), private :: restart_layername = ''         ! [add] H.Yashiro 20110826
 
   integer :: NCTP = 14 !! No. of cloud types for CHIKIRA scheme: 11/08/16 M.Satoh
   !-----------------------------------------------------------------------------

@@ -49,24 +49,19 @@ module mod_debug
   !++ Private parameters & variables
   !
   integer,                 private, parameter :: DEBUG_rapnlimit = 100
-  integer,                 private,      save :: DEBUG_rapnmax   = 0
-  character(len=ADM_NSYS), private,      save :: DEBUG_rapname(DEBUG_rapnlimit)
-  real(8),                 private,      save :: DEBUG_raptstr(DEBUG_rapnlimit)
-  real(8),                 private,      save :: DEBUG_rapttot(DEBUG_rapnlimit)
-  integer,                 private,      save :: DEBUG_rapnstr(DEBUG_rapnlimit)
-  integer,                 private,      save :: DEBUG_rapnend(DEBUG_rapnlimit)
+  integer,                 private            :: DEBUG_rapnmax   = 0
+  character(len=ADM_NSYS), private            :: DEBUG_rapname(DEBUG_rapnlimit)
+  real(8),                 private            :: DEBUG_raptstr(DEBUG_rapnlimit)
+  real(8),                 private            :: DEBUG_rapttot(DEBUG_rapnlimit)
+  integer,                 private            :: DEBUG_rapnstr(DEBUG_rapnlimit)
+  integer,                 private            :: DEBUG_rapnend(DEBUG_rapnlimit)
 
 #ifdef PAPI_OPS
-  ! <-- [add] PAPI R.Yoshida 20121022
-  !integer(8),public, save :: papi_flpins    !total floating point instructions since the first call
-  integer(8),public, save :: papi_flpops    !total floating point operations since the first call
-  !real(4),   public, save :: papi_real_time_i !total realtime since the first PAPI_flins() call
-  !real(4),   public, save :: papi_proc_time_i !total process time since the first PAPI_flins() call
-  real(4),   public, save :: papi_real_time_o !total realtime since the first PAPI_flops() call
-  real(4),   public, save :: papi_proc_time_o !total process time since the first PAPI_flops() call
-  !real(4),   public, save :: papi_mflins    !Mflip/s achieved since the previous call
-  real(4),   public, save :: papi_mflops    !Mflop/s achieved since the previous call
-  integer,   public, save :: papi_check
+  integer(8),public :: papi_flpops      ! total floating point operations since the first call
+  real(4),   public :: papi_real_time_o ! total realtime since the first PAPI_flops() call
+  real(4),   public :: papi_proc_time_o ! total process time since the first PAPI_flops() call
+  real(4),   public :: papi_mflops      ! Mflop/s achieved since the previous call
+  integer,   public :: papi_check
 #endif
 
   !-----------------------------------------------------------------------------

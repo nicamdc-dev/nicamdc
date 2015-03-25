@@ -30,114 +30,114 @@ module mod_cnst
   !
   !++ Public parameters & variables
   !
-  real(8), public, save :: CNST_ERADIUS = 6.37122D+6 ! Radius of the Earth [m]
-  real(8), public, save :: CNST_EOHM    = 7.292D-5   ! Angular velocity of the Earth [/s]
-  real(8), public, save :: CNST_EGRAV   = 9.80616D0  ! Gravitational accerlaration of the Earth [m/s2]
+  real(8), public :: CNST_ERADIUS = 6.37122D+6 ! Radius of the Earth [m]
+  real(8), public :: CNST_EOHM    = 7.292D-5   ! Angular velocity of the Earth [/s]
+  real(8), public :: CNST_EGRAV   = 9.80616D0  ! Gravitational accerlaration of the Earth [m/s2]
 
-  real(8), public, save :: CNST_RAIR    =  287.0D0   ! Gas constant of air
-  real(8), public, save :: CNST_RVAP    =  461.5D0   ! Gas constant of vapor
+  real(8), public :: CNST_RAIR    =  287.0D0   ! Gas constant of air
+  real(8), public :: CNST_RVAP    =  461.5D0   ! Gas constant of vapor
 
-  real(8), public, save :: CNST_CP      = 1004.5D0   ! Specific heat of air (consant pressure)
-  real(8), public, save :: CNST_CV                   ! Specific heat of air (consant volume)
+  real(8), public :: CNST_CP      = 1004.5D0   ! Specific heat of air (consant pressure)
+  real(8), public :: CNST_CV                   ! Specific heat of air (consant volume)
 
-  real(8), public, save :: CNST_CPV     = 1846.0D0   ! Specific heat of vapor (consant pressure)
-  real(8), public, save :: CNST_CVV                  ! Specific heat of vapor (consant volume)
-  real(8), public, save :: CNST_CL      = 4218.0D0   ! Specific heat of water
-  real(8), public, save :: CNST_CI      = 2006.0D0   ! Specific heat of ice
+  real(8), public :: CNST_CPV     = 1846.0D0   ! Specific heat of vapor (consant pressure)
+  real(8), public :: CNST_CVV                  ! Specific heat of vapor (consant volume)
+  real(8), public :: CNST_CL      = 4218.0D0   ! Specific heat of water
+  real(8), public :: CNST_CI      = 2006.0D0   ! Specific heat of ice
 
-  real(8), public, save :: CNST_SOUND                ! Speed of sound at 0C, dry
+  real(8), public :: CNST_SOUND                ! Speed of sound at 0C, dry
 
   !------ cp/cv
-  real(8), public, save :: CNST_GAMMA
+  real(8), public :: CNST_GAMMA
   !<----- calculated in sub[CNST_setup].
   !
   !------ R/cp
-  real(8), public, save :: CNST_KAPPA
+  real(8), public :: CNST_KAPPA
   !<----- calculated in sub[CNST_setup].
   !
   !------ dry lapse rate [K/m]
-  real(8), public, save :: CNST_LAPS
+  real(8), public :: CNST_LAPS
   !<----- calculated in sub[CNST_setup].
   !
   !------ molecular weight ( water/air )
-  real(8), public, save :: CNST_EPSV
+  real(8), public :: CNST_EPSV
   !<----- calculated in sub[CNST_setup].
   !
   !------ 1/epsv-1
-  real(8), public, save :: CNST_EPSVT
+  real(8), public :: CNST_EPSVT
   !<----- calculated in sub[CNST_setup].
   !
   !------ Density of water
-  real(8), public, save :: CNST_DWATR = 1000.D0
+  real(8), public :: CNST_DWATR = 1000.D0
   !
   !------ Saturate pressure of water vapor at 0C
-  real(8), public, save :: CNST_PSAT0 = 610.7D0
+  real(8), public :: CNST_PSAT0 = 610.7D0
   !<----- unit : [Pa]
   !
   !------ Latent heat of vaporizaion at 0C
-!  real(8), public, save :: CNST_LH0   = 2.5008D+6 [mod] 20120704 H.Yashiro
-  real(8), public, save :: CNST_LH0   = 2.501D+6
+!  real(8), public :: CNST_LH0   = 2.5008D+6 [mod] 20120704 H.Yashiro
+  real(8), public :: CNST_LH0   = 2.501D+6
   !
   !------ Latent heat of vaporizaion at 0K
-  real(8), public, save :: CNST_LH00
+  real(8), public :: CNST_LH00
   !<----- calculated in sub[CNST_setup].
   !
   !------ Latent heat of sublimation at 0C
-!  real(8), public, save :: CNST_LHS0  = 2.8342D+6 [mod] 20120704 H.Yashiro
-  real(8), public, save :: CNST_LHS0  = 2.834D+6
+!  real(8), public :: CNST_LHS0  = 2.8342D+6 [mod] 20120704 H.Yashiro
+  real(8), public :: CNST_LHS0  = 2.834D+6
   !
   !------ Latent heat of sublimation at 0K
-  real(8), public, save :: CNST_LHS00
+  real(8), public :: CNST_LHS00
   !<----- calculated in sub[CNST_setup].
   !
   !------ Latent heat of fusion at 0C
-  real(8), public, save :: CNST_LHF0
+  real(8), public :: CNST_LHF0
   !<----- calculated in sub[CNST_setup].
   !
   !------ latent heat of fusion at 0K
-  real(8), public, save :: CNST_LHF00
+  real(8), public :: CNST_LHF00
   !<----- calculated in sub[CNST_setup].
   !
   !------ Latent heat of melting
-  real(8), public, save :: CNST_EMELT = 3.40D+5
+  real(8), public :: CNST_EMELT = 3.40D+5
   !
   !------ Melting temperature of water
-  real(8), public, save :: CNST_TMELT = 273.15D0
+  real(8), public :: CNST_TMELT = 273.15D0
   !
   !------ Freeze point of sea
-  real(8), public, save :: CNST_TFRZS  = 271.35D0
+  real(8), public :: CNST_TFRZS  = 271.35D0
   !
   !------ Wet-bulb temp. rain/snow
-  real(8), public, save :: CNST_TQICE = 273.15D0
+  real(8), public :: CNST_TQICE = 273.15D0
   !
   !------ Stefan-Boltzman constant
-  real(8), public, save :: CNST_STB   = 5.67D-8
+  real(8), public :: CNST_STB   = 5.67D-8
   !
   !------ Karman constant
-  real(8), public, save :: CNST_KARMAN = 0.4D0
+  real(8), public :: CNST_KARMAN = 0.4D0
   !
   !------ Surface pressure
-  real(8), public, save :: CNST_PRES0    = 101325.0D0
+  real(8), public :: CNST_PRES0    = 101325.0D0
   !
   !------ Surface temperature
-  real(8), public, save :: CNST_TEMS0    = 300.0D0
+  real(8), public :: CNST_TEMS0    = 300.0D0
   !
   !------ Standard pressure
-  real(8), public, save :: CNST_PRE00    = 1.0D+5
+  real(8), public :: CNST_PRE00    = 1.0D+5
   !
   !------ Standard temperature
-  real(8), public, save :: CNST_TEM00    = 273.15D0
+  real(8), public :: CNST_TEM00    = 273.15D0
   !
   !------ Standard density
-  real(8), public, save :: CNST_RHO00
+  real(8), public :: CNST_RHO00
   !<----- calculated in sub[CNST_setup].
   !
   !====== Misc. constants ======
   !
   !------ Definition of PI
-  real(8), public, save :: CNST_PI = 3.14159265358979323846D0
+  real(8), public :: CNST_PI = 3.14159265358979323846D0
 
-  real(8), public, save :: CNST_D2R
+  real(8), public :: CNST_D2R
 
   !------ Allowable minimum value
   real(8), public, parameter :: CNST_EPS_ZERO = 1.0D-99

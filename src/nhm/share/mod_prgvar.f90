@@ -79,8 +79,8 @@ module mod_prgvar
   real(8), public, allocatable :: PRG_var1(:,:,:,:)
   real(8), public, allocatable :: DIAG_var(:,:,:,:)
 
-  character(len=ADM_MAXFNAME), public, save :: restart_input_basename  = ''
-  character(len=ADM_MAXFNAME), public, save :: restart_output_basename = ''
+  character(len=ADM_MAXFNAME), public :: restart_input_basename  = ''
+  character(len=ADM_MAXFNAME), public :: restart_output_basename = ''
 
   !-----------------------------------------------------------------------------
   !
@@ -94,12 +94,12 @@ module mod_prgvar
   real(8), private, allocatable :: PRG_var1_pl(:,:,:,:)
   real(8), private, allocatable :: DIAG_var_pl(:,:,:,:)
 
-  integer, private, save :: TRC_vmax_input ! number of input tracer variables
+  integer, private :: TRC_vmax_input ! number of input tracer variables
 
-  character(len=ADM_MAXFNAME), private, save :: layername      = ''
-  character(len=ADM_MAXFNAME), private, save :: input_io_mode  = 'ADVANCED'
-  character(len=ADM_MAXFNAME), private, save :: output_io_mode = 'ADVANCED'
-  logical,                     private, save :: allow_missingq = .false.
+  character(len=ADM_MAXFNAME), private :: layername      = ''
+  character(len=ADM_MAXFNAME), private :: input_io_mode  = 'ADVANCED'
+  character(len=ADM_MAXFNAME), private :: output_io_mode = 'ADVANCED'
+  logical,                     private :: allow_missingq = .false.
 
   !-----------------------------------------------------------------------------
 contains

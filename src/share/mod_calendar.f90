@@ -59,44 +59,44 @@ module mod_calendar
   integer, private :: idays0, idy, ileap, id, m, idayyr, jyear, jmonth
   !
   !--- flag of automatic or not
-  logical, private, save ::  oauto = .true.
+  logical, private ::  oauto = .true.
   !<---                      yr=0-999     : 360day
   !<---                      yr=1000-1899 : 365day
   !<---                      yr=1900-     : gregorian
   !
   !--- flag of the gregorian calendar or not
-  logical, private, save :: ogrego = .true.
+  logical, private :: ogrego = .true.
   !
   !--- number of days in a month
-  integer, private, save :: monday ( 12,2 )
+  integer, private :: monday ( 12,2 )
   data   monday /                            &
        31,28,31,30,31,30,31,31,30,31,30,31,  &
        31,29,31,30,31,30,31,31,30,31,30,31 /
   !
   !--- flag of ideal calender (n day per month)
-  logical, private, save :: oideal = .false.
+  logical, private :: oideal = .false.
   !------ 1 month = x days in the ideal case
-  integer, private, save :: idaymo = 30
+  integer, private :: idaymo = 30
   !------ 1 year = x months in the ideal case
-  integer, private, save :: imonyr = 12
+  integer, private :: imonyr = 12
   !
   !--- flag of perpetual or not
-  logical, private, save :: operpt = .false.
+  logical, private :: operpt = .false.
   !------ perpetual date(year)
-  integer, private, save :: iyrpp  = 0
+  integer, private :: iyrpp  = 0
   !------ perpetual date(month)
-  integer, private, save :: imonpp = 3
+  integer, private :: imonpp = 3
   !------ perpetual date(day)
-  integer, private, save :: idaypp = 21
+  integer, private :: idaypp = 21
   !
   !--- 1 minute = x sec.
-  integer, private, save :: isecmn = 60
+  integer, private :: isecmn = 60
   !--- 1 hour = x minutes
-  integer, private, save :: iminhr = 60
+  integer, private :: iminhr = 60
   !--- 1 day = x hours
-  integer, private, save :: ihrday = 24
+  integer, private :: ihrday = 24
   !
-  logical, private, save :: ooperz = .true.
+  logical, private :: ooperz = .true.
 
   !-----------------------------------------------------------------------------
 contains

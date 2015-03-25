@@ -52,9 +52,9 @@ module mod_history
   !
   !++ Public parameters & variables
   !
-  integer,                 public,              save :: HIST_req_nmax
-  character(len=ADM_NSYS), public, allocatable, save :: item_save(:)
-  logical,                 public,              save :: HIST_output_step0 = .false.
+  integer,                 public              :: HIST_req_nmax
+  character(len=ADM_NSYS), public, allocatable :: item_save(:)
+  logical,                 public              :: HIST_output_step0 = .false.
 
   !-----------------------------------------------------------------------------
   !

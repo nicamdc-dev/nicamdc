@@ -32,26 +32,26 @@ module mod_time
   !
   !++ Public parameters & variables
   !
-  character(len=ADM_NSYS), public, save :: TIME_INTEG_TYPE         ! Integration method in large steps
-  !                                                        = 'RK2' ! Runge-Kutta 2nd
-  !                                                        = 'RK3' ! Runge-Kutta 3rd
-  !                                                        = 'RK4' ! Runge-Kutta 4th
+  character(len=ADM_NSYS), public :: TIME_INTEG_TYPE         ! Integration method in large steps
+  !                                                  = 'RK2' ! Runge-Kutta 2nd
+  !                                                  = 'RK3' ! Runge-Kutta 3rd
+  !                                                  = 'RK4' ! Runge-Kutta 4th
 
-  logical, public, save :: TIME_SPLIT     = .true. ! Horizontally splitting?
+  logical, public :: TIME_SPLIT     = .true. ! Horizontally splitting?
 
-  integer, public, save :: TIME_LSTEP_MAX = 10     ! Max steps of large step
-  integer, public, save :: TIME_SSTEP_MAX          ! Max steps of small step
+  integer, public :: TIME_LSTEP_MAX = 10     ! Max steps of large step
+  integer, public :: TIME_SSTEP_MAX          ! Max steps of small step
 
-  real(8), public, save :: TIME_DTL       = 5.D0   ! Time interval for large step [sec]
-  real(8), public, save :: TIME_DTS                ! Time interval for small step [sec]
+  real(8), public :: TIME_DTL       = 5.D0   ! Time interval for large step [sec]
+  real(8), public :: TIME_DTS                ! Time interval for small step [sec]
   !
-  real(8), public, save :: TIME_START              ! Start time [sec]
-  real(8), public, save :: TIME_END                ! End   time [sec]
-  integer, public, save :: TIME_NSTART             ! Time step at the start
-  integer, public, save :: TIME_NEND               ! Time step at the end
+  real(8), public :: TIME_START              ! Start time [sec]
+  real(8), public :: TIME_END                ! End   time [sec]
+  integer, public :: TIME_NSTART             ! Time step at the start
+  integer, public :: TIME_NEND               ! Time step at the end
 
-  real(8), public, save :: TIME_CTIME              ! Current time [sec]
-  integer, public, save :: TIME_CSTEP              ! Current time step
+  real(8), public :: TIME_CTIME              ! Current time [sec]
+  integer, public :: TIME_CSTEP              ! Current time step
 
   !-----------------------------------------------------------------------------
   !

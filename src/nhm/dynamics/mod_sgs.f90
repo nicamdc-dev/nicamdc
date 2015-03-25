@@ -108,63 +108,63 @@ module mod_sgs
   !++ Private variables
   !
   !------ Dependency of horizontal grid size
-  logical, private, save :: dep_hgrid = .false.
+  logical, private :: dep_hgrid = .false.
   !------ coefficient for diffusion (horizontal)
-  integer, private, save :: lap_order_hdiff = 2
+  integer, private :: lap_order_hdiff = 2
   !
-  real(8), private, save :: K_coef_minlim = 0!3.0D+9
-  real(8), private, save :: K_coef_maxlim = 1.0D+99
-  real(8), private, save :: LENGTH_maxlim = 1.0D+99
-  real(8), private, save :: SMG_CS = 0.2d0
-  real(8), private, save :: SMALL=1.0d-10
-  real(8), private, save :: GAMMA=1.0d0  ! (kind of aspect ratio?)
-  real(8), private, save :: Pr=1.0d0
-  logical, private, save :: stratos_effect = .false.
-  real(8), private, save :: beta_theta!=1.0d0
-  real(8), private, save :: beta_q!=1.0d0
+  real(8), private :: K_coef_minlim = 0!3.0D+9
+  real(8), private :: K_coef_maxlim = 1.0D+99
+  real(8), private :: LENGTH_maxlim = 1.0D+99
+  real(8), private :: SMG_CS = 0.2d0
+  real(8), private :: SMALL=1.0d-10
+  real(8), private :: GAMMA=1.0d0  ! (kind of aspect ratio?)
+  real(8), private :: Pr=1.0d0
+  logical, private :: stratos_effect = .false.
+  real(8), private :: beta_theta!=1.0d0
+  real(8), private :: beta_q!=1.0d0
 
 
-!  logical, private, save :: DEEP_EFFECT = .true. ! --> why ?  meaningless here
+!  logical, private :: DEEP_EFFECT = .true. ! --> why ?  meaningless here
 
-  real(8), private, save :: horiz_dx2
+  real(8), private :: horiz_dx2
   !
-  logical, private, save :: first = .true.
+  logical, private :: first = .true.
   !
   ! for smg_oprt
 
-  real(8), allocatable, private, save:: smg_oprt_cxh(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_cxh_pl(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_cyh(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_cyh_pl(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_czh(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_czh_pl(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_cx(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_cx_pl(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_cy(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_cy_pl(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_cz(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_cz_pl(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_rgamH(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_rgamH_pl(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_rgam(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_rgam_pl(:,:,:)
-!  real(8), allocatable, private, save:: smg_oprt_GzGz(:,:,:)
-!  real(8), allocatable, private, save:: smg_oprt_GzGz_pl(:,:,:)
-!  real(8), allocatable, private, save:: smg_oprt_GzGzh(:,:,:)
-!  real(8), allocatable, private, save:: smg_oprt_GzGzh_pl(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_gsqrt(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_gsqrt_pl(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_gsqrtH(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_gsqrtH_pl(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_GAM(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_GAM_pl(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_GAMH(:,:,:)
-  real(8), allocatable, private, save:: smg_oprt_GAMH_pl(:,:,:)
+  real(8), allocatable, private:: smg_oprt_cxh(:,:,:)
+  real(8), allocatable, private:: smg_oprt_cxh_pl(:,:,:)
+  real(8), allocatable, private:: smg_oprt_cyh(:,:,:)
+  real(8), allocatable, private:: smg_oprt_cyh_pl(:,:,:)
+  real(8), allocatable, private:: smg_oprt_czh(:,:,:)
+  real(8), allocatable, private:: smg_oprt_czh_pl(:,:,:)
+  real(8), allocatable, private:: smg_oprt_cx(:,:,:)
+  real(8), allocatable, private:: smg_oprt_cx_pl(:,:,:)
+  real(8), allocatable, private:: smg_oprt_cy(:,:,:)
+  real(8), allocatable, private:: smg_oprt_cy_pl(:,:,:)
+  real(8), allocatable, private:: smg_oprt_cz(:,:,:)
+  real(8), allocatable, private:: smg_oprt_cz_pl(:,:,:)
+  real(8), allocatable, private:: smg_oprt_rgamH(:,:,:)
+  real(8), allocatable, private:: smg_oprt_rgamH_pl(:,:,:)
+  real(8), allocatable, private:: smg_oprt_rgam(:,:,:)
+  real(8), allocatable, private:: smg_oprt_rgam_pl(:,:,:)
+!  real(8), allocatable, private:: smg_oprt_GzGz(:,:,:)
+!  real(8), allocatable, private:: smg_oprt_GzGz_pl(:,:,:)
+!  real(8), allocatable, private:: smg_oprt_GzGzh(:,:,:)
+!  real(8), allocatable, private:: smg_oprt_GzGzh_pl(:,:,:)
+  real(8), allocatable, private:: smg_oprt_gsqrt(:,:,:)
+  real(8), allocatable, private:: smg_oprt_gsqrt_pl(:,:,:)
+  real(8), allocatable, private:: smg_oprt_gsqrtH(:,:,:)
+  real(8), allocatable, private:: smg_oprt_gsqrtH_pl(:,:,:)
+  real(8), allocatable, private:: smg_oprt_GAM(:,:,:)
+  real(8), allocatable, private:: smg_oprt_GAM_pl(:,:,:)
+  real(8), allocatable, private:: smg_oprt_GAMH(:,:,:)
+  real(8), allocatable, private:: smg_oprt_GAMH_pl(:,:,:)
 
-  real(8), allocatable, private, save:: var(:,:,:,:,:)
-  real(8), allocatable, private, save:: var_pl(:,:,:,:,:)
-  real(8), allocatable, private, save:: varh(:,:,:,:,:)
-  real(8), allocatable, private, save:: varh_pl(:,:,:,:,:)
+  real(8), allocatable, private:: var(:,:,:,:,:)
+  real(8), allocatable, private:: var_pl(:,:,:,:,:)
+  real(8), allocatable, private:: varh(:,:,:,:,:)
+  real(8), allocatable, private:: varh_pl(:,:,:,:,:)
 
    integer, private, parameter ::  IVX=1
    integer, private, parameter ::  IVY=2
@@ -416,8 +416,8 @@ contains
 
     real(8) :: dummy(ADM_GALL,ADM_kall,ADM_LALL)
     real(8) :: dummy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-!   logical,save:: dbgfirst=.true.
-    logical,save:: dbgfirst=.false.
+
+    logical :: dbgfirst=.false.
 
     real(8) :: wrkwrk(ADM_GALL,ADM_kall,ADM_LALL)
     real(8) :: wrkwrk2(ADM_GALL,ADM_kall,ADM_LALL)

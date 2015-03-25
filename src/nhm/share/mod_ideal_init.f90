@@ -55,8 +55,8 @@ module mod_ideal_init
   !
   !++ Public parameters & variables
   !
-  character(len=ADM_NSYS), public, save :: DCTEST_type = '' !
-  character(len=ADM_NSYS), public, save :: DCTEST_case = '' !
+  character(len=ADM_NSYS), public :: DCTEST_type = '' !
+  character(len=ADM_NSYS), public :: DCTEST_case = '' !
 
   !-----------------------------------------------------------------------------
   !
@@ -87,28 +87,28 @@ module mod_ideal_init
   !
 
   ! physical parameters configurations
-  real(8), private, save :: Kap                    ! temporal value
-  real(8), private, save :: d2r                    ! Degree to Radian
-  real(8), private, save :: r2d                    ! Radian to Degree
-  real(8), private, save :: eps = 1.D-14           ! minimum value
-  real(8), private, save :: zero = 0.D0            ! zero
+  real(8), private :: Kap                    ! temporal value
+  real(8), private :: d2r                    ! Degree to Radian
+  real(8), private :: r2d                    ! Radian to Degree
+  real(8), private :: eps = 1.D-14           ! minimum value
+  real(8), private :: zero = 0.D0            ! zero
 
   ! for Held and Suarez
-  real(8), private, save :: deltaT = 60.D0
-  real(8), private, save :: deltaTh = 10.D0
+  real(8), private :: deltaT = 60.D0
+  real(8), private :: deltaTh = 10.D0
   ! for Jablonowski
-  real(8), private, save :: clat = 40.D0              ! perturbation center: latitude [deg]
-  real(8), private, save :: clon = 20.D0              ! perturbation center: longitude [deg]
-  real(8), private, save :: etaS = 1.D0               ! surface eta level
-  real(8), private, save :: etaT = 0.2d0              ! threashold of vertical profile
-  real(8), private, save :: eta0 = 0.252d0            ! threashold of vertical profile
-  real(8), private, save :: t0 = 288.D0               ! [K]
-  real(8), private, save :: delT = 4.8d+5             ! [K]
-  real(8), private, save :: ganma = 0.005d0           ! [K m^-1]
-  real(8), private, save :: u0 = 35.D0                ! [m s^-1]
-  real(8), private, save :: uP = 1.D0                 ! [m s^-1]
-  real(8), private, save :: p0 = 1.D+5                ! [Pa]
-  real(8), private, save :: ps = 1.D+5                ! [Pa]
+  real(8), private :: clat = 40.D0              ! perturbation center: latitude [deg]
+  real(8), private :: clon = 20.D0              ! perturbation center: longitude [deg]
+  real(8), private :: etaS = 1.D0               ! surface eta level
+  real(8), private :: etaT = 0.2d0              ! threashold of vertical profile
+  real(8), private :: eta0 = 0.252d0            ! threashold of vertical profile
+  real(8), private :: t0 = 288.D0               ! [K]
+  real(8), private :: delT = 4.8d+5             ! [K]
+  real(8), private :: ganma = 0.005d0           ! [K m^-1]
+  real(8), private :: u0 = 35.D0                ! [m s^-1]
+  real(8), private :: uP = 1.D0                 ! [m s^-1]
+  real(8), private :: p0 = 1.D+5                ! [Pa]
+  real(8), private :: ps = 1.D+5                ! [Pa]
   logical, private, parameter :: message = .false.
   integer, private, parameter :: itrmax = 100       ! # of iteration maximum
 

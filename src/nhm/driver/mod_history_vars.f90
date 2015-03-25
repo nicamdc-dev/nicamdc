@@ -77,29 +77,29 @@ module mod_history_vars
   !
   !++ Private parameters & variables
   !
-  logical, private, save :: out_ucos_vcos = .false.
-  logical, private, save :: out_omg       = .false.
-  logical, private, save :: out_hgt       = .false.
-  logical, private, save :: out_th        = .false.
-  logical, private, save :: out_th_prime  = .false.
-  logical, private, save :: out_rh        = .false.
+  logical, private :: out_ucos_vcos = .false.
+  logical, private :: out_omg       = .false.
+  logical, private :: out_hgt       = .false.
+  logical, private :: out_th        = .false.
+  logical, private :: out_th_prime  = .false.
+  logical, private :: out_rh        = .false.
 
-  logical, private, save :: out_cld_frac  = .false.
-  logical, private, save :: out_cldw      = .false.
-  logical, private, save :: out_qr        = .false.
-  logical, private, save :: out_qs        = .false.
-  logical, private, save :: out_qi        = .false.
-  logical, private, save :: out_qg        = .false.
-  logical, private, save :: out_cldi      = .false.
-  logical, private, save :: out_slh       = .false.
-  logical, private, save :: out_tau_uv    = .false.
-  logical, private, save :: out_10m_uv    = .false.
-  logical, private, save :: out_vap_atm   = .false.
-  logical, private, save :: out_tem_atm   = .false.
-  logical, private, save :: out_albedo    = .false.
-  logical, private, save :: out_slp       = .false.
-  logical, private, save :: out_850hPa    = .false.
-  logical, private, save :: out_cape_cin  = .false.
+  logical, private :: out_cld_frac  = .false.
+  logical, private :: out_cldw      = .false.
+  logical, private :: out_qr        = .false.
+  logical, private :: out_qs        = .false.
+  logical, private :: out_qi        = .false.
+  logical, private :: out_qg        = .false.
+  logical, private :: out_cldi      = .false.
+  logical, private :: out_slh       = .false.
+  logical, private :: out_tau_uv    = .false.
+  logical, private :: out_10m_uv    = .false.
+  logical, private :: out_vap_atm   = .false.
+  logical, private :: out_tem_atm   = .false.
+  logical, private :: out_albedo    = .false.
+  logical, private :: out_slp       = .false.
+  logical, private :: out_850hPa    = .false.
+  logical, private :: out_cape_cin  = .false.
 
   !-----------------------------------------------------------------------------
 contains

@@ -40,28 +40,28 @@ module mod_embudget
   !
   !++ Private parameters & variables
   !
-  logical, private, save :: MNT_ON   = .false.
-  integer, private, save :: MNT_INTV = 1
-  integer, private, save :: MNT_m_fid
-  integer, private, save :: MNT_e_fid
+  logical, private :: MNT_ON   = .false.
+  integer, private :: MNT_INTV = 1
+  integer, private :: MNT_m_fid
+  integer, private :: MNT_e_fid
 
-  real(8), private, allocatable, save :: evap0     (:,:,:)
-  real(8), private, allocatable, save :: evap0_pl  (:,:,:)
-  real(8), private, allocatable, save :: precip0   (:,:,:)
-  real(8), private, allocatable, save :: precip0_pl(:,:,:)
+  real(8), private, allocatable :: evap0     (:,:,:)
+  real(8), private, allocatable :: evap0_pl  (:,:,:)
+  real(8), private, allocatable :: precip0   (:,:,:)
+  real(8), private, allocatable :: precip0_pl(:,:,:)
 
-  real(8), private, allocatable, save :: sfcrad0          (:,:,:)
-  real(8), private, allocatable, save :: sfcrad0_pl       (:,:,:)
-  real(8), private, allocatable, save :: toarad0          (:,:,:)
-  real(8), private, allocatable, save :: toarad0_pl       (:,:,:)
-  real(8), private, allocatable, save :: evap_energy0     (:,:,:)
-  real(8), private, allocatable, save :: evap_energy0_pl  (:,:,:)
-  real(8), private, allocatable, save :: precip_energy0   (:,:,:)
-  real(8), private, allocatable, save :: precip_energy0_pl(:,:,:)
-  real(8), private, allocatable, save :: sh_flux_sfc0     (:,:,:)
-  real(8), private, allocatable, save :: sh_flux_sfc0_pl  (:,:,:)
-  real(8), private, allocatable, save :: lh_flux_sfc0     (:,:,:)
-  real(8), private, allocatable, save :: lh_flux_sfc0_pl  (:,:,:)
+  real(8), private, allocatable :: sfcrad0          (:,:,:)
+  real(8), private, allocatable :: sfcrad0_pl       (:,:,:)
+  real(8), private, allocatable :: toarad0          (:,:,:)
+  real(8), private, allocatable :: toarad0_pl       (:,:,:)
+  real(8), private, allocatable :: evap_energy0     (:,:,:)
+  real(8), private, allocatable :: evap_energy0_pl  (:,:,:)
+  real(8), private, allocatable :: precip_energy0   (:,:,:)
+  real(8), private, allocatable :: precip_energy0_pl(:,:,:)
+  real(8), private, allocatable :: sh_flux_sfc0     (:,:,:)
+  real(8), private, allocatable :: sh_flux_sfc0_pl  (:,:,:)
+  real(8), private, allocatable :: lh_flux_sfc0     (:,:,:)
+  real(8), private, allocatable :: lh_flux_sfc0_pl  (:,:,:)
 
   !-----------------------------------------------------------------------------
 contains

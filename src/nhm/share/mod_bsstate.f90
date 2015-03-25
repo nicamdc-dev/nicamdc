@@ -42,31 +42,31 @@ module mod_bsstate
   !
   !
   !--- density
-  real(8),allocatable, public, save :: rho_bs(:,:,:)
-  real(8),allocatable, public, save :: rho_bs_pl(:,:,:)
+  real(8),allocatable, public :: rho_bs(:,:,:)
+  real(8),allocatable, public :: rho_bs_pl(:,:,:)
   !
   !--- pressure
-  real(8),allocatable, public, save :: pre_bs(:,:,:)
-  real(8),allocatable, public, save :: pre_bs_pl(:,:,:)
+  real(8),allocatable, public :: pre_bs(:,:,:)
+  real(8),allocatable, public :: pre_bs_pl(:,:,:)
   !
   !--- temperature
-  real(8),allocatable, public, save :: tem_bs(:,:,:)
-  real(8),allocatable, public, save :: tem_bs_pl(:,:,:)
+  real(8),allocatable, public :: tem_bs(:,:,:)
+  real(8),allocatable, public :: tem_bs_pl(:,:,:)
   !
   !--- pot temperature
-  real(8),allocatable, public, save :: th_bs(:,:,:)
-  real(8),allocatable, public, save :: th_bs_pl(:,:,:)
+  real(8),allocatable, public :: th_bs(:,:,:)
+  real(8),allocatable, public :: th_bs_pl(:,:,:)
   !
   !--- water vap.
-  real(8),allocatable, public, save :: qv_bs(:,:,:)
-  real(8),allocatable, public, save :: qv_bs_pl(:,:,:)
+  real(8),allocatable, public :: qv_bs(:,:,:)
+  real(8),allocatable, public :: qv_bs_pl(:,:,:)
   !
   !--- geo-potential ( g X z )
-  real(8),allocatable, private, save :: phi(:,:,:)
-  real(8),allocatable, private, save :: phi_pl(:,:,:)
+  real(8),allocatable, private :: phi(:,:,:)
+  real(8),allocatable, private :: phi_pl(:,:,:)
   !
   !--- Basic state type
-  character(ADM_NSYS), public, save :: ref_type = 'NOBASE'
+  character(ADM_NSYS), public :: ref_type = 'NOBASE'
   !                                  ='TEM': temerature is given.
   !                                  ='TH' : potential temperature is given.
   !                                  ='NOBASE' : no basic state
@@ -84,25 +84,25 @@ module mod_bsstate
   !++ Private parameters
   !
   !--- reference pressure at the ground
-  real(8), private, save :: pre_g = 101325.0D0
+  real(8), private :: pre_g = 101325.0D0
   !
   !--- reference temperature at the ground
-  real(8), private, save :: tem_g = 300.0D0
+  real(8), private :: tem_g = 300.0D0
   !
   !--- reference pot. temperature at the ground
-  real(8), private, save :: th_g = 300.0D0
+  real(8), private :: th_g = 300.0D0
   !
   !--- reference density at the ground ( calculated by using pre_g & tem_g )
-  real(8), private, save :: rho_g
+  real(8), private :: rho_g
   !
   !--- reference Brunt-Vaisala frequency ( used if ref_type = 'TH'. )
-  real(8), private, save :: BV_freq = 0.0D0
+  real(8), private :: BV_freq = 0.0D0
   !
   !--- lapse rate ( used if ref_type = 'TEM'. )
-  real(8), private, save :: TGAMMA = 0.0D0
+  real(8), private :: TGAMMA = 0.0D0
   !
   !--- lower boundary of constant (potential) temperature
-  real(8), private, save :: ZT = 0.0D0
+  real(8), private :: ZT = 0.0D0
   !
   !--- geopotential at the ground
   real(8), parameter, public :: PHI0=0.0D0
@@ -111,24 +111,24 @@ module mod_bsstate
   !++ Private variables
   !
   !--- reference phi
-  real(8), allocatable, private, save :: phi_ref(:)
+  real(8), allocatable, private :: phi_ref(:)
   !
   !--- reference density
-  real(8), allocatable, private, save :: rho_ref(:)
+  real(8), allocatable, private :: rho_ref(:)
   !
   !--- reference pressure
-  real(8), allocatable, private, save :: pre_ref(:)
+  real(8), allocatable, private :: pre_ref(:)
   !
   !--- reference temperature
-  real(8), allocatable, private, save :: tem_ref(:)
+  real(8), allocatable, private :: tem_ref(:)
   !
   !--- water vapor
-  real(8), allocatable, private, save :: qv_ref(:)
+  real(8), allocatable, private :: qv_ref(:)
   !
   !--- reference potential temperature
-  real(8), allocatable, private, save :: th_ref(:)
+  real(8), allocatable, private :: th_ref(:)
   !
-  character(ADM_MAXFNAME), private, save :: ref_fname = 'ref.dat'
+  character(ADM_MAXFNAME), private :: ref_fname = 'ref.dat'
   !
   !-----------------------------------------------------------------------------
   !

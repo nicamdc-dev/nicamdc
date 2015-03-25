@@ -51,26 +51,26 @@ module mod_nudge
   !
   !++ Private parameters & variables
   !
-  real(8), private, allocatable, save :: NDG_fact   (:,:,:,:)
-  real(8), private, allocatable, save :: NDG_fact_pl(:,:,:,:)
+  real(8), private, allocatable :: NDG_fact   (:,:,:,:)
+  real(8), private, allocatable :: NDG_fact_pl(:,:,:,:)
 
-  real(8), private, allocatable, save :: NDG_ref   (:,:,:,:)
-  real(8), private, allocatable, save :: NDG_ref_pl(:,:,:,:)
+  real(8), private, allocatable :: NDG_ref   (:,:,:,:)
+  real(8), private, allocatable :: NDG_ref_pl(:,:,:,:)
 
-  integer, private, save :: NDG_VMAX = -1
-  integer, private, save :: I_vx  = -1
-  integer, private, save :: I_vy  = -1
-  integer, private, save :: I_vz  = -1
-  integer, private, save :: I_w   = -1
-  integer, private, save :: I_tem = -1
-  integer, private, save :: I_pre = -1
-  integer, private, save :: I_qv  = -1
+  integer, private :: NDG_VMAX = -1
+  integer, private :: I_vx  = -1
+  integer, private :: I_vy  = -1
+  integer, private :: I_vz  = -1
+  integer, private :: I_w   = -1
+  integer, private :: I_tem = -1
+  integer, private :: I_pre = -1
+  integer, private :: I_qv  = -1
 
-  real(8), private, save :: NDG_tau_vxvyvz = -999.D0
-  real(8), private, save :: NDG_tau_w      = -999.D0
-  real(8), private, save :: NDG_tau_tem    = -999.D0
-  real(8), private, save :: NDG_tau_pre    = -999.D0
-  real(8), private, save :: NDG_tau_qv     = -999.D0
+  real(8), private :: NDG_tau_vxvyvz = -999.D0
+  real(8), private :: NDG_tau_w      = -999.D0
+  real(8), private :: NDG_tau_tem    = -999.D0
+  real(8), private :: NDG_tau_pre    = -999.D0
+  real(8), private :: NDG_tau_qv     = -999.D0
 
   !-----------------------------------------------------------------------------
 contains
