@@ -248,10 +248,10 @@ contains
     real(8), intent(in)    :: dt
 
     ! merged array for communication
-    real(8) :: variation_vh   (ADM_gall   ,ADM_kall,ADM_lall   ,3)
-    real(8) :: variation_vh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
-    real(8) :: variation_we   (ADM_gall   ,ADM_kall,ADM_lall   ,3)
-    real(8) :: variation_we_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
+    real(8) :: diff_vh   (ADM_gall   ,ADM_kall,ADM_lall   ,3)
+    real(8) :: diff_vh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
+    real(8) :: diff_we   (ADM_gall   ,ADM_kall,ADM_lall   ,3)
+    real(8) :: diff_we_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
 
     ! tendency term (large step + small step)
     real(8) :: grhog        (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -608,9 +608,9 @@ contains
              drhogvz       = grhogvz(g,k,l) - dpgrad(g,k,l,GRD_ZDIR) + ddivdvz(g,k,l) + ddivdvz_2d(g,k,l)
              drhogw(g,k,l) = grhogw (g,k,l)                          + ddivdw (g,k,l) * NON_HYDRO_ALPHA
 
-             variation_vh(g,k,l,1) = rhogvx_split(g,k,l) + drhogvx * dt
-             variation_vh(g,k,l,2) = rhogvy_split(g,k,l) + drhogvy * dt
-             variation_vh(g,k,l,3) = rhogvz_split(g,k,l) + drhogvz * dt
+             diff_vh(g,k,l,1) = rhogvx_split(g,k,l) + drhogvx * dt
+             diff_vh(g,k,l,2) = rhogvy_split(g,k,l) + drhogvy * dt
+             diff_vh(g,k,l,3) = rhogvz_split(g,k,l) + drhogvz * dt
           enddo
           enddo
           enddo
@@ -624,9 +624,9 @@ contains
                 drhogvz_pl       = grhogvz_pl(g,k,l) - dpgrad_pl(g,k,l,GRD_ZDIR) + ddivdvz_pl(g,k,l) + ddivdvz_2d_pl(g,k,l)
                 drhogw_pl(g,k,l) = grhogw_pl (g,k,l)                             + ddivdw_pl (g,k,l) * NON_HYDRO_ALPHA
 
-                variation_vh_pl(g,k,l,1) = rhogvx_split_pl(g,k,l) + drhogvx_pl * dt
-                variation_vh_pl(g,k,l,2) = rhogvy_split_pl(g,k,l) + drhogvy_pl * dt
-                variation_vh_pl(g,k,l,3) = rhogvz_split_pl(g,k,l) + drhogvz_pl * dt
+                diff_vh_pl(g,k,l,1) = rhogvx_split_pl(g,k,l) + drhogvx_pl * dt
+                diff_vh_pl(g,k,l,2) = rhogvy_split_pl(g,k,l) + drhogvy_pl * dt
+                diff_vh_pl(g,k,l,3) = rhogvz_split_pl(g,k,l) + drhogvz_pl * dt
              enddo
              enddo
              enddo
@@ -642,9 +642,9 @@ contains
           do g = 1, ADM_gall
              drhogw(g,k,l) = grhogw(g,k,l)
 
-             variation_vh(g,k,l,1) = rhogvx_split(g,k,l) + grhogvx(g,k,l) * dt
-             variation_vh(g,k,l,2) = rhogvy_split(g,k,l) + grhogvy(g,k,l) * dt
-             variation_vh(g,k,l,3) = rhogvz_split(g,k,l) + grhogvz(g,k,l) * dt
+             diff_vh(g,k,l,1) = rhogvx_split(g,k,l) + grhogvx(g,k,l) * dt
+             diff_vh(g,k,l,2) = rhogvy_split(g,k,l) + grhogvy(g,k,l) * dt
+             diff_vh(g,k,l,3) = rhogvz_split(g,k,l) + grhogvz(g,k,l) * dt
           enddo
           enddo
           enddo
@@ -655,9 +655,9 @@ contains
              do g = 1, ADM_gall_pl
                 drhogw_pl(g,k,l) = grhogw_pl(g,k,l)
 
-                variation_vh_pl(g,k,l,1) = rhogvx_split_pl(g,k,l) + grhogvx_pl(g,k,l) * dt
-                variation_vh_pl(g,k,l,2) = rhogvy_split_pl(g,k,l) + grhogvy_pl(g,k,l) * dt
-                variation_vh_pl(g,k,l,3) = rhogvz_split_pl(g,k,l) + grhogvz_pl(g,k,l) * dt
+                diff_vh_pl(g,k,l,1) = rhogvx_split_pl(g,k,l) + grhogvx_pl(g,k,l) * dt
+                diff_vh_pl(g,k,l,2) = rhogvy_split_pl(g,k,l) + grhogvy_pl(g,k,l) * dt
+                diff_vh_pl(g,k,l,3) = rhogvz_split_pl(g,k,l) + grhogvz_pl(g,k,l) * dt
              enddo
              enddo
              enddo
@@ -667,35 +667,35 @@ contains
 
        ! treatment for boundary condition
        do l = 1, ADM_lall
-          call BNDCND_rhovxvyvz( ADM_gall,              & ! [IN]
-                                 rhog(:,:,l),           & ! [IN]
-                                 variation_vh(:,:,l,1), & ! [INOUT]
-                                 variation_vh(:,:,l,2), & ! [INOUT]
-                                 variation_vh(:,:,l,3)  ) ! [INOUT]
+          call BNDCND_rhovxvyvz( ADM_gall,         & ! [IN]
+                                 rhog(:,:,l),      & ! [IN]
+                                 diff_vh(:,:,l,1), & ! [INOUT]
+                                 diff_vh(:,:,l,2), & ! [INOUT]
+                                 diff_vh(:,:,l,3)  ) ! [INOUT]
        enddo
 
        if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
-             call BNDCND_rhovxvyvz( ADM_gall_pl,              & ! [IN]
-                                    rhog_pl(:,:,l),           & ! [IN]
-                                    variation_vh_pl(:,:,l,1), & ! [INOUT]
-                                    variation_vh_pl(:,:,l,2), & ! [INOUT]
-                                    variation_vh_pl(:,:,l,3)  ) ! [INOUT]
+             call BNDCND_rhovxvyvz( ADM_gall_pl,         & ! [IN]
+                                    rhog_pl(:,:,l),      & ! [IN]
+                                    diff_vh_pl(:,:,l,1), & ! [INOUT]
+                                    diff_vh_pl(:,:,l,2), & ! [INOUT]
+                                    diff_vh_pl(:,:,l,3)  ) ! [INOUT]
           enddo
        endif
 
-       call COMM_data_transfer( variation_vh, variation_vh_pl )
+       call COMM_data_transfer( diff_vh, diff_vh_pl )
 
 !OCL SERIAL
        do l = 1, ADM_lall
 !OCL PARALLEL
        do k = 1, ADM_kall
-          variation_vh(suf(ADM_gmax+1,ADM_gmin-1),k,l,1) = variation_vh(suf(ADM_gmax+1,ADM_gmin),k,l,1)
-          variation_vh(suf(ADM_gmin-1,ADM_gmax+1),k,l,1) = variation_vh(suf(ADM_gmin,ADM_gmax+1),k,l,1)
-          variation_vh(suf(ADM_gmax+1,ADM_gmin-1),k,l,2) = variation_vh(suf(ADM_gmax+1,ADM_gmin),k,l,2)
-          variation_vh(suf(ADM_gmin-1,ADM_gmax+1),k,l,2) = variation_vh(suf(ADM_gmin,ADM_gmax+1),k,l,2)
-          variation_vh(suf(ADM_gmax+1,ADM_gmin-1),k,l,3) = variation_vh(suf(ADM_gmax+1,ADM_gmin),k,l,3)
-          variation_vh(suf(ADM_gmin-1,ADM_gmax+1),k,l,3) = variation_vh(suf(ADM_gmin,ADM_gmax+1),k,l,3)
+          diff_vh(suf(ADM_gmax+1,ADM_gmin-1),k,l,1) = diff_vh(suf(ADM_gmax+1,ADM_gmin),k,l,1)
+          diff_vh(suf(ADM_gmin-1,ADM_gmax+1),k,l,1) = diff_vh(suf(ADM_gmin,ADM_gmax+1),k,l,1)
+          diff_vh(suf(ADM_gmax+1,ADM_gmin-1),k,l,2) = diff_vh(suf(ADM_gmax+1,ADM_gmin),k,l,2)
+          diff_vh(suf(ADM_gmin-1,ADM_gmax+1),k,l,2) = diff_vh(suf(ADM_gmin,ADM_gmax+1),k,l,2)
+          diff_vh(suf(ADM_gmax+1,ADM_gmin-1),k,l,3) = diff_vh(suf(ADM_gmax+1,ADM_gmin),k,l,3)
+          diff_vh(suf(ADM_gmin-1,ADM_gmax+1),k,l,3) = diff_vh(suf(ADM_gmin,ADM_gmax+1),k,l,3)
        enddo
        enddo
 
@@ -704,44 +704,44 @@ contains
 
        !---< vertical implicit scheme >
 
-       call vi_main( variation_we(:,:,:,1), variation_we_pl(:,:,:,1), & ! [OUT]
-                     variation_we(:,:,:,2), variation_we_pl(:,:,:,2), & ! [OUT]
-                     variation_we(:,:,:,3), variation_we_pl(:,:,:,3), & ! [OUT]
-                     variation_vh(:,:,:,1), variation_vh_pl(:,:,:,1), & ! [IN]
-                     variation_vh(:,:,:,2), variation_vh_pl(:,:,:,2), & ! [IN]
-                     variation_vh(:,:,:,3), variation_vh_pl(:,:,:,3), & ! [IN]
-                     rhog_split,            rhog_split_pl,            & ! [IN]
-                     rhogvx_split,          rhogvx_split_pl,          & ! [IN]
-                     rhogvy_split,          rhogvy_split_pl,          & ! [IN]
-                     rhogvz_split,          rhogvz_split_pl,          & ! [IN]
-                     rhogw_split,           rhogw_split_pl,           & ! [IN]
-                     rhoge_split,           rhoge_split_pl,           & ! [IN]
-                     preg_prim_split,       preg_prim_split_pl,       & ! [IN]
-                     rhog,                  rhog_pl,                  & ! [IN]
-                     rhogvx,                rhogvx_pl,                & ! [IN]
-                     rhogvy,                rhogvy_pl,                & ! [IN]
-                     rhogvz,                rhogvz_pl,                & ! [IN]
-                     rhogw,                 rhogw_pl,                 & ! [IN]
-                     eth,                   eth_pl,                   & ! [IN]
-                     grhog,                 grhog_pl,                 & ! [IN]
-                     drhogw,                drhogw_pl,                & ! [IN]
-                     grhoge,                grhoge_pl,                & ! [IN]
-                     grhogetot0,            grhogetot0_pl,            & ! [IN]
-                     dt                                               ) ! [IN]
+       call vi_main( diff_we(:,:,:,1), diff_we_pl(:,:,:,1), & ! [OUT]
+                     diff_we(:,:,:,2), diff_we_pl(:,:,:,2), & ! [OUT]
+                     diff_we(:,:,:,3), diff_we_pl(:,:,:,3), & ! [OUT]
+                     diff_vh(:,:,:,1), diff_vh_pl(:,:,:,1), & ! [IN]
+                     diff_vh(:,:,:,2), diff_vh_pl(:,:,:,2), & ! [IN]
+                     diff_vh(:,:,:,3), diff_vh_pl(:,:,:,3), & ! [IN]
+                     rhog_split,       rhog_split_pl,       & ! [IN]
+                     rhogvx_split,     rhogvx_split_pl,     & ! [IN]
+                     rhogvy_split,     rhogvy_split_pl,     & ! [IN]
+                     rhogvz_split,     rhogvz_split_pl,     & ! [IN]
+                     rhogw_split,      rhogw_split_pl,      & ! [IN]
+                     rhoge_split,      rhoge_split_pl,      & ! [IN]
+                     preg_prim_split,  preg_prim_split_pl,  & ! [IN]
+                     rhog,             rhog_pl,             & ! [IN]
+                     rhogvx,           rhogvx_pl,           & ! [IN]
+                     rhogvy,           rhogvy_pl,           & ! [IN]
+                     rhogvz,           rhogvz_pl,           & ! [IN]
+                     rhogw,            rhogw_pl,            & ! [IN]
+                     eth,              eth_pl,              & ! [IN]
+                     grhog,            grhog_pl,            & ! [IN]
+                     drhogw,           drhogw_pl,           & ! [IN]
+                     grhoge,           grhoge_pl,           & ! [IN]
+                     grhogetot0,       grhogetot0_pl,       & ! [IN]
+                     dt                                     ) ! [IN]
 
        ! treatment for boundary condition
-       call COMM_data_transfer( variation_we, variation_we_pl )
+       call COMM_data_transfer( diff_we, diff_we_pl )
 
 !OCL SERIAL
        do l = 1, ADM_lall
 !OCL PARALLEL
        do k = 1, ADM_kall
-          variation_we(suf(ADM_gmax+1,ADM_gmin-1),k,l,1) = variation_we(suf(ADM_gmax+1,ADM_gmin),k,l,1)
-          variation_we(suf(ADM_gmin-1,ADM_gmax+1),k,l,1) = variation_we(suf(ADM_gmin,ADM_gmax+1),k,l,1)
-          variation_we(suf(ADM_gmax+1,ADM_gmin-1),k,l,2) = variation_we(suf(ADM_gmax+1,ADM_gmin),k,l,2)
-          variation_we(suf(ADM_gmin-1,ADM_gmax+1),k,l,2) = variation_we(suf(ADM_gmin,ADM_gmax+1),k,l,2)
-          variation_we(suf(ADM_gmax+1,ADM_gmin-1),k,l,3) = variation_we(suf(ADM_gmax+1,ADM_gmin),k,l,3)
-          variation_we(suf(ADM_gmin-1,ADM_gmax+1),k,l,3) = variation_we(suf(ADM_gmin,ADM_gmax+1),k,l,3)
+          diff_we(suf(ADM_gmax+1,ADM_gmin-1),k,l,1) = diff_we(suf(ADM_gmax+1,ADM_gmin),k,l,1)
+          diff_we(suf(ADM_gmin-1,ADM_gmax+1),k,l,1) = diff_we(suf(ADM_gmin,ADM_gmax+1),k,l,1)
+          diff_we(suf(ADM_gmax+1,ADM_gmin-1),k,l,2) = diff_we(suf(ADM_gmax+1,ADM_gmin),k,l,2)
+          diff_we(suf(ADM_gmin-1,ADM_gmax+1),k,l,2) = diff_we(suf(ADM_gmin,ADM_gmax+1),k,l,2)
+          diff_we(suf(ADM_gmax+1,ADM_gmin-1),k,l,3) = diff_we(suf(ADM_gmax+1,ADM_gmin),k,l,3)
+          diff_we(suf(ADM_gmin-1,ADM_gmax+1),k,l,3) = diff_we(suf(ADM_gmin,ADM_gmax+1),k,l,3)
        enddo
        enddo
 
@@ -749,12 +749,12 @@ contains
        do l = 1, ADM_lall
        do k = 1, ADM_kall
        do g = 1, ADM_gall
-          rhogvx_split(g,k,l) = variation_vh(g,k,l,1)
-          rhogvy_split(g,k,l) = variation_vh(g,k,l,2)
-          rhogvz_split(g,k,l) = variation_vh(g,k,l,3)
-          rhog_split  (g,k,l) = variation_we(g,k,l,1)
-          rhogw_split (g,k,l) = variation_we(g,k,l,2)
-          rhoge_split (g,k,l) = variation_we(g,k,l,3)
+          rhogvx_split(g,k,l) = diff_vh(g,k,l,1)
+          rhogvy_split(g,k,l) = diff_vh(g,k,l,2)
+          rhogvz_split(g,k,l) = diff_vh(g,k,l,3)
+          rhog_split  (g,k,l) = diff_we(g,k,l,1)
+          rhogw_split (g,k,l) = diff_we(g,k,l,2)
+          rhoge_split (g,k,l) = diff_we(g,k,l,3)
 
           PROG_mean(g,k,l,1) = PROG_mean(g,k,l,1) + rhogvx_split(g,k,l) * rweight_itr
           PROG_mean(g,k,l,2) = PROG_mean(g,k,l,2) + rhogvy_split(g,k,l) * rweight_itr
@@ -769,12 +769,12 @@ contains
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do g = 1, ADM_gall_pl
-             rhogvx_split_pl(g,k,l) = variation_vh_pl(g,k,l,1)
-             rhogvy_split_pl(g,k,l) = variation_vh_pl(g,k,l,2)
-             rhogvz_split_pl(g,k,l) = variation_vh_pl(g,k,l,3)
-             rhog_split_pl  (g,k,l) = variation_we_pl(g,k,l,1)
-             rhogw_split_pl (g,k,l) = variation_we_pl(g,k,l,2)
-             rhoge_split_pl (g,k,l) = variation_we_pl(g,k,l,3)
+             rhogvx_split_pl(g,k,l) = diff_vh_pl(g,k,l,1)
+             rhogvy_split_pl(g,k,l) = diff_vh_pl(g,k,l,2)
+             rhogvz_split_pl(g,k,l) = diff_vh_pl(g,k,l,3)
+             rhog_split_pl  (g,k,l) = diff_we_pl(g,k,l,1)
+             rhogw_split_pl (g,k,l) = diff_we_pl(g,k,l,2)
+             rhoge_split_pl (g,k,l) = diff_we_pl(g,k,l,3)
 
              PROG_mean_pl(g,k,l,1) = PROG_mean_pl(g,k,l,1) + rhogvx_split_pl(g,k,l) * rweight_itr
              PROG_mean_pl(g,k,l,2) = PROG_mean_pl(g,k,l,2) + rhogvy_split_pl(g,k,l) * rweight_itr
@@ -1059,12 +1059,12 @@ contains
           enddo
           enddo
 
-          call BNDCND_rhow( ADM_gall_pl,                & ! [IN]
-                            rhogvx_split1_pl (:,:,l),   & ! [IN]
-                            rhogvy_split1_pl (:,:,l),   & ! [IN]
-                            rhogvz_split1_pl (:,:,l),   & ! [IN]
-                            rhogw_split1_pl  (:,:,l),   & ! [INOUT]
-                            VMTR_C2WfactGz_pl(:,:,:,l)  ) ! [IN]
+          call BNDCND_rhow( ADM_gall_pl,               & ! [IN]
+                            rhogvx_split1_pl (:,:,l),  & ! [IN]
+                            rhogvy_split1_pl (:,:,l),  & ! [IN]
+                            rhogvz_split1_pl (:,:,l),  & ! [IN]
+                            rhogw_split1_pl  (:,:,l),  & ! [INOUT]
+                            VMTR_C2WfactGz_pl(:,:,:,l) ) ! [IN]
        enddo
     endif
 

@@ -916,24 +916,23 @@ contains
                                              g_TENDq  (:,:,:,nq),       g_TENDq_pl  (:,:,:,nq),       & ! [OUT]
                                              I_SRC_default                                            ) ! [IN]
 
-             !$acc kernels pcopy(PROGq) pcopyin(PROGq0,g_TENDq,f_TENDq) async(0)
-             PROGq(:,:,:,:) = PROGq0(:,:,:,:)                                                                   &
-                            + ( num_of_iteration_sstep(nl) * TIME_DTS ) * ( g_TENDq(:,:,:,:) + f_TENDq(:,:,:,:) )
-
-             PROGq(:,ADM_kmin-1,:,:) = 0.D0
-             PROGq(:,ADM_kmax+1,:,:) = 0.D0
-             !$acc end kernels
-
-             if ( ADM_prc_pl == ADM_prc_me ) then
-                      PROGq_pl(:,:,:,:) = PROGq0_pl(:,:,:,:)                          &
-                                        + ( num_of_iteration_sstep(nl) * TIME_DTS )   &
-                                        * ( g_TENDq_pl(:,:,:,:) + f_TENDq_pl(:,:,:,:) )
-
-                PROGq_pl(:,ADM_kmin-1,:,:) = 0.D0
-                PROGq_pl(:,ADM_kmax+1,:,:) = 0.D0
-             endif
-
           enddo ! tracer LOOP
+
+          !$acc kernels pcopy(PROGq) pcopyin(PROGq0,g_TENDq,f_TENDq) async(0)
+          PROGq(:,:,:,:) = PROGq0(:,:,:,:)                                                                   &
+                         + ( num_of_iteration_sstep(nl) * TIME_DTS ) * ( g_TENDq(:,:,:,:) + f_TENDq(:,:,:,:) )
+
+          PROGq(:,ADM_kmin-1,:,:) = 0.D0
+          PROGq(:,ADM_kmax+1,:,:) = 0.D0
+          !$acc end kernels
+
+          if ( ADM_prc_pl == ADM_prc_me ) then
+             PROGq_pl(:,:,:,:) = PROGq0_pl(:,:,:,:)                                                                      &
+                               + ( num_of_iteration_sstep(nl) * TIME_DTS ) * ( g_TENDq_pl(:,:,:,:) + f_TENDq_pl(:,:,:,:) )
+
+             PROGq_pl(:,ADM_kmin-1,:,:) = 0.D0
+             PROGq_pl(:,ADM_kmax+1,:,:) = 0.D0
+          endif
 
           if( I_TKE >= 0 ) do_tke_correction = .true.
 
