@@ -27,23 +27,23 @@ module mod_oprt3d
      AJ  => ADM_AJ,  &
      K0  => ADM_KNONE
   use mod_gmtr, only: &
-     P_AREA => GMTR_P_AREA, &
-     W1     => GMTR_T_W1,   &
-     W2     => GMTR_T_W2,   &
-     W3     => GMTR_T_W3,   &
-     T_AREA => GMTR_T_AREA, &
-     HNX    => GMTR_A_HNX,  &
-     HNY    => GMTR_A_HNY,  &
-     HNZ    => GMTR_A_HNZ,  &
-     HTX    => GMTR_A_HTX,  &
-     HTY    => GMTR_A_HTY,  &
-     HTZ    => GMTR_A_HTZ,  &
-     TNX    => GMTR_A_TNX,  &
-     TNY    => GMTR_A_TNY,  &
-     TNZ    => GMTR_A_TNZ,  &
-     TN2X   => GMTR_A_TN2X, &
-     TN2Y   => GMTR_A_TN2Y, &
-     TN2Z   => GMTR_A_TN2Z
+     P_RAREA => GMTR_P_RAREA, &
+     T_RAREA => GMTR_T_RAREA, &
+     W1      => GMTR_T_W1,    &
+     W2      => GMTR_T_W2,    &
+     W3      => GMTR_T_W3,    &
+     HNX     => GMTR_A_HNX,   &
+     HNY     => GMTR_A_HNY,   &
+     HNZ     => GMTR_A_HNZ,   &
+     HTX     => GMTR_A_HTX,   &
+     HTY     => GMTR_A_HTY,   &
+     HTZ     => GMTR_A_HTZ,   &
+     TNX     => GMTR_A_TNX,   &
+     TNY     => GMTR_A_TNY,   &
+     TNZ     => GMTR_A_TNZ,   &
+     TN2X    => GMTR_A_TN2X,  &
+     TN2Y    => GMTR_A_TN2Y,  &
+     TN2Z    => GMTR_A_TN2Z
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -371,7 +371,7 @@ contains
                                - ( rhogvx_vm_pl(ijp1) + rhogvx_vm_pl(n   ) ) * GMTR_A_var_pl(ijp1,k0,l,TNX ) &
                                - ( rhogvy_vm_pl(ijp1) + rhogvy_vm_pl(n   ) ) * GMTR_A_var_pl(ijp1,k0,l,TNY ) &
                                - ( rhogvz_vm_pl(ijp1) + rhogvz_vm_pl(n   ) ) * GMTR_A_var_pl(ijp1,k0,l,TNZ ) &
-                             ) * 0.5D0 / GMTR_T_var_pl(ij,k0,l,T_AREA) &
+                             ) * 0.5D0 * GMTR_T_var_pl(ij,k0,l,T_RAREA) &
                            + sclt_rhogw_pl
              enddo
 
@@ -389,9 +389,9 @@ contains
                 ddivdz_pl(n,k,l) = ddivdz_pl(n,k,l) + ( sclt_pl(ijm1) + sclt_pl(ij) ) * GMTR_A_var_pl(ij,k0,l,HNZ)
              enddo
 
-             ddivdx_pl(n,k,l) = ddivdx_pl(n,k,l) * 0.5D0 / GMTR_P_var_pl(n,k0,l,P_AREA)
-             ddivdy_pl(n,k,l) = ddivdy_pl(n,k,l) * 0.5D0 / GMTR_P_var_pl(n,k0,l,P_AREA)
-             ddivdz_pl(n,k,l) = ddivdz_pl(n,k,l) * 0.5D0 / GMTR_P_var_pl(n,k0,l,P_AREA)
+             ddivdx_pl(n,k,l) = ddivdx_pl(n,k,l) * 0.5D0 * GMTR_P_var_pl(n,k0,l,P_RAREA)
+             ddivdy_pl(n,k,l) = ddivdy_pl(n,k,l) * 0.5D0 * GMTR_P_var_pl(n,k0,l,P_RAREA)
+             ddivdz_pl(n,k,l) = ddivdz_pl(n,k,l) * 0.5D0 * GMTR_P_var_pl(n,k0,l,P_RAREA)
           enddo
 
        enddo

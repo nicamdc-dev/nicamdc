@@ -31,22 +31,23 @@ module mod_src_tracer
      YDIR => GRD_YDIR, &
      ZDIR => GRD_ZDIR
   use mod_gmtr, only: &
-     P_AREA => GMTR_P_AREA, &
-     W1     => GMTR_T_W1,   &
-     W2     => GMTR_T_W2,   &
-     W3     => GMTR_T_W3,   &
-     HNX    => GMTR_A_HNX,  &
-     HNY    => GMTR_A_HNY,  &
-     HNZ    => GMTR_A_HNZ,  &
-     HTX    => GMTR_A_HTX,  &
-     HTY    => GMTR_A_HTY,  &
-     HTZ    => GMTR_A_HTZ,  &
-     TNX    => GMTR_A_TNX,  &
-     TNY    => GMTR_A_TNY,  &
-     TNZ    => GMTR_A_TNZ,  &
-     TN2X   => GMTR_A_TN2X, &
-     TN2Y   => GMTR_A_TN2Y, &
-     TN2Z   => GMTR_A_TN2Z
+     P_RAREA => GMTR_P_RAREA, &
+     T_RAREA => GMTR_T_RAREA, &
+     W1      => GMTR_T_W1,    &
+     W2      => GMTR_T_W2,    &
+     W3      => GMTR_T_W3,    &
+     HNX     => GMTR_A_HNX,   &
+     HNY     => GMTR_A_HNY,   &
+     HNZ     => GMTR_A_HNZ,   &
+     HTX     => GMTR_A_HTX,   &
+     HTY     => GMTR_A_HTY,   &
+     HTZ     => GMTR_A_HTZ,   &
+     TNX     => GMTR_A_TNX,   &
+     TNY     => GMTR_A_TNY,   &
+     TNZ     => GMTR_A_TNZ,   &
+     TN2X    => GMTR_A_TN2X,  &
+     TN2Y    => GMTR_A_TN2Y,  &
+     TN2Z    => GMTR_A_TN2Z
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -896,7 +897,7 @@ contains
                             + rhovyt2 * GMTR_A_var_pl(ij,K0,l,HNY) &
                             + rhovzt2 * GMTR_A_var_pl(ij,K0,l,HNZ) )
 
-             flx_h_pl(v,k,l) = flux / GMTR_P_var_pl(n,K0,l,P_AREA) * dt
+             flx_h_pl(v,k,l) = flux * GMTR_P_var_pl(n,K0,l,P_RAREA) * dt
 
              GRD_xc_pl(v,k,l,XDIR) = GRD_xr_pl(v,K0,l,XDIR) - rhovxt2 * rrhoa2 * dt * 0.5D0
              GRD_xc_pl(v,k,l,YDIR) = GRD_xr_pl(v,K0,l,YDIR) - rhovyt2 * rrhoa2 * dt * 0.5D0

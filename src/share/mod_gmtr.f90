@@ -49,26 +49,28 @@ module mod_gmtr
   !
   !++ Public parameters & variables
   !
-  integer, public, parameter :: GMTR_P_nmax_var = 9
+  integer, public, parameter :: GMTR_P_nmax_var = 10
 
-  integer, public, parameter :: GMTR_P_IX   = 1
-  integer, public, parameter :: GMTR_P_IY   = 2
-  integer, public, parameter :: GMTR_P_IZ   = 3
-  integer, public, parameter :: GMTR_P_JX   = 4
-  integer, public, parameter :: GMTR_P_JY   = 5
-  integer, public, parameter :: GMTR_P_JZ   = 6
-  integer, public, parameter :: GMTR_P_LAT  = 7
-  integer, public, parameter :: GMTR_P_LON  = 8
-  integer, public, parameter :: GMTR_P_AREA = 9
+  integer, public, parameter :: GMTR_P_AREA  = 1
+  integer, public, parameter :: GMTR_P_RAREA = 2
+  integer, public, parameter :: GMTR_P_IX    = 3
+  integer, public, parameter :: GMTR_P_IY    = 4
+  integer, public, parameter :: GMTR_P_IZ    = 5
+  integer, public, parameter :: GMTR_P_JX    = 6
+  integer, public, parameter :: GMTR_P_JY    = 7
+  integer, public, parameter :: GMTR_P_JZ    = 8
+  integer, public, parameter :: GMTR_P_LAT   = 9
+  integer, public, parameter :: GMTR_P_LON   = 10
 
-  integer, public, parameter :: GMTR_T_nmax_var = 6
+  integer, public, parameter :: GMTR_T_nmax_var = 7
 
-  integer, public, parameter :: GMTR_T_W1    = 1
-  integer, public, parameter :: GMTR_T_W2    = 2
-  integer, public, parameter :: GMTR_T_W3    = 3
-  integer, public, parameter :: GMTR_T_LAT   = 4
-  integer, public, parameter :: GMTR_T_LON   = 5
-  integer, public, parameter :: GMTR_T_AREA  = 6
+  integer, public, parameter :: GMTR_T_AREA  = 1
+  integer, public, parameter :: GMTR_T_RAREA = 2
+  integer, public, parameter :: GMTR_T_W1    = 3
+  integer, public, parameter :: GMTR_T_W2    = 4
+  integer, public, parameter :: GMTR_T_W3    = 5
+  integer, public, parameter :: GMTR_T_LAT   = 6
+  integer, public, parameter :: GMTR_T_LON   = 7
 
   integer, public, parameter :: GMTR_A_nmax_var    = 12
   integer, public, parameter :: GMTR_A_nmax_var_pl = 18
@@ -154,6 +156,7 @@ contains
     use mod_adm, only: &
        ADM_CTL_FID,   &
        ADM_proc_stop, &
+       ADM_gall_1d,   &
        ADM_gmin,      &
        ADM_gmax
     use mod_comm, only: &
@@ -227,16 +230,10 @@ contains
 
 
     !--- fill HALO
-    call COMM_data_transfer( GMTR_P_var(:,:,:,:), GMTR_P_var_pl(:,:,:,:) )
+    call COMM_data_transfer( GMTR_P_var, GMTR_P_var_pl )
 
     GMTR_P_var(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = GMTR_P_var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
     GMTR_P_var(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = GMTR_P_var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
-
-    call COMM_data_transfer( GMTR_T_var(:,:,:,ADM_TI,:), GMTR_T_var_pl(:,:,:,:) )
-    call COMM_data_transfer( GMTR_T_var(:,:,:,ADM_TJ,:), GMTR_T_var_pl(:,:,:,:) )
-
-    GMTR_T_var(suf(ADM_gmax+1,ADM_gmin-1),:,:,:,GMTR_T_AREA) = GMTR_T_var(suf(ADM_gmax+1,ADM_gmin),:,:,:,GMTR_T_AREA)
-    GMTR_T_var(suf(ADM_gmin-1,ADM_gmax+1),:,:,:,GMTR_T_AREA) = GMTR_T_var(suf(ADM_gmin,ADM_gmax+1),:,:,:,GMTR_T_AREA)
 
     !--- for simple use
     GMTR_area   (:,:) = GMTR_P_var   (:,K0,:,GMTR_P_AREA)
@@ -266,6 +263,7 @@ contains
        ADM_rgn_vnum,    &
        ADM_W,           &
        ADM_nxyz,        &
+       ADM_gall_1d,     &
        ADM_gmin,        &
        ADM_IooJoo_nmax, &
        ADM_IooJoo,      &
@@ -343,6 +341,25 @@ contains
           ij = ADM_IooJoo(n,ADM_GIoJo)
 
           area = 0.D0
+          if ( GRD_grid_type == 'ON_PLANE' ) then
+             do m = 1, 6
+                area = area + triangle_area_on_plane( v(:,0,ij), v(:,m,ij), v(:,m+1,ij) )
+             enddo
+          else
+             do m = 1, 6
+                area = area + MISC_triangle_area( v(:,0,ij), v(:,m,ij), v(:,m+1,ij), &
+                                                  GMTR_polygon_type, GRD_rscale      )
+             enddo
+          endif
+
+          GMTR_P_var(ij,K0,l,GMTR_P_AREA)  = area
+          GMTR_P_var(ij,K0,l,GMTR_P_RAREA) = 1.D0 / GMTR_P_var(ij,K0,l,GMTR_P_AREA)
+
+          call MISC_get_latlon( GMTR_P_var(ij,K0,l,GMTR_P_LAT), &
+                                GMTR_P_var(ij,K0,l,GMTR_P_LON), &
+                                GRD_x     (ij,K0,l,GRD_XDIR),   &
+                                GRD_x     (ij,K0,l,GRD_YDIR),   &
+                                GRD_x     (ij,K0,l,GRD_ZDIR)    )
 
           if ( GRD_grid_type == 'ON_PLANE' ) then
 
@@ -352,10 +369,6 @@ contains
              GMTR_P_var(ij,K0,l,GMTR_P_JX) = 0.D0
              GMTR_P_var(ij,K0,l,GMTR_P_JY) = 1.D0
              GMTR_P_var(ij,K0,l,GMTR_P_JZ) = 0.D0
-
-             do m = 1, 6
-                area = area + triangle_area_on_plane( v(:,0,ij), v(:,m,ij), v(:,m+1,ij) )
-             enddo
 
           else
 
@@ -369,21 +382,7 @@ contains
              GMTR_P_var(ij,K0,l,GMTR_P_JY) = -( GRD_x(ij,K0,l,GRD_ZDIR) * sin_lam ) / GRD_rscale
              GMTR_P_var(ij,K0,l,GMTR_P_JZ) =  ( GRD_x(ij,K0,l,GRD_XDIR) * cos_lam &
                                               + GRD_x(ij,K0,l,GRD_YDIR) * sin_lam ) / GRD_rscale
-
-             do m = 1, 6
-                area = area + MISC_triangle_area( v(:,0,ij), v(:,m,ij), v(:,m+1,ij), &
-                                                  GMTR_polygon_type, GRD_rscale      )
-             enddo
-
           endif
-
-          call MISC_get_latlon( GMTR_P_var(ij,K0,l,GMTR_P_LAT), &
-                                GMTR_P_var(ij,K0,l,GMTR_P_LON), &
-                                GRD_x     (ij,K0,l,GRD_XDIR),   &
-                                GRD_x     (ij,K0,l,GRD_YDIR),   &
-                                GRD_x     (ij,K0,l,GRD_ZDIR)    )
-
-          GMTR_P_var(ij,K0,l,GMTR_P_AREA)  = area
 
        enddo ! ij loop
     enddo ! l loop
@@ -403,6 +402,21 @@ contains
           enddo
           v_pl(:,ADM_vlink_nmax+1) = v_pl(:,1)
 
+          area = 0.D0
+          do m = 1, ADM_vlink_nmax ! (ICO=5)
+             area = area + MISC_triangle_area( v_pl(:,0), v_pl(:,m), v_pl(:,m+1), &
+                                               GMTR_polygon_type, GRD_rscale      )
+          enddo
+
+          GMTR_P_var_pl(n,K0,l,GMTR_P_AREA)  = area
+          GMTR_P_var_pl(n,K0,l,GMTR_P_RAREA) = 1.D0 / GMTR_P_var_pl(n,K0,l,GMTR_P_AREA)
+
+          call MISC_get_latlon( GMTR_P_var_pl(n,K0,l,GMTR_P_LAT), &
+                                GMTR_P_var_pl(n,K0,l,GMTR_P_LON), &
+                                GRD_x_pl     (n,K0,l,GRD_XDIR),   &
+                                GRD_x_pl     (n,K0,l,GRD_YDIR),   &
+                                GRD_x_pl     (n,K0,l,GRD_ZDIR)    )
+
           sin_lam = sin( GMTR_P_var_pl(n,K0,l,GMTR_P_LON) )
           cos_lam = cos( GMTR_P_var_pl(n,K0,l,GMTR_P_LON) )
 
@@ -413,23 +427,8 @@ contains
           GMTR_P_var_pl(n,K0,l,GMTR_P_JY) = -( GRD_x_pl(n,K0,l,GRD_ZDIR) * sin_lam ) / GRD_rscale
           GMTR_P_var_pl(n,K0,l,GMTR_P_JZ) =  ( GRD_x_pl(n,K0,l,GRD_XDIR) * cos_lam &
                                              + GRD_x_pl(n,K0,l,GRD_YDIR) * sin_lam ) / GRD_rscale
-
-          area = 0.D0
-          do m = 1, ADM_vlink_nmax ! (ICO=5)
-             area = area + MISC_triangle_area( v_pl(:,0), v_pl(:,m), v_pl(:,m+1), &
-                                               GMTR_polygon_type, GRD_rscale      )
-          enddo
-
-          call MISC_get_latlon( GMTR_P_var_pl(n,K0,l,GMTR_P_LAT), &
-                                GMTR_P_var_pl(n,K0,l,GMTR_P_LON), &
-                                GRD_x_pl     (n,K0,l,GRD_XDIR),   &
-                                GRD_x_pl     (n,K0,l,GRD_YDIR),   &
-                                GRD_x_pl     (n,K0,l,GRD_ZDIR)    )
-
-          GMTR_P_var_pl(n,K0,l,GMTR_P_AREA)  = area
-
        enddo ! l loop
-       endif
+    endif
 
     return
   end subroutine GMTR_calc_P
@@ -447,6 +446,7 @@ contains
        ADM_rgn_vnum,    &
        ADM_W,           &
        ADM_nxyz,        &
+       ADM_gall_1d,     &
        ADM_gmin,        &
        ADM_gmax,        &
        ADM_ImoJmo_nmax, &
@@ -458,8 +458,6 @@ contains
        ADM_gslf_pl,     &
        ADM_gmin_pl,     &
        ADM_gmax_pl
-    use mod_cnst, only: &
-       CNST_UNDEF
     use mod_grd, only: &
        GRD_XDIR,      &
        GRD_YDIR,      &
@@ -544,17 +542,18 @@ contains
 
           area = area1 + area2 + area3
 
-          GMTR_T_var(ij,K0,l,t,GMTR_T_W1) = area1 / area
-          GMTR_T_var(ij,K0,l,t,GMTR_T_W2) = area2 / area
-          GMTR_T_var(ij,K0,l,t,GMTR_T_W3) = area3 / area
+          GMTR_T_var(ij,K0,l,t,GMTR_T_AREA)  = area
+          GMTR_T_var(ij,K0,l,t,GMTR_T_RAREA) = 1.D0 / area
+
+          GMTR_T_var(ij,K0,l,t,GMTR_T_W1)    = area1 / area
+          GMTR_T_var(ij,K0,l,t,GMTR_T_W2)    = area2 / area
+          GMTR_T_var(ij,K0,l,t,GMTR_T_W3)    = area3 / area
 
           call MISC_get_latlon( GMTR_T_var(ij,K0,l,t,GMTR_T_LAT), &
                                 GMTR_T_var(ij,K0,l,t,GMTR_T_LON), &
                                 GRD_xt    (ij,K0,l,t,GRD_XDIR),   &
                                 GRD_xt    (ij,K0,l,t,GRD_YDIR),   &
                                 GRD_xt    (ij,K0,l,t,GRD_ZDIR)    )
-
-          GMTR_T_var(ij,K0,l,t,GMTR_T_AREA) = area
        enddo
        enddo
 
@@ -587,19 +586,20 @@ contains
 
              area = area1 + area2 + area3
 
-             GMTR_T_var_pl(n,K0,l,GMTR_T_W1) = area1 / area
-             GMTR_T_var_pl(n,K0,l,GMTR_T_W2) = area2 / area
-             GMTR_T_var_pl(n,K0,l,GMTR_T_W3) = area3 / area
+             GMTR_T_var_pl(n,K0,l,GMTR_T_AREA)  = area
+             GMTR_T_var_pl(n,K0,l,GMTR_T_RAREA) = 1.D0 / area
+
+             GMTR_T_var_pl(n,K0,l,GMTR_T_W1)    = area1 / area
+             GMTR_T_var_pl(n,K0,l,GMTR_T_W2)    = area2 / area
+             GMTR_T_var_pl(n,K0,l,GMTR_T_W3)    = area3 / area
+
 
              call MISC_get_latlon( GMTR_T_var_pl(n,K0,l,GMTR_T_LAT), &
                                    GMTR_T_var_pl(n,K0,l,GMTR_T_LON), &
                                    GRD_xt_pl    (n,K0,l,GRD_XDIR),   &
                                    GRD_xt_pl    (n,K0,l,GRD_YDIR),   &
                                    GRD_xt_pl    (n,K0,l,GRD_ZDIR)    )
-
-             GMTR_T_var_pl(n,K0,l,GMTR_T_AREA) = area
           enddo
-          GMTR_T_var_pl(ADM_gslf_pl,K0,l,GMTR_T_AREA) = CNST_UNDEF
 
        enddo
     endif
@@ -619,6 +619,7 @@ contains
        ADM_rgn_vnum,    &
        ADM_W,           &
        ADM_nxyz,        &
+       ADM_gall_1d,     &
        ADM_gmin,        &
        ADM_gmax,        &
        ADM_ImpJmo_nmax, &
