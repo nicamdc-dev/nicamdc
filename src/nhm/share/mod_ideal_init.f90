@@ -638,8 +638,8 @@ contains
     logical, parameter :: hybrid_eta = .false. ! dont use hybrid sigma-p (eta) coordinate
     integer, parameter :: zcoords    = 1       ! if zcoords = 1, then we use z and output p
     integer, parameter :: cfv        = 2       ! if cfv = 2 then our velocities follow Gal-Chen coordinates and we need to specify w
-    real(8)            :: hyam       = UNDEF   ! dont use hybrid sigma-p (eta) coordinate
-    real(8)            :: hybm       = UNDEF   ! dont use hybrid sigma-p (eta) coordinate
+    real(8)            :: hyam                 ! dont use hybrid sigma-p (eta) coordinate
+    real(8)            :: hybm                 ! dont use hybrid sigma-p (eta) coordinate
     real(8)            :: gc                   ! bar{z} for Gal-Chen coordinate
 
     integer :: I_pasv1, I_pasv2
@@ -653,6 +653,9 @@ contains
     I_pasv2 = 6 + NCHEM_STR + chemvar_getid( "passive002" ) - 1
     I_pasv3 = 6 + NCHEM_STR + chemvar_getid( "passive003" ) - 1
     I_pasv4 = 6 + NCHEM_STR + chemvar_getid( "passive004" ) - 1
+
+    hyam = UNDEF
+    hybm = UNDEF
 
     select case(test_case)
     case ('1', '1-1') ! DCMIP 2012 Test 1-1: 3D Deformational Flow

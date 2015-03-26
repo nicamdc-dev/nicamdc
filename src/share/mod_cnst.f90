@@ -154,7 +154,10 @@ module mod_cnst
   real(8), public, parameter :: CNST_VMISS    = 0.0D0
   !
   !------ Undefined value
-  real(8), public, parameter :: CNST_UNDEF    = -99.9D+33
+  real(RP), public :: CNST_UNDEF
+  !
+  !------ Undefined value
+  real(8), public, parameter :: CNST_UNDEF8   = -99.9D+33
   !
   !------ Undefined value
   real(4), public, parameter :: CNST_UNDEF4   = -99.9E+33
@@ -246,6 +249,15 @@ contains
     CNST_LHS0    = latent_heat_sub
 
     !--- calculate other parameters
+    if    ( RP == SP ) then
+       CNST_UNDEF = real(CNST_UNDEF4,kind=RP)
+    elseif( RP == DP ) then
+       CNST_UNDEF = real(CNST_UNDEF8,kind=RP)
+    else
+       write(*,*) 'xxx unsupported precision: ', RP
+       call ADM_proc_stop
+    endif
+
     CNST_PI    = 4.D0 * atan( 1.D0 )
     CNST_D2R   = CNST_PI / 180.D0
 
