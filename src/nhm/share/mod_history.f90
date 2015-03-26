@@ -81,7 +81,7 @@ module mod_history
   logical,                     private :: direct_access  = .false.
   integer,                     private :: output_size    = 4
   integer,                     private :: npreslev       = 1
-  real(8),                     private :: pres_levs(60)  != CNST_PRE00
+  REAL(RP),                     private :: pres_levs(60)  != CNST_PRE00
   logical,                     private :: check_flag     = .true.
 
   integer,                     private :: ksum
@@ -103,24 +103,24 @@ module mod_history
 
   character(len=ADM_NSYS),     private, allocatable :: lname_save   (:)
   integer,                     private, allocatable :: tmax_save    (:)
-  real(8),                     private, allocatable :: tstr_save    (:)
-  real(8),                     private, allocatable :: tend_save    (:)
+  REAL(RP),                     private, allocatable :: tstr_save    (:)
+  REAL(RP),                     private, allocatable :: tend_save    (:)
   integer,                     private, allocatable :: month_old    (:)
   integer,                     private, allocatable :: l_region_save(:)
 
   integer,                     public,  allocatable :: ksumstr  (:)
   integer,                     private, allocatable :: ksumend  (:)
-  real(8),                     private, allocatable :: tsum_save(:,:)
+  REAL(RP),                     private, allocatable :: tsum_save(:,:)
   logical,                     private, allocatable :: flag_save(:)
 
-  real(8),                     public,  allocatable :: v_save   (:,:,:,:)
-  real(8),                     private, allocatable :: v_save_pl(:,:,:,:)
-  real(8),                     private, allocatable :: zlev_save(:)
+  REAL(RP),                     public,  allocatable :: v_save   (:,:,:,:)
+  REAL(RP),                     private, allocatable :: v_save_pl(:,:,:,:)
+  REAL(RP),                     private, allocatable :: zlev_save(:)
 
-  real(8),                     private, allocatable :: pres_levs_ln(:)
+  REAL(RP),                     private, allocatable :: pres_levs_ln(:)
   integer,                     public,  allocatable :: cnvpre_klev(:,:,:)
-  real(8),                     public,  allocatable :: cnvpre_fac1(:,:,:)
-  real(8),                     public,  allocatable :: cnvpre_fac2(:,:,:)
+  REAL(RP),                     public,  allocatable :: cnvpre_fac1(:,:,:)
+  REAL(RP),                     public,  allocatable :: cnvpre_fac2(:,:,:)
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
@@ -588,7 +588,7 @@ contains
     implicit none
 
     character(len=*), intent(in) :: item
-    real(8),          intent(in) :: gd(:,:)
+    REAL(RP),          intent(in) :: gd(:,:)
     integer,          intent(in), optional :: l_region
 
     character(len=ADM_NSYS) :: hitem
@@ -782,9 +782,9 @@ contains
        VINTRPL_z_level, &
        VINTRPL_z_level2
 
-    real(8) :: tmp   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: val_max, val_min
+    REAL(RP) :: tmp   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: val_max, val_min
 
     character(len=20)           :: HTIME
     character(len=ADM_NSYS)     :: item
@@ -1056,32 +1056,32 @@ contains
        THRMDYN_tempre
     implicit none
 
-    real(8) :: rhog     (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhogvx   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhogvy   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhogvz   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhogw    (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhoge    (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhogq    (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
-    real(8) :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    REAL(RP) :: rhog     (ADM_gall   ,ADM_kall,ADM_lall   )
+    REAL(RP) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: rhogvx   (ADM_gall   ,ADM_kall,ADM_lall   )
+    REAL(RP) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: rhogvy   (ADM_gall   ,ADM_kall,ADM_lall   )
+    REAL(RP) :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: rhogvz   (ADM_gall   ,ADM_kall,ADM_lall   )
+    REAL(RP) :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: rhogw    (ADM_gall   ,ADM_kall,ADM_lall   )
+    REAL(RP) :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: rhoge    (ADM_gall   ,ADM_kall,ADM_lall   )
+    REAL(RP) :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: rhogq    (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
+    REAL(RP) :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    real(8) :: pre_sfc   (ADM_gall   ,ADM_KNONE,ADM_lall   )
-    real(8) :: pre_sfc_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    REAL(RP) :: pre_sfc   (ADM_gall   ,ADM_KNONE,ADM_lall   )
+    REAL(RP) :: pre_sfc_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
 
-    real(8) :: rho(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: ein(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: q  (ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
-    real(8) :: tem(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: pre(ADM_gall,ADM_kall,ADM_lall)
+    REAL(RP) :: rho(ADM_gall,ADM_kall,ADM_lall)
+    REAL(RP) :: ein(ADM_gall,ADM_kall,ADM_lall)
+    REAL(RP) :: q  (ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
+    REAL(RP) :: tem(ADM_gall,ADM_kall,ADM_lall)
+    REAL(RP) :: pre(ADM_gall,ADM_kall,ADM_lall)
 
-    real(8) :: lpres_sfc(ADM_gall)
-    real(8) :: lpres    (ADM_gall,ADM_kall)
+    REAL(RP) :: lpres_sfc(ADM_gall)
+    REAL(RP) :: lpres    (ADM_gall,ADM_kall)
 
     integer :: g, k, l, nq, kk
     !---------------------------------------------------------------------------

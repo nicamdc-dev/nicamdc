@@ -44,15 +44,15 @@ module mod_time
   integer, public :: TIME_LSTEP_MAX = 10     ! Max steps of large step
   integer, public :: TIME_SSTEP_MAX          ! Max steps of small step
 
-  real(8), public :: TIME_DTL       = 5.D0   ! Time interval for large step [sec]
-  real(8), public :: TIME_DTS                ! Time interval for small step [sec]
+  REAL(RP), public :: TIME_DTL       = 5.D0   ! Time interval for large step [sec]
+  REAL(RP), public :: TIME_DTS                ! Time interval for small step [sec]
   !
-  real(8), public :: TIME_START              ! Start time [sec]
-  real(8), public :: TIME_END                ! End   time [sec]
+  REAL(RP), public :: TIME_START              ! Start time [sec]
+  REAL(RP), public :: TIME_END                ! End   time [sec]
   integer, public :: TIME_NSTART             ! Time step at the start
   integer, public :: TIME_NEND               ! Time step at the end
 
-  real(8), public :: TIME_CTIME              ! Current time [sec]
+  REAL(RP), public :: TIME_CTIME              ! Current time [sec]
   integer, public :: TIME_CSTEP              ! Current time step
 
   !-----------------------------------------------------------------------------
@@ -79,7 +79,7 @@ contains
 
     character(len=ADM_NSYS) :: integ_type !--- integration method
     logical                 :: split      !--- time spliting flag
-    real(8)                 :: dtl        !--- delta t in large step
+    REAL(RP)                 :: dtl        !--- delta t in large step
     integer                 :: lstep_max  !--- maximum number of large steps
     integer                 :: sstep_max  !--- division number in large step
 

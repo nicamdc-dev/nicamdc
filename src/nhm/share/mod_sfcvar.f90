@@ -152,15 +152,15 @@ module mod_sfcvar
 
   integer, private :: I_ALL
 
-  real(8), public , allocatable :: sfcvar   (:,:,:,:)
-  real(8), private, allocatable :: sfcvar_pl(:,:,:,:)
+  REAL(RP), public , allocatable :: sfcvar   (:,:,:,:)
+  REAL(RP), private, allocatable :: sfcvar_pl(:,:,:,:)
 
   integer, private, allocatable :: KMAX(:)
   integer, public , allocatable :: KSTR(:)
   integer, private, allocatable :: KEND(:)
   integer, private              :: KSUM
 
-  real(8), private :: VMISS = -999.D30
+  REAL(RP), private :: VMISS = -999.D30
 
   !-----------------------------------------------------------------------------
 contains
@@ -331,8 +331,8 @@ contains
          ADM_gall_1d
     !
     implicit none
-    real(8), intent(out) :: sv(ADM_gall,ADM_KNONE,ADM_lall)
-    real(8), intent(out) :: sv_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL)
+    REAL(RP), intent(out) :: sv(ADM_gall,ADM_KNONE,ADM_lall)
+    REAL(RP), intent(out) :: sv_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL)
     integer, intent(in)  :: vid
     !
     sv(1:ADM_gall,ADM_KNONE,1:ADM_lall) &
@@ -370,8 +370,8 @@ contains
     !
     implicit none
     integer, intent(in) :: mdim
-    real(8), intent(out) :: sv(ADM_gall,ADM_KNONE,ADM_lall,mdim)
-    real(8), intent(out) :: sv_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL,mdim)
+    REAL(RP), intent(out) :: sv(ADM_gall,ADM_KNONE,ADM_lall,mdim)
+    REAL(RP), intent(out) :: sv_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL,mdim)
     integer, intent(in)  :: vid
     !
     integer :: m,l,n
@@ -419,8 +419,8 @@ contains
     !
     implicit none
     integer, intent(in) :: mdim1, mdim2
-    real(8), intent(out) :: sv(ADM_gall,ADM_KNONE,ADM_lall,mdim1,mdim2)
-    real(8), intent(out) :: sv_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL,mdim1,mdim2)
+    REAL(RP), intent(out) :: sv(ADM_gall,ADM_KNONE,ADM_lall,mdim1,mdim2)
+    REAL(RP), intent(out) :: sv_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL,mdim1,mdim2)
     integer, intent(in) :: vid
     !
     integer :: l,n
@@ -486,8 +486,8 @@ contains
          ADM_gall_1d
     !
     implicit none
-    real(8), intent(in) :: sv(ADM_gall,ADM_KNONE,ADM_lall)
-    real(8), intent(in) :: sv_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL)
+    REAL(RP), intent(in) :: sv(ADM_gall,ADM_KNONE,ADM_lall)
+    REAL(RP), intent(in) :: sv_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL)
     integer, intent(in) :: vid
     !
     integer :: i,j,suf
@@ -525,7 +525,7 @@ contains
          ADM_GIoJo
     !
     implicit none
-    real(8), intent(out) :: sv(ADM_IopJop_nmax,ADM_KNONE,ADM_lall)
+    REAL(RP), intent(out) :: sv(ADM_IopJop_nmax,ADM_KNONE,ADM_lall)
     integer, intent(in) :: vid
     !
     integer :: l,n,nn
@@ -561,7 +561,7 @@ contains
          ADM_GIoJo
     !
     implicit none
-    real(8), intent(in) :: sv(ADM_IopJop_nmax,ADM_KNONE,ADM_lall)
+    REAL(RP), intent(in) :: sv(ADM_IopJop_nmax,ADM_KNONE,ADM_lall)
     integer, intent(in) :: vid
     !
     integer :: l,n,nn
@@ -601,7 +601,7 @@ contains
     !
     implicit none
     integer, intent(in) :: mdim
-    real(8), intent(out) :: sv(ADM_IopJop_nmax,ADM_KNONE,ADM_lall,mdim)
+    REAL(RP), intent(out) :: sv(ADM_IopJop_nmax,ADM_KNONE,ADM_lall,mdim)
     integer, intent(in) :: vid
     !
     integer :: l,n,nn
@@ -647,8 +647,8 @@ contains
     !
     implicit none
     integer, intent(in) :: mdim
-    real(8), intent(in) :: sv(ADM_gall,ADM_KNONE,ADM_lall,mdim)
-    real(8), intent(in) :: sv_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,mdim)
+    REAL(RP), intent(in) :: sv(ADM_gall,ADM_KNONE,ADM_lall,mdim)
+    REAL(RP), intent(in) :: sv_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,mdim)
     integer, intent(in) :: vid
     integer, optional, intent(in) :: comm_flag
     !
@@ -711,7 +711,7 @@ contains
     !
     implicit none
     integer, intent(in) :: mdim
-    real(8), intent(in) :: sv(ADM_IopJop_nmax,ADM_KNONE,ADM_lall,mdim)
+    REAL(RP), intent(in) :: sv(ADM_IopJop_nmax,ADM_KNONE,ADM_lall,mdim)
     integer, intent(in) :: vid
     !
     integer :: l,n,nn
@@ -753,7 +753,7 @@ contains
     !
     implicit none
     integer, intent(in) :: mdim1, mdim2
-    real(8), intent(out) :: sv(ADM_IopJop_nmax,ADM_KNONE,ADM_lall,mdim1,mdim2)
+    REAL(RP), intent(out) :: sv(ADM_IopJop_nmax,ADM_KNONE,ADM_lall,mdim1,mdim2)
     integer, intent(in) :: vid
     !
     integer :: l,n,nn
@@ -803,7 +803,7 @@ contains
     !
     implicit none
     integer, intent(in) :: mdim1, mdim2
-    real(8), intent(in) :: sv(ADM_IopJop_nmax,ADM_KNONE,ADM_lall,mdim1,mdim2)
+    REAL(RP), intent(in) :: sv(ADM_IopJop_nmax,ADM_KNONE,ADM_lall,mdim1,mdim2)
     integer, intent(in) :: vid
     !
     integer :: l,n,nn
@@ -854,8 +854,8 @@ contains
     !
     implicit none
     integer, intent(in) :: mdim1, mdim2
-    real(8), intent(in) :: sv   (ADM_gall   ,ADM_KNONE,ADM_lall   ,mdim1,mdim2)
-    real(8), intent(in) :: sv_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,mdim1,mdim2)
+    REAL(RP), intent(in) :: sv   (ADM_gall   ,ADM_KNONE,ADM_lall   ,mdim1,mdim2)
+    REAL(RP), intent(in) :: sv_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,mdim1,mdim2)
     integer, intent(in) :: vid
     !
     integer :: l,ij

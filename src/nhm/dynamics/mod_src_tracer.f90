@@ -123,60 +123,60 @@ contains
     implicit none
 
     integer, intent(in)    :: vmax
-    real(8), intent(inout) :: rhogq         (ADM_gall,   ADM_kall,ADM_lall,   vmax)
-    real(8), intent(inout) :: rhogq_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl,vmax)
-    real(8), intent(in)    :: rhog_in       (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: rhog_in_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: rhog_mean     (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: rhog_mean_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: rhogvx_mean   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: rhogvx_mean_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: rhogvy_mean   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: rhogvy_mean_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: rhogvz_mean   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: rhogvz_mean_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: rhogw_mean    (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: rhogw_mean_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: frhog         (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: frhog_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: dt
+    REAL(RP), intent(inout) :: rhogq         (ADM_gall,   ADM_kall,ADM_lall,   vmax)
+    REAL(RP), intent(inout) :: rhogq_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl,vmax)
+    REAL(RP), intent(in)    :: rhog_in       (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: rhog_in_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: rhog_mean     (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: rhog_mean_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: rhogvx_mean   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: rhogvx_mean_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: rhogvy_mean   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: rhogvy_mean_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: rhogvz_mean   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: rhogvz_mean_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: rhogw_mean    (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: rhogw_mean_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: frhog         (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: frhog_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: dt
     logical, intent(in)    :: thubern_lim  ![add] 20130613 R.Yoshida
 
-    real(8) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: q        (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: q_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: d        (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: d_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: q        (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: q_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: d        (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: d_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: q_h      (ADM_gall,   ADM_kall,ADM_lall   )   ! q at layer face
-    real(8) :: q_h_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: flx_v    (ADM_gall,   ADM_kall,ADM_lall   )   ! mass flux
-    real(8) :: flx_v_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: ck       (ADM_gall,   ADM_kall,ADM_lall,   2) ! Courant number
-    real(8) :: ck_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,2)
+    REAL(RP) :: q_h      (ADM_gall,   ADM_kall,ADM_lall   )   ! q at layer face
+    REAL(RP) :: q_h_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: flx_v    (ADM_gall,   ADM_kall,ADM_lall   )   ! mass flux
+    REAL(RP) :: flx_v_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: ck       (ADM_gall,   ADM_kall,ADM_lall,   2) ! Courant number
+    REAL(RP) :: ck_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,2)
 
-    real(8) :: q_a      (ADM_gall,   ADM_kall,ADM_lall   ,6) ! q at cell face
-    real(8) :: q_a_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
-    real(8) :: flx_h    (ADM_gall,   ADM_kall,ADM_lall   ,6) ! mass flux
-    real(8) :: flx_h_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
-    real(8) :: ch       (ADM_gall,   ADM_kall,ADM_lall   ,6) ! Courant number
-    real(8) :: ch_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
-    real(8) :: cmask    (ADM_gall,   ADM_kall,ADM_lall   ,6) ! upwind direction mask
-    real(8) :: cmask_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
-    real(8) :: GRD_xc   (ADM_gall,   ADM_kall,ADM_lall,   AI:AJ,XDIR:ZDIR) ! mass centroid position
-    real(8) :: GRD_xc_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,      XDIR:ZDIR)
+    REAL(RP) :: q_a      (ADM_gall,   ADM_kall,ADM_lall   ,6) ! q at cell face
+    REAL(RP) :: q_a_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
+    REAL(RP) :: flx_h    (ADM_gall,   ADM_kall,ADM_lall   ,6) ! mass flux
+    REAL(RP) :: flx_h_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
+    REAL(RP) :: ch       (ADM_gall,   ADM_kall,ADM_lall   ,6) ! Courant number
+    REAL(RP) :: ch_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
+    REAL(RP) :: cmask    (ADM_gall,   ADM_kall,ADM_lall   ,6) ! upwind direction mask
+    REAL(RP) :: cmask_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
+    REAL(RP) :: GRD_xc   (ADM_gall,   ADM_kall,ADM_lall,   AI:AJ,XDIR:ZDIR) ! mass centroid position
+    REAL(RP) :: GRD_xc_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,      XDIR:ZDIR)
 
-    real(8), parameter :: b1 = 0.D0
-    real(8), parameter :: b2 = 1.D0
-    real(8), parameter :: b3 = 1.D0 - (b1+b2)
+    REAL(RP), parameter :: b1 = 0.D0
+    REAL(RP), parameter :: b2 = 1.D0
+    REAL(RP), parameter :: b3 = 1.D0 - (b1+b2)
 
     integer :: nstart, nend
     integer :: g, k, l, v, iq
@@ -669,38 +669,38 @@ contains
        cinterp_PRA
     implicit none
 
-    real(8), intent(out) :: flx_h    (ADM_gall   ,ADM_kall,ADM_lall   ,6)               ! horizontal mass flux
-    real(8), intent(out) :: flx_h_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
-    real(8), intent(out) :: GRD_xc   (ADM_gall   ,ADM_kall,ADM_lall   ,AI:AJ,XDIR:ZDIR) ! mass centroid position
-    real(8), intent(out) :: GRD_xc_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,      XDIR:ZDIR)
-    real(8), intent(in)  :: rho      (ADM_gall   ,ADM_kall,ADM_lall   )                 ! rho at cell center
-    real(8), intent(in)  :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhovx    (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: rhovx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhovy    (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: rhovy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhovz    (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: rhovz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: dt
+    REAL(RP), intent(out) :: flx_h    (ADM_gall   ,ADM_kall,ADM_lall   ,6)               ! horizontal mass flux
+    REAL(RP), intent(out) :: flx_h_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
+    REAL(RP), intent(out) :: GRD_xc   (ADM_gall   ,ADM_kall,ADM_lall   ,AI:AJ,XDIR:ZDIR) ! mass centroid position
+    REAL(RP), intent(out) :: GRD_xc_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,      XDIR:ZDIR)
+    REAL(RP), intent(in)  :: rho      (ADM_gall   ,ADM_kall,ADM_lall   )                 ! rho at cell center
+    REAL(RP), intent(in)  :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: rhovx    (ADM_gall   ,ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: rhovx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: rhovy    (ADM_gall   ,ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: rhovy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: rhovz    (ADM_gall   ,ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: rhovz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: dt
 
-    real(8) :: rhot_TI  (ADM_gall   ) ! rho at cell vertex
-    real(8) :: rhot_TJ  (ADM_gall   ) ! rho at cell vertex
-    real(8) :: rhot_pl  (ADM_gall_pl)
-    real(8) :: rhovxt_TI(ADM_gall   )
-    real(8) :: rhovxt_TJ(ADM_gall   )
-    real(8) :: rhovxt_pl(ADM_gall_pl)
-    real(8) :: rhovyt_TI(ADM_gall   )
-    real(8) :: rhovyt_TJ(ADM_gall   )
-    real(8) :: rhovyt_pl(ADM_gall_pl)
-    real(8) :: rhovzt_TI(ADM_gall   )
-    real(8) :: rhovzt_TJ(ADM_gall   )
-    real(8) :: rhovzt_pl(ADM_gall_pl)
+    REAL(RP) :: rhot_TI  (ADM_gall   ) ! rho at cell vertex
+    REAL(RP) :: rhot_TJ  (ADM_gall   ) ! rho at cell vertex
+    REAL(RP) :: rhot_pl  (ADM_gall_pl)
+    REAL(RP) :: rhovxt_TI(ADM_gall   )
+    REAL(RP) :: rhovxt_TJ(ADM_gall   )
+    REAL(RP) :: rhovxt_pl(ADM_gall_pl)
+    REAL(RP) :: rhovyt_TI(ADM_gall   )
+    REAL(RP) :: rhovyt_TJ(ADM_gall   )
+    REAL(RP) :: rhovyt_pl(ADM_gall_pl)
+    REAL(RP) :: rhovzt_TI(ADM_gall   )
+    REAL(RP) :: rhovzt_TJ(ADM_gall   )
+    REAL(RP) :: rhovzt_pl(ADM_gall_pl)
 
-    real(8) :: rhovxt2
-    real(8) :: rhovyt2
-    real(8) :: rhovzt2
-    real(8) :: flux
-    real(8) :: rrhoa2
+    REAL(RP) :: rhovxt2
+    REAL(RP) :: rhovyt2
+    REAL(RP) :: rhovzt2
+    REAL(RP) :: flux
+    REAL(RP) :: rrhoa2
 
     integer :: ij
     integer :: ip1j, ijp1, ip1jp1
@@ -943,25 +943,25 @@ contains
        OPRT_gradient
     implicit none
 
-    real(8), intent(out) :: q_a      (ADM_gall   ,ADM_kall,ADM_lall   ,6)               ! q at cell face
-    real(8), intent(out) :: q_a_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
-    real(8), intent(in)  :: q        (ADM_gall   ,ADM_kall,ADM_lall     )               ! q at cell center
-    real(8), intent(in)  :: q_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
-    real(8), intent(in)  :: cmask    (ADM_gall   ,ADM_kall,ADM_lall   ,6)               ! upwind direction mask
-    real(8), intent(in)  :: cmask_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
-    real(8), intent(in)  :: GRD_xc   (ADM_gall   ,ADM_kall,ADM_lall   ,AI:AJ,XDIR:ZDIR) ! position of the mass centroid
-    real(8), intent(in)  :: GRD_xc_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,      XDIR:ZDIR)
+    REAL(RP), intent(out) :: q_a      (ADM_gall   ,ADM_kall,ADM_lall   ,6)               ! q at cell face
+    REAL(RP), intent(out) :: q_a_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
+    REAL(RP), intent(in)  :: q        (ADM_gall   ,ADM_kall,ADM_lall     )               ! q at cell center
+    REAL(RP), intent(in)  :: q_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
+    REAL(RP), intent(in)  :: cmask    (ADM_gall   ,ADM_kall,ADM_lall   ,6)               ! upwind direction mask
+    REAL(RP), intent(in)  :: cmask_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
+    REAL(RP), intent(in)  :: GRD_xc   (ADM_gall   ,ADM_kall,ADM_lall   ,AI:AJ,XDIR:ZDIR) ! position of the mass centroid
+    REAL(RP), intent(in)  :: GRD_xc_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,      XDIR:ZDIR)
 
-    real(8)  :: gradq   (ADM_gall   ,ADM_kall,ADM_lall   ,XDIR:ZDIR) ! grad(q)
-    real(8)  :: gradq_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,XDIR:ZDIR)
+    REAL(RP)  :: gradq   (ADM_gall   ,ADM_kall,ADM_lall   ,XDIR:ZDIR) ! grad(q)
+    REAL(RP)  :: gradq_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,XDIR:ZDIR)
 
-    real(8) :: q_ap1(ADM_gall), q_am1(ADM_gall)
-    real(8) :: q_ap2(ADM_gall), q_am2(ADM_gall)
-    real(8) :: q_ap3(ADM_gall), q_am3(ADM_gall)
-    real(8) :: q_ap4(ADM_gall), q_am4(ADM_gall)
-    real(8) :: q_ap5(ADM_gall), q_am5(ADM_gall)
-    real(8) :: q_ap6(ADM_gall), q_am6(ADM_gall)
-    real(8) :: q_ap, q_am
+    REAL(RP) :: q_ap1(ADM_gall), q_am1(ADM_gall)
+    REAL(RP) :: q_ap2(ADM_gall), q_am2(ADM_gall)
+    REAL(RP) :: q_ap3(ADM_gall), q_am3(ADM_gall)
+    REAL(RP) :: q_ap4(ADM_gall), q_am4(ADM_gall)
+    REAL(RP) :: q_ap5(ADM_gall), q_am5(ADM_gall)
+    REAL(RP) :: q_ap6(ADM_gall), q_am6(ADM_gall)
+    REAL(RP) :: q_ap, q_am
 
     integer :: ij
     integer :: ip1j, ijp1, ip1jp1
@@ -1253,27 +1253,27 @@ contains
        EPS => CNST_EPS_ZERO
     implicit none
 
-    real(8), intent(inout) :: q_h   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: q_h_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: q     (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: q_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: d     (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: d_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: ck    (ADM_gall,   ADM_kall,ADM_lall   ,2)
-    real(8), intent(in)    :: ck_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,2)
+    REAL(RP), intent(inout) :: q_h   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(inout) :: q_h_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: q     (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: q_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: d     (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: d_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: ck    (ADM_gall,   ADM_kall,ADM_lall   ,2)
+    REAL(RP), intent(in)    :: ck_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,2)
 
-    real(8) :: Qout_min   (ADM_gall,   ADM_kall)
-    real(8) :: Qout_max   (ADM_gall,   ADM_kall)
-    real(8) :: Qout_min_pl(ADM_gall_pl,ADM_kall)
-    real(8) :: Qout_max_pl(ADM_gall_pl,ADM_kall)
+    REAL(RP) :: Qout_min   (ADM_gall,   ADM_kall)
+    REAL(RP) :: Qout_max   (ADM_gall,   ADM_kall)
+    REAL(RP) :: Qout_min_pl(ADM_gall_pl,ADM_kall)
+    REAL(RP) :: Qout_max_pl(ADM_gall_pl,ADM_kall)
 
-    real(8) :: Qin_minL, Qin_maxL
-    real(8) :: Qin_minU, Qin_maxU
-    real(8) :: qnext_min, qnext_max
-    real(8) :: Cin, Cout
-    real(8) :: CQin_min, CQin_max
-    real(8) :: inflagL, inflagU
-    real(8) :: zerosw
+    REAL(RP) :: Qin_minL, Qin_maxL
+    REAL(RP) :: Qin_minU, Qin_maxU
+    REAL(RP) :: qnext_min, qnext_max
+    REAL(RP) :: Cin, Cout
+    REAL(RP) :: CQin_min, CQin_max
+    REAL(RP) :: inflagL, inflagU
+    REAL(RP) :: zerosw
 
     integer :: n, k, l
     !---------------------------------------------------------------------------
@@ -1410,42 +1410,42 @@ contains
        COMM_data_transfer
     implicit none
 
-    real(8), intent(inout) :: q_a     (ADM_gall   ,ADM_kall,ADM_lall   ,6)
-    real(8), intent(inout) :: q_a_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
-    real(8), intent(in)    :: q       (ADM_gall   ,ADM_kall,ADM_lall     )
-    real(8), intent(in)    :: q_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
-    real(8), intent(in)    :: d       (ADM_gall   ,ADM_kall,ADM_lall     )
-    real(8), intent(in)    :: d_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
-    real(8), intent(in)    :: ch      (ADM_gall   ,ADM_kall,ADM_lall   ,6)
-    real(8), intent(in)    :: ch_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
-    real(8), intent(in)    :: cmask   (ADM_gall   ,ADM_kall,ADM_lall   ,6)
-    real(8), intent(in)    :: cmask_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl  )
+    REAL(RP), intent(inout) :: q_a     (ADM_gall   ,ADM_kall,ADM_lall   ,6)
+    REAL(RP), intent(inout) :: q_a_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
+    REAL(RP), intent(in)    :: q       (ADM_gall   ,ADM_kall,ADM_lall     )
+    REAL(RP), intent(in)    :: q_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
+    REAL(RP), intent(in)    :: d       (ADM_gall   ,ADM_kall,ADM_lall     )
+    REAL(RP), intent(in)    :: d_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
+    REAL(RP), intent(in)    :: ch      (ADM_gall   ,ADM_kall,ADM_lall   ,6)
+    REAL(RP), intent(in)    :: ch_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl  )
+    REAL(RP), intent(in)    :: cmask   (ADM_gall   ,ADM_kall,ADM_lall   ,6)
+    REAL(RP), intent(in)    :: cmask_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl  )
 
-    real(8) :: q_min_AI, q_min_AIJ, q_min_AJ, q_min_pl
-    real(8) :: q_max_AI, q_max_AIJ, q_max_AJ, q_max_pl
+    REAL(RP) :: q_min_AI, q_min_AIJ, q_min_AJ, q_min_pl
+    REAL(RP) :: q_max_AI, q_max_AIJ, q_max_AJ, q_max_pl
 
-    real(8) :: qnext_min   (ADM_gall), qnext_min_pl
-    real(8) :: qnext_max   (ADM_gall), qnext_max_pl
-    real(8) :: Cin_sum     (ADM_gall), Cin_sum_pl
-    real(8) :: Cout_sum    (ADM_gall), Cout_sum_pl
-    real(8) :: CQin_max_sum(ADM_gall), CQin_max_sum_pl
-    real(8) :: CQin_min_sum(ADM_gall), CQin_min_sum_pl
+    REAL(RP) :: qnext_min   (ADM_gall), qnext_min_pl
+    REAL(RP) :: qnext_max   (ADM_gall), qnext_max_pl
+    REAL(RP) :: Cin_sum     (ADM_gall), Cin_sum_pl
+    REAL(RP) :: Cout_sum    (ADM_gall), Cout_sum_pl
+    REAL(RP) :: CQin_max_sum(ADM_gall), CQin_max_sum_pl
+    REAL(RP) :: CQin_min_sum(ADM_gall), CQin_min_sum_pl
 
     integer, parameter :: I_min = 1
     integer, parameter :: I_max = 2
-    real(8) :: Qin    (ADM_gall   ,ADM_kall,ADM_lall   ,2,6)
-    real(8) :: Qin_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,2,2)
-    real(8) :: Qout   (ADM_gall   ,ADM_kall,ADM_lall   ,2  )
-    real(8) :: Qout_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,2  )
+    REAL(RP) :: Qin    (ADM_gall   ,ADM_kall,ADM_lall   ,2,6)
+    REAL(RP) :: Qin_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,2,2)
+    REAL(RP) :: Qout   (ADM_gall   ,ADM_kall,ADM_lall   ,2  )
+    REAL(RP) :: Qout_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,2  )
 
-    real(8) :: ch_masked1
-    real(8) :: ch_masked2
-    real(8) :: ch_masked3
-    real(8) :: ch_masked4
-    real(8) :: ch_masked5
-    real(8) :: ch_masked6
-    real(8) :: ch_masked
-    real(8) :: zerosw
+    REAL(RP) :: ch_masked1
+    REAL(RP) :: ch_masked2
+    REAL(RP) :: ch_masked3
+    REAL(RP) :: ch_masked4
+    REAL(RP) :: ch_masked5
+    REAL(RP) :: ch_masked6
+    REAL(RP) :: ch_masked
+    REAL(RP) :: zerosw
 
     integer :: ij
     integer :: ip1j, ijp1, ip1jp1, ip2jp1

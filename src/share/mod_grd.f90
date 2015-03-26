@@ -137,22 +137,22 @@ module mod_grd
   !<-----          ' p '
   !<-----
 
-  real(8), public              :: GRD_rscale ! scaling factor for the radius of the sphere
+  REAL(RP), public              :: GRD_rscale ! scaling factor for the radius of the sphere
 
 #ifdef _FIXEDINDEX_
-  real(8), public              :: GRD_x    (ADM_gall   ,ADM_KNONE,ADM_lall   ,              ADM_nxyz)
-  real(8), public              :: GRD_x_pl (ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              ADM_nxyz)
-  real(8), public              :: GRD_xt   (ADM_gall   ,ADM_KNONE,ADM_lall   ,ADM_TI:ADM_TJ,ADM_nxyz)
-  real(8), public              :: GRD_xt_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              ADM_nxyz)
-  real(8), public              :: GRD_xr   (ADM_gall   ,ADM_KNONE,ADM_lall   ,ADM_AI:ADM_AJ,ADM_nxyz)
-  real(8), public              :: GRD_xr_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              ADM_nxyz)
+  REAL(RP), public              :: GRD_x    (ADM_gall   ,ADM_KNONE,ADM_lall   ,              ADM_nxyz)
+  REAL(RP), public              :: GRD_x_pl (ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              ADM_nxyz)
+  REAL(RP), public              :: GRD_xt   (ADM_gall   ,ADM_KNONE,ADM_lall   ,ADM_TI:ADM_TJ,ADM_nxyz)
+  REAL(RP), public              :: GRD_xt_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              ADM_nxyz)
+  REAL(RP), public              :: GRD_xr   (ADM_gall   ,ADM_KNONE,ADM_lall   ,ADM_AI:ADM_AJ,ADM_nxyz)
+  REAL(RP), public              :: GRD_xr_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              ADM_nxyz)
 #else
-  real(8), public, allocatable :: GRD_x    (:,:,:,:)
-  real(8), public, allocatable :: GRD_x_pl (:,:,:,:)
-  real(8), public, allocatable :: GRD_xt   (:,:,:,:,:)
-  real(8), public, allocatable :: GRD_xt_pl(:,:,:,:)
-  real(8), public, allocatable :: GRD_xr   (:,:,:,:,:)
-  real(8), public, allocatable :: GRD_xr_pl(:,:,:,:)
+  REAL(RP), public, allocatable :: GRD_x    (:,:,:,:)
+  REAL(RP), public, allocatable :: GRD_x_pl (:,:,:,:)
+  REAL(RP), public, allocatable :: GRD_xt   (:,:,:,:,:)
+  REAL(RP), public, allocatable :: GRD_xt_pl(:,:,:,:)
+  REAL(RP), public, allocatable :: GRD_xr   (:,:,:,:,:)
+  REAL(RP), public, allocatable :: GRD_xr_pl(:,:,:,:)
 #endif
 
 
@@ -161,11 +161,11 @@ module mod_grd
   integer, public, parameter   :: GRD_ZSFC = 1
 
 #ifdef _FIXEDINDEX_
-  real(8), public              :: GRD_zs   (ADM_gall   ,ADM_KNONE,ADM_lall   ,GRD_ZSFC)
-  real(8), public              :: GRD_zs_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,GRD_ZSFC)
+  REAL(RP), public              :: GRD_zs   (ADM_gall   ,ADM_KNONE,ADM_lall   ,GRD_ZSFC)
+  REAL(RP), public              :: GRD_zs_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,GRD_ZSFC)
 #else
-  real(8), public, allocatable :: GRD_zs   (:,:,:,:)
-  real(8), public, allocatable :: GRD_zs_pl(:,:,:,:)
+  REAL(RP), public, allocatable :: GRD_zs   (:,:,:,:)
+  REAL(RP), public, allocatable :: GRD_zs_pl(:,:,:,:)
 #endif
 
 
@@ -188,38 +188,38 @@ module mod_grd
   integer, public, parameter   :: GRD_Z  = 1
   integer, public, parameter   :: GRD_ZH = 2
 
-  real(8), public              :: GRD_htop ! model top height [m]
+  REAL(RP), public              :: GRD_htop ! model top height [m]
 
 #ifdef _FIXEDINDEX_
-  real(8), public              :: GRD_gz   (ADM_kall)
-  real(8), public              :: GRD_gzh  (ADM_kall)
-  real(8), public              :: GRD_dgz  (ADM_kall)
-  real(8), public              :: GRD_dgzh (ADM_kall)
-  real(8), public              :: GRD_rdgz (ADM_kall)
-  real(8), public              :: GRD_rdgzh(ADM_kall)
+  REAL(RP), public              :: GRD_gz   (ADM_kall)
+  REAL(RP), public              :: GRD_gzh  (ADM_kall)
+  REAL(RP), public              :: GRD_dgz  (ADM_kall)
+  REAL(RP), public              :: GRD_dgzh (ADM_kall)
+  REAL(RP), public              :: GRD_rdgz (ADM_kall)
+  REAL(RP), public              :: GRD_rdgzh(ADM_kall)
 
-  real(8), public              :: GRD_afac(ADM_kall)
-  real(8), public              :: GRD_bfac(ADM_kall)
-  real(8), public              :: GRD_cfac(ADM_kall)
-  real(8), public              :: GRD_dfac(ADM_kall)
+  REAL(RP), public              :: GRD_afac(ADM_kall)
+  REAL(RP), public              :: GRD_bfac(ADM_kall)
+  REAL(RP), public              :: GRD_cfac(ADM_kall)
+  REAL(RP), public              :: GRD_dfac(ADM_kall)
 
-  real(8), public              :: GRD_vz   (ADM_gall   ,ADM_kall,ADM_lall   ,GRD_Z:GRD_ZH)
-  real(8), public              :: GRD_vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,GRD_Z:GRD_ZH)
+  REAL(RP), public              :: GRD_vz   (ADM_gall   ,ADM_kall,ADM_lall   ,GRD_Z:GRD_ZH)
+  REAL(RP), public              :: GRD_vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,GRD_Z:GRD_ZH)
 #else
-  real(8), public, allocatable :: GRD_gz   (:) ! gsi (z-star) coordinate
-  real(8), public, allocatable :: GRD_gzh  (:) ! gsi (z-star) coordinate at the half point
-  real(8), public, allocatable :: GRD_dgz  (:) ! d(gsi)
-  real(8), public, allocatable :: GRD_dgzh (:) ! d(gsi) at the half point
-  real(8), public, allocatable :: GRD_rdgz (:)
-  real(8), public, allocatable :: GRD_rdgzh(:)
+  REAL(RP), public, allocatable :: GRD_gz   (:) ! gsi (z-star) coordinate
+  REAL(RP), public, allocatable :: GRD_gzh  (:) ! gsi (z-star) coordinate at the half point
+  REAL(RP), public, allocatable :: GRD_dgz  (:) ! d(gsi)
+  REAL(RP), public, allocatable :: GRD_dgzh (:) ! d(gsi) at the half point
+  REAL(RP), public, allocatable :: GRD_rdgz (:)
+  REAL(RP), public, allocatable :: GRD_rdgzh(:)
 
-  real(8), public, allocatable :: GRD_afac (:) ! From the cell center value to the cell wall value
-  real(8), public, allocatable :: GRD_bfac (:) !    A(k-1/2) = ( afac(k) A(k) + bfac(k) * A(k-1) ) / 2
-  real(8), public, allocatable :: GRD_cfac (:) ! From the cell wall value to the cell center value
-  real(8), public, allocatable :: GRD_dfac (:) !    A(k) = ( cfac(k) A(k+1/2) + dfac(k) * A(k-1/2) ) / 2
+  REAL(RP), public, allocatable :: GRD_afac (:) ! From the cell center value to the cell wall value
+  REAL(RP), public, allocatable :: GRD_bfac (:) !    A(k-1/2) = ( afac(k) A(k) + bfac(k) * A(k-1) ) / 2
+  REAL(RP), public, allocatable :: GRD_cfac (:) ! From the cell wall value to the cell center value
+  REAL(RP), public, allocatable :: GRD_dfac (:) !    A(k) = ( cfac(k) A(k+1/2) + dfac(k) * A(k-1/2) ) / 2
 
-  real(8), public, allocatable :: GRD_vz   (:,:,:,:)
-  real(8), public, allocatable :: GRD_vz_pl(:,:,:,:)
+  REAL(RP), public, allocatable :: GRD_vz   (:,:,:,:)
+  REAL(RP), public, allocatable :: GRD_vz_pl(:,:,:,:)
 #endif
 
   character(len=ADM_NSYS), public :: GRD_grid_type = 'ON_SPHERE' ! grid type [add] T.Ohno 110722
@@ -240,12 +240,12 @@ module mod_grd
 
   character(len=ADM_MAXFNAME), private :: vgrid_fname     = ''       ! vertical grid file
   character(len=ADM_NSYS),     private :: vgrid_scheme    = 'LINEAR' ! vertical coordinate scheme
-  real(8),                     private :: h_efold         = 10000.D0 ! e-folding height for hybrid vertical coordinate [m]
-  real(8),                     private :: hflat           =  -999.D0 ! [m]
+  REAL(RP),                     private :: h_efold         = 10000.D0 ! e-folding height for hybrid vertical coordinate [m]
+  REAL(RP),                     private :: hflat           =  -999.D0 ! [m]
   logical,                     private :: output_vgrid    = .false.  ! output verical grid file?
 
   logical,                     private :: hgrid_comm_flg  = .true.   ! communicate GRD_x?          [add] T.Ohno 110722
-  real(8),                     private :: triangle_size   = 0.D0     ! length of sides of triangle [add] T.Ohno 110722
+  REAL(RP),                     private :: triangle_size   = 0.D0     ! length of sides of triangle [add] T.Ohno 110722
 
   !-----------------------------------------------------------------------------
 contains
@@ -285,7 +285,7 @@ contains
        hgrid_comm_flg, &
        triangle_size
 
-    real(8) :: htop
+    REAL(RP) :: htop
     integer :: nstart, nend
     integer :: kflat
 
@@ -861,8 +861,8 @@ contains
 
     character(len=*), intent(in) :: basename
 
-    real(8) :: lat(ADM_gall,ADM_KNONE,ADM_lall)
-    real(8) :: lon(ADM_gall,ADM_KNONE,ADM_lall)
+    REAL(RP) :: lat(ADM_gall,ADM_KNONE,ADM_lall)
+    REAL(RP) :: lon(ADM_gall,ADM_KNONE,ADM_lall)
 
     character(len=128) :: fname
     integer            :: g, l, rgnid
@@ -954,8 +954,8 @@ contains
     integer :: rreq     (ADM_VLINK_NMAX)
     logical :: send_flag(ADM_VLINK_NMAX)
 
-    real(8) :: vsend_pl (ADM_nxyz,ADM_vlink_nmax)
-    real(8) :: vrecv_pl (ADM_nxyz,ADM_vlink_nmax)
+    REAL(RP) :: vsend_pl (ADM_nxyz,ADM_vlink_nmax)
+    REAL(RP) :: vrecv_pl (ADM_nxyz,ADM_vlink_nmax)
 
     integer :: istat(MPI_STATUS_SIZE)
     integer :: n, l, ierr
@@ -1093,7 +1093,7 @@ contains
   subroutine GRD_scaling( fact )
     implicit none
 
-    real(8), intent(in) :: fact ! scaling factor
+    REAL(RP), intent(in) :: fact ! scaling factor
     !---------------------------------------------------------------------------
 
     if ( GRD_grid_type == 'ON_PLANE' ) then

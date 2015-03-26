@@ -49,23 +49,23 @@ module mod_embudget
   integer, private :: MNT_m_fid
   integer, private :: MNT_e_fid
 
-  real(8), private, allocatable :: evap0     (:,:,:)
-  real(8), private, allocatable :: evap0_pl  (:,:,:)
-  real(8), private, allocatable :: precip0   (:,:,:)
-  real(8), private, allocatable :: precip0_pl(:,:,:)
+  REAL(RP), private, allocatable :: evap0     (:,:,:)
+  REAL(RP), private, allocatable :: evap0_pl  (:,:,:)
+  REAL(RP), private, allocatable :: precip0   (:,:,:)
+  REAL(RP), private, allocatable :: precip0_pl(:,:,:)
 
-  real(8), private, allocatable :: sfcrad0          (:,:,:)
-  real(8), private, allocatable :: sfcrad0_pl       (:,:,:)
-  real(8), private, allocatable :: toarad0          (:,:,:)
-  real(8), private, allocatable :: toarad0_pl       (:,:,:)
-  real(8), private, allocatable :: evap_energy0     (:,:,:)
-  real(8), private, allocatable :: evap_energy0_pl  (:,:,:)
-  real(8), private, allocatable :: precip_energy0   (:,:,:)
-  real(8), private, allocatable :: precip_energy0_pl(:,:,:)
-  real(8), private, allocatable :: sh_flux_sfc0     (:,:,:)
-  real(8), private, allocatable :: sh_flux_sfc0_pl  (:,:,:)
-  real(8), private, allocatable :: lh_flux_sfc0     (:,:,:)
-  real(8), private, allocatable :: lh_flux_sfc0_pl  (:,:,:)
+  REAL(RP), private, allocatable :: sfcrad0          (:,:,:)
+  REAL(RP), private, allocatable :: sfcrad0_pl       (:,:,:)
+  REAL(RP), private, allocatable :: toarad0          (:,:,:)
+  REAL(RP), private, allocatable :: toarad0_pl       (:,:,:)
+  REAL(RP), private, allocatable :: evap_energy0     (:,:,:)
+  REAL(RP), private, allocatable :: evap_energy0_pl  (:,:,:)
+  REAL(RP), private, allocatable :: precip_energy0   (:,:,:)
+  REAL(RP), private, allocatable :: precip_energy0_pl(:,:,:)
+  REAL(RP), private, allocatable :: sh_flux_sfc0     (:,:,:)
+  REAL(RP), private, allocatable :: sh_flux_sfc0_pl  (:,:,:)
+  REAL(RP), private, allocatable :: lh_flux_sfc0     (:,:,:)
+  REAL(RP), private, allocatable :: lh_flux_sfc0_pl  (:,:,:)
 
   !-----------------------------------------------------------------------------
 contains
@@ -220,23 +220,23 @@ contains
        I_LH_FLUX_SFC
     implicit none
 
-    real(8) :: evap     (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(8) :: evap_pl  (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(8) :: precip   (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(8) :: precip_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    REAL(RP) :: evap     (ADM_gall,   ADM_KNONE,ADM_lall   )
+    REAL(RP) :: evap_pl  (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    REAL(RP) :: precip   (ADM_gall,   ADM_KNONE,ADM_lall   )
+    REAL(RP) :: precip_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
 
-    real(8) :: sfcrad          (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(8) :: sfcrad_pl       (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(8) :: toarad          (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(8) :: toarad_pl       (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(8) :: evap_energy     (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(8) :: evap_energy_pl  (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(8) :: precip_energy   (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(8) :: precip_energy_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(8) :: sh_flux_sfc     (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(8) :: sh_flux_sfc_pl  (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(8) :: lh_flux_sfc     (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(8) :: lh_flux_sfc_pl  (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    REAL(RP) :: sfcrad          (ADM_gall,   ADM_KNONE,ADM_lall   )
+    REAL(RP) :: sfcrad_pl       (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    REAL(RP) :: toarad          (ADM_gall,   ADM_KNONE,ADM_lall   )
+    REAL(RP) :: toarad_pl       (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    REAL(RP) :: evap_energy     (ADM_gall,   ADM_KNONE,ADM_lall   )
+    REAL(RP) :: evap_energy_pl  (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    REAL(RP) :: precip_energy   (ADM_gall,   ADM_KNONE,ADM_lall   )
+    REAL(RP) :: precip_energy_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    REAL(RP) :: sh_flux_sfc     (ADM_gall,   ADM_KNONE,ADM_lall   )
+    REAL(RP) :: sh_flux_sfc_pl  (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    REAL(RP) :: lh_flux_sfc     (ADM_gall,   ADM_KNONE,ADM_lall   )
+    REAL(RP) :: lh_flux_sfc_pl  (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
     !---------------------------------------------------------------------------
 
     if( .NOT. MNT_ON ) return
@@ -326,71 +326,71 @@ contains
        THRMDYN_qd
     implicit none
 
-    real(8) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhoge    (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhogq    (ADM_gall,   ADM_kall,ADM_lall   ,TRC_vmax)
-    real(8) :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
+    REAL(RP) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: rhoge    (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: rhogq    (ADM_gall,   ADM_kall,ADM_lall   ,TRC_vmax)
+    REAL(RP) :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
 
-    real(8) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: pre      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: pre_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: tem      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: tem_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: vx       (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: vx_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: vy       (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: vy_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: vz       (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: vz_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: w        (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: w_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: q        (ADM_gall,   ADM_kall,ADM_lall   ,TRC_vmax)
-    real(8) :: q_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
+    REAL(RP) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: pre      (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: pre_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: tem      (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: tem_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: vx       (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: vx_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: vy       (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: vy_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: vz       (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: vz_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: w        (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: w_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: q        (ADM_gall,   ADM_kall,ADM_lall   ,TRC_vmax)
+    REAL(RP) :: q_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
 
-    real(8) :: qd    (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: qd_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: qd    (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: qd_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: tmp   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: tmp   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: rho_sum
-    real(8) :: rhoqd_sum
-    real(8) :: rhoq_sum(1:TRC_vmax)
-    real(8) :: rhoqw_sum
-    real(8) :: rhoqv_sum
-    real(8) :: rhoql_sum
-    real(8) :: rhoqi_sum
+    REAL(RP) :: rho_sum
+    REAL(RP) :: rhoqd_sum
+    REAL(RP) :: rhoq_sum(1:TRC_vmax)
+    REAL(RP) :: rhoqw_sum
+    REAL(RP) :: rhoqv_sum
+    REAL(RP) :: rhoql_sum
+    REAL(RP) :: rhoqi_sum
 
-    real(8) :: precip_sum
-    real(8) :: evap_sum
+    REAL(RP) :: precip_sum
+    REAL(RP) :: evap_sum
 
-    real(8) :: rhoetot_sum
-    real(8) :: rhophi_sum
-    real(8) :: rhokin_sum
-    real(8) :: rhoein_sum
-    real(8) :: rhoein_qd_sum
-    real(8) :: rhoein_qw_sum(1:TRC_vmax)
+    REAL(RP) :: rhoetot_sum
+    REAL(RP) :: rhophi_sum
+    REAL(RP) :: rhokin_sum
+    REAL(RP) :: rhoein_sum
+    REAL(RP) :: rhoein_qd_sum
+    REAL(RP) :: rhoein_qw_sum(1:TRC_vmax)
 
-    real(8) :: sfcrad_sum
-    real(8) :: toarad_sum
-    real(8) :: evap_energy_sum
-    real(8) :: precip_energy_sum
-    real(8) :: sh_flux_sfc_sum
-    real(8) :: lh_flux_sfc_sum
+    REAL(RP) :: sfcrad_sum
+    REAL(RP) :: toarad_sum
+    REAL(RP) :: evap_energy_sum
+    REAL(RP) :: precip_energy_sum
+    REAL(RP) :: sh_flux_sfc_sum
+    REAL(RP) :: lh_flux_sfc_sum
 
-    real(8), save :: rhoqw_sum_old
-    real(8), save :: rhoetot_sum_old
+    REAL(RP), save :: rhoqw_sum_old
+    REAL(RP), save :: rhoetot_sum_old
     logical, save :: iflag = .true.
 
     integer :: nq

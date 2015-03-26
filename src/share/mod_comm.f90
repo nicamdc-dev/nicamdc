@@ -113,11 +113,11 @@ module mod_comm
   integer, public, allocatable :: sendlist_sgp(:,:,:)
 
 #ifdef _ACCCUDA
-  real(8), public, allocatable, pinned :: sendbuf(:,:)
-  real(8), public, allocatable, pinned :: recvbuf(:,:)
+  REAL(RP), public, allocatable, pinned :: sendbuf(:,:)
+  REAL(RP), public, allocatable, pinned :: recvbuf(:,:)
 #else
-  real(8), public, allocatable :: sendbuf(:,:)
-  real(8), public, allocatable :: recvbuf(:,:)
+  REAL(RP), public, allocatable :: sendbuf(:,:)
+  REAL(RP), public, allocatable :: recvbuf(:,:)
 #endif
 
   !-----------------------------------------------------------------------------
@@ -150,8 +150,8 @@ module mod_comm
   logical, private :: opt_check_varmax = .true.
   logical, private :: opt_comm_dbg = .false.
   logical, private :: opt_comm_barrier = .false.
-  real(8), private :: dbg_sendbuf_init
-  real(8), private :: dbg_recvbuf_init
+  REAL(RP), private :: dbg_sendbuf_init
+  REAL(RP), private :: dbg_recvbuf_init
   integer,private,allocatable :: dbg_areq_save(:,:)
 
   integer, private :: rank_me
@@ -226,8 +226,8 @@ module mod_comm
   integer, private, allocatable :: slist_r2r(:,:,:,:)
 
   integer, private              :: max_datasize_r2r
-  real(8), private, allocatable :: recvbuf_r2r(:,:,:)
-  real(8), private, allocatable :: sendbuf_r2r(:,:,:)
+  REAL(RP), private, allocatable :: recvbuf_r2r(:,:,:)
+  REAL(RP), private, allocatable :: sendbuf_r2r(:,:,:)
 
   integer, private, allocatable :: rsize_r2p(:,:,:)
   integer, private, allocatable :: ssize_r2p(:,:,:)
@@ -243,13 +243,13 @@ module mod_comm
   integer, private, allocatable :: slist_r2p(:,:,:,:)
 
   integer,private               ::  max_datasize_r2p
-  real(8), private, allocatable :: recvbuf_r2p(:,:,:)
-  real(8), private, allocatable :: sendbuf_r2p(:,:,:)
+  REAL(RP), private, allocatable :: recvbuf_r2p(:,:,:)
+  REAL(RP), private, allocatable :: sendbuf_r2p(:,:,:)
 
   integer, private, allocatable :: recvtag_p2r(:,:)
   integer, private, allocatable :: sendtag_p2r(:,:)
-  real(8), private, allocatable :: sendbuf_p2r(:,:)
-  real(8), private, allocatable :: recvbuf_p2r(:,:)
+  REAL(RP), private, allocatable :: sendbuf_p2r(:,:)
+  REAL(RP), private, allocatable :: recvbuf_p2r(:,:)
 
   integer, private, allocatable :: dest_rank_all(:,:,:)
   integer, private, allocatable :: src_rank_all(:,:,:)
@@ -2291,8 +2291,8 @@ contains
        ADM_kall
     implicit none
 
-    real(8), intent(inout) ::  var   (:,:,:,:)
-    real(8), intent(inout) ::  var_pl(:,:,:,:)
+    REAL(RP), intent(inout) ::  var   (:,:,:,:)
+    REAL(RP), intent(inout) ::  var_pl(:,:,:,:)
 
     integer ::  shp(4)
     integer ::  cmax, kmax, varmax
@@ -2723,13 +2723,13 @@ contains
 
     integer, intent(in)  ::  knum
     integer, intent(in)  ::  nnum
-    real(8), intent(inout) ::  var   (ADM_gall,   knum,ADM_lall,   nnum)
-    real(8), intent(inout) ::  var_pl(ADM_gall_pl,knum,ADM_lall_pl,nnum)
+    REAL(RP), intent(inout) ::  var   (ADM_gall,   knum,ADM_lall,   nnum)
+    REAL(RP), intent(inout) ::  var_pl(ADM_gall_pl,knum,ADM_lall_pl,nnum)
 
-    real(8) ::  v_npl_send(knum,nnum)
-    real(8) ::  v_spl_send(knum,nnum)
-    real(8) ::  v_npl_recv(knum,nnum)
-    real(8) ::  v_spl_recv(knum,nnum)
+    REAL(RP) ::  v_npl_send(knum,nnum)
+    REAL(RP) ::  v_spl_send(knum,nnum)
+    REAL(RP) ::  v_npl_recv(knum,nnum)
+    REAL(RP) ::  v_spl_recv(knum,nnum)
 
     integer ::  ireq(4)
     integer ::  istat(MPI_STATUS_SIZE)
@@ -2879,11 +2879,11 @@ contains
        ADM_prc_all
     implicit none
 
-    real(8), intent(in) ::  localsum
-    real(8), intent(out) ::  globalsum
+    REAL(RP), intent(in) ::  localsum
+    REAL(RP), intent(out) ::  globalsum
 
-    real(8) ::  sendbuf(1)
-    real(8) ::  recvbuf(ADM_prc_all)
+    REAL(RP) ::  sendbuf(1)
+    REAL(RP) ::  recvbuf(ADM_prc_all)
 
     integer ::  ierr
     !---------------------------------------------------------------------------
@@ -2916,13 +2916,13 @@ contains
     implicit none
 
     integer, intent(in) ::  kall
-    real(8), intent(in) ::  localsum (kall)
-    real(8), intent(out) ::  globalsum(kall)
+    REAL(RP), intent(in) ::  localsum (kall)
+    REAL(RP), intent(out) ::  globalsum(kall)
 
-    real(8) ::  sendbuf(kall)
+    REAL(RP) ::  sendbuf(kall)
     integer ::  displs (ADM_prc_all)
     integer ::  counts (ADM_prc_all)
-    real(8) ::  recvbuf(kall,ADM_prc_all)
+    REAL(RP) ::  recvbuf(kall,ADM_prc_all)
 
     integer ::  ierr
     integer ::  k, p
@@ -2965,11 +2965,11 @@ contains
        ADM_prc_all
     implicit none
 
-    real(8), intent(in) ::  localavg
-    real(8), intent(out) ::  globalavg
+    REAL(RP), intent(in) ::  localavg
+    REAL(RP), intent(out) ::  globalavg
 
-    real(8) ::  sendbuf(1)
-    real(8) ::  recvbuf(ADM_prc_all)
+    REAL(RP) ::  sendbuf(1)
+    REAL(RP) ::  recvbuf(ADM_prc_all)
 
     integer ::  ierr
     !---------------------------------------------------------------------------
@@ -3003,11 +3003,11 @@ contains
        ADM_prc_all
     implicit none
 
-    real(8), intent(in) ::  localmax
-    real(8), intent(out) ::  globalmax
+    REAL(RP), intent(in) ::  localmax
+    REAL(RP), intent(out) ::  globalmax
 
-    real(8) ::  sendbuf(1)
-    real(8) ::  recvbuf(ADM_prc_all)
+    REAL(RP) ::  sendbuf(1)
+    REAL(RP) ::  recvbuf(ADM_prc_all)
 
     integer ::  ierr
     !---------------------------------------------------------------------------
@@ -3037,11 +3037,11 @@ contains
        ADM_prc_all
     implicit none
 
-    real(8), intent(in) ::  localmin
-    real(8), intent(out) ::  globalmin
+    REAL(RP), intent(in) ::  localmin
+    REAL(RP), intent(out) ::  globalmin
 
-    real(8) ::  sendbuf(1)
-    real(8) ::  recvbuf(ADM_prc_all)
+    REAL(RP) ::  sendbuf(1)
+    REAL(RP) ::  recvbuf(ADM_prc_all)
 
     integer ::  ierr
     !---------------------------------------------------------------------------

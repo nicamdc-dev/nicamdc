@@ -403,8 +403,8 @@ contains
     implicit none
 
     integer, intent(out) :: idays
-    real(8), intent(out) :: rsec
-    real(8), intent(in) :: dsec
+    REAL(RP), intent(out) :: rsec
+    REAL(RP), intent(in) :: dsec
     !---------------------------------------------------------------------------
 
     isecdy = isecmn*iminhr*ihrday
@@ -431,9 +431,9 @@ contains
        )
     implicit none
 
-    real(8), intent(out) :: dsec
+    REAL(RP), intent(out) :: dsec
     integer, intent(in) :: idays
-    real(8), intent(in) :: rsec
+    REAL(RP), intent(in) :: rsec
     !---------------------------------------------------------------------------
 
     isecdy = isecmn*iminhr*ihrday
@@ -458,7 +458,7 @@ contains
     integer, intent(out) :: ihour
     integer, intent(out) :: imin
     integer, intent(out) :: isec
-    real(8), intent(in) :: rsec
+    REAL(RP), intent(in) :: rsec
     !---------------------------------------------------------------------------
 
     isechr = isecmn*iminhr
@@ -492,7 +492,7 @@ contains
        )
     implicit none
 
-    real(8), intent(out) :: rsec
+    REAL(RP), intent(out) :: rsec
     integer, intent(in) :: ihour
     integer, intent(in) :: imin
     integer, intent(in) :: isec
@@ -744,10 +744,10 @@ contains
     implicit none
 
     integer, intent(out) :: idate(6) ! yymmddhhmmss
-    real(8), intent(in) :: dsec      ! time
+    REAL(RP), intent(in) :: dsec      ! time
 
     integer    idays             ! serial no.of day
-    real(8)    rsec              ! no. of sec. in a day
+    REAL(RP)    rsec              ! no. of sec. in a day
     !---------------------------------------------------------------------------
 
     call calendar_ss2ds &
@@ -776,11 +776,11 @@ contains
        )
     implicit none
 
-    real(8), intent(out) :: dsec    ! time
+    REAL(RP), intent(out) :: dsec    ! time
     integer, intent(in) :: idate(6) ! yymmddhhmmss
 
     integer    idays             ! serial no.of day
-    real(8)    rsec              ! no. of sec. in a day
+    REAL(RP)    rsec              ! no. of sec. in a day
     !---------------------------------------------------------------------------
 
     call calendar_ym2dd &
@@ -842,7 +842,7 @@ contains
 
     integer, intent(out) :: iyear
     integer, intent(out) :: idaysy
-    real(8), intent(in) :: dsec
+    REAL(RP), intent(in) :: dsec
 
     integer :: imonth, iday
     !---------------------------------------------------------------------------
@@ -874,10 +874,10 @@ contains
     integer, intent(out) :: iyear
     integer, intent(out) :: imonth
     integer, intent(out) :: iday
-    real(8), intent(in) :: dsec
+    REAL(RP), intent(in) :: dsec
 
     integer :: idays
-    real(8) :: rsec
+    REAL(RP) :: rsec
     !---------------------------------------------------------------------------
 
     call calendar_ss2ds &
@@ -904,10 +904,10 @@ contains
        )
     implicit none
 
-    real(8), intent(out) :: ddsec
-    real(8), intent(in) :: rtdur
+    REAL(RP), intent(out) :: ddsec
+    REAL(RP), intent(in) :: rtdur
     character, intent(in) :: hunit *(*)
-    real(8), intent(in) :: dsec
+    REAL(RP), intent(in) :: dsec
 
     character(len=10) :: hunitx
     integer :: isecmi, isechr, isecdy
@@ -1010,7 +1010,7 @@ contains
     implicit none
 
     character, intent(out) :: htime *(*)
-    real(8), intent(in) :: dsec
+    REAL(RP), intent(in) :: dsec
 
     integer :: itime(6), i
     !---------------------------------------------------------------------------
@@ -1067,14 +1067,14 @@ contains
        )
     implicit none
 
-    real(8), intent(out) :: dseca
-    real(8), intent(in) :: dsec
-    real(8), intent(in) :: raftr
+    REAL(RP), intent(out) :: dseca
+    REAL(RP), intent(in) :: dsec
+    REAL(RP), intent(in) :: raftr
     character, intent(in) :: hunit *(*)
 
     integer :: idays, iyear, imonth, iday
-    real(8) :: rsec
-    real(8) :: ddtime
+    REAL(RP) :: rsec
+    REAL(RP) :: ddtime
     !---------------------------------------------------------------------------
 
     if ( hunit(1:1) == 'y' .or. hunit(1:1) == 'Y' &
@@ -1122,18 +1122,18 @@ contains
     implicit none
 
     logical :: calendar_ointvl
-    real(8), intent(in) :: dtime
-    real(8), intent(in) :: dtprev
-    real(8), intent(in) :: dtorgn
-    real(8), intent(in) :: rintv
+    REAL(RP), intent(in) :: dtime
+    REAL(RP), intent(in) :: dtprev
+    REAL(RP), intent(in) :: dtorgn
+    REAL(RP), intent(in) :: rintv
     character, intent(in) :: htunit *(*)
 
-    real(8) :: ddtime
+    REAL(RP) :: ddtime
     character(len=5) :: hunit
     integer :: iyear, imon, iday, iyearp, imonp, idayp
     integer :: iy, imo
     integer :: nmonyr, ndayyr, ndaymo
-    real(8) :: ry, rmo
+    REAL(RP) :: ry, rmo
     !---------------------------------------------------------------------------
 
     hunit = htunit
@@ -1196,8 +1196,8 @@ contains
         )
     implicit none
 
-    real(8) :: calendar_dgaus
-    real(8), intent(in) :: dx
+    REAL(RP) :: calendar_dgaus
+    REAL(RP), intent(in) :: dx
     !---------------------------------------------------------------------------
 
     calendar_dgaus = aint(dx) + aint(dx - aint(dx) + 1.d0) - 1.d0

@@ -246,7 +246,7 @@ contains
        ADM_lall
     implicit none
 
-    real(8),          intent(out) :: var(:,:,:)
+    REAL(RP),          intent(out) :: var(:,:,:)
     character(LEN=*), intent( in) :: basename
     character(LEN=*), intent( in) :: varname
     character(LEN=*), intent( in) :: layername
@@ -256,7 +256,7 @@ contains
     logical, intent(in), optional :: allow_missingq !--- if data is missing, set value to zero
 
     real(4) :: var4(ADM_gall,k_start:k_end,ADM_lall)
-    real(8) :: var8(ADM_gall,k_start:k_end,ADM_lall)
+    REAL(RP) :: var8(ADM_gall,k_start:k_end,ADM_lall)
 
     integer :: did, fid
     !---------------------------------------------------------------------------
@@ -359,11 +359,11 @@ contains
     character(len=*), intent(in) :: varname
     character(len=*), intent(in) :: layername
     integer,          intent(in) :: k_start, k_end
-    real(8),          intent(in) :: ctime
+    REAL(RP),          intent(in) :: ctime
     integer,          intent(in) :: cdate(6)
     logical,          intent(in) :: opt_periodic_year
 
-    real(8) :: midtime !--- [sec]
+    REAL(RP) :: midtime !--- [sec]
     logical :: startflag
     integer :: did, fid
     integer :: i
@@ -456,7 +456,7 @@ contains
        CNST_UNDEF4
     implicit none
 
-    real(8),          intent(in) :: var(:,:,:)
+    REAL(RP),          intent(in) :: var(:,:,:)
     character(LEN=*), intent(in) :: basename
     character(LEN=*), intent(in) :: pkg_desc
     character(LEN=*), intent(in) :: pkg_note
@@ -468,10 +468,10 @@ contains
     character(LEN=*), intent(in) :: layername
     integer,          intent(in) :: k_start, k_end
     integer,          intent(in) :: step
-    real(8),          intent(in) :: t_start, t_end
+    REAL(RP),          intent(in) :: t_start, t_end
 
     real(4) :: var4(ADM_gall,k_start:k_end,ADM_lall)
-    real(8) :: var8(ADM_gall,k_start:k_end,ADM_lall)
+    REAL(RP) :: var8(ADM_gall,k_start:k_end,ADM_lall)
 
     integer :: did, fid
     !---------------------------------------------------------------------------

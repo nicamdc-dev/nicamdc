@@ -77,29 +77,29 @@ contains
     implicit none
 
     integer, intent(in)  :: ijdim 
-    real(8), intent(in)  :: lat(ijdim)
-    real(8), intent(in)  :: pre(ijdim,kdim)
-    real(8), intent(in)  :: tem(ijdim,kdim)
-    real(8), intent(in)  :: vx (ijdim,kdim)
-    real(8), intent(in)  :: vy (ijdim,kdim)
-    real(8), intent(in)  :: vz (ijdim,kdim)
-    real(8), intent(out) :: fvx(ijdim,kdim)
-    real(8), intent(out) :: fvy(ijdim,kdim)
-    real(8), intent(out) :: fvz(ijdim,kdim)
-    real(8), intent(out) :: fw (ijdim,kdim)
-    real(8), intent(out) :: fe (ijdim,kdim)
+    REAL(RP), intent(in)  :: lat(ijdim)
+    REAL(RP), intent(in)  :: pre(ijdim,kdim)
+    REAL(RP), intent(in)  :: tem(ijdim,kdim)
+    REAL(RP), intent(in)  :: vx (ijdim,kdim)
+    REAL(RP), intent(in)  :: vy (ijdim,kdim)
+    REAL(RP), intent(in)  :: vz (ijdim,kdim)
+    REAL(RP), intent(out) :: fvx(ijdim,kdim)
+    REAL(RP), intent(out) :: fvy(ijdim,kdim)
+    REAL(RP), intent(out) :: fvz(ijdim,kdim)
+    REAL(RP), intent(out) :: fw (ijdim,kdim)
+    REAL(RP), intent(out) :: fe (ijdim,kdim)
 
-    real(8) :: T_eq, acl, asl, ap0
-    real(8), parameter :: T_eq2 = 200.D0
-    real(8), parameter :: DT_y  =  60.D0 ! [K]
-    real(8), parameter :: Dth_z =  10.D0 ! [K]
+    REAL(RP) :: T_eq, acl, asl, ap0
+    REAL(RP), parameter :: T_eq2 = 200.D0
+    REAL(RP), parameter :: DT_y  =  60.D0 ! [K]
+    REAL(RP), parameter :: Dth_z =  10.D0 ! [K]
 
-    real(8) :: k_t, k_v
-    real(8) :: sigma, fact_sig
-    real(8), parameter :: sigma_b = 0.7D0
-    real(8), parameter :: k_f     = 1.D0 / ( 1.D0 * 86400.D0 )
-    real(8), parameter :: k_a     = 1.D0 / (40.D0 * 86400.D0 )
-    real(8), parameter :: k_s     = 1.D0 / ( 4.D0 * 86400.D0 )
+    REAL(RP) :: k_t, k_v
+    REAL(RP) :: sigma, fact_sig
+    REAL(RP), parameter :: sigma_b = 0.7D0
+    REAL(RP), parameter :: k_f     = 1.D0 / ( 1.D0 * 86400.D0 )
+    REAL(RP), parameter :: k_a     = 1.D0 / (40.D0 * 86400.D0 )
+    REAL(RP), parameter :: k_s     = 1.D0 / ( 4.D0 * 86400.D0 )
 
     integer :: n, k
     !---------------------------------------------------------------------------

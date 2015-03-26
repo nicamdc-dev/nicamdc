@@ -89,47 +89,47 @@ module mod_numfilter
   integer, private, parameter :: I_RHOGE    = 6 ! Density x G^1/2 x gamma^2 x Internal Energy
   integer, private, parameter :: I_RHOGETOT = 7 ! Density x G^1/2 x gamma^2 x Total Energy
 
-  real(8), public,  allocatable :: rayleigh_coef  (:)             ! Rayleigh damping coefficient at cell center
-  real(8), private, allocatable :: rayleigh_coef_h(:)             ! Rayleigh damping coefficient at cell wall
+  REAL(RP), public,  allocatable :: rayleigh_coef  (:)             ! Rayleigh damping coefficient at cell center
+  REAL(RP), private, allocatable :: rayleigh_coef_h(:)             ! Rayleigh damping coefficient at cell wall
   logical, private              :: rayleigh_damp_only_w = .false. ! damp only w?
 
-  real(8), public,  allocatable :: Kh_coef   (:,:,:)              ! horizontal diffusion coefficient at cell center
-  real(8), private, allocatable :: Kh_coef_pl(:,:,:)
+  REAL(RP), public,  allocatable :: Kh_coef   (:,:,:)              ! horizontal diffusion coefficient at cell center
+  REAL(RP), private, allocatable :: Kh_coef_pl(:,:,:)
   integer, private              :: lap_order_hdiff = 2            ! laplacian order
-  real(8), private              :: hdiff_fact_rho  = 1.D-2
-  real(8), private              :: hdiff_fact_q    = 0.D0
-  real(8), private              :: Kh_coef_minlim  = 0.D0
-  real(8), private              :: Kh_coef_maxlim  = 1.D99
+  REAL(RP), private              :: hdiff_fact_rho  = 1.D-2
+  REAL(RP), private              :: hdiff_fact_q    = 0.D0
+  REAL(RP), private              :: Kh_coef_minlim  = 0.D0
+  REAL(RP), private              :: Kh_coef_maxlim  = 1.D99
 
   logical, private              :: hdiff_nonlinear = .false.
-  real(8), private              :: ZD_hdiff_nl     = 25000.D0     ! hight for decay of nonlinear diffusion
+  REAL(RP), private              :: ZD_hdiff_nl     = 25000.D0     ! hight for decay of nonlinear diffusion
 
-  real(8), public,  allocatable :: Kh_coef_lap1   (:,:,:)         ! Kh_coef but 1st order laplacian
-  real(8), private, allocatable :: Kh_coef_lap1_pl(:,:,:)
+  REAL(RP), public,  allocatable :: Kh_coef_lap1   (:,:,:)         ! Kh_coef but 1st order laplacian
+  REAL(RP), private, allocatable :: Kh_coef_lap1_pl(:,:,:)
 
-  real(8), public,  allocatable :: Kv_coef  (:)                   ! vertical diffusion coefficient at cell center
-  real(8), private, allocatable :: Kv_coef_h(:)                   ! vertical diffusion coefficient at cell wall
+  REAL(RP), public,  allocatable :: Kv_coef  (:)                   ! vertical diffusion coefficient at cell center
+  REAL(RP), private, allocatable :: Kv_coef_h(:)                   ! vertical diffusion coefficient at cell wall
 
-  real(8), public,  allocatable :: divdamp_coef   (:,:,:)         ! divergence damping coefficient at cell center
-  real(8), private, allocatable :: divdamp_coef_pl(:,:,:)
+  REAL(RP), public,  allocatable :: divdamp_coef   (:,:,:)         ! divergence damping coefficient at cell center
+  REAL(RP), private, allocatable :: divdamp_coef_pl(:,:,:)
   integer, private              :: lap_order_divdamp = 2          ! laplacian order
-  real(8), private              :: divdamp_coef_v    = 0.D0
+  REAL(RP), private              :: divdamp_coef_v    = 0.D0
 
-  real(8), public,  allocatable :: divdamp_2d_coef   (:,:,:)      ! divergence damping coefficient at cell center
-  real(8), private, allocatable :: divdamp_2d_coef_pl(:,:,:)
+  REAL(RP), public,  allocatable :: divdamp_2d_coef   (:,:,:)      ! divergence damping coefficient at cell center
+  REAL(RP), private, allocatable :: divdamp_2d_coef_pl(:,:,:)
   integer, private              :: lap_order_divdamp_2d = 1       ! laplacian order
 
   logical, private              :: dep_hgrid = .false.            ! depend on the horizontal grid spacing?
-  real(8), private              :: AREA_ave                       ! averaged grid area
+  REAL(RP), private              :: AREA_ave                       ! averaged grid area
 
   logical, private              :: smooth_1var = .true.           ! should be false for stretched grid [add] S.Iga 20120721
 
   logical, private              :: deep_effect = .false.
-  real(8), private, allocatable :: Kh_deep_factor       (:)
-  real(8), private, allocatable :: Kh_deep_factor_h     (:)
-  real(8), private, allocatable :: Kh_lap1_deep_factor  (:)
-  real(8), private, allocatable :: Kh_lap1_deep_factor_h(:)
-  real(8), private, allocatable :: divdamp_deep_factor  (:)
+  REAL(RP), private, allocatable :: Kh_deep_factor       (:)
+  REAL(RP), private, allocatable :: Kh_deep_factor_h     (:)
+  REAL(RP), private, allocatable :: Kh_lap1_deep_factor  (:)
+  REAL(RP), private, allocatable :: Kh_lap1_deep_factor_h(:)
+  REAL(RP), private, allocatable :: divdamp_deep_factor  (:)
 
   logical, private              :: debug = .false.
 
@@ -151,29 +151,29 @@ contains
     implicit none
 
     ! rayleigh damping
-    real(8)                 :: alpha_r         = 0.D0                 ! coefficient for rayleigh damping
-    real(8)                 :: ZD              = 25000.D0             ! lower limit of rayleigh damping [m]
+    REAL(RP)                 :: alpha_r         = 0.D0                 ! coefficient for rayleigh damping
+    REAL(RP)                 :: ZD              = 25000.D0             ! lower limit of rayleigh damping [m]
     ! horizontal diffusion
     character(len=ADM_NSYS) :: hdiff_type      = 'NONDIM_COEF'        ! diffusion type
-    real(8)                 :: gamma_h         = 1.D0 / 16.D0 / 10.D0 ! coefficient    for horizontal diffusion
-    real(8)                 :: tau_h           = 160000.D0            ! e-folding time for horizontal diffusion [sec]
+    REAL(RP)                 :: gamma_h         = 1.D0 / 16.D0 / 10.D0 ! coefficient    for horizontal diffusion
+    REAL(RP)                 :: tau_h           = 160000.D0            ! e-folding time for horizontal diffusion [sec]
     ! horizontal diffusion (1st order laplacian)
     character(len=ADM_NSYS) :: hdiff_type_lap1 = 'DIRECT'             ! diffusion type
-    real(8)                 :: gamma_h_lap1    = 0.D0                 ! height-dependent gamma_h but 1st-order laplacian
-    real(8)                 :: tau_h_lap1      = 160000.D0            ! height-dependent tau_h   but 1st-order laplacian [sec]
-    real(8)                 :: ZD_hdiff_lap1   = 25000.D0             ! lower limit of horizontal diffusion [m]
+    REAL(RP)                 :: gamma_h_lap1    = 0.D0                 ! height-dependent gamma_h but 1st-order laplacian
+    REAL(RP)                 :: tau_h_lap1      = 160000.D0            ! height-dependent tau_h   but 1st-order laplacian [sec]
+    REAL(RP)                 :: ZD_hdiff_lap1   = 25000.D0             ! lower limit of horizontal diffusion [m]
     ! vertical diffusion
-    real(8)                 :: gamma_v         = 0.D0                 ! coefficient of vertical diffusion
+    REAL(RP)                 :: gamma_v         = 0.D0                 ! coefficient of vertical diffusion
     ! 3D divergence damping
     character(len=ADM_NSYS) :: divdamp_type    = 'NONDIM_COEF'        ! damping type
-    real(8)                 :: alpha_d         = 0.D0                 ! coefficient    for divergence damping
-    real(8)                 :: tau_d           = 132800.D0            ! e-folding time for divergence damping
-    real(8)                 :: alpha_dv        = 0.D0                 ! vertical coefficient
+    REAL(RP)                 :: alpha_d         = 0.D0                 ! coefficient    for divergence damping
+    REAL(RP)                 :: tau_d           = 132800.D0            ! e-folding time for divergence damping
+    REAL(RP)                 :: alpha_dv        = 0.D0                 ! vertical coefficient
     ! 2D divergence damping
     character(len=ADM_NSYS) :: divdamp_2d_type = 'NONDIM_COEF'        ! damping type
-    real(8)                 :: alpha_d_2d      = 0.D0                 ! coefficient    for divergence damping
-    real(8)                 :: tau_d_2d        = 1328000.D0           ! e-folding time for divergence damping [sec]
-    real(8)                 :: ZD_d_2d         = 25000.D0             ! lower limit of divergence damping [m]
+    REAL(RP)                 :: alpha_d_2d      = 0.D0                 ! coefficient    for divergence damping
+    REAL(RP)                 :: tau_d_2d        = 1328000.D0           ! e-folding time for divergence damping [sec]
+    REAL(RP)                 :: ZD_d_2d         = 25000.D0             ! lower limit of divergence damping [m]
 
     namelist / NUMFILTERPARAM / &
        alpha_r,              &
@@ -208,7 +208,7 @@ contains
        deep_effect,          &
        debug
 
-    real(8) :: global_area, global_grid
+    REAL(RP) :: global_area, global_grid
 
     integer :: k
     integer :: ierr
@@ -308,10 +308,10 @@ contains
        GRD_gzh
     implicit none
 
-    real(8), intent(in) :: alpha  ! coefficient for rayleigh damping
-    real(8), intent(in) :: zlimit ! lower limit of rayleigh damping [m]
+    REAL(RP), intent(in) :: alpha  ! coefficient for rayleigh damping
+    REAL(RP), intent(in) :: zlimit ! lower limit of rayleigh damping [m]
 
-    real(8) :: fact(ADM_kall)
+    REAL(RP) :: fact(ADM_kall)
 
     integer :: k
     !---------------------------------------------------------------------------
@@ -393,19 +393,19 @@ contains
     logical,          intent(in) :: dep_hgrid       ! depend on each horizontal grid?
     logical,          intent(in) :: smooth_1var     ! apply smoothing to coef?
     integer,          intent(in) :: lap_order       ! laplacian order
-    real(8),          intent(in) :: gamma           ! coefficient    for horizontal diffusion
-    real(8),          intent(in) :: tau             ! e-folding time for horizontal diffusion
+    REAL(RP),          intent(in) :: gamma           ! coefficient    for horizontal diffusion
+    REAL(RP),          intent(in) :: tau             ! e-folding time for horizontal diffusion
     character(len=*), intent(in) :: hdiff_type_lap1 ! type of horizontal diffusion (lap1)
-    real(8),          intent(in) :: gamma_lap1      ! coefficient    for horizontal diffusion (lap1)
-    real(8),          intent(in) :: tau_lap1        ! e-folding time for horizontal diffusion (lap1)
-    real(8),          intent(in) :: zlimit_lap1     ! lower limit of horizontal diffusion (lap1) [m]
+    REAL(RP),          intent(in) :: gamma_lap1      ! coefficient    for horizontal diffusion (lap1)
+    REAL(RP),          intent(in) :: tau_lap1        ! e-folding time for horizontal diffusion (lap1)
+    REAL(RP),          intent(in) :: zlimit_lap1     ! lower limit of horizontal diffusion (lap1) [m]
 
-    real(8) :: fact(ADM_kall)
+    REAL(RP) :: fact(ADM_kall)
 
-    real(8) :: e_fold_time   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: e_fold_time_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: coef_max, coef_min
-    real(8) :: eft_max,  eft_min
+    REAL(RP) :: e_fold_time   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: e_fold_time_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: coef_max, coef_min
+    REAL(RP) :: eft_max,  eft_min
 
     integer :: k, l
     !---------------------------------------------------------------------------
@@ -663,7 +663,7 @@ contains
        TIME_DTL
     implicit none
 
-    real(8), intent(in) :: gamma ! coefficient for vertical diffusion
+    REAL(RP), intent(in) :: gamma ! coefficient for vertical diffusion
 
     integer :: k
     !---------------------------------------------------------------------------
@@ -737,16 +737,16 @@ contains
     logical,          intent(in) :: dep_hgrid    ! depend on each horizontal grid?
     logical,          intent(in) :: smooth_1var  ! apply smoothing to coef?
     integer,          intent(in) :: lap_order    ! laplacian order
-    real(8),          intent(in) :: alpha        ! coefficient    for divergence damping
-    real(8),          intent(in) :: tau          ! e-folding time for divergence damping
-    real(8),          intent(in) :: alpha_v      ! coefficient    for divergence damping
+    REAL(RP),          intent(in) :: alpha        ! coefficient    for divergence damping
+    REAL(RP),          intent(in) :: tau          ! e-folding time for divergence damping
+    REAL(RP),          intent(in) :: alpha_v      ! coefficient    for divergence damping
 
-    real(8) :: e_fold_time   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: e_fold_time_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: e_fold_time   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: e_fold_time_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: coef
-    real(8) :: coef_max, coef_min
-    real(8) :: eft_max,  eft_min
+    REAL(RP) :: coef
+    REAL(RP) :: coef_max, coef_min
+    REAL(RP) :: eft_max,  eft_min
 
     integer :: k, l
     !---------------------------------------------------------------------------
@@ -893,18 +893,18 @@ contains
     character(len=*), intent(in) :: divdamp_type ! type of divergence damping
     logical,          intent(in) :: dep_hgrid    ! depend on each horizontal grid?
     integer,          intent(in) :: lap_order    ! laplacian order
-    real(8),          intent(in) :: alpha        ! coefficient    for divergence damping
-    real(8),          intent(in) :: tau          ! e-folding time for divergence damping
-    real(8),          intent(in) :: zlimit       ! lower limit of divergence damping [m]
+    REAL(RP),          intent(in) :: alpha        ! coefficient    for divergence damping
+    REAL(RP),          intent(in) :: tau          ! e-folding time for divergence damping
+    REAL(RP),          intent(in) :: zlimit       ! lower limit of divergence damping [m]
 
-    real(8) :: fact(ADM_kall)
+    REAL(RP) :: fact(ADM_kall)
 
-    real(8) :: e_fold_time   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: e_fold_time_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: e_fold_time   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: e_fold_time_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: coef
-    real(8) :: coef_max, coef_min
-    real(8) :: eft_max,  eft_min
+    REAL(RP) :: coef
+    REAL(RP) :: coef_max, coef_min
+    REAL(RP) :: eft_max,  eft_min
 
     integer :: k, l
     !---------------------------------------------------------------------------
@@ -1044,26 +1044,26 @@ contains
        VMTR_C2Wfact_pl
     implicit none
 
-    real(8), intent(in)    :: rhog      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: rhog_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: vx        (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: vx_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: vy        (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: vy_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: vz        (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: vz_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: w         (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: w_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogw    (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: rhog      (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: rhog_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: vx        (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: vx_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: vy        (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: vy_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: vz        (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: vz_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: w         (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: w_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(inout) :: frhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(inout) :: frhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(inout) :: frhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(inout) :: frhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(inout) :: frhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(inout) :: frhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(inout) :: frhogw    (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(inout) :: frhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: coef
+    REAL(RP) :: coef
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
@@ -1174,58 +1174,58 @@ contains
        tem_bs_pl
     implicit none
 
-    real(8), intent(in)  :: rhog         (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: rhog_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rho          (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: rho_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: vx           (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: vx_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: vy           (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: vy_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: vz           (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: vz_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: w            (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: w_pl         (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: tem          (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: tem_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: q            (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
-    real(8), intent(in)  :: q_pl         (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
-    real(8), intent(out) :: tendency     (ADM_gall,   ADM_kall,ADM_lall   ,7)
-    real(8), intent(out) :: tendency_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,7)
-    real(8), intent(out) :: tendency_q   (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
-    real(8), intent(out) :: tendency_q_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    REAL(RP), intent(in)  :: rhog         (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: rhog_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: rho          (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: rho_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: vx           (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: vx_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: vy           (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: vy_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: vz           (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: vz_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: w            (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: w_pl         (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: tem          (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: tem_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: q            (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
+    REAL(RP), intent(in)  :: q_pl         (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    REAL(RP), intent(out) :: tendency     (ADM_gall,   ADM_kall,ADM_lall   ,7)
+    REAL(RP), intent(out) :: tendency_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,7)
+    REAL(RP), intent(out) :: tendency_q   (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
+    REAL(RP), intent(out) :: tendency_q_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    real(8) :: KH_coef_h        (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: KH_coef_h_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: KH_coef_lap1_h   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: KH_coef_lap1_h_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: KH_coef_h        (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: KH_coef_h_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: KH_coef_lap1_h   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: KH_coef_lap1_h_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: vtmp        (ADM_gall,   ADM_kall,ADM_lall   ,6)
-    real(8) :: vtmp_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
-    real(8) :: vtmp2       (ADM_gall,   ADM_kall,ADM_lall   ,6)
-    real(8) :: vtmp2_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
+    REAL(RP) :: vtmp        (ADM_gall,   ADM_kall,ADM_lall   ,6)
+    REAL(RP) :: vtmp_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
+    REAL(RP) :: vtmp2       (ADM_gall,   ADM_kall,ADM_lall   ,6)
+    REAL(RP) :: vtmp2_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
 
-    real(8) :: qtmp        (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
-    real(8) :: qtmp_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
-    real(8) :: qtmp2       (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
-    real(8) :: qtmp2_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    REAL(RP) :: qtmp        (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
+    REAL(RP) :: qtmp_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    REAL(RP) :: qtmp2       (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
+    REAL(RP) :: qtmp2_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    real(8) :: vtmp_lap1   (ADM_gall,   ADM_kall,ADM_lall   ,6)
-    real(8) :: vtmp_lap1_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
-    real(8) :: qtmp_lap1   (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
-    real(8) :: qtmp_lap1_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    REAL(RP) :: vtmp_lap1   (ADM_gall,   ADM_kall,ADM_lall   ,6)
+    REAL(RP) :: vtmp_lap1_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
+    REAL(RP) :: qtmp_lap1   (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
+    REAL(RP) :: qtmp_lap1_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    real(8) :: wk       (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: wk_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhog_h   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rhog_h_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: wk       (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: wk_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: rhog_h   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: rhog_h_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8), parameter :: cfact = 2.D0
-    real(8), parameter :: T0    = 300.D0
+    REAL(RP), parameter :: cfact = 2.D0
+    REAL(RP), parameter :: T0    = 300.D0
 
-    real(8) :: fact  (ADM_kall)
-    real(8) :: kh_max(ADM_kall)
-    real(8) :: d2T_dx2, coef
+    REAL(RP) :: fact  (ADM_kall)
+    REAL(RP) :: kh_max(ADM_kall)
+    REAL(RP) :: d2T_dx2, coef
 
     integer :: g, k, l, nq, p
     !---------------------------------------------------------------------------
@@ -1598,26 +1598,26 @@ contains
        tem_bs_pl
     implicit none
 
-    real(8), intent(in)    :: rhog         (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: rhog_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: rho          (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: rho_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: vx           (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: vx_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: vy           (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: vy_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: vz           (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: vz_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: w            (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: w_pl         (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: tem          (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: tem_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: q            (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
-    real(8), intent(in)    :: q_pl         (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
-    real(8), intent(inout) :: tendency     (ADM_gall,   ADM_kall,ADM_lall   ,7)
-    real(8), intent(inout) :: tendency_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,7)
-    real(8), intent(inout) :: tendency_q   (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
-    real(8), intent(inout) :: tendency_q_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    REAL(RP), intent(in)    :: rhog         (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: rhog_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: rho          (ADM_gall   ,ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: rho_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: vx           (ADM_gall   ,ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: vx_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: vy           (ADM_gall   ,ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: vy_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: vz           (ADM_gall   ,ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: vz_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: w            (ADM_gall   ,ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: w_pl         (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: tem          (ADM_gall   ,ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)    :: tem_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: q            (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
+    REAL(RP), intent(in)    :: q_pl         (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    REAL(RP), intent(inout) :: tendency     (ADM_gall,   ADM_kall,ADM_lall   ,7)
+    REAL(RP), intent(inout) :: tendency_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,7)
+    REAL(RP), intent(inout) :: tendency_q   (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
+    REAL(RP), intent(inout) :: tendency_q_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
     integer, parameter :: vmax  = 6
     integer, parameter :: I_VX  = 1
@@ -1627,15 +1627,15 @@ contains
     integer, parameter :: I_TEM = 5
     integer, parameter :: I_RHO = 6
 
-    real(8) :: rhog_h   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: rhog_h_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: rhog_h   (ADM_gall   ,ADM_kall,ADM_lall   )
+    REAL(RP) :: rhog_h_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: flux    (ADM_gall   ,ADM_kall,ADM_lall   ,vmax+TRC_VMAX)
-    real(8) :: flux_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,vmax+TRC_VMAX)
-    real(8) :: vtmp0   (ADM_gall   ,ADM_kall,ADM_lall   ,vmax+TRC_VMAX)
-    real(8) :: vtmp0_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,vmax+TRC_VMAX)
-    real(8) :: vtmp1   (ADM_gall   ,ADM_kall,ADM_lall   ,vmax+TRC_VMAX)
-    real(8) :: vtmp1_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,vmax+TRC_VMAX)
+    REAL(RP) :: flux    (ADM_gall   ,ADM_kall,ADM_lall   ,vmax+TRC_VMAX)
+    REAL(RP) :: flux_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,vmax+TRC_VMAX)
+    REAL(RP) :: vtmp0   (ADM_gall   ,ADM_kall,ADM_lall   ,vmax+TRC_VMAX)
+    REAL(RP) :: vtmp0_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,vmax+TRC_VMAX)
+    REAL(RP) :: vtmp1   (ADM_gall   ,ADM_kall,ADM_lall   ,vmax+TRC_VMAX)
+    REAL(RP) :: vtmp1_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,vmax+TRC_VMAX)
 
     integer :: g, k, l, nq, p
     !---------------------------------------------------------------------------
@@ -2079,30 +2079,30 @@ contains
        I_SRC_default
     implicit none
 
-    real(8), intent(in)  :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vx ( G^1/2 x gam2 )
-    real(8), intent(in)  :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vy ( G^1/2 x gam2 )
-    real(8), intent(in)  :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vy ( G^1/2 x gam2 )
-    real(8), intent(in)  :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*w  ( G^1/2 x gam2 )
-    real(8), intent(in)  :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: gdx      (ADM_gall,   ADM_kall,ADM_lall   ) ! (grad div)_x ( G^1/2 x gam2 )
-    real(8), intent(out) :: gdx_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: gdy      (ADM_gall,   ADM_kall,ADM_lall   ) ! (grad div)_x ( G^1/2 x gam2 )
-    real(8), intent(out) :: gdy_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: gdz      (ADM_gall,   ADM_kall,ADM_lall   ) ! (grad div)_x ( G^1/2 x gam2 )
-    real(8), intent(out) :: gdz_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: gdvz     (ADM_gall,   ADM_kall,ADM_lall   ) ! (grad div)_x ( G^1/2 x gam2 )
-    real(8), intent(out) :: gdvz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vx ( G^1/2 x gam2 )
+    REAL(RP), intent(in)  :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vy ( G^1/2 x gam2 )
+    REAL(RP), intent(in)  :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vy ( G^1/2 x gam2 )
+    REAL(RP), intent(in)  :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*w  ( G^1/2 x gam2 )
+    REAL(RP), intent(in)  :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(out) :: gdx      (ADM_gall,   ADM_kall,ADM_lall   ) ! (grad div)_x ( G^1/2 x gam2 )
+    REAL(RP), intent(out) :: gdx_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(out) :: gdy      (ADM_gall,   ADM_kall,ADM_lall   ) ! (grad div)_x ( G^1/2 x gam2 )
+    REAL(RP), intent(out) :: gdy_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(out) :: gdz      (ADM_gall,   ADM_kall,ADM_lall   ) ! (grad div)_x ( G^1/2 x gam2 )
+    REAL(RP), intent(out) :: gdz_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(out) :: gdvz     (ADM_gall,   ADM_kall,ADM_lall   ) ! (grad div)_x ( G^1/2 x gam2 )
+    REAL(RP), intent(out) :: gdvz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: vtmp    (ADM_gall,   ADM_kall,ADM_lall   ,3)
-    real(8) :: vtmp_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
-    real(8) :: vtmp2   (ADM_gall,   ADM_kall,ADM_lall   ,3)
-    real(8) :: vtmp2_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
+    REAL(RP) :: vtmp    (ADM_gall,   ADM_kall,ADM_lall   ,3)
+    REAL(RP) :: vtmp_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
+    REAL(RP) :: vtmp2   (ADM_gall,   ADM_kall,ADM_lall   ,3)
+    REAL(RP) :: vtmp2_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
 
-    real(8) :: cnv     (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: cnv_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP) :: cnv     (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP) :: cnv_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     integer :: k, l, p
     !---------------------------------------------------------------------------
@@ -2227,24 +2227,24 @@ contains
        OPRT_divdamp
     implicit none
 
-    real(8), intent(in)  :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8), intent(out) :: gdx      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(out) :: gdx_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: gdy      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(out) :: gdy_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: gdz      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(out) :: gdz_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(out) :: gdx      (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(out) :: gdx_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(out) :: gdy      (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(out) :: gdy_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(out) :: gdz      (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(out) :: gdz_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: vtmp    (ADM_gall,   ADM_kall,ADM_lall   ,3)
-    real(8) :: vtmp_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
-    real(8) :: vtmp2   (ADM_gall,   ADM_kall,ADM_lall   ,3)
-    real(8) :: vtmp2_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
+    REAL(RP) :: vtmp    (ADM_gall,   ADM_kall,ADM_lall   ,3)
+    REAL(RP) :: vtmp_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
+    REAL(RP) :: vtmp2   (ADM_gall,   ADM_kall,ADM_lall   ,3)
+    REAL(RP) :: vtmp2_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
 
     integer :: p
     !---------------------------------------------------------------------------
@@ -2330,15 +2330,15 @@ contains
        OPRT_laplacian
     implicit none
 
-    real(8), intent(inout) :: s   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: s_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(inout) :: s   (ADM_gall   ,ADM_kall,ADM_lall   )
+    REAL(RP), intent(inout) :: s_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: vtmp    (ADM_gall   ,ADM_kall,ADM_lall   ,1)
-    real(8) :: vtmp_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,1)
-    real(8) :: vtmp2   (ADM_gall   ,ADM_kall,ADM_lall   ,1)
-    real(8) :: vtmp2_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,1)
+    REAL(RP) :: vtmp    (ADM_gall   ,ADM_kall,ADM_lall   ,1)
+    REAL(RP) :: vtmp_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,1)
+    REAL(RP) :: vtmp2   (ADM_gall   ,ADM_kall,ADM_lall   ,1)
+    REAL(RP) :: vtmp2_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,1)
 
-    real(8), parameter :: ggamma_h = 1.D0 / 16.D0 / 10.D0
+    REAL(RP), parameter :: ggamma_h = 1.D0 / 16.D0 / 10.D0
     integer, parameter :: itelim = 80
 
     integer :: p, ite
@@ -2409,12 +2409,12 @@ contains
     implicit none
 
     integer, intent(in)  :: kdim          ! number of vertical grid
-    real(8), intent(in)  :: z(kdim)       ! height [m]
-    real(8), intent(in)  :: z_top         ! height top [m]
-    real(8), intent(in)  :: z_bottomlimit ! bottom limit of the factor [m]
-    real(8), intent(out) :: factor(kdim)  ! height-dependent factor [0-1]
+    REAL(RP), intent(in)  :: z(kdim)       ! height [m]
+    REAL(RP), intent(in)  :: z_top         ! height top [m]
+    REAL(RP), intent(in)  :: z_bottomlimit ! bottom limit of the factor [m]
+    REAL(RP), intent(out) :: factor(kdim)  ! height-dependent factor [0-1]
 
-    real(8) :: sw
+    REAL(RP) :: sw
 
     integer :: k
     !---------------------------------------------------------------------------

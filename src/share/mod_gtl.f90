@@ -88,11 +88,11 @@ contains
        VMTR_VOLUME_pl
     implicit none
 
-    real(8), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8)             :: sum_g
+    REAL(RP), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP)             :: sum_g
 
-    real(8) :: sum
+    REAL(RP) :: sum
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
@@ -139,11 +139,11 @@ contains
        GMTR_area_pl
     implicit none
 
-    real(8), intent(in) :: var   (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(8), intent(in) :: var_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(8)             :: sum_g
+    REAL(RP), intent(in) :: var   (ADM_gall,   ADM_KNONE,ADM_lall   )
+    REAL(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    REAL(RP)             :: sum_g
 
-    real(8) :: sum
+    REAL(RP) :: sum
     integer :: n, l
     !---------------------------------------------------------------------------
 
@@ -191,11 +191,11 @@ contains
        VMTR_GAM2_pl
     implicit none
 
-    real(8), intent(in)  :: var   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: sum_g (ADM_kall)
+    REAL(RP), intent(in)  :: var   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(out) :: sum_g (ADM_kall)
 
-    real(8) :: sum(ADM_kall)
+    REAL(RP) :: sum(ADM_kall)
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
@@ -237,14 +237,14 @@ contains
        COMM_Stat_sum
     implicit none
 
-    real(8), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8)             :: sum_g
+    REAL(RP), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP)             :: sum_g
 
-    real(8)       :: one   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8)       :: one_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP)       :: one   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP)       :: one_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     logical, save :: first = .true.
-    real(8), save :: volume_g
+    REAL(RP), save :: volume_g
     !---------------------------------------------------------------------------
 
     if ( first ) then
@@ -284,11 +284,11 @@ contains
     integer, intent(in) :: kdim
     integer, intent(in) :: kstart
     integer, intent(in) :: kend
-    real(8), intent(in) :: var   (ADM_gall,   kdim,ADM_lall   )
-    real(8), intent(in) :: var_pl(ADM_gall_pl,kdim,ADM_lall_pl)
-    real(8)             :: vmax_g
+    REAL(RP), intent(in) :: var   (ADM_gall,   kdim,ADM_lall   )
+    REAL(RP), intent(in) :: var_pl(ADM_gall_pl,kdim,ADM_lall_pl)
+    REAL(RP)             :: vmax_g
 
-    real(8) :: vmax
+    REAL(RP) :: vmax
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
@@ -332,12 +332,12 @@ contains
        COMM_Stat_max
     implicit none
 
-    real(8), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer, intent(in) :: k
-    real(8)             :: vmax_g
+    REAL(RP)             :: vmax_g
 
-    real(8) :: vmax
+    REAL(RP) :: vmax
     integer :: n, l
     !---------------------------------------------------------------------------
 
@@ -379,12 +379,12 @@ contains
     integer, intent(in) :: kdim
     integer, intent(in) :: kstart
     integer, intent(in) :: kend
-    real(8), intent(in) :: var   (ADM_gall,   kdim,ADM_lall   )
-    real(8), intent(in) :: var_pl(ADM_gall_pl,kdim,ADM_lall_pl)
-    real(8)             :: vmin_g
+    REAL(RP), intent(in) :: var   (ADM_gall,   kdim,ADM_lall   )
+    REAL(RP), intent(in) :: var_pl(ADM_gall_pl,kdim,ADM_lall_pl)
+    REAL(RP)             :: vmin_g
     logical, optional, intent(in) :: nonzero
 
-    real(8) :: vmin
+    REAL(RP) :: vmin
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
@@ -464,12 +464,12 @@ contains
        COMM_Stat_min
     implicit none
 
-    real(8), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer, intent(in) :: k
-    real(8)             :: vmin_g
+    REAL(RP)             :: vmin_g
 
-    real(8) :: vmin
+    REAL(RP) :: vmin
     integer :: n, l
     !---------------------------------------------------------------------------
 
@@ -506,12 +506,12 @@ contains
     character(len=*), intent(in)  :: basename
     integer,          intent(in)  :: k_start
     integer,          intent(in)  :: k_end
-    real(8),          intent(out) :: var(ADM_gall,k_start:k_end,ADM_lall)
+    REAL(RP),          intent(out) :: var(ADM_gall,k_start:k_end,ADM_lall)
     integer,          intent(in)  :: recnum
     integer,          intent(in)  :: input_size
 
     real(4) :: var4(ADM_gall,k_start:k_end)
-    real(8) :: var8(ADM_gall,k_start:k_end)
+    REAL(RP) :: var8(ADM_gall,k_start:k_end)
 
     character(len=ADM_MAXFNAME) :: fname
 
@@ -562,12 +562,12 @@ contains
     character(len=ADM_MAXFNAME), intent(in)  :: basename
     integer,                     intent(in)  :: k_start
     integer,                     intent(in)  :: k_end
-    real(8),                     intent(in)  :: var(:,:,:)
+    REAL(RP),                     intent(in)  :: var(:,:,:)
     integer,                     intent(in)  :: recnum
     integer,                     intent(in)  :: output_size
 
     real(4) :: var4(ADM_gall,k_start:k_end)
-    real(8) :: var8(ADM_gall,k_start:k_end)
+    REAL(RP) :: var8(ADM_gall,k_start:k_end)
 
     character(len=ADM_MAXFNAME) :: fname
 
@@ -634,18 +634,18 @@ contains
        GMTR_P_var_pl
     implicit none
 
-    real(8), intent(in)  :: ucos   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: ucos_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: vcos   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: vcos_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: vx     (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(out) :: vx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: vy     (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(out) :: vy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: vz     (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(out) :: vz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: ucos   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: ucos_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: vcos   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: vcos_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(out) :: vx     (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(out) :: vx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(out) :: vy     (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(out) :: vy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(out) :: vz     (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(out) :: vz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: u, v, coslat, sw
+    REAL(RP) :: u, v, coslat, sw
 
     integer :: n, k, l, k0
     !---------------------------------------------------------------------------
@@ -726,16 +726,16 @@ contains
        GMTR_P_var_pl
     implicit none
 
-    real(8), intent(out) :: u    (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(out) :: u_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: v    (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(out) :: v_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(out) :: u    (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(out) :: u_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(out) :: v    (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(out) :: v_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)  :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(in)  :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     integer, optional, intent(in) :: icos
 
@@ -843,16 +843,16 @@ contains
        GMTR_P_var_pl
     implicit none
 
-    real(8), intent(inout) :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: alpha
-    real(8), intent(in)    :: vmax
+    REAL(RP), intent(inout) :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(inout) :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(inout) :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(inout) :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(inout) :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
+    REAL(RP), intent(inout) :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    REAL(RP), intent(in)    :: alpha
+    REAL(RP), intent(in)    :: vmax
 
-    real(8) :: u, v
+    REAL(RP) :: u, v
     integer :: n, k, l, ij, k0
     !---------------------------------------------------------------------------
 
@@ -915,8 +915,8 @@ contains
 
     integer, intent(in)  :: kmin
     integer, intent(in)  :: kmax
-    real(8), intent(in)  :: v     (ADM_gall,       ADM_kall,       ADM_lall)
-    real(8), intent(out) :: v_clip(ADM_IopJop_nmax,1:(kmax-kmin+1),ADM_lall)
+    REAL(RP), intent(in)  :: v     (ADM_gall,       ADM_kall,       ADM_lall)
+    REAL(RP), intent(out) :: v_clip(ADM_IopJop_nmax,1:(kmax-kmin+1),ADM_lall)
 
     integer :: n, k, l
     !---------------------------------------------------------------------------
@@ -944,8 +944,8 @@ contains
        ADM_IopJop
     implicit none
 
-    real(8), intent(in)  :: v     (ADM_gall,       ADM_lall)
-    real(8), intent(out) :: v_clip(ADM_IopJop_nmax,ADM_lall)
+    REAL(RP), intent(in)  :: v     (ADM_gall,       ADM_lall)
+    REAL(RP), intent(out) :: v_clip(ADM_IopJop_nmax,ADM_lall)
 
     integer :: n, l
     !---------------------------------------------------------------------------
@@ -973,8 +973,8 @@ contains
     implicit none
 
     integer, intent(in)  :: ksize
-    real(8), intent(in)  :: v     (ADM_gall,ksize, ADM_lall)
-    real(8), intent(out) :: v_clip(ADM_IopJop_nmax,ADM_lall)
+    REAL(RP), intent(in)  :: v     (ADM_gall,ksize, ADM_lall)
+    REAL(RP), intent(out) :: v_clip(ADM_IopJop_nmax,ADM_lall)
     integer, intent(in)  :: k
 
     integer :: n, l

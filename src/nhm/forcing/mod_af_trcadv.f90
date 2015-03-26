@@ -52,11 +52,11 @@ module mod_af_trcadv
   !
   !++ Private parameters & variables
   !
-  real(8), private, parameter :: a  = 6371220.D0        ! Earth's Radius [m]
-  real(8), private, parameter :: Rd = 287.D0            ! Ideal gas const dry air [J/kg*K]
-  real(8), private, parameter :: g  = 9.80616D0         ! Gravity [m/s2]
-  real(8), private, parameter :: cp = 1004.5D0          ! Specific heat capacity [J/kg*K]
-  real(8), private, parameter :: pi = 4.D0 * atan(1.D0) ! pi
+  REAL(RP), private, parameter :: a  = 6371220.D0        ! Earth's Radius [m]
+  REAL(RP), private, parameter :: Rd = 287.D0            ! Ideal gas const dry air [J/kg*K]
+  REAL(RP), private, parameter :: g  = 9.80616D0         ! Gravity [m/s2]
+  REAL(RP), private, parameter :: cp = 1004.5D0          ! Specific heat capacity [J/kg*K]
+  REAL(RP), private, parameter :: pi = 4.D0 * atan(1.D0) ! pi
 
   !-----------------------------------------------------------------------------
 contains
@@ -74,28 +74,28 @@ contains
        w     )
     implicit none
 
-    real(8),intent(in)  :: time
-    real(8),intent(in)  :: lon
-    real(8),intent(in)  :: lat
-    real(8),intent(in)  :: zf
-    real(8),intent(in)  :: zh
-    real(8),intent(out) :: vx
-    real(8),intent(out) :: vy
-    real(8),intent(out) :: vz
-    real(8),intent(out) :: w
+    REAL(RP),intent(in)  :: time
+    REAL(RP),intent(in)  :: lon
+    REAL(RP),intent(in)  :: lat
+    REAL(RP),intent(in)  :: zf
+    REAL(RP),intent(in)  :: zh
+    REAL(RP),intent(out) :: vx
+    REAL(RP),intent(out) :: vy
+    REAL(RP),intent(out) :: vz
+    REAL(RP),intent(out) :: w
 
-    real(8), parameter :: tau     = 12.D0 * 86400.D0 ! period of motion 12 days
-    real(8), parameter :: u0      = 2.D0*pi*a/tau    ! 2 pi a / 12 days
-    real(8), parameter :: k0      = 10.D0*a/tau      ! Velocity Magnitude
-    real(8), parameter :: omega0  = 23000.D0*pi/tau  ! Velocity Magnitude
-    real(8), parameter :: T0      = 300.D0           ! temperature
-    real(8), parameter :: H       = Rd * T0 / g      ! scale height
-    real(8), parameter :: p0      = 100000.D0        ! reference pressure (Pa)
+    REAL(RP), parameter :: tau     = 12.D0 * 86400.D0 ! period of motion 12 days
+    REAL(RP), parameter :: u0      = 2.D0*pi*a/tau    ! 2 pi a / 12 days
+    REAL(RP), parameter :: k0      = 10.D0*a/tau      ! Velocity Magnitude
+    REAL(RP), parameter :: omega0  = 23000.D0*pi/tau  ! Velocity Magnitude
+    REAL(RP), parameter :: T0      = 300.D0           ! temperature
+    REAL(RP), parameter :: H       = Rd * T0 / g      ! scale height
+    REAL(RP), parameter :: p0      = 100000.D0        ! reference pressure (Pa)
 
-    real(8) :: u ! Zonal wind      [m/s]
-    real(8) :: v ! Meridional wind [m/s]
-    real(8) :: dlon, lonp, bs, height, p, ptop, s, ud
-    real(8) :: east(3), nrth(3)
+    REAL(RP) :: u ! Zonal wind      [m/s]
+    REAL(RP) :: v ! Meridional wind [m/s]
+    REAL(RP) :: dlon, lonp, bs, height, p, ptop, s, ud
+    REAL(RP) :: east(3), nrth(3)
     !---------------------------------------------------------------------------
 
     dlon = 2.D0 * pi * time / tau
@@ -151,31 +151,31 @@ contains
        w     )
     implicit none
 
-    real(8),intent(in)  :: time
-    real(8),intent(in)  :: lon
-    real(8),intent(in)  :: lat
-    real(8),intent(in)  :: zf
-    real(8),intent(in)  :: zh
-    real(8),intent(out) :: vx
-    real(8),intent(out) :: vy
-    real(8),intent(out) :: vz
-    real(8),intent(out) :: w
+    REAL(RP),intent(in)  :: time
+    REAL(RP),intent(in)  :: lon
+    REAL(RP),intent(in)  :: lat
+    REAL(RP),intent(in)  :: zf
+    REAL(RP),intent(in)  :: zh
+    REAL(RP),intent(out) :: vx
+    REAL(RP),intent(out) :: vy
+    REAL(RP),intent(out) :: vz
+    REAL(RP),intent(out) :: w
 
-    real(8), parameter :: tau  = 1.D0 * 86400.D0 ! period of motion 1 day (in s)
-    real(8), parameter :: u0   = 40.D0           ! Zonal velocity magnitude (m/s)
-    real(8), parameter :: w0   = 0.15D0          ! Vertical velocity magnitude (m/s), changed in v5
-    real(8), parameter :: T0   = 300.D0          ! temperature
-    real(8), parameter :: H    = Rd * T0 / g     ! scale height
-    real(8), parameter :: K    = 5.D0            ! number of Hadley-like cells
-    real(8), parameter :: z1   = 2000.D0         ! position of lower tracer bound (m), changed in v5
-    real(8), parameter :: z2   = 5000.D0         ! position of upper tracer bound (m), changed in v5
-    real(8), parameter :: ztop = 12000.D0        ! model top (m)
-    real(8), parameter :: p0   = 100000.D0       ! reference pressure (Pa)
+    REAL(RP), parameter :: tau  = 1.D0 * 86400.D0 ! period of motion 1 day (in s)
+    REAL(RP), parameter :: u0   = 40.D0           ! Zonal velocity magnitude (m/s)
+    REAL(RP), parameter :: w0   = 0.15D0          ! Vertical velocity magnitude (m/s), changed in v5
+    REAL(RP), parameter :: T0   = 300.D0          ! temperature
+    REAL(RP), parameter :: H    = Rd * T0 / g     ! scale height
+    REAL(RP), parameter :: K    = 5.D0            ! number of Hadley-like cells
+    REAL(RP), parameter :: z1   = 2000.D0         ! position of lower tracer bound (m), changed in v5
+    REAL(RP), parameter :: z2   = 5000.D0         ! position of upper tracer bound (m), changed in v5
+    REAL(RP), parameter :: ztop = 12000.D0        ! model top (m)
+    REAL(RP), parameter :: p0   = 100000.D0       ! reference pressure (Pa)
 
-    real(8) :: u ! Zonal wind      [m/s]
-    real(8) :: v ! Meridional wind [m/s]
-    real(8) :: height, p, rho, t, rho0
-    real(8) :: east(3), nrth(3)
+    REAL(RP) :: u ! Zonal wind      [m/s]
+    REAL(RP) :: v ! Meridional wind [m/s]
+    REAL(RP) :: height, p, rho, t, rho0
+    REAL(RP) :: east(3), nrth(3)
     !---------------------------------------------------------------------------
 
     t    = T0
@@ -210,8 +210,8 @@ contains
   function Sp_Unit_East( lon ) result( unit_east )
     implicit none
 
-    real(8), intent(in) :: lon ! [rad]
-    real(8)             :: unit_east(3)
+    REAL(RP), intent(in) :: lon ! [rad]
+    REAL(RP)             :: unit_east(3)
     !---------------------------------------------------------------------------
 
     unit_east(1) = -sin(lon) ! x-direction
@@ -225,8 +225,8 @@ contains
   function Sp_Unit_North( lon, lat ) result( unit_north )
     implicit none
 
-    real(8), intent(in) :: lon, lat ! [rad]
-    real(8)             :: unit_north(3)
+    REAL(RP), intent(in) :: lon, lat ! [rad]
+    REAL(RP)             :: unit_north(3)
     !---------------------------------------------------------------------------
 
     unit_north(1) = -sin(lat) * cos(lon) ! x-direction

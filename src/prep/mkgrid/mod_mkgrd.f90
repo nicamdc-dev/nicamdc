@@ -77,12 +77,12 @@ module mod_mkgrd
   logical, private :: MKGRD_DOSHRINK    = .false.
   logical, private :: MKGRD_DOROTATE    = .false.
 
-  real(8), private :: MKGRD_spring_beta      = 1.15D0 ! parameter beta for spring dynamics
-  real(8), private :: MKGRD_prerotation_tilt =   0.D0 ! [deg]
-  real(8), private :: MKGRD_stretch_alpha    = 1.00D0 ! parameter alpha for stretch
+  REAL(RP), private :: MKGRD_spring_beta      = 1.15D0 ! parameter beta for spring dynamics
+  REAL(RP), private :: MKGRD_prerotation_tilt =   0.D0 ! [deg]
+  REAL(RP), private :: MKGRD_stretch_alpha    = 1.00D0 ! parameter alpha for stretch
   integer, private :: MKGRD_shrink_level     =      0 ! shrink level (only for 1-diamond experiment)
-  real(8), private :: MKGRD_rotation_lon     =   0.D0 ! [deg]
-  real(8), private :: MKGRD_rotation_lat     =  90.D0 ! [deg]
+  REAL(RP), private :: MKGRD_rotation_lon     =   0.D0 ! [deg]
+  REAL(RP), private :: MKGRD_rotation_lat     =  90.D0 ! [deg]
 
   !-----------------------------------------------------------------------------
 contains
@@ -167,15 +167,15 @@ contains
        COMM_data_transfer
     implicit none
 
-    real(8), allocatable :: r0(:,:,:)
-    real(8), allocatable :: r1(:,:,:)
-    real(8), allocatable :: g0(:,:,:)
-    real(8), allocatable :: g1(:,:,:)
+    REAL(RP), allocatable :: r0(:,:,:)
+    REAL(RP), allocatable :: r1(:,:,:)
+    REAL(RP), allocatable :: g0(:,:,:)
+    REAL(RP), allocatable :: g1(:,:,:)
 
-    real(8) :: alpha2, phi
+    REAL(RP) :: alpha2, phi
 
     integer :: rgnid, dmd
-    real(8) :: rdmd
+    REAL(RP) :: rdmd
 
     integer :: rgn_all_1d, rgn_all
     integer :: rgnid_dmd, ir, jr
@@ -362,35 +362,35 @@ contains
     integer, parameter :: I_Fsum = 7
     integer, parameter :: I_Ek   = 8
 
-    real(8) :: var   ( ADM_gall,   ADM_KNONE,ADM_lall,   var_vindex)
-    real(8) :: var_pl( ADM_gall_pl,ADM_KNONE,ADM_lall_pl,var_vindex)
+    REAL(RP) :: var   ( ADM_gall,   ADM_KNONE,ADM_lall,   var_vindex)
+    REAL(RP) :: var_pl( ADM_gall_pl,ADM_KNONE,ADM_lall_pl,var_vindex)
 
-    real(8) :: lambda
-    real(8) :: dbar
+    REAL(RP) :: lambda
+    REAL(RP) :: dbar
 
-    real(8) :: Px(ADM_gall,0:6)
-    real(8) :: Py(ADM_gall,0:6)
-    real(8) :: Pz(ADM_gall,0:6)
-    real(8) :: Fx(ADM_gall,0:6)
-    real(8) :: Fy(ADM_gall,0:6)
-    real(8) :: Fz(ADM_gall,0:6)
+    REAL(RP) :: Px(ADM_gall,0:6)
+    REAL(RP) :: Py(ADM_gall,0:6)
+    REAL(RP) :: Pz(ADM_gall,0:6)
+    REAL(RP) :: Fx(ADM_gall,0:6)
+    REAL(RP) :: Fy(ADM_gall,0:6)
+    REAL(RP) :: Fz(ADM_gall,0:6)
 
-    real(8) :: fixed_point(3)
+    REAL(RP) :: fixed_point(3)
 
-    real(8) :: Ax, Ay, Az
-    real(8) :: Ex, Ey, Ez
-    real(8) :: Fsumx, Fsumy, Fsumz
-    real(8) :: Rx, Ry, Rz
-    real(8) :: Wx, Wy, Wz
-    real(8) :: len, d, E
+    REAL(RP) :: Ax, Ay, Az
+    REAL(RP) :: Ex, Ey, Ez
+    REAL(RP) :: Fsumx, Fsumy, Fsumz
+    REAL(RP) :: Rx, Ry, Rz
+    REAL(RP) :: Wx, Wy, Wz
+    REAL(RP) :: len, d, E
 
     integer, parameter :: itelim = 100000
     integer            :: ite
-    real(8) :: Fsum_max, Ek_max
+    REAL(RP) :: Fsum_max, Ek_max
 
-    real(8), parameter :: dump_coef = 1.D0  !> friction coefficent in spring dynamics
-    real(8), parameter :: dt        = 2.D-2 !> delta t for solution of spring dynamics
-    real(8), parameter :: criteria  = 1.D-4 !> criteria of convergence
+    REAL(RP), parameter :: dump_coef = 1.D0  !> friction coefficent in spring dynamics
+    REAL(RP), parameter :: dt        = 2.D-2 !> delta t for solution of spring dynamics
+    REAL(RP), parameter :: criteria  = 1.D-4 !> criteria of convergence
 
     integer :: rgnid
     integer :: ij_singular
@@ -602,11 +602,11 @@ contains
        COMM_data_transfer
     implicit none
 
-    real(8) :: g(3)
-    real(8) :: angle_y, angle_z, angle_tilt
-    real(8) :: alpha2
+    REAL(RP) :: g(3)
+    REAL(RP) :: angle_y, angle_z, angle_tilt
+    REAL(RP) :: alpha2
 
-    real(8) :: d2r
+    REAL(RP) :: d2r
     integer :: ij, k, l
     !---------------------------------------------------------------------------
 
@@ -695,9 +695,9 @@ contains
        COMM_data_transfer
     implicit none
 
-    real(8) :: lat, lon, lat_trans
+    REAL(RP) :: lat, lon, lat_trans
 
-    real(8), parameter :: criteria = 1.D-10
+    REAL(RP), parameter :: criteria = 1.D-10
 
     integer :: ij, k, l
     !---------------------------------------------------------------------------
@@ -784,7 +784,7 @@ contains
        COMM_data_transfer
     implicit none
 
-    real(8) :: o(3), g(3), len
+    REAL(RP) :: o(3), g(3), len
 
     integer :: ij, k, l, ite
     !---------------------------------------------------------------------------
@@ -863,10 +863,10 @@ contains
        COMM_data_transfer
     implicit none
 
-    real(8) :: g(3)
-    real(8) :: angle_y, angle_z
+    REAL(RP) :: g(3)
+    REAL(RP) :: angle_y, angle_z
 
-    real(8) :: d2r
+    REAL(RP) :: d2r
     integer :: ij, k, l
     !---------------------------------------------------------------------------
 
@@ -979,25 +979,25 @@ contains
        GTL_min
     implicit none
 
-    real(8) :: angle    (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(8) :: angle_pl (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(8) :: length   (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(8) :: length_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(8) :: sqarea   (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(8) :: sqarea_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(8) :: dummy    (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(8) :: dummy_pl (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    REAL(RP) :: angle    (ADM_gall,   ADM_KNONE,ADM_lall   )
+    REAL(RP) :: angle_pl (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    REAL(RP) :: length   (ADM_gall,   ADM_KNONE,ADM_lall   )
+    REAL(RP) :: length_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    REAL(RP) :: sqarea   (ADM_gall,   ADM_KNONE,ADM_lall   )
+    REAL(RP) :: sqarea_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    REAL(RP) :: dummy    (ADM_gall,   ADM_KNONE,ADM_lall   )
+    REAL(RP) :: dummy_pl (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
 
-    real(8) :: len(6), ang(6)
-    real(8) :: p(dir_vindex,0:7)
-    real(8) :: nvlenC, nvlenS, nv(3)
+    REAL(RP) :: len(6), ang(6)
+    REAL(RP) :: p(dir_vindex,0:7)
+    REAL(RP) :: nvlenC, nvlenS, nv(3)
 
-    real(8) :: nlen, len_tot
-    real(8) :: l_mean, area, temp
-    real(8) :: sqarea_avg, sqarea_max, sqarea_min
-    real(8) :: angle_max,  length_max, length_avg
+    REAL(RP) :: nlen, len_tot
+    REAL(RP) :: l_mean, area, temp
+    REAL(RP) :: sqarea_avg, sqarea_max, sqarea_min
+    REAL(RP) :: angle_max,  length_max, length_avg
 
-    real(8) :: global_area
+    REAL(RP) :: global_area
     integer :: global_grid
 
     integer :: rgnid
@@ -1158,11 +1158,11 @@ contains
     implicit none
 
     integer, intent(in)  :: n0
-    real(8), intent(in)  :: g0(n0,n0,3)
+    REAL(RP), intent(in)  :: g0(n0,n0,3)
     integer, intent(in)  :: n1
-    real(8), intent(out) :: g1(n1,n1,3)
+    REAL(RP), intent(out) :: g1(n1,n1,3)
 
-    real(8) :: r
+    REAL(RP) :: r
     integer :: i, j, inew, jnew
     !---------------------------------------------------------------------------
 
@@ -1224,11 +1224,11 @@ contains
       iaxis  )
     implicit none
 
-    real(8), intent(inout) :: a(3)
-    real(8), intent(in)    :: angle
+    REAL(RP), intent(inout) :: a(3)
+    REAL(RP), intent(in)    :: angle
     integer, intent(in)    :: iaxis
 
-    real(8) :: m(3,3), b(3)
+    REAL(RP) :: m(3,3), b(3)
     !---------------------------------------------------------------------------
 
     if ( iaxis == I_Xaxis ) then
@@ -1291,14 +1291,14 @@ contains
       lon_center  )
     implicit none
 
-    real(8), intent(out) :: x          !> gnomonic, x
-    real(8), intent(out) :: y          !> gnomonic, y
-    real(8), intent(in)  :: lat        !> spheric, latitude
-    real(8), intent(in)  :: lon        !> spheric, longitude
-    real(8), intent(in)  :: lat_center !> projection center, latitude
-    real(8), intent(in)  :: lon_center !> projection center, longitude
+    REAL(RP), intent(out) :: x          !> gnomonic, x
+    REAL(RP), intent(out) :: y          !> gnomonic, y
+    REAL(RP), intent(in)  :: lat        !> spheric, latitude
+    REAL(RP), intent(in)  :: lon        !> spheric, longitude
+    REAL(RP), intent(in)  :: lat_center !> projection center, latitude
+    REAL(RP), intent(in)  :: lon_center !> projection center, longitude
 
-    real(8) :: cosc
+    REAL(RP) :: cosc
     !---------------------------------------------------------------------------
 
     cosc = sin(lat_center) * sin(lat) &
@@ -1321,14 +1321,14 @@ contains
       lon_center  )
     implicit none
 
-    real(8), intent(out) :: lat        !> spheric, latitude
-    real(8), intent(out) :: lon        !> spheric, longitude
-    real(8), intent(in)  :: x          !> gnomonic, x
-    real(8), intent(in)  :: y          !> gnomonic, y
-    real(8), intent(in)  :: lat_center !> projection center, latitude
-    real(8), intent(in)  :: lon_center !> projection center, longitude
+    REAL(RP), intent(out) :: lat        !> spheric, latitude
+    REAL(RP), intent(out) :: lon        !> spheric, longitude
+    REAL(RP), intent(in)  :: x          !> gnomonic, x
+    REAL(RP), intent(in)  :: y          !> gnomonic, y
+    REAL(RP), intent(in)  :: lat_center !> projection center, latitude
+    REAL(RP), intent(in)  :: lon_center !> projection center, longitude
 
-    real(8) :: rho, c
+    REAL(RP) :: rho, c
     !---------------------------------------------------------------------------
 
     rho = sqrt( x*x + y*y )
@@ -1380,16 +1380,16 @@ contains
       ADM_GIpJo
     implicit none
 
-    real(8) :: v    (dir_vindex,ADM_gall   ,4,ADM_TI:ADM_TJ)
-    real(8) :: v_pl (dir_vindex,ADM_gall_pl,4)
-    real(8) :: w    (dir_vindex,ADM_gall   ,3)
-    real(8) :: w_pl (dir_vindex,ADM_gall_pl,3)
-    real(8) :: gc   (dir_vindex,ADM_gall   )
-    real(8) :: gc_pl(dir_vindex,ADM_gall_pl)
+    REAL(RP) :: v    (dir_vindex,ADM_gall   ,4,ADM_TI:ADM_TJ)
+    REAL(RP) :: v_pl (dir_vindex,ADM_gall_pl,4)
+    REAL(RP) :: w    (dir_vindex,ADM_gall   ,3)
+    REAL(RP) :: w_pl (dir_vindex,ADM_gall_pl,3)
+    REAL(RP) :: gc   (dir_vindex,ADM_gall   )
+    REAL(RP) :: gc_pl(dir_vindex,ADM_gall_pl)
 
-    real(8), parameter :: o(3) = 0.D0
+    REAL(RP), parameter :: o(3) = 0.D0
 
-    real(8) :: w_lenS, w_lenC, gc_len
+    REAL(RP) :: w_lenS, w_lenC, gc_len
 
     integer :: rgnid
     integer :: oo, po, pp, op
@@ -1569,16 +1569,16 @@ contains
       GRD_xt_pl
     implicit none
 
-    real(8) :: v    (dir_vindex,ADM_gall   ,7)
-    real(8) :: v_pl (dir_vindex,ADM_gall_pl,6)
-    real(8) :: w    (dir_vindex,ADM_gall   ,6)
-    real(8) :: w_pl (dir_vindex,ADM_gall_pl,5)
-    real(8) :: gc   (dir_vindex,ADM_gall   )
-    real(8) :: gc_pl(dir_vindex,ADM_gall_pl)
+    REAL(RP) :: v    (dir_vindex,ADM_gall   ,7)
+    REAL(RP) :: v_pl (dir_vindex,ADM_gall_pl,6)
+    REAL(RP) :: w    (dir_vindex,ADM_gall   ,6)
+    REAL(RP) :: w_pl (dir_vindex,ADM_gall_pl,5)
+    REAL(RP) :: gc   (dir_vindex,ADM_gall   )
+    REAL(RP) :: gc_pl(dir_vindex,ADM_gall_pl)
 
-    real(8), parameter :: o(3) = 0.D0
+    REAL(RP), parameter :: o(3) = 0.D0
 
-    real(8) :: w_lenC, w_lenS, gc_len
+    REAL(RP) :: w_lenC, w_lenS, gc_len
 
     integer :: rgnid
     integer :: oo, mo, mm, om

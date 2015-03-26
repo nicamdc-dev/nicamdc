@@ -27,11 +27,11 @@ program prg_mkvlayer
   integer, parameter :: kdum=1
   integer, parameter :: fid=11
   integer :: num_of_layer = 10
-  real(8) :: ztop = 1.0D+4
+  REAL(RP) :: ztop = 1.0D+4
   character(256) :: outfname = 'outfile'
   character(256) :: infname = 'infile'
   character(16) :: layer_type = 'POWER'
-  real(8) :: fact = 1.0D0
+  REAL(RP) :: fact = 1.0D0
 
   namelist / mkvlayer_cnf / &
        num_of_layer,        & !--- number of layers
@@ -41,8 +41,8 @@ program prg_mkvlayer
        fact,                & !--- factor  if layer_type='POWER'
        infname                !--- input file name if layer_type='GIVEN'
 
-  real(8),allocatable :: z_c(:)
-  real(8),allocatable :: z_h(:)
+  REAL(RP),allocatable :: z_c(:)
+  REAL(RP),allocatable :: z_h(:)
 
   integer :: kmin
   integer :: kmax
@@ -67,9 +67,9 @@ contains
   !-----------------------------------------------------------------------------
   subroutine mk_layer_powerfunc( fact )
     implicit none
-    real(8) :: a
+    REAL(RP) :: a
     integer :: k
-    real(8),intent(in) :: fact
+    REAL(RP),intent(in) :: fact
 
     kmin=kdum+1
     kmax=kdum+num_of_layer
