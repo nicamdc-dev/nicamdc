@@ -172,7 +172,7 @@ contains
     !$acc kernels pcopy(qd) pcopyin(q) async(0)
     do k  = 1, kdim
     do ij = 1, ijdim
-       qd(ij,k) = 1.D0
+       qd(ij,k) = 1.0_RP
 
        !$acc loop seq
        do nq = NQW_STR,NQW_END
@@ -210,7 +210,7 @@ contains
     do l  = 1, ldim
     do k  = 1, kdim
     do ij = 1, ijdim
-       qd(ij,k,l) = 1.D0
+       qd(ij,k,l) = 1.0_RP
 
        !$acc loop seq
        do nq = NQW_STR,NQW_END
@@ -654,7 +654,7 @@ contains
     REAL(RP) :: Pvap
     REAL(RP) :: LH(nqmax)
 
-    REAL(RP), parameter :: EPS = 1.D-10
+    REAL(RP), parameter :: EPS = 1.E-10_RP
 
     integer :: ij, k, nq
     !---------------------------------------------------------------------------
@@ -665,7 +665,7 @@ contains
        elseif( nq == I_QI .OR. nq == I_QS .OR. nq == I_QG ) then
           LH(nq) = -LHF / TEM00
        else
-          LH(nq) = 0.D0
+          LH(nq) = 0.0_RP
        endif
     enddo
 
@@ -732,8 +732,8 @@ contains
     do l  = 1, ldim
     do k  = 1, kdim
     do ij = 1, ijdim
-       cv(ij,k,l) = 0.D0
-       qd(ij,k,l) = 1.D0
+       cv(ij,k,l) = 0.0_RP
+       qd(ij,k,l) = 1.0_RP
 
        !$acc loop seq
        do nq = NQW_STR, NQW_END
@@ -786,8 +786,8 @@ contains
     do l  = 1, ldim
     do k  = 1, kdim
     do ij = 1, ijdim
-       cv(ij,k,l) = 0.D0
-       qd(ij,k,l) = 1.D0
+       cv(ij,k,l) = 0.0_RP
+       qd(ij,k,l) = 1.0_RP
 
        !$acc loop seq
        do nq = NQW_STR, NQW_END

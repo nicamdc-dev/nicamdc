@@ -180,8 +180,8 @@ contains
        enddo
        enddo
        do g = 1, ADM_gall
-          rhogw_vm(g,ADM_kmin  ) = 0.D0
-          rhogw_vm(g,ADM_kmax+1) = 0.D0
+          rhogw_vm(g,ADM_kmin  ) = 0.0_RP
+          rhogw_vm(g,ADM_kmax+1) = 0.0_RP
        enddo
 
        !$omp parallel default(none),private(g,n,k,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1,sclt_rhogw), &
@@ -206,7 +206,7 @@ contains
 
              sclt_rhogw = ( ( rhogw_vm(ij,k+1) + rhogw_vm(ip1j,k+1) + rhogw_vm(ip1jp1,k+1) ) &
                           - ( rhogw_vm(ij,k  ) + rhogw_vm(ip1j,k  ) + rhogw_vm(ip1jp1,k  ) ) &
-                          ) / 3.D0 * GRD_rdgz(k)
+                          ) / 3.0_RP * GRD_rdgz(k)
 
              sclt(n,TI) = ( - (rhogvx_vm(ij    )+rhogvx_vm(ip1j  )) * cinterp_TN(ij  ,l,AI ,1) &
                             - (rhogvx_vm(ip1j  )+rhogvx_vm(ip1jp1)) * cinterp_TN(ip1j,l,AJ ,1) &
@@ -217,7 +217,7 @@ contains
                             - (rhogvz_vm(ij    )+rhogvz_vm(ip1j  )) * cinterp_TN(ij  ,l,AI ,3) &
                             - (rhogvz_vm(ip1j  )+rhogvz_vm(ip1jp1)) * cinterp_TN(ip1j,l,AJ ,3) &
                             + (rhogvz_vm(ip1jp1)+rhogvz_vm(ij    )) * cinterp_TN(ij  ,l,AIJ,3) &
-                          ) * 0.5D0 * cinterp_TRA(ij,l,TI) &
+                          ) * 0.5_RP * cinterp_TRA(ij,l,TI) &
                         + sclt_rhogw
           enddo
           !$omp end do nowait
@@ -230,7 +230,7 @@ contains
 
              sclt_rhogw = ( ( rhogw_vm(ij,k+1) + rhogw_vm(ijp1,k+1) + rhogw_vm(ip1jp1,k+1) ) &
                           - ( rhogw_vm(ij,k  ) + rhogw_vm(ijp1,k  ) + rhogw_vm(ip1jp1,k  ) ) &
-                          ) / 3.D0 * GRD_rdgz(k)
+                          ) / 3.0_RP * GRD_rdgz(k)
 
              sclt(n,TJ) = ( - (rhogvx_vm(ij    )+rhogvx_vm(ip1jp1)) * cinterp_TN(ij  ,l,AIJ,1) &
                             + (rhogvx_vm(ip1jp1)+rhogvx_vm(ijp1  )) * cinterp_TN(ijp1,l,AI ,1) &
@@ -241,7 +241,7 @@ contains
                             - (rhogvz_vm(ij    )+rhogvz_vm(ip1jp1)) * cinterp_TN(ij  ,l,AIJ,3) &
                             + (rhogvz_vm(ip1jp1)+rhogvz_vm(ijp1  )) * cinterp_TN(ijp1,l,AI ,3) &
                             + (rhogvz_vm(ijp1  )+rhogvz_vm(ij    )) * cinterp_TN(ij  ,l,AJ ,3) &
-                          ) * 0.5D0 * cinterp_TRA(ij,l,TJ) &
+                          ) * 0.5_RP * cinterp_TRA(ij,l,TJ) &
                         + sclt_rhogw
           enddo
           !$omp end do
@@ -259,7 +259,7 @@ contains
                                - ( sclt(im1jm1,TJ) + sclt(im1j,  TI) ) * cinterp_HN(im1j,  l,AI ,1) &
                                - ( sclt(im1jm1,TI) + sclt(im1jm1,TJ) ) * cinterp_HN(im1jm1,l,AIJ,1) &
                                - ( sclt(ijm1  ,TJ) + sclt(im1jm1,TI) ) * cinterp_HN(ijm1,  l,AJ ,1) &
-                             ) * 0.5D0 * cinterp_PRA(ij,l)
+                             ) * 0.5_RP * cinterp_PRA(ij,l)
 
              ddivdy(n,k,l) = ( + ( sclt(ijm1,  TJ) + sclt(ij,    TI) ) * cinterp_HN(ij,    l,AI ,2) &
                                + ( sclt(ij,    TI) + sclt(ij,    TJ) ) * cinterp_HN(ij,    l,AIJ,2) &
@@ -267,7 +267,7 @@ contains
                                - ( sclt(im1jm1,TJ) + sclt(im1j,  TI) ) * cinterp_HN(im1j,  l,AI ,2) &
                                - ( sclt(im1jm1,TI) + sclt(im1jm1,TJ) ) * cinterp_HN(im1jm1,l,AIJ,2) &
                                - ( sclt(ijm1  ,TJ) + sclt(im1jm1,TI) ) * cinterp_HN(ijm1,  l,AJ ,2) &
-                             ) * 0.5D0 * cinterp_PRA(ij,l)
+                             ) * 0.5_RP * cinterp_PRA(ij,l)
 
              ddivdz(n,k,l) = ( + ( sclt(ijm1,  TJ) + sclt(ij,    TI) ) * cinterp_HN(ij,    l,AI ,3) &
                                + ( sclt(ij,    TI) + sclt(ij,    TJ) ) * cinterp_HN(ij,    l,AIJ,3) &
@@ -275,7 +275,7 @@ contains
                                - ( sclt(im1jm1,TJ) + sclt(im1j,  TI) ) * cinterp_HN(im1j,  l,AI ,3) &
                                - ( sclt(im1jm1,TI) + sclt(im1jm1,TJ) ) * cinterp_HN(im1jm1,l,AIJ,3) &
                                - ( sclt(ijm1  ,TJ) + sclt(im1jm1,TI) ) * cinterp_HN(ijm1,  l,AJ ,3) &
-                             ) * 0.5D0 * cinterp_PRA(ij,l)
+                             ) * 0.5_RP * cinterp_PRA(ij,l)
           enddo
 
           if ( ADM_have_sgp(l) ) then
@@ -294,21 +294,21 @@ contains
                                + ( sclt(ij,    TJ) + sclt(im1j,  TI) ) * cinterp_HN(ij,    l,AJ ,1) &
                                - ( sclt(im1jm1,TJ) + sclt(im1j,  TI) ) * cinterp_HN(im1j,  l,AI ,1) &
                                - ( sclt(im1jm1,TI) + sclt(im1jm1,TJ) ) * cinterp_HN(im1jm1,l,AIJ,1) &
-                             ) * 0.5D0 * cinterp_PRA(ij,l)
+                             ) * 0.5_RP * cinterp_PRA(ij,l)
 
              ddivdy(n,k,l) = ( + ( sclt(ijm1,  TJ) + sclt(ij,    TI) ) * cinterp_HN(ij,    l,AI ,2) &
                                + ( sclt(ij,    TI) + sclt(ij,    TJ) ) * cinterp_HN(ij,    l,AIJ,2) &
                                + ( sclt(ij,    TJ) + sclt(im1j,  TI) ) * cinterp_HN(ij,    l,AJ ,2) &
                                - ( sclt(im1jm1,TJ) + sclt(im1j,  TI) ) * cinterp_HN(im1j,  l,AI ,2) &
                                - ( sclt(im1jm1,TI) + sclt(im1jm1,TJ) ) * cinterp_HN(im1jm1,l,AIJ,2) &
-                             ) * 0.5D0 * cinterp_PRA(ij,l)
+                             ) * 0.5_RP * cinterp_PRA(ij,l)
 
              ddivdz(n,k,l) = ( + ( sclt(ijm1,  TJ) + sclt(ij,    TI) ) * cinterp_HN(ij,    l,AI ,3) &
                                + ( sclt(ij,    TI) + sclt(ij,    TJ) ) * cinterp_HN(ij,    l,AIJ,3) &
                                + ( sclt(ij,    TJ) + sclt(im1j,  TI) ) * cinterp_HN(ij,    l,AJ ,3) &
                                - ( sclt(im1jm1,TJ) + sclt(im1j,  TI) ) * cinterp_HN(im1j,  l,AI ,3) &
                                - ( sclt(im1jm1,TI) + sclt(im1jm1,TJ) ) * cinterp_HN(im1jm1,l,AIJ,3) &
-                             ) * 0.5D0 * cinterp_PRA(ij,l)
+                             ) * 0.5_RP * cinterp_PRA(ij,l)
              !$omp end master
              !$omp barrier
           endif
@@ -317,12 +317,12 @@ contains
        !$omp end parallel
 
        do g = 1, ADM_gall
-          ddivdx(g,ADM_kmin-1,l) = 0.D0
-          ddivdx(g,ADM_kmax+1,l) = 0.D0
-          ddivdy(g,ADM_kmin-1,l) = 0.D0
-          ddivdy(g,ADM_kmax+1,l) = 0.D0
-          ddivdz(g,ADM_kmin-1,l) = 0.D0
-          ddivdz(g,ADM_kmax+1,l) = 0.D0
+          ddivdx(g,ADM_kmin-1,l) = 0.0_RP
+          ddivdx(g,ADM_kmax+1,l) = 0.0_RP
+          ddivdy(g,ADM_kmin-1,l) = 0.0_RP
+          ddivdy(g,ADM_kmax+1,l) = 0.0_RP
+          ddivdz(g,ADM_kmin-1,l) = 0.0_RP
+          ddivdz(g,ADM_kmax+1,l) = 0.0_RP
        enddo
     enddo
 
@@ -341,8 +341,8 @@ contains
           enddo
           enddo
           do g = 1, ADM_gall_pl
-             rhogw_vm_pl(g,ADM_kmin  ) = 0.D0
-             rhogw_vm_pl(g,ADM_kmax+1) = 0.D0
+             rhogw_vm_pl(g,ADM_kmin  ) = 0.0_RP
+             rhogw_vm_pl(g,ADM_kmax+1) = 0.0_RP
           enddo
 
           n = ADM_GSLF_PL
@@ -361,7 +361,7 @@ contains
 
                 sclt_rhogw_pl = ( ( rhogw_vm_pl(n,k+1) + rhogw_vm_pl(ij,k+1) + rhogw_vm_pl(ijp1,k+1) ) &
                                 - ( rhogw_vm_pl(n,k  ) + rhogw_vm_pl(ij,k  ) + rhogw_vm_pl(ijp1,k  ) ) &
-                                ) / 3.D0 * GRD_rdgz(k)
+                                ) / 3.0_RP * GRD_rdgz(k)
 
                 sclt_pl(v) = ( + ( rhogvx_vm_pl(n   ) + rhogvx_vm_pl(ij  ) ) * GMTR_A_var_pl(ij,  k0,l,TNX ) &
                                + ( rhogvy_vm_pl(n   ) + rhogvy_vm_pl(ij  ) ) * GMTR_A_var_pl(ij,  k0,l,TNY ) &
@@ -372,13 +372,13 @@ contains
                                - ( rhogvx_vm_pl(ijp1) + rhogvx_vm_pl(n   ) ) * GMTR_A_var_pl(ijp1,k0,l,TNX ) &
                                - ( rhogvy_vm_pl(ijp1) + rhogvy_vm_pl(n   ) ) * GMTR_A_var_pl(ijp1,k0,l,TNY ) &
                                - ( rhogvz_vm_pl(ijp1) + rhogvz_vm_pl(n   ) ) * GMTR_A_var_pl(ijp1,k0,l,TNZ ) &
-                             ) * 0.5D0 * GMTR_T_var_pl(ij,k0,l,T_RAREA) &
+                             ) * 0.5_RP * GMTR_T_var_pl(ij,k0,l,T_RAREA) &
                            + sclt_rhogw_pl
              enddo
 
-             ddivdx_pl(n,k,l) = 0.D0
-             ddivdy_pl(n,k,l) = 0.D0
-             ddivdz_pl(n,k,l) = 0.D0
+             ddivdx_pl(n,k,l) = 0.0_RP
+             ddivdy_pl(n,k,l) = 0.0_RP
+             ddivdz_pl(n,k,l) = 0.0_RP
 
              do v = ADM_gmin_pl, ADM_gmax_pl
                 ij   = v
@@ -390,9 +390,9 @@ contains
                 ddivdz_pl(n,k,l) = ddivdz_pl(n,k,l) + ( sclt_pl(ijm1) + sclt_pl(ij) ) * GMTR_A_var_pl(ij,k0,l,HNZ)
              enddo
 
-             ddivdx_pl(n,k,l) = ddivdx_pl(n,k,l) * 0.5D0 * GMTR_P_var_pl(n,k0,l,P_RAREA)
-             ddivdy_pl(n,k,l) = ddivdy_pl(n,k,l) * 0.5D0 * GMTR_P_var_pl(n,k0,l,P_RAREA)
-             ddivdz_pl(n,k,l) = ddivdz_pl(n,k,l) * 0.5D0 * GMTR_P_var_pl(n,k0,l,P_RAREA)
+             ddivdx_pl(n,k,l) = ddivdx_pl(n,k,l) * 0.5_RP * GMTR_P_var_pl(n,k0,l,P_RAREA)
+             ddivdy_pl(n,k,l) = ddivdy_pl(n,k,l) * 0.5_RP * GMTR_P_var_pl(n,k0,l,P_RAREA)
+             ddivdz_pl(n,k,l) = ddivdz_pl(n,k,l) * 0.5_RP * GMTR_P_var_pl(n,k0,l,P_RAREA)
           enddo
 
        enddo

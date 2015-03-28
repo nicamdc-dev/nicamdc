@@ -168,25 +168,25 @@ contains
     REAL(RP),intent(inout) :: lat, lon
     REAL(RP),intent(in) :: x,y,z
     !
-    REAL(RP), parameter :: epsilon = 1.0D-99
+    REAL(RP), parameter :: epsilon = 1.E-30
     REAL(RP) :: leng,leng_xy
     !
     leng=sqrt(x*x+y*y+z*z)
     !
     ! --- vector length equals to zero.
     if(leng<epsilon) then
-       lat=0.0D0
-       lon=0.0D0
+       lat=0.0_RP
+       lon=0.0_RP
        return
     endif
     ! --- vector is parallele to z axis.
-    if(z/leng>=1.0D0) then
-       lat=asin(1.0D0)
-       lon=0.0D0
+    if(z/leng>=1.0_RP) then
+       lat=asin(1.0_RP)
+       lon=0.0_RP
        return
-    elseif(z/leng<=-1.0D0) then
-       lat=asin(-1.0D0)
-       lon=0.0D0
+    elseif(z/leng<=-1.0_RP) then
+       lat=asin(-1.0_RP)
+       lon=0.0_RP
        return
     endif
     ! --- not parallele to z axis
@@ -194,20 +194,20 @@ contains
     !
     leng_xy=sqrt(x*x+y*y)
     if(leng_xy<epsilon) then
-       lon=0.0D0
+       lon=0.0_RP
        return
     endif
-    if(x/leng_xy>=1.0D0) then
-       lon=acos(1.0D0)
-       if(y<0.0D0) lon=-lon
+    if(x/leng_xy>=1.0_RP) then
+       lon=acos(1.0_RP)
+       if(y<0.0_RP) lon=-lon
        return
-    elseif(x/leng_xy<=-1.0D0) then
-       lon=acos(-1.0D0)
-       if(y<0.0D0) lon=-lon
+    elseif(x/leng_xy<=-1.0_RP) then
+       lon=acos(-1.0_RP)
+       if(y<0.0_RP) lon=-lon
        return
     endif
     lon=acos(x/leng_xy)
-    if(y<0.0D0) lon=-lon
+    if(y<0.0_RP) lon=-lon
     return
   end subroutine MISC_get_latlon
 
@@ -229,7 +229,7 @@ contains
     integer, parameter :: ix = 1
     integer, parameter :: iy = 2
     integer, parameter :: iz = 3
-    REAL(RP), parameter :: pi  = 3.14159265358979323846D0
+    REAL(RP), parameter :: pi  = 3.14159265358979323846_RP
     !
     REAL(RP) :: area
     REAL(RP),intent(in) :: a(ix:iz),b(ix:iz),c(ix:iz)
@@ -276,7 +276,7 @@ contains
     ! S.Iga060209=>
     if (.not.present(critical)) then
        !       critical = 0 !1d-10e
-       epsi = 0.D0 !1d-10e
+       epsi = 0.0_RP !1d-10e
     else
        epsi=critical  !060224
     endif
@@ -295,7 +295,7 @@ contains
        w(iy) = v1(iz)*v2(ix)-v2(iz)*v1(ix)
        w(iz) = v1(ix)*v2(iy)-v2(ix)*v1(iy)
        !
-       area=0.5D0*sqrt(w(ix)*w(ix)+w(iy)*w(iy)+w(iz)*w(iz))
+       area=0.5_RP*sqrt(w(ix)*w(ix)+w(iy)*w(iy)+w(iz)*w(iz))
        !
        len = sqrt(a(ix)*a(ix)+a(iy)*a(iy)+a(iz)*a(iz))
        area=area*(radius/len)*(radius/len)
@@ -318,13 +318,13 @@ contains
        v23(ix:iz)=b(ix:iz)-c(ix:iz)
        !----
        r_v01_x_v01&
-            =1.0D0/(v01(ix)*v01(ix)+v01(iy)*v01(iy)+v01(iz)*v01(iz))
+            =1.0_RP/(v01(ix)*v01(ix)+v01(iy)*v01(iy)+v01(iz)*v01(iz))
        fac11=(v01(ix)*v11(ix)+v01(iy)*v11(iy)+v01(iz)*v11(iz))&
             *r_v01_x_v01
        fac21=(v01(ix)*v21(ix)+v01(iy)*v21(iy)+v01(iz)*v21(iz))&
             *r_v01_x_v01
        !---- Escape for the case arg=0 (S.Iga060209)
-       area = 0.D0
+       area = 0.0_RP
        if ((v12(ix)**2+v12(iy)**2+v12(iz)**2) * r_v01_x_v01 <= epsi**2 ) return
        if ((v13(ix)**2+v13(iy)**2+v13(iz)**2) * r_v01_x_v01 <= epsi**2 ) return
        if ((v23(ix)**2+v23(iy)**2+v23(iz)**2) * r_v01_x_v01 <= epsi**2 ) return
@@ -341,12 +341,12 @@ contains
        ang(1)=(w11(ix)*w21(ix)+w11(iy)*w21(iy)+w11(iz)*w21(iz))&
             /( sqrt(w11(ix)*w11(ix)+w11(iy)*w11(iy)+w11(iz)*w11(iz))&
             * sqrt(w21(ix)*w21(ix)+w21(iy)*w21(iy)+w21(iz)*w21(iz)) )
-       if(ang(1)>1.0D0) ang(1) = 1.0D0
-       if(ang(1)<-1.0D0) ang(1) = -1.0D0
+       if(ang(1)>1.0_RP) ang(1) = 1.0_RP
+       if(ang(1)<-1.0_RP) ang(1) = -1.0_RP
        ang(1)=acos(ang(1))
        !
        r_v02_x_v02&
-            =1.0D0/(v02(ix)*v02(ix)+v02(iy)*v02(iy)+v02(iz)*v02(iz))
+            =1.0_RP/(v02(ix)*v02(ix)+v02(iy)*v02(iy)+v02(iz)*v02(iz))
        fac12=(v02(ix)*v12(ix)+v02(iy)*v12(iy)+v02(iz)*v12(iz))&
             *r_v02_x_v02
        fac22=(v02(ix)*v22(ix)+v02(iy)*v22(iy)+v02(iz)*v22(iz))&
@@ -363,12 +363,12 @@ contains
        ang(2)=(w12(ix)*w22(ix)+w12(iy)*w22(iy)+w12(iz)*w22(iz))&
             /( sqrt(w12(ix)*w12(ix)+w12(iy)*w12(iy)+w12(iz)*w12(iz))&
             *sqrt(w22(ix)*w22(ix)+w22(iy)*w22(iy)+w22(iz)*w22(iz)) )
-       if(ang(2)>1.0D0) ang(2) = 1.0D0
-       if(ang(2)<-1.0D0) ang(2) = -1.0D0
+       if(ang(2)>1.0_RP) ang(2) = 1.0_RP
+       if(ang(2)<-1.0_RP) ang(2) = -1.0_RP
        ang(2)=acos(ang(2))
        !
        r_v03_x_v03&
-            =1.0D0/(v03(ix)*v03(ix)+v03(iy)*v03(iy)+v03(iz)*v03(iz))
+            =1.0_RP/(v03(ix)*v03(ix)+v03(iy)*v03(iy)+v03(iz)*v03(iz))
        fac13=(v03(ix)*v13(ix)+v03(iy)*v13(iy)+v03(iz)*v13(iz))&
             *r_v03_x_v03
        fac23=(v03(ix)*v23(ix)+v03(iy)*v23(iy)+v03(iz)*v23(iz))&
@@ -385,8 +385,8 @@ contains
        ang(3)=(w13(ix)*w23(ix)+w13(iy)*w23(iy)+w13(iz)*w23(iz))&
             /( sqrt(w13(ix)*w13(ix)+w13(iy)*w13(iy)+w13(iz)*w13(iz))&
             *sqrt(w23(ix)*w23(ix)+w23(iy)*w23(iy)+w23(iz)*w23(iz)) )
-       if(ang(3)>1.0D0) ang(3) = 1.0D0
-       if(ang(3)<-1.0D0) ang(3) = -1.0D0
+       if(ang(3)>1.0_RP) ang(3) = 1.0_RP
+       if(ang(3)<-1.0_RP) ang(3) = -1.0_RP
        ang(3)=acos(ang(3))
        !----
        area=(ang(1)+ang(2)+ang(3)-pi)*radius*radius
@@ -415,7 +415,7 @@ contains
     integer, parameter :: ix = 1
     integer, parameter :: iy = 2
     integer, parameter :: iz = 3
-    REAL(RP), parameter :: pi  = 3.14159265358979323846E0_8
+    REAL(RP), parameter :: pi  = 3.14159265358979323846_RP
     !
     REAL(RP) :: area
     REAL(RP),intent(in) :: a(ix:iz),b(ix:iz),c(ix:iz)
@@ -460,54 +460,54 @@ contains
 
 
     if ( .not. present(critical)) then
-       epsi = 0.E0_8
+       epsi = 0.0_RP
     else
-       epsi = real(critical,kind=8)
+       epsi = real(critical,kind=RP)
     endif
 
     if(trim(polygon_type)=='ON_PLANE') then
        !---- Note : On a plane,
        !----        area = | ourter product of two vectors |.
-       v1(ix:iz)= real(b(ix:iz),kind=8) - real(a(ix:iz),kind=8)
-       v2(ix:iz)= real(c(ix:iz),kind=8) - real(a(ix:iz),kind=8)
+       v1(ix:iz)= real(b(ix:iz),kind=RP) - real(a(ix:iz),kind=RP)
+       v2(ix:iz)= real(c(ix:iz),kind=RP) - real(a(ix:iz),kind=RP)
 
        w(ix) = v1(iy)*v2(iz)-v2(iy)*v1(iz)
        w(iy) = v1(iz)*v2(ix)-v2(iz)*v1(ix)
        w(iz) = v1(ix)*v2(iy)-v2(ix)*v1(iy)
 
-       area16 = 0.5E0_8 * sqrt(w(ix)*w(ix)+w(iy)*w(iy)+w(iz)*w(iz))
+       area16 = 0.5_RP * sqrt(w(ix)*w(ix)+w(iy)*w(iy)+w(iz)*w(iz))
 
-       a16(ix:iz) = real(a(ix:iz),kind=8)
+       a16(ix:iz) = real(a(ix:iz),kind=RP)
        len = sqrt( a16(ix)*a16(ix)+a16(iy)*a16(iy)+a16(iz)*a16(iz) )
        area16 = area16 * (radius/len)*(radius/len)
 
-       area = real(area16,kind=8)
+       area = real(area16,kind=RP)
 
        return
     elseif(trim(polygon_type)=='ON_SPHERE') then
        !
        !---- NOTE : On a unit sphere,
        !----        area = sum of angles - pi.
-       v01(ix:iz)=real(a(ix:iz),kind=8)
-       v11(ix:iz)=real(b(ix:iz),kind=8)-real(a(ix:iz),kind=8)
-       v21(ix:iz)=real(c(ix:iz),kind=8)-real(a(ix:iz),kind=8)
+       v01(ix:iz)=real(a(ix:iz),kind=RP)
+       v11(ix:iz)=real(b(ix:iz),kind=RP)-real(a(ix:iz),kind=RP)
+       v21(ix:iz)=real(c(ix:iz),kind=RP)-real(a(ix:iz),kind=RP)
        !----
-       v02(ix:iz)=real(b(ix:iz),kind=8)
-       v12(ix:iz)=real(a(ix:iz),kind=8)-real(b(ix:iz),kind=8)
-       v22(ix:iz)=real(c(ix:iz),kind=8)-real(b(ix:iz),kind=8)
+       v02(ix:iz)=real(b(ix:iz),kind=RP)
+       v12(ix:iz)=real(a(ix:iz),kind=RP)-real(b(ix:iz),kind=RP)
+       v22(ix:iz)=real(c(ix:iz),kind=RP)-real(b(ix:iz),kind=RP)
        !----
-       v03(ix:iz)=real(c(ix:iz),kind=8)
-       v13(ix:iz)=real(a(ix:iz),kind=8)-real(c(ix:iz),kind=8)
-       v23(ix:iz)=real(b(ix:iz),kind=8)-real(c(ix:iz),kind=8)
+       v03(ix:iz)=real(c(ix:iz),kind=RP)
+       v13(ix:iz)=real(a(ix:iz),kind=RP)-real(c(ix:iz),kind=RP)
+       v23(ix:iz)=real(b(ix:iz),kind=RP)-real(c(ix:iz),kind=RP)
        !----
        r_v01_x_v01&
-            =1.0D0/(v01(ix)*v01(ix)+v01(iy)*v01(iy)+v01(iz)*v01(iz))
+            =1.0_RP/(v01(ix)*v01(ix)+v01(iy)*v01(iy)+v01(iz)*v01(iz))
        fac11=(v01(ix)*v11(ix)+v01(iy)*v11(iy)+v01(iz)*v11(iz))&
             *r_v01_x_v01
        fac21=(v01(ix)*v21(ix)+v01(iy)*v21(iy)+v01(iz)*v21(iz))&
             *r_v01_x_v01
        !---- Escape for the case arg=0 (S.Iga060209)
-       area=0E0_8
+       area=0.0_RP
 
        if ((v12(ix)**2+v12(iy)**2+v12(iz)**2) * r_v01_x_v01 <= epsi**2 ) return
        if ((v13(ix)**2+v13(iy)**2+v13(iz)**2) * r_v01_x_v01 <= epsi**2 ) return
@@ -525,12 +525,12 @@ contains
        ang(1)=(w11(ix)*w21(ix)+w11(iy)*w21(iy)+w11(iz)*w21(iz))&
             /( sqrt(w11(ix)*w11(ix)+w11(iy)*w11(iy)+w11(iz)*w11(iz))&
             * sqrt(w21(ix)*w21(ix)+w21(iy)*w21(iy)+w21(iz)*w21(iz)) )
-       if( ang(1) >  1.0E0_8 ) ang(1) =  1.E0_8
-       if( ang(1) <- 1.0E0_8 ) ang(1) = -1.E0_8
+       if( ang(1) >  1.0_RP ) ang(1) =  1.0_RP
+       if( ang(1) <- 1.0_RP ) ang(1) = -1.0_RP
        ang(1)=acos(ang(1))
        !
        r_v02_x_v02&
-            =1.0D0/(v02(ix)*v02(ix)+v02(iy)*v02(iy)+v02(iz)*v02(iz))
+            =1.0_RP/(v02(ix)*v02(ix)+v02(iy)*v02(iy)+v02(iz)*v02(iz))
        fac12=(v02(ix)*v12(ix)+v02(iy)*v12(iy)+v02(iz)*v12(iz))&
             *r_v02_x_v02
        fac22=(v02(ix)*v22(ix)+v02(iy)*v22(iy)+v02(iz)*v22(iz))&
@@ -548,13 +548,13 @@ contains
             /( sqrt(w12(ix)*w12(ix)+w12(iy)*w12(iy)+w12(iz)*w12(iz))&
             *sqrt(w22(ix)*w22(ix)+w22(iy)*w22(iy)+w22(iz)*w22(iz)) )
 
-       if( ang(2) >  1.0E0_8 ) ang(2) =  1.E0_8
-       if( ang(2) <- 1.0E0_8 ) ang(2) = -1.E0_8
+       if( ang(2) >  1.0_RP ) ang(2) =  1.0_RP
+       if( ang(2) <- 1.0_RP ) ang(2) = -1.0_RP
 
        ang(2)=acos(ang(2))
 
        r_v03_x_v03&
-            =1.0D0/(v03(ix)*v03(ix)+v03(iy)*v03(iy)+v03(iz)*v03(iz))
+            =1.0_RP/(v03(ix)*v03(ix)+v03(iy)*v03(iy)+v03(iz)*v03(iz))
        fac13=(v03(ix)*v13(ix)+v03(iy)*v13(iy)+v03(iz)*v13(iz))&
             *r_v03_x_v03
        fac23=(v03(ix)*v23(ix)+v03(iy)*v23(iy)+v03(iz)*v23(iz))&
@@ -572,14 +572,14 @@ contains
             /( sqrt(w13(ix)*w13(ix)+w13(iy)*w13(iy)+w13(iz)*w13(iz))&
             *sqrt(w23(ix)*w23(ix)+w23(iy)*w23(iy)+w23(iz)*w23(iz)) )
 
-       if( ang(3) >  1.0E0_8 ) ang(3) =  1.E0_8
-       if( ang(3) <- 1.0E0_8 ) ang(3) = -1.E0_8
+       if( ang(3) >  1.0_RP ) ang(3) =  1.0_RP
+       if( ang(3) <- 1.0_RP ) ang(3) = -1.0_RP
 
        ang(3)=acos(ang(3))
        !----
        area16=(ang(1)+ang(2)+ang(3)-pi)*radius*radius
 
-       area = real(area16,kind=8)
+       area = real(area16,kind=RP)
 
        return
     endif
@@ -619,11 +619,11 @@ contains
        !--- NOTE : Length of a geodesic line is caluclatd
        !---        by (angle X radius).
        vec_len = sqrt(vs(ix)*vs(ix)+vs(iy)*vs(iy)+vs(iz)*vs(iz))
-       if(vec_len/=0.0D0) then
+       if(vec_len/=0.0_RP) then
           len=acos((vs(ix)*ve(ix)+vs(iy)*ve(iy)+vs(iz)*ve(iz))/vec_len/vec_len)&
                *radius
        else
-          len = 0.0D0
+          len = 0.0_RP
        endif
        !
     elseif(trim(polygon_type)=='ON_PLANE') then
@@ -777,7 +777,7 @@ contains
     character(len=*), intent( in) :: polygon_type
     REAL(RP),          intent( in) :: radius
 
-    REAL(RP), parameter :: o(3) = 0.D0
+    REAL(RP), parameter :: o(3) = 0.0_RP
 
     ! ON_PLANE
     REAL(RP) :: abc(3)
@@ -792,13 +792,13 @@ contains
     REAL(RP) :: bcbc, baba
     REAL(RP) :: caca, cbcb
 
-    REAL(RP), parameter :: eps = 1.D-16
+    REAL(RP), parameter :: eps = 1.E-16_RP
     REAL(RP) :: pi
     !---------------------------------------------------------------------------
 
-    pi = atan(1.D0) * 4.D0
+    pi = atan(1.0_RP) * 4.0_RP
 
-    area = 0.D0
+    area = 0.0_RP
 
     if(trim(polygon_type)=='ON_PLANE') then
        !
@@ -809,11 +809,11 @@ contains
        call MISC_3dvec_abs( prd, abc(:) )
        call MISC_3dvec_abs( r  , a(:)   )
 
-       prd = 0.5D0 * prd !! triangle area
+       prd = 0.5_RP * prd !! triangle area
        if ( r < eps * radius ) then
           print *, "zero length?", a(:)
        else
-          r = 1.D0 / r   !! 1 / length
+          r = 1.0_RP / r   !! 1 / length
        endif
 
        area = prd * r*r * radius*radius
@@ -882,14 +882,14 @@ contains
     REAL(RP), intent(out) :: p(3) ! intersection point
     REAL(RP), intent(in ) :: a(3), b(3), c(3), d(3)
 
-    REAL(RP), parameter :: o(3) = 0.D0
+    REAL(RP), parameter :: o(3) = 0.0_RP
 
     REAL(RP)            :: oaob(3), ocod(3), cdab(3)
     REAL(RP)            :: ip, length
     REAL(RP)            :: angle_aop, angle_pob, angle_aob
     REAL(RP)            :: angle_cop, angle_pod, angle_cod
 
-    REAL(RP), parameter :: eps = 1.D-12
+    REAL(RP), parameter :: eps = 1.E-12_RP
     !---------------------------------------------------------------------
 
     call MISC_3dvec_cross( oaob, o, a, o, b )
@@ -924,7 +924,7 @@ contains
        ifcross = .true.
     else
        ifcross = .false.
-       p(:) = 0.D0
+       p(:) = 0.0_RP
     endif
 
     return
@@ -938,12 +938,12 @@ contains
     integer, intent(in)    :: nvert
     REAL(RP), intent(inout) :: vertex(nvert,3)
 
-    REAL(RP), parameter :: o(3) = 0.D0
+    REAL(RP), parameter :: o(3) = 0.0_RP
     REAL(RP)            :: v1(3), v2(3), v3(3)
     REAL(RP)            :: xp(3), ip
     REAL(RP)            :: angle1, angle2
 
-    REAL(RP), parameter :: eps = 1.D-12
+    REAL(RP), parameter :: eps = 1.E-12_RP
 
     integer :: i, j
     !---------------------------------------------------------------------
@@ -977,7 +977,7 @@ contains
 !    write(ADM_LOG_FID,*) ip, angle1, angle2, abs(angle1)-abs(angle2)
 
     if (       abs(ip)                 < eps  &      ! on the same line
-         .AND. abs(angle2)-abs(angle1) < 0.D0 ) then ! which is far?
+         .AND. abs(angle2)-abs(angle1) < 0.0_RP ) then ! which is far?
 !       write(ADM_LOG_FID,*) 'exchange by angle', 2, '<->', 3
        vertex(2,:) = v3(:)
        vertex(3,:) = v2(:)
@@ -993,7 +993,7 @@ contains
 !    write(ADM_LOG_FID,*) ip, angle1, angle2, abs(angle1)-abs(angle2)
 
     if (       abs(ip)                 < eps  &      ! on the same line
-         .AND. abs(angle2)-abs(angle1) < 0.D0 ) then ! which is far?
+         .AND. abs(angle2)-abs(angle1) < 0.0_RP ) then ! which is far?
 !       write(ADM_LOG_FID,*) 'exchange by angle', nvert, '<->', nvert-1
        vertex(nvert,  :) = v3(:)
        vertex(nvert-1,:) = v2(:)

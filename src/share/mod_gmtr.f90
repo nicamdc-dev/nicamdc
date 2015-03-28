@@ -211,12 +211,12 @@ contains
     allocate( GMTR_lon     (ADM_gall,   ADM_lall   ) )
     allocate( GMTR_lon_pl  (ADM_gall_pl,ADM_lall_pl) )
 #endif
-    GMTR_P_var   (:,:,:,:)   = 0.D0
-    GMTR_P_var_pl(:,:,:,:)   = 0.D0
-    GMTR_T_var   (:,:,:,:,:) = 0.D0
-    GMTR_T_var_pl(:,:,:,:)   = 0.D0
-    GMTR_A_var   (:,:,:,:,:) = 0.D0
-    GMTR_A_var_pl(:,:,:,:)   = 0.D0
+    GMTR_P_var   (:,:,:,:)   = 0.0_RP
+    GMTR_P_var_pl(:,:,:,:)   = 0.0_RP
+    GMTR_T_var   (:,:,:,:,:) = 0.0_RP
+    GMTR_T_var_pl(:,:,:,:)   = 0.0_RP
+    GMTR_A_var   (:,:,:,:,:) = 0.0_RP
+    GMTR_A_var_pl(:,:,:,:)   = 0.0_RP
 
 
 
@@ -342,7 +342,7 @@ contains
        do n = 1, ADM_IooJoo_nmax
           ij = ADM_IooJoo(n,ADM_GIoJo)
 
-          area = 0.D0
+          area = 0.0_RP
           if ( GRD_grid_type == 'ON_PLANE' ) then
              do m = 1, 6
                 area = area + triangle_area_on_plane( v(:,0,ij), v(:,m,ij), v(:,m+1,ij) )
@@ -355,7 +355,7 @@ contains
           endif
 
           GMTR_P_var(ij,K0,l,GMTR_P_AREA)  = area
-          GMTR_P_var(ij,K0,l,GMTR_P_RAREA) = 1.D0 / GMTR_P_var(ij,K0,l,GMTR_P_AREA)
+          GMTR_P_var(ij,K0,l,GMTR_P_RAREA) = 1.0_RP / GMTR_P_var(ij,K0,l,GMTR_P_AREA)
 
           call MISC_get_latlon( GMTR_P_var(ij,K0,l,GMTR_P_LAT), &
                                 GMTR_P_var(ij,K0,l,GMTR_P_LON), &
@@ -365,12 +365,12 @@ contains
 
           if ( GRD_grid_type == 'ON_PLANE' ) then
 
-             GMTR_P_var(ij,K0,l,GMTR_P_IX) = 1.D0
-             GMTR_P_var(ij,K0,l,GMTR_P_IY) = 0.D0
-             GMTR_P_var(ij,K0,l,GMTR_P_IZ) = 0.D0
-             GMTR_P_var(ij,K0,l,GMTR_P_JX) = 0.D0
-             GMTR_P_var(ij,K0,l,GMTR_P_JY) = 1.D0
-             GMTR_P_var(ij,K0,l,GMTR_P_JZ) = 0.D0
+             GMTR_P_var(ij,K0,l,GMTR_P_IX) = 1.0_RP
+             GMTR_P_var(ij,K0,l,GMTR_P_IY) = 0.0_RP
+             GMTR_P_var(ij,K0,l,GMTR_P_IZ) = 0.0_RP
+             GMTR_P_var(ij,K0,l,GMTR_P_JX) = 0.0_RP
+             GMTR_P_var(ij,K0,l,GMTR_P_JY) = 1.0_RP
+             GMTR_P_var(ij,K0,l,GMTR_P_JZ) = 0.0_RP
 
           else
 
@@ -379,7 +379,7 @@ contains
 
              GMTR_P_var(ij,K0,l,GMTR_P_IX) = -sin_lam
              GMTR_P_var(ij,K0,l,GMTR_P_IY) =  cos_lam
-             GMTR_P_var(ij,K0,l,GMTR_P_IZ) = 0.0D0
+             GMTR_P_var(ij,K0,l,GMTR_P_IZ) = 0.0_RP
              GMTR_P_var(ij,K0,l,GMTR_P_JX) = -( GRD_x(ij,K0,l,GRD_ZDIR) * cos_lam ) / GRD_rscale
              GMTR_P_var(ij,K0,l,GMTR_P_JY) = -( GRD_x(ij,K0,l,GRD_ZDIR) * sin_lam ) / GRD_rscale
              GMTR_P_var(ij,K0,l,GMTR_P_JZ) =  ( GRD_x(ij,K0,l,GRD_XDIR) * cos_lam &
@@ -404,14 +404,14 @@ contains
           enddo
           v_pl(:,ADM_vlink_nmax+1) = v_pl(:,1)
 
-          area = 0.D0
+          area = 0.0_RP
           do m = 1, ADM_vlink_nmax ! (ICO=5)
              area = area + MISC_triangle_area( v_pl(:,0), v_pl(:,m), v_pl(:,m+1), &
                                                GMTR_polygon_type, GRD_rscale      )
           enddo
 
           GMTR_P_var_pl(n,K0,l,GMTR_P_AREA)  = area
-          GMTR_P_var_pl(n,K0,l,GMTR_P_RAREA) = 1.D0 / GMTR_P_var_pl(n,K0,l,GMTR_P_AREA)
+          GMTR_P_var_pl(n,K0,l,GMTR_P_RAREA) = 1.0_RP / GMTR_P_var_pl(n,K0,l,GMTR_P_AREA)
 
           call MISC_get_latlon( GMTR_P_var_pl(n,K0,l,GMTR_P_LAT), &
                                 GMTR_P_var_pl(n,K0,l,GMTR_P_LON), &
@@ -424,7 +424,7 @@ contains
 
           GMTR_P_var_pl(n,K0,l,GMTR_P_IX) = -sin_lam
           GMTR_P_var_pl(n,K0,l,GMTR_P_IY) =  cos_lam
-          GMTR_P_var_pl(n,K0,l,GMTR_P_IZ) = 0.0D0
+          GMTR_P_var_pl(n,K0,l,GMTR_P_IZ) = 0.0_RP
           GMTR_P_var_pl(n,K0,l,GMTR_P_JX) = -( GRD_x_pl(n,K0,l,GRD_ZDIR) * cos_lam ) / GRD_rscale
           GMTR_P_var_pl(n,K0,l,GMTR_P_JY) = -( GRD_x_pl(n,K0,l,GRD_ZDIR) * sin_lam ) / GRD_rscale
           GMTR_P_var_pl(n,K0,l,GMTR_P_JZ) =  ( GRD_x_pl(n,K0,l,GRD_XDIR) * cos_lam &
@@ -545,7 +545,7 @@ contains
           area = area1 + area2 + area3
 
           GMTR_T_var(ij,K0,l,t,GMTR_T_AREA)  = area
-          GMTR_T_var(ij,K0,l,t,GMTR_T_RAREA) = 1.D0 / area
+          GMTR_T_var(ij,K0,l,t,GMTR_T_RAREA) = 1.0_RP / area
 
           GMTR_T_var(ij,K0,l,t,GMTR_T_W1)    = area1 / area
           GMTR_T_var(ij,K0,l,t,GMTR_T_W2)    = area2 / area
@@ -589,7 +589,7 @@ contains
              area = area1 + area2 + area3
 
              GMTR_T_var_pl(n,K0,l,GMTR_T_AREA)  = area
-             GMTR_T_var_pl(n,K0,l,GMTR_T_RAREA) = 1.D0 / area
+             GMTR_T_var_pl(n,K0,l,GMTR_T_RAREA) = 1.0_RP / area
 
              GMTR_T_var_pl(n,K0,l,GMTR_T_W1)    = area1 / area
              GMTR_T_var_pl(n,K0,l,GMTR_T_W2)    = area2 / area
@@ -1011,16 +1011,16 @@ contains
     do l = 1, ADM_lall
        rgnid = ADM_prc_tab(l,ADM_prc_me)
        do g = 1, ADM_gall
-          tmp(g,K0,l,I_rgn ) = real(rgnid,kind=8)
-          tmp(g,K0,l,I_grid) = real(g    ,kind=8)
+          tmp(g,K0,l,I_rgn ) = real(rgnid,kind=RP)
+          tmp(g,K0,l,I_grid) = real(g    ,kind=RP)
        enddo
     enddo
 
     if ( ADM_prc_me == ADM_prc_pl ) Then
        do l = 1, ADM_lall_pl
        do g = 1, ADM_gall_pl
-          tmp_pl(g,K0,l,I_rgn ) = real(-l,kind=8)
-          tmp_pl(g,K0,l,I_grid) = real(g ,kind=8)
+          tmp_pl(g,K0,l,I_rgn ) = real(-l,kind=RP)
+          tmp_pl(g,K0,l,I_grid) = real(g ,kind=RP)
        enddo
        enddo
     endif
@@ -1032,23 +1032,23 @@ contains
        call FIO_output( GMTR_P_var(:,:,:,GMTR_P_AREA),                     &
                         basename, desc, "",                                &
                         "area", "control area", "",                        &
-                        "m2", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.D0, 0.D0     )
+                        "m2", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_RP, 0.0_RP     )
        call FIO_output( GMTR_P_var(:,:,:,GMTR_P_LAT),                      &
                         basename, desc, "",                                &
                         "lat", "latitude", "",                             &
-                        "radian", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.D0, 0.D0 )
+                        "radian", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_RP, 0.0_RP )
        call FIO_output( GMTR_P_var(:,:,:,GMTR_P_LON),                      &
                         basename, desc, "",                                &
                         "lon", "longitude", "",                            &
-                        "radian", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.D0, 0.D0 )
+                        "radian", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_RP, 0.0_RP )
        call FIO_output( tmp(:,:,:,I_rgn),                                  &
                         basename, desc, "",                                &
                         "rgn", "region number", "",                        &
-                        "NIL", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.D0, 0.D0    )
+                        "NIL", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_RP, 0.0_RP    )
        call FIO_output( tmp(:,:,:,I_grid),                                 &
                         basename, desc, "",                                &
                         "grid", "grid number", "",                         &
-                        "NIL", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.D0, 0.D0    )
+                        "NIL", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_RP, 0.0_RP    )
 
     elseif( GMTR_io_mode == 'LEGACY' ) then
 
@@ -1093,7 +1093,7 @@ contains
 
     vN(1) = -vT(2)
     vN(2) =  vT(1)
-    vN(3) =   0.D0
+    vN(3) =   0.0_RP
 
     return
   end subroutine mk_gmtrvec_on_plane
@@ -1118,7 +1118,7 @@ contains
     len_a2c = a2c(1)*a2c(1) + a2c(3)*a2c(3) + a2c(3)*a2c(3) ! |a->c|**2
     prd     = a2b(1)*a2c(1) + a2b(2)*a2c(2) + a2b(3)*a2c(3) ! (a->b)*(a->c)
 
-    area    = 0.5D0 * sqrt( len_a2b * len_a2c - prd*prd )
+    area    = 0.5_RP * sqrt( len_a2b * len_a2c - prd*prd )
 
   end function triangle_area_on_plane
 

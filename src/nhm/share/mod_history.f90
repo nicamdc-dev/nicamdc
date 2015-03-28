@@ -367,8 +367,8 @@ contains
     allocate( flag_save         (HIST_req_nmax) )
     lname_save        (:) = ""
     tmax_save         (:) = 0
-    tstr_save         (:) = 0.D0
-    tend_save         (:) = 0.D0
+    tstr_save         (:) = 0.0_RP
+    tend_save         (:) = 0.0_RP
     month_old         (:) = 0
     l_region_save     (:) = 0
     flag_save         (:) = .false.
@@ -505,7 +505,7 @@ contains
        lname_save        (n) = lname
        tmax_save         (n) = 0
        tstr_save         (n) = TIME_CTIME
-       tend_save         (n) = 0.D0
+       tend_save         (n) = 0.0_RP
 
        month_old         (n) = idate(2)
        l_region_save     (n) = 0
@@ -522,13 +522,13 @@ contains
     enddo
 
     allocate( tsum_save(HIST_req_nmax,ADM_lall) )
-    tsum_save(:,:) = 0.D0
+    tsum_save(:,:) = 0.0_RP
 
     ! k-merged history container
     allocate( v_save   (ADM_gall,   ksum,ADM_lall,   1) )
     allocate( v_save_pl(ADM_gall_pl,ksum,ADM_lall_pl,1) )
-    v_save   (:,:,:,:) = 0.D0
-    v_save_pl(:,:,:,:) = 0.D0
+    v_save   (:,:,:,:) = 0.0_RP
+    v_save_pl(:,:,:,:) = 0.0_RP
 
     allocate( zlev_save(ksum) )
 
@@ -541,15 +541,15 @@ contains
              zlev_save( ksumstr(n):ksumend(n) ) = GRD_gz(ADM_kmin:ADM_kmax)
           endif
        case('2D')
-          zlev_save( ksumstr(n):ksumend(n) ) = 0.D0
+          zlev_save( ksumstr(n):ksumend(n) ) = 0.0_RP
 !       case('ISCCP')
 !          do k = 1, NTAU_ISCCP*NPRES_ISCCP
-!             zlev_save( ksumstr(n) + k-1 ) = real(k,kind=8)
+!             zlev_save( ksumstr(n) + k-1 ) = real(k,kind=RP)
 !          enddo
 !       case('GL')
 !       case('GO')
 !          do k = 1, kmax_save(n)
-!             zlev_save( ksumstr(n) + k-1 ) = real(k,kind=8)
+!             zlev_save( ksumstr(n) + k-1 ) = real(k,kind=RP)
 !          enddo
        case default
           zlev_save( ksumstr(n):ksumend(n) ) = GRD_gz( ADM_kmin+kstr_save(n)-1:ADM_kmin+kend_save(n)-1 )
@@ -926,11 +926,11 @@ contains
           endif
 
           ! reset saved variable
-          v_save   (:,ksumstr(n):ksumend(n),:,1) = 0.D0
-          v_save_pl(:,ksumstr(n):ksumend(n),:,1) = 0.D0
+          v_save   (:,ksumstr(n):ksumend(n),:,1) = 0.0_RP
+          v_save_pl(:,ksumstr(n):ksumend(n),:,1) = 0.0_RP
 
           tstr_save(n) = TIME_CTIME
-          tsum_save(n,:) = 0.D0
+          tsum_save(n,:) = 0.0_RP
        endif
     enddo
 
@@ -1086,8 +1086,8 @@ contains
     integer :: g, k, l, nq, kk
     !---------------------------------------------------------------------------
 
-    cnvpre_fac1(:,:,:) = 0.D0
-    cnvpre_fac2(:,:,:) = 0.D0
+    cnvpre_fac1(:,:,:) = 0.0_RP
+    cnvpre_fac2(:,:,:) = 0.0_RP
     cnvpre_klev(:,:,:) = -1
 
     call prgvar_get( rhog,   rhog_pl,   &

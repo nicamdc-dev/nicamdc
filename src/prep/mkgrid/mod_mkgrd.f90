@@ -77,12 +77,12 @@ module mod_mkgrd
   logical, private :: MKGRD_DOSHRINK    = .false.
   logical, private :: MKGRD_DOROTATE    = .false.
 
-  REAL(RP), private :: MKGRD_spring_beta      = 1.15D0 ! parameter beta for spring dynamics
-  REAL(RP), private :: MKGRD_prerotation_tilt =   0.D0 ! [deg]
-  REAL(RP), private :: MKGRD_stretch_alpha    = 1.00D0 ! parameter alpha for stretch
+  REAL(RP), private :: MKGRD_spring_beta      = 1.15_RP ! parameter beta for spring dynamics
+  REAL(RP), private :: MKGRD_prerotation_tilt =   0.0_RP ! [deg]
+  REAL(RP), private :: MKGRD_stretch_alpha    = 1.00_RP ! parameter alpha for stretch
   integer, private :: MKGRD_shrink_level     =      0 ! shrink level (only for 1-diamond experiment)
-  REAL(RP), private :: MKGRD_rotation_lon     =   0.D0 ! [deg]
-  REAL(RP), private :: MKGRD_rotation_lat     =  90.D0 ! [deg]
+  REAL(RP), private :: MKGRD_rotation_lon     =   0.0_RP ! [deg]
+  REAL(RP), private :: MKGRD_rotation_lat     =  90.0_RP ! [deg]
 
   !-----------------------------------------------------------------------------
 contains
@@ -188,8 +188,8 @@ contains
 
     k = ADM_KNONE
 
-    alpha2 = 2.D0 * PI / 5.D0
-    phi    = asin( cos(alpha2) / (1.D0-cos(alpha2) ) )
+    alpha2 = 2.0_RP * PI / 5.0_RP
+    phi    = asin( cos(alpha2) / (1.0_RP-cos(alpha2) ) )
 
     rgn_all_1d = 2**ADM_rlevel
     rgn_all    = rgn_all_1d * rgn_all_1d
@@ -204,40 +204,40 @@ contains
        dmd = (rgnid-1) / rgn_all + 1
 
        if ( dmd <= 5 ) then ! northern hemisphere
-          rdmd = real(dmd-1,kind=8)
+          rdmd = real(dmd-1,kind=RP)
 
           r0(1,1,GRD_XDIR) = cos( phi) * cos(alpha2*rdmd)
           r0(1,1,GRD_YDIR) = cos( phi) * sin(alpha2*rdmd)
           r0(1,1,GRD_ZDIR) = sin( phi)
 
-          r0(2,1,GRD_XDIR) = cos(-phi) * cos(alpha2*(rdmd+0.5D0))
-          r0(2,1,GRD_YDIR) = cos(-phi) * sin(alpha2*(rdmd+0.5D0))
+          r0(2,1,GRD_XDIR) = cos(-phi) * cos(alpha2*(rdmd+0.5_RP))
+          r0(2,1,GRD_YDIR) = cos(-phi) * sin(alpha2*(rdmd+0.5_RP))
           r0(2,1,GRD_ZDIR) = sin(-phi)
 
-          r0(1,2,GRD_XDIR) =  0.D0
-          r0(1,2,GRD_YDIR) =  0.D0
-          r0(1,2,GRD_ZDIR) =  1.D0
+          r0(1,2,GRD_XDIR) =  0.0_RP
+          r0(1,2,GRD_YDIR) =  0.0_RP
+          r0(1,2,GRD_ZDIR) =  1.0_RP
 
-          r0(2,2,GRD_XDIR) = cos( phi) * cos(alpha2*(rdmd+1.0D0))
-          r0(2,2,GRD_YDIR) = cos( phi) * sin(alpha2*(rdmd+1.0D0))
+          r0(2,2,GRD_XDIR) = cos( phi) * cos(alpha2*(rdmd+1.0_RP))
+          r0(2,2,GRD_YDIR) = cos( phi) * sin(alpha2*(rdmd+1.0_RP))
           r0(2,2,GRD_ZDIR) = sin( phi)
        else ! southern hemisphere
-          rdmd = real(dmd-6,kind=8)
+          rdmd = real(dmd-6,kind=RP)
 
-          r0(1,1,GRD_XDIR) = cos(-phi) * cos(-alpha2*(rdmd+0.5D0))
-          r0(1,1,GRD_YDIR) = cos(-phi) * sin(-alpha2*(rdmd+0.5D0))
+          r0(1,1,GRD_XDIR) = cos(-phi) * cos(-alpha2*(rdmd+0.5_RP))
+          r0(1,1,GRD_YDIR) = cos(-phi) * sin(-alpha2*(rdmd+0.5_RP))
           r0(1,1,GRD_ZDIR) = sin(-phi)
 
-          r0(2,1,GRD_XDIR) =  0.D0
-          r0(2,1,GRD_YDIR) =  0.D0
-          r0(2,1,GRD_ZDIR) = -1.D0
+          r0(2,1,GRD_XDIR) =  0.0_RP
+          r0(2,1,GRD_YDIR) =  0.0_RP
+          r0(2,1,GRD_ZDIR) = -1.0_RP
 
           r0(1,2,GRD_XDIR) = cos( phi) * cos(-alpha2*rdmd)
           r0(1,2,GRD_YDIR) = cos( phi) * sin(-alpha2*rdmd)
           r0(1,2,GRD_ZDIR) = sin( phi)
 
-          r0(2,2,GRD_XDIR) = cos(-phi) * cos(-alpha2*(rdmd-0.5D0))
-          r0(2,2,GRD_YDIR) = cos(-phi) * sin(-alpha2*(rdmd-0.5D0))
+          r0(2,2,GRD_XDIR) = cos(-phi) * cos(-alpha2*(rdmd-0.5_RP))
+          r0(2,2,GRD_YDIR) = cos(-phi) * sin(-alpha2*(rdmd-0.5_RP))
           r0(2,2,GRD_ZDIR) = sin(-phi)
        endif
 
@@ -306,13 +306,13 @@ contains
 
     ij = ADM_gslf_pl
 
-    GRD_x_pl(ij,k,ADM_NPL,GRD_XDIR) =  0.D0
-    GRD_x_pl(ij,k,ADM_NPL,GRD_YDIR) =  0.D0
-    GRD_x_pl(ij,k,ADM_NPL,GRD_ZDIR) =  1.D0
+    GRD_x_pl(ij,k,ADM_NPL,GRD_XDIR) =  0.0_RP
+    GRD_x_pl(ij,k,ADM_NPL,GRD_YDIR) =  0.0_RP
+    GRD_x_pl(ij,k,ADM_NPL,GRD_ZDIR) =  1.0_RP
 
-    GRD_x_pl(ij,k,ADM_SPL,GRD_XDIR) =  0.D0
-    GRD_x_pl(ij,k,ADM_SPL,GRD_YDIR) =  0.D0
-    GRD_x_pl(ij,k,ADM_SPL,GRD_ZDIR) = -1.D0
+    GRD_x_pl(ij,k,ADM_SPL,GRD_XDIR) =  0.0_RP
+    GRD_x_pl(ij,k,ADM_SPL,GRD_YDIR) =  0.0_RP
+    GRD_x_pl(ij,k,ADM_SPL,GRD_ZDIR) = -1.0_RP
 
     call COMM_data_transfer( GRD_x(:,:,:,:), GRD_x_pl(:,:,:,:) )
 
@@ -388,9 +388,9 @@ contains
     integer            :: ite
     REAL(RP) :: Fsum_max, Ek_max
 
-    REAL(RP), parameter :: dump_coef = 1.D0  !> friction coefficent in spring dynamics
-    REAL(RP), parameter :: dt        = 2.D-2 !> delta t for solution of spring dynamics
-    REAL(RP), parameter :: criteria  = 1.D-4 !> criteria of convergence
+    REAL(RP), parameter :: dump_coef = 1.0_RP   !> friction coefficent in spring dynamics
+    REAL(RP), parameter :: dt        = 2.E-2_RP !> delta t for solution of spring dynamics
+    REAL(RP), parameter :: criteria  = 1.E-4_RP !> criteria of convergence
 
     integer :: rgnid
     integer :: ij_singular
@@ -402,10 +402,10 @@ contains
     k = ADM_KNONE
     ij_singular = suf(ADM_gmin,ADM_gmin)
 
-    var   (:,:,:,:) = 0.D0
-    var_pl(:,:,:,:) = 0.D0
+    var   (:,:,:,:) = 0.0_RP
+    var_pl(:,:,:,:) = 0.0_RP
 
-    lambda = 2.D0*PI / ( 10.D0*2.D0**(ADM_glevel-1) )
+    lambda = 2.0_RP*PI / ( 10.0_RP*2.0_RP**(ADM_glevel-1) )
 
     dbar = MKGRD_spring_beta * lambda
 
@@ -490,9 +490,9 @@ contains
           enddo
 
           if ( ADM_rgn_vnum(ADM_W,rgnid) == 3 ) then ! pentagon
-             Fx(ij_singular,6) = 0.D0
-             Fy(ij_singular,6) = 0.D0
-             Fz(ij_singular,6) = 0.D0
+             Fx(ij_singular,6) = 0.0_RP
+             Fy(ij_singular,6) = 0.0_RP
+             Fz(ij_singular,6) = 0.0_RP
           endif
 
           do n = 1, ADM_IooJoo_nmax
@@ -551,14 +551,14 @@ contains
              var(ij,k,l,I_Wz) = Wz - E * var(ij,k,l,I_Rz)
 
              ! kinetic energy
-             var(ij,k,l,I_Ek) = 0.5D0 * ( var(ij,k,l,I_Wx)*var(ij,k,l,I_Wx) &
+             var(ij,k,l,I_Ek) = 0.5_RP * ( var(ij,k,l,I_Wx)*var(ij,k,l,I_Wx) &
                                         + var(ij,k,l,I_Wy)*var(ij,k,l,I_Wy) &
                                         + var(ij,k,l,I_Wz)*var(ij,k,l,I_Wz) )
           enddo
 
           ! restore value of fixed point
           if ( ADM_rgn_vnum(ADM_W,rgnid) == 3 ) then
-             var(ij_singular,k,l,:)    = 0.D0
+             var(ij_singular,k,l,:)    = 0.0_RP
              var(ij_singular,k,l,I_Rx) = fixed_point(I_Rx)
              var(ij_singular,k,l,I_Ry) = fixed_point(I_Ry)
              var(ij_singular,k,l,I_Rz) = fixed_point(I_Rz)
@@ -614,10 +614,10 @@ contains
 
     k = ADM_KNONE
 
-    d2r        = PI / 180.D0
-    alpha2     = 2.D0 * PI / 5.D0
-    angle_z    = alpha2 / 2.D0
-    angle_y    = 0.25D0*PI * ( 3.D0 - sqrt(3.D0) )
+    d2r        = PI / 180.0_RP
+    alpha2     = 2.0_RP * PI / 5.0_RP
+    angle_z    = alpha2 / 2.0_RP
+    angle_y    = 0.25_RP*PI * ( 3.0_RP - sqrt(3.0_RP) )
     angle_tilt = MKGRD_prerotation_tilt * d2r
 
     write(ADM_LOG_FID,*) '*** Apply pre-rotation'
@@ -697,7 +697,7 @@ contains
 
     REAL(RP) :: lat, lon, lat_trans
 
-    REAL(RP), parameter :: criteria = 1.D-10
+    REAL(RP), parameter :: criteria = 1.E-10_RP
 
     integer :: ij, k, l
     !---------------------------------------------------------------------------
@@ -718,9 +718,9 @@ contains
                                 GRD_x(ij,k,l,GRD_YDIR), & ! [IN]
                                 GRD_x(ij,k,l,GRD_ZDIR)  ) ! [IN]
 
-          if ( 0.5D0*PI-abs(lat) > criteria ) then
-             lat_trans = asin( ( MKGRD_stretch_alpha*(1.D0+sin(lat)) / (1.D0-sin(lat)) - 1.D0 ) &
-                             / ( MKGRD_stretch_alpha*(1.D0+sin(lat)) / (1.D0-sin(lat)) + 1.D0 ) )
+          if ( 0.5_RP*PI-abs(lat) > criteria ) then
+             lat_trans = asin( ( MKGRD_stretch_alpha*(1.0_RP+sin(lat)) / (1.0_RP-sin(lat)) - 1.0_RP ) &
+                             / ( MKGRD_stretch_alpha*(1.0_RP+sin(lat)) / (1.0_RP-sin(lat)) + 1.0_RP ) )
           else
              lat_trans = lat
           endif
@@ -730,7 +730,7 @@ contains
                                    GRD_x(ij,k,l,GRD_ZDIR), & ! [OUT]
                                    lat_trans,              & ! [IN]
                                    lon,                    & ! [IN]
-                                   1.D0                    ) ! [IN]
+                                   1.0_RP                    ) ! [IN]
        enddo
     enddo
 
@@ -744,9 +744,9 @@ contains
                                 GRD_x_pl(ij,k,l,GRD_YDIR), & ! [IN]
                                 GRD_x_pl(ij,k,l,GRD_ZDIR)  ) ! [IN]
 
-          if ( 0.5D0*PI-abs(lat) > criteria ) then
-             lat_trans = asin( ( MKGRD_stretch_alpha*(1.D0+sin(lat)) / (1.D0-sin(lat)) - 1.D0 ) &
-                             / ( MKGRD_stretch_alpha*(1.D0+sin(lat)) / (1.D0-sin(lat)) + 1.D0 ) )
+          if ( 0.5_RP*PI-abs(lat) > criteria ) then
+             lat_trans = asin( ( MKGRD_stretch_alpha*(1.0_RP+sin(lat)) / (1.0_RP-sin(lat)) - 1.0_RP ) &
+                             / ( MKGRD_stretch_alpha*(1.0_RP+sin(lat)) / (1.0_RP-sin(lat)) + 1.0_RP ) )
           else
              lat_trans = lat
           endif
@@ -756,7 +756,7 @@ contains
                                    GRD_x_pl(ij,k,l,GRD_ZDIR), & ! [OUT]
                                    lat_trans,                 & ! [IN]
                                    lon,                       & ! [IN]
-                                   1.D0                       ) ! [IN]
+                                   1.0_RP                       ) ! [IN]
        enddo
        enddo
     endif
@@ -796,13 +796,13 @@ contains
 
     k = ADM_KNONE
 
-    o(GRD_XDIR) = 0.D0
-    o(GRD_YDIR) = 0.D0
+    o(GRD_XDIR) = 0.0_RP
+    o(GRD_YDIR) = 0.0_RP
 
     do ite = 1, MKGRD_shrink_level
        do l  = 1, ADM_lall
        do ij = 1, ADM_gall
-          o(GRD_ZDIR) = sign(1.D0,GRD_x(ij,k,l,GRD_ZDIR))
+          o(GRD_ZDIR) = sign(1.0_RP,GRD_x(ij,k,l,GRD_ZDIR))
 
           g(GRD_XDIR) = GRD_x(ij,k,l,GRD_XDIR) + o(GRD_XDIR)
           g(GRD_YDIR) = GRD_x(ij,k,l,GRD_YDIR) + o(GRD_YDIR)
@@ -823,7 +823,7 @@ contains
     do ite = 1, MKGRD_shrink_level-1
        do l  = 1, ADM_lall_pl
        do ij = 1, ADM_gall_pl
-          o(GRD_ZDIR) = sign(1.D0,GRD_x_pl(ij,k,l,GRD_ZDIR))
+          o(GRD_ZDIR) = sign(1.0_RP,GRD_x_pl(ij,k,l,GRD_ZDIR))
 
           g(GRD_XDIR) = GRD_x_pl(ij,k,l,GRD_XDIR) + o(GRD_XDIR)
           g(GRD_YDIR) = GRD_x_pl(ij,k,l,GRD_YDIR) + o(GRD_YDIR)
@@ -878,8 +878,8 @@ contains
 
     k = ADM_KNONE
 
-    d2r = PI / 180.D0
-    angle_y = ( MKGRD_rotation_lat - 90.D0 ) * d2r
+    d2r = PI / 180.0_RP
+    angle_y = ( MKGRD_rotation_lat - 90.0_RP ) * d2r
     angle_z = - MKGRD_rotation_lon * d2r
 
     do l = 1, ADM_lall
@@ -1008,13 +1008,13 @@ contains
 
     k = ADM_KNONE
 
-    angle    (:,:,:) = 0.D0
-    angle_pl (:,:,:) = 0.D0
-    length   (:,:,:) = 0.D0
-    length_pl(:,:,:) = 0.D0
+    angle    (:,:,:) = 0.0_RP
+    angle_pl (:,:,:) = 0.0_RP
+    length   (:,:,:) = 0.0_RP
+    length_pl(:,:,:) = 0.0_RP
 
-    nlen    = 0.D0
-    len_tot = 0.D0
+    nlen    = 0.0_RP
+    len_tot = 0.0_RP
 
     do l = 1, ADM_lall
        rgnid = ADM_prc_tab(l,ADM_prc_me)
@@ -1035,8 +1035,8 @@ contains
              p(:,5) = GRD_xt(suf(i,  j-1),k,l,ADM_TJ,:)
              p(:,6) = GRD_xt(suf(i,  j  ),k,l,ADM_TI,:)
 
-             len(:) = 0.D0
-             ang(:) = 0.D0
+             len(:) = 0.0_RP
+             ang(:) = 0.0_RP
              do m = 1, 5
                 ! vector length of Pm->Pm-1, Pm->Pm+1
                 call MISC_3dvec_dot( len(m), p(:,m), p(:,m-1), p(:,m), p(:,m-1) )
@@ -1051,21 +1051,21 @@ contains
              enddo
 
              ! maximum/minimum ratio of angle between the cell vertexes
-             angle(ij,k,l) = maxval( ang(1:5) ) / minval( ang(1:5) ) - 1.D0
+             angle(ij,k,l) = maxval( ang(1:5) ) / minval( ang(1:5) ) - 1.0_RP
 
              ! l_mean: side length of regular pentagon =sqrt(area/1.7204774005)
              area   = GMTR_P_var(ij,k,l,GMTR_P_AREA)
-             l_mean = sqrt( 4.D0 / sqrt( 25.D0 + 10.D0*sqrt(5.D0)) * area )
+             l_mean = sqrt( 4.0_RP / sqrt( 25.0_RP + 10.0_RP*sqrt(5.0_RP)) * area )
 
-             temp = 0.D0
+             temp = 0.0_RP
              do m = 1, 5
-                nlen    = nlen + 1.D0
+                nlen    = nlen + 1.0_RP
                 len_tot = len_tot + len(m)
 
                 temp = temp + (len(m)-l_mean) * (len(m)-l_mean)
              enddo
              ! distortion of side length from l_mean
-             length(ij,k,l) = sqrt( temp/5.D0 ) / l_mean
+             length(ij,k,l) = sqrt( temp/5.0_RP ) / l_mean
 
           else ! Hexagon
 
@@ -1078,8 +1078,8 @@ contains
              p(:,6) = GRD_xt(suf(i,  j-1),k,l,ADM_TJ,:)
              p(:,7) = GRD_xt(suf(i,  j  ),k,l,ADM_TI,:)
 
-             len(:) = 0.D0
-             ang(:) = 0.D0
+             len(:) = 0.0_RP
+             ang(:) = 0.0_RP
              do m = 1, 6
                 ! vector length of Pm->Pm-1, Pm->Pm+1
                 call MISC_3dvec_dot( len(m), p(:,m), p(:,m-1), p(:,m), p(:,m-1) )
@@ -1094,21 +1094,21 @@ contains
              enddo
 
              ! maximum/minimum ratio of angle between the cell vertexes
-             angle(ij,k,l) = maxval( ang(:) ) / minval( ang(:) ) - 1.D0
+             angle(ij,k,l) = maxval( ang(:) ) / minval( ang(:) ) - 1.0_RP
 
              ! l_mean: side length of equilateral triangle
              area   = GMTR_P_var(ij,k,l,GMTR_P_AREA)
-             l_mean = sqrt( 4.D0 / sqrt(3.D0) / 6.D0 * area )
+             l_mean = sqrt( 4.0_RP / sqrt(3.0_RP) / 6.0_RP * area )
 
-             temp = 0.D0
+             temp = 0.0_RP
              do m = 1, 6
-                nlen = nlen + 1.D0
+                nlen = nlen + 1.0_RP
                 len_tot = len_tot + len(m)
 
                 temp = temp + (len(m)-l_mean)*(len(m)-l_mean)
              enddo
              ! distortion of side length from l_mean
-             length(ij,k,l) = sqrt( temp/6.D0 ) / l_mean
+             length(ij,k,l) = sqrt( temp/6.0_RP ) / l_mean
 
           endif
        enddo
@@ -1116,11 +1116,11 @@ contains
 
     enddo
 
-    dummy    (:,:,:) = 1.D0
-    dummy_pl (:,:,:) = 1.D0
+    dummy    (:,:,:) = 1.0_RP
+    dummy_pl (:,:,:) = 1.0_RP
     global_area = GTL_global_sum_srf( dummy(:,:,:), dummy_pl(:,:,:) )
     global_grid = 10*4**ADM_glevel + 2
-    sqarea_avg = sqrt( global_area / real(global_grid,kind=8) )
+    sqarea_avg = sqrt( global_area / real(global_grid,kind=RP) )
 
     sqarea   (:,:,:) = sqrt( GMTR_P_var   (:,:,:,GMTR_P_AREA) )
     sqarea_pl(:,:,:) = sqrt( GMTR_P_var_pl(:,:,:,GMTR_P_AREA) )
@@ -1133,18 +1133,18 @@ contains
 
     write(ADM_LOG_FID,*)
     write(ADM_LOG_FID,*) '------ Diagnosis result ---'
-    write(ADM_LOG_FID,*) '--- ideal  global surface area  = ', 4.D0*PI*RADIUS*RADIUS*1.D-6,' [km2]'
-    write(ADM_LOG_FID,*) '--- actual global surface area  = ', global_area*1.D-6,' [km2]'
+    write(ADM_LOG_FID,*) '--- ideal  global surface area  = ', 4.0_RP*PI*RADIUS*RADIUS*1.E-6_RP,' [km2]'
+    write(ADM_LOG_FID,*) '--- actual global surface area  = ', global_area*1.E-6_RP,' [km2]'
     write(ADM_LOG_FID,*) '--- global total number of grid = ', global_grid
     write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '--- average grid interval       = ', sqarea_avg * 1.D-3,' [km]'
-    write(ADM_LOG_FID,*) '--- max grid interval           = ', sqarea_max * 1.D-3,' [km]'
-    write(ADM_LOG_FID,*) '--- min grid interval           = ', sqarea_min * 1.D-3,' [km]'
+    write(ADM_LOG_FID,*) '--- average grid interval       = ', sqarea_avg * 1.E-3_RP,' [km]'
+    write(ADM_LOG_FID,*) '--- max grid interval           = ', sqarea_max * 1.E-3_RP,' [km]'
+    write(ADM_LOG_FID,*) '--- min grid interval           = ', sqarea_min * 1.E-3_RP,' [km]'
     write(ADM_LOG_FID,*) '--- ratio max/min grid interval = ', sqarea_max / sqarea_min
-    write(ADM_LOG_FID,*) '--- average length of arc(side) = ', length_avg * 1.D-3,' [km]'
+    write(ADM_LOG_FID,*) '--- average length of arc(side) = ', length_avg * 1.E-3_RP,' [km]'
     write(ADM_LOG_FID,*)
     write(ADM_LOG_FID,*) '--- max length distortion       = ', length_max * 1.D-3,' [km]'
-    write(ADM_LOG_FID,*) '--- max angle distortion        = ', angle_max*180.D0/PI,' [deg]'
+    write(ADM_LOG_FID,*) '--- max angle distortion        = ', angle_max*180.0_RP/PI,' [deg]'
 
     return
   end subroutine MKGRD_diagnosis
@@ -1232,41 +1232,41 @@ contains
     !---------------------------------------------------------------------------
 
     if ( iaxis == I_Xaxis ) then
-       m(1,1) =        1.D0
-       m(1,2) =        0.D0
-       m(1,3) =        0.D0
+       m(1,1) =        1.0_RP
+       m(1,2) =        0.0_RP
+       m(1,3) =        0.0_RP
 
-       m(2,1) =        0.D0
+       m(2,1) =        0.0_RP
        m(2,2) =  cos(angle)
        m(2,3) =  sin(angle)
 
-       m(3,1) =        0.D0
+       m(3,1) =        0.0_RP
        m(3,2) = -sin(angle)
        m(3,3) =  cos(angle)
     elseif( iaxis == I_Yaxis ) then
        m(1,1) =  cos(angle)
-       m(1,2) =        0.D0
+       m(1,2) =        0.0_RP
        m(1,3) = -sin(angle)
 
-       m(2,1) =        0.D0
-       m(2,2) =        1.D0
-       m(2,3) =        0.D0
+       m(2,1) =        0.0_RP
+       m(2,2) =        1.0_RP
+       m(2,3) =        0.0_RP
 
        m(3,1) =  sin(angle)
-       m(3,2) =        0.D0
+       m(3,2) =        0.0_RP
        m(3,3) =  cos(angle)
     elseif( iaxis == I_Zaxis ) then
        m(1,1) =  cos(angle)
        m(1,2) =  sin(angle)
-       m(1,3) =        0.D0
+       m(1,3) =        0.0_RP
 
        m(2,1) = -sin(angle)
        m(2,2) =  cos(angle)
-       m(2,3) =        0.D0
+       m(2,3) =        0.0_RP
 
-       m(3,1) =        0.D0
-       m(3,2) =        0.D0
-       m(3,3) =        1.D0
+       m(3,1) =        0.0_RP
+       m(3,2) =        0.0_RP
+       m(3,3) =        1.0_RP
     else
        return
     endif
@@ -1387,7 +1387,7 @@ contains
     REAL(RP) :: gc   (dir_vindex,ADM_gall   )
     REAL(RP) :: gc_pl(dir_vindex,ADM_gall_pl)
 
-    REAL(RP), parameter :: o(3) = 0.D0
+    REAL(RP), parameter :: o(3) = 0.0_RP
 
     REAL(RP) :: w_lenS, w_lenC, gc_len
 
@@ -1576,7 +1576,7 @@ contains
     REAL(RP) :: gc   (dir_vindex,ADM_gall   )
     REAL(RP) :: gc_pl(dir_vindex,ADM_gall_pl)
 
-    REAL(RP), parameter :: o(3) = 0.D0
+    REAL(RP), parameter :: o(3) = 0.0_RP
 
     REAL(RP) :: w_lenC, w_lenS, gc_len
 
@@ -1640,7 +1640,7 @@ contains
        enddo
 
        if ( ADM_rgn_vnum(ADM_W,rgnid) == 3 ) then
-          w(:,suf(ADM_gmin,ADM_gmin),6) = 0.D0
+          w(:,suf(ADM_gmin,ADM_gmin),6) = 0.0_RP
        endif
 
        do n = 1, ADM_IooJoo_nmax

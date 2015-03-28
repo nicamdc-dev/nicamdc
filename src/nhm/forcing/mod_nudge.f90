@@ -68,11 +68,11 @@ module mod_nudge
   integer, private :: I_pre = -1
   integer, private :: I_qv  = -1
 
-  REAL(RP), private :: NDG_tau_vxvyvz = -999.D0
-  REAL(RP), private :: NDG_tau_w      = -999.D0
-  REAL(RP), private :: NDG_tau_tem    = -999.D0
-  REAL(RP), private :: NDG_tau_pre    = -999.D0
-  REAL(RP), private :: NDG_tau_qv     = -999.D0
+  REAL(RP), private :: NDG_tau_vxvyvz = -999.0_RP
+  REAL(RP), private :: NDG_tau_w      = -999.0_RP
+  REAL(RP), private :: NDG_tau_tem    = -999.0_RP
+  REAL(RP), private :: NDG_tau_pre    = -999.0_RP
+  REAL(RP), private :: NDG_tau_qv     = -999.0_RP
 
   !-----------------------------------------------------------------------------
 contains
@@ -113,12 +113,12 @@ contains
     integer :: NDG_kmax1 = 1000
 
     logical :: NDG_hwgt            = .false.     ! weighted nudging option, depending on the distance from the pole
-    REAL(RP) :: NDG_hwgt_center_lat =  35.D0      ! lat. of the pole ( -90<=v<=90 )
-    REAL(RP) :: NDG_hwgt_center_lon = 135.D0      ! lon. of the pole (-180<=v<=180)
-    REAL(RP) :: NDG_hwgt_halo1_dist =   0.D0      ! distance from the pole to the halo1 in [m] (0<=v<=NDG_hwgt_halo2_dist)
+    REAL(RP) :: NDG_hwgt_center_lat =  35.0_RP      ! lat. of the pole ( -90<=v<=90 )
+    REAL(RP) :: NDG_hwgt_center_lon = 135.0_RP      ! lon. of the pole (-180<=v<=180)
+    REAL(RP) :: NDG_hwgt_halo1_dist =   0.0_RP      ! distance from the pole to the halo1 in [m] (0<=v<=NDG_hwgt_halo2_dist)
     REAL(RP) :: NDG_hwgt_halo2_dist = 2.0015778D7 ! distance from the pole to the halo2 in [m] (wt_ngd_halo1<=v<=pi*r_e)
-    REAL(RP) :: NDG_hwgt_halo1_coef =   0.D0      ! min. coefficient (0<=v<=wt_ngd_max)
-    REAL(RP) :: NDG_hwgt_halo2_coef =   1.D0      ! max. coefficient (wt_ngd_min<=v<=1)
+    REAL(RP) :: NDG_hwgt_halo1_coef =   0.0_RP      ! min. coefficient (0<=v<=wt_ngd_max)
+    REAL(RP) :: NDG_hwgt_halo2_coef =   1.0_RP      ! max. coefficient (wt_ngd_min<=v<=1)
 
     namelist /NUDGEPARAM/ &
        NDG_tau_vxvyvz,      &
@@ -172,52 +172,52 @@ contains
 
     NDG_VMAX = 0
 
-    if ( NDG_tau_vxvyvz > 0.D0 ) then
+    if ( NDG_tau_vxvyvz > 0.0_RP ) then
        NDG_VMAX = NDG_VMAX + 3
        I_vx     = 1
        I_vy     = 2
        I_vz     = 3
-       NDG_rtau_vxvyvz = 1.D0 / NDG_tau_vxvyvz
+       NDG_rtau_vxvyvz = 1.0_RP / NDG_tau_vxvyvz
     else
-       NDG_rtau_vxvyvz = 0.D0
+       NDG_rtau_vxvyvz = 0.0_RP
     endif
 
-    if ( NDG_tau_w > 0.D0 ) then
+    if ( NDG_tau_w > 0.0_RP ) then
        NDG_VMAX = NDG_VMAX + 1
        I_w      = NDG_VMAX
-       NDG_rtau_w = 1.D0 / NDG_tau_w
+       NDG_rtau_w = 1.0_RP / NDG_tau_w
     else
-       NDG_rtau_w = 0.D0
+       NDG_rtau_w = 0.0_RP
     endif
 
-    if ( NDG_tau_tem > 0.D0 ) then
+    if ( NDG_tau_tem > 0.0_RP ) then
        NDG_VMAX = NDG_VMAX + 1
        I_tem    = NDG_VMAX
-       NDG_rtau_tem = 1.D0 / NDG_tau_tem
+       NDG_rtau_tem = 1.0_RP / NDG_tau_tem
     else
-       NDG_rtau_tem = 0.D0
+       NDG_rtau_tem = 0.0_RP
     endif
 
-    if ( NDG_tau_pre > 0.D0 ) then
+    if ( NDG_tau_pre > 0.0_RP ) then
        NDG_VMAX = NDG_VMAX + 1
        I_pre    = NDG_VMAX
-       NDG_rtau_pre = 1.D0 / NDG_tau_pre
+       NDG_rtau_pre = 1.0_RP / NDG_tau_pre
     else
-       NDG_rtau_pre = 0.D0
+       NDG_rtau_pre = 0.0_RP
     endif
 
-    if ( NDG_tau_qv > 0.D0 ) then
+    if ( NDG_tau_qv > 0.0_RP ) then
        NDG_VMAX = NDG_VMAX + 1
        I_qv     = NDG_VMAX
-       NDG_rtau_qv = 1.D0 / NDG_tau_qv
+       NDG_rtau_qv = 1.0_RP / NDG_tau_qv
     else
-       NDG_rtau_qv = 0.D0
+       NDG_rtau_qv = 0.0_RP
     endif
 
     allocate( NDG_fact   (ADM_gall   ,ADM_kall,ADM_lall   ,NDG_VMAX) )
     allocate( NDG_fact_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,NDG_VMAX) )
-    NDG_fact   (:,:,:,:) = 0.D0
-    NDG_fact_pl(:,:,:,:) = 0.D0
+    NDG_fact   (:,:,:,:) = 0.0_RP
+    NDG_fact_pl(:,:,:,:) = 0.0_RP
 
     allocate( NDG_ref   (ADM_gall   ,ADM_kall,ADM_lall   ,NDG_VMAX) )
     allocate( NDG_ref_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,NDG_VMAX) )
@@ -251,17 +251,17 @@ contains
 
     do k = 1, ADM_kall
        if ( k < NDG_kmin0 ) then
-          wgt_vertical(k) = 0.D0
+          wgt_vertical(k) = 0.0_RP
        elseif( k >= NDG_kmin0 .AND. k < NDG_kmin1 ) then
-          wgt_vertical(k) = 0.5D0 * ( 1.D0 + cos(CNST_PI * (GRD_gz(k)        -GRD_gz(NDG_kmin1) ) &
+          wgt_vertical(k) = 0.5_RP * ( 1.0_RP + cos(CNST_PI * (GRD_gz(k)        -GRD_gz(NDG_kmin1) ) &
                                                          / (GRD_gz(NDG_kmin0)-GRD_gz(NDG_kmin1) ) ) )
        elseif( k >= NDG_kmax0 .AND. k < NDG_kmax1 ) then
-          wgt_vertical(k) = 0.5D0 * ( 1.D0 + cos(CNST_PI * (GRD_gz(k)        -GRD_gz(NDG_kmax0) ) &
+          wgt_vertical(k) = 0.5_RP * ( 1.0_RP + cos(CNST_PI * (GRD_gz(k)        -GRD_gz(NDG_kmax0) ) &
                                                          / (GRD_gz(NDG_kmax1)-GRD_gz(NDG_kmax0) ) ) )
        elseif( NDG_kmax1 <= k ) then
-          wgt_vertical(k) = 0.D0
+          wgt_vertical(k) = 0.0_RP
        else
-          wgt_vertical(k) = 1.D0
+          wgt_vertical(k) = 1.0_RP
        endif
     enddo
 
@@ -276,8 +276,8 @@ contains
                                  wgt_horizontal   (:,:,:,:), & ! [OUT]
                                  wgt_horizontal_pl(:,:,:,:)  ) ! [OUT]
     else
-       wgt_horizontal   (:,:,:,:) = 1.D0
-       wgt_horizontal_pl(:,:,:,:) = 1.D0
+       wgt_horizontal   (:,:,:,:) = 1.0_RP
+       wgt_horizontal_pl(:,:,:,:) = 1.0_RP
     endif
 
     !---< calc factor >---
@@ -366,7 +366,7 @@ contains
     integer :: g, k, l, n
     !---------------------------------------------------------------------------
 
-    if ( NDG_tau_vxvyvz > 0.D0 ) then
+    if ( NDG_tau_vxvyvz > 0.0_RP ) then
        do l = 1, ADM_lall
           call extdata_update(temp(:,:),'vx',l,ctime,eflag)
           if ( .NOT. eflag ) then
@@ -403,7 +403,7 @@ contains
        enddo
     endif
 
-    if ( NDG_tau_w > 0.D0 ) then
+    if ( NDG_tau_w > 0.0_RP ) then
        do l = 1, ADM_lall
           call extdata_update(temp(:,:),'w',l,ctime,eflag)
           if ( .NOT. eflag ) then
@@ -418,7 +418,7 @@ contains
        enddo
     endif
 
-    if ( NDG_tau_tem > 0.D0 ) then
+    if ( NDG_tau_tem > 0.0_RP ) then
        do l = 1, ADM_lall
           call extdata_update(temp(:,:),'tem',l,ctime,eflag)
           if ( .NOT. eflag ) then
@@ -433,7 +433,7 @@ contains
        enddo
     endif
 
-    if ( NDG_tau_pre > 0.D0 ) then
+    if ( NDG_tau_pre > 0.0_RP ) then
        do l = 1, ADM_lall
           call extdata_update(temp(:,:),'pre',l,ctime,eflag)
           if ( .NOT. eflag ) then
@@ -448,7 +448,7 @@ contains
        enddo
     endif
 
-    if ( NDG_tau_qv > 0.D0 ) then
+    if ( NDG_tau_qv > 0.0_RP ) then
        do l = 1, ADM_lall
           call extdata_update(temp(:,:),'qv',l,ctime,eflag)
           if ( .NOT. eflag ) then
@@ -593,7 +593,7 @@ contains
        frhogetot_pl(:,:,:) = frhogetot_pl(:,:,:) + dein_pl(:,:,:) * rhog_pl(:,:,:)
     endif
 
-    if ( NDG_tau_w > 0.D0 ) then
+    if ( NDG_tau_w > 0.0_RP ) then
        do l = 1, ADM_lall
        do k = ADM_kmin,ADM_kmax+1
        do g = 1, ADM_gall
@@ -641,7 +641,7 @@ contains
           call history_in('nudge_du',   du  (:,:,l))
           call history_in('nudge_dv',   dv  (:,:,l))
           call history_in('nudge_dtem', dtem(:,:,l))
-          if ( NDG_tau_w > 0.D0 ) then
+          if ( NDG_tau_w > 0.0_RP ) then
              call history_in('nudge_dw', dw(:,:,l))
           endif
        enddo
@@ -682,7 +682,7 @@ contains
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
-    if ( NDG_tau_qv > 0.D0 ) then
+    if ( NDG_tau_qv > 0.0_RP ) then
        call GTL_clip_region(NDG_ref(:,:,:,I_qv),NDG_ref_qv_in(:,:,:),1,ADM_kall)
 
        do l = 1, ADM_lall
@@ -756,8 +756,8 @@ contains
 
     k0 = ADM_KNONE
 
-    center_lon_rad = center_lon / 180.D0 * CNST_PI
-    center_lat_rad = center_lat / 180.D0 * CNST_PI
+    center_lon_rad = center_lon / 180.0_RP * CNST_PI
+    center_lat_rad = center_lat / 180.0_RP * CNST_PI
 
     do l = 1, ADM_lall
     do g = 1, ADM_gall
@@ -770,14 +770,14 @@ contains
                                dist            ) ! [OUT]
 
        if ( dist < halo1_dist ) then
-          fact = 0.D0
+          fact = 0.0_RP
        elseif( dist >= halo1_dist .AND. dist <= halo2_dist ) then
           fact = (dist-halo1_dist) / (halo2_dist-halo1_dist)
        elseif( dist > halo2_dist ) then
-          fact = 1.D0
+          fact = 1.0_RP
        endif
 
-       weight(g,k0,l,1) = ( 1.D0-fact ) * halo1_coef &
+       weight(g,k0,l,1) = ( 1.0_RP-fact ) * halo1_coef &
                         + (      fact ) * halo2_coef
 
     enddo
@@ -795,14 +795,14 @@ contains
                                   dist              ) ! [OUT]
 
           if ( dist < halo1_dist ) then
-             fact = 0.D0
+             fact = 0.0_RP
           elseif( dist >= halo1_dist .AND. dist <= halo2_dist ) then
              fact = (dist-halo1_dist) / (halo2_dist-halo1_dist)
           elseif( dist > halo2_dist ) then
-             fact = 1.D0
+             fact = 1.0_RP
           endif
 
-          weight_pl(g,k0,l,1) = ( 1.D0-fact ) * halo1_coef &
+          weight_pl(g,k0,l,1) = ( 1.0_RP-fact ) * halo1_coef &
                               + (      fact ) * halo2_coef
        enddo
        enddo

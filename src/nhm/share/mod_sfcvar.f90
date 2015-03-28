@@ -160,7 +160,7 @@ module mod_sfcvar
   integer, private, allocatable :: KEND(:)
   integer, private              :: KSUM
 
-  REAL(RP), private :: VMISS = -999.D30
+  REAL(RP), private :: VMISS = -999.E30_RP
 
   !-----------------------------------------------------------------------------
 contains
@@ -302,8 +302,8 @@ contains
          ADM_lall_pl,   &
          DIAG_MAX))
     !
-    sfcvar(:,:,:,:)=0.0D0
-    sfcvar_pl(:,:,:,:)=0.0D0
+    sfcvar(:,:,:,:)=0.0_RP
+    sfcvar_pl(:,:,:,:)=0.0_RP
 !    ! 2010.5.17. M.Satoh
 !    sfcvar(:,:,:,:)=VMISS
 !    sfcvar_pl(:,:,:,:)=VMISS

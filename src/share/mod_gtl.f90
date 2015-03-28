@@ -96,7 +96,7 @@ contains
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
-    sum = 0.D0
+    sum = 0.0_RP
     do l = 1,        ADM_lall
     do k = ADM_kmin, ADM_kmax
     do n = 1,        ADM_IooJoo_nmax
@@ -147,7 +147,7 @@ contains
     integer :: n, l
     !---------------------------------------------------------------------------
 
-    sum = 0.D0
+    sum = 0.0_RP
     do l = 1, ADM_lall
     do n = 1, ADM_IooJoo_nmax
        sum = sum + var      (ADM_IooJoo(n,ADM_GIoJo),ADM_KNONE,l) &
@@ -199,7 +199,7 @@ contains
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
-    sum(:) = 0.D0
+    sum(:) = 0.0_RP
     do l = 1, ADM_lall
     do k = 1, ADM_kall
     do n = 1, ADM_IooJoo_nmax
@@ -249,8 +249,8 @@ contains
 
     if ( first ) then
        !--- calc global volume at first time
-       one   (:,:,:) = 1.D0
-       one_pl(:,:,:) = 1.D0
+       one   (:,:,:) = 1.0_RP
+       one_pl(:,:,:) = 1.0_RP
 
        volume_g = GTL_global_sum( one(:,:,:), one_pl(:,:,:) )
 
@@ -292,7 +292,7 @@ contains
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
-    vmax = -1.D+99
+    vmax = -1.E+30_RP
     do l = 1,      ADM_lall
     do k = kstart, kend
     do n = 1,      ADM_IooJoo_nmax
@@ -341,7 +341,7 @@ contains
     integer :: n, l
     !---------------------------------------------------------------------------
 
-    vmax = -1.D+99
+    vmax = -1.E+30_RP
     do l = 1,        ADM_lall
     do n = 1,        ADM_IooJoo_nmax
        vmax = max( vmax, var(ADM_IooJoo(n,ADM_GIoJo),k,l) )
@@ -391,11 +391,11 @@ contains
     if ( present(nonzero) ) then
        if ( nonzero ) then
 
-          vmin = 1.D+99
+          vmin = 1.E+30_RP
           do l = 1,      ADM_lall
           do k = kstart, kend
           do n = 1,      ADM_IooJoo_nmax
-             if (       var(ADM_IooJoo(n,ADM_GIoJo),k,l) > 0.D0 &
+             if (       var(ADM_IooJoo(n,ADM_GIoJo),k,l) > 0.0_RP &
                   .AND. var(ADM_IooJoo(n,ADM_GIoJo),k,l) < vmin ) then
 
                 vmin = var(ADM_IooJoo(n,ADM_GIoJo),k,l)
@@ -408,7 +408,7 @@ contains
        if ( ADM_prc_me == ADM_prc_pl ) then
           do l = 1,      ADM_lall_pl
           do k = kstart, kend
-             if (       var_pl(ADM_GSLF_PL,k,l) > 0.D0 &
+             if (       var_pl(ADM_GSLF_PL,k,l) > 0.0_RP &
                   .AND. var_pl(ADM_GSLF_PL,k,l) < vmin ) then
 
                 vmin = var_pl(ADM_GSLF_PL,k,l)
@@ -424,7 +424,7 @@ contains
        endif
     endif
 
-    vmin = 1.D+99
+    vmin = 1.E+30_RP
     do l = 1,      ADM_lall
     do k = kstart, kend
     do n = 1,      ADM_IooJoo_nmax
@@ -473,7 +473,7 @@ contains
     integer :: n, l
     !---------------------------------------------------------------------------
 
-    vmin = +1.D+99
+    vmin = +1.E+30_RP
     do l = 1,        ADM_lall
     do n = 1,        ADM_IooJoo_nmax
        vmin = min( vmin, var(ADM_IooJoo(n,ADM_GIoJo),k,l) )
@@ -510,8 +510,8 @@ contains
     integer,          intent(in)  :: recnum
     integer,          intent(in)  :: input_size
 
-    real(4) :: var4(ADM_gall,k_start:k_end)
-    REAL(RP) :: var8(ADM_gall,k_start:k_end)
+    real(SP) :: var4(ADM_gall,k_start:k_end)
+    REAL(DP) :: var8(ADM_gall,k_start:k_end)
 
     character(len=ADM_MAXFNAME) :: fname
 
@@ -533,10 +533,10 @@ contains
 
        if ( input_size == 4 ) then
           read(fid,rec=recnum) var4(:,:)
-          var(:,k_start:k_end,l) = real(var4(:,k_start:k_end),kind=8)
+          var(:,k_start:k_end,l) = real(var4(:,k_start:k_end),kind=RP)
        elseif( input_size == 8 ) then
           read(fid,rec=recnum) var8(:,:)
-          var(:,k_start:k_end,l) = var8(:,k_start:k_end)
+          var(:,k_start:k_end,l) = real(var8(:,k_start:k_end),kind=RP)
        endif
 
        close(fid)
@@ -590,7 +590,7 @@ contains
        if ( output_size == 4 ) then
          var4(:,k_start:k_end) = real(var(:,k_start:k_end,l),kind=4)
 
-         where( var4(:,k_start:k_end) < CNST_UNDEF4+1.D0 )
+         where( var4(:,k_start:k_end) < CNST_UNDEF4+1.0_RP )
             var4(:,k_start:k_end) = CNST_UNDEF4
          end where
 
@@ -657,10 +657,10 @@ contains
     do n = 1, ADM_gall
        coslat = cos(GMTR_P_var(n,k0,l,P_LAT))
 
-       sw = 0.5D0 + sign(0.5D0,-abs(coslat)) ! if (coslat == 0), u=v=0
+       sw = 0.5_RP + sign(0.5_RP,-abs(coslat)) ! if (coslat == 0), u=v=0
 
-       u = ucos(n,k,l) * ( 1.D0 - sw ) / ( coslat - sw )
-       v = vcos(n,k,l) * ( 1.D0 - sw ) / ( coslat - sw )
+       u = ucos(n,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
+       v = vcos(n,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
 
        vx(n,k,l) = u * GMTR_P_var(n,k0,l,P_IX) &
                  + v * GMTR_P_var(n,k0,l,P_JX)
@@ -678,10 +678,10 @@ contains
        do n = 1, ADM_gall_pl
           coslat = cos(GMTR_P_var_pl(n,k0,l,P_LAT))
 
-          sw = 0.5D0 + sign(0.5D0,-abs(coslat)) ! if (coslat == 0), u=v=0
+          sw = 0.5_RP + sign(0.5_RP,-abs(coslat)) ! if (coslat == 0), u=v=0
 
-          u = ucos_pl(n,k,l) * ( 1.D0 - sw ) / ( coslat - sw )
-          v = vcos_pl(n,k,l) * ( 1.D0 - sw ) / ( coslat - sw )
+          u = ucos_pl(n,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
+          v = vcos_pl(n,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
 
           vx_pl(n,k,l) = u * GMTR_P_var_pl(n,k0,l,P_IX) &
                        + v * GMTR_P_var_pl(n,k0,l,P_JX)

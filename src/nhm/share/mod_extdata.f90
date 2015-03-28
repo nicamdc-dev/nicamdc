@@ -187,7 +187,7 @@ contains
        opt_fix_rec       = .false.
        opt_monthly_cnst  = .false.
        opt_periodic_year = .false.
-       defval            = 0.D0
+       defval            = 0.0_RP
        ! [Add] 12/02/01 T.Seiki
        ddata_date(:)     = 0
        opt_increment_date= .false.
@@ -498,7 +498,7 @@ contains
 
     !--- store the raw data to gdata.
     if ( (info(np)%opt_fix_rec).or.(info(np)%opt_monthly_cnst) ) then
-       wt = 1.D0
+       wt = 1.0_RP
     elseif(info(np)%data_rec(1) == 1) then !<--- this case is only periodic one.
        data_date_prev(:) = info(np)%data_date(:,info(np)%num_of_data)
        data_date_prev(1) = data_date_prev(1) - 1
@@ -516,7 +516,7 @@ contains
     do k = 1, kall
     do n = 1, ADM_gall_in
        gdata(n,k) = info(np)%v(ADM_IopJop(n,ADM_GIoJo),k,l_region,1) * (     wt) &
-                  + info(np)%v(ADM_IopJop(n,ADM_GIoJo),k,l_region,2) * (1.D0-wt)
+                  + info(np)%v(ADM_IopJop(n,ADM_GIoJo),k,l_region,2) * (1.0_RP-wt)
     enddo
     enddo
 

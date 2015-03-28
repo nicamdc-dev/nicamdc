@@ -296,7 +296,7 @@ contains
        w(ij,kmin  ) = rhogw(ij,kmin  ) / ( c2wfact(ij,kmin  ,1) * rhog(ij,kmin  ) &
                                          + c2wfact(ij,kmin  ,2) * rhog(ij,kmin-1) )
 
-       w(ij,kmin-1) = 0.D0
+       w(ij,kmin-1) = 0.0_RP
 
     enddo
     !$acc end kernels
@@ -481,7 +481,7 @@ contains
     do ij = 1, ijdim
 
        if    ( is_top_rigid ) then
-          rhogw(ij,kmax+1) = 0.D0
+          rhogw(ij,kmax+1) = 0.0_RP
        elseif( is_top_free  ) then
           rhogw(ij,kmax+1) = - ( c2wfact(ij,kmax+1,1) * rhogvx(ij,kmax+1) &
                                + c2wfact(ij,kmax+1,2) * rhogvx(ij,kmax  ) &
@@ -492,7 +492,7 @@ contains
        endif
 
        if    ( is_btm_rigid ) then
-          rhogw(ij,kmin) = 0.D0
+          rhogw(ij,kmin) = 0.0_RP
        elseif( is_btm_free  ) then
           rhogw(ij,kmin) = - ( c2wfact(ij,kmin,1) * rhogvx(ij,kmin  ) &
                              + c2wfact(ij,kmin,2) * rhogvx(ij,kmin-1) &
@@ -502,7 +502,7 @@ contains
                              + c2wfact(ij,kmin,6) * rhogvz(ij,kmin-1) )
        endif
 
-       rhogw(ij,kmin-1) = 0.D0
+       rhogw(ij,kmin-1) = 0.0_RP
 
     enddo
     !$acc end kernels

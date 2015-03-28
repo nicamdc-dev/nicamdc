@@ -1243,7 +1243,7 @@ contains
     !---------------------------------------------------------------------------
 
     if ( ADM_mpi_alive ) then
-       time = real(MPI_WTIME(), kind=8)
+       time = real(MPI_WTIME(),kind=RP)
     else
        call cpu_time(time)
     endif

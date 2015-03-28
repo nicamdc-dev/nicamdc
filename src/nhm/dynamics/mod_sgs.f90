@@ -34,53 +34,56 @@ module mod_sgs
   !
   !++ Used modules
   !
-  use mod_adm, only :  &
-       ADM_log_fid, &
-       ADM_prc_me, &
-       ADM_prc_pl, &
-       ADM_gall, &
-       ADM_kall, &
-       ADM_lall, &
-       ADM_gall_pl, &
-       ADM_lall_pl, &
-       ADM_knone,        &
-       ADM_kmin,         &
-       ADM_kmax, &
-       ADM_NSYS
-    use mod_vmtr,only:&
-         VMTR_GSGAM2,&
-         VMTR_RGAM2,&
-         VMTR_RGAM2H,&
-         VMTR_RGSGAM2,&
-         VMTR_RGSGAM2H,&
-         VMTR_GAM2,&
-         VMTR_GAM2H,&
-         VMTR_GSGAM2H,   &
-         VMTR_GZX,&
-         VMTR_GZXH,&
-         VMTR_GZY,&
-         VMTR_GZZ,&
-         VMTR_GZYH,&
-         VMTR_GZZH,&
-         VMTR_RGSH,&
-         VMTR_RGAM,&
-         VMTR_GAM2_PL,&
-         VMTR_GAM2H_PL,&
-         VMTR_GSGAM2H_pl,&
-         VMTR_GSGAM2_PL,&
-         VMTR_RGAM2_PL,&
-         VMTR_RGAM2H_PL,&
-         VMTR_RGSGAM2_PL,&
-         VMTR_RGSGAM2H_PL,&
-         VMTR_GZX_PL,&
-         VMTR_GZY_PL,&
-         VMTR_GZXH_PL,&
-         VMTR_GZYH_PL,&
-         VMTR_GZZ_PL,&
-         VMTR_GZZH_PL,&
-         VMTR_RGSH_PL,&
-         VMTR_RGAM_PL
-    use mod_history
+  use mod_adm, only: &
+     ADM_LOG_FID, &
+     ADM_NSYS,    &
+     ADM_prc_me,  &
+     ADM_prc_pl,  &
+     ADM_lall,    &
+     ADM_lall_pl, &
+     ADM_gall,    &
+     ADM_gall_pl, &
+     ADM_kall,    &
+     ADM_kmin,    &
+     ADM_kmax,    &
+     ADM_KNONE
+  use mod_cnst, only: &
+     EPS => CNST_EPS_ZERO
+  use mod_vmtr,only:&
+     VMTR_GSGAM2,&
+     VMTR_RGAM2,&
+     VMTR_RGAM2H,&
+     VMTR_RGSGAM2,&
+     VMTR_RGSGAM2H,&
+     VMTR_GAM2,&
+     VMTR_GAM2H,&
+     VMTR_GSGAM2H,   &
+     VMTR_GZX,&
+     VMTR_GZXH,&
+     VMTR_GZY,&
+     VMTR_GZZ,&
+     VMTR_GZYH,&
+     VMTR_GZZH,&
+     VMTR_RGSH,&
+     VMTR_RGAM,&
+     VMTR_GAM2_PL,&
+     VMTR_GAM2H_PL,&
+     VMTR_GSGAM2H_pl,&
+     VMTR_GSGAM2_PL,&
+     VMTR_RGAM2_PL,&
+     VMTR_RGAM2H_PL,&
+     VMTR_RGSGAM2_PL,&
+     VMTR_RGSGAM2H_PL,&
+     VMTR_GZX_PL,&
+     VMTR_GZY_PL,&
+     VMTR_GZXH_PL,&
+     VMTR_GZYH_PL,&
+     VMTR_GZZ_PL,&
+     VMTR_GZZH_PL,&
+     VMTR_RGSH_PL,&
+     VMTR_RGAM_PL
+  use mod_history, only: &
+     histry_in
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -112,16 +115,15 @@ module mod_sgs
   !------ coefficient for diffusion (horizontal)
   integer, private :: lap_order_hdiff = 2
   !
-  REAL(RP), private :: K_coef_minlim = 0!3.0D+9
-  REAL(RP), private :: K_coef_maxlim = 1.0D+99
-  REAL(RP), private :: LENGTH_maxlim = 1.0D+99
-  REAL(RP), private :: SMG_CS = 0.2d0
-  REAL(RP), private :: SMALL=1.0d-10
-  REAL(RP), private :: GAMMA=1.0d0  ! (kind of aspect ratio?)
-  REAL(RP), private :: Pr=1.0d0
+  REAL(RP), private :: K_coef_minlim = 0.0_RP
+  REAL(RP), private :: K_coef_maxlim = 1.E+30_RP
+  REAL(RP), private :: LENGTH_maxlim = 1.E+30_RP
+  REAL(RP), private :: SMG_CS = 0.2_RP
+  REAL(RP), private :: GAMMA=1.0_RP  ! (kind of aspect ratio?)
+  REAL(RP), private :: Pr=1.0_RP
   logical, private :: stratos_effect = .false.
-  REAL(RP), private :: beta_theta!=1.0d0
-  REAL(RP), private :: beta_q!=1.0d0
+  REAL(RP), private :: beta_theta!=1.0_RP
+  REAL(RP), private :: beta_q!=1.0_RP
 
 
 !  logical, private :: DEEP_EFFECT = .true. ! --> why ?  meaningless here
@@ -523,15 +525,15 @@ contains
 !    call dbgmx('aa oprt_GAM',smg_oprt_GAM(:,ADM_kmin:ADM_kmax,:))
 !    if (ADM_prc_me.eq.1) call dbgmx('aa oprt_GAM_pl',smg_oprt_GAM_pl(:,ADM_kmin:ADM_kmax,:))
 
-    sijh=0.d0
-    sijh_pl=0.d0
-    uijh=0.d0
-    uijh_pl=0.d0
+    sijh=0.0_RP
+    sijh_pl=0.0_RP
+    uijh=0.0_RP
+    uijh_pl=0.0_RP
 
-    sij=0.d0
-    sij_pl=0.d0
-    uij=0.d0
-    uij_pl=0.d0
+    sij=0.0_RP
+    sij_pl=0.0_RP
+    uij=0.0_RP
+    uij_pl=0.0_RP
 
     ! x
     call Gradient3dfh( abs_vx (:,:,:),     abs_vx_pl (:,:,:),     & ! [IN]
@@ -569,16 +571,16 @@ contains
 
     do i=1,3
        do j=1,3
-          sij(:,ADM_kmin:ADM_kmax,:,i,j)=(uij(:,ADM_kmin:ADM_kmax,:,i,j)+uij(:,ADM_kmin:ADM_kmax,:,j,i))/2.d0
-          sij_pl(:,ADM_kmin:ADM_kmax,:,i,j)=(uij_pl(:,ADM_kmin:ADM_kmax,:,i,j)+uij_pl(:,ADM_kmin:ADM_kmax,:,j,i))/2.d0
-          sijh(:,ADM_kmin:ADM_kmax,:,i,j)=(uijh(:,ADM_kmin:ADM_kmax,:,i,j)+uijh(:,ADM_kmin:ADM_kmax,:,j,i))/2.d0
-          sijh_pl(:,ADM_kmin:ADM_kmax,:,i,j)=(uijh_pl(:,ADM_kmin:ADM_kmax,:,i,j)+uijh_pl(:,ADM_kmin:ADM_kmax,:,j,i))/2.d0
+          sij(:,ADM_kmin:ADM_kmax,:,i,j)=(uij(:,ADM_kmin:ADM_kmax,:,i,j)+uij(:,ADM_kmin:ADM_kmax,:,j,i))/2.0_RP
+          sij_pl(:,ADM_kmin:ADM_kmax,:,i,j)=(uij_pl(:,ADM_kmin:ADM_kmax,:,i,j)+uij_pl(:,ADM_kmin:ADM_kmax,:,j,i))/2.0_RP
+          sijh(:,ADM_kmin:ADM_kmax,:,i,j)=(uijh(:,ADM_kmin:ADM_kmax,:,i,j)+uijh(:,ADM_kmin:ADM_kmax,:,j,i))/2.0_RP
+          sijh_pl(:,ADM_kmin:ADM_kmax,:,i,j)=(uijh_pl(:,ADM_kmin:ADM_kmax,:,i,j)+uijh_pl(:,ADM_kmin:ADM_kmax,:,j,i))/2.0_RP
        enddo
     enddo
-    sijsij(:,:,:) = 0.d0
-    sijsij_pl(:,:,:) = 0.d0
-    sijsijh(:,:,:) = 0.d0
-    sijsijh_pl(:,:,:) = 0.d0
+    sijsij(:,:,:) = 0.0_RP
+    sijsij_pl(:,:,:) = 0.0_RP
+    sijsijh(:,:,:) = 0.0_RP
+    sijsijh_pl(:,:,:) = 0.0_RP
     do i=1,3
        do j=1,3
           sijsij(:,ADM_kmin:ADM_kmax,:)=sijsij(:,ADM_kmin:ADM_kmax,:)+&
@@ -619,7 +621,7 @@ contains
 !!$          do k = ADM_kmin+1, ADM_kmax
 !!$             do n = 1, ADM_gall_pl
 !!$                n2= CNST_EGRAV/(potemh(n,k,l) * (potem(n,k,l)-potem(n,k-1,l))/ ( GRD_vz(n,k,l,GRD_Z)-GRD_vz(n,k-1,l,GRD_Z) ))
-!!$                ri= n2/max(  (vx(n,k,l)-vx(n,k-1,l))**2+(vy(n,k,l)-vy(n,k-1,l))**2+(vz(n,k,l)-vz(n,k-1,l))**2, small) *&
+!!$                ri= n2/max(  (vx(n,k,l)-vx(n,k-1,l))**2+(vy(n,k,l)-vy(n,k-1,l))**2+(vz(n,k,l)-vz(n,k-1,l))**2, EPS) *&
 !!$                     ( GRD_vz(n,k,l,GRD_Z)-GRD_vz(n,k-1,l,GRD_Z) )**2
 !!$                qtot =
 !!$
@@ -638,17 +640,17 @@ contains
     wrkwrk2=0.0
 
     ! half --------------
-    K_coefh= 0.0d0
-    K_coefh_pl= 0.0d0
-    K_coefh(:,ADM_kmin-1,:) = 0.0d0 ! im not sure
-    K_coefh(:,ADM_kmax+1,:) = 0.0d0
+    K_coefh= 0.0_RP
+    K_coefh_pl= 0.0_RP
+    K_coefh(:,ADM_kmin-1,:) = 0.0_RP ! im not sure
+    K_coefh(:,ADM_kmax+1,:) = 0.0_RP
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kmax
           do n = 1, ADM_gall
              del_xyz2=GMTR_area(n,l)+( GRD_vz(n,k,l,GRD_Z)-GRD_vz(n,k-1,l,GRD_Z) )**2 ! (length scale)**2 @ half level, (actual height is used)
              del_xyz2=min(del_xyz2,LENGTH_maxlim2)
 !            write(*,*) l,k,n,del_xyz2,GMTR_area(n,l),( GRD_vz(n,k,l,GRD_Z)-GRD_vz(n,k-1,l,GRD_Z) )**2
-             K_coefh(n,k,l)   = min(max(SMG_CS2*del_xyz2 * sqrt(max(2.0d0*sijsijh(n,k,l)+stratosh(n,k,l),SMALL)),&
+             K_coefh(n,k,l)   = min(max(SMG_CS2*del_xyz2 * sqrt(max(2.0_RP*sijsijh(n,k,l)+stratosh(n,k,l),EPS)),&
                   K_coef_minlim),K_coef_maxlim)
              wrkwrk(n,k,l)=del_xyz2
              wrkwrk2(n,l,l)=n
@@ -686,19 +688,19 @@ contains
     call dbgmx('uij31',uij(:,:,:,3,1))
     call dbgmx('uij32',uij(:,:,:,3,2))
     call dbgmx('uij33',uij(:,:,:,3,3))
-    call dbgmx('sijsijh',sqrt(max(2.0d0*sijsijh(:,:,:)+stratosh(:,:,:),SMALL)))
-    call dbgmx('sijsijha',sqrt(max(2.0d0*sijsijh(:,:,:),SMALL)))
-    call dbgmx('sijsijhb',sqrt(max(stratosh(:,:,:),SMALL)))
+    call dbgmx('sijsijh',sqrt(max(2.0_RP*sijsijh(:,:,:)+stratosh(:,:,:),EPS)))
+    call dbgmx('sijsijha',sqrt(max(2.0_RP*sijsijh(:,:,:),EPS)))
+    call dbgmx('sijsijhb',sqrt(max(stratosh(:,:,:),EPS)))
 
     if(ADM_prc_me==ADM_prc_pl) then
-       K_coefh_pl(:,ADM_kmin-1,:) = 0.0d0 ! im not sure
-       K_coefh_pl(:,ADM_kmax+1,:) = 0.0d0
+       K_coefh_pl(:,ADM_kmin-1,:) = 0.0_RP ! im not sure
+       K_coefh_pl(:,ADM_kmax+1,:) = 0.0_RP
        do l = 1, ADM_lall_pl
           do k = ADM_kmin, ADM_kmax
              do n = 1, ADM_gall_pl
                 del_xyz2=GMTR_area_pl(n,l)+( GRD_vz_pl(n,k,l,GRD_Z)-GRD_vz_pl(n,k-1,l,GRD_Z) )**2 ! (length scale)**2 @ half level, (actual height is used)
                 del_xyz2=min(del_xyz2,LENGTH_maxlim2)
-                K_coefh_pl(n,k,l)   = min(max(SMG_CS2*del_xyz2 * sqrt(max(2.0d0*sijsijh_pl(n,k,l)+stratosh_pl(n,k,l),SMALL)),&
+                K_coefh_pl(n,k,l)   = min(max(SMG_CS2*del_xyz2 * sqrt(max(2.0_RP*sijsijh_pl(n,k,l)+stratosh_pl(n,k,l),EPS)),&
                      K_coef_minlim),K_coef_maxlim)
              enddo
           enddo
@@ -707,29 +709,29 @@ contains
 
 
     ! full --------------
-    K_coef= 0.0d0
-    K_coef_pl= 0.0d0
-    K_coef(:,ADM_kmin-1,:) = 0.0d0
-    K_coef(:,ADM_kmax+1,:) = 0.0d0
+    K_coef= 0.0_RP
+    K_coef_pl= 0.0_RP
+    K_coef(:,ADM_kmin-1,:) = 0.0_RP
+    K_coef(:,ADM_kmax+1,:) = 0.0_RP
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kmax
           do n = 1, ADM_gall
              del_xyz2=GMTR_area(n,l)+( GRD_vz(n,k+1,l,GRD_ZH)-GRD_vz(n,k,l,GRD_ZH) )**2 ! (length scale)**2 @ full level, (actual height is used)
              del_xyz2=min(del_xyz2,LENGTH_maxlim2)
-             K_coef(n,k,l)   = min(max(SMG_CS2*del_xyz2 * sqrt(max(2.0d0*sijsij(n,k,l)+stratos(n,k,l),SMALL)),&
+             K_coef(n,k,l)   = min(max(SMG_CS2*del_xyz2 * sqrt(max(2.0_RP*sijsij(n,k,l)+stratos(n,k,l),EPS)),&
                   K_coef_minlim),K_coef_maxlim)
           enddo
        enddo
     enddo
     if(ADM_prc_me==ADM_prc_pl) then
-       K_coef_pl(:,ADM_kmin-1,:) = 0.0d0
-       K_coef_pl(:,ADM_kmax+1,:) = 0.0d0
+       K_coef_pl(:,ADM_kmin-1,:) = 0.0_RP
+       K_coef_pl(:,ADM_kmax+1,:) = 0.0_RP
        do l = 1, ADM_lall_pl
           do k = ADM_kmin, ADM_kmax
              do n = 1, ADM_gall_pl
                 del_xyz2=GMTR_area_pl(n,l)+( GRD_vz_pl(n,k+1,l,GRD_ZH)-GRD_vz_pl(n,k,l,GRD_ZH) )**2 ! (length scale)**2 @ full level, (actual height is used)
                 del_xyz2=min(del_xyz2,LENGTH_maxlim2)
-                K_coef_pl(n,k,l)  = min(max(SMG_CS2*del_xyz2 * sqrt(max(2.0d0*sijsij_pl(n,k,l)+stratos_pl(n,k,l),SMALL))&
+                K_coef_pl(n,k,l)  = min(max(SMG_CS2*del_xyz2 * sqrt(max(2.0_RP*sijsij_pl(n,k,l)+stratos_pl(n,k,l),EPS))&
                   ,K_coef_minlim),K_coef_maxlim)
              enddo
           enddo
@@ -756,8 +758,8 @@ contains
     enddo
     k=ADM_kmin ! ground.  i'm not sure it is needed
     K_coefh(:,k,:)    = K_coefh(:,k,:)*rho(:,k,:)
-    K_coefh(:,ADM_kmin-1,:) = 0.0d0
-    K_coefh(:,ADM_kmax+1,:) = 0.0d0
+    K_coefh(:,ADM_kmin-1,:) = 0.0_RP
+    K_coefh(:,ADM_kmax+1,:) = 0.0_RP
 
     if(ADM_prc_me==ADM_prc_pl) then
        K_coef_pl(:,ADM_kmin:ADM_kmax,:)=K_coef_pl(:,ADM_kmin:ADM_kmax,:)*rho_pl(:,ADM_kmin:ADM_kmax,:)
@@ -766,8 +768,8 @@ contains
        enddo
        k=ADM_kmin ! ground.  i'm not sure it is needed
        K_coefh_pl(:,k,:) = K_coefh_pl(:,k,:)*rho_pl(:,k,:)
-       K_coefh_pl(:,ADM_kmin-1,:) = 0.0d0
-       K_coefh_pl(:,ADM_kmax+1,:) = 0.0d0
+       K_coefh_pl(:,ADM_kmin-1,:) = 0.0_RP
+       K_coefh_pl(:,ADM_kmax+1,:) = 0.0_RP
     endif
 
     !============================= (4) calculate gradient3D for q and potem ============================
@@ -1055,11 +1057,11 @@ contains
     endif
 
     ! 1/gamma at half level
-    smg_oprt_rgamH(:,ADM_kmin:ADM_kmax,:)= 1.0d0/sqrt(VMTR_GAM2H(:,ADM_kmin:ADM_kmax,:))
-    smg_oprt_rgam(:,ADM_kmin:ADM_kmax,:)= 1.0d0/sqrt(VMTR_GAM2(:,ADM_kmin:ADM_kmax,:))
+    smg_oprt_rgamH(:,ADM_kmin:ADM_kmax,:)= 1.0_RP/sqrt(VMTR_GAM2H(:,ADM_kmin:ADM_kmax,:))
+    smg_oprt_rgam(:,ADM_kmin:ADM_kmax,:)= 1.0_RP/sqrt(VMTR_GAM2(:,ADM_kmin:ADM_kmax,:))
     if(ADM_prc_me==ADM_prc_pl) then
-      smg_oprt_rgamH_pl(:,ADM_kmin:ADM_kmax,:)= 1.0d0/sqrt(VMTR_GAM2H_pl(:,ADM_kmin:ADM_kmax,:))
-      smg_oprt_rgam_pl(:,ADM_kmin:ADM_kmax,:)= 1.0d0/sqrt(VMTR_GAM2_pl(:,ADM_kmin:ADM_kmax,:))
+      smg_oprt_rgamH_pl(:,ADM_kmin:ADM_kmax,:)= 1.0_RP/sqrt(VMTR_GAM2H_pl(:,ADM_kmin:ADM_kmax,:))
+      smg_oprt_rgam_pl(:,ADM_kmin:ADM_kmax,:)= 1.0_RP/sqrt(VMTR_GAM2_pl(:,ADM_kmin:ADM_kmax,:))
     endif
 
     ! coef for grad3d
@@ -1165,13 +1167,13 @@ contains
     else
        vhh(:,ADM_kmin,:,:) = vh(:,ADM_kmin,:,:)
        do k = ADM_kmin+1, ADM_kmax
-          vhh(:,k,:,:) = ( vh(:,k,:,:) + vh(:,k-1,:,:) ) * 0.5D0
+          vhh(:,k,:,:) = ( vh(:,k,:,:) + vh(:,k-1,:,:) ) * 0.5_RP
        enddo
 
        if ( ADM_prc_me == ADM_prc_pl ) then
           vhh_pl(:,ADM_kmin,:,:) = vh_pl(:,ADM_kmin,:,:)
           do k = ADM_kmin+1, ADM_kmax
-             vhh_pl(:,k,:,:) = ( vh_pl(:,k,:,:) + vh_pl(:,k-1,:,:) ) * 0.5D0
+             vhh_pl(:,k,:,:) = ( vh_pl(:,k,:,:) + vh_pl(:,k-1,:,:) ) * 0.5_RP
           enddo
        endif
     endif
@@ -1306,28 +1308,28 @@ contains
 
 
     ! initiation because halo is not written
-    tmp=0.D0
-    tmp_vx=0.D0
-    tmp_vy=0.D0
-    tmp_vz=0.D0
-    tmph=0.D0
-    tmp_vxh=0.D0
-    tmp_vyh=0.D0
-    tmp_vzh=0.D0
+    tmp=0.0_RP
+    tmp_vx=0.0_RP
+    tmp_vy=0.0_RP
+    tmp_vz=0.0_RP
+    tmph=0.0_RP
+    tmp_vxh=0.0_RP
+    tmp_vyh=0.0_RP
+    tmp_vzh=0.0_RP
 
-    tmp_pl=0.D0
-    tmp_vx_pl=0.D0
-    tmp_vy_pl=0.D0
-    tmp_vz_pl=0.D0
-    tmph_pl=0.D0
-    tmp_vxh_pl=0.D0
-    tmp_vyh_pl=0.D0
-    tmp_vzh_pl=0.D0
+    tmp_pl=0.0_RP
+    tmp_vx_pl=0.0_RP
+    tmp_vy_pl=0.0_RP
+    tmp_vz_pl=0.0_RP
+    tmph_pl=0.0_RP
+    tmp_vxh_pl=0.0_RP
+    tmp_vyh_pl=0.0_RP
+    tmp_vzh_pl=0.0_RP
 
-    scl=0.D0
-    sclh=0.D0
-    scl_pl=0.D0
-    sclh_pl=0.D0
+    scl=0.0_RP
+    sclh=0.0_RP
+    scl_pl=0.0_RP
+    sclh_pl=0.0_RP
 
     !-------------------------- for full level -------------------------
     tmp_vx(:,ADM_kmin:ADM_kmax,:)= vx(:,ADM_kmin:ADM_kmax,:)* smg_oprt_gsqrt(:,ADM_kmin:ADM_kmax,:)
@@ -1344,7 +1346,7 @@ contains
          tmp_vx, tmp_vx_pl,   &
          tmp_vy, tmp_vy_pl,   &
          tmp_vz, tmp_vz_pl,    &
-         mfact=1.D0)
+         mfact=1.0_RP)
 
 !       write(*,*) 'a',smg_oprt_GAM(1144,9,1),tmp(1144,9,1)
 !       write(*,*) 'b',tmp_vx(1144,9,1),tmp_vy(1144,9,1),tmp_vz(1144,9,1)
@@ -1456,7 +1458,7 @@ contains
          tmp_vxh, tmp_vxh_pl,   &
          tmp_vyh, tmp_vyh_pl,   &
          tmp_vzh, tmp_vzh_pl,   &
-         mfact=1.D0)
+         mfact=1.0_RP)
     sclh(:,ADM_kmin:ADM_kmax,:) = tmph(:,ADM_kmin:ADM_kmax,:) * smg_oprt_GAMH(:,ADM_kmin:ADM_kmax,:)
     if(ADM_prc_me==ADM_prc_pl) then
        sclh_pl(:,ADM_kmin:ADM_kmax,:) = tmph_pl(:,ADM_kmin:ADM_kmax,:) * smg_oprt_GAMH_pl(:,ADM_kmin:ADM_kmax,:)

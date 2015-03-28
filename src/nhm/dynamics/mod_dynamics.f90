@@ -338,7 +338,7 @@ contains
 
     REAL(RP) :: pre0_kappa
 
-    REAL(RP), parameter :: TKE_MIN = 0.D0
+    REAL(RP), parameter :: TKE_MIN = 0.0_RP
     REAL(RP)            :: TKEg_corr
 
     integer :: small_step_ite
@@ -364,7 +364,7 @@ contains
 
     call DEBUG_rapstart('___Pre_Post')
 
-    large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=8)
+    large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=RP)
 
     !--- get from prg0
     call prgvar_get( PROG(:,:,:,I_RHOG),   PROG_pl(:,:,:,I_RHOG),   & ! [OUT]
@@ -402,8 +402,8 @@ contains
        call DEBUG_rapstart('___Tracer_Advection')
 
        !$acc kernels pcopy(f_TEND) async(0)
-       f_TEND   (:,:,:,:) = 0.D0
-       f_TEND_pl(:,:,:,:) = 0.D0
+       f_TEND   (:,:,:,:) = 0.0_RP
+       f_TEND_pl(:,:,:,:) = 0.0_RP
        !$acc end kernels
 
        call src_tracer_advection( TRC_VMAX,                                          & ! [IN]
@@ -465,8 +465,8 @@ contains
        do l = 1, ADM_lall
        do k = 1, ADM_kall
        do g = 1, ADM_gall
-          cv(g,k,l) = 0.D0
-          qd(g,k,l) = 1.D0
+          cv(g,k,l) = 0.0_RP
+          qd(g,k,l) = 1.0_RP
 
           !$acc loop seq
           do nq = NQW_STR, NQW_END
@@ -549,8 +549,8 @@ contains
              q_pl(:,:,:,nq) = PROGq_pl(:,:,:,nq) / PROG_pl(:,:,:,I_RHOG)
           enddo
 
-          cv_pl(:,:,:) = 0.D0
-          qd_pl(:,:,:) = 1.D0
+          cv_pl(:,:,:) = 0.0_RP
+          qd_pl(:,:,:) = 1.0_RP
           do nq = NQW_STR, NQW_END
              cv_pl(:,:,:) = cv_pl(:,:,:) + q_pl(:,:,:,nq) * CVW(nq)
              qd_pl(:,:,:) = qd_pl(:,:,:) - q_pl(:,:,:,nq)
@@ -609,22 +609,22 @@ contains
           rhogd_pl(:,:,:) = ( rho_pl(:,:,:) - rho_bs_pl(:,:,:) ) * VMTR_GSGAM2_pl(:,:,:)
        else
 
-          rho_pl(:,:,:) = 0.D0
-          vx_pl (:,:,:) = 0.D0
-          vy_pl (:,:,:) = 0.D0
-          vz_pl (:,:,:) = 0.D0
-          w_pl  (:,:,:) = 0.D0
-          ein_pl(:,:,:) = 0.D0
+          rho_pl(:,:,:) = 0.0_RP
+          vx_pl (:,:,:) = 0.0_RP
+          vy_pl (:,:,:) = 0.0_RP
+          vz_pl (:,:,:) = 0.0_RP
+          w_pl  (:,:,:) = 0.0_RP
+          ein_pl(:,:,:) = 0.0_RP
 
-          q_pl(:,:,:,:) = 0.D0
+          q_pl(:,:,:,:) = 0.0_RP
 
-          tem_pl(:,:,:) = 0.D0
-          pre_pl(:,:,:) = 0.D0
-          th_pl (:,:,:) = 0.D0
-          eth_pl(:,:,:) = 0.D0
+          tem_pl(:,:,:) = 0.0_RP
+          pre_pl(:,:,:) = 0.0_RP
+          th_pl (:,:,:) = 0.0_RP
+          eth_pl(:,:,:) = 0.0_RP
 
-          pregd_pl(:,:,:) = 0.D0
-          rhogd_pl(:,:,:) = 0.D0
+          pregd_pl(:,:,:) = 0.0_RP
+          rhogd_pl(:,:,:) = 0.0_RP
 
        endif
 
@@ -651,13 +651,13 @@ contains
                                                 g_TEND(:,:,:,I_RHOGW ), g_TEND_pl(:,:,:,I_RHOGW )  ) ! [OUT]
 
        !$acc kernels pcopy(g_TEND) async(0)
-       g_TEND   (:,:,:,I_RHOG)     = 0.D0
-       g_TEND   (:,:,:,I_RHOGE)    = 0.D0
-       g_TEND   (:,:,:,I_RHOGETOT) = 0.D0
+       g_TEND   (:,:,:,I_RHOG)     = 0.0_RP
+       g_TEND   (:,:,:,I_RHOGE)    = 0.0_RP
+       g_TEND   (:,:,:,I_RHOGETOT) = 0.0_RP
        !$acc end kernels
-       g_TEND_pl(:,:,:,I_RHOG)     = 0.D0
-       g_TEND_pl(:,:,:,I_RHOGE)    = 0.D0
-       g_TEND_pl(:,:,:,I_RHOGETOT) = 0.D0
+       g_TEND_pl(:,:,:,I_RHOG)     = 0.0_RP
+       g_TEND_pl(:,:,:,I_RHOGE)    = 0.0_RP
+       g_TEND_pl(:,:,:,I_RHOGETOT) = 0.0_RP
 
        !---< numerical diffusion term
        if ( NDIFF_LOCATION == 'IN_LARGE_STEP' ) then
@@ -812,9 +812,9 @@ contains
           PROG_split_pl(:,:,:,:) = PROG0_pl(:,:,:,:) - PROG_pl(:,:,:,:)
        else
           !$acc kernels pcopy(PROG_split) async(0)
-          PROG_split   (:,:,:,:) = 0.D0
+          PROG_split   (:,:,:,:) = 0.0_RP
           !$acc end kernels
-          PROG_split_pl(:,:,:,:) = 0.D0
+          PROG_split_pl(:,:,:,:) = 0.0_RP
        endif
 
        !------ Core routine for small step
@@ -889,15 +889,15 @@ contains
              !$acc end kernels
 
              !$acc kernels pcopy(PROGq) async(0)
-             PROGq(:,ADM_kmin-1,:,:) = 0.D0
-             PROGq(:,ADM_kmax+1,:,:) = 0.D0
+             PROGq(:,ADM_kmin-1,:,:) = 0.0_RP
+             PROGq(:,ADM_kmax+1,:,:) = 0.0_RP
              !$acc end kernels
 
              if ( ADM_prc_pl == ADM_prc_me ) then
                 PROGq_pl(:,:,:,:) = PROGq_pl(:,:,:,:) + large_step_dt * f_TENDq_pl(:,:,:,:)
 
-                PROGq_pl(:,ADM_kmin-1,:,:) = 0.D0
-                PROGq_pl(:,ADM_kmax+1,:,:) = 0.D0
+                PROGq_pl(:,ADM_kmin-1,:,:) = 0.0_RP
+                PROGq_pl(:,ADM_kmax+1,:,:) = 0.0_RP
              endif
 
              ! [comment] H.Tomita: I don't recommend adding the hyperviscosity term because of numerical instability in this case.
@@ -923,16 +923,16 @@ contains
           PROGq(:,:,:,:) = PROGq0(:,:,:,:)                                                                   &
                          + ( num_of_iteration_sstep(nl) * TIME_DTS ) * ( g_TENDq(:,:,:,:) + f_TENDq(:,:,:,:) )
 
-          PROGq(:,ADM_kmin-1,:,:) = 0.D0
-          PROGq(:,ADM_kmax+1,:,:) = 0.D0
+          PROGq(:,ADM_kmin-1,:,:) = 0.0_RP
+          PROGq(:,ADM_kmax+1,:,:) = 0.0_RP
           !$acc end kernels
 
           if ( ADM_prc_pl == ADM_prc_me ) then
              PROGq_pl(:,:,:,:) = PROGq0_pl(:,:,:,:)                                                                      &
                                + ( num_of_iteration_sstep(nl) * TIME_DTS ) * ( g_TENDq_pl(:,:,:,:) + f_TENDq_pl(:,:,:,:) )
 
-             PROGq_pl(:,ADM_kmin-1,:,:) = 0.D0
-             PROGq_pl(:,ADM_kmax+1,:,:) = 0.D0
+             PROGq_pl(:,ADM_kmin-1,:,:) = 0.0_RP
+             PROGq_pl(:,ADM_kmax+1,:,:) = 0.0_RP
           endif
 
           if( I_TKE >= 0 ) do_tke_correction = .true.
@@ -949,7 +949,7 @@ contains
           do l = 1, ADM_lall
           do k = 1, ADM_kall
           do g = 1, ADM_gall
-             TKEG_corr = max( TKE_MIN * VMTR_GSGAM2(g,k,l) - PROGq(g,k,l,I_TKE), 0.D0 )
+             TKEG_corr = max( TKE_MIN * VMTR_GSGAM2(g,k,l) - PROGq(g,k,l,I_TKE), 0.0_RP )
 
              PROG (g,k,l,I_RHOGE) = PROG (g,k,l,I_RHOGE) - TKEG_corr
              PROGq(g,k,l,I_TKE)   = PROGq(g,k,l,I_TKE)   + TKEG_corr
@@ -962,7 +962,7 @@ contains
              do l = 1, ADM_lall_pl
              do k = 1, ADM_kall
              do g = 1, ADM_gall_pl
-                TKEg_corr = max( TKE_MIN * VMTR_GSGAM2_pl(g,k,l) - PROGq_pl(g,k,l,I_TKE), 0.D0 )
+                TKEg_corr = max( TKE_MIN * VMTR_GSGAM2_pl(g,k,l) - PROGq_pl(g,k,l,I_TKE), 0.0_RP )
 
                 PROG_pl (g,k,l,I_RHOGE) = PROG_pl (g,k,l,I_RHOGE) - TKEG_corr
                 PROGq_pl(g,k,l,I_TKE)   = PROGq_pl(g,k,l,I_TKE)   + TKEG_corr

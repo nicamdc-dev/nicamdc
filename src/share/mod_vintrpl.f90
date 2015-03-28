@@ -93,7 +93,7 @@ contains
     if(present(z_offset_in)) then
        z_offset = z_offset
     else
-       z_offset = 0.0D0
+       z_offset = 0.0_RP
     endif
     !
     do l=1,ADM_lall
@@ -149,7 +149,7 @@ contains
           else if ( v(n,k,l) == CNST_UNDEF ) then
             tmp(n,k,l) = v(n,k+1,l)
           else
-            tmp(n,k,l) = 0.5D0*(v(n,k+1,l)+v(n,k,l))
+            tmp(n,k,l) = 0.5_RP*(v(n,k+1,l)+v(n,k,l))
           endif
        enddo
        enddo
@@ -167,7 +167,7 @@ contains
             else if ( v_pl(n,k,l) == CNST_UNDEF ) then
               tmp_pl(n,k,l) = v_pl(n,k+1,l)
             else
-              tmp_pl(n,k,l) = 0.5D0*(v_pl(n,k+1,l)+v_pl(n,k,l))
+              tmp_pl(n,k,l) = 0.5_RP*(v_pl(n,k+1,l)+v_pl(n,k,l))
             endif
           enddo
           enddo
@@ -308,7 +308,7 @@ contains
          else if ( v(n,k,l) == CNST_UNDEF ) then
            tmp(n,k,l) = v(n,k+1,l)
          else
-           tmp(n,k,l) = 0.5D0*(v(n,k+1,l)+v(n,k,l))
+           tmp(n,k,l) = 0.5_RP*(v(n,k+1,l)+v(n,k,l))
          endif
        enddo
        enddo
@@ -325,7 +325,7 @@ contains
             else if ( v_pl(n,k,l) == CNST_UNDEF ) then
               tmp_pl(n,k,l) = v_pl(n,k+1,l)
             else
-              tmp_pl(n,k,l) = 0.5D0*(v_pl(n,k+1,l)+v_pl(n,k,l))
+              tmp_pl(n,k,l) = 0.5_RP*(v_pl(n,k+1,l)+v_pl(n,k,l))
             endif
           enddo
           enddo
@@ -553,7 +553,7 @@ contains
     integer :: k
 
     do k=ADM_kmin,ADM_kmax
-       tmp(:,k,:) = 0.5D0*(v(:,k+1,:)+v(:,k,:))
+       tmp(:,k,:) = 0.5_RP*(v(:,k+1,:)+v(:,k,:))
     enddo
     tmp(:,ADM_kmin-1,:) = v(:,ADM_kmin,:)
     tmp(:,ADM_kmax+1,:) = v(:,ADM_kmax+1,:)
@@ -561,7 +561,7 @@ contains
     !
     if (ADM_prc_me==ADM_prc_pl) Then
        do k=ADM_kmin,ADM_kmax
-          tmp_pl(:,k,:) = 0.5D0*(v_pl(:,k+1,:)+v_pl(:,k,:))
+          tmp_pl(:,k,:) = 0.5_RP*(v_pl(:,k+1,:)+v_pl(:,k,:))
        enddo
        tmp_pl(:,ADM_kmin-1,:) = v_pl(:,ADM_kmin,:)
        tmp_pl(:,ADM_kmax+1,:) = v_pl(:,ADM_kmax+1,:)
@@ -623,14 +623,14 @@ contains
 
     if(wgrid) then
        do k=ADM_kmin,ADM_kmax
-          tmp(:,k,:) = 0.5D0*(v(:,k+1,:)+v(:,k,:))
+          tmp(:,k,:) = 0.5_RP*(v(:,k+1,:)+v(:,k,:))
        enddo
        tmp(:,ADM_kmin-1,:) = v(:,ADM_kmin,:)
        tmp(:,ADM_kmax+1,:) = v(:,ADM_kmax+1,:)
 
        if (ADM_prc_me==ADM_prc_pl) Then
           do k=ADM_kmin,ADM_kmax
-             tmp_pl(:,k,:) = 0.5D0*(v_pl(:,k+1,:)+v_pl(:,k,:))
+             tmp_pl(:,k,:) = 0.5_RP*(v_pl(:,k+1,:)+v_pl(:,k,:))
           enddo
           tmp_pl(:,ADM_kmin-1,:) = v_pl(:,ADM_kmin,:)
           tmp_pl(:,ADM_kmax+1,:) = v_pl(:,ADM_kmax+1,:)

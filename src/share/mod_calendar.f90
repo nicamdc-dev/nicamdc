@@ -408,12 +408,12 @@ contains
     !---------------------------------------------------------------------------
 
     isecdy = isecmn*iminhr*ihrday
-    idays  = int( dsec/dble (isecdy) ) + 1
-    rsec   = dsec - dble (idays-1)*dble (isecdy)
+    idays  = int( dsec/real(isecdy,kind=RP) ) + 1
+    rsec   = dsec - real(idays-1,kind=RP) * real(isecdy,kind=RP)
 
     if ( nint( rsec ) >= isecdy ) then
        idays = idays + 1
-       rsec  = rsec - dble(isecdy)
+       rsec  = rsec - real(isecdy,kind=RP)
     endif
 
     return
@@ -498,7 +498,7 @@ contains
     integer, intent(in) :: isec
     !---------------------------------------------------------------------------
 
-    rsec = real( ihour*isecmn*iminhr + imin*isecmn + isec, kind=8 )
+    rsec = real( ihour*isecmn*iminhr + imin*isecmn + isec, kind=RP )
 
     return
   end subroutine calendar_hm2rs
@@ -1200,7 +1200,7 @@ contains
     REAL(RP), intent(in) :: dx
     !---------------------------------------------------------------------------
 
-    calendar_dgaus = aint(dx) + aint(dx - aint(dx) + 1.d0) - 1.d0
+    calendar_dgaus = aint(dx) + aint(dx - aint(dx) + 1.0_RP) - 1.0_RP
 
   end function calendar_dgaus
 

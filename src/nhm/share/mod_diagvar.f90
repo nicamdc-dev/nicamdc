@@ -492,8 +492,8 @@ contains
             ADM_LALL_PL,     &
             DIAG_VMAX       &
             ))
-       diagvar = 0.0D0
-       diagvar_pl = 0.0D0
+       diagvar = 0.0_RP
+       diagvar_pl = 0.0_RP
 
        ! [Add] 10/04/26 M.Satoh
        if ( DIAG_VMAX_1LAYER > 0 ) then
@@ -509,8 +509,8 @@ contains
                ADM_LALL_PL,     &
                DIAG_VMAX_1LAYER &
                ))
-          diagvar1 = -999.0D0
-          diagvar1_pl = -999.0D0
+          diagvar1 = -999.0_RP
+          diagvar1_pl = -999.0_RP
        endif
 
        ! [Add] 11/08/16 M.Satoh
@@ -527,8 +527,8 @@ contains
                ADM_LALL_PL,     &
                1                &
                ))
-          diagvarn(:,:,:,:) = -999.0D0
-          diagvarn_pl(:,:,:,:) = -999.0D0
+          diagvarn(:,:,:,:) = -999.0_RP
+          diagvarn_pl(:,:,:,:) = -999.0_RP
        endif
 
        ! [Add] 07/12/05 Mitsui
@@ -562,8 +562,8 @@ contains
        ! 2011/08/16 M.Satoh
        if ( trim(CP_TYPE) == 'CHIKIRA' ) then
           if (CBMFX_CHIKIRA_fname=='NONE') then
-             diagvarn(:,ksta:kend,:,1) = 0.d0
-             diagvarn_pl(:,ksta:kend,:,1) = 0.d0
+             diagvarn(:,ksta:kend,:,1) = 0.0_RP
+             diagvarn_pl(:,ksta:kend,:,1) = 0.0_RP
           else
              ksta = diag_ksta_nlayer(I_CBMFX_CHIKIRA)
              kend = diag_kend_nlayer(I_CBMFX_CHIKIRA)
@@ -582,8 +582,8 @@ contains
        ! 2011/08/16 M.Satoh, change names
        if ( trim(CP_TYPE) == 'TDK' ) then
           if (QV_TB_TEND_fname=='NONE') then
-             diagvar(:,:,:,I_QV_TB_TEND) = 0.d0
-             diagvar_pl(:,:,:,I_QV_TB_TEND) = 0.d0 ! 11/08/16 M.Satoh
+             diagvar(:,:,:,I_QV_TB_TEND) = 0.0_RP
+             diagvar_pl(:,:,:,I_QV_TB_TEND) = 0.0_RP ! 11/08/16 M.Satoh
           else
              if ( input_io_mode == 'ADVANCED' ) then
 
@@ -596,8 +596,8 @@ contains
           ! 2010.5.22 M.Satoh
           if ( EVAP_SFC_fname == 'NONE' ) then
              ! set initial value of evap_sfc
-             diagvar1(:,:,:,I_EVAP_SFC) = 0.0d0
-             diagvar1_pl(:,:,:,I_EVAP_SFC) = 0.0d0 ! 11/08/16 M.Satoh
+             diagvar1(:,:,:,I_EVAP_SFC) = 0.0_RP
+             diagvar1_pl(:,:,:,I_EVAP_SFC) = 0.0_RP ! 11/08/16 M.Satoh
           else
              ! -> [add] H.Yashiro 20110826
              if ( input_io_mode == 'ADVANCED' ) then
@@ -615,8 +615,8 @@ contains
           ! 2011/08/16b M.Satoh
           if ( SH_FLUX_SFC_fname == 'NONE' ) then
              ! set initial value of sh_flux_sfc
-             diagvar1(:,:,:,I_SH_FLUX_SFC) = 0.0d0
-             diagvar1_pl(:,:,:,I_SH_FLUX_SFC) = 0.0d0
+             diagvar1(:,:,:,I_SH_FLUX_SFC) = 0.0_RP
+             diagvar1_pl(:,:,:,I_SH_FLUX_SFC) = 0.0_RP
           else
              if ( input_io_mode == 'ADVANCED' ) then
 
@@ -689,8 +689,8 @@ contains
        if ( ROUGHNESS_SEA_TYPE == 'YQW' ) then
           if ( ROUGHNESS_SEA_fname == 'NONE' ) then
              ! set initial value in roughness_sea_init
-             diagvar1(:,:,:,I_ROUGHNESS_SEA) = -999.0d0
-             diagvar1_pl(:,:,:,I_ROUGHNESS_SEA) = -999.0d0 ! 11/08/16 M.Satoh
+             diagvar1(:,:,:,I_ROUGHNESS_SEA) = -999.0_RP
+             diagvar1_pl(:,:,:,I_ROUGHNESS_SEA) = -999.0_RP ! 11/08/16 M.Satoh
           else
              ! -> [add] H.Yashiro 20110826
              if ( input_io_mode == 'ADVANCED' ) then

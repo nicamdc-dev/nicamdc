@@ -200,8 +200,8 @@ contains
        vy(:,ADM_kmin-1,l) = vy(:,ADM_kmin,l)
        vz(:,ADM_kmin-1,l) = vz(:,ADM_kmin,l)
 
-       q(:,ADM_kmax+1,l,:) = 0.D0
-       q(:,ADM_kmin-1,l,:) = 0.D0
+       q(:,ADM_kmax+1,l,:) = 0.0_RP
+       q(:,ADM_kmin-1,l,:) = 0.0_RP
     enddo
 
     ! forcing
@@ -228,17 +228,17 @@ contains
           call history_in( 'ml_af_fw',  fw (:,:,l) )
           call history_in( 'ml_af_fe',  fe (:,:,l) )
        enddo
-       fq(:,:,:,:) = 0.D0
+       fq(:,:,:,:) = 0.0_RP
 
     case default
 
-       fvx(:,:,:) = 0.D0
-       fvy(:,:,:) = 0.D0
-       fvz(:,:,:) = 0.D0
-       fw (:,:,:) = 0.D0
-       fe (:,:,:) = 0.D0
+       fvx(:,:,:) = 0.0_RP
+       fvy(:,:,:) = 0.0_RP
+       fvz(:,:,:) = 0.0_RP
+       fw (:,:,:) = 0.0_RP
+       fe (:,:,:) = 0.0_RP
 
-       fq (:,:,:,:) = 0.D0
+       fq (:,:,:,:) = 0.0_RP
 
     end select
 
@@ -313,7 +313,7 @@ contains
     REAL(RP) :: w      (ADM_gall,   ADM_kall,ADM_lall   ) ! vertical velocity
     REAL(RP) :: w_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    REAL(RP), save :: time = 0.D0 ! for tracer advection test  [add; original by H.Miura] 20130612 R.Yoshida
+    REAL(RP), save :: time = 0.0_RP ! for tracer advection test  [add; original by H.Miura] 20130612 R.Yoshida
 
     integer :: n, k ,l
     !---------------------------------------------------------------------------

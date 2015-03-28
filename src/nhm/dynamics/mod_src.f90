@@ -172,7 +172,7 @@ contains
     do l = 1, ADM_lall
        do k = ADM_kmin,ADM_kmax
        do g = 1, ADM_gall
-          wc = 0.5D0 * ( GRD_cfac(k) * w(g,k+1,l) &
+          wc = 0.5_RP * ( GRD_cfac(k) * w(g,k+1,l) &
                        + GRD_dfac(k) * w(g,k  ,l) )
 
           vvx(g,k,l) = vx(g,k,l) + wc * GRD_x(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
@@ -182,12 +182,12 @@ contains
        enddo
 
        do g = 1, ADM_gall
-          vvx(g,ADM_kmin-1,l) = 0.D0
-          vvx(g,ADM_kmax+1,l) = 0.D0
-          vvy(g,ADM_kmin-1,l) = 0.D0
-          vvy(g,ADM_kmax+1,l) = 0.D0
-          vvz(g,ADM_kmin-1,l) = 0.D0
-          vvz(g,ADM_kmax+1,l) = 0.D0
+          vvx(g,ADM_kmin-1,l) = 0.0_RP
+          vvx(g,ADM_kmax+1,l) = 0.0_RP
+          vvy(g,ADM_kmin-1,l) = 0.0_RP
+          vvy(g,ADM_kmax+1,l) = 0.0_RP
+          vvz(g,ADM_kmin-1,l) = 0.0_RP
+          vvz(g,ADM_kmax+1,l) = 0.0_RP
        enddo
     enddo
 
@@ -195,7 +195,7 @@ contains
        do l = 1, ADM_lall_pl
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
-             wc = 0.5D0 * ( GRD_cfac(k) * w_pl(g,k+1,l) &
+             wc = 0.5_RP * ( GRD_cfac(k) * w_pl(g,k+1,l) &
                           + GRD_dfac(k) * w_pl(g,k  ,l) )
 
              vvx_pl(g,k,l) = vx_pl(g,k,l) + wc * GRD_x_pl(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
@@ -205,12 +205,12 @@ contains
           enddo
 
           do g = 1, ADM_gall_pl
-             vvx_pl(g,ADM_kmin-1,l) = 0.D0
-             vvx_pl(g,ADM_kmax+1,l) = 0.D0
-             vvy_pl(g,ADM_kmin-1,l) = 0.D0
-             vvy_pl(g,ADM_kmax+1,l) = 0.D0
-             vvz_pl(g,ADM_kmin-1,l) = 0.D0
-             vvz_pl(g,ADM_kmax+1,l) = 0.D0
+             vvx_pl(g,ADM_kmin-1,l) = 0.0_RP
+             vvx_pl(g,ADM_kmax+1,l) = 0.0_RP
+             vvy_pl(g,ADM_kmin-1,l) = 0.0_RP
+             vvy_pl(g,ADM_kmax+1,l) = 0.0_RP
+             vvz_pl(g,ADM_kmin-1,l) = 0.0_RP
+             vvz_pl(g,ADM_kmax+1,l) = 0.0_RP
           enddo
        enddo
     endif
@@ -246,8 +246,8 @@ contains
        !---< coriolis force >
        do k = ADM_kmin, ADM_kmax
        do g = 1, ADM_gall
-          dvvx(g,k,l) = dvvx(g,k,l) - 2.D0 * rhog(g,k,l) * ( -OHM * vvy(g,k,l) )
-          dvvy(g,k,l) = dvvy(g,k,l) - 2.D0 * rhog(g,k,l) * (  OHM * vvx(g,k,l) )
+          dvvx(g,k,l) = dvvx(g,k,l) - 2.0_RP * rhog(g,k,l) * ( -OHM * vvy(g,k,l) )
+          dvvy(g,k,l) = dvvy(g,k,l) - 2.0_RP * rhog(g,k,l) * (  OHM * vvx(g,k,l) )
        enddo
        enddo
 
@@ -262,7 +262,7 @@ contains
           grhogvy(g,k,l) = dvvy(g,k,l) - prd * GRD_x(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
           grhogvz(g,k,l) = dvvz(g,k,l) - prd * GRD_x(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
 
-          grhogwc(g,k,l) = prd * real(NON_HYDRO_ALPHA,kind=8)
+          grhogwc(g,k,l) = prd * real(NON_HYDRO_ALPHA,kind=RP)
        enddo
        enddo
 
@@ -274,15 +274,15 @@ contains
        enddo
 
        do g = 1, ADM_gall
-          grhogvx(g,ADM_kmin-1,l) = 0.D0
-          grhogvx(g,ADM_kmax+1,l) = 0.D0
-          grhogvy(g,ADM_kmin-1,l) = 0.D0
-          grhogvy(g,ADM_kmax+1,l) = 0.D0
-          grhogvz(g,ADM_kmin-1,l) = 0.D0
-          grhogvz(g,ADM_kmax+1,l) = 0.D0
-          grhogw (g,ADM_kmin-1,l) = 0.D0
-          grhogw (g,ADM_kmin  ,l) = 0.D0
-          grhogw (g,ADM_kmax+1,l) = 0.D0
+          grhogvx(g,ADM_kmin-1,l) = 0.0_RP
+          grhogvx(g,ADM_kmax+1,l) = 0.0_RP
+          grhogvy(g,ADM_kmin-1,l) = 0.0_RP
+          grhogvy(g,ADM_kmax+1,l) = 0.0_RP
+          grhogvz(g,ADM_kmin-1,l) = 0.0_RP
+          grhogvz(g,ADM_kmax+1,l) = 0.0_RP
+          grhogw (g,ADM_kmin-1,l) = 0.0_RP
+          grhogw (g,ADM_kmin  ,l) = 0.0_RP
+          grhogw (g,ADM_kmax+1,l) = 0.0_RP
        enddo
     enddo
 
@@ -291,8 +291,8 @@ contains
           !---< coriolis force >
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
-             dvvx_pl(g,k,l) = dvvx_pl(g,k,l) - 2.D0 * rhog_pl(g,k,l) * ( -OHM * vvy_pl(g,k,l) )
-             dvvy_pl(g,k,l) = dvvy_pl(g,k,l) - 2.D0 * rhog_pl(g,k,l) * (  OHM * vvx_pl(g,k,l) )
+             dvvx_pl(g,k,l) = dvvx_pl(g,k,l) - 2.0_RP * rhog_pl(g,k,l) * ( -OHM * vvy_pl(g,k,l) )
+             dvvy_pl(g,k,l) = dvvy_pl(g,k,l) - 2.0_RP * rhog_pl(g,k,l) * (  OHM * vvx_pl(g,k,l) )
           enddo
           enddo
 
@@ -307,7 +307,7 @@ contains
              grhogvy_pl(g,k,l) = dvvy_pl(g,k,l) - prd * GRD_x_pl(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
              grhogvz_pl(g,k,l) = dvvz_pl(g,k,l) - prd * GRD_x_pl(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
 
-             grhogwc_pl(g,k,l) = prd * real(NON_HYDRO_ALPHA,kind=8)
+             grhogwc_pl(g,k,l) = prd * real(NON_HYDRO_ALPHA,kind=RP)
           enddo
           enddo
 
@@ -319,15 +319,15 @@ contains
           enddo
 
           do g = 1, ADM_gall_pl
-             grhogvx_pl(g,ADM_kmin-1,l) = 0.D0
-             grhogvx_pl(g,ADM_kmax+1,l) = 0.D0
-             grhogvy_pl(g,ADM_kmin-1,l) = 0.D0
-             grhogvy_pl(g,ADM_kmax+1,l) = 0.D0
-             grhogvz_pl(g,ADM_kmin-1,l) = 0.D0
-             grhogvz_pl(g,ADM_kmax+1,l) = 0.D0
-             grhogw_pl (g,ADM_kmin-1,l) = 0.D0
-             grhogw_pl (g,ADM_kmin  ,l) = 0.D0
-             grhogw_pl (g,ADM_kmax+1,l) = 0.D0
+             grhogvx_pl(g,ADM_kmin-1,l) = 0.0_RP
+             grhogvx_pl(g,ADM_kmax+1,l) = 0.0_RP
+             grhogvy_pl(g,ADM_kmin-1,l) = 0.0_RP
+             grhogvy_pl(g,ADM_kmax+1,l) = 0.0_RP
+             grhogvz_pl(g,ADM_kmin-1,l) = 0.0_RP
+             grhogvz_pl(g,ADM_kmax+1,l) = 0.0_RP
+             grhogw_pl (g,ADM_kmin-1,l) = 0.0_RP
+             grhogw_pl (g,ADM_kmin  ,l) = 0.0_RP
+             grhogw_pl (g,ADM_kmax+1,l) = 0.0_RP
           enddo
        enddo
     endif
@@ -422,12 +422,12 @@ contains
        do l = 1, ADM_lall
           do k = ADM_kmin, ADM_kmax+1
           do g = 1, ADM_gall
-             rhogwscl(g,k,l) = rhogw(g,k,l) * 0.5D0 * ( GRD_afac(k) * scl(g,k,  l) &
+             rhogwscl(g,k,l) = rhogw(g,k,l) * 0.5_RP * ( GRD_afac(k) * scl(g,k,  l) &
                                                       + GRD_bfac(k) * scl(g,k-1,l) )
           enddo
           enddo
           do g = 1, ADM_gall
-             rhogwscl(g,ADM_kmin-1,l) = 0.D0
+             rhogwscl(g,ADM_kmin-1,l) = 0.0_RP
           enddo
        enddo
 
@@ -435,12 +435,12 @@ contains
           do l = 1, ADM_lall_pl
              do k = ADM_kmin, ADM_kmax+1
              do g = 1, ADM_gall_pl
-                rhogwscl_pl(g,k,l) = rhogw_pl(g,k,l) * 0.5D0 * ( GRD_afac(k) * scl_pl(g,k  ,l) &
+                rhogwscl_pl(g,k,l) = rhogw_pl(g,k,l) * 0.5_RP * ( GRD_afac(k) * scl_pl(g,k  ,l) &
                                                                + GRD_bfac(k) * scl_pl(g,k-1,l) )
              enddo
              enddo
              do g = 1, ADM_gall_pl
-                rhogwscl_pl(g,ADM_kmin-1,l) = 0.D0
+                rhogwscl_pl(g,ADM_kmin-1,l) = 0.0_RP
              enddo
           enddo
        endif
@@ -452,7 +452,7 @@ contains
 !OCL PARALLEL
        do k = 1, ADM_kall
        do g = 1, ADM_gall
-          rhogwscl(g,k,l) = 0.D0
+          rhogwscl(g,k,l) = 0.0_RP
        enddo
        enddo
        enddo
@@ -461,7 +461,7 @@ contains
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do g = 1, ADM_gall_pl
-             rhogwscl_pl(g,k,l) = 0.D0
+             rhogwscl_pl(g,k,l) = 0.0_RP
           enddo
           enddo
           enddo
@@ -553,9 +553,9 @@ contains
     call DEBUG_rapstart('____src_flux_convergence')
 
     if ( fluxtype == I_SRC_default ) then ! Default
-       vertical_flag = 1.D0
+       vertical_flag = 1.0_RP
     elseif( fluxtype == I_SRC_horizontal ) then ! Horizontal
-       vertical_flag = 0.D0
+       vertical_flag = 0.0_RP
     endif
 
     do l = 1, ADM_lall
@@ -582,8 +582,8 @@ contains
        enddo
        enddo
        do g = 1, ADM_gall
-          rhogw_vmh(g,ADM_kmin  ,l) = 0.D0
-          rhogw_vmh(g,ADM_kmax+1,l) = 0.D0
+          rhogw_vmh(g,ADM_kmin  ,l) = 0.0_RP
+          rhogw_vmh(g,ADM_kmax+1,l) = 0.0_RP
        enddo
     enddo
 
@@ -612,8 +612,8 @@ contains
           enddo
           enddo
           do g = 1, ADM_gall_pl
-             rhogw_vmh_pl(g,ADM_kmin  ,l) = 0.D0
-             rhogw_vmh_pl(g,ADM_kmax+1,l) = 0.D0
+             rhogw_vmh_pl(g,ADM_kmin  ,l) = 0.0_RP
+             rhogw_vmh_pl(g,ADM_kmax+1,l) = 0.0_RP
           enddo
        enddo
     endif
@@ -634,8 +634,8 @@ contains
        enddo
 
        do g = 1, ADM_gall
-          grhog(g,ADM_kmin-1,l) = 0.D0
-          grhog(g,ADM_kmax+1,l) = 0.D0
+          grhog(g,ADM_kmin-1,l) = 0.0_RP
+          grhog(g,ADM_kmax+1,l) = 0.0_RP
        enddo
     enddo
 
@@ -649,8 +649,8 @@ contains
           enddo
 
           do g = 1, ADM_gall_pl
-             grhog_pl(g,ADM_kmin-1,l) = 0.D0
-             grhog_pl(g,ADM_kmax+1,l) = 0.D0
+             grhog_pl(g,ADM_kmin-1,l) = 0.0_RP
+             grhog_pl(g,ADM_kmax+1,l) = 0.0_RP
           enddo
        enddo
     endif
@@ -778,8 +778,8 @@ contains
        endif
 
        do g = 1, ADM_gall
-          Pgrad(g,ADM_kmin-1,l,d) = 0.D0
-          Pgrad(g,ADM_kmax+1,l,d) = 0.D0
+          Pgrad(g,ADM_kmin-1,l,d) = 0.0_RP
+          Pgrad(g,ADM_kmax+1,l,d) = 0.0_RP
        enddo
     enddo
     enddo
@@ -813,8 +813,8 @@ contains
           endif
 
           do g = 1, ADM_gall_pl
-             Pgrad_pl(g,ADM_kmin-1,l,d) = 0.D0
-             Pgrad_pl(g,ADM_kmax+1,l,d) = 0.D0
+             Pgrad_pl(g,ADM_kmin-1,l,d) = 0.0_RP
+             Pgrad_pl(g,ADM_kmax+1,l,d) = 0.0_RP
           enddo
        enddo
        enddo
@@ -841,9 +841,9 @@ contains
           enddo
 
           do g = 1, ADM_gall
-             Pgradw(g,ADM_kmin-1,l) = 0.D0
-             Pgradw(g,ADM_kmin  ,l) = 0.D0
-             Pgradw(g,ADM_kmax+1,l) = 0.D0
+             Pgradw(g,ADM_kmin-1,l) = 0.0_RP
+             Pgradw(g,ADM_kmin  ,l) = 0.0_RP
+             Pgradw(g,ADM_kmax+1,l) = 0.0_RP
           enddo
        enddo
 
@@ -858,18 +858,18 @@ contains
              enddo
 
              do g = 1, ADM_gall_pl
-                Pgradw_pl(g,ADM_kmin-1,l) = 0.D0
-                Pgradw_pl(g,ADM_kmin  ,l) = 0.D0
-                Pgradw_pl(g,ADM_kmax+1,l) = 0.D0
+                Pgradw_pl(g,ADM_kmin-1,l) = 0.0_RP
+                Pgradw_pl(g,ADM_kmin  ,l) = 0.0_RP
+                Pgradw_pl(g,ADM_kmax+1,l) = 0.0_RP
              enddo
           enddo
        endif
 
     elseif( gradtype == I_SRC_horizontal ) then
 
-       Pgradw(:,:,:) = 0.D0
+       Pgradw(:,:,:) = 0.0_RP
        if ( ADM_have_pl ) then
-          Pgradw_pl(:,:,:) = 0.D0
+          Pgradw_pl(:,:,:) = 0.0_RP
        endif
 
     endif
@@ -920,9 +920,9 @@ contains
        enddo
 
        do g = 1, ADM_gall
-          buoiw(g,ADM_kmin-1,l) = 0.D0
-          buoiw(g,ADM_kmin  ,l) = 0.D0
-          buoiw(g,ADM_kmax+1,l) = 0.D0
+          buoiw(g,ADM_kmin-1,l) = 0.0_RP
+          buoiw(g,ADM_kmin  ,l) = 0.0_RP
+          buoiw(g,ADM_kmax+1,l) = 0.0_RP
        enddo
     enddo
 
@@ -936,9 +936,9 @@ contains
           enddo
 
           do g = 1, ADM_gall_pl
-             buoiw_pl(g,ADM_kmin-1,l) = 0.D0
-             buoiw_pl(g,ADM_kmin  ,l) = 0.D0
-             buoiw_pl(g,ADM_kmax+1,l) = 0.D0
+             buoiw_pl(g,ADM_kmin-1,l) = 0.0_RP
+             buoiw_pl(g,ADM_kmin  ,l) = 0.0_RP
+             buoiw_pl(g,ADM_kmax+1,l) = 0.0_RP
           enddo
        enddo
     endif

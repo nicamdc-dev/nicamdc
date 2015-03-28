@@ -416,7 +416,7 @@ contains
        !--- horizontal kinetic energy
        do k = ADM_kmin, ADM_kmax
        do g = 1, ADM_gall
-          rhogkin_h(g,k) = 0.5D0 * ( rhogvx(g,k,l) * rhogvx(g,k,l) &
+          rhogkin_h(g,k) = 0.5_RP * ( rhogvx(g,k,l) * rhogvx(g,k,l) &
                                    + rhogvy(g,k,l) * rhogvy(g,k,l) &
                                    + rhogvz(g,k,l) * rhogvz(g,k,l) ) / rhog(g,k,l)
        enddo
@@ -425,13 +425,13 @@ contains
        !--- vertical kinetic energy
        do k = ADM_kmin+1, ADM_kmax
        do g = 1, ADM_gall
-          rhogkin_v(g,k) = 0.5D0 * ( rhogw(g,k,l) * rhogw(g,k,l) ) &
+          rhogkin_v(g,k) = 0.5_RP * ( rhogw(g,k,l) * rhogw(g,k,l) ) &
                          / ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k  ,l) &
                            + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
        enddo
        enddo
-       rhogkin_v(:,ADM_kmin  ) = 0.D0
-       rhogkin_v(:,ADM_kmax+1) = 0.D0
+       rhogkin_v(:,ADM_kmin  ) = 0.0_RP
+       rhogkin_v(:,ADM_kmax+1) = 0.0_RP
 
        !--- total kinetic energy
        do k = ADM_kmin, ADM_kmax
@@ -441,8 +441,8 @@ contains
                            + VMTR_W2Cfact(g,k,2,l) * rhogkin_v(g,k  ) )
        enddo
        enddo
-       rhogkin(:,ADM_kmin-1,l) = 0.D0
-       rhogkin(:,ADM_kmax+1,l) = 0.D0
+       rhogkin(:,ADM_kmin-1,l) = 0.0_RP
+       rhogkin(:,ADM_kmax+1,l) = 0.0_RP
     enddo
 
     if ( ADM_prc_me == ADM_prc_pl ) then
@@ -450,7 +450,7 @@ contains
           !--- horizontal kinetic energy
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
-             rhogkin_h_pl(g,k) = 0.5D0 * ( rhogvx_pl(g,k,l) * rhogvx_pl(g,k,l) &
+             rhogkin_h_pl(g,k) = 0.5_RP * ( rhogvx_pl(g,k,l) * rhogvx_pl(g,k,l) &
                                          + rhogvy_pl(g,k,l) * rhogvy_pl(g,k,l) &
                                          + rhogvz_pl(g,k,l) * rhogvz_pl(g,k,l) ) / rhog_pl(g,k,l)
           enddo
@@ -459,13 +459,13 @@ contains
           !--- vertical kinetic energy
           do k = ADM_kmin+1, ADM_kmax
           do g = 1, ADM_gall_pl
-             rhogkin_v_pl(g,k) = 0.5D0 * ( rhogw_pl(g,k,l) * rhogw_pl(g,k,l) ) &
+             rhogkin_v_pl(g,k) = 0.5_RP * ( rhogw_pl(g,k,l) * rhogw_pl(g,k,l) ) &
                                / ( VMTR_C2Wfact_pl(g,k,1,l) * rhog_pl(g,k  ,l) &
                                  + VMTR_C2Wfact_pl(g,k,2,l) * rhog_pl(g,k-1,l) )
           enddo
           enddo
-          rhogkin_v_pl(:,ADM_kmin  ) = 0.D0
-          rhogkin_v_pl(:,ADM_kmax+1) = 0.D0
+          rhogkin_v_pl(:,ADM_kmin  ) = 0.0_RP
+          rhogkin_v_pl(:,ADM_kmax+1) = 0.0_RP
 
           !--- total kinetic energy
           do k = ADM_kmin, ADM_kmax
@@ -475,8 +475,8 @@ contains
                                  + VMTR_W2Cfact_pl(g,k,2,l) * rhogkin_v_pl(g,k  ) )
           enddo
           enddo
-          rhogkin_pl(:,ADM_kmin-1,l) = 0.D0
-          rhogkin_pl(:,ADM_kmax+1,l) = 0.D0
+          rhogkin_pl(:,ADM_kmin-1,l) = 0.0_RP
+          rhogkin_pl(:,ADM_kmax+1,l) = 0.0_RP
        enddo
     endif
 

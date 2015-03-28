@@ -92,25 +92,24 @@ module mod_ideal_init
   REAL(RP), private :: Kap                    ! temporal value
   REAL(RP), private :: d2r                    ! Degree to Radian
   REAL(RP), private :: r2d                    ! Radian to Degree
-  REAL(RP), private :: eps = 1.D-14           ! minimum value
-  REAL(RP), private :: zero = 0.D0            ! zero
+  REAL(RP), private :: zero = 0.0_RP          ! zero
 
   ! for Held and Suarez
-  REAL(RP), private :: deltaT = 60.D0
-  REAL(RP), private :: deltaTh = 10.D0
+  REAL(RP), private :: deltaT = 60.0_RP
+  REAL(RP), private :: deltaTh = 10.0_RP
   ! for Jablonowski
-  REAL(RP), private :: clat = 40.D0              ! perturbation center: latitude [deg]
-  REAL(RP), private :: clon = 20.D0              ! perturbation center: longitude [deg]
-  REAL(RP), private :: etaS = 1.D0               ! surface eta level
-  REAL(RP), private :: etaT = 0.2d0              ! threashold of vertical profile
-  REAL(RP), private :: eta0 = 0.252d0            ! threashold of vertical profile
-  REAL(RP), private :: t0 = 288.D0               ! [K]
-  REAL(RP), private :: delT = 4.8d+5             ! [K]
-  REAL(RP), private :: ganma = 0.005d0           ! [K m^-1]
-  REAL(RP), private :: u0 = 35.D0                ! [m s^-1]
-  REAL(RP), private :: uP = 1.D0                 ! [m s^-1]
-  REAL(RP), private :: p0 = 1.D+5                ! [Pa]
-  REAL(RP), private :: ps = 1.D+5                ! [Pa]
+  REAL(RP), private :: clat = 40.0_RP              ! perturbation center: latitude [deg]
+  REAL(RP), private :: clon = 20.0_RP              ! perturbation center: longitude [deg]
+  REAL(RP), private :: etaS = 1.0_RP               ! surface eta level
+  REAL(RP), private :: etaT = 0.2_RP              ! threashold of vertical profile
+  REAL(RP), private :: eta0 = 0.252_RP            ! threashold of vertical profile
+  REAL(RP), private :: t0 = 288.0_RP               ! [K]
+  REAL(RP), private :: delT = 4.8E+5_RP             ! [K]
+  REAL(RP), private :: ganma = 0.005_RP           ! [K m^-1]
+  REAL(RP), private :: u0 = 35.0_RP                ! [m s^-1]
+  REAL(RP), private :: uP = 1.0_RP                 ! [m s^-1]
+  REAL(RP), private :: p0 = 1.E+5_RP                ! [Pa]
+  REAL(RP), private :: ps = 1.E+5_RP                ! [Pa]
   logical, private, parameter :: message = .false.
   integer, private, parameter :: itrmax = 100       ! # of iteration maximum
 
@@ -133,8 +132,8 @@ contains
 
     character(len=ADM_NSYS) :: init_type   = ''
     character(len=ADM_NSYS) :: test_case   = ''
-    REAL(RP) :: eps_geo2prs = 1.D-2
-    logical :: nicamcore = .true.
+    REAL(RP)                :: eps_geo2prs = 1.E-2_RP
+    logical                 :: nicamcore   = .true.
 
     namelist / DYCORETESTPARAM / &
        init_type,   &
@@ -146,8 +145,8 @@ contains
     !---------------------------------------------------------------------------
 
     Kap = Rd / Cp
-    d2r = pi/180.D0
-    r2d = 180.D0/pi
+    d2r = pi/180.0_RP
+    r2d = 180.0_RP/pi
 
     !--- read parameters
     write(ADM_LOG_FID,*)
@@ -250,7 +249,7 @@ contains
           do l = 1, ADM_lall
           do k = 1, ADM_kall
           do g = 1, ADM_gall
-             TRC_var(g,k,l,nq) = 0.D0
+             TRC_var(g,k,l,nq) = 0.0_RP
           enddo
           enddo
           enddo
@@ -260,9 +259,9 @@ contains
           do g = 1, ADM_gall
              deg = nint( GMTR_lon(g,l) / CNST_D2R )
              if ( mod(deg,10) == 0 ) then
-                TRC_var(g,k,l,nq) = real(ADM_kall-k+1,kind=8)
+                TRC_var(g,k,l,nq) = real(ADM_kall-k+1,kind=RP)
              else
-                TRC_var(g,k,l,nq) = 0.D0
+                TRC_var(g,k,l,nq) = 0.0_RP
              endif
           enddo
           enddo
@@ -273,9 +272,9 @@ contains
           do g = 1, ADM_gall
              deg = nint( GMTR_lat(g,l) / CNST_D2R )
              if ( mod(deg,10) == 0 ) then
-                TRC_var(g,k,l,nq) = real(ADM_kall-k+1,kind=8)
+                TRC_var(g,k,l,nq) = real(ADM_kall-k+1,kind=RP)
              else
-                TRC_var(g,k,l,nq) = 0.D0
+                TRC_var(g,k,l,nq) = 0.0_RP
              endif
           enddo
           enddo
@@ -284,7 +283,7 @@ contains
           do l = 1, ADM_lall
           do k = 1, ADM_kall
           do g = 1, ADM_gall
-             TRC_var(g,k,l,nq) = random(g,k,l) * exp(real(nq,kind=8)/10.D0)
+             TRC_var(g,k,l,nq) = random(g,k,l) * exp(real(nq,kind=RP)/10.0_RP)
           enddo
           enddo
           enddo
@@ -322,9 +321,9 @@ contains
     REAL(RP) :: pre_sfc, tem_sfc
     REAL(RP) :: pre_save
 
-    REAL(RP), parameter :: deltaT  = 60.D0
-    REAL(RP), parameter :: deltaTh = 10.D0
-    REAL(RP), parameter :: eps_hs  = 1.D-7
+    REAL(RP), parameter :: deltaT  = 60.0_RP
+    REAL(RP), parameter :: deltaTh = 10.0_RP
+    REAL(RP), parameter :: eps_hs  = 1.E-7_RP
 
     REAL(RP) :: f, df
     REAL(RP) :: lat, lon
@@ -332,7 +331,7 @@ contains
     integer :: n, k, l, itr
     !---------------------------------------------------------------------------
 
-    DIAG_var(:,:,:,:) = 0.D0
+    DIAG_var(:,:,:,:) = 0.0_RP
 
     do l = 1, lall
     do n = 1, ijdim
@@ -346,8 +345,8 @@ contains
        lon = GMTR_lon(n,l)
 
        pre_sfc = PRE00
-!       tem_sfc = 300.D0
-       tem_sfc = 315.D0 - deltaT*sin(lat)**2
+!       tem_sfc = 300.0_RP
+       tem_sfc = 315.0_RP - deltaT*sin(lat)**2
 
        !---< from ground surface to lowermost atmosphere >---
        k = ADM_kmin
@@ -359,14 +358,14 @@ contains
        do itr = 1, itrmax
           pre_save = pre(k) ! save
 
-          f  = log(pre(k)/pre_sfc) / dz(k) + g / ( Rd * 0.5D0 * (tem(k)+tem_sfc) )
-          df = 1.D0 / (pre(k)*dz(k))
+          f  = log(pre(k)/pre_sfc) / dz(k) + g / ( Rd * 0.5_RP * (tem(k)+tem_sfc) )
+          df = 1.0_RP / (pre(k)*dz(k))
 
           pre(k) = pre(k) - f / df
-!          tem(k) = 300.D0 * ( pre(k)/PRE00 )**KAPPA
-          tem(k) = ( 315.D0 - deltaT*sin(lat)**2 - deltaTh*log(pre(k)/PRE00)*cos(lat)**2 ) &
+!          tem(k) = 300.0_RP * ( pre(k)/PRE00 )**KAPPA
+          tem(k) = ( 315.0_RP - deltaT*sin(lat)**2 - deltaTh*log(pre(k)/PRE00)*cos(lat)**2 ) &
                  * ( pre(k)/PRE00 )**KAPPA
-          tem(k) = max( 200.D0, tem(k) )
+          tem(k) = max( 200.0_RP, tem(k) )
 
           if( abs(pre_save-pre(k)) <= eps_hs ) exit
        enddo
@@ -382,21 +381,21 @@ contains
 
           ! first guess
           pre(k) = pre(k-1)
-          tem(k) = 300.D0 * ( pre(k)/PRE00 )**KAPPA
-          tem(k) = max( 200.D0, tem(k) )
+          tem(k) = 300.0_RP * ( pre(k)/PRE00 )**KAPPA
+          tem(k) = max( 200.0_RP, tem(k) )
 
           ! Newton-Lapson
           do itr = 1, itrmax
              pre_save = pre(k) ! save
 
-             f  = log(pre(k)/pre(k-1)) / dz(k) + g / ( Rd * 0.5D0 * (tem(k)+tem(k-1)) )
-             df = 1.D0 / (pre(k)*dz(k))
+             f  = log(pre(k)/pre(k-1)) / dz(k) + g / ( Rd * 0.5_RP * (tem(k)+tem(k-1)) )
+             df = 1.0_RP / (pre(k)*dz(k))
 
              pre(k) = pre(k) - f / df
-!             tem(k) = 300.D0 * ( pre(k)/PRE00 )**KAPPA
-             tem(k) = ( 315.D0 - deltaT*sin(lat)**2 - deltaTh*log(pre(k)/PRE00)*cos(lat)**2 ) &
+!             tem(k) = 300.0_RP * ( pre(k)/PRE00 )**KAPPA
+             tem(k) = ( 315.0_RP - deltaT*sin(lat)**2 - deltaTh*log(pre(k)/PRE00)*cos(lat)**2 ) &
                     * ( pre(k)/PRE00 )**KAPPA
-             tem(k) = max( 200.D0, tem(k) )
+             tem(k) = max( 200.0_RP, tem(k) )
 
              if( abs(pre_save-pre(k)) <= eps_hs ) exit
 
@@ -446,19 +445,18 @@ contains
        TRC_vmax
     implicit none
 
-    integer, intent(in)  :: ijdim
-    integer, intent(in)  :: kdim
-    integer, intent(in)  :: lall
+    integer,          intent(in)  :: ijdim
+    integer,          intent(in)  :: kdim
+    integer,          intent(in)  :: lall
     character(len=*), intent(in)  :: test_case
-    REAL(RP), intent(in) :: eps_geo2prs
+    REAL(RP),         intent(in)  :: eps_geo2prs
     logical,          intent(in)  :: nicamcore
-    REAL(RP), intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+    REAL(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-    ! work paramters
-    REAL(RP) :: lat, lon                 ! latitude, longitude on Icosahedral grid
-    REAL(RP) :: eta(kdim,2), geo(kdim)   ! eta & geopotential in ICO-grid field
-    REAL(RP) :: prs(kdim),   tmp(kdim)   ! pressure & temperature in ICO-grid field
-    REAL(RP) :: wix(kdim),   wiy(kdim)   ! zonal/meridional wind components in ICO-grid field
+    REAL(RP) :: lat, lon               ! latitude, longitude on Icosahedral grid
+    REAL(RP) :: eta(kdim,2), geo(kdim) ! eta & geopotential in ICO-grid field
+    REAL(RP) :: prs(kdim),   tmp(kdim) ! pressure & temperature in ICO-grid field
+    REAL(RP) :: wix(kdim),   wiy(kdim) ! zonal/meridional wind components in ICO-grid field
 
     REAL(RP) :: z_local (kdim)
     REAL(RP) :: vx_local(kdim)
@@ -468,16 +466,16 @@ contains
     REAL(RP) :: v(kdim)
     REAL(RP) :: ps
 
-    logical :: signal       ! if true, continue iteration
-    logical :: pertb        ! if true, with perturbation
-    logical :: psgm         ! if true, PS Gradient Method
-    logical :: eta_limit    ! if true, value of eta is limited upto 1.0
-    logical :: logout       ! log output switch for Pressure Convert
+    logical :: signal    ! if true, continue iteration
+    logical :: pertb     ! if true, with perturbation
+    logical :: psgm      ! if true, PS Gradient Method
+    logical :: eta_limit ! if true, value of eta is limited upto 1.0
+    logical :: logout    ! log output switch for Pressure Convert
 
     integer :: n, k, l, itr
     !---------------------------------------------------------------------------
 
-    DIAG_var(:,:,:,:) = 0.D0
+    DIAG_var(:,:,:,:) = 0.0_RP
 
     eta_limit = .true.
     psgm = .false.
@@ -521,11 +519,12 @@ contains
        lon = GMTR_lon(n,l)
 
        signal = .true.
-       ! iteration -----
+
+       ! iteration
        do itr = 1, itrmax
 
-          if( itr == 1 ) then
-             eta(:,:) = 1.D-7 ! This initial value is recommended by Jablonowsky.
+          if ( itr == 1 ) then
+             eta(:,:) = 1.E-7_RP ! This initial value is recommended by Jablonowsky.
           else
              call eta_vert_coord_NW( kdim, itr, z_local, tmp, geo, eta_limit, eta, signal )
           endif
@@ -551,7 +550,7 @@ contains
 
        call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
-       do k=1, kdim
+       do k = 1, kdim
           DIAG_var(n,k,l,1) = prs(k)
           DIAG_var(n,k,l,2) = tmp(k)
           DIAG_var(n,k,l,3) = vx_local(k)
@@ -566,7 +565,7 @@ contains
 
     write (ADM_LOG_FID,*) " |            Vertical Coordinate used in JBW initialization              |"
     write (ADM_LOG_FID,*) " |------------------------------------------------------------------------|"
-    do k=1, kdim
+    do k = 1, kdim
        write (ADM_LOG_FID,'(3X,"(k=",I3,") HGT:",F8.2," [m]",2X,"PRS: ",F9.2," [Pa]",2X,"GH: ",F8.2," [m]",2X,"ETA: ",F9.5)') &
        k, z_local(k), prs(k), geo(k)/g, eta(k,1)
     enddo
@@ -587,7 +586,7 @@ contains
        ADM_kmin,      &
        ADM_kmax
     use mod_cnst, only: &
-       UNDEF => CNST_UNDEF
+       UNDEF8 => CNST_UNDEF8
     use mod_grd, only: &
        GRD_gz, &
        GRD_Z,  &
@@ -625,12 +624,10 @@ contains
     REAL(RP) :: ps      ! surface pressure     [Pa]   , not in use
     REAL(RP) :: rho     ! density              [kg/m3], not in use
     REAL(RP) :: q       ! specific humidity    [kg/kg], not in use
-
     REAL(RP) :: q1(kdim) ! passive tracer       [kg/kg]
     REAL(RP) :: q2(kdim) ! passive tracer       [kg/kg]
     REAL(RP) :: q3(kdim) ! passive tracer       [kg/kg]
     REAL(RP) :: q4(kdim) ! passive tracer       [kg/kg]
-
     REAL(RP) :: vx(kdim)
     REAL(RP) :: vy(kdim)
     REAL(RP) :: vz(kdim)
@@ -647,7 +644,7 @@ contains
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
-    DIAG_var(:,:,:,:) = 0.D0
+    DIAG_var(:,:,:,:) = 0.0_RP
 
     I_pasv1 = 6 + NCHEM_STR + chemvar_getid( "passive001" ) - 1
     I_pasv2 = 6 + NCHEM_STR + chemvar_getid( "passive002" ) - 1
@@ -666,7 +663,7 @@ contains
           do k = ADM_kmin, ADM_kmax+1
              z(k) = GRD_vz(n,k,l,GRD_Z)
           enddo
-          p(:) = 0.D0
+          p(:) = 0.0_RP
 
           lat = GMTR_lat(n,l)
           lon = GMTR_lon(n,l)
@@ -693,7 +690,7 @@ contains
 
           call conv_vxvyvz( kdim, lat, lon, u(:), v(:), vx(:), vy(:), vz(:) )
 
-          do k=1, kdim
+          do k = 1, kdim
              DIAG_var(n,k,l,1) = p (k)
              DIAG_var(n,k,l,2) = t (k)
              DIAG_var(n,k,l,3) = vx(k)
@@ -717,7 +714,7 @@ contains
           do k = ADM_kmin, ADM_kmax+1
              z(k) = GRD_vz(n,k,l,GRD_Z)
           enddo
-          p(:) = 0.D0
+          p(:) = 0.0_RP
 
           lat = GMTR_lat(n,l)
           lon = GMTR_lon(n,l)
@@ -745,7 +742,7 @@ contains
 
           call conv_vxvyvz( kdim, lat, lon, u(:), v(:), vx(:), vy(:), vz(:) )
 
-          do k=1, kdim
+          do k = 1, kdim
              DIAG_var(n,k,l,1) = p (k)
              DIAG_var(n,k,l,2) = t (k)
              DIAG_var(n,k,l,3) = vx(k)

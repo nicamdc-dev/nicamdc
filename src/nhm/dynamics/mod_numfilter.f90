@@ -96,13 +96,13 @@ module mod_numfilter
   REAL(RP), public,  allocatable :: Kh_coef   (:,:,:)              ! horizontal diffusion coefficient at cell center
   REAL(RP), private, allocatable :: Kh_coef_pl(:,:,:)
   integer, private              :: lap_order_hdiff = 2            ! laplacian order
-  REAL(RP), private              :: hdiff_fact_rho  = 1.D-2
-  REAL(RP), private              :: hdiff_fact_q    = 0.D0
-  REAL(RP), private              :: Kh_coef_minlim  = 0.D0
-  REAL(RP), private              :: Kh_coef_maxlim  = 1.D99
+  REAL(RP), private              :: hdiff_fact_rho  = 1.E-2_RP
+  REAL(RP), private              :: hdiff_fact_q    = 0.0_RP
+  REAL(RP), private              :: Kh_coef_minlim  = 0.E+00_RP
+  REAL(RP), private              :: Kh_coef_maxlim  = 1.E+30_RP
 
   logical, private              :: hdiff_nonlinear = .false.
-  REAL(RP), private              :: ZD_hdiff_nl     = 25000.D0     ! hight for decay of nonlinear diffusion
+  REAL(RP), private              :: ZD_hdiff_nl     = 25000.0_RP     ! hight for decay of nonlinear diffusion
 
   REAL(RP), public,  allocatable :: Kh_coef_lap1   (:,:,:)         ! Kh_coef but 1st order laplacian
   REAL(RP), private, allocatable :: Kh_coef_lap1_pl(:,:,:)
@@ -113,7 +113,7 @@ module mod_numfilter
   REAL(RP), public,  allocatable :: divdamp_coef   (:,:,:)         ! divergence damping coefficient at cell center
   REAL(RP), private, allocatable :: divdamp_coef_pl(:,:,:)
   integer, private              :: lap_order_divdamp = 2          ! laplacian order
-  REAL(RP), private              :: divdamp_coef_v    = 0.D0
+  REAL(RP), private              :: divdamp_coef_v    = 0.0_RP
 
   REAL(RP), public,  allocatable :: divdamp_2d_coef   (:,:,:)      ! divergence damping coefficient at cell center
   REAL(RP), private, allocatable :: divdamp_2d_coef_pl(:,:,:)
@@ -151,29 +151,29 @@ contains
     implicit none
 
     ! rayleigh damping
-    REAL(RP)                 :: alpha_r         = 0.D0                 ! coefficient for rayleigh damping
-    REAL(RP)                 :: ZD              = 25000.D0             ! lower limit of rayleigh damping [m]
+    REAL(RP)                 :: alpha_r         = 0.0_RP                 ! coefficient for rayleigh damping
+    REAL(RP)                 :: ZD              = 25000.0_RP             ! lower limit of rayleigh damping [m]
     ! horizontal diffusion
     character(len=ADM_NSYS) :: hdiff_type      = 'NONDIM_COEF'        ! diffusion type
-    REAL(RP)                 :: gamma_h         = 1.D0 / 16.D0 / 10.D0 ! coefficient    for horizontal diffusion
-    REAL(RP)                 :: tau_h           = 160000.D0            ! e-folding time for horizontal diffusion [sec]
+    REAL(RP)                 :: gamma_h         = 1.0_RP / 16.0_RP / 10.0_RP ! coefficient    for horizontal diffusion
+    REAL(RP)                 :: tau_h           = 160000.0_RP            ! e-folding time for horizontal diffusion [sec]
     ! horizontal diffusion (1st order laplacian)
     character(len=ADM_NSYS) :: hdiff_type_lap1 = 'DIRECT'             ! diffusion type
-    REAL(RP)                 :: gamma_h_lap1    = 0.D0                 ! height-dependent gamma_h but 1st-order laplacian
-    REAL(RP)                 :: tau_h_lap1      = 160000.D0            ! height-dependent tau_h   but 1st-order laplacian [sec]
-    REAL(RP)                 :: ZD_hdiff_lap1   = 25000.D0             ! lower limit of horizontal diffusion [m]
+    REAL(RP)                 :: gamma_h_lap1    = 0.0_RP                 ! height-dependent gamma_h but 1st-order laplacian
+    REAL(RP)                 :: tau_h_lap1      = 160000.0_RP            ! height-dependent tau_h   but 1st-order laplacian [sec]
+    REAL(RP)                 :: ZD_hdiff_lap1   = 25000.0_RP             ! lower limit of horizontal diffusion [m]
     ! vertical diffusion
-    REAL(RP)                 :: gamma_v         = 0.D0                 ! coefficient of vertical diffusion
+    REAL(RP)                 :: gamma_v         = 0.0_RP                 ! coefficient of vertical diffusion
     ! 3D divergence damping
     character(len=ADM_NSYS) :: divdamp_type    = 'NONDIM_COEF'        ! damping type
-    REAL(RP)                 :: alpha_d         = 0.D0                 ! coefficient    for divergence damping
-    REAL(RP)                 :: tau_d           = 132800.D0            ! e-folding time for divergence damping
-    REAL(RP)                 :: alpha_dv        = 0.D0                 ! vertical coefficient
+    REAL(RP)                 :: alpha_d         = 0.0_RP                 ! coefficient    for divergence damping
+    REAL(RP)                 :: tau_d           = 132800.0_RP            ! e-folding time for divergence damping
+    REAL(RP)                 :: alpha_dv        = 0.0_RP                 ! vertical coefficient
     ! 2D divergence damping
     character(len=ADM_NSYS) :: divdamp_2d_type = 'NONDIM_COEF'        ! damping type
-    REAL(RP)                 :: alpha_d_2d      = 0.D0                 ! coefficient    for divergence damping
-    REAL(RP)                 :: tau_d_2d        = 1328000.D0           ! e-folding time for divergence damping [sec]
-    REAL(RP)                 :: ZD_d_2d         = 25000.D0             ! lower limit of divergence damping [m]
+    REAL(RP)                 :: alpha_d_2d      = 0.0_RP                 ! coefficient    for divergence damping
+    REAL(RP)                 :: tau_d_2d        = 1328000.0_RP           ! e-folding time for divergence damping [sec]
+    REAL(RP)                 :: ZD_d_2d         = 25000.0_RP             ! lower limit of divergence damping [m]
 
     namelist / NUMFILTERPARAM / &
        alpha_r,              &
@@ -228,8 +228,8 @@ contains
     endif
     write(ADM_LOG_FID,nml=NUMFILTERPARAM)
 
-    global_area = 4.D0 * PI * RADIUS * RADIUS
-    global_grid = 10.D0 * 4.D0**ADM_GLEVEL
+    global_area = 4.0_RP * PI * RADIUS * RADIUS
+    global_grid = 10.0_RP * 4.0_RP**ADM_GLEVEL
     AREA_ave = global_area / global_grid
 
 
@@ -270,11 +270,11 @@ contains
     allocate( Kh_lap1_deep_factor  (ADM_kall) )
     allocate( Kh_lap1_deep_factor_h(ADM_kall) )
     allocate( divdamp_deep_factor  (ADM_kall) )
-    Kh_deep_factor       (:) = 0.D0
-    Kh_deep_factor_h     (:) = 0.D0
-    Kh_lap1_deep_factor  (:) = 0.D0
-    Kh_lap1_deep_factor_h(:) = 0.D0
-    divdamp_deep_factor  (:) = 0.D0
+    Kh_deep_factor       (:) = 0.0_RP
+    Kh_deep_factor_h     (:) = 0.0_RP
+    Kh_lap1_deep_factor  (:) = 0.0_RP
+    Kh_lap1_deep_factor_h(:) = 0.0_RP
+    divdamp_deep_factor  (:) = 0.0_RP
 
     if ( deep_effect ) then
        write(ADM_LOG_FID,*) 'xxx this feature is tentatively suspended. stop.'
@@ -316,7 +316,7 @@ contains
     integer :: k
     !---------------------------------------------------------------------------
 
-    if ( alpha > 0.D0 ) NUMFILTER_DOrayleigh = .true.
+    if ( alpha > 0.0_RP ) NUMFILTER_DOrayleigh = .true.
 
     allocate( rayleigh_coef  (ADM_kall) )
     allocate( rayleigh_coef_h(ADM_kall) )
@@ -336,10 +336,10 @@ contains
        if ( debug ) then
           write(ADM_LOG_FID,*) '    z[m]      ray.coef   e-time(2DX)'
           k = ADM_kmax + 1
-          write(ADM_LOG_FID,'(1x,F8.2,3E14.6)') GRD_gzh(k), rayleigh_coef_h(k), 1.D0/( rayleigh_coef_h(k)+EPS )
+          write(ADM_LOG_FID,'(1x,F8.2,3E14.6)') GRD_gzh(k), rayleigh_coef_h(k), 1.0_RP/( rayleigh_coef_h(k)+EPS )
           do k = ADM_kmax, ADM_kmin, -1
-             write(ADM_LOG_FID,'(1x,F8.2,3E14.6)') GRD_gz (k), rayleigh_coef  (k), 1.D0/( rayleigh_coef  (k)+EPS )
-             write(ADM_LOG_FID,'(1x,F8.2,3E14.6)') GRD_gzh(k), rayleigh_coef_h(k), 1.D0/( rayleigh_coef_h(k)+EPS )
+             write(ADM_LOG_FID,'(1x,F8.2,3E14.6)') GRD_gz (k), rayleigh_coef  (k), 1.0_RP/( rayleigh_coef  (k)+EPS )
+             write(ADM_LOG_FID,'(1x,F8.2,3E14.6)') GRD_gzh(k), rayleigh_coef_h(k), 1.0_RP/( rayleigh_coef_h(k)+EPS )
           enddo
        else
           write(ADM_LOG_FID,*) '=> used.'
@@ -412,18 +412,18 @@ contains
 
     allocate( Kh_coef   (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( Kh_coef_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    Kh_coef   (:,:,:) = 0.D0
-    Kh_coef_pl(:,:,:) = 0.D0
+    Kh_coef   (:,:,:) = 0.0_RP
+    Kh_coef_pl(:,:,:) = 0.0_RP
 
     if ( hdiff_type == "DIRECT" ) then
-       if( gamma > 0.D0 ) NUMFILTER_DOhorizontaldiff = .true.
+       if( gamma > 0.0_RP ) NUMFILTER_DOhorizontaldiff = .true.
 
        ! gamma is an absolute value.
        Kh_coef   (:,:,:) = gamma
        Kh_coef_pl(:,:,:) = gamma
 
     elseif( hdiff_type == "NONDIM_COEF" ) then
-       if( gamma > 0.D0 ) NUMFILTER_DOhorizontaldiff = .true.
+       if( gamma > 0.0_RP ) NUMFILTER_DOhorizontaldiff = .true.
 
        ! gamma is a non-dimensional number.
        if ( dep_hgrid ) then
@@ -446,7 +446,7 @@ contains
        endif
 
     elseif( hdiff_type == "E_FOLD_TIME" ) then
-       if( tau > 0.D0 ) NUMFILTER_DOhorizontaldiff = .true.
+       if( tau > 0.0_RP ) NUMFILTER_DOhorizontaldiff = .true.
 
        ! tau is e-folding time for 2*dx waves.
        if ( dep_hgrid ) then
@@ -472,8 +472,8 @@ contains
        NUMFILTER_DOhorizontaldiff = .true.
        hdiff_nonlinear            = .true.
 
-       Kh_coef   (:,:,:) = -999.D0
-       Kh_coef_pl(:,:,:) = -999.D0
+       Kh_coef   (:,:,:) = -999.0_RP
+       Kh_coef_pl(:,:,:) = -999.0_RP
     endif
 
     if (       hdiff_type /= "DIRECT"     &
@@ -529,18 +529,18 @@ contains
 
     allocate( Kh_coef_lap1   (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( Kh_coef_lap1_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    Kh_coef_lap1    = 0.D0
-    Kh_coef_lap1_pl = 0.D0
+    Kh_coef_lap1    = 0.0_RP
+    Kh_coef_lap1_pl = 0.0_RP
 
     if ( hdiff_type_lap1 == "DIRECT" ) then
-       if( gamma_lap1 > 0.D0 ) NUMFILTER_DOhorizontaldiff_lap1 = .true.
+       if( gamma_lap1 > 0.0_RP ) NUMFILTER_DOhorizontaldiff_lap1 = .true.
 
        ! gamma is an absolute value.
        Kh_coef_lap1   (:,:,:) = gamma_lap1
        Kh_coef_lap1_pl(:,:,:) = gamma_lap1
 
     elseif( hdiff_type_lap1 == "NONDIM_COEF" ) then
-       if( gamma_lap1 > 0.D0 ) NUMFILTER_DOhorizontaldiff_lap1 = .true.
+       if( gamma_lap1 > 0.0_RP ) NUMFILTER_DOhorizontaldiff_lap1 = .true.
 
        ! gamma is a non-dimensional number.
        if ( dep_hgrid ) then
@@ -565,7 +565,7 @@ contains
        endif
 
     elseif( hdiff_type_lap1 == "E_FOLD_TIME" ) then
-       if( tau_lap1 > 0.D0 ) NUMFILTER_DOhorizontaldiff_lap1 = .true.
+       if( tau_lap1 > 0.0_RP ) NUMFILTER_DOhorizontaldiff_lap1 = .true.
 
        ! tau is e-folding time for 2*dx waves.
        if ( dep_hgrid ) then
@@ -668,7 +668,7 @@ contains
     integer :: k
     !---------------------------------------------------------------------------
 
-    if ( gamma > 0.D0 ) NUMFILTER_DOverticaldiff = .true.
+    if ( gamma > 0.0_RP ) NUMFILTER_DOverticaldiff = .true.
 
     allocate( Kv_coef  (ADM_kall) )
     allocate( Kv_coef_h(ADM_kall) )
@@ -753,11 +753,11 @@ contains
 
     allocate( divdamp_coef   (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( divdamp_coef_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    divdamp_coef    = 0.D0
-    divdamp_coef_pl = 0.D0
+    divdamp_coef    = 0.0_RP
+    divdamp_coef_pl = 0.0_RP
 
     if ( divdamp_type == "DIRECT") then
-       if( alpha > 0.D0 ) NUMFILTER_DOdivdamp = .true.
+       if( alpha > 0.0_RP ) NUMFILTER_DOdivdamp = .true.
 
        ! alpha_d is an absolute value.
        coef = alpha
@@ -766,7 +766,7 @@ contains
        divdamp_coef_pl(:,:,:) = coef
 
     elseif( divdamp_type == "NONDIM_COEF" ) then
-       if( alpha > 0.D0 ) NUMFILTER_DOdivdamp = .true.
+       if( alpha > 0.0_RP ) NUMFILTER_DOdivdamp = .true.
 
        ! alpha_d is a non-dimensional number.
        ! alpha_d * (c_s)^p * dt^{2p-1}
@@ -776,7 +776,7 @@ contains
        divdamp_coef_pl(:,:,:) = coef
 
     elseif( divdamp_type == "E_FOLD_TIME" ) then
-       if( tau > 0.D0 ) NUMFILTER_DOdivdamp = .true.
+       if( tau > 0.0_RP ) NUMFILTER_DOdivdamp = .true.
 
        ! tau_d is e-folding time for 2*dx.
        if ( dep_hgrid ) then
@@ -822,7 +822,7 @@ contains
           enddo
           enddo
 
-          e_fold_time_pl(:,:,:) = 0.D0
+          e_fold_time_pl(:,:,:) = 0.0_RP
 
           if ( ADM_have_pl ) then
              do l = 1, ADM_lall_pl
@@ -848,7 +848,7 @@ contains
        write(ADM_LOG_FID,*) '=> not used.'
     endif
 
-    if( alpha_v > 0.D0 ) NUMFILTER_DOdivdamp_v = .true.
+    if( alpha_v > 0.0_RP ) NUMFILTER_DOdivdamp_v = .true.
 
     divdamp_coef_v = -alpha_v * SOUND * SOUND * TIME_DTS
 
@@ -911,11 +911,11 @@ contains
 
     allocate( divdamp_2d_coef   (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( divdamp_2d_coef_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    divdamp_2d_coef    = 0.D0
-    divdamp_2d_coef_pl = 0.D0
+    divdamp_2d_coef    = 0.0_RP
+    divdamp_2d_coef_pl = 0.0_RP
 
     if ( divdamp_type == "DIRECT" ) then
-       if( alpha > 0.D0 ) NUMFILTER_DOdivdamp_2d = .true.
+       if( alpha > 0.0_RP ) NUMFILTER_DOdivdamp_2d = .true.
 
        ! alpha is the absolute value.
        coef = alpha
@@ -924,7 +924,7 @@ contains
        divdamp_2d_coef_pl(:,:,:) = coef
 
     elseif( divdamp_type == "NONDIM_COEF" ) then
-       if( alpha > 0.D0 ) NUMFILTER_DOdivdamp_2d = .true.
+       if( alpha > 0.0_RP ) NUMFILTER_DOdivdamp_2d = .true.
 
        ! alpha is the non-dimensional number.
        ! alpha * (c_s)^p * dt^{2p-1}
@@ -934,7 +934,7 @@ contains
        divdamp_2d_coef_pl(:,:,:) = coef
 
     elseif( divdamp_type == "E_FOLD_TIME" ) then
-       if( tau > 0.D0 ) NUMFILTER_DOdivdamp_2d = .true.
+       if( tau > 0.0_RP ) NUMFILTER_DOdivdamp_2d = .true.
 
        ! tau is e-folding time for 2*dx.
        if ( dep_hgrid ) then
@@ -997,7 +997,7 @@ contains
              enddo
              enddo
           else
-             e_fold_time_pl(:,:,:) = 0.D0
+             e_fold_time_pl(:,:,:) = 0.0_RP
           endif
 
           write(ADM_LOG_FID,*) '    z[m]      max coef      min coef  max eft(2DX)  min eft(2DX)'
@@ -1220,8 +1220,8 @@ contains
     REAL(RP) :: rhog_h   (ADM_gall,   ADM_kall,ADM_lall   )
     REAL(RP) :: rhog_h_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    REAL(RP), parameter :: cfact = 2.D0
-    REAL(RP), parameter :: T0    = 300.D0
+    REAL(RP), parameter :: cfact = 2.0_RP
+    REAL(RP), parameter :: T0    = 300.0_RP
 
     REAL(RP) :: fact  (ADM_kall)
     REAL(RP) :: kh_max(ADM_kall)
@@ -1236,13 +1236,13 @@ contains
     if ( hdiff_nonlinear ) then
        call height_factor( ADM_kall, GRD_gz(:), GRD_htop, ZD_hdiff_nl, fact(:) )
 
-       kh_max(:) = ( 1.D0 - fact(:) ) * Kh_coef_maxlim &
+       kh_max(:) = ( 1.0_RP - fact(:) ) * Kh_coef_maxlim &
                  + (        fact(:) ) * Kh_coef_minlim
     endif
 
-    rhog_h(:,ADM_kmin,:) = 0.D0
+    rhog_h(:,ADM_kmin-1,:) = 0.0_RP
     do l = 1, ADM_lall
-    do k = ADM_kmin+1, ADM_kmax
+    do k = ADM_kmin, ADM_kmax+1
     do g = 1, ADM_gall
        rhog_h(g,k,l) = ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k  ,l) &
                        + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
@@ -1250,9 +1250,9 @@ contains
     enddo
     enddo
 
-    rhog_h_pl(:,ADM_kmin,:) = 0.D0
+    rhog_h_pl(:,ADM_kmin-1,:) = 0.0_RP
     do l = 1, ADM_lall_pl
-    do k = ADM_kmin+1, ADM_kmax
+    do k = ADM_kmin, ADM_kmax+1
     do g = 1, ADM_gall_pl
        rhog_h_pl(g,k,l) = ( VMTR_C2Wfact_pl(g,k,1,l) * rhog_pl(g,k  ,l) &
                           + VMTR_C2Wfact_pl(g,k,2,l) * rhog_pl(g,k-1,l) )
@@ -1323,16 +1323,16 @@ contains
 
              do l = 1, ADM_lall
                 do k = ADM_kmin+1, ADM_kmax
-                   KH_coef_h(:,k,l) = 0.5D0 * ( KH_coef(:,k,l) + KH_coef(:,k-1,l) )
+                   KH_coef_h(:,k,l) = 0.5_RP * ( KH_coef(:,k,l) + KH_coef(:,k-1,l) )
                 enddo
-                KH_coef_h(:,ADM_kmin,l) = 0.D0
+                KH_coef_h(:,ADM_kmin,l) = 0.0_RP
              enddo
 
              do l = 1, ADM_lall_pl
                 do k = ADM_kmin+1, ADM_kmax
-                   KH_coef_h_pl(:,k,l) = 0.5D0 * ( KH_coef_pl(:,k,l) + KH_coef_pl(:,k-1,l) )
+                   KH_coef_h_pl(:,k,l) = 0.5_RP * ( KH_coef_pl(:,k,l) + KH_coef_pl(:,k-1,l) )
                 enddo
-                KH_coef_h_pl(:,ADM_kmin,l) = 0.D0
+                KH_coef_h_pl(:,ADM_kmin,l) = 0.0_RP
              enddo
           else
              KH_coef_h   (:,:,:) = KH_coef   (:,:,:)
@@ -1404,11 +1404,11 @@ contains
 
        call COMM_data_transfer( vtmp_lap1, vtmp_lap1_pl )
     else
-       KH_coef_lap1_h   (:,:,:) = 0.D0
-       KH_coef_lap1_h_pl(:,:,:) = 0.D0
+       KH_coef_lap1_h   (:,:,:) = 0.0_RP
+       KH_coef_lap1_h_pl(:,:,:) = 0.0_RP
 
-       vtmp_lap1   (:,:,:,:) = 0.D0
-       vtmp_lap1_pl(:,:,:,:) = 0.D0
+       vtmp_lap1   (:,:,:,:) = 0.0_RP
+       vtmp_lap1_pl(:,:,:,:) = 0.0_RP
     endif
 
     !--- Update tendency
@@ -1455,7 +1455,7 @@ contains
        enddo
        enddo
     else
-       tendency_pl(:,:,:,:) = 0.D0
+       tendency_pl(:,:,:,:) = 0.0_RP
     endif
 
     call OPRT_horizontalize_vec( tendency(:,:,:,I_RHOGVX), tendency_pl(:,:,:,I_RHOGVX), & !--- [INOUT]
@@ -1522,8 +1522,8 @@ contains
 
           call COMM_data_transfer( qtmp_lap1(:,:,:,:), qtmp_lap1_pl(:,:,:,:) )
        else
-          qtmp_lap1   (:,:,:,:) = 0.D0
-          qtmp_lap1_pl(:,:,:,:) = 0.D0
+          qtmp_lap1   (:,:,:,:) = 0.0_RP
+          qtmp_lap1_pl(:,:,:,:) = 0.0_RP
        endif
 
        do nq = 1, TRC_VMAX
@@ -1543,11 +1543,11 @@ contains
           enddo
           enddo
        else
-          tendency_q_pl(:,:,:,:) = 0.D0
+          tendency_q_pl(:,:,:,:) = 0.0_RP
        endif
     else
-       tendency_q   (:,:,:,:) = 0.D0
-       tendency_q_pl(:,:,:,:) = 0.D0
+       tendency_q   (:,:,:,:) = 0.0_RP
+       tendency_q_pl(:,:,:,:) = 0.0_RP
     endif ! apply filter to tracer?
 
     call DEBUG_rapend('____numfilter_hdiffusion')
@@ -1680,33 +1680,33 @@ contains
     vtmp0(:,ADM_kmin-1,:,I_VX ) = vtmp0(:,ADM_kmin,:,I_VX)
     vtmp0(:,ADM_kmin-1,:,I_VY ) = vtmp0(:,ADM_kmin,:,I_VY)
     vtmp0(:,ADM_kmin-1,:,I_VZ ) = vtmp0(:,ADM_kmin,:,I_VZ)
-    vtmp0(:,ADM_kmin  ,:,I_W  ) = 0.D0
-    vtmp0(:,ADM_kmin-1,:,I_TEM) = 3.D0 * vtmp0(:,ADM_kmin  ,:,I_TEM) &
-                                - 3.D0 * vtmp0(:,ADM_kmin+1,:,I_TEM) &
-                                + 1.D0 * vtmp0(:,ADM_kmin+2,:,I_TEM)
-    vtmp0(:,ADM_kmin-1,:,I_RHO) = 3.D0 * vtmp0(:,ADM_kmin  ,:,I_RHO) &
-                                - 3.D0 * vtmp0(:,ADM_kmin+1,:,I_RHO) &
-                                + 1.D0 * vtmp0(:,ADM_kmin+2,:,I_RHO)
+    vtmp0(:,ADM_kmin  ,:,I_W  ) = 0.0_RP
+    vtmp0(:,ADM_kmin-1,:,I_TEM) = 3.0_RP * vtmp0(:,ADM_kmin  ,:,I_TEM) &
+                                - 3.0_RP * vtmp0(:,ADM_kmin+1,:,I_TEM) &
+                                + 1.0_RP * vtmp0(:,ADM_kmin+2,:,I_TEM)
+    vtmp0(:,ADM_kmin-1,:,I_RHO) = 3.0_RP * vtmp0(:,ADM_kmin  ,:,I_RHO) &
+                                - 3.0_RP * vtmp0(:,ADM_kmin+1,:,I_RHO) &
+                                + 1.0_RP * vtmp0(:,ADM_kmin+2,:,I_RHO)
 
     !--- top boundary
     vtmp0(:,ADM_kmax+1,:,I_VX ) = vtmp0(:,ADM_kmax,:,I_VX)
     vtmp0(:,ADM_kmax+1,:,I_VY ) = vtmp0(:,ADM_kmax,:,I_VY)
     vtmp0(:,ADM_kmax+1,:,I_VZ ) = vtmp0(:,ADM_kmax,:,I_VZ)
-    vtmp0(:,ADM_kmax+1,:,I_W  ) = 0.D0
-    vtmp0(:,ADM_kmax+1,:,I_TEM) = 3.D0 * vtmp0(:,ADM_kmax  ,:,I_TEM) &
-                                - 3.D0 * vtmp0(:,ADM_kmax-1,:,I_TEM) &
-                                + 1.D0 * vtmp0(:,ADM_kmax-2,:,I_TEM)
-    vtmp0(:,ADM_kmax+1,:,I_RHO) = 3.D0 * vtmp0(:,ADM_kmax  ,:,I_RHO) &
-                                - 3.D0 * vtmp0(:,ADM_kmax-1,:,I_RHO) &
-                                + 1.D0 * vtmp0(:,ADM_kmax-2,:,I_RHO)
+    vtmp0(:,ADM_kmax+1,:,I_W  ) = 0.0_RP
+    vtmp0(:,ADM_kmax+1,:,I_TEM) = 3.0_RP * vtmp0(:,ADM_kmax  ,:,I_TEM) &
+                                - 3.0_RP * vtmp0(:,ADM_kmax-1,:,I_TEM) &
+                                + 1.0_RP * vtmp0(:,ADM_kmax-2,:,I_TEM)
+    vtmp0(:,ADM_kmax+1,:,I_RHO) = 3.0_RP * vtmp0(:,ADM_kmax  ,:,I_RHO) &
+                                - 3.0_RP * vtmp0(:,ADM_kmax-1,:,I_RHO) &
+                                + 1.0_RP * vtmp0(:,ADM_kmax-2,:,I_RHO)
 
     do nq = 1, TRC_VMAX
-       vtmp0(:,ADM_kmin-1,:,vmax+nq) = 3.D0 * vtmp0(:,ADM_kmin  ,:,vmax+nq) &
-                                     - 3.D0 * vtmp0(:,ADM_kmin+1,:,vmax+nq) &
-                                     + 1.D0 * vtmp0(:,ADM_kmin+2,:,vmax+nq)
-       vtmp0(:,ADM_kmax+1,:,vmax+nq) = 3.D0 * vtmp0(:,ADM_kmax  ,:,vmax+nq) &
-                                     - 3.D0 * vtmp0(:,ADM_kmax-1,:,vmax+nq) &
-                                     + 1.D0 * vtmp0(:,ADM_kmax-2,:,vmax+nq)
+       vtmp0(:,ADM_kmin-1,:,vmax+nq) = 3.0_RP * vtmp0(:,ADM_kmin  ,:,vmax+nq) &
+                                     - 3.0_RP * vtmp0(:,ADM_kmin+1,:,vmax+nq) &
+                                     + 1.0_RP * vtmp0(:,ADM_kmin+2,:,vmax+nq)
+       vtmp0(:,ADM_kmax+1,:,vmax+nq) = 3.0_RP * vtmp0(:,ADM_kmax  ,:,vmax+nq) &
+                                     - 3.0_RP * vtmp0(:,ADM_kmax-1,:,vmax+nq) &
+                                     + 1.0_RP * vtmp0(:,ADM_kmax-2,:,vmax+nq)
     enddo
 
     do l = 1, ADM_lall
@@ -1746,20 +1746,20 @@ contains
              vtmp1(:,ADM_kmin-1,l,I_VY ) = vtmp1(:,ADM_kmin  ,l,I_VY )
              vtmp1(:,ADM_kmin-1,l,I_VZ ) = vtmp1(:,ADM_kmin  ,l,I_VZ )
              vtmp1(:,ADM_kmin  ,l,I_W  ) = vtmp1(:,ADM_kmin+1,l,I_W  )
-             vtmp1(:,ADM_kmin-1,l,I_TEM) = vtmp1(:,ADM_kmin  ,l,I_TEM) * 2.D0 - vtmp1(:,ADM_kmin+1,l,I_TEM)
-             vtmp1(:,ADM_kmin-1,l,I_RHO) = vtmp1(:,ADM_kmin  ,l,I_RHO) * 2.D0 - vtmp1(:,ADM_kmin+1,l,I_RHO)
+             vtmp1(:,ADM_kmin-1,l,I_TEM) = vtmp1(:,ADM_kmin  ,l,I_TEM) * 2.0_RP - vtmp1(:,ADM_kmin+1,l,I_TEM)
+             vtmp1(:,ADM_kmin-1,l,I_RHO) = vtmp1(:,ADM_kmin  ,l,I_RHO) * 2.0_RP - vtmp1(:,ADM_kmin+1,l,I_RHO)
 
              !--- top boundary
              vtmp1(:,ADM_kmax+1,l,I_VX ) = vtmp1(:,ADM_kmax,l,I_VX )
              vtmp1(:,ADM_kmax+1,l,I_VY ) = vtmp1(:,ADM_kmax,l,I_VY )
              vtmp1(:,ADM_kmax+1,l,I_VZ ) = vtmp1(:,ADM_kmax,l,I_VZ )
              vtmp1(:,ADM_kmax+1,l,I_W  ) = vtmp1(:,ADM_kmax,l,I_W  )
-             vtmp1(:,ADM_kmax+1,l,I_TEM) = vtmp1(:,ADM_kmax,l,I_TEM) * 2.D0 - vtmp1(:,ADM_kmax-1,l,I_TEM)
-             vtmp1(:,ADM_kmax+1,l,I_RHO) = vtmp1(:,ADM_kmax,l,I_RHO) * 2.D0 - vtmp1(:,ADM_kmax-1,l,I_RHO)
+             vtmp1(:,ADM_kmax+1,l,I_TEM) = vtmp1(:,ADM_kmax,l,I_TEM) * 2.0_RP - vtmp1(:,ADM_kmax-1,l,I_TEM)
+             vtmp1(:,ADM_kmax+1,l,I_RHO) = vtmp1(:,ADM_kmax,l,I_RHO) * 2.0_RP - vtmp1(:,ADM_kmax-1,l,I_RHO)
 
              do nq = 1, TRC_VMAX
-                vtmp1(:,ADM_kmin-1,l,vmax+nq) = 2.D0 * vtmp1(:,ADM_kmin,l,vmax+nq) - vtmp1(:,ADM_kmin+1,l,vmax+nq)
-                vtmp1(:,ADM_kmax+1,l,vmax+nq) = 2.D0 * vtmp1(:,ADM_kmax,l,vmax+nq) - vtmp1(:,ADM_kmax-1,l,vmax+nq)
+                vtmp1(:,ADM_kmin-1,l,vmax+nq) = 2.0_RP * vtmp1(:,ADM_kmin,l,vmax+nq) - vtmp1(:,ADM_kmin+1,l,vmax+nq)
+                vtmp1(:,ADM_kmax+1,l,vmax+nq) = 2.0_RP * vtmp1(:,ADM_kmax,l,vmax+nq) - vtmp1(:,ADM_kmax-1,l,vmax+nq)
              enddo
 
              vtmp0(:,:,l,:) = vtmp1(:,:,l,:)
@@ -1857,33 +1857,33 @@ contains
        vtmp0_pl(:,ADM_kmin-1,:,I_VX ) = vtmp0_pl(:,ADM_kmin,:,I_VX)
        vtmp0_pl(:,ADM_kmin-1,:,I_VY ) = vtmp0_pl(:,ADM_kmin,:,I_VY)
        vtmp0_pl(:,ADM_kmin-1,:,I_VZ ) = vtmp0_pl(:,ADM_kmin,:,I_VZ)
-       vtmp0_pl(:,ADM_kmin  ,:,I_W  ) = 0.D0
-       vtmp0_pl(:,ADM_kmin-1,:,I_TEM) = 3.D0 * vtmp0_pl(:,ADM_kmin  ,:,I_TEM) &
-                                      - 3.D0 * vtmp0_pl(:,ADM_kmin+1,:,I_TEM) &
-                                      + 1.D0 * vtmp0_pl(:,ADM_kmin+2,:,I_TEM)
-       vtmp0_pl(:,ADM_kmin-1,:,I_RHO) = 3.D0 * vtmp0_pl(:,ADM_kmin  ,:,I_RHO) &
-                                      - 3.D0 * vtmp0_pl(:,ADM_kmin+1,:,I_RHO) &
-                                      + 1.D0 * vtmp0_pl(:,ADM_kmin+2,:,I_RHO)
+       vtmp0_pl(:,ADM_kmin  ,:,I_W  ) = 0.0_RP
+       vtmp0_pl(:,ADM_kmin-1,:,I_TEM) = 3.0_RP * vtmp0_pl(:,ADM_kmin  ,:,I_TEM) &
+                                      - 3.0_RP * vtmp0_pl(:,ADM_kmin+1,:,I_TEM) &
+                                      + 1.0_RP * vtmp0_pl(:,ADM_kmin+2,:,I_TEM)
+       vtmp0_pl(:,ADM_kmin-1,:,I_RHO) = 3.0_RP * vtmp0_pl(:,ADM_kmin  ,:,I_RHO) &
+                                      - 3.0_RP * vtmp0_pl(:,ADM_kmin+1,:,I_RHO) &
+                                      + 1.0_RP * vtmp0_pl(:,ADM_kmin+2,:,I_RHO)
 
        !--- top boundary
        vtmp0_pl(:,ADM_kmax+1,:,I_VX ) = vtmp0_pl(:,ADM_kmax,:,I_VX)
        vtmp0_pl(:,ADM_kmax+1,:,I_VY ) = vtmp0_pl(:,ADM_kmax,:,I_VY)
        vtmp0_pl(:,ADM_kmax+1,:,I_VZ ) = vtmp0_pl(:,ADM_kmax,:,I_VZ)
-       vtmp0_pl(:,ADM_kmax+1,:,I_W  ) = 0.D0
-       vtmp0_pl(:,ADM_kmax+1,:,I_TEM) = 3.D0 * vtmp0_pl(:,ADM_kmax  ,:,I_TEM) &
-                                      - 3.D0 * vtmp0_pl(:,ADM_kmax-1,:,I_TEM) &
-                                      + 1.D0 * vtmp0_pl(:,ADM_kmax-2,:,I_TEM)
-       vtmp0_pl(:,ADM_kmax+1,:,I_RHO) = 3.D0 * vtmp0_pl(:,ADM_kmax  ,:,I_RHO) &
-                                      - 3.D0 * vtmp0_pl(:,ADM_kmax-1,:,I_RHO) &
-                                      + 1.D0 * vtmp0_pl(:,ADM_kmax-2,:,I_RHO)
+       vtmp0_pl(:,ADM_kmax+1,:,I_W  ) = 0.0_RP
+       vtmp0_pl(:,ADM_kmax+1,:,I_TEM) = 3.0_RP * vtmp0_pl(:,ADM_kmax  ,:,I_TEM) &
+                                      - 3.0_RP * vtmp0_pl(:,ADM_kmax-1,:,I_TEM) &
+                                      + 1.0_RP * vtmp0_pl(:,ADM_kmax-2,:,I_TEM)
+       vtmp0_pl(:,ADM_kmax+1,:,I_RHO) = 3.0_RP * vtmp0_pl(:,ADM_kmax  ,:,I_RHO) &
+                                      - 3.0_RP * vtmp0_pl(:,ADM_kmax-1,:,I_RHO) &
+                                      + 1.0_RP * vtmp0_pl(:,ADM_kmax-2,:,I_RHO)
 
        do nq = 1, TRC_VMAX
-          vtmp0_pl(:,ADM_kmin-1,:,vmax+nq) = 3.D0 * vtmp0_pl(:,ADM_kmin  ,:,vmax+nq) &
-                                           - 3.D0 * vtmp0_pl(:,ADM_kmin+1,:,vmax+nq) &
-                                           + 1.D0 * vtmp0_pl(:,ADM_kmin+2,:,vmax+nq)
-          vtmp0_pl(:,ADM_kmax+1,:,vmax+nq) = 3.D0 * vtmp0_pl(:,ADM_kmax  ,:,vmax+nq) &
-                                           - 3.D0 * vtmp0_pl(:,ADM_kmax-1,:,vmax+nq) &
-                                           + 1.D0 * vtmp0_pl(:,ADM_kmax-2,:,vmax+nq)
+          vtmp0_pl(:,ADM_kmin-1,:,vmax+nq) = 3.0_RP * vtmp0_pl(:,ADM_kmin  ,:,vmax+nq) &
+                                           - 3.0_RP * vtmp0_pl(:,ADM_kmin+1,:,vmax+nq) &
+                                           + 1.0_RP * vtmp0_pl(:,ADM_kmin+2,:,vmax+nq)
+          vtmp0_pl(:,ADM_kmax+1,:,vmax+nq) = 3.0_RP * vtmp0_pl(:,ADM_kmax  ,:,vmax+nq) &
+                                           - 3.0_RP * vtmp0_pl(:,ADM_kmax-1,:,vmax+nq) &
+                                           + 1.0_RP * vtmp0_pl(:,ADM_kmax-2,:,vmax+nq)
        enddo
 
        do l = 1, ADM_lall
@@ -1925,22 +1925,22 @@ contains
                 vtmp1_pl(:,ADM_kmin-1,l,I_VY ) = vtmp1_pl(:,ADM_kmin  ,l,I_VY )
                 vtmp1_pl(:,ADM_kmin-1,l,I_VZ ) = vtmp1_pl(:,ADM_kmin  ,l,I_VZ )
                 vtmp1_pl(:,ADM_kmin  ,l,I_W  ) = vtmp1_pl(:,ADM_kmin+1,l,I_W  )
-                vtmp1_pl(:,ADM_kmin-1,l,I_TEM) = vtmp1_pl(:,ADM_kmin  ,l,I_TEM) * 2.D0 - vtmp1_pl(:,ADM_kmin+1,l,I_TEM)
-                vtmp1_pl(:,ADM_kmin-1,l,I_RHO) = vtmp1_pl(:,ADM_kmin  ,l,I_RHO) * 2.D0 - vtmp1_pl(:,ADM_kmin+1,l,I_RHO)
+                vtmp1_pl(:,ADM_kmin-1,l,I_TEM) = vtmp1_pl(:,ADM_kmin  ,l,I_TEM) * 2.0_RP - vtmp1_pl(:,ADM_kmin+1,l,I_TEM)
+                vtmp1_pl(:,ADM_kmin-1,l,I_RHO) = vtmp1_pl(:,ADM_kmin  ,l,I_RHO) * 2.0_RP - vtmp1_pl(:,ADM_kmin+1,l,I_RHO)
 
                 !--- top boundary
                 vtmp1_pl(:,ADM_kmax+1,l,I_VX ) = vtmp1_pl(:,ADM_kmax,l,I_VX )
                 vtmp1_pl(:,ADM_kmax+1,l,I_VY ) = vtmp1_pl(:,ADM_kmax,l,I_VY )
                 vtmp1_pl(:,ADM_kmax+1,l,I_VZ ) = vtmp1_pl(:,ADM_kmax,l,I_VZ )
                 vtmp1_pl(:,ADM_kmax+1,l,I_W  ) = vtmp1_pl(:,ADM_kmax,l,I_W  )
-                vtmp1_pl(:,ADM_kmax+1,l,I_TEM) = vtmp1_pl(:,ADM_kmax,l,I_TEM) * 2.D0 - vtmp1_pl(:,ADM_kmax-1,l,I_TEM)
-                vtmp1_pl(:,ADM_kmax+1,l,I_RHO) = vtmp1_pl(:,ADM_kmax,l,I_RHO) * 2.D0 - vtmp1_pl(:,ADM_kmax-1,l,I_RHO)
+                vtmp1_pl(:,ADM_kmax+1,l,I_TEM) = vtmp1_pl(:,ADM_kmax,l,I_TEM) * 2.0_RP - vtmp1_pl(:,ADM_kmax-1,l,I_TEM)
+                vtmp1_pl(:,ADM_kmax+1,l,I_RHO) = vtmp1_pl(:,ADM_kmax,l,I_RHO) * 2.0_RP - vtmp1_pl(:,ADM_kmax-1,l,I_RHO)
 
                 do nq = 1, TRC_VMAX
-                   vtmp1_pl(:,ADM_kmin-1,l,vmax+nq) = 2.D0 * vtmp1_pl(:,ADM_kmin  ,l,vmax+nq) &
-                                                    - 1.D0 * vtmp1_pl(:,ADM_kmin+1,l,vmax+nq)
-                   vtmp1_pl(:,ADM_kmax+1,l,vmax+nq) = 2.D0 * vtmp1_pl(:,ADM_kmax  ,l,vmax+nq) &
-                                                    - 1.D0 * vtmp1_pl(:,ADM_kmax-1,l,vmax+nq)
+                   vtmp1_pl(:,ADM_kmin-1,l,vmax+nq) = 2.0_RP * vtmp1_pl(:,ADM_kmin  ,l,vmax+nq) &
+                                                    - 1.0_RP * vtmp1_pl(:,ADM_kmin+1,l,vmax+nq)
+                   vtmp1_pl(:,ADM_kmax+1,l,vmax+nq) = 2.0_RP * vtmp1_pl(:,ADM_kmax  ,l,vmax+nq) &
+                                                    - 1.0_RP * vtmp1_pl(:,ADM_kmax-1,l,vmax+nq)
                 enddo
 
              elseif( p == 2 ) then
@@ -2110,14 +2110,14 @@ contains
     call DEBUG_rapstart('____numfilter_divdamp')
 
     if ( .NOT. NUMFILTER_DOdivdamp ) then
-       gdx    (:,:,:) = 0.D0
-       gdx_pl (:,:,:) = 0.D0
-       gdy    (:,:,:) = 0.D0
-       gdy_pl (:,:,:) = 0.D0
-       gdz    (:,:,:) = 0.D0
-       gdz_pl (:,:,:) = 0.D0
-       gdvz   (:,:,:) = 0.D0
-       gdvz_pl(:,:,:) = 0.D0
+       gdx    (:,:,:) = 0.0_RP
+       gdx_pl (:,:,:) = 0.0_RP
+       gdy    (:,:,:) = 0.0_RP
+       gdy_pl (:,:,:) = 0.0_RP
+       gdz    (:,:,:) = 0.0_RP
+       gdz_pl (:,:,:) = 0.0_RP
+       gdvz   (:,:,:) = 0.0_RP
+       gdvz_pl(:,:,:) = 0.0_RP
        call DEBUG_rapend('____numfilter_divdamp')
        return
     endif
@@ -2178,9 +2178,9 @@ contains
           do k = ADM_kmin+1, ADM_kmax
              gdvz(:,k,l) = divdamp_coef_v * ( cnv(:,k,l) - cnv(:,k-1,l) ) * GRD_rdgzh(k)
           enddo
-          gdvz(:,ADM_kmin-1,l) = 0.D0
-          gdvz(:,ADM_kmin  ,l) = 0.D0
-          gdvz(:,ADM_kmax+1,l) = 0.D0
+          gdvz(:,ADM_kmin-1,l) = 0.0_RP
+          gdvz(:,ADM_kmin  ,l) = 0.0_RP
+          gdvz(:,ADM_kmax+1,l) = 0.0_RP
        enddo
 
        if ( ADM_have_pl ) then
@@ -2188,15 +2188,15 @@ contains
              do k = ADM_kmin+1, ADM_kmax
                 gdvz_pl(:,k,l) = divdamp_coef_v * ( cnv_pl(:,k,l) - cnv_pl(:,k-1,l) ) * GRD_rdgzh(k)
              enddo
-             gdvz_pl(:,ADM_kmin-1,l) = 0.D0
-             gdvz_pl(:,ADM_kmin  ,l) = 0.D0
-             gdvz_pl(:,ADM_kmax+1,l) = 0.D0
+             gdvz_pl(:,ADM_kmin-1,l) = 0.0_RP
+             gdvz_pl(:,ADM_kmin  ,l) = 0.0_RP
+             gdvz_pl(:,ADM_kmax+1,l) = 0.0_RP
           enddo
        endif
 
     else
-       gdvz   (:,:,:) = 0.D0
-       gdvz_pl(:,:,:) = 0.D0
+       gdvz   (:,:,:) = 0.0_RP
+       gdvz_pl(:,:,:) = 0.0_RP
     endif
 
     call DEBUG_rapend('____numfilter_divdamp')
@@ -2252,12 +2252,12 @@ contains
     call DEBUG_rapstart('____numfilter_divdamp_2d')
 
     if ( .NOT. NUMFILTER_DOdivdamp_2d ) then
-       gdx   (:,:,:) = 0.D0
-       gdx_pl(:,:,:) = 0.D0
-       gdy   (:,:,:) = 0.D0
-       gdy_pl(:,:,:) = 0.D0
-       gdz   (:,:,:) = 0.D0
-       gdz_pl(:,:,:) = 0.D0
+       gdx   (:,:,:) = 0.0_RP
+       gdx_pl(:,:,:) = 0.0_RP
+       gdy   (:,:,:) = 0.0_RP
+       gdy_pl(:,:,:) = 0.0_RP
+       gdz   (:,:,:) = 0.0_RP
+       gdz_pl(:,:,:) = 0.0_RP
        call DEBUG_rapend('____numfilter_divdamp_2d')
        return
     endif
@@ -2338,7 +2338,7 @@ contains
     REAL(RP) :: vtmp2   (ADM_gall   ,ADM_kall,ADM_lall   ,1)
     REAL(RP) :: vtmp2_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,1)
 
-    REAL(RP), parameter :: ggamma_h = 1.D0 / 16.D0 / 10.D0
+    REAL(RP), parameter :: ggamma_h = 1.0_RP / 16.0_RP / 10.0_RP
     integer, parameter :: itelim = 80
 
     integer :: p, ite
@@ -2349,7 +2349,7 @@ contains
 
        vtmp(:,:,:,1) = s(:,:,:)
 
-       vtmp_pl(:,:,:,:) = 0.D0
+       vtmp_pl(:,:,:,:) = 0.0_RP
 
        if ( ADM_have_pl ) then
           vtmp_pl(:,:,:,1) = s_pl(:,:,:)
@@ -2358,8 +2358,8 @@ contains
        call COMM_data_transfer( vtmp, vtmp_pl )
 
        do p = 1, 2
-          vtmp2   (:,:,:,:) = 0.D0
-          vtmp2_pl(:,:,:,:) = 0.D0
+          vtmp2   (:,:,:,:) = 0.0_RP
+          vtmp2_pl(:,:,:,:) = 0.0_RP
 
           call OPRT_laplacian( vtmp2(:,:,:,1), vtmp2_pl(:,:,:,1), & ! [OUT]
                                vtmp (:,:,:,1), vtmp_pl (:,:,:,1)  ) ! [IN]
@@ -2420,9 +2420,9 @@ contains
     !---------------------------------------------------------------------------
 
     do k = 1, kdim
-       sw = 0.5D0 + sign( 0.5D0, z(k)-z_bottomlimit )
+       sw = 0.5_RP + sign( 0.5_RP, z(k)-z_bottomlimit )
 
-       factor(k) = sw * 0.5D0 * ( 1.D0 - cos( PI * (z(k)-z_bottomlimit) / (z_top-z_bottomlimit)) )
+       factor(k) = sw * 0.5_RP * ( 1.0_RP - cos( PI * (z(k)-z_bottomlimit) / (z_top-z_bottomlimit)) )
     enddo
 
     return

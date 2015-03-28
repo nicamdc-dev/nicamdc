@@ -174,9 +174,9 @@ contains
     REAL(RP) :: GRD_xc   (ADM_gall,   ADM_kall,ADM_lall,   AI:AJ,XDIR:ZDIR) ! mass centroid position
     REAL(RP) :: GRD_xc_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,      XDIR:ZDIR)
 
-    REAL(RP), parameter :: b1 = 0.D0
-    REAL(RP), parameter :: b2 = 1.D0
-    REAL(RP), parameter :: b3 = 1.D0 - (b1+b2)
+    REAL(RP), parameter :: b1 = 0.0_RP
+    REAL(RP), parameter :: b2 = 1.0_RP
+    REAL(RP), parameter :: b3 = 1.0_RP - (b1+b2)
 
     integer :: nstart, nend
     integer :: g, k, l, v, iq
@@ -201,12 +201,12 @@ contains
                            + VMTR_C2WfactGz(g,k,6,l) * rhogvz_mean(g,k-1,l) &
                            ) * VMTR_RGAMH(g,k,l)                            & ! horizontal contribution
                          + rhogw_mean(g,k,l) * VMTR_RGSQRTH(g,k,l)          & ! vertical   contribution
-                         ) * 0.5D0 * dt
+                         ) * 0.5_RP * dt
        enddo
        enddo
        do g = 1, ADM_gall
-          flx_v(g,ADM_kmin,  l) = 0.D0
-          flx_v(g,ADM_kmax+1,l) = 0.D0
+          flx_v(g,ADM_kmin,  l) = 0.0_RP
+          flx_v(g,ADM_kmax+1,l) = 0.0_RP
        enddo
 
        do k = ADM_kmin, ADM_kmax
@@ -222,10 +222,10 @@ contains
           d(g,ADM_kmin-1,l) = b1 * frhog(g,ADM_kmin-1,l) / rhog_in(g,ADM_kmin-1,l) * dt
           d(g,ADM_kmax+1,l) = b1 * frhog(g,ADM_kmax+1,l) / rhog_in(g,ADM_kmax+1,l) * dt
 
-          ck(g,ADM_kmin-1,l,1) = 0.D0
-          ck(g,ADM_kmin-1,l,2) = 0.D0
-          ck(g,ADM_kmax+1,l,1) = 0.D0
-          ck(g,ADM_kmax+1,l,2) = 0.D0
+          ck(g,ADM_kmin-1,l,1) = 0.0_RP
+          ck(g,ADM_kmin-1,l,2) = 0.0_RP
+          ck(g,ADM_kmax+1,l,1) = 0.0_RP
+          ck(g,ADM_kmax+1,l,2) = 0.0_RP
        enddo
     enddo
 
@@ -241,12 +241,12 @@ contains
                                  + VMTR_C2WfactGz_pl(g,k,6,l) * rhogvz_mean_pl(g,k-1,l) &
                                  ) * VMTR_RGAMH_pl(g,k,l)                               & ! horizontal contribution
                                + rhogw_mean_pl(g,k,l) * VMTR_RGSQRTH_pl(g,k,l)          & ! vertical   contribution
-                               ) * 0.5D0 * dt
+                               ) * 0.5_RP * dt
           enddo
           enddo
           do g = 1, ADM_gall_pl
-             flx_v_pl(g,ADM_kmin,  l) = 0.D0
-             flx_v_pl(g,ADM_kmax+1,l) = 0.D0
+             flx_v_pl(g,ADM_kmin,  l) = 0.0_RP
+             flx_v_pl(g,ADM_kmax+1,l) = 0.0_RP
           enddo
 
           do k = ADM_kmin, ADM_kmax
@@ -262,10 +262,10 @@ contains
              d_pl(g,ADM_kmin-1,l) = b1 * frhog_pl(g,ADM_kmin-1,l) / rhog_in_pl(g,ADM_kmin-1,l) * dt
              d_pl(g,ADM_kmax+1,l) = b1 * frhog_pl(g,ADM_kmax+1,l) / rhog_in_pl(g,ADM_kmax+1,l) * dt
 
-             ck_pl(g,ADM_kmin-1,l,1) = 0.D0
-             ck_pl(g,ADM_kmin-1,l,2) = 0.D0
-             ck_pl(g,ADM_kmax+1,l,1) = 0.D0
-             ck_pl(g,ADM_kmax+1,l,2) = 0.D0
+             ck_pl(g,ADM_kmin-1,l,1) = 0.0_RP
+             ck_pl(g,ADM_kmin-1,l,2) = 0.0_RP
+             ck_pl(g,ADM_kmax+1,l,1) = 0.0_RP
+             ck_pl(g,ADM_kmax+1,l,2) = 0.0_RP
           enddo
        enddo
     endif
@@ -277,10 +277,10 @@ contains
           q(:,:,l) = rhogq(:,:,l,iq) / rhog_in(:,:,l)
 
           do k = ADM_kmin, ADM_kmax+1
-             q_h(:,k,l) = 0.5D0 * ( GRD_afac(k) * q(:,k,  l) &
+             q_h(:,k,l) = 0.5_RP * ( GRD_afac(k) * q(:,k,  l) &
                                   + GRD_bfac(k) * q(:,k-1,l) )
           enddo
-          q_h(:,ADM_kmin-1,l) = 0.D0
+          q_h(:,ADM_kmin-1,l) = 0.0_RP
        enddo
 
        if ( ADM_have_pl ) then
@@ -288,10 +288,10 @@ contains
              q_pl(:,:,l) = rhogq_pl(:,:,l,iq) / rhog_in_pl(:,:,l)
 
              do k = ADM_kmin, ADM_kmax+1
-                q_h_pl(:,k,l) = 0.5D0 * ( GRD_afac(k) * q_pl(:,k,  l) &
+                q_h_pl(:,k,l) = 0.5_RP * ( GRD_afac(k) * q_pl(:,k,  l) &
                                         + GRD_bfac(k) * q_pl(:,k-1,l) )
              enddo
-             q_h_pl(:,ADM_kmin-1,l) = 0.D0
+             q_h_pl(:,ADM_kmin-1,l) = 0.0_RP
           enddo
        endif
 
@@ -304,8 +304,8 @@ contains
 
        !--- update rhogq
        do l = 1, ADM_lall
-          q_h(:,ADM_kmin  ,l) = 0.D0
-          q_h(:,ADM_kmax+1,l) = 0.D0
+          q_h(:,ADM_kmin  ,l) = 0.0_RP
+          q_h(:,ADM_kmax+1,l) = 0.0_RP
 
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall
@@ -318,8 +318,8 @@ contains
 
        if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
-             q_h_pl(:,ADM_kmin  ,l) = 0.D0
-             q_h_pl(:,ADM_kmax+1,l) = 0.D0
+             q_h_pl(:,ADM_kmin  ,l) = 0.0_RP
+             q_h_pl(:,ADM_kmax+1,l) = 0.0_RP
 
              do k = ADM_kmin, ADM_kmax
              do g = 1, ADM_gall_pl
@@ -412,12 +412,12 @@ contains
        ch(g,k,l,6) = flx_h(g,k,l,6) / rhog(g,k,l)
 
        ! c <= 0(incoming), cmask = 1
-       cmask(g,k,l,1) = 0.5D0 - sign(0.5D0,ch(g,k,l,1)-EPS)
-       cmask(g,k,l,2) = 0.5D0 - sign(0.5D0,ch(g,k,l,2)-EPS)
-       cmask(g,k,l,3) = 0.5D0 - sign(0.5D0,ch(g,k,l,3)-EPS)
-       cmask(g,k,l,4) = 0.5D0 - sign(0.5D0,ch(g,k,l,4)-EPS)
-       cmask(g,k,l,5) = 0.5D0 - sign(0.5D0,ch(g,k,l,5)-EPS)
-       cmask(g,k,l,6) = 0.5D0 - sign(0.5D0,ch(g,k,l,6)-EPS)
+       cmask(g,k,l,1) = 0.5_RP - sign(0.5_RP,ch(g,k,l,1)-EPS)
+       cmask(g,k,l,2) = 0.5_RP - sign(0.5_RP,ch(g,k,l,2)-EPS)
+       cmask(g,k,l,3) = 0.5_RP - sign(0.5_RP,ch(g,k,l,3)-EPS)
+       cmask(g,k,l,4) = 0.5_RP - sign(0.5_RP,ch(g,k,l,4)-EPS)
+       cmask(g,k,l,5) = 0.5_RP - sign(0.5_RP,ch(g,k,l,5)-EPS)
+       cmask(g,k,l,6) = 0.5_RP - sign(0.5_RP,ch(g,k,l,6)-EPS)
     enddo
     enddo
     enddo
@@ -430,7 +430,7 @@ contains
        do v = ADM_gmin_pl, ADM_gmax_pl
           ch_pl(v,k,l) = flx_h_pl(v,k,l) / rhog_pl(g,k,l)
 
-          cmask_pl(v,k,l) = 0.5D0 - sign(0.5D0,ch_pl(v,k,l)-EPS)
+          cmask_pl(v,k,l) = 0.5_RP - sign(0.5_RP,ch_pl(v,k,l)-EPS)
        enddo
        enddo
        enddo
@@ -542,10 +542,10 @@ contains
           ck(:,k,l,1) = -flx_v(:,k  ,l) / rhog(:,k,l) * GRD_rdgz(k)
           ck(:,k,l,2) =  flx_v(:,k+1,l) / rhog(:,k,l) * GRD_rdgz(k)
        enddo
-       ck(:,ADM_kmin-1,l,1) = 0.D0
-       ck(:,ADM_kmin-1,l,2) = 0.D0
-       ck(:,ADM_kmax+1,l,1) = 0.D0
-       ck(:,ADM_kmax+1,l,2) = 0.D0
+       ck(:,ADM_kmin-1,l,1) = 0.0_RP
+       ck(:,ADM_kmin-1,l,2) = 0.0_RP
+       ck(:,ADM_kmax+1,l,1) = 0.0_RP
+       ck(:,ADM_kmax+1,l,2) = 0.0_RP
     enddo ! l LOOP
 
     if ( ADM_have_pl ) then
@@ -556,10 +556,10 @@ contains
              ck_pl(:,k,l,1) = -flx_v_pl(:,k  ,l) / rhog_pl(:,k,l) * GRD_rdgz(k)
              ck_pl(:,k,l,2) =  flx_v_pl(:,k+1,l) / rhog_pl(:,k,l) * GRD_rdgz(k)
           enddo
-          ck_pl(:,ADM_kmin-1,l,1) = 0.D0
-          ck_pl(:,ADM_kmin-1,l,2) = 0.D0
-          ck_pl(:,ADM_kmax+1,l,1) = 0.D0
-          ck_pl(:,ADM_kmax+1,l,2) = 0.D0
+          ck_pl(:,ADM_kmin-1,l,1) = 0.0_RP
+          ck_pl(:,ADM_kmin-1,l,2) = 0.0_RP
+          ck_pl(:,ADM_kmax+1,l,1) = 0.0_RP
+          ck_pl(:,ADM_kmax+1,l,2) = 0.0_RP
        enddo
     endif
 
@@ -570,10 +570,10 @@ contains
           q(:,:,l) = rhogq(:,:,l,iq) / rhog(:,:,l)
 
           do k = ADM_kmin, ADM_kmax+1
-             q_h(:,k,l) = 0.5D0 * ( GRD_afac(k) * q(:,k,  l) &
+             q_h(:,k,l) = 0.5_RP * ( GRD_afac(k) * q(:,k,  l) &
                                   + GRD_bfac(k) * q(:,k-1,l) )
           enddo
-          q_h(:,ADM_kmin-1,l) = 0.D0
+          q_h(:,ADM_kmin-1,l) = 0.0_RP
        enddo
 
        if ( ADM_have_pl ) then
@@ -581,10 +581,10 @@ contains
              q_pl(:,:,l) = rhogq_pl(:,:,l,iq) / rhog_pl(:,:,l)
 
              do k = ADM_kmin, ADM_kmax+1
-                q_h_pl(:,k,l) = 0.5D0 * ( GRD_afac(k) * q_pl(:,k,  l) &
+                q_h_pl(:,k,l) = 0.5_RP * ( GRD_afac(k) * q_pl(:,k,  l) &
                                         + GRD_bfac(k) * q_pl(:,k-1,l) )
              enddo
-             q_h_pl(:,ADM_kmin-1,l) = 0.D0
+             q_h_pl(:,ADM_kmin-1,l) = 0.0_RP
           enddo
        endif
 
@@ -597,8 +597,8 @@ contains
 
        !--- update rhogq
        do l = 1, ADM_lall
-          q_h(:,ADM_kmin  ,l) = 0.D0
-          q_h(:,ADM_kmax+1,l) = 0.D0
+          q_h(:,ADM_kmin  ,l) = 0.0_RP
+          q_h(:,ADM_kmax+1,l) = 0.0_RP
 
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall
@@ -611,8 +611,8 @@ contains
 
        if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
-             q_h_pl(:,ADM_kmin  ,l) = 0.D0
-             q_h_pl(:,ADM_kmax+1,l) = 0.D0
+             q_h_pl(:,ADM_kmin  ,l) = 0.0_RP
+             q_h_pl(:,ADM_kmax+1,l) = 0.0_RP
 
              do k = ADM_kmin, ADM_kmax
              do g = 1, ADM_gall_pl
@@ -786,21 +786,21 @@ contains
           ijm1   = n     - ADM_gall_1d
           ip1j   = n + 1
 
-          rrhoa2  = 1.D0 / max( rhot_TJ(ijm1) + rhot_TI(ij), EPS ) ! doubled
+          rrhoa2  = 1.0_RP / max( rhot_TJ(ijm1) + rhot_TI(ij), EPS ) ! doubled
           rhovxt2 = rhovxt_TJ(ijm1) + rhovxt_TI(ij)
           rhovyt2 = rhovyt_TJ(ijm1) + rhovyt_TI(ij)
           rhovzt2 = rhovzt_TJ(ijm1) + rhovzt_TI(ij)
 
-          flux = 0.5D0 * ( rhovxt2 * cinterp_HN(ij,l,AI ,1) &
+          flux = 0.5_RP * ( rhovxt2 * cinterp_HN(ij,l,AI ,1) &
                          + rhovyt2 * cinterp_HN(ij,l,AI ,2) &
                          + rhovzt2 * cinterp_HN(ij,l,AI ,3) )
 
           flx_h(ij  ,k,l,1) =  flux * cinterp_PRA(ij  ,l) * dt
           flx_h(ip1j,k,l,4) = -flux * cinterp_PRA(ip1j,l) * dt
 
-          GRD_xc(n,k,l,AI,XDIR) = GRD_xr(n,K0,l,AI,XDIR) - rhovxt2 * rrhoa2 * dt * 0.5D0
-          GRD_xc(n,k,l,AI,YDIR) = GRD_xr(n,K0,l,AI,YDIR) - rhovyt2 * rrhoa2 * dt * 0.5D0
-          GRD_xc(n,k,l,AI,ZDIR) = GRD_xr(n,K0,l,AI,ZDIR) - rhovzt2 * rrhoa2 * dt * 0.5D0
+          GRD_xc(n,k,l,AI,XDIR) = GRD_xr(n,K0,l,AI,XDIR) - rhovxt2 * rrhoa2 * dt * 0.5_RP
+          GRD_xc(n,k,l,AI,YDIR) = GRD_xr(n,K0,l,AI,YDIR) - rhovyt2 * rrhoa2 * dt * 0.5_RP
+          GRD_xc(n,k,l,AI,ZDIR) = GRD_xr(n,K0,l,AI,ZDIR) - rhovzt2 * rrhoa2 * dt * 0.5_RP
        enddo
 
        nstart = suf(ADM_gmin-1,ADM_gmin-1)
@@ -810,21 +810,21 @@ contains
           ij     = n
           ip1jp1 = n + 1 + ADM_gall_1d
 
-          rrhoa2  = 1.D0 / max( rhot_TI(ij) + rhot_TJ(ij), EPS ) ! doubled
+          rrhoa2  = 1.0_RP / max( rhot_TI(ij) + rhot_TJ(ij), EPS ) ! doubled
           rhovxt2 = rhovxt_TI(ij) + rhovxt_TJ(ij)
           rhovyt2 = rhovyt_TI(ij) + rhovyt_TJ(ij)
           rhovzt2 = rhovzt_TI(ij) + rhovzt_TJ(ij)
 
-          flux = 0.5D0 * ( rhovxt2 * cinterp_HN(ij,l,AIJ,1) &
+          flux = 0.5_RP * ( rhovxt2 * cinterp_HN(ij,l,AIJ,1) &
                          + rhovyt2 * cinterp_HN(ij,l,AIJ,2) &
                          + rhovzt2 * cinterp_HN(ij,l,AIJ,3) )
 
           flx_h(ij    ,k,l,2) =  flux * cinterp_PRA(ij    ,l) * dt
           flx_h(ip1jp1,k,l,5) = -flux * cinterp_PRA(ip1jp1,l) * dt
 
-          GRD_xc(n,k,l,AIJ,XDIR) = GRD_xr(n,K0,l,AIJ,XDIR) - rhovxt2 * rrhoa2 * dt * 0.5D0
-          GRD_xc(n,k,l,AIJ,YDIR) = GRD_xr(n,K0,l,AIJ,YDIR) - rhovyt2 * rrhoa2 * dt * 0.5D0
-          GRD_xc(n,k,l,AIJ,ZDIR) = GRD_xr(n,K0,l,AIJ,ZDIR) - rhovzt2 * rrhoa2 * dt * 0.5D0
+          GRD_xc(n,k,l,AIJ,XDIR) = GRD_xr(n,K0,l,AIJ,XDIR) - rhovxt2 * rrhoa2 * dt * 0.5_RP
+          GRD_xc(n,k,l,AIJ,YDIR) = GRD_xr(n,K0,l,AIJ,YDIR) - rhovyt2 * rrhoa2 * dt * 0.5_RP
+          GRD_xc(n,k,l,AIJ,ZDIR) = GRD_xr(n,K0,l,AIJ,ZDIR) - rhovzt2 * rrhoa2 * dt * 0.5_RP
        enddo
 
        nstart = suf(ADM_gmin  ,ADM_gmin-1)
@@ -835,25 +835,25 @@ contains
           im1j   = n - 1
           ijp1   = n     + ADM_gall_1d
 
-          rrhoa2  = 1.D0 / max( rhot_TJ(ij) + rhot_TI(im1j), EPS ) ! doubled
+          rrhoa2  = 1.0_RP / max( rhot_TJ(ij) + rhot_TI(im1j), EPS ) ! doubled
           rhovxt2 = rhovxt_TJ(ij) + rhovxt_TI(im1j)
           rhovyt2 = rhovyt_TJ(ij) + rhovyt_TI(im1j)
           rhovzt2 = rhovzt_TJ(ij) + rhovzt_TI(im1j)
 
-          flux = 0.5D0 * ( rhovxt2 * cinterp_HN(ij,l,AJ ,1) &
+          flux = 0.5_RP * ( rhovxt2 * cinterp_HN(ij,l,AJ ,1) &
                          + rhovyt2 * cinterp_HN(ij,l,AJ ,2) &
                          + rhovzt2 * cinterp_HN(ij,l,AJ ,3) )
 
           flx_h(ij  ,k,l,3) =  flux * cinterp_PRA(ij  ,l) * dt
           flx_h(ijp1,k,l,6) = -flux * cinterp_PRA(ijp1,l) * dt
 
-          GRD_xc(n,k,l,AJ,XDIR) = GRD_xr(n,K0,l,AJ,XDIR) - rhovxt2 * rrhoa2 * dt * 0.5D0
-          GRD_xc(n,k,l,AJ,YDIR) = GRD_xr(n,K0,l,AJ,YDIR) - rhovyt2 * rrhoa2 * dt * 0.5D0
-          GRD_xc(n,k,l,AJ,ZDIR) = GRD_xr(n,K0,l,AJ,ZDIR) - rhovzt2 * rrhoa2 * dt * 0.5D0
+          GRD_xc(n,k,l,AJ,XDIR) = GRD_xr(n,K0,l,AJ,XDIR) - rhovxt2 * rrhoa2 * dt * 0.5_RP
+          GRD_xc(n,k,l,AJ,YDIR) = GRD_xr(n,K0,l,AJ,YDIR) - rhovyt2 * rrhoa2 * dt * 0.5_RP
+          GRD_xc(n,k,l,AJ,ZDIR) = GRD_xr(n,K0,l,AJ,ZDIR) - rhovzt2 * rrhoa2 * dt * 0.5_RP
        enddo
 
        if ( ADM_have_sgp(l) ) then
-          flx_h(suf(ADM_gmin,ADM_gmin),k,l,6) = 0.D0
+          flx_h(suf(ADM_gmin,ADM_gmin),k,l,6) = 0.0_RP
        endif
 
     enddo
@@ -889,20 +889,20 @@ contains
              ijm1 = v - 1
              if( ijm1 == ADM_gmin_pl - 1 ) ijm1 = ADM_gmax_pl
 
-             rrhoa2  = 1.D0 / max( rhot_pl(ijm1) + rhot_pl(ij), EPS ) ! doubled
+             rrhoa2  = 1.0_RP / max( rhot_pl(ijm1) + rhot_pl(ij), EPS ) ! doubled
              rhovxt2 = rhovxt_pl(ijm1) + rhovxt_pl(ij)
              rhovyt2 = rhovyt_pl(ijm1) + rhovyt_pl(ij)
              rhovzt2 = rhovzt_pl(ijm1) + rhovzt_pl(ij)
 
-             flux = 0.5D0 * ( rhovxt2 * GMTR_A_var_pl(ij,K0,l,HNX) &
+             flux = 0.5_RP * ( rhovxt2 * GMTR_A_var_pl(ij,K0,l,HNX) &
                             + rhovyt2 * GMTR_A_var_pl(ij,K0,l,HNY) &
                             + rhovzt2 * GMTR_A_var_pl(ij,K0,l,HNZ) )
 
              flx_h_pl(v,k,l) = flux * GMTR_P_var_pl(n,K0,l,P_RAREA) * dt
 
-             GRD_xc_pl(v,k,l,XDIR) = GRD_xr_pl(v,K0,l,XDIR) - rhovxt2 * rrhoa2 * dt * 0.5D0
-             GRD_xc_pl(v,k,l,YDIR) = GRD_xr_pl(v,K0,l,YDIR) - rhovyt2 * rrhoa2 * dt * 0.5D0
-             GRD_xc_pl(v,k,l,ZDIR) = GRD_xr_pl(v,K0,l,ZDIR) - rhovzt2 * rrhoa2 * dt * 0.5D0
+             GRD_xc_pl(v,k,l,XDIR) = GRD_xr_pl(v,K0,l,XDIR) - rhovxt2 * rrhoa2 * dt * 0.5_RP
+             GRD_xc_pl(v,k,l,YDIR) = GRD_xr_pl(v,K0,l,YDIR) - rhovyt2 * rrhoa2 * dt * 0.5_RP
+             GRD_xc_pl(v,k,l,ZDIR) = GRD_xr_pl(v,K0,l,ZDIR) - rhovzt2 * rrhoa2 * dt * 0.5_RP
           enddo
 
        enddo
@@ -1064,7 +1064,7 @@ contains
 
           !$omp do
           do n = nstart1, nstart2
-             q_ap4(n) = 0.D0
+             q_ap4(n) = 0.0_RP
           enddo
           !$omp end do nowait
 
@@ -1081,7 +1081,7 @@ contains
 
           !$omp do
           do n = nstart1, nstart2
-             q_am4(n) = 0.D0
+             q_am4(n) = 0.0_RP
           enddo
           !$omp end do nowait
 
@@ -1097,7 +1097,7 @@ contains
 
           !$omp do
           do n = nstart1, nstart3
-             q_ap5(n) = 0.D0
+             q_ap5(n) = 0.0_RP
           enddo
           !$omp end do nowait
 
@@ -1114,7 +1114,7 @@ contains
 
           !$omp do
           do n = nstart1, nstart3
-             q_am5(n) = 0.D0
+             q_am5(n) = 0.0_RP
           enddo
           !$omp end do nowait
 
@@ -1130,7 +1130,7 @@ contains
 
           !$omp do
           do n = nstart1, nstart4
-             q_ap6(n) = 0.D0
+             q_ap6(n) = 0.0_RP
           enddo
           !$omp end do nowait
 
@@ -1147,7 +1147,7 @@ contains
 
           !$omp do
           do n = nstart1, nstart4
-             q_am6(n) = 0.D0
+             q_am6(n) = 0.0_RP
           enddo
           !$omp end do nowait
 
@@ -1164,42 +1164,42 @@ contains
           !$omp do
           do n = nstart1, nend
              q_a(n,k,l,1) = (      cmask(n,k,l,1) ) * q_am1(n) &
-                          + ( 1.D0-cmask(n,k,l,1) ) * q_ap1(n)
+                          + ( 1.0_RP-cmask(n,k,l,1) ) * q_ap1(n)
           enddo
           !$omp end do nowait
 
           !$omp do
           do n = nstart1, nend
              q_a(n,k,l,2) = (      cmask(n,k,l,2) ) * q_am2(n) &
-                          + ( 1.D0-cmask(n,k,l,2) ) * q_ap2(n)
+                          + ( 1.0_RP-cmask(n,k,l,2) ) * q_ap2(n)
           enddo
           !$omp end do nowait
 
           !$omp do
           do n = nstart1, nend
              q_a(n,k,l,3) = (      cmask(n,k,l,3) ) * q_am3(n) &
-                          + ( 1.D0-cmask(n,k,l,3) ) * q_ap3(n)
+                          + ( 1.0_RP-cmask(n,k,l,3) ) * q_ap3(n)
           enddo
           !$omp end do nowait
 
           !$omp do
           do n = nstart1, nend
              q_a(n,k,l,4) = (      cmask(n,k,l,4) ) * q_am4(n) &
-                          + ( 1.D0-cmask(n,k,l,4) ) * q_ap4(n)
+                          + ( 1.0_RP-cmask(n,k,l,4) ) * q_ap4(n)
           enddo
           !$omp end do nowait
 
           !$omp do
           do n = nstart1, nend
              q_a(n,k,l,5) = (      cmask(n,k,l,5) ) * q_am5(n) &
-                          + ( 1.D0-cmask(n,k,l,5) ) * q_ap5(n)
+                          + ( 1.0_RP-cmask(n,k,l,5) ) * q_ap5(n)
           enddo
           !$omp end do nowait
 
           !$omp do
           do n = nstart1, nend
              q_a(n,k,l,6) = (      cmask(n,k,l,6) ) * q_am6(n) &
-                          + ( 1.D0-cmask(n,k,l,6) ) * q_ap6(n)
+                          + ( 1.0_RP-cmask(n,k,l,6) ) * q_ap6(n)
           enddo
           !$omp end do
 
@@ -1222,7 +1222,7 @@ contains
                              + gradq_pl(v,k,l,ZDIR) * ( GRD_xc_pl(v,k,l,ZDIR) - GRD_x_pl(v,K0,l,ZDIR) )
 
           q_a_pl(v,k,l) = (      cmask_pl(v,k,l) ) * q_am &
-                        + ( 1.D0-cmask_pl(v,k,l) ) * q_ap
+                        + ( 1.0_RP-cmask_pl(v,k,l) ) * q_ap
        enddo
        enddo
        enddo
@@ -1284,44 +1284,44 @@ contains
 
        do k = ADM_kmin, ADM_kmax
        do n = 1, ADM_gall
-          inflagL = 0.5D0 - sign(0.5D0, ck(n,k  ,l,1)) ! incoming flux: flag=1
-          inflagU = 0.5D0 - sign(0.5D0,-ck(n,k+1,l,1)) ! incoming flux: flag=1
+          inflagL = 0.5_RP - sign(0.5_RP, ck(n,k  ,l,1)) ! incoming flux: flag=1
+          inflagU = 0.5_RP - sign(0.5_RP,-ck(n,k+1,l,1)) ! incoming flux: flag=1
 
-          Qin_minL = min( q(n,k,l), q(n,k-1,l) ) + ( 1.D0-inflagL ) * BIG
-          Qin_minU = min( q(n,k,l), q(n,k+1,l) ) + ( 1.D0-inflagU ) * BIG
-          Qin_maxL = max( q(n,k,l), q(n,k-1,l) ) - ( 1.D0-inflagL ) * BIG
-          Qin_maxU = max( q(n,k,l), q(n,k+1,l) ) - ( 1.D0-inflagU ) * BIG
+          Qin_minL = min( q(n,k,l), q(n,k-1,l) ) + ( 1.0_RP-inflagL ) * BIG
+          Qin_minU = min( q(n,k,l), q(n,k+1,l) ) + ( 1.0_RP-inflagU ) * BIG
+          Qin_maxL = max( q(n,k,l), q(n,k-1,l) ) - ( 1.0_RP-inflagL ) * BIG
+          Qin_maxU = max( q(n,k,l), q(n,k+1,l) ) - ( 1.0_RP-inflagU ) * BIG
 
           qnext_min = min( Qin_minL, Qin_minU, q(n,k,l) )
           qnext_max = max( Qin_maxL, Qin_maxU, q(n,k,l) )
 
           Cin      = (      inflagL ) * ( ck(n,k,l,1) ) &
                    + (      inflagU ) * ( ck(n,k,l,2) )
-          Cout     = ( 1.D0-inflagL ) * ( ck(n,k,l,1) ) &
-                   + ( 1.D0-inflagU ) * ( ck(n,k,l,2) )
+          Cout     = ( 1.0_RP-inflagL ) * ( ck(n,k,l,1) ) &
+                   + ( 1.0_RP-inflagU ) * ( ck(n,k,l,2) )
 
           CQin_max = (      inflagL ) * ( ck(n,k,l,1) * Qin_maxL ) &
                    + (      inflagU ) * ( ck(n,k,l,2) * Qin_maxU )
           CQin_min = (      inflagL ) * ( ck(n,k,l,1) * Qin_minL ) &
                    + (      inflagU ) * ( ck(n,k,l,2) * Qin_minU )
 
-          zerosw = 0.5D0 - sign(0.5D0,abs(Cout)-EPS) ! if Cout = 0, sw = 1
+          zerosw = 0.5_RP - sign(0.5_RP,abs(Cout)-EPS) ! if Cout = 0, sw = 1
 
-          Qout_min(n,k) = ( q(n,k,l) - CQin_max - qnext_max*(1.D0-Cin-Cout+d(n,k,l)) ) &
-                        / ( Cout + zerosw ) * ( 1.D0 - zerosw )                        &
+          Qout_min(n,k) = ( q(n,k,l) - CQin_max - qnext_max*(1.0_RP-Cin-Cout+d(n,k,l)) ) &
+                        / ( Cout + zerosw ) * ( 1.0_RP - zerosw )                        &
                         + q(n,k,l) * zerosw
-          Qout_max(n,k) = ( q(n,k,l) - CQin_min - qnext_min*(1.D0-Cin-Cout+d(n,k,l)) ) &
-                        / ( Cout + zerosw ) * ( 1.D0 - zerosw )                        &
+          Qout_max(n,k) = ( q(n,k,l) - CQin_min - qnext_min*(1.0_RP-Cin-Cout+d(n,k,l)) ) &
+                        / ( Cout + zerosw ) * ( 1.0_RP - zerosw )                        &
                         + q(n,k,l) * zerosw
        enddo
        enddo
 
        do k = ADM_kmin+1, ADM_kmax
        do n = 1, ADM_gall
-          inflagL = 0.5D0 - sign(0.5D0,ck(n,k,l,1)) ! incoming flux: flag=1
+          inflagL = 0.5_RP - sign(0.5_RP,ck(n,k,l,1)) ! incoming flux: flag=1
 
           q_h(n,k,l) = (      inflagL ) * max( min( q_h(n,k,l), Qout_max(n,k-1) ), Qout_min(n,k-1) ) &
-                     + ( 1.D0-inflagL ) * max( min( q_h(n,k,l), Qout_max(n,k  ) ), Qout_min(n,k  ) )
+                     + ( 1.0_RP-inflagL ) * max( min( q_h(n,k,l), Qout_max(n,k  ) ), Qout_min(n,k  ) )
        enddo
        enddo
 
@@ -1332,44 +1332,44 @@ contains
 
           do k = ADM_kmin, ADM_kmax
           do n = 1, ADM_gall_pl
-             inflagL = 0.5D0 - sign(0.5D0, ck_pl(n,k  ,l,1)) ! incoming flux: flag=1
-             inflagU = 0.5D0 - sign(0.5D0,-ck_pl(n,k+1,l,1)) ! incoming flux: flag=1
+             inflagL = 0.5_RP - sign(0.5_RP, ck_pl(n,k  ,l,1)) ! incoming flux: flag=1
+             inflagU = 0.5_RP - sign(0.5_RP,-ck_pl(n,k+1,l,1)) ! incoming flux: flag=1
 
-             Qin_minL = min( q_pl(n,k,l), q_pl(n,k-1,l) ) + ( 1.D0-inflagL ) * BIG
-             Qin_minU = min( q_pl(n,k,l), q_pl(n,k+1,l) ) + ( 1.D0-inflagU ) * BIG
-             Qin_maxL = max( q_pl(n,k,l), q_pl(n,k-1,l) ) - ( 1.D0-inflagL ) * BIG
-             Qin_maxU = max( q_pl(n,k,l), q_pl(n,k+1,l) ) - ( 1.D0-inflagU ) * BIG
+             Qin_minL = min( q_pl(n,k,l), q_pl(n,k-1,l) ) + ( 1.0_RP-inflagL ) * BIG
+             Qin_minU = min( q_pl(n,k,l), q_pl(n,k+1,l) ) + ( 1.0_RP-inflagU ) * BIG
+             Qin_maxL = max( q_pl(n,k,l), q_pl(n,k-1,l) ) - ( 1.0_RP-inflagL ) * BIG
+             Qin_maxU = max( q_pl(n,k,l), q_pl(n,k+1,l) ) - ( 1.0_RP-inflagU ) * BIG
 
              qnext_min = min( Qin_minL, Qin_minU, q_pl(n,k,l) )
              qnext_max = max( Qin_maxL, Qin_maxU, q_pl(n,k,l) )
 
              Cin      = (      inflagL ) * ( ck_pl(n,k  ,l,1) ) &
                       + (      inflagU ) * ( ck_pl(n,k+1,l,2) )
-             Cout     = ( 1.D0-inflagL ) * ( ck_pl(n,k  ,l,1) ) &
-                      + ( 1.D0-inflagU ) * ( ck_pl(n,k+1,l,2) )
+             Cout     = ( 1.0_RP-inflagL ) * ( ck_pl(n,k  ,l,1) ) &
+                      + ( 1.0_RP-inflagU ) * ( ck_pl(n,k+1,l,2) )
 
              CQin_max = (      inflagL ) * ( ck_pl(n,k  ,l,1) * Qin_maxL ) &
                       + (      inflagU ) * ( ck_pl(n,k+1,l,2) * Qin_maxU )
              CQin_min = (      inflagL ) * ( ck_pl(n,k  ,l,1) * Qin_minL ) &
                       + (      inflagU ) * ( ck_pl(n,k+1,l,2) * Qin_minU )
 
-             zerosw = 0.5D0 - sign(0.5D0,abs(Cout)-EPS) ! if Cout = 0, sw = 1
+             zerosw = 0.5_RP - sign(0.5_RP,abs(Cout)-EPS) ! if Cout = 0, sw = 1
 
-             Qout_min_pl(n,k) = ( q_pl(n,k,l) - CQin_max - qnext_max*(1.D0-Cin-Cout+d_pl(n,k,l)) ) &
-                              / ( Cout + zerosw ) * ( 1.D0 - zerosw )                              &
+             Qout_min_pl(n,k) = ( q_pl(n,k,l) - CQin_max - qnext_max*(1.0_RP-Cin-Cout+d_pl(n,k,l)) ) &
+                              / ( Cout + zerosw ) * ( 1.0_RP - zerosw )                              &
                               + q_pl(n,k,l) * zerosw
-             Qout_max_pl(n,k) = ( q_pl(n,k,l) - CQin_min - qnext_min*(1.D0-Cin-Cout+d_pl(n,k,l)) ) &
-                              / ( Cout + zerosw ) * ( 1.D0 - zerosw )                              &
+             Qout_max_pl(n,k) = ( q_pl(n,k,l) - CQin_min - qnext_min*(1.0_RP-Cin-Cout+d_pl(n,k,l)) ) &
+                              / ( Cout + zerosw ) * ( 1.0_RP - zerosw )                              &
                               + q_pl(n,k,l) * zerosw
           enddo
           enddo
 
           do k = ADM_kmin+1, ADM_kmax
           do n = 1, ADM_gall_pl
-             inflagL = 0.5D0 - sign(0.5D0,ck_pl(n,k,l,1)) ! incoming flux: flag=1
+             inflagL = 0.5_RP - sign(0.5_RP,ck_pl(n,k,l,1)) ! incoming flux: flag=1
 
              q_h_pl(n,k,l) = (      inflagL ) * max( min( q_h_pl(n,k,l), Qout_max_pl(n,k-1) ), Qout_min_pl(n,k-1) ) &
-                           + ( 1.D0-inflagL ) * max( min( q_h_pl(n,k,l), Qout_max_pl(n,k  ) ), Qout_min_pl(n,k  ) )
+                           + ( 1.0_RP-inflagL ) * max( min( q_h_pl(n,k,l), Qout_max_pl(n,k  ) ), Qout_min_pl(n,k  ) )
           enddo
           enddo
 
@@ -1482,31 +1482,31 @@ contains
           q_max_AJ  = max( q(ij,k,l), q(ip1jp1,k,l), q(ijp1,k,l), q(im1j,k,l) )
 
           Qin(ij,    k,l,I_min,1) = (      cmask(n,k,l,1) ) * q_min_AI         &
-                                  + ( 1.D0-cmask(n,k,l,1) ) * CNST_MAX_REAL
+                                  + ( 1.0_RP-cmask(n,k,l,1) ) * CNST_MAX_REAL
           Qin(ip1j,  k,l,I_min,4) = (      cmask(n,k,l,1) ) * CNST_MAX_REAL    &
-                                  + ( 1.D0-cmask(n,k,l,1) ) * q_min_AI
+                                  + ( 1.0_RP-cmask(n,k,l,1) ) * q_min_AI
           Qin(ij,    k,l,I_max,1) = (      cmask(n,k,l,1) ) * q_max_AI         &
-                                  + ( 1.D0-cmask(n,k,l,1) ) * (-CNST_MAX_REAL)
+                                  + ( 1.0_RP-cmask(n,k,l,1) ) * (-CNST_MAX_REAL)
           Qin(ip1j,  k,l,I_max,4) = (      cmask(n,k,l,1) ) * (-CNST_MAX_REAL) &
-                                  + ( 1.D0-cmask(n,k,l,1) ) * q_max_AI
+                                  + ( 1.0_RP-cmask(n,k,l,1) ) * q_max_AI
 
           Qin(ij,    k,l,I_min,2) = (      cmask(n,k,l,2) ) * q_min_AIJ        &
-                                  + ( 1.D0-cmask(n,k,l,2) ) * CNST_MAX_REAL
+                                  + ( 1.0_RP-cmask(n,k,l,2) ) * CNST_MAX_REAL
           Qin(ip1jp1,k,l,I_min,5) = (      cmask(n,k,l,2) ) * CNST_MAX_REAL    &
-                                  + ( 1.D0-cmask(n,k,l,2) ) * q_min_AIJ
+                                  + ( 1.0_RP-cmask(n,k,l,2) ) * q_min_AIJ
           Qin(ij,    k,l,I_max,2) = (      cmask(n,k,l,2) ) * q_max_AIJ        &
-                                  + ( 1.D0-cmask(n,k,l,2) ) * (-CNST_MAX_REAL)
+                                  + ( 1.0_RP-cmask(n,k,l,2) ) * (-CNST_MAX_REAL)
           Qin(ip1jp1,k,l,I_max,5) = (      cmask(n,k,l,2) ) * (-CNST_MAX_REAL) &
-                                  + ( 1.D0-cmask(n,k,l,2) ) * q_max_AIJ
+                                  + ( 1.0_RP-cmask(n,k,l,2) ) * q_max_AIJ
 
           Qin(ij,    k,l,I_min,3) = (      cmask(n,k,l,3) ) * q_min_AJ         &
-                                  + ( 1.D0-cmask(n,k,l,3) ) * CNST_MAX_REAL
+                                  + ( 1.0_RP-cmask(n,k,l,3) ) * CNST_MAX_REAL
           Qin(ijp1,  k,l,I_min,6) = (      cmask(n,k,l,3) ) * CNST_MAX_REAL    &
-                                  + ( 1.D0-cmask(n,k,l,3) ) * q_min_AJ
+                                  + ( 1.0_RP-cmask(n,k,l,3) ) * q_min_AJ
           Qin(ij,    k,l,I_max,3) = (      cmask(n,k,l,3) ) * q_max_AJ         &
-                                  + ( 1.D0-cmask(n,k,l,3) ) * (-CNST_MAX_REAL)
+                                  + ( 1.0_RP-cmask(n,k,l,3) ) * (-CNST_MAX_REAL)
           Qin(ijp1,  k,l,I_max,6) = (      cmask(n,k,l,3) ) * (-CNST_MAX_REAL) &
-                                  + ( 1.D0-cmask(n,k,l,3) ) * q_max_AJ
+                                  + ( 1.0_RP-cmask(n,k,l,3) ) * q_max_AJ
        enddo
 
        ! peeling
@@ -1523,13 +1523,13 @@ contains
           q_max_AI  = max( q(ij,k,l), q(ip1j,k,l), q(ip1jp1,k,l), q(ijm1,k,l) )
 
           Qin(ij,    k,l,I_min,1) = (      cmask(n,k,l,1) ) * q_min_AI         &
-                                  + ( 1.D0-cmask(n,k,l,1) ) * CNST_MAX_REAL
+                                  + ( 1.0_RP-cmask(n,k,l,1) ) * CNST_MAX_REAL
           Qin(ip1j,  k,l,I_min,4) = (      cmask(n,k,l,1) ) * CNST_MAX_REAL    &
-                                  + ( 1.D0-cmask(n,k,l,1) ) * q_min_AI
+                                  + ( 1.0_RP-cmask(n,k,l,1) ) * q_min_AI
           Qin(ij,    k,l,I_max,1) = (      cmask(n,k,l,1) ) * q_max_AI         &
-                                  + ( 1.D0-cmask(n,k,l,1) ) * (-CNST_MAX_REAL)
+                                  + ( 1.0_RP-cmask(n,k,l,1) ) * (-CNST_MAX_REAL)
           Qin(ip1j,  k,l,I_max,4) = (      cmask(n,k,l,1) ) * (-CNST_MAX_REAL) &
-                                  + ( 1.D0-cmask(n,k,l,1) ) * q_max_AI
+                                  + ( 1.0_RP-cmask(n,k,l,1) ) * q_max_AI
        enddo
 
        ! peeling
@@ -1546,13 +1546,13 @@ contains
           q_max_AIJ = max( q(ij,k,l), q(ip1jp1,k,l), q(ip1j,k,l), q(ijp1,k,l) )
 
           Qin(ij,    k,l,I_min,2) = (      cmask(n,k,l,2) ) * q_min_AIJ        &
-                                  + ( 1.D0-cmask(n,k,l,2) ) * CNST_MAX_REAL
+                                  + ( 1.0_RP-cmask(n,k,l,2) ) * CNST_MAX_REAL
           Qin(ip1jp1,k,l,I_min,5) = (      cmask(n,k,l,2) ) * CNST_MAX_REAL    &
-                                  + ( 1.D0-cmask(n,k,l,2) ) * q_min_AIJ
+                                  + ( 1.0_RP-cmask(n,k,l,2) ) * q_min_AIJ
           Qin(ij,    k,l,I_max,2) = (      cmask(n,k,l,2) ) * q_max_AIJ        &
-                                  + ( 1.D0-cmask(n,k,l,2) ) * (-CNST_MAX_REAL)
+                                  + ( 1.0_RP-cmask(n,k,l,2) ) * (-CNST_MAX_REAL)
           Qin(ip1jp1,k,l,I_max,5) = (      cmask(n,k,l,2) ) * (-CNST_MAX_REAL) &
-                                  + ( 1.D0-cmask(n,k,l,2) ) * q_max_AIJ
+                                  + ( 1.0_RP-cmask(n,k,l,2) ) * q_max_AIJ
        enddo
 
        ! peeling
@@ -1569,13 +1569,13 @@ contains
           q_max_AJ  = max( q(ij,k,l), q(ijp1,k,l), q(ip1jp1,k,l), q(im1j,k,l) )
 
           Qin(ij,    k,l,I_min,3) = (      cmask(n,k,l,3) ) * q_min_AJ         &
-                                  + ( 1.D0-cmask(n,k,l,3) ) * CNST_MAX_REAL
+                                  + ( 1.0_RP-cmask(n,k,l,3) ) * CNST_MAX_REAL
           Qin(ijp1,  k,l,I_min,6) = (      cmask(n,k,l,3) ) * CNST_MAX_REAL    &
-                                  + ( 1.D0-cmask(n,k,l,3) ) * q_min_AJ
+                                  + ( 1.0_RP-cmask(n,k,l,3) ) * q_min_AJ
           Qin(ij,    k,l,I_max,3) = (      cmask(n,k,l,3) ) * q_max_AJ         &
-                                  + ( 1.D0-cmask(n,k,l,3) ) * (-CNST_MAX_REAL)
+                                  + ( 1.0_RP-cmask(n,k,l,3) ) * (-CNST_MAX_REAL)
           Qin(ijp1,  k,l,I_max,6) = (      cmask(n,k,l,3) ) * (-CNST_MAX_REAL) &
-                                  + ( 1.D0-cmask(n,k,l,3) ) * q_max_AJ
+                                  + ( 1.0_RP-cmask(n,k,l,3) ) * q_max_AJ
        enddo
 
        if ( ADM_have_sgp(l) ) then
@@ -1589,13 +1589,13 @@ contains
           q_max_AIJ = max( q(ij,k,l), q(ip1jp1,k,l), q(ip2jp1,k,l), q(ijp1,k,l) )
 
           Qin(ij,    k,l,I_min,2) = (      cmask(n,k,l,2) ) * q_min_AIJ        &
-                                  + ( 1.D0-cmask(n,k,l,2) ) * CNST_MAX_REAL
+                                  + ( 1.0_RP-cmask(n,k,l,2) ) * CNST_MAX_REAL
           Qin(ip1jp1,k,l,I_min,5) = (      cmask(n,k,l,2) ) * CNST_MAX_REAL    &
-                                  + ( 1.D0-cmask(n,k,l,2) ) * q_min_AIJ
+                                  + ( 1.0_RP-cmask(n,k,l,2) ) * q_min_AIJ
           Qin(ij,    k,l,I_max,2) = (      cmask(n,k,l,2) ) * q_max_AIJ        &
-                                  + ( 1.D0-cmask(n,k,l,2) ) * (-CNST_MAX_REAL)
+                                  + ( 1.0_RP-cmask(n,k,l,2) ) * (-CNST_MAX_REAL)
           Qin(ip1jp1,k,l,I_max,5) = (      cmask(n,k,l,2) ) * (-CNST_MAX_REAL) &
-                                  + ( 1.D0-cmask(n,k,l,2) ) * q_max_AIJ
+                                  + ( 1.0_RP-cmask(n,k,l,2) ) * q_max_AIJ
        endif
 
     enddo
@@ -1618,12 +1618,12 @@ contains
        enddo
 
        do n = nstart, nend
-          ch_masked1 = min( ch(n,k,l,1), 0.D0 )
-          ch_masked2 = min( ch(n,k,l,2), 0.D0 )
-          ch_masked3 = min( ch(n,k,l,3), 0.D0 )
-          ch_masked4 = min( ch(n,k,l,4), 0.D0 )
-          ch_masked5 = min( ch(n,k,l,5), 0.D0 )
-          ch_masked6 = min( ch(n,k,l,6), 0.D0 )
+          ch_masked1 = min( ch(n,k,l,1), 0.0_RP )
+          ch_masked2 = min( ch(n,k,l,2), 0.0_RP )
+          ch_masked3 = min( ch(n,k,l,3), 0.0_RP )
+          ch_masked4 = min( ch(n,k,l,4), 0.0_RP )
+          ch_masked5 = min( ch(n,k,l,5), 0.0_RP )
+          ch_masked6 = min( ch(n,k,l,6), 0.0_RP )
 
           Cin_sum(n)      = ch_masked1 &
                           + ch_masked2 &
@@ -1655,13 +1655,13 @@ contains
        enddo
 
        do n = nstart, nend
-          zerosw = 0.5D0 - sign(0.5D0,abs(Cout_sum(n))-CNST_EPS_ZERO) ! if Cout_sum = 0, sw = 1
+          zerosw = 0.5_RP - sign(0.5_RP,abs(Cout_sum(n))-CNST_EPS_ZERO) ! if Cout_sum = 0, sw = 1
 
-          Qout(n,k,l,I_min) = ( q(n,k,l) - CQin_max_sum(n) - qnext_max(n)*(1.D0-Cin_sum(n)-Cout_sum(n)+d(n,k,l)) ) &
-                            / ( Cout_sum(n) + zerosw ) * ( 1.D0 - zerosw )                                         &
+          Qout(n,k,l,I_min) = ( q(n,k,l) - CQin_max_sum(n) - qnext_max(n)*(1.0_RP-Cin_sum(n)-Cout_sum(n)+d(n,k,l)) ) &
+                            / ( Cout_sum(n) + zerosw ) * ( 1.0_RP - zerosw )                                         &
                             + q(n,k,l) * zerosw
-          Qout(n,k,l,I_max) = ( q(n,k,l) - CQin_min_sum(n) - qnext_min(n)*(1.D0-Cin_sum(n)-Cout_sum(n)+d(n,k,l)) ) &
-                            / ( Cout_sum(n) + zerosw ) * ( 1.D0 - zerosw )                                         &
+          Qout(n,k,l,I_max) = ( q(n,k,l) - CQin_min_sum(n) - qnext_min(n)*(1.0_RP-Cin_sum(n)-Cout_sum(n)+d(n,k,l)) ) &
+                            / ( Cout_sum(n) + zerosw ) * ( 1.0_RP - zerosw )                                         &
                             + q(n,k,l) * zerosw
        enddo ! n loop
     enddo ! k loop
@@ -1688,13 +1688,13 @@ contains
                 q_max_pl = max( q_pl(n,k,l), q_pl(ij,k,l), q_pl(ijm1,k,l), q_pl(ijp1,k,l) )
 
                 Qin_pl(ij,k,l,I_min,1) = (      cmask_pl(ij,k,l) ) * q_min_pl         &
-                                       + ( 1.D0-cmask_pl(ij,k,l) ) * CNST_MAX_REAL
+                                       + ( 1.0_RP-cmask_pl(ij,k,l) ) * CNST_MAX_REAL
                 Qin_pl(ij,k,l,I_min,2) = (      cmask_pl(ij,k,l) ) * CNST_MAX_REAL    &
-                                       + ( 1.D0-cmask_pl(ij,k,l) ) * q_min_pl
+                                       + ( 1.0_RP-cmask_pl(ij,k,l) ) * q_min_pl
                 Qin_pl(ij,k,l,I_max,1) = (      cmask_pl(ij,k,l) ) * q_max_pl         &
-                                       + ( 1.D0-cmask_pl(ij,k,l) ) * (-CNST_MAX_REAL)
+                                       + ( 1.0_RP-cmask_pl(ij,k,l) ) * (-CNST_MAX_REAL)
                 Qin_pl(ij,k,l,I_max,2) = (      cmask_pl(ij,k,l) ) * (-CNST_MAX_REAL) &
-                                       + ( 1.D0-cmask_pl(ij,k,l) ) * q_max_pl
+                                       + ( 1.0_RP-cmask_pl(ij,k,l) ) * q_max_pl
              enddo
           enddo
 
@@ -1706,10 +1706,10 @@ contains
                 qnext_max_pl = max( qnext_max_pl, Qin_pl(v,k,l,I_max,1) )
              enddo
 
-             Cin_sum_pl      = 0.D0
-             Cout_sum_pl     = 0.D0
-             CQin_max_sum_pl = 0.D0
-             CQin_min_sum_pl = 0.D0
+             Cin_sum_pl      = 0.0_RP
+             Cout_sum_pl     = 0.0_RP
+             CQin_max_sum_pl = 0.0_RP
+             CQin_min_sum_pl = 0.0_RP
              do v = ADM_gmin_pl, ADM_gmax_pl
                 ch_masked = cmask_pl(v,k,l) * ch_pl(v,k,l)
 
@@ -1719,13 +1719,13 @@ contains
                 CQin_max_sum_pl = CQin_max_sum_pl + ch_masked * Qin_pl(v,k,l,I_max,1)
              enddo
 
-             zerosw = 0.5D0 - sign(0.5D0,abs(Cout_sum_pl)-CNST_EPS_ZERO) ! if Cout_sum_pl = 0, sw = 1
+             zerosw = 0.5_RP - sign(0.5_RP,abs(Cout_sum_pl)-CNST_EPS_ZERO) ! if Cout_sum_pl = 0, sw = 1
 
-             Qout_pl(n,k,l,I_min) = ( q_pl(n,k,l) - CQin_max_sum_pl - qnext_max_pl*(1.D0-Cin_sum_pl-Cout_sum_pl+d_pl(n,k,l)) ) &
-                                  / ( Cout_sum_pl + zerosw ) * ( 1.D0 - zerosw )                                               &
+             Qout_pl(n,k,l,I_min) = ( q_pl(n,k,l) - CQin_max_sum_pl - qnext_max_pl*(1.0_RP-Cin_sum_pl-Cout_sum_pl+d_pl(n,k,l)) ) &
+                                  / ( Cout_sum_pl + zerosw ) * ( 1.0_RP - zerosw )                                               &
                                   + q_pl(n,k,l) * zerosw
-             Qout_pl(n,k,l,I_max) = ( q_pl(n,k,l) - CQin_min_sum_pl - qnext_min_pl*(1.D0-Cin_sum_pl-Cout_sum_pl+d_pl(n,k,l)) ) &
-                                  / ( Cout_sum_pl + zerosw ) * ( 1.D0 - zerosw )                                               &
+             Qout_pl(n,k,l,I_max) = ( q_pl(n,k,l) - CQin_min_sum_pl - qnext_min_pl*(1.0_RP-Cin_sum_pl-Cout_sum_pl+d_pl(n,k,l)) ) &
+                                  / ( Cout_sum_pl + zerosw ) * ( 1.0_RP - zerosw )                                               &
                                   + q_pl(n,k,l) * zerosw
           enddo
        enddo
@@ -1746,21 +1746,21 @@ contains
           ip1jp1 = n + 1 + ADM_gall_1d
 
           q_a(n,k,l,1) = (      cmask(n,k,l,1) ) * min(max(q_a(n,k,l,1), Qin (ij    ,k,l,I_min,1)), Qin (ij    ,k,l,I_max,1)) &
-                       + ( 1.D0-cmask(n,k,l,1) ) * min(max(q_a(n,k,l,1), Qin (ip1j  ,k,l,I_min,4)), Qin (ip1j  ,k,l,I_max,4))
+                       + ( 1.0_RP-cmask(n,k,l,1) ) * min(max(q_a(n,k,l,1), Qin (ip1j  ,k,l,I_min,4)), Qin (ip1j  ,k,l,I_max,4))
           q_a(n,k,l,1) = (      cmask(n,k,l,1) ) * max(min(q_a(n,k,l,1), Qout(ip1j  ,k,l,I_max  )), Qout(ip1j  ,k,l,I_min  )) &
-                       + ( 1.D0-cmask(n,k,l,1) ) * max(min(q_a(n,k,l,1), Qout(ij    ,k,l,I_max  )), Qout(ij    ,k,l,I_min  ))
+                       + ( 1.0_RP-cmask(n,k,l,1) ) * max(min(q_a(n,k,l,1), Qout(ij    ,k,l,I_max  )), Qout(ij    ,k,l,I_min  ))
           q_a(ip1j,k,l,4) = q_a(n,k,l,1)
 
           q_a(n,k,l,2) = (      cmask(n,k,l,2) ) * min(max(q_a(n,k,l,2), Qin (ij    ,k,l,I_min,2)), Qin (ij    ,k,l,I_max,2)) &
-                       + ( 1.D0-cmask(n,k,l,2) ) * min(max(q_a(n,k,l,2), Qin (ip1jp1,k,l,I_min,5)), Qin (ip1jp1,k,l,I_max,5))
+                       + ( 1.0_RP-cmask(n,k,l,2) ) * min(max(q_a(n,k,l,2), Qin (ip1jp1,k,l,I_min,5)), Qin (ip1jp1,k,l,I_max,5))
           q_a(n,k,l,2) = (      cmask(n,k,l,2) ) * max(min(q_a(n,k,l,2), Qout(ip1jp1,k,l,I_max  )), Qout(ip1jp1,k,l,I_min  )) &
-                       + ( 1.D0-cmask(n,k,l,2) ) * max(min(q_a(n,k,l,2), Qout(ij    ,k,l,I_max  )), Qout(ij    ,k,l,I_min  ))
+                       + ( 1.0_RP-cmask(n,k,l,2) ) * max(min(q_a(n,k,l,2), Qout(ij    ,k,l,I_max  )), Qout(ij    ,k,l,I_min  ))
           q_a(ip1jp1,k,l,5) = q_a(n,k,l,2)
 
           q_a(n,k,l,3) = (      cmask(n,k,l,3) ) * min(max(q_a(n,k,l,3), Qin (ij    ,k,l,I_min,3)), Qin (ij    ,k,l,I_max,3)) &
-                       + ( 1.D0-cmask(n,k,l,3) ) * min(max(q_a(n,k,l,3), Qin (ijp1  ,k,l,I_min,6)), Qin (ijp1  ,k,l,I_max,6))
+                       + ( 1.0_RP-cmask(n,k,l,3) ) * min(max(q_a(n,k,l,3), Qin (ijp1  ,k,l,I_min,6)), Qin (ijp1  ,k,l,I_max,6))
           q_a(n,k,l,3) = (      cmask(n,k,l,3) ) * max(min(q_a(n,k,l,3), Qout(ijp1  ,k,l,I_max  )), Qout(ijp1  ,k,l,I_min  )) &
-                       + ( 1.D0-cmask(n,k,l,3) ) * max(min(q_a(n,k,l,3), Qout(ij    ,k,l,I_max  )), Qout(ij    ,k,l,I_min  ))
+                       + ( 1.0_RP-cmask(n,k,l,3) ) * max(min(q_a(n,k,l,3), Qout(ij    ,k,l,I_max  )), Qout(ij    ,k,l,I_min  ))
           q_a(ijp1,k,l,6) = q_a(n,k,l,3)
        enddo
     enddo
@@ -1773,9 +1773,9 @@ contains
        do k = 1, ADM_kall
        do v = ADM_gmin_pl, ADM_gmax_pl
           q_a_pl(v,k,l) = (      cmask_pl(v,k,l) ) * min(max(q_a_pl(v,k,l), Qin_pl (v,k,l,I_min,1)), Qin_pl (v,k,l,I_max,1)) &
-                        + ( 1.D0-cmask_pl(v,k,l) ) * min(max(q_a_pl(v,k,l), Qin_pl (v,k,l,I_min,2)), Qin_pl (v,k,l,I_max,2))
+                        + ( 1.0_RP-cmask_pl(v,k,l) ) * min(max(q_a_pl(v,k,l), Qin_pl (v,k,l,I_min,2)), Qin_pl (v,k,l,I_max,2))
           q_a_pl(v,k,l) = (      cmask_pl(v,k,l) ) * max(min(q_a_pl(v,k,l), Qout_pl(v,k,l,I_max  )), Qout_pl(v,k,l,I_min  )) &
-                        + ( 1.D0-cmask_pl(v,k,l) ) * max(min(q_a_pl(v,k,l), Qout_pl(n,k,l,I_max  )), Qout_pl(n,k,l,I_min  ))
+                        + ( 1.0_RP-cmask_pl(v,k,l) ) * max(min(q_a_pl(v,k,l), Qout_pl(n,k,l,I_max  )), Qout_pl(n,k,l,I_min  ))
        enddo
        enddo
        enddo

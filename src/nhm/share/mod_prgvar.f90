@@ -1093,7 +1093,7 @@ contains
                           DIAG_var_pl(:,:,:,DIAG_vmax0+nq), &
                           ADM_kall, ADM_kmin, ADM_kmax      )
 
-       if ( val_max <= 0.D0 ) then
+       if ( val_max <= 0.0_RP ) then
           nonzero = .false.
        else
           nonzero = .true.
@@ -1122,7 +1122,7 @@ contains
                           PRG_var_pl(:,:,:,PRG_vmax0+nq), &
                           ADM_kall, ADM_kmin, ADM_kmax    )
 
-       if ( val_max <= 0.D0 ) then
+       if ( val_max <= 0.0_RP ) then
           nonzero = .false.
        else
           nonzero = .true.
@@ -1224,7 +1224,7 @@ contains
                           DIAG_var_pl(:,:,:,DIAG_vmax0+nq), &
                           ADM_kall, ADM_kmin, ADM_kmax      )
 
-       if ( val_max <= 0.D0 ) then
+       if ( val_max <= 0.0_RP ) then
           nonzero = .false.
        else
           nonzero = .true.

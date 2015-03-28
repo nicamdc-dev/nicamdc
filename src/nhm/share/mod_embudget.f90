@@ -174,23 +174,23 @@ contains
     allocate( lh_flux_sfc0     (ADM_gall,   k0,ADM_lall   ) )
     allocate( lh_flux_sfc0_pl  (ADM_gall_pl,k0,ADM_lall_pl) )
 
-    evap0     (:,:,:) = 0.D0
-    evap0_pl  (:,:,:) = 0.D0
-    precip0   (:,:,:) = 0.D0
-    precip0_pl(:,:,:) = 0.D0
+    evap0     (:,:,:) = 0.0_RP
+    evap0_pl  (:,:,:) = 0.0_RP
+    precip0   (:,:,:) = 0.0_RP
+    precip0_pl(:,:,:) = 0.0_RP
 
-    sfcrad0          (:,:,:) = 0.D0
-    sfcrad0_pl       (:,:,:) = 0.D0
-    toarad0          (:,:,:) = 0.D0
-    toarad0_pl       (:,:,:) = 0.D0
-    evap_energy0     (:,:,:) = 0.D0
-    evap_energy0_pl  (:,:,:) = 0.D0
-    precip_energy0   (:,:,:) = 0.D0
-    precip_energy0_pl(:,:,:) = 0.D0
-    sh_flux_sfc0     (:,:,:) = 0.D0
-    sh_flux_sfc0_pl  (:,:,:) = 0.D0
-    lh_flux_sfc0     (:,:,:) = 0.D0
-    lh_flux_sfc0_pl  (:,:,:) = 0.D0
+    sfcrad0          (:,:,:) = 0.0_RP
+    sfcrad0_pl       (:,:,:) = 0.0_RP
+    toarad0          (:,:,:) = 0.0_RP
+    toarad0_pl       (:,:,:) = 0.0_RP
+    evap_energy0     (:,:,:) = 0.0_RP
+    evap_energy0_pl  (:,:,:) = 0.0_RP
+    precip_energy0   (:,:,:) = 0.0_RP
+    precip_energy0_pl(:,:,:) = 0.0_RP
+    sh_flux_sfc0     (:,:,:) = 0.0_RP
+    sh_flux_sfc0_pl  (:,:,:) = 0.0_RP
+    lh_flux_sfc0     (:,:,:) = 0.0_RP
+    lh_flux_sfc0_pl  (:,:,:) = 0.0_RP
 
     call diagnose_energy_mass
 
@@ -452,10 +452,10 @@ contains
     enddo
 
     !--- total mass (total/vapor/liquid/soild water)
-    rhoqw_sum = 0.D0
-    rhoqv_sum = 0.D0
-    rhoql_sum = 0.D0
-    rhoqi_sum = 0.D0
+    rhoqw_sum = 0.0_RP
+    rhoqv_sum = 0.0_RP
+    rhoql_sum = 0.0_RP
+    rhoqi_sum = 0.0_RP
     do nq = NQW_STR, NQW_END
        rhoqw_sum = rhoqw_sum + rhoq_sum(nq)
 
@@ -493,7 +493,7 @@ contains
 
     !----- Energy budget
 
-    rhoein_sum = 0.D0
+    rhoein_sum = 0.0_RP
 
     !--- internal energy (dry air)
     tmp = rho * qd * CNST_CV * tem
@@ -590,23 +590,23 @@ contains
     rhoetot_sum_old = rhoetot_sum
 
     ! reset array
-    evap0     (:,:,:) = 0.D0
-    evap0_pl  (:,:,:) = 0.D0
-    precip0   (:,:,:) = 0.D0
-    precip0_pl(:,:,:) = 0.D0
+    evap0     (:,:,:) = 0.0_RP
+    evap0_pl  (:,:,:) = 0.0_RP
+    precip0   (:,:,:) = 0.0_RP
+    precip0_pl(:,:,:) = 0.0_RP
 
-    sfcrad0          (:,:,:) = 0.D0
-    sfcrad0_pl       (:,:,:) = 0.D0
-    toarad0          (:,:,:) = 0.D0
-    toarad0_pl       (:,:,:) = 0.D0
-    evap_energy0     (:,:,:) = 0.D0
-    evap_energy0_pl  (:,:,:) = 0.D0
-    precip_energy0   (:,:,:) = 0.D0
-    precip_energy0_pl(:,:,:) = 0.D0
-    sh_flux_sfc0     (:,:,:) = 0.D0
-    sh_flux_sfc0_pl  (:,:,:) = 0.D0
-    lh_flux_sfc0     (:,:,:) = 0.D0
-    lh_flux_sfc0_pl  (:,:,:) = 0.D0
+    sfcrad0          (:,:,:) = 0.0_RP
+    sfcrad0_pl       (:,:,:) = 0.0_RP
+    toarad0          (:,:,:) = 0.0_RP
+    toarad0_pl       (:,:,:) = 0.0_RP
+    evap_energy0     (:,:,:) = 0.0_RP
+    evap_energy0_pl  (:,:,:) = 0.0_RP
+    precip_energy0   (:,:,:) = 0.0_RP
+    precip_energy0_pl(:,:,:) = 0.0_RP
+    sh_flux_sfc0     (:,:,:) = 0.0_RP
+    sh_flux_sfc0_pl  (:,:,:) = 0.0_RP
+    lh_flux_sfc0     (:,:,:) = 0.0_RP
+    lh_flux_sfc0_pl  (:,:,:) = 0.0_RP
 
     return
   end subroutine diagnose_energy_mass

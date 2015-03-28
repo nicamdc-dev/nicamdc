@@ -246,7 +246,7 @@ contains
        ADM_lall
     implicit none
 
-    REAL(RP),          intent(out) :: var(:,:,:)
+    REAL(RP),         intent(out) :: var(:,:,:)
     character(LEN=*), intent( in) :: basename
     character(LEN=*), intent( in) :: varname
     character(LEN=*), intent( in) :: layername
@@ -255,8 +255,8 @@ contains
 
     logical, intent(in), optional :: allow_missingq !--- if data is missing, set value to zero
 
-    real(4) :: var4(ADM_gall,k_start:k_end,ADM_lall)
-    REAL(RP) :: var8(ADM_gall,k_start:k_end,ADM_lall)
+    real(SP) :: var4(ADM_gall,k_start:k_end,ADM_lall)
+    REAL(DP) :: var8(ADM_gall,k_start:k_end,ADM_lall)
 
     integer :: did, fid
     !---------------------------------------------------------------------------
@@ -290,7 +290,7 @@ contains
                                   'varname= ',trim(varname),', step=',step
              write(ADM_LOG_FID,*) '*** [INPUT]/[FIO] Q Value is set to 0.'
 
-             var(:,k_start:k_end,:) = 0.D0
+             var(:,k_start:k_end,:) = 0.0_RP
 
              call DEBUG_rapend('FILEIO_in')
              return
@@ -316,12 +316,12 @@ contains
     if ( dinfo%datatype == FIO_REAL4 ) then
 
        call fio_read_data(fid,did,var4(:,:,:))
-       var(:,k_start:k_end,:) = real(var4(:,1:dinfo%num_of_layer,:),kind=8)
+       var(:,k_start:k_end,:) = real(var4(:,1:dinfo%num_of_layer,:),kind=RP)
 
     elseif( dinfo%datatype == FIO_REAL8 ) then
 
        call fio_read_data(fid,did,var8(:,:,:))
-       var(:,k_start:k_end,:) = var8(:,1:dinfo%num_of_layer,:)
+       var(:,k_start:k_end,:) = real(var8(:,1:dinfo%num_of_layer,:),kind=RP)
 
     endif
 
@@ -410,7 +410,7 @@ contains
        endif
 
        ! [fix] H.Yashiro 20111011 : specify int kind=8
-       midtime = dble( int( (dinfo%time_start+dinfo%time_end)*0.5D0+1.D0,kind=8 ) )
+       midtime = real( int( (dinfo%time_start+dinfo%time_end)*0.5_RP+1.0_RP,kind=8 ),kind=RP )
        call calendar_ss2yh( data_date(:,i), midtime )
 
        if ( opt_periodic_year ) then
@@ -470,8 +470,8 @@ contains
     integer,          intent(in) :: step
     REAL(RP),          intent(in) :: t_start, t_end
 
-    real(4) :: var4(ADM_gall,k_start:k_end,ADM_lall)
-    REAL(RP) :: var8(ADM_gall,k_start:k_end,ADM_lall)
+    real(SP) :: var4(ADM_gall,k_start:k_end,ADM_lall)
+    REAL(DP) :: var8(ADM_gall,k_start:k_end,ADM_lall)
 
     integer :: did, fid
     !---------------------------------------------------------------------------
@@ -508,7 +508,7 @@ contains
 
     if ( dtype == FIO_REAL4 ) then
 
-       var4(:,k_start:k_end,:)=real(var(:,k_start:k_end,:),kind=4)
+       var4(:,k_start:k_end,:)=real(var(:,k_start:k_end,:),kind=SP)
        where( var4(:,:,:) < (CNST_UNDEF4+1.0) )
           var4(:,:,:) = CNST_UNDEF4
        endwhere
@@ -517,7 +517,7 @@ contains
 
     elseif( dtype == FIO_REAL8 ) then
 
-       var8(:,k_start:k_end,:)=var(:,k_start:k_end,:)
+       var8(:,k_start:k_end,:)=real(var(:,k_start:k_end,:),kind=DP)
 
        call fio_put_write_datainfo_data(did,fid,dinfo,var8(:,:,:))
     else

@@ -75,12 +75,12 @@ module mod_latlon
   character(len=ADM_NSYS), private :: latlon_type = 'EQUIDIST' ! grid type ( equidist or gaussian )
   integer,                 private :: imax        = 360        ! number of longitude
   integer,                 private :: jmax        = 180        ! number of latitude
-  REAL(RP),                 private :: lonmin      = -999.D0    ! minimun longitude of region window in deg
-  REAL(RP),                 private :: lonmax      = -999.D0    ! maximun longitude of region window in deg
-  REAL(RP),                 private :: latmin      = -999.D0    ! minimun latitude of region window in deg
-  REAL(RP),                 private :: latmax      = -999.D0    ! maximun latitude of region window in deg
+  REAL(RP),                 private :: lonmin      = -999.0_RP    ! minimun longitude of region window in deg
+  REAL(RP),                 private :: lonmax      = -999.0_RP    ! maximun longitude of region window in deg
+  REAL(RP),                 private :: latmin      = -999.0_RP    ! minimun latitude of region window in deg
+  REAL(RP),                 private :: latmax      = -999.0_RP    ! maximun latitude of region window in deg
   logical,                 private :: lon_offset  = .true.     ! logitude offset
-  REAL(RP),                 private :: polar_limit = -999.D0    ! search all longitude if abs(lat) > polar_limit
+  REAL(RP),                 private :: polar_limit = -999.0_RP    ! search all longitude if abs(lat) > polar_limit
 
   character(len=ADM_MAXFNAME), private :: SAMPLE_OUT_BASENAME = ''
   character(len=ADM_NSYS),     private :: SAMPLE_io_mode      = 'ADVANCED'
@@ -152,8 +152,8 @@ contains
     !--- setup point data
     allocate( GMTR_P_ll   (ADM_gall,   ADM_KNONE,ADM_lall,   GMTR_P_nmax_var) )
     allocate( GMTR_P_ll_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,GMTR_P_nmax_var) )
-    GMTR_P_ll   (:,:,:,:) = 0.D0
-    GMTR_P_ll_pl(:,:,:,:) = 0.D0
+    GMTR_P_ll   (:,:,:,:) = 0.0_RP
+    GMTR_P_ll_pl(:,:,:,:) = 0.0_RP
 
     do l = 1, ADM_lall
        do n = 1, ADM_IooJoo_nmax
@@ -208,11 +208,11 @@ contains
     character(len=*), intent(in) :: output_dirname
     character(len=*), intent(in) :: output_lldata_type_in
 
-    REAL(RP) :: latmax_deg      =   90.D0
-    REAL(RP) :: latmin_deg      =  -90.D0
-    REAL(RP) :: lonmax_deg      =  180.D0
-    REAL(RP) :: lonmin_deg      = -180.D0
-    REAL(RP) :: polar_limit_deg =   89.D0
+    REAL(RP) :: latmax_deg      =   90.0_RP
+    REAL(RP) :: latmin_deg      =  -90.0_RP
+    REAL(RP) :: lonmax_deg      =  180.0_RP
+    REAL(RP) :: lonmin_deg      = -180.0_RP
+    REAL(RP) :: polar_limit_deg =   89.0_RP
 
     namelist / LATLONPARAM / &
          latlon_type,         &
@@ -257,7 +257,7 @@ contains
     endif
     write(ADM_LOG_FID,nml=LATLONPARAM)
 
-    d2r    = CNST_PI / 180.D0
+    d2r    = CNST_PI / 180.0_RP
     latmax = latmax_deg * d2r
     latmin = latmin_deg * d2r
     lonmax = lonmax_deg * d2r
@@ -403,7 +403,7 @@ contains
           nstart = nend - nmax_llgrid_rgn(l) + 1
 
           do n = nstart, nend
-             if ( abs(w1(n)+w2(n)+w3(n)-1.D0) > 1.D-15 ) then
+             if ( abs(w1(n)+w2(n)+w3(n)-1.0_RP) > 1.E-15_RP ) then
                 write(ADM_LOG_FID,'(A,2I6,E30.20)') '(lat,lon,area)=', &
                 lat_index(n),lon_index(n),w1(n)+w2(n)+w3(n)
              endif
@@ -516,9 +516,9 @@ contains
 
     character(len=*), intent(in) :: what_is_done
 
-    REAL(RP), parameter :: rscale = 1.D0
+    REAL(RP), parameter :: rscale = 1.0_RP
 
-    REAL(RP), parameter :: o(3) = 0.D0
+    REAL(RP), parameter :: o(3) = 0.0_RP
     REAL(RP) :: r0(3), r1(3), r2(3), r3(3)
     REAL(RP) :: nvec(3), v12xv10(3), v23xv20(3), v31xv30(3)
     REAL(RP) :: judge12, judge23, judge31
@@ -535,10 +535,10 @@ contains
 
     REAL(RP) :: area_total, area1, area2, area3
 
-    REAL(RP) :: eps_judge  = 1.D-18 ! marginal value for inner products
-    REAL(RP) :: eps_latlon = 1.D-15 ! marginal square near grid points (in radian)
-    REAL(RP) :: eps_vertex = 1.D-15 ! marginal value for vartex
-    REAL(RP) :: eps_area   = 0.D0   ! marginal value for triangle area
+    REAL(RP) :: eps_judge  = 1.E-18_RP ! marginal value for inner products
+    REAL(RP) :: eps_latlon = 1.E-15_RP ! marginal square near grid points (in radian)
+    REAL(RP) :: eps_vertex = 1.E-15_RP ! marginal value for vartex
+    REAL(RP) :: eps_area   = 0.0_RP    ! marginal value for triangle area
 
     integer :: rgnid
     integer :: n, k, l, t, i, j
@@ -595,9 +595,9 @@ contains
        lonmax_l = max(lon1,lon2,lon3)
        lonmin_l = min(lon1,lon2,lon3)
        if ( lonmax_l-lonmin_l > CNST_PI ) then
-          if( lon1 < 0 ) lon1 = lon1 + 2.D0 * CNST_PI
-          if( lon2 < 0 ) lon2 = lon2 + 2.D0 * CNST_PI
-          if( lon3 < 0 ) lon3 = lon3 + 2.D0 * CNST_PI
+          if( lon1 < 0 ) lon1 = lon1 + 2.0_RP * CNST_PI
+          if( lon2 < 0 ) lon2 = lon2 + 2.0_RP * CNST_PI
+          if( lon3 < 0 ) lon3 = lon3 + 2.0_RP * CNST_PI
 
           lonmax_l = max(lon1,lon2,lon3)
           lonmin_l = min(lon1,lon2,lon3)
@@ -619,10 +619,10 @@ contains
              if ( .NOT. near_pole ) then
                 if ( .NOT. (      (       ( lon(i)                <= lonmax_l ) &
                                     .AND. ( lon(i)                >= lonmin_l ) ) &
-                             .OR. (       ( lon(i) - 2.D0*CNST_PI <= lonmax_l ) &
-                                    .AND. ( lon(i) - 2.D0*CNST_PI >= lonmin_l ) ) &
-                             .OR. (       ( lon(i) + 2.D0*CNST_PI <= lonmax_l ) &
-                                    .AND. ( lon(i) + 2.D0*CNST_PI >= lonmin_l ) ) ) ) then
+                             .OR. (       ( lon(i) - 2.0_RP*CNST_PI <= lonmax_l ) &
+                                    .AND. ( lon(i) - 2.0_RP*CNST_PI >= lonmin_l ) ) &
+                             .OR. (       ( lon(i) + 2.0_RP*CNST_PI <= lonmax_l ) &
+                                    .AND. ( lon(i) + 2.0_RP*CNST_PI >= lonmin_l ) ) ) ) then
                    cycle
                 endif
              endif
@@ -634,7 +634,7 @@ contains
 
              !--- remove the case inner product is negative
              call MISC_3dvec_dot( ip, o(:), r1(:), o(:), r0(:) )
-             if( ip < 0.D0 ) cycle
+             if( ip < 0.0_RP ) cycle
              v01(:) = r1(:) - r0(:)
 
              !--- normal vector
@@ -711,9 +711,9 @@ contains
                                                    polygon_type, rscale )
                    endif
 
-                   if (      area1 * 0.D0 /= 0.D0 &
-                        .OR. area2 * 0.D0 /= 0.D0 &
-                        .OR. area3 * 0.D0 /= 0.D0 ) then ! Nan?
+                   if (      area1 * 0.0_RP /= 0.0_RP &
+                        .OR. area2 * 0.0_RP /= 0.0_RP &
+                        .OR. area3 * 0.0_RP /= 0.0_RP ) then ! Nan?
                       write(*,          *) 'Nan! (i,j,n,t,l)=', i,j,n,t,l
                       write(*,          *) '(area1,area2,area3)=', area1,area2,area3
                       write(ADM_LOG_FID,*) 'Nan! (i,j,n,t,l)=', i,j,n,t,l
@@ -754,9 +754,9 @@ contains
                    n1_index (nmax_llgrid) = ADM_IooJoo(n,ADM_GIoJo)
                    n2_index (nmax_llgrid) = ADM_IooJoo(n,ADM_GIpJo)
                    n3_index (nmax_llgrid) = ADM_IooJoo(n,ADM_GIpJp)
-                   w1       (nmax_llgrid) = 1.D0
-                   w2       (nmax_llgrid) = 0.D0
-                   w3       (nmax_llgrid) = 0.D0
+                   w1       (nmax_llgrid) = 1.0_RP
+                   w2       (nmax_llgrid) = 0.0_RP
+                   w3       (nmax_llgrid) = 0.0_RP
                 endselect
 
              endif
@@ -791,7 +791,7 @@ contains
 
           !--- remove the case inner product is negative
           call MISC_3dvec_dot( ip, o(:), r1(:), o(:), r0(:) )
-          if( ip < 0.D0 ) cycle
+          if( ip < 0.0_RP ) cycle
           v01(:) = r1(:) - r0(:)
 
           if (      abs(v01(1)) < eps_vertex &
@@ -817,9 +817,9 @@ contains
                 n1_index (nmax_llgrid) = n
                 n2_index (nmax_llgrid) = n
                 n3_index (nmax_llgrid) = n
-                w1       (nmax_llgrid) = 1.D0
-                w2       (nmax_llgrid) = 0.D0
-                w3       (nmax_llgrid) = 0.D0
+                w1       (nmax_llgrid) = 1.0_RP
+                w2       (nmax_llgrid) = 0.0_RP
+                w3       (nmax_llgrid) = 0.0_RP
              endselect
 
           endif
@@ -869,8 +869,8 @@ contains
 
     k = ADM_KNONE
 
-    SAMPLE   (:,:,:,:) = -999.D0
-    SAMPLE_pl(:,:,:,:) = -999.D0
+    SAMPLE   (:,:,:,:) = -999.0_RP
+    SAMPLE_pl(:,:,:,:) = -999.0_RP
 
     do l = 1, ADM_lall
        rgnid = ADM_prc_tab(l,ADM_prc_me)
@@ -880,10 +880,10 @@ contains
        do i = ADM_gmin, ADM_gmax
           ij = ADM_gall_1d * (j-1) + i
 
-          SAMPLE(ij,k,l,1) = real(prc,  kind=8)
-          SAMPLE(ij,k,l,2) = real(rgnid,kind=8)
-          SAMPLE(ij,k,l,3) = real(i,    kind=8)
-          SAMPLE(ij,k,l,4) = real(j,    kind=8)
+          SAMPLE(ij,k,l,1) = real(prc,  kind=RP)
+          SAMPLE(ij,k,l,2) = real(rgnid,kind=RP)
+          SAMPLE(ij,k,l,3) = real(i,    kind=RP)
+          SAMPLE(ij,k,l,4) = real(j,    kind=RP)
        enddo
        enddo
     enddo
@@ -893,10 +893,10 @@ contains
        prc   = ADM_prc_me
 
        do ij = 1, ADM_gall_pl
-          SAMPLE_pl(ij,k,l,1) = real(prc,   kind=8)
-          SAMPLE_pl(ij,k,l,2) = real(-rgnid,kind=8)
-          SAMPLE_pl(ij,k,l,3) = real( ij,   kind=8)
-          SAMPLE_pl(ij,k,l,4) = real(-ij,   kind=8)
+          SAMPLE_pl(ij,k,l,1) = real(prc,   kind=RP)
+          SAMPLE_pl(ij,k,l,2) = real(-rgnid,kind=RP)
+          SAMPLE_pl(ij,k,l,3) = real( ij,   kind=RP)
+          SAMPLE_pl(ij,k,l,4) = real(-ij,   kind=RP)
        enddo
     enddo
 
@@ -906,16 +906,16 @@ contains
 
        call FIO_output( SAMPLE(:,:,:,1), SAMPLE_OUT_BASENAME, "", "", &
                        "sample1", "sample data(prc)", "", "NIL",      &
-                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.D0, 0.D0   )
+                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.0_RP, 0.0_RP   )
        call FIO_output( SAMPLE(:,:,:,2), SAMPLE_OUT_BASENAME, "", "", &
                        "sample2", "sample data(rgn)", "", "NIL",      &
-                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.D0, 0.D0   )
+                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.0_RP, 0.0_RP   )
        call FIO_output( SAMPLE(:,:,:,3), SAMPLE_OUT_BASENAME, "", "", &
                        "sample3", "sample data(i)", "", "NIL",      &
-                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.D0, 0.D0   )
+                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.0_RP, 0.0_RP   )
        call FIO_output( SAMPLE(:,:,:,4), SAMPLE_OUT_BASENAME, "", "", &
                        "sample4", "sample data(j)", "", "NIL",      &
-                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.D0, 0.D0   )
+                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.0_RP, 0.0_RP   )
 
     elseif( sample_io_mode == 'LEGACY' ) then
 
@@ -961,8 +961,8 @@ contains
     elseif( latlon_type == 'GAUSSIAN' ) then
 
        !--- if GAUSSIAN grid is selected, latmax and latmin are overwritten.
-       latmax =  CNST_PI*0.5D0
-       latmin = -CNST_PI*0.5D0
+       latmax =  CNST_PI*0.5_RP
+       latmin = -CNST_PI*0.5_RP
        call set_gaussian_grid
 
     endif
@@ -981,21 +981,21 @@ contains
     integer :: i, j
     !---------------------------------------------------------------------------
 
-    dlat = ( latmax - latmin ) / real(jmax,kind=8)
+    dlat = ( latmax - latmin ) / real(jmax,kind=RP)
 
     do j = 1, jmax
-       lat(j) = latmin + dlat * ( real(j,kind=8) - 0.5D0 )
+       lat(j) = latmin + dlat * ( real(j,kind=RP) - 0.5_RP )
     enddo
 
-    dlon = ( lonmax - lonmin ) / real(imax,kind=8)
+    dlon = ( lonmax - lonmin ) / real(imax,kind=RP)
 
     if ( lon_offset ) then
        do i = 1, imax
-          lon(i) = lonmin + dlon * ( real(i,kind=8) - 0.5D0 )
+          lon(i) = lonmin + dlon * ( real(i,kind=RP) - 0.5_RP )
        enddo
     else
        do i = 1, imax
-          lon(i) = lonmin + dlon * ( real(i,kind=8) - 1.D0 )
+          lon(i) = lonmin + dlon * ( real(i,kind=RP) - 1.0_RP )
        enddo
     endif
 
@@ -1026,44 +1026,44 @@ contains
     !---------------------------------------------------------------------------
 
     !--- calculate machine eps.
-    e(:) = 0.D0
-    eps  = 1.D0
+    e(:) = 0.0_RP
+    eps  = 1.0_RP
 
     do i = 1, nb
-       eps  = eps * 0.5D0
+       eps  = eps * 0.5_RP
        e(i) = eps+1
     enddo
 
     i = 1
-    eps = 1.D0
+    eps = 1.0_RP
 
     do i = 1, nb
-       if( e(i) > 1.D0 ) exit
-       eps = eps * 0.5D0
+       if( e(i) > 1.0_RP ) exit
+       eps = eps * 0.5_RP
     enddo
-    eps = eps * 4.D0
+    eps = eps * 4.0_RP
 
     !---  calculate gausian_grid by Newton-Rapson method
     do j = 1, jmax
 
-       mu0=sin(CNST_PI*dble(jmax+1-2*j)/dble(2*jmax+1))
+       mu0=sin(CNST_PI*real(jmax+1-2*j,kind=RP)/real(2*jmax+1,kind=RP))
 
        loopeps:do
 
-          P0(0)=1.0d0
+          P0(0)=1.0_RP
           P0(1)=mu0
           do n=1,jmax-1
-             P0(n+1)=(dble(2*n+1)*mu0*P0(n)-n*P0(n-1))/dble(n+1)
+             P0(n+1)=(real(2*n+1,kind=RP)*mu0*P0(n)-n*P0(n-1)) / real(n+1,kind=RP)
           enddo
           dP0=jmax*(P0(jmax-1)-mu0*P0(jmax))/(1-mu0*mu0)
           dmu=P0(jmax)/dP0
           mu0=mu0-dmu
           if (abs(dmu)<eps) then
              mu(j)=mu0
-             P0(0)=1.0d0
+             P0(0)=1.0_RP
              P0(1)=mu(j)
              do n=1,jmax-1
-                P0(n+1)=(dble(2*n+1)*mu(j)*P0(n)-n*P0(n-1))/dble(n+1)
+                P0(n+1)=(real(2*n+1,kind=RP)*mu(j)*P0(n)-n*P0(n-1)) / real(n+1,kind=RP)
              enddo
              exit loopeps
           endif
@@ -1076,15 +1076,15 @@ contains
        lat(j) = -asin(mu(j))
     enddo
 
-    dlon = ( lonmax - lonmin) / real(imax,kind=8)
+    dlon = ( lonmax - lonmin) / real(imax,kind=RP)
 
     if ( lon_offset ) then
        do i = 1, imax
-          lon(i) = lonmin + dlon * ( real(i,kind=8) - 0.5D0 )
+          lon(i) = lonmin + dlon * ( real(i,kind=RP) - 0.5_RP )
        enddo
     else
        do i = 1, imax
-          lon(i) = lonmin + dlon * ( real(i,kind=8) - 1.D0 )
+          lon(i) = lonmin + dlon * ( real(i,kind=RP) - 1.0_RP )
        enddo
     endif
 
@@ -1277,24 +1277,24 @@ contains
 !          !
 !          !--- midpoint value between n1 and n2
 !          !--- based on Hermitian interpolation.
-!          v12 = (v1+v2)*0.5D0                                   &
-!               + 0.125D0                                        &
+!          v12 = (v1+v2)*0.5_RP                                   &
+!               + 0.125_RP                                        &
 !               * (( grd(n1,k,l,ix) - grd(n2,k,l,ix) )*vec12(ix) &
 !                 +( grd(n1,k,l,iy) - grd(n2,k,l,iy) )*vec12(iy) &
 !                 +( grd(n1,k,l,iz) - grd(n2,k,l,iz) )*vec12(iz))
 !          !
 !          !--- midpoint value between n2 and n3
 !          !--- based on Hermitian interpolation.
-!          v23 = (v2+v3)*0.5D0                                   &
-!               + 0.125D0                                        &
+!          v23 = (v2+v3)*0.5_RP                                   &
+!               + 0.125_RP                                        &
 !               * (( grd(n2,k,l,ix) - grd(n3,k,l,ix) )*vec23(ix) &
 !                 +( grd(n2,k,l,iy) - grd(n3,k,l,iy) )*vec23(iy) &
 !                 +( grd(n2,k,l,iz) - grd(n3,k,l,iz) )*vec23(iz))
 !          !
 !          !--- midpoint value between n3 and n1
 !          !--- based on Hermitian interpolation.
-!          v31 = (v3+v1)*0.5D0                                   &
-!               + 0.125D0                                        &
+!          v31 = (v3+v1)*0.5_RP                                   &
+!               + 0.125_RP                                        &
 !               * (( grd(n3,k,l,ix) - grd(n1,k,l,ix) )*vec31(ix) &
 !                 +( grd(n3,k,l,iy) - grd(n1,k,l,iy) )*vec31(iy) &
 !                 +( grd(n3,k,l,iz) - grd(n1,k,l,iz) )*vec31(iz))
@@ -1302,12 +1302,12 @@ contains
 !               def_grd(n2,k,l).and. &
 !               def_grd(n3,k,l) ) then
 !             var_ll(m,k)                          &
-!                  = w1(m)*(2.0D0*w1(m)-1.0D0)*v1  &
-!                  + w2(m)*(2.0D0*w2(m)-1.0D0)*v2  &
-!                  + w3(m)*(2.0D0*w3(m)-1.0D0)*v3  &
-!                  + 4.0D0*w1(m)*w2(m)        *v12 &
-!                  + 4.0D0*w2(m)*w3(m)        *v23 &
-!                  + 4.0D0*w3(m)*w1(m)        *v31
+!                  = w1(m)*(2.0_RP*w1(m)-1.0_RP)*v1  &
+!                  + w2(m)*(2.0_RP*w2(m)-1.0_RP)*v2  &
+!                  + w3(m)*(2.0_RP*w3(m)-1.0_RP)*v3  &
+!                  + 4.0_RP*w1(m)*w2(m)        *v12 &
+!                  + 4.0_RP*w2(m)*w3(m)        *v23 &
+!                  + 4.0_RP*w3(m)*w1(m)        *v31
 !          else
 !             var_ll(m,k) = CNST_UNDEF
 !          endif

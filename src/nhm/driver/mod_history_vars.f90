@@ -452,10 +452,10 @@ contains
     !--- vertical wind (at cell center)
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kmax
-          wc(:,k,l) = 0.5D0 * ( w(:,k,l) + w(:,k+1,l) )
+          wc(:,k,l) = 0.5_RP * ( w(:,k,l) + w(:,k+1,l) )
        enddo
-       wc(:,ADM_kmin-1,l) = 0.D0
-       wc(:,ADM_kmax+1,l) = 0.D0
+       wc(:,ADM_kmin-1,l) = 0.0_RP
+       wc(:,ADM_kmax+1,l) = 0.0_RP
 
        call history_in( 'ml_w', wc(:,:,l) )
     enddo
@@ -509,8 +509,8 @@ contains
     endif
 
     if ( out_th_prime ) then
-       one   (:,:,:) = 1.D0
-       one_pl(:,:,:) = 1.D0
+       one   (:,:,:) = 1.0_RP
+       one_pl(:,:,:) = 1.0_RP
 
        call GTL_global_sum_eachlayer( one, one_pl, area_prof )
 
@@ -560,8 +560,8 @@ contains
 
     !--- hydrometeors
     do l  = 1, ADM_lall
-       q_clw(:,:,l) = 0.D0
-       q_cli(:,:,l) = 0.D0
+       q_clw(:,:,l) = 0.0_RP
+       q_cli(:,:,l) = 0.0_RP
        do nq = NQW_STR, NQW_END
           if ( nq == I_QC ) then
              q_clw(:,:,l) = q_clw(:,:,l) + q(:,:,l,nq)
@@ -580,13 +580,13 @@ contains
 
        call history_in( 'ml_qtot', qtot(:,:,l) )
 
-       cloud_frac(:,:,l) = 0.0D0
-       where( qtot(:,:,l) >= 0.005D-3 ) !--- tompkins & craig
-          cloud_frac(:,:,l) = 1.D0
+       cloud_frac(:,:,l) = 0.0_RP
+       where( qtot(:,:,l) >= 0.005E-3_RP ) !--- tompkins & craig
+          cloud_frac(:,:,l) = 1.0_RP
        end where
 
        if (out_cldw) then
-          dummy2D(:,K0,l) = 0.D0
+          dummy2D(:,K0,l) = 0.0_RP
           do k = ADM_kmin, ADM_kmax
              dummy2D(:,K0,l) = dummy2D(:,K0,l) &
                              + rho(:,k,l) * q_clw(:,k,l) * VMTR_VOLUME(:,k,l) / GMTR_area(:,l)
@@ -596,7 +596,7 @@ contains
        endif
 
        if (out_cldi) then
-          dummy2D(:,K0,l) = 0.D0
+          dummy2D(:,K0,l) = 0.0_RP
           do k = ADM_kmin, ADM_kmax
              dummy2D(:,K0,l) = dummy2D(:,K0,l) &
                              + rho(:,k,l) * q_cli(:,k,l) * VMTR_VOLUME(:,k,l) / GMTR_area(:,l)
@@ -664,7 +664,7 @@ contains
        do l = 1, ADM_lall
           slp(:,K0,l) = pre_sfc(:,K0,l) &
                       * exp( CNST_EGRAV * GRD_zs(:,K0,l,GRD_ZSFC) &
-                      / ( CNST_RAIR * ( t2m(:,K0,l) + 0.5D0 * 0.005D0 * ( GRD_zs(:,K0,l,GRD_ZSFC) + 2.D0 ) ) ) )
+                      / ( CNST_RAIR * ( t2m(:,K0,l) + 0.5_RP * 0.005_RP * ( GRD_zs(:,K0,l,GRD_ZSFC) + 2.0_RP ) ) ) )
 
           call history_in( 'sl_slp', slp(:,:,l) )
        enddo
@@ -678,7 +678,7 @@ contains
                              v      (:,:,l),  & ! [IN]
                              w      (:,:,l),  & ! [IN]
                              tem    (:,:,l),  & ! [IN]
-                             85000.D0,        & ! [IN]
+                             85000.0_RP,      & ! [IN]
                              u_850  (:,K0,l), & ! [OUT]
                              v_850  (:,K0,l), & ! [OUT]
                              w_850  (:,K0,l), & ! [OUT]
@@ -752,8 +752,8 @@ contains
 
     if (out_tem_atm) then
        do l = 1, ADM_lall
-          dummy2D(:,K0,l) = 0.D0
-          rw(:,:)         = 0.D0
+          dummy2D(:,K0,l) = 0.0_RP
+          rw(:,:)         = 0.0_RP
           do k = ADM_kmin, ADM_kmax
              dummy2D(:,K0,l) = dummy2D(:,K0,l) + rho(:,k,l) * tem(:,k,l) * VMTR_VOLUME(:,k,l)
              rw     (:,l)    = rw     (:,l)    + rho(:,k,l)              * VMTR_VOLUME(:,k,l)
@@ -788,7 +788,7 @@ contains
        call history_in( 'sl_swu_toa_c', rflux_toa_su_c(:,:,l) )
 
        if (out_albedo) then
-          dummy2D(:,K0,l) = min( rflux_toa_su(:,K0,l) / max( rflux_toa_sd(:,K0,l), CNST_EPS_ZERO ), 1.D0 )
+          dummy2D(:,K0,l) = min( rflux_toa_su(:,K0,l) / max( rflux_toa_sd(:,K0,l), CNST_EPS_ZERO ), 1.0_RP )
           call history_in( 'sl_albedo', dummy2D(:,:,l) )
        endif
     enddo
@@ -830,7 +830,7 @@ contains
 
     !--- surface pressure ( hydrostatic balance )
     do ij = 1, ijdim
-       pre_srf(ij) = pre(ij,kmin) + 0.5D0 * ( rho_srf(ij)+rho(ij,kmin) ) * CNST_EGRAV * ( z(ij,kmin)-z_srf(ij) )
+       pre_srf(ij) = pre(ij,kmin) + 0.5_RP * ( rho_srf(ij)+rho(ij,kmin) ) * CNST_EGRAV * ( z(ij,kmin)-z_srf(ij) )
     enddo
 
     return
