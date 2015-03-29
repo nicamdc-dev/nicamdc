@@ -170,8 +170,8 @@ module mod_adm
   !
   character(len=ADM_MAXFNAME), public :: ADM_rgnmngfname ! file name for region management info
 
-  integer, public, parameter   :: PRC_RGN_NMAX = 2560    ! maximum number of region per process.
-  integer, public              :: ADM_vlink_nmax         ! maximum number of vertex linkage
+  integer, public, parameter   :: PRC_RGN_NMAX   = 2560  ! maximum number of region per process.
+  integer, public              :: ADM_vlink_nmax = -1    ! maximum number of vertex linkage
                                                          ! [XTMS] ICO:5, PSP:6, LCP, MLCP:k
 
   integer, public, allocatable :: ADM_prc_rnum(:)        ! number of regions managed by each process = ADM_lall

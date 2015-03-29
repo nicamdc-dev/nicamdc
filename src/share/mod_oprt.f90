@@ -1733,6 +1733,8 @@ contains
           enddo
        enddo
        enddo
+    else
+       scl_pl(:,:,:) = 0.0_RP
     endif
 
     call DEBUG_rapend('OPRT_divergence')
@@ -1812,6 +1814,8 @@ contains
        enddo
        enddo
        enddo
+    else
+       grad_pl(:,:,:,:) = 0.0_RP
     endif
 
     call DEBUG_rapend('OPRT_gradient')
@@ -1885,6 +1889,8 @@ contains
           enddo
        enddo
        enddo
+    else
+       dscl_pl(:,:,:) = 0.0_RP
     endif
 
     call DEBUG_rapend('OPRT_laplacian')
@@ -2139,6 +2145,8 @@ contains
        enddo
        enddo
 
+    else
+       dscl_pl(:,:,:) = 0.0_RP
     endif
 
     call DEBUG_rapend('OPRT_diffusion')
@@ -2211,6 +2219,10 @@ contains
        enddo
        enddo
        enddo
+    else
+       vx_pl(:,:,:) = 0.0_RP
+       vy_pl(:,:,:) = 0.0_RP
+       vz_pl(:,:,:) = 0.0_RP
     endif
 
     call DEBUG_rapend('OPRT_horizontalize_vec')
@@ -2415,6 +2427,8 @@ contains
 
        enddo
        enddo
+    else
+       scl_pl(:,:,:) = 0.0_RP
     endif
 
     call DEBUG_rapend('OPRT_vorticity')
@@ -2662,6 +2676,10 @@ contains
           ddivdz_pl(n,k,l) = ddivdz_pl(n,k,l) * 0.5_RP * GMTR_P_var_pl(n,k0,l,P_RAREA)
        enddo
        enddo
+    else
+       ddivdx_pl(:,:,:) = 0.0_RP
+       ddivdy_pl(:,:,:) = 0.0_RP
+       ddivdz_pl(:,:,:) = 0.0_RP
     endif
 
     call DEBUG_rapend('OPRT_divdamp')

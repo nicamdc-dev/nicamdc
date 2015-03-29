@@ -330,6 +330,11 @@ contains
              grhogw_pl (g,ADM_kmax+1,l) = 0.0_RP
           enddo
        enddo
+    else
+       grhogvx_pl(:,:,:) = 0.0_RP
+       grhogvy_pl(:,:,:) = 0.0_RP
+       grhogvz_pl(:,:,:) = 0.0_RP
+       grhogw_pl (:,:,:) = 0.0_RP
     endif
 
     call DEBUG_rapend('____src_advection_convergence_m')

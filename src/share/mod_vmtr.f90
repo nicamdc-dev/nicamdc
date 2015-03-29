@@ -596,7 +596,21 @@ contains
        enddo
        enddo
        enddo
-
+    else
+       VMTR_GAM2_pl     (:,:,:)   = 0.0_RP
+       VMTR_GAM2H_pl    (:,:,:)   = 0.0_RP
+       VMTR_GSGAM2_pl   (:,:,:)   = 0.0_RP
+       VMTR_GSGAM2H_pl  (:,:,:)   = 0.0_RP
+       VMTR_RGSQRTH_pl  (:,:,:)   = 0.0_RP
+       VMTR_RGAM_pl     (:,:,:)   = 0.0_RP
+       VMTR_RGAMH_pl    (:,:,:)   = 0.0_RP
+       VMTR_RGSGAM2_pl  (:,:,:)   = 0.0_RP
+       VMTR_RGSGAM2H_pl (:,:,:)   = 0.0_RP
+       VMTR_W2Cfact_pl  (:,:,:,:) = 0.0_RP
+       VMTR_C2Wfact_pl  (:,:,:,:) = 0.0_RP
+       VMTR_C2WfactGz_pl(:,:,:,:) = 0.0_RP
+       VMTR_VOLUME_pl   (:,:,:)   = 0.0_RP
+       VMTR_PHI_pl      (:,:,:)   = 0.0_RP
     endif
 
     return

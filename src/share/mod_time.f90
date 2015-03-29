@@ -34,10 +34,11 @@ module mod_time
   !
   !++ Public parameters & variables
   !
-  character(len=ADM_NSYS), public :: TIME_INTEG_TYPE         ! Integration method in large steps
-  !                                                  = 'RK2' ! Runge-Kutta 2nd
-  !                                                  = 'RK3' ! Runge-Kutta 3rd
-  !                                                  = 'RK4' ! Runge-Kutta 4th
+  character(len=ADM_NSYS), public :: TIME_INTEG_TYPE = 'UNDEF'  ! Integration method in large steps
+  !                                                  = 'RK2'    ! Runge-Kutta 2nd
+  !                                                  = 'RK3'    ! Runge-Kutta 3rd
+  !                                                  = 'RK4'    ! Runge-Kutta 4th
+  !                                                  = 'TRCADV' ! Tracer advection only
 
   logical, public :: TIME_SPLIT     = .true. ! Horizontally splitting?
 

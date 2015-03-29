@@ -163,8 +163,7 @@ contains
   !-----------------------------------------------------------------------------
   subroutine dynamics_step
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_kall,    &
@@ -386,13 +385,19 @@ contains
     !$acc kernels pcopy(PROG0) pcopyin(PROG) async(0)
     PROG0   (:,:,:,:) = PROG   (:,:,:,:)
     !$acc end kernels
-    PROG0_pl(:,:,:,:) = PROG_pl(:,:,:,:)
+
+    if ( ADM_have_pl ) then
+       PROG0_pl(:,:,:,:) = PROG_pl(:,:,:,:)
+    endif
 
     if ( TRC_ADV_TYPE == 'DEFAULT' ) then
        !$acc kernels pcopy(PROGq0) pcopyin(PROGq) async(0)
        PROGq0   (:,:,:,:) = PROGq   (:,:,:,:)
        !$acc end kernels
-       PROGq0_pl(:,:,:,:) = PROGq_pl(:,:,:,:)
+
+       if ( ADM_have_pl ) then
+          PROGq0_pl(:,:,:,:) = PROGq_pl(:,:,:,:)
+       endif
     endif
 
     call DEBUG_rapend  ('___Pre_Post')
@@ -537,7 +542,7 @@ contains
        rhogd(:,:,:) = ( rho(:,:,:) - rho_bs(:,:,:) ) * VMTR_GSGAM2(:,:,:)
        !$acc end kernels
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
 
           rho_pl(:,:,:) = PROG_pl(:,:,:,I_RHOG  ) / VMTR_GSGAM2_pl(:,:,:)
           vx_pl (:,:,:) = PROG_pl(:,:,:,I_RHOGVX) / PROG_pl(:,:,:,I_RHOG)
@@ -608,6 +613,8 @@ contains
           pregd_pl(:,:,:) = ( pre_pl(:,:,:) - pre_bs_pl(:,:,:) ) * VMTR_GSGAM2_pl(:,:,:)
           rhogd_pl(:,:,:) = ( rho_pl(:,:,:) - rho_bs_pl(:,:,:) ) * VMTR_GSGAM2_pl(:,:,:)
        else
+
+          PROG_pl  (:,:,:,:) = 0.0_RP
 
           rho_pl(:,:,:) = 0.0_RP
           vx_pl (:,:,:) = 0.0_RP
@@ -893,7 +900,7 @@ contains
              PROGq(:,ADM_kmax+1,:,:) = 0.0_RP
              !$acc end kernels
 
-             if ( ADM_prc_pl == ADM_prc_me ) then
+             if ( ADM_have_pl ) then
                 PROGq_pl(:,:,:,:) = PROGq_pl(:,:,:,:) + large_step_dt * f_TENDq_pl(:,:,:,:)
 
                 PROGq_pl(:,ADM_kmin-1,:,:) = 0.0_RP
@@ -927,7 +934,7 @@ contains
           PROGq(:,ADM_kmax+1,:,:) = 0.0_RP
           !$acc end kernels
 
-          if ( ADM_prc_pl == ADM_prc_me ) then
+          if ( ADM_have_pl ) then
              PROGq_pl(:,:,:,:) = PROGq0_pl(:,:,:,:)                                                                      &
                                + ( num_of_iteration_sstep(nl) * TIME_DTS ) * ( g_TENDq_pl(:,:,:,:) + f_TENDq_pl(:,:,:,:) )
 
@@ -958,7 +965,7 @@ contains
           enddo
           !$acc end kernels
 
-          if ( ADM_prc_pl == ADM_prc_me ) then
+          if ( ADM_have_pl ) then
              do l = 1, ADM_lall_pl
              do k = 1, ADM_kall
              do g = 1, ADM_gall_pl

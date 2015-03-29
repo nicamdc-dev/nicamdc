@@ -396,6 +396,10 @@ contains
           enddo
 
        enddo
+    else
+       ddivdx_pl(:,:,:) = 0.0_RP
+       ddivdy_pl(:,:,:) = 0.0_RP
+       ddivdz_pl(:,:,:) = 0.0_RP
     endif
 
     call DEBUG_rapend('OPRT3D_divdamp')

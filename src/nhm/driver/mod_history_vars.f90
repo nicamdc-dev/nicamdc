@@ -437,6 +437,10 @@ contains
     enddo
 
     !--- zonal and meridonal wind
+    dummy3D3_pl = 0.0_RP
+    dummy3D4_pl = 0.0_RP
+    dummy3D5_pl = 0.0_RP
+
     call GTL_generate_uv( u,  dummy3D1_pl, & ! [OUT]
                           v,  dummy3D2_pl, & ! [OUT]
                           vx, dummy3D3_pl, & ! [IN]
