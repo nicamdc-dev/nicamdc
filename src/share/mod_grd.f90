@@ -785,9 +785,14 @@ contains
 
     character(len=ADM_MAXFNAME), intent(in) :: fname ! vertical grid file name
 
-    integer :: num_of_layer
+    integer               :: num_of_layer
+    real(DP), allocatable :: gz (:)
+    real(DP), allocatable :: gzh(:)
+
     integer :: fid, ierr
     !---------------------------------------------------------------------------
+
+    write(ADM_LOG_FID,*) '*** Read vertical grid file: ', trim(fname)
 
     fid = MISC_get_available_fid()
     open( unit   = fid,           &
@@ -803,13 +808,19 @@ contains
 
        read(fid) num_of_layer
 
+       allocate( gz (1+num_of_layer+1) )
+       allocate( gzh(1+num_of_layer+1) )
+
+       read(fid) gz (:)
+       read(fid) gzh(:)
+
        if ( num_of_layer /= ADM_vlayer ) then
           write(ADM_LOG_FID,*) 'xxx inconsistency in number of vertical layers.'
           call ADM_proc_stop
        endif
 
-       read(fid) GRD_gz
-       read(fid) GRD_gzh
+       GRD_gz (:) = real(gz ,kind=RP)
+       GRD_gzh(:) = real(gzh,kind=RP)
 
     close(fid)
 

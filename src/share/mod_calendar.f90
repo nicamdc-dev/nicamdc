@@ -437,7 +437,7 @@ contains
     !---------------------------------------------------------------------------
 
     isecdy = isecmn*iminhr*ihrday
-    dsec   = dble (idays-1)*dble (isecdy) + dble (rsec)
+    dsec   = real(idays-1,kind=RP) * real(isecdy,kind=RP) + real(rsec,kind=RP)
 
     return
   end subroutine calendar_ds2ss
@@ -462,9 +462,9 @@ contains
     !---------------------------------------------------------------------------
 
     isechr = isecmn*iminhr
-    ihour  = int ( rsec / dble(isechr ) )
-    imin   = int ( ( rsec - dble(ihour*isechr) )/dble(isecmn) )
-    isec   = nint( rsec - dble(ihour*isechr) - dble(imin*isecmn) )
+    ihour  = int ( rsec / real(isechr ) )
+    imin   = int ( ( rsec - real(ihour*isechr,kind=RP) ) / real(isecmn,kind=RP) )
+    isec   = nint( rsec - real(ihour*isechr,kind=RP) - real(imin*isecmn,kind=RP) )
 
     if ( isec >= isecmn ) then
        imin  = imin + 1
@@ -546,7 +546,7 @@ contains
     endif
 
     if ( ogrego ) then
-       jy     = int(dble(idays)/365.24d0)
+       jy     = int(real(idays,kind=RP)/365.24_RP)
 1100   continue
        jy4    = (jy+3)/4
        jcent  = (jy+99)/100
@@ -917,16 +917,16 @@ contains
     hunitx = hunit
 
     if      ( hunitx(1:1) == 's' .or. hunitx(1:1) == 'S' ) then
-       ddsec = dble (rtdur)
+       ddsec = real(rtdur,kind=RP)
     elseif ( hunitx(1:2) == 'mi' .or. hunitx(1:2) == 'MI' ) then
        call calendar_secmi( isecmi )
-       ddsec = dble (rtdur)*dble (isecmi)
+       ddsec = real(rtdur,kind=RP) * real(isecmi,kind=RP)
     elseif ( hunitx(1:1) == 'h' .or. hunitx(1:1) == 'H' ) then
        call calendar_sechr( isechr )
-       ddsec = dble (rtdur)*dble (isechr)
+       ddsec = real(rtdur,kind=RP) * real(isechr,kind=RP)
     elseif ( hunitx(1:1) == 'd' .or. hunitx(1:1) == 'D' ) then
        call calendar_secdy( isecdy )
-       ddsec = dble (rtdur)*dble (isecdy)
+       ddsec = real(rtdur,kind=RP) * real(isecdy,kind=RP)
     elseif ( hunitx(1:2) == 'mo' .or. hunitx(1:2) == 'MO' ) then
        call calendar_ss2ym &
             ( iyear , imonth, iday  , &
@@ -935,7 +935,7 @@ contains
             ( ndaymo, &
             iyear , imonth  )
        call calendar_secdy( isecdy )
-       ddsec = dble (rtdur)*dble (ndaymo)*dble (isecdy)
+       ddsec = real(rtdur,kind=RP) * real(ndaymo,kind=RP) * real(isecdy,kind=RP)
     elseif ( hunitx(1:1) == 'y' .or. hunitx(1:1) == 'Y' ) then
        call calendar_ss2ym &
             ( iyear , imonth, iday  , &
@@ -944,7 +944,7 @@ contains
             ( ndayyr, &
             iyear   )
        call calendar_secdy( isecdy )
-       ddsec = dble (rtdur)*dble (ndayyr)*dble (isecdy)
+       ddsec = real(rtdur,kind=RP) * real(ndayyr,kind=RP)) * real(isecdy,kind=RP)
     else
        write (6,*) ' ### cxx2ss: invalid unit : ', hunit, &
             ' [sec] assumed'
@@ -1158,9 +1158,9 @@ contains
        if      ( hunit(1:1) == 'y' .or. hunit(1:1) == 'Y' ) then
           call calendar_monyr( nmonyr, iyear )
           call calendar_dayyr( ndayyr, iyear )
-          ry = dble( iyear - iyearp )                  &
-             + dble( imon  - imonp  ) / dble( nmonyr ) &
-             + dble( iday  - idayp  ) / dble( ndayyr )
+          ry = real( iyear-iyearp, kind=RP )                           &
+             + real( imon -imonp , kind=RP ) / real( nmonyr, kind=RP ) &
+             + real( iday -idayp , kind=RP ) / real( ndayyr, kind=RP )
           if ( ry >= rintv ) then
              calendar_ointvl = .true.
           endif
@@ -1171,8 +1171,8 @@ contains
              imo = imo + nmonyr
           enddo
           call calendar_daymo( ndaymo, iyear, imon )
-          rmo = dble( imon - imonp + imo ) &
-              + dble( iday - idayp ) / dble( ndaymo )
+          rmo = real( imon-imonp+imo, kind=RP ) &
+              + real( iday-idayp    , kind=RP ) / real( ndaymo, kind=RP )
           if ( rmo >= rintv ) then
              calendar_ointvl = .true.
           endif
