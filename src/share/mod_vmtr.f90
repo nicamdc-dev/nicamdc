@@ -18,6 +18,8 @@ module mod_vmtr
   !
   !++ Used modules
   !
+  use mod_precision
+  use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID
   use mod_adm, only: &
@@ -60,71 +62,71 @@ module mod_vmtr
   integer, public, parameter :: I_b_GZZH = 6
 
 #ifdef _FIXEDINDEX_
-  real(8), public              :: VMTR_GAM2        (ADM_gall   ,ADM_kall,ADM_lall   )
-  real(8), public              :: VMTR_GAM2_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-  real(8), public              :: VMTR_GAM2H       (ADM_gall   ,ADM_kall,ADM_lall   )
-  real(8), public              :: VMTR_GAM2H_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-  real(8), public              :: VMTR_GSGAM2      (ADM_gall   ,ADM_kall,ADM_lall   )
-  real(8), public              :: VMTR_GSGAM2_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-  real(8), public              :: VMTR_GSGAM2H     (ADM_gall   ,ADM_kall,ADM_lall   )
-  real(8), public              :: VMTR_GSGAM2H_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_GAM2        (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_GAM2_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_GAM2H       (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_GAM2H_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_GSGAM2      (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_GSGAM2_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_GSGAM2H     (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_GSGAM2H_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-  real(8), public              :: VMTR_RGSQRTH     (ADM_gall   ,ADM_kall,ADM_lall   )
-  real(8), public              :: VMTR_RGSQRTH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-  real(8), public              :: VMTR_RGAM        (ADM_gall   ,ADM_kall,ADM_lall   )
-  real(8), public              :: VMTR_RGAM_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-  real(8), public              :: VMTR_RGAMH       (ADM_gall   ,ADM_kall,ADM_lall   )
-  real(8), public              :: VMTR_RGAMH_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-  real(8), public              :: VMTR_RGSGAM2     (ADM_gall   ,ADM_kall,ADM_lall   )
-  real(8), public              :: VMTR_RGSGAM2_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-  real(8), public              :: VMTR_RGSGAM2H    (ADM_gall   ,ADM_kall,ADM_lall   )
-  real(8), public              :: VMTR_RGSGAM2H_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_RGSQRTH     (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_RGSQRTH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_RGAM        (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_RGAM_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_RGAMH       (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_RGAMH_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_RGSGAM2     (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_RGSGAM2_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_RGSGAM2H    (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_RGSGAM2H_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-  real(8), public              :: VMTR_W2Cfact     (ADM_gall,   ADM_kall,2,ADM_lall   )
-  real(8), public              :: VMTR_W2Cfact_pl  (ADM_gall_pl,ADM_kall,2,ADM_lall_pl)
-  real(8), public              :: VMTR_C2Wfact     (ADM_gall,   ADM_kall,2,ADM_lall   )
-  real(8), public              :: VMTR_C2Wfact_pl  (ADM_gall_pl,ADM_kall,2,ADM_lall_pl)
-  real(8), public              :: VMTR_C2WfactGz   (ADM_gall,   ADM_kall,6,ADM_lall   )
-  real(8), public              :: VMTR_C2WfactGz_pl(ADM_gall_pl,ADM_kall,6,ADM_lall_pl)
+  real(RP), public              :: VMTR_W2Cfact     (ADM_gall,   ADM_kall,2,ADM_lall   )
+  real(RP), public              :: VMTR_W2Cfact_pl  (ADM_gall_pl,ADM_kall,2,ADM_lall_pl)
+  real(RP), public              :: VMTR_C2Wfact     (ADM_gall,   ADM_kall,2,ADM_lall   )
+  real(RP), public              :: VMTR_C2Wfact_pl  (ADM_gall_pl,ADM_kall,2,ADM_lall_pl)
+  real(RP), public              :: VMTR_C2WfactGz   (ADM_gall,   ADM_kall,6,ADM_lall   )
+  real(RP), public              :: VMTR_C2WfactGz_pl(ADM_gall_pl,ADM_kall,6,ADM_lall_pl)
 
-  real(8), public              :: VMTR_VOLUME      (ADM_gall   ,ADM_kall,ADM_lall   )
-  real(8), public              :: VMTR_VOLUME_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_VOLUME      (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_VOLUME_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-  real(8), public              :: VMTR_PHI         (ADM_gall   ,ADM_kall,ADM_lall   )
-  real(8), public              :: VMTR_PHI_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_PHI         (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_PHI_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 #else
-  real(8), public, allocatable :: VMTR_GAM2        (:,:,:)   ! Gamma^2 at the full level
-  real(8), public, allocatable :: VMTR_GAM2_pl     (:,:,:)
-  real(8), public, allocatable :: VMTR_GAM2H       (:,:,:)   ! Gamma^2 at the half level
-  real(8), public, allocatable :: VMTR_GAM2H_pl    (:,:,:)
-  real(8), public, allocatable :: VMTR_GSGAM2      (:,:,:)   ! G^1/2 X Gamma^2 at the full level
-  real(8), public, allocatable :: VMTR_GSGAM2_pl   (:,:,:)
-  real(8), public, allocatable :: VMTR_GSGAM2H     (:,:,:)   ! G^1/2 X Gamma^2 at the half level
-  real(8), public, allocatable :: VMTR_GSGAM2H_pl  (:,:,:)
+  real(RP), public, allocatable :: VMTR_GAM2        (:,:,:)   ! Gamma^2 at the full level
+  real(RP), public, allocatable :: VMTR_GAM2_pl     (:,:,:)
+  real(RP), public, allocatable :: VMTR_GAM2H       (:,:,:)   ! Gamma^2 at the half level
+  real(RP), public, allocatable :: VMTR_GAM2H_pl    (:,:,:)
+  real(RP), public, allocatable :: VMTR_GSGAM2      (:,:,:)   ! G^1/2 X Gamma^2 at the full level
+  real(RP), public, allocatable :: VMTR_GSGAM2_pl   (:,:,:)
+  real(RP), public, allocatable :: VMTR_GSGAM2H     (:,:,:)   ! G^1/2 X Gamma^2 at the half level
+  real(RP), public, allocatable :: VMTR_GSGAM2H_pl  (:,:,:)
 
-  real(8), public, allocatable :: VMTR_RGSQRTH     (:,:,:)   ! 1 / G^1/2 at the half level
-  real(8), public, allocatable :: VMTR_RGSQRTH_pl  (:,:,:)
-  real(8), public, allocatable :: VMTR_RGAM        (:,:,:)   ! 1 / Gamma at the integer level
-  real(8), public, allocatable :: VMTR_RGAM_pl     (:,:,:)
-  real(8), public, allocatable :: VMTR_RGAMH       (:,:,:)   ! 1 / Gamma at the half level
-  real(8), public, allocatable :: VMTR_RGAMH_pl    (:,:,:)
-  real(8), public, allocatable :: VMTR_RGSGAM2     (:,:,:)   ! 1 / (G^1/2 X Gamma^2) at the full level
-  real(8), public, allocatable :: VMTR_RGSGAM2_pl  (:,:,:)
-  real(8), public, allocatable :: VMTR_RGSGAM2H    (:,:,:)   ! 1 / (G^1/2 X Gamma^2) at the half level
-  real(8), public, allocatable :: VMTR_RGSGAM2H_pl (:,:,:)
+  real(RP), public, allocatable :: VMTR_RGSQRTH     (:,:,:)   ! 1 / G^1/2 at the half level
+  real(RP), public, allocatable :: VMTR_RGSQRTH_pl  (:,:,:)
+  real(RP), public, allocatable :: VMTR_RGAM        (:,:,:)   ! 1 / Gamma at the integer level
+  real(RP), public, allocatable :: VMTR_RGAM_pl     (:,:,:)
+  real(RP), public, allocatable :: VMTR_RGAMH       (:,:,:)   ! 1 / Gamma at the half level
+  real(RP), public, allocatable :: VMTR_RGAMH_pl    (:,:,:)
+  real(RP), public, allocatable :: VMTR_RGSGAM2     (:,:,:)   ! 1 / (G^1/2 X Gamma^2) at the full level
+  real(RP), public, allocatable :: VMTR_RGSGAM2_pl  (:,:,:)
+  real(RP), public, allocatable :: VMTR_RGSGAM2H    (:,:,:)   ! 1 / (G^1/2 X Gamma^2) at the half level
+  real(RP), public, allocatable :: VMTR_RGSGAM2H_pl (:,:,:)
 
-  real(8), public, allocatable :: VMTR_W2Cfact     (:,:,:,:) ! factor for half to full level
-  real(8), public, allocatable :: VMTR_W2Cfact_pl  (:,:,:,:)
-  real(8), public, allocatable :: VMTR_C2Wfact     (:,:,:,:) ! factor for full to half level
-  real(8), public, allocatable :: VMTR_C2Wfact_pl  (:,:,:,:)
-  real(8), public, allocatable :: VMTR_C2WfactGz   (:,:,:,:) ! factor for full to half level with Gz
-  real(8), public, allocatable :: VMTR_C2WfactGz_pl(:,:,:,:)
+  real(RP), public, allocatable :: VMTR_W2Cfact     (:,:,:,:) ! factor for half to full level
+  real(RP), public, allocatable :: VMTR_W2Cfact_pl  (:,:,:,:)
+  real(RP), public, allocatable :: VMTR_C2Wfact     (:,:,:,:) ! factor for full to half level
+  real(RP), public, allocatable :: VMTR_C2Wfact_pl  (:,:,:,:)
+  real(RP), public, allocatable :: VMTR_C2WfactGz   (:,:,:,:) ! factor for full to half level with Gz
+  real(RP), public, allocatable :: VMTR_C2WfactGz_pl(:,:,:,:)
 
-  real(8), public, allocatable :: VMTR_VOLUME      (:,:,:)   ! volume at the full level
-  real(8), public, allocatable :: VMTR_VOLUME_pl   (:,:,:)
+  real(RP), public, allocatable :: VMTR_VOLUME      (:,:,:)   ! volume at the full level
+  real(RP), public, allocatable :: VMTR_VOLUME_pl   (:,:,:)
 
-  real(8), public, allocatable :: VMTR_PHI         (:,:,:)   ! geopotential at the full level
-  real(8), public, allocatable :: VMTR_PHI_pl      (:,:,:)
+  real(RP), public, allocatable :: VMTR_PHI         (:,:,:)   ! geopotential at the full level
+  real(RP), public, allocatable :: VMTR_PHI_pl      (:,:,:)
 #endif
 
   !-----------------------------------------------------------------------------
@@ -145,8 +147,7 @@ contains
     use mod_adm, only: &
        ADM_CTL_FID,   &
        ADM_proc_stop, &
-       ADM_prc_me,    &
-       ADM_prc_pl,    &
+       ADM_have_pl,   &
        ADM_gmin,      &
        ADM_gmax,      &
        ADM_KNONE,     &
@@ -186,33 +187,33 @@ contains
     integer, parameter :: JY      = 5
     integer, parameter :: JZ      = 6
 
-    real(8) :: var   (ADM_gall,   ADM_kall,ADM_lall,   var_max)
-    real(8) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,var_max)
+    real(RP) :: var   (ADM_gall,   ADM_kall,ADM_lall,   var_max)
+    real(RP) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,var_max)
 
     !--- G^1/2
-    real(8) :: GSQRT    (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: GSQRT_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: GSQRTH   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: GSQRTH_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GSQRT    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GSQRT_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GSQRTH   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GSQRTH_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !--- Gamma factor
-    real(8) :: GAM      (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: GAM_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: GAMH     (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: GAMH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GAM      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GAM_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GAMH     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GAMH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !--- vector G^z at the full level
-    real(8) :: GZX      (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: GZX_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: GZY      (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: GZY_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: GZZ      (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: GZZ_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GZX      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GZX_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GZY      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GZY_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GZZ      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GZZ_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !--- vector G^z at the half level
-    real(8) :: GZXH     (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: GZXH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: GZYH     (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: GZYH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: GZZH     (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: GZZH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GZXH     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GZXH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GZYH     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GZYH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GZZH     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GZZH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     namelist / VMTRPARAM / &
        deep
@@ -281,8 +282,8 @@ contains
        return
     endif
 
-    var   (:,:,:,:) = 0.D0
-    var_pl(:,:,:,:) = 0.D0
+    var   (:,:,:,:) = 0.0_RP
+    var_pl(:,:,:,:) = 0.0_RP
 
     !--- calculation of Jxh, Jyh, and Jzh
     call OPRT_gradient( GRD_vz(:,:,:,GRD_ZH),  GRD_vz_pl(:,:,:,GRD_ZH), & !--- [IN]
@@ -337,8 +338,8 @@ contains
        do l = 1, ADM_lall
        do k = 1, ADM_kall
        do g = 1, ADM_gall
-          GAM (g,k,l) = 1.D0 + GRD_vz(g,k,l,GRD_Z)  / GRD_rscale
-          GAMH(g,k,l) = 1.D0 + GRD_vz(g,k,l,GRD_ZH) / GRD_rscale
+          GAM (g,k,l) = 1.0_RP + GRD_vz(g,k,l,GRD_Z)  / GRD_rscale
+          GAMH(g,k,l) = 1.0_RP + GRD_vz(g,k,l,GRD_ZH) / GRD_rscale
        enddo
        enddo
        enddo
@@ -346,8 +347,8 @@ contains
        do l = 1, ADM_lall
        do k = 1, ADM_kall
        do g = 1, ADM_gall
-          GAM (g,k,l) = 1.D0
-          GAMH(g,k,l) = 1.D0
+          GAM (g,k,l) = 1.0_RP
+          GAMH(g,k,l) = 1.0_RP
        enddo
        enddo
        enddo
@@ -361,11 +362,11 @@ contains
        VMTR_GSGAM2  (g,k,l) = GAM (g,k,l) * GAM (g,k,l) * GSQRT (g,k,l)
        VMTR_GSGAM2H (g,k,l) = GAMH(g,k,l) * GAMH(g,k,l) * GSQRTH(g,k,l)
 
-       VMTR_RGSQRTH (g,k,l) = 1.D0 / GSQRTH(g,k,l)
-       VMTR_RGAM    (g,k,l) = 1.D0 / GAM (g,k,l)
-       VMTR_RGAMH   (g,k,l) = 1.D0 / GAMH(g,k,l)
-       VMTR_RGSGAM2 (g,k,l) = 1.D0 / VMTR_GSGAM2 (g,k,l)
-       VMTR_RGSGAM2H(g,k,l) = 1.D0 / VMTR_GSGAM2H(g,k,l)
+       VMTR_RGSQRTH (g,k,l) = 1.0_RP / GSQRTH(g,k,l)
+       VMTR_RGAM    (g,k,l) = 1.0_RP / GAM (g,k,l)
+       VMTR_RGAMH   (g,k,l) = 1.0_RP / GAMH(g,k,l)
+       VMTR_RGSGAM2 (g,k,l) = 1.0_RP / VMTR_GSGAM2 (g,k,l)
+       VMTR_RGSGAM2H(g,k,l) = 1.0_RP / VMTR_GSGAM2H(g,k,l)
     enddo
     enddo
     enddo
@@ -374,24 +375,24 @@ contains
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kmax+1
        do g = 1, ADM_gall
-          VMTR_C2Wfact(g,k,I_a,l) = 0.5D0 * GRD_afac(k) * VMTR_RGSGAM2(g,k  ,l) * VMTR_GSGAM2H(g,k,l)
-          VMTR_C2Wfact(g,k,I_b,l) = 0.5D0 * GRD_bfac(k) * VMTR_RGSGAM2(g,k-1,l) * VMTR_GSGAM2H(g,k,l)
+          VMTR_C2Wfact(g,k,I_a,l) = 0.5_RP * GRD_afac(k) * VMTR_RGSGAM2(g,k  ,l) * VMTR_GSGAM2H(g,k,l)
+          VMTR_C2Wfact(g,k,I_b,l) = 0.5_RP * GRD_bfac(k) * VMTR_RGSGAM2(g,k-1,l) * VMTR_GSGAM2H(g,k,l)
        enddo
        enddo
        do g = 1, ADM_gall
-          VMTR_C2Wfact(g,ADM_kmin-1,I_a,l) = 0.D0
-          VMTR_C2Wfact(g,ADM_kmin-1,I_b,l) = 0.D0
+          VMTR_C2Wfact(g,ADM_kmin-1,I_a,l) = 0.0_RP
+          VMTR_C2Wfact(g,ADM_kmin-1,I_b,l) = 0.0_RP
        enddo
 
        do k = ADM_kmin-1, ADM_kmax
        do g = 1, ADM_gall
-          VMTR_W2Cfact(g,k,I_c,l) = 0.5D0 * GRD_cfac(k) * VMTR_GSGAM2(g,k,l) * VMTR_RGSGAM2H(g,k+1,l)
-          VMTR_W2Cfact(g,k,I_d,l) = 0.5D0 * GRD_dfac(k) * VMTR_GSGAM2(g,k,l) * VMTR_RGSGAM2H(g,k  ,l)
+          VMTR_W2Cfact(g,k,I_c,l) = 0.5_RP * GRD_cfac(k) * VMTR_GSGAM2(g,k,l) * VMTR_RGSGAM2H(g,k+1,l)
+          VMTR_W2Cfact(g,k,I_d,l) = 0.5_RP * GRD_dfac(k) * VMTR_GSGAM2(g,k,l) * VMTR_RGSGAM2H(g,k  ,l)
        enddo
        enddo
        do g = 1, ADM_gall
-          VMTR_W2Cfact(g,ADM_kmax+1,I_c,l) = 0.D0
-          VMTR_W2Cfact(g,ADM_kmax+1,I_d,l) = 0.D0
+          VMTR_W2Cfact(g,ADM_kmax+1,I_c,l) = 0.0_RP
+          VMTR_W2Cfact(g,ADM_kmax+1,I_d,l) = 0.0_RP
        enddo
     enddo
 
@@ -414,28 +415,28 @@ contains
 
        do k = ADM_kmin, ADM_kmax+1
        do g = 1, ADM_gall
-          VMTR_C2WfactGz(g,k,I_a_GZXH,l) = 0.5D0 * GRD_afac(k) * VMTR_RGSGAM2(g,k  ,l) * VMTR_GSGAM2H(g,k,l) &
+          VMTR_C2WfactGz(g,k,I_a_GZXH,l) = 0.5_RP * GRD_afac(k) * VMTR_RGSGAM2(g,k  ,l) * VMTR_GSGAM2H(g,k,l) &
                                          * GZXH(g,k,l)
-          VMTR_C2WfactGz(g,k,I_b_GZXH,l) = 0.5D0 * GRD_bfac(k) * VMTR_RGSGAM2(g,k-1,l) * VMTR_GSGAM2H(g,k,l) &
+          VMTR_C2WfactGz(g,k,I_b_GZXH,l) = 0.5_RP * GRD_bfac(k) * VMTR_RGSGAM2(g,k-1,l) * VMTR_GSGAM2H(g,k,l) &
                                          * GZXH(g,k,l)
-          VMTR_C2WfactGz(g,k,I_a_GZYH,l) = 0.5D0 * GRD_afac(k) * VMTR_RGSGAM2(g,k  ,l) * VMTR_GSGAM2H(g,k,l) &
+          VMTR_C2WfactGz(g,k,I_a_GZYH,l) = 0.5_RP * GRD_afac(k) * VMTR_RGSGAM2(g,k  ,l) * VMTR_GSGAM2H(g,k,l) &
                                          * GZYH(g,k,l)
-          VMTR_C2WfactGz(g,k,I_b_GZYH,l) = 0.5D0 * GRD_bfac(k) * VMTR_RGSGAM2(g,k-1,l) * VMTR_GSGAM2H(g,k,l) &
+          VMTR_C2WfactGz(g,k,I_b_GZYH,l) = 0.5_RP * GRD_bfac(k) * VMTR_RGSGAM2(g,k-1,l) * VMTR_GSGAM2H(g,k,l) &
                                          * GZYH(g,k,l)
-          VMTR_C2WfactGz(g,k,I_a_GZZH,l) = 0.5D0 * GRD_afac(k) * VMTR_RGSGAM2(g,k  ,l) * VMTR_GSGAM2H(g,k,l) &
+          VMTR_C2WfactGz(g,k,I_a_GZZH,l) = 0.5_RP * GRD_afac(k) * VMTR_RGSGAM2(g,k  ,l) * VMTR_GSGAM2H(g,k,l) &
                                          * GZZH(g,k,l)
-          VMTR_C2WfactGz(g,k,I_b_GZZH,l) = 0.5D0 * GRD_bfac(k) * VMTR_RGSGAM2(g,k-1,l) * VMTR_GSGAM2H(g,k,l) &
+          VMTR_C2WfactGz(g,k,I_b_GZZH,l) = 0.5_RP * GRD_bfac(k) * VMTR_RGSGAM2(g,k-1,l) * VMTR_GSGAM2H(g,k,l) &
                                          * GZZH(g,k,l)
        enddo
        enddo
 
        do g = 1, ADM_gall
-          VMTR_C2WfactGz(g,ADM_kmin-1,I_a_GZXH,l) = 0.D0
-          VMTR_C2WfactGz(g,ADM_kmin-1,I_b_GZXH,l) = 0.D0
-          VMTR_C2WfactGz(g,ADM_kmin-1,I_a_GZYH,l) = 0.D0
-          VMTR_C2WfactGz(g,ADM_kmin-1,I_b_GZYH,l) = 0.D0
-          VMTR_C2WfactGz(g,ADM_kmin-1,I_a_GZZH,l) = 0.D0
-          VMTR_C2WfactGz(g,ADM_kmin-1,I_b_GZZH,l) = 0.D0
+          VMTR_C2WfactGz(g,ADM_kmin-1,I_a_GZXH,l) = 0.0_RP
+          VMTR_C2WfactGz(g,ADM_kmin-1,I_b_GZXH,l) = 0.0_RP
+          VMTR_C2WfactGz(g,ADM_kmin-1,I_a_GZYH,l) = 0.0_RP
+          VMTR_C2WfactGz(g,ADM_kmin-1,I_b_GZYH,l) = 0.0_RP
+          VMTR_C2WfactGz(g,ADM_kmin-1,I_a_GZZH,l) = 0.0_RP
+          VMTR_C2WfactGz(g,ADM_kmin-1,I_b_GZZH,l) = 0.0_RP
        enddo
     enddo
 
@@ -452,7 +453,7 @@ contains
 
 
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
 
        !---   G^1/2 = dz/dgz
        do l = 1, ADM_lall_pl
@@ -482,8 +483,8 @@ contains
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do g = 1, ADM_gall_pl
-             GAM_pl (g,k,l) = 1.D0 + GRD_vz_pl(g,k,l,GRD_Z)  / GRD_rscale
-             GAMH_pl(g,k,l) = 1.D0 + GRD_vz_pl(g,k,l,GRD_ZH) / GRD_rscale
+             GAM_pl (g,k,l) = 1.0_RP + GRD_vz_pl(g,k,l,GRD_Z)  / GRD_rscale
+             GAMH_pl(g,k,l) = 1.0_RP + GRD_vz_pl(g,k,l,GRD_ZH) / GRD_rscale
           enddo
           enddo
           enddo
@@ -491,8 +492,8 @@ contains
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do g = 1, ADM_gall_pl
-             GAM_pl (g,k,l) = 1.D0
-             GAMH_pl(g,k,l) = 1.D0
+             GAM_pl (g,k,l) = 1.0_RP
+             GAMH_pl(g,k,l) = 1.0_RP
           enddo
           enddo
           enddo
@@ -506,11 +507,11 @@ contains
           VMTR_GSGAM2_pl  (g,k,l) = GAM_pl (g,k,l) * GAM_pl (g,k,l) * GSQRT_pl (g,k,l)
           VMTR_GSGAM2H_pl (g,k,l) = GAMH_pl(g,k,l) * GAMH_pl(g,k,l) * GSQRTH_pl(g,k,l)
 
-          VMTR_RGSQRTH_pl (g,k,l) = 1.D0 / GSQRTH_pl(g,k,l)
-          VMTR_RGAM_pl    (g,k,l) = 1.D0 / GAM_pl (g,k,l)
-          VMTR_RGAMH_pl   (g,k,l) = 1.D0 / GAMH_pl(g,k,l)
-          VMTR_RGSGAM2_pl (g,k,l) = 1.D0 / VMTR_GSGAM2_pl (g,k,l)
-          VMTR_RGSGAM2H_pl(g,k,l) = 1.D0 / VMTR_GSGAM2H_pl(g,k,l)
+          VMTR_RGSQRTH_pl (g,k,l) = 1.0_RP / GSQRTH_pl(g,k,l)
+          VMTR_RGAM_pl    (g,k,l) = 1.0_RP / GAM_pl (g,k,l)
+          VMTR_RGAMH_pl   (g,k,l) = 1.0_RP / GAMH_pl(g,k,l)
+          VMTR_RGSGAM2_pl (g,k,l) = 1.0_RP / VMTR_GSGAM2_pl (g,k,l)
+          VMTR_RGSGAM2H_pl(g,k,l) = 1.0_RP / VMTR_GSGAM2H_pl(g,k,l)
        enddo
        enddo
        enddo
@@ -519,24 +520,24 @@ contains
        do l = 1, ADM_lall_pl
           do k = ADM_kmin, ADM_kmax+1
           do g = 1, ADM_gall_pl
-             VMTR_C2Wfact_pl(g,k,I_a,l) = 0.5D0 * GRD_afac(k) * VMTR_RGSGAM2_pl(g,k  ,l) * VMTR_GSGAM2H_pl(g,k,l)
-             VMTR_C2Wfact_pl(g,k,I_b,l) = 0.5D0 * GRD_bfac(k) * VMTR_RGSGAM2_pl(g,k-1,l) * VMTR_GSGAM2H_pl(g,k,l)
+             VMTR_C2Wfact_pl(g,k,I_a,l) = 0.5_RP * GRD_afac(k) * VMTR_RGSGAM2_pl(g,k  ,l) * VMTR_GSGAM2H_pl(g,k,l)
+             VMTR_C2Wfact_pl(g,k,I_b,l) = 0.5_RP * GRD_bfac(k) * VMTR_RGSGAM2_pl(g,k-1,l) * VMTR_GSGAM2H_pl(g,k,l)
           enddo
           enddo
           do g = 1, ADM_gall_pl
-             VMTR_C2Wfact_pl(g,ADM_kmin-1,I_a,l) = 0.D0
-             VMTR_C2Wfact_pl(g,ADM_kmin-1,I_b,l) = 0.D0
+             VMTR_C2Wfact_pl(g,ADM_kmin-1,I_a,l) = 0.0_RP
+             VMTR_C2Wfact_pl(g,ADM_kmin-1,I_b,l) = 0.0_RP
           enddo
 
           do k = ADM_kmin-1, ADM_kmax
           do g = 1, ADM_gall_pl
-             VMTR_W2Cfact_pl(g,k,I_c,l) = 0.5D0 * GRD_cfac(k) * VMTR_GSGAM2_pl(g,k,l) * VMTR_RGSGAM2H_pl(g,k+1,l)
-             VMTR_W2Cfact_pl(g,k,I_d,l) = 0.5D0 * GRD_dfac(k) * VMTR_GSGAM2_pl(g,k,l) * VMTR_RGSGAM2H_pl(g,k  ,l)
+             VMTR_W2Cfact_pl(g,k,I_c,l) = 0.5_RP * GRD_cfac(k) * VMTR_GSGAM2_pl(g,k,l) * VMTR_RGSGAM2H_pl(g,k+1,l)
+             VMTR_W2Cfact_pl(g,k,I_d,l) = 0.5_RP * GRD_dfac(k) * VMTR_GSGAM2_pl(g,k,l) * VMTR_RGSGAM2H_pl(g,k  ,l)
           enddo
           enddo
           do g = 1, ADM_gall_pl
-             VMTR_W2Cfact_pl(g,ADM_kmax+1,I_c,l) = 0.D0
-             VMTR_W2Cfact_pl(g,ADM_kmax+1,I_d,l) = 0.D0
+             VMTR_W2Cfact_pl(g,ADM_kmax+1,I_c,l) = 0.0_RP
+             VMTR_W2Cfact_pl(g,ADM_kmax+1,I_d,l) = 0.0_RP
           enddo
        enddo
 
@@ -559,28 +560,28 @@ contains
 
           do k = ADM_kmin, ADM_kmax+1
           do g = 1, ADM_gall_pl
-             VMTR_C2WfactGz_pl(g,k,I_a_GZXH,l) = 0.5D0 * GRD_afac(k) * VMTR_RGSGAM2_pl(g,k  ,l) * VMTR_GSGAM2H_pl(g,k,l) &
+             VMTR_C2WfactGz_pl(g,k,I_a_GZXH,l) = 0.5_RP * GRD_afac(k) * VMTR_RGSGAM2_pl(g,k  ,l) * VMTR_GSGAM2H_pl(g,k,l) &
                                                * GZXH_pl(g,k,l)
-             VMTR_C2WfactGz_pl(g,k,I_b_GZXH,l) = 0.5D0 * GRD_bfac(k) * VMTR_RGSGAM2_pl(g,k-1,l) * VMTR_GSGAM2H_pl(g,k,l) &
+             VMTR_C2WfactGz_pl(g,k,I_b_GZXH,l) = 0.5_RP * GRD_bfac(k) * VMTR_RGSGAM2_pl(g,k-1,l) * VMTR_GSGAM2H_pl(g,k,l) &
                                                * GZXH_pl(g,k,l)
-             VMTR_C2WfactGz_pl(g,k,I_a_GZYH,l) = 0.5D0 * GRD_afac(k) * VMTR_RGSGAM2_pl(g,k  ,l) * VMTR_GSGAM2H_pl(g,k,l) &
+             VMTR_C2WfactGz_pl(g,k,I_a_GZYH,l) = 0.5_RP * GRD_afac(k) * VMTR_RGSGAM2_pl(g,k  ,l) * VMTR_GSGAM2H_pl(g,k,l) &
                                                * GZYH_pl(g,k,l)
-             VMTR_C2WfactGz_pl(g,k,I_b_GZYH,l) = 0.5D0 * GRD_bfac(k) * VMTR_RGSGAM2_pl(g,k-1,l) * VMTR_GSGAM2H_pl(g,k,l) &
+             VMTR_C2WfactGz_pl(g,k,I_b_GZYH,l) = 0.5_RP * GRD_bfac(k) * VMTR_RGSGAM2_pl(g,k-1,l) * VMTR_GSGAM2H_pl(g,k,l) &
                                                * GZYH_pl(g,k,l)
-             VMTR_C2WfactGz_pl(g,k,I_a_GZZH,l) = 0.5D0 * GRD_afac(k) * VMTR_RGSGAM2_pl(g,k  ,l) * VMTR_GSGAM2H_pl(g,k,l) &
+             VMTR_C2WfactGz_pl(g,k,I_a_GZZH,l) = 0.5_RP * GRD_afac(k) * VMTR_RGSGAM2_pl(g,k  ,l) * VMTR_GSGAM2H_pl(g,k,l) &
                                                * GZZH_pl(g,k,l)
-             VMTR_C2WfactGz_pl(g,k,I_b_GZZH,l) = 0.5D0 * GRD_bfac(k) * VMTR_RGSGAM2_pl(g,k-1,l) * VMTR_GSGAM2H_pl(g,k,l) &
+             VMTR_C2WfactGz_pl(g,k,I_b_GZZH,l) = 0.5_RP * GRD_bfac(k) * VMTR_RGSGAM2_pl(g,k-1,l) * VMTR_GSGAM2H_pl(g,k,l) &
                                                * GZZH_pl(g,k,l)
           enddo
           enddo
 
           do g = 1, ADM_gall_pl
-             VMTR_C2WfactGz_pl(g,ADM_kmin-1,I_a_GZXH,l) = 0.D0
-             VMTR_C2WfactGz_pl(g,ADM_kmin-1,I_b_GZXH,l) = 0.D0
-             VMTR_C2WfactGz_pl(g,ADM_kmin-1,I_a_GZYH,l) = 0.D0
-             VMTR_C2WfactGz_pl(g,ADM_kmin-1,I_b_GZYH,l) = 0.D0
-             VMTR_C2WfactGz_pl(g,ADM_kmin-1,I_a_GZZH,l) = 0.D0
-             VMTR_C2WfactGz_pl(g,ADM_kmin-1,I_b_GZZH,l) = 0.D0
+             VMTR_C2WfactGz_pl(g,ADM_kmin-1,I_a_GZXH,l) = 0.0_RP
+             VMTR_C2WfactGz_pl(g,ADM_kmin-1,I_b_GZXH,l) = 0.0_RP
+             VMTR_C2WfactGz_pl(g,ADM_kmin-1,I_a_GZYH,l) = 0.0_RP
+             VMTR_C2WfactGz_pl(g,ADM_kmin-1,I_b_GZYH,l) = 0.0_RP
+             VMTR_C2WfactGz_pl(g,ADM_kmin-1,I_a_GZZH,l) = 0.0_RP
+             VMTR_C2WfactGz_pl(g,ADM_kmin-1,I_b_GZZH,l) = 0.0_RP
           enddo
        enddo
 
@@ -594,7 +595,21 @@ contains
        enddo
        enddo
        enddo
-
+    else
+       VMTR_GAM2_pl     (:,:,:)   = 0.0_RP
+       VMTR_GAM2H_pl    (:,:,:)   = 0.0_RP
+       VMTR_GSGAM2_pl   (:,:,:)   = 0.0_RP
+       VMTR_GSGAM2H_pl  (:,:,:)   = 0.0_RP
+       VMTR_RGSQRTH_pl  (:,:,:)   = 0.0_RP
+       VMTR_RGAM_pl     (:,:,:)   = 0.0_RP
+       VMTR_RGAMH_pl    (:,:,:)   = 0.0_RP
+       VMTR_RGSGAM2_pl  (:,:,:)   = 0.0_RP
+       VMTR_RGSGAM2H_pl (:,:,:)   = 0.0_RP
+       VMTR_W2Cfact_pl  (:,:,:,:) = 0.0_RP
+       VMTR_C2Wfact_pl  (:,:,:,:) = 0.0_RP
+       VMTR_C2WfactGz_pl(:,:,:,:) = 0.0_RP
+       VMTR_VOLUME_pl   (:,:,:)   = 0.0_RP
+       VMTR_PHI_pl      (:,:,:)   = 0.0_RP
     endif
 
     return

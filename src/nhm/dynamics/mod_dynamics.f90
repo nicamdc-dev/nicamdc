@@ -31,6 +31,7 @@ module mod_dynamics
   !
   !++ Used modules
   !
+  use mod_precision
   use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID
@@ -123,7 +124,7 @@ contains
        num_of_iteration_sstep(3) = TIME_SSTEP_MAX / 2
        num_of_iteration_sstep(4) = TIME_SSTEP_MAX
 
-    case('TRCADV') ! R.Yoshida 13/06/13 [add]
+    case('TRCADV')
        write(ADM_LOG_FID,*) '+++ Offline tracer experiment'
 
        num_of_iteration_lstep    = 0
@@ -162,8 +163,7 @@ contains
   !-----------------------------------------------------------------------------
   subroutine dynamics_step
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_kall,    &
@@ -209,7 +209,7 @@ contains
        TRC_ADV_TYPE,   &
        FLAG_NUDGING,   &
 !       TB_TYPE,        &
-       THUBURN_LIM       ! R.Yoshida 13/06/13 [add]
+       THUBURN_LIM
     use mod_prgvar, only: &
        prgvar_set, &
        prgvar_get
@@ -238,10 +238,10 @@ contains
     use mod_src_tracer, only: &
        src_tracer_advection
     use mod_forcing_driver, only: &
-       forcing_update ! R.Yoshida 13/06/13 [add]
+       forcing_update
 !    use mod_sgs, only: &
 !       sgs_smagorinsky
-    use mod_nudge, only: & ! Y.Niwa add 08/09/09
+    use mod_nudge, only: &
        NDG_update_reference, &
        NDG_apply_uvtp
     !##### OpenACC (for data copy) #####
@@ -251,98 +251,98 @@ contains
     !##### OpenACC #####
     implicit none
 
-    real(8) :: PROG         (ADM_gall,   ADM_kall,ADM_lall,   6)         ! prognostic variables
-    real(8) :: PROG_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
-    real(8) :: PROGq        (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! tracer variables
-    real(8) :: PROGq_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(RP) :: PROG         (ADM_gall,   ADM_kall,ADM_lall,   6)         ! prognostic variables
+    real(RP) :: PROG_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
+    real(RP) :: PROGq        (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! tracer variables
+    real(RP) :: PROGq_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    real(8) :: g_TEND       (ADM_gall,   ADM_kall,ADM_lall,   7)         ! tendency of prognostic variables
-    real(8) :: g_TEND_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,7)
-    real(8) :: g_TENDq      (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! tendency of tracer variables
-    real(8) :: g_TENDq_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(RP) :: g_TEND       (ADM_gall,   ADM_kall,ADM_lall,   7)         ! tendency of prognostic variables
+    real(RP) :: g_TEND_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,7)
+    real(RP) :: g_TENDq      (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! tendency of tracer variables
+    real(RP) :: g_TENDq_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    real(8) :: f_TEND       (ADM_gall,   ADM_kall,ADM_lall,   7)         ! forcing tendency of prognostic variables
-    real(8) :: f_TEND_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,7)
-    real(8) :: f_TENDq      (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! forcing tendency of tracer variables
-    real(8) :: f_TENDq_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(RP) :: f_TEND       (ADM_gall,   ADM_kall,ADM_lall,   7)         ! forcing tendency of prognostic variables
+    real(RP) :: f_TEND_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,7)
+    real(RP) :: f_TENDq      (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! forcing tendency of tracer variables
+    real(RP) :: f_TENDq_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    real(8) :: PROG0        (ADM_gall,   ADM_kall,ADM_lall,   6)         ! prognostic variables (save)
-    real(8) :: PROG0_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
-    real(8) :: PROGq0       (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! tracer variables (save)
-    real(8) :: PROGq0_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(RP) :: PROG0        (ADM_gall,   ADM_kall,ADM_lall,   6)         ! prognostic variables (save)
+    real(RP) :: PROG0_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
+    real(RP) :: PROGq0       (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! tracer variables (save)
+    real(RP) :: PROGq0_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    real(8) :: PROG_split   (ADM_gall,   ADM_kall,ADM_lall,   6)         ! prognostic variables (split)
-    real(8) :: PROG_split_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
+    real(RP) :: PROG_split   (ADM_gall,   ADM_kall,ADM_lall,   6)         ! prognostic variables (split)
+    real(RP) :: PROG_split_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
 
-    real(8) :: v_mean_c     (ADM_gall,   ADM_kall,ADM_lall   ,5)
-    real(8) :: v_mean_c_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,5)
+    real(RP) :: PROG_mean    (ADM_gall,   ADM_kall,ADM_lall   ,5)
+    real(RP) :: PROG_mean_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,5)
 
     !--- density ( physical )
-    real(8) :: rho   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rho_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rho   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: rho_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- horizontal velocity_x  ( physical )
-    real(8) :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- horizontal velocity_y  ( physical )
-    real(8) :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- horizontal velocity_z  ( physical )
-    real(8) :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- vertical velocity ( physical )
-    real(8) :: w   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: w_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: w   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: w_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- internal energy  ( physical )
-    real(8) :: ein   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: ein_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: ein   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: ein_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- mass concentration of water substance ( physical )
-    real(8) :: q   (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)
-    real(8) :: q_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(RP) :: q   (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)
+    real(RP) :: q_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
     !--- enthalpy ( physical )
-    real(8) :: eth   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: eth_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: eth   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: eth_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- pressure ( physical )
-    real(8) :: pre   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: pre_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: pre   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: pre_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- temperature ( physical )
-    real(8) :: tem   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: tem_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: tem   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: tem_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- potential temperature ( physical )
-    real(8) :: th   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: th_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: th   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: th_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- density deviation from the base state ( G^1/2 X gamma2 )
-    real(8) :: rhogd   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rhogd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhogd   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: rhogd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- pressure deviation from the base state ( G^1/2 X gamma2 )
-    real(8) :: pregd   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: pregd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: pregd   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: pregd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- temporary variables
-    real(8) :: qd   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: qd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: cv   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: cv_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: qd   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: qd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: cv   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: cv_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: pre0_kappa
+    real(RP) :: pre0_kappa
 
-    real(8), parameter :: TKE_MIN = 0.D0
-    real(8)            :: TKEg_corr
+    real(RP), parameter :: TKE_MIN = 0.0_RP
+    real(RP)            :: TKEg_corr
 
     integer :: small_step_ite
-    real(8) :: large_step_dt
-    real(8) :: small_step_dt
+    real(RP) :: large_step_dt
+    real(RP) :: small_step_dt
 
     logical :: ndg_TEND_out
     logical :: do_tke_correction
@@ -357,13 +357,13 @@ contains
     call DEBUG_rapstart('__Dynamics')
 
     !$acc  data &
-    !$acc& create(PROG,PROGq,g_TEND,g_TENDq,f_TEND,f_TENDq,PROG0,PROGq0,PROG_split,v_mean_c) &
+    !$acc& create(PROG,PROGq,g_TEND,g_TENDq,f_TEND,f_TENDq,PROG0,PROGq0,PROG_split,PROG_mean) &
     !$acc& create(rho,vx,vy,vz,w,ein,tem,pre,eth,th,rhogd,pregd,q,qd,cv) &
     !$acc& pcopy(PRG_var,PRG_var1)
 
     call DEBUG_rapstart('___Pre_Post')
 
-    large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=8)
+    large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=RP)
 
     !--- get from prg0
     call prgvar_get( PROG(:,:,:,I_RHOG),   PROG_pl(:,:,:,I_RHOG),   & ! [OUT]
@@ -385,13 +385,19 @@ contains
     !$acc kernels pcopy(PROG0) pcopyin(PROG) async(0)
     PROG0   (:,:,:,:) = PROG   (:,:,:,:)
     !$acc end kernels
-    PROG0_pl(:,:,:,:) = PROG_pl(:,:,:,:)
+
+    if ( ADM_have_pl ) then
+       PROG0_pl(:,:,:,:) = PROG_pl(:,:,:,:)
+    endif
 
     if ( TRC_ADV_TYPE == 'DEFAULT' ) then
        !$acc kernels pcopy(PROGq0) pcopyin(PROGq) async(0)
        PROGq0   (:,:,:,:) = PROGq   (:,:,:,:)
        !$acc end kernels
-       PROGq0_pl(:,:,:,:) = PROGq_pl(:,:,:,:)
+
+       if ( ADM_have_pl ) then
+          PROGq0_pl(:,:,:,:) = PROGq_pl(:,:,:,:)
+       endif
     endif
 
     call DEBUG_rapend  ('___Pre_Post')
@@ -401,8 +407,8 @@ contains
        call DEBUG_rapstart('___Tracer_Advection')
 
        !$acc kernels pcopy(f_TEND) async(0)
-       f_TEND   (:,:,:,:) = 0.D0
-       f_TEND_pl(:,:,:,:) = 0.D0
+       f_TEND   (:,:,:,:) = 0.0_RP
+       f_TEND_pl(:,:,:,:) = 0.0_RP
        !$acc end kernels
 
        call src_tracer_advection( TRC_VMAX,                                          & ! [IN]
@@ -415,7 +421,7 @@ contains
                                   PROG  (:,:,:,I_RHOGW ), PROG_pl  (:,:,:,I_RHOGW ), & ! [IN]
                                   f_TEND(:,:,:,I_RHOG),   f_TEND_pl(:,:,:,I_RHOG),   & ! [IN]
                                   large_step_dt,                                     & ! [IN]
-                                  THUBURN_LIM                                        ) ! [IN] [add] 20130613 R.Yoshida
+                                  THUBURN_LIM                                        ) ! [IN]
 
        call DEBUG_rapend  ('___Tracer_Advection')
 
@@ -464,8 +470,8 @@ contains
        do l = 1, ADM_lall
        do k = 1, ADM_kall
        do g = 1, ADM_gall
-          cv(g,k,l) = 0.D0
-          qd(g,k,l) = 1.D0
+          cv(g,k,l) = 0.0_RP
+          qd(g,k,l) = 1.0_RP
 
           !$acc loop seq
           do nq = NQW_STR, NQW_END
@@ -536,7 +542,7 @@ contains
        rhogd(:,:,:) = ( rho(:,:,:) - rho_bs(:,:,:) ) * VMTR_GSGAM2(:,:,:)
        !$acc end kernels
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
 
           rho_pl(:,:,:) = PROG_pl(:,:,:,I_RHOG  ) / VMTR_GSGAM2_pl(:,:,:)
           vx_pl (:,:,:) = PROG_pl(:,:,:,I_RHOGVX) / PROG_pl(:,:,:,I_RHOG)
@@ -548,8 +554,8 @@ contains
              q_pl(:,:,:,nq) = PROGq_pl(:,:,:,nq) / PROG_pl(:,:,:,I_RHOG)
           enddo
 
-          cv_pl(:,:,:) = 0.D0
-          qd_pl(:,:,:) = 1.D0
+          cv_pl(:,:,:) = 0.0_RP
+          qd_pl(:,:,:) = 1.0_RP
           do nq = NQW_STR, NQW_END
              cv_pl(:,:,:) = cv_pl(:,:,:) + q_pl(:,:,:,nq) * CVW(nq)
              qd_pl(:,:,:) = qd_pl(:,:,:) - q_pl(:,:,:,nq)
@@ -608,22 +614,24 @@ contains
           rhogd_pl(:,:,:) = ( rho_pl(:,:,:) - rho_bs_pl(:,:,:) ) * VMTR_GSGAM2_pl(:,:,:)
        else
 
-          rho_pl(:,:,:) = 0.D0
-          vx_pl (:,:,:) = 0.D0
-          vy_pl (:,:,:) = 0.D0
-          vz_pl (:,:,:) = 0.D0
-          w_pl  (:,:,:) = 0.D0
-          ein_pl(:,:,:) = 0.D0
+          PROG_pl  (:,:,:,:) = 0.0_RP
 
-          q_pl(:,:,:,:) = 0.D0
+          rho_pl(:,:,:) = 0.0_RP
+          vx_pl (:,:,:) = 0.0_RP
+          vy_pl (:,:,:) = 0.0_RP
+          vz_pl (:,:,:) = 0.0_RP
+          w_pl  (:,:,:) = 0.0_RP
+          ein_pl(:,:,:) = 0.0_RP
 
-          tem_pl(:,:,:) = 0.D0
-          pre_pl(:,:,:) = 0.D0
-          th_pl (:,:,:) = 0.D0
-          eth_pl(:,:,:) = 0.D0
+          q_pl(:,:,:,:) = 0.0_RP
 
-          pregd_pl(:,:,:) = 0.D0
-          rhogd_pl(:,:,:) = 0.D0
+          tem_pl(:,:,:) = 0.0_RP
+          pre_pl(:,:,:) = 0.0_RP
+          th_pl (:,:,:) = 0.0_RP
+          eth_pl(:,:,:) = 0.0_RP
+
+          pregd_pl(:,:,:) = 0.0_RP
+          rhogd_pl(:,:,:) = 0.0_RP
 
        endif
 
@@ -650,13 +658,13 @@ contains
                                                 g_TEND(:,:,:,I_RHOGW ), g_TEND_pl(:,:,:,I_RHOGW )  ) ! [OUT]
 
        !$acc kernels pcopy(g_TEND) async(0)
-       g_TEND   (:,:,:,I_RHOG)     = 0.D0
-       g_TEND   (:,:,:,I_RHOGE)    = 0.D0
-       g_TEND   (:,:,:,I_RHOGETOT) = 0.D0
+       g_TEND   (:,:,:,I_RHOG)     = 0.0_RP
+       g_TEND   (:,:,:,I_RHOGE)    = 0.0_RP
+       g_TEND   (:,:,:,I_RHOGETOT) = 0.0_RP
        !$acc end kernels
-       g_TEND_pl(:,:,:,I_RHOG)     = 0.D0
-       g_TEND_pl(:,:,:,I_RHOGE)    = 0.D0
-       g_TEND_pl(:,:,:,I_RHOGETOT) = 0.D0
+       g_TEND_pl(:,:,:,I_RHOG)     = 0.0_RP
+       g_TEND_pl(:,:,:,I_RHOGE)    = 0.0_RP
+       g_TEND_pl(:,:,:,I_RHOGETOT) = 0.0_RP
 
        !---< numerical diffusion term
        if ( NDIFF_LOCATION == 'IN_LARGE_STEP' ) then
@@ -741,7 +749,7 @@ contains
 
        endif
 
-!       if ( TB_TYPE == 'SMG' ) then ! Smagorinksy-type SGS model [add] A.Noda 10/11/29
+!       if ( TB_TYPE == 'SMG' ) then ! Smagorinksy-type SGS model
 !          call sgs_smagorinsky( nl,                                                      &
 !                                rho,                       rho_pl,                       & ! [IN]
 !                                PROG(:,:,:,I_RHOG  ),      PROG_pl(:,:,:,I_RHOG  ),      & ! [IN]
@@ -811,9 +819,9 @@ contains
           PROG_split_pl(:,:,:,:) = PROG0_pl(:,:,:,:) - PROG_pl(:,:,:,:)
        else
           !$acc kernels pcopy(PROG_split) async(0)
-          PROG_split   (:,:,:,:) = 0.D0
+          PROG_split   (:,:,:,:) = 0.0_RP
           !$acc end kernels
-          PROG_split_pl(:,:,:,:) = 0.D0
+          PROG_split_pl(:,:,:,:) = 0.0_RP
        endif
 
        !------ Core routine for small step
@@ -855,13 +863,12 @@ contains
                            PROG_split(:,:,:,I_RHOGVZ), PROG_split_pl(:,:,:,I_RHOGVZ), & ! [INOUT]
                            PROG_split(:,:,:,I_RHOGW ), PROG_split_pl(:,:,:,I_RHOGW ), & ! [INOUT]
                            PROG_split(:,:,:,I_RHOGE ), PROG_split_pl(:,:,:,I_RHOGE ), & ! [INOUT]
-                           v_mean_c,                   v_mean_c_pl,                   & ! [OUT] mean value
+                           PROG_mean,                  PROG_mean_pl,                  & ! [OUT] mean value
                            small_step_ite,                                            & ! [IN]
                            small_step_dt                                              ) ! [IN]
 
        !$acc wait
        call DEBUG_rapend  ('___Small_step')
-
        !------------------------------------------------------------------------
        !>  Tracer advection
        !------------------------------------------------------------------------
@@ -872,32 +879,32 @@ contains
 
           if ( nl == num_of_iteration_lstep ) then
 
-             call src_tracer_advection( TRC_VMAX,                                              & ! [IN]
-                                        PROGq   (:,:,:,:),        PROGq_pl   (:,:,:,:),        & ! [INOUT]
-                                        PROG0   (:,:,:,I_RHOG  ), PROG0_pl   (:,:,:,I_RHOG  ), & ! [IN]
-                                        v_mean_c(:,:,:,I_RHOG  ), v_mean_c_pl(:,:,:,I_RHOG  ), & ! [IN]
-                                        v_mean_c(:,:,:,I_RHOGVX), v_mean_c_pl(:,:,:,I_RHOGVX), & ! [IN]
-                                        v_mean_c(:,:,:,I_RHOGVY), v_mean_c_pl(:,:,:,I_RHOGVY), & ! [IN]
-                                        v_mean_c(:,:,:,I_RHOGVZ), v_mean_c_pl(:,:,:,I_RHOGVZ), & ! [IN]
-                                        v_mean_c(:,:,:,I_RHOGW ), v_mean_c_pl(:,:,:,I_RHOGW ), & ! [IN]
-                                        f_TEND  (:,:,:,I_RHOG  ), f_TEND_pl  (:,:,:,I_RHOG  ), & ! [IN]
-                                        large_step_dt,                                         & ! [IN]
-                                        THUBURN_LIM                                            ) ! [IN]  ![add] 20130613 R.Yoshida
+             call src_tracer_advection( TRC_VMAX,                                                & ! [IN]
+                                        PROGq    (:,:,:,:),        PROGq_pl    (:,:,:,:),        & ! [INOUT]
+                                        PROG0    (:,:,:,I_RHOG  ), PROG0_pl    (:,:,:,I_RHOG  ), & ! [IN]
+                                        PROG_mean(:,:,:,I_RHOG  ), PROG_mean_pl(:,:,:,I_RHOG  ), & ! [IN]
+                                        PROG_mean(:,:,:,I_RHOGVX), PROG_mean_pl(:,:,:,I_RHOGVX), & ! [IN]
+                                        PROG_mean(:,:,:,I_RHOGVY), PROG_mean_pl(:,:,:,I_RHOGVY), & ! [IN]
+                                        PROG_mean(:,:,:,I_RHOGVZ), PROG_mean_pl(:,:,:,I_RHOGVZ), & ! [IN]
+                                        PROG_mean(:,:,:,I_RHOGW ), PROG_mean_pl(:,:,:,I_RHOGW ), & ! [IN]
+                                        f_TEND   (:,:,:,I_RHOG  ), f_TEND_pl   (:,:,:,I_RHOG  ), & ! [IN]
+                                        large_step_dt,                                           & ! [IN]
+                                        THUBURN_LIM                                              ) ! [IN]
 
              !$acc kernels pcopy(PROGq) pcopyin(f_TENDq) async(0)
              PROGq(:,:,:,:) = PROGq(:,:,:,:) + large_step_dt * f_TENDq(:,:,:,:) ! update rhogq by viscosity
              !$acc end kernels
 
              !$acc kernels pcopy(PROGq) async(0)
-             PROGq(:,ADM_kmin-1,:,:) = 0.D0
-             PROGq(:,ADM_kmax+1,:,:) = 0.D0
+             PROGq(:,ADM_kmin-1,:,:) = 0.0_RP
+             PROGq(:,ADM_kmax+1,:,:) = 0.0_RP
              !$acc end kernels
 
-             if ( ADM_prc_pl == ADM_prc_me ) then
+             if ( ADM_have_pl ) then
                 PROGq_pl(:,:,:,:) = PROGq_pl(:,:,:,:) + large_step_dt * f_TENDq_pl(:,:,:,:)
 
-                PROGq_pl(:,ADM_kmin-1,:,:) = 0.D0
-                PROGq_pl(:,ADM_kmax+1,:,:) = 0.D0
+                PROGq_pl(:,ADM_kmin-1,:,:) = 0.0_RP
+                PROGq_pl(:,ADM_kmax+1,:,:) = 0.0_RP
              endif
 
              ! [comment] H.Tomita: I don't recommend adding the hyperviscosity term because of numerical instability in this case.
@@ -909,32 +916,31 @@ contains
 
           do nq = 1, TRC_VMAX
 
-             call src_advection_convergence( v_mean_c(:,:,:,I_RHOGVX), v_mean_c_pl(:,:,:,I_RHOGVX), & ! [IN]
-                                             v_mean_c(:,:,:,I_RHOGVY), v_mean_c_pl(:,:,:,I_RHOGVY), & ! [IN]
-                                             v_mean_c(:,:,:,I_RHOGVZ), v_mean_c_pl(:,:,:,I_RHOGVZ), & ! [IN]
-                                             v_mean_c(:,:,:,I_RHOGW ), v_mean_c_pl(:,:,:,I_RHOGW ), & ! [IN]
-                                             q       (:,:,:,nq),       q_pl       (:,:,:,nq),       & ! [IN]
-                                             g_TENDq (:,:,:,nq),       g_TENDq_pl (:,:,:,nq),       & ! [OUT]
-                                             I_SRC_default                                          ) ! [IN]  [mod] H.Yashiro 20120530
-
-             !$acc kernels pcopy(PROGq) pcopyin(PROGq0,g_TENDq,f_TENDq) async(0)
-             PROGq(:,:,:,:) = PROGq0(:,:,:,:)                                                                   &
-                            + ( num_of_iteration_sstep(nl) * TIME_DTS ) * ( g_TENDq(:,:,:,:) + f_TENDq(:,:,:,:) )
-
-             PROGq(:,ADM_kmin-1,:,:) = 0.D0
-             PROGq(:,ADM_kmax+1,:,:) = 0.D0
-             !$acc end kernels
-
-             if ( ADM_prc_pl == ADM_prc_me ) then
-                      PROGq_pl(:,:,:,:) = PROGq0_pl(:,:,:,:)                          &
-                                        + ( num_of_iteration_sstep(nl) * TIME_DTS )   &
-                                        * ( g_TENDq_pl(:,:,:,:) + f_TENDq_pl(:,:,:,:) )
-
-                PROGq_pl(:,ADM_kmin-1,:,:) = 0.D0
-                PROGq_pl(:,ADM_kmax+1,:,:) = 0.D0
-             endif
+             call src_advection_convergence( PROG_mean(:,:,:,I_RHOGVX), PROG_mean_pl(:,:,:,I_RHOGVX), & ! [IN]
+                                             PROG_mean(:,:,:,I_RHOGVY), PROG_mean_pl(:,:,:,I_RHOGVY), & ! [IN]
+                                             PROG_mean(:,:,:,I_RHOGVZ), PROG_mean_pl(:,:,:,I_RHOGVZ), & ! [IN]
+                                             PROG_mean(:,:,:,I_RHOGW ), PROG_mean_pl(:,:,:,I_RHOGW ), & ! [IN]
+                                             q        (:,:,:,nq),       q_pl        (:,:,:,nq),       & ! [IN]
+                                             g_TENDq  (:,:,:,nq),       g_TENDq_pl  (:,:,:,nq),       & ! [OUT]
+                                             I_SRC_default                                            ) ! [IN]
 
           enddo ! tracer LOOP
+
+          !$acc kernels pcopy(PROGq) pcopyin(PROGq0,g_TENDq,f_TENDq) async(0)
+          PROGq(:,:,:,:) = PROGq0(:,:,:,:)                                                                   &
+                         + ( num_of_iteration_sstep(nl) * TIME_DTS ) * ( g_TENDq(:,:,:,:) + f_TENDq(:,:,:,:) )
+
+          PROGq(:,ADM_kmin-1,:,:) = 0.0_RP
+          PROGq(:,ADM_kmax+1,:,:) = 0.0_RP
+          !$acc end kernels
+
+          if ( ADM_have_pl ) then
+             PROGq_pl(:,:,:,:) = PROGq0_pl(:,:,:,:)                                                                      &
+                               + ( num_of_iteration_sstep(nl) * TIME_DTS ) * ( g_TENDq_pl(:,:,:,:) + f_TENDq_pl(:,:,:,:) )
+
+             PROGq_pl(:,ADM_kmin-1,:,:) = 0.0_RP
+             PROGq_pl(:,ADM_kmax+1,:,:) = 0.0_RP
+          endif
 
           if( I_TKE >= 0 ) do_tke_correction = .true.
 
@@ -950,7 +956,7 @@ contains
           do l = 1, ADM_lall
           do k = 1, ADM_kall
           do g = 1, ADM_gall
-             TKEG_corr = max( TKE_MIN * VMTR_GSGAM2(g,k,l) - PROGq(g,k,l,I_TKE), 0.D0 )
+             TKEG_corr = max( TKE_MIN * VMTR_GSGAM2(g,k,l) - PROGq(g,k,l,I_TKE), 0.0_RP )
 
              PROG (g,k,l,I_RHOGE) = PROG (g,k,l,I_RHOGE) - TKEG_corr
              PROGq(g,k,l,I_TKE)   = PROGq(g,k,l,I_TKE)   + TKEG_corr
@@ -959,11 +965,11 @@ contains
           enddo
           !$acc end kernels
 
-          if ( ADM_prc_pl == ADM_prc_me ) then
+          if ( ADM_have_pl ) then
              do l = 1, ADM_lall_pl
              do k = 1, ADM_kall
              do g = 1, ADM_gall_pl
-                TKEg_corr = max( TKE_MIN * VMTR_GSGAM2_pl(g,k,l) - PROGq_pl(g,k,l,I_TKE), 0.D0 )
+                TKEg_corr = max( TKE_MIN * VMTR_GSGAM2_pl(g,k,l) - PROGq_pl(g,k,l,I_TKE), 0.0_RP )
 
                 PROG_pl (g,k,l,I_RHOGE) = PROG_pl (g,k,l,I_RHOGE) - TKEG_corr
                 PROGq_pl(g,k,l,I_TKE)   = PROGq_pl(g,k,l,I_TKE)   + TKEG_corr

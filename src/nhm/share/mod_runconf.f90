@@ -62,9 +62,10 @@ module mod_runconf
   !
   !++ Used modules
   !
+  use mod_precision
   use mod_debug
   use mod_adm, only: &
-     ADM_LOG_FID, &
+     ADM_LOG_FID,  &
      ADM_NSYS
   !-----------------------------------------------------------------------------
   implicit none
@@ -179,12 +180,12 @@ module mod_runconf
   integer, public            :: NCHEM_END  = -1 ! end   index of chemical (or general purpose) tracers
 
   !--- specific heat of water on const pressure
-  real(8), public, allocatable :: CVW(:)
-  real(8), public, allocatable :: CPW(:)
+  real(RP), public, allocatable :: CVW(:)
+  real(RP), public, allocatable :: CPW(:)
   !--- Latent heat
-  real(8), public            :: LHV
-  real(8), public            :: LHF
-  real(8), public            :: LHS
+  real(RP), public            :: LHV
+  real(RP), public            :: LHF
+  real(RP), public            :: LHS
   !--- No. of band for rad.
   integer, public, parameter :: NRBND     = 3
   integer, public, parameter :: NRBND_VIS = 1

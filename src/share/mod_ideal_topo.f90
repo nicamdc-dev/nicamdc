@@ -21,6 +21,8 @@ module mod_ideal_topo
   !
   !++ Used modules
   !
+  use mod_precision
+  use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID,  &
      ADM_NSYS
@@ -64,9 +66,9 @@ contains
        ADM_lall
     implicit none
 
-    real(8), intent(in)  :: lat (ADM_gall,ADM_KNONE,ADM_lall)
-    real(8), intent(in)  :: lon (ADM_gall,ADM_KNONE,ADM_lall)
-    real(8), intent(out) :: Zsfc(ADM_gall,ADM_KNONE,ADM_lall)
+    real(RP), intent(in)  :: lat (ADM_gall,ADM_KNONE,ADM_lall)
+    real(RP), intent(in)  :: lon (ADM_gall,ADM_KNONE,ADM_lall)
+    real(RP), intent(out) :: Zsfc(ADM_gall,ADM_KNONE,ADM_lall)
 
     character(len=ADM_NSYS) :: topo_type = ''
 
@@ -134,15 +136,15 @@ contains
        D2R    => CNST_D2R
     implicit none
 
-    real(8), intent(in)  :: lat (ADM_gall,ADM_KNONE,ADM_lall)
-    real(8), intent(in)  :: lon (ADM_gall,ADM_KNONE,ADM_lall)
-    real(8), intent(out) :: Zsfc(ADM_gall,ADM_KNONE,ADM_lall)
+    real(RP), intent(in)  :: lat (ADM_gall,ADM_KNONE,ADM_lall)
+    real(RP), intent(in)  :: lon (ADM_gall,ADM_KNONE,ADM_lall)
+    real(RP), intent(out) :: Zsfc(ADM_gall,ADM_KNONE,ADM_lall)
 
-    real(8) :: center_lon =  270.D0 ! Longitude of Schar-type mountain center point [deg]
-    real(8) :: center_lat =    0.D0 ! Latitude  of Schar-type mountain center point [deg]
-    real(8) :: H0         = 2000.D0 ! Maximum Schar-type mountain height [m]
-    real(8) :: Rm_deg     =  135.D0 ! Schar-type mountain radius     [deg]
-    real(8) :: QSIm_deg   = 11.25D0 ! Schar-type mountain wavelength [deg]
+    real(RP) :: center_lon =  270.0_RP ! Longitude of Schar-type mountain center point [deg]
+    real(RP) :: center_lat =    0.0_RP ! Latitude  of Schar-type mountain center point [deg]
+    real(RP) :: H0         = 2000.0_RP ! Maximum Schar-type mountain height [m]
+    real(RP) :: Rm_deg     =  135.0_RP ! Schar-type mountain radius     [deg]
+    real(RP) :: QSIm_deg   = 11.25_RP ! Schar-type mountain wavelength [deg]
 
     namelist / IDEALTOPOPARAM_Schar_Moderate / &
        center_lon, &
@@ -151,10 +153,10 @@ contains
        Rm_deg,     &
        QSIm_deg
 
-    real(8) :: LAMBDA,  PHI
-    real(8) :: LAMBDAm, PHIm, Rm, QSIm
-    real(8) :: sinPHIm, cosPHIm
-    real(8) :: distance, mask
+    real(RP) :: LAMBDA,  PHI
+    real(RP) :: LAMBDAm, PHIm, Rm, QSIm
+    real(RP) :: sinPHIm, cosPHIm
+    real(RP) :: distance, mask
 
     integer :: g, l, K0
     integer :: ierr
@@ -191,10 +193,10 @@ contains
        distance = acos( sinPHIm * sin(PHI)                       &
                       + cosPHIm * cos(PHI) * cos(LAMBDA-LAMBDAm) )
 
-       mask = 0.5D0 - sign(0.5D0,distance-Rm) ! if distance > Rm, mask = 0
+       mask = 0.5_RP - sign(0.5_RP,distance-Rm) ! if distance > Rm, mask = 0
 
-       Zsfc(g,ADM_KNONE,l) = H0/2.D0                              &
-                           * ( 1.D0 + cos( PI * distance / Rm ) ) &
+       Zsfc(g,ADM_KNONE,l) = H0/2.0_RP                              &
+                           * ( 1.0_RP + cos( PI * distance / Rm ) ) &
                            * cos( PI * distance / QSIm )**2       &
                            * mask
     enddo
@@ -221,15 +223,15 @@ contains
        RADIUS => CNST_ERADIUS
     implicit none
 
-    real(8), intent(in)  :: lat (ADM_gall,ADM_KNONE,ADM_lall)
-    real(8), intent(in)  :: lon (ADM_gall,ADM_KNONE,ADM_lall)
-    real(8), intent(out) :: Zsfc(ADM_gall,ADM_KNONE,ADM_lall)
+    real(RP), intent(in)  :: lat (ADM_gall,ADM_KNONE,ADM_lall)
+    real(RP), intent(in)  :: lon (ADM_gall,ADM_KNONE,ADM_lall)
+    real(RP), intent(out) :: Zsfc(ADM_gall,ADM_KNONE,ADM_lall)
 
-    real(8) :: center_lon =   45.D0 ! Longitude of Schar-type mountain center point [deg]
-    real(8) :: center_lat =    0.D0 ! Latitude  of Schar-type mountain center point [deg]
-    real(8) :: H0         =  250.D0 ! Maximum Schar-type mountain height [m]
-    real(8) :: d          = 5000.D0 ! Schar-type mountain half-width [m]
-    real(8) :: QSI        = 4000.D0 ! Schar-type mountain wavelength [m]
+    real(RP) :: center_lon =   45.0_RP ! Longitude of Schar-type mountain center point [deg]
+    real(RP) :: center_lat =    0.0_RP ! Latitude  of Schar-type mountain center point [deg]
+    real(RP) :: H0         =  250.0_RP ! Maximum Schar-type mountain height [m]
+    real(RP) :: d          = 5000.0_RP ! Schar-type mountain half-width [m]
+    real(RP) :: QSI        = 4000.0_RP ! Schar-type mountain wavelength [m]
 
     namelist / IDEALTOPOPARAM_Schar_Steep / &
        center_lon, &
@@ -238,10 +240,10 @@ contains
        d,          &
        QSI
 
-    real(8) :: LAMBDA,  PHI
-    real(8) :: LAMBDAc, PHIc
-    real(8) :: sinPHIc, cosPHIc
-    real(8) :: distance
+    real(RP) :: LAMBDA,  PHI
+    real(RP) :: LAMBDAc, PHIc
+    real(RP) :: sinPHIc, cosPHIc
+    real(RP) :: distance
 
     integer :: g, l, K0
     integer :: ierr
@@ -302,32 +304,32 @@ contains
        GRAV   => CNST_EGRAV
     implicit none
 
-    real(8), intent(in)  :: lat (ADM_gall,ADM_KNONE,ADM_lall)
-    real(8), intent(in)  :: lon (ADM_gall,ADM_KNONE,ADM_lall)
-    real(8), intent(out) :: Zsfc(ADM_gall,ADM_KNONE,ADM_lall)
+    real(RP), intent(in)  :: lat (ADM_gall,ADM_KNONE,ADM_lall)
+    real(RP), intent(in)  :: lon (ADM_gall,ADM_KNONE,ADM_lall)
+    real(RP), intent(out) :: Zsfc(ADM_gall,ADM_KNONE,ADM_lall)
 
-    real(8), parameter :: ETA0 = 0.252D0 ! Value of eta at a reference level (position of the jet)
-    real(8), parameter :: ETAs =    1.D0 ! Value of eta at the surface
-    real(8), parameter :: u0   =   35.D0 ! Maximum amplitude of the zonal wind
+    real(RP), parameter :: ETA0 = 0.252_RP ! Value of eta at a reference level (position of the jet)
+    real(RP), parameter :: ETAs =    1.0_RP ! Value of eta at the surface
+    real(RP), parameter :: u0   =   35.0_RP ! Maximum amplitude of the zonal wind
 
-    real(8) :: PHI, ETAv, u0cos32ETAv
-    real(8) :: f1, f2
+    real(RP) :: PHI, ETAv, u0cos32ETAv
+    real(RP) :: f1, f2
 
     integer :: g, l, K0
     !---------------------------------------------------------------------------
 
     K0 = ADM_KNONE
 
-    ETAv        = ( ETAs - ETA0 ) * PI/2.D0
-    u0cos32ETAv = u0 * cos(ETAv)**(3.D0/2.D0)
+    ETAv        = ( ETAs - ETA0 ) * PI/2.0_RP
+    u0cos32ETAv = u0 * cos(ETAv)**(3.0_RP/2.0_RP)
 
     ! for globe
     do l = 1, ADM_lall
     do g = 1, ADM_gall
        PHI = lat(g,K0,l)
 
-       f1 = -2.D0 * sin(PHI)**6 * ( cos(PHI)**2 + 1.D0/3.D0 ) + 10.D0/63.D0
-       f2 = 8.D0/5.D0 * cos(PHI)**3 * ( sin(PHI)**2 + 2.D0/3.D0 ) - PI/4.D0
+       f1 = -2.0_RP * sin(PHI)**6 * ( cos(PHI)**2 + 1.0_RP/3.0_RP ) + 10.0_RP/63.0_RP
+       f2 = 8.0_RP/5.0_RP * cos(PHI)**3 * ( sin(PHI)**2 + 2.0_RP/3.0_RP ) - PI/4.0_RP
 
        Zsfc(g,k0,l) = u0cos32ETAv * ( u0cos32ETAv*f1 + RADIUS*OHM*f2 ) / GRAV
     enddo

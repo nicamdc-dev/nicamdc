@@ -25,6 +25,15 @@ module mod_thrmdyn
   !
   !++ Used modules
   !
+  use mod_precision
+  use mod_debug
+  use mod_adm, only: &
+     ADM_LOG_FID,      &
+     ADM_MAXFNAME,     &
+     ADM_NSYS,         &
+     kdim => ADM_kall, &
+     kmin => ADM_kmin, &
+     kmax => ADM_kmax
   use mod_cnst, only: &
      Rdry  => CNST_RAIR,  &
      CPdry => CNST_CP,    &
@@ -154,8 +163,8 @@ contains
 
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
-    real(8), intent(in)  :: q (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
-    real(8), intent(out) :: qd(ijdim,kdim)       ! dry air mass concentration [kg/kg]
+    real(RP), intent(in)  :: q (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: qd(ijdim,kdim)       ! dry air mass concentration [kg/kg]
 
     integer :: ij, k, nq
     !---------------------------------------------------------------------------
@@ -163,7 +172,7 @@ contains
     !$acc kernels pcopy(qd) pcopyin(q) async(0)
     do k  = 1, kdim
     do ij = 1, ijdim
-       qd(ij,k) = 1.D0
+       qd(ij,k) = 1.0_RP
 
        !$acc loop seq
        do nq = NQW_STR,NQW_END
@@ -191,8 +200,8 @@ contains
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
     integer, intent(in)  :: ldim
-    real(8), intent(in)  :: q (ijdim,kdim,ldim,nqmax) ! tracer  mass concentration [kg/kg]
-    real(8), intent(out) :: qd(ijdim,kdim,ldim)       ! dry air mass concentration [kg/kg]
+    real(RP), intent(in)  :: q (ijdim,kdim,ldim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: qd(ijdim,kdim,ldim)       ! dry air mass concentration [kg/kg]
 
     integer :: ij, k, l,nq
     !---------------------------------------------------------------------------
@@ -201,7 +210,7 @@ contains
     do l  = 1, ldim
     do k  = 1, kdim
     do ij = 1, ijdim
-       qd(ij,k,l) = 1.D0
+       qd(ij,k,l) = 1.0_RP
 
        !$acc loop seq
        do nq = NQW_STR,NQW_END
@@ -229,9 +238,9 @@ contains
 
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
-    real(8), intent(in)  :: qd(ijdim,kdim)       ! dry air mass concentration [kg/kg]
-    real(8), intent(in)  :: q (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
-    real(8), intent(out) :: cv(ijdim,kdim)       ! specific heat [J/kg/K]
+    real(RP), intent(in)  :: qd(ijdim,kdim)       ! dry air mass concentration [kg/kg]
+    real(RP), intent(in)  :: q (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: cv(ijdim,kdim)       ! specific heat [J/kg/K]
 
     integer :: ij, k, nq
     !---------------------------------------------------------------------------
@@ -266,9 +275,9 @@ contains
 
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
-    real(8), intent(in)  :: qd(ijdim,kdim)       ! dry air mass concentration [kg/kg]
-    real(8), intent(in)  :: q (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
-    real(8), intent(out) :: cp(ijdim,kdim)       ! specific heat [J/kg/K]
+    real(RP), intent(in)  :: qd(ijdim,kdim)       ! dry air mass concentration [kg/kg]
+    real(RP), intent(in)  :: q (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: cp(ijdim,kdim)       ! specific heat [J/kg/K]
 
     integer :: ij, k, nq
     !---------------------------------------------------------------------------
@@ -305,11 +314,11 @@ contains
 
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
-    real(8), intent(in)  :: tem(ijdim,kdim)       ! temperature [K]
-    real(8), intent(in)  :: pre(ijdim,kdim)       ! pressure    [Pa]
-    real(8), intent(in)  :: qd (ijdim,kdim)       ! dry air mass concentration [kg/kg]
-    real(8), intent(in)  :: q  (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
-    real(8), intent(out) :: rho(ijdim,kdim)       ! density     [kg/m3]
+    real(RP), intent(in)  :: tem(ijdim,kdim)       ! temperature [K]
+    real(RP), intent(in)  :: pre(ijdim,kdim)       ! pressure    [Pa]
+    real(RP), intent(in)  :: qd (ijdim,kdim)       ! dry air mass concentration [kg/kg]
+    real(RP), intent(in)  :: q  (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: rho(ijdim,kdim)       ! density     [kg/m3]
 
     integer :: ij, k
     !---------------------------------------------------------------------------
@@ -341,11 +350,11 @@ contains
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
     integer, intent(in)  :: ldim
-    real(8), intent(in)  :: tem(ijdim,kdim,ldim)       ! temperature [K]
-    real(8), intent(in)  :: pre(ijdim,kdim,ldim)       ! pressure    [Pa]
-    real(8), intent(in)  :: qd (ijdim,kdim,ldim)       ! dry air mass concentration [kg/kg]
-    real(8), intent(in)  :: q  (ijdim,kdim,ldim,nqmax) ! tracer  mass concentration [kg/kg]
-    real(8), intent(out) :: rho(ijdim,kdim,ldim)       ! density     [kg/m3]
+    real(RP), intent(in)  :: tem(ijdim,kdim,ldim)       ! temperature [K]
+    real(RP), intent(in)  :: pre(ijdim,kdim,ldim)       ! pressure    [Pa]
+    real(RP), intent(in)  :: qd (ijdim,kdim,ldim)       ! dry air mass concentration [kg/kg]
+    real(RP), intent(in)  :: q  (ijdim,kdim,ldim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: rho(ijdim,kdim,ldim)       ! density     [kg/m3]
 
     integer :: ij, k, l
     !---------------------------------------------------------------------------
@@ -377,11 +386,11 @@ contains
 
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
-    real(8), intent(in)  :: rho(ijdim,kdim)       ! density     [kg/m3]
-    real(8), intent(in)  :: tem(ijdim,kdim)       ! temperature [K]
-    real(8), intent(in)  :: qd (ijdim,kdim)       ! dry air mass concentration [kg/kg]
-    real(8), intent(in)  :: q  (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
-    real(8), intent(out) :: pre(ijdim,kdim)       ! pressure    [Pa]
+    real(RP), intent(in)  :: rho(ijdim,kdim)       ! density     [kg/m3]
+    real(RP), intent(in)  :: tem(ijdim,kdim)       ! temperature [K]
+    real(RP), intent(in)  :: qd (ijdim,kdim)       ! dry air mass concentration [kg/kg]
+    real(RP), intent(in)  :: q  (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: pre(ijdim,kdim)       ! pressure    [Pa]
 
     integer :: ij, k
     !---------------------------------------------------------------------------
@@ -410,12 +419,12 @@ contains
 
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
-    real(8), intent(in)  :: tem(ijdim,kdim)       ! temperature [K]
-    real(8), intent(in)  :: qd (ijdim,kdim)       ! dry air mass concentration [kg/kg]
-    real(8), intent(in)  :: q  (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
-    real(8), intent(out) :: ein(ijdim,kdim)       ! internal energy [J]
+    real(RP), intent(in)  :: tem(ijdim,kdim)       ! temperature [K]
+    real(RP), intent(in)  :: qd (ijdim,kdim)       ! dry air mass concentration [kg/kg]
+    real(RP), intent(in)  :: q  (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: ein(ijdim,kdim)       ! internal energy [J]
 
-    real(8) :: cv(ijdim,kdim)
+    real(RP) :: cv(ijdim,kdim)
 
     integer :: ij, k, nq
     !---------------------------------------------------------------------------
@@ -452,12 +461,12 @@ contains
 
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
-    real(8), intent(in)  :: ein(ijdim,kdim)       ! internal energy [J]
-    real(8), intent(in)  :: qd (ijdim,kdim)       ! dry air mass concentration [kg/kg]
-    real(8), intent(in)  :: q  (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
-    real(8), intent(out) :: tem(ijdim,kdim)       ! temperature [K]
+    real(RP), intent(in)  :: ein(ijdim,kdim)       ! internal energy [J]
+    real(RP), intent(in)  :: qd (ijdim,kdim)       ! dry air mass concentration [kg/kg]
+    real(RP), intent(in)  :: q  (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: tem(ijdim,kdim)       ! temperature [K]
 
-    real(8) :: cv(ijdim,kdim)
+    real(RP) :: cv(ijdim,kdim)
 
     integer :: ij, k, nq
     !---------------------------------------------------------------------------
@@ -493,11 +502,11 @@ contains
 
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
-    real(8), intent(in)  :: tem(ijdim,kdim) ! temperature [K]
-    real(8), intent(in)  :: pre(ijdim,kdim) ! pressure    [Pa]
-    real(8), intent(out) :: th (ijdim,kdim) ! potential temperature [K]
+    real(RP), intent(in)  :: tem(ijdim,kdim) ! temperature [K]
+    real(RP), intent(in)  :: pre(ijdim,kdim) ! pressure    [Pa]
+    real(RP), intent(out) :: th (ijdim,kdim) ! potential temperature [K]
 
-    real(8) :: pre0_kappa
+    real(RP) :: pre0_kappa
 
     integer :: ij, k
     !---------------------------------------------------------------------------
@@ -529,11 +538,11 @@ contains
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
     integer, intent(in)  :: ldim
-    real(8), intent(in)  :: tem(ijdim,kdim,ldim) ! temperature [K]
-    real(8), intent(in)  :: pre(ijdim,kdim,ldim) ! pressure    [Pa]
-    real(8), intent(out) :: th (ijdim,kdim,ldim) ! potential temperature [K]
+    real(RP), intent(in)  :: tem(ijdim,kdim,ldim) ! temperature [K]
+    real(RP), intent(in)  :: pre(ijdim,kdim,ldim) ! pressure    [Pa]
+    real(RP), intent(out) :: th (ijdim,kdim,ldim) ! potential temperature [K]
 
-    real(8) :: pre0_kappa
+    real(RP) :: pre0_kappa
 
     integer :: ij, k, l
     !---------------------------------------------------------------------------
@@ -566,10 +575,10 @@ contains
 
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
-    real(8), intent(in)  :: ein(ijdim,kdim) ! internal energy [J]
-    real(8), intent(in)  :: pre(ijdim,kdim) ! pressure    [Pa]
-    real(8), intent(in)  :: rho(ijdim,kdim) ! density     [kg/m3]
-    real(8), intent(out) :: eth(ijdim,kdim) ! enthalpy
+    real(RP), intent(in)  :: ein(ijdim,kdim) ! internal energy [J]
+    real(RP), intent(in)  :: pre(ijdim,kdim) ! pressure    [Pa]
+    real(RP), intent(in)  :: rho(ijdim,kdim) ! density     [kg/m3]
+    real(RP), intent(out) :: eth(ijdim,kdim) ! enthalpy
 
     integer :: ij, k
     !---------------------------------------------------------------------------
@@ -600,10 +609,10 @@ contains
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
     integer, intent(in)  :: ldim
-    real(8), intent(in)  :: ein(ijdim,kdim,ldim) ! internal energy [J]
-    real(8), intent(in)  :: pre(ijdim,kdim,ldim) ! pressure    [Pa]
-    real(8), intent(in)  :: rho(ijdim,kdim,ldim) ! density     [kg/m3]
-    real(8), intent(out) :: eth(ijdim,kdim,ldim) ! enthalpy
+    real(RP), intent(in)  :: ein(ijdim,kdim,ldim) ! internal energy [J]
+    real(RP), intent(in)  :: pre(ijdim,kdim,ldim) ! pressure    [Pa]
+    real(RP), intent(in)  :: rho(ijdim,kdim,ldim) ! density     [kg/m3]
+    real(RP), intent(out) :: eth(ijdim,kdim,ldim) ! enthalpy
 
     integer :: ij, k, l
     !---------------------------------------------------------------------------
@@ -635,17 +644,17 @@ contains
 
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
-    real(8), intent(in)  :: tem(ijdim,kdim)
-    real(8), intent(in)  :: pre(ijdim,kdim)
-    real(8), intent(in)  :: qd (ijdim,kdim)
-    real(8), intent(in)  :: q  (ijdim,kdim,nqmax)
-    real(8), intent(out) :: ent(ijdim,kdim)
+    real(RP), intent(in)  :: tem(ijdim,kdim)
+    real(RP), intent(in)  :: pre(ijdim,kdim)
+    real(RP), intent(in)  :: qd (ijdim,kdim)
+    real(RP), intent(in)  :: q  (ijdim,kdim,nqmax)
+    real(RP), intent(out) :: ent(ijdim,kdim)
 
-    real(8) :: Pdry
-    real(8) :: Pvap
-    real(8) :: LH(nqmax)
+    real(RP) :: Pdry
+    real(RP) :: Pvap
+    real(RP) :: LH(nqmax)
 
-    real(8), parameter :: EPS = 1.D-10
+    real(RP), parameter :: EPS = 1.E-10_RP
 
     integer :: ij, k, nq
     !---------------------------------------------------------------------------
@@ -656,7 +665,7 @@ contains
        elseif( nq == I_QI .OR. nq == I_QS .OR. nq == I_QG ) then
           LH(nq) = -LHF / TEM00
        else
-          LH(nq) = 0.D0
+          LH(nq) = 0.0_RP
        endif
     enddo
 
@@ -707,14 +716,14 @@ contains
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
     integer, intent(in)  :: ldim
-    real(8), intent(in)  :: tem(ijdim,kdim,ldim)       ! temperature [K]
-    real(8), intent(in)  :: pre(ijdim,kdim,ldim)       ! pressure    [Pa]
-    real(8), intent(in)  :: q  (ijdim,kdim,ldim,nqmax) ! tracer  mass concentration [kg/kg]
-    real(8), intent(out) :: rho(ijdim,kdim,ldim)       ! density     [kg/m3]
-    real(8), intent(out) :: ein(ijdim,kdim,ldim)       ! internal energy [J]
+    real(RP), intent(in)  :: tem(ijdim,kdim,ldim)       ! temperature [K]
+    real(RP), intent(in)  :: pre(ijdim,kdim,ldim)       ! pressure    [Pa]
+    real(RP), intent(in)  :: q  (ijdim,kdim,ldim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: rho(ijdim,kdim,ldim)       ! density     [kg/m3]
+    real(RP), intent(out) :: ein(ijdim,kdim,ldim)       ! internal energy [J]
 
-    real(8) :: cv(ijdim,kdim,ldim)
-    real(8) :: qd(ijdim,kdim,ldim)
+    real(RP) :: cv(ijdim,kdim,ldim)
+    real(RP) :: qd(ijdim,kdim,ldim)
 
     integer :: ij, k, l, nq
     !---------------------------------------------------------------------------
@@ -723,8 +732,8 @@ contains
     do l  = 1, ldim
     do k  = 1, kdim
     do ij = 1, ijdim
-       cv(ij,k,l) = 0.D0
-       qd(ij,k,l) = 1.D0
+       cv(ij,k,l) = 0.0_RP
+       qd(ij,k,l) = 1.0_RP
 
        !$acc loop seq
        do nq = NQW_STR, NQW_END
@@ -761,14 +770,14 @@ contains
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
     integer, intent(in)  :: ldim
-    real(8), intent(in)  :: ein(ijdim,kdim,ldim)       ! internal energy [J]
-    real(8), intent(in)  :: rho(ijdim,kdim,ldim)       ! density     [kg/m3]
-    real(8), intent(in)  :: q  (ijdim,kdim,ldim,nqmax) ! tracer  mass concentration [kg/kg]
-    real(8), intent(out) :: tem(ijdim,kdim,ldim)       ! temperature [K]
-    real(8), intent(out) :: pre(ijdim,kdim,ldim)       ! pressure    [Pa]
+    real(RP), intent(in)  :: ein(ijdim,kdim,ldim)       ! internal energy [J]
+    real(RP), intent(in)  :: rho(ijdim,kdim,ldim)       ! density     [kg/m3]
+    real(RP), intent(in)  :: q  (ijdim,kdim,ldim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: tem(ijdim,kdim,ldim)       ! temperature [K]
+    real(RP), intent(out) :: pre(ijdim,kdim,ldim)       ! pressure    [Pa]
 
-    real(8) :: cv(ijdim,kdim,ldim)
-    real(8) :: qd(ijdim,kdim,ldim)
+    real(RP) :: cv(ijdim,kdim,ldim)
+    real(RP) :: qd(ijdim,kdim,ldim)
 
     integer :: ij, k, l, nq
     !---------------------------------------------------------------------------
@@ -777,8 +786,8 @@ contains
     do l  = 1, ldim
     do k  = 1, kdim
     do ij = 1, ijdim
-       cv(ij,k,l) = 0.D0
-       qd(ij,k,l) = 1.D0
+       cv(ij,k,l) = 0.0_RP
+       qd(ij,k,l) = 1.0_RP
 
        !$acc loop seq
        do nq = NQW_STR, NQW_END

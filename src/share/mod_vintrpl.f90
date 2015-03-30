@@ -23,7 +23,10 @@ module mod_vintrpl
   !
   !++ Used modules
   !
-  use mod_adm, only :   &
+  use mod_precision
+  use mod_debug
+  use mod_adm, only: &
+     ADM_LOG_FID, &
        ADM_gall,        &
        ADM_kall,        &
        ADM_lall,        &
@@ -32,8 +35,7 @@ module mod_vintrpl
        ADM_KNONE,       &
        ADM_kmin,        &
        ADM_kmax,        &
-       ADM_prc_me,      &
-       ADM_prc_pl
+       ADM_have_pl
   use mod_grd, only :   &
        GRD_vz,GRD_vz_pl,&
        GRD_gz,          &
@@ -71,26 +73,26 @@ contains
     !------
     !------ Caluculate surface value.( e.g. surface pressure )
     implicit none
-    real(8), intent(in)  :: var(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in)  :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: svar(ADM_gall,ADM_KNONE,ADM_lall)
-    real(8), intent(out) :: svar_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(8), intent(in), optional  :: z_offset_in
+    real(RP), intent(in)  :: var(ADM_gall,ADM_kall,ADM_lall)
+    real(RP), intent(in)  :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: svar(ADM_gall,ADM_KNONE,ADM_lall)
+    real(RP), intent(out) :: svar_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    real(RP), intent(in), optional  :: z_offset_in
     !
-    real(8) :: lag_intpl
-    real(8) :: z,z1,p1,z2,p2,z3,p3
+    real(RP) :: lag_intpl
+    real(RP) :: z,z1,p1,z2,p2,z3,p3
     lag_intpl(z,z1,p1,z2,p2,z3,p3)             &
          = ((z-z2)*(z-z3))/((z1-z2)*(z1-z3))*p1&
          + ((z-z1)*(z-z3))/((z2-z1)*(z2-z3))*p2&
          + ((z-z1)*(z-z2))/((z3-z1)*(z3-z2))*p3
     !
     integer :: l,n
-    real(8) :: z_offset
+    real(RP) :: z_offset
     !
     if(present(z_offset_in)) then
        z_offset = z_offset
     else
-       z_offset = 0.0D0
+       z_offset = 0.0_RP
     endif
     !
     do l=1,ADM_lall
@@ -102,7 +104,7 @@ contains
                GRD_vz(n,ADM_kmin  ,l,GRD_Z),var(n,ADM_kmin  ,l))
        enddo
     enddo
-    if(ADM_prc_me==ADM_prc_pl) then
+    if( ADM_have_pl ) then
        do l=1,ADM_lall_pl
           do n = 1, ADM_gall_pl
              svar_pl(n,ADM_KNONE,l) &
@@ -117,17 +119,17 @@ contains
   !-----------------------------------------------------------------------------
   subroutine VINTRPL_z_level( v, v_pl, wgrid )
     implicit none
-    real(8), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
+    real(RP), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     logical, intent(in) :: wgrid
 
-    real(8) :: tmp(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: tmp(ADM_gall,ADM_kall,ADM_lall)
+    real(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer :: l,k,n,kk
 
     integer :: kp
-    real(8) :: lag_intpl_quadra, lag_intpl_linear
-    real(8) :: z,z1,p1,z2,p2,z3,p3
+    real(RP) :: lag_intpl_quadra, lag_intpl_linear
+    real(RP) :: z,z1,p1,z2,p2,z3,p3
     lag_intpl_quadra(z,z1,p1,z2,p2,z3,p3)       &
          = ((z-z2)*(z-z3))/((z1-z2)*(z1-z3))*p1 &
          + ((z-z1)*(z-z3))/((z2-z1)*(z2-z3))*p2 &
@@ -146,7 +148,7 @@ contains
           else if ( v(n,k,l) == CNST_UNDEF ) then
             tmp(n,k,l) = v(n,k+1,l)
           else
-            tmp(n,k,l) = 0.5D0*(v(n,k+1,l)+v(n,k,l))
+            tmp(n,k,l) = 0.5_RP*(v(n,k+1,l)+v(n,k,l))
           endif
        enddo
        enddo
@@ -154,7 +156,7 @@ contains
        tmp(:,ADM_kmin-1,:) = v(:,ADM_kmin,:)
        tmp(:,ADM_kmax+1,:) = v(:,ADM_kmax+1,:)
 
-       if (ADM_prc_me==ADM_prc_pl) Then
+       if ( ADM_have_pl ) Then
           ! 07/01/24 K.Suzuki: consider undefined value
           do l=1,ADM_lall
           do k=ADM_kmin,ADM_kmax
@@ -164,7 +166,7 @@ contains
             else if ( v_pl(n,k,l) == CNST_UNDEF ) then
               tmp_pl(n,k,l) = v_pl(n,k+1,l)
             else
-              tmp_pl(n,k,l) = 0.5D0*(v_pl(n,k+1,l)+v_pl(n,k,l))
+              tmp_pl(n,k,l) = 0.5_RP*(v_pl(n,k+1,l)+v_pl(n,k,l))
             endif
           enddo
           enddo
@@ -223,9 +225,9 @@ contains
                 endif
              endif
           enddo
-       end Do
-    end Do
-    if (ADM_prc_me==ADM_prc_pl) Then
+       enddo
+    enddo
+    if ( ADM_have_pl ) Then
        Do l=1,ADM_lall_pl
           do k=1,ADM_kall
              do n=1, ADM_gall_pl
@@ -272,25 +274,25 @@ contains
                    endif
                 endif
              enddo
-          end Do
-       end Do
+          enddo
+       enddo
     endif
   end subroutine VINTRPL_z_level
   !-----------------------------------------------------------------------------
   subroutine VINTRPL_z_level2( v, v_pl, wgrid ) ! 07/01/24 K.Suzuki [add]
     implicit none
-    real(8), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
+    real(RP), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     logical, intent(in) :: wgrid
 
-    real(8) :: tmp(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: tmp(ADM_gall,ADM_kall,ADM_lall)
+    real(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer :: l,k,n,kk
 
     integer :: kp
-    real(8) :: lag_intpl
+    real(RP) :: lag_intpl
 
-    real(8) :: z,z1,p1,z2,p2
+    real(RP) :: z,z1,p1,z2,p2
     lag_intpl(z,z1,p1,z2,p2)  &
          = (z-z2)/(z1-z2)*p1  &
          + (z1-z)/(z1-z2)*p2
@@ -305,7 +307,7 @@ contains
          else if ( v(n,k,l) == CNST_UNDEF ) then
            tmp(n,k,l) = v(n,k+1,l)
          else
-           tmp(n,k,l) = 0.5D0*(v(n,k+1,l)+v(n,k,l))
+           tmp(n,k,l) = 0.5_RP*(v(n,k+1,l)+v(n,k,l))
          endif
        enddo
        enddo
@@ -313,7 +315,7 @@ contains
        tmp(:,ADM_kmin-1,:) = v(:,ADM_kmin,:)
        tmp(:,ADM_kmax+1,:) = v(:,ADM_kmax+1,:)
 
-       if (ADM_prc_me==ADM_prc_pl) Then
+       if ( ADM_have_pl ) Then
           do l=1,ADM_lall
           do k=ADM_kmin,ADM_kmax
           do n=1,ADM_gall
@@ -322,7 +324,7 @@ contains
             else if ( v_pl(n,k,l) == CNST_UNDEF ) then
               tmp_pl(n,k,l) = v_pl(n,k+1,l)
             else
-              tmp_pl(n,k,l) = 0.5D0*(v_pl(n,k+1,l)+v_pl(n,k,l))
+              tmp_pl(n,k,l) = 0.5_RP*(v_pl(n,k+1,l)+v_pl(n,k,l))
             endif
           enddo
           enddo
@@ -365,9 +367,9 @@ contains
                 endif
              endif
           enddo
-       end Do
-    end Do
-    if (ADM_prc_me==ADM_prc_pl) Then
+       enddo
+    enddo
+    if ( ADM_have_pl ) Then
        Do l=1,ADM_lall_pl
           do k=1,ADM_kall
              do n=1, ADM_gall_pl
@@ -398,8 +400,8 @@ contains
                    endif
                 endif
              enddo
-          end Do
-       end Do
+          enddo
+       enddo
     endif
   end subroutine VINTRPL_z_level2
 
@@ -410,17 +412,17 @@ contains
        wgrid )
     implicit none
 
-    real(8), intent(inout) :: v   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: v   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     logical, intent(in)    :: wgrid
 
-    real(8) :: tmp   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: tmp   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     integer :: n, k, l, kk, kp
 
-    real(8) :: lag_intpl
-    real(8) :: z, z1, p1, z2, p2, z3, p3
+    real(RP) :: lag_intpl
+    real(RP) :: z, z1, p1, z2, p2, z3, p3
     lag_intpl(z,z1,p1,z2,p2,z3,p3) = ( (z-z2)*(z-z3) ) / ( (z1-z2)*(z1-z3) ) * p1 &
                                    + ( (z-z1)*(z-z3) ) / ( (z2-z1)*(z2-z3) ) * p2 &
                                    + ( (z-z1)*(z-z2) ) / ( (z3-z1)*(z3-z2) ) * p3
@@ -452,7 +454,7 @@ contains
           enddo
        enddo
 
-       if (ADM_prc_me==ADM_prc_pl) Then
+       if ( ADM_have_pl ) Then
           tmp_pl = v_pl
           v_pl(:,ADM_kmin-1,:) = CNST_UNDEF
           do l=1,ADM_lall_pl
@@ -509,7 +511,7 @@ contains
        enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) Then
+       if ( ADM_have_pl ) Then
           tmp_pl = v_pl
           v_pl(:,ADM_kmin-1,:) = CNST_UNDEF
           v_pl(:,ADM_kmax+1,:) = CNST_UNDEF
@@ -542,23 +544,23 @@ contains
   !-----------------------------------------------------------------------------
   subroutine VINTRPL_half2full( v, v_pl )
     implicit none
-    real(8), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
+    real(RP), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: tmp(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: tmp(ADM_gall,ADM_kall,ADM_lall)
+    real(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer :: k
 
     do k=ADM_kmin,ADM_kmax
-       tmp(:,k,:) = 0.5D0*(v(:,k+1,:)+v(:,k,:))
+       tmp(:,k,:) = 0.5_RP*(v(:,k+1,:)+v(:,k,:))
     enddo
     tmp(:,ADM_kmin-1,:) = v(:,ADM_kmin,:)
     tmp(:,ADM_kmax+1,:) = v(:,ADM_kmax+1,:)
     v = tmp
     !
-    if (ADM_prc_me==ADM_prc_pl) Then
+    if ( ADM_have_pl ) Then
        do k=ADM_kmin,ADM_kmax
-          tmp_pl(:,k,:) = 0.5D0*(v_pl(:,k+1,:)+v_pl(:,k,:))
+          tmp_pl(:,k,:) = 0.5_RP*(v_pl(:,k+1,:)+v_pl(:,k,:))
        enddo
        tmp_pl(:,ADM_kmin-1,:) = v_pl(:,ADM_kmin,:)
        tmp_pl(:,ADM_kmax+1,:) = v_pl(:,ADM_kmax+1,:)
@@ -571,13 +573,13 @@ contains
     !
     implicit none
     !
-    real(8), intent(out) :: sigma(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(out) :: sigma_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in) :: pre(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in) :: pre_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: sigma(ADM_gall,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: sigma_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in) :: pre(ADM_gall,ADM_kall,ADM_lall)
+    real(RP), intent(in) :: pre_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !
-    real(8), intent(in) :: pres(ADM_gall,ADM_KNONE,ADM_lall)
-    real(8), intent(in) :: pres_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    real(RP), intent(in) :: pres(ADM_gall,ADM_KNONE,ADM_lall)
+    real(RP), intent(in) :: pres_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
     integer :: l,k,n
     !
     do l = 1, ADM_lall
@@ -587,7 +589,7 @@ contains
           enddo
        enddo
     enddo
-    if (ADM_prc_me==ADM_prc_pl) Then
+    if ( ADM_have_pl ) Then
        do l = 1, ADM_lall_pl
           do k = 1,ADM_kall
              do n=1, ADM_gall_pl
@@ -605,29 +607,29 @@ contains
        sigma_lev, MAX_SIGMA,      &
        wgrid )
     implicit none
-    real(8), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in) :: sigma(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in) :: sigma_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
+    real(RP), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in) :: sigma(ADM_gall,ADM_kall,ADM_lall)
+    real(RP), intent(in) :: sigma_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer, intent(in) :: MAX_SIGMA
-    real(8), intent(in) :: sigma_lev(MAX_SIGMA)
+    real(RP), intent(in) :: sigma_lev(MAX_SIGMA)
     logical, intent(in) :: wgrid
 
-    real(8) :: tmp(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: a,b
+    real(RP) :: tmp(ADM_gall,ADM_kall,ADM_lall)
+    real(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: a,b
     integer :: l,k,n,kk,kp
 
     if(wgrid) then
        do k=ADM_kmin,ADM_kmax
-          tmp(:,k,:) = 0.5D0*(v(:,k+1,:)+v(:,k,:))
+          tmp(:,k,:) = 0.5_RP*(v(:,k+1,:)+v(:,k,:))
        enddo
        tmp(:,ADM_kmin-1,:) = v(:,ADM_kmin,:)
        tmp(:,ADM_kmax+1,:) = v(:,ADM_kmax+1,:)
 
-       if (ADM_prc_me==ADM_prc_pl) Then
+       if ( ADM_have_pl ) Then
           do k=ADM_kmin,ADM_kmax
-             tmp_pl(:,k,:) = 0.5D0*(v_pl(:,k+1,:)+v_pl(:,k,:))
+             tmp_pl(:,k,:) = 0.5_RP*(v_pl(:,k+1,:)+v_pl(:,k,:))
           enddo
           tmp_pl(:,ADM_kmin-1,:) = v_pl(:,ADM_kmin,:)
           tmp_pl(:,ADM_kmax+1,:) = v_pl(:,ADM_kmax+1,:)
@@ -648,9 +650,9 @@ contains
              b = sigma_lev(k)-sigma(n,kp-1,l)
              v(n,k,l) = (b*tmp(n,kp,l) + a*tmp(n,kp-1,l))/(a+b)
           enddo
-       end Do
-    end Do
-    if (ADM_prc_me==ADM_prc_pl) Then
+       enddo
+    enddo
+    if ( ADM_have_pl ) Then
        Do l=1,ADM_lall_pl
           do k=1,MAX_SIGMA
              do n=1, ADM_gall_pl
@@ -662,8 +664,8 @@ contains
                 b = sigma_lev(k)-sigma_pl(n,kp-1,l)
                 v_pl(n,k,l) = (b*tmp_pl(n,kp,l) + a*tmp_pl(n,kp-1,l))/(a+b)
              enddo
-          end Do
-       end Do
+          enddo
+       enddo
     endif
   end subroutine VINTRPL_sigma_level
   !-----------------------------------------------------------------------------

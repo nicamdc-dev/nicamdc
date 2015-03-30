@@ -17,6 +17,8 @@ module mod_bndcnd
   !
   !++ Used modules
   !
+  use mod_precision
+  use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID,  &
      ADM_NSYS
@@ -209,28 +211,28 @@ contains
     implicit none
 
     integer, intent(in)    :: ijdim           ! number of horizontal grid
-    real(8), intent(inout) :: rho(ijdim,kdim) ! density
-    real(8), intent(inout) :: vx (ijdim,kdim) ! horizontal wind (x)
-    real(8), intent(inout) :: vy (ijdim,kdim) ! horizontal wind (y)
-    real(8), intent(inout) :: vz (ijdim,kdim) ! horizontal wind (z)
-    real(8), intent(inout) :: w  (ijdim,kdim) ! vertical   wind
-    real(8), intent(inout) :: ein(ijdim,kdim) ! internal energy
-    real(8), intent(inout) :: tem(ijdim,kdim) ! temperature
-    real(8), intent(inout) :: pre(ijdim,kdim) ! pressure
+    real(RP), intent(inout) :: rho(ijdim,kdim) ! density
+    real(RP), intent(inout) :: vx (ijdim,kdim) ! horizontal wind (x)
+    real(RP), intent(inout) :: vy (ijdim,kdim) ! horizontal wind (y)
+    real(RP), intent(inout) :: vz (ijdim,kdim) ! horizontal wind (z)
+    real(RP), intent(inout) :: w  (ijdim,kdim) ! vertical   wind
+    real(RP), intent(inout) :: ein(ijdim,kdim) ! internal energy
+    real(RP), intent(inout) :: tem(ijdim,kdim) ! temperature
+    real(RP), intent(inout) :: pre(ijdim,kdim) ! pressure
 
-    real(8), intent(inout) :: rhog  (ijdim,kdim)
-    real(8), intent(inout) :: rhogvx(ijdim,kdim)
-    real(8), intent(inout) :: rhogvy(ijdim,kdim)
-    real(8), intent(inout) :: rhogvz(ijdim,kdim)
-    real(8), intent(inout) :: rhogw (ijdim,kdim)
-    real(8), intent(inout) :: rhoge (ijdim,kdim)
+    real(RP), intent(inout) :: rhog  (ijdim,kdim)
+    real(RP), intent(inout) :: rhogvx(ijdim,kdim)
+    real(RP), intent(inout) :: rhogvy(ijdim,kdim)
+    real(RP), intent(inout) :: rhogvz(ijdim,kdim)
+    real(RP), intent(inout) :: rhogw (ijdim,kdim)
+    real(RP), intent(inout) :: rhoge (ijdim,kdim)
 
-    real(8), intent(in)    :: gsqrtgam2 (ijdim,kdim)
-    real(8), intent(in)    :: phi       (ijdim,kdim)   ! geopotential
-    real(8), intent(in)    :: c2wfact   (ijdim,kdim,2)
-    real(8), intent(in)    :: c2wfact_Gz(ijdim,kdim,6)
+    real(RP), intent(in)    :: gsqrtgam2 (ijdim,kdim)
+    real(RP), intent(in)    :: phi       (ijdim,kdim)   ! geopotential
+    real(RP), intent(in)    :: c2wfact   (ijdim,kdim,2)
+    real(RP), intent(in)    :: c2wfact_Gz(ijdim,kdim,6)
 
-    integer :: ij, k
+    integer :: ij
     !---------------------------------------------------------------------------
 
     !$acc  data &
@@ -294,7 +296,7 @@ contains
        w(ij,kmin  ) = rhogw(ij,kmin  ) / ( c2wfact(ij,kmin  ,1) * rhog(ij,kmin  ) &
                                          + c2wfact(ij,kmin  ,2) * rhog(ij,kmin-1) )
 
-       w(ij,kmin-1) = 0.D0
+       w(ij,kmin-1) = 0.0_RP
 
     enddo
     !$acc end kernels
@@ -323,15 +325,15 @@ contains
     implicit none
 
     integer, intent(in)    :: ijdim           ! number of horizontal grid
-    real(8), intent(inout) :: tem(ijdim,kdim) ! temperature
-    real(8), intent(inout) :: rho(ijdim,kdim) ! density
-    real(8), intent(inout) :: pre(ijdim,kdim) ! pressure
-    real(8), intent(in)    :: phi(ijdim,kdim) ! geopotential
+    real(RP), intent(inout) :: tem(ijdim,kdim) ! temperature
+    real(RP), intent(inout) :: rho(ijdim,kdim) ! density
+    real(RP), intent(inout) :: pre(ijdim,kdim) ! pressure
+    real(RP), intent(in)    :: phi(ijdim,kdim) ! geopotential
 
     integer :: ij
 
-    real(8) :: z,z1,z2,z3,p1,p2,p3
-    real(8) :: lag_intpl
+    real(RP) :: z,z1,z2,z3,p1,p2,p3
+    real(RP) :: lag_intpl
     lag_intpl(z,z1,p1,z2,p2,z3,p3) = ( (z-z2)*(z-z3))/((z1-z2)*(z1-z3) ) * p1 &
                                    + ( (z-z1)*(z-z3))/((z2-z1)*(z2-z3) ) * p2 &
                                    + ( (z-z1)*(z-z2))/((z3-z1)*(z3-z2) ) * p3
@@ -413,10 +415,10 @@ contains
     implicit none
 
     integer, intent(in)    :: ijdim
-    real(8), intent(in)    :: rhog  (ijdim,kdim)
-    real(8), intent(inout) :: rhogvx(ijdim,kdim)
-    real(8), intent(inout) :: rhogvy(ijdim,kdim)
-    real(8), intent(inout) :: rhogvz(ijdim,kdim)
+    real(RP), intent(in)    :: rhog  (ijdim,kdim)
+    real(RP), intent(inout) :: rhogvx(ijdim,kdim)
+    real(RP), intent(inout) :: rhogvy(ijdim,kdim)
+    real(RP), intent(inout) :: rhogvz(ijdim,kdim)
 
     integer :: ij
     !---------------------------------------------------------------------------
@@ -466,20 +468,20 @@ contains
     implicit none
 
     integer, intent(in)    :: ijdim
-    real(8), intent(in)    :: rhogvx (ijdim,kdim)
-    real(8), intent(in)    :: rhogvy (ijdim,kdim)
-    real(8), intent(in)    :: rhogvz (ijdim,kdim)
-    real(8), intent(inout) :: rhogw  (ijdim,kdim)
-    real(8), intent(in)    :: c2wfact(ijdim,kdim,6)
+    real(RP), intent(in)    :: rhogvx (ijdim,kdim)
+    real(RP), intent(in)    :: rhogvy (ijdim,kdim)
+    real(RP), intent(in)    :: rhogvz (ijdim,kdim)
+    real(RP), intent(inout) :: rhogw  (ijdim,kdim)
+    real(RP), intent(in)    :: c2wfact(ijdim,kdim,6)
 
-    integer :: ij, k, kk
+    integer :: ij
     !---------------------------------------------------------------------------
 
     !$acc kernels pcopy(rhogw) pcopyin(rhogvx,rhogvy,rhogvz,c2wfact) async(0)
     do ij = 1, ijdim
 
        if    ( is_top_rigid ) then
-          rhogw(ij,kmax+1) = 0.D0
+          rhogw(ij,kmax+1) = 0.0_RP
        elseif( is_top_free  ) then
           rhogw(ij,kmax+1) = - ( c2wfact(ij,kmax+1,1) * rhogvx(ij,kmax+1) &
                                + c2wfact(ij,kmax+1,2) * rhogvx(ij,kmax  ) &
@@ -490,7 +492,7 @@ contains
        endif
 
        if    ( is_btm_rigid ) then
-          rhogw(ij,kmin) = 0.D0
+          rhogw(ij,kmin) = 0.0_RP
        elseif( is_btm_free  ) then
           rhogw(ij,kmin) = - ( c2wfact(ij,kmin,1) * rhogvx(ij,kmin  ) &
                              + c2wfact(ij,kmin,2) * rhogvx(ij,kmin-1) &
@@ -500,7 +502,7 @@ contains
                              + c2wfact(ij,kmin,6) * rhogvz(ij,kmin-1) )
        endif
 
-       rhogw(ij,kmin-1) = 0.D0
+       rhogw(ij,kmin-1) = 0.0_RP
 
     enddo
     !$acc end kernels

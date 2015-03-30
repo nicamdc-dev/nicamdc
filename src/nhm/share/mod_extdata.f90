@@ -26,9 +26,12 @@ module mod_extdata
   !
   !++ Used modules
   !
-  use mod_adm, only : &
-    ADM_MAXFNAME, &
-    ADM_NSYS
+  use mod_precision
+  use mod_debug
+  use mod_adm, only: &
+     ADM_LOG_FID,  &
+     ADM_MAXFNAME, &
+     ADM_NSYS
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -51,7 +54,7 @@ module mod_extdata
   !
   !++ Private parameters & variables
   !
-  integer, private, save      :: max_extdata            !--- max number of external data
+  integer, private            :: max_extdata            !--- max number of external data
   integer, private, parameter :: max_num_of_data = 2500 !--- max time step num
 
   !--- type definition of information of external data
@@ -65,18 +68,18 @@ module mod_extdata
      integer                 :: kall              !--- number of layer
      integer                 :: num_of_data       !--- number of data
      integer, pointer        :: data_date(:,:)    !--- date of each data piece
-     real(8), pointer        :: data_time(:)      !--- time[sec] of each data piecce
+     real(RP), pointer        :: data_time(:)      !--- time[sec] of each data piecce
      integer                 :: data_rec(2)       !--- data record ( forward & backward )
      integer                 :: fix_rec           !--- record number if it's fixed
      logical                 :: opt_fix_rec       !--- flag for fix record number
      logical                 :: opt_monthly_cnst  !--- no time interpolation in a month
      logical                 :: opt_periodic_year !--- flag for periodic year
-     real(8)                 :: defval            !--- default value
-     real(8), pointer        :: v(:,:,:,:)        !--- data stoarege for regular region
-     real(8), pointer        :: v_pl(:,:,:,:)     !--- data stoarege for poler region
+     real(RP)                 :: defval            !--- default value
+     real(RP), pointer        :: v(:,:,:,:)        !--- data stoarege for regular region
+     real(RP), pointer        :: v_pl(:,:,:,:)     !--- data stoarege for poler region
   end type extdatainfo
 
-  type(extdatainfo), allocatable, private, save :: info(:)
+  type(extdatainfo), allocatable, private :: info(:)
 
   !-----------------------------------------------------------------------------
 contains
@@ -114,7 +117,7 @@ contains
     logical                     :: opt_fix_rec
     logical                     :: opt_monthly_cnst
     logical                     :: opt_periodic_year
-    real(8)                     :: defval
+    real(RP)                     :: defval
     ! [Add] 12/02/01 T.Seiki
     integer :: ddata_date(6)
     logical :: opt_increment_date
@@ -137,7 +140,7 @@ contains
          opt_periodic_year, &
          defval
 
-    real(8) :: csec !!! [Add] T.Seiki, xxxxxx
+    real(RP) :: csec !!! [Add] T.Seiki, xxxxxx
     integer :: cdate(6)
 
     integer :: ierr
@@ -184,7 +187,7 @@ contains
        opt_fix_rec       = .false.
        opt_monthly_cnst  = .false.
        opt_periodic_year = .false.
-       defval            = 0.D0
+       defval            = 0.0_RP
        ! [Add] 12/02/01 T.Seiki
        ddata_date(:)     = 0
        opt_increment_date= .false.
@@ -398,19 +401,19 @@ contains
       calendar_ss2yh
     implicit none
 
-    real(8),          intent(inout) :: gdata(:,:) ! data is inout to retain initilized value.
+    real(RP),          intent(inout) :: gdata(:,:) ! data is inout to retain initilized value.
     character(len=*), intent(in)    :: DNAME      ! data name
     integer,          intent(in)    :: l_region
-    real(8),          intent(in)    :: ctime      ! current time
+    real(RP),          intent(in)    :: ctime      ! current time
     logical,          intent(out)   :: eflag
     !
-    real(8) :: dt !-- delta t between two timestep data
-    real(8) :: wt !-- t weight of two timestep data
+    real(RP) :: dt !-- delta t between two timestep data
+    real(RP) :: wt !-- t weight of two timestep data
 
     !--- data ID
     integer :: np
     integer :: data_date_prev(6), cdate(6)
-    real(8) :: data_time_prev
+    real(RP) :: data_time_prev
 
     integer :: kall, gall
     integer :: im, n, k
@@ -495,7 +498,7 @@ contains
 
     !--- store the raw data to gdata.
     if ( (info(np)%opt_fix_rec).or.(info(np)%opt_monthly_cnst) ) then
-       wt = 1.D0
+       wt = 1.0_RP
     elseif(info(np)%data_rec(1) == 1) then !<--- this case is only periodic one.
        data_date_prev(:) = info(np)%data_date(:,info(np)%num_of_data)
        data_date_prev(1) = data_date_prev(1) - 1
@@ -513,7 +516,7 @@ contains
     do k = 1, kall
     do n = 1, ADM_gall_in
        gdata(n,k) = info(np)%v(ADM_IopJop(n,ADM_GIoJo),k,l_region,1) * (     wt) &
-                  + info(np)%v(ADM_IopJop(n,ADM_GIoJo),k,l_region,2) * (1.D0-wt)
+                  + info(np)%v(ADM_IopJop(n,ADM_GIoJo),k,l_region,2) * (1.0_RP-wt)
     enddo
     enddo
 

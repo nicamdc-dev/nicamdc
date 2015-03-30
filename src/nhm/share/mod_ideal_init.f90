@@ -25,8 +25,10 @@ module mod_ideal_init
   !
   !++ Used modules
   !
+  use mod_precision
+  use mod_debug
   use mod_adm, only: &
-     ADM_LOG_FID,  &
+     ADM_LOG_FID, &
      ADM_NSYS
   use dcmip_initial_conditions_test_1_2_3, only: &
      test2_steady_state_mountain, &
@@ -55,8 +57,8 @@ module mod_ideal_init
   !
   !++ Public parameters & variables
   !
-  character(len=ADM_NSYS), public, save :: DCTEST_type = '' !
-  character(len=ADM_NSYS), public, save :: DCTEST_case = '' !
+  character(len=ADM_NSYS), public :: DCTEST_type = '' !
+  character(len=ADM_NSYS), public :: DCTEST_case = '' !
 
   !-----------------------------------------------------------------------------
   !
@@ -87,28 +89,22 @@ module mod_ideal_init
   !
 
   ! physical parameters configurations
-  real(8), private, save :: Kap                    ! temporal value
-  real(8), private, save :: d2r                    ! Degree to Radian
-  real(8), private, save :: r2d                    ! Radian to Degree
-  real(8), private, save :: eps = 1.D-14           ! minimum value
-  real(8), private, save :: zero = 0.D0            ! zero
+  real(RP), private :: Kap                    ! temporal value
+  real(RP), private :: d2r                    ! Degree to Radian
+  real(RP), private :: r2d                    ! Radian to Degree
+  real(RP), private :: zero = 0.0_RP          ! zero
 
-  ! for Held and Suarez
-  real(8), private, save :: deltaT = 60.D0
-  real(8), private, save :: deltaTh = 10.D0
   ! for Jablonowski
-  real(8), private, save :: clat = 40.D0              ! perturbation center: latitude [deg]
-  real(8), private, save :: clon = 20.D0              ! perturbation center: longitude [deg]
-  real(8), private, save :: etaS = 1.D0               ! surface eta level
-  real(8), private, save :: etaT = 0.2d0              ! threashold of vertical profile
-  real(8), private, save :: eta0 = 0.252d0            ! threashold of vertical profile
-  real(8), private, save :: t0 = 288.D0               ! [K]
-  real(8), private, save :: delT = 4.8d+5             ! [K]
-  real(8), private, save :: ganma = 0.005d0           ! [K m^-1]
-  real(8), private, save :: u0 = 35.D0                ! [m s^-1]
-  real(8), private, save :: uP = 1.D0                 ! [m s^-1]
-  real(8), private, save :: p0 = 1.D+5                ! [Pa]
-  real(8), private, save :: ps = 1.D+5                ! [Pa]
+  real(RP), private :: clat = 40.0_RP              ! perturbation center: latitude [deg]
+  real(RP), private :: clon = 20.0_RP              ! perturbation center: longitude [deg]
+  real(RP), private :: etaT = 0.2_RP              ! threashold of vertical profile
+  real(RP), private :: eta0 = 0.252_RP            ! threashold of vertical profile
+  real(RP), private :: t0 = 288.0_RP               ! [K]
+  real(RP), private :: delT = 4.8E+5_RP             ! [K]
+  real(RP), private :: ganma = 0.005_RP           ! [K m^-1]
+  real(RP), private :: u0 = 35.0_RP                ! [m s^-1]
+  real(RP), private :: uP = 1.0_RP                 ! [m s^-1]
+  real(RP), private :: p0 = 1.E+5_RP                ! [Pa]
   logical, private, parameter :: message = .false.
   integer, private, parameter :: itrmax = 100       ! # of iteration maximum
 
@@ -127,12 +123,12 @@ contains
        TRC_vmax
     implicit none
 
-    real(8), intent(out) :: DIAG_var(ADM_gall,ADM_kall,ADM_lall,6+TRC_VMAX)
+    real(RP), intent(out) :: DIAG_var(ADM_gall,ADM_kall,ADM_lall,6+TRC_VMAX)
 
     character(len=ADM_NSYS) :: init_type   = ''
     character(len=ADM_NSYS) :: test_case   = ''
-    real(8) :: eps_geo2prs = 1.D-2
-    logical :: nicamcore = .true.
+    real(RP)                :: eps_geo2prs = 1.E-2_RP
+    logical                 :: nicamcore   = .true.
 
     namelist / DYCORETESTPARAM / &
        init_type,   &
@@ -144,8 +140,8 @@ contains
     !---------------------------------------------------------------------------
 
     Kap = Rd / Cp
-    d2r = pi/180.D0
-    r2d = 180.D0/pi
+    d2r = pi/180.0_RP
+    r2d = 180.0_RP/pi
 
     !--- read parameters
     write(ADM_LOG_FID,*)
@@ -222,8 +218,7 @@ contains
     use mod_random, only: &
        RANDOM_get
     use mod_cnst, only: &
-       CNST_D2R, &
-       CNST_PI
+       CNST_D2R
     use mod_gmtr, only: &
        GMTR_lon, &
        GMTR_lat
@@ -231,9 +226,9 @@ contains
        TRC_vmax
     implicit none
 
-    real(8), intent(out) :: TRC_var(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
+    real(RP), intent(out) :: TRC_var(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
 
-    real(8) :: random(ADM_gall,ADM_kall,ADM_lall)
+    real(RP) :: random(ADM_gall,ADM_kall,ADM_lall)
     integer :: deg
 
     integer :: g, k, l, nq, K0
@@ -248,7 +243,7 @@ contains
           do l = 1, ADM_lall
           do k = 1, ADM_kall
           do g = 1, ADM_gall
-             TRC_var(g,k,l,nq) = 0.D0
+             TRC_var(g,k,l,nq) = 0.0_RP
           enddo
           enddo
           enddo
@@ -258,9 +253,9 @@ contains
           do g = 1, ADM_gall
              deg = nint( GMTR_lon(g,l) / CNST_D2R )
              if ( mod(deg,10) == 0 ) then
-                TRC_var(g,k,l,nq) = real(ADM_kall-k+1,kind=8)
+                TRC_var(g,k,l,nq) = real(ADM_kall-k+1,kind=RP)
              else
-                TRC_var(g,k,l,nq) = 0.D0
+                TRC_var(g,k,l,nq) = 0.0_RP
              endif
           enddo
           enddo
@@ -271,9 +266,9 @@ contains
           do g = 1, ADM_gall
              deg = nint( GMTR_lat(g,l) / CNST_D2R )
              if ( mod(deg,10) == 0 ) then
-                TRC_var(g,k,l,nq) = real(ADM_kall-k+1,kind=8)
+                TRC_var(g,k,l,nq) = real(ADM_kall-k+1,kind=RP)
              else
-                TRC_var(g,k,l,nq) = 0.D0
+                TRC_var(g,k,l,nq) = 0.0_RP
              endif
           enddo
           enddo
@@ -282,7 +277,7 @@ contains
           do l = 1, ADM_lall
           do k = 1, ADM_kall
           do g = 1, ADM_gall
-             TRC_var(g,k,l,nq) = random(g,k,l) * exp(real(nq,kind=8)/10.D0)
+             TRC_var(g,k,l,nq) = random(g,k,l) * exp(real(nq,kind=RP)/10.0_RP)
           enddo
           enddo
           enddo
@@ -314,23 +309,23 @@ contains
     integer, intent(in)    :: ijdim
     integer, intent(in)    :: kdim
     integer, intent(in)    :: lall
-    real(8), intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+    real(RP), intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-    real(8) :: pre(kdim), tem(kdim), dz(kdim)
-    real(8) :: pre_sfc, tem_sfc
-    real(8) :: pre_save
+    real(RP) :: pre(kdim), tem(kdim), dz(kdim)
+    real(RP) :: pre_sfc, tem_sfc
+    real(RP) :: pre_save
 
-    real(8), parameter :: deltaT  = 60.D0
-    real(8), parameter :: deltaTh = 10.D0
-    real(8), parameter :: eps_hs  = 1.D-7
+    real(RP), parameter :: deltaT  = 60.0_RP
+    real(RP), parameter :: deltaTh = 10.0_RP
+    real(RP), parameter :: eps_hs  = 1.E-7_RP
 
-    real(8) :: f, df
-    real(8) :: lat, lon
+    real(RP) :: f, df
+    real(RP) :: lat, lon
 
     integer :: n, k, l, itr
     !---------------------------------------------------------------------------
 
-    DIAG_var(:,:,:,:) = 0.D0
+    DIAG_var(:,:,:,:) = 0.0_RP
 
     do l = 1, lall
     do n = 1, ijdim
@@ -344,8 +339,8 @@ contains
        lon = GMTR_lon(n,l)
 
        pre_sfc = PRE00
-!       tem_sfc = 300.D0
-       tem_sfc = 315.D0 - deltaT*sin(lat)**2
+!       tem_sfc = 300.0_RP
+       tem_sfc = 315.0_RP - deltaT*sin(lat)**2
 
        !---< from ground surface to lowermost atmosphere >---
        k = ADM_kmin
@@ -357,14 +352,14 @@ contains
        do itr = 1, itrmax
           pre_save = pre(k) ! save
 
-          f  = log(pre(k)/pre_sfc) / dz(k) + g / ( Rd * 0.5D0 * (tem(k)+tem_sfc) )
-          df = 1.D0 / (pre(k)*dz(k))
+          f  = log(pre(k)/pre_sfc) / dz(k) + g / ( Rd * 0.5_RP * (tem(k)+tem_sfc) )
+          df = 1.0_RP / (pre(k)*dz(k))
 
           pre(k) = pre(k) - f / df
-!          tem(k) = 300.D0 * ( pre(k)/PRE00 )**KAPPA
-          tem(k) = ( 315.D0 - deltaT*sin(lat)**2 - deltaTh*log(pre(k)/PRE00)*cos(lat)**2 ) &
+!          tem(k) = 300.0_RP * ( pre(k)/PRE00 )**KAPPA
+          tem(k) = ( 315.0_RP - deltaT*sin(lat)**2 - deltaTh*log(pre(k)/PRE00)*cos(lat)**2 ) &
                  * ( pre(k)/PRE00 )**KAPPA
-          tem(k) = max( 200.D0, tem(k) )
+          tem(k) = max( 200.0_RP, tem(k) )
 
           if( abs(pre_save-pre(k)) <= eps_hs ) exit
        enddo
@@ -380,21 +375,21 @@ contains
 
           ! first guess
           pre(k) = pre(k-1)
-          tem(k) = 300.D0 * ( pre(k)/PRE00 )**KAPPA
-          tem(k) = max( 200.D0, tem(k) )
+          tem(k) = 300.0_RP * ( pre(k)/PRE00 )**KAPPA
+          tem(k) = max( 200.0_RP, tem(k) )
 
           ! Newton-Lapson
           do itr = 1, itrmax
              pre_save = pre(k) ! save
 
-             f  = log(pre(k)/pre(k-1)) / dz(k) + g / ( Rd * 0.5D0 * (tem(k)+tem(k-1)) )
-             df = 1.D0 / (pre(k)*dz(k))
+             f  = log(pre(k)/pre(k-1)) / dz(k) + g / ( Rd * 0.5_RP * (tem(k)+tem(k-1)) )
+             df = 1.0_RP / (pre(k)*dz(k))
 
              pre(k) = pre(k) - f / df
-!             tem(k) = 300.D0 * ( pre(k)/PRE00 )**KAPPA
-             tem(k) = ( 315.D0 - deltaT*sin(lat)**2 - deltaTh*log(pre(k)/PRE00)*cos(lat)**2 ) &
+!             tem(k) = 300.0_RP * ( pre(k)/PRE00 )**KAPPA
+             tem(k) = ( 315.0_RP - deltaT*sin(lat)**2 - deltaTh*log(pre(k)/PRE00)*cos(lat)**2 ) &
                     * ( pre(k)/PRE00 )**KAPPA
-             tem(k) = max( 200.D0, tem(k) )
+             tem(k) = max( 200.0_RP, tem(k) )
 
              if( abs(pre_save-pre(k)) <= eps_hs ) exit
 
@@ -444,38 +439,35 @@ contains
        TRC_vmax
     implicit none
 
-    integer, intent(in)  :: ijdim
-    integer, intent(in)  :: kdim
-    integer, intent(in)  :: lall
+    integer,          intent(in)  :: ijdim
+    integer,          intent(in)  :: kdim
+    integer,          intent(in)  :: lall
     character(len=*), intent(in)  :: test_case
-    real(8), intent(in) :: eps_geo2prs
+    real(RP),         intent(in)  :: eps_geo2prs
     logical,          intent(in)  :: nicamcore
-    real(8), intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+    real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-    ! work paramters
-    real(8) :: lat, lon                 ! latitude, longitude on Icosahedral grid
-    real(8) :: eta(kdim,2), geo(kdim)   ! eta & geopotential in ICO-grid field
-    real(8) :: prs(kdim),   tmp(kdim)   ! pressure & temperature in ICO-grid field
-    real(8) :: wix(kdim),   wiy(kdim)   ! zonal/meridional wind components in ICO-grid field
+    real(RP) :: lat, lon               ! latitude, longitude on Icosahedral grid
+    real(RP) :: eta(kdim,2), geo(kdim) ! eta & geopotential in ICO-grid field
+    real(RP) :: prs(kdim),   tmp(kdim) ! pressure & temperature in ICO-grid field
+    real(RP) :: wix(kdim),   wiy(kdim) ! zonal/meridional wind components in ICO-grid field
 
-    real(8) :: z_local (kdim)
-    real(8) :: vx_local(kdim)
-    real(8) :: vy_local(kdim)
-    real(8) :: vz_local(kdim)
-    real(8) :: u(kdim)
-    real(8) :: v(kdim)
-    real(8) :: ps
+    real(RP) :: z_local (kdim)
+    real(RP) :: vx_local(kdim)
+    real(RP) :: vy_local(kdim)
+    real(RP) :: vz_local(kdim)
+    real(RP) :: ps
 
-    logical :: signal       ! if true, continue iteration
-    logical :: pertb        ! if true, with perturbation
-    logical :: psgm         ! if true, PS Gradient Method
-    logical :: eta_limit    ! if true, value of eta is limited upto 1.0
-    logical :: logout       ! log output switch for Pressure Convert
+    logical :: signal    ! if true, continue iteration
+    logical :: pertb     ! if true, with perturbation
+    logical :: psgm      ! if true, PS Gradient Method
+    logical :: eta_limit ! if true, value of eta is limited upto 1.0
+    logical :: logout    ! log output switch for Pressure Convert
 
     integer :: n, k, l, itr
     !---------------------------------------------------------------------------
 
-    DIAG_var(:,:,:,:) = 0.D0
+    DIAG_var(:,:,:,:) = 0.0_RP
 
     eta_limit = .true.
     psgm = .false.
@@ -519,11 +511,12 @@ contains
        lon = GMTR_lon(n,l)
 
        signal = .true.
-       ! iteration -----
+
+       ! iteration
        do itr = 1, itrmax
 
-          if( itr == 1 ) then
-             eta(:,:) = 1.D-7 ! This initial value is recommended by Jablonowsky.
+          if ( itr == 1 ) then
+             eta(:,:) = 1.E-7_RP ! This initial value is recommended by Jablonowsky.
           else
              call eta_vert_coord_NW( kdim, itr, z_local, tmp, geo, eta_limit, eta, signal )
           endif
@@ -549,7 +542,7 @@ contains
 
        call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
-       do k=1, kdim
+       do k = 1, kdim
           DIAG_var(n,k,l,1) = prs(k)
           DIAG_var(n,k,l,2) = tmp(k)
           DIAG_var(n,k,l,3) = vx_local(k)
@@ -564,7 +557,7 @@ contains
 
     write (ADM_LOG_FID,*) " |            Vertical Coordinate used in JBW initialization              |"
     write (ADM_LOG_FID,*) " |------------------------------------------------------------------------|"
-    do k=1, kdim
+    do k = 1, kdim
        write (ADM_LOG_FID,'(3X,"(k=",I3,") HGT:",F8.2," [m]",2X,"PRS: ",F9.2," [Pa]",2X,"GH: ",F8.2," [m]",2X,"ETA: ",F9.5)') &
        k, z_local(k), prs(k), geo(k)/g, eta(k,1)
     enddo
@@ -584,8 +577,6 @@ contains
        ADM_proc_stop, &
        ADM_kmin,      &
        ADM_kmax
-    use mod_cnst, only: &
-       UNDEF => CNST_UNDEF
     use mod_grd, only: &
        GRD_gz, &
        GRD_Z,  &
@@ -609,43 +600,58 @@ contains
     integer,                 intent(in)    :: kdim
     integer,                 intent(in)    :: lall
     character(len=ADM_NSYS), intent(in)    :: test_case
-    real(8),                 intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+    real(RP),                 intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-    real(8) :: lon     ! longitude            [rad]
-    real(8) :: lat     ! latitude             [rad]
-    real(8) :: z(kdim) ! Height               [m]
-    real(8) :: p(kdim) ! pressure             [Pa]
-    real(8) :: u(kdim) ! zonal      wind      [m/s]
-    real(8) :: v(kdim) ! meridional wind      [m/s]
-    real(8) :: w(kdim) ! vertical   wind      [m/s]
-    real(8) :: t(kdim) ! temperature          [K]
-    real(8) :: phis    ! surface geopotential [m2/s2], not in use
-    real(8) :: ps      ! surface pressure     [Pa]   , not in use
-    real(8) :: rho     ! density              [kg/m3], not in use
-    real(8) :: q       ! specific humidity    [kg/kg], not in use
+    real(RP) :: lon      ! longitude            [rad]
+    real(RP) :: lat      ! latitude             [rad]
+    real(RP) :: z(kdim)  ! Height               [m]
+    real(RP) :: p(kdim)  ! pressure             [Pa]
+    real(RP) :: u(kdim)  ! zonal      wind      [m/s]
+    real(RP) :: v(kdim)  ! meridional wind      [m/s]
+    real(RP) :: w(kdim)  ! vertical   wind      [m/s]
+    real(RP) :: t(kdim)  ! temperature          [K]
+    real(RP) :: phis     ! surface geopotential [m2/s2], not in use
+    real(RP) :: ps       ! surface pressure     [Pa]   , not in use
+    real(RP) :: rho      ! density              [kg/m3], not in use
+    real(RP) :: q        ! specific humidity    [kg/kg], not in use
+    real(RP) :: q1(kdim) ! passive tracer       [kg/kg]
+    real(RP) :: q2(kdim) ! passive tracer       [kg/kg]
+    real(RP) :: q3(kdim) ! passive tracer       [kg/kg]
+    real(RP) :: q4(kdim) ! passive tracer       [kg/kg]
+    real(RP) :: vx(kdim)
+    real(RP) :: vy(kdim)
+    real(RP) :: vz(kdim)
 
-    real(8) :: q1(kdim) ! passive tracer       [kg/kg]
-    real(8) :: q2(kdim) ! passive tracer       [kg/kg]
-    real(8) :: q3(kdim) ! passive tracer       [kg/kg]
-    real(8) :: q4(kdim) ! passive tracer       [kg/kg]
-
-    real(8) :: vx(kdim)
-    real(8) :: vy(kdim)
-    real(8) :: vz(kdim)
+    real(DP) :: DP_lon  ! longitude            [rad]
+    real(DP) :: DP_lat  ! latitude             [rad]
+    real(DP) :: DP_z    ! Height               [m]
+    real(DP) :: DP_p    ! pressure             [Pa]
+    real(DP) :: DP_u    ! zonal      wind      [m/s]
+    real(DP) :: DP_v    ! meridional wind      [m/s]
+    real(DP) :: DP_w    ! vertical   wind      [m/s]
+    real(DP) :: DP_t    ! temperature          [K]
+    real(DP) :: DP_phis ! surface geopotential [m2/s2], not in use
+    real(DP) :: DP_ps   ! surface pressure     [Pa]   , not in use
+    real(DP) :: DP_rho  ! density              [kg/m3], not in use
+    real(DP) :: DP_q    ! specific humidity    [kg/kg], not in use
+    real(DP) :: DP_q1   ! passive tracer       [kg/kg]
+    real(DP) :: DP_q2   ! passive tracer       [kg/kg]
+    real(DP) :: DP_q3   ! passive tracer       [kg/kg]
+    real(DP) :: DP_q4   ! passive tracer       [kg/kg]
 
     logical, parameter :: hybrid_eta = .false. ! dont use hybrid sigma-p (eta) coordinate
     integer, parameter :: zcoords    = 1       ! if zcoords = 1, then we use z and output p
     integer, parameter :: cfv        = 2       ! if cfv = 2 then our velocities follow Gal-Chen coordinates and we need to specify w
-    real(8)            :: hyam       = UNDEF   ! dont use hybrid sigma-p (eta) coordinate
-    real(8)            :: hybm       = UNDEF   ! dont use hybrid sigma-p (eta) coordinate
-    real(8)            :: gc                   ! bar{z} for Gal-Chen coordinate
+    real(DP)           :: hyam       = 0.0_DP  ! dont use hybrid sigma-p (eta) coordinate
+    real(DP)           :: hybm       = 0.0_DP  ! dont use hybrid sigma-p (eta) coordinate
+    real(DP)           :: DP_gc                ! bar{z} for Gal-Chen coordinate
 
     integer :: I_pasv1, I_pasv2
     integer :: I_pasv3, I_pasv4
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
-    DIAG_var(:,:,:,:) = 0.D0
+    DIAG_var(:,:,:,:) = 0.0_RP
 
     I_pasv1 = 6 + NCHEM_STR + chemvar_getid( "passive001" ) - 1
     I_pasv2 = 6 + NCHEM_STR + chemvar_getid( "passive002" ) - 1
@@ -661,34 +667,53 @@ contains
           do k = ADM_kmin, ADM_kmax+1
              z(k) = GRD_vz(n,k,l,GRD_Z)
           enddo
-          p(:) = 0.D0
+          p(:) = 0.0_RP
 
           lat = GMTR_lat(n,l)
           lon = GMTR_lon(n,l)
 
-          do k=1, kdim
-             call test1_advection_deformation( lon,     & ! [IN]
-                                               lat,     & ! [IN]
-                                               p(k),    & ! [INOUT]
-                                               z(k),    & ! [IN]
+          do k = 1, kdim
+             DP_lon = real(lon ,kind=DP)
+             DP_lat = real(lat ,kind=DP)
+             DP_p   = real(p(k),kind=DP)
+             DP_z   = real(z(k),kind=DP)
+
+             call test1_advection_deformation( DP_lon , & ! [IN]
+                                               DP_lat , & ! [IN]
+                                               DP_p   , & ! [INOUT]
+                                               DP_z   , & ! [IN]
                                                zcoords, & ! [IN]
-                                               u(k),    & ! [OUT]
-                                               v(k),    & ! [OUT]
-                                               w(k),    & ! [OUT]
-                                               t(k),    & ! [OUT]
-                                               phis,    & ! [OUT]
-                                               ps,      & ! [OUT]
-                                               rho,     & ! [OUT]
-                                               q,       & ! [OUT]
-                                               q1(k),   & ! [OUT]
-                                               q2(k),   & ! [OUT]
-                                               q3(k),   & ! [OUT]
-                                               q4(k)    ) ! [OUT]
+                                               DP_u   , & ! [OUT]
+                                               DP_v   , & ! [OUT]
+                                               DP_w   , & ! [OUT]
+                                               DP_t   , & ! [OUT]
+                                               DP_phis, & ! [OUT]
+                                               DP_ps  , & ! [OUT]
+                                               DP_rho , & ! [OUT]
+                                               DP_q   , & ! [OUT]
+                                               DP_q1  , & ! [OUT]
+                                               DP_q2  , & ! [OUT]
+                                               DP_q3  , & ! [OUT]
+                                               DP_q4    ) ! [OUT]
+
+             p(k)  = real(DP_p   ,kind=RP)
+             u(k)  = real(DP_u   ,kind=RP)
+             v(k)  = real(DP_v   ,kind=RP)
+             w(k)  = real(DP_w   ,kind=RP)
+             t(k)  = real(DP_t   ,kind=RP)
+             phis  = real(DP_phis,kind=RP)
+             ps    = real(DP_ps  ,kind=RP)
+             rho   = real(DP_rho ,kind=RP)
+             q     = real(DP_q   ,kind=RP)
+             q1(k) = real(DP_q1  ,kind=RP)
+             q2(k) = real(DP_q2  ,kind=RP)
+             q3(k) = real(DP_q3  ,kind=RP)
+             q4(k) = real(DP_q4  ,kind=RP)
           enddo
 
           call conv_vxvyvz( kdim, lat, lon, u(:), v(:), vx(:), vy(:), vz(:) )
 
-          do k=1, kdim
+          do k = 1, kdim
              DIAG_var(n,k,l,1) = p (k)
              DIAG_var(n,k,l,2) = t (k)
              DIAG_var(n,k,l,3) = vx(k)
@@ -712,35 +737,50 @@ contains
           do k = ADM_kmin, ADM_kmax+1
              z(k) = GRD_vz(n,k,l,GRD_Z)
           enddo
-          p(:) = 0.D0
+          p(:) = 0.0_RP
 
           lat = GMTR_lat(n,l)
           lon = GMTR_lon(n,l)
 
-          do k=1, kdim
-             call test1_advection_hadley( lon,     & ! [IN]
-                                          lat,     & ! [IN]
-                                          p(k),    & ! [INOUT]
-                                          z(k),    & ! [IN]
-                                          zcoords, & ! [IN]
-                                          u(k),    & ! [OUT]
-                                          v(k),    & ! [OUT]
-                                          w(k),    & ! [OUT]
-                                          t(k),    & ! [OUT]
-                                          phis,    & ! [OUT]
-                                          ps,      & ! [OUT]
-                                          rho,     & ! [OUT]
-                                          q,       & ! [OUT]
-                                          q1(k)    ) ! [OUT]
+          do k = 1, kdim
+             DP_lon = real(lon ,kind=DP)
+             DP_lat = real(lat ,kind=DP)
+             DP_p   = real(p(k),kind=DP)
+             DP_z   = real(z(k),kind=DP)
 
-             q2(k) = 0.D0
-             q3(k) = 0.D0
-             q4(k) = 0.D0
+             call test1_advection_hadley( DP_lon , & ! [IN]
+                                          DP_lat , & ! [IN]
+                                          DP_p   , & ! [INOUT]
+                                          DP_z   , & ! [IN]
+                                          zcoords, & ! [IN]
+                                          DP_u   , & ! [OUT]
+                                          DP_v   , & ! [OUT]
+                                          DP_w   , & ! [OUT]
+                                          DP_t   , & ! [OUT]
+                                          DP_phis, & ! [OUT]
+                                          DP_ps  , & ! [OUT]
+                                          DP_rho , & ! [OUT]
+                                          DP_q   , & ! [OUT]
+                                          DP_q1    ) ! [OUT]
+
+             p(k)  = real(DP_p   ,kind=RP)
+             u(k)  = real(DP_u   ,kind=RP)
+             v(k)  = real(DP_v   ,kind=RP)
+             w(k)  = real(DP_w   ,kind=RP)
+             t(k)  = real(DP_t   ,kind=RP)
+             phis  = real(DP_phis,kind=RP)
+             ps    = real(DP_ps  ,kind=RP)
+             rho   = real(DP_rho ,kind=RP)
+             q     = real(DP_q   ,kind=RP)
+             q1(k) = real(DP_q1  ,kind=RP)
+             q2(k) = 0.0_RP
+             q3(k) = 0.0_RP
+             q4(k) = 0.0_RP
           enddo
 
           call conv_vxvyvz( kdim, lat, lon, u(:), v(:), vx(:), vy(:), vz(:) )
 
-          do k=1, kdim
+          do k = 1, kdim
              DIAG_var(n,k,l,1) = p (k)
              DIAG_var(n,k,l,2) = t (k)
              DIAG_var(n,k,l,3) = vx(k)
@@ -764,41 +804,60 @@ contains
           do k = ADM_kmin, ADM_kmax+1
              z(k) = GRD_vz(n,k,l,GRD_Z)
           enddo
-          p(:) = 0.D0
+          p(:) = 0.0_RP
 
           lat = GMTR_lat(n,l)
           lon = GMTR_lon(n,l)
 
-          do k=1, kdim
-             gc = GRD_gz(k)
+          do k = 1, kdim
+             DP_gc = real(GRD_gz(k),kind=DP)
 
-             call test1_advection_orography(lon,        & ! [IN]
-                                            lat,        & ! [IN]
-                                            p(k),       & ! [INOUT]
-                                            z(k),       & ! [IN]
-                                            zcoords,    & ! [IN]
-                                            cfv,        & ! [IN]
-                                            hybrid_eta, & ! [IN]
-                                            hyam,       & ! [IN]
-                                            hybm,       & ! [IN]
-                                            gc,         & ! [IN]
-                                            u(k),       & ! [OUT]
-                                            v(k),       & ! [OUT]
-                                            w(k),       & ! [OUT]
-                                            t(k),       & ! [OUT]
-                                            phis,       & ! [OUT]
-                                            ps,         & ! [OUT]
-                                            rho,        & ! [OUT]
-                                            q,          & ! [OUT]
-                                            q1(k),      & ! [OUT]
-                                            q2(k),      & ! [OUT]
-                                            q3(k),      & ! [OUT]
-                                            q4(k)       ) ! [OUT]
+             DP_lon = real(lon ,kind=DP)
+             DP_lat = real(lat ,kind=DP)
+             DP_p   = real(p(k),kind=DP)
+             DP_z   = real(z(k),kind=DP)
+
+             call test1_advection_orography( DP_lon    , & ! [IN]
+                                             DP_lat    , & ! [IN]
+                                             DP_p      , & ! [INOUT]
+                                             DP_z      , & ! [IN]
+                                             zcoords   , & ! [IN]
+                                             cfv,        & ! [IN]
+                                             hybrid_eta, & ! [IN]
+                                             hyam,       & ! [IN]
+                                             hybm,       & ! [IN]
+                                             DP_gc     , & ! [IN]
+                                             DP_u      , & ! [OUT]
+                                             DP_v      , & ! [OUT]
+                                             DP_w      , & ! [OUT]
+                                             DP_t      , & ! [OUT]
+                                             DP_phis   , & ! [OUT]
+                                             DP_ps     , & ! [OUT]
+                                             DP_rho    , & ! [OUT]
+                                             DP_q      , & ! [OUT]
+                                             DP_q1     , & ! [OUT]
+                                             DP_q2     , & ! [OUT]
+                                             DP_q3     , & ! [OUT]
+                                             DP_q4       ) ! [OUT]
+
+             p(k)  = real(DP_p   ,kind=RP)
+             u(k)  = real(DP_u   ,kind=RP)
+             v(k)  = real(DP_v   ,kind=RP)
+             w(k)  = real(DP_w   ,kind=RP)
+             t(k)  = real(DP_t   ,kind=RP)
+             phis  = real(DP_phis,kind=RP)
+             ps    = real(DP_ps  ,kind=RP)
+             rho   = real(DP_rho ,kind=RP)
+             q     = real(DP_q   ,kind=RP)
+             q1(k) = real(DP_q1  ,kind=RP)
+             q2(k) = real(DP_q2  ,kind=RP)
+             q3(k) = real(DP_q3  ,kind=RP)
+             q4(k) = real(DP_q4  ,kind=RP)
           enddo
 
           call conv_vxvyvz( kdim, lat, lon, u(:), v(:), vx(:), vy(:), vz(:) )
 
-          do k=1, kdim
+          do k = 1, kdim
              DIAG_var(n,k,l,1) = p (k)
              DIAG_var(n,k,l,2) = t (k)
              DIAG_var(n,k,l,3) = vx(k)
@@ -825,26 +884,21 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine mountwave_init( &
-     ijdim,      &
-     kdim,       &
-     lall,       &
-     test_case,  &
-     DIAG_var    )
+       ijdim,     &
+       kdim,      &
+       lall,      &
+       test_case, &
+       DIAG_var   )
     use mod_misc, only: &
-       MISC_get_latlon, &
        MISC_get_distance
     use mod_adm, only: &
-       ADM_KNONE,      &
-       ADM_NSYS,       &
-       ADM_proc_stop
+       ADM_NSYS,      &
+       ADM_proc_stop, &
+       ADM_kmax,      &
+       ADM_kmin
     use mod_grd, only: &
-       GRD_vz,         &
-       GRD_x,          &
-       GRD_x_pl,       &
-       GRD_XDIR,       &
-       GRD_YDIR,       &
-       GRD_ZDIR,       &
-       GRD_Z,          &
+       GRD_vz,   &
+       GRD_Z,    &
        GRD_ZH
     use mod_gmtr, only: &
        GMTR_lon, &
@@ -856,99 +910,251 @@ contains
        chemvar_getid
     implicit none
 
-    integer, intent(in)    :: ijdim
-    integer, intent(in)    :: kdim
-    integer, intent(in)    :: lall
-    character(len=ADM_NSYS), intent(in) :: test_case
-    real(8), intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+    integer,                 intent(in)    :: ijdim
+    integer,                 intent(in)    :: kdim
+    integer,                 intent(in)    :: lall
+    character(len=ADM_NSYS), intent(in)    :: test_case
+    real(RP),                intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-    ! work paramters
-    real(8) :: lat, lon                 ! latitude, longitude on Icosahedral grid
-    real(8) :: prs(kdim),   tmp(kdim)   ! pressure & temperature in ICO-grid field
-    real(8) :: wix(kdim),   wiy(kdim)   ! zonal/meridional wind components in ICO-grid field
-    real(8) :: wiz(kdim)                ! vertical wind components in ICO-grid field
-    real(8) :: q(kdim),     rho(kdim)   ! tracer and rho in ICO-grid field
+    real(RP) :: lon      ! longitude            [rad]
+    real(RP) :: lat      ! latitude             [rad]
+    real(RP) :: z(kdim)  ! Height               [m]
+    real(RP) :: p(kdim)  ! pressure             [Pa]
+    real(RP) :: u(kdim)  ! zonal      wind      [m/s]
+    real(RP) :: v(kdim)  ! meridional wind      [m/s]
+    real(RP) :: w(kdim)  ! vertical   wind      [m/s]
+    real(RP) :: t(kdim)  ! temperature          [K]
+    real(RP) :: phis     ! surface geopotential [m2/s2], not in use
+    real(RP) :: ps       ! surface pressure     [Pa]   , not in use
+    real(RP) :: rho      ! density              [kg/m3], not in use
+    real(RP) :: q(kdim)  ! specific humidity    [kg/kg], not in use
+    real(RP) :: vx(kdim)
+    real(RP) :: vy(kdim)
+    real(RP) :: vz(kdim)
 
-    real(8) :: z_local (kdim)
-    real(8) :: vx_local(kdim)
-    real(8) :: vy_local(kdim)
-    real(8) :: vz_local(kdim)
+    real(DP) :: DP_lon  ! longitude            [rad]
+    real(DP) :: DP_lat  ! latitude             [rad]
+    real(DP) :: DP_z    ! Height               [m]
+    real(DP) :: DP_p    ! pressure             [Pa]
+    real(DP) :: DP_u    ! zonal      wind      [m/s]
+    real(DP) :: DP_v    ! meridional wind      [m/s]
+    real(DP) :: DP_w    ! vertical   wind      [m/s]
+    real(DP) :: DP_t    ! temperature          [K]
+    real(DP) :: DP_phis ! surface geopotential [m2/s2], not in use
+    real(DP) :: DP_ps   ! surface pressure     [Pa]   , not in use
+    real(DP) :: DP_rho  ! density              [kg/m3], not in use
+    real(DP) :: DP_q    ! specific humidity    [kg/kg], not in use
 
     integer :: I_pasv1
-    integer :: n, l, k, K0
 
-    integer :: shear
-    logical :: fault = .true.
-    logical :: hybrid_eta = .false.
-    real(8) :: hyam, hybm, phis, ps
+    real(DP) :: hyam       = 0.0_DP
+    real(DP) :: hybm       = 0.0_DP
+    logical  :: hybrid_eta = .false.
+
     integer, parameter :: zcoords = 1
+    integer  :: shear
+
+    integer :: n, l, k
     !---------------------------------------------------------------------------
 
-    hyam = 0.0d0
-    hybm = 0.0d0
-    fault = .false.
-    hybrid_eta = .false.
-
-    K0 = ADM_KNONE
-
-    DIAG_var(:,:,:,:) = 0.D0
+    DIAG_var(:,:,:,:) = 0.0_RP
 
     I_pasv1 = 6 + chemvar_getid( "passive001" ) + NCHEM_STR - 1
 
-    do l = 1, lall
-    do n = 1, ijdim
-       z_local(1) = GRD_vz(n,2,l,GRD_ZH)
-       do k = 2, kdim
-          z_local(k) = GRD_vz(n,k,l,GRD_Z)
+    select case( test_case )
+    case ('0', '2-0') ! DCMIP: TEST CASE 2-0 - Steady-State Atmosphere at Rest in the Presence of Orography
+
+       do l = 1, lall
+       do n = 1, ijdim
+          z(ADM_kmin-1) = GRD_vz(n,ADM_kmin,l,GRD_ZH)
+          do k = ADM_kmin, ADM_kmax+1
+             z(k) = GRD_vz(n,k,l,GRD_Z)
+          enddo
+          p(:) = 0.0_RP
+
+          lat = GMTR_lat(n,l)
+          lon = GMTR_lon(n,l)
+
+          do k = 1, kdim
+             DP_lon = real(lon ,kind=DP)
+             DP_lat = real(lat ,kind=DP)
+             DP_p   = real(p(k),kind=DP)
+             DP_z   = real(z(k),kind=DP)
+
+             call test2_steady_state_mountain( DP_lon    , & ! [IN]
+                                               DP_lat    , & ! [IN]
+                                               DP_p      , & ! [INOUT]
+                                               DP_z      , & ! [IN]
+                                               zcoords   , & ! [IN]
+                                               hybrid_eta, & ! [IN]
+                                               hyam,       & ! [IN]
+                                               hybm,       & ! [IN]
+                                               DP_u      , & ! [OUT]
+                                               DP_v      , & ! [OUT]
+                                               DP_w      , & ! [OUT]
+                                               DP_t      , & ! [OUT]
+                                               DP_phis   , & ! [OUT]
+                                               DP_ps     , & ! [OUT]
+                                               DP_rho    , & ! [OUT]
+                                               DP_q        ) ! [OUT]
+
+             p(k)  = real(DP_p   ,kind=RP)
+             u(k)  = real(DP_u   ,kind=RP)
+             v(k)  = real(DP_v   ,kind=RP)
+             w(k)  = real(DP_w   ,kind=RP)
+             t(k)  = real(DP_t   ,kind=RP)
+             phis  = real(DP_phis,kind=RP)
+             ps    = real(DP_ps  ,kind=RP)
+             rho   = real(DP_rho ,kind=RP)
+             q(k)  = real(DP_q   ,kind=RP)
+          enddo
+
+          call conv_vxvyvz( kdim, lat, lon, u(:), v(:), vx(:), vy(:), vz(:) )
+
+          do k = 1, kdim
+             DIAG_var(n,k,l,1) = p (k)
+             DIAG_var(n,k,l,2) = t (k)
+             DIAG_var(n,k,l,3) = vx(k)
+             DIAG_var(n,k,l,4) = vy(k)
+             DIAG_var(n,k,l,5) = vz(k)
+             DIAG_var(n,k,l,6) = w (k)
+
+             DIAG_var(n,k,l,I_pasv1) = q(k)
+          enddo
+       enddo
        enddo
 
-       call MISC_get_latlon( lat, lon,               &
-                             GRD_x(n,K0,l,GRD_XDIR), &
-                             GRD_x(n,K0,l,GRD_YDIR), &
-                             GRD_x(n,K0,l,GRD_ZDIR)  )
+    case ('1', '2-1') ! DCMIP: TEST CASE 2-1 - Non-hydrostatic Mountain Waves over a Schaer-type Mountain
+       shear = 0 ! constant u
 
-       select case( trim(test_case) )
-       ! DCMIP: TEST CASE 2-0 - Steady-State Atmosphere at Rest in the Presence of Orography
-       case ('0', '2-0')
-          do k=1, kdim
-             call test2_steady_state_mountain (lon, lat, prs(k), z_local(k), zcoords, &
-                      hybrid_eta, hyam, hybm, wix(k), wiy(k), wiz(k), tmp(k), phis, &
-                      ps, rho(k), q(k) )
+       do l = 1, lall
+       do n = 1, ijdim
+          z(ADM_kmin-1) = GRD_vz(n,ADM_kmin,l,GRD_ZH)
+          do k = ADM_kmin, ADM_kmax+1
+             z(k) = GRD_vz(n,k,l,GRD_Z)
           enddo
-       ! DCMIP: TEST CASE 2-1 - Non-hydrostatic Mountain Waves over a Schaer-type Mountain
-       case ('1', '2-1')
-          shear = 0   ! test case: 2-1 (constant u)
-          do k=1, kdim
-             call test2_schaer_mountain (lon, lat, prs(k), z_local(k), zcoords, &
-                      hybrid_eta, hyam, hybm, shear, wix(k), wiy(k), wiz(k), tmp(k), phis, &
-                      ps, rho(k), q(k) )
-          enddo
-       ! DCMIP: TEST CASE 2-2 - Non-hydrostatic Mountain Waves over a Schaer-type Mountain
-       case ('2', '2-2')
-          shear = 1   ! test case: 2-2 (sheared u)
-          do k=1, kdim
-             call test2_schaer_mountain (lon, lat, prs(k), z_local(k), zcoords, &
-                      hybrid_eta, hyam, hybm, shear, wix(k), wiy(k), wiz(k), tmp(k), phis, &
-                      ps, rho(k), q(k) )
-          enddo
-       case default
-          write(ADM_LOG_FID,*) "Unknown test_case: '"//trim(test_case)//"' specified."
-          call ADM_proc_stop
-       end select
+          p(:) = 0.0_RP
 
-       call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
+          lat = GMTR_lat(n,l)
+          lon = GMTR_lon(n,l)
 
-       do k=1, kdim
-          DIAG_var(n,k,l,1) = prs(k)
-          DIAG_var(n,k,l,2) = tmp(k)
-          DIAG_var(n,k,l,3) = vx_local(k)
-          DIAG_var(n,k,l,4) = vy_local(k)
-          DIAG_var(n,k,l,5) = vz_local(k)
-          DIAG_var(n,k,l,6) = wiz(k)
-          DIAG_var(n,k,l,I_pasv1) = q(k)
+          do k = 1, kdim
+             DP_lon = real(lon ,kind=DP)
+             DP_lat = real(lat ,kind=DP)
+             DP_p   = real(p(k),kind=DP)
+             DP_z   = real(z(k),kind=DP)
+
+             call test2_steady_state_mountain( DP_lon    , & ! [IN]
+                                               DP_lat    , & ! [IN]
+                                               DP_p      , & ! [INOUT]
+                                               DP_z      , & ! [IN]
+                                               zcoords   , & ! [IN]
+                                               hybrid_eta, & ! [IN]
+                                               hyam,       & ! [IN]
+                                               hybm,       & ! [IN]
+                                               DP_u      , & ! [OUT]
+                                               DP_v      , & ! [OUT]
+                                               DP_w      , & ! [OUT]
+                                               DP_t      , & ! [OUT]
+                                               DP_phis   , & ! [OUT]
+                                               DP_ps     , & ! [OUT]
+                                               DP_rho    , & ! [OUT]
+                                               DP_q        ) ! [OUT]
+
+             p(k)  = real(DP_p   ,kind=RP)
+             u(k)  = real(DP_u   ,kind=RP)
+             v(k)  = real(DP_v   ,kind=RP)
+             w(k)  = real(DP_w   ,kind=RP)
+             t(k)  = real(DP_t   ,kind=RP)
+             phis  = real(DP_phis,kind=RP)
+             ps    = real(DP_ps  ,kind=RP)
+             rho   = real(DP_rho ,kind=RP)
+             q(k)  = real(DP_q   ,kind=RP)
+          enddo
+
+          call conv_vxvyvz( kdim, lat, lon, u(:), v(:), vx(:), vy(:), vz(:) )
+
+          do k = 1, kdim
+             DIAG_var(n,k,l,1) = p (k)
+             DIAG_var(n,k,l,2) = t (k)
+             DIAG_var(n,k,l,3) = vx(k)
+             DIAG_var(n,k,l,4) = vy(k)
+             DIAG_var(n,k,l,5) = vz(k)
+             DIAG_var(n,k,l,6) = w (k)
+
+             DIAG_var(n,k,l,I_pasv1) = q(k)
+          enddo
        enddo
-    enddo
-    enddo
+       enddo
+
+    case ('2', '2-2') ! DCMIP: TEST CASE 2-2 - Non-hydrostatic Mountain Waves over a Schaer-type Mountain
+       shear = 1 ! sheared u
+
+       do l = 1, lall
+       do n = 1, ijdim
+          z(ADM_kmin-1) = GRD_vz(n,ADM_kmin,l,GRD_ZH)
+          do k = ADM_kmin, ADM_kmax+1
+             z(k) = GRD_vz(n,k,l,GRD_Z)
+          enddo
+          p(:) = 0.0_RP
+
+          lat = GMTR_lat(n,l)
+          lon = GMTR_lon(n,l)
+
+          do k = 1, kdim
+             DP_lon = real(lon ,kind=DP)
+             DP_lat = real(lat ,kind=DP)
+             DP_p   = real(p(k),kind=DP)
+             DP_z   = real(z(k),kind=DP)
+
+             call test2_steady_state_mountain( DP_lon    , & ! [IN]
+                                               DP_lat    , & ! [IN]
+                                               DP_p      , & ! [INOUT]
+                                               DP_z      , & ! [IN]
+                                               zcoords   , & ! [IN]
+                                               hybrid_eta, & ! [IN]
+                                               hyam,       & ! [IN]
+                                               hybm,       & ! [IN]
+                                               DP_u      , & ! [OUT]
+                                               DP_v      , & ! [OUT]
+                                               DP_w      , & ! [OUT]
+                                               DP_t      , & ! [OUT]
+                                               DP_phis   , & ! [OUT]
+                                               DP_ps     , & ! [OUT]
+                                               DP_rho    , & ! [OUT]
+                                               DP_q        ) ! [OUT]
+
+             p(k)  = real(DP_p   ,kind=RP)
+             u(k)  = real(DP_u   ,kind=RP)
+             v(k)  = real(DP_v   ,kind=RP)
+             w(k)  = real(DP_w   ,kind=RP)
+             t(k)  = real(DP_t   ,kind=RP)
+             phis  = real(DP_phis,kind=RP)
+             ps    = real(DP_ps  ,kind=RP)
+             rho   = real(DP_rho ,kind=RP)
+             q(k)  = real(DP_q   ,kind=RP)
+          enddo
+
+          call conv_vxvyvz( kdim, lat, lon, u(:), v(:), vx(:), vy(:), vz(:) )
+
+          do k = 1, kdim
+             DIAG_var(n,k,l,1) = p (k)
+             DIAG_var(n,k,l,2) = t (k)
+             DIAG_var(n,k,l,3) = vx(k)
+             DIAG_var(n,k,l,4) = vy(k)
+             DIAG_var(n,k,l,5) = vz(k)
+             DIAG_var(n,k,l,6) = w (k)
+
+             DIAG_var(n,k,l,I_pasv1) = q(k)
+          enddo
+       enddo
+       enddo
+
+    case default
+       write(*          ,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
+       write(ADM_LOG_FID,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
+       call ADM_proc_stop
+    end select
 
     return
   end subroutine mountwave_init
@@ -977,31 +1183,43 @@ contains
     integer, intent(in)    :: ijdim
     integer, intent(in)    :: kdim
     integer, intent(in)    :: lall
-    real(8), intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+    real(RP), intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
     integer, parameter :: zcoords = 1
 
-    real(8) :: lon     ! longitude            [rad]
-    real(8) :: lat     ! latitude             [rad]
-    real(8) :: z(kdim) ! Height               [m]
-    real(8) :: p(kdim) ! pressure             [Pa]
-    real(8) :: u(kdim) ! zonal      wind      [m/s]
-    real(8) :: v(kdim) ! meridional wind      [m/s]
-    real(8) :: w(kdim) ! vertical   wind      [m/s]
-    real(8) :: t(kdim) ! temperature          [K]
-    real(8) :: phis    ! surface geopotential [m2/s2], not in use
-    real(8) :: ps      ! surface pressure     [Pa]   , not in use
-    real(8) :: rho     ! density              [kg/m3], not in use
-    real(8) :: q       ! specific humidity    [kg/kg], not in use
+    real(RP) :: lon     ! longitude            [rad]
+    real(RP) :: lat     ! latitude             [rad]
+    real(RP) :: z(kdim) ! Height               [m]
+    real(RP) :: p(kdim) ! pressure             [Pa]
+    real(RP) :: u(kdim) ! zonal      wind      [m/s]
+    real(RP) :: v(kdim) ! meridional wind      [m/s]
+    real(RP) :: w(kdim) ! vertical   wind      [m/s]
+    real(RP) :: t(kdim) ! temperature          [K]
+    real(RP) :: phis    ! surface geopotential [m2/s2], not in use
+    real(RP) :: ps      ! surface pressure     [Pa]   , not in use
+    real(RP) :: rho     ! density              [kg/m3], not in use
+    real(RP) :: q       ! specific humidity    [kg/kg], not in use
+    real(RP) :: vx(kdim)
+    real(RP) :: vy(kdim)
+    real(RP) :: vz(kdim)
 
-    real(8) :: vx(kdim)
-    real(8) :: vy(kdim)
-    real(8) :: vz(kdim)
+    real(DP) :: DP_lon  ! longitude            [rad]
+    real(DP) :: DP_lat  ! latitude             [rad]
+    real(DP) :: DP_z    ! Height               [m]
+    real(DP) :: DP_p    ! pressure             [Pa]
+    real(DP) :: DP_u    ! zonal      wind      [m/s]
+    real(DP) :: DP_v    ! meridional wind      [m/s]
+    real(DP) :: DP_w    ! vertical   wind      [m/s]
+    real(DP) :: DP_t    ! temperature          [K]
+    real(DP) :: DP_phis ! surface geopotential [m2/s2], not in use
+    real(DP) :: DP_ps   ! surface pressure     [Pa]   , not in use
+    real(DP) :: DP_rho  ! density              [kg/m3], not in use
+    real(DP) :: DP_q    ! specific humidity    [kg/kg], not in use
 
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
-    DIAG_var(:,:,:,:) = 0.D0
+    DIAG_var(:,:,:,:) = 0.0_RP
 
     do l = 1, lall
     do n = 1, ijdim
@@ -1009,30 +1227,45 @@ contains
        do k = ADM_kmin, ADM_kmax+1
           z(k) = GRD_vz(n,k,l,GRD_Z)
        enddo
-       p(:) = 0.D0
+       p(:) = 0.0_RP
 
        lat = GMTR_lat(n,l)
        lon = GMTR_lon(n,l)
 
-       do k=1, kdim
-          call test3_gravity_wave( lon,     & ! [IN]
-                                   lat,     & ! [IN]
-                                   p(k),    & ! [INOUT]
-                                   z(k),    & ! [IN]
+       do k = 1, kdim
+          DP_lon = real(lon ,kind=DP)
+          DP_lat = real(lat ,kind=DP)
+          DP_p   = real(p(k),kind=DP)
+          DP_z   = real(z(k),kind=DP)
+
+          call test3_gravity_wave( DP_lon , & ! [IN]
+                                   DP_lat , & ! [IN]
+                                   DP_p   , & ! [INOUT]
+                                   DP_z   , & ! [IN]
                                    zcoords, & ! [IN]
-                                   u(k),    & ! [OUT]
-                                   v(k),    & ! [OUT]
-                                   w(k),    & ! [OUT]
-                                   t(k),    & ! [OUT]
-                                   phis,    & ! [OUT]
-                                   ps,      & ! [OUT]
-                                   rho,     & ! [OUT]
-                                   q        ) ! [OUT]
+                                   DP_u   , & ! [OUT]
+                                   DP_v   , & ! [OUT]
+                                   DP_w   , & ! [OUT]
+                                   DP_t   , & ! [OUT]
+                                   DP_phis, & ! [OUT]
+                                   DP_ps  , & ! [OUT]
+                                   DP_rho , & ! [OUT]
+                                   DP_q     ) ! [OUT]
+
+          p(k)  = real(DP_p   ,kind=RP)
+          u(k)  = real(DP_u   ,kind=RP)
+          v(k)  = real(DP_v   ,kind=RP)
+          w(k)  = real(DP_w   ,kind=RP)
+          t(k)  = real(DP_t   ,kind=RP)
+          phis  = real(DP_phis,kind=RP)
+          ps    = real(DP_ps  ,kind=RP)
+          rho   = real(DP_rho ,kind=RP)
+          q     = real(DP_q   ,kind=RP)
        enddo
 
        call conv_vxvyvz( kdim, lat, lon, u, v, vx, vy, vz )
 
-       do k=1, kdim
+       do k = 1, kdim
           DIAG_var(n,k,l,1) = p (k)
           DIAG_var(n,k,l,2) = t (k)
           DIAG_var(n,k,l,3) = vx(k)
@@ -1058,12 +1291,11 @@ contains
        ADM_KNONE,      &
        ADM_NSYS
     use mod_grd, only: &
-       GRD_vz,         &
        GRD_x,          &
-       GRD_x_pl,       &
        GRD_XDIR,       &
        GRD_YDIR,       &
        GRD_ZDIR,       &
+       GRD_vz,         &
        GRD_Z,          &
        GRD_ZH
     use mod_runconf, only: &
@@ -1073,17 +1305,17 @@ contains
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
     integer, intent(in)  :: lall
-    real(8), intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+    real(RP), intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
     ! work paramters
-    real(8) :: lat, lon                 ! latitude, longitude on Icosahedral grid
-    real(8) :: prs(kdim),   tmp(kdim)   ! pressure & temperature in ICO-grid field
-    real(8) :: wix(kdim),   wiy(kdim)   ! zonal/meridional wind components in ICO-grid field
+    real(RP) :: lat, lon                 ! latitude, longitude on Icosahedral grid
+    real(RP) :: prs(kdim),   tmp(kdim)   ! pressure & temperature in ICO-grid field
+    real(RP) :: wix(kdim),   wiy(kdim)   ! zonal/meridional wind components in ICO-grid field
 
-    real(8) :: z_local (kdim)
-    real(8) :: vx_local(kdim)
-    real(8) :: vy_local(kdim)
-    real(8) :: vz_local(kdim)
+    real(RP) :: z_local (kdim)
+    real(RP) :: vx_local(kdim)
+    real(RP) :: vy_local(kdim)
+    real(RP) :: vz_local(kdim)
 
     integer :: n, l, k, K0
     logical :: logout
@@ -1092,7 +1324,7 @@ contains
     K0 = ADM_KNONE
     logout = .true.
 
-    DIAG_var(:,:,:,:) = 0.D0
+    DIAG_var(:,:,:,:) = 0.0_RP
 
     write(ADM_LOG_FID,*) "Qian98 Like Mountain Wave Exp. (Tomita and Satoh 2004)"
 
@@ -1112,7 +1344,7 @@ contains
        logout = .false.
        call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
-       do k=1, kdim
+       do k = 1, kdim
           DIAG_var(n,k,l,1) = prs(k)
           DIAG_var(n,k,l,2) = tmp(k)
           DIAG_var(n,k,l,3) = vx_local(k)
@@ -1125,7 +1357,7 @@ contains
 
     write (ADM_LOG_FID,*) " |            Vertical Coordinate used in JBW initialization              |"
     write (ADM_LOG_FID,*) " |------------------------------------------------------------------------|"
-    do k=1, kdim
+    do k = 1, kdim
        write (ADM_LOG_FID,'(3X,"(k=",I3,") HGT:",F8.2," [m]",2X,"PRS: ",F9.2," [Pa]")') &
        k, z_local(k), prs(k)
     enddo
@@ -1149,21 +1381,21 @@ contains
        ADM_LOG_FID
     implicit none
     integer, intent(in) :: kdim
-    real(8), intent(in) :: lat
-    real(8), intent(in) :: z_local(kdim)
-    real(8), intent(inout) :: wix(kdim)
-    real(8), intent(inout) :: wiy(kdim)
-    real(8), intent(inout) :: tmp(kdim)
-    real(8), intent(inout) :: prs(kdim)
+    real(RP), intent(in) :: lat
+    real(RP), intent(in) :: z_local(kdim)
+    real(RP), intent(inout) :: wix(kdim)
+    real(RP), intent(inout) :: wiy(kdim)
+    real(RP), intent(inout) :: tmp(kdim)
+    real(RP), intent(inout) :: prs(kdim)
     logical, intent(in) :: logout
 
-    integer :: i, k
-    real(8) :: g1, g2, Gphi, Gzero, Pphi
-    real(8), parameter :: N = 0.0187D0        ! Brunt-Vaisala Freq.
-    real(8), parameter :: prs0 = 1.D5         ! pressure at the equator [Pa]
-    real(8), parameter :: ux0 = 40.D0         ! zonal wind at the equator [ms-1]
-    real(8) :: N2                              ! Square of Brunt-Vaisala Freq.
-    real(8) :: work
+    integer :: k
+    real(RP) :: g1, g2, Gphi, Gzero, Pphi
+    real(RP), parameter :: N = 0.0187_RP        ! Brunt-Vaisala Freq.
+    real(RP), parameter :: prs0 = 1.E+5_RP      ! pressure at the equator [Pa]
+    real(RP), parameter :: ux0 = 40.0_RP        ! zonal wind at the equator [ms-1]
+    real(RP) :: N2                              ! Square of Brunt-Vaisala Freq.
+    real(RP) :: work
     !-----
 
     if (logout) then
@@ -1174,33 +1406,33 @@ contains
        write(ADM_LOG_FID, '("| -- Earth Gravity Accel.:", F20.10)') g
     endif
 
-    N2 = N**2.D0
-    work = (N2*a) / (4.D0*g*Kap)
+    N2 = N**2.0_RP
+    work = (N2*a) / (4.0_RP*g*Kap)
 
-    g1 =   2.D0 * ( 3.D0 + 4.D0*cos(2.D0*zero) + cos(4.D0*zero) ) * (ux0**4.D0)   &
-        +  8.D0 * ( 3.D0 + 4.D0*cos(2.D0*zero) + cos(4.D0*zero) ) * (ux0**3.D0)*a*omega   &
-        +  8.D0 * ( 3.D0 + 4.D0*cos(2.D0*zero) + cos(4.D0*zero) ) * (ux0**2.D0)*(a**2.D0)*(omega**2.D0)   &
-        - 16.D0 * ( 1.D0 + cos(2.D0*zero) ) * (ux0**2.D0)*a*g   &
-        - 32.D0 * ( 1.D0 + cos(2.D0*zero) ) * ux0*(a**2.D0)*g*omega   &
-        + 16.D0 * (a**2.D0) * (g**2.D0)
-    g2 = (ux0**4.D0) + 4.D0*a*omega*(ux0**3.D0) + 4.D0*(a**2.D0)*(omega**2.D0)*(ux0**2.D0)
+    g1 =   2.0_RP * ( 3.0_RP + 4.0_RP*cos(2.0_RP*zero) + cos(4.0_RP*zero) ) * (ux0**4.0_RP)   &
+        +  8.0_RP * ( 3.0_RP + 4.0_RP*cos(2.0_RP*zero) + cos(4.0_RP*zero) ) * (ux0**3.0_RP)*a*omega   &
+        +  8.0_RP * ( 3.0_RP + 4.0_RP*cos(2.0_RP*zero) + cos(4.0_RP*zero) ) * (ux0**2.0_RP)*(a**2.0_RP)*(omega**2.0_RP)   &
+        - 16.0_RP * ( 1.0_RP + cos(2.0_RP*zero) ) * (ux0**2.0_RP)*a*g   &
+        - 32.0_RP * ( 1.0_RP + cos(2.0_RP*zero) ) * ux0*(a**2.0_RP)*g*omega   &
+        + 16.0_RP * (a**2.0_RP) * (g**2.0_RP)
+    g2 = (ux0**4.0_RP) + 4.0_RP*a*omega*(ux0**3.0_RP) + 4.0_RP*(a**2.0_RP)*(omega**2.0_RP)*(ux0**2.0_RP)
     Gzero = ( g1 / g2 )**work
 
-    g1 =   2.D0 * ( 3.D0 + 4.D0*cos(2.D0*lat) + cos(4.D0*lat) ) * (ux0**4.D0)   &
-        +  8.D0 * ( 3.D0 + 4.D0*cos(2.D0*lat) + cos(4.D0*lat) ) * (ux0**3.D0)*a*omega   &
-        +  8.D0 * ( 3.D0 + 4.D0*cos(2.D0*lat) + cos(4.D0*lat) ) * (ux0**2.D0)*(a**2.D0)*(omega**2.D0)   &
-        - 16.D0 * ( 1.D0 + cos(2.D0*lat) ) * (ux0**2.D0)*a*g   &
-        - 32.D0 * ( 1.D0 + cos(2.D0*lat) ) * ux0*(a**2.D0)*g*omega   &
-        + 16.D0 * (a**2.D0) * (g**2.D0)
-    g2 = (ux0**4.D0) + 4.D0*a*omega*(ux0**3.D0) + 4.D0*(a**2.D0)*(omega**2.D0)*(ux0**2.D0)
+    g1 =   2.0_RP * ( 3.0_RP + 4.0_RP*cos(2.0_RP*lat) + cos(4.0_RP*lat) ) * (ux0**4.0_RP)   &
+        +  8.0_RP * ( 3.0_RP + 4.0_RP*cos(2.0_RP*lat) + cos(4.0_RP*lat) ) * (ux0**3.0_RP)*a*omega   &
+        +  8.0_RP * ( 3.0_RP + 4.0_RP*cos(2.0_RP*lat) + cos(4.0_RP*lat) ) * (ux0**2.0_RP)*(a**2.0_RP)*(omega**2.0_RP)   &
+        - 16.0_RP * ( 1.0_RP + cos(2.0_RP*lat) ) * (ux0**2.0_RP)*a*g   &
+        - 32.0_RP * ( 1.0_RP + cos(2.0_RP*lat) ) * ux0*(a**2.0_RP)*g*omega   &
+        + 16.0_RP * (a**2.0_RP) * (g**2.0_RP)
+    g2 = (ux0**4.0_RP) + 4.0_RP*a*omega*(ux0**3.0_RP) + 4.0_RP*(a**2.0_RP)*(omega**2.0_RP)*(ux0**2.0_RP)
     Gphi = ( g1 / g2 )**work
 
     Pphi = prs0 * ( Gzero / Gphi )
 
-    do k=1, kdim
+    do k = 1, kdim
        wix(k) = ux0 * cos(lat)
-       prs(k) = Pphi * exp( (-1.D0*N2*z_local(k)) / (g*Kap) )
-       tmp(k) = (g * Kap * ( g - (wix(k)**2.D0)/a - 2.D0*omega*wix(k)*cos(lat) )) / (N2*Rd)
+       prs(k) = Pphi * exp( (-1.0_RP*N2*z_local(k)) / (g*Kap) )
+       tmp(k) = (g * Kap * ( g - (wix(k)**2.0_RP)/a - 2.0_RP*omega*wix(k)*cos(lat) )) / (N2*Rd)
     enddo
 
     return
@@ -1209,51 +1441,62 @@ contains
   !-----------------------------------------------------------------------------
   ! eta vertical coordinate by Newton Method
   subroutine eta_vert_coord_NW( &
-      kdim,      &  !--- IN : # of z dimension
-      itr,       &  !--- IN : iteration number
-      z,         &  !--- IN : z-height vertical coordinate
-      tmp,       &  !--- IN : guessed temperature
-      geo,       &  !--- IN : guessed geopotential
-      eta_limit, &  !--- IN : eta limitation flag
-      eta,       &  !--- INOUT : eta level vertical coordinate
-      signal     )  !--- INOUT : iteration signal
-    !
+      kdim,      &
+      itr,       &
+      z,         &
+      tmp,       &
+      geo,       &
+      eta_limit, &
+      eta,       &
+      signal     )
+    use mod_cnst, only: &
+       CNST_EPS_ZERO
     implicit none
-    integer, intent(in) :: itr
-    integer, intent(in) :: kdim
-    real(8), intent(in) :: z(kdim)
-    real(8), intent(in) :: geo(kdim), tmp(kdim)
-    real(8), intent(inout) :: eta(kdim,2)
-    logical, intent(in) :: eta_limit
-    logical, intent(inout) :: signal
-    integer :: k
-    real(8) :: diffmax, diff(kdim)
-    real(8) :: F(kdim), Feta(kdim)
-    !
-    do k=1, kdim
-       F(k) = -g*z(k) + geo(k)
-       Feta(k) = -1.D0 * ( Rd/eta(k,1) ) * tmp(k)
+
+    integer,  intent(in)    :: kdim        ! # of z dimension
+    integer,  intent(in)    :: itr         ! iteration number
+    real(RP), intent(in)    :: z  (kdim)   ! z-height vertical coordinate
+    real(RP), intent(in)    :: tmp(kdim)   ! guessed temperature
+    real(RP), intent(in)    :: geo(kdim)   ! guessed geopotential
+    logical,  intent(in)    :: eta_limit   ! eta limitation flag
+    real(RP), intent(inout) :: eta(kdim,2) ! eta level vertical coordinate
+    logical,  intent(inout) :: signal      ! iteration signal
+
+    real(RP) :: diff(kdim)
+    real(RP) :: F(kdim), Feta(kdim)
+    real(RP) :: criteria
+    integer  :: k
+    !---------------------------------------------------------------------------
+
+    criteria = max( CNST_EPS_ZERO * 10.0_RP, 1.E-14_RP )
+
+    do k = 1, kdim
+       F   (k) = -g*z(k) + geo(k)
+       Feta(k) = -1.0_RP * ( Rd/eta(k,1) ) * tmp(k)
+
        eta(k,2) = eta(k,1) - ( F(k)/Feta(k) )
-       if (eta_limit) then                     ! [add] for PSDM (2013/12/20 R.Yoshida)
-          if(eta(k,2) > 1.D0) eta(k,2) = 1.D0   ! not allow over 1.0 for eta
+
+       if (eta_limit) then ! [add] for PSDM (2013/12/20 R.Yoshida)
+          eta(k,2) = min(eta(k,2),1.0_RP) ! not allow over 1.0 for eta
        endif
-       if(eta(k,2) < 0.D0) eta(k,2) = 1.D-20
+
+       eta(k,2) = max(eta(k,2),CNST_EPS_ZERO) ! not allow over 1.0 for eta
+
        diff(k) = abs( eta(k,2) - eta(k,1) )
     enddo
-    !
+
     eta(:,1) = eta(:,2)
-    diffmax = maxval(diff)
-    if (message) write (ADM_LOG_FID, '("| Eta  ",I4,": -- MAX: ",F23.20,3X,"MIN: ",F23.20)') &
-                 itr, maxval(eta(:,1)), minval(eta(:,1))
-    if (message) write (ADM_LOG_FID, '("| Diff ",I4,": -- MAX: ",F23.20,3X,"MIN: ",F23.20)') &
-                 itr, diffmax, minval(diff)
-    !
-    if(diffmax < eps) then
+    if(message) write(ADM_LOG_FID,'(A,I4,A,ES20.10,A,ES20.10)') &
+                " | Eta  ",itr,": -- MAX: ",maxval(diff(:))," MIN: ",minval(diff(:))
+    if(message) write(ADM_LOG_FID,'(A,I4,A,ES20.10,A,ES20.10)') &
+                " | Diff ",itr,": -- MAX: ",maxval(diff(:))," MIN: ",minval(diff(:))
+
+    if ( maxval(diff(:)) < criteria ) then
        signal = .false.
     else
-       if (message) write (ADM_LOG_FID,*) "| ----- Iterating ", itr
+       if(message) write(ADM_LOG_FID,*) "| Iterating : ", itr, "criteria = ", criteria
     endif
-    !
+
     return
   end subroutine eta_vert_coord_NW
 
@@ -1271,33 +1514,33 @@ contains
     implicit none
     integer :: k
     integer, intent(in) :: kdim
-    real(8), intent(in) :: lat
-    real(8), intent(in) :: eta(kdim,2)
-    real(8), intent(inout) :: wix(kdim)
-    real(8), intent(inout) :: wiy(kdim)
-    real(8), intent(inout) :: tmp(kdim)
-    real(8), intent(inout) :: geo(kdim)
-    real(8) :: eta_v
-    real(8) :: work1, work2
+    real(RP), intent(in) :: lat
+    real(RP), intent(in) :: eta(kdim,2)
+    real(RP), intent(inout) :: wix(kdim)
+    real(RP), intent(inout) :: wiy(kdim)
+    real(RP), intent(inout) :: tmp(kdim)
+    real(RP), intent(inout) :: geo(kdim)
+    real(RP) :: eta_v
+    real(RP) :: work1, work2
     !
     ! ---------- horizontal mean
-    work1 = pi/2.D0
+    work1 = pi/2.0_RP
     work2 = Rd*ganma/g
-    do k=1, kdim
+    do k = 1, kdim
        eta_v = (eta(k,1) - eta0)*(work1)
-       wix(k) = u0 * (cos(eta_v))**1.5d0 * (sin(2.D0*lat))**2.D0
+       wix(k) = u0 * (cos(eta_v))**1.5_RP * (sin(2.0_RP*lat))**2.0_RP
        !
        !if( etaS >= eta(k,1) .and. eta(k,1) >= etaT ) then  ! not allow over 1.0 for eta
        if( eta(k,1) >= etaT ) then
           tmp(k) = t0 * eta(k,1)**work2
-          geo(k) = t0*g/ganma * ( 1.D0 - eta(k,1)**work2 )
+          geo(k) = t0*g/ganma * ( 1.0_RP - eta(k,1)**work2 )
        elseif( eta(k,1) < etaT ) then
-          tmp(k) = t0 * eta(k,1)**work2 + delT*(etaT - eta(k,1))**5.D0
+          tmp(k) = t0 * eta(k,1)**work2 + delT*(etaT - eta(k,1))**5.0_RP
           !
-          geo(k) = t0*g/ganma * ( 1.D0 - eta(k,1)**work2 ) - Rd * delT *                              &
-                  ( ( log(eta(k,1)/etaT) + 137.D0/60.D0 )*etaT**5.D0 - 5.D0*(etaT**4.D0)*eta(k,1)     &
-                    + 5.D0*(etaT**3.D0)*(eta(k,1)**2.D0) - (10.D0/3.D0)*(etaT**2.D0)*(eta(k,1)**3.D0) &
-                    + (5.D0/4.D0)*etaT*(eta(k,1)**4.D0) - (1.D0/5.D0)*(eta(k,1)**5.D0)                &
+          geo(k) = t0*g/ganma * ( 1.0_RP - eta(k,1)**work2 ) - Rd * delT *                              &
+                  ( ( log(eta(k,1)/etaT) + 137.0_RP/60.0_RP )*etaT**5.0_RP - 5.0_RP*(etaT**4.0_RP)*eta(k,1)     &
+                    + 5.0_RP*(etaT**3.0_RP)*(eta(k,1)**2.0_RP) - (10.0_RP/3.0_RP)*(etaT**2.0_RP)*(eta(k,1)**3.0_RP) &
+                    + (5.0_RP/4.0_RP)*etaT*(eta(k,1)**4.0_RP) - (1.0_RP/5.0_RP)*(eta(k,1)**5.0_RP)                &
                   )
        else
           write (ADM_LOG_FID,'(A)') "|-- ETA BOUNDARY ERROR: [steady state calc.]"
@@ -1312,27 +1555,27 @@ contains
     enddo
     !
     ! ---------- meridional distribution for temeperature and geopotential
-    work1 = pi/2.D0
-    work2 = 3.D0/4.D0 * ( pi*u0 / Rd )
-    do k=1, kdim
+    work1 = pi/2.0_RP
+    work2 = 3.0_RP/4.0_RP * ( pi*u0 / Rd )
+    do k = 1, kdim
        eta_v = (eta(k,1) - eta0)*(work1)
        tmp(k) = tmp(k)                                           &
-                    + work2*eta(k,1) * sin(eta_v) * (cos(eta_v))**0.5d0  &
-                    * ( ( -2.D0 * (sin(lat))**6.D0 * (cos(lat)**2.D0 + 1.D0/3.D0) + 10.D0/63.D0 )   &
-                         * 2.D0*u0*(cos(eta_v))**1.5d0                   &
-                        + ( 8.D0/5.D0 * (cos(lat))**3.D0 * ((sin(lat))**2.D0 + 2.D0/3.D0) - pi/4.D0 ) &
+                    + work2*eta(k,1) * sin(eta_v) * (cos(eta_v))**0.5_RP  &
+                    * ( ( -2.0_RP * (sin(lat))**6.0_RP * (cos(lat)**2.0_RP + 1.0_RP/3.0_RP) + 10.0_RP/63.0_RP )   &
+                         * 2.0_RP*u0*(cos(eta_v))**1.5_RP                   &
+                        + ( 8.0_RP/5.0_RP * (cos(lat))**3.0_RP * ((sin(lat))**2.0_RP + 2.0_RP/3.0_RP) - pi/4.0_RP ) &
                          * a*omega                                       &
                       )
        geo(k) = geo(k)                                           &
-                    + u0*(cos(eta_v))**1.5d0  &
-                    * ( ( -2.D0 * (sin(lat))**6.D0 * (cos(lat)**2.D0 + 1.D0/3.D0) + 10.D0/63.D0 )   &
-                         * u0*(cos(eta_v))**1.5d0                        &
-                        + ( 8.D0/5.D0 * (cos(lat))**3.D0 * ((sin(lat))**2.D0 + 2.D0/3.D0) - pi/4.D0 ) &
+                    + u0*(cos(eta_v))**1.5_RP  &
+                    * ( ( -2.0_RP * (sin(lat))**6.0_RP * (cos(lat)**2.0_RP + 1.0_RP/3.0_RP) + 10.0_RP/63.0_RP )   &
+                         * u0*(cos(eta_v))**1.5_RP                        &
+                        + ( 8.0_RP/5.0_RP * (cos(lat))**3.0_RP * ((sin(lat))**2.0_RP + 2.0_RP/3.0_RP) - pi/4.0_RP ) &
                          * a*omega                                       &
                       )
     enddo
     !
-    wiy(:) = 0.D0
+    wiy(:) = 0.0_RP
     !
     return
   end subroutine steady_state
@@ -1353,21 +1596,21 @@ contains
     !
     implicit none
     integer, intent(in) :: kdim
-    real(8), intent(in) :: ps
-    real(8), intent(in) :: lat
-    real(8), intent(in) :: tmp(kdim)
-    real(8), intent(in) :: geo(kdim)
-    real(8), intent(in) :: wix(kdim)
-    real(8), intent(inout) :: prs(kdim)
-    real(8), intent(in) :: eps_geo2prs
+    real(RP), intent(in) :: ps
+    real(RP), intent(in) :: lat
+    real(RP), intent(in) :: tmp(kdim)
+    real(RP), intent(in) :: geo(kdim)
+    real(RP), intent(in) :: wix(kdim)
+    real(RP), intent(inout) :: prs(kdim)
+    real(RP), intent(in) :: eps_geo2prs
     logical, intent(in) :: nicamcore
     logical, intent(in) :: logout
 
     integer :: i, k
     integer, parameter :: limit = 400
-    real(8) :: dz, uave, diff
-    real(8) :: f_cf(3), rho(3)
-    real(8) :: pp(kdim)
+    real(RP) :: dz, uave, diff
+    real(RP) :: f_cf(3)
+    real(RP) :: pp(kdim)
     logical :: iteration = .false.
     logical :: do_iter = .true.
     !-----
@@ -1378,14 +1621,14 @@ contains
     do k=2, kdim
        dz = (geo(k) - geo(k-1))/g
        if (nicamcore) then
-          uave = (wix(k) + wix(k-1)) * 0.5D0
-          f_cf(1) = 2.D0*omega*uave*cos(lat) + (uave**2.D0)/a
+          uave = (wix(k) + wix(k-1)) * 0.5_RP
+          f_cf(1) = 2.0_RP*omega*uave*cos(lat) + (uave**2.0_RP)/a
        else
-          f_cf(1) = 0.D0
+          f_cf(1) = 0.0_RP
        endif
 
-       pp(k) = pp(k-1) * ( 1.D0 + dz*(f_cf(1) - g)/(2.D0*Rd*tmp(k-1)) ) &
-                       / ( 1.D0 - dz*(f_cf(1) - g)/(2.D0*Rd*tmp(k)) )
+       pp(k) = pp(k-1) * ( 1.0_RP + dz*(f_cf(1) - g)/(2.0_RP*Rd*tmp(k-1)) ) &
+                       / ( 1.0_RP - dz*(f_cf(1) - g)/(2.0_RP*Rd*tmp(k)) )
     enddo
     prs(:) = pp(:)
 
@@ -1437,10 +1680,12 @@ contains
        endif
     endif
     if (message) then
-       write (ADM_LOG_FID,'(A)') "| ----- Pressure (Final Guess) -----"
-       do k=1, kdim
-          write(ADM_LOG_FID, '("| K(",I3,") -- ",F20.13)') k, prs(k)
+       write(ADM_LOG_FID,*)
+       write(ADM_LOG_FID,'(A)') " | ----- Pressure (Final Guess) -----"
+       do k = 1, kdim
+          write(ADM_LOG_FID, '(" | K(",I3,") -- ",F20.13)') k, prs(k)
        enddo
+       write(ADM_LOG_FID,*)
     endif
 
     return
@@ -1457,60 +1702,58 @@ contains
       wix,  &  !--- IN : zonal wind speed
       ps,   &  !--- OUT : surface pressure
       nicamcore )  !--- IN : nicamcore switch
-    use mod_adm, only :  &
-       ADM_LOG_FID
     implicit none
+
     integer, intent(in) :: kdim
-    real(8), intent(in) :: lat
-    real(8), intent(in) :: eta(kdim)
-    real(8), intent(in) :: tmp(kdim)
-    real(8), intent(in) :: geo(kdim)
-    real(8), intent(in) :: wix(kdim)
-    real(8), intent(out) :: ps
+    real(RP), intent(in) :: lat
+    real(RP), intent(in) :: eta(kdim)
+    real(RP), intent(in) :: tmp(kdim)
+    real(RP), intent(in) :: geo(kdim)
+    real(RP), intent(in) :: wix(kdim)
+    real(RP), intent(out) :: ps
     logical, intent(in) :: nicamcore
 
-    integer :: k
-    real(8), parameter :: lat0 = 0.691590985442682
-    real(8) :: cs32ev, f1, f2
-    real(8) :: eta_v, tmp0, tmp1
-    real(8) :: ux1, ux2, hgt0, hgt1
-    real(8) :: dz, uave
-    real(8) :: f_cf(3), rho(3)
-    real(8), parameter :: eta1 = 1.0D0
+    real(RP), parameter :: lat0 = 0.691590985442682
+    real(RP) :: cs32ev, f1, f2
+    real(RP) :: eta_v, tmp0, tmp1
+    real(RP) :: ux1, ux2, hgt0, hgt1
+    real(RP) :: dz, uave
+    real(RP) :: f_cf(3)
+    real(RP), parameter :: eta1 = 1.0_RP
     !-----
 
-    eta_v = (eta1 - eta0)*(pi*0.5D0)
+    eta_v = (eta1 - eta0)*(pi*0.5_RP)
 
     ! temperature at bottom of eta-grid
     tmp0 = t0                                                   &
-           + (3.D0/4.D0 * (pi*u0/Rd))*eta1 * sin(eta_v) * (cos(eta_v))**0.5d0                &
-           * ( ( -2.D0 * (sin(lat0))**6.D0 * (cos(lat0)**2.D0 + 1.D0/3.D0) + 10.D0/63.D0 )   &
-                * 2.D0*u0*(cos(eta_v))**1.5d0                   &
-                + ( 8.D0/5.D0 * (cos(lat0))**3.D0 * ((sin(lat0))**2.D0 + 2.D0/3.D0) - pi/4.D0 ) &
+           + (3.0_RP/4.0_RP * (pi*u0/Rd))*eta1 * sin(eta_v) * (cos(eta_v))**0.5_RP                &
+           * ( ( -2.0_RP * (sin(lat0))**6.0_RP * (cos(lat0)**2.0_RP + 1.0_RP/3.0_RP) + 10.0_RP/63.0_RP )   &
+                * 2.0_RP*u0*(cos(eta_v))**1.5_RP                   &
+                + ( 8.0_RP/5.0_RP * (cos(lat0))**3.0_RP * ((sin(lat0))**2.0_RP + 2.0_RP/3.0_RP) - pi/4.0_RP ) &
                 * a*omega  )
     tmp1 = tmp(1)
 
     ! wind speed at bottom of eta-grid
-    ux1 = (u0 * cos(eta_v)**1.5d0) * (sin(2.D0*lat0))**2.D0
+    ux1 = (u0 * cos(eta_v)**1.5_RP) * (sin(2.0_RP*lat0))**2.0_RP
     ux2 = wix(1)
 
     ! topography calculation (imported from mod_grd.f90)
-    cs32ev = ( cos( (1.D0-0.252D0) * pi * 0.5D0 ) )**1.5D0
-    f1 = 10.D0/63.D0 - 2.D0 * sin(lat)**6 * ( cos(lat)**2 + 1.D0/3.D0 )
-    f2 = 1.6D0 * cos(lat)**3 * ( sin(lat)**2 + 2.D0/3.D0 ) - 0.25D0 * pi
-    hgt1 = -1.D0 * u0 * cs32ev * ( f1*u0*cs32ev + f2*a*omega ) / g
-    hgt0 = 0.D0
+    cs32ev = ( cos( (1.0_RP-0.252_RP) * pi * 0.5_RP ) )**1.5_RP
+    f1 = 10.0_RP/63.0_RP - 2.0_RP * sin(lat)**6 * ( cos(lat)**2 + 1.0_RP/3.0_RP )
+    f2 = 1.6_RP * cos(lat)**3 * ( sin(lat)**2 + 2.0_RP/3.0_RP ) - 0.25_RP * pi
+    hgt1 = -1.0_RP * u0 * cs32ev * ( f1*u0*cs32ev + f2*a*omega ) / g
+    hgt0 = 0.0_RP
 
     ! ps estimation
     dz = hgt1 - hgt0
     if (nicamcore) then
-       uave = (ux1 + ux2) * 0.5D0
-       f_cf(1) = 2.D0*omega*uave*cos(lat) + (uave**2.D0)/a
+       uave = (ux1 + ux2) * 0.5_RP
+       f_cf(1) = 2.0_RP*omega*uave*cos(lat) + (uave**2.0_RP)/a
     else
-       f_cf(1) = 0.D0
+       f_cf(1) = 0.0_RP
     endif
-    ps = p0 * ( 1.D0 + dz*(f_cf(1) - g)/(2.D0*Rd*tmp0) ) &
-            / ( 1.D0 - dz*(f_cf(1) - g)/(2.D0*Rd*tmp1) )
+    ps = p0 * ( 1.0_RP + dz*(f_cf(1) - g)/(2.0_RP*Rd*tmp0) ) &
+            / ( 1.0_RP - dz*(f_cf(1) - g)/(2.0_RP*Rd*tmp1) )
 
     return
   end subroutine ps_estimation
@@ -1518,33 +1761,33 @@ contains
   !-----------------------------------------------------------------------------
   ! setting perturbation
   subroutine perturbation( &
-      ijdim,     &  !--- IN : # of ij dimension
-      kdim,      &  !--- IN : # of z dimension
-      lall,      &  !--- IN : # of region
-      vmax,      &  !--- IN : # of variables
-      DIAG_var   )  !--- INOUT : variables container
+       ijdim,   &
+       kdim,    &
+       lall,    &
+       vmax,    &
+       DIAG_var )
     use mod_grd, only: &
-       GRD_x,      &
-       GRD_x_pl,   &
-       GRD_XDIR,   &
-       GRD_YDIR,   &
+       GRD_x,    &
+       GRD_XDIR, &
+       GRD_YDIR, &
        GRD_ZDIR
     use mod_misc, only: &
        MISC_get_latlon
     use mod_adm, only: &
        K0 => ADM_KNONE
     implicit none
+
     integer, intent(in) :: ijdim, kdim, lall, vmax
-    real(8), intent(inout) :: DIAG_var(ijdim,kdim,lall,vmax)
+    real(RP), intent(inout) :: DIAG_var(ijdim,kdim,lall,vmax)
 
     integer, parameter :: ID_vx  = 3
     integer, parameter :: ID_vy  = 4
     integer, parameter :: ID_vz  = 5
     integer :: n, k, l
-    real(8) :: lat, lon
-    real(8) :: r, rr, rbyrr, cla, clo
-    real(8) :: ptb_wix(kdim), ptb_wiy(kdim)
-    real(8) :: ptb_vx(kdim), ptb_vy(kdim), ptb_vz(kdim)
+    real(RP) :: lat, lon
+    real(RP) :: r, rr, rbyrr, cla, clo
+    real(RP) :: ptb_wix(kdim), ptb_wiy(kdim)
+    real(RP) :: ptb_vx(kdim), ptb_vy(kdim), ptb_vz(kdim)
 
     cla = clat * d2r
     clo = clon * d2r
@@ -1556,11 +1799,11 @@ contains
                              GRD_x(n,K0,l,GRD_YDIR), &
                              GRD_x(n,K0,l,GRD_ZDIR)  )
        r = a * acos( sin(cla)*sin(lat) + cos(cla)*cos(lat)*cos(lon-clo) )
-       rr = a / 10.D0
+       rr = a / 10.0_RP
        rbyrr = r/rr
        do k = 1, kdim
-          ptb_wix(k) = uP * exp( -1.D0*rbyrr**2.D0 )
-          ptb_wiy(k) = 0.0d0
+          ptb_wix(k) = uP * exp( -1.0_RP*rbyrr**2.0_RP )
+          ptb_wiy(k) = 0.0_RP
        enddo
 
        call conv_vxvyvz( kdim, lat, lon, ptb_wix, ptb_wiy, ptb_vx, ptb_vy, ptb_vz )
@@ -1588,20 +1831,20 @@ contains
     !
     implicit none
     integer, intent(in) :: kdim
-    real(8), intent(in)    :: lat
-    real(8), intent(in)    :: lon
-    real(8), intent(in)    :: wix(kdim)
-    real(8), intent(in)    :: wiy(kdim)
-    real(8), intent(inout) :: vx1d(kdim)
-    real(8), intent(inout) :: vy1d(kdim)
-    real(8), intent(inout) :: vz1d(kdim)
+    real(RP), intent(in)    :: lat
+    real(RP), intent(in)    :: lon
+    real(RP), intent(in)    :: wix(kdim)
+    real(RP), intent(in)    :: wiy(kdim)
+    real(RP), intent(inout) :: vx1d(kdim)
+    real(RP), intent(inout) :: vy1d(kdim)
+    real(RP), intent(inout) :: vz1d(kdim)
     !
     integer :: k
-    real(8) :: unit_east(3), unit_north(3)
+    real(RP) :: unit_east(3), unit_north(3)
     !
     ! imported from NICAM/nhm/mkinit/prg_mkinit_ncep.f90 (original written by H.Miura)
     ! *** compute vx, vy, vz as 1-dimensional variables
-    do k=1, kdim
+    do k = 1, kdim
        unit_east  = Sp_Unit_East( lon )
        unit_north = Sp_Unit_North( lon, lat )
        !
@@ -1632,38 +1875,38 @@ contains
       result (pout)
     !
     implicit none
-    real(8), intent(in) :: pin1, pin2, pin3
-    real(8), intent(in) :: t1, t2, t3
-    real(8), intent(in) :: u1, u2, u3
-    real(8), intent(in) :: geo1, geo3, lat
+    real(RP), intent(in) :: pin1, pin2, pin3
+    real(RP), intent(in) :: t1, t2, t3
+    real(RP), intent(in) :: u1, u2, u3
+    real(RP), intent(in) :: geo1, geo3, lat
     logical, intent(in) :: downward
     logical, intent(in) :: nicamcore
     !
-    real(8) :: dz, pout
-    real(8) :: f_cf(3), rho(3)
+    real(RP) :: dz, pout
+    real(RP) :: f_cf(3), rho(3)
     !---------------------------------------------------------------------------
 
-    dz = (geo1-geo3) / g * 0.5D0
+    dz = (geo1-geo3) / g * 0.5_RP
 
     if (nicamcore) then
-       f_cf(1) = 2.D0*omega*u1*cos(lat) + (u1**2.D0)/a
-       f_cf(2) = 2.D0*omega*u2*cos(lat) + (u2**2.D0)/a
-       f_cf(3) = 2.D0*omega*u3*cos(lat) + (u3**2.D0)/a
+       f_cf(1) = 2.0_RP*omega*u1*cos(lat) + (u1**2.0_RP)/a
+       f_cf(2) = 2.0_RP*omega*u2*cos(lat) + (u2**2.0_RP)/a
+       f_cf(3) = 2.0_RP*omega*u3*cos(lat) + (u3**2.0_RP)/a
     else
-       f_cf(:) = 0.D0
+       f_cf(:) = 0.0_RP
     endif
     rho(1) = pin1 / ( Rd*t1 )
     rho(2) = pin2 / ( Rd*t2 )
     rho(3) = pin3 / ( Rd*t3 )
 
     if (downward) then
-       pout = pin1 - ( (1.D0/3.D0) * rho(1) * ( f_cf(1) - g ) &
-                       + (4.D0/3.D0) * rho(2) * ( f_cf(2) - g ) &
-                     + (1.D0/3.D0) * rho(3) * ( f_cf(3) - g ) ) * dz
+       pout = pin1 - ( (1.0_RP/3.0_RP) * rho(1) * ( f_cf(1) - g ) &
+                       + (4.0_RP/3.0_RP) * rho(2) * ( f_cf(2) - g ) &
+                     + (1.0_RP/3.0_RP) * rho(3) * ( f_cf(3) - g ) ) * dz
     else
-       pout = pin3 + ( (1.D0/3.D0) * rho(1) * ( f_cf(1) - g ) &
-                       + (4.D0/3.D0) * rho(2) * ( f_cf(2) - g ) &
-                     + (1.D0/3.D0) * rho(3) * ( f_cf(3) - g ) ) * dz
+       pout = pin3 + ( (1.0_RP/3.0_RP) * rho(1) * ( f_cf(1) - g ) &
+                       + (4.0_RP/3.0_RP) * rho(2) * ( f_cf(2) - g ) &
+                     + (1.0_RP/3.0_RP) * rho(3) * ( f_cf(3) - g ) ) * dz
     endif
 
     return
@@ -1673,13 +1916,13 @@ contains
   function Sp_Unit_East( lon ) result( unit_east )
     implicit none
 
-    real(8), intent(in) :: lon ! [rad]
-    real(8)             :: unit_east(3)
+    real(RP), intent(in) :: lon ! [rad]
+    real(RP)             :: unit_east(3)
     !---------------------------------------------------------------------------
 
     unit_east(1) = -sin(lon) ! x-direction
     unit_east(2) =  cos(lon) ! y-direction
-    unit_east(3) = 0.D0      ! z-direction
+    unit_east(3) = 0.0_RP      ! z-direction
 
     return
   end function Sp_Unit_East
@@ -1688,8 +1931,8 @@ contains
   function Sp_Unit_North( lon, lat ) result( unit_north )
     implicit none
 
-    real(8), intent(in) :: lon, lat ! [rad]
-    real(8)             :: unit_north(3)
+    real(RP), intent(in) :: lon, lat ! [rad]
+    real(RP)             :: unit_north(3)
     !---------------------------------------------------------------------------
 
     unit_north(1) = -sin(lat) * cos(lon) ! x-direction

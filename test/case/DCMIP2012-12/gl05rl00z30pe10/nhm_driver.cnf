@@ -81,7 +81,6 @@
     output_io_mode   = 'ADVANCED' ,
     histall_fname    = 'history'  ,
     hist3D_layername = 'Z30_400m_DCMIP' ,
-    DIRECT_ACCESS    = .true.     ,
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
     step             = 3          ,

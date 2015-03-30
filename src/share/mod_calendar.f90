@@ -19,6 +19,10 @@ module mod_calendar
   !
   !++ Used modules
   !
+  use mod_precision
+  use mod_debug
+  use mod_adm, only: &
+     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -59,44 +63,44 @@ module mod_calendar
   integer, private :: idays0, idy, ileap, id, m, idayyr, jyear, jmonth
   !
   !--- flag of automatic or not
-  logical, private, save ::  oauto = .true.
+  logical, private ::  oauto = .true.
   !<---                      yr=0-999     : 360day
   !<---                      yr=1000-1899 : 365day
   !<---                      yr=1900-     : gregorian
   !
   !--- flag of the gregorian calendar or not
-  logical, private, save :: ogrego = .true.
+  logical, private :: ogrego = .true.
   !
   !--- number of days in a month
-  integer, private, save :: monday ( 12,2 )
+  integer, private :: monday ( 12,2 )
   data   monday /                            &
        31,28,31,30,31,30,31,31,30,31,30,31,  &
        31,29,31,30,31,30,31,31,30,31,30,31 /
   !
   !--- flag of ideal calender (n day per month)
-  logical, private, save :: oideal = .false.
+  logical, private :: oideal = .false.
   !------ 1 month = x days in the ideal case
-  integer, private, save :: idaymo = 30
+  integer, private :: idaymo = 30
   !------ 1 year = x months in the ideal case
-  integer, private, save :: imonyr = 12
+  integer, private :: imonyr = 12
   !
   !--- flag of perpetual or not
-  logical, private, save :: operpt = .false.
+  logical, private :: operpt = .false.
   !------ perpetual date(year)
-  integer, private, save :: iyrpp  = 0
+  integer, private :: iyrpp  = 0
   !------ perpetual date(month)
-  integer, private, save :: imonpp = 3
+  integer, private :: imonpp = 3
   !------ perpetual date(day)
-  integer, private, save :: idaypp = 21
+  integer, private :: idaypp = 21
   !
   !--- 1 minute = x sec.
-  integer, private, save :: isecmn = 60
+  integer, private :: isecmn = 60
   !--- 1 hour = x minutes
-  integer, private, save :: iminhr = 60
+  integer, private :: iminhr = 60
   !--- 1 day = x hours
-  integer, private, save :: ihrday = 24
+  integer, private :: ihrday = 24
   !
-  logical, private, save :: ooperz = .true.
+  logical, private :: ooperz = .true.
 
   !-----------------------------------------------------------------------------
 contains
@@ -399,17 +403,17 @@ contains
     implicit none
 
     integer, intent(out) :: idays
-    real(8), intent(out) :: rsec
-    real(8), intent(in) :: dsec
+    real(RP), intent(out) :: rsec
+    real(RP), intent(in) :: dsec
     !---------------------------------------------------------------------------
 
     isecdy = isecmn*iminhr*ihrday
-    idays  = int( dsec/dble (isecdy) ) + 1
-    rsec   = dsec - dble (idays-1)*dble (isecdy)
+    idays  = int( dsec/real(isecdy,kind=RP) ) + 1
+    rsec   = dsec - real(idays-1,kind=RP) * real(isecdy,kind=RP)
 
     if ( nint( rsec ) >= isecdy ) then
        idays = idays + 1
-       rsec  = rsec - dble(isecdy)
+       rsec  = rsec - real(isecdy,kind=RP)
     endif
 
     return
@@ -427,13 +431,13 @@ contains
        )
     implicit none
 
-    real(8), intent(out) :: dsec
+    real(RP), intent(out) :: dsec
     integer, intent(in) :: idays
-    real(8), intent(in) :: rsec
+    real(RP), intent(in) :: rsec
     !---------------------------------------------------------------------------
 
     isecdy = isecmn*iminhr*ihrday
-    dsec   = dble (idays-1)*dble (isecdy) + dble (rsec)
+    dsec   = real(idays-1,kind=RP) * real(isecdy,kind=RP) + real(rsec,kind=RP)
 
     return
   end subroutine calendar_ds2ss
@@ -454,13 +458,13 @@ contains
     integer, intent(out) :: ihour
     integer, intent(out) :: imin
     integer, intent(out) :: isec
-    real(8), intent(in) :: rsec
+    real(RP), intent(in) :: rsec
     !---------------------------------------------------------------------------
 
     isechr = isecmn*iminhr
-    ihour  = int ( rsec / dble(isechr ) )
-    imin   = int ( ( rsec - dble(ihour*isechr) )/dble(isecmn) )
-    isec   = nint( rsec - dble(ihour*isechr) - dble(imin*isecmn) )
+    ihour  = int ( rsec / real(isechr,kind=RP) )
+    imin   = int ( ( rsec - real(ihour*isechr,kind=RP) ) / real(isecmn,kind=RP) )
+    isec   = nint( rsec - real(ihour*isechr,kind=RP) - real(imin*isecmn,kind=RP) )
 
     if ( isec >= isecmn ) then
        imin  = imin + 1
@@ -488,13 +492,13 @@ contains
        )
     implicit none
 
-    real(8), intent(out) :: rsec
+    real(RP), intent(out) :: rsec
     integer, intent(in) :: ihour
     integer, intent(in) :: imin
     integer, intent(in) :: isec
     !---------------------------------------------------------------------------
 
-    rsec = real( ihour*isecmn*iminhr + imin*isecmn + isec, kind=8 )
+    rsec = real( ihour*isecmn*iminhr + imin*isecmn + isec, kind=RP )
 
     return
   end subroutine calendar_hm2rs
@@ -542,7 +546,7 @@ contains
     endif
 
     if ( ogrego ) then
-       jy     = int(dble(idays)/365.24d0)
+       jy     = int(real(idays,kind=RP)/365.24_RP)
 1100   continue
        jy4    = (jy+3)/4
        jcent  = (jy+99)/100
@@ -740,10 +744,10 @@ contains
     implicit none
 
     integer, intent(out) :: idate(6) ! yymmddhhmmss
-    real(8), intent(in) :: dsec      ! time
+    real(RP), intent(in) :: dsec      ! time
 
     integer    idays             ! serial no.of day
-    real(8)    rsec              ! no. of sec. in a day
+    real(RP)    rsec              ! no. of sec. in a day
     !---------------------------------------------------------------------------
 
     call calendar_ss2ds &
@@ -772,11 +776,11 @@ contains
        )
     implicit none
 
-    real(8), intent(out) :: dsec    ! time
+    real(RP), intent(out) :: dsec    ! time
     integer, intent(in) :: idate(6) ! yymmddhhmmss
 
     integer    idays             ! serial no.of day
-    real(8)    rsec              ! no. of sec. in a day
+    real(RP)    rsec              ! no. of sec. in a day
     !---------------------------------------------------------------------------
 
     call calendar_ym2dd &
@@ -838,7 +842,7 @@ contains
 
     integer, intent(out) :: iyear
     integer, intent(out) :: idaysy
-    real(8), intent(in) :: dsec
+    real(RP), intent(in) :: dsec
 
     integer :: imonth, iday
     !---------------------------------------------------------------------------
@@ -870,10 +874,10 @@ contains
     integer, intent(out) :: iyear
     integer, intent(out) :: imonth
     integer, intent(out) :: iday
-    real(8), intent(in) :: dsec
+    real(RP), intent(in) :: dsec
 
     integer :: idays
-    real(8) :: rsec
+    real(RP) :: rsec
     !---------------------------------------------------------------------------
 
     call calendar_ss2ds &
@@ -900,10 +904,10 @@ contains
        )
     implicit none
 
-    real(8), intent(out) :: ddsec
-    real(8), intent(in) :: rtdur
+    real(RP), intent(out) :: ddsec
+    real(RP), intent(in) :: rtdur
     character, intent(in) :: hunit *(*)
-    real(8), intent(in) :: dsec
+    real(RP), intent(in) :: dsec
 
     character(len=10) :: hunitx
     integer :: isecmi, isechr, isecdy
@@ -913,16 +917,16 @@ contains
     hunitx = hunit
 
     if      ( hunitx(1:1) == 's' .or. hunitx(1:1) == 'S' ) then
-       ddsec = dble (rtdur)
+       ddsec = real(rtdur,kind=RP)
     elseif ( hunitx(1:2) == 'mi' .or. hunitx(1:2) == 'MI' ) then
        call calendar_secmi( isecmi )
-       ddsec = dble (rtdur)*dble (isecmi)
+       ddsec = real(rtdur,kind=RP) * real(isecmi,kind=RP)
     elseif ( hunitx(1:1) == 'h' .or. hunitx(1:1) == 'H' ) then
        call calendar_sechr( isechr )
-       ddsec = dble (rtdur)*dble (isechr)
+       ddsec = real(rtdur,kind=RP) * real(isechr,kind=RP)
     elseif ( hunitx(1:1) == 'd' .or. hunitx(1:1) == 'D' ) then
        call calendar_secdy( isecdy )
-       ddsec = dble (rtdur)*dble (isecdy)
+       ddsec = real(rtdur,kind=RP) * real(isecdy,kind=RP)
     elseif ( hunitx(1:2) == 'mo' .or. hunitx(1:2) == 'MO' ) then
        call calendar_ss2ym &
             ( iyear , imonth, iday  , &
@@ -931,7 +935,7 @@ contains
             ( ndaymo, &
             iyear , imonth  )
        call calendar_secdy( isecdy )
-       ddsec = dble (rtdur)*dble (ndaymo)*dble (isecdy)
+       ddsec = real(rtdur,kind=RP) * real(ndaymo,kind=RP) * real(isecdy,kind=RP)
     elseif ( hunitx(1:1) == 'y' .or. hunitx(1:1) == 'Y' ) then
        call calendar_ss2ym &
             ( iyear , imonth, iday  , &
@@ -940,7 +944,7 @@ contains
             ( ndayyr, &
             iyear   )
        call calendar_secdy( isecdy )
-       ddsec = dble (rtdur)*dble (ndayyr)*dble (isecdy)
+       ddsec = real(rtdur * ndayyr * isecdy,kind=RP)
     else
        write (6,*) ' ### cxx2ss: invalid unit : ', hunit, &
             ' [sec] assumed'
@@ -1006,7 +1010,7 @@ contains
     implicit none
 
     character, intent(out) :: htime *(*)
-    real(8), intent(in) :: dsec
+    real(RP), intent(in) :: dsec
 
     integer :: itime(6), i
     !---------------------------------------------------------------------------
@@ -1063,14 +1067,14 @@ contains
        )
     implicit none
 
-    real(8), intent(out) :: dseca
-    real(8), intent(in) :: dsec
-    real(8), intent(in) :: raftr
+    real(RP), intent(out) :: dseca
+    real(RP), intent(in) :: dsec
+    real(RP), intent(in) :: raftr
     character, intent(in) :: hunit *(*)
 
     integer :: idays, iyear, imonth, iday
-    real(8) :: rsec
-    real(8) :: ddtime
+    real(RP) :: rsec
+    real(RP) :: ddtime
     !---------------------------------------------------------------------------
 
     if ( hunit(1:1) == 'y' .or. hunit(1:1) == 'Y' &
@@ -1118,18 +1122,18 @@ contains
     implicit none
 
     logical :: calendar_ointvl
-    real(8), intent(in) :: dtime
-    real(8), intent(in) :: dtprev
-    real(8), intent(in) :: dtorgn
-    real(8), intent(in) :: rintv
+    real(RP), intent(in) :: dtime
+    real(RP), intent(in) :: dtprev
+    real(RP), intent(in) :: dtorgn
+    real(RP), intent(in) :: rintv
     character, intent(in) :: htunit *(*)
 
-    real(8) :: ddtime
+    real(RP) :: ddtime
     character(len=5) :: hunit
     integer :: iyear, imon, iday, iyearp, imonp, idayp
     integer :: iy, imo
     integer :: nmonyr, ndayyr, ndaymo
-    real(8) :: ry, rmo
+    real(RP) :: ry, rmo
     !---------------------------------------------------------------------------
 
     hunit = htunit
@@ -1154,9 +1158,9 @@ contains
        if      ( hunit(1:1) == 'y' .or. hunit(1:1) == 'Y' ) then
           call calendar_monyr( nmonyr, iyear )
           call calendar_dayyr( ndayyr, iyear )
-          ry = dble( iyear - iyearp )                  &
-             + dble( imon  - imonp  ) / dble( nmonyr ) &
-             + dble( iday  - idayp  ) / dble( ndayyr )
+          ry = real( iyear-iyearp, kind=RP )                           &
+             + real( imon -imonp , kind=RP ) / real( nmonyr, kind=RP ) &
+             + real( iday -idayp , kind=RP ) / real( ndayyr, kind=RP )
           if ( ry >= rintv ) then
              calendar_ointvl = .true.
           endif
@@ -1167,8 +1171,8 @@ contains
              imo = imo + nmonyr
           enddo
           call calendar_daymo( ndaymo, iyear, imon )
-          rmo = dble( imon - imonp + imo ) &
-              + dble( iday - idayp ) / dble( ndaymo )
+          rmo = real( imon-imonp+imo, kind=RP ) &
+              + real( iday-idayp    , kind=RP ) / real( ndaymo, kind=RP )
           if ( rmo >= rintv ) then
              calendar_ointvl = .true.
           endif
@@ -1192,11 +1196,11 @@ contains
         )
     implicit none
 
-    real(8) :: calendar_dgaus
-    real(8), intent(in) :: dx
+    real(RP) :: calendar_dgaus
+    real(RP), intent(in) :: dx
     !---------------------------------------------------------------------------
 
-    calendar_dgaus = aint(dx) + aint(dx - aint(dx) + 1.d0) - 1.d0
+    calendar_dgaus = aint(dx) + aint(dx - aint(dx) + 1.0_RP) - 1.0_RP
 
   end function calendar_dgaus
 

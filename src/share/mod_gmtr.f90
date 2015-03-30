@@ -20,6 +20,8 @@ module mod_gmtr
   !
   !++ Used modules
   !
+  use mod_precision
+  use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID, &
      ADM_NSYS,    &
@@ -96,33 +98,33 @@ module mod_gmtr
   integer, public, parameter :: GMTR_A_TT2Z = 18
 
 #ifdef _FIXEDINDEX_
-  real(8), public              :: GMTR_P_var   (ADM_gall   ,ADM_KNONE,ADM_lall   ,              GMTR_P_nmax_var   )
-  real(8), public              :: GMTR_P_var_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              GMTR_P_nmax_var   )
-  real(8), public              :: GMTR_T_var   (ADM_gall   ,ADM_KNONE,ADM_lall   ,ADM_TI:ADM_TJ,GMTR_T_nmax_var   )
-  real(8), public              :: GMTR_T_var_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              GMTR_T_nmax_var   )
-  real(8), public              :: GMTR_A_var   (ADM_gall   ,ADM_KNONE,ADM_lall   ,ADM_AI:ADM_AJ,GMTR_A_nmax_var   )
-  real(8), public              :: GMTR_A_var_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              GMTR_A_nmax_var_pl)
+  real(RP), public              :: GMTR_P_var   (ADM_gall   ,ADM_KNONE,ADM_lall   ,              GMTR_P_nmax_var   )
+  real(RP), public              :: GMTR_P_var_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              GMTR_P_nmax_var   )
+  real(RP), public              :: GMTR_T_var   (ADM_gall   ,ADM_KNONE,ADM_lall   ,ADM_TI:ADM_TJ,GMTR_T_nmax_var   )
+  real(RP), public              :: GMTR_T_var_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              GMTR_T_nmax_var   )
+  real(RP), public              :: GMTR_A_var   (ADM_gall   ,ADM_KNONE,ADM_lall   ,ADM_AI:ADM_AJ,GMTR_A_nmax_var   )
+  real(RP), public              :: GMTR_A_var_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              GMTR_A_nmax_var_pl)
 
-  real(8), public              :: GMTR_area    (ADM_gall   ,ADM_lall   )
-  real(8), public              :: GMTR_area_pl (ADM_gall_pl,ADM_lall_pl)
-  real(8), public              :: GMTR_lat     (ADM_gall   ,ADM_lall   )
-  real(8), public              :: GMTR_lat_pl  (ADM_gall_pl,ADM_lall_pl)
-  real(8), public              :: GMTR_lon     (ADM_gall   ,ADM_lall   )
-  real(8), public              :: GMTR_lon_pl  (ADM_gall_pl,ADM_lall_pl)
+  real(RP), public              :: GMTR_area    (ADM_gall   ,ADM_lall   )
+  real(RP), public              :: GMTR_area_pl (ADM_gall_pl,ADM_lall_pl)
+  real(RP), public              :: GMTR_lat     (ADM_gall   ,ADM_lall   )
+  real(RP), public              :: GMTR_lat_pl  (ADM_gall_pl,ADM_lall_pl)
+  real(RP), public              :: GMTR_lon     (ADM_gall   ,ADM_lall   )
+  real(RP), public              :: GMTR_lon_pl  (ADM_gall_pl,ADM_lall_pl)
 #else
-  real(8), public, allocatable :: GMTR_P_var   (:,:,:,:)   ! geometrics for the cell point
-  real(8), public, allocatable :: GMTR_P_var_pl(:,:,:,:)
-  real(8), public, allocatable :: GMTR_T_var   (:,:,:,:,:) ! geometrics for the cell vertex
-  real(8), public, allocatable :: GMTR_T_var_pl(:,:,:,:)
-  real(8), public, allocatable :: GMTR_A_var   (:,:,:,:,:) ! geometrics for the cell arc
-  real(8), public, allocatable :: GMTR_A_var_pl(:,:,:,:)
+  real(RP), public, allocatable :: GMTR_P_var   (:,:,:,:)   ! geometrics for the cell point
+  real(RP), public, allocatable :: GMTR_P_var_pl(:,:,:,:)
+  real(RP), public, allocatable :: GMTR_T_var   (:,:,:,:,:) ! geometrics for the cell vertex
+  real(RP), public, allocatable :: GMTR_T_var_pl(:,:,:,:)
+  real(RP), public, allocatable :: GMTR_A_var   (:,:,:,:,:) ! geometrics for the cell arc
+  real(RP), public, allocatable :: GMTR_A_var_pl(:,:,:,:)
 
-  real(8), public, allocatable :: GMTR_area    (:,:)       ! control area of the cell
-  real(8), public, allocatable :: GMTR_area_pl (:,:)
-  real(8), public, allocatable :: GMTR_lat     (:,:)       ! latitude  of the cell point
-  real(8), public, allocatable :: GMTR_lat_pl  (:,:)
-  real(8), public, allocatable :: GMTR_lon     (:,:)       ! longitude of the cell point
-  real(8), public, allocatable :: GMTR_lon_pl  (:,:)
+  real(RP), public, allocatable :: GMTR_area    (:,:)       ! control area of the cell
+  real(RP), public, allocatable :: GMTR_area_pl (:,:)
+  real(RP), public, allocatable :: GMTR_lat     (:,:)       ! latitude  of the cell point
+  real(RP), public, allocatable :: GMTR_lat_pl  (:,:)
+  real(RP), public, allocatable :: GMTR_lon     (:,:)       ! longitude of the cell point
+  real(RP), public, allocatable :: GMTR_lon_pl  (:,:)
 #endif
 
   character(len=ADM_NSYS), public :: GMTR_polygon_type = 'ON_SPHERE'
@@ -156,7 +158,6 @@ contains
     use mod_adm, only: &
        ADM_CTL_FID,   &
        ADM_proc_stop, &
-       ADM_gall_1d,   &
        ADM_gmin,      &
        ADM_gmax
     use mod_comm, only: &
@@ -209,12 +210,12 @@ contains
     allocate( GMTR_lon     (ADM_gall,   ADM_lall   ) )
     allocate( GMTR_lon_pl  (ADM_gall_pl,ADM_lall_pl) )
 #endif
-    GMTR_P_var   (:,:,:,:)   = 0.D0
-    GMTR_P_var_pl(:,:,:,:)   = 0.D0
-    GMTR_T_var   (:,:,:,:,:) = 0.D0
-    GMTR_T_var_pl(:,:,:,:)   = 0.D0
-    GMTR_A_var   (:,:,:,:,:) = 0.D0
-    GMTR_A_var_pl(:,:,:,:)   = 0.D0
+    GMTR_P_var   (:,:,:,:)   = 0.0_RP
+    GMTR_P_var_pl(:,:,:,:)   = 0.0_RP
+    GMTR_T_var   (:,:,:,:,:) = 0.0_RP
+    GMTR_T_var_pl(:,:,:,:)   = 0.0_RP
+    GMTR_A_var   (:,:,:,:,:) = 0.0_RP
+    GMTR_A_var_pl(:,:,:,:)   = 0.0_RP
 
 
 
@@ -258,12 +259,11 @@ contains
        MISC_get_latlon
     use mod_adm, only: &
        ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_prc_tab,     &
        ADM_rgn_vnum,    &
        ADM_W,           &
        ADM_nxyz,        &
-       ADM_gall_1d,     &
        ADM_gmin,        &
        ADM_IooJoo_nmax, &
        ADM_IooJoo,      &
@@ -286,11 +286,11 @@ contains
        GRD_rscale
     implicit none
 
-    real(8) :: v   (ADM_nxyz,0:7,ADM_gall)
-    real(8) :: v_pl(ADM_nxyz,0:ADM_vlink_nmax+1)
+    real(RP) :: v   (ADM_nxyz,0:7,ADM_gall)
+    real(RP) :: v_pl(ADM_nxyz,0:ADM_vlink_nmax+1)
 
-    real(8) :: area
-    real(8) :: cos_lam, sin_lam
+    real(RP) :: area
+    real(RP) :: cos_lam, sin_lam
 
     integer :: l, n, m
     integer :: rgnid, ij, K0
@@ -340,7 +340,7 @@ contains
        do n = 1, ADM_IooJoo_nmax
           ij = ADM_IooJoo(n,ADM_GIoJo)
 
-          area = 0.D0
+          area = 0.0_RP
           if ( GRD_grid_type == 'ON_PLANE' ) then
              do m = 1, 6
                 area = area + triangle_area_on_plane( v(:,0,ij), v(:,m,ij), v(:,m+1,ij) )
@@ -353,7 +353,7 @@ contains
           endif
 
           GMTR_P_var(ij,K0,l,GMTR_P_AREA)  = area
-          GMTR_P_var(ij,K0,l,GMTR_P_RAREA) = 1.D0 / GMTR_P_var(ij,K0,l,GMTR_P_AREA)
+          GMTR_P_var(ij,K0,l,GMTR_P_RAREA) = 1.0_RP / GMTR_P_var(ij,K0,l,GMTR_P_AREA)
 
           call MISC_get_latlon( GMTR_P_var(ij,K0,l,GMTR_P_LAT), &
                                 GMTR_P_var(ij,K0,l,GMTR_P_LON), &
@@ -363,12 +363,12 @@ contains
 
           if ( GRD_grid_type == 'ON_PLANE' ) then
 
-             GMTR_P_var(ij,K0,l,GMTR_P_IX) = 1.D0
-             GMTR_P_var(ij,K0,l,GMTR_P_IY) = 0.D0
-             GMTR_P_var(ij,K0,l,GMTR_P_IZ) = 0.D0
-             GMTR_P_var(ij,K0,l,GMTR_P_JX) = 0.D0
-             GMTR_P_var(ij,K0,l,GMTR_P_JY) = 1.D0
-             GMTR_P_var(ij,K0,l,GMTR_P_JZ) = 0.D0
+             GMTR_P_var(ij,K0,l,GMTR_P_IX) = 1.0_RP
+             GMTR_P_var(ij,K0,l,GMTR_P_IY) = 0.0_RP
+             GMTR_P_var(ij,K0,l,GMTR_P_IZ) = 0.0_RP
+             GMTR_P_var(ij,K0,l,GMTR_P_JX) = 0.0_RP
+             GMTR_P_var(ij,K0,l,GMTR_P_JY) = 1.0_RP
+             GMTR_P_var(ij,K0,l,GMTR_P_JZ) = 0.0_RP
 
           else
 
@@ -377,7 +377,7 @@ contains
 
              GMTR_P_var(ij,K0,l,GMTR_P_IX) = -sin_lam
              GMTR_P_var(ij,K0,l,GMTR_P_IY) =  cos_lam
-             GMTR_P_var(ij,K0,l,GMTR_P_IZ) = 0.0D0
+             GMTR_P_var(ij,K0,l,GMTR_P_IZ) = 0.0_RP
              GMTR_P_var(ij,K0,l,GMTR_P_JX) = -( GRD_x(ij,K0,l,GRD_ZDIR) * cos_lam ) / GRD_rscale
              GMTR_P_var(ij,K0,l,GMTR_P_JY) = -( GRD_x(ij,K0,l,GRD_ZDIR) * sin_lam ) / GRD_rscale
              GMTR_P_var(ij,K0,l,GMTR_P_JZ) =  ( GRD_x(ij,K0,l,GRD_XDIR) * cos_lam &
@@ -387,7 +387,7 @@ contains
        enddo ! ij loop
     enddo ! l loop
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        n = ADM_GSLF_PL
 
        do l = 1,ADM_lall_pl
@@ -402,14 +402,14 @@ contains
           enddo
           v_pl(:,ADM_vlink_nmax+1) = v_pl(:,1)
 
-          area = 0.D0
+          area = 0.0_RP
           do m = 1, ADM_vlink_nmax ! (ICO=5)
              area = area + MISC_triangle_area( v_pl(:,0), v_pl(:,m), v_pl(:,m+1), &
                                                GMTR_polygon_type, GRD_rscale      )
           enddo
 
           GMTR_P_var_pl(n,K0,l,GMTR_P_AREA)  = area
-          GMTR_P_var_pl(n,K0,l,GMTR_P_RAREA) = 1.D0 / GMTR_P_var_pl(n,K0,l,GMTR_P_AREA)
+          GMTR_P_var_pl(n,K0,l,GMTR_P_RAREA) = 1.0_RP / GMTR_P_var_pl(n,K0,l,GMTR_P_AREA)
 
           call MISC_get_latlon( GMTR_P_var_pl(n,K0,l,GMTR_P_LAT), &
                                 GMTR_P_var_pl(n,K0,l,GMTR_P_LON), &
@@ -422,7 +422,7 @@ contains
 
           GMTR_P_var_pl(n,K0,l,GMTR_P_IX) = -sin_lam
           GMTR_P_var_pl(n,K0,l,GMTR_P_IY) =  cos_lam
-          GMTR_P_var_pl(n,K0,l,GMTR_P_IZ) = 0.0D0
+          GMTR_P_var_pl(n,K0,l,GMTR_P_IZ) = 0.0_RP
           GMTR_P_var_pl(n,K0,l,GMTR_P_JX) = -( GRD_x_pl(n,K0,l,GRD_ZDIR) * cos_lam ) / GRD_rscale
           GMTR_P_var_pl(n,K0,l,GMTR_P_JY) = -( GRD_x_pl(n,K0,l,GRD_ZDIR) * sin_lam ) / GRD_rscale
           GMTR_P_var_pl(n,K0,l,GMTR_P_JZ) =  ( GRD_x_pl(n,K0,l,GRD_XDIR) * cos_lam &
@@ -441,12 +441,11 @@ contains
        MISC_get_latlon
     use mod_adm, only: &
        ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_prc_tab,     &
        ADM_rgn_vnum,    &
        ADM_W,           &
        ADM_nxyz,        &
-       ADM_gall_1d,     &
        ADM_gmin,        &
        ADM_gmax,        &
        ADM_ImoJmo_nmax, &
@@ -470,10 +469,10 @@ contains
        GRD_rscale
     implicit none
 
-    real(8) :: v   (ADM_nxyz,0:3,ADM_gall   ,ADM_TI:ADM_TJ)
-    real(8) :: v_pl(ADM_nxyz,0:3,ADM_gall_pl)
+    real(RP) :: v   (ADM_nxyz,0:3,ADM_gall   ,ADM_TI:ADM_TJ)
+    real(RP) :: v_pl(ADM_nxyz,0:3,ADM_gall_pl)
 
-    real(8) :: area, area1, area2, area3
+    real(RP) :: area, area1, area2, area3
     integer :: l, d, t, n
     integer :: rgnid, ij, K0
     !---------------------------------------------------------------------------
@@ -543,7 +542,7 @@ contains
           area = area1 + area2 + area3
 
           GMTR_T_var(ij,K0,l,t,GMTR_T_AREA)  = area
-          GMTR_T_var(ij,K0,l,t,GMTR_T_RAREA) = 1.D0 / area
+          GMTR_T_var(ij,K0,l,t,GMTR_T_RAREA) = 1.0_RP / area
 
           GMTR_T_var(ij,K0,l,t,GMTR_T_W1)    = area1 / area
           GMTR_T_var(ij,K0,l,t,GMTR_T_W2)    = area2 / area
@@ -559,7 +558,7 @@ contains
 
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1,ADM_lall_pl
 
           do n = ADM_GMIN_PL, ADM_GMAX_PL-1
@@ -587,7 +586,7 @@ contains
              area = area1 + area2 + area3
 
              GMTR_T_var_pl(n,K0,l,GMTR_T_AREA)  = area
-             GMTR_T_var_pl(n,K0,l,GMTR_T_RAREA) = 1.D0 / area
+             GMTR_T_var_pl(n,K0,l,GMTR_T_RAREA) = 1.0_RP / area
 
              GMTR_T_var_pl(n,K0,l,GMTR_T_W1)    = area1 / area
              GMTR_T_var_pl(n,K0,l,GMTR_T_W2)    = area2 / area
@@ -614,12 +613,11 @@ contains
        MISC_mk_gmtrvec
     use mod_adm, only: &
        ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_prc_tab,     &
        ADM_rgn_vnum,    &
        ADM_W,           &
        ADM_nxyz,        &
-       ADM_gall_1d,     &
        ADM_gmin,        &
        ADM_gmax,        &
        ADM_ImpJmo_nmax, &
@@ -653,11 +651,11 @@ contains
        GRD_rscale
     implicit none
 
-    real(8) :: v   (ADM_nxyz,2,ADM_gall   )
-    real(8) :: v_pl(ADM_nxyz,2,ADM_gall_pl)
+    real(RP) :: v   (ADM_nxyz,2,ADM_gall   )
+    real(RP) :: v_pl(ADM_nxyz,2,ADM_gall_pl)
 
-    real(8) :: tvec(ADM_nxyz)
-    real(8) :: nvec(ADM_nxyz)
+    real(RP) :: tvec(ADM_nxyz)
+    real(RP) :: nvec(ADM_nxyz)
 
     integer :: ij, K0, l, d
     integer :: rgnid
@@ -909,7 +907,7 @@ contains
 
     enddo ! l loop
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
 
           do ij = ADM_GMIN_PL, ADM_GMAX_PL
@@ -978,8 +976,8 @@ contains
     use mod_adm, only: &
        ADM_proc_stop, &
        ADM_prc_tab,   &
-       ADM_prc_me,    &
-       ADM_prc_pl
+       ADM_have_pl, &
+       ADM_prc_me
     use mod_fio, only: &
        FIO_output, &
        FIO_HMID,   &
@@ -993,8 +991,8 @@ contains
     character(LEN=128)      :: fname
     character(LEN=FIO_HMID) :: desc = 'Metrics info'
 
-    real(8) :: tmp   (ADM_gall   ,ADM_KNONE,ADM_lall   ,2)
-    real(8) :: tmp_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,2)
+    real(RP) :: tmp   (ADM_gall   ,ADM_KNONE,ADM_lall   ,2)
+    real(RP) :: tmp_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,2)
 
     integer :: rgnid
     integer, parameter :: I_rgn  = 1
@@ -1009,16 +1007,16 @@ contains
     do l = 1, ADM_lall
        rgnid = ADM_prc_tab(l,ADM_prc_me)
        do g = 1, ADM_gall
-          tmp(g,K0,l,I_rgn ) = real(rgnid,kind=8)
-          tmp(g,K0,l,I_grid) = real(g    ,kind=8)
+          tmp(g,K0,l,I_rgn ) = real(rgnid,kind=RP)
+          tmp(g,K0,l,I_grid) = real(g    ,kind=RP)
        enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) Then
+    if ( ADM_have_pl ) Then
        do l = 1, ADM_lall_pl
        do g = 1, ADM_gall_pl
-          tmp_pl(g,K0,l,I_rgn ) = real(-l,kind=8)
-          tmp_pl(g,K0,l,I_grid) = real(g ,kind=8)
+          tmp_pl(g,K0,l,I_rgn ) = real(-l,kind=RP)
+          tmp_pl(g,K0,l,I_grid) = real(g ,kind=RP)
        enddo
        enddo
     endif
@@ -1030,23 +1028,23 @@ contains
        call FIO_output( GMTR_P_var(:,:,:,GMTR_P_AREA),                     &
                         basename, desc, "",                                &
                         "area", "control area", "",                        &
-                        "m2", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.D0, 0.D0     )
+                        "m2", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_RP, 0.0_RP     )
        call FIO_output( GMTR_P_var(:,:,:,GMTR_P_LAT),                      &
                         basename, desc, "",                                &
                         "lat", "latitude", "",                             &
-                        "radian", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.D0, 0.D0 )
+                        "radian", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_RP, 0.0_RP )
        call FIO_output( GMTR_P_var(:,:,:,GMTR_P_LON),                      &
                         basename, desc, "",                                &
                         "lon", "longitude", "",                            &
-                        "radian", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.D0, 0.D0 )
+                        "radian", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_RP, 0.0_RP )
        call FIO_output( tmp(:,:,:,I_rgn),                                  &
                         basename, desc, "",                                &
                         "rgn", "region number", "",                        &
-                        "NIL", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.D0, 0.D0    )
+                        "NIL", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_RP, 0.0_RP    )
        call FIO_output( tmp(:,:,:,I_grid),                                 &
                         basename, desc, "",                                &
                         "grid", "grid number", "",                         &
-                        "NIL", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.D0, 0.D0    )
+                        "NIL", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_RP, 0.0_RP    )
 
     elseif( GMTR_io_mode == 'LEGACY' ) then
 
@@ -1083,15 +1081,15 @@ contains
   subroutine mk_gmtrvec_on_plane( vFrom, vTo, vT, vN )
     implicit none
 
-    real(8), intent(in)  :: vFrom(3), vTo(3)
-    real(8), intent(out) :: vT(3),    vN(3)
+    real(RP), intent(in)  :: vFrom(3), vTo(3)
+    real(RP), intent(out) :: vT(3),    vN(3)
     !---------------------------------------------------------------------------
 
     vT(:) = vTo(:) - vFrom(:)
 
     vN(1) = -vT(2)
     vN(2) =  vT(1)
-    vN(3) =   0.D0
+    vN(3) =   0.0_RP
 
     return
   end subroutine mk_gmtrvec_on_plane
@@ -1102,12 +1100,12 @@ contains
   function triangle_area_on_plane( a, b, c ) result(area)
     implicit none
 
-    real(8), intent(in) :: a(3), b(3), c(3)
-    real(8)             :: area
+    real(RP), intent(in) :: a(3), b(3), c(3)
+    real(RP)             :: area
     !
-    real(8) :: a2b(3), a2c(3)
-    real(8) :: len_a2b, len_a2c
-    real(8) :: prd
+    real(RP) :: a2b(3), a2c(3)
+    real(RP) :: len_a2b, len_a2c
+    real(RP) :: prd
     !---------------------------------------------------------------------------
 
     a2b(:)  = b(:) - a(:)
@@ -1116,7 +1114,7 @@ contains
     len_a2c = a2c(1)*a2c(1) + a2c(3)*a2c(3) + a2c(3)*a2c(3) ! |a->c|**2
     prd     = a2b(1)*a2c(1) + a2b(2)*a2c(2) + a2b(3)*a2c(3) ! (a->b)*(a->c)
 
-    area    = 0.5D0 * sqrt( len_a2b * len_a2c - prd*prd )
+    area    = 0.5_RP * sqrt( len_a2b * len_a2c - prd*prd )
 
   end function triangle_area_on_plane
 

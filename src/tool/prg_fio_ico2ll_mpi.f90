@@ -35,6 +35,7 @@ program fio_ico2ll_mpi
   !++ Used modules
   !
   use mpi
+  use mod_precision
   use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID,    &
@@ -737,7 +738,7 @@ program fio_ico2ll_mpi
   write(ADM_LOG_FID,*) '########## Variable List ########## '
   write(ADM_LOG_FID,*) 'ID |NAME            |STEPS|Layername       |START FROM         |DT [sec]|Xi2Z?'
   do v = 1, nvar
-     call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=8) )
+     call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=RP) )
      write(tmpl,'(I4.4,"/",I2.2,"/",I2.2,1x,I2.2,":",I2.2,":",I2.2)') date_str(:)
      write(ADM_LOG_FID,'(1x,I3,A1,A16,A1,I5,A1,A16,A1,A19,A1,I8,A1,L5)') &
               v,'|',var_name(v),'|',var_nstep(v),'|',var_layername(v),'|', tmpl,'|', var_dt(v), '|', var_xi2z(v)
@@ -831,7 +832,7 @@ program fio_ico2ll_mpi
            write(ADM_LOG_FID,*) 'Output: ', trim(outbase)//'.nc'
            write(*          ,*) 'Output: ', trim(outbase)//'.nc'
 
-           call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=8) )
+           call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=RP) )
 
            do j = 1, 6
               write( date_str_tmp(j), '(I4)' ) date_str(j)
@@ -1561,7 +1562,7 @@ contains
     ! Prefer not to use calendar_dd2ym subroutine
     ! Epoch time is different between calendar_ss2yh and calendar_dd2ym
     ! New I/O stores timestamp, which is generated via calendar_yh2ss
-    call calendar_ss2yh( d(:), real(datesec,kind=8) )
+    call calendar_ss2yh( d(:), real(datesec,kind=RP) )
 
     write(template,'(I2.2,A1,I2.2,A1,I2.2,A3,I4.4)') &
                               d(4), ':', d(5), 'Z', d(3), nmonth(d(2)), d(1)
@@ -1585,7 +1586,7 @@ contains
     ! Prefer not to use calendar_dd2ym subroutine
     ! Epoch time is different between calendar_ss2yh and calendar_dd2ym
     ! New I/O stores timestamp, which is generated via calendar_yh2ss
-    call calendar_ss2yh( d(:), real(datesec,kind=8) )
+    call calendar_ss2yh( d(:), real(datesec,kind=RP) )
 
     write(template,'(I4.4,A1,I2.2,A1,I2.2,A1,I2.2,A1,I2.2,A1)') &
                           d(1), '-', d(2), '-', d(3), '-', d(4), 'h', d(5), 'm'
@@ -1624,7 +1625,7 @@ contains
     ! Prefer not to use calendar_dd2ym subroutine
     ! Epoch time is different between calendar_ss2yh and calendar_dd2ym
     ! New I/O stores timestamp, which is generated via calendar_yh2ss
-    call calendar_ss2yh( d(:), real(datesec,kind=8) )
+    call calendar_ss2yh( d(:), real(datesec,kind=RP) )
 
     write (template,'(i4.4,i2.2,i2.2,1x,i2.2,i2.2,i2.2,1x)') (d(i),i=1,6)
 

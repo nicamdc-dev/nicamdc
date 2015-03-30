@@ -22,6 +22,8 @@ module mod_gtl
   !++ Used modules
   !
   use mpi
+  use mod_precision
+  use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID, &
      ADM_NSYS,    &
@@ -66,8 +68,7 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_global_sum( var, var_pl ) result( sum_g )
     use mod_adm, only: &
-       ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_gall,        &
        ADM_gall_pl,     &
        ADM_lall,        &
@@ -86,15 +87,15 @@ contains
        VMTR_VOLUME_pl
     implicit none
 
-    real(8), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8)             :: sum_g
+    real(RP), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP)             :: sum_g
 
-    real(8) :: sum
+    real(RP) :: sum
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
-    sum = 0.D0
+    sum = 0.0_RP
     do l = 1,        ADM_lall
     do k = ADM_kmin, ADM_kmax
     do n = 1,        ADM_IooJoo_nmax
@@ -103,7 +104,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1,        ADM_lall_pl
        do k = ADM_kmin, ADM_kmax
           sum = sum + var_pl(ADM_GSLF_PL,k,l) * VMTR_VOLUME_pl(ADM_GSLF_PL,k,l)
@@ -119,8 +120,7 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_global_sum_srf( var, var_pl ) result( sum_g )
     use mod_adm, only: &
-       ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_gall,        &
        ADM_gall_pl,     &
        ADM_lall,        &
@@ -137,15 +137,15 @@ contains
        GMTR_area_pl
     implicit none
 
-    real(8), intent(in) :: var   (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(8), intent(in) :: var_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(8)             :: sum_g
+    real(RP), intent(in) :: var   (ADM_gall,   ADM_KNONE,ADM_lall   )
+    real(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    real(RP)             :: sum_g
 
-    real(8) :: sum
+    real(RP) :: sum
     integer :: n, l
     !---------------------------------------------------------------------------
 
-    sum = 0.D0
+    sum = 0.0_RP
     do l = 1, ADM_lall
     do n = 1, ADM_IooJoo_nmax
        sum = sum + var      (ADM_IooJoo(n,ADM_GIoJo),ADM_KNONE,l) &
@@ -153,7 +153,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
           sum = sum + var_pl      (ADM_GSLF_PL,ADM_KNONE,l) &
                     * GMTR_area_pl(ADM_GSLF_PL,l)
@@ -168,8 +168,7 @@ contains
   !-----------------------------------------------------------------------------
   subroutine GTL_global_sum_eachlayer( var, var_pl, sum_g )
     use mod_adm, only: &
-       ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_gall,        &
        ADM_gall_pl,     &
        ADM_lall,        &
@@ -189,15 +188,15 @@ contains
        VMTR_GAM2_pl
     implicit none
 
-    real(8), intent(in)  :: var   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: sum_g (ADM_kall)
+    real(RP), intent(in)  :: var   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: sum_g (ADM_kall)
 
-    real(8) :: sum(ADM_kall)
+    real(RP) :: sum(ADM_kall)
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
-    sum(:) = 0.D0
+    sum(:) = 0.0_RP
     do l = 1, ADM_lall
     do k = 1, ADM_kall
     do n = 1, ADM_IooJoo_nmax
@@ -208,7 +207,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
           sum(k) = sum(k) + var_pl      (ADM_GSLF_PL,k,l) &
@@ -235,20 +234,20 @@ contains
        COMM_Stat_sum
     implicit none
 
-    real(8), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8)             :: sum_g
+    real(RP), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP)             :: sum_g
 
-    real(8)       :: one   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8)       :: one_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP)       :: one   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP)       :: one_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     logical, save :: first = .true.
-    real(8), save :: volume_g
+    real(RP), save :: volume_g
     !---------------------------------------------------------------------------
 
     if ( first ) then
        !--- calc global volume at first time
-       one   (:,:,:) = 1.D0
-       one_pl(:,:,:) = 1.D0
+       one   (:,:,:) = 1.0_RP
+       one_pl(:,:,:) = 1.0_RP
 
        volume_g = GTL_global_sum( one(:,:,:), one_pl(:,:,:) )
 
@@ -265,8 +264,7 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_max( var, var_pl, kdim, kstart, kend ) result( vmax_g )
     use mod_adm, only: &
-       ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_gall,        &
        ADM_gall_pl,     &
        ADM_lall,        &
@@ -282,15 +280,15 @@ contains
     integer, intent(in) :: kdim
     integer, intent(in) :: kstart
     integer, intent(in) :: kend
-    real(8), intent(in) :: var   (ADM_gall,   kdim,ADM_lall   )
-    real(8), intent(in) :: var_pl(ADM_gall_pl,kdim,ADM_lall_pl)
-    real(8)             :: vmax_g
+    real(RP), intent(in) :: var   (ADM_gall,   kdim,ADM_lall   )
+    real(RP), intent(in) :: var_pl(ADM_gall_pl,kdim,ADM_lall_pl)
+    real(RP)             :: vmax_g
 
-    real(8) :: vmax
+    real(RP) :: vmax
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
-    vmax = -1.D+99
+    vmax = -1.E+30_RP
     do l = 1,      ADM_lall
     do k = kstart, kend
     do n = 1,      ADM_IooJoo_nmax
@@ -299,7 +297,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1,      ADM_lall_pl
        do k = kstart, kend
           vmax = max( vmax, var_pl(ADM_GSLF_PL,k,l) )
@@ -315,8 +313,7 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_max_k( var, var_pl, k ) result( vmax_g )
     use mod_adm, only: &
-       ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_gall,        &
        ADM_gall_pl,     &
        ADM_lall,        &
@@ -330,23 +327,23 @@ contains
        COMM_Stat_max
     implicit none
 
-    real(8), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer, intent(in) :: k
-    real(8)             :: vmax_g
+    real(RP)             :: vmax_g
 
-    real(8) :: vmax
+    real(RP) :: vmax
     integer :: n, l
     !---------------------------------------------------------------------------
 
-    vmax = -1.D+99
+    vmax = -1.E+30_RP
     do l = 1,        ADM_lall
     do n = 1,        ADM_IooJoo_nmax
        vmax = max( vmax, var(ADM_IooJoo(n,ADM_GIoJo),k,l) )
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1,        ADM_lall_pl
           vmax = max( vmax, var_pl(ADM_GSLF_PL,k,l) )
        enddo
@@ -360,8 +357,7 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_min( var, var_pl, kdim, kstart, kend, nonzero ) result( vmin_g )
     use mod_adm, only: &
-       ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_gall,        &
        ADM_gall_pl,     &
        ADM_lall,        &
@@ -377,23 +373,23 @@ contains
     integer, intent(in) :: kdim
     integer, intent(in) :: kstart
     integer, intent(in) :: kend
-    real(8), intent(in) :: var   (ADM_gall,   kdim,ADM_lall   )
-    real(8), intent(in) :: var_pl(ADM_gall_pl,kdim,ADM_lall_pl)
-    real(8)             :: vmin_g
+    real(RP), intent(in) :: var   (ADM_gall,   kdim,ADM_lall   )
+    real(RP), intent(in) :: var_pl(ADM_gall_pl,kdim,ADM_lall_pl)
+    real(RP)             :: vmin_g
     logical, optional, intent(in) :: nonzero
 
-    real(8) :: vmin
+    real(RP) :: vmin
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
     if ( present(nonzero) ) then
        if ( nonzero ) then
 
-          vmin = 1.D+99
+          vmin = 1.E+30_RP
           do l = 1,      ADM_lall
           do k = kstart, kend
           do n = 1,      ADM_IooJoo_nmax
-             if (       var(ADM_IooJoo(n,ADM_GIoJo),k,l) > 0.D0 &
+             if (       var(ADM_IooJoo(n,ADM_GIoJo),k,l) > 0.0_RP &
                   .AND. var(ADM_IooJoo(n,ADM_GIoJo),k,l) < vmin ) then
 
                 vmin = var(ADM_IooJoo(n,ADM_GIoJo),k,l)
@@ -403,10 +399,10 @@ contains
           enddo
           enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           do l = 1,      ADM_lall_pl
           do k = kstart, kend
-             if (       var_pl(ADM_GSLF_PL,k,l) > 0.D0 &
+             if (       var_pl(ADM_GSLF_PL,k,l) > 0.0_RP &
                   .AND. var_pl(ADM_GSLF_PL,k,l) < vmin ) then
 
                 vmin = var_pl(ADM_GSLF_PL,k,l)
@@ -422,7 +418,7 @@ contains
        endif
     endif
 
-    vmin = 1.D+99
+    vmin = 1.E+30_RP
     do l = 1,      ADM_lall
     do k = kstart, kend
     do n = 1,      ADM_IooJoo_nmax
@@ -431,7 +427,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1,      ADM_lall_pl
        do k = kstart, kend
           vmin = min( vmin, var_pl(ADM_GSLF_PL,k,l) )
@@ -447,8 +443,7 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_min_k( var, var_pl, k ) result( vmin_g )
     use mod_adm, only: &
-       ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_gall,        &
        ADM_gall_pl,     &
        ADM_lall,        &
@@ -462,23 +457,23 @@ contains
        COMM_Stat_min
     implicit none
 
-    real(8), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer, intent(in) :: k
-    real(8)             :: vmin_g
+    real(RP)             :: vmin_g
 
-    real(8) :: vmin
+    real(RP) :: vmin
     integer :: n, l
     !---------------------------------------------------------------------------
 
-    vmin = +1.D+99
+    vmin = +1.E+30_RP
     do l = 1,        ADM_lall
     do n = 1,        ADM_IooJoo_nmax
        vmin = min( vmin, var(ADM_IooJoo(n,ADM_GIoJo),k,l) )
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1,        ADM_lall_pl
           vmin = min( vmin, var_pl(ADM_GSLF_PL,k,l) )
        enddo
@@ -504,12 +499,12 @@ contains
     character(len=*), intent(in)  :: basename
     integer,          intent(in)  :: k_start
     integer,          intent(in)  :: k_end
-    real(8),          intent(out) :: var(ADM_gall,k_start:k_end,ADM_lall)
+    real(RP),          intent(out) :: var(ADM_gall,k_start:k_end,ADM_lall)
     integer,          intent(in)  :: recnum
     integer,          intent(in)  :: input_size
 
-    real(4) :: var4(ADM_gall,k_start:k_end)
-    real(8) :: var8(ADM_gall,k_start:k_end)
+    real(SP) :: var4(ADM_gall,k_start:k_end)
+    real(DP) :: var8(ADM_gall,k_start:k_end)
 
     character(len=ADM_MAXFNAME) :: fname
 
@@ -531,10 +526,10 @@ contains
 
        if ( input_size == 4 ) then
           read(fid,rec=recnum) var4(:,:)
-          var(:,k_start:k_end,l) = real(var4(:,k_start:k_end),kind=8)
+          var(:,k_start:k_end,l) = real(var4(:,k_start:k_end),kind=RP)
        elseif( input_size == 8 ) then
           read(fid,rec=recnum) var8(:,:)
-          var(:,k_start:k_end,l) = var8(:,k_start:k_end)
+          var(:,k_start:k_end,l) = real(var8(:,k_start:k_end),kind=RP)
        endif
 
        close(fid)
@@ -560,12 +555,12 @@ contains
     character(len=ADM_MAXFNAME), intent(in)  :: basename
     integer,                     intent(in)  :: k_start
     integer,                     intent(in)  :: k_end
-    real(8),                     intent(in)  :: var(:,:,:)
+    real(RP),                     intent(in)  :: var(:,:,:)
     integer,                     intent(in)  :: recnum
     integer,                     intent(in)  :: output_size
 
     real(4) :: var4(ADM_gall,k_start:k_end)
-    real(8) :: var8(ADM_gall,k_start:k_end)
+    real(RP) :: var8(ADM_gall,k_start:k_end)
 
     character(len=ADM_MAXFNAME) :: fname
 
@@ -588,7 +583,7 @@ contains
        if ( output_size == 4 ) then
          var4(:,k_start:k_end) = real(var(:,k_start:k_end,l),kind=4)
 
-         where( var4(:,k_start:k_end) < CNST_UNDEF4+1.D0 )
+         where( var4(:,k_start:k_end) < CNST_UNDEF4+1.0_RP )
             var4(:,k_start:k_end) = CNST_UNDEF4
          end where
 
@@ -612,8 +607,7 @@ contains
        vy,   vy_pl,   &
        vz,   vz_pl    )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_lall,    &
@@ -632,18 +626,18 @@ contains
        GMTR_P_var_pl
     implicit none
 
-    real(8), intent(in)  :: ucos   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: ucos_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: vcos   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: vcos_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: vx     (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(out) :: vx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: vy     (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(out) :: vy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: vz     (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(out) :: vz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: ucos   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: ucos_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: vcos   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vcos_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: vx     (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: vx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: vy     (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: vy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: vz     (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: vz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: u, v, coslat, sw
+    real(RP) :: u, v, coslat, sw
 
     integer :: n, k, l, k0
     !---------------------------------------------------------------------------
@@ -655,10 +649,10 @@ contains
     do n = 1, ADM_gall
        coslat = cos(GMTR_P_var(n,k0,l,P_LAT))
 
-       sw = 0.5D0 + sign(0.5D0,-abs(coslat)) ! if (coslat == 0), u=v=0
+       sw = 0.5_RP + sign(0.5_RP,-abs(coslat)) ! if (coslat == 0), u=v=0
 
-       u = ucos(n,k,l) * ( 1.D0 - sw ) / ( coslat - sw )
-       v = vcos(n,k,l) * ( 1.D0 - sw ) / ( coslat - sw )
+       u = ucos(n,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
+       v = vcos(n,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
 
        vx(n,k,l) = u * GMTR_P_var(n,k0,l,P_IX) &
                  + v * GMTR_P_var(n,k0,l,P_JX)
@@ -670,16 +664,16 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
        do n = 1, ADM_gall_pl
           coslat = cos(GMTR_P_var_pl(n,k0,l,P_LAT))
 
-          sw = 0.5D0 + sign(0.5D0,-abs(coslat)) ! if (coslat == 0), u=v=0
+          sw = 0.5_RP + sign(0.5_RP,-abs(coslat)) ! if (coslat == 0), u=v=0
 
-          u = ucos_pl(n,k,l) * ( 1.D0 - sw ) / ( coslat - sw )
-          v = vcos_pl(n,k,l) * ( 1.D0 - sw ) / ( coslat - sw )
+          u = ucos_pl(n,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
+          v = vcos_pl(n,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
 
           vx_pl(n,k,l) = u * GMTR_P_var_pl(n,k0,l,P_IX) &
                        + v * GMTR_P_var_pl(n,k0,l,P_JX)
@@ -704,8 +698,7 @@ contains
        vz, vz_pl, &
        icos       )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_lall,    &
@@ -724,16 +717,16 @@ contains
        GMTR_P_var_pl
     implicit none
 
-    real(8), intent(out) :: u    (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(out) :: u_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: v    (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(out) :: v_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(in)  :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: u    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: u_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: v    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: v_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     integer, optional, intent(in) :: icos
 
@@ -758,7 +751,7 @@ contains
        enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do n = 1, ADM_gall_pl
@@ -788,7 +781,7 @@ contains
        enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do n = 1, ADM_gall_pl
@@ -816,8 +809,7 @@ contains
        alpha,     &
        vmax       )
     use mod_adm, only: &
-       ADM_prc_pl,      &
-       ADM_prc_me,      &
+       ADM_have_pl,     &
        ADM_gall,        &
        ADM_gall_pl,     &
        ADM_lall,        &
@@ -841,16 +833,16 @@ contains
        GMTR_P_var_pl
     implicit none
 
-    real(8), intent(inout) :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: alpha
-    real(8), intent(in)    :: vmax
+    real(RP), intent(inout) :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)    :: alpha
+    real(RP), intent(in)    :: vmax
 
-    real(8) :: u, v
+    real(RP) :: u, v
     integer :: n, k, l, ij, k0
     !---------------------------------------------------------------------------
 
@@ -876,7 +868,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl) then
+    if ( ADM_have_pl ) then
        ij = ADM_GSLF_PL
 
        do l = 1, ADM_lall_pl
@@ -913,8 +905,8 @@ contains
 
     integer, intent(in)  :: kmin
     integer, intent(in)  :: kmax
-    real(8), intent(in)  :: v     (ADM_gall,       ADM_kall,       ADM_lall)
-    real(8), intent(out) :: v_clip(ADM_IopJop_nmax,1:(kmax-kmin+1),ADM_lall)
+    real(RP), intent(in)  :: v     (ADM_gall,       ADM_kall,       ADM_lall)
+    real(RP), intent(out) :: v_clip(ADM_IopJop_nmax,1:(kmax-kmin+1),ADM_lall)
 
     integer :: n, k, l
     !---------------------------------------------------------------------------
@@ -942,8 +934,8 @@ contains
        ADM_IopJop
     implicit none
 
-    real(8), intent(in)  :: v     (ADM_gall,       ADM_lall)
-    real(8), intent(out) :: v_clip(ADM_IopJop_nmax,ADM_lall)
+    real(RP), intent(in)  :: v     (ADM_gall,       ADM_lall)
+    real(RP), intent(out) :: v_clip(ADM_IopJop_nmax,ADM_lall)
 
     integer :: n, l
     !---------------------------------------------------------------------------
@@ -971,8 +963,8 @@ contains
     implicit none
 
     integer, intent(in)  :: ksize
-    real(8), intent(in)  :: v     (ADM_gall,ksize, ADM_lall)
-    real(8), intent(out) :: v_clip(ADM_IopJop_nmax,ADM_lall)
+    real(RP), intent(in)  :: v     (ADM_gall,ksize, ADM_lall)
+    real(RP), intent(out) :: v_clip(ADM_IopJop_nmax,ADM_lall)
     integer, intent(in)  :: k
 
     integer :: n, l

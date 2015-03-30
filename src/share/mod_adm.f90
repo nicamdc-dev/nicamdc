@@ -27,7 +27,8 @@ module mod_adm
   !++ used modules
   !
   use mpi
-  !-----------------------------------------------------------------------
+  use mod_precision
+  !-----------------------------------------------------------------------------
   implicit none
   private
   !-----------------------------------------------------------------------
@@ -169,8 +170,8 @@ module mod_adm
   !
   character(len=ADM_MAXFNAME), public :: ADM_rgnmngfname ! file name for region management info
 
-  integer, public, parameter   :: PRC_RGN_NMAX = 2560    ! maximum number of region per process.
-  integer, public              :: ADM_vlink_nmax         ! maximum number of vertex linkage
+  integer, public, parameter   :: PRC_RGN_NMAX   = 2560  ! maximum number of region per process.
+  integer, public              :: ADM_vlink_nmax = -1    ! maximum number of vertex linkage
                                                          ! [XTMS] ICO:5, PSP:6, LCP, MLCP:k
 
   integer, public, allocatable :: ADM_prc_rnum(:)        ! number of regions managed by each process = ADM_lall
@@ -1238,11 +1239,11 @@ contains
   function ADM_MPItime() result(time)
     implicit none
 
-    real(8) :: time
+    real(RP) :: time
     !---------------------------------------------------------------------------
 
     if ( ADM_mpi_alive ) then
-       time = real(MPI_WTIME(), kind=8)
+       time = real(MPI_WTIME(),kind=RP)
     else
        call cpu_time(time)
     endif

@@ -18,6 +18,7 @@ module mod_cnvvar
   !
   !++ Used modules
   !
+  use mod_precision
   use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID
@@ -70,8 +71,7 @@ contains
        prg,  prg_pl, &
        diag, diag_pl )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_lall,    &
@@ -85,24 +85,22 @@ contains
     use mod_runconf, only: &
        PRG_vmax,  &
        DIAG_vmax, &
-       TRC_vmax,  &
-       NQW_STR,   &
-       NQW_END
+       TRC_vmax
     use mod_thrmdyn, only: &
        THRMDYN_tempre
     implicit none
 
-    real(8), intent(in)  :: prg    (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax )
-    real(8), intent(in)  :: prg_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,PRG_vmax )
-    real(8), intent(out) :: diag   (ADM_gall,   ADM_kall,ADM_lall,   DIAG_vmax)
-    real(8), intent(out) :: diag_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,DIAG_vmax)
+    real(RP), intent(in)  :: prg    (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax )
+    real(RP), intent(in)  :: prg_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,PRG_vmax )
+    real(RP), intent(out) :: diag   (ADM_gall,   ADM_kall,ADM_lall,   DIAG_vmax)
+    real(RP), intent(out) :: diag_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,DIAG_vmax)
 
-    real(8) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: ein      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: ein_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhog_h   (ADM_gall,   ADM_kall)
-    real(8) :: rhog_h_pl(ADM_gall_pl,ADM_kall)
+    real(RP) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: ein      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: ein_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhog_h   (ADM_gall,   ADM_kall)
+    real(RP) :: rhog_h_pl(ADM_gall_pl,ADM_kall)
 
     integer :: n, k, l, iv
     !---------------------------------------------------------------------------
@@ -157,7 +155,7 @@ contains
        enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
 
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
@@ -219,8 +217,7 @@ contains
        prg,  prg_pl, &
        diag, diag_pl )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_lall,    &
@@ -234,24 +231,22 @@ contains
     use mod_runconf, only: &
        PRG_vmax,  &
        DIAG_vmax, &
-       TRC_vmax,  &
-       NQW_STR,   &
-       NQW_END
+       TRC_vmax
     use mod_thrmdyn, only: &
        THRMDYN_rhoein
     implicit none
 
-    real(8), intent(out) :: prg    (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax )
-    real(8), intent(out) :: prg_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,PRG_vmax )
-    real(8), intent(in)  :: diag   (ADM_gall,   ADM_kall,ADM_lall,   DIAG_vmax)
-    real(8), intent(in)  :: diag_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,DIAG_vmax)
+    real(RP), intent(out) :: prg    (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax )
+    real(RP), intent(out) :: prg_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,PRG_vmax )
+    real(RP), intent(in)  :: diag   (ADM_gall,   ADM_kall,ADM_lall,   DIAG_vmax)
+    real(RP), intent(in)  :: diag_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,DIAG_vmax)
 
-    real(8) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: ein      (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: ein_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: rhog_h   (ADM_gall,   ADM_kall)
-    real(8) :: rhog_h_pl(ADM_gall_pl,ADM_kall)
+    real(RP) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: ein      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: ein_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhog_h   (ADM_gall,   ADM_kall)
+    real(RP) :: rhog_h_pl(ADM_gall_pl,ADM_kall)
 
     integer :: n, k, l, iv
     !---------------------------------------------------------------------------
@@ -306,7 +301,7 @@ contains
        enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
 
        call THRMDYN_rhoein( ADM_gall_pl,                  & ! [IN]
                             ADM_kall,                     & ! [IN]
@@ -372,8 +367,7 @@ contains
        rhogw,   rhogw_pl,  &
        rhogkin, rhogkin_pl )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_lall,    &
@@ -388,23 +382,23 @@ contains
        VMTR_W2Cfact_pl
     implicit none
 
-    real(8), intent(in)  :: rhog      (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 )
-    real(8), intent(in)  :: rhog_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogvx    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vx
-    real(8), intent(in)  :: rhogvx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogvy    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vy
-    real(8), intent(in)  :: rhogvy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogvz    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vz
-    real(8), intent(in)  :: rhogvz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)  :: rhogw     (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X w
-    real(8), intent(in)  :: rhogw_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(out) :: rhogkin   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X kin
-    real(8), intent(out) :: rhogkin_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhog      (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 )
+    real(RP), intent(in)  :: rhog_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogvx    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vx
+    real(RP), intent(in)  :: rhogvx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogvy    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vy
+    real(RP), intent(in)  :: rhogvy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogvz    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vz
+    real(RP), intent(in)  :: rhogvz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogw     (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X w
+    real(RP), intent(in)  :: rhogw_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhogkin   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X kin
+    real(RP), intent(out) :: rhogkin_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: rhogkin_h   (ADM_gall,   ADM_kall) ! rho X ( G^1/2 X gamma2 ) X kin (horizontal)
-    real(8) :: rhogkin_h_pl(ADM_gall_pl,ADM_kall)
-    real(8) :: rhogkin_v   (ADM_gall,   ADM_kall) ! rho X ( G^1/2 X gamma2 ) X kin (vertical)
-    real(8) :: rhogkin_v_pl(ADM_gall_pl,ADM_kall)
+    real(RP) :: rhogkin_h   (ADM_gall,   ADM_kall) ! rho X ( G^1/2 X gamma2 ) X kin (horizontal)
+    real(RP) :: rhogkin_h_pl(ADM_gall_pl,ADM_kall)
+    real(RP) :: rhogkin_v   (ADM_gall,   ADM_kall) ! rho X ( G^1/2 X gamma2 ) X kin (vertical)
+    real(RP) :: rhogkin_v_pl(ADM_gall_pl,ADM_kall)
 
     integer :: g, k, l
     !---------------------------------------------------------------------------
@@ -415,7 +409,7 @@ contains
        !--- horizontal kinetic energy
        do k = ADM_kmin, ADM_kmax
        do g = 1, ADM_gall
-          rhogkin_h(g,k) = 0.5D0 * ( rhogvx(g,k,l) * rhogvx(g,k,l) &
+          rhogkin_h(g,k) = 0.5_RP * ( rhogvx(g,k,l) * rhogvx(g,k,l) &
                                    + rhogvy(g,k,l) * rhogvy(g,k,l) &
                                    + rhogvz(g,k,l) * rhogvz(g,k,l) ) / rhog(g,k,l)
        enddo
@@ -424,13 +418,13 @@ contains
        !--- vertical kinetic energy
        do k = ADM_kmin+1, ADM_kmax
        do g = 1, ADM_gall
-          rhogkin_v(g,k) = 0.5D0 * ( rhogw(g,k,l) * rhogw(g,k,l) ) &
+          rhogkin_v(g,k) = 0.5_RP * ( rhogw(g,k,l) * rhogw(g,k,l) ) &
                          / ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k  ,l) &
                            + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
        enddo
        enddo
-       rhogkin_v(:,ADM_kmin  ) = 0.D0
-       rhogkin_v(:,ADM_kmax+1) = 0.D0
+       rhogkin_v(:,ADM_kmin  ) = 0.0_RP
+       rhogkin_v(:,ADM_kmax+1) = 0.0_RP
 
        !--- total kinetic energy
        do k = ADM_kmin, ADM_kmax
@@ -440,16 +434,16 @@ contains
                            + VMTR_W2Cfact(g,k,2,l) * rhogkin_v(g,k  ) )
        enddo
        enddo
-       rhogkin(:,ADM_kmin-1,l) = 0.D0
-       rhogkin(:,ADM_kmax+1,l) = 0.D0
+       rhogkin(:,ADM_kmin-1,l) = 0.0_RP
+       rhogkin(:,ADM_kmax+1,l) = 0.0_RP
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
           !--- horizontal kinetic energy
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
-             rhogkin_h_pl(g,k) = 0.5D0 * ( rhogvx_pl(g,k,l) * rhogvx_pl(g,k,l) &
+             rhogkin_h_pl(g,k) = 0.5_RP * ( rhogvx_pl(g,k,l) * rhogvx_pl(g,k,l) &
                                          + rhogvy_pl(g,k,l) * rhogvy_pl(g,k,l) &
                                          + rhogvz_pl(g,k,l) * rhogvz_pl(g,k,l) ) / rhog_pl(g,k,l)
           enddo
@@ -458,13 +452,13 @@ contains
           !--- vertical kinetic energy
           do k = ADM_kmin+1, ADM_kmax
           do g = 1, ADM_gall_pl
-             rhogkin_v_pl(g,k) = 0.5D0 * ( rhogw_pl(g,k,l) * rhogw_pl(g,k,l) ) &
+             rhogkin_v_pl(g,k) = 0.5_RP * ( rhogw_pl(g,k,l) * rhogw_pl(g,k,l) ) &
                                / ( VMTR_C2Wfact_pl(g,k,1,l) * rhog_pl(g,k  ,l) &
                                  + VMTR_C2Wfact_pl(g,k,2,l) * rhog_pl(g,k-1,l) )
           enddo
           enddo
-          rhogkin_v_pl(:,ADM_kmin  ) = 0.D0
-          rhogkin_v_pl(:,ADM_kmax+1) = 0.D0
+          rhogkin_v_pl(:,ADM_kmin  ) = 0.0_RP
+          rhogkin_v_pl(:,ADM_kmax+1) = 0.0_RP
 
           !--- total kinetic energy
           do k = ADM_kmin, ADM_kmax
@@ -474,8 +468,8 @@ contains
                                  + VMTR_W2Cfact_pl(g,k,2,l) * rhogkin_v_pl(g,k  ) )
           enddo
           enddo
-          rhogkin_pl(:,ADM_kmin-1,l) = 0.D0
-          rhogkin_pl(:,ADM_kmax+1,l) = 0.D0
+          rhogkin_pl(:,ADM_kmin-1,l) = 0.0_RP
+          rhogkin_pl(:,ADM_kmax+1,l) = 0.0_RP
        enddo
     endif
 

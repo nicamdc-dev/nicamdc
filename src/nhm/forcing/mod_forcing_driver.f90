@@ -17,6 +17,7 @@ module mod_forcing_driver
   !
   !++ Used modules
   !
+  use mod_precision
   use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID
@@ -122,38 +123,38 @@ contains
        history_in
     implicit none
 
-    real(8) :: rhog  (ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: rhogvx(ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: rhogvy(ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: rhogvz(ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: rhogw (ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: rhoge (ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: rhogq (ADM_gall_in,ADM_kall,ADM_lall,TRC_vmax)
-    real(8) :: rho   (ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: pre   (ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: tem   (ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: vx    (ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: vy    (ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: vz    (ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: w     (ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: q     (ADM_gall_in,ADM_kall,ADM_lall,TRC_vmax)
+    real(RP) :: rhog  (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: rhogvx(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: rhogvy(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: rhogvz(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: rhogw (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: rhoge (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: rhogq (ADM_gall_in,ADM_kall,ADM_lall,TRC_vmax)
+    real(RP) :: rho   (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: pre   (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: tem   (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: vx    (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: vy    (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: vz    (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: w     (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: q     (ADM_gall_in,ADM_kall,ADM_lall,TRC_vmax)
 
     ! forcing tendency
-    real(8) :: fvx(ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: fvy(ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: fvz(ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: fw (ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: fe (ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: fq (ADM_gall_in,ADM_kall,ADM_lall,TRC_VMAX)
+    real(RP) :: fvx(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: fvy(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: fvz(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: fw (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: fe (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: fq (ADM_gall_in,ADM_kall,ADM_lall,TRC_VMAX)
 
     ! geometry, coordinate
-    Real(8) :: gsgam2 (ADM_gall_in,ADM_kall,ADM_lall)
-    Real(8) :: gsgam2h(ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: phi    (ADM_gall_in,ADM_kall,ADM_lall)
-    Real(8) :: z      (ADM_gall_in,ADM_kall,ADM_lall)
-    real(8) :: lat    (ADM_gall_in,ADM_lall)
+    real(RP) :: gsgam2 (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: gsgam2h(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: phi    (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: z      (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: lat    (ADM_gall_in,ADM_lall)
 
-    real(8) :: frhogq(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: frhogq(ADM_gall_in,ADM_kall,ADM_lall)
 
     integer :: l, nq
     !---------------------------------------------------------------------------
@@ -199,8 +200,8 @@ contains
        vy(:,ADM_kmin-1,l) = vy(:,ADM_kmin,l)
        vz(:,ADM_kmin-1,l) = vz(:,ADM_kmin,l)
 
-       q(:,ADM_kmax+1,l,:) = 0.D0
-       q(:,ADM_kmin-1,l,:) = 0.D0
+       q(:,ADM_kmax+1,l,:) = 0.0_RP
+       q(:,ADM_kmin-1,l,:) = 0.0_RP
     enddo
 
     ! forcing
@@ -227,17 +228,17 @@ contains
           call history_in( 'ml_af_fw',  fw (:,:,l) )
           call history_in( 'ml_af_fe',  fe (:,:,l) )
        enddo
-       fq(:,:,:,:) = 0.D0
+       fq(:,:,:,:) = 0.0_RP
 
     case default
 
-       fvx(:,:,:) = 0.D0
-       fvy(:,:,:) = 0.D0
-       fvz(:,:,:) = 0.D0
-       fw (:,:,:) = 0.D0
-       fe (:,:,:) = 0.D0
+       fvx(:,:,:) = 0.0_RP
+       fvy(:,:,:) = 0.0_RP
+       fvz(:,:,:) = 0.0_RP
+       fw (:,:,:) = 0.0_RP
+       fe (:,:,:) = 0.0_RP
 
-       fq (:,:,:,:) = 0.D0
+       fq (:,:,:,:) = 0.0_RP
 
     end select
 
@@ -273,8 +274,7 @@ contains
   subroutine forcing_update( &
        PROG, PROG_pl )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_lall,    &
@@ -300,19 +300,19 @@ contains
        test12_velocity
     implicit none
 
-    real(8), intent(inout) :: PROG    (ADM_gall,   ADM_kall,ADM_lall,   nmax_PROG) ! prognostic variables
-    real(8), intent(inout) :: PROG_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_PROG)
+    real(RP), intent(inout) :: PROG    (ADM_gall,   ADM_kall,ADM_lall,   nmax_PROG) ! prognostic variables
+    real(RP), intent(inout) :: PROG_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_PROG)
 
-    real(8) :: vx     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_x
-    real(8) :: vx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: vy     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_y
-    real(8) :: vy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: vz     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_z
-    real(8) :: vz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: w      (ADM_gall,   ADM_kall,ADM_lall   ) ! vertical velocity
-    real(8) :: w_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: vx     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_x
+    real(RP) :: vx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: vy     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_y
+    real(RP) :: vy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: vz     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_z
+    real(RP) :: vz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: w      (ADM_gall,   ADM_kall,ADM_lall   ) ! vertical velocity
+    real(RP) :: w_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8), save :: time = 0.D0 ! for tracer advection test  [add; original by H.Miura] 20130612 R.Yoshida
+    real(RP), save :: time = 0.0_RP ! for tracer advection test  [add; original by H.Miura] 20130612 R.Yoshida
 
     integer :: n, k ,l
     !---------------------------------------------------------------------------
@@ -342,7 +342,7 @@ contains
        enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do n = 1, ADM_gall_pl
@@ -380,7 +380,7 @@ contains
        enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do n = 1, ADM_gall_pl
@@ -405,7 +405,7 @@ contains
     PROG(:,:,:,I_RHOGVZ) = vz(:,:,:) * PROG(:,:,:,I_RHOG)
     PROG(:,:,:,I_RHOGW ) = w (:,:,:) * PROG(:,:,:,I_RHOG)
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        PROG_pl(:,:,:,I_RHOGVX) = vx_pl(:,:,:) * PROG_pl(:,:,:,I_RHOG)
        PROG_pl(:,:,:,I_RHOGVY) = vy_pl(:,:,:) * PROG_pl(:,:,:,I_RHOG)
        PROG_pl(:,:,:,I_RHOGVZ) = vz_pl(:,:,:) * PROG_pl(:,:,:,I_RHOG)

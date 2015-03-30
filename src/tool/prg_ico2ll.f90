@@ -49,6 +49,7 @@ program ico2ll
   !
   !++ Used modules (shared)
   !
+  use mod_precision
   use mod_misc
   use mod_cnst, only : &
        CNST_UNDEF,     & ! 05/12/21 M.Satoh
@@ -100,14 +101,7 @@ program ico2ll
   logical :: sepdir = .false. !S.Iga060508
   character(20) :: access_icodata = 'direct' ! 'direct' or 'sequential' ! 09/01/31 M.Satoh
   !                                          ! or 'sequential-time'     ! 09/03/16 H.Taniguchi
-  ! 2009-09-09 Y.Yamada ->
-  integer :: ofid2b
-  integer, parameter :: dummy=99999999
-  !  integer(2) :: comp_8to2
-  logical :: compress = .FALSE. !
-  logical :: negative = .TRUE.  !
-  character(30) :: ofname2b
-  ! 2009-09-09 Y.Yamada <-
+
   logical :: opt_zstar2z=.false.                       ! 13/06/13 T.Seiki
   logical :: opt_lagintrpl=.true.                      ! 13/06/13 T.Seiki
   character(len=256) :: topo_fname="topog"             ! 13/06/13 T.Seiki
@@ -137,8 +131,6 @@ program ico2ll
        ! S.Iga 051226<=
        header_strings,     &  ! header of file names
        access_icodata,     &  ! access type 09/01/31 M.Satoh
-!       compress,           &  !
-       negative,           &
        opt_nearest_neighbor,& ! [Add] 13/06/13 T.Seiki
        opt_zstar2z,        &  ! [Add] 13/06/13 T.Seiki
        opt_lagintrpl,      &  ! [Add] 13/06/13 T.Seiki
@@ -433,7 +425,7 @@ program ico2ll
 !                   pi,             &
 !                   lon_swap        &
 !                   )
-!           end if
+!           endif
            ! 09-09-09 Y.Yamada <-
            !
         endif
@@ -618,7 +610,7 @@ program ico2ll
 !                      k,&!XS
 !                      base_name(v)        &
 !                      )
-!              end if
+!              endif
               rec_counter = rec_counter+1
            enddo
 !           write(*,*) 't=',t,' : done', maxval(latlon_data), minval(latlon_data)
@@ -632,11 +624,11 @@ program ico2ll
            ! 09-09-19 Y.Yamada ->
 !           if(compress)then
 !              close(ofid2b)
-!           end if
+!           endif
         else
 !           if(compress)then
 !              close(ofid2b)
-!           end if
+!           endif
            ! <-
         endif
      enddo
@@ -687,7 +679,7 @@ contains
     !
     real(4), intent(inout) :: v(ijdim,kmin:kmax)
     real(8) :: tmp(ijdim,1:kdim)
-    integer :: l,k,n,kk
+    integer :: k,n,kk
 
     integer :: kp
     real(8) :: lag_intpl_quadra, lag_intpl_linear
@@ -763,10 +755,10 @@ contains
     real(4), intent(inout) :: v(ijdim,kmin:kmax)
     !
     real(8) :: tmp(ijdim,kdim)
-    integer :: l,k,n,kk
+    integer :: k,n,kk
     integer :: kp
     real(8) :: lag_intpl
-    real(8) :: z,z1,p1,z2,p2,z3,p3, zz
+    real(8) :: z,z1,p1,z2,p2
     lag_intpl(z,z1,p1,z2,p2)  &
          = (z-z2)/(z1-z2)*p1  &
          + (z1-z)/(z1-z2)*p2

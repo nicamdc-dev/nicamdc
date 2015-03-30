@@ -56,6 +56,7 @@ program prg_driver
   !
   !++ Used modules
   !
+  use mod_precision
   use mod_debug
   use mod_adm, only: &
      ADM_MULTI_PRC,      &
@@ -101,11 +102,6 @@ program prg_driver
      restart_output_basename, &
      restart_input,           &
      restart_output
-  use mod_diagvar, only: &
-     diagvar_setup, &
-     diagvar_restart_output
-  use mod_sfcvar, only: &
-     sfcvar_setup
   use mod_dynamics, only: &
      dynamics_setup, &
      dynamics_step
@@ -182,9 +178,6 @@ program prg_driver
      PRG_var,  &
      PRG_var1, &
      DIAG_var
-  use mod_sfcvar, only: &
-     sfcvar, &
-     KSTR
   use mod_bsstate, only: &
      rho_bs, &
      pre_bs, &
@@ -266,12 +259,6 @@ program prg_driver
   call prgvar_setup
   call restart_input( restart_input_basename )
 
-  !---< diagnostic variable module setup >---
-  call diagvar_setup
-
-  !---< surface variable module setup >---
-  call sfcvar_setup
-
 
   !---< dynamics module setup >---
   call dynamics_setup
@@ -327,7 +314,6 @@ program prg_driver
   !$acc& pcopyin(VMTR_RGSQRTH,VMTR_RGAM,VMTR_RGAMH,VMTR_RGSGAM2,VMTR_RGSGAM2H) &
   !$acc& pcopyin(VMTR_W2Cfact,VMTR_C2Wfact,VMTR_C2WfactGz,VMTR_PHI) &
   !$acc& pcopyin(CVW) &
-  !$acc& pcopyin(sfcvar,KSTR) &
   !$acc& pcopyin(rho_bs,pre_bs,tem_bs) &
   !$acc& pcopyin(divdamp_coef,Kh_coef,Kh_coef_lap1) &
   !$acc& pcopyin(Mc,Mu,Ml) &
@@ -363,7 +349,6 @@ program prg_driver
      if (n == TIME_LSTEP_MAX) then
         cdate = ""
         call restart_output( restart_output_basename )
-        call diagvar_restart_output ( cdate )
      endif
      call DEBUG_rapend  ('_History')
 

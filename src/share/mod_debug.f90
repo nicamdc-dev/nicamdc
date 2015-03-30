@@ -16,6 +16,7 @@ module mod_debug
   !++ Used modules
   !
   use mpi
+  use mod_precision
   use mod_adm, only: &
      ADM_LOG_FID, &
      ADM_NSYS,    &
@@ -49,24 +50,19 @@ module mod_debug
   !++ Private parameters & variables
   !
   integer,                 private, parameter :: DEBUG_rapnlimit = 100
-  integer,                 private,      save :: DEBUG_rapnmax   = 0
-  character(len=ADM_NSYS), private,      save :: DEBUG_rapname(DEBUG_rapnlimit)
-  real(8),                 private,      save :: DEBUG_raptstr(DEBUG_rapnlimit)
-  real(8),                 private,      save :: DEBUG_rapttot(DEBUG_rapnlimit)
-  integer,                 private,      save :: DEBUG_rapnstr(DEBUG_rapnlimit)
-  integer,                 private,      save :: DEBUG_rapnend(DEBUG_rapnlimit)
+  integer,                 private            :: DEBUG_rapnmax   = 0
+  character(len=ADM_NSYS), private            :: DEBUG_rapname(DEBUG_rapnlimit)
+  real(RP),                 private            :: DEBUG_raptstr(DEBUG_rapnlimit)
+  real(RP),                 private            :: DEBUG_rapttot(DEBUG_rapnlimit)
+  integer,                 private            :: DEBUG_rapnstr(DEBUG_rapnlimit)
+  integer,                 private            :: DEBUG_rapnend(DEBUG_rapnlimit)
 
 #ifdef PAPI_OPS
-  ! <-- [add] PAPI R.Yoshida 20121022
-  !integer(8),public, save :: papi_flpins    !total floating point instructions since the first call
-  integer(8),public, save :: papi_flpops    !total floating point operations since the first call
-  !real(4),   public, save :: papi_real_time_i !total realtime since the first PAPI_flins() call
-  !real(4),   public, save :: papi_proc_time_i !total process time since the first PAPI_flins() call
-  real(4),   public, save :: papi_real_time_o !total realtime since the first PAPI_flops() call
-  real(4),   public, save :: papi_proc_time_o !total process time since the first PAPI_flops() call
-  !real(4),   public, save :: papi_mflins    !Mflip/s achieved since the previous call
-  real(4),   public, save :: papi_mflops    !Mflop/s achieved since the previous call
-  integer,   public, save :: papi_check
+  integer(8),public :: papi_flpops      ! total floating point operations since the first call
+  real(4),   public :: papi_real_time_o ! total realtime since the first PAPI_flops() call
+  real(4),   public :: papi_proc_time_o ! total process time since the first PAPI_flops() call
+  real(4),   public :: papi_mflops      ! Mflop/s achieved since the previous call
+  integer,   public :: papi_check
 #endif
 
   !-----------------------------------------------------------------------------
@@ -84,13 +80,13 @@ contains
        MISC_make_idstr, &
        MISC_get_available_fid
     use mod_adm, only: &
-       ADM_prc_pl, &
+       ADM_have_pl, &
        ADM_prc_me
     implicit none
 
     character(len=*), intent(in) :: basename
-    real(8),          intent(in) :: var   (:,:,:,:)
-    real(8),          intent(in) :: var_pl(:,:,:,:)
+    real(RP),          intent(in) :: var   (:,:,:,:)
+    real(RP),          intent(in) :: var_pl(:,:,:,:)
 
     integer :: shp(4)
 
@@ -114,7 +110,7 @@ contains
 
     close(fid)
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        shp(:) = shape(var_pl)
 
        fname = trim(basename)//'.pl'
@@ -146,13 +142,13 @@ contains
        MISC_make_idstr, &
        MISC_get_available_fid
     use mod_adm, only: &
-       ADM_prc_pl, &
+       ADM_have_pl, &
        ADM_prc_me
     implicit none
 
     character(len=*), intent(in) :: basename
-    real(8),          intent(in) :: var   (:,:,:,:)
-    real(8),          intent(in) :: var_pl(:,:,:,:)
+    real(RP),          intent(in) :: var   (:,:,:,:)
+    real(RP),          intent(in) :: var_pl(:,:,:,:)
 
     integer :: shp(4)
 
@@ -183,7 +179,7 @@ contains
 
     close(fid)
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        shp(:) = shape(var_pl)
 
        fname = trim(basename)//'.txtpl'
@@ -221,13 +217,13 @@ contains
        MISC_make_idstr, &
        MISC_get_available_fid
     use mod_adm, only: &
-       ADM_prc_pl, &
+       ADM_have_pl, &
        ADM_prc_me
     implicit none
 
     character(len=*), intent(in) :: basename
-    real(8),          intent(in) :: var   (:,:,:)
-    real(8),          intent(in) :: var_pl(:,:,:)
+    real(RP),          intent(in) :: var   (:,:,:)
+    real(RP),          intent(in) :: var_pl(:,:,:)
 
     integer :: shp(3)
 
@@ -256,7 +252,7 @@ contains
 
     close(fid)
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        shp(:) = shape(var_pl)
 
        fname = trim(basename)//'.txtpl'
@@ -298,8 +294,8 @@ contains
     DEBUG_rapnmax     = DEBUG_rapnmax + 1
     id                = DEBUG_rapnmax
     DEBUG_rapname(id) = trim(rapname)
-    DEBUG_raptstr(id) = 0.D0
-    DEBUG_rapttot(id) = 0.D0
+    DEBUG_raptstr(id) = 0.0_RP
+    DEBUG_rapttot(id) = 0.0_RP
     DEBUG_rapnstr(id) = 0
     DEBUG_rapnend(id) = 0
 
@@ -359,20 +355,32 @@ contains
   subroutine DEBUG_rapreport
     use mod_adm, only: &
        ADM_COMM_WORLD, &
-       ADM_prc_all
+       ADM_prc_all,    &
+       ADM_proc_stop
     implicit none
 
-    real(8) :: sendbuf(1)
-    real(8) :: recvbuf(ADM_prc_all)
+    real(RP) :: sendbuf(1)
+    real(RP) :: recvbuf(ADM_prc_all)
 
-    real(8) :: globalavg, globalmax, globalmin
+    real(RP) :: globalavg, globalmax, globalmin
 #ifdef PAPI_OPS
-    real(8) :: globalsum, total_flops
+    real(RP) :: globalsum, total_flops
 #endif
+
+    integer :: datatype
 
     integer :: ierr
     integer :: id
     !---------------------------------------------------------------------------
+
+    if ( RP == DP ) then
+       datatype = MPI_DOUBLE_PRECISION
+    elseif( RP == SP ) then
+       datatype = MPI_REAL
+    else
+       write(*,*) 'xxx precision is not supportd'
+       call ADM_proc_stop
+    endif
 
     if ( DEBUG_rapnmax >= 1 ) then
 
@@ -392,16 +400,16 @@ contains
 
        do id = 1, DEBUG_rapnmax
           sendbuf(1) = DEBUG_rapttot(id)
-          call MPI_Allgather( sendbuf,              &
-                              1,                    &
-                              MPI_DOUBLE_PRECISION, &
-                              recvbuf,              &
-                              1,                    &
-                              MPI_DOUBLE_PRECISION, &
-                              ADM_COMM_WORLD,       &
-                              ierr                  )
+          call MPI_Allgather( sendbuf,        &
+                              1,              &
+                              datatype,       &
+                              recvbuf,        &
+                              1,              &
+                              datatype,       &
+                              ADM_COMM_WORLD, &
+                              ierr            )
 
-          globalavg = sum( recvbuf(:) ) / real(ADM_prc_all,kind=8)
+          globalavg = sum( recvbuf(:) ) / real(ADM_prc_all,kind=RP)
           globalmax = maxval( recvbuf(:) )
           globalmin = minval( recvbuf(:) )
 
@@ -421,8 +429,8 @@ contains
 #ifdef PAPI_OPS
     ! [add] PAPI R.Yoshida 20121022
     !write(ADM_LOG_FID,*) ' *** Type: Instructions'
-    !write(ADM_LOG_FID,*) ' --- Real Time:',papi_real_time_i*2.0d0,' Proc. Time:',papi_proc_time_i*2.0d0
-    !write(ADM_LOG_FID,*) ' --- flop inst:',papi_flpins*2,'  Gflins/s:',papi_mflins*2.0d0/1.0d3  !GIGA
+    !write(ADM_LOG_FID,*) ' --- Real Time:',papi_real_time_i*2.0_RP,' Proc. Time:',papi_proc_time_i*2.0_RP
+    !write(ADM_LOG_FID,*) ' --- flop inst:',papi_flpins*2,'  Gflins/s:',papi_mflins*2.0_RP/1.0d3  !GIGA
     write(ADM_LOG_FID,*)
     write(ADM_LOG_FID,*) '********* PAPI report *********'
     write(ADM_LOG_FID,*) '*** Type: Operations'
@@ -430,53 +438,53 @@ contains
     write(ADM_LOG_FID,*) '--- Processor Time       [sec] (this PE):', papi_proc_time_o
     write(ADM_LOG_FID,*) '--- Floating Operations [FLOP] (this PE):', papi_flpops
     write(ADM_LOG_FID,*) '--- FLOPS by PAPI     [MFLOPS] (this PE):', papi_mflops
-    write(ADM_LOG_FID,*) '--- FLOP / Time       [MFLOPS] (this PE):', papi_flpops / papi_proc_time_o / 1024.D0**2 !GIGA
+    write(ADM_LOG_FID,*) '--- FLOP / Time       [MFLOPS] (this PE):', papi_flpops / papi_proc_time_o / 1024.0_RP**2 !GIGA
     write(ADM_LOG_FID,*)
 
-    sendbuf(1) = real(papi_proc_time_o,kind=8)
-    call MPI_Allgather( sendbuf,              &
-                        1,                    &
-                        MPI_DOUBLE_PRECISION, &
-                        recvbuf,              &
-                        1,                    &
-                        MPI_DOUBLE_PRECISION, &
-                        ADM_COMM_WORLD,       &
-                        ierr                  )
+    sendbuf(1) = real(papi_proc_time_o,kind=RP)
+    call MPI_Allgather( sendbuf,        &
+                        1,              &
+                        datatype,       &
+                        recvbuf,        &
+                        1,              &
+                        datatype,       &
+                        ADM_COMM_WORLD, &
+                        ierr            )
 
-    globalavg = sum( recvbuf(:) ) / real(ADM_prc_all,kind=8)
+    globalavg = sum( recvbuf(:) ) / real(ADM_prc_all,kind=RP)
     globalmax = maxval( recvbuf(:) )
     globalmin = minval( recvbuf(:) )
 
-    call COMM_Stat_avg( real(papi_proc_time_o,kind=8), globalavg )
-    call COMM_Stat_max( real(papi_proc_time_o,kind=8), globalmax )
-    call COMM_Stat_min( real(papi_proc_time_o,kind=8), globalmin )
+    call COMM_Stat_avg( real(papi_proc_time_o,kind=RP), globalavg )
+    call COMM_Stat_max( real(papi_proc_time_o,kind=RP), globalmax )
+    call COMM_Stat_min( real(papi_proc_time_o,kind=RP), globalmin )
 
     write(ADM_LOG_FID,'(1x,A,F10.3,A,F10.3,A,F10.3)') &
                       '--- Processor Time        [sec] (avg)=', globalavg, &
                                                     ', (max)=', globalmax, &
                                                     ', (min)=', globalmin
 
-    sendbuf(1) = real(papi_flpops,kind=8)
-    call MPI_Allgather( sendbuf,              &
-                        1,                    &
-                        MPI_DOUBLE_PRECISION, &
-                        recvbuf,              &
-                        1,                    &
-                        MPI_DOUBLE_PRECISION, &
-                        ADM_COMM_WORLD,       &
-                        ierr                  )
+    sendbuf(1) = real(papi_flpops,kind=RP)
+    call MPI_Allgather( sendbuf,        &
+                        1,              &
+                        datatype,       &
+                        recvbuf,        &
+                        1,              &
+                        datatype,       &
+                        ADM_COMM_WORLD, &
+                        ierr            )
 
     globalsum = sum( recvbuf(:) )
-    globalavg = globalsum / real(ADM_prc_all,kind=8)
+    globalavg = globalsum / real(ADM_prc_all,kind=RP)
     globalmax = maxval( recvbuf(:) )
     globalmin = minval( recvbuf(:) )
 
-    total_flops = globalsum / globalmax / 1024.D0**3
+    total_flops = globalsum / globalmax / 1024.0_RP**3
 
     write(ADM_LOG_FID,'(1x,A,F10.3,A,F10.3,A,F10.3)') &
-                      '--- Floating Operations [GFLOP] (avg)=', globalavg / 1024.D0**3, &
-                                                    ', (max)=', globalmax / 1024.D0**3, &
-                                                    ', (min)=', globalmin / 1024.D0**3
+                      '--- Floating Operations [GFLOP] (avg)=', globalavg / 1024.0_RP**3, &
+                                                    ', (max)=', globalmax / 1024.0_RP**3, &
+                                                    ', (min)=', globalmin / 1024.0_RP**3
     write(ADM_LOG_FID,'(1x,A,F10.3)') &
                       '--- Total Flops [GFLOPS] (all PE):',total_flops
 
