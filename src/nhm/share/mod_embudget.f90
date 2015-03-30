@@ -44,56 +44,49 @@ module mod_embudget
   !
   !++ Private parameters & variables
   !
-  logical, private :: MNT_ON   = .false.
-  integer, private :: MNT_INTV = 1
-  integer, private :: MNT_m_fid
-  integer, private :: MNT_e_fid
+  logical,  private :: MNT_ON   = .false.
+  integer,  private :: MNT_INTV = 1
+  integer,  private :: MNT_m_fid
+  integer,  private :: MNT_e_fid
 
-  real(RP), private, allocatable :: evap0     (:,:,:)
-  real(RP), private, allocatable :: evap0_pl  (:,:,:)
-  real(RP), private, allocatable :: precip0   (:,:,:)
-  real(RP), private, allocatable :: precip0_pl(:,:,:)
+  real(RP), private :: rhoqd_sum_old   = 0.0_RP
+  real(RP), private :: rhoqv_sum_old   = 0.0_RP
+  real(RP), private :: rhoql_sum_old   = 0.0_RP
+  real(RP), private :: rhoqi_sum_old   = 0.0_RP
+  real(RP), private :: rhoqt_sum_old   = 0.0_RP
+  real(RP), private :: rhophi_sum_old  = 0.0_RP
+  real(RP), private :: rhoein_sum_old  = 0.0_RP
+  real(RP), private :: rhokin_sum_old  = 0.0_RP
+  real(RP), private :: rhoetot_sum_old = 0.0_RP
 
-  real(RP), private, allocatable :: sfcrad0          (:,:,:)
-  real(RP), private, allocatable :: sfcrad0_pl       (:,:,:)
-  real(RP), private, allocatable :: toarad0          (:,:,:)
-  real(RP), private, allocatable :: toarad0_pl       (:,:,:)
-  real(RP), private, allocatable :: evap_energy0     (:,:,:)
-  real(RP), private, allocatable :: evap_energy0_pl  (:,:,:)
-  real(RP), private, allocatable :: precip_energy0   (:,:,:)
-  real(RP), private, allocatable :: precip_energy0_pl(:,:,:)
-  real(RP), private, allocatable :: sh_flux_sfc0     (:,:,:)
-  real(RP), private, allocatable :: sh_flux_sfc0_pl  (:,:,:)
-  real(RP), private, allocatable :: lh_flux_sfc0     (:,:,:)
-  real(RP), private, allocatable :: lh_flux_sfc0_pl  (:,:,:)
+  real(RP), private :: Mass_budget_factor
+  real(RP), private :: Energy_budget_factor
+
+  logical,  private :: first = .true.
 
   !-----------------------------------------------------------------------------
 contains
-
   !-----------------------------------------------------------------------------
   subroutine embudget_setup
     use mod_misc, only: &
        MISC_get_available_fid
     use mod_adm, only: &
-       ADM_LOG_FID,        &
        ADM_CTL_FID,        &
        ADM_proc_stop,      &
        ADM_prc_me,         &
-       ADM_prc_run_master, &
-       ADM_gall,           &
-       ADM_gall_pl,        &
-       ADM_KNONE,          &
-       ADM_lall,           &
-       ADM_lall_pl
+       ADM_prc_run_master
+    use mod_cnst, only: &
+       ERADIUS => CNST_ERADIUS, &
+       PI      => CNST_PI
+    use mod_time, only: &
+       TIME_DTL
     implicit none
 
-    integer :: ierr
-
     namelist / EMBUDGETPARAM / &
-         MNT_INTV, &
-         MNT_ON
+       MNT_INTV, &
+       MNT_ON
 
-    integer :: k0
+    integer :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -112,6 +105,11 @@ contains
 
     if(.not.MNT_ON) return
 
+    Mass_budget_factor   = 1.0_RP / ( TIME_DTL * real(MNT_INTV,kind=RP) * 4.D0 * PI * ERADIUS * ERADIUS ) ! [kg/step] -> [kg/m2/s]
+    Energy_budget_factor = 1.0_RP / ( TIME_DTL * real(MNT_INTV,kind=RP) * 4.D0 * PI * ERADIUS * ERADIUS ) ! [J /step] -> [W/m2]
+    write(ADM_LOG_FID,*) "Mass_budget_factor   = ", Mass_budget_factor
+    write(ADM_LOG_FID,*) "Energy_budget_factor = ", Energy_budget_factor
+
     ! open budget.info file
     if ( ADM_prc_me == ADM_prc_run_master ) then
        MNT_m_fid  = MISC_get_available_fid()
@@ -120,77 +118,12 @@ contains
              form   = 'formatted',        &
              status = 'unknown'           )
 
-          write(MNT_m_fid,'(A6)', ADVANCE='NO') '# STEP'
-          write(MNT_m_fid,'(A22)',ADVANCE='NO') 'Dry air[Kg]'
-          write(MNT_m_fid,'(A22)',ADVANCE='NO') 'Vapor[Kg]'
-          write(MNT_m_fid,'(A22)',ADVANCE='NO') 'Liquid water[Kg]'
-          write(MNT_m_fid,'(A22)',ADVANCE='NO') 'Ice water[Kg]'
-          write(MNT_m_fid,'(A22)',ADVANCE='NO') 'Total water[Kg]'
-          write(MNT_m_fid,'(A22)',ADVANCE='NO') 'diff.of Total water[Kg]'
-          write(MNT_m_fid,'(A22)',ADVANCE='NO') 'precipitaion[Kg]'
-          write(MNT_m_fid,'(A22)',ADVANCE='NO') 'evaporation[Kg]'
-          write(MNT_m_fid,'(A22)',ADVANCE='NO') 'evap - precip[Kg]'
-          write(MNT_m_fid,*)
-
        MNT_e_fid = MISC_get_available_fid()
        open( unit   = MNT_e_fid,            &
              file   = 'ENERGY_BUDGET.info', &
              form   = 'formatted',          &
              status = 'unknown'             )
-
-          write(MNT_e_fid,'(A6)', ADVANCE='NO') '# STEP'
-          write(MNT_e_fid,'(A22)',ADVANCE='NO') 'Int. E(moist)'
-          write(MNT_e_fid,'(A22)',ADVANCE='NO') 'Potential'
-          write(MNT_e_fid,'(A22)',ADVANCE='NO') 'Kinematic'
-          write(MNT_e_fid,'(A22)',ADVANCE='NO') 'Total energy'
-          write(MNT_e_fid,'(A22)',ADVANCE='NO') 'diff. of tot. energy'
-          write(MNT_e_fid,'(A22)',ADVANCE='NO') 'Radiation (SFC)'
-          write(MNT_e_fid,'(A22)',ADVANCE='NO') 'Radiation (TOA)'
-          write(MNT_e_fid,'(A22)',ADVANCE='NO') 'Sensible heat(SFC)'
-          write(MNT_e_fid,'(A22)',ADVANCE='NO') 'Latent heat(SFC)'
-          write(MNT_e_fid,'(A22)',ADVANCE='NO') 'Evap energy(SFC)'
-          write(MNT_e_fid,'(A22)',ADVANCE='NO') 'Precip energy(SFC)'
-          write(MNT_e_fid,'(A22)',ADVANCE='NO') 'Net SFC/TOA energy'
-          write(MNT_e_fid,*)
     endif
-
-    k0 = ADM_KNONE
-
-    allocate( evap0     (ADM_gall,   k0,ADM_lall   ) )
-    allocate( evap0_pl  (ADM_gall_pl,k0,ADM_lall_pl) )
-    allocate( precip0   (ADM_gall,   k0,ADM_lall   ) )
-    allocate( precip0_pl(ADM_gall_pl,k0,ADM_lall_pl) )
-
-    allocate( sfcrad0          (ADM_gall,   k0,ADM_lall   ) )
-    allocate( sfcrad0_pl       (ADM_gall_pl,k0,ADM_lall_pl) )
-    allocate( toarad0          (ADM_gall,   k0,ADM_lall   ) )
-    allocate( toarad0_pl       (ADM_gall_pl,k0,ADM_lall_pl) )
-    allocate( evap_energy0     (ADM_gall,   k0,ADM_lall   ) )
-    allocate( evap_energy0_pl  (ADM_gall_pl,k0,ADM_lall_pl) )
-    allocate( precip_energy0   (ADM_gall,   k0,ADM_lall   ) )
-    allocate( precip_energy0_pl(ADM_gall_pl,k0,ADM_lall_pl) )
-    allocate( sh_flux_sfc0     (ADM_gall,   k0,ADM_lall   ) )
-    allocate( sh_flux_sfc0_pl  (ADM_gall_pl,k0,ADM_lall_pl) )
-    allocate( lh_flux_sfc0     (ADM_gall,   k0,ADM_lall   ) )
-    allocate( lh_flux_sfc0_pl  (ADM_gall_pl,k0,ADM_lall_pl) )
-
-    evap0     (:,:,:) = 0.0_RP
-    evap0_pl  (:,:,:) = 0.0_RP
-    precip0   (:,:,:) = 0.0_RP
-    precip0_pl(:,:,:) = 0.0_RP
-
-    sfcrad0          (:,:,:) = 0.0_RP
-    sfcrad0_pl       (:,:,:) = 0.0_RP
-    toarad0          (:,:,:) = 0.0_RP
-    toarad0_pl       (:,:,:) = 0.0_RP
-    evap_energy0     (:,:,:) = 0.0_RP
-    evap_energy0_pl  (:,:,:) = 0.0_RP
-    precip_energy0   (:,:,:) = 0.0_RP
-    precip_energy0_pl(:,:,:) = 0.0_RP
-    sh_flux_sfc0     (:,:,:) = 0.0_RP
-    sh_flux_sfc0_pl  (:,:,:) = 0.0_RP
-    lh_flux_sfc0     (:,:,:) = 0.0_RP
-    lh_flux_sfc0_pl  (:,:,:) = 0.0_RP
 
     call diagnose_energy_mass
 
@@ -199,81 +132,12 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine embudget_monitor
-    use mod_adm, only: &
-       ADM_gall,    &
-       ADM_gall_pl, &
-       ADM_KNONE,   &
-       ADM_lall,    &
-       ADM_lall_pl
     use mod_time, only: &
-       TIME_CSTEP, &
-       TIME_DTL
-    use mod_sfcvar, only: &
-       sfcvar_get,      &
-       I_PRECIP_TOT,    &
-       I_EVAP_SFC,      &
-       I_SFCRAD_ENERGY, &
-       I_TOARAD_ENERGY, &
-       I_EVAP_ENERGY,   &
-       I_PRECIP_ENERGY, &
-       I_SH_FLUX_SFC,   &
-       I_LH_FLUX_SFC
+       TIME_CSTEP
     implicit none
-
-    real(RP) :: evap     (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(RP) :: evap_pl  (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(RP) :: precip   (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(RP) :: precip_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-
-    real(RP) :: sfcrad          (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(RP) :: sfcrad_pl       (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(RP) :: toarad          (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(RP) :: toarad_pl       (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(RP) :: evap_energy     (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(RP) :: evap_energy_pl  (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(RP) :: precip_energy   (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(RP) :: precip_energy_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(RP) :: sh_flux_sfc     (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(RP) :: sh_flux_sfc_pl  (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    real(RP) :: lh_flux_sfc     (ADM_gall,   ADM_KNONE,ADM_lall   )
-    real(RP) :: lh_flux_sfc_pl  (ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
     !---------------------------------------------------------------------------
 
     if( .NOT. MNT_ON ) return
-
-    !--- mass
-    call sfcvar_get( evap, evap_pl, vid = I_EVAP_SFC )
-    evap0    = evap0    + evap    * TIME_DTL
-    evap0_pl = evap0_pl + evap_pl * TIME_DTL
-
-    call sfcvar_get( precip, precip_pl, vid = I_PRECIP_TOT    )
-    precip0    = precip0    + precip    * TIME_DTL
-    precip0_pl = precip0_pl + precip_pl * TIME_DTL
-
-    !--- energy
-    call sfcvar_get( sfcrad, sfcrad_pl, vid = I_SFCRAD_ENERGY )
-    sfcrad0    = sfcrad0    + sfcrad    * TIME_DTL
-    sfcrad0_pl = sfcrad0_pl + sfcrad_pl * TIME_DTL
-
-    call sfcvar_get( toarad, toarad_pl, vid = I_TOARAD_ENERGY )
-    toarad0    = toarad0    + toarad    * TIME_DTL
-    toarad0_pl = toarad0_pl + toarad_pl * TIME_DTL
-
-    call sfcvar_get( evap_energy, evap_energy_pl, vid = I_EVAP_ENERGY )
-    evap_energy0    = evap_energy0    + evap_energy    * TIME_DTL
-    evap_energy0_pl = evap_energy0_pl + evap_energy_pl * TIME_DTL
-
-    call sfcvar_get( precip_energy, precip_energy_pl, vid = I_PRECIP_ENERGY )
-    precip_energy0    = precip_energy0    + precip_energy    * TIME_DTL
-    precip_energy0_pl = precip_energy0_pl + precip_energy_pl * TIME_DTL
-
-    call sfcvar_get( sh_flux_sfc, sh_flux_sfc_pl, vid = I_SH_FLUX_SFC )
-    sh_flux_sfc0    = sh_flux_sfc0    + sh_flux_sfc    * TIME_DTL
-    sh_flux_sfc0_pl = sh_flux_sfc0_pl + sh_flux_sfc_pl * TIME_DTL
-
-    call sfcvar_get( lh_flux_sfc, lh_flux_sfc_pl, vid = I_LH_FLUX_SFC )
-    lh_flux_sfc0    = lh_flux_sfc0    + lh_flux_sfc    * TIME_DTL
-    lh_flux_sfc0_pl = lh_flux_sfc0_pl + lh_flux_sfc_pl * TIME_DTL
 
     if ( mod(TIME_CSTEP,MNT_INTV) == 0 ) then
        call diagnose_energy_mass
@@ -288,20 +152,23 @@ contains
        ADM_prc_me,         &
        ADM_prc_run_master, &
        ADM_have_pl,        &
+       ADM_lall,           &
+       ADM_lall_pl,        &
        ADM_gall,           &
        ADM_gall_pl,        &
-       ADM_kall,           &
-       ADM_lall,           &
-       ADM_lall_pl
+       ADM_kall
     use mod_cnst, only: &
-       CNST_CV
-    use mod_time, only: &
-       TIME_CSTEP
+       ERADIUS => CNST_ERADIUS, &
+       PI      => CNST_PI,      &
+       CV      => CNST_CV
     use mod_vmtr, only: &
        VMTR_RGSGAM2,    &
        VMTR_RGSGAM2_pl, &
        VMTR_PHI,        &
        VMTR_PHI_pl
+    use mod_time, only: &
+       TIME_CSTEP, &
+       TIME_DTL
     use mod_gtl, only: &
        GTL_global_sum, &
        GTL_global_sum_srf
@@ -360,38 +227,32 @@ contains
 
     real(RP) :: qd    (ADM_gall,   ADM_kall,ADM_lall   )
     real(RP) :: qd_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-
     real(RP) :: tmp   (ADM_gall,   ADM_kall,ADM_lall   )
     real(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(RP) :: rho_sum
+    real(RP) :: rhoq_sum    (TRC_vmax)
+    real(RP) :: rhoein_q_sum(TRC_vmax)
+    real(RP) :: rhoein_qd_sum
+
     real(RP) :: rhoqd_sum
-    real(RP) :: rhoq_sum(1:TRC_vmax)
-    real(RP) :: rhoqw_sum
     real(RP) :: rhoqv_sum
     real(RP) :: rhoql_sum
     real(RP) :: rhoqi_sum
-
-    real(RP) :: precip_sum
-    real(RP) :: evap_sum
-
-    real(RP) :: rhoetot_sum
+    real(RP) :: rhoqt_sum
     real(RP) :: rhophi_sum
-    real(RP) :: rhokin_sum
     real(RP) :: rhoein_sum
-    real(RP) :: rhoein_qd_sum
-    real(RP) :: rhoein_qw_sum(1:TRC_vmax)
+    real(RP) :: rhokin_sum
+    real(RP) :: rhoetot_sum
 
-    real(RP) :: sfcrad_sum
-    real(RP) :: toarad_sum
-    real(RP) :: evap_energy_sum
-    real(RP) :: precip_energy_sum
-    real(RP) :: sh_flux_sfc_sum
-    real(RP) :: lh_flux_sfc_sum
-
-    real(RP), save :: rhoqw_sum_old
-    real(RP), save :: rhoetot_sum_old
-    logical, save :: iflag = .true.
+    real(RP) :: rhoqd_sum_diff
+    real(RP) :: rhoqv_sum_diff
+    real(RP) :: rhoql_sum_diff
+    real(RP) :: rhoqi_sum_diff
+    real(RP) :: rhoqt_sum_diff
+    real(RP) :: rhophi_sum_diff
+    real(RP) :: rhoein_sum_diff
+    real(RP) :: rhokin_sum_diff
+    real(RP) :: rhoetot_sum_diff
 
     integer :: nq
     !---------------------------------------------------------------------------
@@ -428,13 +289,6 @@ contains
 
     !----- Mass budget
 
-    !--- total mass ( dry + water )
-    tmp(:,:,:) = rho(:,:,:)
-    if ( ADM_have_pl ) then
-       tmp_pl(:,:,:) = rho_pl(:,:,:)
-    endif
-    rho_sum = GTL_global_sum( tmp, tmp_pl ) ! [kg/m3] -> [kg]
-
     !--- total mass (dry air)
     tmp(:,:,:) = rho(:,:,:) * qd(:,:,:)
     if ( ADM_have_pl ) then
@@ -452,12 +306,12 @@ contains
     enddo
 
     !--- total mass (total/vapor/liquid/soild water)
-    rhoqw_sum = 0.0_RP
+    rhoqt_sum = 0.0_RP
     rhoqv_sum = 0.0_RP
     rhoql_sum = 0.0_RP
     rhoqi_sum = 0.0_RP
     do nq = NQW_STR, NQW_END
-       rhoqw_sum = rhoqw_sum + rhoq_sum(nq)
+       rhoqt_sum = rhoqt_sum + rhoq_sum(nq)
 
        if    ( nq == I_QV ) then
           rhoqv_sum = rhoqv_sum + rhoq_sum(nq)
@@ -468,65 +322,8 @@ contains
        endif
     enddo
 
-    !--- total mass (precipitation/evapolation)
-    precip_sum = GTL_global_sum_srf( precip0(:,:,:), precip0_pl(:,:,:) )
-    evap_sum   = GTL_global_sum_srf( evap0  (:,:,:), evap0_pl  (:,:,:) )
-
-    if ( iflag ) then
-       rhoqw_sum_old = rhoqw_sum
-    endif
-
-    if ( ADM_prc_me == ADM_prc_run_master ) then
-       write(MNT_m_fid,'(I6)',    ADVANCE='NO') TIME_CSTEP
-       write(MNT_m_fid,'(E22.14)',ADVANCE='NO') rhoqd_sum
-       write(MNT_m_fid,'(E22.14)',ADVANCE='NO') rhoqv_sum
-       write(MNT_m_fid,'(E22.14)',ADVANCE='NO') rhoql_sum
-       write(MNT_m_fid,'(E22.14)',ADVANCE='NO') rhoqi_sum
-       write(MNT_m_fid,'(E22.14)',ADVANCE='NO') rhoqw_sum
-       write(MNT_m_fid,'(E22.14)',ADVANCE='NO') rhoqw_sum - rhoqw_sum_old
-       write(MNT_m_fid,'(E22.14)',ADVANCE='NO') precip_sum
-       write(MNT_m_fid,'(E22.14)',ADVANCE='NO') evap_sum
-       write(MNT_m_fid,'(E22.14)',ADVANCE='NO') evap_sum - precip_sum
-       write(MNT_m_fid,*)
-    endif
-
 
     !----- Energy budget
-
-    rhoein_sum = 0.0_RP
-
-    !--- internal energy (dry air)
-    tmp = rho * qd * CNST_CV * tem
-    if ( ADM_have_pl ) then
-       tmp_pl = rho_pl * qd_pl * CNST_CV * tem_pl
-    endif
-    rhoein_qd_sum = GTL_global_sum( tmp, tmp_pl )
-    rhoein_sum    = rhoein_sum + rhoein_qd_sum
-
-    !--- internal energy (each water category)
-    do nq = NQW_STR,NQW_END
-       tmp(:,:,:) = rho(:,:,:) * q(:,:,:,nq) * CVW(nq) * tem(:,:,:)
-
-       !--- correct latent heat
-       if    ( nq == I_QV ) then
-          tmp(:,:,:) = tmp(:,:,:) + rho(:,:,:) * q(:,:,:,nq) * LHV
-       elseif( nq == I_QI .OR. nq == I_QS .OR. nq == I_QG ) then
-          tmp(:,:,:) = tmp(:,:,:) - rho(:,:,:) * q(:,:,:,nq) * LHF
-       endif
-
-       if ( ADM_have_pl ) then
-          tmp_pl(:,:,:) = rho_pl(:,:,:) * q_pl(:,:,:,nq) * CVW(nq) * tem_pl(:,:,:)
-
-          if    ( nq == I_QV ) then
-             tmp_pl(:,:,:) = tmp_pl(:,:,:) + rho_pl(:,:,:) * q_pl(:,:,:,nq) * LHV
-          elseif( nq == I_QI .OR. nq == I_QS .OR. nq == I_QG ) then
-             tmp_pl(:,:,:) = tmp_pl(:,:,:) - rho_pl(:,:,:) * q_pl(:,:,:,nq) * LHF
-          endif
-       endif
-
-       rhoein_qw_sum(nq) = GTL_global_sum( tmp, tmp_pl )
-       rhoein_sum        = rhoein_sum + rhoein_qw_sum(nq)
-    enddo
 
     !--- potential energy
     tmp(:,:,:) = rho(:,:,:) * VMTR_PHI(:,:,:)
@@ -534,6 +331,41 @@ contains
        tmp_pl(:,:,:) = rho_pl(:,:,:) * VMTR_PHI_pl(:,:,:)
     endif
     rhophi_sum = GTL_global_sum( tmp, tmp_pl )
+
+    !--- internal energy (dry air)
+    tmp = rho * qd * CV * tem
+    if ( ADM_have_pl ) then
+       tmp_pl = rho_pl * qd_pl * CV * tem_pl
+    endif
+    rhoein_qd_sum = GTL_global_sum( tmp, tmp_pl )
+
+    !--- internal energy (each water category)
+    do nq = NQW_STR,NQW_END
+
+       tmp(:,:,:) = rho(:,:,:) * q(:,:,:,nq) * CVW(nq) * tem(:,:,:)
+       if    ( nq == I_QV ) then
+          tmp(:,:,:) = tmp(:,:,:) + rho(:,:,:) * q(:,:,:,nq) * LHV ! correct latent heat
+       elseif( nq == I_QI .OR. nq == I_QS .OR. nq == I_QG ) then
+          tmp(:,:,:) = tmp(:,:,:) - rho(:,:,:) * q(:,:,:,nq) * LHF ! correct latent heat
+       endif
+
+       if ( ADM_have_pl ) then
+          tmp_pl(:,:,:) = rho_pl(:,:,:) * q_pl(:,:,:,nq) * CVW(nq) * tem_pl(:,:,:)
+          if    ( nq == I_QV ) then
+             tmp_pl(:,:,:) = tmp_pl(:,:,:) + rho_pl(:,:,:) * q_pl(:,:,:,nq) * LHV ! correct latent heat
+          elseif( nq == I_QI .OR. nq == I_QS .OR. nq == I_QG ) then
+             tmp_pl(:,:,:) = tmp_pl(:,:,:) - rho_pl(:,:,:) * q_pl(:,:,:,nq) * LHF ! correct latent heat
+          endif
+       endif
+
+       rhoein_q_sum(nq) = GTL_global_sum( tmp, tmp_pl )
+    enddo
+
+    !--- internal energy (total)
+    rhoein_sum = rhoein_qd_sum
+    do nq = NQW_STR,NQW_END
+       rhoein_sum = rhoein_sum + rhoein_q_sum(nq)
+    enddo
 
     !--- kinetic energy
     call cnvvar_rhogkin( rhog,   rhog_pl,   & !--- [IN]
@@ -543,7 +375,7 @@ contains
                          rhogw,  rhogw_pl,  & !--- [IN]
                          tmp,    tmp_pl     ) !--- [OUT]
 
-    tmp(:,:,:) = tmp(:,:,:) *  VMTR_RGSGAM2(:,:,:)
+    tmp(:,:,:) = tmp(:,:,:) * VMTR_RGSGAM2(:,:,:)
     if ( ADM_have_pl ) then
        tmp_pl(:,:,:) = tmp_pl(:,:,:) * VMTR_RGSGAM2_pl(:,:,:)
     endif
@@ -552,61 +384,89 @@ contains
     !--- total energy
     rhoetot_sum = rhoein_sum + rhophi_sum + rhokin_sum
 
-    if ( iflag ) then
-       rhoetot_sum_old = rhoetot_sum
+
+
+    !##### File OUTPUT #####
+
+    if ( first ) then
+       ! [kg/m2], absolute value
+       rhoqd_sum_diff   = rhoqd_sum   / ( 4.D0 * PI * ERADIUS * ERADIUS )
+       rhoqv_sum_diff   = rhoqv_sum   / ( 4.D0 * PI * ERADIUS * ERADIUS )
+       rhoql_sum_diff   = rhoql_sum   / ( 4.D0 * PI * ERADIUS * ERADIUS )
+       rhoqi_sum_diff   = rhoqi_sum   / ( 4.D0 * PI * ERADIUS * ERADIUS )
+       rhoqt_sum_diff   = rhoqt_sum   / ( 4.D0 * PI * ERADIUS * ERADIUS )
+       ! [J/m2], absolute value
+       rhophi_sum_diff  = rhophi_sum  / ( 4.D0 * PI * ERADIUS * ERADIUS )
+       rhoein_sum_diff  = rhoein_sum  / ( 4.D0 * PI * ERADIUS * ERADIUS )
+       rhokin_sum_diff  = rhokin_sum  / ( 4.D0 * PI * ERADIUS * ERADIUS )
+       rhoetot_sum_diff = rhoetot_sum / ( 4.D0 * PI * ERADIUS * ERADIUS )
+    else
+       ! [kg/m2/s], difference from previous step
+       rhoqd_sum_diff   = ( rhoqd_sum   - rhoqd_sum_old   ) * Mass_budget_factor
+       rhoqv_sum_diff   = ( rhoqv_sum   - rhoqv_sum_old   ) * Mass_budget_factor
+       rhoql_sum_diff   = ( rhoql_sum   - rhoql_sum_old   ) * Mass_budget_factor
+       rhoqi_sum_diff   = ( rhoqi_sum   - rhoqi_sum_old   ) * Mass_budget_factor
+       rhoqt_sum_diff   = ( rhoqt_sum   - rhoqt_sum_old   ) * Mass_budget_factor
+       ! [W/m2], difference from previous step
+       rhophi_sum_diff  = ( rhophi_sum  - rhophi_sum_old  ) * Energy_budget_factor
+       rhoein_sum_diff  = ( rhoein_sum  - rhoein_sum_old  ) * Energy_budget_factor
+       rhokin_sum_diff  = ( rhokin_sum  - rhokin_sum_old  ) * Energy_budget_factor
+       rhoetot_sum_diff = ( rhoetot_sum - rhoetot_sum_old ) * Energy_budget_factor
     endif
 
-    sfcrad_sum        = GTL_global_sum_srf( sfcrad0(:,:,:), sfcrad0_pl(:,:,:) )
-    toarad_sum        = GTL_global_sum_srf( toarad0(:,:,:), toarad0_pl(:,:,:) )
-
-    evap_energy_sum   = GTL_global_sum_srf( evap_energy0  (:,:,:), evap_energy0_pl  (:,:,:) )
-    precip_energy_sum = GTL_global_sum_srf( precip_energy0(:,:,:), precip_energy0_pl(:,:,:) )
-
-    sh_flux_sfc_sum   = GTL_global_sum_srf( sh_flux_sfc0(:,:,:), sh_flux_sfc0_pl(:,:,:) )
-    lh_flux_sfc_sum   = GTL_global_sum_srf( lh_flux_sfc0(:,:,:), lh_flux_sfc0_pl(:,:,:) )
-
     if ( ADM_prc_me == ADM_prc_run_master ) then
+       if ( first ) then
+          write(MNT_m_fid,'(A6)' ,advance='no') '#STEP'
+          write(MNT_m_fid,'(A16)',advance='no') 'Day'
+          write(MNT_m_fid,'(A16)',advance='no') 'dry air mass '
+          write(MNT_m_fid,'(A16)',advance='no') 'water mass(g)'
+          write(MNT_m_fid,'(A16)',advance='no') 'water mass(l)'
+          write(MNT_m_fid,'(A16)',advance='no') 'water mass(s)'
+          write(MNT_m_fid,'(A16)',advance='no') 'water mass(t)'
+          write(MNT_m_fid,*)
 
-       write(MNT_e_fid,'(I6)',    ADVANCE='NO') TIME_CSTEP
-       write(MNT_e_fid,'(E22.14)',ADVANCE='NO') rhoein_sum
-       write(MNT_e_fid,'(E22.14)',ADVANCE='NO') rhophi_sum
-       write(MNT_e_fid,'(E22.14)',ADVANCE='NO') rhokin_sum
-       write(MNT_e_fid,'(E22.14)',ADVANCE='NO') rhoetot_sum
-       write(MNT_e_fid,'(E22.14)',ADVANCE='NO') rhoetot_sum-rhoetot_sum_old
-       write(MNT_e_fid,'(E22.14)',ADVANCE='NO') sfcrad_sum
-       write(MNT_e_fid,'(E22.14)',ADVANCE='NO') toarad_sum
-       write(MNT_e_fid,'(E22.14)',ADVANCE='NO') sh_flux_sfc_sum
-       write(MNT_e_fid,'(E22.14)',ADVANCE='NO') lh_flux_sfc_sum
-       write(MNT_e_fid,'(E22.14)',ADVANCE='NO') evap_energy_sum
-       write(MNT_e_fid,'(E22.14)',ADVANCE='NO') precip_energy_sum
-       write(MNT_e_fid,'(E22.14)',ADVANCE='NO') sfcrad_sum-toarad_sum &
-                                              + evap_energy_sum-precip_energy_sum &
-                                              + sh_flux_sfc_sum+lh_flux_sfc_sum
+          write(MNT_e_fid,'(A6)' ,advance='no') '#STEP'
+          write(MNT_e_fid,'(A16)',advance='no') 'Day'
+          write(MNT_e_fid,'(A16)',advance='no') 'energy(pot)'
+          write(MNT_e_fid,'(A16)',advance='no') 'energy(int)'
+          write(MNT_e_fid,'(A16)',advance='no') 'energy(kin)'
+          write(MNT_e_fid,'(A16)',advance='no') 'energy(tot)'
+          write(MNT_e_fid,*)
+       endif
+
+       ! mass budget
+       write(MNT_m_fid,'(I6)'    ,advance='no') TIME_CSTEP
+       write(MNT_m_fid,'(ES16.8)',advance='no') TIME_CSTEP * TIME_DTL / 86400.D0
+       write(MNT_m_fid,'(ES16.8)',advance='no') rhoqd_sum_diff
+       write(MNT_m_fid,'(ES16.8)',advance='no') rhoqv_sum_diff
+       write(MNT_m_fid,'(ES16.8)',advance='no') rhoql_sum_diff
+       write(MNT_m_fid,'(ES16.8)',advance='no') rhoqi_sum_diff
+       write(MNT_m_fid,'(ES16.8)',advance='no') rhoqt_sum_diff
+       write(MNT_m_fid,*)
+
+       ! energy budget
+       write(MNT_e_fid,'(I6)'    ,advance='no') TIME_CSTEP
+       write(MNT_e_fid,'(ES16.8)',advance='no') TIME_CSTEP * TIME_DTL / 86400.D0
+       write(MNT_e_fid,'(ES16.8)',advance='no') rhophi_sum_diff
+       write(MNT_e_fid,'(ES16.8)',advance='no') rhoein_sum_diff
+       write(MNT_e_fid,'(ES16.8)',advance='no') rhokin_sum_diff
+       write(MNT_e_fid,'(ES16.8)',advance='no') rhoetot_sum_diff
        write(MNT_e_fid,*)
     endif
 
-    if( iflag ) iflag = .false.
-    rhoqw_sum_old   = rhoqw_sum
+    rhoqd_sum_old   = rhoqd_sum
+    rhoqv_sum_old   = rhoqv_sum
+    rhoql_sum_old   = rhoql_sum
+    rhoqi_sum_old   = rhoqi_sum
+    rhoqt_sum_old   = rhoqt_sum
+    rhophi_sum_old  = rhophi_sum
+    rhoein_sum_old  = rhoein_sum
+    rhokin_sum_old  = rhokin_sum
     rhoetot_sum_old = rhoetot_sum
 
-    ! reset array
-    evap0     (:,:,:) = 0.0_RP
-    evap0_pl  (:,:,:) = 0.0_RP
-    precip0   (:,:,:) = 0.0_RP
-    precip0_pl(:,:,:) = 0.0_RP
-
-    sfcrad0          (:,:,:) = 0.0_RP
-    sfcrad0_pl       (:,:,:) = 0.0_RP
-    toarad0          (:,:,:) = 0.0_RP
-    toarad0_pl       (:,:,:) = 0.0_RP
-    evap_energy0     (:,:,:) = 0.0_RP
-    evap_energy0_pl  (:,:,:) = 0.0_RP
-    precip_energy0   (:,:,:) = 0.0_RP
-    precip_energy0_pl(:,:,:) = 0.0_RP
-    sh_flux_sfc0     (:,:,:) = 0.0_RP
-    sh_flux_sfc0_pl  (:,:,:) = 0.0_RP
-    lh_flux_sfc0     (:,:,:) = 0.0_RP
-    lh_flux_sfc0_pl  (:,:,:) = 0.0_RP
+    if ( first ) then
+       first = .false.
+    endif
 
     return
   end subroutine diagnose_energy_mass

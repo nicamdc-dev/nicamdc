@@ -136,33 +136,17 @@ contains
        ADM_vlayer
     use mod_cnst, only: &
        CNST_PRE00
+    use mod_calendar, only: &
+       calendar_ss2yh
+    use mod_grd, only: &
+       GRD_gz
     use mod_fio, only: &
        FIO_REAL8, &
        FIO_REAL4
     use mod_time, only: &
        TIME_CTIME
-    use mod_calendar, only: &
-       calendar_ss2yh
-    use mod_grd, only: &
-       GRD_gz
     use mod_runconf, only: &
-       RUNNAME!,          &
-!         NTAU_ISCCP,        &
-!         NPRES_ISCCP,       &
-!         LAND_TYPE,         &
-!         OCEAN_TYPE
-!    use mod_landvar_bc, only: &
-!         KMAX_bc    => KMAX,    &
-!         GLVNAME_bc => GLVNAME, &
-!         I_ALL_bc   => I_ALL
-!    use mod_landvar_matsiro, only: &
-!         KMAX_mat    => KMAX,    &
-!         GLVNAME_mat => GLVNAME, &
-!         I_ALL_mat   => I_ALL
-!    use mod_oceanvar_mixedlayer, only: &
-!         KMAX_ocn  => KMAX, &
-!         GOVNAME,           &
-!         I_ALL_ocn => I_ALL
+       RUNNAME
     implicit none
 
     character(len=ADM_NSYS)     :: hist3D_layername  != ''
@@ -428,37 +412,6 @@ contains
           kstr = 1
           kend = 1
           lname = "ZSSFC1"
-!       case('ISCCP')
-!          kstr = 1
-!          kend = NTAU_ISCCP*NPRES_ISCCP
-!       case('GL')
-!          kstr =  1
-!          kend = -1
-!          if ( trim(LAND_TYPE) == 'BUCKET' ) then
-!             do idx = 1, I_ALL_bc
-!                if( trim(GLVNAME_bc(idx) ) == trim(item) ) kend = KMAX_bc(idx)
-!             enddo
-!          elseif( trim(LAND_TYPE) == 'MATSIRO' ) then
-!             do idx = 1, I_ALL_mat
-!                if( trim(GLVNAME_mat(idx)) == trim(item) ) kend = KMAX_mat(idx)
-!             enddo
-!          endif
-!          if ( kend == -1 ) then
-!             write(ADM_LOG_FID,*) 'xxx History item=', trim(item), ' is not in LAND module=', trim(LAND_TYPE),'. STOP.'
-!             call ADM_proc_stop
-!          endif
-!       case('GO')
-!          kstr =  1
-!          kend = -1
-!          if ( trim(OCEAN_TYPE) == 'MIXEDLAYER' ) then
-!              do idx = 1, I_ALL_ocn
-!                 if( trim(GOVNAME(idx)) == trim(item) ) kend = KMAX_ocn(idx)
-!              enddo
-!          endif
-!          if ( kend == -1 ) then
-!             write(ADM_LOG_FID,*) 'xxx History item=', trim(item), ' is not in OCEAN module=', trim(OCEAN_TYPE),'. STOP.'
-!             call ADM_proc_stop
-!          endif
        endselect
 
        ! check consistensy between kend and kmax
@@ -1041,15 +994,17 @@ contains
        ADM_KNONE,   &
        ADM_kmax,    &
        ADM_kmin
+    use mod_grd, only: &
+       GRD_zs,   &
+       GRD_ZSFC, &
+       GRD_vz,   &
+       GRD_Z
     use mod_vmtr, only: &
        VMTR_GSGAM2
     use mod_runconf, only: &
        TRC_VMAX
     use mod_prgvar, only: &
        prgvar_get
-    use mod_sfcvar, only: &
-       sfcvar_get, &
-       I_PRE_SFC
     use mod_thrmdyn, only: &
        THRMDYN_tempre
     implicit none
@@ -1069,14 +1024,13 @@ contains
     real(RP) :: rhogq    (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
     real(RP) :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    real(RP) :: pre_sfc   (ADM_gall   ,ADM_KNONE,ADM_lall   )
-    real(RP) :: pre_sfc_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-
     real(RP) :: rho(ADM_gall,ADM_kall,ADM_lall)
     real(RP) :: ein(ADM_gall,ADM_kall,ADM_lall)
     real(RP) :: q  (ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
     real(RP) :: tem(ADM_gall,ADM_kall,ADM_lall)
     real(RP) :: pre(ADM_gall,ADM_kall,ADM_lall)
+
+    real(RP) :: pre_sfc(ADM_gall,ADM_KNONE,ADM_lall)
 
     real(RP) :: lpres_sfc(ADM_gall)
     real(RP) :: lpres    (ADM_gall,ADM_kall)
@@ -1096,8 +1050,6 @@ contains
                      rhoge,  rhoge_pl,  &
                      rhogq,  rhogq_pl,  &
                      0                  )
-
-    call sfcvar_get( pre_sfc, pre_sfc_pl, vid=I_PRE_SFC )
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
@@ -1127,6 +1079,15 @@ contains
                          tem(:,:,:),   & ! [OUT]
                          pre(:,:,:)    ) ! [OUT]
 
+    call diag_pre_sfc( ADM_gall,                & ! [IN]
+                       ADM_kall,                & ! [IN]
+                       ADM_lall,                & ! [IN]
+                       GRD_vz (:,:,:,GRD_Z),    & ! [IN]
+                       rho    (:,:,:),          & ! [IN]
+                       pre    (:,:,:),          & ! [IN]
+                       GRD_zs (:,:,:,GRD_ZSFC), & ! [IN]
+                       pre_sfc(:,:,:)           ) ! [OUT]
+
     do l = 1, ADM_lall
        lpres_sfc(:)   = log( pre_sfc(:,ADM_KNONE,l) )
        lpres    (:,:) = log( pre(:,:,l) )
@@ -1154,6 +1115,56 @@ contains
 
     return
   end subroutine get_log_pres
+
+  !-----------------------------------------------------------------------------
+  subroutine diag_pre_sfc( &
+       ijdim,  &
+       kdim,   &
+       ldim,   &
+       z,      &
+       rho,    &
+       pre,    &
+       z_sfc,  &
+       pre_sfc )
+    use mod_adm, only: &
+       knone => ADM_KNONE, &
+       kmin  => ADM_kmin
+    use mod_cnst, only: &
+       GRAV => CNST_EGRAV
+    implicit none
+
+    integer,  intent(in)  :: ijdim
+    integer,  intent(in)  :: kdim
+    integer,  intent(in)  :: ldim
+    real(RP), intent(in)  :: z      (ijdim,kdim ,ldim) ! altitude [m]
+    real(RP), intent(in)  :: rho    (ijdim,kdim ,ldim) ! density  [kg/m3]
+    real(RP), intent(in)  :: pre    (ijdim,kdim ,ldim) ! pressure [Pa]
+    real(RP), intent(in)  :: z_sfc  (ijdim,knone,ldim) ! surface altitude [m]
+    real(RP), intent(out) :: pre_sfc(ijdim,knone,ldim) ! surface pressure [Pa]
+
+    real(RP) :: rho_sfc ! surface density [kg/m3]
+
+    integer :: ij, l
+    !---------------------------------------------------------------------------
+
+    do l  = 1, ldim
+    do ij = 1, ijdim
+       ! surface density: extrapolation
+       rho_sfc = ( (z_sfc(ij,knone ,l)-z(ij,kmin+1,l)) * (z_sfc(ij,knone ,l)-z(ij,kmin+2,l)) )                    &
+               / ( (z    (ij,kmin  ,l)-z(ij,kmin+1,l)) * (z    (ij,kmin  ,l)-z(ij,kmin+2,l)) ) * rho(ij,kmin  ,l) &
+               + ( (z_sfc(ij,knone ,l)-z(ij,kmin  ,l)) * (z_sfc(ij,knone ,l)-z(ij,kmin+2,l)) )                    &
+               / ( (z    (ij,kmin+1,l)-z(ij,kmin  ,l)) * (z    (ij,kmin+1,l)-z(ij,kmin+2,l)) ) * rho(ij,kmin+1,l) &
+               + ( (z_sfc(ij,knone ,l)-z(ij,kmin  ,l)) * (z_sfc(ij,knone ,l)-z(ij,kmin+1,l)) )                    &
+               / ( (z    (ij,kmin+2,l)-z(ij,kmin  ,l)) * (z    (ij,kmin+2,l)-z(ij,kmin+1,l)) ) * rho(ij,kmin+2,l)
+
+       ! surface pressure: hydrostatic balance
+       pre_sfc(ij,knone,l) = pre(ij,kmin,l) + 0.5_RP * ( rho(ij,kmin,l)+rho_sfc           ) &
+                                            * GRAV   * ( z  (ij,kmin,l)-z_sfc(ij,knone,l) )
+    enddo
+    enddo
+
+    return
+  end subroutine diag_pre_sfc
 
 end module mod_history
 !-------------------------------------------------------------------------------
