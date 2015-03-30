@@ -146,13 +146,13 @@ module mod_diagvar
 
   integer, public ::  I_ROUGHNESS_SEA = -999 ! 10/04/26 [add] M.Satoh
   !
-  REAL(RP), public, allocatable :: diagvar(:,:,:,:)
-  REAL(RP), public, allocatable :: diagvar_pl(:,:,:,:)
+  real(RP), public, allocatable :: diagvar(:,:,:,:)
+  real(RP), public, allocatable :: diagvar_pl(:,:,:,:)
 
-  REAL(RP), public, allocatable :: diagvar1(:,:,:,:) ! 10/04/26 [add] M.Satoh
-  REAL(RP), public, allocatable :: diagvar1_pl(:,:,:,:) ! 10/04/26 [add] M.Satoh
-  REAL(RP), public, allocatable :: diagvarn(:,:,:,:) ! 11/08/16 [add] M.Satoh
-  REAL(RP), public, allocatable :: diagvarn_pl(:,:,:,:) ! 11/08/16 [add] M.Satoh
+  real(RP), public, allocatable :: diagvar1(:,:,:,:) ! 10/04/26 [add] M.Satoh
+  real(RP), public, allocatable :: diagvar1_pl(:,:,:,:) ! 10/04/26 [add] M.Satoh
+  real(RP), public, allocatable :: diagvarn(:,:,:,:) ! 11/08/16 [add] M.Satoh
+  real(RP), public, allocatable :: diagvarn_pl(:,:,:,:) ! 11/08/16 [add] M.Satoh
   !
   integer, private, parameter :: DIAG_VMAX_DEF = 256 ! 2010/05/05 M.Satoh [add]
   character(len=ADM_NSYS), public :: &
@@ -733,8 +733,8 @@ contains
   !------ get prognostic variables from diag[num].
   !------
   implicit none
-  REAL(RP), intent(out) :: dv(ADM_gall,ADM_kall,ADM_lall)
-  REAL(RP), intent(out) :: dv_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+  real(RP), intent(out) :: dv(ADM_gall,ADM_kall,ADM_lall)
+  real(RP), intent(out) :: dv_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
   integer:: ij,k,l
   integer, intent(in)  :: vid
   ! [Add] 07/11/06 T.Mitsui for check
@@ -770,8 +770,8 @@ contains
     !------ and COMMUNICATION.
     !------
     implicit none
-    REAL(RP), intent(in) :: dv(ADM_gall,ADM_kall,ADM_lall)
-    REAL(RP), intent(in) :: dv_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP), intent(in) :: dv(ADM_gall,ADM_kall,ADM_lall)
+    real(RP), intent(in) :: dv_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     integer, intent(in) :: vid
     !
     integer :: i,j,suf,ij,k,l
@@ -812,7 +812,7 @@ contains
     !------ get diagnostic variables
     !------
     implicit none
-    REAL(RP), intent(out) :: sv(ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: sv(ADM_IopJop_nmax,ADM_kall,ADM_lall)
     integer, intent(in) :: vid
     !
     integer :: l,n,nn,k
@@ -846,7 +846,7 @@ contains
     !------ and COMMUNICATION.
     !------
     implicit none
-    REAL(RP), intent(in) :: sv(ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(in) :: sv(ADM_IopJop_nmax,ADM_kall,ADM_lall)
     integer, intent(in) :: vid
     !
     integer :: l,n,nn,k
@@ -885,7 +885,7 @@ contains
     !------ get diagnostic variables
     !------
     implicit none
-    REAL(RP), intent(out) :: sv(ADM_IopJop_nmax,ADM_kall)
+    real(RP), intent(out) :: sv(ADM_IopJop_nmax,ADM_kall)
     integer, intent(in) :: vid
     integer, intent(in) :: l_region
     !
@@ -919,7 +919,7 @@ contains
     !------ and COMMUNICATION.
     !------
     implicit none
-    REAL(RP), intent(in) :: sv(ADM_IopJop_nmax,ADM_kall)
+    real(RP), intent(in) :: sv(ADM_IopJop_nmax,ADM_kall)
     integer, intent(in) :: vid
     integer, intent(in) :: l_region
     !
@@ -959,7 +959,7 @@ contains
     !------ get diagnostic variables
     !------
     implicit none
-    REAL(RP), intent(out) :: sv(ADM_IopJop_nmax,ADM_lall)
+    real(RP), intent(out) :: sv(ADM_IopJop_nmax,ADM_lall)
     integer, intent(in) :: vid
     !
     integer :: l,n,nn
@@ -993,7 +993,7 @@ contains
     !------
     implicit none
     integer, intent(in) :: ksize,k
-    REAL(RP), intent(out) :: sv(ADM_IopJop_nmax,ksize,ADM_lall)
+    real(RP), intent(out) :: sv(ADM_IopJop_nmax,ksize,ADM_lall)
     integer, intent(in) :: vid
     !
     integer :: l,n,nn
@@ -1024,7 +1024,7 @@ contains
     !------ and COMMUNICATION.
     !------
     implicit none
-    REAL(RP), intent(in) :: sv(ADM_IopJop_nmax,ADM_lall)
+    real(RP), intent(in) :: sv(ADM_IopJop_nmax,ADM_lall)
     integer, intent(in) :: vid
     !
     integer :: l,n,nn
@@ -1061,7 +1061,7 @@ contains
     !------ get diagnostic variables
     !------
     implicit none
-    REAL(RP), intent(out) :: sv(ADM_IopJop_nmax)
+    real(RP), intent(out) :: sv(ADM_IopJop_nmax)
     integer, intent(in) :: vid
     integer, intent(in) :: l_region
     !
@@ -1092,7 +1092,7 @@ contains
     !------ and COMMUNICATION.
     !------
     implicit none
-    REAL(RP), intent(in) :: sv(ADM_IopJop_nmax)
+    real(RP), intent(in) :: sv(ADM_IopJop_nmax)
     integer, intent(in) :: vid
     integer, intent(in) :: l_region
     !
@@ -1133,7 +1133,7 @@ contains
     implicit none
 
     integer, intent(in) :: knum
-    REAL(RP), intent(out) :: sv(ADM_IopJop_nmax,knum)
+    real(RP), intent(out) :: sv(ADM_IopJop_nmax,knum)
     integer, intent(in) :: vid
     integer, intent(in) :: l_region
     !
@@ -1175,7 +1175,7 @@ contains
        )
     implicit none
 
-    REAL(RP), intent(in) :: sv(ADM_IopJop_nmax,ADM_kall)
+    real(RP), intent(in) :: sv(ADM_IopJop_nmax,ADM_kall)
     integer, intent(in) :: vid
     integer, intent(in) :: knum
     integer, intent(in) :: l_region
@@ -1237,13 +1237,13 @@ contains
   !-----------------------------------------------------------------------------
   subroutine diagvar_checkvalues ( item, var, vmin, vmax )
 
-    REAL(RP), intent(in) :: var(:,:)
-    REAL(RP), intent(in) :: vmax
-    REAL(RP), intent(in) :: vmin
+    real(RP), intent(in) :: var(:,:)
+    real(RP), intent(in) :: vmax
+    real(RP), intent(in) :: vmin
     character(LEN=*), intent(in) :: item
 
-    REAL(RP) :: varmax
-    REAL(RP) :: varmin
+    real(RP) :: varmax
+    real(RP) :: varmin
 
     varmax = maxval( var )
     varmin = minval( var )

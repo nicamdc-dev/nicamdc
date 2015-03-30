@@ -93,17 +93,17 @@ contains
        THRMDYN_tempre
     implicit none
 
-    REAL(RP), intent(in)  :: prg    (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax )
-    REAL(RP), intent(in)  :: prg_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,PRG_vmax )
-    REAL(RP), intent(out) :: diag   (ADM_gall,   ADM_kall,ADM_lall,   DIAG_vmax)
-    REAL(RP), intent(out) :: diag_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,DIAG_vmax)
+    real(RP), intent(in)  :: prg    (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax )
+    real(RP), intent(in)  :: prg_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,PRG_vmax )
+    real(RP), intent(out) :: diag   (ADM_gall,   ADM_kall,ADM_lall,   DIAG_vmax)
+    real(RP), intent(out) :: diag_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,DIAG_vmax)
 
-    REAL(RP) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: ein      (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP) :: ein_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: rhog_h   (ADM_gall,   ADM_kall)
-    REAL(RP) :: rhog_h_pl(ADM_gall_pl,ADM_kall)
+    real(RP) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: ein      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: ein_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhog_h   (ADM_gall,   ADM_kall)
+    real(RP) :: rhog_h_pl(ADM_gall_pl,ADM_kall)
 
     integer :: n, k, l, iv
     !---------------------------------------------------------------------------
@@ -242,17 +242,17 @@ contains
        THRMDYN_rhoein
     implicit none
 
-    REAL(RP), intent(out) :: prg    (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax )
-    REAL(RP), intent(out) :: prg_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,PRG_vmax )
-    REAL(RP), intent(in)  :: diag   (ADM_gall,   ADM_kall,ADM_lall,   DIAG_vmax)
-    REAL(RP), intent(in)  :: diag_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,DIAG_vmax)
+    real(RP), intent(out) :: prg    (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax )
+    real(RP), intent(out) :: prg_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,PRG_vmax )
+    real(RP), intent(in)  :: diag   (ADM_gall,   ADM_kall,ADM_lall,   DIAG_vmax)
+    real(RP), intent(in)  :: diag_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,DIAG_vmax)
 
-    REAL(RP) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: ein      (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP) :: ein_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: rhog_h   (ADM_gall,   ADM_kall)
-    REAL(RP) :: rhog_h_pl(ADM_gall_pl,ADM_kall)
+    real(RP) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: ein      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: ein_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhog_h   (ADM_gall,   ADM_kall)
+    real(RP) :: rhog_h_pl(ADM_gall_pl,ADM_kall)
 
     integer :: n, k, l, iv
     !---------------------------------------------------------------------------
@@ -389,23 +389,23 @@ contains
        VMTR_W2Cfact_pl
     implicit none
 
-    REAL(RP), intent(in)  :: rhog      (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 )
-    REAL(RP), intent(in)  :: rhog_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: rhogvx    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vx
-    REAL(RP), intent(in)  :: rhogvx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: rhogvy    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vy
-    REAL(RP), intent(in)  :: rhogvy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: rhogvz    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vz
-    REAL(RP), intent(in)  :: rhogvz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: rhogw     (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X w
-    REAL(RP), intent(in)  :: rhogw_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: rhogkin   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X kin
-    REAL(RP), intent(out) :: rhogkin_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhog      (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 )
+    real(RP), intent(in)  :: rhog_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogvx    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vx
+    real(RP), intent(in)  :: rhogvx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogvy    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vy
+    real(RP), intent(in)  :: rhogvy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogvz    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vz
+    real(RP), intent(in)  :: rhogvz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogw     (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X w
+    real(RP), intent(in)  :: rhogw_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhogkin   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X kin
+    real(RP), intent(out) :: rhogkin_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    REAL(RP) :: rhogkin_h   (ADM_gall,   ADM_kall) ! rho X ( G^1/2 X gamma2 ) X kin (horizontal)
-    REAL(RP) :: rhogkin_h_pl(ADM_gall_pl,ADM_kall)
-    REAL(RP) :: rhogkin_v   (ADM_gall,   ADM_kall) ! rho X ( G^1/2 X gamma2 ) X kin (vertical)
-    REAL(RP) :: rhogkin_v_pl(ADM_gall_pl,ADM_kall)
+    real(RP) :: rhogkin_h   (ADM_gall,   ADM_kall) ! rho X ( G^1/2 X gamma2 ) X kin (horizontal)
+    real(RP) :: rhogkin_h_pl(ADM_gall_pl,ADM_kall)
+    real(RP) :: rhogkin_v   (ADM_gall,   ADM_kall) ! rho X ( G^1/2 X gamma2 ) X kin (vertical)
+    real(RP) :: rhogkin_v_pl(ADM_gall_pl,ADM_kall)
 
     integer :: g, k, l
     !---------------------------------------------------------------------------

@@ -77,29 +77,29 @@ contains
     implicit none
 
     integer, intent(in)  :: ijdim
-    REAL(RP), intent(in)  :: lat(ijdim)
-    REAL(RP), intent(in)  :: pre(ijdim,kdim)
-    REAL(RP), intent(in)  :: tem(ijdim,kdim)
-    REAL(RP), intent(in)  :: vx (ijdim,kdim)
-    REAL(RP), intent(in)  :: vy (ijdim,kdim)
-    REAL(RP), intent(in)  :: vz (ijdim,kdim)
-    REAL(RP), intent(out) :: fvx(ijdim,kdim)
-    REAL(RP), intent(out) :: fvy(ijdim,kdim)
-    REAL(RP), intent(out) :: fvz(ijdim,kdim)
-    REAL(RP), intent(out) :: fw (ijdim,kdim)
-    REAL(RP), intent(out) :: fe (ijdim,kdim)
+    real(RP), intent(in)  :: lat(ijdim)
+    real(RP), intent(in)  :: pre(ijdim,kdim)
+    real(RP), intent(in)  :: tem(ijdim,kdim)
+    real(RP), intent(in)  :: vx (ijdim,kdim)
+    real(RP), intent(in)  :: vy (ijdim,kdim)
+    real(RP), intent(in)  :: vz (ijdim,kdim)
+    real(RP), intent(out) :: fvx(ijdim,kdim)
+    real(RP), intent(out) :: fvy(ijdim,kdim)
+    real(RP), intent(out) :: fvz(ijdim,kdim)
+    real(RP), intent(out) :: fw (ijdim,kdim)
+    real(RP), intent(out) :: fe (ijdim,kdim)
 
-    REAL(RP) :: T_eq, acl, asl, ap0
-    REAL(RP), parameter :: T_eq2 = 200.0_RP
-    REAL(RP), parameter :: DT_y  =  60.0_RP ! [K]
-    REAL(RP), parameter :: Dth_z =  10.0_RP ! [K]
+    real(RP) :: T_eq, acl, asl, ap0
+    real(RP), parameter :: T_eq2 = 200.0_RP
+    real(RP), parameter :: DT_y  =  60.0_RP ! [K]
+    real(RP), parameter :: Dth_z =  10.0_RP ! [K]
 
-    REAL(RP) :: k_t, k_v
-    REAL(RP) :: sigma, fact_sig
-    REAL(RP), parameter :: sigma_b = 0.7_RP
-    REAL(RP), parameter :: k_f     = 1.0_RP / ( 1.0_RP * 86400.0_RP )
-    REAL(RP), parameter :: k_a     = 1.0_RP / (40.0_RP * 86400.0_RP )
-    REAL(RP), parameter :: k_s     = 1.0_RP / ( 4.0_RP * 86400.0_RP )
+    real(RP) :: k_t, k_v
+    real(RP) :: sigma, fact_sig
+    real(RP), parameter :: sigma_b = 0.7_RP
+    real(RP), parameter :: k_f     = 1.0_RP / ( 1.0_RP * 86400.0_RP )
+    real(RP), parameter :: k_a     = 1.0_RP / (40.0_RP * 86400.0_RP )
+    real(RP), parameter :: k_s     = 1.0_RP / ( 4.0_RP * 86400.0_RP )
 
     integer :: n, k
     !---------------------------------------------------------------------------

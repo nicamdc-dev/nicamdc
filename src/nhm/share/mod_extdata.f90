@@ -68,15 +68,15 @@ module mod_extdata
      integer                 :: kall              !--- number of layer
      integer                 :: num_of_data       !--- number of data
      integer, pointer        :: data_date(:,:)    !--- date of each data piece
-     REAL(RP), pointer        :: data_time(:)      !--- time[sec] of each data piecce
+     real(RP), pointer        :: data_time(:)      !--- time[sec] of each data piecce
      integer                 :: data_rec(2)       !--- data record ( forward & backward )
      integer                 :: fix_rec           !--- record number if it's fixed
      logical                 :: opt_fix_rec       !--- flag for fix record number
      logical                 :: opt_monthly_cnst  !--- no time interpolation in a month
      logical                 :: opt_periodic_year !--- flag for periodic year
-     REAL(RP)                 :: defval            !--- default value
-     REAL(RP), pointer        :: v(:,:,:,:)        !--- data stoarege for regular region
-     REAL(RP), pointer        :: v_pl(:,:,:,:)     !--- data stoarege for poler region
+     real(RP)                 :: defval            !--- default value
+     real(RP), pointer        :: v(:,:,:,:)        !--- data stoarege for regular region
+     real(RP), pointer        :: v_pl(:,:,:,:)     !--- data stoarege for poler region
   end type extdatainfo
 
   type(extdatainfo), allocatable, private :: info(:)
@@ -117,7 +117,7 @@ contains
     logical                     :: opt_fix_rec
     logical                     :: opt_monthly_cnst
     logical                     :: opt_periodic_year
-    REAL(RP)                     :: defval
+    real(RP)                     :: defval
     ! [Add] 12/02/01 T.Seiki
     integer :: ddata_date(6)
     logical :: opt_increment_date
@@ -140,7 +140,7 @@ contains
          opt_periodic_year, &
          defval
 
-    REAL(RP) :: csec !!! [Add] T.Seiki, xxxxxx
+    real(RP) :: csec !!! [Add] T.Seiki, xxxxxx
     integer :: cdate(6)
 
     integer :: ierr
@@ -401,19 +401,19 @@ contains
       calendar_ss2yh
     implicit none
 
-    REAL(RP),          intent(inout) :: gdata(:,:) ! data is inout to retain initilized value.
+    real(RP),          intent(inout) :: gdata(:,:) ! data is inout to retain initilized value.
     character(len=*), intent(in)    :: DNAME      ! data name
     integer,          intent(in)    :: l_region
-    REAL(RP),          intent(in)    :: ctime      ! current time
+    real(RP),          intent(in)    :: ctime      ! current time
     logical,          intent(out)   :: eflag
     !
-    REAL(RP) :: dt !-- delta t between two timestep data
-    REAL(RP) :: wt !-- t weight of two timestep data
+    real(RP) :: dt !-- delta t between two timestep data
+    real(RP) :: wt !-- t weight of two timestep data
 
     !--- data ID
     integer :: np
     integer :: data_date_prev(6), cdate(6)
-    REAL(RP) :: data_time_prev
+    real(RP) :: data_time_prev
 
     integer :: kall, gall
     integer :: im, n, k

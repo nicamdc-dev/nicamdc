@@ -123,38 +123,38 @@ contains
        history_in
     implicit none
 
-    REAL(RP) :: rhog  (ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: rhogvx(ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: rhogvy(ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: rhogvz(ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: rhogw (ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: rhoge (ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: rhogq (ADM_gall_in,ADM_kall,ADM_lall,TRC_vmax)
-    REAL(RP) :: rho   (ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: pre   (ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: tem   (ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: vx    (ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: vy    (ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: vz    (ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: w     (ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: q     (ADM_gall_in,ADM_kall,ADM_lall,TRC_vmax)
+    real(RP) :: rhog  (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: rhogvx(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: rhogvy(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: rhogvz(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: rhogw (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: rhoge (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: rhogq (ADM_gall_in,ADM_kall,ADM_lall,TRC_vmax)
+    real(RP) :: rho   (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: pre   (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: tem   (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: vx    (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: vy    (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: vz    (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: w     (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: q     (ADM_gall_in,ADM_kall,ADM_lall,TRC_vmax)
 
     ! forcing tendency
-    REAL(RP) :: fvx(ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: fvy(ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: fvz(ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: fw (ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: fe (ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: fq (ADM_gall_in,ADM_kall,ADM_lall,TRC_VMAX)
+    real(RP) :: fvx(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: fvy(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: fvz(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: fw (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: fe (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: fq (ADM_gall_in,ADM_kall,ADM_lall,TRC_VMAX)
 
     ! geometry, coordinate
-    REAL(RP) :: gsgam2 (ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: gsgam2h(ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: phi    (ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: z      (ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP) :: lat    (ADM_gall_in,ADM_lall)
+    real(RP) :: gsgam2 (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: gsgam2h(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: phi    (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: z      (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: lat    (ADM_gall_in,ADM_lall)
 
-    REAL(RP) :: frhogq(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: frhogq(ADM_gall_in,ADM_kall,ADM_lall)
 
     integer :: l, nq
     !---------------------------------------------------------------------------
@@ -301,19 +301,19 @@ contains
        test12_velocity
     implicit none
 
-    REAL(RP), intent(inout) :: PROG    (ADM_gall,   ADM_kall,ADM_lall,   nmax_PROG) ! prognostic variables
-    REAL(RP), intent(inout) :: PROG_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_PROG)
+    real(RP), intent(inout) :: PROG    (ADM_gall,   ADM_kall,ADM_lall,   nmax_PROG) ! prognostic variables
+    real(RP), intent(inout) :: PROG_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_PROG)
 
-    REAL(RP) :: vx     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_x
-    REAL(RP) :: vx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: vy     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_y
-    REAL(RP) :: vy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: vz     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_z
-    REAL(RP) :: vz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: w      (ADM_gall,   ADM_kall,ADM_lall   ) ! vertical velocity
-    REAL(RP) :: w_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: vx     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_x
+    real(RP) :: vx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: vy     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_y
+    real(RP) :: vy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: vz     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_z
+    real(RP) :: vz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: w      (ADM_gall,   ADM_kall,ADM_lall   ) ! vertical velocity
+    real(RP) :: w_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    REAL(RP), save :: time = 0.0_RP ! for tracer advection test  [add; original by H.Miura] 20130612 R.Yoshida
+    real(RP), save :: time = 0.0_RP ! for tracer advection test  [add; original by H.Miura] 20130612 R.Yoshida
 
     integer :: n, k ,l
     !---------------------------------------------------------------------------

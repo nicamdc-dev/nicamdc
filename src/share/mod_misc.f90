@@ -165,11 +165,11 @@ contains
     !
     implicit none
     !
-    REAL(RP),intent(inout) :: lat, lon
-    REAL(RP),intent(in) :: x,y,z
+    real(RP),intent(inout) :: lat, lon
+    real(RP),intent(in) :: x,y,z
     !
-    REAL(RP), parameter :: epsilon = 1.E-30
-    REAL(RP) :: leng,leng_xy
+    real(RP), parameter :: epsilon = 1.E-30
+    real(RP) :: leng,leng_xy
     !
     leng=sqrt(x*x+y*y+z*z)
     !
@@ -229,48 +229,48 @@ contains
     integer, parameter :: ix = 1
     integer, parameter :: iy = 2
     integer, parameter :: iz = 3
-    REAL(RP), parameter :: pi  = 3.14159265358979323846_RP
+    real(RP), parameter :: pi  = 3.14159265358979323846_RP
     !
-    REAL(RP) :: area
-    REAL(RP),intent(in) :: a(ix:iz),b(ix:iz),c(ix:iz)
+    real(RP) :: area
+    real(RP),intent(in) :: a(ix:iz),b(ix:iz),c(ix:iz)
     character(len=*), intent(in) :: polygon_type
-    REAL(RP) :: radius
+    real(RP) :: radius
     !
     !
-    REAL(RP) :: v01(ix:iz)
-    REAL(RP) :: v02(ix:iz)
-    REAL(RP) :: v03(ix:iz)
+    real(RP) :: v01(ix:iz)
+    real(RP) :: v02(ix:iz)
+    real(RP) :: v03(ix:iz)
     !
-    REAL(RP) :: v11(ix:iz)
-    REAL(RP) :: v12(ix:iz)
-    REAL(RP) :: v13(ix:iz)
+    real(RP) :: v11(ix:iz)
+    real(RP) :: v12(ix:iz)
+    real(RP) :: v13(ix:iz)
     !
-    REAL(RP) :: v21(ix:iz)
-    REAL(RP) :: v22(ix:iz)
-    REAL(RP) :: v23(ix:iz)
-    REAL(RP) :: w21(ix:iz)
-    REAL(RP) :: w22(ix:iz)
-    REAL(RP) :: w23(ix:iz)
-    REAL(RP) :: w11(ix:iz)
-    REAL(RP) :: w12(ix:iz)
-    REAL(RP) :: w13(ix:iz)
+    real(RP) :: v21(ix:iz)
+    real(RP) :: v22(ix:iz)
+    real(RP) :: v23(ix:iz)
+    real(RP) :: w21(ix:iz)
+    real(RP) :: w22(ix:iz)
+    real(RP) :: w23(ix:iz)
+    real(RP) :: w11(ix:iz)
+    real(RP) :: w12(ix:iz)
+    real(RP) :: w13(ix:iz)
 
-    REAL(RP) :: v1(ix:iz)
-    REAL(RP) :: v2(ix:iz)
-    REAL(RP) :: w(ix:iz)
+    real(RP) :: v1(ix:iz)
+    real(RP) :: v2(ix:iz)
+    real(RP) :: w(ix:iz)
     !
-    REAL(RP) :: fac11,fac12,fac13
-    REAL(RP) :: fac21,fac22,fac23
+    real(RP) :: fac11,fac12,fac13
+    real(RP) :: fac21,fac22,fac23
     !
-    REAL(RP) :: r_v01_x_v01,r_v02_x_v02,r_v03_x_v03
+    real(RP) :: r_v01_x_v01,r_v02_x_v02,r_v03_x_v03
     !
-    REAL(RP) :: ang(3)
-    REAL(RP) :: len
+    real(RP) :: ang(3)
+    real(RP) :: len
     !
     ! S.Iga060209=>
-    REAL(RP), optional:: critical
+    real(RP), optional:: critical
     ! S.Iga060209>=
-    REAL(RP):: epsi
+    real(RP):: epsi
 
 
     ! S.Iga060209=>
@@ -415,48 +415,48 @@ contains
     integer, parameter :: ix = 1
     integer, parameter :: iy = 2
     integer, parameter :: iz = 3
-    REAL(RP), parameter :: pi  = 3.14159265358979323846_RP
+    real(RP), parameter :: pi  = 3.14159265358979323846_RP
     !
-    REAL(RP) :: area
-    REAL(RP),intent(in) :: a(ix:iz),b(ix:iz),c(ix:iz)
+    real(RP) :: area
+    real(RP),intent(in) :: a(ix:iz),b(ix:iz),c(ix:iz)
     character(len=*), intent(in) :: polygon_type
-    REAL(RP) :: radius
+    real(RP) :: radius
     !
     !
-    REAL(RP) :: v01(ix:iz)
-    REAL(RP) :: v02(ix:iz)
-    REAL(RP) :: v03(ix:iz)
+    real(RP) :: v01(ix:iz)
+    real(RP) :: v02(ix:iz)
+    real(RP) :: v03(ix:iz)
     !
-    REAL(RP) :: v11(ix:iz)
-    REAL(RP) :: v12(ix:iz)
-    REAL(RP) :: v13(ix:iz)
+    real(RP) :: v11(ix:iz)
+    real(RP) :: v12(ix:iz)
+    real(RP) :: v13(ix:iz)
     !
-    REAL(RP) :: v21(ix:iz)
-    REAL(RP) :: v22(ix:iz)
-    REAL(RP) :: v23(ix:iz)
-    REAL(RP) :: w21(ix:iz)
-    REAL(RP) :: w22(ix:iz)
-    REAL(RP) :: w23(ix:iz)
-    REAL(RP) :: w11(ix:iz)
-    REAL(RP) :: w12(ix:iz)
-    REAL(RP) :: w13(ix:iz)
+    real(RP) :: v21(ix:iz)
+    real(RP) :: v22(ix:iz)
+    real(RP) :: v23(ix:iz)
+    real(RP) :: w21(ix:iz)
+    real(RP) :: w22(ix:iz)
+    real(RP) :: w23(ix:iz)
+    real(RP) :: w11(ix:iz)
+    real(RP) :: w12(ix:iz)
+    real(RP) :: w13(ix:iz)
 
-    REAL(RP) :: v1(ix:iz)
-    REAL(RP) :: v2(ix:iz)
-    REAL(RP) :: w(ix:iz)
+    real(RP) :: v1(ix:iz)
+    real(RP) :: v2(ix:iz)
+    real(RP) :: w(ix:iz)
     !
-    REAL(RP) :: fac11,fac12,fac13
-    REAL(RP) :: fac21,fac22,fac23
+    real(RP) :: fac11,fac12,fac13
+    real(RP) :: fac21,fac22,fac23
     !
-    REAL(RP) :: r_v01_x_v01,r_v02_x_v02,r_v03_x_v03
+    real(RP) :: r_v01_x_v01,r_v02_x_v02,r_v03_x_v03
     !
-    REAL(RP) :: ang(3)
-    REAL(RP) :: len
-    REAL(RP) :: a16(3)
-    REAL(RP) :: area16
+    real(RP) :: ang(3)
+    real(RP) :: len
+    real(RP) :: a16(3)
+    real(RP) :: area16
 
-    REAL(RP), optional:: critical
-    REAL(RP):: epsi
+    real(RP), optional:: critical
+    real(RP):: epsi
 
 
     if ( .not. present(critical)) then
@@ -603,16 +603,16 @@ contains
     integer, parameter :: iy = 2
     integer, parameter :: iz = 3
     !
-    REAL(RP),intent(in) :: vs(ix:iz)
-    REAL(RP),intent(in) :: ve(ix:iz)
-    REAL(RP),intent(inout) :: tv(ix:iz)
-    REAL(RP),intent(inout) :: nv(ix:iz)
+    real(RP),intent(in) :: vs(ix:iz)
+    real(RP),intent(in) :: ve(ix:iz)
+    real(RP),intent(inout) :: tv(ix:iz)
+    real(RP),intent(inout) :: nv(ix:iz)
     character(len=*), intent(in) :: polygon_type
-    REAL(RP), intent(in) :: radius
-    REAL(RP) :: vec_len
+    real(RP), intent(in) :: radius
+    real(RP) :: vec_len
     !
-    REAL(RP) :: len
-    REAL(RP) :: fact_nv,fact_tv
+    real(RP) :: len
+    real(RP) :: fact_nv,fact_tv
     !
     if(trim(polygon_type)=='ON_SPHERE') then
        !
@@ -699,8 +699,8 @@ contains
     ! exterior product of vector a->b and c->d
     implicit none
 
-    REAL(RP), intent(out) :: nv(3)                  ! normal vector
-    REAL(RP), intent(in ) :: a(3), b(3), c(3), d(3) ! x,y,z(cartesian)
+    real(RP), intent(out) :: nv(3)                  ! normal vector
+    real(RP), intent(in ) :: a(3), b(3), c(3), d(3) ! x,y,z(cartesian)
     !---------------------------------------------------------------------------
 
     nv(1) = ( b(2)-a(2) ) * ( d(3)-c(3) ) &
@@ -718,8 +718,8 @@ contains
     ! interior product of vector a->b and c->d
     implicit none
 
-    REAL(RP), intent(out) :: l
-    REAL(RP), intent(in ) :: a(3), b(3), c(3), d(3) ! x,y,z(cartesian)
+    real(RP), intent(out) :: l
+    real(RP), intent(in ) :: a(3), b(3), c(3), d(3) ! x,y,z(cartesian)
     !---------------------------------------------------------------------------
     ! if a=c=zero-vector and b=d, result is abs|a|^2
 
@@ -735,8 +735,8 @@ contains
     ! length of vector o->a
     implicit none
 
-    REAL(RP), intent(out) :: l
-    REAL(RP), intent(in ) :: a(3) ! x,y,z(cartesian)
+    real(RP), intent(out) :: l
+    real(RP), intent(in ) :: a(3) ! x,y,z(cartesian)
     !---------------------------------------------------------------------------
 
     l = a(1)*a(1) + a(2)*a(2) + a(3)*a(3)
@@ -750,10 +750,10 @@ contains
     ! calc angle between two vector(b->a,b->c)
     implicit none
 
-    REAL(RP), intent(out) :: angle
-    REAL(RP), intent(in ) :: a(3), b(3), c(3)
+    real(RP), intent(out) :: angle
+    real(RP), intent(in ) :: a(3), b(3), c(3)
 
-    REAL(RP) :: nv(3), nvlenS, nvlenC
+    real(RP) :: nv(3), nvlenS, nvlenC
     !---------------------------------------------------------------------
 
     call MISC_3dvec_dot  ( nvlenC, b, a, b, c )
@@ -772,28 +772,28 @@ contains
        result(area)    !--- OUT : triangle area
     implicit none
 
-    REAL(RP) :: area
-    REAL(RP),          intent( in) :: a(3), b(3), c(3)
+    real(RP) :: area
+    real(RP),          intent( in) :: a(3), b(3), c(3)
     character(len=*), intent( in) :: polygon_type
-    REAL(RP),          intent( in) :: radius
+    real(RP),          intent( in) :: radius
 
-    REAL(RP), parameter :: o(3) = 0.0_RP
+    real(RP), parameter :: o(3) = 0.0_RP
 
     ! ON_PLANE
-    REAL(RP) :: abc(3)
-    REAL(RP) :: prd, r
+    real(RP) :: abc(3)
+    real(RP) :: prd, r
 
     ! ON_SPHERE
-    REAL(RP) :: angle(3)
-    REAL(RP) :: oaob(3), oaoc(3)
-    REAL(RP) :: oboc(3), oboa(3)
-    REAL(RP) :: ocoa(3), ocob(3)
-    REAL(RP) :: abab, acac
-    REAL(RP) :: bcbc, baba
-    REAL(RP) :: caca, cbcb
+    real(RP) :: angle(3)
+    real(RP) :: oaob(3), oaoc(3)
+    real(RP) :: oboc(3), oboa(3)
+    real(RP) :: ocoa(3), ocob(3)
+    real(RP) :: abab, acac
+    real(RP) :: bcbc, baba
+    real(RP) :: caca, cbcb
 
-    REAL(RP), parameter :: eps = 1.E-16_RP
-    REAL(RP) :: pi
+    real(RP), parameter :: eps = 1.E-16_RP
+    real(RP) :: pi
     !---------------------------------------------------------------------------
 
     pi = atan(1.0_RP) * 4.0_RP
@@ -879,17 +879,17 @@ contains
     logical, intent(out) :: ifcross
     ! .true. : line a->b and c->d intersect
     ! .false.: line a->b and c->d do not intersect and p = (0,0)
-    REAL(RP), intent(out) :: p(3) ! intersection point
-    REAL(RP), intent(in ) :: a(3), b(3), c(3), d(3)
+    real(RP), intent(out) :: p(3) ! intersection point
+    real(RP), intent(in ) :: a(3), b(3), c(3), d(3)
 
-    REAL(RP), parameter :: o(3) = 0.0_RP
+    real(RP), parameter :: o(3) = 0.0_RP
 
-    REAL(RP)            :: oaob(3), ocod(3), cdab(3)
-    REAL(RP)            :: ip, length
-    REAL(RP)            :: angle_aop, angle_pob, angle_aob
-    REAL(RP)            :: angle_cop, angle_pod, angle_cod
+    real(RP)            :: oaob(3), ocod(3), cdab(3)
+    real(RP)            :: ip, length
+    real(RP)            :: angle_aop, angle_pob, angle_aob
+    real(RP)            :: angle_cop, angle_pod, angle_cod
 
-    REAL(RP), parameter :: eps = 1.E-12_RP
+    real(RP), parameter :: eps = 1.E-12_RP
     !---------------------------------------------------------------------
 
     call MISC_3dvec_cross( oaob, o, a, o, b )
@@ -936,14 +936,14 @@ contains
     implicit none
 
     integer, intent(in)    :: nvert
-    REAL(RP), intent(inout) :: vertex(nvert,3)
+    real(RP), intent(inout) :: vertex(nvert,3)
 
-    REAL(RP), parameter :: o(3) = 0.0_RP
-    REAL(RP)            :: v1(3), v2(3), v3(3)
-    REAL(RP)            :: xp(3), ip
-    REAL(RP)            :: angle1, angle2
+    real(RP), parameter :: o(3) = 0.0_RP
+    real(RP)            :: v1(3), v2(3), v3(3)
+    real(RP)            :: xp(3), ip
+    real(RP)            :: angle1, angle2
 
-    REAL(RP), parameter :: eps = 1.E-12_RP
+    real(RP), parameter :: eps = 1.E-12_RP
 
     integer :: i, j
     !---------------------------------------------------------------------
@@ -1010,9 +1010,9 @@ contains
        radius    ) !--- IN    : radius
     implicit none
 
-    REAL(RP),intent(inout) :: x, y, z
-    REAL(RP),intent(in)    :: lat, lon
-    REAL(RP),intent(in)    :: radius
+    real(RP),intent(inout) :: x, y, z
+    real(RP),intent(in)    :: lat, lon
+    real(RP),intent(in)    :: radius
     !---------------------------------------------------------------------------
 
     x = radius * cos(lat) * cos(lon)
@@ -1037,12 +1037,12 @@ contains
        dist  )
     implicit none
 
-    REAL(RP), intent(in)  :: r          ! radius in meter
-    REAL(RP), intent(in)  :: lon1, lat1 ! in radian
-    REAL(RP), intent(in)  :: lon2, lat2 ! in radian
-    REAL(RP), intent(out) :: dist       ! distance of the two points in meter
+    real(RP), intent(in)  :: r          ! radius in meter
+    real(RP), intent(in)  :: lon1, lat1 ! in radian
+    real(RP), intent(in)  :: lon2, lat2 ! in radian
+    real(RP), intent(out) :: dist       ! distance of the two points in meter
 
-    REAL(RP) :: gmm, gno_x, gno_y
+    real(RP) :: gmm, gno_x, gno_y
     !-----------------------------------------------------------------------
 
     gmm = sin(lat1) * sin(lat2) &

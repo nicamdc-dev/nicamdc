@@ -62,71 +62,71 @@ module mod_vmtr
   integer, public, parameter :: I_b_GZZH = 6
 
 #ifdef _FIXEDINDEX_
-  REAL(RP), public              :: VMTR_GAM2        (ADM_gall   ,ADM_kall,ADM_lall   )
-  REAL(RP), public              :: VMTR_GAM2_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-  REAL(RP), public              :: VMTR_GAM2H       (ADM_gall   ,ADM_kall,ADM_lall   )
-  REAL(RP), public              :: VMTR_GAM2H_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-  REAL(RP), public              :: VMTR_GSGAM2      (ADM_gall   ,ADM_kall,ADM_lall   )
-  REAL(RP), public              :: VMTR_GSGAM2_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-  REAL(RP), public              :: VMTR_GSGAM2H     (ADM_gall   ,ADM_kall,ADM_lall   )
-  REAL(RP), public              :: VMTR_GSGAM2H_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_GAM2        (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_GAM2_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_GAM2H       (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_GAM2H_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_GSGAM2      (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_GSGAM2_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_GSGAM2H     (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_GSGAM2H_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-  REAL(RP), public              :: VMTR_RGSQRTH     (ADM_gall   ,ADM_kall,ADM_lall   )
-  REAL(RP), public              :: VMTR_RGSQRTH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-  REAL(RP), public              :: VMTR_RGAM        (ADM_gall   ,ADM_kall,ADM_lall   )
-  REAL(RP), public              :: VMTR_RGAM_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-  REAL(RP), public              :: VMTR_RGAMH       (ADM_gall   ,ADM_kall,ADM_lall   )
-  REAL(RP), public              :: VMTR_RGAMH_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-  REAL(RP), public              :: VMTR_RGSGAM2     (ADM_gall   ,ADM_kall,ADM_lall   )
-  REAL(RP), public              :: VMTR_RGSGAM2_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-  REAL(RP), public              :: VMTR_RGSGAM2H    (ADM_gall   ,ADM_kall,ADM_lall   )
-  REAL(RP), public              :: VMTR_RGSGAM2H_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_RGSQRTH     (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_RGSQRTH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_RGAM        (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_RGAM_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_RGAMH       (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_RGAMH_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_RGSGAM2     (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_RGSGAM2_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_RGSGAM2H    (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_RGSGAM2H_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-  REAL(RP), public              :: VMTR_W2Cfact     (ADM_gall,   ADM_kall,2,ADM_lall   )
-  REAL(RP), public              :: VMTR_W2Cfact_pl  (ADM_gall_pl,ADM_kall,2,ADM_lall_pl)
-  REAL(RP), public              :: VMTR_C2Wfact     (ADM_gall,   ADM_kall,2,ADM_lall   )
-  REAL(RP), public              :: VMTR_C2Wfact_pl  (ADM_gall_pl,ADM_kall,2,ADM_lall_pl)
-  REAL(RP), public              :: VMTR_C2WfactGz   (ADM_gall,   ADM_kall,6,ADM_lall   )
-  REAL(RP), public              :: VMTR_C2WfactGz_pl(ADM_gall_pl,ADM_kall,6,ADM_lall_pl)
+  real(RP), public              :: VMTR_W2Cfact     (ADM_gall,   ADM_kall,2,ADM_lall   )
+  real(RP), public              :: VMTR_W2Cfact_pl  (ADM_gall_pl,ADM_kall,2,ADM_lall_pl)
+  real(RP), public              :: VMTR_C2Wfact     (ADM_gall,   ADM_kall,2,ADM_lall   )
+  real(RP), public              :: VMTR_C2Wfact_pl  (ADM_gall_pl,ADM_kall,2,ADM_lall_pl)
+  real(RP), public              :: VMTR_C2WfactGz   (ADM_gall,   ADM_kall,6,ADM_lall   )
+  real(RP), public              :: VMTR_C2WfactGz_pl(ADM_gall_pl,ADM_kall,6,ADM_lall_pl)
 
-  REAL(RP), public              :: VMTR_VOLUME      (ADM_gall   ,ADM_kall,ADM_lall   )
-  REAL(RP), public              :: VMTR_VOLUME_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_VOLUME      (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_VOLUME_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-  REAL(RP), public              :: VMTR_PHI         (ADM_gall   ,ADM_kall,ADM_lall   )
-  REAL(RP), public              :: VMTR_PHI_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+  real(RP), public              :: VMTR_PHI         (ADM_gall   ,ADM_kall,ADM_lall   )
+  real(RP), public              :: VMTR_PHI_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 #else
-  REAL(RP), public, allocatable :: VMTR_GAM2        (:,:,:)   ! Gamma^2 at the full level
-  REAL(RP), public, allocatable :: VMTR_GAM2_pl     (:,:,:)
-  REAL(RP), public, allocatable :: VMTR_GAM2H       (:,:,:)   ! Gamma^2 at the half level
-  REAL(RP), public, allocatable :: VMTR_GAM2H_pl    (:,:,:)
-  REAL(RP), public, allocatable :: VMTR_GSGAM2      (:,:,:)   ! G^1/2 X Gamma^2 at the full level
-  REAL(RP), public, allocatable :: VMTR_GSGAM2_pl   (:,:,:)
-  REAL(RP), public, allocatable :: VMTR_GSGAM2H     (:,:,:)   ! G^1/2 X Gamma^2 at the half level
-  REAL(RP), public, allocatable :: VMTR_GSGAM2H_pl  (:,:,:)
+  real(RP), public, allocatable :: VMTR_GAM2        (:,:,:)   ! Gamma^2 at the full level
+  real(RP), public, allocatable :: VMTR_GAM2_pl     (:,:,:)
+  real(RP), public, allocatable :: VMTR_GAM2H       (:,:,:)   ! Gamma^2 at the half level
+  real(RP), public, allocatable :: VMTR_GAM2H_pl    (:,:,:)
+  real(RP), public, allocatable :: VMTR_GSGAM2      (:,:,:)   ! G^1/2 X Gamma^2 at the full level
+  real(RP), public, allocatable :: VMTR_GSGAM2_pl   (:,:,:)
+  real(RP), public, allocatable :: VMTR_GSGAM2H     (:,:,:)   ! G^1/2 X Gamma^2 at the half level
+  real(RP), public, allocatable :: VMTR_GSGAM2H_pl  (:,:,:)
 
-  REAL(RP), public, allocatable :: VMTR_RGSQRTH     (:,:,:)   ! 1 / G^1/2 at the half level
-  REAL(RP), public, allocatable :: VMTR_RGSQRTH_pl  (:,:,:)
-  REAL(RP), public, allocatable :: VMTR_RGAM        (:,:,:)   ! 1 / Gamma at the integer level
-  REAL(RP), public, allocatable :: VMTR_RGAM_pl     (:,:,:)
-  REAL(RP), public, allocatable :: VMTR_RGAMH       (:,:,:)   ! 1 / Gamma at the half level
-  REAL(RP), public, allocatable :: VMTR_RGAMH_pl    (:,:,:)
-  REAL(RP), public, allocatable :: VMTR_RGSGAM2     (:,:,:)   ! 1 / (G^1/2 X Gamma^2) at the full level
-  REAL(RP), public, allocatable :: VMTR_RGSGAM2_pl  (:,:,:)
-  REAL(RP), public, allocatable :: VMTR_RGSGAM2H    (:,:,:)   ! 1 / (G^1/2 X Gamma^2) at the half level
-  REAL(RP), public, allocatable :: VMTR_RGSGAM2H_pl (:,:,:)
+  real(RP), public, allocatable :: VMTR_RGSQRTH     (:,:,:)   ! 1 / G^1/2 at the half level
+  real(RP), public, allocatable :: VMTR_RGSQRTH_pl  (:,:,:)
+  real(RP), public, allocatable :: VMTR_RGAM        (:,:,:)   ! 1 / Gamma at the integer level
+  real(RP), public, allocatable :: VMTR_RGAM_pl     (:,:,:)
+  real(RP), public, allocatable :: VMTR_RGAMH       (:,:,:)   ! 1 / Gamma at the half level
+  real(RP), public, allocatable :: VMTR_RGAMH_pl    (:,:,:)
+  real(RP), public, allocatable :: VMTR_RGSGAM2     (:,:,:)   ! 1 / (G^1/2 X Gamma^2) at the full level
+  real(RP), public, allocatable :: VMTR_RGSGAM2_pl  (:,:,:)
+  real(RP), public, allocatable :: VMTR_RGSGAM2H    (:,:,:)   ! 1 / (G^1/2 X Gamma^2) at the half level
+  real(RP), public, allocatable :: VMTR_RGSGAM2H_pl (:,:,:)
 
-  REAL(RP), public, allocatable :: VMTR_W2Cfact     (:,:,:,:) ! factor for half to full level
-  REAL(RP), public, allocatable :: VMTR_W2Cfact_pl  (:,:,:,:)
-  REAL(RP), public, allocatable :: VMTR_C2Wfact     (:,:,:,:) ! factor for full to half level
-  REAL(RP), public, allocatable :: VMTR_C2Wfact_pl  (:,:,:,:)
-  REAL(RP), public, allocatable :: VMTR_C2WfactGz   (:,:,:,:) ! factor for full to half level with Gz
-  REAL(RP), public, allocatable :: VMTR_C2WfactGz_pl(:,:,:,:)
+  real(RP), public, allocatable :: VMTR_W2Cfact     (:,:,:,:) ! factor for half to full level
+  real(RP), public, allocatable :: VMTR_W2Cfact_pl  (:,:,:,:)
+  real(RP), public, allocatable :: VMTR_C2Wfact     (:,:,:,:) ! factor for full to half level
+  real(RP), public, allocatable :: VMTR_C2Wfact_pl  (:,:,:,:)
+  real(RP), public, allocatable :: VMTR_C2WfactGz   (:,:,:,:) ! factor for full to half level with Gz
+  real(RP), public, allocatable :: VMTR_C2WfactGz_pl(:,:,:,:)
 
-  REAL(RP), public, allocatable :: VMTR_VOLUME      (:,:,:)   ! volume at the full level
-  REAL(RP), public, allocatable :: VMTR_VOLUME_pl   (:,:,:)
+  real(RP), public, allocatable :: VMTR_VOLUME      (:,:,:)   ! volume at the full level
+  real(RP), public, allocatable :: VMTR_VOLUME_pl   (:,:,:)
 
-  REAL(RP), public, allocatable :: VMTR_PHI         (:,:,:)   ! geopotential at the full level
-  REAL(RP), public, allocatable :: VMTR_PHI_pl      (:,:,:)
+  real(RP), public, allocatable :: VMTR_PHI         (:,:,:)   ! geopotential at the full level
+  real(RP), public, allocatable :: VMTR_PHI_pl      (:,:,:)
 #endif
 
   !-----------------------------------------------------------------------------
@@ -188,33 +188,33 @@ contains
     integer, parameter :: JY      = 5
     integer, parameter :: JZ      = 6
 
-    REAL(RP) :: var   (ADM_gall,   ADM_kall,ADM_lall,   var_max)
-    REAL(RP) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,var_max)
+    real(RP) :: var   (ADM_gall,   ADM_kall,ADM_lall,   var_max)
+    real(RP) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,var_max)
 
     !--- G^1/2
-    REAL(RP) :: GSQRT    (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: GSQRT_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: GSQRTH   (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: GSQRTH_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GSQRT    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GSQRT_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GSQRTH   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GSQRTH_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !--- Gamma factor
-    REAL(RP) :: GAM      (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: GAM_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: GAMH     (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: GAMH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GAM      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GAM_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GAMH     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GAMH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !--- vector G^z at the full level
-    REAL(RP) :: GZX      (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: GZX_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: GZY      (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: GZY_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: GZZ      (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: GZZ_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GZX      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GZX_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GZY      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GZY_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GZZ      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GZZ_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !--- vector G^z at the half level
-    REAL(RP) :: GZXH     (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: GZXH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: GZYH     (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: GZYH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: GZZH     (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: GZZH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GZXH     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GZXH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GZYH     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GZYH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: GZZH     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: GZZH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     namelist / VMTRPARAM / &
        deep

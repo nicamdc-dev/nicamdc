@@ -211,26 +211,26 @@ contains
     implicit none
 
     integer, intent(in)    :: ijdim           ! number of horizontal grid
-    REAL(RP), intent(inout) :: rho(ijdim,kdim) ! density
-    REAL(RP), intent(inout) :: vx (ijdim,kdim) ! horizontal wind (x)
-    REAL(RP), intent(inout) :: vy (ijdim,kdim) ! horizontal wind (y)
-    REAL(RP), intent(inout) :: vz (ijdim,kdim) ! horizontal wind (z)
-    REAL(RP), intent(inout) :: w  (ijdim,kdim) ! vertical   wind
-    REAL(RP), intent(inout) :: ein(ijdim,kdim) ! internal energy
-    REAL(RP), intent(inout) :: tem(ijdim,kdim) ! temperature
-    REAL(RP), intent(inout) :: pre(ijdim,kdim) ! pressure
+    real(RP), intent(inout) :: rho(ijdim,kdim) ! density
+    real(RP), intent(inout) :: vx (ijdim,kdim) ! horizontal wind (x)
+    real(RP), intent(inout) :: vy (ijdim,kdim) ! horizontal wind (y)
+    real(RP), intent(inout) :: vz (ijdim,kdim) ! horizontal wind (z)
+    real(RP), intent(inout) :: w  (ijdim,kdim) ! vertical   wind
+    real(RP), intent(inout) :: ein(ijdim,kdim) ! internal energy
+    real(RP), intent(inout) :: tem(ijdim,kdim) ! temperature
+    real(RP), intent(inout) :: pre(ijdim,kdim) ! pressure
 
-    REAL(RP), intent(inout) :: rhog  (ijdim,kdim)
-    REAL(RP), intent(inout) :: rhogvx(ijdim,kdim)
-    REAL(RP), intent(inout) :: rhogvy(ijdim,kdim)
-    REAL(RP), intent(inout) :: rhogvz(ijdim,kdim)
-    REAL(RP), intent(inout) :: rhogw (ijdim,kdim)
-    REAL(RP), intent(inout) :: rhoge (ijdim,kdim)
+    real(RP), intent(inout) :: rhog  (ijdim,kdim)
+    real(RP), intent(inout) :: rhogvx(ijdim,kdim)
+    real(RP), intent(inout) :: rhogvy(ijdim,kdim)
+    real(RP), intent(inout) :: rhogvz(ijdim,kdim)
+    real(RP), intent(inout) :: rhogw (ijdim,kdim)
+    real(RP), intent(inout) :: rhoge (ijdim,kdim)
 
-    REAL(RP), intent(in)    :: gsqrtgam2 (ijdim,kdim)
-    REAL(RP), intent(in)    :: phi       (ijdim,kdim)   ! geopotential
-    REAL(RP), intent(in)    :: c2wfact   (ijdim,kdim,2)
-    REAL(RP), intent(in)    :: c2wfact_Gz(ijdim,kdim,6)
+    real(RP), intent(in)    :: gsqrtgam2 (ijdim,kdim)
+    real(RP), intent(in)    :: phi       (ijdim,kdim)   ! geopotential
+    real(RP), intent(in)    :: c2wfact   (ijdim,kdim,2)
+    real(RP), intent(in)    :: c2wfact_Gz(ijdim,kdim,6)
 
     integer :: ij, k
     !---------------------------------------------------------------------------
@@ -325,15 +325,15 @@ contains
     implicit none
 
     integer, intent(in)    :: ijdim           ! number of horizontal grid
-    REAL(RP), intent(inout) :: tem(ijdim,kdim) ! temperature
-    REAL(RP), intent(inout) :: rho(ijdim,kdim) ! density
-    REAL(RP), intent(inout) :: pre(ijdim,kdim) ! pressure
-    REAL(RP), intent(in)    :: phi(ijdim,kdim) ! geopotential
+    real(RP), intent(inout) :: tem(ijdim,kdim) ! temperature
+    real(RP), intent(inout) :: rho(ijdim,kdim) ! density
+    real(RP), intent(inout) :: pre(ijdim,kdim) ! pressure
+    real(RP), intent(in)    :: phi(ijdim,kdim) ! geopotential
 
     integer :: ij
 
-    REAL(RP) :: z,z1,z2,z3,p1,p2,p3
-    REAL(RP) :: lag_intpl
+    real(RP) :: z,z1,z2,z3,p1,p2,p3
+    real(RP) :: lag_intpl
     lag_intpl(z,z1,p1,z2,p2,z3,p3) = ( (z-z2)*(z-z3))/((z1-z2)*(z1-z3) ) * p1 &
                                    + ( (z-z1)*(z-z3))/((z2-z1)*(z2-z3) ) * p2 &
                                    + ( (z-z1)*(z-z2))/((z3-z1)*(z3-z2) ) * p3
@@ -415,10 +415,10 @@ contains
     implicit none
 
     integer, intent(in)    :: ijdim
-    REAL(RP), intent(in)    :: rhog  (ijdim,kdim)
-    REAL(RP), intent(inout) :: rhogvx(ijdim,kdim)
-    REAL(RP), intent(inout) :: rhogvy(ijdim,kdim)
-    REAL(RP), intent(inout) :: rhogvz(ijdim,kdim)
+    real(RP), intent(in)    :: rhog  (ijdim,kdim)
+    real(RP), intent(inout) :: rhogvx(ijdim,kdim)
+    real(RP), intent(inout) :: rhogvy(ijdim,kdim)
+    real(RP), intent(inout) :: rhogvz(ijdim,kdim)
 
     integer :: ij
     !---------------------------------------------------------------------------
@@ -468,11 +468,11 @@ contains
     implicit none
 
     integer, intent(in)    :: ijdim
-    REAL(RP), intent(in)    :: rhogvx (ijdim,kdim)
-    REAL(RP), intent(in)    :: rhogvy (ijdim,kdim)
-    REAL(RP), intent(in)    :: rhogvz (ijdim,kdim)
-    REAL(RP), intent(inout) :: rhogw  (ijdim,kdim)
-    REAL(RP), intent(in)    :: c2wfact(ijdim,kdim,6)
+    real(RP), intent(in)    :: rhogvx (ijdim,kdim)
+    real(RP), intent(in)    :: rhogvy (ijdim,kdim)
+    real(RP), intent(in)    :: rhogvz (ijdim,kdim)
+    real(RP), intent(inout) :: rhogw  (ijdim,kdim)
+    real(RP), intent(in)    :: c2wfact(ijdim,kdim,6)
 
     integer :: ij, k, kk
     !---------------------------------------------------------------------------

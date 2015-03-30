@@ -35,129 +35,129 @@ module mod_cnst
   !
   !++ Public parameters & variables
   !
-  REAL(RP), public :: CNST_ERADIUS = 6.37122E6_RP ! Radius of the Earth [m]
-  REAL(RP), public :: CNST_EOHM    = 7.292E-5_RP  ! Angular velocity of the Earth [/s]
-  REAL(RP), public :: CNST_EGRAV   = 9.80616_RP  ! Gravitational accerlaration of the Earth [m/s2]
+  real(RP), public :: CNST_ERADIUS = 6.37122E6_RP ! Radius of the Earth [m]
+  real(RP), public :: CNST_EOHM    = 7.292E-5_RP  ! Angular velocity of the Earth [/s]
+  real(RP), public :: CNST_EGRAV   = 9.80616_RP  ! Gravitational accerlaration of the Earth [m/s2]
 
-  REAL(RP), public :: CNST_RAIR    =  287.0_RP   ! Gas constant of air
-  REAL(RP), public :: CNST_RVAP    =  461.5_RP   ! Gas constant of vapor
+  real(RP), public :: CNST_RAIR    =  287.0_RP   ! Gas constant of air
+  real(RP), public :: CNST_RVAP    =  461.5_RP   ! Gas constant of vapor
 
-  REAL(RP), public :: CNST_CP      = 1004.5_RP   ! Specific heat of air (consant pressure)
-  REAL(RP), public :: CNST_CV                   ! Specific heat of air (consant volume)
+  real(RP), public :: CNST_CP      = 1004.5_RP   ! Specific heat of air (consant pressure)
+  real(RP), public :: CNST_CV                   ! Specific heat of air (consant volume)
 
-  REAL(RP), public :: CNST_CPV     = 1846.0_RP   ! Specific heat of vapor (consant pressure)
-  REAL(RP), public :: CNST_CVV                  ! Specific heat of vapor (consant volume)
-  REAL(RP), public :: CNST_CL      = 4218.0_RP   ! Specific heat of water
-  REAL(RP), public :: CNST_CI      = 2006.0_RP   ! Specific heat of ice
+  real(RP), public :: CNST_CPV     = 1846.0_RP   ! Specific heat of vapor (consant pressure)
+  real(RP), public :: CNST_CVV                  ! Specific heat of vapor (consant volume)
+  real(RP), public :: CNST_CL      = 4218.0_RP   ! Specific heat of water
+  real(RP), public :: CNST_CI      = 2006.0_RP   ! Specific heat of ice
 
-  REAL(RP), public :: CNST_SOUND                ! Speed of sound at 0C, dry
+  real(RP), public :: CNST_SOUND                ! Speed of sound at 0C, dry
 
   !------ cp/cv
-  REAL(RP), public :: CNST_GAMMA
+  real(RP), public :: CNST_GAMMA
   !<----- calculated in sub[CNST_setup].
   !
   !------ R/cp
-  REAL(RP), public :: CNST_KAPPA
+  real(RP), public :: CNST_KAPPA
   !<----- calculated in sub[CNST_setup].
   !
   !------ dry lapse rate [K/m]
-  REAL(RP), public :: CNST_LAPS
+  real(RP), public :: CNST_LAPS
   !<----- calculated in sub[CNST_setup].
   !
   !------ molecular weight ( water/air )
-  REAL(RP), public :: CNST_EPSV
+  real(RP), public :: CNST_EPSV
   !<----- calculated in sub[CNST_setup].
   !
   !------ 1/epsv-1
-  REAL(RP), public :: CNST_EPSVT
+  real(RP), public :: CNST_EPSVT
   !<----- calculated in sub[CNST_setup].
   !
   !------ Density of water
-  REAL(RP), public :: CNST_DWATR = 1000.0_RP
+  real(RP), public :: CNST_DWATR = 1000.0_RP
   !
   !------ Saturate pressure of water vapor at 0C
-  REAL(RP), public :: CNST_PSAT0 = 610.7_RP
+  real(RP), public :: CNST_PSAT0 = 610.7_RP
   !<----- unit : [Pa]
   !
   !------ Latent heat of vaporizaion at 0C
-!  REAL(RP), public :: CNST_LH0   = 2.5008D+6 [mod] 20120704 H.Yashiro
-  REAL(RP), public :: CNST_LH0   = 2.501E+6_RP
+!  real(RP), public :: CNST_LH0   = 2.5008D+6 [mod] 20120704 H.Yashiro
+  real(RP), public :: CNST_LH0   = 2.501E+6_RP
   !
   !------ Latent heat of vaporizaion at 0K
-  REAL(RP), public :: CNST_LH00
+  real(RP), public :: CNST_LH00
   !<----- calculated in sub[CNST_setup].
   !
   !------ Latent heat of sublimation at 0C
-!  REAL(RP), public :: CNST_LHS0  = 2.8342D+6 [mod] 20120704 H.Yashiro
-  REAL(RP), public :: CNST_LHS0  = 2.834E+6_RP
+!  real(RP), public :: CNST_LHS0  = 2.8342D+6 [mod] 20120704 H.Yashiro
+  real(RP), public :: CNST_LHS0  = 2.834E+6_RP
   !
   !------ Latent heat of sublimation at 0K
-  REAL(RP), public :: CNST_LHS00
+  real(RP), public :: CNST_LHS00
   !<----- calculated in sub[CNST_setup].
   !
   !------ Latent heat of fusion at 0C
-  REAL(RP), public :: CNST_LHF0
+  real(RP), public :: CNST_LHF0
   !<----- calculated in sub[CNST_setup].
   !
   !------ latent heat of fusion at 0K
-  REAL(RP), public :: CNST_LHF00
+  real(RP), public :: CNST_LHF00
   !<----- calculated in sub[CNST_setup].
   !
   !------ Latent heat of melting
-  REAL(RP), public :: CNST_EMELT = 3.40E5_RP
+  real(RP), public :: CNST_EMELT = 3.40E5_RP
   !
   !------ Melting temperature of water
-  REAL(RP), public :: CNST_TMELT = 273.15_RP
+  real(RP), public :: CNST_TMELT = 273.15_RP
   !
   !------ Freeze point of sea
-  REAL(RP), public :: CNST_TFRZS  = 271.35_RP
+  real(RP), public :: CNST_TFRZS  = 271.35_RP
   !
   !------ Wet-bulb temp. rain/snow
-  REAL(RP), public :: CNST_TQICE = 273.15_RP
+  real(RP), public :: CNST_TQICE = 273.15_RP
   !
   !------ Stefan-Boltzman constant
-  REAL(RP), public :: CNST_STB   = 5.67E-8_RP
+  real(RP), public :: CNST_STB   = 5.67E-8_RP
   !
   !------ Karman constant
-  REAL(RP), public :: CNST_KARMAN = 0.4_RP
+  real(RP), public :: CNST_KARMAN = 0.4_RP
   !
   !------ Surface pressure
-  REAL(RP), public :: CNST_PRES0    = 101325.0_RP
+  real(RP), public :: CNST_PRES0    = 101325.0_RP
   !
   !------ Surface temperature
-  REAL(RP), public :: CNST_TEMS0    = 300.0_RP
+  real(RP), public :: CNST_TEMS0    = 300.0_RP
   !
   !------ Standard pressure
-  REAL(RP), public :: CNST_PRE00    = 1.0E+5_RP
+  real(RP), public :: CNST_PRE00    = 1.0E+5_RP
   !
   !------ Standard temperature
-  REAL(RP), public :: CNST_TEM00    = 273.15_RP
+  real(RP), public :: CNST_TEM00    = 273.15_RP
   !
   !------ Standard density
-  REAL(RP), public :: CNST_RHO00
+  real(RP), public :: CNST_RHO00
   !<----- calculated in sub[CNST_setup].
   !
   !====== Misc. constants ======
   !
   !------ Definition of PI
-  REAL(RP), public :: CNST_PI = 3.14159265358979323846_RP
+  real(RP), public :: CNST_PI = 3.14159265358979323846_RP
 
-  REAL(RP), public :: CNST_D2R
+  real(RP), public :: CNST_D2R
 
   !------ Allowable minimum value
-  REAL(RP), public :: CNST_EPS_ZERO = 1.E-16_RP
+  real(RP), public :: CNST_EPS_ZERO = 1.E-16_RP
   !
   !------ Allowable maximum value
-  REAL(RP), public, parameter :: CNST_MAX_REAL = 1.E+30_RP
+  real(RP), public, parameter :: CNST_MAX_REAL = 1.E+30_RP
   !
   !------ Missing value
-  REAL(RP), public, parameter :: CNST_VMISS    = 0.0_RP
+  real(RP), public, parameter :: CNST_VMISS    = 0.0_RP
   !
   !------ Undefined value
   real(RP), public :: CNST_UNDEF
   !
   !------ Undefined value
-  REAL(DP), public, parameter :: CNST_UNDEF8   = -99.9D+33
+  real(DP), public, parameter :: CNST_UNDEF8   = -99.9D+33
   !
   !------ Undefined value
   real(SP), public, parameter :: CNST_UNDEF4   = -99.9E+33
@@ -187,16 +187,16 @@ contains
        ADM_proc_stop
     implicit none
 
-    REAL(RP) :: earth_radius                 ! Earth radius
-    REAL(RP) :: earth_angvel                 ! Anguler velocity of the earth
-    REAL(RP) :: small_planet_factor = 1.0_RP ! small planet factor
-    REAL(RP) :: earth_gravity                ! Gravitational accelaration
-    REAL(RP) :: gas_cnst                     ! Gas constant of dry air
-    REAL(RP) :: gas_cnst_vap                 ! Gas constant of water vapour
-    REAL(RP) :: specific_heat_pre            ! Specific heat of air( const pre )
-    REAL(RP) :: specific_heat_pre_vap        ! Specific heat of water vapour ( const pre )
-    REAL(RP) :: latent_heat_vap              ! latent heat of vaporization LH0 ( 0 deg )
-    REAL(RP) :: latent_heat_sub              ! latent heat of sublimation LHS0 ( 0 deg )
+    real(RP) :: earth_radius                 ! Earth radius
+    real(RP) :: earth_angvel                 ! Anguler velocity of the earth
+    real(RP) :: small_planet_factor = 1.0_RP ! small planet factor
+    real(RP) :: earth_gravity                ! Gravitational accelaration
+    real(RP) :: gas_cnst                     ! Gas constant of dry air
+    real(RP) :: gas_cnst_vap                 ! Gas constant of water vapour
+    real(RP) :: specific_heat_pre            ! Specific heat of air( const pre )
+    real(RP) :: specific_heat_pre_vap        ! Specific heat of water vapour ( const pre )
+    real(RP) :: latent_heat_vap              ! latent heat of vaporization LH0 ( 0 deg )
+    real(RP) :: latent_heat_sub              ! latent heat of sublimation LHS0 ( 0 deg )
 
     namelist / CNSTPARAM / &
        earth_radius,          &

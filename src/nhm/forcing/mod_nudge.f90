@@ -53,11 +53,11 @@ module mod_nudge
   !
   !++ Private parameters & variables
   !
-  REAL(RP), private, allocatable :: NDG_fact   (:,:,:,:)
-  REAL(RP), private, allocatable :: NDG_fact_pl(:,:,:,:)
+  real(RP), private, allocatable :: NDG_fact   (:,:,:,:)
+  real(RP), private, allocatable :: NDG_fact_pl(:,:,:,:)
 
-  REAL(RP), private, allocatable :: NDG_ref   (:,:,:,:)
-  REAL(RP), private, allocatable :: NDG_ref_pl(:,:,:,:)
+  real(RP), private, allocatable :: NDG_ref   (:,:,:,:)
+  real(RP), private, allocatable :: NDG_ref_pl(:,:,:,:)
 
   integer, private :: NDG_VMAX = -1
   integer, private :: I_vx  = -1
@@ -68,11 +68,11 @@ module mod_nudge
   integer, private :: I_pre = -1
   integer, private :: I_qv  = -1
 
-  REAL(RP), private :: NDG_tau_vxvyvz = -999.0_RP
-  REAL(RP), private :: NDG_tau_w      = -999.0_RP
-  REAL(RP), private :: NDG_tau_tem    = -999.0_RP
-  REAL(RP), private :: NDG_tau_pre    = -999.0_RP
-  REAL(RP), private :: NDG_tau_qv     = -999.0_RP
+  real(RP), private :: NDG_tau_vxvyvz = -999.0_RP
+  real(RP), private :: NDG_tau_w      = -999.0_RP
+  real(RP), private :: NDG_tau_tem    = -999.0_RP
+  real(RP), private :: NDG_tau_pre    = -999.0_RP
+  real(RP), private :: NDG_tau_qv     = -999.0_RP
 
   !-----------------------------------------------------------------------------
 contains
@@ -113,12 +113,12 @@ contains
     integer :: NDG_kmax1 = 1000
 
     logical :: NDG_hwgt            = .false.     ! weighted nudging option, depending on the distance from the pole
-    REAL(RP) :: NDG_hwgt_center_lat =  35.0_RP      ! lat. of the pole ( -90<=v<=90 )
-    REAL(RP) :: NDG_hwgt_center_lon = 135.0_RP      ! lon. of the pole (-180<=v<=180)
-    REAL(RP) :: NDG_hwgt_halo1_dist =   0.0_RP      ! distance from the pole to the halo1 in [m] (0<=v<=NDG_hwgt_halo2_dist)
-    REAL(RP) :: NDG_hwgt_halo2_dist = 2.0015778D7 ! distance from the pole to the halo2 in [m] (wt_ngd_halo1<=v<=pi*r_e)
-    REAL(RP) :: NDG_hwgt_halo1_coef =   0.0_RP      ! min. coefficient (0<=v<=wt_ngd_max)
-    REAL(RP) :: NDG_hwgt_halo2_coef =   1.0_RP      ! max. coefficient (wt_ngd_min<=v<=1)
+    real(RP) :: NDG_hwgt_center_lat =  35.0_RP      ! lat. of the pole ( -90<=v<=90 )
+    real(RP) :: NDG_hwgt_center_lon = 135.0_RP      ! lon. of the pole (-180<=v<=180)
+    real(RP) :: NDG_hwgt_halo1_dist =   0.0_RP      ! distance from the pole to the halo1 in [m] (0<=v<=NDG_hwgt_halo2_dist)
+    real(RP) :: NDG_hwgt_halo2_dist = 2.0015778D7 ! distance from the pole to the halo2 in [m] (wt_ngd_halo1<=v<=pi*r_e)
+    real(RP) :: NDG_hwgt_halo1_coef =   0.0_RP      ! min. coefficient (0<=v<=wt_ngd_max)
+    real(RP) :: NDG_hwgt_halo2_coef =   1.0_RP      ! max. coefficient (wt_ngd_min<=v<=1)
 
     namelist /NUDGEPARAM/ &
        NDG_tau_vxvyvz,      &
@@ -138,15 +138,15 @@ contains
        NDG_hwgt_halo1_coef, &
        NDG_hwgt_halo2_coef
 
-    REAL(RP) :: NDG_rtau_vxvyvz
-    REAL(RP) :: NDG_rtau_w
-    REAL(RP) :: NDG_rtau_tem
-    REAL(RP) :: NDG_rtau_pre
-    REAL(RP) :: NDG_rtau_qv
+    real(RP) :: NDG_rtau_vxvyvz
+    real(RP) :: NDG_rtau_w
+    real(RP) :: NDG_rtau_tem
+    real(RP) :: NDG_rtau_pre
+    real(RP) :: NDG_rtau_qv
 
-    REAL(RP) :: wgt_vertical     (ADM_kall)
-    REAL(RP) :: wgt_horizontal   (ADM_gall   ,ADM_KNONE,ADM_lall   ,1) ! 2008/09/10 [Add] M.Hara
-    REAL(RP) :: wgt_horizontal_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,1)
+    real(RP) :: wgt_vertical     (ADM_kall)
+    real(RP) :: wgt_horizontal   (ADM_gall   ,ADM_KNONE,ADM_lall   ,1) ! 2008/09/10 [Add] M.Hara
+    real(RP) :: wgt_horizontal_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,1)
 
     integer :: k0, k1
     integer :: g, k, l
@@ -358,9 +358,9 @@ contains
        extdata_update
     implicit none
 
-    REAL(RP), intent(in) :: ctime
+    real(RP), intent(in) :: ctime
 
-    REAL(RP) :: temp(ADM_IopJop_nmax,ADM_kall)
+    real(RP) :: temp(ADM_IopJop_nmax,ADM_kall)
 
     logical :: eflag
     integer :: g, k, l, n
@@ -510,53 +510,53 @@ contains
        history_in
     implicit none
 
-    REAL(RP), intent(in)    :: rhog        (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)    :: rhog_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)    :: vx          (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)    :: vx_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)    :: vy          (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)    :: vy_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)    :: vz          (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)    :: vz_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)    :: w           (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)    :: w_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)    :: tem         (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)    :: tem_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)    :: pre         (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)    :: pre_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(inout) :: frhogvx     (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(inout) :: frhogvx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(inout) :: frhogvy     (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(inout) :: frhogvy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(inout) :: frhogvz     (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(inout) :: frhogvz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(inout) :: frhogw      (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(inout) :: frhogw_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(inout) :: frhoge      (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(inout) :: frhoge_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(inout) :: frhogetot   (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(inout) :: frhogetot_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)    :: rhog        (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: rhog_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)    :: vx          (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: vx_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)    :: vy          (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: vy_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)    :: vz          (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: vz_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)    :: w           (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: w_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)    :: tem         (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: tem_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)    :: pre         (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: pre_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: frhogvx     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: frhogvx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: frhogvy     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: frhogvy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: frhogvz     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: frhogvz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: frhogw      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: frhogw_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: frhoge      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: frhoge_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: frhogetot   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: frhogetot_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     logical, intent(in)    :: out_tendency
 
-    REAL(RP) :: dvx    (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: dvx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: dvy    (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: dvy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: dvz    (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: dvz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: dw     (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: dw_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: dein   (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: dein_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: dvx    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: dvx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: dvy    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: dvy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: dvz    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: dvz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: dw     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: dw_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: dein   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: dein_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    REAL(RP) :: du     (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: du_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: dv     (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: dv_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: dtem   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: du     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: du_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: dv     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: dv_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: dtem   (ADM_gall   ,ADM_kall,ADM_lall   )
 
-    REAL(RP) :: rhog_h
-    REAL(RP) :: NDG_ref_w
+    real(RP) :: rhog_h
+    real(RP) :: NDG_ref_w
 
     integer :: g, k, l
     !---------------------------------------------------------------------------
@@ -670,14 +670,14 @@ contains
        history_in
     implicit none
 
-    REAL(RP), intent(inout) :: rhog (ADM_gall_in,ADM_kall,ADM_lall)
-    REAL(RP), intent(inout) :: rhogq(ADM_gall_in,ADM_kall,ADM_lall,TRC_VMAX)
-    REAL(RP), intent(in)    :: dt
+    real(RP), intent(inout) :: rhog (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(inout) :: rhogq(ADM_gall_in,ADM_kall,ADM_lall,TRC_VMAX)
+    real(RP), intent(in)    :: dt
 
-    REAL(RP) :: NDG_ref_qv_in(ADM_gall_in,ADM_kall,ADM_lall) ! trimmed
-    REAL(RP) :: dqv          (ADM_gall_in,ADM_kall,ADM_lall) ! tendency of qv     [kg/kg/s]
+    real(RP) :: NDG_ref_qv_in(ADM_gall_in,ADM_kall,ADM_lall) ! trimmed
+    real(RP) :: dqv          (ADM_gall_in,ADM_kall,ADM_lall) ! tendency of qv     [kg/kg/s]
 
-    REAL(RP) :: drhogqv ! tendency of rhogqv [kg/m3/s]
+    real(RP) :: drhogqv ! tendency of rhogqv [kg/m3/s]
 
     integer :: g, k, l
     !---------------------------------------------------------------------------
@@ -740,17 +740,17 @@ contains
        history_in
     implicit none
 
-    REAL(RP), intent(in)  :: center_lon ! nudging center longitude [degree]
-    REAL(RP), intent(in)  :: center_lat ! nudging center latitude  [degree]
-    REAL(RP), intent(in)  :: halo1_dist ! distance from the pole to the halo1 in [m] (0<=v<=halo2_dist)
-    REAL(RP), intent(in)  :: halo2_dist ! distance from the pole to the halo2 in [m] (wt_ngd_halo1<=v<=pi*r_e)
-    REAL(RP), intent(in)  :: halo1_coef ! coefficient (0<=v<=wt_ngd_max)
-    REAL(RP), intent(in)  :: halo2_coef ! coefficient (wt_ngd_min<=v<=1)
-    REAL(RP), intent(out) :: weight   (ADM_gall   ,ADM_KNONE,ADM_lall   ,1)
-    REAL(RP), intent(out) :: weight_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,1)
+    real(RP), intent(in)  :: center_lon ! nudging center longitude [degree]
+    real(RP), intent(in)  :: center_lat ! nudging center latitude  [degree]
+    real(RP), intent(in)  :: halo1_dist ! distance from the pole to the halo1 in [m] (0<=v<=halo2_dist)
+    real(RP), intent(in)  :: halo2_dist ! distance from the pole to the halo2 in [m] (wt_ngd_halo1<=v<=pi*r_e)
+    real(RP), intent(in)  :: halo1_coef ! coefficient (0<=v<=wt_ngd_max)
+    real(RP), intent(in)  :: halo2_coef ! coefficient (wt_ngd_min<=v<=1)
+    real(RP), intent(out) :: weight   (ADM_gall   ,ADM_KNONE,ADM_lall   ,1)
+    real(RP), intent(out) :: weight_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,1)
 
-    REAL(RP) :: center_lon_rad, center_lat_rad ! [rad]
-    REAL(RP) :: dist, fact
+    real(RP) :: center_lon_rad, center_lat_rad ! [rad]
+    real(RP) :: dist, fact
     integer :: g, k0, l
     !---------------------------------------------------------------------------
 

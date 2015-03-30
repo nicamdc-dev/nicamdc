@@ -52,8 +52,8 @@ module mod_debug
   integer,                 private, parameter :: DEBUG_rapnlimit = 100
   integer,                 private            :: DEBUG_rapnmax   = 0
   character(len=ADM_NSYS), private            :: DEBUG_rapname(DEBUG_rapnlimit)
-  REAL(RP),                 private            :: DEBUG_raptstr(DEBUG_rapnlimit)
-  REAL(RP),                 private            :: DEBUG_rapttot(DEBUG_rapnlimit)
+  real(RP),                 private            :: DEBUG_raptstr(DEBUG_rapnlimit)
+  real(RP),                 private            :: DEBUG_rapttot(DEBUG_rapnlimit)
   integer,                 private            :: DEBUG_rapnstr(DEBUG_rapnlimit)
   integer,                 private            :: DEBUG_rapnend(DEBUG_rapnlimit)
 
@@ -85,8 +85,8 @@ contains
     implicit none
 
     character(len=*), intent(in) :: basename
-    REAL(RP),          intent(in) :: var   (:,:,:,:)
-    REAL(RP),          intent(in) :: var_pl(:,:,:,:)
+    real(RP),          intent(in) :: var   (:,:,:,:)
+    real(RP),          intent(in) :: var_pl(:,:,:,:)
 
     integer :: shp(4)
 
@@ -147,8 +147,8 @@ contains
     implicit none
 
     character(len=*), intent(in) :: basename
-    REAL(RP),          intent(in) :: var   (:,:,:,:)
-    REAL(RP),          intent(in) :: var_pl(:,:,:,:)
+    real(RP),          intent(in) :: var   (:,:,:,:)
+    real(RP),          intent(in) :: var_pl(:,:,:,:)
 
     integer :: shp(4)
 
@@ -222,8 +222,8 @@ contains
     implicit none
 
     character(len=*), intent(in) :: basename
-    REAL(RP),          intent(in) :: var   (:,:,:)
-    REAL(RP),          intent(in) :: var_pl(:,:,:)
+    real(RP),          intent(in) :: var   (:,:,:)
+    real(RP),          intent(in) :: var_pl(:,:,:)
 
     integer :: shp(3)
 
@@ -359,12 +359,12 @@ contains
        ADM_proc_stop
     implicit none
 
-    REAL(RP) :: sendbuf(1)
-    REAL(RP) :: recvbuf(ADM_prc_all)
+    real(RP) :: sendbuf(1)
+    real(RP) :: recvbuf(ADM_prc_all)
 
-    REAL(RP) :: globalavg, globalmax, globalmin
+    real(RP) :: globalavg, globalmax, globalmin
 #ifdef PAPI_OPS
-    REAL(RP) :: globalsum, total_flops
+    real(RP) :: globalsum, total_flops
 #endif
 
     integer :: datatype

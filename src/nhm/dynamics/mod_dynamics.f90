@@ -251,98 +251,98 @@ contains
     !##### OpenACC #####
     implicit none
 
-    REAL(RP) :: PROG         (ADM_gall,   ADM_kall,ADM_lall,   6)         ! prognostic variables
-    REAL(RP) :: PROG_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
-    REAL(RP) :: PROGq        (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! tracer variables
-    REAL(RP) :: PROGq_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(RP) :: PROG         (ADM_gall,   ADM_kall,ADM_lall,   6)         ! prognostic variables
+    real(RP) :: PROG_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
+    real(RP) :: PROGq        (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! tracer variables
+    real(RP) :: PROGq_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    REAL(RP) :: g_TEND       (ADM_gall,   ADM_kall,ADM_lall,   7)         ! tendency of prognostic variables
-    REAL(RP) :: g_TEND_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,7)
-    REAL(RP) :: g_TENDq      (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! tendency of tracer variables
-    REAL(RP) :: g_TENDq_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(RP) :: g_TEND       (ADM_gall,   ADM_kall,ADM_lall,   7)         ! tendency of prognostic variables
+    real(RP) :: g_TEND_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,7)
+    real(RP) :: g_TENDq      (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! tendency of tracer variables
+    real(RP) :: g_TENDq_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    REAL(RP) :: f_TEND       (ADM_gall,   ADM_kall,ADM_lall,   7)         ! forcing tendency of prognostic variables
-    REAL(RP) :: f_TEND_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,7)
-    REAL(RP) :: f_TENDq      (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! forcing tendency of tracer variables
-    REAL(RP) :: f_TENDq_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(RP) :: f_TEND       (ADM_gall,   ADM_kall,ADM_lall,   7)         ! forcing tendency of prognostic variables
+    real(RP) :: f_TEND_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,7)
+    real(RP) :: f_TENDq      (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! forcing tendency of tracer variables
+    real(RP) :: f_TENDq_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    REAL(RP) :: PROG0        (ADM_gall,   ADM_kall,ADM_lall,   6)         ! prognostic variables (save)
-    REAL(RP) :: PROG0_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
-    REAL(RP) :: PROGq0       (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! tracer variables (save)
-    REAL(RP) :: PROGq0_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(RP) :: PROG0        (ADM_gall,   ADM_kall,ADM_lall,   6)         ! prognostic variables (save)
+    real(RP) :: PROG0_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
+    real(RP) :: PROGq0       (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! tracer variables (save)
+    real(RP) :: PROGq0_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    REAL(RP) :: PROG_split   (ADM_gall,   ADM_kall,ADM_lall,   6)         ! prognostic variables (split)
-    REAL(RP) :: PROG_split_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
+    real(RP) :: PROG_split   (ADM_gall,   ADM_kall,ADM_lall,   6)         ! prognostic variables (split)
+    real(RP) :: PROG_split_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
 
-    REAL(RP) :: PROG_mean    (ADM_gall,   ADM_kall,ADM_lall   ,5)
-    REAL(RP) :: PROG_mean_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,5)
+    real(RP) :: PROG_mean    (ADM_gall,   ADM_kall,ADM_lall   ,5)
+    real(RP) :: PROG_mean_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,5)
 
     !--- density ( physical )
-    REAL(RP) :: rho   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP) :: rho_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rho   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: rho_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- horizontal velocity_x  ( physical )
-    REAL(RP) :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP) :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- horizontal velocity_y  ( physical )
-    REAL(RP) :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP) :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- horizontal velocity_z  ( physical )
-    REAL(RP) :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP) :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- vertical velocity ( physical )
-    REAL(RP) :: w   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP) :: w_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: w   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: w_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- internal energy  ( physical )
-    REAL(RP) :: ein   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP) :: ein_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: ein   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: ein_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- mass concentration of water substance ( physical )
-    REAL(RP) :: q   (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)
-    REAL(RP) :: q_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(RP) :: q   (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)
+    real(RP) :: q_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
     !--- enthalpy ( physical )
-    REAL(RP) :: eth   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP) :: eth_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: eth   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: eth_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- pressure ( physical )
-    REAL(RP) :: pre   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP) :: pre_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: pre   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: pre_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- temperature ( physical )
-    REAL(RP) :: tem   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP) :: tem_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: tem   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: tem_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- potential temperature ( physical )
-    REAL(RP) :: th   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP) :: th_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: th   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: th_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- density deviation from the base state ( G^1/2 X gamma2 )
-    REAL(RP) :: rhogd   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP) :: rhogd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhogd   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: rhogd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- pressure deviation from the base state ( G^1/2 X gamma2 )
-    REAL(RP) :: pregd   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP) :: pregd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: pregd   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: pregd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- temporary variables
-    REAL(RP) :: qd   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP) :: qd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: cv   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP) :: cv_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: qd   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: qd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: cv   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: cv_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    REAL(RP) :: pre0_kappa
+    real(RP) :: pre0_kappa
 
-    REAL(RP), parameter :: TKE_MIN = 0.0_RP
-    REAL(RP)            :: TKEg_corr
+    real(RP), parameter :: TKE_MIN = 0.0_RP
+    real(RP)            :: TKEg_corr
 
     integer :: small_step_ite
-    REAL(RP) :: large_step_dt
-    REAL(RP) :: small_step_dt
+    real(RP) :: large_step_dt
+    real(RP) :: small_step_dt
 
     logical :: ndg_TEND_out
     logical :: do_tke_correction

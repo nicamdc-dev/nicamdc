@@ -74,21 +74,21 @@ contains
     !------
     !------ Caluculate surface value.( e.g. surface pressure )
     implicit none
-    REAL(RP), intent(in)  :: var(ADM_gall,ADM_kall,ADM_lall)
-    REAL(RP), intent(in)  :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: svar(ADM_gall,ADM_KNONE,ADM_lall)
-    REAL(RP), intent(out) :: svar_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
-    REAL(RP), intent(in), optional  :: z_offset_in
+    real(RP), intent(in)  :: var(ADM_gall,ADM_kall,ADM_lall)
+    real(RP), intent(in)  :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: svar(ADM_gall,ADM_KNONE,ADM_lall)
+    real(RP), intent(out) :: svar_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    real(RP), intent(in), optional  :: z_offset_in
     !
-    REAL(RP) :: lag_intpl
-    REAL(RP) :: z,z1,p1,z2,p2,z3,p3
+    real(RP) :: lag_intpl
+    real(RP) :: z,z1,p1,z2,p2,z3,p3
     lag_intpl(z,z1,p1,z2,p2,z3,p3)             &
          = ((z-z2)*(z-z3))/((z1-z2)*(z1-z3))*p1&
          + ((z-z1)*(z-z3))/((z2-z1)*(z2-z3))*p2&
          + ((z-z1)*(z-z2))/((z3-z1)*(z3-z2))*p3
     !
     integer :: l,n
-    REAL(RP) :: z_offset
+    real(RP) :: z_offset
     !
     if(present(z_offset_in)) then
        z_offset = z_offset
@@ -120,17 +120,17 @@ contains
   !-----------------------------------------------------------------------------
   subroutine VINTRPL_z_level( v, v_pl, wgrid )
     implicit none
-    REAL(RP), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
-    REAL(RP), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
+    real(RP), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     logical, intent(in) :: wgrid
 
-    REAL(RP) :: tmp(ADM_gall,ADM_kall,ADM_lall)
-    REAL(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: tmp(ADM_gall,ADM_kall,ADM_lall)
+    real(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer :: l,k,n,kk
 
     integer :: kp
-    REAL(RP) :: lag_intpl_quadra, lag_intpl_linear
-    REAL(RP) :: z,z1,p1,z2,p2,z3,p3
+    real(RP) :: lag_intpl_quadra, lag_intpl_linear
+    real(RP) :: z,z1,p1,z2,p2,z3,p3
     lag_intpl_quadra(z,z1,p1,z2,p2,z3,p3)       &
          = ((z-z2)*(z-z3))/((z1-z2)*(z1-z3))*p1 &
          + ((z-z1)*(z-z3))/((z2-z1)*(z2-z3))*p2 &
@@ -282,18 +282,18 @@ contains
   !-----------------------------------------------------------------------------
   subroutine VINTRPL_z_level2( v, v_pl, wgrid ) ! 07/01/24 K.Suzuki [add]
     implicit none
-    REAL(RP), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
-    REAL(RP), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
+    real(RP), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     logical, intent(in) :: wgrid
 
-    REAL(RP) :: tmp(ADM_gall,ADM_kall,ADM_lall)
-    REAL(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: tmp(ADM_gall,ADM_kall,ADM_lall)
+    real(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer :: l,k,n,kk
 
     integer :: kp
-    REAL(RP) :: lag_intpl
+    real(RP) :: lag_intpl
 
-    REAL(RP) :: z,z1,p1,z2,p2
+    real(RP) :: z,z1,p1,z2,p2
     lag_intpl(z,z1,p1,z2,p2)  &
          = (z-z2)/(z1-z2)*p1  &
          + (z1-z)/(z1-z2)*p2
@@ -413,17 +413,17 @@ contains
        wgrid )
     implicit none
 
-    REAL(RP), intent(inout) :: v   (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: v   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     logical, intent(in)    :: wgrid
 
-    REAL(RP) :: tmp   (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: tmp   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     integer :: n, k, l, kk, kp
 
-    REAL(RP) :: lag_intpl
-    REAL(RP) :: z, z1, p1, z2, p2, z3, p3
+    real(RP) :: lag_intpl
+    real(RP) :: z, z1, p1, z2, p2, z3, p3
     lag_intpl(z,z1,p1,z2,p2,z3,p3) = ( (z-z2)*(z-z3) ) / ( (z1-z2)*(z1-z3) ) * p1 &
                                    + ( (z-z1)*(z-z3) ) / ( (z2-z1)*(z2-z3) ) * p2 &
                                    + ( (z-z1)*(z-z2) ) / ( (z3-z1)*(z3-z2) ) * p3
@@ -545,11 +545,11 @@ contains
   !-----------------------------------------------------------------------------
   subroutine VINTRPL_half2full( v, v_pl )
     implicit none
-    REAL(RP), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
-    REAL(RP), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
+    real(RP), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    REAL(RP) :: tmp(ADM_gall,ADM_kall,ADM_lall)
-    REAL(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: tmp(ADM_gall,ADM_kall,ADM_lall)
+    real(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer :: k
 
     do k=ADM_kmin,ADM_kmax
@@ -574,13 +574,13 @@ contains
     !
     implicit none
     !
-    REAL(RP), intent(out) :: sigma(ADM_gall,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: sigma_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in) :: pre(ADM_gall,ADM_kall,ADM_lall)
-    REAL(RP), intent(in) :: pre_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: sigma(ADM_gall,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: sigma_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in) :: pre(ADM_gall,ADM_kall,ADM_lall)
+    real(RP), intent(in) :: pre_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !
-    REAL(RP), intent(in) :: pres(ADM_gall,ADM_KNONE,ADM_lall)
-    REAL(RP), intent(in) :: pres_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
+    real(RP), intent(in) :: pres(ADM_gall,ADM_KNONE,ADM_lall)
+    real(RP), intent(in) :: pres_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
     integer :: l,k,n
     !
     do l = 1, ADM_lall
@@ -608,17 +608,17 @@ contains
        sigma_lev, MAX_SIGMA,      &
        wgrid )
     implicit none
-    REAL(RP), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
-    REAL(RP), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in) :: sigma(ADM_gall,ADM_kall,ADM_lall)
-    REAL(RP), intent(in) :: sigma_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
+    real(RP), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in) :: sigma(ADM_gall,ADM_kall,ADM_lall)
+    real(RP), intent(in) :: sigma_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer, intent(in) :: MAX_SIGMA
-    REAL(RP), intent(in) :: sigma_lev(MAX_SIGMA)
+    real(RP), intent(in) :: sigma_lev(MAX_SIGMA)
     logical, intent(in) :: wgrid
 
-    REAL(RP) :: tmp(ADM_gall,ADM_kall,ADM_lall)
-    REAL(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP) :: a,b
+    real(RP) :: tmp(ADM_gall,ADM_kall,ADM_lall)
+    real(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: a,b
     integer :: l,k,n,kk,kp
 
     if(wgrid) then

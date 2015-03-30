@@ -53,8 +53,8 @@ module mod_latlon
   integer, public, parameter :: GMTR_P_LAT = 1
   integer, public, parameter :: GMTR_P_LON = 2
 
-  REAL(RP), public, allocatable :: GMTR_P_ll   (:,:,:,:)
-  REAL(RP), public, allocatable :: GMTR_P_ll_pl(:,:,:,:)
+  real(RP), public, allocatable :: GMTR_P_ll   (:,:,:,:)
+  real(RP), public, allocatable :: GMTR_P_ll_pl(:,:,:,:)
 
   character(len=ADM_NSYS),  public :: polygon_type = 'ON_SPHERE' ! triangle is fit to the sphere
   !                                                  'ON_PLANE'  ! triangle is treated as 2D
@@ -75,20 +75,20 @@ module mod_latlon
   character(len=ADM_NSYS), private :: latlon_type = 'EQUIDIST' ! grid type ( equidist or gaussian )
   integer,                 private :: imax        = 360        ! number of longitude
   integer,                 private :: jmax        = 180        ! number of latitude
-  REAL(RP),                 private :: lonmin      = -999.0_RP    ! minimun longitude of region window in deg
-  REAL(RP),                 private :: lonmax      = -999.0_RP    ! maximun longitude of region window in deg
-  REAL(RP),                 private :: latmin      = -999.0_RP    ! minimun latitude of region window in deg
-  REAL(RP),                 private :: latmax      = -999.0_RP    ! maximun latitude of region window in deg
+  real(RP),                 private :: lonmin      = -999.0_RP    ! minimun longitude of region window in deg
+  real(RP),                 private :: lonmax      = -999.0_RP    ! maximun longitude of region window in deg
+  real(RP),                 private :: latmin      = -999.0_RP    ! minimun latitude of region window in deg
+  real(RP),                 private :: latmax      = -999.0_RP    ! maximun latitude of region window in deg
   logical,                 private :: lon_offset  = .true.     ! logitude offset
-  REAL(RP),                 private :: polar_limit = -999.0_RP    ! search all longitude if abs(lat) > polar_limit
+  real(RP),                 private :: polar_limit = -999.0_RP    ! search all longitude if abs(lat) > polar_limit
 
   character(len=ADM_MAXFNAME), private :: SAMPLE_OUT_BASENAME = ''
   character(len=ADM_NSYS),     private :: SAMPLE_io_mode      = 'ADVANCED'
 
   character(len=ADM_NSYS),     private :: output_lldata_type = 'mkllmap'
 
-  REAL(RP), private, allocatable :: lat(:)
-  REAL(RP), private, allocatable :: lon(:)
+  real(RP), private, allocatable :: lat(:)
+  real(RP), private, allocatable :: lon(:)
 
   integer, private              :: nmax_llgrid
   integer, private, allocatable :: nmax_llgrid_rgn(:)
@@ -100,9 +100,9 @@ module mod_latlon
   integer, private, allocatable :: n1_index (:)
   integer, private, allocatable :: n2_index (:)
   integer, private, allocatable :: n3_index (:)
-  REAL(RP), private, allocatable :: w1       (:)
-  REAL(RP), private, allocatable :: w2       (:)
-  REAL(RP), private, allocatable :: w3       (:)
+  real(RP), private, allocatable :: w1       (:)
+  real(RP), private, allocatable :: w2       (:)
+  real(RP), private, allocatable :: w3       (:)
 
   real(4), private, allocatable :: checkmap   (:,:)
   real(4), private, allocatable :: checkmapsum(:,:)
@@ -208,11 +208,11 @@ contains
     character(len=*), intent(in) :: output_dirname
     character(len=*), intent(in) :: output_lldata_type_in
 
-    REAL(RP) :: latmax_deg      =   90.0_RP
-    REAL(RP) :: latmin_deg      =  -90.0_RP
-    REAL(RP) :: lonmax_deg      =  180.0_RP
-    REAL(RP) :: lonmin_deg      = -180.0_RP
-    REAL(RP) :: polar_limit_deg =   89.0_RP
+    real(RP) :: latmax_deg      =   90.0_RP
+    real(RP) :: latmin_deg      =  -90.0_RP
+    real(RP) :: lonmax_deg      =  180.0_RP
+    real(RP) :: lonmin_deg      = -180.0_RP
+    real(RP) :: polar_limit_deg =   89.0_RP
 
     namelist / LATLONPARAM / &
          latlon_type,         &
@@ -230,7 +230,7 @@ contains
 
     character(len=ADM_MAXFNAME) :: fname
 
-    REAL(RP) :: d2r
+    real(RP) :: d2r
 
     integer :: globalsum
     integer :: sendbuf(1)
@@ -516,29 +516,29 @@ contains
 
     character(len=*), intent(in) :: what_is_done
 
-    REAL(RP), parameter :: rscale = 1.0_RP
+    real(RP), parameter :: rscale = 1.0_RP
 
-    REAL(RP), parameter :: o(3) = 0.0_RP
-    REAL(RP) :: r0(3), r1(3), r2(3), r3(3)
-    REAL(RP) :: nvec(3), v12xv10(3), v23xv20(3), v31xv30(3)
-    REAL(RP) :: judge12, judge23, judge31
-    REAL(RP) :: rf, rn, ip, len
-    REAL(RP) :: v01(3)
+    real(RP), parameter :: o(3) = 0.0_RP
+    real(RP) :: r0(3), r1(3), r2(3), r3(3)
+    real(RP) :: nvec(3), v12xv10(3), v23xv20(3), v31xv30(3)
+    real(RP) :: judge12, judge23, judge31
+    real(RP) :: rf, rn, ip, len
+    real(RP) :: v01(3)
 
-    REAL(RP) :: coslat(jmax), sinlat(jmax)
-    REAL(RP) :: coslon(imax), sinlon(imax)
-    REAL(RP) :: lat1, lat2, lat3
-    REAL(RP) :: lon1, lon2, lon3
-    REAL(RP) :: latmin_l,latmax_l
-    REAL(RP) :: lonmin_l,lonmax_l
+    real(RP) :: coslat(jmax), sinlat(jmax)
+    real(RP) :: coslon(imax), sinlon(imax)
+    real(RP) :: lat1, lat2, lat3
+    real(RP) :: lon1, lon2, lon3
+    real(RP) :: latmin_l,latmax_l
+    real(RP) :: lonmin_l,lonmax_l
     logical :: near_pole
 
-    REAL(RP) :: area_total, area1, area2, area3
+    real(RP) :: area_total, area1, area2, area3
 
-    REAL(RP) :: eps_judge  = 1.E-18_RP ! marginal value for inner products
-    REAL(RP) :: eps_latlon = 1.E-15_RP ! marginal square near grid points (in radian)
-    REAL(RP) :: eps_vertex = 1.E-15_RP ! marginal value for vartex
-    REAL(RP) :: eps_area   = 0.0_RP    ! marginal value for triangle area
+    real(RP) :: eps_judge  = 1.E-18_RP ! marginal value for inner products
+    real(RP) :: eps_latlon = 1.E-15_RP ! marginal square near grid points (in radian)
+    real(RP) :: eps_vertex = 1.E-15_RP ! marginal value for vartex
+    real(RP) :: eps_area   = 0.0_RP    ! marginal value for triangle area
 
     integer :: rgnid
     integer :: n, k, l, t, i, j
@@ -857,8 +857,8 @@ contains
        FIO_REAL8
     implicit none
 
-    REAL(RP) :: SAMPLE   ( ADM_gall,   ADM_KNONE,ADM_lall,   4)
-    REAL(RP) :: SAMPLE_pl( ADM_gall_pl,ADM_KNONE,ADM_lall_pl,4)
+    real(RP) :: SAMPLE   ( ADM_gall,   ADM_KNONE,ADM_lall,   4)
+    real(RP) :: SAMPLE_pl( ADM_gall_pl,ADM_KNONE,ADM_lall_pl,4)
 
     character(len=ADM_MAXFNAME) :: fname
 
@@ -977,7 +977,7 @@ contains
   subroutine set_equidist_grid
     implicit none
 
-    REAL(RP) :: dlat, dlon
+    real(RP) :: dlat, dlon
     integer :: i, j
     !---------------------------------------------------------------------------
 
@@ -1013,14 +1013,14 @@ contains
 
     integer, parameter :: nb = 256
 
-    REAL(RP) :: e(nb)
-    REAL(RP) :: eps
+    real(RP) :: e(nb)
+    real(RP) :: eps
 
-    REAL(RP) :: mu0, dmu, dP0
-    REAL(RP) :: mu(jmax)
-    REAL(RP) :: P0(0:jmax)
+    real(RP) :: mu0, dmu, dP0
+    real(RP) :: mu(jmax)
+    real(RP) :: P0(0:jmax)
 
-    REAL(RP) :: dlon
+    real(RP) :: dlon
 
     integer :: n, i, j
     !---------------------------------------------------------------------------
@@ -1131,25 +1131,25 @@ contains
 !    implicit none
 !    !
 !    integer, intent(in) :: kmin,kmax
-!    REAL(RP), intent(out) :: var_ll(nmax_llgrid,kmin:kmax)
-!    !    REAL(RP), intent(in)  :: var(ADM_gall,kmin:kmax,ADM_lall)
-!    !    REAL(RP), intent(in)  :: var_pl(ADM_gall_pl,kmin:kmax,ADM_lall_pl)
-!    !    REAL(RP), intent(in)  :: var(:,:,:)
-!    !    REAL(RP), intent(in)  :: var_pl(:,:,:)
-!    REAL(RP), intent(in) :: var(ADM_gall,ADM_kall,ADM_lall)
-!    REAL(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+!    real(RP), intent(out) :: var_ll(nmax_llgrid,kmin:kmax)
+!    !    real(RP), intent(in)  :: var(ADM_gall,kmin:kmax,ADM_lall)
+!    !    real(RP), intent(in)  :: var_pl(ADM_gall_pl,kmin:kmax,ADM_lall_pl)
+!    !    real(RP), intent(in)  :: var(:,:,:)
+!    !    real(RP), intent(in)  :: var_pl(:,:,:)
+!    real(RP), intent(in) :: var(ADM_gall,ADM_kall,ADM_lall)
+!    real(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 !    !
 !    integer, parameter :: ix = 1
 !    integer, parameter :: iy = 2
 !    integer, parameter :: iz = 3
 !    !
-!    REAL(RP) ::  grd(ADM_gall,ADM_kall,ADM_lall,ix:iz)
-!    REAL(RP) ::  grd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,ix:iz)
+!    real(RP) ::  grd(ADM_gall,ADM_kall,ADM_lall,ix:iz)
+!    real(RP) ::  grd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,ix:iz)
 !    logical ::  def_grd(ADM_gall,kmin:kmax,ADM_lall)
 !    !
 !    integer :: n0,n1,n2,n3,n4,n5,n6
-!    REAL(RP) :: vec12(ix:iz),vec23(ix:iz),vec31(ix:iz)
-!    REAL(RP) :: v1,v2,v3,v12,v23,v31
+!    real(RP) :: vec12(ix:iz),vec23(ix:iz),vec31(ix:iz)
+!    real(RP) :: v1,v2,v3,v12,v23,v31
 !    !
 !    integer :: k,m,l,n
 !    !

@@ -1239,7 +1239,7 @@ contains
   function ADM_MPItime() result(time)
     implicit none
 
-    REAL(RP) :: time
+    real(RP) :: time
     !---------------------------------------------------------------------------
 
     if ( ADM_mpi_alive ) then

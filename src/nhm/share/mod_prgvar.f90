@@ -77,9 +77,9 @@ module mod_prgvar
   !
   !++ Public parameters & variables
   !
-  REAL(RP), public, allocatable :: PRG_var (:,:,:,:)
-  REAL(RP), public, allocatable :: PRG_var1(:,:,:,:)
-  REAL(RP), public, allocatable :: DIAG_var(:,:,:,:)
+  real(RP), public, allocatable :: PRG_var (:,:,:,:)
+  real(RP), public, allocatable :: PRG_var1(:,:,:,:)
+  real(RP), public, allocatable :: DIAG_var(:,:,:,:)
 
   character(len=ADM_MAXFNAME), public :: restart_input_basename  = ''
   character(len=ADM_MAXFNAME), public :: restart_output_basename = ''
@@ -92,9 +92,9 @@ module mod_prgvar
   !
   !++ Private parameters & variables
   !
-  REAL(RP), private, allocatable :: PRG_var_pl (:,:,:,:)
-  REAL(RP), private, allocatable :: PRG_var1_pl(:,:,:,:)
-  REAL(RP), private, allocatable :: DIAG_var_pl(:,:,:,:)
+  real(RP), private, allocatable :: PRG_var_pl (:,:,:,:)
+  real(RP), private, allocatable :: PRG_var1_pl(:,:,:,:)
+  real(RP), private, allocatable :: DIAG_var_pl(:,:,:,:)
 
   integer, private :: TRC_vmax_input ! number of input tracer variables
 
@@ -222,20 +222,20 @@ contains
        TRC_vmax
     implicit none
 
-    REAL(RP), intent(out) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: rhoge    (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: rhogq    (ADM_gall,   ADM_kall,ADM_lall   ,TRC_vmax)
-    REAL(RP), intent(out) :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
+    real(RP), intent(out) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhoge    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhogq    (ADM_gall,   ADM_kall,ADM_lall   ,TRC_vmax)
+    real(RP), intent(out) :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
     integer, intent(in)  :: num
 
     integer :: n, k, l, nq
@@ -368,18 +368,18 @@ contains
        ADM_lall_pl
     implicit none
 
-    REAL(RP), intent(out) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: rhoge    (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhoge    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     integer :: n, k, l
     !---------------------------------------------------------------------------
@@ -454,36 +454,36 @@ contains
        cnvvar_prg2diag
     implicit none
 
-    REAL(RP), intent(out) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: rhoge    (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: rhogq    (ADM_gall,   ADM_kall,ADM_lall   ,TRC_vmax)
-    REAL(RP), intent(out) :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
-    REAL(RP), intent(out) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: pre      (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: pre_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: tem      (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: tem_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: vx       (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: vx_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: vy       (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: vy_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: vz       (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: vz_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: w        (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: w_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: q        (ADM_gall,   ADM_kall,ADM_lall,   TRC_vmax)
-    REAL(RP), intent(out) :: q_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
+    real(RP), intent(out) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhoge    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: rhogq    (ADM_gall,   ADM_kall,ADM_lall   ,TRC_vmax)
+    real(RP), intent(out) :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
+    real(RP), intent(out) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: pre      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: pre_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: tem      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: tem_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: vx       (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: vx_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: vy       (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: vy_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: vz       (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: vz_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: w        (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: w_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: q        (ADM_gall,   ADM_kall,ADM_lall,   TRC_vmax)
+    real(RP), intent(out) :: q_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
 
     integer :: n, k, l, nq
     !---------------------------------------------------------------------------
@@ -596,20 +596,20 @@ contains
        TRC_vmax
     implicit none
 
-    REAL(RP), intent(in)  :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: rhoge    (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: rhogq    (ADM_gall,   ADM_kall,ADM_lall   ,TRC_vmax)
-    REAL(RP), intent(in)  :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
+    real(RP), intent(in)  :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhoge    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogq    (ADM_gall,   ADM_kall,ADM_lall   ,TRC_vmax)
+    real(RP), intent(in)  :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
     integer, intent(in)  :: num
 
     integer :: i, j, suf
@@ -761,13 +761,13 @@ contains
        TRC_vmax
     implicit none
 
-    REAL(RP), intent(out) :: rhog  (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: rhogvx(ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: rhogvy(ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: rhogvz(ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: rhogw (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: rhoge (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: rhogq (ADM_IopJop_nmax,ADM_kall,ADM_lall,TRC_vmax)
+    real(RP), intent(out) :: rhog  (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogvx(ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogvy(ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogvz(ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogw (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhoge (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogq (ADM_IopJop_nmax,ADM_kall,ADM_lall,TRC_vmax)
 
     integer :: n, k, l, nq, ij
     !---------------------------------------------------------------------------
@@ -836,21 +836,21 @@ contains
        cnvvar_prg2diag
     implicit none
 
-    REAL(RP), intent(out) :: rhog  (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: rhogvx(ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: rhogvy(ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: rhogvz(ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: rhogw (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: rhoge (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: rhogq (ADM_IopJop_nmax,ADM_kall,ADM_lall,TRC_vmax)
-    REAL(RP), intent(out) :: rho   (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: pre   (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: tem   (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: vx    (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: vy    (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: vz    (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: w     (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(out) :: q     (ADM_IopJop_nmax,ADM_kall,ADM_lall,TRC_vmax)
+    real(RP), intent(out) :: rhog  (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogvx(ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogvy(ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogvz(ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogw (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhoge (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogq (ADM_IopJop_nmax,ADM_kall,ADM_lall,TRC_vmax)
+    real(RP), intent(out) :: rho   (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: pre   (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: tem   (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: vx    (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: vy    (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: vz    (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: w     (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: q     (ADM_IopJop_nmax,ADM_kall,ADM_lall,TRC_vmax)
 
     integer :: n, k, l, nq, ij
     !---------------------------------------------------------------------------
@@ -927,13 +927,13 @@ contains
        TRC_vmax
     implicit none
 
-    REAL(RP), intent(in) :: rhog  (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(in) :: rhogvx(ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(in) :: rhogvy(ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(in) :: rhogvz(ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(in) :: rhogw (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(in) :: rhoge (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    REAL(RP), intent(in) :: rhogq (ADM_IopJop_nmax,ADM_kall,ADM_lall,TRC_vmax)
+    real(RP), intent(in) :: rhog  (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(in) :: rhogvx(ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(in) :: rhogvy(ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(in) :: rhogvz(ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(in) :: rhogw (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(in) :: rhoge (ADM_IopJop_nmax,ADM_kall,ADM_lall)
+    real(RP), intent(in) :: rhogq (ADM_IopJop_nmax,ADM_kall,ADM_lall,TRC_vmax)
 
 
     integer :: n, k, l, nq, ij
@@ -1016,7 +1016,7 @@ contains
 
     character(len=ADM_MAXFNAME) :: fname
 
-    REAL(RP) :: val_max, val_min
+    real(RP) :: val_max, val_min
     logical :: nonzero
 
     integer :: fid
@@ -1196,7 +1196,7 @@ contains
 
     character(len=ADM_MAXFNAME) :: fname
 
-    REAL(RP) :: val_max, val_min
+    real(RP) :: val_max, val_min
     logical :: nonzero
 
     integer :: fid

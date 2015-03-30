@@ -90,29 +90,29 @@ module mod_oprt
   integer, public :: OPRT_nend
 
 #ifdef _FIXEDINDEX_
-  REAL(RP), public              :: cdiv       (ADM_gall   ,ADM_lall   ,0:6,            ADM_nxyz)
-  REAL(RP), public              :: cdiv_pl    (ADM_gall_pl,ADM_lall_pl,0:ADM_gall_pl-1,ADM_nxyz)
-  REAL(RP), public              :: cgrad      (ADM_gall   ,ADM_lall   ,0:6            ,ADM_nxyz)
-  REAL(RP), public              :: cgrad_pl   (ADM_gall_pl,ADM_lall_pl,0:ADM_gall_pl-1,ADM_nxyz)
-  REAL(RP), public              :: clap       (ADM_gall   ,ADM_lall   ,0:6                     )
-  REAL(RP), public              :: clap_pl    (ADM_gall_pl,ADM_lall_pl,0:ADM_gall_pl-1         )
+  real(RP), public              :: cdiv       (ADM_gall   ,ADM_lall   ,0:6,            ADM_nxyz)
+  real(RP), public              :: cdiv_pl    (ADM_gall_pl,ADM_lall_pl,0:ADM_gall_pl-1,ADM_nxyz)
+  real(RP), public              :: cgrad      (ADM_gall   ,ADM_lall   ,0:6            ,ADM_nxyz)
+  real(RP), public              :: cgrad_pl   (ADM_gall_pl,ADM_lall_pl,0:ADM_gall_pl-1,ADM_nxyz)
+  real(RP), public              :: clap       (ADM_gall   ,ADM_lall   ,0:6                     )
+  real(RP), public              :: clap_pl    (ADM_gall_pl,ADM_lall_pl,0:ADM_gall_pl-1         )
 
-  REAL(RP), public              :: cinterp_TN (ADM_gall,ADM_lall,AI:AJ,ADM_nxyz)
-  REAL(RP), public              :: cinterp_HN (ADM_gall,ADM_lall,AI:AJ,ADM_nxyz)
-  REAL(RP), public              :: cinterp_TRA(ADM_gall,ADM_lall,TI:TJ         )
-  REAL(RP), public              :: cinterp_PRA(ADM_gall,ADM_lall               )
+  real(RP), public              :: cinterp_TN (ADM_gall,ADM_lall,AI:AJ,ADM_nxyz)
+  real(RP), public              :: cinterp_HN (ADM_gall,ADM_lall,AI:AJ,ADM_nxyz)
+  real(RP), public              :: cinterp_TRA(ADM_gall,ADM_lall,TI:TJ         )
+  real(RP), public              :: cinterp_PRA(ADM_gall,ADM_lall               )
 #else
-  REAL(RP), public, allocatable :: cdiv       (:,:,:,:) ! coefficient for divergence operator
-  REAL(RP), public, allocatable :: cdiv_pl    (:,:,:,:)
-  REAL(RP), public, allocatable :: cgrad      (:,:,:,:) ! coefficient for gradient operator
-  REAL(RP), public, allocatable :: cgrad_pl   (:,:,:,:)
-  REAL(RP), public, allocatable :: clap       (:,:,:)   ! coefficient for laplacian operator
-  REAL(RP), public, allocatable :: clap_pl    (:,:,:)
+  real(RP), public, allocatable :: cdiv       (:,:,:,:) ! coefficient for divergence operator
+  real(RP), public, allocatable :: cdiv_pl    (:,:,:,:)
+  real(RP), public, allocatable :: cgrad      (:,:,:,:) ! coefficient for gradient operator
+  real(RP), public, allocatable :: cgrad_pl   (:,:,:,:)
+  real(RP), public, allocatable :: clap       (:,:,:)   ! coefficient for laplacian operator
+  real(RP), public, allocatable :: clap_pl    (:,:,:)
 
-  REAL(RP), public, allocatable :: cinterp_TN (:,:,:,:) ! coefficient for diffusion operator
-  REAL(RP), public, allocatable :: cinterp_HN (:,:,:,:)
-  REAL(RP), public, allocatable :: cinterp_TRA(:,:,:)
-  REAL(RP), public, allocatable :: cinterp_PRA(:,:)
+  real(RP), public, allocatable :: cinterp_TN (:,:,:,:) ! coefficient for diffusion operator
+  real(RP), public, allocatable :: cinterp_HN (:,:,:,:)
+  real(RP), public, allocatable :: cinterp_TRA(:,:,:)
+  real(RP), public, allocatable :: cinterp_PRA(:,:)
 #endif
 
   !-----------------------------------------------------------------------------
@@ -1607,18 +1607,18 @@ contains
        ADM_gmax_pl
     implicit none
 
-    REAL(RP), intent(out) :: scl   (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: scl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: vx    (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: vx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: vy    (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: vy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: vz    (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: vz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: scl   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: scl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: vx    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: vy    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: vz    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    REAL(RP) :: sclx(ADM_gall)
-    REAL(RP) :: scly(ADM_gall)
-    REAL(RP) :: sclz(ADM_gall)
+    real(RP) :: sclx(ADM_gall)
+    real(RP) :: scly(ADM_gall)
+    real(RP) :: sclz(ADM_gall)
 
     integer :: ij
     integer :: ip1j, ijp1, ip1jp1
@@ -1760,10 +1760,10 @@ contains
        ADM_nxyz
     implicit none
 
-    REAL(RP), intent(in)  :: scl    (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: scl_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: grad   (ADM_gall   ,ADM_kall,ADM_lall   ,ADM_nxyz)
-    REAL(RP), intent(out) :: grad_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,ADM_nxyz)
+    real(RP), intent(in)  :: scl    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: scl_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: grad   (ADM_gall   ,ADM_kall,ADM_lall   ,ADM_nxyz)
+    real(RP), intent(out) :: grad_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,ADM_nxyz)
 
     integer :: ij
     integer :: ip1j, ijp1, ip1jp1
@@ -1839,10 +1839,10 @@ contains
        ADM_gmax_pl
     implicit none
 
-    REAL(RP), intent(out) :: dscl   (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: dscl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: scl    (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: scl_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: dscl   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: dscl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: scl    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: scl_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     integer :: ij
     integer :: ip1j, ijp1, ip1jp1
@@ -1918,23 +1918,23 @@ contains
        GMTR_A_var_pl
     implicit none
 
-    REAL(RP), intent(out) :: dscl   (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: dscl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: scl    (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: scl_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: kh     (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: kh_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: dscl   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: dscl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: scl    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: scl_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: kh     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: kh_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    REAL(RP)  :: vxt    (ADM_gall   ,TI:TJ)
-    REAL(RP)  :: vyt    (ADM_gall   ,TI:TJ)
-    REAL(RP)  :: vzt    (ADM_gall   ,TI:TJ)
-    REAL(RP)  :: flux   (ADM_gall   ,AI:AJ)
-    REAL(RP)  :: vxt_pl (ADM_gall_pl)
-    REAL(RP)  :: vyt_pl (ADM_gall_pl)
-    REAL(RP)  :: vzt_pl (ADM_gall_pl)
-    REAL(RP)  :: flux_pl(ADM_gall_pl)
+    real(RP)  :: vxt    (ADM_gall   ,TI:TJ)
+    real(RP)  :: vyt    (ADM_gall   ,TI:TJ)
+    real(RP)  :: vzt    (ADM_gall   ,TI:TJ)
+    real(RP)  :: flux   (ADM_gall   ,AI:AJ)
+    real(RP)  :: vxt_pl (ADM_gall_pl)
+    real(RP)  :: vyt_pl (ADM_gall_pl)
+    real(RP)  :: vzt_pl (ADM_gall_pl)
+    real(RP)  :: flux_pl(ADM_gall_pl)
 
-    REAL(RP) :: u1, u2, u3, smean
+    real(RP) :: u1, u2, u3, smean
 
     integer :: nstart1, nstart2, nstart3, nend
     integer :: ij
@@ -2176,14 +2176,14 @@ contains
        GRD_x_pl
     implicit none
 
-    REAL(RP), intent(inout) :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(inout) :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(inout) :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(inout) :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(inout) :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
-    REAL(RP), intent(inout) :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    REAL(RP) :: prd
+    real(RP) :: prd
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
@@ -2257,23 +2257,23 @@ contains
        GMTR_A_var_pl
     implicit none
 
-    REAL(RP), intent(out) :: scl   (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: scl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: vx    (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: vx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: vy    (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: vy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: vz    (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: vz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: scl   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: scl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: vx    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: vy    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: vz    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    REAL(RP)  :: vxt    (ADM_gall   ,TI:TJ)
-    REAL(RP)  :: vxt_pl (ADM_gall_pl)
-    REAL(RP)  :: vyt    (ADM_gall   ,TI:TJ)
-    REAL(RP)  :: vyt_pl (ADM_gall_pl)
-    REAL(RP)  :: vzt    (ADM_gall   ,TI:TJ)
-    REAL(RP)  :: vzt_pl (ADM_gall_pl)
-    REAL(RP)  :: flux   (ADM_gall   ,AI:AJ)
-    REAL(RP)  :: flux_pl(ADM_gall_pl)
+    real(RP)  :: vxt    (ADM_gall   ,TI:TJ)
+    real(RP)  :: vxt_pl (ADM_gall_pl)
+    real(RP)  :: vyt    (ADM_gall   ,TI:TJ)
+    real(RP)  :: vyt_pl (ADM_gall_pl)
+    real(RP)  :: vzt    (ADM_gall   ,TI:TJ)
+    real(RP)  :: vzt_pl (ADM_gall_pl)
+    real(RP)  :: flux   (ADM_gall   ,AI:AJ)
+    real(RP)  :: flux_pl(ADM_gall_pl)
 
     integer :: nstart, nend
     integer :: ij
@@ -2466,21 +2466,21 @@ contains
        GMTR_A_var_pl
     implicit none
 
-    REAL(RP), intent(out) :: ddivdx   (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: ddivdx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: ddivdy   (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: ddivdy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: ddivdz   (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: ddivdz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: vx       (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: vx_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: vy       (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: vy_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: vz       (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(in)  :: vz_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: ddivdx   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: ddivdx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: ddivdy   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: ddivdy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: ddivdz   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: ddivdz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: vx       (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vx_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: vy       (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vy_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: vz       (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vz_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    REAL(RP) :: sclt   (ADM_gall   ,TI:TJ)
-    REAL(RP) :: sclt_pl(ADM_gall_pl)
+    real(RP) :: sclt   (ADM_gall   ,TI:TJ)
+    real(RP) :: sclt_pl(ADM_gall_pl)
 
     integer :: nstart, nend
     integer :: ij

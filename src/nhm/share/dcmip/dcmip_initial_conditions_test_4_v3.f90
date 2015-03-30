@@ -52,7 +52,7 @@ MODULE dcmip_initial_conditions_test_4
 ! use physical constants
 !=======================================================================
 
-  REAL(8), PARAMETER ::                               &
+  real(8), PARAMETER ::                               &
        a     = 6371220.0d0,                           & ! Reference Earth's Radius (m)
        Rd    = 287.0d0,                               & ! Ideal gas const dry air (J kg^-1 K^1)
        g     = 9.80616d0,                             & ! Gravity (m s^2)
@@ -65,14 +65,14 @@ MODULE dcmip_initial_conditions_test_4
 ! additional constants
 !=======================================================================
 
-  REAL(8), PARAMETER ::                               &
+  real(8), PARAMETER ::                               &
        p0       = 100000.0d0,                         & ! surface pressure (Pa)
        deg2rad  = pi/180.d0                             ! Conversion factor of degrees to radians
 
 !-----------------------------------------------------------------------
 ! steady-state and baroclinic wave tuning parameter
 !----------------------------------------------------------------------- 
-  REAL(8), PARAMETER ::                            &
+  real(8), PARAMETER ::                            &
        eta_tropo  = 0.2d0     ,                    & ! tropopause level
        u0         = 35.d0     ,                    & ! 35 m/s
        T0         = 288.d0    ,                    & ! horizontal mean T at surface
@@ -104,17 +104,17 @@ CONTAINS
 !-----------------------------------------------------------------------
     INTEGER, INTENT(IN)  :: moist      ! Moist (1) or non-moist (0) test case
 
-    REAL(8), INTENT(IN)  :: &
+    real(8), INTENT(IN)  :: &
                 lon,        & ! Longitude (radians)
                 lat,        & ! Latitude (radians)
                 z,          & ! Height (m)
                 X             ! Scale factor, not used in this version since unscaled EPV is selected
 
-    REAL(8), INTENT(INOUT) :: p        ! Pressure  (Pa)                
+    real(8), INTENT(INOUT) :: p        ! Pressure  (Pa)                
 
     INTEGER, INTENT(IN) :: zcoords     ! 0 or 1 see below
 
-    REAL(8), INTENT(OUT) :: &
+    real(8), INTENT(OUT) :: &
                 u,          & ! Zonal wind (m s^-1)
                 v,          & ! Meridional wind (m s^-1)
                 w,          & ! Vertical Velocity (m s^-1)
@@ -126,7 +126,7 @@ CONTAINS
                 q1,         & ! Tracer q1 - Potential temperature (kg/kg)
                 q2            ! Tracer q2 - Ertel's potential vorticity (kg/kg)
 
-    REAL(8) :: eta
+    real(8) :: eta
 
 !-----------------------------------------------------------------------
 !    initialize PS (surface pressure)
@@ -196,9 +196,9 @@ CONTAINS
 !********************************************************************
 ! Temperature = mean + perturbation temperature
 !********************************************************************
-  REAL(8) FUNCTION temperature(lon,lat,eta)
+  real(8) FUNCTION temperature(lon,lat,eta)
     IMPLICIT NONE
-    REAL(8), INTENT(IN) :: lon, lat, eta
+    real(8), INTENT(IN) :: lon, lat, eta
 
     temperature  = t_mean(eta) + t_deviation(lon,lat,eta)
 
@@ -209,9 +209,9 @@ CONTAINS
 !***********************************************************************************************
 ! Horizontally averaged temperature
 !***********************************************************************************************
-  REAL(8) FUNCTION t_mean(eta)
+  real(8) FUNCTION t_mean(eta)
     IMPLICIT NONE
-    REAL(8), INTENT(IN) :: eta
+    real(8), INTENT(IN) :: eta
     
     if (eta .ge. eta_tropo) then
       t_mean = T0*eta**exponent       ! mean temperature at each level
@@ -225,10 +225,10 @@ CONTAINS
 !***********************************************************************************************
 ! Temperature deviation from the horizontal mean 
 !***********************************************************************************************
-  REAL(8) FUNCTION t_deviation(lon,lat,eta)
+  real(8) FUNCTION t_deviation(lon,lat,eta)
     IMPLICIT NONE
-    REAL(8), INTENT(IN) :: eta, lon, lat
-    REAL(8)             :: factor, phi_vertical
+    real(8), INTENT(IN) :: eta, lon, lat
+    real(8)             :: factor, phi_vertical
 
     factor       = eta*pi*u0/Rd             
     phi_vertical = (eta - eta0) * 0.5d0*pi
@@ -244,10 +244,10 @@ CONTAINS
 !**************************************************************************
 ! Surface geopotential
 !**************************************************************************  
-  REAL(8) FUNCTION surface_geopotential(lon,lat)
+  real(8) FUNCTION surface_geopotential(lon,lat)
     IMPLICIT NONE
-    REAL(8), INTENT(IN) :: lon, lat
-    REAL(8)             :: cos_tmp
+    real(8), INTENT(IN) :: lon, lat
+    real(8)             :: cos_tmp
 
     cos_tmp    = u0 * (cos((eta_sfc-eta0)*pi*0.5d0))**1.5d0
 
@@ -259,10 +259,10 @@ CONTAINS
 !**************************************************************************
 ! 3D geopotential
 !**************************************************************************  
-  REAL(8) FUNCTION geopotential(lon,lat,eta)
+  real(8) FUNCTION geopotential(lon,lat,eta)
     IMPLICIT NONE
-    REAL(8), INTENT(IN) :: lon, lat, eta
-    REAL(8)             :: cos_tmp
+    real(8), INTENT(IN) :: lon, lat, eta
+    real(8)             :: cos_tmp
 
     cos_tmp    = u0 * (cos((eta-eta0)*pi*0.5d0))**1.5d0
 
@@ -276,10 +276,10 @@ CONTAINS
 !**************************************************************************
 ! mean geopotential
 !**************************************************************************  
-  REAL(8) FUNCTION horiz_mean_geopotential(eta)
+  real(8) FUNCTION horiz_mean_geopotential(eta)
     IMPLICIT NONE
-    REAL(8), INTENT(IN) :: eta
-    REAL(8)             :: delta_phi
+    real(8), INTENT(IN) :: eta
+    real(8)             :: delta_phi
 
     horiz_mean_geopotential = T0 * g / gamma * (1.0d0 - eta**(Rd * gamma / g))
 
@@ -300,12 +300,12 @@ CONTAINS
 !********************************************************************
 ! u wind component
 !********************************************************************  
-  REAL(8) FUNCTION u_wind(lon,lat,eta,lperturb)
+  real(8) FUNCTION u_wind(lon,lat,eta,lperturb)
     IMPLICIT NONE
-    REAL(8), INTENT(IN) :: lon,lat,eta
+    real(8), INTENT(IN) :: lon,lat,eta
     LOGICAL, INTENT(IN)  :: lperturb        ! if .true. perturbation is added
-    REAL(8) :: phi_vertical, sin_tmp, cos_tmp, r, u_perturb
-    REAL(8) :: perturb_lon, perturb_lat
+    real(8) :: phi_vertical, sin_tmp, cos_tmp, r, u_perturb
+    real(8) :: perturb_lon, perturb_lat
 
 
 !---------------
@@ -339,9 +339,9 @@ CONTAINS
 !********************************************************************
 ! v wind component
 !********************************************************************  
-  REAL(8) FUNCTION v_wind(lon,lat,eta,lperturb)
+  real(8) FUNCTION v_wind(lon,lat,eta,lperturb)
     IMPLICIT NONE
-    REAL(8), INTENT(IN) :: lon,lat,eta
+    real(8), INTENT(IN) :: lon,lat,eta
     LOGICAL, INTENT(IN)  :: lperturb
 
     v_wind = 0.0d0
@@ -351,13 +351,13 @@ CONTAINS
 !********************************************************************
 ! Calculate eta from height
 !********************************************************************
-  REAL(8) FUNCTION eta_from_z(lon,lat,z)
+  real(8) FUNCTION eta_from_z(lon,lat,z)
     IMPLICIT NONE
-    REAL(8), INTENT(IN) :: lon, lat, z
-    REAL(8) :: eta_new, f, df
+    real(8), INTENT(IN) :: lon, lat, z
+    real(8) :: eta_new, f, df
     INTEGER :: iter
 
-    REAL(8), PARAMETER ::    &
+    real(8), PARAMETER ::    &
         initial_eta = 1.0d-7, &
         convergence = 1.0d-13
 
@@ -384,10 +384,10 @@ CONTAINS
 !-----------------------------------------------------------------------
 ! Potential temperature
 !-----------------------------------------------------------------------
-  REAL(8) FUNCTION theta(lon,lat,eta)
+  real(8) FUNCTION theta(lon,lat,eta)
     IMPLICIT NONE
-    REAL(8), INTENT(IN) :: eta, lon, lat
-    REAL(8) :: eta_nu, cos_tmp, Y
+    real(8), INTENT(IN) :: eta, lon, lat
+    real(8) :: eta_nu, cos_tmp, Y
 
     eta_nu     = (eta-eta0)*pi*0.5d0
     cos_tmp    = u0 * (cos(eta_nu))**1.5d0
@@ -403,14 +403,14 @@ CONTAINS
 !-----------------------------------------------------------------------
 ! Ertel's potential vorticity
 !-----------------------------------------------------------------------
-  REAL(8) FUNCTION epv(lon,lat,eta)
+  real(8) FUNCTION epv(lon,lat,eta)
     IMPLICIT NONE
-    REAL(8), INTENT(IN) :: eta, lon, lat
-    REAL(8) :: perturb_lon, perturb_lat
-    REAL(8) :: eta_nu, cos_tmp, Y, r, zeta, K, DK, F
-    REAL(8) :: dudeta, dmeanthetadeta, dthetadeta
-    REAL(8) :: dthetadphi1, dthetadphi2, dthetadphi
-    REAL(8) :: epsilon
+    real(8), INTENT(IN) :: eta, lon, lat
+    real(8) :: perturb_lon, perturb_lat
+    real(8) :: eta_nu, cos_tmp, Y, r, zeta, K, DK, F
+    real(8) :: dudeta, dmeanthetadeta, dthetadeta
+    real(8) :: dthetadphi1, dthetadphi2, dthetadphi
+    real(8) :: epsilon
 
     !  center of perturbation, convert from degrees to radians
     perturb_lon = perturbation_longitude*deg2rad

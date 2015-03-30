@@ -44,28 +44,28 @@ module mod_bsstate
   !
   !
   !--- density
-  REAL(RP),allocatable, public :: rho_bs(:,:,:)
-  REAL(RP),allocatable, public :: rho_bs_pl(:,:,:)
+  real(RP),allocatable, public :: rho_bs(:,:,:)
+  real(RP),allocatable, public :: rho_bs_pl(:,:,:)
   !
   !--- pressure
-  REAL(RP),allocatable, public :: pre_bs(:,:,:)
-  REAL(RP),allocatable, public :: pre_bs_pl(:,:,:)
+  real(RP),allocatable, public :: pre_bs(:,:,:)
+  real(RP),allocatable, public :: pre_bs_pl(:,:,:)
   !
   !--- temperature
-  REAL(RP),allocatable, public :: tem_bs(:,:,:)
-  REAL(RP),allocatable, public :: tem_bs_pl(:,:,:)
+  real(RP),allocatable, public :: tem_bs(:,:,:)
+  real(RP),allocatable, public :: tem_bs_pl(:,:,:)
   !
   !--- pot temperature
-  REAL(RP),allocatable, public :: th_bs(:,:,:)
-  REAL(RP),allocatable, public :: th_bs_pl(:,:,:)
+  real(RP),allocatable, public :: th_bs(:,:,:)
+  real(RP),allocatable, public :: th_bs_pl(:,:,:)
   !
   !--- water vap.
-  REAL(RP),allocatable, public :: qv_bs(:,:,:)
-  REAL(RP),allocatable, public :: qv_bs_pl(:,:,:)
+  real(RP),allocatable, public :: qv_bs(:,:,:)
+  real(RP),allocatable, public :: qv_bs_pl(:,:,:)
   !
   !--- geo-potential ( g X z )
-  REAL(RP),allocatable, private :: phi(:,:,:)
-  REAL(RP),allocatable, private :: phi_pl(:,:,:)
+  real(RP),allocatable, private :: phi(:,:,:)
+  real(RP),allocatable, private :: phi_pl(:,:,:)
   !
   !--- Basic state type
   character(ADM_NSYS), public :: ref_type = 'NOBASE'
@@ -86,49 +86,49 @@ module mod_bsstate
   !++ Private parameters
   !
   !--- reference pressure at the ground
-  REAL(RP), private :: pre_g = 101325.0_RP
+  real(RP), private :: pre_g = 101325.0_RP
   !
   !--- reference temperature at the ground
-  REAL(RP), private :: tem_g = 300.0_RP
+  real(RP), private :: tem_g = 300.0_RP
   !
   !--- reference pot. temperature at the ground
-  REAL(RP), private :: th_g = 300.0_RP
+  real(RP), private :: th_g = 300.0_RP
   !
   !--- reference density at the ground ( calculated by using pre_g & tem_g )
-  REAL(RP), private :: rho_g
+  real(RP), private :: rho_g
   !
   !--- reference Brunt-Vaisala frequency ( used if ref_type = 'TH'. )
-  REAL(RP), private :: BV_freq = 0.0_RP
+  real(RP), private :: BV_freq = 0.0_RP
   !
   !--- lapse rate ( used if ref_type = 'TEM'. )
-  REAL(RP), private :: TGAMMA = 0.0_RP
+  real(RP), private :: TGAMMA = 0.0_RP
   !
   !--- lower boundary of constant (potential) temperature
-  REAL(RP), private :: ZT = 0.0_RP
+  real(RP), private :: ZT = 0.0_RP
   !
   !--- geopotential at the ground
-  REAL(RP), parameter, public :: PHI0=0.0_RP
+  real(RP), parameter, public :: PHI0=0.0_RP
   !-----------------------------------------------------------------------------
   !
   !++ Private variables
   !
   !--- reference phi
-  REAL(RP), allocatable, private :: phi_ref(:)
+  real(RP), allocatable, private :: phi_ref(:)
   !
   !--- reference density
-  REAL(RP), allocatable, private :: rho_ref(:)
+  real(RP), allocatable, private :: rho_ref(:)
   !
   !--- reference pressure
-  REAL(RP), allocatable, private :: pre_ref(:)
+  real(RP), allocatable, private :: pre_ref(:)
   !
   !--- reference temperature
-  REAL(RP), allocatable, private :: tem_ref(:)
+  real(RP), allocatable, private :: tem_ref(:)
   !
   !--- water vapor
-  REAL(RP), allocatable, private :: qv_ref(:)
+  real(RP), allocatable, private :: qv_ref(:)
   !
   !--- reference potential temperature
-  REAL(RP), allocatable, private :: th_ref(:)
+  real(RP), allocatable, private :: th_ref(:)
   !
   character(ADM_MAXFNAME), private :: ref_fname = 'ref.dat'
   !
@@ -299,8 +299,8 @@ contains
          GRD_bfac
     implicit none
 
-    REAL(RP) :: dpre_ref_k
-    REAL(RP) :: pre_s, rho_s, total_mass0, total_mass, mass_diff_ratio
+    real(RP) :: dpre_ref_k
+    real(RP) :: pre_s, rho_s, total_mass0, total_mass, mass_diff_ratio
 
     integer :: k
     !---------------------------------------------------------------------------
@@ -725,17 +725,17 @@ contains
 
     character(len=128) :: fname = 'ooyama_profile.dat'
 
-    REAL(RP), allocatable :: z_s  (:)
-    REAL(RP), allocatable :: rho_s(:)
-    REAL(RP), allocatable :: tem_s(:)
-    REAL(RP), allocatable :: qv_s (:)
+    real(RP), allocatable :: z_s  (:)
+    real(RP), allocatable :: rho_s(:)
+    real(RP), allocatable :: tem_s(:)
+    real(RP), allocatable :: qv_s (:)
 
     integer :: fid
     integer :: kmax
     integer :: k, kk, kp
 
-    REAL(RP) :: lag_intpl
-    REAL(RP) :: z,z1,p1,z2,p2,z3,p3
+    real(RP) :: lag_intpl
+    real(RP) :: z,z1,p1,z2,p2,z3,p3
     lag_intpl(z,z1,p1,z2,p2,z3,p3) = ((z-z2)*(z-z3))/((z1-z2)*(z1-z3))*p1 &
                                    + ((z-z1)*(z-z3))/((z2-z1)*(z2-z3))*p2 &
                                    + ((z-z1)*(z-z2))/((z3-z1)*(z3-z2))*p3
@@ -831,10 +831,10 @@ contains
        I_QV
     implicit none
 
-    REAL(RP) :: q_bs    (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
-    REAL(RP) :: q_bs_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
-    REAL(RP) :: qd_bs   (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP) :: qd_bs_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: q_bs    (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
+    real(RP) :: q_bs_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(RP) :: qd_bs   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: qd_bs_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     integer :: k, l
     !---------------------------------------------------------------------------

@@ -180,12 +180,12 @@ module mod_runconf
   integer, public            :: NCHEM_END  = -1 ! end   index of chemical (or general purpose) tracers
 
   !--- specific heat of water on const pressure
-  REAL(RP), public, allocatable :: CVW(:)
-  REAL(RP), public, allocatable :: CPW(:)
+  real(RP), public, allocatable :: CVW(:)
+  real(RP), public, allocatable :: CPW(:)
   !--- Latent heat
-  REAL(RP), public            :: LHV
-  REAL(RP), public            :: LHF
-  REAL(RP), public            :: LHS
+  real(RP), public            :: LHV
+  real(RP), public            :: LHF
+  real(RP), public            :: LHS
   !--- No. of band for rad.
   integer, public, parameter :: NRBND     = 3
   integer, public, parameter :: NRBND_VIS = 1

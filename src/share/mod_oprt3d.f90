@@ -117,34 +117,34 @@ contains
        VMTR_C2WfactGz_pl
     implicit none
 
-    REAL(RP), intent(out) :: ddivdx   (ADM_gall   ,ADM_kall,ADM_lall   ) ! tendency
-    REAL(RP), intent(out) :: ddivdx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: ddivdy   (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: ddivdy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(out) :: ddivdz   (ADM_gall   ,ADM_kall,ADM_lall   )
-    REAL(RP), intent(out) :: ddivdz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: rhogvx   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*vx { gam2 x G^1/2 }
-    REAL(RP), intent(in)  :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: rhogvy   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*vy { gam2 x G^1/2 }
-    REAL(RP), intent(in)  :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: rhogvz   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*vz { gam2 x G^1/2 }
-    REAL(RP), intent(in)  :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    REAL(RP), intent(in)  :: rhogw    (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*w  { gam2 x G^1/2 }
-    REAL(RP), intent(in)  :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: ddivdx   (ADM_gall   ,ADM_kall,ADM_lall   ) ! tendency
+    real(RP), intent(out) :: ddivdx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: ddivdy   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: ddivdy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: ddivdz   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: ddivdz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogvx   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*vx { gam2 x G^1/2 }
+    real(RP), intent(in)  :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogvy   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*vy { gam2 x G^1/2 }
+    real(RP), intent(in)  :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogvz   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*vz { gam2 x G^1/2 }
+    real(RP), intent(in)  :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogw    (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*w  { gam2 x G^1/2 }
+    real(RP), intent(in)  :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    REAL(RP) :: sclt         (ADM_gall   ,TI:TJ) ! scalar on the hexagon vertex
-    REAL(RP) :: sclt_pl      (ADM_gall_pl)
-    REAL(RP) :: sclt_rhogw
-    REAL(RP) :: sclt_rhogw_pl
+    real(RP) :: sclt         (ADM_gall   ,TI:TJ) ! scalar on the hexagon vertex
+    real(RP) :: sclt_pl      (ADM_gall_pl)
+    real(RP) :: sclt_rhogw
+    real(RP) :: sclt_rhogw_pl
 
-    REAL(RP) :: rhogvx_vm   (ADM_gall   )          ! rho*vx / vertical metrics
-    REAL(RP) :: rhogvx_vm_pl(ADM_gall_pl)
-    REAL(RP) :: rhogvy_vm   (ADM_gall   )          ! rho*vy / vertical metrics
-    REAL(RP) :: rhogvy_vm_pl(ADM_gall_pl)
-    REAL(RP) :: rhogvz_vm   (ADM_gall   )          ! rho*vz / vertical metrics
-    REAL(RP) :: rhogvz_vm_pl(ADM_gall_pl)
-    REAL(RP) :: rhogw_vm    (ADM_gall,   ADM_kall) ! rho*w  / vertical metrics
-    REAL(RP) :: rhogw_vm_pl (ADM_gall_pl,ADM_kall)
+    real(RP) :: rhogvx_vm   (ADM_gall   )          ! rho*vx / vertical metrics
+    real(RP) :: rhogvx_vm_pl(ADM_gall_pl)
+    real(RP) :: rhogvy_vm   (ADM_gall   )          ! rho*vy / vertical metrics
+    real(RP) :: rhogvy_vm_pl(ADM_gall_pl)
+    real(RP) :: rhogvz_vm   (ADM_gall   )          ! rho*vz / vertical metrics
+    real(RP) :: rhogvz_vm_pl(ADM_gall_pl)
+    real(RP) :: rhogw_vm    (ADM_gall,   ADM_kall) ! rho*w  / vertical metrics
+    real(RP) :: rhogw_vm_pl (ADM_gall_pl,ADM_kall)
 
     integer :: nstart, nend
     integer :: ij

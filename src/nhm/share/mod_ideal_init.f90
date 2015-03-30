@@ -89,27 +89,27 @@ module mod_ideal_init
   !
 
   ! physical parameters configurations
-  REAL(RP), private :: Kap                    ! temporal value
-  REAL(RP), private :: d2r                    ! Degree to Radian
-  REAL(RP), private :: r2d                    ! Radian to Degree
-  REAL(RP), private :: zero = 0.0_RP          ! zero
+  real(RP), private :: Kap                    ! temporal value
+  real(RP), private :: d2r                    ! Degree to Radian
+  real(RP), private :: r2d                    ! Radian to Degree
+  real(RP), private :: zero = 0.0_RP          ! zero
 
   ! for Held and Suarez
-  REAL(RP), private :: deltaT = 60.0_RP
-  REAL(RP), private :: deltaTh = 10.0_RP
+  real(RP), private :: deltaT = 60.0_RP
+  real(RP), private :: deltaTh = 10.0_RP
   ! for Jablonowski
-  REAL(RP), private :: clat = 40.0_RP              ! perturbation center: latitude [deg]
-  REAL(RP), private :: clon = 20.0_RP              ! perturbation center: longitude [deg]
-  REAL(RP), private :: etaS = 1.0_RP               ! surface eta level
-  REAL(RP), private :: etaT = 0.2_RP              ! threashold of vertical profile
-  REAL(RP), private :: eta0 = 0.252_RP            ! threashold of vertical profile
-  REAL(RP), private :: t0 = 288.0_RP               ! [K]
-  REAL(RP), private :: delT = 4.8E+5_RP             ! [K]
-  REAL(RP), private :: ganma = 0.005_RP           ! [K m^-1]
-  REAL(RP), private :: u0 = 35.0_RP                ! [m s^-1]
-  REAL(RP), private :: uP = 1.0_RP                 ! [m s^-1]
-  REAL(RP), private :: p0 = 1.E+5_RP                ! [Pa]
-  REAL(RP), private :: ps = 1.E+5_RP                ! [Pa]
+  real(RP), private :: clat = 40.0_RP              ! perturbation center: latitude [deg]
+  real(RP), private :: clon = 20.0_RP              ! perturbation center: longitude [deg]
+  real(RP), private :: etaS = 1.0_RP               ! surface eta level
+  real(RP), private :: etaT = 0.2_RP              ! threashold of vertical profile
+  real(RP), private :: eta0 = 0.252_RP            ! threashold of vertical profile
+  real(RP), private :: t0 = 288.0_RP               ! [K]
+  real(RP), private :: delT = 4.8E+5_RP             ! [K]
+  real(RP), private :: ganma = 0.005_RP           ! [K m^-1]
+  real(RP), private :: u0 = 35.0_RP                ! [m s^-1]
+  real(RP), private :: uP = 1.0_RP                 ! [m s^-1]
+  real(RP), private :: p0 = 1.E+5_RP                ! [Pa]
+  real(RP), private :: ps = 1.E+5_RP                ! [Pa]
   logical, private, parameter :: message = .false.
   integer, private, parameter :: itrmax = 100       ! # of iteration maximum
 
@@ -128,11 +128,11 @@ contains
        TRC_vmax
     implicit none
 
-    REAL(RP), intent(out) :: DIAG_var(ADM_gall,ADM_kall,ADM_lall,6+TRC_VMAX)
+    real(RP), intent(out) :: DIAG_var(ADM_gall,ADM_kall,ADM_lall,6+TRC_VMAX)
 
     character(len=ADM_NSYS) :: init_type   = ''
     character(len=ADM_NSYS) :: test_case   = ''
-    REAL(RP)                :: eps_geo2prs = 1.E-2_RP
+    real(RP)                :: eps_geo2prs = 1.E-2_RP
     logical                 :: nicamcore   = .true.
 
     namelist / DYCORETESTPARAM / &
@@ -232,9 +232,9 @@ contains
        TRC_vmax
     implicit none
 
-    REAL(RP), intent(out) :: TRC_var(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
+    real(RP), intent(out) :: TRC_var(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
 
-    REAL(RP) :: random(ADM_gall,ADM_kall,ADM_lall)
+    real(RP) :: random(ADM_gall,ADM_kall,ADM_lall)
     integer :: deg
 
     integer :: g, k, l, nq, K0
@@ -315,18 +315,18 @@ contains
     integer, intent(in)    :: ijdim
     integer, intent(in)    :: kdim
     integer, intent(in)    :: lall
-    REAL(RP), intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+    real(RP), intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-    REAL(RP) :: pre(kdim), tem(kdim), dz(kdim)
-    REAL(RP) :: pre_sfc, tem_sfc
-    REAL(RP) :: pre_save
+    real(RP) :: pre(kdim), tem(kdim), dz(kdim)
+    real(RP) :: pre_sfc, tem_sfc
+    real(RP) :: pre_save
 
-    REAL(RP), parameter :: deltaT  = 60.0_RP
-    REAL(RP), parameter :: deltaTh = 10.0_RP
-    REAL(RP), parameter :: eps_hs  = 1.E-7_RP
+    real(RP), parameter :: deltaT  = 60.0_RP
+    real(RP), parameter :: deltaTh = 10.0_RP
+    real(RP), parameter :: eps_hs  = 1.E-7_RP
 
-    REAL(RP) :: f, df
-    REAL(RP) :: lat, lon
+    real(RP) :: f, df
+    real(RP) :: lat, lon
 
     integer :: n, k, l, itr
     !---------------------------------------------------------------------------
@@ -449,22 +449,22 @@ contains
     integer,          intent(in)  :: kdim
     integer,          intent(in)  :: lall
     character(len=*), intent(in)  :: test_case
-    REAL(RP),         intent(in)  :: eps_geo2prs
+    real(RP),         intent(in)  :: eps_geo2prs
     logical,          intent(in)  :: nicamcore
-    REAL(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+    real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-    REAL(RP) :: lat, lon               ! latitude, longitude on Icosahedral grid
-    REAL(RP) :: eta(kdim,2), geo(kdim) ! eta & geopotential in ICO-grid field
-    REAL(RP) :: prs(kdim),   tmp(kdim) ! pressure & temperature in ICO-grid field
-    REAL(RP) :: wix(kdim),   wiy(kdim) ! zonal/meridional wind components in ICO-grid field
+    real(RP) :: lat, lon               ! latitude, longitude on Icosahedral grid
+    real(RP) :: eta(kdim,2), geo(kdim) ! eta & geopotential in ICO-grid field
+    real(RP) :: prs(kdim),   tmp(kdim) ! pressure & temperature in ICO-grid field
+    real(RP) :: wix(kdim),   wiy(kdim) ! zonal/meridional wind components in ICO-grid field
 
-    REAL(RP) :: z_local (kdim)
-    REAL(RP) :: vx_local(kdim)
-    REAL(RP) :: vy_local(kdim)
-    REAL(RP) :: vz_local(kdim)
-    REAL(RP) :: u(kdim)
-    REAL(RP) :: v(kdim)
-    REAL(RP) :: ps
+    real(RP) :: z_local (kdim)
+    real(RP) :: vx_local(kdim)
+    real(RP) :: vy_local(kdim)
+    real(RP) :: vz_local(kdim)
+    real(RP) :: u(kdim)
+    real(RP) :: v(kdim)
+    real(RP) :: ps
 
     logical :: signal    ! if true, continue iteration
     logical :: pertb     ! if true, with perturbation
@@ -610,51 +610,51 @@ contains
     integer,                 intent(in)    :: kdim
     integer,                 intent(in)    :: lall
     character(len=ADM_NSYS), intent(in)    :: test_case
-    REAL(RP),                 intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+    real(RP),                 intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-    REAL(RP) :: lon      ! longitude            [rad]
-    REAL(RP) :: lat      ! latitude             [rad]
-    REAL(RP) :: z(kdim)  ! Height               [m]
-    REAL(RP) :: p(kdim)  ! pressure             [Pa]
-    REAL(RP) :: u(kdim)  ! zonal      wind      [m/s]
-    REAL(RP) :: v(kdim)  ! meridional wind      [m/s]
-    REAL(RP) :: w(kdim)  ! vertical   wind      [m/s]
-    REAL(RP) :: t(kdim)  ! temperature          [K]
-    REAL(RP) :: phis     ! surface geopotential [m2/s2], not in use
-    REAL(RP) :: ps       ! surface pressure     [Pa]   , not in use
-    REAL(RP) :: rho      ! density              [kg/m3], not in use
-    REAL(RP) :: q        ! specific humidity    [kg/kg], not in use
-    REAL(RP) :: q1(kdim) ! passive tracer       [kg/kg]
-    REAL(RP) :: q2(kdim) ! passive tracer       [kg/kg]
-    REAL(RP) :: q3(kdim) ! passive tracer       [kg/kg]
-    REAL(RP) :: q4(kdim) ! passive tracer       [kg/kg]
-    REAL(RP) :: vx(kdim)
-    REAL(RP) :: vy(kdim)
-    REAL(RP) :: vz(kdim)
+    real(RP) :: lon      ! longitude            [rad]
+    real(RP) :: lat      ! latitude             [rad]
+    real(RP) :: z(kdim)  ! Height               [m]
+    real(RP) :: p(kdim)  ! pressure             [Pa]
+    real(RP) :: u(kdim)  ! zonal      wind      [m/s]
+    real(RP) :: v(kdim)  ! meridional wind      [m/s]
+    real(RP) :: w(kdim)  ! vertical   wind      [m/s]
+    real(RP) :: t(kdim)  ! temperature          [K]
+    real(RP) :: phis     ! surface geopotential [m2/s2], not in use
+    real(RP) :: ps       ! surface pressure     [Pa]   , not in use
+    real(RP) :: rho      ! density              [kg/m3], not in use
+    real(RP) :: q        ! specific humidity    [kg/kg], not in use
+    real(RP) :: q1(kdim) ! passive tracer       [kg/kg]
+    real(RP) :: q2(kdim) ! passive tracer       [kg/kg]
+    real(RP) :: q3(kdim) ! passive tracer       [kg/kg]
+    real(RP) :: q4(kdim) ! passive tracer       [kg/kg]
+    real(RP) :: vx(kdim)
+    real(RP) :: vy(kdim)
+    real(RP) :: vz(kdim)
 
-    REAL(DP) :: DP_lon  ! longitude            [rad]
-    REAL(DP) :: DP_lat  ! latitude             [rad]
-    REAL(DP) :: DP_z    ! Height               [m]
-    REAL(DP) :: DP_p    ! pressure             [Pa]
-    REAL(DP) :: DP_u    ! zonal      wind      [m/s]
-    REAL(DP) :: DP_v    ! meridional wind      [m/s]
-    REAL(DP) :: DP_w    ! vertical   wind      [m/s]
-    REAL(DP) :: DP_t    ! temperature          [K]
-    REAL(DP) :: DP_phis ! surface geopotential [m2/s2], not in use
-    REAL(DP) :: DP_ps   ! surface pressure     [Pa]   , not in use
-    REAL(DP) :: DP_rho  ! density              [kg/m3], not in use
-    REAL(DP) :: DP_q    ! specific humidity    [kg/kg], not in use
-    REAL(DP) :: DP_q1   ! passive tracer       [kg/kg]
-    REAL(DP) :: DP_q2   ! passive tracer       [kg/kg]
-    REAL(DP) :: DP_q3   ! passive tracer       [kg/kg]
-    REAL(DP) :: DP_q4   ! passive tracer       [kg/kg]
+    real(DP) :: DP_lon  ! longitude            [rad]
+    real(DP) :: DP_lat  ! latitude             [rad]
+    real(DP) :: DP_z    ! Height               [m]
+    real(DP) :: DP_p    ! pressure             [Pa]
+    real(DP) :: DP_u    ! zonal      wind      [m/s]
+    real(DP) :: DP_v    ! meridional wind      [m/s]
+    real(DP) :: DP_w    ! vertical   wind      [m/s]
+    real(DP) :: DP_t    ! temperature          [K]
+    real(DP) :: DP_phis ! surface geopotential [m2/s2], not in use
+    real(DP) :: DP_ps   ! surface pressure     [Pa]   , not in use
+    real(DP) :: DP_rho  ! density              [kg/m3], not in use
+    real(DP) :: DP_q    ! specific humidity    [kg/kg], not in use
+    real(DP) :: DP_q1   ! passive tracer       [kg/kg]
+    real(DP) :: DP_q2   ! passive tracer       [kg/kg]
+    real(DP) :: DP_q3   ! passive tracer       [kg/kg]
+    real(DP) :: DP_q4   ! passive tracer       [kg/kg]
 
     logical, parameter :: hybrid_eta = .false. ! dont use hybrid sigma-p (eta) coordinate
     integer, parameter :: zcoords    = 1       ! if zcoords = 1, then we use z and output p
     integer, parameter :: cfv        = 2       ! if cfv = 2 then our velocities follow Gal-Chen coordinates and we need to specify w
-    REAL(DP)           :: hyam       = 0.0_DP  ! dont use hybrid sigma-p (eta) coordinate
-    REAL(DP)           :: hybm       = 0.0_DP  ! dont use hybrid sigma-p (eta) coordinate
-    REAL(DP)           :: DP_gc                ! bar{z} for Gal-Chen coordinate
+    real(DP)           :: hyam       = 0.0_DP  ! dont use hybrid sigma-p (eta) coordinate
+    real(DP)           :: hybm       = 0.0_DP  ! dont use hybrid sigma-p (eta) coordinate
+    real(DP)           :: DP_gc                ! bar{z} for Gal-Chen coordinate
 
     integer :: I_pasv1, I_pasv2
     integer :: I_pasv3, I_pasv4
@@ -929,36 +929,36 @@ contains
     integer,                 intent(in)    :: kdim
     integer,                 intent(in)    :: lall
     character(len=ADM_NSYS), intent(in)    :: test_case
-    REAL(RP),                intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+    real(RP),                intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-    REAL(RP) :: lon      ! longitude            [rad]
-    REAL(RP) :: lat      ! latitude             [rad]
-    REAL(RP) :: z(kdim)  ! Height               [m]
-    REAL(RP) :: p(kdim)  ! pressure             [Pa]
-    REAL(RP) :: u(kdim)  ! zonal      wind      [m/s]
-    REAL(RP) :: v(kdim)  ! meridional wind      [m/s]
-    REAL(RP) :: w(kdim)  ! vertical   wind      [m/s]
-    REAL(RP) :: t(kdim)  ! temperature          [K]
-    REAL(RP) :: phis     ! surface geopotential [m2/s2], not in use
-    REAL(RP) :: ps       ! surface pressure     [Pa]   , not in use
-    REAL(RP) :: rho      ! density              [kg/m3], not in use
-    REAL(RP) :: q(kdim)  ! specific humidity    [kg/kg], not in use
-    REAL(RP) :: vx(kdim)
-    REAL(RP) :: vy(kdim)
-    REAL(RP) :: vz(kdim)
+    real(RP) :: lon      ! longitude            [rad]
+    real(RP) :: lat      ! latitude             [rad]
+    real(RP) :: z(kdim)  ! Height               [m]
+    real(RP) :: p(kdim)  ! pressure             [Pa]
+    real(RP) :: u(kdim)  ! zonal      wind      [m/s]
+    real(RP) :: v(kdim)  ! meridional wind      [m/s]
+    real(RP) :: w(kdim)  ! vertical   wind      [m/s]
+    real(RP) :: t(kdim)  ! temperature          [K]
+    real(RP) :: phis     ! surface geopotential [m2/s2], not in use
+    real(RP) :: ps       ! surface pressure     [Pa]   , not in use
+    real(RP) :: rho      ! density              [kg/m3], not in use
+    real(RP) :: q(kdim)  ! specific humidity    [kg/kg], not in use
+    real(RP) :: vx(kdim)
+    real(RP) :: vy(kdim)
+    real(RP) :: vz(kdim)
 
-    REAL(DP) :: DP_lon  ! longitude            [rad]
-    REAL(DP) :: DP_lat  ! latitude             [rad]
-    REAL(DP) :: DP_z    ! Height               [m]
-    REAL(DP) :: DP_p    ! pressure             [Pa]
-    REAL(DP) :: DP_u    ! zonal      wind      [m/s]
-    REAL(DP) :: DP_v    ! meridional wind      [m/s]
-    REAL(DP) :: DP_w    ! vertical   wind      [m/s]
-    REAL(DP) :: DP_t    ! temperature          [K]
-    REAL(DP) :: DP_phis ! surface geopotential [m2/s2], not in use
-    REAL(DP) :: DP_ps   ! surface pressure     [Pa]   , not in use
-    REAL(DP) :: DP_rho  ! density              [kg/m3], not in use
-    REAL(DP) :: DP_q    ! specific humidity    [kg/kg], not in use
+    real(DP) :: DP_lon  ! longitude            [rad]
+    real(DP) :: DP_lat  ! latitude             [rad]
+    real(DP) :: DP_z    ! Height               [m]
+    real(DP) :: DP_p    ! pressure             [Pa]
+    real(DP) :: DP_u    ! zonal      wind      [m/s]
+    real(DP) :: DP_v    ! meridional wind      [m/s]
+    real(DP) :: DP_w    ! vertical   wind      [m/s]
+    real(DP) :: DP_t    ! temperature          [K]
+    real(DP) :: DP_phis ! surface geopotential [m2/s2], not in use
+    real(DP) :: DP_ps   ! surface pressure     [Pa]   , not in use
+    real(DP) :: DP_rho  ! density              [kg/m3], not in use
+    real(DP) :: DP_q    ! specific humidity    [kg/kg], not in use
 
     integer :: I_pasv1
 
@@ -1199,38 +1199,38 @@ contains
     integer, intent(in)    :: ijdim
     integer, intent(in)    :: kdim
     integer, intent(in)    :: lall
-    REAL(RP), intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+    real(RP), intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
     integer, parameter :: zcoords = 1
 
-    REAL(RP) :: lon     ! longitude            [rad]
-    REAL(RP) :: lat     ! latitude             [rad]
-    REAL(RP) :: z(kdim) ! Height               [m]
-    REAL(RP) :: p(kdim) ! pressure             [Pa]
-    REAL(RP) :: u(kdim) ! zonal      wind      [m/s]
-    REAL(RP) :: v(kdim) ! meridional wind      [m/s]
-    REAL(RP) :: w(kdim) ! vertical   wind      [m/s]
-    REAL(RP) :: t(kdim) ! temperature          [K]
-    REAL(RP) :: phis    ! surface geopotential [m2/s2], not in use
-    REAL(RP) :: ps      ! surface pressure     [Pa]   , not in use
-    REAL(RP) :: rho     ! density              [kg/m3], not in use
-    REAL(RP) :: q       ! specific humidity    [kg/kg], not in use
-    REAL(RP) :: vx(kdim)
-    REAL(RP) :: vy(kdim)
-    REAL(RP) :: vz(kdim)
+    real(RP) :: lon     ! longitude            [rad]
+    real(RP) :: lat     ! latitude             [rad]
+    real(RP) :: z(kdim) ! Height               [m]
+    real(RP) :: p(kdim) ! pressure             [Pa]
+    real(RP) :: u(kdim) ! zonal      wind      [m/s]
+    real(RP) :: v(kdim) ! meridional wind      [m/s]
+    real(RP) :: w(kdim) ! vertical   wind      [m/s]
+    real(RP) :: t(kdim) ! temperature          [K]
+    real(RP) :: phis    ! surface geopotential [m2/s2], not in use
+    real(RP) :: ps      ! surface pressure     [Pa]   , not in use
+    real(RP) :: rho     ! density              [kg/m3], not in use
+    real(RP) :: q       ! specific humidity    [kg/kg], not in use
+    real(RP) :: vx(kdim)
+    real(RP) :: vy(kdim)
+    real(RP) :: vz(kdim)
 
-    REAL(DP) :: DP_lon  ! longitude            [rad]
-    REAL(DP) :: DP_lat  ! latitude             [rad]
-    REAL(DP) :: DP_z    ! Height               [m]
-    REAL(DP) :: DP_p    ! pressure             [Pa]
-    REAL(DP) :: DP_u    ! zonal      wind      [m/s]
-    REAL(DP) :: DP_v    ! meridional wind      [m/s]
-    REAL(DP) :: DP_w    ! vertical   wind      [m/s]
-    REAL(DP) :: DP_t    ! temperature          [K]
-    REAL(DP) :: DP_phis ! surface geopotential [m2/s2], not in use
-    REAL(DP) :: DP_ps   ! surface pressure     [Pa]   , not in use
-    REAL(DP) :: DP_rho  ! density              [kg/m3], not in use
-    REAL(DP) :: DP_q    ! specific humidity    [kg/kg], not in use
+    real(DP) :: DP_lon  ! longitude            [rad]
+    real(DP) :: DP_lat  ! latitude             [rad]
+    real(DP) :: DP_z    ! Height               [m]
+    real(DP) :: DP_p    ! pressure             [Pa]
+    real(DP) :: DP_u    ! zonal      wind      [m/s]
+    real(DP) :: DP_v    ! meridional wind      [m/s]
+    real(DP) :: DP_w    ! vertical   wind      [m/s]
+    real(DP) :: DP_t    ! temperature          [K]
+    real(DP) :: DP_phis ! surface geopotential [m2/s2], not in use
+    real(DP) :: DP_ps   ! surface pressure     [Pa]   , not in use
+    real(DP) :: DP_rho  ! density              [kg/m3], not in use
+    real(DP) :: DP_q    ! specific humidity    [kg/kg], not in use
 
     integer :: n, k, l
     !---------------------------------------------------------------------------
@@ -1322,17 +1322,17 @@ contains
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
     integer, intent(in)  :: lall
-    REAL(RP), intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+    real(RP), intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
     ! work paramters
-    REAL(RP) :: lat, lon                 ! latitude, longitude on Icosahedral grid
-    REAL(RP) :: prs(kdim),   tmp(kdim)   ! pressure & temperature in ICO-grid field
-    REAL(RP) :: wix(kdim),   wiy(kdim)   ! zonal/meridional wind components in ICO-grid field
+    real(RP) :: lat, lon                 ! latitude, longitude on Icosahedral grid
+    real(RP) :: prs(kdim),   tmp(kdim)   ! pressure & temperature in ICO-grid field
+    real(RP) :: wix(kdim),   wiy(kdim)   ! zonal/meridional wind components in ICO-grid field
 
-    REAL(RP) :: z_local (kdim)
-    REAL(RP) :: vx_local(kdim)
-    REAL(RP) :: vy_local(kdim)
-    REAL(RP) :: vz_local(kdim)
+    real(RP) :: z_local (kdim)
+    real(RP) :: vx_local(kdim)
+    real(RP) :: vy_local(kdim)
+    real(RP) :: vz_local(kdim)
 
     integer :: n, l, k, K0
     logical :: logout
@@ -1398,21 +1398,21 @@ contains
        ADM_LOG_FID
     implicit none
     integer, intent(in) :: kdim
-    REAL(RP), intent(in) :: lat
-    REAL(RP), intent(in) :: z_local(kdim)
-    REAL(RP), intent(inout) :: wix(kdim)
-    REAL(RP), intent(inout) :: wiy(kdim)
-    REAL(RP), intent(inout) :: tmp(kdim)
-    REAL(RP), intent(inout) :: prs(kdim)
+    real(RP), intent(in) :: lat
+    real(RP), intent(in) :: z_local(kdim)
+    real(RP), intent(inout) :: wix(kdim)
+    real(RP), intent(inout) :: wiy(kdim)
+    real(RP), intent(inout) :: tmp(kdim)
+    real(RP), intent(inout) :: prs(kdim)
     logical, intent(in) :: logout
 
     integer :: i, k
-    REAL(RP) :: g1, g2, Gphi, Gzero, Pphi
-    REAL(RP), parameter :: N = 0.0187_RP        ! Brunt-Vaisala Freq.
-    REAL(RP), parameter :: prs0 = 1.E+5_RP      ! pressure at the equator [Pa]
-    REAL(RP), parameter :: ux0 = 40.0_RP        ! zonal wind at the equator [ms-1]
-    REAL(RP) :: N2                              ! Square of Brunt-Vaisala Freq.
-    REAL(RP) :: work
+    real(RP) :: g1, g2, Gphi, Gzero, Pphi
+    real(RP), parameter :: N = 0.0187_RP        ! Brunt-Vaisala Freq.
+    real(RP), parameter :: prs0 = 1.E+5_RP      ! pressure at the equator [Pa]
+    real(RP), parameter :: ux0 = 40.0_RP        ! zonal wind at the equator [ms-1]
+    real(RP) :: N2                              ! Square of Brunt-Vaisala Freq.
+    real(RP) :: work
     !-----
 
     if (logout) then
@@ -1472,16 +1472,16 @@ contains
 
     integer,  intent(in)    :: kdim        ! # of z dimension
     integer,  intent(in)    :: itr         ! iteration number
-    REAL(RP), intent(in)    :: z  (kdim)   ! z-height vertical coordinate
-    REAL(RP), intent(in)    :: tmp(kdim)   ! guessed temperature
-    REAL(RP), intent(in)    :: geo(kdim)   ! guessed geopotential
+    real(RP), intent(in)    :: z  (kdim)   ! z-height vertical coordinate
+    real(RP), intent(in)    :: tmp(kdim)   ! guessed temperature
+    real(RP), intent(in)    :: geo(kdim)   ! guessed geopotential
     logical,  intent(in)    :: eta_limit   ! eta limitation flag
-    REAL(RP), intent(inout) :: eta(kdim,2) ! eta level vertical coordinate
+    real(RP), intent(inout) :: eta(kdim,2) ! eta level vertical coordinate
     logical,  intent(inout) :: signal      ! iteration signal
 
-    REAL(RP) :: diffmax, diff(kdim)
-    REAL(RP) :: F(kdim), Feta(kdim)
-    REAL(RP) :: criteria
+    real(RP) :: diffmax, diff(kdim)
+    real(RP) :: F(kdim), Feta(kdim)
+    real(RP) :: criteria
     integer  :: k
     !---------------------------------------------------------------------------
 
@@ -1531,14 +1531,14 @@ contains
     implicit none
     integer :: k
     integer, intent(in) :: kdim
-    REAL(RP), intent(in) :: lat
-    REAL(RP), intent(in) :: eta(kdim,2)
-    REAL(RP), intent(inout) :: wix(kdim)
-    REAL(RP), intent(inout) :: wiy(kdim)
-    REAL(RP), intent(inout) :: tmp(kdim)
-    REAL(RP), intent(inout) :: geo(kdim)
-    REAL(RP) :: eta_v
-    REAL(RP) :: work1, work2
+    real(RP), intent(in) :: lat
+    real(RP), intent(in) :: eta(kdim,2)
+    real(RP), intent(inout) :: wix(kdim)
+    real(RP), intent(inout) :: wiy(kdim)
+    real(RP), intent(inout) :: tmp(kdim)
+    real(RP), intent(inout) :: geo(kdim)
+    real(RP) :: eta_v
+    real(RP) :: work1, work2
     !
     ! ---------- horizontal mean
     work1 = pi/2.0_RP
@@ -1613,21 +1613,21 @@ contains
     !
     implicit none
     integer, intent(in) :: kdim
-    REAL(RP), intent(in) :: ps
-    REAL(RP), intent(in) :: lat
-    REAL(RP), intent(in) :: tmp(kdim)
-    REAL(RP), intent(in) :: geo(kdim)
-    REAL(RP), intent(in) :: wix(kdim)
-    REAL(RP), intent(inout) :: prs(kdim)
-    REAL(RP), intent(in) :: eps_geo2prs
+    real(RP), intent(in) :: ps
+    real(RP), intent(in) :: lat
+    real(RP), intent(in) :: tmp(kdim)
+    real(RP), intent(in) :: geo(kdim)
+    real(RP), intent(in) :: wix(kdim)
+    real(RP), intent(inout) :: prs(kdim)
+    real(RP), intent(in) :: eps_geo2prs
     logical, intent(in) :: nicamcore
     logical, intent(in) :: logout
 
     integer :: i, k
     integer, parameter :: limit = 400
-    REAL(RP) :: dz, uave, diff
-    REAL(RP) :: f_cf(3), rho(3)
-    REAL(RP) :: pp(kdim)
+    real(RP) :: dz, uave, diff
+    real(RP) :: f_cf(3), rho(3)
+    real(RP) :: pp(kdim)
     logical :: iteration = .false.
     logical :: do_iter = .true.
     !-----
@@ -1723,22 +1723,22 @@ contains
        ADM_LOG_FID
     implicit none
     integer, intent(in) :: kdim
-    REAL(RP), intent(in) :: lat
-    REAL(RP), intent(in) :: eta(kdim)
-    REAL(RP), intent(in) :: tmp(kdim)
-    REAL(RP), intent(in) :: geo(kdim)
-    REAL(RP), intent(in) :: wix(kdim)
-    REAL(RP), intent(out) :: ps
+    real(RP), intent(in) :: lat
+    real(RP), intent(in) :: eta(kdim)
+    real(RP), intent(in) :: tmp(kdim)
+    real(RP), intent(in) :: geo(kdim)
+    real(RP), intent(in) :: wix(kdim)
+    real(RP), intent(out) :: ps
     logical, intent(in) :: nicamcore
 
     integer :: k
-    REAL(RP), parameter :: lat0 = 0.691590985442682
-    REAL(RP) :: cs32ev, f1, f2
-    REAL(RP) :: eta_v, tmp0, tmp1
-    REAL(RP) :: ux1, ux2, hgt0, hgt1
-    REAL(RP) :: dz, uave
-    REAL(RP) :: f_cf(3), rho(3)
-    REAL(RP), parameter :: eta1 = 1.0_RP
+    real(RP), parameter :: lat0 = 0.691590985442682
+    real(RP) :: cs32ev, f1, f2
+    real(RP) :: eta_v, tmp0, tmp1
+    real(RP) :: ux1, ux2, hgt0, hgt1
+    real(RP) :: dz, uave
+    real(RP) :: f_cf(3), rho(3)
+    real(RP), parameter :: eta1 = 1.0_RP
     !-----
 
     eta_v = (eta1 - eta0)*(pi*0.5_RP)
@@ -1797,16 +1797,16 @@ contains
        K0 => ADM_KNONE
     implicit none
     integer, intent(in) :: ijdim, kdim, lall, vmax
-    REAL(RP), intent(inout) :: DIAG_var(ijdim,kdim,lall,vmax)
+    real(RP), intent(inout) :: DIAG_var(ijdim,kdim,lall,vmax)
 
     integer, parameter :: ID_vx  = 3
     integer, parameter :: ID_vy  = 4
     integer, parameter :: ID_vz  = 5
     integer :: n, k, l
-    REAL(RP) :: lat, lon
-    REAL(RP) :: r, rr, rbyrr, cla, clo
-    REAL(RP) :: ptb_wix(kdim), ptb_wiy(kdim)
-    REAL(RP) :: ptb_vx(kdim), ptb_vy(kdim), ptb_vz(kdim)
+    real(RP) :: lat, lon
+    real(RP) :: r, rr, rbyrr, cla, clo
+    real(RP) :: ptb_wix(kdim), ptb_wiy(kdim)
+    real(RP) :: ptb_vx(kdim), ptb_vy(kdim), ptb_vz(kdim)
 
     cla = clat * d2r
     clo = clon * d2r
@@ -1850,16 +1850,16 @@ contains
     !
     implicit none
     integer, intent(in) :: kdim
-    REAL(RP), intent(in)    :: lat
-    REAL(RP), intent(in)    :: lon
-    REAL(RP), intent(in)    :: wix(kdim)
-    REAL(RP), intent(in)    :: wiy(kdim)
-    REAL(RP), intent(inout) :: vx1d(kdim)
-    REAL(RP), intent(inout) :: vy1d(kdim)
-    REAL(RP), intent(inout) :: vz1d(kdim)
+    real(RP), intent(in)    :: lat
+    real(RP), intent(in)    :: lon
+    real(RP), intent(in)    :: wix(kdim)
+    real(RP), intent(in)    :: wiy(kdim)
+    real(RP), intent(inout) :: vx1d(kdim)
+    real(RP), intent(inout) :: vy1d(kdim)
+    real(RP), intent(inout) :: vz1d(kdim)
     !
     integer :: k
-    REAL(RP) :: unit_east(3), unit_north(3)
+    real(RP) :: unit_east(3), unit_north(3)
     !
     ! imported from NICAM/nhm/mkinit/prg_mkinit_ncep.f90 (original written by H.Miura)
     ! *** compute vx, vy, vz as 1-dimensional variables
@@ -1894,15 +1894,15 @@ contains
       result (pout)
     !
     implicit none
-    REAL(RP), intent(in) :: pin1, pin2, pin3
-    REAL(RP), intent(in) :: t1, t2, t3
-    REAL(RP), intent(in) :: u1, u2, u3
-    REAL(RP), intent(in) :: geo1, geo3, lat
+    real(RP), intent(in) :: pin1, pin2, pin3
+    real(RP), intent(in) :: t1, t2, t3
+    real(RP), intent(in) :: u1, u2, u3
+    real(RP), intent(in) :: geo1, geo3, lat
     logical, intent(in) :: downward
     logical, intent(in) :: nicamcore
     !
-    REAL(RP) :: dz, pout
-    REAL(RP) :: f_cf(3), rho(3)
+    real(RP) :: dz, pout
+    real(RP) :: f_cf(3), rho(3)
     !---------------------------------------------------------------------------
 
     dz = (geo1-geo3) / g * 0.5_RP
@@ -1935,8 +1935,8 @@ contains
   function Sp_Unit_East( lon ) result( unit_east )
     implicit none
 
-    REAL(RP), intent(in) :: lon ! [rad]
-    REAL(RP)             :: unit_east(3)
+    real(RP), intent(in) :: lon ! [rad]
+    real(RP)             :: unit_east(3)
     !---------------------------------------------------------------------------
 
     unit_east(1) = -sin(lon) ! x-direction
@@ -1950,8 +1950,8 @@ contains
   function Sp_Unit_North( lon, lat ) result( unit_north )
     implicit none
 
-    REAL(RP), intent(in) :: lon, lat ! [rad]
-    REAL(RP)             :: unit_north(3)
+    real(RP), intent(in) :: lon, lat ! [rad]
+    real(RP)             :: unit_north(3)
     !---------------------------------------------------------------------------
 
     unit_north(1) = -sin(lat) * cos(lon) ! x-direction
