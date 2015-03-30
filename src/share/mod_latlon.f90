@@ -117,8 +117,7 @@ contains
     use mod_misc, only: &
        MISC_get_latlon
     use mod_adm, only: &
-       ADM_prc_pl,      &
-       ADM_prc_me,      &
+       ADM_have_pl,     &
        ADM_lall,        &
        ADM_lall_pl,     &
        ADM_gall,        &
@@ -166,7 +165,7 @@ contains
        enddo ! ij loop
     enddo ! l loop
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        n = ADM_GSLF_PL
        do l = 1,ADM_lall_pl
           call MISC_get_latlon( GMTR_P_ll_pl(n,k,l,GMTR_P_LAT), &

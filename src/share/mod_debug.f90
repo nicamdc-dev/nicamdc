@@ -80,7 +80,7 @@ contains
        MISC_make_idstr, &
        MISC_get_available_fid
     use mod_adm, only: &
-       ADM_prc_pl, &
+       ADM_have_pl, &
        ADM_prc_me
     implicit none
 
@@ -110,7 +110,7 @@ contains
 
     close(fid)
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        shp(:) = shape(var_pl)
 
        fname = trim(basename)//'.pl'
@@ -142,7 +142,7 @@ contains
        MISC_make_idstr, &
        MISC_get_available_fid
     use mod_adm, only: &
-       ADM_prc_pl, &
+       ADM_have_pl, &
        ADM_prc_me
     implicit none
 
@@ -179,7 +179,7 @@ contains
 
     close(fid)
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        shp(:) = shape(var_pl)
 
        fname = trim(basename)//'.txtpl'
@@ -217,7 +217,7 @@ contains
        MISC_make_idstr, &
        MISC_get_available_fid
     use mod_adm, only: &
-       ADM_prc_pl, &
+       ADM_have_pl, &
        ADM_prc_me
     implicit none
 
@@ -252,7 +252,7 @@ contains
 
     close(fid)
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        shp(:) = shape(var_pl)
 
        fname = trim(basename)//'.txtpl'

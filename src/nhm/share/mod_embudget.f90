@@ -287,7 +287,7 @@ contains
     use mod_adm, only: &
        ADM_prc_me,         &
        ADM_prc_run_master, &
-       ADM_prc_pl,         &
+       ADM_have_pl,        &
        ADM_gall,           &
        ADM_gall_pl,        &
        ADM_kall,           &
@@ -418,7 +418,7 @@ contains
                      q (:,:,:,:), & ! [IN]
                      qd(:,:,:)    ) ! [OUT]
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        call THRMDYN_qd( ADM_gall_pl,    & ! [IN]
                         ADM_kall,       & ! [IN]
                         ADM_lall_pl,    & ! [IN]
@@ -430,14 +430,14 @@ contains
 
     !--- total mass ( dry + water )
     tmp(:,:,:) = rho(:,:,:)
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        tmp_pl(:,:,:) = rho_pl(:,:,:)
     end if
     rho_sum = GTL_global_sum( tmp, tmp_pl ) ! [kg/m3] -> [kg]
 
     !--- total mass (dry air)
     tmp(:,:,:) = rho(:,:,:) * qd(:,:,:)
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        tmp_pl(:,:,:) = rho_pl(:,:,:) * qd_pl(:,:,:)
     endif
     rhoqd_sum = GTL_global_sum( tmp, tmp_pl )
@@ -445,7 +445,7 @@ contains
     !--- total mass (each water category)
     do nq = NQW_STR, NQW_END
        tmp(:,:,:) = rho(:,:,:) * q(:,:,:,nq)
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           tmp_pl(:,:,:) = rho_pl(:,:,:) * q_pl(:,:,:,nq)
        endif
        rhoq_sum(nq) = GTL_global_sum( tmp, tmp_pl )
@@ -497,7 +497,7 @@ contains
 
     !--- internal energy (dry air)
     tmp = rho * qd * CNST_CV * tem
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        tmp_pl = rho_pl * qd_pl * CNST_CV * tem_pl
     end if
     rhoein_qd_sum = GTL_global_sum( tmp, tmp_pl )
@@ -514,7 +514,7 @@ contains
           tmp(:,:,:) = tmp(:,:,:) - rho(:,:,:) * q(:,:,:,nq) * LHF
        endif
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           tmp_pl(:,:,:) = rho_pl(:,:,:) * q_pl(:,:,:,nq) * CVW(nq) * tem_pl(:,:,:)
 
           if    ( nq == I_QV ) then
@@ -530,7 +530,7 @@ contains
 
     !--- potential energy
     tmp(:,:,:) = rho(:,:,:) * VMTR_PHI(:,:,:)
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        tmp_pl(:,:,:) = rho_pl(:,:,:) * VMTR_PHI_pl(:,:,:)
     endif
     rhophi_sum = GTL_global_sum( tmp, tmp_pl )
@@ -544,7 +544,7 @@ contains
                          tmp,    tmp_pl     ) !--- [OUT]
 
     tmp(:,:,:) = tmp(:,:,:) *  VMTR_RGSGAM2(:,:,:)
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        tmp_pl(:,:,:) = tmp_pl(:,:,:) * VMTR_RGSGAM2_pl(:,:,:)
     endif
     rhokin_sum = GTL_global_sum( tmp, tmp_pl )

@@ -257,7 +257,7 @@ contains
        ADM_proc_stop,      &
        ADM_prc_me,         &
        ADM_prc_run_master, &
-       ADM_prc_pl,         &
+       ADM_have_pl,        &
        ADM_gall_1d,        &
        ADM_gmin,           &
        ADM_gmax,           &
@@ -465,7 +465,7 @@ contains
              endif
           enddo
 
-          if ( ADM_prc_me == ADM_prc_pl ) then
+          if ( ADM_have_pl ) then
              n = ADM_GSLF_PL
              do l = 1, ADM_lall_pl
                 do k = ADM_kmin-1, kflat
@@ -503,7 +503,7 @@ contains
           enddo
           enddo
 
-          if ( ADM_prc_me == ADM_prc_pl ) then
+          if ( ADM_have_pl ) then
              n = ADM_GSLF_PL
              do l = 1, ADM_lall_pl
              do k = ADM_kmin-1, ADM_kmax+1

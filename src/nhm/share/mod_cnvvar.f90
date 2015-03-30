@@ -71,8 +71,7 @@ contains
        prg,  prg_pl, &
        diag, diag_pl )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_lall,    &
@@ -158,7 +157,7 @@ contains
        enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
 
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
@@ -220,8 +219,7 @@ contains
        prg,  prg_pl, &
        diag, diag_pl )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_lall,    &
@@ -307,7 +305,7 @@ contains
        enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
 
        call THRMDYN_rhoein( ADM_gall_pl,                  & ! [IN]
                             ADM_kall,                     & ! [IN]
@@ -373,8 +371,7 @@ contains
        rhogw,   rhogw_pl,  &
        rhogkin, rhogkin_pl )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_lall,    &
@@ -445,7 +442,7 @@ contains
        rhogkin(:,ADM_kmax+1,l) = 0.0_RP
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
           !--- horizontal kinetic energy
           do k = ADM_kmin, ADM_kmax

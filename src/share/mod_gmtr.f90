@@ -260,7 +260,7 @@ contains
        MISC_get_latlon
     use mod_adm, only: &
        ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_prc_tab,     &
        ADM_rgn_vnum,    &
        ADM_W,           &
@@ -389,7 +389,7 @@ contains
        enddo ! ij loop
     enddo ! l loop
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        n = ADM_GSLF_PL
 
        do l = 1,ADM_lall_pl
@@ -443,7 +443,7 @@ contains
        MISC_get_latlon
     use mod_adm, only: &
        ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_prc_tab,     &
        ADM_rgn_vnum,    &
        ADM_W,           &
@@ -561,7 +561,7 @@ contains
 
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1,ADM_lall_pl
 
           do n = ADM_GMIN_PL, ADM_GMAX_PL-1
@@ -616,7 +616,7 @@ contains
        MISC_mk_gmtrvec
     use mod_adm, only: &
        ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_prc_tab,     &
        ADM_rgn_vnum,    &
        ADM_W,           &
@@ -911,7 +911,7 @@ contains
 
     enddo ! l loop
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
 
           do ij = ADM_GMIN_PL, ADM_GMAX_PL
@@ -980,8 +980,8 @@ contains
     use mod_adm, only: &
        ADM_proc_stop, &
        ADM_prc_tab,   &
-       ADM_prc_me,    &
-       ADM_prc_pl
+       ADM_have_pl, &
+       ADM_prc_me
     use mod_fio, only: &
        FIO_output, &
        FIO_HMID,   &
@@ -1016,7 +1016,7 @@ contains
        enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) Then
+    if ( ADM_have_pl ) Then
        do l = 1, ADM_lall_pl
        do g = 1, ADM_gall_pl
           tmp_pl(g,K0,l,I_rgn ) = real(-l,kind=RP)

@@ -68,8 +68,7 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_global_sum( var, var_pl ) result( sum_g )
     use mod_adm, only: &
-       ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_gall,        &
        ADM_gall_pl,     &
        ADM_lall,        &
@@ -105,7 +104,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1,        ADM_lall_pl
        do k = ADM_kmin, ADM_kmax
           sum = sum + var_pl(ADM_GSLF_PL,k,l) * VMTR_VOLUME_pl(ADM_GSLF_PL,k,l)
@@ -121,8 +120,7 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_global_sum_srf( var, var_pl ) result( sum_g )
     use mod_adm, only: &
-       ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_gall,        &
        ADM_gall_pl,     &
        ADM_lall,        &
@@ -155,7 +153,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
           sum = sum + var_pl      (ADM_GSLF_PL,ADM_KNONE,l) &
                     * GMTR_area_pl(ADM_GSLF_PL,l)
@@ -170,8 +168,7 @@ contains
   !-----------------------------------------------------------------------------
   subroutine GTL_global_sum_eachlayer( var, var_pl, sum_g )
     use mod_adm, only: &
-       ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_gall,        &
        ADM_gall_pl,     &
        ADM_lall,        &
@@ -210,7 +207,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
           sum(k) = sum(k) + var_pl      (ADM_GSLF_PL,k,l) &
@@ -267,8 +264,7 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_max( var, var_pl, kdim, kstart, kend ) result( vmax_g )
     use mod_adm, only: &
-       ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_gall,        &
        ADM_gall_pl,     &
        ADM_lall,        &
@@ -301,7 +297,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1,      ADM_lall_pl
        do k = kstart, kend
           vmax = max( vmax, var_pl(ADM_GSLF_PL,k,l) )
@@ -317,8 +313,7 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_max_k( var, var_pl, k ) result( vmax_g )
     use mod_adm, only: &
-       ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_gall,        &
        ADM_gall_pl,     &
        ADM_lall,        &
@@ -348,7 +343,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1,        ADM_lall_pl
           vmax = max( vmax, var_pl(ADM_GSLF_PL,k,l) )
        enddo
@@ -362,8 +357,7 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_min( var, var_pl, kdim, kstart, kend, nonzero ) result( vmin_g )
     use mod_adm, only: &
-       ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_gall,        &
        ADM_gall_pl,     &
        ADM_lall,        &
@@ -405,7 +399,7 @@ contains
           enddo
           enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           do l = 1,      ADM_lall_pl
           do k = kstart, kend
              if (       var_pl(ADM_GSLF_PL,k,l) > 0.0_RP &
@@ -433,7 +427,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1,      ADM_lall_pl
        do k = kstart, kend
           vmin = min( vmin, var_pl(ADM_GSLF_PL,k,l) )
@@ -449,8 +443,7 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_min_k( var, var_pl, k ) result( vmin_g )
     use mod_adm, only: &
-       ADM_prc_me,      &
-       ADM_prc_pl,      &
+       ADM_have_pl,     &
        ADM_gall,        &
        ADM_gall_pl,     &
        ADM_lall,        &
@@ -480,7 +473,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1,        ADM_lall_pl
           vmin = min( vmin, var_pl(ADM_GSLF_PL,k,l) )
        enddo
@@ -614,8 +607,7 @@ contains
        vy,   vy_pl,   &
        vz,   vz_pl    )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_lall,    &
@@ -672,7 +664,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
        do n = 1, ADM_gall_pl
@@ -706,8 +698,7 @@ contains
        vz, vz_pl, &
        icos       )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_lall,    &
@@ -760,7 +751,7 @@ contains
        enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do n = 1, ADM_gall_pl
@@ -790,7 +781,7 @@ contains
        enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do n = 1, ADM_gall_pl
@@ -818,8 +809,7 @@ contains
        alpha,     &
        vmax       )
     use mod_adm, only: &
-       ADM_prc_pl,      &
-       ADM_prc_me,      &
+       ADM_have_pl,     &
        ADM_gall,        &
        ADM_gall_pl,     &
        ADM_lall,        &
@@ -878,7 +868,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl) then
+    if ( ADM_have_pl ) then
        ij = ADM_GSLF_PL
 
        do l = 1, ADM_lall_pl

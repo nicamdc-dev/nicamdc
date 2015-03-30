@@ -147,8 +147,7 @@ contains
     use mod_adm, only: &
        ADM_CTL_FID,   &
        ADM_proc_stop, &
-       ADM_prc_me,    &
-       ADM_prc_pl,    &
+       ADM_have_pl,   &
        ADM_gmin,      &
        ADM_gmax,      &
        ADM_KNONE,     &
@@ -454,7 +453,7 @@ contains
 
 
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
 
        !---   G^1/2 = dz/dgz
        do l = 1, ADM_lall_pl

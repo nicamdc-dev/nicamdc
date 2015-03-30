@@ -211,8 +211,7 @@ contains
        rhogq,  rhogq_pl,  &
        num                )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kall,    &
@@ -266,7 +265,7 @@ contains
        enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
 
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
@@ -318,7 +317,7 @@ contains
        enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
 
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
@@ -359,8 +358,7 @@ contains
        rhogw,  rhogw_pl,  &
        rhoge,  rhoge_pl   )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kall,    &
@@ -397,7 +395,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
 
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
@@ -438,8 +436,7 @@ contains
        w,      w_pl,      &
        q,      q_pl       )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kall,    &
@@ -525,7 +522,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
 
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
@@ -580,8 +577,7 @@ contains
        rhogq,  rhogq_pl,  &
        num                )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kall,    &
@@ -643,7 +639,7 @@ contains
        enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
 
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
@@ -701,7 +697,7 @@ contains
        enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
 
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
@@ -986,7 +982,7 @@ contains
     use mod_adm, only: &
        ADM_prc_tab, &
        ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_lall,    &
        ADM_kall,    &
@@ -1146,7 +1142,7 @@ contains
     use mod_adm, only: &
        ADM_prc_tab, &
        ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_lall,    &
        ADM_kall,    &

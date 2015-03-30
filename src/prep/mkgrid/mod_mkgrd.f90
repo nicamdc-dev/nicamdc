@@ -589,8 +589,7 @@ contains
   !> Apply rotation before stretching, for 1-diamond grid system
   subroutine MKGRD_prerotate
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_KNONE,   &
@@ -647,7 +646,7 @@ contains
        enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l  = 1, ADM_lall_pl
        do ij = 1, ADM_gall_pl
           g(:) = GRD_x_pl(ij,k,l,:)
@@ -682,8 +681,7 @@ contains
        MISC_get_latlon, &
        MISC_get_cartesian
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_KNONE,   &
@@ -734,7 +732,7 @@ contains
        enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l  = 1, ADM_lall_pl
        do ij = 1, ADM_gall_pl
 
@@ -773,8 +771,7 @@ contains
        MISC_get_latlon, &
        MISC_get_cartesian
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_KNONE,   &
@@ -819,7 +816,7 @@ contains
        enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
     do ite = 1, MKGRD_shrink_level-1
        do l  = 1, ADM_lall_pl
        do ij = 1, ADM_gall_pl
@@ -850,8 +847,7 @@ contains
   !> Apply rotation to grid system
   subroutine MKGRD_rotate
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_KNONE,   &
@@ -899,7 +895,7 @@ contains
        enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l  = 1, ADM_lall_pl
        do ij = 1, ADM_gall_pl
           g(:) = GRD_x_pl(ij,k,l,:)
@@ -1360,7 +1356,7 @@ contains
       ADM_TJ,         &
       ADM_KNONE,      &
       ADM_prc_tab,    &
-      ADM_PRC_PL,     &
+       ADM_have_pl,     &
       ADM_prc_me,     &
       ADM_rgn_vnum,   &
       ADM_lall,       &
@@ -1490,7 +1486,7 @@ contains
 
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
 
           do oo = ADM_GMIN_PL, ADM_GMAX_PL-1
@@ -1542,7 +1538,7 @@ contains
       ADM_TJ,         &
       ADM_KNONE,      &
       ADM_prc_tab,    &
-      ADM_PRC_PL,     &
+       ADM_have_pl,     &
       ADM_prc_me,     &
       ADM_rgn_vnum,   &
       ADM_lall,       &
@@ -1659,7 +1655,7 @@ contains
        enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1,ADM_lall_pl
           oo = ADM_GSLF_PL
 

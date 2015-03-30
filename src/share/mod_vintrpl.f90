@@ -35,8 +35,7 @@ module mod_vintrpl
        ADM_KNONE,       &
        ADM_kmin,        &
        ADM_kmax,        &
-       ADM_prc_me,      &
-       ADM_prc_pl
+       ADM_have_pl
   use mod_grd, only :   &
        GRD_vz,GRD_vz_pl,&
        GRD_gz,          &
@@ -105,7 +104,7 @@ contains
                GRD_vz(n,ADM_kmin  ,l,GRD_Z),var(n,ADM_kmin  ,l))
        enddo
     enddo
-    if(ADM_prc_me==ADM_prc_pl) then
+    if( ADM_have_pl ) then
        do l=1,ADM_lall_pl
           do n = 1, ADM_gall_pl
              svar_pl(n,ADM_KNONE,l) &
@@ -157,7 +156,7 @@ contains
        tmp(:,ADM_kmin-1,:) = v(:,ADM_kmin,:)
        tmp(:,ADM_kmax+1,:) = v(:,ADM_kmax+1,:)
 
-       if (ADM_prc_me==ADM_prc_pl) Then
+       if ( ADM_have_pl ) Then
           ! 07/01/24 K.Suzuki: consider undefined value
           do l=1,ADM_lall
           do k=ADM_kmin,ADM_kmax
@@ -228,7 +227,7 @@ contains
           enddo
        end Do
     end Do
-    if (ADM_prc_me==ADM_prc_pl) Then
+    if ( ADM_have_pl ) Then
        Do l=1,ADM_lall_pl
           do k=1,ADM_kall
              do n=1, ADM_gall_pl
@@ -316,7 +315,7 @@ contains
        tmp(:,ADM_kmin-1,:) = v(:,ADM_kmin,:)
        tmp(:,ADM_kmax+1,:) = v(:,ADM_kmax+1,:)
 
-       if (ADM_prc_me==ADM_prc_pl) Then
+       if ( ADM_have_pl ) Then
           do l=1,ADM_lall
           do k=ADM_kmin,ADM_kmax
           do n=1,ADM_gall
@@ -370,7 +369,7 @@ contains
           enddo
        end Do
     end Do
-    if (ADM_prc_me==ADM_prc_pl) Then
+    if ( ADM_have_pl ) Then
        Do l=1,ADM_lall_pl
           do k=1,ADM_kall
              do n=1, ADM_gall_pl
@@ -455,7 +454,7 @@ contains
           enddo
        enddo
 
-       if (ADM_prc_me==ADM_prc_pl) Then
+       if ( ADM_have_pl ) Then
           tmp_pl = v_pl
           v_pl(:,ADM_kmin-1,:) = CNST_UNDEF
           do l=1,ADM_lall_pl
@@ -512,7 +511,7 @@ contains
        enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) Then
+       if ( ADM_have_pl ) Then
           tmp_pl = v_pl
           v_pl(:,ADM_kmin-1,:) = CNST_UNDEF
           v_pl(:,ADM_kmax+1,:) = CNST_UNDEF
@@ -559,7 +558,7 @@ contains
     tmp(:,ADM_kmax+1,:) = v(:,ADM_kmax+1,:)
     v = tmp
     !
-    if (ADM_prc_me==ADM_prc_pl) Then
+    if ( ADM_have_pl ) Then
        do k=ADM_kmin,ADM_kmax
           tmp_pl(:,k,:) = 0.5_RP*(v_pl(:,k+1,:)+v_pl(:,k,:))
        enddo
@@ -590,7 +589,7 @@ contains
           enddo
        enddo
     enddo
-    if (ADM_prc_me==ADM_prc_pl) Then
+    if ( ADM_have_pl ) Then
        do l = 1, ADM_lall_pl
           do k = 1,ADM_kall
              do n=1, ADM_gall_pl
@@ -628,7 +627,7 @@ contains
        tmp(:,ADM_kmin-1,:) = v(:,ADM_kmin,:)
        tmp(:,ADM_kmax+1,:) = v(:,ADM_kmax+1,:)
 
-       if (ADM_prc_me==ADM_prc_pl) Then
+       if ( ADM_have_pl ) Then
           do k=ADM_kmin,ADM_kmax
              tmp_pl(:,k,:) = 0.5_RP*(v_pl(:,k+1,:)+v_pl(:,k,:))
           enddo
@@ -653,7 +652,7 @@ contains
           enddo
        end Do
     end Do
-    if (ADM_prc_me==ADM_prc_pl) Then
+    if ( ADM_have_pl ) Then
        Do l=1,ADM_lall_pl
           do k=1,MAX_SIGMA
              do n=1, ADM_gall_pl

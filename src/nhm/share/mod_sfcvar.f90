@@ -323,8 +323,7 @@ contains
          ADM_LOG_FID,       &
          ADM_GALL_PL,       &
          ADM_LALL_PL,       &
-         ADM_prc_me,        &
-         ADM_prc_pl,        &
+       ADM_have_pl, &
          ADM_KNONE,         &
          ADM_gall,          &
          ADM_lall,          &
@@ -338,7 +337,7 @@ contains
     sv(1:ADM_gall,ADM_KNONE,1:ADM_lall) &
          = sfcvar(1:ADM_gall,KSTR(vid),1:ADM_lall,1)
 
-    if(ADM_prc_me==ADM_prc_pl) then
+    if( ADM_have_pl ) then
        sv_pl(1:ADM_gall_pl,ADM_KNONE,1:ADM_lall_pl) &
             = sfcvar_pl(1:ADM_gall_pl,KSTR(vid),1:ADM_lall_pl,1)
     end if
@@ -359,8 +358,7 @@ contains
          ADM_LOG_FID,       &
          ADM_GALL_PL,       &
          ADM_LALL_PL,       &
-         ADM_prc_me,        &
-         ADM_prc_pl,        &
+       ADM_have_pl, &
          ADM_KNONE,         &
          ADM_gall,          &
          ADM_lall,          &
@@ -384,7 +382,7 @@ contains
        end do
     end do
 
-    if(ADM_prc_me==ADM_prc_pl) then
+    if( ADM_have_pl ) then
        do m=1, mdim
           do l=1,ADM_lall_pl
              do n=1,ADM_gall_pl
@@ -407,17 +405,14 @@ contains
     !------ get diagnostic variables
     !------
     use mod_adm, only :     &
-         ADM_LOG_FID,       &
+       ADM_have_pl, &
          ADM_KNONE,         &
          ADM_lall,          &
          ADM_gall,          &
          ADM_gall_pl,       &
-         ADM_lall_pl,       &
-         ADM_prc_pl,        &
-         ADM_prc_me
-
-    !
+         ADM_lall_pl
     implicit none
+
     integer, intent(in) :: mdim1, mdim2
     real(RP), intent(out) :: sv(ADM_gall,ADM_KNONE,ADM_lall,mdim1,mdim2)
     real(RP), intent(out) :: sv_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL,mdim1,mdim2)
@@ -442,8 +437,8 @@ contains
           end do
        end do
     end do
-    !
-    if(ADM_prc_me==ADM_prc_pl) then
+
+    if( ADM_have_pl ) then
        k = 0
        ! modify T.Mitsui 06.04.18
 !!$       do m1 = 1, mdim1
@@ -473,11 +468,9 @@ contains
     !------ and COMMUNICATION.
     !------
     use mod_adm, only :     &
-         ADM_LOG_FID,       &
          ADM_GALL_PL,       &
          ADM_LALL_PL,       &
-         ADM_prc_me,        &
-         ADM_prc_pl,        &
+       ADM_have_pl, &
          ADM_KNONE,         &
          ADM_gall,          &
          ADM_gmin,          &
@@ -495,7 +488,7 @@ contains
 
     sfcvar(1:ADM_gall,KSTR(vid),1:ADM_lall,1) &
          = sv(1:ADM_gall,ADM_KNONE,1:ADM_lall)
-    if(ADM_prc_me==ADM_prc_pl) then
+    if( ADM_have_pl ) then
        sfcvar_pl(1:ADM_gall_pl,KSTR(vid),1:ADM_lall_pl,1) &
             = sv_pl(1:ADM_gall_pl,ADM_KNONE,1:ADM_lall_pl)
     end if
@@ -630,18 +623,16 @@ contains
     !------ set prognostic variables to diag[num]
     !------ and COMMUNICATION.
     !------
-    use mod_adm, only :     &
-         ADM_LOG_FID,       &
-         ADM_KNONE,         &
-         ADM_gmin,          &
-         ADM_gmax,          &
-         ADM_gall,          &
-         ADM_lall,          &
-         ADM_gall_pl,       &
-         ADM_lall_pl,       &
-         ADM_gall_1d,       &
-         adm_prc_me,        &
-         adm_prc_pl
+    use mod_adm, only: &
+       ADM_have_pl, &
+       ADM_KNONE,   &
+       ADM_gmin,    &
+       ADM_gmax,    &
+       ADM_gall,    &
+       ADM_lall,    &
+       ADM_gall_pl, &
+       ADM_lall_pl, &
+       ADM_gall_1d
     use mod_comm, only :    &
          COMM_data_transfer
     !
@@ -667,7 +658,7 @@ contains
           end do
        end do
     end do
-    if(ADM_prc_me==ADM_prc_pl) then
+    if( ADM_have_pl ) then
        do m=1, mdim
           do l=1,ADM_lall_pl
              do n=1,ADM_gall_pl
@@ -843,16 +834,15 @@ contains
        vid,               &  !--- IN : variable ID
        mdim1, mdim2       &  !--- IN
        )
-    use mod_adm, only :     &
-         ADM_KNONE,         &
-         ADM_gall,          &
-         ADM_gall_pl,       &
-         ADM_lall,          &
-         ADM_lall_pl,       &
-         adm_prc_me,        &
-         adm_prc_pl
-    !
+    use mod_adm, only: &
+       ADM_have_pl, &
+       ADM_KNONE,   &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_lall,    &
+       ADM_lall_pl
     implicit none
+
     integer, intent(in) :: mdim1, mdim2
     real(RP), intent(in) :: sv   (ADM_gall   ,ADM_KNONE,ADM_lall   ,mdim1,mdim2)
     real(RP), intent(in) :: sv_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,mdim1,mdim2)
@@ -875,8 +865,8 @@ contains
           end do
        end do
     end do
-    !
-    if(adm_prc_me == adm_prc_pl) then
+
+    if ( ADM_have_pl ) then
        k=0
        do m2=1,mdim2
           do m1=1,mdim1

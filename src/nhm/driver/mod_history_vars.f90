@@ -163,8 +163,7 @@ contains
   !----------------------------------------------------------------------
   subroutine history_vars
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kall,    &
@@ -525,7 +524,7 @@ contains
                         pre(:,:,:), & ! [IN]
                         th (:,:,:)  ) ! [OUT]
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           call THRMDYN_th( ADM_gall_pl,   & ! [IN]
                            ADM_kall,      & ! [IN]
                            ADM_lall_pl,   & ! [IN]

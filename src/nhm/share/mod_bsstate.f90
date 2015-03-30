@@ -286,11 +286,10 @@ contains
          CNST_PRE00,     &
          CNST_KAPPA
     use mod_adm, only :  &
+       ADM_have_pl, &
          ADM_kall,       &
          ADM_kmin,       &
-         ADM_kmax,       &
-         ADM_prc_pl,     &
-         ADM_prc_me
+         ADM_kmax
     use mod_grd, only :  &
          GRD_gz,         &
          GRD_dgz,        &
@@ -569,7 +568,7 @@ contains
              dpre_ref_k = rho_ref(k) * CNST_RAIR * tem_ref(k) - pre_ref(k)
              pre_ref(k) = pre_ref(k)+ dpre_ref_k
              if ( abs(dpre_ref_k) < 1.E-10_RP ) exit
-             if ( ADM_prc_me==ADM_prc_pl) then
+             if ( ADM_have_pl ) then
                 write(*,*) k,abs(dpre_ref_k)
              endif
           enddo
@@ -656,7 +655,7 @@ contains
              dpre_ref_k = rho_ref(k) * CNST_RAIR * tem_ref(k) - pre_ref(k)
              pre_ref(k) = pre_ref(k)+ dpre_ref_k
              if ( abs(dpre_ref_k) < 1.E-10_RP ) exit
-             if ( ADM_prc_me==ADM_prc_pl) then
+             if ( ADM_have_pl ) then
                 write(*,*) k,abs(dpre_ref_k)
              endif
           enddo
@@ -807,8 +806,7 @@ contains
     use mod_cnst, only: &
        CNST_EGRAV
     use mod_adm, only: &
-       ADM_prc_pl,  &
-       ADM_prc_me,  &
+       ADM_have_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_gall,    &
@@ -841,7 +839,7 @@ contains
 
     !--- calculation of geo-potential
     phi(:,:,:) = CNST_EGRAV * GRD_vz(:,:,:,GRD_Z)
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        phi_pl(:,:,:) = CNST_EGRAV * GRD_vz_pl(:,:,:,GRD_Z)
     endif
 
@@ -855,7 +853,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
           pre_bs_pl(:,k,l) = pre_ref(k)
@@ -905,7 +903,7 @@ contains
                      pre_bs(:,:,:), & ! [IN]
                      th_bs (:,:,:)  ) ! [OUT]
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        q_bs_pl(:,:,:,:)    = 0.0_RP
        q_bs_pl(:,:,:,I_QV) = qv_bs_pl(:,:,:)
 
@@ -954,8 +952,8 @@ contains
     use mod_adm, only :  &
          ADM_prc_me,     &
          ADM_prc_run_master
-    !
     implicit none
+
     Character(*), Intent(in) :: basename
     integer :: fid
     !

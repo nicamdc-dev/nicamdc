@@ -72,8 +72,7 @@ module mod_diagvar
        ADM_CTL_FID,       &
        ADM_gall_pl,       &
        ADM_lall_pl,       &
-       ADM_prc_me,        &
-       ADM_prc_pl,        &
+       ADM_have_pl,       &
        ADM_kall,          &
        ADM_KNONE,         &
        ADM_gall,          &
@@ -752,7 +751,7 @@ contains
   enddo
 
 
-  if (ADM_prc_me==ADM_prc_pl) then
+  if ( ADM_have_pl ) then
      dv_pl(1:ADM_gall_pl,:,:)   = diagvar_pl(1:ADM_gall_pl,:,:,vid)
   endif
   !
@@ -792,7 +791,7 @@ contains
      enddo
   enddo
 
-    if (ADM_prc_me==ADM_prc_pl) then
+    if ( ADM_have_pl ) then
        diagvar_pl(1:ADM_gall_pl,:,:,vid)   = dv_pl(1:ADM_gall_pl,:,:)
     endif
     !
@@ -1503,8 +1502,8 @@ contains
          MISC_get_available_fid
     use mod_adm, only :         &
          ADM_NSYS,              &
-         ADM_prc_me,            &
          ADM_kmin,ADM_kmax,     &
+         ADM_prc_me,            &
          ADM_prc_run_master
     use mod_time, only :        &
          TIME_DTL, &
