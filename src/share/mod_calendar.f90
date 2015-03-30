@@ -462,7 +462,7 @@ contains
     !---------------------------------------------------------------------------
 
     isechr = isecmn*iminhr
-    ihour  = int ( rsec / real(isechr ) )
+    ihour  = int ( rsec / real(isechr,kind=RP) )
     imin   = int ( ( rsec - real(ihour*isechr,kind=RP) ) / real(isecmn,kind=RP) )
     isec   = nint( rsec - real(ihour*isechr,kind=RP) - real(imin*isecmn,kind=RP) )
 
@@ -944,7 +944,7 @@ contains
             ( ndayyr, &
             iyear   )
        call calendar_secdy( isecdy )
-       ddsec = real(rtdur,kind=RP) * real(ndayyr,kind=RP)) * real(isecdy,kind=RP)
+       ddsec = real(rtdur * ndayyr * isecdy,kind=RP)
     else
        write (6,*) ' ### cxx2ss: invalid unit : ', hunit, &
             ' [sec] assumed'

@@ -409,7 +409,7 @@ contains
     real(RP) :: coef_max, coef_min
     real(RP) :: eft_max,  eft_min
 
-    real(8) :: large_step_dt
+    real(RP) :: large_step_dt
 
     integer :: k, l
     !---------------------------------------------------------------------------
@@ -675,7 +675,7 @@ contains
 
     real(RP), intent(in) :: gamma ! coefficient for vertical diffusion
 
-    real(8) :: large_step_dt
+    real(RP) :: large_step_dt
 
     integer :: k
     !---------------------------------------------------------------------------
@@ -764,7 +764,7 @@ contains
     real(RP) :: coef_max, coef_min
     real(RP) :: eft_max,  eft_min
 
-    real(8) :: small_step_dt
+    real(RP) :: small_step_dt
 
     integer :: k, l
     !---------------------------------------------------------------------------
@@ -930,7 +930,7 @@ contains
     real(RP) :: coef_max, coef_min
     real(RP) :: eft_max,  eft_min
 
-    real(8) :: small_step_dt
+    real(RP) :: small_step_dt
 
     integer :: k, l
     !---------------------------------------------------------------------------
@@ -1256,7 +1256,7 @@ contains
     real(RP) :: kh_max(ADM_kall)
     real(RP) :: d2T_dx2, coef
 
-    real(8) :: large_step_dt
+    real(RP) :: large_step_dt
 
     integer :: g, k, l, nq, p
     !---------------------------------------------------------------------------

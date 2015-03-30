@@ -168,7 +168,7 @@ contains
     real(RP),intent(inout) :: lat, lon
     real(RP),intent(in) :: x,y,z
     !
-    real(RP), parameter :: epsilon = 1.E-30
+    real(RP), parameter :: epsilon = 1.E-30_RP
     real(RP) :: leng,leng_xy
     !
     leng=sqrt(x*x+y*y+z*z)

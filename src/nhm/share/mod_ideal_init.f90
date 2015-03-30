@@ -1485,7 +1485,7 @@ contains
     integer  :: k
     !---------------------------------------------------------------------------
 
-    criteria = max( CNST_EPS_ZERO * 10.0_RP, 1.E-14 )
+    criteria = max( CNST_EPS_ZERO * 10.0_RP, 1.E-14_RP )
 
     do k = 1, kdim
        F   (k) = -g*z(k) + geo(k)
