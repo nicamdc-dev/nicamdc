@@ -387,6 +387,8 @@ contains
     use mod_gtl, only: &
        GTL_max_k, &
        GTL_min_k
+    use mod_runconf, only: &
+       DYN_DIV_NUM
     implicit none
 
     character(len=*), intent(in) :: hdiff_type      ! type of horizontal diffusion
@@ -407,6 +409,8 @@ contains
     real(RP) :: coef_max, coef_min
     real(RP) :: eft_max,  eft_min
 
+    real(8) :: large_step_dt
+
     integer :: k, l
     !---------------------------------------------------------------------------
 
@@ -425,24 +429,26 @@ contains
     elseif( hdiff_type == "NONDIM_COEF" ) then
        if( gamma > 0.0_RP ) NUMFILTER_DOhorizontaldiff = .true.
 
+       large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=RP)
+
        ! gamma is a non-dimensional number.
        if ( dep_hgrid ) then
           do l = 1, ADM_lall
           do k = 1, ADM_kall
-             Kh_coef(:,k,l) = gamma / TIME_DTL * GMTR_area(:,l)**lap_order
+             Kh_coef(:,k,l) = gamma / large_step_dt * GMTR_area(:,l)**lap_order
           enddo
           enddo
 
           if ( ADM_have_pl ) then
              do l = 1, ADM_lall_pl
              do k = 1, ADM_kall
-                Kh_coef_pl(:,k,l) = gamma / TIME_DTL * GMTR_area_pl(:,l)**lap_order
+                Kh_coef_pl(:,k,l) = gamma / large_step_dt * GMTR_area_pl(:,l)**lap_order
              enddo
              enddo
           endif
        else
-          Kh_coef   (:,:,:) = gamma / TIME_DTL * AREA_ave**lap_order
-          Kh_coef_pl(:,:,:) = gamma / TIME_DTL * AREA_ave**lap_order
+          Kh_coef   (:,:,:) = gamma / large_step_dt * AREA_ave**lap_order
+          Kh_coef_pl(:,:,:) = gamma / large_step_dt * AREA_ave**lap_order
        endif
 
     elseif( hdiff_type == "E_FOLD_TIME" ) then
@@ -542,26 +548,28 @@ contains
     elseif( hdiff_type_lap1 == "NONDIM_COEF" ) then
        if( gamma_lap1 > 0.0_RP ) NUMFILTER_DOhorizontaldiff_lap1 = .true.
 
+       large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=RP)
+
        ! gamma is a non-dimensional number.
        if ( dep_hgrid ) then
 
           do l = 1, ADM_lall
           do k = 1, ADM_kall
-             Kh_coef_lap1(:,k,l) = gamma_lap1 / TIME_DTL * GMTR_area(:,l)
+             Kh_coef_lap1(:,k,l) = gamma_lap1 / large_step_dt * GMTR_area(:,l)
           enddo
           enddo
 
           if ( ADM_have_pl ) then
              do l = 1, ADM_lall_pl
              do k = 1, ADM_kall
-                Kh_coef_lap1_pl(:,k,l) = gamma_lap1 / TIME_DTL * GMTR_area_pl(:,l)
+                Kh_coef_lap1_pl(:,k,l) = gamma_lap1 / large_step_dt * GMTR_area_pl(:,l)
              enddo
              enddo
           endif
 
        else
-          Kh_coef_lap1   (:,:,:) = gamma_lap1 / TIME_DTL * AREA_ave
-          Kh_coef_lap1_pl(:,:,:) = gamma_lap1 / TIME_DTL * AREA_ave
+          Kh_coef_lap1   (:,:,:) = gamma_lap1 / large_step_dt * AREA_ave
+          Kh_coef_lap1_pl(:,:,:) = gamma_lap1 / large_step_dt * AREA_ave
        endif
 
     elseif( hdiff_type_lap1 == "E_FOLD_TIME" ) then
@@ -661,9 +669,13 @@ contains
        GRD_dgzh
     use mod_time, only: &
        TIME_DTL
+    use mod_runconf, only: &
+       DYN_DIV_NUM
     implicit none
 
     real(RP), intent(in) :: gamma ! coefficient for vertical diffusion
+
+    real(8) :: large_step_dt
 
     integer :: k
     !---------------------------------------------------------------------------
@@ -673,9 +685,11 @@ contains
     allocate( Kv_coef  (ADM_kall) )
     allocate( Kv_coef_h(ADM_kall) )
 
+    large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=RP)
+
     ! 6th order vertical numerical diffusion
-    Kv_coef  (:) = gamma * GRD_dgz (:)**6 / TIME_DTL
-    Kv_coef_h(:) = gamma * GRD_dgzh(:)**6 / TIME_DTL
+    Kv_coef  (:) = gamma * GRD_dgz (:)**6 / large_step_dt
+    Kv_coef_h(:) = gamma * GRD_dgzh(:)**6 / large_step_dt
 
     write(ADM_LOG_FID,*)
     write(ADM_LOG_FID,*) '-----   Vertical numerical diffusion   -----'
@@ -731,6 +745,8 @@ contains
     use mod_gtl, only: &
        GTL_max_k, &
        GTL_min_k
+    use mod_runconf, only: &
+       DYN_DIV_NUM
     implicit none
 
     character(len=*), intent(in) :: divdamp_type ! type of divergence damping
@@ -747,6 +763,8 @@ contains
     real(RP) :: coef
     real(RP) :: coef_max, coef_min
     real(RP) :: eft_max,  eft_min
+
+    real(8) :: small_step_dt
 
     integer :: k, l
     !---------------------------------------------------------------------------
@@ -768,9 +786,11 @@ contains
     elseif( divdamp_type == "NONDIM_COEF" ) then
        if( alpha > 0.0_RP ) NUMFILTER_DOdivdamp = .true.
 
+       small_step_dt = TIME_DTS / real(DYN_DIV_NUM,kind=RP)
+
        ! alpha_d is a non-dimensional number.
        ! alpha_d * (c_s)^p * dt^{2p-1}
-       coef = alpha * ( SOUND * SOUND )**lap_order * TIME_DTS**(2*lap_order-1)
+       coef = alpha * ( SOUND * SOUND )**lap_order * small_step_dt**(2*lap_order-1)
 
        divdamp_coef   (:,:,:) = coef
        divdamp_coef_pl(:,:,:) = coef
@@ -850,7 +870,9 @@ contains
 
     if( alpha_v > 0.0_RP ) NUMFILTER_DOdivdamp_v = .true.
 
-    divdamp_coef_v = -alpha_v * SOUND * SOUND * TIME_DTS
+    small_step_dt = TIME_DTS / real(DYN_DIV_NUM,kind=RP)
+
+    divdamp_coef_v = -alpha_v * SOUND * SOUND * small_step_dt
 
     return
   end subroutine numfilter_divdamp_setup
@@ -888,6 +910,8 @@ contains
     use mod_gtl, only: &
        GTL_max_k, &
        GTL_min_k
+    use mod_runconf, only: &
+       DYN_DIV_NUM
     implicit none
 
     character(len=*), intent(in) :: divdamp_type ! type of divergence damping
@@ -905,6 +929,8 @@ contains
     real(RP) :: coef
     real(RP) :: coef_max, coef_min
     real(RP) :: eft_max,  eft_min
+
+    real(8) :: small_step_dt
 
     integer :: k, l
     !---------------------------------------------------------------------------
@@ -926,9 +952,11 @@ contains
     elseif( divdamp_type == "NONDIM_COEF" ) then
        if( alpha > 0.0_RP ) NUMFILTER_DOdivdamp_2d = .true.
 
+       small_step_dt = TIME_DTS / real(DYN_DIV_NUM,kind=RP)
+
        ! alpha is the non-dimensional number.
        ! alpha * (c_s)^p * dt^{2p-1}
-       coef = alpha * ( SOUND * SOUND )**lap_order * TIME_DTS**(2*lap_order-1)
+       coef = alpha * ( SOUND * SOUND )**lap_order * small_step_dt**(2*lap_order-1)
 
        divdamp_2d_coef   (:,:,:) = coef
        divdamp_2d_coef_pl(:,:,:) = coef
@@ -1165,8 +1193,9 @@ contains
     use mod_time, only: &
        TIME_DTL
     use mod_runconf, only: &
-       TRC_VMAX,    &
-       TRC_ADV_TYPE
+       TRC_VMAX,     &
+       TRC_ADV_TYPE, &
+       DYN_DIV_NUM
     use mod_bsstate, only: &
        rho_bs,    &
        rho_bs_pl, &
@@ -1226,6 +1255,8 @@ contains
     real(RP) :: fact  (ADM_kall)
     real(RP) :: kh_max(ADM_kall)
     real(RP) :: d2T_dx2, coef
+
+    real(8) :: large_step_dt
 
     integer :: g, k, l, nq, p
     !---------------------------------------------------------------------------
@@ -1299,11 +1330,13 @@ contains
        if ( p == lap_order_hdiff ) then
 
           if ( hdiff_nonlinear ) then
+             large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=RP)
+
              do l = 1, ADM_lall
              do k = 1, ADM_kall
              do g = 1, ADM_gall
                 d2T_dx2 = abs(vtmp(g,k,l,5)) / T0 * AREA_ave
-                coef    = cfact * ( AREA_ave * AREA_ave ) / TIME_DTL * d2T_dx2
+                coef    = cfact * ( AREA_ave * AREA_ave ) / large_step_dt * d2T_dx2
 
                 KH_coef(g,k,l) = max( min( coef, Kh_max(k) ), Kh_coef_minlim )
              enddo
@@ -1314,7 +1347,7 @@ contains
              do k = 1, ADM_kall
              do g = 1, ADM_gall_pl
                 d2T_dx2 = abs(vtmp_pl(g,k,l,5)) / T0 * AREA_ave
-                coef    = cfact * ( AREA_ave * AREA_ave ) / TIME_DTL * d2T_dx2
+                coef    = cfact * ( AREA_ave * AREA_ave ) / large_step_dt * d2T_dx2
 
                 KH_coef_pl(g,k,l) = max( min( coef, Kh_max(k) ), Kh_coef_minlim )
              enddo
