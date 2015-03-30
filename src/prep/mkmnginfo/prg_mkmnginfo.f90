@@ -182,13 +182,13 @@ Contains
                          j_nb=rgnlen+1-i
                          d_nb=dmd_data(ADM_SW,d)
                          edgid_nb=ADM_SE
-                      End If
+                      endif
                    Else
                       i_nb=i
                       j_nb=j-1
                       d_nb=d
                       edgid_nb=ADM_NE
-                   End If
+                   endif
                 Case(ADM_NW)
                    If(i==1) Then
                       If(d<=5) Then
@@ -201,13 +201,13 @@ Contains
                          j_nb=j
                          d_nb=dmd_data(ADM_NW,d)
                          edgid_nb=ADM_SE
-                      End If
+                      endif
                    Else
                       i_nb=i-1
                       j_nb=j
                       d_nb=d
                       edgid_nb=ADM_SE
-                   End If
+                   endif
                 Case(ADM_NE)
                    If(j==rgnlen) Then
                       If(d<=5) Then
@@ -220,13 +220,13 @@ Contains
                          j_nb=1
                          d_nb=dmd_data(ADM_NE,d)
                          edgid_nb=ADM_SW
-                      End If
+                      endif
                    Else
                       i_nb=i
                       j_nb=j+1
                       d_nb=d
                       edgid_nb=ADM_SW
-                   End If
+                   endif
                 Case(ADM_SE)
                    If(i==rgnlen) Then
                       If(d<=5) Then
@@ -239,23 +239,23 @@ Contains
                          j_nb=1
                          d_nb=dmd_data(ADM_SE,d)
                          edgid_nb=ADM_SW
-                      End If
+                      endif
                    Else
                       i_nb=i+1
                       j_nb=j
                       d_nb=d
                       edgid_nb=ADM_NW
-                   End If
+                   endif
                 End Select
                 !
                 l_nb=(rgnlen*rgnlen)*(d_nb-1)+rgnlen*(j_nb-1)+i_nb
                 rgn_tab(ADM_RID,k,l)=l_nb
                 rgn_tab(ADM_DIR,k,l)=edgid_nb
                 !
-             End Do
-          End Do
-       End Do
-    End Do
+             enddo
+          enddo
+       enddo
+    enddo
     !
 !    nmax_prc=all_rgn
     !
@@ -267,7 +267,7 @@ Contains
           stop
        else
           mngrgn(m)=all_rgn/nmax_prc
-       end if
+       endif
        prc_tab(1:nmax_mng,m)=-1
        do p=1,mngrgn(m)
           if( MAPPING_TYPE == 'K-TERAI' ) then
@@ -283,22 +283,22 @@ Contains
              if( p >= 3 ) then
                 write(*,*) 'More than two regions is not allowed when MAPING_TYPE = K-TERAI'
                 stop
-             end if
+             endif
              tmp_4r=4**rlevel
              if( mod(tmp_m-1,2*tmp_4r) < tmp_4r ) then
                 tmp=(tmp_m-1-mod(tmp_m-1,tmp_4r))/(2*tmp_4r)+1
              else
                 tmp=10-(tmp_4r+tmp_m-1-mod(tmp_m-1,tmp_4r))/(2*tmp_4r)+1
-             end if
+             endif
              !write(*,*) tmp
              prc_tab(p,m)=(tmp-1)*tmp_4r+mod(tmp_m-1,tmp_4r)+1
              write(*,*) 'peid=', m, 'regid=', prc_tab(p,m)
              ! -->
           else
              prc_tab(p,m)=(m-1)*(all_rgn/nmax_prc)+p  ! default
-          end if
-       end do
-    End Do
+          endif
+       enddo
+    enddo
     !
     Open(fid,file=Trim(fname),form='formatted')
     !
@@ -312,7 +312,7 @@ Contains
        ne=rgn_tab(:,ADM_NE,l)
        se=rgn_tab(:,ADM_SE,l)
        Write(fid,nml=rgn_link_info)
-    End Do
+    enddo
     num_of_proc=nmax_prc
     Write(fid,nml=proc_info)
     Do m=1,nmax_prc
@@ -320,7 +320,7 @@ Contains
        num_of_mng=mngrgn(m)
        mng_rgnid=prc_tab(:,m)
        Write(fid,nml=rgn_mng_info)
-    End Do
+    enddo
     !
     Close(fid)
     !
@@ -478,13 +478,13 @@ Contains
                          j_nb=rgnlen+1-i
                          d_nb=dmd_data(ADM_SW,d)
                          edgid_nb=ADM_SE
-                      End If
+                      endif
                    Else
                       i_nb=i
                       j_nb=j-1
                       d_nb=d
                       edgid_nb=ADM_NE
-                   End If
+                   endif
                 Case(ADM_NW)
                    If(i==1) Then
                       If(d<=XTMS_K) Then
@@ -507,13 +507,13 @@ Contains
                          j_nb=j
                          d_nb=dmd_data(ADM_NW,d)
                          edgid_nb=ADM_SE
-                      End If
+                      endif
                    Else
                       i_nb=i-1
                       j_nb=j
                       d_nb=d
                       edgid_nb=ADM_SE
-                   End If
+                   endif
                 Case(ADM_NE)
                    If(j==rgnlen) Then
                       If(d<=XTMS_K) Then
@@ -536,13 +536,13 @@ Contains
                          j_nb=1
                          d_nb=dmd_data(ADM_NE,d)
                          edgid_nb=ADM_SW
-                      End If
+                      endif
                    Else
                       i_nb=i
                       j_nb=j+1
                       d_nb=d
                       edgid_nb=ADM_SW
-                   End If
+                   endif
                 Case(ADM_SE)
                    If(i==rgnlen) Then
                       If(d<=XTMS_K) Then
@@ -565,23 +565,23 @@ Contains
                          j_nb=1
                          d_nb=dmd_data(ADM_SE,d)
                          edgid_nb=ADM_SW
-                      End If
+                      endif
                    Else
                       i_nb=i+1
                       j_nb=j
                       d_nb=d
                       edgid_nb=ADM_NW
-                   End If
+                   endif
                 End Select
                 !
                 l_nb=(rgnlen*rgnlen)*(d_nb-1)+rgnlen*(j_nb-1)+i_nb
                 rgn_tab(ADM_RID,k,l)=l_nb
                 rgn_tab(ADM_DIR,k,l)=edgid_nb
                 !
-             End Do
-          End Do
-       End Do
-    End Do
+             enddo
+          enddo
+       enddo
+    enddo
     !
 !    nmax_prc=all_rgn
     !
@@ -593,12 +593,12 @@ Contains
           stop
        else
           mngrgn(m)=all_rgn/nmax_prc
-       end if
+       endif
        prc_tab(1:nmax_mng,m)=-1
        do p=1,mngrgn(m)
           prc_tab(p,m)=(m-1)*(all_rgn/nmax_prc)+p
-       end do
-    End Do
+       enddo
+    enddo
     !
     Open(fid,file=Trim(fname),form='formatted')
     !
@@ -612,7 +612,7 @@ Contains
        ne=rgn_tab(:,ADM_NE,l)
        se=rgn_tab(:,ADM_SE,l)
        Write(fid,nml=rgn_link_info)
-    End Do
+    enddo
     num_of_proc=nmax_prc
     Write(fid,nml=proc_info)
     Do m=1,nmax_prc
@@ -620,7 +620,7 @@ Contains
        num_of_mng=mngrgn(m)
        mng_rgnid=prc_tab(:,m)
        Write(fid,nml=rgn_mng_info)
-    End Do
+    enddo
     !
     Close(fid)
     !
@@ -759,13 +759,13 @@ Contains
                          j_nb=rgnlen
                          d_nb=dmd_data(ADM_SW,d)
                          edgid_nb=ADM_NE
-                      End If
+                      endif
                    Else
                       i_nb=i
                       j_nb=j-1
                       d_nb=d
                       edgid_nb=ADM_NE
-                   End If
+                   endif
                 Case(ADM_NW)
                    If(i==1) Then
                       If(mod(d,(XTMS_MLCP_S+1))==1) Then
@@ -778,13 +778,13 @@ Contains
                          j_nb=j
                          d_nb=dmd_data(ADM_NW,d)
                          edgid_nb=ADM_SE
-                      End If
+                      endif
                    Else
                       i_nb=i-1
                       j_nb=j
                       d_nb=d
                       edgid_nb=ADM_SE
-                   End If
+                   endif
                 Case(ADM_NE)
                    If(j==rgnlen) Then
                       If(mod(d,(XTMS_MLCP_S+1))==1) Then
@@ -797,13 +797,13 @@ Contains
                          j_nb=1
                          d_nb=dmd_data(ADM_NE,d)
                          edgid_nb=ADM_SW
-                      End If
+                      endif
                    Else
                       i_nb=i
                       j_nb=j+1
                       d_nb=d
                       edgid_nb=ADM_SW
-                   End If
+                   endif
 
 
                 Case(ADM_SE)
@@ -818,23 +818,23 @@ Contains
                          j_nb=j
                          d_nb=dmd_data(ADM_SE,d)
                          edgid_nb=ADM_NW
-                      End If
+                      endif
                    Else
                       i_nb=i+1
                       j_nb=j
                       d_nb=d
                       edgid_nb=ADM_NW
-                   End If
+                   endif
                 End Select
                 !
                 l_nb=(rgnlen*rgnlen)*(d_nb-1)+rgnlen*(j_nb-1)+i_nb
                 rgn_tab(ADM_RID,k,l)=l_nb
                 rgn_tab(ADM_DIR,k,l)=edgid_nb
                 !
-             End Do
-          End Do
-       End Do
-    End Do
+             enddo
+          enddo
+       enddo
+    enddo
     !
 !    nmax_prc=all_rgn
     !
@@ -846,12 +846,12 @@ Contains
           stop
        else
           mngrgn(m)=all_rgn/nmax_prc
-       end if
+       endif
        prc_tab(1:nmax_mng,m)=-1
        do p=1,mngrgn(m)
           prc_tab(p,m)=(m-1)*(all_rgn/nmax_prc)+p
-       end do
-    End Do
+       enddo
+    enddo
     !
     Open(fid,file=Trim(fname),form='formatted')
     !
@@ -865,7 +865,7 @@ Contains
        ne=rgn_tab(:,ADM_NE,l)
        se=rgn_tab(:,ADM_SE,l)
        Write(fid,nml=rgn_link_info)
-    End Do
+    enddo
     num_of_proc=nmax_prc
     Write(fid,nml=proc_info)
     Do m=1,nmax_prc
@@ -873,7 +873,7 @@ Contains
        num_of_mng=mngrgn(m)
        mng_rgnid=prc_tab(:,m)
        Write(fid,nml=rgn_mng_info)
-    End Do
+    enddo
     !
     Close(fid)
     !
@@ -989,13 +989,13 @@ Contains
                          j_nb=rgnlen+1-i
                          d_nb=dmd_data(ADM_SW,d)
                          edgid_nb=ADM_SE
-                      End If
+                      endif
                    Else
                       i_nb=i
                       j_nb=j-1
                       d_nb=d
                       edgid_nb=ADM_NE
-                   End If
+                   endif
                 Case(ADM_NW)
                    If(i==1) Then
                       If(d<=XTMS_K) Then
@@ -1008,13 +1008,13 @@ Contains
                          j_nb=j
                          d_nb=dmd_data(ADM_NW,d)
                          edgid_nb=ADM_SE
-                      End If
+                      endif
                    Else
                       i_nb=i-1
                       j_nb=j
                       d_nb=d
                       edgid_nb=ADM_SE
-                   End If
+                   endif
                 Case(ADM_NE)
                    If(j==rgnlen) Then
                       If(d<=XTMS_K) Then
@@ -1027,13 +1027,13 @@ Contains
                          j_nb=1
                          d_nb=dmd_data(ADM_NE,d)
                          edgid_nb=ADM_SW
-                      End If
+                      endif
                    Else
                       i_nb=i
                       j_nb=j+1
                       d_nb=d
                       edgid_nb=ADM_SW
-                   End If
+                   endif
                 Case(ADM_SE)
                    If(i==rgnlen) Then
                       If(d<=XTMS_K) Then
@@ -1046,23 +1046,23 @@ Contains
                          j_nb=1
                          d_nb=dmd_data(ADM_SE,d)
                          edgid_nb=ADM_SW
-                      End If
+                      endif
                    Else
                       i_nb=i+1
                       j_nb=j
                       d_nb=d
                       edgid_nb=ADM_NW
-                   End If
+                   endif
                 End Select
                 !
                 l_nb=(rgnlen*rgnlen)*(d_nb-1)+rgnlen*(j_nb-1)+i_nb
                 rgn_tab(ADM_RID,k,l)=l_nb
                 rgn_tab(ADM_DIR,k,l)=edgid_nb
                 !
-             End Do
-          End Do
-       End Do
-    End Do
+             enddo
+          enddo
+       enddo
+    enddo
     !
 !    nmax_prc=all_rgn
     !
@@ -1074,12 +1074,12 @@ Contains
           stop
        else
           mngrgn(m)=all_rgn/nmax_prc
-       end if
+       endif
        prc_tab(1:nmax_mng,m)=-1
        do p=1,mngrgn(m)
           prc_tab(p,m)=(m-1)*(all_rgn/nmax_prc)+p
-       end do
-    End Do
+       enddo
+    enddo
     !
     Open(fid,file=Trim(fname),form='formatted')
     !
@@ -1093,7 +1093,7 @@ Contains
        ne=rgn_tab(:,ADM_NE,l)
        se=rgn_tab(:,ADM_SE,l)
        Write(fid,nml=rgn_link_info)
-    End Do
+    enddo
     num_of_proc=nmax_prc
     Write(fid,nml=proc_info)
     Do m=1,nmax_prc
@@ -1101,7 +1101,7 @@ Contains
        num_of_mng=mngrgn(m)
        mng_rgnid=prc_tab(:,m)
        Write(fid,nml=rgn_mng_info)
-    End Do
+    enddo
     !
     Close(fid)
     !
@@ -1178,7 +1178,7 @@ Contains
                       j_nb=j-1
                       d_nb=d
                       edgid_nb=ADM_NE
-                   End If
+                   endif
                 Case(ADM_NW)
                    If(i==1) Then
                     i_nb=rgnlen
@@ -1190,7 +1190,7 @@ Contains
                       j_nb=j
                       d_nb=d
                       edgid_nb=ADM_SE
-                   End If
+                   endif
                 Case(ADM_NE)
                    If(j==rgnlen) Then
                     i_nb=i
@@ -1202,7 +1202,7 @@ Contains
                       j_nb=j+1
                       d_nb=d
                       edgid_nb=ADM_SW
-                   End If
+                   endif
                 Case(ADM_SE)
                    If(i==rgnlen) Then
                     i_nb=1
@@ -1214,17 +1214,17 @@ Contains
                       j_nb=j
                       d_nb=d
                       edgid_nb=ADM_NW
-                   End If
+                   endif
                 End Select
                 !
                 l_nb=(rgnlen*rgnlen)*(d_nb-1)+rgnlen*(j_nb-1)+i_nb
                 rgn_tab(ADM_RID,k,l)=l_nb
                 rgn_tab(ADM_DIR,k,l)=edgid_nb
                 !
-             End Do
-          End Do
-       End Do
-    End Do
+             enddo
+          enddo
+       enddo
+    enddo
     !
     Allocate(mngrgn(nmax_prc))
     Allocate(prc_tab(nmax_mng,nmax_prc))
@@ -1234,12 +1234,12 @@ Contains
           stop
        else
           mngrgn(m)=all_rgn/nmax_prc
-       end if
+       endif
        prc_tab(1:nmax_mng,m)=-1
        do p=1,mngrgn(m)
           prc_tab(p,m)=(m-1)*(all_rgn/nmax_prc)+p
-       end do
-    End Do
+       enddo
+    enddo
     !
     Open(fid,file=Trim(fname),form='formatted')
     !
@@ -1253,7 +1253,7 @@ Contains
        ne    = rgn_tab(:,ADM_NE,l)
        se    = rgn_tab(:,ADM_SE,l)
        Write(fid,nml=rgn_link_info)
-    End Do
+    enddo
     num_of_proc=nmax_prc
     Write(fid,nml=proc_info)
     Do m=1,nmax_prc
@@ -1261,7 +1261,7 @@ Contains
        num_of_mng=mngrgn(m)
        mng_rgnid=prc_tab(:,m)
        Write(fid,nml=rgn_mng_info)
-    End Do
+    enddo
     !
     Close(fid)
     !
@@ -1341,13 +1341,13 @@ Contains
                          j_nb=rgnlen+1-i
                          d_nb=dmd_data(ADM_SW,d)
                          edgid_nb=ADM_SE
-                      End If
+                      endif
                    Else
                       i_nb=i
                       j_nb=j-1
                       d_nb=d
                       edgid_nb=ADM_NE
-                   End If
+                   endif
                 Case(ADM_NW)
                    If(i==1) Then
                       If(d<=5) Then
@@ -1360,13 +1360,13 @@ Contains
                          j_nb=j
                          d_nb=dmd_data(ADM_NW,d)
                          edgid_nb=ADM_SE
-                      End If
+                      endif
                    Else
                       i_nb=i-1
                       j_nb=j
                       d_nb=d
                       edgid_nb=ADM_SE
-                   End If
+                   endif
                 Case(ADM_NE)
                    If(j==rgnlen) Then
                       If(d<=5) Then
@@ -1379,13 +1379,13 @@ Contains
                          j_nb=1
                          d_nb=dmd_data(ADM_NE,d)
                          edgid_nb=ADM_SW
-                      End If
+                      endif
                    Else
                       i_nb=i
                       j_nb=j+1
                       d_nb=d
                       edgid_nb=ADM_SW
-                   End If
+                   endif
                 Case(ADM_SE)
                    If(i==rgnlen) Then
                       If(d<=5) Then
@@ -1398,23 +1398,23 @@ Contains
                          j_nb=1
                          d_nb=dmd_data(ADM_SE,d)
                          edgid_nb=ADM_SW
-                      End If
+                      endif
                    Else
                       i_nb=i+1
                       j_nb=j
                       d_nb=d
                       edgid_nb=ADM_NW
-                   End If
+                   endif
                 End Select
                 !
                 l_nb=(rgnlen*rgnlen)*(d_nb-1)+rgnlen*(j_nb-1)+i_nb
                 rgn_tab(ADM_RID,k,l)=l_nb
                 rgn_tab(ADM_DIR,k,l)=edgid_nb
                 !
-             End Do
-          End Do
-       End Do
-    End Do
+             enddo
+          enddo
+       enddo
+    enddo
     !
 !    nmax_prc=all_rgn
     !
@@ -1427,12 +1427,12 @@ Contains
           stop
        else
           mngrgn(m)=all_rgn/nmax_prc
-       end if
+       endif
        prc_tab(1:nmax_mng,m)=-1
        do p=1,mngrgn(m)
           prc_tab(p,m)=(m-1)*(all_rgn/nmax_prc)+p
-       end do
-    End Do
+       enddo
+    enddo
     !
     Open(fid,file=Trim(fname),form='formatted')
     !
@@ -1444,9 +1444,9 @@ Contains
           IF (rgn_tab(ADM_RID,k,l) > num_of_rgn) then
              rgn_tab(ADM_RID,k,l) = l
              rgn_tab(ADM_DIR,k,l) = k
-          END IF
-       END DO
-    END DO
+          endif
+       enddo
+    enddo
     Write(fid,nml=rgn_info)
     Write(6,nml=rgn_info)
     !
@@ -1458,7 +1458,7 @@ Contains
        se=rgn_tab(:,ADM_SE,l)
        Write(fid,nml=rgn_link_info)
        Write(6,nml=rgn_link_info)
-    End Do
+    enddo
     num_of_proc=nmax_prc
     PRINT *, nmax_prc, num_of_proc
     num_of_proc = num_of_proc/10
@@ -1470,7 +1470,7 @@ Contains
        mng_rgnid=prc_tab(:,m)
        Write(fid,nml=rgn_mng_info)
        Write(6,nml=rgn_mng_info)
-    End Do
+    enddo
     !
     Close(fid)
     !

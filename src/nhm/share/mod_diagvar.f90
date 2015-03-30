@@ -186,26 +186,17 @@ module mod_diagvar
   public :: diagvar_restart_output
 
   character(LEN=ADM_MAXFNAME), private :: output_basename = '' ! [add] H.Yashiro 20120512
-  ! [Add] 2012/06/07 T.Seiki, for multi-job system with LEGACY formatted data
-  character(ADM_MAXFNAME), private  :: output_basename_CBMFX = ''
-  character(ADM_MAXFNAME), private  :: output_basename_MP    = ''
-  character(ADM_MAXFNAME), private  :: output_basename_QV_TB_TEND = ''
-  character(ADM_MAXFNAME), private  :: output_basename_EVAP_SFC = ''
-  character(ADM_MAXFNAME), private  :: output_basename_SH_FLUX_SFC = ''
-  character(ADM_MAXFNAME), private  :: output_basename_ROUGHNESS_SEA = ''
-  character(ADM_MAXFNAME), private  :: output_basename_CBMFX_CHIKIRA = ''
 
   character(ADM_MAXFNAME), private  :: CBMFX_fname = 'NONE'
   character(ADM_MAXFNAME), private  :: TB_fname    = 'NONE' ! 07/07/05 A.T.Noda
   character(ADM_MAXFNAME), private  :: MP_fname    = 'NONE' ! 07/12/05  T.Mitsui
   character(ADM_MAXFNAME), private  :: QV_TB_TEND_fname = 'NONE' ! 11/08/16 M.Satoh
-!!$  character(ADM_MAXFNAME), private  :: RHOGQV_CONV_TB_fname = 'NONE' ! 10/05/06  M.Satoh
   character(ADM_MAXFNAME), private  :: EVAP_SFC_fname = 'NONE' ! 10/05/22  M.Satoh
   character(ADM_MAXFNAME), private  :: SH_FLUX_SFC_fname = 'NONE' ! 11/08/16b  M.Satoh
   character(ADM_MAXFNAME), private  :: ROUGHNESS_SEA_fname = 'NONE' ! 10/04/28 M.Satoh
   character(ADM_MAXFNAME), private  :: CBMFX_CHIKIRA_fname = 'NONE' ! 11/08/16 M.Satoh
 
-  logical, private :: input_direct_access = .false.
+  logical, private :: input_direct_access  = .false.
   logical, private :: output_direct_access = .false.
 
   character(LEN=ADM_MAXFNAME), private :: input_io_mode     = 'ADVANCED' ! [add] H.Yashiro 20110819
@@ -244,14 +235,7 @@ contains
          input_io_mode,       & !--- [add] H.Yashiro 20110819
          output_io_mode,      & !--- [add] H.Yashiro 20110819
          restart_layername,   & !--- [add] H.Yashiro 20110826
-         output_basename, &     !--- [add] H.Yashiro 20120512
-         output_basename_CBMFX,         & ! [Add] 2012/06/07 T.Seiki
-         output_basename_MP,            & ! [Add] 2012/06/07 T.Seiki
-         output_basename_QV_TB_TEND,    & ! [Add] 2012/06/07 T.Seiki
-         output_basename_EVAP_SFC,      & ! [Add] 2012/06/07 T.Seiki
-         output_basename_SH_FLUX_SFC,   & ! [Add] 2012/06/07 T.Seiki
-         output_basename_ROUGHNESS_SEA, & ! [Add] 2012/06/07 T.Seiki
-         output_basename_CBMFX_CHIKIRA    ! [Add] 2012/06/07 T.Seiki
+         output_basename        !--- [add] H.Yashiro 20120512
 
     NAMELIST / NM_CP_CHIKIRA_SETUP / &
          NCTP
@@ -404,7 +388,7 @@ contains
              diag_ksta_nlayer(iv) = diag_kend_nlayer(iv-1) + 1
              diag_kend_nlayer(iv) &
                   = diag_ksta_nlayer(iv) + diag_knum_nlayer(iv) - 1
-          end do
+          enddo
        endif
        DIAG_KTOT_NLAYER = diag_kend_nlayer(DIAG_VMAX_NLAYER)
     endif
@@ -434,18 +418,18 @@ contains
     ! [Add] 07/12/05 Mitsui
     do iv=1, DIAG_VMAX
        write(ADM_LOG_FID,'(a20, i5 )') trim(diag_cname(iv)),iv
-    end do
+    enddo
     ! [Add] 10/04/30 M.Satoh
     if ( DIAG_VMAX_1LAYER > 0 ) then
        do iv=1, DIAG_VMAX_1LAYER
           write(ADM_LOG_FID,'(a20, i5 )') trim(diag_cname_1layer(iv)),iv
-       end do
+       enddo
     endif
     ! [Add] 11/08/16 M.Satoh
     if ( DIAG_VMAX_NLAYER > 0 ) then
        do iv=1, DIAG_VMAX_NLAYER
           write(ADM_LOG_FID,'(a20, i5 )') trim(diag_cname_nlayer(iv)),iv
-       end do
+       enddo
     endif
 
     !--- read parameters
@@ -486,9 +470,9 @@ contains
             DIAG_VMAX       &
             ))
        allocate(diagvar_pl(   &
-            ADM_GALL_PL,     &
+            ADM_gall_pl,     &
             ADM_kall,        &
-            ADM_LALL_PL,     &
+            ADM_lall_pl,     &
             DIAG_VMAX       &
             ))
        diagvar = 0.0_RP
@@ -503,9 +487,9 @@ contains
                DIAG_VMAX_1LAYER &
                ))
           allocate(diagvar1_pl( &
-               ADM_GALL_PL,     &
+               ADM_gall_pl,     &
                ADM_KNONE,       &
-               ADM_LALL_PL,     &
+               ADM_lall_pl,     &
                DIAG_VMAX_1LAYER &
                ))
           diagvar1 = -999.0_RP
@@ -521,9 +505,9 @@ contains
                1                &
                ))
           allocate(diagvarn_pl( &
-               ADM_GALL_PL,     &
+               ADM_gall_pl,     &
                DIAG_KTOT_NLAYER, &
-               ADM_LALL_PL,     &
+               ADM_lall_pl,     &
                1                &
                ))
           diagvarn(:,:,:,:) = -999.0_RP
@@ -733,7 +717,7 @@ contains
   !------
   implicit none
   real(RP), intent(out) :: dv(ADM_gall,ADM_kall,ADM_lall)
-  real(RP), intent(out) :: dv_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+  real(RP), intent(out) :: dv_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
   integer:: ij,k,l
   integer, intent(in)  :: vid
   ! [Add] 07/11/06 T.Mitsui for check
@@ -770,7 +754,7 @@ contains
     !------
     implicit none
     real(RP), intent(in) :: dv(ADM_gall,ADM_kall,ADM_lall)
-    real(RP), intent(in) :: dv_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP), intent(in) :: dv_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer, intent(in) :: vid
     !
     integer :: i,j,suf,ij,k,l
@@ -827,9 +811,9 @@ contains
           do n=1, ADM_IopJop_nmax
              nn = ADM_IopJop(n,ADM_GIoJo)
              sv(n,k,l)  = diagvar(nn,k,l,vid)
-          end do
-       end do
-    end do
+          enddo
+       enddo
+    enddo
     !
     return
     !
@@ -864,9 +848,9 @@ contains
           do n=1, ADM_IopJop_nmax
              nn = ADM_IopJop(n,ADM_GIoJo)
              diagvar(nn,k,l,vid) = sv(n,k,l)
-          end do
-       end do
-    end do
+          enddo
+       enddo
+    enddo
     !
     diagvar(suf(ADM_gmax+1,ADM_gmin-1),:,:,vid) = diagvar(suf(ADM_gmax+1,ADM_gmin),:,:,vid)
     diagvar(suf(ADM_gmin-1,ADM_gmax+1),:,:,vid) = diagvar(suf(ADM_gmin,ADM_gmax+1),:,:,vid)
@@ -888,7 +872,7 @@ contains
     integer, intent(in) :: vid
     integer, intent(in) :: l_region
     !
-    integer :: l,n,nn,k
+    integer :: n,nn,k
     !
     if ( vid == -999 )then
        write(ADM_LOG_FID,*) "*** Error, DIAGVAR has not been setup."
@@ -899,8 +883,8 @@ contains
        do n=1, ADM_IopJop_nmax
           nn = ADM_IopJop(n,ADM_GIoJo)
           sv(n,k)  = diagvar(nn,k,l_region,vid)
-       end do
-    end do
+       enddo
+    enddo
     !
     return
     !
@@ -922,7 +906,7 @@ contains
     integer, intent(in) :: vid
     integer, intent(in) :: l_region
     !
-    integer :: l,n,nn,k
+    integer :: n,nn,k
     !
     integer :: i,j,suf
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
@@ -938,8 +922,8 @@ contains
           ![fix] 12/03/28 T.Seiki
 !!$       diagvar(nn,k,l,vid) = sv(n,k)
           diagvar(nn,k,l_region,vid) = sv(n,k)
-       end do
-    end do
+       enddo
+    enddo
     !
     diagvar(suf(ADM_gmax+1,ADM_gmin-1),:,l_region,vid) &
          = diagvar(suf(ADM_gmax+1,ADM_gmin),:,l_region,vid)
@@ -972,8 +956,8 @@ contains
        do n=1, ADM_IopJop_nmax
           nn = ADM_IopJop(n,ADM_GIoJo)
           sv(n,l)  = diagvar1(nn,ADM_KNONE,l,vid)
-       end do
-    end do
+       enddo
+    enddo
     !
     return
     !
@@ -1006,8 +990,8 @@ contains
        do n=1, ADM_IopJop_nmax
           nn = ADM_IopJop(n,ADM_GIoJo)
           sv(n,k,l)  = diagvar1(nn,ADM_KNONE,l,vid)
-       end do
-    end do
+       enddo
+    enddo
     !
     return
     !
@@ -1040,8 +1024,8 @@ contains
        do n=1, ADM_IopJop_nmax
           nn = ADM_IopJop(n,ADM_GIoJo)
           diagvar1(nn,ADM_KNONE,l,vid) = sv(n,l)
-       end do
-    end do
+       enddo
+    enddo
     !
     diagvar1(suf(ADM_gmax+1,ADM_gmin-1),:,:,vid) &
          = diagvar1(suf(ADM_gmax+1,ADM_gmin),:,:,vid)
@@ -1074,7 +1058,7 @@ contains
     do n=1, ADM_IopJop_nmax
        nn = ADM_IopJop(n,ADM_GIoJo)
        sv(n)  = diagvar1(nn,ADM_KNONE,l_region,vid)
-    end do
+    enddo
     !
     return
     !
@@ -1108,7 +1092,7 @@ contains
     do n=1, ADM_IopJop_nmax
        nn = ADM_IopJop(n,ADM_GIoJo)
        diagvar1(nn,ADM_KNONE,l_region,vid) = sv(n)
-    end do
+    enddo
     !
 !!$    diagvar1(suf(ADM_gmax+1,ADM_gmin-1),:,:,vid) &
 !!$         = diagvar1(suf(ADM_gmax+1,ADM_gmin),:,:,vid)
@@ -1136,7 +1120,7 @@ contains
     integer, intent(in) :: vid
     integer, intent(in) :: l_region
     !
-    integer :: l,n,nn,k
+    integer :: n,nn,k
     integer :: ksta
     !
     if ( vid == -999 )then
@@ -1151,8 +1135,8 @@ contains
           do n=1, ADM_IopJop_nmax
              nn = ADM_IopJop(n,ADM_GIoJo)
              sv(n,k)  = diagvarn(nn,ksta+k-1,l_region,1)
-          end do
-       end do
+          enddo
+       enddo
     else
        write(ADM_LOG_FID,*) "*** Error, DIAGVAR illegal diag_vmax_nlayer", &
             DIAG_VMAX_NLAYER
@@ -1179,7 +1163,7 @@ contains
     integer, intent(in) :: knum
     integer, intent(in) :: l_region
     !
-    integer :: l,n,nn,k
+    integer :: n,nn,k
     integer :: ksta, kend
     !
     integer :: i,j,suf
@@ -1194,8 +1178,8 @@ contains
           do n=1, ADM_IopJop_nmax
              nn = ADM_IopJop(n,ADM_GIoJo)
              diagvarn(nn,ksta+k-1,l_region,1) = sv(n,k)
-          end do
-       end do
+          enddo
+       enddo
        diagvarn(suf(ADM_gmax+1,ADM_gmin-1),ksta:kend,l_region,1) &
             = diagvar(suf(ADM_gmax+1,ADM_gmin),ksta:kend,l_region,1)
        diagvarn(suf(ADM_gmin-1,ADM_gmax+1),ksta:kend,l_region,1) &
@@ -1261,8 +1245,6 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine diagvar_restart_output( cdate ) !08/03/10 T.Mitsui [Add] cdate
-    use mod_adm, only :     &               ! 07/07/05 A.T.Noda
-         ADM_NSYS
     use mod_runconf, only : &
          RAIN_TYPE,         &
          MP_TYPE,           &               ! 07/12/05  T.Mitsui
@@ -1502,7 +1484,6 @@ contains
          MISC_get_available_fid
     use mod_adm, only :         &
          ADM_NSYS,              &
-         ADM_kmin,ADM_kmax,     &
          ADM_prc_me,            &
          ADM_prc_run_master
     use mod_time, only :        &
@@ -1530,16 +1511,16 @@ contains
 
     do iv = 1, DIAG_VMAX
        cname(iv) = diag_cname(iv)//trim(cdate)
-    end do
+    enddo
     if ( DIAG_VMAX_1layer > 0 )then
        do iv = 1, DIAG_VMAX_1layer
           cname_1layer(iv) = diag_cname_1layer(iv)//trim(cdate)
-       end do
+       enddo
     endif
     if ( DIAG_VMAX_nlayer > 0 )then ! 11/08/16 M.Satoh
        do iv = 1, DIAG_VMAX_nlayer
           cname_nlayer(iv) = diag_cname_nlayer(iv)//trim(cdate)
-       end do
+       enddo
     endif
 
     if (ADM_prc_me == ADM_prc_run_master) then
@@ -1551,10 +1532,10 @@ contains
           write(fid,'(I4)') ADM_kall
           do k=1, ADM_kall
              write(fid,'(F16.4)') GRD_gz(k)
-          end do
+          enddo
           write(fid,'(I4)') num
           write(fid,'(a32)') trim(cname(n))
-       end do
+       enddo
        if ( DIAG_VMAX_1layer > 0 ) then
           do n = 1, DIAG_VMAX_1layer
              write(fid,'(I4,F16.2)') 1, TIME_DTL*TIME_LSTEP_MAX
@@ -1562,7 +1543,7 @@ contains
              write(fid,'(F16.4)') 0.0
              write(fid,'(I4)') num
              write(fid,'(a32)') trim(cname_1layer(n))
-          end do
+          enddo
        endif
        if ( DIAG_VMAX_nlayer > 0 ) then
           do n = 1, DIAG_VMAX_nlayer
@@ -1570,10 +1551,10 @@ contains
              write(fid,'(I4)') diag_knum_nlayer(n)
              do k=1, diag_knum_nlayer(n)
                 write(fid,'(F16.4)') float(k)
-             end do
+             enddo
              write(fid,'(I4)') num
              write(fid,'(a32)') trim(cname_nlayer(n))
-          end do
+          enddo
        endif
        close(fid)
        !

@@ -148,8 +148,6 @@ module mod_sfcvar
   !
   !++ Private variables
   !
-  integer, allocatable, private :: NVAR(:)
-
   integer, private :: I_ALL
 
   real(RP), public , allocatable :: sfcvar   (:,:,:,:)
@@ -160,34 +158,26 @@ module mod_sfcvar
   integer, private, allocatable :: KEND(:)
   integer, private              :: KSUM
 
-  real(RP), private :: VMISS = -999.E30_RP
-
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
   subroutine sfcvar_setup
-    !
-    use mod_adm, only :     &
-         ADM_LOG_FID,       &
-         ADM_GALL_PL,       &
-         ADM_LALL_PL,       &
-         ADM_KNONE,         &
-         ADM_gall,          &
-         ADM_gmin,          &
-         ADM_gmax,          &
-         ADM_lall,          &
-         ADM_gall_1d
-    use mod_runconf, only : &
-         RAIN_TYPE,         &
-         CP_TYPE,           & ! 10/06/15 A.T.Noda
-         AE_TYPE,           & ! 12/03/28 T.Seiki
-         NRBND,             &
-         NRDIR
-    !
+    use mod_adm, only: &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_KNONE,   &
+       ADM_lall,    &
+       ADM_lall_pl
+    use mod_runconf, only: &
+       RAIN_TYPE,  &
+       CP_TYPE,    &
+       AE_TYPE,    &
+       NRBND,      &
+       NRDIR
     implicit none
 
     integer :: i
-    !
+
     I_PRECIP_TOT         = 1   !--- total precip
     I_PRECIP_CP          = 2   !--- convective precip ( rain, snow )
     I_PRECIP_MP          = 3   !--- dynamical precip  ( rain, snow )
@@ -263,12 +253,12 @@ contains
        I_ALL             = 57
     else
        I_ALL             = 56
-    end if
+    endif
     !  [Add] 12/03/28 T.Seiki
     if(AE_TYPE /= 'NONE' )then
        I_ALL       = I_ALL+1
        I_VFRICTION = I_ALL
-    end if
+    endif
     !
     ! 04/11/30 M.Satoh
     I_ALL = I_ALL + 1
@@ -289,7 +279,7 @@ contains
        KSTR(i) = KSUM + 1
        KSUM = KSUM + KMAX(i)
        KEND(i) = KSUM
-    end do
+    enddo
     !
     allocate(sfcvar(    &
          ADM_gall,      &
@@ -297,7 +287,7 @@ contains
          ADM_lall,      &
          DIAG_MAX))
     allocate(sfcvar_pl( &
-         ADM_GALL_PL,   &
+         ADM_gall_pl,   &
          KSUM,          &
          ADM_lall_pl,   &
          DIAG_MAX))
@@ -313,63 +303,49 @@ contains
   end subroutine sfcvar_setup
   !-----------------------------------------------------------------------------
   subroutine sfcvar_get( &
-       sv, sv_pl,        &  !--- OUT : surface variable
-       vid               &  !--- IN  : variable ID
-       )
-    !------
-    !------ get prognostic variables from diag[num].
-    !------
-    use mod_adm, only :     &
-         ADM_LOG_FID,       &
-         ADM_GALL_PL,       &
-         ADM_LALL_PL,       &
+       sv, sv_pl, &
+       vid        )
+    use mod_adm, only: &
        ADM_have_pl, &
-         ADM_KNONE,         &
-         ADM_gall,          &
-         ADM_lall,          &
-         ADM_gall_1d
-    !
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_KNONE,   &
+       ADM_lall,    &
+       ADM_lall_pl
     implicit none
+
     real(RP), intent(out) :: sv(ADM_gall,ADM_KNONE,ADM_lall)
-    real(RP), intent(out) :: sv_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL)
+    real(RP), intent(out) :: sv_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
     integer, intent(in)  :: vid
-    !
-    sv(1:ADM_gall,ADM_KNONE,1:ADM_lall) &
-         = sfcvar(1:ADM_gall,KSTR(vid),1:ADM_lall,1)
+
+    sv(1:ADM_gall,ADM_KNONE,1:ADM_lall) = sfcvar(1:ADM_gall,KSTR(vid),1:ADM_lall,1)
 
     if( ADM_have_pl ) then
-       sv_pl(1:ADM_gall_pl,ADM_KNONE,1:ADM_lall_pl) &
-            = sfcvar_pl(1:ADM_gall_pl,KSTR(vid),1:ADM_lall_pl,1)
-    end if
-    !
+       sv_pl(1:ADM_gall_pl,ADM_KNONE,1:ADM_lall_pl) = sfcvar_pl(1:ADM_gall_pl,KSTR(vid),1:ADM_lall_pl,1)
+    endif
+
     return
-    !
   end subroutine sfcvar_get
+
   !-----------------------------------------------------------------------------
   subroutine sfcvar_get1( &
-       sv, sv_pl,        &  !--- OUT : surface variable
-       vid,              &  !--- IN  : variable ID
-       mdim              &  !--- IN  : dimension
-       )
-    !------
-    !------ get prognostic variables from diag[num].
-    !------
-    use mod_adm, only :     &
-         ADM_LOG_FID,       &
-         ADM_GALL_PL,       &
-         ADM_LALL_PL,       &
+       sv, sv_pl, &
+       vid,       &
+       mdim       )
+    use mod_adm, only: &
        ADM_have_pl, &
-         ADM_KNONE,         &
-         ADM_gall,          &
-         ADM_lall,          &
-         ADM_gall_1d
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_KNONE,   &
+       ADM_lall,    &
+       ADM_lall_pl
     use mod_comm, only :    &
          COMM_data_transfer
-    !
     implicit none
+
     integer, intent(in) :: mdim
     real(RP), intent(out) :: sv(ADM_gall,ADM_KNONE,ADM_lall,mdim)
-    real(RP), intent(out) :: sv_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL,mdim)
+    real(RP), intent(out) :: sv_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,mdim)
     integer, intent(in)  :: vid
     !
     integer :: m,l,n
@@ -378,19 +354,19 @@ contains
        do l=1,ADM_lall
           do n=1,ADM_gall
              sv(n,ADM_KNONE,l,m) = sfcvar(n,KSTR(vid)+m-1,l,1)
-          end do
-       end do
-    end do
+          enddo
+       enddo
+    enddo
 
     if( ADM_have_pl ) then
        do m=1, mdim
           do l=1,ADM_lall_pl
              do n=1,ADM_gall_pl
                 sv_pl(n,ADM_KNONE,l,m) = sfcvar_pl(n,KSTR(vid)+m-1,l,1)
-             end do
-          end do
-       end do
-    end if
+             enddo
+          enddo
+       enddo
+    endif
     !
     return
     !
@@ -401,9 +377,6 @@ contains
        vid,                &  !--- IN : variable ID
        mdim1, mdim2        &  !--- IN
        )
-    !------
-    !------ get diagnostic variables
-    !------
     use mod_adm, only :     &
        ADM_have_pl, &
          ADM_KNONE,         &
@@ -415,45 +388,37 @@ contains
 
     integer, intent(in) :: mdim1, mdim2
     real(RP), intent(out) :: sv(ADM_gall,ADM_KNONE,ADM_lall,mdim1,mdim2)
-    real(RP), intent(out) :: sv_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL,mdim1,mdim2)
+    real(RP), intent(out) :: sv_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,mdim1,mdim2)
     integer, intent(in) :: vid
     !
     integer :: l,n
     integer :: m1,m2, k
-    !
-    ! assume: vid == I_ALBEDO_SFC
-    ! assume: NVAR(I_ALBEDO_SFC) = NRDIR * NRBND
+
     k = 0
-    ! modify T.Mitsui 06.04.18
-!!$    do m1 = 1, mdim1
-!!$       do m2 = 1, mdim2
     do m2 = 1, mdim2
        do m1 = 1, mdim1
           k = k + 1
           do l=1, ADM_lall
              do n=1, ADM_gall
                 sv(n,ADM_KNONE,l,m1,m2) = sfcvar(n,KSTR(vid)+k-1,l,1)
-             end do
-          end do
-       end do
-    end do
+             enddo
+          enddo
+       enddo
+    enddo
 
     if( ADM_have_pl ) then
        k = 0
-       ! modify T.Mitsui 06.04.18
-!!$       do m1 = 1, mdim1
-!!$          do m2 = 1, mdim2
        do m2 = 1, mdim2
           do m1 = 1, mdim1
              k = k + 1
              do l=1, ADM_lall_pl
                 do n=1, ADM_gall_pl
                    sv_pl(n,ADM_KNONE,l,m1,m2) = sfcvar_pl(n,KSTR(vid)+k-1,l,1)
-                end do
-             end do
-          end do
-       end do
-    end if
+                enddo
+             enddo
+          enddo
+       enddo
+    endif
     !
     return
     !
@@ -463,13 +428,9 @@ contains
        sv, sv_pl,          &  !--- IN : surface variable
        vid                 &  !--- IN : variable ID
        )
-    !------
-    !------ set diagnostic variables
-    !------ and COMMUNICATION.
-    !------
     use mod_adm, only :     &
-         ADM_GALL_PL,       &
-         ADM_LALL_PL,       &
+         ADM_gall_pl,       &
+         ADM_lall_pl,       &
        ADM_have_pl, &
          ADM_KNONE,         &
          ADM_gall,          &
@@ -480,7 +441,7 @@ contains
     !
     implicit none
     real(RP), intent(in) :: sv(ADM_gall,ADM_KNONE,ADM_lall)
-    real(RP), intent(in) :: sv_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL)
+    real(RP), intent(in) :: sv_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
     integer, intent(in) :: vid
     !
     integer :: i,j,suf
@@ -491,7 +452,7 @@ contains
     if( ADM_have_pl ) then
        sfcvar_pl(1:ADM_gall_pl,KSTR(vid),1:ADM_lall_pl,1) &
             = sv_pl(1:ADM_gall_pl,ADM_KNONE,1:ADM_lall_pl)
-    end if
+    endif
     !
     sfcvar(suf(ADM_gmax+1,ADM_gmin-1),KSTR(vid),:,1) &
          = sfcvar(suf(ADM_gmax+1,ADM_gmin),KSTR(vid),:,1)
@@ -506,11 +467,7 @@ contains
        sv,                 &  !--- OUT : surface variable
        vid                 &  !--- IN : variable ID
        )
-    !------
-    !------ get diagnostic variables
-    !------
     use mod_adm, only :     &
-         ADM_LOG_FID,       &
          ADM_KNONE,         &
          ADM_lall,          &
          ADM_IopJop_nmax,   &
@@ -527,8 +484,8 @@ contains
        do n=1, ADM_IopJop_nmax
           nn = ADM_IopJop(n,ADM_GIoJo)
           sv(n,ADM_KNONE,l)  = sfcvar(nn,KSTR(vid),l,1)
-       end do
-    end do
+       enddo
+    enddo
     !
     return
     !
@@ -538,12 +495,7 @@ contains
        sv,                  &  !--- IN : surface variable
        vid                  &  !--- IN : variable ID
        )
-    !------
-    !------ set prognostic variables to diag[num]
-    !------ and COMMUNICATION.
-    !------
     use mod_adm, only :     &
-         ADM_LOG_FID,       &
          ADM_KNONE,         &
          ADM_gmin,          &
          ADM_gmax,          &
@@ -566,8 +518,8 @@ contains
        do n=1, ADM_IopJop_nmax
           nn = ADM_IopJop(n,ADM_GIoJo)
           sfcvar(nn,KSTR(vid),l,1) = sv(n,ADM_KNONE,l)
-       end do
-    end do
+       enddo
+    enddo
     !
     sfcvar(suf(ADM_gmax+1,ADM_gmin-1),KSTR(vid),:,1) &
          = sfcvar(suf(ADM_gmax+1,ADM_gmin),KSTR(vid),:,1)
@@ -581,18 +533,14 @@ contains
        vid,                &  !--- IN : variable ID
        mdim                &  !--- IN : dimension
        )
-    !------
-    !------ get diagnostic variables
-    !------
     use mod_adm, only :     &
-         ADM_LOG_FID,       &
          ADM_KNONE,         &
          ADM_lall,          &
          ADM_IopJop_nmax,   &
          ADM_IopJop,        &
          ADM_GIoJo
-    !
     implicit none
+
     integer, intent(in) :: mdim
     real(RP), intent(out) :: sv(ADM_IopJop_nmax,ADM_KNONE,ADM_lall,mdim)
     integer, intent(in) :: vid
@@ -605,9 +553,9 @@ contains
           do n=1, ADM_IopJop_nmax
              nn = ADM_IopJop(n,ADM_GIoJo)
              sv(n,ADM_KNONE,l,m)  = sfcvar(nn,KSTR(vid)+m-1,l,1)
-          end do
-       end do
-    end do
+          enddo
+       enddo
+    enddo
     !
     return
     !
@@ -619,10 +567,6 @@ contains
        mdim,                &  !--- IN : dimension
        comm_flag            &  !--- IN, optional
        )
-    !------
-    !------ set prognostic variables to diag[num]
-    !------ and COMMUNICATION.
-    !------
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_KNONE,   &
@@ -643,30 +587,28 @@ contains
     integer, intent(in) :: vid
     integer, optional, intent(in) :: comm_flag
     !
-    integer :: l,n,nn
+    integer :: l,n
     integer :: m
     !
     integer :: i,j,suf
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
 
-    integer :: ierr
-
     do m=1, mdim
        do l=1, ADM_lall
           do n=1, ADM_gall
              sfcvar(n,KSTR(vid)+m-1,l,1) = sv(n,ADM_KNONE,l,m)
-          end do
-       end do
-    end do
+          enddo
+       enddo
+    enddo
     if( ADM_have_pl ) then
        do m=1, mdim
           do l=1,ADM_lall_pl
              do n=1,ADM_gall_pl
                 sfcvar_pl(n,KSTR(vid)+m-1,l,1) = sv_pl(n,ADM_KNONE,l,m)
-             end do
-          end do
-       end do
-    end if
+             enddo
+          enddo
+       enddo
+    endif
 
     if ( present(comm_flag) ) then
        if(comm_flag==1) then
@@ -685,12 +627,7 @@ contains
        vid,                 &  !--- IN : variable ID
        mdim                 &  !--- IN : dimension
        )
-    !------
-    !------ set prognostic variables to diag[num]
-    !------ and COMMUNICATION.
-    !------
     use mod_adm, only :     &
-         ADM_LOG_FID,       &
          ADM_KNONE,         &
          ADM_gmin,          &
          ADM_gmax,          &
@@ -699,8 +636,8 @@ contains
          ADM_IopJop_nmax,   &
          ADM_IopJop,        &
          ADM_GIoJo
-    !
     implicit none
+
     integer, intent(in) :: mdim
     real(RP), intent(in) :: sv(ADM_IopJop_nmax,ADM_KNONE,ADM_lall,mdim)
     integer, intent(in) :: vid
@@ -716,9 +653,9 @@ contains
           do n=1, ADM_IopJop_nmax
              nn = ADM_IopJop(n,ADM_GIoJo)
              sfcvar(nn,KSTR(vid)+m-1,l,1) = sv(n,ADM_KNONE,l,m)
-          end do
-       end do
-    end do
+          enddo
+       enddo
+    enddo
     sfcvar(suf(ADM_gmax+1,ADM_gmin-1),KSTR(vid):KEND(vid),:,1) &
          = sfcvar(suf(ADM_gmax+1,ADM_gmin),KSTR(vid):KEND(vid),:,1)
     sfcvar(suf(ADM_gmin-1,ADM_gmax+1),KSTR(vid):KEND(vid),:,1) &
@@ -731,11 +668,7 @@ contains
        vid,                &  !--- IN : variable ID
        mdim1, mdim2        &  !--- IN
        )
-    !------
-    !------ get diagnostic variables
-    !------
     use mod_adm, only :     &
-         ADM_LOG_FID,       &
          ADM_KNONE,         &
          ADM_lall,          &
          ADM_IopJop_nmax,   &
@@ -749,13 +682,8 @@ contains
     !
     integer :: l,n,nn
     integer :: m1,m2, k
-    !
-    ! assume: vid == I_ALBEDO_SFC
-    ! assume: NVAR(I_ALBEDO_SFC) = NRDIR * NRBND
+
     k = 0
-    ! modify T.Mitsui 06.04.18
-!!$    do m1 = 1, mdim1
-!!$       do m2 = 1, mdim2
     do m2 = 1, mdim2
        do m1 = 1, mdim1
           k = k + 1
@@ -763,13 +691,12 @@ contains
              do n=1, ADM_IopJop_nmax
                 nn = ADM_IopJop(n,ADM_GIoJo)
                 sv(n,ADM_KNONE,l,m1,m2) = sfcvar(nn,KSTR(vid)+k-1,l,1)
-             end do
-          end do
-       end do
-    end do
-    !
+             enddo
+          enddo
+       enddo
+    enddo
+
     return
-    !
   end subroutine sfcvar_get2_in
   !-----------------------------------------------------------------------------
   subroutine sfcvar_set2_in( &
@@ -777,12 +704,7 @@ contains
        vid,                 &  !--- IN : variable ID
        mdim1, mdim2        &  !--- IN
        )
-    !------
-    !------ set prognostic variables to diag[num]
-    !------ and COMMUNICATION.
-    !------
     use mod_adm, only :     &
-         ADM_LOG_FID,       &
          ADM_KNONE,         &
          ADM_gmin,          &
          ADM_gmax,          &
@@ -802,14 +724,8 @@ contains
     !
     integer :: i,j,suf
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
-    !
-    ! assume: vid == I_ALBEDO_SFC
-    ! assume: NVAR(I_ALBEDO_SFC) = NRDIR * NRBND
-    !
+
     k = 0
-    ! modify T.Mitsui 06.04.18
-!!$    do m1 = 1, mdim1
-!!$       do m2 = 1, mdim2
     do m2 = 1, mdim2
        do m1 = 1, mdim1
           k = k + 1
@@ -817,18 +733,18 @@ contains
              do n=1, ADM_IopJop_nmax
                 nn = ADM_IopJop(n,ADM_GIoJo)
                 sfcvar(nn,KSTR(vid)+k-1,l,1) = sv(n,ADM_KNONE,l,m1,m2)
-             end do
-          end do
-       end do
-    end do
+             enddo
+          enddo
+       enddo
+    enddo
     sfcvar(suf(ADM_gmax+1,ADM_gmin-1),KSTR(vid):KEND(vid),:,1) &
          = sfcvar(suf(ADM_gmax+1,ADM_gmin),KSTR(vid):KEND(vid),:,1)
     sfcvar(suf(ADM_gmin-1,ADM_gmax+1),KSTR(vid):KEND(vid),:,1) &
          = sfcvar(suf(ADM_gmin,ADM_gmax+1),KSTR(vid):KEND(vid),:,1)
-    !
+
   end subroutine sfcvar_set2_in
+
   !-----------------------------------------------------------------------------
-  ! ADD T.Mitsui 06.04.18
   subroutine sfcvar_set2( &
        sv,sv_pl,          &  !--- IN : surface variable
        vid,               &  !--- IN : variable ID
@@ -850,10 +766,7 @@ contains
     !
     integer :: l,ij
     integer :: m1, m2, k
-    !
-    ! assume: vid == I_ALBEDO_SFC
-    ! assume: NVAR(I_ALBEDO_SFC) = NRDIR * NRBND
-    !
+
     k = 0
     do m2 = 1, mdim2
        do m1 = 1, mdim1
@@ -861,25 +774,25 @@ contains
           do l=1, ADM_lall
              do ij=1, adm_gall
                 sfcvar(ij,KSTR(vid)+k-1,l,1) = sv(ij,ADM_KNONE,l,m1,m2)
-             end do
-          end do
-       end do
-    end do
+             enddo
+          enddo
+       enddo
+    enddo
 
     if ( ADM_have_pl ) then
        k=0
        do m2=1,mdim2
           do m1=1,mdim1
              k = k + 1
-             do l=1, adm_lall_pl
+             do l=1, ADM_lall_pl
                 do ij=1,ADM_gall_pl
                    sfcvar_pl(ij,KSTR(vid)+k-1,l,1)=sv_pl(ij,ADM_KNONE,l,m1,m2)
-                end do
-             end do
-          end do
-       end do
-    end if
-    !
+                enddo
+             enddo
+          enddo
+       enddo
+    endif
+
     return
   end subroutine sfcvar_set2
 

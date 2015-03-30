@@ -1290,7 +1290,7 @@ contains
     !    Ml(:,k,:) = - GRD_rdgzh(k) * GRD_rdgz(k) * A_o(:,k,:) * A_i(:,k-1,:) &
     !                + GRD_rdgzh(k) * 0.5_RP * GRD_dfac(k-1)                   &
     !                * ( B(:,k-1,:) + C_o(:,k,:) * C_i(:,k-1,:) )
-    ! end do
+    ! enddo
 
     call DEBUG_rapstart('____vi_rhow_update_matrix')
 

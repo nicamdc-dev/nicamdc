@@ -258,7 +258,6 @@ contains
        ADM_prc_me,         &
        ADM_prc_run_master, &
        ADM_have_pl,        &
-       ADM_gall_1d,        &
        ADM_gmin,           &
        ADM_gmax,           &
        ADM_gslf_pl,        &
@@ -954,7 +953,6 @@ contains
        ADM_S,          &
        ADM_NPL,        &
        ADM_SPL,        &
-       ADM_gall_1d,    &
        ADM_gmax,       &
        ADM_gmin,       &
        ADM_gslf_pl

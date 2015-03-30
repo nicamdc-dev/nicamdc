@@ -173,36 +173,35 @@ contains
        ADM_kmin,    &
        ADM_kmax
     use mod_cnst, only: &
-       CNST_EGRAV,     &
-       CNST_RAIR,      &
-       CNST_RVAP,      &
-       CNST_TMELT,     &
-       CNST_EPS_ZERO,  &
-       CNST_UNDEF,     &
-       CNST_DWATR
-    use mod_gmtr, only :        &
-         GMTR_area,             &
-         GMTR_area_pl,          &
-         GMTR_P_var,            &
-         GMTR_P_var_pl,         &
-         GMTR_P_IX,             &
-         GMTR_P_IY,             &
-         GMTR_P_IZ,             &
-         GMTR_P_JX,             &
-         GMTR_P_JY,             &
-         GMTR_P_JZ,             &
-         GMTR_P_LAT
+       CNST_EGRAV,    &
+       CNST_RAIR,     &
+       CNST_EPS_ZERO
+    use mod_grd, only: &
+       GRD_ZSFC, &
+       GRD_Z,    &
+       GRD_zs,   &
+       GRD_vz
+    use mod_gmtr, only: &
+       GMTR_area,  &
+       GMTR_P_var, &
+       GMTR_P_IX,  &
+       GMTR_P_IY,  &
+       GMTR_P_IZ,  &
+       GMTR_P_JX,  &
+       GMTR_P_JY,  &
+       GMTR_P_JZ,  &
+       GMTR_P_LAT
+    use mod_vmtr, only: &
+       VMTR_PHI,    &
+       VMTR_VOLUME
     use mod_gtl, only: &
        GTL_generate_uv,          &
        GTL_global_sum_eachlayer, &
        GTL_clip_region_1layer,   &  ! [add] 2010.08.20 C.Kodama
        GTL_max, &
        GTL_min
-    use mod_vmtr, only :        &
-       VMTR_PHI,    &
-       VMTR_VOLUME
-    use mod_prgvar, only :     &
-         prgvar_get_withdiag
+    use mod_prgvar, only: &
+       prgvar_get_withdiag
     use mod_sfcvar, only :    &
          sfcvar_get,          &
          sfcvar_get1,         &
@@ -278,12 +277,6 @@ contains
          I_GDCFRC,          &
          I_CUMCLW,          &
          I_UNCCN                 ! 08/02/19 T.Mitsui
-    use mod_grd, only:          &
-         grd_zsfc,              &
-         grd_zs,                &
-         grd_zs_pl,             &
-         GRD_vz,                &
-         GRD_Z
     use mod_history, only : &
        history_in
     implicit none

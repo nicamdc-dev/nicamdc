@@ -90,7 +90,6 @@ contains
        ADM_gall_pl,   &
        ADM_kall,      &
        ADM_kmin,      &
-       ADM_kmax,      &
        ADM_vlayer
     use mod_cnst, only: &
        CNST_PI,    &

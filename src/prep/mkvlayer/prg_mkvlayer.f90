@@ -81,13 +81,13 @@ contains
     !
     do k = kmin, kmax+1
        z_h(k) = a * (dble(k-kmin)**fact)
-    end do
+    enddo
     !
     z_h(kmin-1) = z_h(kmin) - ( z_h(kmin+1) - z_h(kmin) )
     !
     do k= kmin-1, kmax
        z_c(k) = z_h(k) + ( z_h(k+1) - z_h(k) )*0.5_RP
-    end do
+    enddo
     z_c(kmax+1) = z_h(kmax+1) + ( z_h(kmax+1) - z_h(kmax) )*0.5_RP
     !
   end subroutine mk_layer_powerfunc
@@ -109,13 +109,13 @@ contains
     !
     do k = kmin, kmax+1
        read(fid,*) z_h(k)
-    end do
+    enddo
     !
     z_h(kmin-1) = z_h(kmin) - ( z_h(kmin+1) - z_h(kmin) )
     !
     do k= kmin-1, kmax
        z_c(k) = z_h(k) + ( z_h(k+1) - z_h(k) )*0.5_RP
-    end do
+    enddo
     z_c(kmax+1) = z_h(kmax+1) + ( z_h(kmax+1) - z_h(kmax) )*0.5_RP
     !
     close(fid)

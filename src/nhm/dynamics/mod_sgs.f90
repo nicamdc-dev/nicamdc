@@ -287,70 +287,70 @@ contains
     !
     integer, intent(in) :: nl
     real(RP), intent(in) :: rho   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP), intent(in) :: rho_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP), intent(in) :: rho_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in) :: rhog   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP), intent(in) :: rhog_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP), intent(in) :: rhog_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in) :: rhogq(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
-    real(RP), intent(in) :: rhogq_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,TRC_VMAX)
+    real(RP), intent(in) :: rhogq_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
     !
     real(RP), intent(in) :: vx   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP), intent(in) :: vx_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP), intent(in) :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in) :: vy   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP), intent(in) :: vy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP), intent(in) :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in) :: vz   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP), intent(in) :: vz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP), intent(in) :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in) :: w   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP), intent(in) :: w_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP), intent(in) :: w_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in) :: tem   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP), intent(in) :: tem_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP), intent(in) :: tem_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in) :: q(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
-    real(RP), intent(in) :: q_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,TRC_VMAX)
+    real(RP), intent(in) :: q_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
     !
     real(RP), intent(inout) :: frhog   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP), intent(inout) :: frhog_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP), intent(inout) :: frhog_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(inout) :: frhogvx   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP), intent(inout) :: frhogvx_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP), intent(inout) :: frhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(inout) :: frhogvy   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP), intent(inout) :: frhogvy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP), intent(inout) :: frhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(inout) :: frhogvz   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP), intent(inout) :: frhogvz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP), intent(inout) :: frhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     real(RP), intent(inout) :: frhogw   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP), intent(inout) :: frhogw_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP), intent(inout) :: frhogw_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(inout) :: frhoge   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP), intent(inout) :: frhoge_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP), intent(inout) :: frhoge_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(inout) :: frhogetot   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP), intent(inout) :: frhogetot_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP), intent(inout) :: frhogetot_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(inout) :: frhogq(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
-    real(RP), intent(inout) :: frhogq_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,TRC_VMAX)
+    real(RP), intent(inout) :: frhogq_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
     !full level growth late
     real(RP) :: grhogvx   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP) :: grhogvx_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP) :: grhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: grhogvy   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP) :: grhogvy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP) :: grhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: grhogvz   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP) :: grhogvz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP) :: grhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 !    real(RP) :: grhogw   (ADM_gall   ,ADM_kall,ADM_lall   )
-!    real(RP) :: grhogw_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+!    real(RP) :: grhogw_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: grhoge   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP) :: grhoge_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP) :: grhoge_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 !    real(RP) :: grhogetot   (ADM_gall   ,ADM_kall,ADM_lall   )
-!    real(RP) :: grhogetot_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+!    real(RP) :: grhogetot_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: grhogq(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
-    real(RP) :: grhogq_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,TRC_VMAX)
+    real(RP) :: grhogq_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
     !half level growth late
     real(RP) :: grhogvxh   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP) :: grhogvxh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP) :: grhogvxh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: grhogvyh   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP) :: grhogvyh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP) :: grhogvyh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: grhogvzh   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP) :: grhogvzh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP) :: grhogvzh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !
     real(RP), intent(in) :: potem   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP), intent(in) :: potem_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP), intent(in) :: potem_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: pi   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP) :: pi_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP) :: pi_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !
 !    integer :: p, id
     integer:: i,j,k,l,n,  idir,ivar
@@ -358,13 +358,13 @@ contains
     !
     real(RP) :: del_xyz2, SMG_CS2, LENGTH_maxlim2
     real(RP)::sij(ADM_gall,ADM_kall,ADM_lall,3,3)           ! full level
-    real(RP)::sij_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,3,3)  ! full level
+    real(RP)::sij_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3,3)  ! full level
     real(RP)::sijsij   (ADM_gall   ,ADM_kall,ADM_lall   )           ! full level
     real(RP)::sijsij_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! full level
     real(RP)::sijsijh   (ADM_gall   ,ADM_kall,ADM_lall   )           ! half level
     real(RP)::sijsijh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! half level
     real(RP)::sijh(ADM_gall,ADM_kall,ADM_lall,3,3)
-    real(RP)::sijh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,3,3)  ! partial ui / partial xj
+    real(RP)::sijh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3,3)  ! partial ui / partial xj
     !
     !------ diffusion coefficient
     real(RP)::K_coef   (ADM_gall   ,ADM_kall,ADM_lall   )            ! full level
@@ -388,36 +388,36 @@ contains
 
     ! tensor
     real(RP)::uijh(ADM_gall,ADM_kall,ADM_lall,3,3)
-    real(RP)::uijh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,3,3)  ! partial ui / partial xj
+    real(RP)::uijh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3,3)  ! partial ui / partial xj
     real(RP)::uij(ADM_gall,ADM_kall,ADM_lall,3,3)
-    real(RP)::uij_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,3,3)  ! partial ui / partial xj
+    real(RP)::uij_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3,3)  ! partial ui / partial xj
 
 
     real(RP) :: stratos(ADM_GALL,ADM_kall,ADM_LALL)
-    real(RP) :: stratos_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP) :: stratos_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: stratosh(ADM_GALL,ADM_kall,ADM_LALL)
-    real(RP) :: stratosh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP) :: stratosh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !
 !    real(RP) :: fq   (ADM_gall   ,ADM_kall,ADM_lall   )
-!    real(RP) :: fq_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+!    real(RP) :: fq_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 !    real(RP) :: wrk(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
-!    real(RP) :: wrk_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,TRC_VMAX)
+!    real(RP) :: wrk_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 !    real(RP) :: wrkh(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
-!    real(RP) :: wrkh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,TRC_VMAX)
+!    real(RP) :: wrkh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
     !
 !    real(RP) :: rhoh   (ADM_gall   ,ADM_kall,ADM_lall   )  ! rho at half level
 !    real(RP) :: rhoh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! rho at half level
     real(RP) :: pih   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP) :: pih_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP) :: pih_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
 !    real(RP) :: rho_K_Cp_PI   (ADM_gall   ,ADM_kall,ADM_lall   )
 !    real(RP) :: rho_K_Cp_PIh   (ADM_gall   ,ADM_kall,ADM_lall   )
-!    real(RP) :: rho_K_Cp_PI_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-!    real(RP) :: rho_K_Cp_PIh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+!    real(RP) :: rho_K_Cp_PI_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+!    real(RP) :: rho_K_Cp_PIh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     real(RP) :: dummy(ADM_GALL,ADM_kall,ADM_LALL)
-    real(RP) :: dummy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP) :: dummy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     logical :: dbgfirst=.false.
 
@@ -1008,33 +1008,33 @@ contains
 
     if(first)then  ! --> why is it needed?
        allocate(smg_oprt_cxh   (ADM_gall   ,ADM_kall,ADM_lall   ))
-       allocate(smg_oprt_cxh_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
+       allocate(smg_oprt_cxh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
        allocate(smg_oprt_cyh   (ADM_gall   ,ADM_kall,ADM_lall   ))
-       allocate(smg_oprt_cyh_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
+       allocate(smg_oprt_cyh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
        allocate(smg_oprt_czh   (ADM_gall   ,ADM_kall,ADM_lall   ))
-       allocate(smg_oprt_czh_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
+       allocate(smg_oprt_czh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
        allocate(smg_oprt_cx   (ADM_gall   ,ADM_kall,ADM_lall   ))
-       allocate(smg_oprt_cx_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
+       allocate(smg_oprt_cx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
        allocate(smg_oprt_cy   (ADM_gall   ,ADM_kall,ADM_lall   ))
-       allocate(smg_oprt_cy_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
+       allocate(smg_oprt_cy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
        allocate(smg_oprt_cz   (ADM_gall   ,ADM_kall,ADM_lall   ))
-       allocate(smg_oprt_cz_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
+       allocate(smg_oprt_cz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
        allocate(smg_oprt_rgamH   (ADM_gall   ,ADM_kall,ADM_lall   ))
-       allocate(smg_oprt_rgamH_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
+       allocate(smg_oprt_rgamH_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
        allocate(smg_oprt_rgam   (ADM_gall   ,ADM_kall,ADM_lall   ))
-       allocate(smg_oprt_rgam_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
+       allocate(smg_oprt_rgam_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
 !       allocate(smg_oprt_GzGz   (ADM_gall   ,ADM_kall,ADM_lall   ))
-!       allocate(smg_oprt_GzGz_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
+!       allocate(smg_oprt_GzGz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
 !       allocate(smg_oprt_GzGzh   (ADM_gall   ,ADM_kall,ADM_lall   ))
-!       allocate(smg_oprt_GzGzh_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
+!       allocate(smg_oprt_GzGzh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
        allocate(smg_oprt_gsqrt   (ADM_gall   ,ADM_kall,ADM_lall   ))
-       allocate(smg_oprt_gsqrt_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
+       allocate(smg_oprt_gsqrt_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
        allocate(smg_oprt_gsqrtH   (ADM_gall   ,ADM_kall,ADM_lall   ))
-       allocate(smg_oprt_gsqrtH_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
+       allocate(smg_oprt_gsqrtH_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
        allocate(smg_oprt_GAM   (ADM_gall   ,ADM_kall,ADM_lall   ))
-       allocate(smg_oprt_GAM_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
+       allocate(smg_oprt_GAM_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
        allocate(smg_oprt_GAMH   (ADM_gall   ,ADM_kall,ADM_lall   ))
-       allocate(smg_oprt_GAMH_pl(ADM_gall_PL,ADM_kall,ADM_lall_PL))
+       allocate(smg_oprt_GAMH_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
 
        allocate(var(ADM_gall,ADM_kall,ADM_lall,GRD_XDIR:GRD_ZDIR,IMAX+TRC_VMAX))
        allocate(varh(ADM_gall,ADM_kall,ADM_lall,GRD_XDIR:GRD_ZDIR,IMAX+TRC_VMAX))
@@ -1287,22 +1287,22 @@ contains
     integer::k,i,l
 
     real(RP)::tmp   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP)::tmp_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP)::tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP)::tmph   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP)::tmph_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP)::tmph_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP)::tmp_vx   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP)::tmp_vx_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP)::tmp_vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP)::tmp_vy   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP)::tmp_vy_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP)::tmp_vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP)::tmp_vz   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP)::tmp_vz_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP)::tmp_vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !
     real(RP)::tmp_vxh   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP)::tmp_vxh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP)::tmp_vxh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP)::tmp_vyh   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP)::tmp_vyh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP)::tmp_vyh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP)::tmp_vzh   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP)::tmp_vzh_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(RP)::tmp_vzh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     if (present(output_sclh)) output_sclh_in=output_sclh
 

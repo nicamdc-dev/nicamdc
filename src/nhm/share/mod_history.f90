@@ -78,7 +78,6 @@ module mod_history
   character(len=ADM_MAXFNAME), private :: output_path    = ''
   character(len=ADM_NSYS),     private :: histall_fname  = ''
   character(len=ADM_MAXFNAME), private :: output_io_mode != 'LEGACY'
-  logical,                     private :: direct_access  = .false.
   integer,                     private :: output_size    = 4
   integer,                     private :: npreslev       = 1
   real(RP),                     private :: pres_levs(60)  != CNST_PRE00
@@ -199,7 +198,6 @@ contains
          histall_fname,     &
          hist3D_layername,  &
          output_io_mode,    &
-         direct_access,     &
          output_size,       &
          step,              &
          ktype,             &

@@ -225,8 +225,8 @@ contains
                 endif
              endif
           enddo
-       end Do
-    end Do
+       enddo
+    enddo
     if ( ADM_have_pl ) Then
        Do l=1,ADM_lall_pl
           do k=1,ADM_kall
@@ -274,8 +274,8 @@ contains
                    endif
                 endif
              enddo
-          end Do
-       end Do
+          enddo
+       enddo
     endif
   end subroutine VINTRPL_z_level
   !-----------------------------------------------------------------------------
@@ -367,8 +367,8 @@ contains
                 endif
              endif
           enddo
-       end Do
-    end Do
+       enddo
+    enddo
     if ( ADM_have_pl ) Then
        Do l=1,ADM_lall_pl
           do k=1,ADM_kall
@@ -400,8 +400,8 @@ contains
                    endif
                 endif
              enddo
-          end Do
-       end Do
+          enddo
+       enddo
     endif
   end subroutine VINTRPL_z_level2
 
@@ -650,8 +650,8 @@ contains
              b = sigma_lev(k)-sigma(n,kp-1,l)
              v(n,k,l) = (b*tmp(n,kp,l) + a*tmp(n,kp-1,l))/(a+b)
           enddo
-       end Do
-    end Do
+       enddo
+    enddo
     if ( ADM_have_pl ) Then
        Do l=1,ADM_lall_pl
           do k=1,MAX_SIGMA
@@ -664,8 +664,8 @@ contains
                 b = sigma_lev(k)-sigma_pl(n,kp-1,l)
                 v_pl(n,k,l) = (b*tmp_pl(n,kp,l) + a*tmp_pl(n,kp-1,l))/(a+b)
              enddo
-          end Do
-       end Do
+          enddo
+       enddo
     endif
   end subroutine VINTRPL_sigma_level
   !-----------------------------------------------------------------------------

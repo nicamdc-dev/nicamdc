@@ -460,8 +460,8 @@ contains
        do n=1,ADM_prc_rnum(p)
           prc_tab_rev(ptr_prcid,ADM_prc_tab(n,p))=p
           prc_tab_rev(ptr_lrgnid,ADM_prc_tab(n,p))=n
-       end do
-    end do
+       enddo
+    enddo
 
     if(ADM_prc_nspl(ADM_npl) < 0 .and. ADM_prc_nspl(ADM_spl) <0 ) comm_pl = .false. ! T.Ohno 110721
 
@@ -1413,7 +1413,7 @@ contains
             prc_tab_rev(ptr_prcid,l)-1, &
             ADM_COMM_world,             &
             ierr)
-    end do
+    enddo
     do l=1,ADM_rgn_nmax
        call MPI_bcast(                  &
             ssize_r2r(1,1,l),           &
@@ -1422,7 +1422,7 @@ contains
             prc_tab_rev(ptr_prcid,l)-1, &
             ADM_COMM_world,             &
             ierr)
-    end do
+    enddo
     !(20101207)removed by teraim
     !do l=1,ADM_rgn_nmax
     !   call MPI_bcast(                  &
@@ -1432,7 +1432,7 @@ contains
     !        prc_tab_rev(ptr_prcid,l)-1, &
     !        ADM_COMM_world,             &
     !        ierr)
-    !end do
+    !enddo
     do l=1,ADM_rgn_nmax
        call MPI_bcast(                             &
             slist_r2r(1,1,1,l),                    &
@@ -1441,7 +1441,7 @@ contains
             prc_tab_rev(ptr_prcid,l)-1,            &
             ADM_COMM_world,                        &
             ierr)
-    end do
+    enddo
     do l=1,ADM_rgn_nmax
        call MPI_bcast(                  &
             maxcommsend_r2r(1,l),       &
@@ -1450,7 +1450,7 @@ contains
             prc_tab_rev(ptr_prcid,l)-1, &
             ADM_COMM_world,             &
             ierr)
-    end do
+    enddo
     !
     allocate(sendbuf_p2r(kmax*max_varmax*2, &
          ADM_rgn_nmax_pl))
@@ -1986,7 +1986,7 @@ contains
     !--- output for debug
     if(present(debug)) then
        if(debug) call output_info
-    end if
+    endif
     !
     ! <== iga for dbg 090917
     if (opt_comm_dbg) then

@@ -982,7 +982,6 @@ contains
     use mod_adm, only: &
        ADM_prc_tab, &
        ADM_prc_me,  &
-       ADM_have_pl, &
        ADM_gall,    &
        ADM_lall,    &
        ADM_kall,    &
@@ -1142,7 +1141,6 @@ contains
     use mod_adm, only: &
        ADM_prc_tab, &
        ADM_prc_me,  &
-       ADM_have_pl, &
        ADM_gall,    &
        ADM_lall,    &
        ADM_kall,    &

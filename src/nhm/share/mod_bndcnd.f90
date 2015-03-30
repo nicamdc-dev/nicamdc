@@ -232,7 +232,7 @@ contains
     real(RP), intent(in)    :: c2wfact   (ijdim,kdim,2)
     real(RP), intent(in)    :: c2wfact_Gz(ijdim,kdim,6)
 
-    integer :: ij, k
+    integer :: ij
     !---------------------------------------------------------------------------
 
     !$acc  data &
@@ -474,7 +474,7 @@ contains
     real(RP), intent(inout) :: rhogw  (ijdim,kdim)
     real(RP), intent(in)    :: c2wfact(ijdim,kdim,6)
 
-    integer :: ij, k, kk
+    integer :: ij
     !---------------------------------------------------------------------------
 
     !$acc kernels pcopy(rhogw) pcopyin(rhogvx,rhogvy,rhogvz,c2wfact) async(0)

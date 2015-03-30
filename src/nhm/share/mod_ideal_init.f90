@@ -94,13 +94,9 @@ module mod_ideal_init
   real(RP), private :: r2d                    ! Radian to Degree
   real(RP), private :: zero = 0.0_RP          ! zero
 
-  ! for Held and Suarez
-  real(RP), private :: deltaT = 60.0_RP
-  real(RP), private :: deltaTh = 10.0_RP
   ! for Jablonowski
   real(RP), private :: clat = 40.0_RP              ! perturbation center: latitude [deg]
   real(RP), private :: clon = 20.0_RP              ! perturbation center: longitude [deg]
-  real(RP), private :: etaS = 1.0_RP               ! surface eta level
   real(RP), private :: etaT = 0.2_RP              ! threashold of vertical profile
   real(RP), private :: eta0 = 0.252_RP            ! threashold of vertical profile
   real(RP), private :: t0 = 288.0_RP               ! [K]
@@ -109,7 +105,6 @@ module mod_ideal_init
   real(RP), private :: u0 = 35.0_RP                ! [m s^-1]
   real(RP), private :: uP = 1.0_RP                 ! [m s^-1]
   real(RP), private :: p0 = 1.E+5_RP                ! [Pa]
-  real(RP), private :: ps = 1.E+5_RP                ! [Pa]
   logical, private, parameter :: message = .false.
   integer, private, parameter :: itrmax = 100       ! # of iteration maximum
 
@@ -223,8 +218,7 @@ contains
     use mod_random, only: &
        RANDOM_get
     use mod_cnst, only: &
-       CNST_D2R, &
-       CNST_PI
+       CNST_D2R
     use mod_gmtr, only: &
        GMTR_lon, &
        GMTR_lat
@@ -462,8 +456,6 @@ contains
     real(RP) :: vx_local(kdim)
     real(RP) :: vy_local(kdim)
     real(RP) :: vz_local(kdim)
-    real(RP) :: u(kdim)
-    real(RP) :: v(kdim)
     real(RP) :: ps
 
     logical :: signal    ! if true, continue iteration
@@ -585,8 +577,6 @@ contains
        ADM_proc_stop, &
        ADM_kmin,      &
        ADM_kmax
-    use mod_cnst, only: &
-       UNDEF8 => CNST_UNDEF8
     use mod_grd, only: &
        GRD_gz, &
        GRD_Z,  &
@@ -907,13 +897,8 @@ contains
        ADM_kmax,      &
        ADM_kmin
     use mod_grd, only: &
-       GRD_vz,         &
-       GRD_x,          &
-       GRD_x_pl,       &
-       GRD_XDIR,       &
-       GRD_YDIR,       &
-       GRD_ZDIR,       &
-       GRD_Z,          &
+       GRD_vz,   &
+       GRD_Z,    &
        GRD_ZH
     use mod_gmtr, only: &
        GMTR_lon, &
@@ -964,7 +949,6 @@ contains
 
     real(DP) :: hyam       = 0.0_DP
     real(DP) :: hybm       = 0.0_DP
-    logical  :: fault      = .false.
     logical  :: hybrid_eta = .false.
 
     integer, parameter :: zcoords = 1
@@ -1307,12 +1291,11 @@ contains
        ADM_KNONE,      &
        ADM_NSYS
     use mod_grd, only: &
-       GRD_vz,         &
        GRD_x,          &
-       GRD_x_pl,       &
        GRD_XDIR,       &
        GRD_YDIR,       &
        GRD_ZDIR,       &
+       GRD_vz,         &
        GRD_Z,          &
        GRD_ZH
     use mod_runconf, only: &
@@ -1406,7 +1389,7 @@ contains
     real(RP), intent(inout) :: prs(kdim)
     logical, intent(in) :: logout
 
-    integer :: i, k
+    integer :: k
     real(RP) :: g1, g2, Gphi, Gzero, Pphi
     real(RP), parameter :: N = 0.0187_RP        ! Brunt-Vaisala Freq.
     real(RP), parameter :: prs0 = 1.E+5_RP      ! pressure at the equator [Pa]
@@ -1479,7 +1462,7 @@ contains
     real(RP), intent(inout) :: eta(kdim,2) ! eta level vertical coordinate
     logical,  intent(inout) :: signal      ! iteration signal
 
-    real(RP) :: diffmax, diff(kdim)
+    real(RP) :: diff(kdim)
     real(RP) :: F(kdim), Feta(kdim)
     real(RP) :: criteria
     integer  :: k
@@ -1626,7 +1609,7 @@ contains
     integer :: i, k
     integer, parameter :: limit = 400
     real(RP) :: dz, uave, diff
-    real(RP) :: f_cf(3), rho(3)
+    real(RP) :: f_cf(3)
     real(RP) :: pp(kdim)
     logical :: iteration = .false.
     logical :: do_iter = .true.
@@ -1719,9 +1702,8 @@ contains
       wix,  &  !--- IN : zonal wind speed
       ps,   &  !--- OUT : surface pressure
       nicamcore )  !--- IN : nicamcore switch
-    use mod_adm, only :  &
-       ADM_LOG_FID
     implicit none
+
     integer, intent(in) :: kdim
     real(RP), intent(in) :: lat
     real(RP), intent(in) :: eta(kdim)
@@ -1731,13 +1713,12 @@ contains
     real(RP), intent(out) :: ps
     logical, intent(in) :: nicamcore
 
-    integer :: k
     real(RP), parameter :: lat0 = 0.691590985442682
     real(RP) :: cs32ev, f1, f2
     real(RP) :: eta_v, tmp0, tmp1
     real(RP) :: ux1, ux2, hgt0, hgt1
     real(RP) :: dz, uave
-    real(RP) :: f_cf(3), rho(3)
+    real(RP) :: f_cf(3)
     real(RP), parameter :: eta1 = 1.0_RP
     !-----
 
@@ -1780,22 +1761,22 @@ contains
   !-----------------------------------------------------------------------------
   ! setting perturbation
   subroutine perturbation( &
-      ijdim,     &  !--- IN : # of ij dimension
-      kdim,      &  !--- IN : # of z dimension
-      lall,      &  !--- IN : # of region
-      vmax,      &  !--- IN : # of variables
-      DIAG_var   )  !--- INOUT : variables container
+       ijdim,   &
+       kdim,    &
+       lall,    &
+       vmax,    &
+       DIAG_var )
     use mod_grd, only: &
-       GRD_x,      &
-       GRD_x_pl,   &
-       GRD_XDIR,   &
-       GRD_YDIR,   &
+       GRD_x,    &
+       GRD_XDIR, &
+       GRD_YDIR, &
        GRD_ZDIR
     use mod_misc, only: &
        MISC_get_latlon
     use mod_adm, only: &
        K0 => ADM_KNONE
     implicit none
+
     integer, intent(in) :: ijdim, kdim, lall, vmax
     real(RP), intent(inout) :: DIAG_var(ijdim,kdim,lall,vmax)
 

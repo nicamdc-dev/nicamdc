@@ -1100,8 +1100,8 @@ contains
 !         ADM_prc_me,               &
 !         ADM_prc_pl,               &
 !         ADM_GSLF_PL,             &
-!         ADM_GALL_PL,              &
-!         ADM_LALL_PL,              &
+!         ADM_gall_pl,              &
+!         ADM_lall_pl,              &
 !         ADM_IooJoo_nmax,          &
 !         ADM_IooJoo,               &
 !         ADM_GIoJo,                &

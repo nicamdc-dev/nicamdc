@@ -432,7 +432,7 @@ contains
     tmp(:,:,:) = rho(:,:,:)
     if ( ADM_have_pl ) then
        tmp_pl(:,:,:) = rho_pl(:,:,:)
-    end if
+    endif
     rho_sum = GTL_global_sum( tmp, tmp_pl ) ! [kg/m3] -> [kg]
 
     !--- total mass (dry air)
@@ -499,7 +499,7 @@ contains
     tmp = rho * qd * CNST_CV * tem
     if ( ADM_have_pl ) then
        tmp_pl = rho_pl * qd_pl * CNST_CV * tem_pl
-    end if
+    endif
     rhoein_qd_sum = GTL_global_sum( tmp, tmp_pl )
     rhoein_sum    = rhoein_sum + rhoein_qd_sum
 

@@ -684,42 +684,33 @@ contains
 
 
   end subroutine set_referencestate
+
   !-----------------------------------------------------------------------------
   subroutine gcss_reference
-    !
-    use mod_misc, only : &
-         MISC_get_available_fid
-    use mod_cnst, only : &
-         CNST_RVAP
-    !
+    use mod_misc, only: &
+       MISC_get_available_fid
     implicit none
-    !
+
     integer :: fid
-    !
-!   character(128) :: fname = 'gcss_profile.dat' ! 11/08/13 A.Noda
-    !
+
     fid = MISC_get_available_fid()
-!   Open(fid,file=Trim(fname),status='old',form='unformatted') ! 11/08/03 A.Noda
     Open(fid,file=Trim(ref_fname),status='old',form='unformatted')
     read(fid) th_ref(:)
     read(fid) pre_ref(:)
     read(fid) qv_ref(:)
     close(fid)
+
   end subroutine gcss_reference
+
   !-----------------------------------------------------------------------------
   subroutine ooyama_reference
     use mod_misc, only: &
        MISC_get_available_fid
     use mod_adm, only: &
-       ADM_kall, &
        ADM_kmin, &
        ADM_kmax
-    use mod_cnst, only: &
-       CNST_RVAP
     use mod_grd, only: &
        GRD_gz
-    use mod_runconf, only: &
-       TRC_VMAX
     implicit none
 
     character(len=128) :: fname = 'ooyama_profile.dat'
@@ -944,19 +935,16 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine bsstate_output_ref( basename )
-    !
-    use mod_misc, only : &
-         MISC_get_available_fid
-    use mod_cnst, only : &
-         CNST_RVAP
-    use mod_adm, only :  &
-         ADM_prc_me,     &
-         ADM_prc_run_master
+    use mod_misc, only: &
+       MISC_get_available_fid
+    use mod_adm, only: &
+       ADM_prc_me,     &
+       ADM_prc_run_master
     implicit none
 
     Character(*), Intent(in) :: basename
     integer :: fid
-    !
+
     !--- output
     if ( ADM_prc_me==ADM_prc_run_master) then
        fid = MISC_get_available_fid()

@@ -85,9 +85,7 @@ contains
     use mod_runconf, only: &
        PRG_vmax,  &
        DIAG_vmax, &
-       TRC_vmax,  &
-       NQW_STR,   &
-       NQW_END
+       TRC_vmax
     use mod_thrmdyn, only: &
        THRMDYN_tempre
     implicit none
@@ -233,9 +231,7 @@ contains
     use mod_runconf, only: &
        PRG_vmax,  &
        DIAG_vmax, &
-       TRC_vmax,  &
-       NQW_STR,   &
-       NQW_END
+       TRC_vmax
     use mod_thrmdyn, only: &
        THRMDYN_rhoein
     implicit none

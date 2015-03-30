@@ -82,7 +82,6 @@
     output_io_mode   = 'ADVANCED' ,
     histall_fname    = 'history'  ,
     hist3D_layername = 'ZSDEF94'  ,
-    DIRECT_ACCESS    = .true.     ,
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
     step             = 72         ,

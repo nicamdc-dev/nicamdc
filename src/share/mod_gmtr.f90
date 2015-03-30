@@ -158,7 +158,6 @@ contains
     use mod_adm, only: &
        ADM_CTL_FID,   &
        ADM_proc_stop, &
-       ADM_gall_1d,   &
        ADM_gmin,      &
        ADM_gmax
     use mod_comm, only: &
@@ -265,7 +264,6 @@ contains
        ADM_rgn_vnum,    &
        ADM_W,           &
        ADM_nxyz,        &
-       ADM_gall_1d,     &
        ADM_gmin,        &
        ADM_IooJoo_nmax, &
        ADM_IooJoo,      &
@@ -448,7 +446,6 @@ contains
        ADM_rgn_vnum,    &
        ADM_W,           &
        ADM_nxyz,        &
-       ADM_gall_1d,     &
        ADM_gmin,        &
        ADM_gmax,        &
        ADM_ImoJmo_nmax, &
@@ -621,7 +618,6 @@ contains
        ADM_rgn_vnum,    &
        ADM_W,           &
        ADM_nxyz,        &
-       ADM_gall_1d,     &
        ADM_gmin,        &
        ADM_gmax,        &
        ADM_ImpJmo_nmax, &

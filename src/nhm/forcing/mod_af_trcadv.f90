@@ -167,8 +167,6 @@ contains
     real(RP), parameter :: T0   = 300.0_RP          ! temperature
     real(RP), parameter :: H    = Rd * T0 / g     ! scale height
     real(RP), parameter :: K    = 5.0_RP            ! number of Hadley-like cells
-    real(RP), parameter :: z1   = 2000.0_RP         ! position of lower tracer bound (m), changed in v5
-    real(RP), parameter :: z2   = 5000.0_RP         ! position of upper tracer bound (m), changed in v5
     real(RP), parameter :: ztop = 12000.0_RP        ! model top (m)
     real(RP), parameter :: p0   = 100000.0_RP       ! reference pressure (Pa)
 
