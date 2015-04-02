@@ -30,19 +30,6 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-# for Oakleaf-FX
-# if [ ${xy} -gt 480 ]; then
-#    rscgrp="x-large"
-# elif [ ${xy} -gt 372 ]; then
-#    rscgrp="large"
-# elif [ ${xy} -gt 216 ]; then
-#    rscgrp="medium"
-# elif [ ${xy} -gt 12 ]; then
-#    rscgrp="small"
-# else
-#    rscgrp="short"
-# fi
-
 # for AICS-FX10
 if [ ${NMPI} -gt 96 ]; then
    rscgrp="huge"
@@ -51,6 +38,7 @@ elif [ ${NMPI} -gt 24 ]; then
 else
    rscgrp="large"
 fi
+
 PROF1="fapp -C -Ihwm -Hevent=Cache        -d prof_cache -L 10"
 PROF2="fapp -C -Ihwm -Hevent=Instructions -d prof_inst  -L 10"
 PROF3="fapp -C -Ihwm -Hevent=MEM_access   -d prof_mem   -L 10"

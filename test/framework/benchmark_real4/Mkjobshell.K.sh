@@ -30,6 +30,7 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
+# for K computer
 if [ ${NMPI} -gt 36864 ]; then
    rscgrp="huge"
 elif [ ${NMPI} -gt 384 ]; then
@@ -37,6 +38,7 @@ elif [ ${NMPI} -gt 384 ]; then
 else
    rscgrp="small"
 fi
+
 PROF1="fapp -C -Ihwm -Hevent=Cache        -d prof_cache -L 10"
 PROF2="fapp -C -Ihwm -Hevent=Instructions -d prof_inst  -L 10"
 PROF3="fapp -C -Ihwm -Hevent=MEM_access   -d prof_mem   -L 10"

@@ -30,6 +30,7 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
+# for K computer
 if [ ${NMPI} -gt 36864 ]; then
    rscgrp="huge"
 elif [ ${NMPI} -gt 384 ]; then

@@ -30,31 +30,24 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-# for AICS-FX10
-if [ ${NMPI} -gt 96 ]; then
-   rscgrp="huge"
-elif [ ${NMPI} -gt 24 ]; then
-   rscgrp="large"
-else
-   rscgrp="large"
-fi
+# for RICC-FX100
+NNODE=`expr $NMPI / 2`
 
-PROF1="fapp -C -Ihwm -Hevent=Cache        -d prof_cache -L 10"
-PROF2="fapp -C -Ihwm -Hevent=Instructions -d prof_inst  -L 10"
-PROF3="fapp -C -Ihwm -Hevent=MEM_access   -d prof_mem   -L 10"
-PROF4="fapp -C -Ihwm -Hevent=Performance  -d prof_perf  -L 10"
-PROF5="fapp -C -Ihwm -Hevent=Statistics   -d prof       -L 10"
+PROF1="fipp -C -Srange -Ihwm,nocall -d prof"
+PROF2="fipp -C -Srange -Inohwm,call -d prof_call"
 
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for FX10
+# for FX100
 #
 ################################################################################
-#PJM --rsc-list "rscgrp=${rscgrp}"
-#PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=00:30:00"
+#PJM -L rscunit=gwmpc
+#PJM -L rscgrp=batch
+#PJM -L node=${NNODE}
+#PJM --mpi proc=${NMPI}
+#PJM -L elapse=00:30:00
 #PJM -j
 #PJM -s
 #
@@ -81,19 +74,14 @@ do
 done
 
 cat << EOF2 >> run.sh
-rm -rf ./prof*
-mkdir -p ./prof_cache
-mkdir -p ./prof_inst
-mkdir -p ./prof_mem
-mkdir -p ./prof_perf
+rm -rf ./prof
+rm -rf ./prof_call
 mkdir -p ./prof
+mkdir -p ./prof_call
 
 # run
 ${PROF1} ${MPIEXEC} ./${BINNAME} || exit
 ${PROF2} ${MPIEXEC} ./${BINNAME} || exit
-${PROF3} ${MPIEXEC} ./${BINNAME} || exit
-${PROF4} ${MPIEXEC} ./${BINNAME} || exit
-${PROF5} ${MPIEXEC} ./${BINNAME} || exit
 
 ################################################################################
 EOF2
@@ -103,12 +91,14 @@ cat << EOFICO2LL1 > ico2ll.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for FX10
+# for FX100
 #
 ################################################################################
-#PJM --rsc-list "rscgrp=${rscgrp}"
-#PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=00:30:00"
+#PJM -L rscunit=gwmpc
+#PJM -L rscgrp=batch
+#PJM -L node=${NNODE}
+#PJM --mpi proc=${NMPI}
+#PJM -L elapse=00:30:00
 #PJM -j
 #PJM -s
 #
