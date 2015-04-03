@@ -34,7 +34,7 @@ MNGINFO=rl${RL}-prc${NP}.info
 NNODE=`expr $NMPI / 2`
 
 PROF1="fapp -C -Ihwm -Hevent=Cache        -d prof_cache -L 10"
-PROF2="fapp -C -Ihwm -Hevent=Instructions -d prof_inst  -L 10"
+PROF2="fapp -C -Ihwm -Hevent=Instructions_SIMD -d prof_inst  -L 10"
 PROF3="fapp -C -Ihwm -Hevent=MEM_access   -d prof_mem   -L 10"
 PROF4="fapp -C -Ihwm -Hevent=Performance  -d prof_perf  -L 10"
 PROF5="fapp -C -Ihwm -Hevent=Statistics   -d prof       -L 10"

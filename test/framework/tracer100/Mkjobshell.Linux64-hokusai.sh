@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpiexec"
+MPIEXEC="mpirun -np ${NMPI} -ppn 5"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -31,35 +31,24 @@ res3d=GL${GL}RL${RL}z${ZL}
 MNGINFO=rl${RL}-prc${NP}.info
 
 # for RICC-FX100
-NNODE=`expr $NMPI / 2`
-
-PROF1="fapp -C -Ihwm -Hevent=Cache        -d prof_cache -L 10"
-PROF2="fapp -C -Ihwm -Hevent=Instructions_SIMD -d prof_inst  -L 10"
-PROF3="fapp -C -Ihwm -Hevent=MEM_access   -d prof_mem   -L 10"
-PROF4="fapp -C -Ihwm -Hevent=Performance  -d prof_perf  -L 10"
-PROF5="fapp -C -Ihwm -Hevent=Statistics   -d prof       -L 10"
+NNODE=`expr $NMPI / 5`
 
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for FX100
+# ------ FOR Linux64 & intel C&fortran & intel mpi + Parallelnavi -----
 #
 ################################################################################
-#PJM -L rscunit=gwmpc
+#PJM -L rscunit=gwacsg
 #PJM -L rscgrp=batch
-#PJM -L node=${NNODE}
-#PJM --mpi proc=${NMPI}
+#PJM -L vnode=${NNODE}
+#PJM -L vnode-core=${NMPI}
 #PJM -L elapse=00:30:00
 #PJM -j
 #PJM -s
-#
-. /work/system/Env_base
-#
-export PARALLEL=16
-export OMP_NUM_THREADS=16
-#export fu08bf=1
-export XOS_MMM_L_ARENA_FREE=2
+
+export OMP_NUM_THREADS=1
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
@@ -71,20 +60,15 @@ do
    echo "ln -sv ${TOPDIR}/data/grid/boundary/${dir2d}/${f} ." >> run.sh
 done
 
+for f in $( ls ${TOPDIR}/data/initial/HS_spinup_300day/${dir3d} )
+do
+   echo "ln -sv ${TOPDIR}/data/initial/HS_spinup_300day/${dir3d}/${f} ./${f/restart/init}" >> run.sh
+done
+
 cat << EOF2 >> run.sh
-rm -rf ./prof*
-mkdir -p ./prof_cache
-mkdir -p ./prof_inst
-mkdir -p ./prof_mem
-mkdir -p ./prof_perf
-mkdir -p ./prof
 
 # run
-${PROF1} ${MPIEXEC} ./${BINNAME} || exit
-${PROF2} ${MPIEXEC} ./${BINNAME} || exit
-${PROF3} ${MPIEXEC} ./${BINNAME} || exit
-${PROF4} ${MPIEXEC} ./${BINNAME} || exit
-${PROF5} ${MPIEXEC} ./${BINNAME} || exit
+${MPIEXEC} ./${BINNAME} || exit
 
 ################################################################################
 EOF2
@@ -94,22 +78,18 @@ cat << EOFICO2LL1 > ico2ll.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for FX100
+# ------ FOR Linux64 & intel C&fortran & intel mpi + Parallelnavi -----
 #
 ################################################################################
-#PJM -L rscunit=gwmpc
+#PJM -L rscunit=gwacsg
 #PJM -L rscgrp=batch
-#PJM -L node=${NNODE}
-#PJM --mpi proc=${NMPI}
+#PJM -L vnode=${NNODE}
+#PJM -L vnode-core=${NMPI}
 #PJM -L elapse=00:30:00
 #PJM -j
 #PJM -s
-#
-. /work/system/Env_base
-#
-export PARALLEL=16
-export OMP_NUM_THREADS=16
-#export fu08bf=1
+
+export OMP_NUM_THREADS=1
 
 ln -sv ${TOPDIR}/bin/fio_ico2ll_mpi .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
