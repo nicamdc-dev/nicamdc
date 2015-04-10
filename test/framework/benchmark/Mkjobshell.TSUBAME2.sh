@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpirun -np ${NMPI} -ppn 5"
+MPIEXEC="mpirun -n ${NMPI} -hostfile \$PBS_NODEFILE ../Wrapper.TSUBAME2_nvprof"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -30,25 +30,30 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-# for RICC-CLUSTER
-NNODE=`expr $NMPI / 5`
-
-cat << EOF1 > run.sh
+cat << EOF0 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ FOR Linux64 & intel C&fortran & intel mpi + Parallelnavi -----
+# ------ FOR TSUBAME2.5 -----
 #
 ################################################################################
-#PJM -L rscunit=gwacsg
-#PJM -L rscgrp=batch
-#PJM -L vnode=${NNODE}
-#PJM -L vnode-core=${NMPI}
-#PJM -L elapse=00:30:00
-#PJM -j
-#PJM -s
 
-export OMP_NUM_THREADS=1
+chmod u+x ../Wrapper.TSUBAME2_nvprof
+chmod u+x ./run2.sh
+t2sub -q G -N ${res3d} -W group_list=t2g-14IAL -l select=${NMPI}:ncpus=1:mpiprocs=1:gpus=1:mem=12gb -l place=scatter -l walltime=00:10:00 ./run2.sh
+
+EOF0
+
+cat << EOF1 > run2.sh
+#! /bin/bash -x
+################################################################################
+#
+# ------ FOR TSUBAME2.5 -----
+#
+################################################################################
+export FORT_FMT_RECL=400
+
+cd \$PBS_O_WORKDIR
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
@@ -57,10 +62,10 @@ EOF1
 
 for f in $( ls ${TOPDIR}/data/grid/boundary/${dir2d} )
 do
-   echo "ln -sv ${TOPDIR}/data/grid/boundary/${dir2d}/${f} ." >> run.sh
+   echo "ln -sv ${TOPDIR}/data/grid/boundary/${dir2d}/${f} ." >> run2.sh
 done
 
-cat << EOF2 >> run.sh
+cat << EOF2 >> run2.sh
 
 # run
 ${MPIEXEC} ./${BINNAME} || exit
@@ -73,18 +78,12 @@ cat << EOFICO2LL1 > ico2ll.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ FOR Linux64 & intel C&fortran & intel mpi + Parallelnavi -----
+# ------ FOR TSUBAME2.5 -----
 #
 ################################################################################
-#PJM -L rscunit=gwacsg
-#PJM -L rscgrp=batch
-#PJM -L vnode=${NNODE}
-#PJM -L vnode-core=${NMPI}
-#PJM -L elapse=00:30:00
-#PJM -j
-#PJM -s
+export FORT_FMT_RECL=400
 
-export OMP_NUM_THREADS=1
+cd \$PBS_O_WORKDIR
 
 ln -sv ${TOPDIR}/bin/fio_ico2ll_mpi .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
