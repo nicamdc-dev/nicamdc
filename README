@@ -1,18 +1,18 @@
 README nicam-dc
-ver. 1.0
-Last update: 2013-09-03
+ver. 1.1
+Last update: 2014-11-22
 ---------------------------------------------------
 
 NICAM-DC
 =========
-The dynamical part of Non-hydrostatic ICosahedral Atmospheric Model.
+The dynamical core component of Non-hydrostatic ICosahedral Atmospheric Model.
 
 
 
 Contributing
 -----------
 This code was developped by NICAM development team
-( JAMSTEC/RIGC , The University of Tokyo/AORI, RIKEN/AICS ).
+( JAMSTEC, The University of Tokyo/AORI, RIKEN/AICS ).
 
 
 
@@ -25,7 +25,7 @@ License
 Contact for inquiry about this code.
 -----------
 RIKEN Advanced Institute for Computational Science
-Computational Climate System Research Team 
+Computational Climate System Research Team
 email: <nicamdc@riken.jp>
 
 
@@ -43,7 +43,7 @@ make
 
 2. Run testcase(ex. Jablonowski and Williamson test case)
 
-cd test/case/jablonowski
+cd test/case/ICOMEX_JW/gl05rl00z40pe10
 make
 make jobshell
 make run
