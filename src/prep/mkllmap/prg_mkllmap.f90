@@ -6,14 +6,14 @@
 program prg_mkllmap
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
-  ! 
-  !++ Current Corresponding Author : 
-  ! 
-  !++ History: 
+  !++ Description:
+  !
+  !++ Current Corresponding Author :
+  !
+  !++ History:
   !       This program originate from 'cnvlatlon.f90'(by H.Tomita) ver 4.38 .
   !
-  !      Version   Date       Comment 
+  !      Version   Date       Comment
   !      -----------------------------------------------------------------------
   !                 11-11-09  H.Yashiro [mod] Avoid arc-cos, precise calculation
   !      -----------------------------------------------------------------------
@@ -22,13 +22,14 @@ program prg_mkllmap
   !
   !++ Used modules (shared)
   !
-  use mod_adm, only : &
-     ADM_MULTI_PRC, &
-     ADM_proc_init, &
-     ADM_proc_stop, &
-     ADM_setup,     &
-     ADM_LOG_FID,   &
-     ADM_CTL_FID,   &
+  use mod_adm, only: &
+     ADM_MULTI_PRC,   &
+     ADM_proc_init,   &
+     ADM_proc_stop,   &
+     ADM_proc_finish, &
+     ADM_setup,       &
+     ADM_LOG_FID,     &
+     ADM_CTL_FID,     &
      ADM_MAXFNAME
   use mod_fio, only: &
      FIO_setup
@@ -83,7 +84,7 @@ program prg_mkllmap
      write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist MKLLMAP_PARAM. STOP.'
      call ADM_proc_stop
   endif
-  write(ADM_LOG_FID,MKLLMAP_PARAM)
+  write(ADM_LOG_FID,nml=MKLLMAP_PARAM)
 
   call LATLON_ico_setup
 
@@ -94,7 +95,7 @@ program prg_mkllmap
   endif
 
 
-  call ADM_proc_stop
+  call ADM_proc_finish
 
 end program prg_mkllmap
 !-------------------------------------------------------------------------------

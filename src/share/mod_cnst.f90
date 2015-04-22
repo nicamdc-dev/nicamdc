@@ -30,52 +30,21 @@ module mod_cnst
   !
   !++ Public parameters & variables
   !
-  !======  Earth parameters ======
-  !
-  !------ Radius of the Earth
-!  real(8), public, save :: CNST_ERADIUS  = 6.37122D+6 [mod] 20120704 H.Yashiro
-  real(8), public, save :: CNST_ERADIUS = 6371000.D0
-  !<----- unit : [m]
-  !
-  !------ Angular velocity of the Earth
-!  real(8), public, save :: CNST_EOHM     = 7.292D-5 [mod] 20120704 H.Yashiro
-  real(8), public, save :: CNST_EOHM = 7.292115D-5
-  !<----- unit : [/s]
-  !
-  !------ Gravitational accerlaration of the Earth
-!  real(8), public, save :: CNST_EGRAV    = 9.80616D0 [mod] 20120704 H.Yashiro
-  real(8), public, save :: CNST_EGRAV    = 9.79764D0
-  !<----- unit : [m/s^2]
-  !
-  !====== Gas parameters ======
-  !
-  !------ Gas constant of air
-  real(8), public, save :: CNST_RAIR     = 287.04D0
-  !
-  !------ Gas constant of vapor
-  real(8), public, save :: CNST_RVAP     = 461.50D0
-  !
-  !------ Specific heat of air (consant pressure)
-  real(8), public, save :: CNST_CP       = 1004.6D0
-  !
-  !------ Specific heat of vapor (consant pressure)
-!  real(8), public, save :: CNST_CPV      = 1850.0D0 [mod] 20120704 H.Yashiro
-  real(8), public, save :: CNST_CPV      = 1846.0D0
-  !
-  !------ Specific heat of water
-  real(8), public, save :: CNST_CL   = 4218.0D0
-  !
-  !------ Specific heat of ice
-  real(8), public, save :: CNST_CI   = 2006.0D0
-  !
-  !------ Specific heat of air (consant volume)
-  real(8), public, save :: CNST_CV
-  !<----- calculated in sub[CNST_setup].
-  !
-  !------ Specific heat of vapor (consant volume)
-  real(8), public, save :: CNST_CVV
-  !<----- calculated in sub[CNST_setup].
-  !
+  real(8), public, save :: CNST_ERADIUS = 6.37122D+6 ! Radius of the Earth [m]
+  real(8), public, save :: CNST_EOHM    = 7.292D-5   ! Angular velocity of the Earth [/s]
+  real(8), public, save :: CNST_EGRAV   = 9.80616D0  ! Gravitational accerlaration of the Earth [m/s2]
+
+  real(8), public, save :: CNST_RAIR    =  287.0D0   ! Gas constant of air
+  real(8), public, save :: CNST_RVAP    =  461.5D0   ! Gas constant of vapor
+
+  real(8), public, save :: CNST_CP      = 1004.5D0   ! Specific heat of air (consant pressure)
+  real(8), public, save :: CNST_CV                   ! Specific heat of air (consant volume)
+
+  real(8), public, save :: CNST_CPV     = 1846.0D0   ! Specific heat of vapor (consant pressure)
+  real(8), public, save :: CNST_CVV                  ! Specific heat of vapor (consant volume)
+  real(8), public, save :: CNST_CL      = 4218.0D0   ! Specific heat of water
+  real(8), public, save :: CNST_CI      = 2006.0D0   ! Specific heat of ice
+
   !------ cp/cv
   real(8), public, save :: CNST_GAMMA
   !<----- calculated in sub[CNST_setup].
@@ -165,7 +134,9 @@ module mod_cnst
   !
   !------ Definition of PI
   real(8), public, save :: CNST_PI = 3.14159265358979323846D0
-  !
+
+  real(8), public, save :: CNST_D2R
+
   !------ Allowable minimum value
   real(8), public, parameter :: CNST_EPS_ZERO = 1.0D-99
   !
@@ -206,27 +177,28 @@ contains
        ADM_proc_stop
     implicit none
 
-    !--- Parameters to be controled
-    real(8) :: earth_radius      !--- Earth radius
-    real(8) :: earth_angvel      !--- Anguler velocity of the earth
-    real(8) :: earth_gravity     !--- Gravitational accelaration
-    real(8) :: gas_cnst          !--- Gas constant of dry air
-    real(8) :: gas_cnst_vap      !--- Gas constant of water vapour
-    real(8) :: specific_heat_pre !--- Specific heat of air( const pre )
-    real(8) :: specific_heat_pre_vap !--- Specific heat of water vapour ( const pre )
-    real(8) :: latent_heat_vap   !--- latent heat of vaporization LH0 ( 0 deg )
-    real(8) :: latent_heat_sub   !--- latent heat of sublimation LHS0 ( 0 deg )
+    real(8) :: earth_radius               ! Earth radius
+    real(8) :: earth_angvel               ! Anguler velocity of the earth
+    real(8) :: small_planet_factor = 1.D0 ! small planet factor
+    real(8) :: earth_gravity              ! Gravitational accelaration
+    real(8) :: gas_cnst                   ! Gas constant of dry air
+    real(8) :: gas_cnst_vap               ! Gas constant of water vapour
+    real(8) :: specific_heat_pre          ! Specific heat of air( const pre )
+    real(8) :: specific_heat_pre_vap      ! Specific heat of water vapour ( const pre )
+    real(8) :: latent_heat_vap            ! latent heat of vaporization LH0 ( 0 deg )
+    real(8) :: latent_heat_sub            ! latent heat of sublimation LHS0 ( 0 deg )
 
     namelist / CNSTPARAM / &
-         earth_radius,     & !--- earth radius
-         earth_angvel,     & !--- anguler velocity of the earth
-         earth_gravity,    & !--- gravitational accelaration
-         gas_cnst,         & !--- gas constant of dry air ( Rd )
-         gas_cnst_vap,     & !--- gas constant of water vapour
-         specific_heat_pre,& !--- specific heat of air ( Cp )
-         specific_heat_pre_vap,&  !--- specific heat of water vapour
-         latent_heat_vap,  &
-         latent_heat_sub
+       earth_radius,          &
+       earth_angvel,          &
+       small_planet_factor,   &
+       earth_gravity,         &
+       gas_cnst,              &
+       gas_cnst_vap,          &
+       specific_heat_pre,     &
+       specific_heat_pre_vap, &
+       latent_heat_vap,       &
+       latent_heat_sub
 
     integer :: ierr
     !---------------------------------------------------------------------------
@@ -254,10 +226,10 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist CNSTPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,CNSTPARAM)
+    write(ADM_LOG_FID,nml=CNSTPARAM)
 
-    CNST_ERADIUS = earth_radius
-    CNST_EOHM    = earth_angvel
+    CNST_ERADIUS = earth_radius / small_planet_factor
+    CNST_EOHM    = earth_angvel * small_planet_factor
     CNST_EGRAV   = earth_gravity
     CNST_RAIR    = gas_cnst
     CNST_RVAP    = gas_cnst_vap
@@ -268,6 +240,7 @@ contains
 
     !--- calculate other parameters
     CNST_PI    = 4.D0 * atan( 1.D0 )
+    CNST_D2R   = CNST_PI / 180.D0
 
     CNST_CV    = CNST_CP - CNST_RAIR
     CNST_GAMMA = CNST_CP / CNST_CV

@@ -1,21 +1,26 @@
 #
-# ------ FOR Earth Simulator 2 -----
+# ------ FOR Earth Simulator 2, SX -----
 #
-
-##### for computation
 
 FFLAGS_FAST  = -C hopt                    \
                -Ep -f2003 -dW             \
                -Wf"-L fmtlist transform"  \
-               -Wf"-pvctl chgpwr fullmsg" \
-               -Wf"-O extendreorder"
+               -Wf"-pvctl chgpwr fullmsg"
 
-FFLAGS_DEBUG = -C debug                   \
+FFLAGS_DEBUG = -C vsafe                   \
                -Ep -f2003 -dW             \
                -Wf"-L fmtlist transform"  \
                -Wf"-pvctl fullmsg"        \
                -Wf"-init heap=nan stack=nan"
-#               -DDEBUG
+
+FC     = sxmpif90
+FFLAGS = $(FFLAGS_FAST)
+#FFLAGS = $(FFLAGS_DEBUG)
+
+CC     = sxmpic++
+CFLAGS =
+
+##### Special Options #####
 
 # Performance monitor
 # disable
@@ -23,27 +28,27 @@ PERF_MONIT = -Nftrace
 # ftrace
 #PERF_MONIT = -ftrace
 
-FC     = sxmpif90
-FFLAGS = $(FFLAGS_FAST) $(PERF_MONIT) -D__ES2
-#FFLAGS = $(FFLAGS_DEBUG) $(PERF_MONIT) -D__ES2
+FFLAGS += $(PERF_MONIT)
+CFLAGS += $(PERF_MONIT)
 
-MODDIROPT ?= -to
-
-CC     = sxmpic++
-CFLAGS = -C vsafe
-
-ifneq ($(USE_NETCDF3),)
-      CFLAGS += -DNETCDF3
+ifeq ($(ENABLE_OPENMP),T)
+	FFLAGS += -P openmp
 endif
+
+ifeq ($(ENABLE_NETCDF),T)
+	NETCDF_INCLUDE ?= -I/SX/usr/include
+	NETCDF_LIBS    ?= -L/SX/usr/lib0 -lnetcdf
+endif
+
+###########################
+
+MODDIROPT ?= -to $(BUILD_DIR) -I$(BUILD_DIR)
+OBJDIR    ?= .
 
 LD     = $(FC)
 LFLAGS = $(FFLAGS)
 
-NETCDF_INCLUDE ?= -I/SX/usr/include
-NETCDF_LIBS    ?= -L/SX/usr/lib0 -lnetcdf
-
-##### for frontend
-INSTALL = install
+INSTALL = cp
 AR      = sxar
 ARFLAGS = r
 RANLIB  = touch

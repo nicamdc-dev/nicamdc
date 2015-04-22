@@ -6,20 +6,20 @@
 module mod_sfcvar
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
-  !       This module contains the surface diagnostic variables and 
+  !++ Description:
+  !       This module contains the surface diagnostic variables and
   !       control subroutines for the non-hydrostatic model.
-  ! 
+  !
   !++ Current Corresponding Author : H.Tomita
-  ! 
-  !++ History: 
-  !      Version   Date       Comment 
+  !
+  !++ History:
+  !      Version   Date       Comment
   !      -----------------------------------------------------------------------
   !      0.00      04-02-17   Add this module
-  !      0.05      xx-xx-xx   Change module name. 
+  !      0.05      xx-xx-xx   Change module name.
   !                05-10-21   M.Satoh set default of I_CUMFRC = 0
   !                06-04-18   T.Mitsui add precip_energy_cp,mp and sfcvar_set2
-  !                07-05-08   H.Tomita : Delete I_TKE_SFC 
+  !                07-05-08   H.Tomita : Delete I_TKE_SFC
   !                07-06-27   T.Mitsui : add sfcvar_set1
   !                07-07-23   K.Suzuki : Add I_CEV for use in SPRINTARS
   !                09-07-10   H.Tomita: Add several variables for energy budget.
@@ -296,7 +296,7 @@ contains
        I_ALL             = 56
     end if
     !  [Add] 12/03/28 T.Seiki
-    if(AE_TYPE /= 'NONE' )then 
+    if(AE_TYPE /= 'NONE' )then
        I_ALL       = I_ALL+1
        I_VFRICTION = I_ALL
     end if
@@ -364,7 +364,7 @@ contains
     implicit none
     real(8), intent(out) :: sv(ADM_gall,ADM_KNONE,ADM_lall)
     real(8), intent(out) :: sv_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL)
-    integer, intent(in)  :: vid 
+    integer, intent(in)  :: vid
     !
     sv(1:ADM_gall,ADM_KNONE,1:ADM_lall) &
          = sfcvar(1:ADM_gall,KSTR(vid),1:ADM_lall,1)
@@ -403,7 +403,7 @@ contains
     integer, intent(in) :: mdim
     real(8), intent(out) :: sv(ADM_gall,ADM_KNONE,ADM_lall,mdim)
     real(8), intent(out) :: sv_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL,mdim)
-    integer, intent(in)  :: vid 
+    integer, intent(in)  :: vid
     !
     integer :: m,l,n
     !
@@ -502,7 +502,7 @@ contains
     !------
     !------ set diagnostic variables
     !------ and COMMUNICATION.
-    !------ 
+    !------
     use mod_adm, only :     &
          ADM_LOG_FID,       &
          ADM_GALL_PL,       &
@@ -579,7 +579,7 @@ contains
     !------
     !------ set prognostic variables to diag[num]
     !------ and COMMUNICATION.
-    !------ 
+    !------
     use mod_adm, only :     &
          ADM_LOG_FID,       &
          ADM_KNONE,         &
@@ -660,7 +660,7 @@ contains
     !------
     !------ set prognostic variables to diag[num]
     !------ and COMMUNICATION.
-    !------ 
+    !------
     use mod_adm, only :     &
          ADM_LOG_FID,       &
          ADM_KNONE,         &
@@ -672,8 +672,7 @@ contains
          ADM_lall_pl,       &
          ADM_gall_1d,       &
          adm_prc_me,        &
-         adm_prc_pl,        &
-         ADM_comm_run_world
+         adm_prc_pl
     use mod_comm, only :    &
          COMM_data_transfer
     !
@@ -729,7 +728,7 @@ contains
     !------
     !------ set prognostic variables to diag[num]
     !------ and COMMUNICATION.
-    !------ 
+    !------
     use mod_adm, only :     &
          ADM_LOG_FID,       &
          ADM_KNONE,         &
@@ -821,7 +820,7 @@ contains
     !------
     !------ set prognostic variables to diag[num]
     !------ and COMMUNICATION.
-    !------ 
+    !------
     use mod_adm, only :     &
          ADM_LOG_FID,       &
          ADM_KNONE,         &
@@ -868,7 +867,7 @@ contains
          = sfcvar(suf(ADM_gmin,ADM_gmax+1),KSTR(vid):KEND(vid),:,1)
     !
   end subroutine sfcvar_set2_in
-  !-----------------------------------------------------------------------------    
+  !-----------------------------------------------------------------------------
   ! ADD T.Mitsui 06.04.18
   subroutine sfcvar_set2( &
        sv,sv_pl,          &  !--- IN : surface variable
@@ -876,7 +875,6 @@ contains
        mdim1, mdim2       &  !--- IN
        )
     use mod_adm, only :     &
-         ADM_LOG_FID,       &
          ADM_KNONE,         &
          ADM_gall,          &
          ADM_gall_pl,       &
@@ -927,30 +925,13 @@ contains
   end subroutine sfcvar_set2
 
   !-----------------------------------------------------------------------------
-  subroutine sfcvar_comm( &
-       comm_type          & !--- IN : communication type
-       )
-    !
-    !--- comm_type : 1 ( region -> pole )
-    !---           : 2 ( region -> pole -> regular communication )
-    !---           : 3 ( regular communication only )
-    use mod_adm, only : &
-         ADM_comm_run_world
-    use mod_comm, only :    &
-         comm_var
-    !
+  subroutine sfcvar_comm
+    use mod_comm, only: &
+       COMM_var
     implicit none
-    integer, intent(in) :: comm_type
+    !---------------------------------------------------------------------------
 
-    integer :: ierr
-
-    call comm_var(  &
-         sfcvar,    & !--- INOUT : variables
-         sfcvar_pl, & !--- INOUT : variables at poles
-         KSUM,      & !--- IN : number of layers
-         DIAG_MAX,  & !--- IN : number of variables
-         comm_type, & !--- IN : communication type
-         NSval_fix=.true. )
+    call COMM_var( sfcvar, sfcvar_pl, KSUM, DIAG_MAX )
 
     return
   end subroutine sfcvar_comm

@@ -7,11 +7,9 @@ ZL=${4}
 VGRID=${5}
 TOPDIR=${6}
 BINNAME=${7}
-RUNCONF=${8}
 
 # System specific
 MPIEXEC="mpiexec"
-PROF="fipp -C -Srange -Ihwm -d prof"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -33,13 +31,13 @@ res3d=GL${GL}RL${RL}z${ZL}
 MNGINFO=rl${RL}-prc${NP}.info
 
 # for Oakleaf-FX
-# if [ ${NMPI} -gt 480 ]; then
+# if [ ${xy} -gt 480 ]; then
 #    rscgrp="x-large"
-# elif [ ${NMPI} -gt 372 ]; then
+# elif [ ${xy} -gt 372 ]; then
 #    rscgrp="large"
-# elif [ ${NMPI} -gt 216 ]; then
+# elif [ ${xy} -gt 216 ]; then
 #    rscgrp="medium"
-# elif [ ${NMPI} -gt 12 ]; then
+# elif [ ${xy} -gt 12 ]; then
 #    rscgrp="small"
 # else
 #    rscgrp="short"
@@ -51,53 +49,10 @@ if [ ${NMPI} -gt 96 ]; then
 elif [ ${NMPI} -gt 24 ]; then
    rscgrp="large"
 else
-#   rscgrp="interact"
    rscgrp="large"
 fi
 
-outdir=${dir3d}
-cd ${outdir}
-
 cat << EOF1 > run.sh
-#! /bin/bash -x
-################################################################################
-#
-# for FX10
-#
-################################################################################
-#PJM --rsc-list "rscgrp=${rscgrp}"
-#PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=05:00:00"
-#PJM -j
-#PJM -s
-#
-. /work/system/Env_base
-#
-export PARALLEL=16
-export OMP_NUM_THREADS=16
-
-ln -sv ${TOPDIR}/bin/${BINNAME} .
-ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
-ln -sv ${TOPDIR}/data/grid/vgrid/${VGRID} .
-EOF1
-
-for f in $( ls ${TOPDIR}/data/grid/boundary/${dir2d} )
-do
-   echo "ln -sv ${TOPDIR}/data/grid/boundary/${dir2d}/${f} ." >> run.sh
-done
-
-cat << EOF2 >> run.sh
-rm -rf ./prof
-mkdir -p ./prof
-
-# run
-${PROF} ${MPIEXEC} ./${BINNAME} || exit
-
-################################################################################
-EOF2
-
-
-cat << EOFICO2LL1 > ico2ll.sh
 #! /bin/bash -x
 ################################################################################
 #
@@ -114,6 +69,46 @@ cat << EOFICO2LL1 > ico2ll.sh
 #
 export PARALLEL=16
 export OMP_NUM_THREADS=16
+#export fu08bf=1
+export XOS_MMM_L_ARENA_FREE=2
+
+ln -sv ${TOPDIR}/bin/${BINNAME} .
+ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
+ln -sv ${TOPDIR}/data/grid/vgrid/${VGRID} .
+EOF1
+
+for f in $( ls ${TOPDIR}/data/grid/boundary/${dir2d} )
+do
+   echo "ln -sv ${TOPDIR}/data/grid/boundary/${dir2d}/${f} ." >> run.sh
+done
+
+cat << EOF2 >> run.sh
+
+# run
+${MPIEXEC} ./${BINNAME} || exit
+
+################################################################################
+EOF2
+
+
+cat << EOFICO2LL1 > ico2ll.sh
+#! /bin/bash -x
+################################################################################
+#
+# for FX10
+#
+################################################################################
+#PJM --rsc-list "rscgrp=${rscgrp}"
+#PJM --rsc-list "node=${NMPI}"
+#PJM --rsc-list "elapse=00:30:00"
+#PJM -j
+#PJM -s
+#
+. /work/system/Env_base
+#
+export PARALLEL=16
+export OMP_NUM_THREADS=16
+#export fu08bf=1
 
 ln -sv ${TOPDIR}/bin/fio_ico2ll_mpi .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .

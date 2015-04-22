@@ -167,7 +167,7 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist GMTRPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,GMTRPARAM)
+    write(ADM_LOG_FID,nml=GMTRPARAM)
 
     GMTR_polygon_type = polygon_type
 

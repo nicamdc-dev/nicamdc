@@ -83,6 +83,16 @@ void fio_put_commoninfo_( int32_t *fmode,
                              rgnid           );
 }
 
+/** put common informtation from file *********************************/
+void fio_put_commoninfo_fromfile_( int32_t *fid,
+                                   int32_t *endiantype )
+{
+  int32_t ierr;
+
+  ierr = fio_put_commoninfo_fromfile( *fid,
+                                      *endiantype );
+}
+
 /** put package information (full) ************************************/
 void fio_put_pkginfo_( int32_t *fid,
                        headerinfo_t *hinfo )

@@ -62,7 +62,7 @@ module mod_misc
   !--- digit of separated file
   integer, private, save      :: NSTR_MAX_DIGIT  = 5
   !
-  !<----  if running on ES, 
+  !<----  if running on ES,
   !<----      NSTR_ZERO_START = .TRUE.
   !<----      NSTR_MAX_DIGIT  = 5
   !-----------------------------------------------------------------------------
@@ -81,7 +81,7 @@ contains
 
     character(len=*), intent(out) :: str    ! combined string (file name)
     character(len=*), intent(in)  :: prefix ! prefix
-    character(len=*), intent(in)  :: ext    ! extention( e.g. .rgn ) 
+    character(len=*), intent(in)  :: ext    ! extention( e.g. .rgn )
     integer,          intent(in)  :: numID  ! number
 
     integer, optional, intent(in) :: digit  ! digit
@@ -720,7 +720,7 @@ contains
 
     l = ( b(1)-a(1) ) * ( d(1)-c(1) ) &
       + ( b(2)-a(2) ) * ( d(2)-c(2) ) &
-      + ( b(3)-a(3) ) * ( d(3)-c(3) ) 
+      + ( b(3)-a(3) ) * ( d(3)-c(3) )
 
     return
   end subroutine MISC_3dvec_dot
@@ -1011,7 +1011,7 @@ contains
     !---------------------------------------------------------------------------
 
     x = radius * cos(lat) * cos(lon)
-    y = radius * cos(lat) * sin(lon) 
+    y = radius * cos(lat) * sin(lon)
     z = radius * sin(lat)
 
     return

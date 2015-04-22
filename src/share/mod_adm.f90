@@ -36,8 +36,10 @@ module mod_adm
   !
   public :: ADM_proc_init
   public :: ADM_proc_stop
+  public :: ADM_proc_finish
   public :: ADM_setup
   public :: ADM_mk_suffix
+  public :: ADM_MPItime
 
   !-----------------------------------------------------------------------------
   !
@@ -53,7 +55,7 @@ module mod_adm
   !====== Basic definition & information ======
   !
   !------ Log file ID & Control file ID
-  integer, public, parameter :: ADM_LOG_FID = 30
+  integer, public, save      :: ADM_LOG_FID = 6 ! default is STDOUT
   integer, public, parameter :: ADM_CTL_FID = 35
   !
   !------ Identifier for single computation or parallel computation
@@ -99,7 +101,8 @@ module mod_adm
   !====== Information for processes ======
   !
   !------ Communication world for NICAM
-  integer, public, save      :: ADM_COMM_RUN_WORLD
+  integer, public, save      :: ADM_COMM_WORLD
+  logical, public, save      :: ADM_MPI_alive = .false.
   !
   !------ Master process
   integer, public, parameter :: ADM_prc_run_master = 1
@@ -114,9 +117,11 @@ module mod_adm
   integer, public, save      :: ADM_prc_pl
   !
   !------ Process ID which have the pole regions.
-  integer, public,  save     :: ADM_prc_npl
-  integer, public,  save     :: ADM_prc_spl
-  integer, public,  save     :: ADM_prc_nspl(ADM_NPL:ADM_SPL)
+  integer, public, save      :: ADM_prc_npl
+  integer, public, save      :: ADM_prc_spl
+  integer, public, save      :: ADM_prc_nspl(ADM_NPL:ADM_SPL)
+
+  logical, public, save      :: ADM_have_pl
 
   !
   !====== Information for processes-region relationship ======
@@ -148,8 +153,7 @@ module mod_adm
   !<-----
   !
   !------ Maximum number of vertex linkage
-  !integer, public, parameter :: ADM_VLINK_NMAX=5 ! S.Iga 100607
-  integer, public,                     save :: ADM_VLINK_NMAX ! S.Iga 100607
+  integer, public,                     save :: ADM_VLINK_NMAX
   !
   !------ Table of n-vertex-link(?) at the region vertex
   integer, public, allocatable,        save :: ADM_rgn_vnum(:,:)
@@ -200,6 +204,8 @@ module mod_adm
   !
   !------ Present Local region number ! 2010.4.26 M.Satoh
   integer, public, save      :: ADM_l_me
+
+  logical, public, allocatable, save :: ADM_have_sgp(:) ! region have singlar point?
 
   !
   !====== Grid resolution informations  ======
@@ -323,6 +329,8 @@ module mod_adm
   !<----- ADM_ImpJmp(ADM_ImpJmp_nmax,ADM_GIJ_nmax)
   !<-----
 
+  integer, public, parameter :: ADM_nxyz = 3 ! dimension of the spacial vector
+
   !=========== For New Grid (XTMS) start    <= S.Iga100607
   !
   !------ Horizontal Grid type
@@ -375,11 +383,21 @@ contains
   !>
   !> Description of the subroutine ADM_proc_init
   !>
-  subroutine ADM_proc_init( rtype )
+  !-----------------------------------------------------------------------------
+  subroutine ADM_proc_init( &
+       rtype )
+#ifdef JCUP
+    use jsp_nicam, only: &
+       jsp_n_init, &
+       jsp_n_get_my_mpi
+#endif
     implicit none
 
-    integer, intent(in) :: rtype ! multi or single processor?
+    integer, intent(in) :: rtype
 
+#ifdef JCUP
+    integer :: my_comm, my_group
+#endif
     integer :: my_rank
     integer :: ierr
     !---------------------------------------------------------------------------
@@ -388,16 +406,23 @@ contains
 
     if ( rtype == ADM_MULTI_PRC ) then
 
+#ifdef JCUP
+       call jsp_n_init("./nhm_driver.cnf")
+       call jsp_n_get_my_mpi(my_comm, my_group, ADM_prc_all, my_rank)
+       ADM_COMM_WORLD = my_comm
+#else
        call MPI_Init(ierr)
        call MPI_Comm_size(MPI_COMM_WORLD, ADM_prc_all, ierr)
-       call MPI_Comm_rank(MPI_COMM_WORLD, my_rank,     ierr)
+       call MPI_Comm_rank(MPI_COMM_WORLD, my_rank, ierr)
+       ADM_COMM_WORLD = MPI_COMM_WORLD
+#endif
+       ADM_mpi_alive  = .true.
 
-       call MPI_Comm_split(MPI_COMM_WORLD, 0, my_rank, ADM_COMM_RUN_WORLD,ierr)
-
-       call MPI_Barrier(MPI_COMM_WORLD,ierr)
     else
+
        ADM_prc_all = 1
        my_rank     = 0
+
     endif
 
     ADM_prc_me = my_rank + 1
@@ -407,51 +432,72 @@ contains
   end subroutine ADM_proc_init
 
   !-----------------------------------------------------------------------------
-  !>
-  !> Description of the subroutine ADM_proc_stop
-  !>
+  !> Abort MPI process
   subroutine ADM_proc_stop
     implicit none
 
-    character(len=ADM_NSYS) :: request
-    integer                 :: ierr
+    integer :: ierr
+    !---------------------------------------------------------------------------
+
+    ! flush 1kbyte
+    write(ADM_LOG_FID,'(32A32)') '                                '
+
+    write(ADM_LOG_FID,*) '+++ Abort MPI'
+    if ( ADM_prc_me == ADM_prc_run_master ) then
+       write(*,*) '+++ Abort MPI'
+    endif
+
+    close(ADM_LOG_FID)
+    close(ADM_CTL_FID)
+
+    ! Abort MPI
+    call MPI_Abort(MPI_COMM_WORLD, 1, ierr)
+
+    stop
+  end subroutine ADM_proc_stop
+
+  !-----------------------------------------------------------------------------
+  !> Finish MPI process
+  subroutine ADM_proc_finish
+#ifdef JCUP
+    use jsp_nicam, only: &
+       jsp_n_finish,         &
+       jsp_n_is_io_coupled,  &
+       jsp_n_is_coco_coupled
+#endif
+    implicit none
+
+    integer :: ierr
     !---------------------------------------------------------------------------
 
     if ( ADM_run_type == ADM_MULTI_PRC ) then
+
        write(ADM_LOG_FID,*)
-       write(ADM_LOG_FID,*) 'MPI process going to STOP...'
+       write(ADM_LOG_FID,*) '+++ finalize MPI'
+       call MPI_Barrier(ADM_COMM_WORLD,ierr)
 
-       request='STOP'
-       call MPI_BCAST( request,              & !--- starting address
-                       ADM_NSYS,             & !--- number of array
-                       MPI_CHARACTER,        & !--- type
-                       ADM_prc_run_master-1, & !--- source rank
-                       MPI_COMM_WORLD,       & !--- world
-                       ierr                  ) !--- error id
-
-       call MPI_Barrier(MPI_COMM_WORLD,ierr)
-
-       write(ADM_LOG_FID,*) 'MPI process has normally finished.'
-       write(ADM_LOG_FID,*) '############################################################'
+#ifdef JCUP
+       if (      jsp_n_is_io_coupled()   &
+            .OR. jsp_n_is_coco_coupled() ) then
+          call jsp_n_finish()
+       else
+          call MPI_Finalize(ierr)
+       endif
+#else
        call MPI_Finalize(ierr)
+#endif
 
-       close(ADM_CTL_FID)
-       close(ADM_LOG_FID)
-
-       stop
+       write(ADM_LOG_FID,*) '*** MPI is peacefully finalized'
     else
        write(ADM_LOG_FID,*)
-       write(ADM_LOG_FID,*) 'Serial process stopeed.'
-       write(ADM_LOG_FID,*) '############################################################'
-
-       close(ADM_CTL_FID)
-       close(ADM_LOG_FID)
-
-       stop
+       write(ADM_LOG_FID,*) '+++ stop serial process.'
     endif
 
+    close(ADM_LOG_FID)
+    close(ADM_CTL_FID)
+
     return
-  end subroutine ADM_proc_stop
+  end subroutine ADM_proc_finish
 
   !-----------------------------------------------------------------------------
   !>
@@ -461,7 +507,8 @@ contains
        param_fname, &
        msg_base     )
     use mod_misc, only: &
-       MISC_make_idstr
+       MISC_make_idstr, &
+       MISC_get_available_fid
     implicit none
 
     character(LEN=*), intent(in) :: param_fname ! namelist file name
@@ -485,6 +532,7 @@ contains
 
     integer :: rgn_nmax
     integer :: nmax
+    integer :: l, rgnid
     integer :: ierr
 
     character(LEN=ADM_MAXFNAME) :: fname
@@ -495,6 +543,7 @@ contains
     if( present(msg_base) ) msg = msg_base ! [add] H.Yashiro 20110701
 
     !--- open message file
+    ADM_LOG_FID = MISC_get_available_fid()
     call MISC_make_idstr(fname,trim(msg),'pe',ADM_prc_me)
     open( unit = ADM_LOG_FID, &
           file = trim(fname), &
@@ -625,6 +674,22 @@ contains
 
     ADM_lall = ADM_prc_rnum(ADM_prc_me)
 
+    allocate( ADM_have_sgp(ADM_lall) )
+    ADM_have_sgp(:) = .false.
+
+    do l = 1, ADM_lall
+       rgnid = ADM_prc_tab(l,ADM_prc_me)
+       if ( ADM_rgn_vnum(ADM_W,rgnid) == 3 ) then
+          ADM_have_sgp(l) = .true.
+       endif
+    enddo
+
+    if ( ADM_prc_me == ADM_prc_pl ) then
+       ADM_have_pl = .true.
+    else
+       ADM_have_pl = .false.
+    endif
+
     ! 2010.4.26 M.Satoh; 2010.5.11 M.Satoh
     ! ADM_l_me: this spans from 1 to ADM_lall, if effective.
     ! Otherwise, ADM_l_me = 0 should be set. see mod_history
@@ -665,7 +730,7 @@ contains
          sw,    &
          nw,    &
          ne,    &
-         se                     
+         se
 
     integer :: num_of_proc !--- number of run-processes
 
@@ -679,7 +744,7 @@ contains
     namelist /rgn_mng_info/ &
          peid,       &
          num_of_mng, &
-         mng_rgnid            
+         mng_rgnid
 
     integer :: fid, ierr
     integer :: l, m, n
@@ -1248,6 +1313,23 @@ contains
 
     return
   end subroutine output_info
+
+  !-----------------------------------------------------------------------------
+  !> Get MPI time
+  !> @return time
+  function ADM_MPItime() result(time)
+    implicit none
+
+    real(8) :: time
+    !---------------------------------------------------------------------------
+
+    if ( ADM_mpi_alive ) then
+       time = real(MPI_WTIME(), kind=8)
+    else
+       call cpu_time(time)
+    endif
+
+  end function ADM_MPItime
 
 end module mod_adm
 !-------------------------------------------------------------------------------

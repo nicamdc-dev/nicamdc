@@ -60,12 +60,12 @@ module mod_debug
   ! <-- [add] PAPI R.Yoshida 20121022
   !integer(8),public, save :: papi_flpins    !total floating point instructions since the first call
   integer(8),public, save :: papi_flpops    !total floating point operations since the first call
-  !real(4),   public, save :: papi_real_time_i !total realtime since the first PAPI_flins() call 
-  !real(4),   public, save :: papi_proc_time_i !total process time since the first PAPI_flins() call 
-  real(4),   public, save :: papi_real_time_o !total realtime since the first PAPI_flops() call 
-  real(4),   public, save :: papi_proc_time_o !total process time since the first PAPI_flops() call 
-  !real(4),   public, save :: papi_mflins    !Mflip/s achieved since the previous call 
-  real(4),   public, save :: papi_mflops    !Mflop/s achieved since the previous call 
+  !real(4),   public, save :: papi_real_time_i !total realtime since the first PAPI_flins() call
+  !real(4),   public, save :: papi_proc_time_i !total process time since the first PAPI_flins() call
+  real(4),   public, save :: papi_real_time_o !total realtime since the first PAPI_flops() call
+  real(4),   public, save :: papi_proc_time_o !total process time since the first PAPI_flops() call
+  !real(4),   public, save :: papi_mflins    !Mflip/s achieved since the previous call
+  real(4),   public, save :: papi_mflops    !Mflop/s achieved since the previous call
   integer,   public, save :: papi_check
 #endif
 
@@ -84,8 +84,8 @@ contains
        MISC_make_idstr, &
        MISC_get_available_fid
     use mod_adm, only: &
-         ADM_PRC_PL, &
-         ADM_prc_me
+       ADM_prc_pl, &
+       ADM_prc_me
     implicit none
 
     character(len=*), intent(in) :: basename
@@ -307,24 +307,25 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine DEBUG_rapstart( rapname )
+    use mod_adm, only: &
+       ADM_MPItime
     implicit none
 
     character(len=*), intent(in) :: rapname
-
-    real(8) :: time
 
     integer :: id
     !---------------------------------------------------------------------------
 
     id = DEBUG_rapid( rapname )
 
-    time = real(MPI_WTIME(), kind=8)
-
-    DEBUG_raptstr(id) = time
+    DEBUG_raptstr(id) = ADM_MPItime()
     DEBUG_rapnstr(id) = DEBUG_rapnstr(id) + 1
 
+    !write(ADM_LOG_FID,*) rapname, DEBUG_rapnstr(id)
+
 #ifdef _FAPP_
-call START_COLLECTION( rapname )
+    call fapp_start( rapname, id, 1 )
+    !call START_COLLECTION( rapname )
 #endif
 
     return
@@ -332,24 +333,23 @@ call START_COLLECTION( rapname )
 
   !-----------------------------------------------------------------------------
   subroutine DEBUG_rapend( rapname )
+    use mod_adm, only: &
+       ADM_MPItime
     implicit none
 
     character(len=*), intent(in) :: rapname
-
-    real(8) :: time
 
     integer :: id
     !---------------------------------------------------------------------------
 
     id = DEBUG_rapid( rapname )
 
-    time = real(MPI_WTIME(), kind=8)
-
-    DEBUG_rapttot(id) = DEBUG_rapttot(id) + ( time-DEBUG_raptstr(id) )
+    DEBUG_rapttot(id) = DEBUG_rapttot(id) + ( ADM_MPItime()-DEBUG_raptstr(id) )
     DEBUG_rapnend(id) = DEBUG_rapnend(id) + 1
 
 #ifdef _FAPP_
-call STOP_COLLECTION( rapname )
+    call fapp_stop( rapname, id, 1 )
+    !call STOP_COLLECTION( rapname )
 #endif
 
     return
@@ -358,9 +358,8 @@ call STOP_COLLECTION( rapname )
   !-----------------------------------------------------------------------------
   subroutine DEBUG_rapreport
     use mod_adm, only: &
-       ADM_COMM_RUN_WORLD, &
-       ADM_prc_all,        &
-       ADM_prc_me
+       ADM_COMM_WORLD, &
+       ADM_prc_all
     implicit none
 
     real(8) :: sendbuf(1)
@@ -386,10 +385,10 @@ call STOP_COLLECTION( rapname )
        write(ADM_LOG_FID,*)
        write(ADM_LOG_FID,*) '*** Computational Time Report'
 
-!       do id = 1, DEBUG_rapnmax
-!          write(ADM_LOG_FID,'(1x,A,I3.3,A,A,A,F10.3,A,I7)') &
-!          '*** ID=',id,' : ',DEBUG_rapname(id),' T=',DEBUG_rapttot(id),' N=',DEBUG_rapnstr(id)
-!       enddo
+       !do id = 1, DEBUG_rapnmax
+       !   write(ADM_LOG_FID,'(1x,A,I3.3,A,A,A,F10.3,A,I7)') &
+       !   '*** ID=',id,' : ',DEBUG_rapname(id),' T=',DEBUG_rapttot(id),' N=',DEBUG_rapnstr(id)
+       !enddo
 
        do id = 1, DEBUG_rapnmax
           sendbuf(1) = DEBUG_rapttot(id)
@@ -399,7 +398,7 @@ call STOP_COLLECTION( rapname )
                               recvbuf,              &
                               1,                    &
                               MPI_DOUBLE_PRECISION, &
-                              ADM_COMM_RUN_WORLD,   &
+                              ADM_COMM_WORLD,       &
                               ierr                  )
 
           globalavg = sum( recvbuf(:) ) / real(ADM_prc_all,kind=8)
@@ -441,7 +440,7 @@ call STOP_COLLECTION( rapname )
                         recvbuf,              &
                         1,                    &
                         MPI_DOUBLE_PRECISION, &
-                        ADM_COMM_RUN_WORLD,   &
+                        ADM_COMM_WORLD,       &
                         ierr                  )
 
     globalavg = sum( recvbuf(:) ) / real(ADM_prc_all,kind=8)
@@ -464,7 +463,7 @@ call STOP_COLLECTION( rapname )
                         recvbuf,              &
                         1,                    &
                         MPI_DOUBLE_PRECISION, &
-                        ADM_COMM_RUN_WORLD,   &
+                        ADM_COMM_WORLD,       &
                         ierr                  )
 
     globalsum = sum( recvbuf(:) )

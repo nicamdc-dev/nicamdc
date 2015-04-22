@@ -34,11 +34,6 @@ module mod_bndcnd
   public :: BNDCND_rhovxvyvz
   public :: BNDCND_rhow
 
-  public  :: BNDCND_all_plane   ! [add] T.Ohno 110722
-  public  :: BNDCND_rhow_plane  ! [add] T.Ohno 110722
-  public  :: BNDCND_rhov2_plane ! [add] T.Ohno 110722
-  private :: BNDCND_w_plane     ! [add] T.Ohno 110722
-
   !-----------------------------------------------------------------------------
   !
   !++ Public parameters & variables
@@ -110,7 +105,7 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist BNDCNDPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,BNDCNDPARAM)
+    write(ADM_LOG_FID,nml=BNDCNDPARAM)
 
     if    ( BND_TYPE_M_TOP == 'RIGID' ) then
        write(ADM_LOG_FID,*) '*** Boundary setting type (momentum,    top   ) : rigid'
@@ -165,7 +160,7 @@ contains
        tem,   &
        rho,   &
        pre,   &
-       phi    )                   
+       phi    )
     use mod_adm, only: &
        kdim => ADM_kall, &
        kmin => ADM_kmin, &
@@ -178,7 +173,7 @@ contains
 
     integer, intent(in)    :: ijdim           ! number of horizontal grid
     real(8), intent(inout) :: tem(ijdim,kdim) ! temperature
-    real(8), intent(inout) :: rho(ijdim,kdim) ! density  
+    real(8), intent(inout) :: rho(ijdim,kdim) ! density
     real(8), intent(inout) :: pre(ijdim,kdim) ! pressure
     real(8), intent(in)    :: phi(ijdim,kdim) ! geopotential
 
@@ -193,9 +188,9 @@ contains
 
     !--- set the TOP boundary of temperature
     select case( trim(BND_TYPE_T_TOP) )
-    case('TEM') 
+    case('TEM')
        tem(:,kmax+1) = tem(:,kmax) ! dT/dz = 0
-    case('EPL') 
+    case('EPL')
        do ij = 1, ijdim
           z  = phi(ij,kmax+1) / CNST_EGRAV
           z1 = phi(ij,kmax  ) / CNST_EGRAV
@@ -215,7 +210,7 @@ contains
        tem(:,kmin-1) = CNST_TEMS0
     case('TEM')
        tem(:,kmin-1) = tem(:,kmin) ! dT/dz = 0
-    case('EPL') 
+    case('EPL')
        do ij = 1, ijdim
           z1 = phi(ij,kmin+2) / CNST_EGRAV
           z2 = phi(ij,kmin+1) / CNST_EGRAV
@@ -331,7 +326,7 @@ contains
     !---------------------------------------------------------------------------
 
     select case( trim(BND_TYPE_M_TOP) )
-    case('RIGID') ! rhow / G^{1/2} = 0.D0
+    case('RIGID') ! rhow / G^1/2 = 0.D0
        rhogw(:,kmax+1) = 0.D0
     case('FREE')
        k = kmax+1
@@ -346,7 +341,7 @@ contains
     endselect
 
     select case( trim(BND_TYPE_M_BOTTOM) )
-    case('RIGID') ! rhow / G^{1/2} = 0.D0
+    case('RIGID') ! rhow / G^1/2 = 0.D0
        rhogw(:,kmin  ) = 0.D0
     case('FREE')
        k = kmin
@@ -368,9 +363,9 @@ contains
   !-----------------------------------------------------------------------------
   !------
   !------ Boundary condition setting for all variables.
-  !------    1. calculation region (:,[kmin,kmax+1],:) 
+  !------    1. calculation region (:,[kmin,kmax+1],:)
   !------       for  rhogw & w.
-  !------    2. calculation region (:,[kmin-1,kmax+1],:) 
+  !------    2. calculation region (:,[kmin-1,kmax+1],:)
   !------       for  the other variables.
   !------
   subroutine BNDCND_all( &
@@ -390,19 +385,15 @@ contains
        rhogw,      &
        rhoge,      &
        gsqrtgam2,  &
-       gsqrtgam2h, &
        phi,        &
-       c2wfact     )
+       c2wfact,    &
+       c2wfact_Gz  )
     use mod_adm, only: &
        kdim => ADM_kall, &
        kmin => ADM_kmin, &
-       kmax => ADM_kmax, &
-       ADM_VMISS
+       kmax => ADM_kmax
     use mod_cnst, only: &
        CNST_CV
-    use mod_grd, only: &
-       GRD_afac, &
-       GRD_bfac
     implicit none
 
     integer, intent(in)    :: ijdim
@@ -423,9 +414,9 @@ contains
     real(8), intent(inout) :: rhoge (ijdim,kdim)
 
     real(8), intent(in)    :: gsqrtgam2 (ijdim,kdim)
-    real(8), intent(in)    :: gsqrtgam2h(ijdim,kdim)
     real(8), intent(in)    :: phi       (ijdim,kdim)
-    real(8), intent(in)    :: c2wfact   (ijdim,kdim)
+    real(8), intent(in)    :: c2wfact   (2,ijdim,kdim)
+    real(8), intent(in)    :: c2wfact_Gz(6,ijdim,kdim)
 
     integer :: ij, k
     !---------------------------------------------------------------------------
@@ -471,378 +462,29 @@ contains
     !
     !--- Momentum ( rhogw, w )
     !
-    call BNDCND_rhow( ijdim,   & !--- [IN]
-                      rhogvx,  & !--- [IN]
-                      rhogvy,  & !--- [IN]
-                      rhogvz,  & !--- [IN]
-                      rhogw,   & !--- [INOUT]
-                      c2wfact  ) !--- [IN]
+    call BNDCND_rhow( ijdim,     & !--- [IN]
+                      rhogvx,    & !--- [IN]
+                      rhogvy,    & !--- [IN]
+                      rhogvz,    & !--- [IN]
+                      rhogw,     & !--- [INOUT]
+                      c2wfact_Gz ) !--- [IN]
 
     k = kmax+1
     do ij = 1, ijdim
-       w(ij,k) = rhogw(ij,k) / ( gsqrtgam2h(ij,k) * 0.5D0 * ( GRD_afac(k) * rho(ij,k  ) &
-                                                            + GRD_bfac(k) * rho(ij,k-1) ) )
+       w(ij,k) = rhogw(ij,k) / ( c2wfact(1,ij,k) * rhog(ij,k  ) &
+                               + c2wfact(2,ij,k) * rhog(ij,k-1) )
     enddo
 
     k = kmin
     do ij = 1, ijdim
-       w(ij,k) = rhogw(ij,k) / ( gsqrtgam2h(ij,k) * 0.5D0 * ( GRD_afac(k) * rho(ij,k  ) &
-                                                            + GRD_bfac(k) * rho(ij,k-1) ) )
+       w(ij,k) = rhogw(ij,k) / ( c2wfact(1,ij,k) * rhog(ij,k  ) &
+                               + c2wfact(2,ij,k) * rhog(ij,k-1) )
     enddo
 
-    w(:,1:kmin-1) = ADM_VMISS
+    w(:,1:kmin-1) = 0.D0
 
     return
   end subroutine BNDCND_all
 
-  !-----------------------------------------------------------------------------
-  subroutine BNDCND_rhow_plane(&
-       ijdim,            & !--- IN : number of horizontal grid
-       rhogvx,           & !--- IN : rho*Vx   ( gam2 X G^{1/2} )
-       rhogvy,           & !--- IN : rho*Vy   ( gam2 X G^{1/2} )
-       rhogw,            & !--- INOUT : rho*w ( gam2 X G^{1/2} )
-       gsqrtgam2,        & !--- IN : G^{1/2} at the cell center
-       gsqrtgam2h,       & !--- IN : G^{1/2} at the cell wall
-       g3xh,             & !--- IN : G3X at the cell wall
-       g3yh,             & !--- IN : G3Y at the cell wall
-       g3zh              & !--- IN : G3Z at the cell wall
-       )
-    ! [add] T.Ohno 110722
-    !------
-    !------ Boundary condition setting for rhow only.
-    !------    1. calculation region (:,[kmin,kmax+1],:)
-    !------
-    !
-    use mod_adm, only :  &
-         kdim => ADM_kall,       &
-         kmin => ADM_kmin,       &
-         kmax => ADM_kmax,       &
-         ADM_VMISS
-    use mod_grd, only :  &
-         GRD_afac,       &
-         GRD_bfac
-    implicit none
-
-    integer, intent(in)    :: ijdim
-    real(8), intent(in) :: rhogvx(ijdim,kdim)
-    real(8), intent(in) :: rhogvy(ijdim,kdim)
-    real(8), intent(in) :: gsqrtgam2(ijdim,kdim)
-    real(8), intent(in) :: gsqrtgam2h(ijdim,kdim)
-    real(8), intent(in) :: g3xh(ijdim,kdim)
-    real(8), intent(in) :: g3yh(ijdim,kdim)
-    real(8), intent(in) :: g3zh(ijdim,kdim)
-    !
-    real(8), intent(inout) :: rhogw(ijdim,kdim)
-    !
-    integer :: k
-    !
-    select case(trim(BND_TYPE_M_BOTTOM))
-    case('FREE')
-       !
-       !--- rhow/G^{1/2} + G3X*rhovx + G3Y*rhovy + G3Z*rhovz = 0
-       rhogw(:,1:kmin-1) = ADM_VMISS
-       do k = kmin, kmax+1, (kmax-kmin+1)
-          rhogw(:,k) = -(                                       &
-               +( ( GRD_afac(k)/gsqrtgam2(:,k  )*rhogvx(:,k  )  &
-               +GRD_bfac(k)/gsqrtgam2(:,k-1)*rhogvx(:,k-1) )    &
-               * 0.5D0*gsqrtgam2h(:,k)*g3xh(:,k)                &
-               +( GRD_afac(k)/gsqrtgam2(:,k  )*rhogvy(:,k  )    &
-               +GRD_bfac(k)/gsqrtgam2(:,k-1)*rhogvy(:,k-1) )    &
-               * 0.5D0**gsqrtgam2h(:,k)*g3yh(:,k) ))            & 
-               * gsqrtgam2h(:,k) 
-       end do
-       !
-    case('RIGID')
-       !
-       !--- rhow/G^{1/2} =0.0D0
-       rhogw(:,1:kmin-1) = ADM_VMISS
-       do k = kmin, kmax+1, (kmax-kmin+1)
-          rhogw(:,k) = 0.0D0
-       end do
-       !
-    end select
-    !
-  end subroutine BNDCND_rhow_plane
-  !-----------------------------------------------------------------------------
-  subroutine BNDCND_rhov2_plane( &
-       ijdim,              &  !--- IN : number of horizontal grid
-       rhog,               &  !--- IN :    rho     ( gam2 X G^{1/2} )
-       rhogvx,             &  !--- INOUT : rho*Vx  ( gam2 X G^{1/2} )
-       rhogvy              &  !--- INOUT : rho*Vy  ( gam2 X G^{1/2} )
-       )
-    ! [add] T.Ohno 110722
-    !------
-    !------ Boundary condition setting for rhogvx
-    !------    * calculation region (:,[kmin-1,kmax+1],:) 
-    !------
-    !
-    use mod_adm, only :  &
-         ADM_LOG_FID,    &
-         kdim => ADM_kall,       &
-         kmin => ADM_kmin,       &
-         kmax => ADM_kmax
-    implicit none
-    !
-    integer, intent(in)    :: ijdim
-    real(8), intent(in) :: rhog(ijdim,kdim)
-    real(8), intent(inout) :: rhogvx(ijdim,kdim)
-    real(8), intent(inout) :: rhogvy(ijdim,kdim)
-    !
-    !
-    !------ bottom ( rhogvx, rhogvy, rhogvz )
-    select case(trim(BND_TYPE_M_BOTTOM))
-    case('FREE')
-       rhogvx(:,kmin-1)                    &
-            = rhogvx(:,kmin)               &
-            / rhog(:,kmin)                 &
-            * rhog(:,kmin-1)
-       rhogvy(:,kmin-1)                    &
-            = rhogvy(:,kmin)               &
-            / rhog(:,kmin)                 &
-            * rhog(:,kmin-1)
-    case('RIGID')
-       rhogvx(:,kmin-1)                    &
-            = -rhogvx(:,kmin)              &
-            / rhog(:,kmin)                 &
-            * rhog(:,kmin-1)
-       rhogvy(:,kmin-1)                    &
-            = -rhogvy(:,kmin)              &
-            / rhog(:,kmin)                 &
-            * rhog(:,kmin-1)
-       !
-    case default
-       write(ADM_LOG_FID,*) &
-            'Msg : Sub[BNDCND_all]/Mod[bndcnd]'
-       write(ADM_LOG_FID,*) &
-            ' **** Warning : invalid t_top_type',BND_TYPE_M_BOTTOM
-    end select
-    !
-    !------ top ( rhogvx, rhogvy, rhogvz ) : stress free
-    rhogvx(:,kmax+1)                    &
-         = rhogvx(:,kmax)               &
-         / rhog(:,kmax)                 &
-         * rhog(:,kmax+1)
-    rhogvy(:,kmax+1)                    &
-         = rhogvy(:,kmax)               &
-         / rhog(:,kmax)                 &
-         * rhog(:,kmax+1)
-    !
-    return
-    !
-  end subroutine BNDCND_rhov2_plane
-  !-----------------------------------------------------------------------------
-  subroutine BNDCND_all_plane(&
-       ijdim,           &  !--- IN : number of horizontal grid
-       vx,              &  !--- INOUT : Vx 
-       vy,              &  !--- INOUT : Vy 
-       w,               &  !--- INOUT : w 
-       tem,             &  !--- INOUT : temp. 
-       rho,             &  !--- INOUT : density
-       pre,             &  !--- INOUT : pressure 
-       ein,             &  !--- INOUT : internal energy
-       rhog,            &  !--- INOUT : rho  ( gam2 X G^{1/2} )
-       rhogvx,          &  !--- INOUT : rho*Vx  ( gam2 X G^{1/2} )
-       rhogvy,          &  !--- INOUT : rho*Vy  ( gam2 X G^{1/2} )
-       rhogw,           &  !--- INOUT : rho*w   ( gam2 X G^{1/2} )
-       rhoge,           &  !--- INOUT : rho*ein ( gam2 X G^{1/2} )
-       phi,             &  !--- IN : geopotential
-       gsqrtgam2,       &  !--- IN : G^{1/2} at the cell center
-       gsqrtgam2h,      &  !--- IN : G^{1/2} at the cell wall
-       gzxh,            &  !--- IN : GZX at the cell wall
-       gzyh             &  !--- IN : GZY at the cell wall
-       )
-    ! [add] T.Ohno 110722
-    !------
-    !------ Boundary condition setting for all variables.
-    !------    1. calculation region (:,[kmin,kmax+1],:) 
-    !------       for  rhogw & w.
-    !------    2. calculation region (:,[kmin-1,kmax+1],:) 
-    !------       for  the other variables.
-    !------
-    !
-    use mod_adm, only :  &
-         ADM_LOG_FID,    &
-         kdim => ADM_kall,       &
-         kmin => ADM_kmin,       &
-         kmax => ADM_kmax
-    use mod_cnst, only : &
-         CNST_CV
-    !
-    implicit none
-    integer, intent(in)    :: ijdim
-    real(8), intent(inout) :: vx(ijdim,kdim)
-    real(8), intent(inout) :: vy(ijdim,kdim)
-    real(8), intent(inout) :: w(ijdim,kdim)
-    !
-    real(8), intent(inout) :: tem(ijdim,kdim)
-    real(8), intent(inout) :: rho(ijdim,kdim)
-    real(8), intent(inout) :: pre(ijdim,kdim)
-    real(8), intent(inout) :: ein(ijdim,kdim)
-    !
-    real(8), intent(inout) :: rhog(ijdim,kdim)
-    real(8), intent(inout) :: rhogvx(ijdim,kdim)
-    real(8), intent(inout) :: rhogvy(ijdim,kdim)
-    real(8), intent(inout) :: rhogw(ijdim,kdim)
-    real(8), intent(inout) :: rhoge(ijdim,kdim)
-    !
-    real(8), intent(in) :: phi(ijdim,kdim)
-    real(8), intent(in) :: gsqrtgam2(ijdim,kdim)
-    real(8), intent(in) :: gsqrtgam2h(ijdim,kdim)
-    real(8), intent(in) :: gzxh(ijdim,kdim)
-    real(8), intent(in) :: gzyh(ijdim,kdim)
-    !
-    !
-    !--- Thermodynamical variables ( tem, th, rho, pre )
-    call BNDCND_thermo( &
-         ijdim,         & !-- in
-         tem,           & !-- inout
-         rho,           & !-- inout
-         pre,           & !-- inout
-         phi )            !-- in
-    rhog(:,kmin-1) = rho(:,kmin-1)*gsqrtgam2(:,kmin-1)
-    rhog(:,kmax+1) = rho(:,kmax+1)*gsqrtgam2(:,kmax+1)
-    !
-    !--- Momentum ( vx, vy, vz, rhogvx, rhogvy, rhogvz, w, rhogw )
-    !
-    !------ bottom ( vx, vy, vz )
-    select case(trim(BND_TYPE_M_BOTTOM))
-    case('FREE')
-       vx(:,kmin-1)    = vx(:,kmin)
-       vy(:,kmin-1)    = vy(:,kmin)
-    case('RIGID')
-       vx(:,kmin-1)    = -vx(:,kmin)
-       vy(:,kmin-1)    = -vy(:,kmin)
-    case default
-       write(ADM_LOG_FID,*) &
-            'Msg : Sub[BNDCND_all]/Mod[bndcnd]'
-       write(ADM_LOG_FID,*) &
-            ' **** Warning : invalid t_top_type',BND_TYPE_M_BOTTOM
-    end select
-    !
-    !------ top ( vx, vy, vz ) : stress free
-    vx(:,kmax+1)    =  vx(:,kmax)
-    vy(:,kmax+1)    =  vy(:,kmax)
-    !
-    !------ top & bottom ( rhogvx, rhogvy, rhogvz )
-    rhogvx(:,kmin-1)                  &
-         = rho(:,kmin-1)*vx(:,kmin-1) &
-         * gsqrtgam2(:,kmin-1)
-    rhogvy(:,kmin-1)                  &
-         = rho(:,kmin-1)*vy(:,kmin-1) &
-         * gsqrtgam2(:,kmin-1)
-    rhogvx(:,kmax+1)                  &
-         = rho(:,kmax+1)*vx(:,kmax+1) &
-         * gsqrtgam2(:,kmax+1)
-    rhogvy(:,kmax+1)                  &
-         = rho(:,kmax+1)*vy(:,kmax+1) &
-         * gsqrtgam2(:,kmax+1)
-    !
-    !------- top & bottom ( w, rhogw )
-    call BNDCND_w_plane(  &
-         ijdim,     & !--- IN
-         rho,       & !--- IN
-         rhogvx,    & !--- IN
-         rhogvy,    & !--- IN
-         rhogw,     & !--- INOUT
-         w,         & !--- INOUT
-         gsqrtgam2, & !--- IN
-         gsqrtgam2h,& !--- IN
-         gzxh,      & !--- IN
-         gzyh       & !--- IN
-         )
-    !
-    !--- internal energy ( ein, rhoge )
-    ein(:,kmin-1)=CNST_CV*tem(:,kmin-1)
-    ein(:,kmax+1)=CNST_CV*tem(:,kmax+1)
-    rhoge(:,kmin-1)                      &
-         = rho(:,kmin-1) * ein(:,kmin-1) &
-         * gsqrtgam2(:,kmin-1)
-    rhoge(:,kmax+1)                      &
-         = rho(:,kmax+1) * ein(:,kmax+1) &
-         * gsqrtgam2(:,kmax+1)
-    !
-    return
-    !
-  end subroutine BNDCND_all_plane
-  !-----------------------------------------------------------------------------
-  subroutine BNDCND_w_plane(  &
-       ijdim,           &  !--- IN : number of horizontal grid
-       rho,             & !--- IN : rho      ( physical )
-       rhogvx,          & !--- IN : rho*Vx   ( gam2 X G^{1/2} )
-       rhogvy,          & !--- IN : rho*Vy   ( gam2 X G^{1/2} )
-       rhogw,           & !--- INOUT : rho*w ( gam2 X G^{1/2} )
-       w,               & !--- INOUT : w     ( physical )
-       gsqrtgam2,       & !--- IN : G^{1/2} at the cell center
-       gsqrtgam2h,      & !--- IN : G^{1/2} at the cell wall
-       g3xh,            & !--- IN : G3X at the cell wall
-       g3yh             & !--- IN : G3Y at the cell wall
-       )
-    ! [add] T.Ohno 110722
-    !------
-    !------ Boundary condition setting for rhogw and w.
-    !------    1. calculation region (:,[kmin,kmax+1],:)
-    !------
-    !
-    use mod_adm, only :  &
-         kdim => ADM_kall,       &
-         kmin => ADM_kmin,       &
-         kmax => ADM_kmax,       &
-         ADM_VMISS
-    use mod_grd, only :  &
-         GRD_afac,       &
-         GRD_bfac
-    !
-    implicit none
-    !
-    integer, intent(in)    :: ijdim
-    real(8), intent(in) :: rho(ijdim,kdim)
-    real(8), intent(in) :: rhogvx(ijdim,kdim)
-    real(8), intent(in) :: rhogvy(ijdim,kdim)
-    real(8), intent(in) :: gsqrtgam2(ijdim,kdim)
-    real(8), intent(in) :: gsqrtgam2h(ijdim,kdim)
-    real(8), intent(in) :: g3xh(ijdim,kdim)
-    real(8), intent(in) :: g3yh(ijdim,kdim)
-    !
-    real(8), intent(inout) :: rhogw(ijdim,kdim)
-    real(8), intent(inout) :: w(ijdim,kdim)
-    !
-    integer :: k
-    !
-    select case(trim(BND_TYPE_M_BOTTOM))
-    case('FREE')
-       !
-       !--- rhow/G^{1/2} + G3X*rhovx + G3Y*rhovy + G3Z*rhovz = 0
-       rhogw(:,1:kmin-1) = ADM_VMISS
-       w(:,1:kmin-1) = ADM_VMISS
-       do k = kmin, kmax+1, (kmax-kmin+1)
-          rhogw(:,k) = -(                                        &
-               +( ( GRD_afac(k)/gsqrtgam2(:,k  )*rhogvx(:,k  )   &
-               +GRD_bfac(k)/gsqrtgam2(:,k-1)*rhogvx(:,k-1) )     &
-               * 0.5D0*gsqrtgam2h(:,k)*g3xh(:,k)                 &
-               +( GRD_afac(k)/gsqrtgam2(:,k  )*rhogvy(:,k  )     &
-               +GRD_bfac(k)/gsqrtgam2(:,k-1)*rhogvy(:,k-1) )     &
-               * 0.5D0**gsqrtgam2h(:,k)*g3yh(:,k) ))             & 
-               * gsqrtgam2h(:,k) 
-          w(:,k)                                                 &
-               = rhogw(:,k)                                      &
-               / gsqrtgam2h(:,k)                                 &
-               /( ( GRD_afac(k) * rho(:,k)                       &
-               + GRD_bfac(k) * rho(:,k-1) ) *0.5D0 )
-       end do
-       !
-    case('RIGID')
-       !
-       !--- rhow/G^{1/2} =0.0D0
-       rhogw(:,1:kmin-1) = ADM_VMISS
-       w(:,1:kmin-1) = ADM_VMISS
-       do k = kmin, kmax+1, (kmax-kmin+1)
-          rhogw(:,k) = 0.0D0
-          w(:,k)    = 0.0D0
-       end do
-       !
-    end select
-    !
-  end subroutine BNDCND_w_plane
-  !-----------------------------------------------------------------------------
 end module mod_bndcnd
 !-------------------------------------------------------------------------------

@@ -1,0 +1,65 @@
+VPATH_PREP = prep/mkgrid:prep/mkmnginfo:prep/mkllmap:prep/mkvlayer:
+PRJ_PREP   = $(PRJ_PREP01) \
+             $(PRJ_PREP02) \
+             $(PRJ_PREP03) \
+             $(PRJ_PREP04) \
+             $(PRJ_PREP05)
+LIB_PREP   = libnicamprep.a
+
+PRJ_PREP01 = mkmnginfo
+PRJ_PREP02 = mkrawgrid
+PRJ_PREP03 = mkhgrid
+PRJ_PREP04 = mkvlayer
+PRJ_PREP05 = mkllmap
+
+PRG_PREP01 = prg_mkmnginfo
+PRG_PREP02 = prg_mkrawgrid
+PRG_PREP03 = prg_mkhgrid
+PRG_PREP04 = prg_mkvlayer
+PRG_PREP05 = prg_mkllmap
+
+MODS_PREP =	\
+	mod_mkgrd.o
+
+mod_mkgrd.o	: mod_mkgrd.f90 mod_precision.o mod_adm.o mod_debug.o mod_grd.o mod_cnst.o mod_comm.o mod_gtl.o mod_misc.o mod_gmtr.o
+
+prg_mkmnginfo.o	: prg_mkmnginfo.f90 mod_precision.o mod_adm.o mod_debug.o
+prg_mkrawgrid.o	: prg_mkrawgrid.f90 mod_precision.o mod_adm.o mod_debug.o mod_fio.o mod_comm.o mod_cnst.o mod_grd.o mod_mkgrd.o
+prg_mkhgrid.o	: prg_mkhgrid.f90 mod_precision.o mod_adm.o mod_debug.o mod_fio.o mod_comm.o mod_cnst.o mod_grd.o mod_gmtr.o mod_mkgrd.o
+prg_mkvlayer.o	: prg_mkvlayer.f90 mod_precision.o
+prg_mkllmap.o	: prg_mkllmap.f90 mod_precision.o mod_adm.o mod_debug.o mod_fio.o mod_comm.o mod_cnst.o mod_grd.o mod_latlon.o
+
+$(NICAM_BINDIR)/$(PRJ_PREP01) : $(BUILD_DIR)/$(PRJ_PREP01)
+	$(INSTALL) $< $@
+	@echo; echo "##### PROGRAM $(notdir $<) is installed Successfully #####"; echo
+$(NICAM_BINDIR)/$(PRJ_PREP02) : $(BUILD_DIR)/$(PRJ_PREP02)
+	$(INSTALL) $< $@
+	@echo; echo "##### PROGRAM $(notdir $<) is installed Successfully #####"; echo
+$(NICAM_BINDIR)/$(PRJ_PREP03) : $(BUILD_DIR)/$(PRJ_PREP03)
+	$(INSTALL) $< $@
+	@echo; echo "##### PROGRAM $(notdir $<) is installed Successfully #####"; echo
+$(NICAM_BINDIR)/$(PRJ_PREP04) : $(BUILD_DIR)/$(PRJ_PREP04)
+	$(INSTALL) $< $@
+	@echo; echo "##### PROGRAM $(notdir $<) is installed Successfully #####"; echo
+$(NICAM_BINDIR)/$(PRJ_PREP05) : $(BUILD_DIR)/$(PRJ_PREP05)
+	$(INSTALL) $< $@
+	@echo; echo "##### PROGRAM $(notdir $<) is installed Successfully #####"; echo
+
+$(BUILD_DIR)/$(PRJ_PREP01) : $(PRG_PREP01).o $(NICAM_LIBDIR)/$(LIB_PREP) $(NICAM_LIBDIR)/$(LIB_SHARE)
+	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILD_DIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
+$(BUILD_DIR)/$(PRJ_PREP02) : $(PRG_PREP02).o $(NICAM_LIBDIR)/$(LIB_PREP) $(NICAM_LIBDIR)/$(LIB_SHARE)
+	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILD_DIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
+$(BUILD_DIR)/$(PRJ_PREP03) : $(PRG_PREP03).o $(NICAM_LIBDIR)/$(LIB_PREP) $(NICAM_LIBDIR)/$(LIB_SHARE)
+	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILD_DIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
+$(BUILD_DIR)/$(PRJ_PREP04) : $(PRG_PREP04).o $(NICAM_LIBDIR)/$(LIB_PREP) $(NICAM_LIBDIR)/$(LIB_SHARE)
+	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILD_DIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
+$(BUILD_DIR)/$(PRJ_PREP05) : $(PRG_PREP05).o $(NICAM_LIBDIR)/$(LIB_PREP) $(NICAM_LIBDIR)/$(LIB_SHARE)
+	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILD_DIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
+
+$(NICAM_LIBDIR)/$(LIB_PREP): $(BUILD_DIR)/$(LIB_PREP)
+	$(INSTALL) $< $@
+	@echo; echo "##### LIBRARY $(LIB_PREP) is Installed Successfully #####"; echo
+
+$(BUILD_DIR)/$(LIB_PREP): $(MODS_PREP)
+	$(AR) $(ARFLAGS) $@ $(patsubst %,$(BUILD_DIR)/%,$(notdir $^))
+	$(RANLIB) $@

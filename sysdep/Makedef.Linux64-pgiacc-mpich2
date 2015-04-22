@@ -9,18 +9,18 @@ FFLAGS_FAST = -Mpreprocess -fastsse -Mipa=fast,inline -m64 \
               -Mbyteswapio                       \
               -Mflushz -pc 80                    \
               -mcmodel=medium                    \
-              -Msmartalloc=huge -Minfo
+              -Msmartalloc=huge
 
-FFLAGS_DEBUG = -Mpreprocess -O0 -m64             \
-               -Minfo=accel -acc -ta=nvidia,time  \
+FFLAGS_DEBUG = -Mpreprocess -O2 -m64             \
+               -Minfo=accel -acc -ta=nvidia      \
                -Mbyteswapio                      \
-               -Ktrap=fp -pc 80                  \
+               -Ktrap=fp -pc 80 -Kieee           \
                -Mbounds -Mstandard -g -traceback \
                -mcmodel=medium -Minfo
 
 FC     = mpif90
-FFLAGS = $(FFLAGS_FAST)
-#FFLAGS = $(FFLAGS_DEBUG)
+#FFLAGS = $(FFLAGS_FAST)
+FFLAGS = $(FFLAGS_DEBUG)
 
 ifneq ($(ENABLE_OPENMP),)
       FFLAGS += -openmp -openmp-report
@@ -41,7 +41,7 @@ ifneq ($(USE_NETCDF3),)
 endif
 
 LD     = $(FC)
-LFLAGS = $(FFLAGS)
+LDFLAGS = $(FFLAGS)
 
 ###### NetCDF library
 NETCDF_INCLUDE ?= -I$(NETCDF3)/include

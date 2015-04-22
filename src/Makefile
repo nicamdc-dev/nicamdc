@@ -1,179 +1,80 @@
 ################################################################################
 #
-# Makefile for main program
+# Makefile grand central
 #
 ################################################################################
 
-TOPDIR = ..
+TOPDIR      = $(abspath ..)
+BUILD_DIR   = ./.libs
+SYSDEP_DIR  = ../sysdep
 
-include $(TOPDIR)/sysdep/Makedef.$(NICAM_SYS)
-include $(TOPDIR)/src/Mkinclude
+VPATH = $(BUILD_DIR)
 
-VPATH  = share:nhm/share:nhm/dynamics:nhm/forcing:nhm
-VPATH += prep/mkmnginfo:prep/mkgrid:prep/mkvlayer:prep/mkllmap
+include $(SYSDEP_DIR)/Makedef.$(NICAM_SYS)
+include $(TOPDIR)/Mkinclude
 
-ifeq ($(prec), noreal16)
-VPATH += :share/extra
-mod_misc := mod_misc_noreal16
-else
-mod_misc := mod_misc
-endif
+all:
+	$(MAKE) makedir
+	$(MAKE) makelib
+	$(MAKE) makebin
 
-PRJ1 = driver-dc
-PRJ2 = mkmnginfo
-PRJ3 = mkrawgrid
-PRJ4 = mkhgrid
-PRJ5 = mkvlayer
-PRJ6 = mkllmap
+allclean: clean cleandir
 
-PRJS = $(PRJ1) $(PRJ2) $(PRJ3) $(PRJ4) $(PRJ5) $(PRJ6)
+# share libraries
+include $(SRCDIR)/share/dependency
+VPATH +=:$(VPATH_SHARE)
+PRJS  += $(PRJ_SHARE)
+LIBS  += $(LIB_SHARE)
 
-all: makedir makemain maketool
+# prep libraries & programs
+include $(SRCDIR)/prep/dependency
+VPATH +=:$(VPATH_PREP)
+PRJS  += $(PRJ_PREP)
+LIBS  += $(LIB_PREP)
+
+# nhm libraries & programs
+include $(SRCDIR)/nhm/dependency
+VPATH +=:$(VPATH_NHM)
+PRJS  += $(PRJ_NHM)
+LIBS  += $(LIB_NHM)
+
+# tool libraries & programs
+include $(SRCDIR)/tool/dependency
+VPATH +=:$(VPATH_TOOL)
+PRJS  += $(PRJ_TOOL)
+LIBS  += $(LIB_TOOL)
 
 makedir:
-	mkdir -p $(BINDIR)
-	mkdir -p $(LIBDIR)
+	mkdir -p $(BUILD_DIR)
+	mkdir -p $(NICAM_BINDIR)
+	mkdir -p $(NICAM_LIBDIR)
 
-makemain: $(PRJS)
-	$(INSTALL) $(PRJS) $(BINDIR)/
-	ln -svf    $(BINDIR)/$(PRJ1) $(BINDIR)/$(BINNAME)
-	@echo; echo "##### $(BINNAME) is Installed Successfully #####"; echo
+makelib: makedir $(addprefix $(NICAM_LIBDIR)/,$(LIBS))
 
-maketool:
-	@$(MAKE) -C tool || exit 1
+makebin: makedir $(addprefix $(NICAM_BINDIR)/,$(PRJS))
 
+nhm    : makedir $(addprefix $(NICAM_BINDIR)/,$(PRJ_NHM))
+prep   : makedir $(addprefix $(NICAM_BINDIR)/,$(PRJ_PREP))
+tool   : makedir $(addprefix $(NICAM_BINDIR)/,$(PRJ_TOOL))
 
-
-MODS =	\
-	mod_adm.o	\
-	$(mod_misc).o	\
-	mod_debug.o	\
-	mod_cnst.o	\
-	mod_fio.o	\
-	mod_calendar.o	\
-	fio.o	\
-	fiof.o	\
-	mod_comm.o	\
-	mod_grd.o	\
-	mod_gmtr.o	\
-	mod_oprt.o	\
-	mod_vmtr.o	\
-	mod_time.o	\
-	mod_latlon.o	\
-	mod_gtl.o	\
-	mod_vintrpl.o	\
-	mod_oprt3d.o	\
-	mod_history.o	\
-	mod_chemvar.o	\
-	mod_runconf.o	\
-	mod_cnvvar.o	\
-	mod_thrmdyn.o	\
-	mod_bndcnd.o	\
-	mod_sfcvar.o	\
-	mod_prgvar.o	\
-	mod_history_vars.o	\
-	mod_bsstate.o	\
-	mod_diagvar.o	\
-	mod_embudget.o	\
-	mod_dcmip.o     \
-	mod_dycoretest.o \
-	mod_forcing_driver.o	\
-	mod_af_trcadv.o	\
-	mod_af_heldsuarez.o	\
-	mod_numfilter.o	\
-	mod_src.o	\
-	mod_trcadv_thuburn.o	\
-	mod_dynstep.o	\
-	mod_vi.o	\
-	mod_ndg.o	\
-	mod_tb_smg.o	\
-	mod_mkgrd.o
-
-$(PRJ1): prg_$(PRJ1).o $(LIBDIR)/$(LIBNAME)
-	$(LD) $(LFLAGS) -o $@ $^
-$(PRJ2): prg_$(PRJ2).o $(LIBDIR)/$(LIBNAME)
-	$(LD) $(LFLAGS) -o $@ $^
-$(PRJ3): prg_$(PRJ3).o $(LIBDIR)/$(LIBNAME)
-	$(LD) $(LFLAGS) -o $@ $^
-$(PRJ4): prg_$(PRJ4).o $(LIBDIR)/$(LIBNAME)
-	$(LD) $(LFLAGS) -o $@ $^
-$(PRJ5): prg_$(PRJ5).o $(LIBDIR)/$(LIBNAME)
-	$(LD) $(LFLAGS) -o $@ $^
-$(PRJ6): prg_$(PRJ6).o $(LIBDIR)/$(LIBNAME)
-	$(LD) $(LFLAGS) -o $@ $^
-
-prg_$(PRJ1).o : prg_$(PRJ1).f90 $(LIBNAME)
-prg_$(PRJ2).o : prg_$(PRJ2).f90 $(LIBNAME)
-prg_$(PRJ3).o : prg_$(PRJ3).f90 $(LIBNAME)
-prg_$(PRJ4).o : prg_$(PRJ4).f90 $(LIBNAME)
-prg_$(PRJ5).o : prg_$(PRJ5).f90 $(LIBNAME)
-prg_$(PRJ6).o : prg_$(PRJ6).f90 $(LIBNAME)
-
-$(LIBDIR)/$(LIBNAME): $(LIBNAME)
-	install $< $@
-	@echo; echo "##### $(LIBNAME) is Installed Successfully #####"; echo
-
-$(LIBNAME): $(MODS)
-	$(AR) $(ARFLAGS) $@ $?
-	$(RANLIB) $@
-
-$(mod_misc).o	: $(mod_misc).f90
-mod_adm.o	: mod_adm.f90 $(mod_misc).o
-mod_debug.o	: mod_debug.f90 mod_adm.o $(mod_misc).o
-mod_cnst.o	: mod_cnst.f90 mod_adm.o
-mod_calendar.o	: mod_calendar.f90 mod_adm.o
-fio.o	: fio.c fio.h fio_def.h
-fiof.o	: fiof.c fiof.h fio.h fio_def.h
-mod_fio.o	: mod_fio.f90 mod_adm.o mod_calendar.o mod_cnst.o fio.o fiof.o mod_debug.o
-mod_comm.o	: mod_comm.f90 mod_adm.o mod_cnst.o mod_debug.o
-mod_grd.o	: mod_grd.f90 mod_adm.o mod_cnst.o mod_comm.o $(mod_misc).o mod_fio.o
-mod_gmtr.o	: mod_gmtr.f90 mod_adm.o mod_comm.o $(mod_misc).o mod_grd.o mod_cnst.o
-mod_oprt.o	: mod_oprt.f90 mod_adm.o mod_gmtr.o mod_grd.o mod_comm.o mod_cnst.o
-mod_vmtr.o	: mod_vmtr.f90 mod_adm.o mod_grd.o mod_comm.o mod_gmtr.o mod_oprt.o mod_cnst.o
-mod_time.o	: mod_time.f90 mod_adm.o mod_calendar.o
-mod_latlon.o	: mod_latlon.f90 mod_adm.o mod_cnst.o $(mod_misc).o mod_grd.o mod_oprt.o mod_comm.o mod_gmtr.o
-mod_gtl.o	: mod_gtl.f90 mod_adm.o mod_comm.o mod_gmtr.o mod_vmtr.o mod_cnst.o $(mod_misc).o mod_grd.o
-mod_vintrpl.o	: mod_vintrpl.f90 mod_adm.o mod_grd.o mod_cnst.o
-mod_oprt3d.o	: mod_oprt3d.f90 mod_adm.o mod_grd.o mod_gmtr.o mod_vmtr.o
-
-mod_chemvar.o	: mod_chemvar.f90 mod_adm.o
-mod_runconf.o	: mod_runconf.f90 mod_adm.o mod_cnst.o mod_chemvar.o
-mod_thrmdyn.o	: mod_thrmdyn.f90 mod_adm.o mod_cnst.o mod_runconf.o
-mod_bndcnd.o	: mod_bndcnd.f90 mod_adm.o mod_cnst.o mod_grd.o mod_runconf.o
-mod_cnvvar.o	: mod_cnvvar.f90 mod_adm.o mod_grd.o mod_thrmdyn.o mod_runconf.o mod_bndcnd.o mod_vmtr.o
-mod_sfcvar.o	: mod_sfcvar.f90 mod_adm.o mod_runconf.o mod_comm.o
-mod_prgvar.o	: mod_prgvar.f90 mod_adm.o mod_runconf.o mod_comm.o mod_dycoretest.o
-mod_history.o	: mod_history.f90 mod_adm.o mod_time.o mod_runconf.o mod_grd.o mod_cnst.o mod_calendar.o mod_fio.o mod_comm.o mod_gtl.o mod_vintrpl.o $(mod_misc).o mod_cnvvar.o mod_thrmdyn.o mod_vmtr.o mod_sfcvar.o mod_prgvar.o
-mod_bsstate.o	: mod_bsstate.f90 mod_adm.o mod_cnst.o mod_grd.o $(mod_misc).o mod_runconf.o mod_vintrpl.o mod_bndcnd.o mod_thrmdyn.o
-mod_diagvar.o	: mod_diagvar.f90 mod_adm.o mod_comm.o $(mod_misc).o mod_gtl.o mod_runconf.o mod_fio.o mod_time.o mod_grd.o
-mod_history_vars.o	: mod_history_vars.f90 mod_history.o mod_adm.o mod_runconf.o mod_gmtr.o mod_gtl.o mod_vmtr.o mod_prgvar.o mod_sfcvar.o mod_bsstate.o mod_cnvvar.o mod_thrmdyn.o mod_cnst.o mod_bndcnd.o mod_diagvar.o mod_grd.o
-mod_embudget.o	: mod_embudget.f90 mod_adm.o $(mod_misc).o mod_time.o mod_sfcvar.o mod_cnst.o mod_grd.o mod_vmtr.o mod_gtl.o mod_runconf.o mod_cnvvar.o mod_bsstate.o mod_thrmdyn.o mod_prgvar.o
-mod_dcmip.o     : mod_dcmip.f90
-mod_dycoretest.o	: mod_dycoretest.f90 mod_adm.o mod_runconf.o $(mod_misc).o mod_vmtr.o mod_fio.o mod_time.o mod_cnvvar.o mod_vintrpl.o mod_comm.o mod_cnst.o mod_thrmdyn.o mod_dcmip.o mod_vmtr.o mod_src.o
-mod_trcadv_thuburn.o	: mod_trcadv_thuburn.f90 mod_adm.o mod_cnst.o mod_comm.o mod_grd.o mod_gmtr.o mod_vmtr.o
-mod_src.o	: mod_src.f90 mod_adm.o mod_grd.o mod_vmtr.o mod_oprt.o mod_cnst.o mod_runconf.o mod_gtl.o
-mod_numfilter.o	: mod_numfilter.f90 mod_adm.o mod_time.o mod_grd.o mod_cnst.o mod_gtl.o mod_gmtr.o mod_oprt.o mod_oprt3d.o mod_comm.o mod_src.o mod_vmtr.o mod_runconf.o mod_bsstate.o
-mod_af_trcadv.o	: mod_af_trcadv.f90
-mod_af_heldsuarez.o	: mod_af_heldsuarez.f90 mod_adm.o mod_cnst.o
-mod_forcing_driver.o	: mod_forcing_driver.f90 mod_adm.o mod_grd.o mod_gmtr.o mod_vmtr.o mod_time.o mod_runconf.o mod_cnst.o mod_cnvvar.o mod_prgvar.o mod_sfcvar.o mod_thrmdyn.o mod_gtl.o mod_diagvar.o mod_bsstate.o mod_bndcnd.o $(mod_misc).o mod_af_heldsuarez.o mod_history.o mod_af_trcadv.o
-mod_vi.o	: mod_vi.f90 mod_adm.o mod_comm.o mod_time.o mod_cnst.o mod_grd.o mod_oprt.o mod_vmtr.o mod_runconf.o mod_bndcnd.o mod_numfilter.o mod_src.o mod_cnvvar.o mod_bsstate.o
-mod_ndg.o	: mod_ndg.f90 mod_adm.o $(mod_misc).o mod_time.o mod_calendar.o mod_grd.o mod_cnst.o mod_vmtr.o mod_history.o mod_gmtr.o mod_oprt.o mod_runconf.o mod_gtl.o mod_comm.o
-mod_tb_smg.o	: mod_tb_smg.f90 mod_adm.o mod_vmtr.o mod_history.o mod_gmtr.o mod_grd.o mod_cnst.o mod_runconf.o mod_oprt.o mod_comm.o mod_bsstate.o mod_time.o
-mod_dynstep.o	: mod_dynstep.f90 mod_adm.o mod_cnst.o mod_time.o mod_grd.o mod_vmtr.o mod_runconf.o mod_bsstate.o mod_bndcnd.o mod_prgvar.o mod_diagvar.o mod_thrmdyn.o mod_numfilter.o mod_vi.o mod_src.o mod_trcadv_thuburn.o mod_ndg.o mod_tb_smg.o mod_oprt.o mod_debug.o
-
-mod_mkgrd.o	: mod_mkgrd.f90 mod_adm.o mod_grd.o mod_cnst.o mod_comm.o mod_gtl.o mod_misc.o mod_gmtr.o
-
-
-.SUFFIXES: .o .f90 .c
-.f90.o:
-	$(FC) $(FFLAGS) -I$(INCDIR) -o $@ -c $<
-.c.o:
-	$(CC) $(CFLAGS) -I$(INCDIR) -o $@ -c $<
-
-%.o: %.mod
-
-.PHONY: clean
+cleandir:
+	-rm -f $(addprefix $(NICAM_LIBDIR)/,$(LIBS))
+	-rm -f $(addprefix $(NICAM_BINDIR)/,$(PRJS))
 
 clean:
-	rm -f $(PRJS) $(LIBNAME) *~ *.h *.mod *.o *__genmod.f90 *.lst *.L
-	$(MAKE) -C tool clean
+	rm -f $(LIBS) $(PRJS)
+	rm -f *~ *.mod *.o *.lst *.L
+	cd $(BUILD_DIR); rm -f $(LIBS) $(PRJS); rm -f *~ *.mod *.o *.lst *.L
+
+.SUFFIXES: .o .f90 .c .mod
+%.o : %.f90
+	$(FC) $(FFLAGS) -I$(BUILD_DIR) $(MODDIROPT) -o $(OBJDIR)/$@ -c $<
+%.o : %.c
+	$(CC) $(CFLAGS) -o $(OBJDIR)/$@ -c $<
+
+%.o : %.mod
+
+%.mod : %.f90
+	$(MAKE) $(patsubst %.f90,%.o,$<)
+
+.PHONY : clean cleandir allclean share prep nhm tool

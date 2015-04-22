@@ -7,7 +7,6 @@ ZL=${4}
 VGRID=${5}
 TOPDIR=${6}
 BINNAME=${7}
-RUNCONF=${8}
 
 # System specific
 MPIEXEC="mpiexec"
@@ -39,9 +38,6 @@ else
    rscgrp="small"
 fi
 
-outdir=${dir3d}
-cd ${outdir}
-
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
@@ -51,15 +47,15 @@ cat << EOF1 > run.sh
 ################################################################################
 #PJM --rsc-list "rscgrp=${rscgrp}"
 #PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=02:00:00"
+#PJM --rsc-list "elapse=01:00:00"
 #PJM --stg-transfiles all
 #PJM --mpi "use-rankdir"
 #PJM --stgin  "rank=* ${TOPDIR}/bin/${BINNAME}           %r:./"
-#PJM --stgin  "rank=* ${outdir}/${RUNCONF}               %r:./"
+#PJM --stgin  "rank=* ./nhm_driver.cnf                   %r:./"
 #PJM --stgin  "rank=* ${TOPDIR}/data/mnginfo/${MNGINFO}  %r:./"
 #PJM --stgin  "rank=* ${TOPDIR}/data/grid/vgrid/${VGRID} %r:./"
 #PJM --stgin  "rank=* ${TOPDIR}/data/grid/boundary/${dir2d}/boundary_${res2d}.pe%06r %r:./"
-#PJM --stgout "rank=* %r:./* ${outdir}/"
+#PJM --stgout "rank=* %r:./*           ./"
 #PJM -j
 #PJM -s
 #
@@ -67,6 +63,8 @@ cat << EOF1 > run.sh
 #
 export PARALLEL=8
 export OMP_NUM_THREADS=8
+#export fu08bf=1
+export XOS_MMM_L_ARENA_FREE=2
 
 # run
 ${MPIEXEC} ./${BINNAME} || exit
@@ -84,15 +82,16 @@ cat << EOFICO2LL1 > ico2ll.sh
 ################################################################################
 #PJM --rsc-list "rscgrp=${rscgrp}"
 #PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=02:00:00"
+#PJM --rsc-list "elapse=00:30:00"
 #PJM --stg-transfiles all
 #PJM --mpi "use-rankdir"
 #PJM --stgin  "rank=* ${TOPDIR}/bin/fio_ico2ll_mpi      %r:./"
 #PJM --stgin  "rank=* ${TOPDIR}/data/mnginfo/${MNGINFO} %r:./"
 #PJM --stgin  "rank=* ${TOPDIR}/data/zaxis/*            %r:./"
-#PJM --stgin  "rank=* ${outdir}/history.pe%06r          %r:./"
+#PJM --stgin  "rank=* ./history.pe%06r                  %r:./"
 #PJM --stgin  "rank=* ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/llmap.* %r:./"
-#PJM --stgout "rank=* %r:./* ${outdir}/"
+#PJM --stgout "rank=* %r:./*           ./"
+#PJM --stgout "rank=0 ../*             ./"
 #PJM -j
 #PJM -s
 #
@@ -100,6 +99,7 @@ cat << EOFICO2LL1 > ico2ll.sh
 #
 export PARALLEL=8
 export OMP_NUM_THREADS=8
+export fu08bf=1
 
 # run
 ${MPIEXEC} ./fio_ico2ll_mpi \
@@ -109,6 +109,7 @@ rlevel=${RLEV} \
 mnginfo="./${MNGINFO}" \
 layerfile_dir="./." \
 llmap_base="./llmap" \
+outfile_dir="../" \
 -lon_swap \
 -comm_smallchunk
 

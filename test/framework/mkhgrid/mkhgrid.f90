@@ -18,9 +18,9 @@ program mkhgrid
   !++ Used modules
   !
   use mod_adm, only: &
-     ADM_MULTI_PRC, &
-     ADM_proc_init, &
-     ADM_proc_stop, &
+     ADM_MULTI_PRC,   &
+     ADM_proc_init,   &
+     ADM_proc_finish, &
      ADM_setup
   use mod_fio, only: &
      FIO_setup
@@ -102,7 +102,7 @@ program mkhgrid
   !########## Finalize ##########
 
   !--- all processes stop
-  call ADM_proc_stop
+  call ADM_proc_finish
 
   stop
 end program mkhgrid

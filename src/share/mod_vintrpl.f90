@@ -6,13 +6,13 @@
 module mod_vintrpl
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
+  !++ Description:
   !       This module contains vertical interpolation subroutines.
-  !       
+  !
   !++ Current Corresponding Author : H.Tomita
-  ! 
-  !++ History: 
-  !      Version    Date      Comment 
+  !
+  !++ History:
+  !      Version    Date      Comment
   !      -----------------------------------------------------------------------
   !      0.00       04-02-17  Imported from igdc-4.33
   !                 07-01-24  added VINTRPL_z_level2 (linear interpolation) and
@@ -27,8 +27,8 @@ module mod_vintrpl
        ADM_gall,        &
        ADM_kall,        &
        ADM_lall,        &
-       ADM_GALL_PL,     &
-       ADM_LALL_PL,     &
+       ADM_gall_pl,     &
+       ADM_lall_pl,     &
        ADM_KNONE,       &
        ADM_kmin,        &
        ADM_kmax,        &
@@ -72,9 +72,9 @@ contains
     !------ Caluculate surface value.( e.g. surface pressure )
     implicit none
     real(8), intent(in)  :: var(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in)  :: var_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(in)  :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(out) :: svar(ADM_gall,ADM_KNONE,ADM_lall)
-    real(8), intent(out) :: svar_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL)
+    real(8), intent(out) :: svar_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
     real(8), intent(in), optional  :: z_offset_in
     !
     real(8) :: lag_intpl
@@ -91,7 +91,7 @@ contains
        z_offset = z_offset
     else
        z_offset = 0.0D0
-    end if
+    endif
     !
     do l=1,ADM_lall
        do n = 1, ADM_gall
@@ -100,29 +100,29 @@ contains
                GRD_vz(n,ADM_kmin+2,l,GRD_Z),var(n,ADM_kmin+2,l),&
                GRD_vz(n,ADM_kmin+1,l,GRD_Z),var(n,ADM_kmin+1,l),&
                GRD_vz(n,ADM_kmin  ,l,GRD_Z),var(n,ADM_kmin  ,l))
-       end do
-    end do
+       enddo
+    enddo
     if(ADM_prc_me==ADM_prc_pl) then
-       do l=1,ADM_LALL_PL
+       do l=1,ADM_lall_pl
           do n = 1, ADM_gall_pl
              svar_pl(n,ADM_KNONE,l) &
                   = lag_intpl(GRD_vz_pl(n,ADM_kmin,l,GRD_ZH)+z_offset,&
                   GRD_vz_pl(n,ADM_kmin+2,l,GRD_Z),var_pl(n,ADM_kmin+2,l),&
                   GRD_vz_pl(n,ADM_kmin+1,l,GRD_Z),var_pl(n,ADM_kmin+1,l),&
                   GRD_vz_pl(n,ADM_kmin  ,l,GRD_Z),var_pl(n,ADM_kmin  ,l))
-          end do
-       end do
-    end if
+          enddo
+       enddo
+    endif
   end subroutine VINTRPL_srfc_val
   !-----------------------------------------------------------------------------
   subroutine VINTRPL_z_level( v, v_pl, wgrid )
     implicit none
     real(8), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(inout) :: v_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     logical, intent(in) :: wgrid
 
     real(8) :: tmp(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: tmp_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer :: l,k,n,kk
 
     integer :: kp
@@ -147,35 +147,35 @@ contains
             tmp(n,k,l) = v(n,k+1,l)
           else
             tmp(n,k,l) = 0.5D0*(v(n,k+1,l)+v(n,k,l))
-          end if
-       end do
-       end do
-       end do
+          endif
+       enddo
+       enddo
+       enddo
        tmp(:,ADM_kmin-1,:) = v(:,ADM_kmin,:)
        tmp(:,ADM_kmax+1,:) = v(:,ADM_kmax+1,:)
 
-       If(ADM_prc_me==ADM_prc_pl) Then
+       if (ADM_prc_me==ADM_prc_pl) Then
           ! 07/01/24 K.Suzuki: consider undefined value
           do l=1,ADM_lall
           do k=ADM_kmin,ADM_kmax
-          do n=1,ADM_gall 
+          do n=1,ADM_gall
             if ( v_pl(n,k+1,l) == CNST_UNDEF ) then
               tmp_pl(n,k,l) = v_pl(n,k,l)
             else if ( v_pl(n,k,l) == CNST_UNDEF ) then
               tmp_pl(n,k,l) = v_pl(n,k+1,l)
             else
               tmp_pl(n,k,l) = 0.5D0*(v_pl(n,k+1,l)+v_pl(n,k,l))
-            end if
-          end do
-          end do
-          end do
+            endif
+          enddo
+          enddo
+          enddo
           tmp_pl(:,ADM_kmin-1,:) = v_pl(:,ADM_kmin,:)
           tmp_pl(:,ADM_kmax+1,:) = v_pl(:,ADM_kmax+1,:)
-       end If
+       endif
     else
        tmp = v
        tmp_pl = v_pl
-    end if
+    endif
 
     Do l=1,ADM_lall
        do k=1,ADM_kall
@@ -187,17 +187,17 @@ contains
                 do kk = ADM_kmin-1,ADM_kmax+1
                    kp=kk
                    if(GRD_gz(k)<GRD_vz(n,kk,l,GRD_Z)) exit
-                end do
+                enddo
 !                if (kp==ADM_kmin-1) then
 !                   kp=ADM_kmin
 !                elseif(kp==ADM_kmax+1) then
 !                   kp=ADM_kmax
-!                end if
+!                endif
                 if (kp<=ADM_kmin) then
                    kp=ADM_kmin+1
                 elseif(kp>=ADM_kmax) then
                    kp=ADM_kmax-1
-                end if
+                endif
                 ! 07/01/24 K.Suzuki: consider undefined value
                 if ( tmp(n,kp+1,l) == CNST_UNDEF ) then
                   if ( tmp(n,kp,l) == CNST_UNDEF ) then
@@ -209,7 +209,7 @@ contains
                          = lag_intpl_linear(GRD_gz(k),         &
                          GRD_vz(n,kp  ,l,GRD_Z),tmp(n,kp  ,l), &
                          GRD_vz(n,kp-1,l,GRD_Z),tmp(n,kp-1,l)  )
-                  end if 
+                  endif
                 else if ( tmp(n,kp,l) == CNST_UNDEF ) then
                    v(n,k,l) = tmp(n,kp-1,l)
                 else if ( tmp(n,kp-1,l) == CNST_UNDEF ) then
@@ -220,12 +220,12 @@ contains
                         GRD_vz(n,kp+1,l,GRD_Z),tmp(n,kp+1,l),  &
                         GRD_vz(n,kp  ,l,GRD_Z),tmp(n,kp  ,l),  &
                         GRD_vz(n,kp-1,l,GRD_Z),tmp(n,kp-1,l) )
-                end if
-             end if
-          end do
+                endif
+             endif
+          enddo
        end Do
     end Do
-    If(ADM_prc_me==ADM_prc_pl) Then
+    if (ADM_prc_me==ADM_prc_pl) Then
        Do l=1,ADM_lall_pl
           do k=1,ADM_kall
              do n=1, ADM_gall_pl
@@ -236,17 +236,17 @@ contains
                    do kk = ADM_kmin-1,ADM_kmax+1
                      kp=kk
                      if(GRD_gz(k)<GRD_vz_pl(n,kk,l,GRD_Z)) exit
-                   end do
+                   enddo
 !                   if(kp==ADM_kmin-1) then
 !                      kp=ADM_kmin
 !                   elseif(kp==ADM_kmax+1) then
 !                      kp=ADM_kmax
-!                   end if
+!                   endif
                    if (kp<=ADM_kmin) then
                       kp=ADM_kmin+1
                    elseif(kp>=ADM_kmax) then
                       kp=ADM_kmax-1
-                   end if
+                   endif
                    ! 07/01/24 K.Suzuki: consider undefined value
                    if ( tmp_pl(n,kp+1,l) == CNST_UNDEF ) then
                      if ( tmp_pl(n,kp,l) == CNST_UNDEF ) then
@@ -258,7 +258,7 @@ contains
                               = lag_intpl_linear(GRD_gz(k),         &
                               GRD_vz_pl(n,kp  ,l,GRD_Z),tmp_pl(n,kp  ,l), &
                               GRD_vz_pl(n,kp-1,l,GRD_Z),tmp_pl(n,kp-1,l) )
-                     end if
+                     endif
                    else if ( tmp_pl(n,kp,l) == CNST_UNDEF ) then
                       v_pl(n,k,l) = tmp_pl(n,kp-1,l)
                    else if ( tmp_pl(n,kp-1,l) == CNST_UNDEF ) then
@@ -269,22 +269,22 @@ contains
                            GRD_vz_pl(n,kp+1,l,GRD_Z),tmp_pl(n,kp+1,l),  &
                            GRD_vz_pl(n,kp  ,l,GRD_Z),tmp_pl(n,kp  ,l),  &
                            GRD_vz_pl(n,kp-1,l,GRD_Z),tmp_pl(n,kp-1,l) )
-                   end if
-                end if
-             end do
+                   endif
+                endif
+             enddo
           end Do
        end Do
-    end If
+    endif
   end subroutine VINTRPL_z_level
   !-----------------------------------------------------------------------------
   subroutine VINTRPL_z_level2( v, v_pl, wgrid ) ! 07/01/24 K.Suzuki [add]
     implicit none
     real(8), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(inout) :: v_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     logical, intent(in) :: wgrid
 
     real(8) :: tmp(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: tmp_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer :: l,k,n,kk
 
     integer :: kp
@@ -306,14 +306,14 @@ contains
            tmp(n,k,l) = v(n,k+1,l)
          else
            tmp(n,k,l) = 0.5D0*(v(n,k+1,l)+v(n,k,l))
-         end if
-       end do
-       end do
-       end do
+         endif
+       enddo
+       enddo
+       enddo
        tmp(:,ADM_kmin-1,:) = v(:,ADM_kmin,:)
        tmp(:,ADM_kmax+1,:) = v(:,ADM_kmax+1,:)
 
-       If(ADM_prc_me==ADM_prc_pl) Then
+       if (ADM_prc_me==ADM_prc_pl) Then
           do l=1,ADM_lall
           do k=ADM_kmin,ADM_kmax
           do n=1,ADM_gall
@@ -323,17 +323,17 @@ contains
               tmp_pl(n,k,l) = v_pl(n,k+1,l)
             else
               tmp_pl(n,k,l) = 0.5D0*(v_pl(n,k+1,l)+v_pl(n,k,l))
-            end if
-          end do
-          end do
-          end do
+            endif
+          enddo
+          enddo
+          enddo
           tmp_pl(:,ADM_kmin-1,:) = v_pl(:,ADM_kmin,:)
           tmp_pl(:,ADM_kmax+1,:) = v_pl(:,ADM_kmax+1,:)
-       end If
+       endif
     else
        tmp = v
        tmp_pl = v_pl
-    end if
+    endif
 
     Do l=1,ADM_lall
        do k=1,ADM_kall
@@ -345,9 +345,9 @@ contains
                 do kk = ADM_kmin-1,ADM_kmax+1
                    kp=kk
                    if(GRD_gz(k)<GRD_vz(n,kk,l,GRD_Z)) exit
-                end do
+                enddo
                 if (kp<=ADM_kmin) then
-                   v(n,k,l)=tmp(n,ADM_kmin,l)  
+                   v(n,k,l)=tmp(n,ADM_kmin,l)
                 elseif(kp>=ADM_kmax+1) then
                    v(n,k,l)=tmp(n,ADM_kmax,l)
                 else
@@ -361,13 +361,13 @@ contains
                           = lag_intpl(GRD_gz(k),                 &
                           GRD_vz(n,kp  ,l,GRD_Z),tmp(n,kp  ,l),  &
                           GRD_vz(n,kp-1,l,GRD_Z),tmp(n,kp-1,l) )
-                  end if
-                end if
-             end if
-          end do
+                  endif
+                endif
+             endif
+          enddo
        end Do
     end Do
-    If(ADM_prc_me==ADM_prc_pl) Then
+    if (ADM_prc_me==ADM_prc_pl) Then
        Do l=1,ADM_lall_pl
           do k=1,ADM_kall
              do n=1, ADM_gall_pl
@@ -378,7 +378,7 @@ contains
                    do kk = ADM_kmin-1,ADM_kmax+1
                      kp=kk
                      if(GRD_gz(k)<GRD_vz_pl(n,kk,l,GRD_Z)) exit
-                   end do
+                   enddo
                    if (kp<=ADM_kmin) then
                       v_pl(n,k,l) = tmp_pl(n,ADM_kmin,l)
                    else if(kp>=ADM_kmax+1) then
@@ -394,32 +394,39 @@ contains
                              = lag_intpl(GRD_gz(k),                      &
                              GRD_vz_pl(n,kp  ,l,GRD_Z),tmp_pl(n,kp  ,l), &
                              GRD_vz_pl(n,kp-1,l,GRD_Z),tmp_pl(n,kp-1,l) )
-                     end if
-                   end if
-                end if
-             end do
+                     endif
+                   endif
+                endif
+             enddo
           end Do
        end Do
-    end If
+    endif
   end subroutine VINTRPL_z_level2
+
   !-----------------------------------------------------------------------------
-  subroutine VINTRPL_zstar_level( v, v_pl, wgrid )
+  subroutine VINTRPL_zstar_level( &
+       v,    &
+       v_pl, &
+       wgrid )
     implicit none
-    real(8), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(inout) :: v_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    logical, intent(in) :: wgrid
-    
-    real(8) :: tmp(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: tmp_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    !
-    integer :: l,k,n,kk,kp
+
+    real(8), intent(inout) :: v   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    logical, intent(in)    :: wgrid
+
+    real(8) :: tmp   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(8) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+
+    integer :: n, k, l, kk, kp
+
     real(8) :: lag_intpl
-    real(8) :: z,z1,p1,z2,p2,z3,p3
-    lag_intpl(z,z1,p1,z2,p2,z3,p3)             &
-         = ((z-z2)*(z-z3))/((z1-z2)*(z1-z3))*p1&
-         + ((z-z1)*(z-z3))/((z2-z1)*(z2-z3))*p2&
-         + ((z-z1)*(z-z2))/((z3-z1)*(z3-z2))*p3
-    if(wgrid) then
+    real(8) :: z, z1, p1, z2, p2, z3, p3
+    lag_intpl(z,z1,p1,z2,p2,z3,p3) = ( (z-z2)*(z-z3) ) / ( (z1-z2)*(z1-z3) ) * p1 &
+                                   + ( (z-z1)*(z-z3) ) / ( (z2-z1)*(z2-z3) ) * p2 &
+                                   + ( (z-z1)*(z-z2) ) / ( (z3-z1)*(z3-z2) ) * p3
+    !---------------------------------------------------------------------------
+
+    if ( wgrid ) then
        tmp = v
        v(:,ADM_kmin-1,:) = CNST_UNDEF
        do l=1,ADM_lall
@@ -432,19 +439,20 @@ contains
                          kp=2
                       else
                          kp=kk
-                      end if
+                      endif
                       v(n,k,l)                         &
                            = lag_intpl(GRD_vz(n,k,l,GRD_ZH),  &
                             GRD_gzh(kp+1),tmp(n,kp+1,l),&
                             GRD_gzh(kp  ),tmp(n,kp  ,l),&
                             GRD_gzh(kp-1),tmp(n,kp-1,l))
                       exit
-                   end if
-                end do
-             end do
-          end do
-       end do
-       If(ADM_prc_me==ADM_prc_pl) Then
+                   endif
+                enddo
+             enddo
+          enddo
+       enddo
+
+       if (ADM_prc_me==ADM_prc_pl) Then
           tmp_pl = v_pl
           v_pl(:,ADM_kmin-1,:) = CNST_UNDEF
           do l=1,ADM_lall_pl
@@ -457,46 +465,51 @@ contains
                             kp=2
                          else
                             kp=kk
-                         end if
+                         endif
                          v_pl(n,k,l)                     &
                            = lag_intpl(GRD_vz_pl(n,k,l,GRD_ZH), &
                            GRD_gzh(kp+1),tmp_pl(n,kp+1,l),&
                            GRD_gzh(kp  ),tmp_pl(n,kp  ,l),&
                            GRD_gzh(kp-1),tmp_pl(n,kp-1,l))
                          exit
-                      end if
-                   end do
-                end do
-             end do
-          end do
-       end If
+                      endif
+                   enddo
+                enddo
+             enddo
+          enddo
+       endif
+
     else !--- full grid
-       tmp = v
+
+       tmp(:,:,:) = v(:,:,:)
        v(:,ADM_kmin-1,:) = CNST_UNDEF
        v(:,ADM_kmax+1,:) = CNST_UNDEF
-       do l=1,ADM_lall
-          do n = 1, ADM_gall
-             do k = ADM_kmin, ADM_kmax
-                do kk = 1, ADM_kall-1
-                   if ( ( GRD_gz(kk)   <= GRD_vz(n,k,l,GRD_Z) ) .and. &
-                        ( GRD_gz(kk+1) >=  GRD_vz(n,k,l,GRD_Z) ) ) then
-                      if(kk==1) then
-                         kp=2
-                      else
-                         kp=kk
-                      end if
-                      v(n,k,l)                              &
-                           = lag_intpl(GRD_vz(n,k,l,GRD_Z), &
-                            GRD_gz(kp+1),tmp(n,kp+1,l),     &
-                            GRD_gz(kp  ),tmp(n,kp  ,l),     &
-                            GRD_gz(kp-1),tmp(n,kp-1,l))
-                      exit
-                   end if
-                end do
-             end do
-          end do
-       end do
-       If(ADM_prc_me==ADM_prc_pl) Then
+
+       do l = 1, ADM_lall
+       do n = 1, ADM_gall
+       do k = ADM_kmin, ADM_kmax
+          do kk = 1, ADM_kall-1
+             if (       GRD_gz(kk)   <= GRD_vz(n,k,l,GRD_Z) &
+                  .AND. GRD_gz(kk+1) >= GRD_vz(n,k,l,GRD_Z) ) then
+
+                if ( kk == 1 ) then
+                   kp = 2
+                else
+                   kp = kk
+                endif
+
+                v(n,k,l) = lag_intpl( GRD_vz(n,k,l,GRD_Z),         &
+                                      GRD_gz(kp+1), tmp(n,kp+1,l), &
+                                      GRD_gz(kp  ), tmp(n,kp  ,l), &
+                                      GRD_gz(kp-1), tmp(n,kp-1,l)  )
+                exit
+             endif
+          enddo
+       enddo
+       enddo
+       enddo
+
+       if ( ADM_prc_me == ADM_prc_pl ) Then
           tmp_pl = v_pl
           v_pl(:,ADM_kmin-1,:) = CNST_UNDEF
           v_pl(:,ADM_kmax+1,:) = CNST_UNDEF
@@ -510,79 +523,79 @@ contains
                             kp=2
                          else
                             kp=kk
-                         end if
+                         endif
                          v_pl(n,k,l)                           &
                            = lag_intpl(GRD_vz_pl(n,k,l,GRD_Z), &
                            GRD_gz(kp+1),tmp_pl(n,kp+1,l),      &
                            GRD_gz(kp  ),tmp_pl(n,kp  ,l),      &
                            GRD_gz(kp-1),tmp_pl(n,kp-1,l))
                          exit
-                      end if
-                   end do
-                end do
-             end do
-          end do
-       end If
-    end if
+                      endif
+                   enddo
+                enddo
+             enddo
+          enddo
+       endif
+    endif
     !
   end subroutine VINTRPL_zstar_level
   !-----------------------------------------------------------------------------
   subroutine VINTRPL_half2full( v, v_pl )
     implicit none
     real(8), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(inout) :: v_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     real(8) :: tmp(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: tmp_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer :: k
 
     do k=ADM_kmin,ADM_kmax
        tmp(:,k,:) = 0.5D0*(v(:,k+1,:)+v(:,k,:))
-    end do
+    enddo
     tmp(:,ADM_kmin-1,:) = v(:,ADM_kmin,:)
     tmp(:,ADM_kmax+1,:) = v(:,ADM_kmax+1,:)
     v = tmp
     !
-    If(ADM_prc_me==ADM_prc_pl) Then
+    if (ADM_prc_me==ADM_prc_pl) Then
        do k=ADM_kmin,ADM_kmax
           tmp_pl(:,k,:) = 0.5D0*(v_pl(:,k+1,:)+v_pl(:,k,:))
-       end do
+       enddo
        tmp_pl(:,ADM_kmin-1,:) = v_pl(:,ADM_kmin,:)
        tmp_pl(:,ADM_kmax+1,:) = v_pl(:,ADM_kmax+1,:)
        v_pl = tmp_pl
-    end If
+    endif
     !
   end subroutine VINTRPL_half2full
-  !-----------------------------------------------------------------------------  
+  !-----------------------------------------------------------------------------
   subroutine VINTRPL_mk_sigma( sigma, sigma_pl, pre, pre_pl, pres, pres_pl )
     !
     implicit none
     !
     real(8), intent(out) :: sigma(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(out) :: sigma_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(out) :: sigma_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(in) :: pre(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in) :: pre_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(in) :: pre_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     !
     real(8), intent(in) :: pres(ADM_gall,ADM_KNONE,ADM_lall)
-    real(8), intent(in) :: pres_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL)
+    real(8), intent(in) :: pres_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl)
     integer :: l,k,n
     !
     do l = 1, ADM_lall
        do k = 1,ADM_kall
           do n=1, ADM_gall
              sigma(n,k,l) = pre(n,k,l)/pres(n,ADM_KNONE,l)
-          end do
-       end do
-    end do
-    If(ADM_prc_me==ADM_prc_pl) Then
+          enddo
+       enddo
+    enddo
+    if (ADM_prc_me==ADM_prc_pl) Then
        do l = 1, ADM_lall_pl
           do k = 1,ADM_kall
              do n=1, ADM_gall_pl
                 sigma_pl(n,k,l) = pre_pl(n,k,l)/pres_pl(n,ADM_KNONE,l)
-             end do
-          end do
-       end do
-    end If
+             enddo
+          enddo
+       enddo
+    endif
     return
   end subroutine VINTRPL_mk_sigma
   !-----------------------------------------------------------------------------
@@ -593,36 +606,36 @@ contains
        wgrid )
     implicit none
     real(8), intent(inout) :: v(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(inout) :: v_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(inout) :: v_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8), intent(in) :: sigma(ADM_gall,ADM_kall,ADM_lall)
-    real(8), intent(in) :: sigma_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8), intent(in) :: sigma_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer, intent(in) :: MAX_SIGMA
     real(8), intent(in) :: sigma_lev(MAX_SIGMA)
     logical, intent(in) :: wgrid
 
     real(8) :: tmp(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: tmp_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
+    real(8) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(8) :: a,b
     integer :: l,k,n,kk,kp
 
     if(wgrid) then
        do k=ADM_kmin,ADM_kmax
           tmp(:,k,:) = 0.5D0*(v(:,k+1,:)+v(:,k,:))
-       end do
+       enddo
        tmp(:,ADM_kmin-1,:) = v(:,ADM_kmin,:)
        tmp(:,ADM_kmax+1,:) = v(:,ADM_kmax+1,:)
 
-       If(ADM_prc_me==ADM_prc_pl) Then
+       if (ADM_prc_me==ADM_prc_pl) Then
           do k=ADM_kmin,ADM_kmax
              tmp_pl(:,k,:) = 0.5D0*(v_pl(:,k+1,:)+v_pl(:,k,:))
-          end do
+          enddo
           tmp_pl(:,ADM_kmin-1,:) = v_pl(:,ADM_kmin,:)
           tmp_pl(:,ADM_kmax+1,:) = v_pl(:,ADM_kmax+1,:)
-       end If
+       endif
     else
        tmp = v
        tmp_pl = v_pl
-    end if
+    endif
 
     Do l=1,ADM_lall
        do k=1,MAX_SIGMA
@@ -630,29 +643,29 @@ contains
              do kk = ADM_kmin+1,ADM_kmax
                kp=kk
                if(sigma_lev(k)>sigma(n,kk,l)) exit
-             end do
+             enddo
              a = sigma(n,kp,l)-sigma_lev(k)
              b = sigma_lev(k)-sigma(n,kp-1,l)
              v(n,k,l) = (b*tmp(n,kp,l) + a*tmp(n,kp-1,l))/(a+b)
-          end do
+          enddo
        end Do
     end Do
-    If(ADM_prc_me==ADM_prc_pl) Then
+    if (ADM_prc_me==ADM_prc_pl) Then
        Do l=1,ADM_lall_pl
           do k=1,MAX_SIGMA
              do n=1, ADM_gall_pl
                 do kk = ADM_kmin+1,ADM_kmax
                   kp=kk
                    if(sigma_lev(k)>sigma_pl(n,kk,l)) exit
-                end do
+                enddo
                 a = sigma_pl(n,kp,l)-sigma_lev(k)
                 b = sigma_lev(k)-sigma_pl(n,kp-1,l)
                 v_pl(n,k,l) = (b*tmp_pl(n,kp,l) + a*tmp_pl(n,kp-1,l))/(a+b)
-             end do
+             enddo
           end Do
        end Do
-    end If
+    endif
   end subroutine VINTRPL_sigma_level
-  !-----------------------------------------------------------------------------  
+  !-----------------------------------------------------------------------------
 end module mod_vintrpl
 !-------------------------------------------------------------------------------

@@ -43,12 +43,20 @@ program prg_fio_dump
   character(LEN=FIO_HLONG) :: argstr
   integer :: n, narg
 
+#ifdef _NOF2003
+  integer :: IARGC
+#else
   integer :: command_argument_count
+#endif
 
   integer :: fid ! return from C program
   !=============================================================================
 
+#ifdef _NOF2003
+  narg = IARGC()
+#else
   narg = command_argument_count()
+#endif
 
   if ( narg == 0 ) then
      write(*,*) 'Usage : fio_dump [option] [file]'
@@ -61,7 +69,12 @@ program prg_fio_dump
   endif
 
   do n = 1, narg
+
+#ifdef _NOF2003
+     call GETARG(n,argstr)
+#else
      call get_command_argument(n,argstr)
+#endif
 
      if ( argstr(1:1) == '-' ) then
         select case(argstr(2:2)) 

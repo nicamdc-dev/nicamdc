@@ -21,6 +21,8 @@ module mod_fio
   !++ Used modules
   !
   use mod_debug
+  use mod_adm, only: &
+     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -38,41 +40,41 @@ module mod_fio
   !
   !++ Public parameters & variables
   !
-  !--- character length 
+  !--- character length
   integer, parameter, public :: FIO_HSHORT =  16
   integer, parameter, public :: FIO_HMID   =  64
   integer, parameter, public :: FIO_HLONG  = 256
 
-  !--- data type 
+  !--- data type
   integer, parameter, public :: FIO_REAL4    = 0
   integer, parameter, public :: FIO_REAL8    = 1
   integer, parameter, public :: FIO_INTEGER4 = 2
   integer, parameter, public :: FIO_INTEGER8 = 3
 
-  !--- data endian 
+  !--- data endian
   integer, parameter, public :: FIO_UNKNOWN_ENDIAN = 0
   integer, parameter, public :: FIO_LITTLE_ENDIAN  = 1
   integer, parameter, public :: FIO_BIG_ENDIAN     = 2
 
-  !--- topology 
+  !--- topology
   integer, parameter, public :: FIO_ICOSAHEDRON = 0
   integer, parameter, public :: FIO_IGA_LCP     = 1
   integer, parameter, public :: FIO_IGA_MLCP    = 2
 
-  !--- file mode (partial or complete) 
+  !--- file mode (partial or complete)
   integer, parameter, public :: FIO_SPLIT_FILE = 0
   integer, parameter, public :: FIO_INTEG_FILE = 1
 
-  !--- proccessor type 
+  !--- proccessor type
   integer, parameter, public :: FIO_SINGLE_PROC = 0
   integer, parameter, public :: FIO_MULTI_PROC  = 1
 
-  !--- action type 
+  !--- action type
   integer, parameter, public :: FIO_FREAD   = 0
   integer, parameter, public :: FIO_FWRITE  = 1
   integer, parameter, public :: FIO_FAPPEND = 2 ! [add] H.Yashiro 20110907 overwrite mode
 
-  !--- data dump type 
+  !--- data dump type
   integer, parameter, public :: FIO_DUMP_OFF      = 0
   integer, parameter, public :: FIO_DUMP_HEADER   = 1
   integer, parameter, public :: FIO_DUMP_ALL      = 2
@@ -123,39 +125,38 @@ module mod_fio
   integer,                  save, private :: FIO_fid_list  (FIO_nmaxfile)
   integer,                  save, private :: FIO_fid_count = 1
 
-  type(headerinfo), private :: hinfo 
-  type(datainfo),   private :: dinfo 
+  type(headerinfo), private :: hinfo
+  type(datainfo),   private :: dinfo
 
   integer, private, parameter :: max_num_of_data = 2500 !--- max time step num
   integer, parameter, private :: preclist(0:3) = (/ 4, 8, 4, 8 /)
 
-  !-----------------------------------------------------------------------------  
+  !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
   subroutine FIO_setup
     use mod_adm, only : &
-      ADM_LOG_FID,   &
-      ADM_prc_me,    &
-      ADM_prc_tab,   &
-      ADM_glevel,    &
-      ADM_rlevel,    &
-      ADM_lall
+       ADM_prc_tab, &
+       ADM_prc_me,  &
+       ADM_glevel,  &
+       ADM_rlevel,  &
+       ADM_lall
     implicit none
 
-    integer, allocatable :: prc_tab(:) 
+    integer, allocatable :: prc_tab(:)
     !---------------------------------------------------------------------------
 
     ! dummy call
-    call DEBUG_rapstart('FILEIO in')
-    call DEBUG_rapend  ('FILEIO in')
-    call DEBUG_rapstart('FILEIO out')
-    call DEBUG_rapend  ('FILEIO out')
+    call DEBUG_rapstart('FILEIO_in')
+    call DEBUG_rapend  ('FILEIO_in')
+    call DEBUG_rapstart('FILEIO_out')
+    call DEBUG_rapend  ('FILEIO_out')
 
     allocate( prc_tab(ADM_lall) )
     ! [fix] 20120201 T.Seiki
     !!$ prc_tab(:) = ADM_prc_tab(:,ADM_prc_me)-1
     prc_tab(1:ADM_lall) = ADM_prc_tab(1:ADM_lall,ADM_prc_me)-1
-    
+
     call fio_syscheck()
     call fio_put_commoninfo( FIO_SPLIT_FILE,  &
                              FIO_BIG_ENDIAN,  &
@@ -174,14 +175,13 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine FIO_getfid( &
-      fid,      &
-      basename, &
-      rwtype,   &
-      pkg_desc, &
-      pkg_note  )
+       fid,      &
+       basename, &
+       rwtype,   &
+       pkg_desc, &
+       pkg_note  )
     use mod_adm, only : &
-      ADM_LOG_FID, &
-      ADM_prc_me
+       ADM_prc_me
     implicit none
 
     integer,          intent(out) :: fid
@@ -235,19 +235,18 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine FIO_input( &
-      var,           &
-      basename,      &
-      varname,       &
-      layername,     &
-      k_start,       &
-      k_end,         &
-      step,          &
-      allow_missingq ) !--- optional
+       var,           &
+       basename,      &
+       varname,       &
+       layername,     &
+       k_start,       &
+       k_end,         &
+       step,          &
+       allow_missingq ) !--- optional
     use mod_adm, only : &
-      ADM_proc_stop, &
-      ADM_LOG_FID, &
-      ADM_gall,    &
-      ADM_lall
+       ADM_proc_stop, &
+       ADM_gall,      &
+       ADM_lall
     implicit none
 
     real(8),          intent(out) :: var(:,:,:)
@@ -265,7 +264,7 @@ contains
     integer :: did, fid
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('FILEIO in')
+    call DEBUG_rapstart('FILEIO_in')
 
     !--- search/register file
     call FIO_getfid( fid, basename, FIO_FREAD, "", "" )
@@ -290,19 +289,20 @@ contains
     if ( did == -1 ) then
        if ( present(allow_missingq) ) then ! [bugfix] H.Yashiro 20110912
           if ( allow_missingq ) then
-             write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] data not found! : ', &
+             write(ADM_LOG_FID,*) '*** [INPUT]/[FIO] data not found! : ', &
                                   'varname= ',trim(varname),', step=',step
-             write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] Q Value is set to 0.'
+             write(ADM_LOG_FID,*) '*** [INPUT]/[FIO] Q Value is set to 0.'
 
              var(:,k_start:k_end,:) = 0.D0
 
+             call DEBUG_rapend('FILEIO_in')
              return
           endif
-       else
-          write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] data not found! : ', &
-                               'varname= ',trim(varname),', step=',step
-          call ADM_proc_stop
        endif
+
+       write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] data not found! : ', &
+                            'varname= ',trim(varname),', step=',step
+       call ADM_proc_stop
     endif
 
     if ( trim(dinfo%layername) /= trim(layername) ) then
@@ -328,31 +328,30 @@ contains
 
     endif
 
-    call DEBUG_rapend('FILEIO in')
+    call DEBUG_rapend('FILEIO_in')
 
     return
   end subroutine FIO_input
 
   !-----------------------------------------------------------------------------
   subroutine FIO_seek( &
-      start_step,       &
-      num_of_step,      &
-      data_date,        &
-      prec,             &
-      basename,         &
-      varname,          &
-      layername,        &
-      k_start,          &
-      k_end,            &
-      ctime,            &
-      cdate,            &
-      opt_periodic_year )
-    use mod_adm, only : &
-      ADM_proc_stop, &
-      ADM_LOG_FID
-    use mod_calendar, only :&
-      calendar_ss2yh, &
-      calendar_yh2ss
+       start_step,       &
+       num_of_step,      &
+       data_date,        &
+       prec,             &
+       basename,         &
+       varname,          &
+       layername,        &
+       k_start,          &
+       k_end,            &
+       ctime,            &
+       cdate,            &
+       opt_periodic_year )
+    use mod_adm, only: &
+       ADM_proc_stop
+    use mod_calendar, only: &
+       calendar_ss2yh, &
+       calendar_yh2ss
     implicit none
 
     integer,          intent(inout) :: start_step
@@ -373,7 +372,7 @@ contains
     integer :: i
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('FILEIO in')
+    call DEBUG_rapstart('FILEIO_in')
 
     !--- search/register file
     call FIO_getfid( fid, basename, FIO_FREAD, "", "" )
@@ -430,36 +429,34 @@ contains
        endif
     enddo
 
-    call DEBUG_rapend('FILEIO in')
+    call DEBUG_rapend('FILEIO_in')
 
     return
   end subroutine FIO_seek
 
   !-----------------------------------------------------------------------------
   subroutine FIO_output( &
-      var,       &
-      basename,  &
-      pkg_desc,  &
-      pkg_note,  &
-      varname,   &
-      data_desc, &
-      data_note, &
-      unit,      &
-      dtype,     &
-      layername, &
-      k_start,   &
-      k_end,     &
-      step,      &
-      t_start,   &
-      t_end      )
-    use mod_adm, only : &
-      ADM_proc_stop, &
-      ADM_LOG_FID, &
-      ADM_prc_me, &
-      ADM_gall,   &
-      ADM_lall
-    use mod_cnst, only : &
-      CNST_UNDEF4
+       var,       &
+       basename,  &
+       pkg_desc,  &
+       pkg_note,  &
+       varname,   &
+       data_desc, &
+       data_note, &
+       unit,      &
+       dtype,     &
+       layername, &
+       k_start,   &
+       k_end,     &
+       step,      &
+       t_start,   &
+       t_end      )
+    use mod_adm, only: &
+       ADM_proc_stop, &
+       ADM_gall,      &
+       ADM_lall
+    use mod_cnst, only: &
+       CNST_UNDEF4
     implicit none
 
     real(8),          intent(in) :: var(:,:,:)
@@ -482,7 +479,7 @@ contains
     integer :: did, fid
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('FILEIO out')
+    call DEBUG_rapstart('FILEIO_out')
 
     !--- search/register file
     call FIO_getfid( fid, basename, FIO_FWRITE, pkg_desc, pkg_note )
@@ -531,7 +528,7 @@ contains
        call ADM_proc_stop
     endif
 
-    call DEBUG_rapend('FILEIO out')
+    call DEBUG_rapend('FILEIO_out')
 
     return
   end subroutine FIO_output
@@ -539,8 +536,7 @@ contains
   !-----------------------------------------------------------------------------
   subroutine FIO_finalize
     use mod_adm, only : &
-      ADM_LOG_FID, &
-      ADM_prc_me
+       ADM_prc_me
     implicit none
 
     character(LEN=FIO_HLONG) :: fname

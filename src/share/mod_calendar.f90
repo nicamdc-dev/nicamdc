@@ -141,7 +141,7 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist NM_CALENDAR. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,NM_CALENDAR)
+    write(ADM_LOG_FID,nml=NM_CALENDAR)
 
     return
   end subroutine calendar_setup

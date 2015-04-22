@@ -192,7 +192,7 @@ contains
     use mod_adm, only: &
        ADM_CTL_FID,        &
        ADM_proc_stop,      &
-       ADM_COMM_RUN_WORLD, &
+       ADM_COMM_WORLD, &
        ADM_prc_all,        &
        ADM_prc_tab,        &
        ADM_prc_run_master, &
@@ -252,7 +252,7 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist LATLONPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,LATLONPARAM)
+    write(ADM_LOG_FID,nml=LATLONPARAM)
 
     d2r    = CNST_PI / 180.D0
     latmax = latmax_deg * d2r
@@ -316,7 +316,7 @@ contains
                            imax*jmax,          &
                            MPI_REAL,           &
                            MPI_SUM,            &
-                           ADM_COMM_RUN_WORLD, &
+                           ADM_COMM_WORLD, &
                            ierr                )
     endif
 
@@ -360,7 +360,7 @@ contains
                         recvbuf,            &
                         1,                  &
                         MPI_INTEGER,        &
-                        ADM_COMM_RUN_WORLD, &
+                        ADM_COMM_WORLD, &
                         ierr                )
 
     globalsum = sum( recvbuf(:) )
@@ -469,7 +469,7 @@ contains
 !          endif
 !       close(fid)
 !    enddo
- 
+
     return
   end subroutine LATLON_setup
 
@@ -645,12 +645,12 @@ contains
              !------ distance from origin to a plane with r1 or (r2,r3).
              call MISC_3dvec_dot( rn, o(:), nvec(:), o(:), r1(:) )
 
-             !------ mapping r0 
+             !------ mapping r0
              r0(1) = r0(1) * (rn/rf)
              r0(2) = r0(2) * (rn/rf)
              r0(3) = r0(3) * (rn/rf)
 
-             !--- calculate vectors from triangler points 
+             !--- calculate vectors from triangler points
              call MISC_3dvec_cross( v12xv10(:), r1(:), r2(:), r0(:), r1(:) )
              call MISC_3dvec_cross( v23xv20(:), r2(:), r3(:), r0(:), r2(:) )
              call MISC_3dvec_cross( v31xv30(:), r3(:), r1(:), r0(:), r3(:) )

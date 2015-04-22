@@ -7,7 +7,6 @@ ZL=${4}
 VGRID=${5}
 TOPDIR=${6}
 BINNAME=${7}
-RUNCONF=${8}
 
 # System specific
 MPIEXEC="mpiexec"
@@ -30,9 +29,6 @@ res2d=GL${GL}RL${RL}
 res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
-
-outdir=${dir3d}
-cd ${outdir}
 
 cat << EOF1 > run.sh
 #! /bin/bash -x

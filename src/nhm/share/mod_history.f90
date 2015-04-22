@@ -19,7 +19,7 @@
 !! @li      2007-12-05 (T.Mitsui)   bug fix
 !! @li      2008-05-30 (T.Mitsui)   distinguish w-grid, and option of v_interpolation
 !! @li      2009-07-13 (S.Iga)      check_count is added. (nmhist miswriting checker)
-!! @li      2010-05-11 (M.Satoh)    add l_region in history_in 
+!! @li      2010-05-11 (M.Satoh)    add l_region in history_in
 !! @li      2011-04-26 (C.Kodama)   support >10000 time steps
 !! @li      2011-09-03 (H.Yashiro)  New I/O
 !! @li      2012-01-26 (Y.Yamada)   trivial bug fix
@@ -145,7 +145,7 @@ contains
     use mod_grd, only: &
        GRD_gz
     use mod_runconf, only: &
-       RUN_TYPE!,          &
+       RUNNAME!,          &
 !         NTAU_ISCCP,        &
 !         NPRES_ISCCP,       &
 !         LAND_TYPE,         &
@@ -189,8 +189,8 @@ contains
     character(len=ADM_NSYS)     :: output_type
     logical                     :: out_prelev
     logical                     :: out_vintrpl
-    logical                     :: opt_wgrid     
-    logical                     :: opt_lagintrpl 
+    logical                     :: opt_wgrid
+    logical                     :: opt_lagintrpl
 
     namelist / NMHISD / &
          output_path,       &
@@ -271,7 +271,7 @@ contains
        write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist NMHISD. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,NMHISD)
+    write(ADM_LOG_FID,nml=NMHISD)
 
     ! nonsence restore
     step_def        = step
@@ -292,7 +292,7 @@ contains
        call ADM_proc_stop
     endif
     HIST_io_fname = trim(output_path)//trim(histall_fname)
-    HIST_io_desc  = trim(RUN_TYPE)
+    HIST_io_desc  = trim(RUNNAME)
 
     if ( output_size == 4 ) then
        HIST_dtype = FIO_REAL4
@@ -555,7 +555,7 @@ contains
     enddo
 
     allocate( pres_levs_ln(npreslev) )
-    pres_levs_ln(1:npreslev) = log( pres_levs(1:npreslev) * 100 )  
+    pres_levs_ln(1:npreslev) = log( pres_levs(1:npreslev) * 100 )
 
     allocate( cnvpre_klev(ADM_gall,npreslev,ADM_lall) )
     allocate( cnvpre_fac1(ADM_gall,npreslev,ADM_lall) )
@@ -769,14 +769,12 @@ contains
        calendar_ss2yh, &
        Calendar_SS2CC
     use mod_comm, only : &
-       COMM_data_transfer, &
        COMM_var
     use mod_fio, only: &
        FIO_output
     use mod_gtl, only: &
        GTL_max, &
        GTL_min, &
-       GTL_output_var2, &
        GTL_output_var2_da
     use mod_vintrpl, only: &
        VINTRPL_z_level, &
@@ -792,7 +790,7 @@ contains
 
     logical, save :: first = .true.
 
-    integer :: idate(6)   
+    integer :: idate(6)
     logical :: out_var(HIST_req_limit)
     integer :: num_output
     integer :: g, k, l, n
@@ -828,12 +826,12 @@ contains
     enddo
 
     ! At least one variable will output, do communication
-    if ( num_output > 0 ) then 
+    if ( num_output > 0 ) then
        write(ADM_LOG_FID,*) '### HISTORY num_output = ', num_output
        call Calendar_SS2CC ( HTIME, TIME_CTIME )
        write(ADM_LOG_FID,*) '###         date-time  = ', HTIME
 
-       call comm_var( v_save, v_save_pl, KSUM, 1, comm_type=2, NSval_fix=.true. )
+       call COMM_var( v_save, v_save_pl, KSUM, 1 )
     else
        return
     endif
@@ -919,13 +917,8 @@ contains
           elseif( trim(output_io_mode) == 'LEGACY' ) then
              basename = trim(output_path)//file_save(n)
 
-             if ( direct_access ) then
-                call GTL_output_var2_da( basename, v_save(:,:,:,1),                        &
-                                         ksumstr(n), ksumend(n), tmax_save(n), output_size )
-             else
-                call GTL_output_var2( basename, v_save(:,:,:,1), v_save_pl(:,:,:,1), &
-                                      ksumstr(n), ksumend(n), output_size            )
-             endif
+             call GTL_output_var2_da( basename, v_save(:,:,:,1),                        &
+                                      ksumstr(n), ksumend(n), tmax_save(n), output_size )
 
              call history_timeinfo
           endif
@@ -1049,8 +1042,6 @@ contains
          ADM_GALL_PL, &
          ADM_LALL_PL, &
          ADM_KNONE
-    use mod_cnvvar, only :  &
-         cnvvar_p2d
     use mod_runconf, only : &
          nqmax => TRC_VMAX
     use mod_thrmdyn, only :    &
@@ -1091,7 +1082,7 @@ contains
     real(8) :: v3d5_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     real(8) :: v3d6_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
     real(8) :: pre_sfc(ADM_gall,ADM_KNONE,ADM_lall)
-    integer, parameter :: num = 0 
+    integer, parameter :: num = 0
 
     real(8) :: lpres_sfc(ADM_gall,ADM_lall)
     real(8) :: lpres(ADM_gall,ADM_kall)
