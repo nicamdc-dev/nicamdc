@@ -321,7 +321,9 @@ contains
 
 #ifdef _FAPP_
     call fapp_start( rapname, id, 1 )
-    !call START_COLLECTION( rapname )
+#endif
+#ifdef _FINEPA_
+    call START_COLLECTION( rapname )
 #endif
 
     return
@@ -345,7 +347,9 @@ contains
 
 #ifdef _FAPP_
     call fapp_stop( rapname, id, 1 )
-    !call STOP_COLLECTION( rapname )
+#endif
+#ifdef _FINEPA_
+    call STOP_COLLECTION( rapname )
 #endif
 
     return
