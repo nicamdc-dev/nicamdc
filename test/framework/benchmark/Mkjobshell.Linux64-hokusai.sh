@@ -9,7 +9,8 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpirun -np ${NMPI} -ppn 5"
+PEpNODE=16
+MPIEXEC="mpirun -np ${NMPI} -ppn ${PEpNODE}"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -31,7 +32,7 @@ res3d=GL${GL}RL${RL}z${ZL}
 MNGINFO=rl${RL}-prc${NP}.info
 
 # for RICC-CLUSTER
-NNODE=`expr $NMPI / 5`
+NNODE=`expr $NMPI / ${PEpNODE}`
 
 cat << EOF1 > run.sh
 #! /bin/bash -x
@@ -43,7 +44,7 @@ cat << EOF1 > run.sh
 #PJM -L rscunit=gwacsg
 #PJM -L rscgrp=batch
 #PJM -L vnode=${NNODE}
-#PJM -L vnode-core=${NMPI}
+#PJM -L vnode-core=${PEpNODE}
 #PJM -L elapse=00:30:00
 #PJM -j
 #PJM -s
@@ -79,7 +80,7 @@ cat << EOFICO2LL1 > ico2ll.sh
 #PJM -L rscunit=gwacsg
 #PJM -L rscgrp=batch
 #PJM -L vnode=${NNODE}
-#PJM -L vnode-core=${NMPI}
+#PJM -L vnode-core=${PEpNODE}
 #PJM -L elapse=00:30:00
 #PJM -j
 #PJM -s
