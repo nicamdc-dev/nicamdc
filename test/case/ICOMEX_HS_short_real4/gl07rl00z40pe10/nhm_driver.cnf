@@ -19,7 +19,7 @@
 /
 
 &TIMEPARAM
-    DTL         = 360.D0,
+    DTL         = 360.E0,
     INTEG_TYPE  = "RK3",
     LSTEP_MAX   = 24000,
     start_date  = 0000,1,1,0,0,0
@@ -48,23 +48,23 @@
 /
 
 &CNSTPARAM
-    earth_radius        = 6.37122D+6,
-    earth_angvel        =   7.292D-5,
-    small_planet_factor =      1.D0,
-    earth_gravity       = 9.80616D0,
-    gas_cnst            =   287.0D0,
-    specific_heat_pre   =  1004.5D0,
+    earth_radius        = 6.37122E+6,
+    earth_angvel        =   7.292E-5,
+    small_planet_factor =      1.E0,
+    earth_gravity       = 9.80616E0,
+    gas_cnst            =   287.0E0,
+    specific_heat_pre   =  1004.5E0,
 /
 
 &NUMFILTERPARAM
     hdiff_type        = 'DIRECT',
     lap_order_hdiff   = 2,
-    gamma_h           = 2.00D14,
-    Kh_coef_minlim    = 0.D0,
-    Kh_coef_maxlim    = 9.9D99,
+    gamma_h           = 2.00E14,
+    Kh_coef_minlim    = 0.E0,
+    Kh_coef_maxlim    = 9.9E30,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
-    alpha_d           = 2.00D14,
+    alpha_d           = 2.00E14,
 /
 
 &EMBUDGETPARAM

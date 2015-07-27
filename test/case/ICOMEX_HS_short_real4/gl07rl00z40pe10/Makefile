@@ -7,6 +7,7 @@
 PWD         = $(shell pwd)
 TOPDIR      = $(abspath ../../../..)
 TESTDIR     = ../../..
+SYSDEP_DIR  = $(abspath ..)
 
 
 # user-defined source files

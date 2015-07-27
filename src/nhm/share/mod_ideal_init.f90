@@ -317,7 +317,8 @@ contains
 
     real(RP), parameter :: deltaT  = 60.0_RP
     real(RP), parameter :: deltaTh = 10.0_RP
-    real(RP), parameter :: eps_hs  = 1.E-7_RP
+!    real(RP), parameter :: eps_hs  = 1.E-7_RP
+    real(RP), parameter :: eps_hs  = max( 1.E-10_RP, (10.0_RP)**(-RP_PREC+1) )
 
     real(RP) :: f, df
     real(RP) :: lat, lon
@@ -361,7 +362,8 @@ contains
                  * ( pre(k)/PRE00 )**KAPPA
           tem(k) = max( 200.0_RP, tem(k) )
 
-          if( abs(pre_save-pre(k)) <= eps_hs ) exit
+!          if( abs(pre_save-pre(k)) <= eps_hs ) exit
+          if( abs(pre_save/pre(k)-1.0_RP) <= eps_hs ) exit
        enddo
 
        if ( itr > itrmax ) then
@@ -391,8 +393,8 @@ contains
                     * ( pre(k)/PRE00 )**KAPPA
              tem(k) = max( 200.0_RP, tem(k) )
 
-             if( abs(pre_save-pre(k)) <= eps_hs ) exit
-
+!             if( abs(pre_save-pre(k)) <= eps_hs ) exit
+             if( abs(pre_save/pre(k)-1.0_RP) <= eps_hs ) exit
           enddo
 
           if ( itr > itrmax ) then
