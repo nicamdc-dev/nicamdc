@@ -31,7 +31,6 @@ res3d=GL${GL}RL${RL}z${ZL}
 MNGINFO=rl${RL}-prc${NP}.info
 
 # for RICC-FX100
-NMPI=12
 NNODE=`expr $NMPI / 4`
 
 cat << EOF1 > run.sh
@@ -69,7 +68,7 @@ done
 # run
 for PA_ID in `seq 1 11`; do
    echo "rm -rf pa${PA_ID}" >> run.sh
-   echo "fapp -C -d pa${PA_ID} -Hpa=${PA_ID} -Hmethod=raw ${MPIEXEC} -n 10 ./${BINNAME} || exit" >> run.sh
+   echo "fapp -C -d pa${PA_ID} -Hpa=${PA_ID} -Hmethod=raw ${MPIEXEC} -n ${NMPI} ./${BINNAME} || exit" >> run.sh
 done
 
 cat << EOFICO2LL1 > ico2ll.sh
