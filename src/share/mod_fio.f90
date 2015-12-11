@@ -33,8 +33,10 @@ module mod_fio
   !
   public :: FIO_setup
   public :: FIO_input
+  public :: FIO_input_DP
   public :: FIO_seek
   public :: FIO_output
+  public :: FIO_output_DP
   public :: FIO_finalize
 
   !-----------------------------------------------------------------------------
@@ -330,6 +332,105 @@ contains
     return
   end subroutine FIO_input
 
+  subroutine FIO_input_DP( &
+       var,           &
+       basename,      &
+       varname,       &
+       layername,     &
+       k_start,       &
+       k_end,         &
+       step,          &
+       allow_missingq ) !--- optional
+    use mod_adm, only : &
+       ADM_proc_stop, &
+       ADM_gall,      &
+       ADM_lall
+    implicit none
+
+    real(DP),         intent(out) :: var(:,:,:)
+    character(LEN=*), intent( in) :: basename
+    character(LEN=*), intent( in) :: varname
+    character(LEN=*), intent( in) :: layername
+    integer,          intent( in) :: k_start, k_end
+    integer,          intent( in) :: step
+
+    logical, intent(in), optional :: allow_missingq !--- if data is missing, set value to zero
+
+    real(SP) :: var4(ADM_gall,k_start:k_end,ADM_lall)
+    real(DP) :: var8(ADM_gall,k_start:k_end,ADM_lall)
+
+    integer :: did, fid
+    !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('FILEIO_in')
+
+    !--- search/register file
+    call FIO_getfid( fid, basename, FIO_FREAD, "", "" )
+
+    !--- seek data ID and get information
+    call fio_seek_datainfo(did,fid,varname,step)
+    call fio_get_datainfo(fid,did,dinfo)
+
+!    write(ADM_LOG_FID,*) dinfo%varname
+!    write(ADM_LOG_FID,*) dinfo%description
+!    write(ADM_LOG_FID,*) dinfo%unit
+!    write(ADM_LOG_FID,*) dinfo%layername
+!    write(ADM_LOG_FID,*) dinfo%note
+!    write(ADM_LOG_FID,*) dinfo%datasize
+!    write(ADM_LOG_FID,*) dinfo%datatype
+!    write(ADM_LOG_FID,*) dinfo%num_of_layer
+!    write(ADM_LOG_FID,*) dinfo%step
+!    write(ADM_LOG_FID,*) dinfo%time_start
+!    write(ADM_LOG_FID,*) dinfo%time_end
+
+    !--- verify
+    if ( did == -1 ) then
+       if ( present(allow_missingq) ) then
+          if ( allow_missingq ) then
+             write(ADM_LOG_FID,*) '*** [INPUT]/[FIO] data not found! : ', &
+                                  'varname= ',trim(varname),', step=',step
+             write(ADM_LOG_FID,*) '*** [INPUT]/[FIO] Q Value is set to 0.'
+
+             var(:,k_start:k_end,:) = 0.0_DP
+
+             call DEBUG_rapend('FILEIO_in')
+             return
+          endif
+       endif
+
+       write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] data not found! : ', &
+                            'varname= ',trim(varname),', step=',step
+       call ADM_proc_stop
+    endif
+
+    if ( trim(dinfo%layername) /= trim(layername) ) then
+       write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] layername mismatch! ', &
+                            "[",trim(dinfo%layername),":",trim(layername),"]"
+       call ADM_proc_stop
+    elseif( dinfo%num_of_layer /= k_end-k_start+1 ) then
+       write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] num_of_layer mismatch! ', &
+                            dinfo%num_of_layer,k_end-k_start+1
+       call ADM_proc_stop
+    endif
+
+    !--- read data
+    if ( dinfo%datatype == FIO_REAL4 ) then
+
+       call fio_read_data(fid,did,var4(:,:,:))
+       var(:,k_start:k_end,:) = real(var4(:,1:dinfo%num_of_layer,:),kind=DP)
+
+    elseif( dinfo%datatype == FIO_REAL8 ) then
+
+       call fio_read_data(fid,did,var8(:,:,:))
+       var(:,k_start:k_end,:) = real(var8(:,1:dinfo%num_of_layer,:),kind=DP)
+
+    endif
+
+    call DEBUG_rapend('FILEIO_in')
+
+    return
+  end subroutine FIO_input_DP
+
   !-----------------------------------------------------------------------------
   subroutine FIO_seek( &
        start_step,       &
@@ -529,6 +630,104 @@ contains
 
     return
   end subroutine FIO_output
+
+  subroutine FIO_output_DP( &
+       var,       &
+       basename,  &
+       pkg_desc,  &
+       pkg_note,  &
+       varname,   &
+       data_desc, &
+       data_note, &
+       unit,      &
+       dtype,     &
+       layername, &
+       k_start,   &
+       k_end,     &
+       step,      &
+       t_start,   &
+       t_end      )
+    use mod_adm, only: &
+       ADM_proc_stop, &
+       ADM_gall,      &
+       ADM_lall
+    use mod_cnst, only: &
+       CNST_UNDEF4
+    implicit none
+
+    real(DP),          intent(in) :: var(:,:,:)
+    character(LEN=*), intent(in) :: basename
+    character(LEN=*), intent(in) :: pkg_desc
+    character(LEN=*), intent(in) :: pkg_note
+    character(LEN=*), intent(in) :: varname
+    character(LEN=*), intent(in) :: data_desc
+    character(LEN=*), intent(in) :: data_note
+    character(LEN=*), intent(in) :: unit
+    integer,          intent(in) :: dtype
+    character(LEN=*), intent(in) :: layername
+    integer,          intent(in) :: k_start, k_end
+    integer,          intent(in) :: step
+    real(DP),          intent(in) :: t_start, t_end
+
+    real(SP) :: var4(ADM_gall,k_start:k_end,ADM_lall)
+    real(DP) :: var8(ADM_gall,k_start:k_end,ADM_lall)
+
+    integer :: did, fid
+    !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('FILEIO_out')
+
+    !--- search/register file
+    call FIO_getfid( fid, basename, FIO_FWRITE, pkg_desc, pkg_note )
+
+    !--- append data to the file
+    dinfo%varname      = varname
+    dinfo%description  = data_desc
+    dinfo%unit         = unit
+    dinfo%layername    = layername
+    dinfo%note         = data_note
+    dinfo%datasize     = int( ADM_gall * ADM_lall * (k_end-k_start+1) * preclist(dtype), kind=8 )
+    dinfo%datatype     = dtype
+    dinfo%num_of_layer = k_end-k_start+1
+    dinfo%step         = step
+    dinfo%time_start   = int( t_start, kind=8 )
+    dinfo%time_end     = int( t_end,   kind=8 )
+
+!    write(ADM_LOG_FID,*) dinfo%varname
+!    write(ADM_LOG_FID,*) dinfo%description
+!    write(ADM_LOG_FID,*) dinfo%unit
+!    write(ADM_LOG_FID,*) dinfo%layername
+!    write(ADM_LOG_FID,*) dinfo%note
+!    write(ADM_LOG_FID,*) dinfo%datasize
+!    write(ADM_LOG_FID,*) dinfo%datatype
+!    write(ADM_LOG_FID,*) dinfo%num_of_layer
+!    write(ADM_LOG_FID,*) dinfo%step
+!    write(ADM_LOG_FID,*) dinfo%time_start
+!    write(ADM_LOG_FID,*) dinfo%time_end
+
+    if ( dtype == FIO_REAL4 ) then
+
+       var4(:,k_start:k_end,:)=real(var(:,k_start:k_end,:),kind=SP)
+       where( var4(:,:,:) < (CNST_UNDEF4+1.0) )
+          var4(:,:,:) = CNST_UNDEF4
+       endwhere
+
+       call fio_put_write_datainfo_data(did,fid,dinfo,var4(:,:,:))
+
+    elseif( dtype == FIO_REAL8 ) then
+
+       var8(:,k_start:k_end,:)=real(var(:,k_start:k_end,:),kind=DP)
+
+       call fio_put_write_datainfo_data(did,fid,dinfo,var8(:,:,:))
+    else
+       write(ADM_LOG_FID,*) 'xxx [OUTPUT]/[FIO] Unsupported datatype!', dtype
+       call ADM_proc_stop
+    endif
+
+    call DEBUG_rapend('FILEIO_out')
+
+    return
+  end subroutine FIO_output_DP
 
   !-----------------------------------------------------------------------------
   subroutine FIO_finalize

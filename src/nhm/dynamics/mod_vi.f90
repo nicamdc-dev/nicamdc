@@ -164,7 +164,9 @@ contains
        GRD_afac, &
        GRD_bfac
     use mod_oprt, only: &
-       OPRT_horizontalize_vec
+         OPRT_horizontalize_vec, &
+         OPRT_horizontalize_vec_DP
+         
     use mod_vmtr, only: &
        VMTR_C2Wfact,    &
        VMTR_C2Wfact_pl, &

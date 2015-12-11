@@ -164,9 +164,9 @@ contains
     call GTL_clip_region(VMTR_GSGAM2 (:,:,:),gsgam2, 1,ADM_kall)
     call GTL_clip_region(VMTR_GSGAM2H(:,:,:),gsgam2h,1,ADM_kall)
     call GTL_clip_region(VMTR_PHI    (:,:,:),phi,    1,ADM_kall)
-    call GTL_clip_region(GRD_vz(:,:,:,GRD_Z),z,      1,ADM_kall)
+    call GTL_clip_region(real(GRD_vz(:,:,:,GRD_Z)),z,      1,ADM_kall)
 
-    call GTL_clip_region_1layer(GMTR_lat(:,:),lat)
+    call GTL_clip_region_1layer(real(GMTR_lat(:,:)),lat)
 
     !--- get the prognostic and diagnostic variables
     call prgvar_get_in_withdiag( rhog,   & ! [IN]
@@ -330,10 +330,10 @@ contains
           ! full (1): u,v
           ! half (2): w
           call test11_velocity( time,                   & ![IN]
-                                GMTR_lon(n,l),          & ![IN]
-                                GMTR_lat(n,l),          & ![IN]
-                                GRD_vz  (n,k,l,GRD_Z ), & ![IN]
-                                GRD_vz  (n,k,l,GRD_ZH), & ![IN]
+                                real(GMTR_lon(n,l)),          & ![IN]
+                                real(GMTR_lat(n,l)),          & ![IN]
+                                real(GRD_vz  (n,k,l,GRD_Z )), & ![IN]
+                                real(GRD_vz  (n,k,l,GRD_ZH)), & ![IN]
                                 vx      (n,k,l),        & ![OUT]
                                 vy      (n,k,l),        & ![OUT]
                                 vz      (n,k,l),        & ![OUT]
@@ -347,10 +347,10 @@ contains
           do k = 1, ADM_kall
           do n = 1, ADM_gall_pl
              call test11_velocity( time,                      & ![IN]
-                                   GMTR_lon_pl(n,l),          & ![IN]
-                                   GMTR_lat_pl(n,l),          & ![IN]
-                                   GRD_vz_pl  (n,k,l,GRD_Z ), & ![IN]
-                                   GRD_vz_pl  (n,k,l,GRD_ZH), & ![IN]
+                                   real(GMTR_lon_pl(n,l)),          & ![IN]
+                                   real(GMTR_lat_pl(n,l)),          & ![IN]
+                                   real(GRD_vz_pl  (n,k,l,GRD_Z )), & ![IN]
+                                   real(GRD_vz_pl  (n,k,l,GRD_ZH)), & ![IN]
                                    vx_pl      (n,k,l),        & ![OUT]
                                    vy_pl      (n,k,l),        & ![OUT]
                                    vz_pl      (n,k,l),        & ![OUT]
@@ -368,10 +368,10 @@ contains
           ! full (1): u,v
           ! half (2): w
           call test12_velocity( time,                   & ![IN]
-                                GMTR_lon(n,l),          & ![IN]
-                                GMTR_lat(n,l),          & ![IN]
-                                GRD_vz  (n,k,l,GRD_Z ), & ![IN]
-                                GRD_vz  (n,k,l,GRD_ZH), & ![IN]
+                                real(GMTR_lon(n,l)),          & ![IN]
+                                real(GMTR_lat(n,l)),          & ![IN]
+                                real(GRD_vz  (n,k,l,GRD_Z )), & ![IN]
+                                real(GRD_vz  (n,k,l,GRD_ZH)), & ![IN]
                                 vx      (n,k,l),        & ![OUT]
                                 vy      (n,k,l),        & ![OUT]
                                 vz      (n,k,l),        & ![OUT]
@@ -385,10 +385,10 @@ contains
           do k = 1, ADM_kall
           do n = 1, ADM_gall_pl
              call test12_velocity( time,                      & ![IN]
-                                   GMTR_lon_pl(n,l),          & ![IN]
-                                   GMTR_lat_pl(n,l),          & ![IN]
-                                   GRD_vz_pl  (n,k,l,GRD_Z ), & ![IN]
-                                   GRD_vz_pl  (n,k,l,GRD_ZH), & ![IN]
+                                   real(GMTR_lon_pl(n,l)),          & ![IN]
+                                   real(GMTR_lat_pl(n,l)),          & ![IN]
+                                   real(GRD_vz_pl  (n,k,l,GRD_Z )), & ![IN]
+                                   real(GRD_vz_pl  (n,k,l,GRD_ZH)), & ![IN]
                                    vx_pl      (n,k,l),        & ![OUT]
                                    vy_pl      (n,k,l),        & ![OUT]
                                    vz_pl      (n,k,l),        & ![OUT]

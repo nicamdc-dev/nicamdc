@@ -60,6 +60,9 @@ module mod_history_vars
   !-----------------------------------------------------------------------------
   implicit none
   private
+  real(RP), save, allocatable :: u_old (:, :, :)
+  real(RP), save, allocatable :: v_old (:, :, :)
+  real(RP), save, allocatable :: wc_old(:, :, :)
   !-----------------------------------------------------------------------------
   !
   !++ Public procedure
@@ -89,6 +92,7 @@ module mod_history_vars
   logical, private :: out_pw       = .false.
   logical, private :: out_lwp      = .false.
   logical, private :: out_iwp      = .false.
+  logical, private :: out_duvw      = .false.
 
   !-----------------------------------------------------------------------------
 contains
@@ -97,6 +101,10 @@ contains
     use mod_history, only: &
        HIST_req_nmax, &
        item_save
+    use mod_adm, only: &
+         ADM_gall, &
+         ADM_kall, &
+         ADM_lall
     implicit none
 
     integer :: n
@@ -117,8 +125,20 @@ contains
        if(      item_save(n) == 'sl_pw'       ) out_pw       = .true.
        if(      item_save(n) == 'sl_lwp'      ) out_lwp      = .true.
        if(      item_save(n) == 'sl_iwp'      ) out_iwp      = .true.
-    enddo
 
+       if(      item_save(n) == 'ml_du'      &
+           .OR. item_save(n) == 'ml_dv'      &
+           .OR. item_save(n) == 'ml_dw'      ) then
+          out_duvw      = .true.
+       end if
+       
+    enddo
+    if (out_duvw == .true.) then
+       allocate(u_old( ADM_gall, ADM_kall, ADM_lall))
+       allocate(v_old( ADM_gall, ADM_kall, ADM_lall))
+       allocate(wc_old(ADM_gall, ADM_kall, ADM_lall))
+    end if
+    
     return
   end subroutine history_vars_setup
 
@@ -210,6 +230,7 @@ contains
     real(RP) :: ucos     (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: vcos     (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: wc       (ADM_gall   ,ADM_kall,ADM_lall   )
+
     real(RP) :: omg      (ADM_gall   ,ADM_kall,ADM_lall   )
 
     real(RP) :: u_850    (ADM_gall   ,ADM_KNONE,ADM_lall   ) ! [add] 20130705 R.Yoshida
@@ -282,6 +303,8 @@ contains
        wc(:,ADM_kmax+1,l) = 0.0_RP
     enddo
 
+
+
     do l = 1, ADM_lall
        call history_in( 'ml_rho',  rho(:,:,l) )
        call history_in( 'ml_tem',  tem(:,:,l) )
@@ -290,9 +313,21 @@ contains
        call history_in( 'ml_u',    u  (:,:,l) )
        call history_in( 'ml_v',    v  (:,:,l) )
        call history_in( 'ml_w',    wc (:,:,l) )
-
-       call history_in( 'ml_hgt',  GRD_vz(:,:,l,GRD_Z) ) ! geopotential height: Hydrostatic assumption
+       
+       call history_in( 'ml_hgt',  real(GRD_vz(:,:,l,GRD_Z)) ) ! geopotential height: Hydrostatic assumption
     enddo
+
+    if (out_duvw) then
+       do l = 1, ADM_lall
+          call history_in( 'ml_du',    u  (:,:,l) -u_old (:,:,l) )
+          call history_in( 'ml_dv',    v  (:,:,l) -v_old (:,:,l) )
+          call history_in( 'ml_dw',    wc (:,:,l) -wc_old(:,:,l) )
+       end do
+
+       u_old(:,:,:) = u(:,:,:)
+       v_old(:,:,:) = v(:,:,:)
+       wc_old(:,:,:) = wc(:,:,:)
+    end if
 
     ! zonal and meridonal wind with cos(phi)
     if (out_uv_cos) then
@@ -390,8 +425,8 @@ contains
        call sv_pre_sfc( ADM_gall,                 & ! [IN]
                         rho    (:,:,l),           & ! [IN]
                         pre    (:,:,l),           & ! [IN]
-                        GRD_vz (:,:,l,GRD_Z),     & ! [IN]
-                        GRD_zs (:,K0,l,GRD_ZSFC), & ! [IN]
+                        real(GRD_vz (:,:,l,GRD_Z)),     & ! [IN]
+                        real(GRD_zs (:,K0,l,GRD_ZSFC)), & ! [IN]
                         rho_sfc(:,K0,l),          & ! [OUT]
                         pre_sfc(:,K0,l)           ) ! [OUT]
 

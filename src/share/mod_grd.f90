@@ -137,22 +137,22 @@ module mod_grd
   !<-----          ' p '
   !<-----
 
-  real(RP), public              :: GRD_rscale ! scaling factor for the radius of the sphere
+  real(DP), public              :: GRD_rscale ! scaling factor for the radius of the sphere
 
 #ifdef _FIXEDINDEX_
-  real(RP), public              :: GRD_x    (ADM_gall   ,ADM_KNONE,ADM_lall   ,              ADM_nxyz)
-  real(RP), public              :: GRD_x_pl (ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              ADM_nxyz)
-  real(RP), public              :: GRD_xt   (ADM_gall   ,ADM_KNONE,ADM_lall   ,ADM_TI:ADM_TJ,ADM_nxyz)
-  real(RP), public              :: GRD_xt_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              ADM_nxyz)
-  real(RP), public              :: GRD_xr   (ADM_gall   ,ADM_KNONE,ADM_lall   ,ADM_AI:ADM_AJ,ADM_nxyz)
-  real(RP), public              :: GRD_xr_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              ADM_nxyz)
+  real(DP), public              :: GRD_x    (ADM_gall   ,ADM_KNONE,ADM_lall   ,              ADM_nxyz)
+  real(DP), public              :: GRD_x_pl (ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              ADM_nxyz)
+  real(DP), public              :: GRD_xt   (ADM_gall   ,ADM_KNONE,ADM_lall   ,ADM_TI:ADM_TJ,ADM_nxyz)
+  real(DP), public              :: GRD_xt_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              ADM_nxyz)
+  real(DP), public              :: GRD_xr   (ADM_gall   ,ADM_KNONE,ADM_lall   ,ADM_AI:ADM_AJ,ADM_nxyz)
+  real(DP), public              :: GRD_xr_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              ADM_nxyz)
 #else
-  real(RP), public, allocatable :: GRD_x    (:,:,:,:)
-  real(RP), public, allocatable :: GRD_x_pl (:,:,:,:)
-  real(RP), public, allocatable :: GRD_xt   (:,:,:,:,:)
-  real(RP), public, allocatable :: GRD_xt_pl(:,:,:,:)
-  real(RP), public, allocatable :: GRD_xr   (:,:,:,:,:)
-  real(RP), public, allocatable :: GRD_xr_pl(:,:,:,:)
+  real(DP), public, allocatable :: GRD_x    (:,:,:,:)
+  real(DP), public, allocatable :: GRD_x_pl (:,:,:,:)
+  real(DP), public, allocatable :: GRD_xt   (:,:,:,:,:)
+  real(DP), public, allocatable :: GRD_xt_pl(:,:,:,:)
+  real(DP), public, allocatable :: GRD_xr   (:,:,:,:,:)
+  real(DP), public, allocatable :: GRD_xr_pl(:,:,:,:)
 #endif
 
 
@@ -161,11 +161,11 @@ module mod_grd
   integer, public, parameter   :: GRD_ZSFC = 1
 
 #ifdef _FIXEDINDEX_
-  real(RP), public              :: GRD_zs   (ADM_gall   ,ADM_KNONE,ADM_lall   ,GRD_ZSFC)
-  real(RP), public              :: GRD_zs_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,GRD_ZSFC)
+  real(DP), public              :: GRD_zs   (ADM_gall   ,ADM_KNONE,ADM_lall   ,GRD_ZSFC)
+  real(DP), public              :: GRD_zs_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,GRD_ZSFC)
 #else
-  real(RP), public, allocatable :: GRD_zs   (:,:,:,:)
-  real(RP), public, allocatable :: GRD_zs_pl(:,:,:,:)
+  real(DP), public, allocatable :: GRD_zs   (:,:,:,:)
+  real(DP), public, allocatable :: GRD_zs_pl(:,:,:,:)
 #endif
 
 
@@ -188,38 +188,38 @@ module mod_grd
   integer, public, parameter   :: GRD_Z  = 1
   integer, public, parameter   :: GRD_ZH = 2
 
-  real(RP), public              :: GRD_htop ! model top height [m]
+  real(DP), public              :: GRD_htop ! model top height [m]
 
 #ifdef _FIXEDINDEX_
-  real(RP), public              :: GRD_gz   (ADM_kall)
-  real(RP), public              :: GRD_gzh  (ADM_kall)
-  real(RP), public              :: GRD_dgz  (ADM_kall)
-  real(RP), public              :: GRD_dgzh (ADM_kall)
-  real(RP), public              :: GRD_rdgz (ADM_kall)
-  real(RP), public              :: GRD_rdgzh(ADM_kall)
+  real(DP), public              :: GRD_gz   (ADM_kall)
+  real(DP), public              :: GRD_gzh  (ADM_kall)
+  real(DP), public              :: GRD_dgz  (ADM_kall)
+  real(DP), public              :: GRD_dgzh (ADM_kall)
+  real(DP), public              :: GRD_rdgz (ADM_kall)
+  real(DP), public              :: GRD_rdgzh(ADM_kall)
 
-  real(RP), public              :: GRD_afac(ADM_kall)
-  real(RP), public              :: GRD_bfac(ADM_kall)
-  real(RP), public              :: GRD_cfac(ADM_kall)
-  real(RP), public              :: GRD_dfac(ADM_kall)
+  real(DP), public              :: GRD_afac(ADM_kall)
+  real(DP), public              :: GRD_bfac(ADM_kall)
+  real(DP), public              :: GRD_cfac(ADM_kall)
+  real(DP), public              :: GRD_dfac(ADM_kall)
 
-  real(RP), public              :: GRD_vz   (ADM_gall   ,ADM_kall,ADM_lall   ,GRD_Z:GRD_ZH)
-  real(RP), public              :: GRD_vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,GRD_Z:GRD_ZH)
+  real(DP), public              :: GRD_vz   (ADM_gall   ,ADM_kall,ADM_lall   ,GRD_Z:GRD_ZH)
+  real(DP), public              :: GRD_vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,GRD_Z:GRD_ZH)
 #else
-  real(RP), public, allocatable :: GRD_gz   (:) ! gsi (z-star) coordinate
-  real(RP), public, allocatable :: GRD_gzh  (:) ! gsi (z-star) coordinate at the half point
-  real(RP), public, allocatable :: GRD_dgz  (:) ! d(gsi)
-  real(RP), public, allocatable :: GRD_dgzh (:) ! d(gsi) at the half point
-  real(RP), public, allocatable :: GRD_rdgz (:)
-  real(RP), public, allocatable :: GRD_rdgzh(:)
+  real(DP), public, allocatable :: GRD_gz   (:) ! gsi (z-star) coordinate
+  real(DP), public, allocatable :: GRD_gzh  (:) ! gsi (z-star) coordinate at the half point
+  real(DP), public, allocatable :: GRD_dgz  (:) ! d(gsi)
+  real(DP), public, allocatable :: GRD_dgzh (:) ! d(gsi) at the half point
+  real(DP), public, allocatable :: GRD_rdgz (:)
+  real(DP), public, allocatable :: GRD_rdgzh(:)
 
-  real(RP), public, allocatable :: GRD_afac (:) ! From the cell center value to the cell wall value
-  real(RP), public, allocatable :: GRD_bfac (:) !    A(k-1/2) = ( afac(k) A(k) + bfac(k) * A(k-1) ) / 2
-  real(RP), public, allocatable :: GRD_cfac (:) ! From the cell wall value to the cell center value
-  real(RP), public, allocatable :: GRD_dfac (:) !    A(k) = ( cfac(k) A(k+1/2) + dfac(k) * A(k-1/2) ) / 2
+  real(DP), public, allocatable :: GRD_afac (:) ! From the cell center value to the cell wall value
+  real(DP), public, allocatable :: GRD_bfac (:) !    A(k-1/2) = ( afac(k) A(k) + bfac(k) * A(k-1) ) / 2
+  real(DP), public, allocatable :: GRD_cfac (:) ! From the cell wall value to the cell center value
+  real(DP), public, allocatable :: GRD_dfac (:) !    A(k) = ( cfac(k) A(k+1/2) + dfac(k) * A(k-1/2) ) / 2
 
-  real(RP), public, allocatable :: GRD_vz   (:,:,:,:)
-  real(RP), public, allocatable :: GRD_vz_pl(:,:,:,:)
+  real(DP), public, allocatable :: GRD_vz   (:,:,:,:)
+  real(DP), public, allocatable :: GRD_vz_pl(:,:,:,:)
 #endif
 
   character(len=ADM_NSYS), public :: GRD_grid_type = 'ON_SPHERE' ! grid type [add] T.Ohno 110722
@@ -240,12 +240,12 @@ module mod_grd
 
   character(len=ADM_MAXFNAME), private :: vgrid_fname     = ''       ! vertical grid file
   character(len=ADM_NSYS),     private :: vgrid_scheme    = 'LINEAR' ! vertical coordinate scheme
-  real(RP),                     private :: h_efold         = 10000.0_RP ! e-folding height for hybrid vertical coordinate [m]
-  real(RP),                     private :: hflat           =  -999.0_RP ! [m]
+  real(DP),                     private :: h_efold         = 10000.0_DP ! e-folding height for hybrid vertical coordinate [m]
+  real(DP),                     private :: hflat           =  -999.0_DP ! [m]
   logical,                     private :: output_vgrid    = .false.  ! output verical grid file?
 
   logical,                     private :: hgrid_comm_flg  = .true.   ! communicate GRD_x?          [add] T.Ohno 110722
-  real(RP),                     private :: triangle_size   = 0.0_RP     ! length of sides of triangle [add] T.Ohno 110722
+  real(DP),                     private :: triangle_size   = 0.0_DP     ! length of sides of triangle [add] T.Ohno 110722
 
   !-----------------------------------------------------------------------------
 contains
@@ -267,7 +267,8 @@ contains
        CNST_ERADIUS, &
        CNST_UNDEF
     use mod_comm, only:  &
-       COMM_data_transfer
+       COMM_data_transfer, &
+       COMM_data_transfer_DP
     implicit none
 
     namelist / GRDPARAM / &
@@ -284,7 +285,7 @@ contains
        hgrid_comm_flg, &
        triangle_size
 
-    real(RP) :: htop
+    real(DP) :: htop
     integer :: nstart, nend
     integer :: kflat
 
@@ -331,13 +332,13 @@ contains
                           hgrid_io_mode ) ![IN]
 
     ! data transfer for GRD_x (note: do not communicate GRD_xt)
-    if( hgrid_comm_flg ) call COMM_data_transfer(GRD_x,GRD_x_pl) ! [mod] T.Ohno 110722
+    if( hgrid_comm_flg ) call COMM_data_transfer_DP(GRD_x,GRD_x_pl) ! [mod] T.Ohno 110722
 
     ! scaling
     if ( trim(GRD_grid_type) == 'ON_PLANE' ) then
        call GRD_scaling(triangle_size)
     else
-       call GRD_scaling(CNST_ERADIUS)
+       call GRD_scaling(dble(CNST_ERADIUS))
     endif
 
     ! calc position of cell arc
@@ -350,8 +351,8 @@ contains
     allocate( GRD_zs   (ADM_gall,   K0,ADM_lall,   GRD_ZSFC) )
     allocate( GRD_zs_pl(ADM_gall_pl,K0,ADM_lall_pl,GRD_ZSFC) )
 #endif
-    GRD_zs   (:,:,:,:) = 0.0_RP
-    GRD_zs_pl(:,:,:,:) = 0.0_RP
+    GRD_zs   (:,:,:,:) = 0.0_DP
+    GRD_zs_pl(:,:,:,:) = 0.0_DP
 
     call GRD_input_topograph(topo_fname)
 
@@ -392,8 +393,8 @@ contains
        GRD_dgzh(ADM_kmin-1) = GRD_dgzh(ADM_kmin)
 
        do k = 1, ADM_kall
-          GRD_rdgz (k) = 1.0_RP / grd_dgz (k)
-          GRD_rdgzh(k) = 1.0_RP / grd_dgzh(k)
+          GRD_rdgz (k) = 1.0_DP / grd_dgz (k)
+          GRD_rdgzh(k) = 1.0_DP / grd_dgzh(k)
        enddo
 
        ! hight top
@@ -401,21 +402,21 @@ contains
 
        !--- vertical interpolation factor
        do k = ADM_kmin, ADM_kmax+1
-          GRD_afac(k) = 2.0_RP * ( GRD_gzh(k) - GRD_gz(k-1) ) &
+          GRD_afac(k) = 2.0_DP * ( GRD_gzh(k) - GRD_gz(k-1) ) &
                              / ( GRD_gz (k) - GRD_gz(k-1) )
        enddo
-       GRD_afac(ADM_kmin-1) = 2.0_RP
+       GRD_afac(ADM_kmin-1) = 2.0_DP
 
-       GRD_bfac(:) = 2.0_RP - GRD_afac(:)
+       GRD_bfac(:) = 2.0_DP - GRD_afac(:)
 
        do k = ADM_kmin, ADM_kmax
-          GRD_cfac(k) = 2.0_RP * ( GRD_gz (k  ) - GRD_gzh(k) ) &
+          GRD_cfac(k) = 2.0_DP * ( GRD_gz (k  ) - GRD_gzh(k) ) &
                              / ( GRD_gzh(k+1) - GRD_gzh(k) )
        enddo
-       GRD_cfac(ADM_kmin-1) = 2.0_RP
-       GRD_cfac(ADM_kmax+1) = 0.0_RP
+       GRD_cfac(ADM_kmin-1) = 2.0_DP
+       GRD_cfac(ADM_kmax+1) = 0.0_DP
 
-       GRD_dfac(:) = 2.0_RP - GRD_cfac(:)
+       GRD_dfac(:) = 2.0_DP - GRD_cfac(:)
 
        !--- setup z-coordinate
        nstart = suf(ADM_gmin,ADM_gmin)
@@ -428,7 +429,7 @@ contains
           !    gz = H(z-zs)/(H-zs) -> z = (H-zs)/H * gz + zs
 
           kflat = -1
-          if ( hflat > 0.0_RP ) then !--- default : -999.0
+          if ( hflat > 0.0_DP ) then !--- default : -999.0
              do k = ADM_kmin+1, ADM_kmax+1
                 if ( hflat < GRD_gzh(k) ) then
                    kflat = k
@@ -521,7 +522,7 @@ contains
        endselect
 
        !--- fill HALO
-       call COMM_data_transfer(GRD_vz,GRD_vz_pl)
+       call COMM_data_transfer_DP(GRD_vz,GRD_vz_pl)
 
        GRD_vz(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = GRD_vz(suf(ADM_gmax+1,ADM_gmin),:,:,:)
        GRD_vz(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = GRD_vz(suf(ADM_gmin,ADM_gmax+1),:,:,:)
@@ -585,7 +586,7 @@ contains
        ADM_prc_tab,   &
        ADM_prc_me
     use mod_fio, only: &
-       FIO_input
+       FIO_input_DP
     implicit none
 
     character(len=*), intent(in) :: basename     ! input basename
@@ -602,21 +603,21 @@ contains
 
     if ( io_mode == 'ADVANCED' ) then
 
-       call FIO_input(GRD_x(:,:,:,GRD_XDIR),basename,'grd_x_x','ZSSFC1',K0,K0,1)
-       call FIO_input(GRD_x(:,:,:,GRD_YDIR),basename,'grd_x_y','ZSSFC1',K0,K0,1)
-       call FIO_input(GRD_x(:,:,:,GRD_ZDIR),basename,'grd_x_z','ZSSFC1',K0,K0,1)
+       call FIO_input_DP(GRD_x(:,:,:,GRD_XDIR),basename,'grd_x_x','ZSSFC1',K0,K0,1)
+       call FIO_input_DP(GRD_x(:,:,:,GRD_YDIR),basename,'grd_x_y','ZSSFC1',K0,K0,1)
+       call FIO_input_DP(GRD_x(:,:,:,GRD_ZDIR),basename,'grd_x_z','ZSSFC1',K0,K0,1)
        if ( input_vertex ) then
-          call FIO_input(GRD_xt(:,:,:,ADM_TI,GRD_XDIR),basename, &
+          call FIO_input_DP(GRD_xt(:,:,:,ADM_TI,GRD_XDIR),basename, &
                          'grd_xt_ix','ZSSFC1',K0,K0,1            )
-          call FIO_input(GRD_xt(:,:,:,ADM_TJ,GRD_XDIR),basename, &
+          call FIO_input_DP(GRD_xt(:,:,:,ADM_TJ,GRD_XDIR),basename, &
                          'grd_xt_jx','ZSSFC1',K0,K0,1            )
-          call FIO_input(GRD_xt(:,:,:,ADM_TI,GRD_YDIR),basename, &
+          call FIO_input_DP(GRD_xt(:,:,:,ADM_TI,GRD_YDIR),basename, &
                          'grd_xt_iy','ZSSFC1',K0,K0,1            )
-          call FIO_input(GRD_xt(:,:,:,ADM_TJ,GRD_YDIR),basename, &
+          call FIO_input_DP(GRD_xt(:,:,:,ADM_TJ,GRD_YDIR),basename, &
                          'grd_xt_jy','ZSSFC1',K0,K0,1            )
-          call FIO_input(GRD_xt(:,:,:,ADM_TI,GRD_ZDIR),basename, &
+          call FIO_input_DP(GRD_xt(:,:,:,ADM_TI,GRD_ZDIR),basename, &
                          'grd_xt_iz','ZSSFC1',K0,K0,1            )
-          call FIO_input(GRD_xt(:,:,:,ADM_TJ,GRD_ZDIR),basename, &
+          call FIO_input_DP(GRD_xt(:,:,:,ADM_TJ,GRD_ZDIR),basename, &
                          'grd_xt_jz','ZSSFC1',K0,K0,1            )
        endif
 
@@ -678,7 +679,8 @@ contains
        ADM_prc_tab,   &
        ADM_prc_me
     use mod_fio, only: &
-       FIO_output, &
+!       FIO_output, &
+       FIO_output_DP, &
        FIO_HMID,   &
        FIO_REAL8
     implicit none
@@ -698,44 +700,44 @@ contains
 
     if ( io_mode == 'ADVANCED' ) then
 
-       call FIO_output( GRD_x(:,:,:,GRD_XDIR),                           &
+       call FIO_output_DP( GRD_x(:,:,:,GRD_XDIR),                           &
                         basename, desc, "",                              &
                        "grd_x_x", "GRD_x (X_DIR)", "",                   &
-                       "NIL", FIO_REAL8, "ZSSFC1", K0, K0, 1, 0.0_RP, 0.0_RP )
-       call FIO_output( GRD_x(:,:,:,GRD_YDIR),                           &
+                       "NIL", FIO_REAL8, "ZSSFC1", K0, K0, 1, 0.0_DP, 0.0_DP )
+       call FIO_output_DP( GRD_x(:,:,:,GRD_YDIR),                           &
                         basename, desc, '',                              &
                        'grd_x_y', 'GRD_x (Y_DIR)', '',                   &
-                       'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_RP, 0.0_RP )
-       call FIO_output( GRD_x(:,:,:,GRD_ZDIR),                           &
+                       'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_DP, 0.0_DP )
+       call FIO_output_DP( GRD_x(:,:,:,GRD_ZDIR),                           &
                         basename, desc, '',                              &
                        'grd_x_z', 'GRD_x (Z_DIR)', '',                   &
-                       'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_RP, 0.0_RP )
+                       'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_DP, 0.0_DP )
 
        if ( output_vertex ) then
-          call FIO_output( GRD_xt(:,:,:,ADM_TI,GRD_XDIR),                   &
+          call FIO_output_DP( GRD_xt(:,:,:,ADM_TI,GRD_XDIR),                   &
                            basename, desc, '',                              &
                           'grd_xt_ix', 'GRD_xt (TI,X_DIR)', '',             &
-                          'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_RP, 0.0_RP )
-          call FIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_XDIR),                   &
+                          'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_DP, 0.0_DP )
+          call FIO_output_DP( GRD_xt(:,:,:,ADM_TJ,GRD_XDIR),                   &
                            basename, desc, '',                              &
                           'grd_xt_jx', 'GRD_xt (TJ,X_DIR)', '',             &
-                          'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_RP, 0.0_RP )
-          call FIO_output( GRD_xt(:,:,:,ADM_TI,GRD_YDIR),                   &
+                          'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_DP, 0.0_DP )
+          call FIO_output_DP( GRD_xt(:,:,:,ADM_TI,GRD_YDIR),                   &
                            basename, desc, '',                              &
                           'grd_xt_iy', 'GRD_xt (TI,Y_DIR)', '',             &
-                          'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_RP, 0.0_RP )
-          call FIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_YDIR),                   &
+                          'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_DP, 0.0_DP )
+          call FIO_output_DP( GRD_xt(:,:,:,ADM_TJ,GRD_YDIR),                   &
                            basename, desc, '',                              &
                           'grd_xt_jy', 'GRD_xt (TJ,Y_DIR)', '',             &
-                          'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_RP, 0.0_RP )
-          call FIO_output( GRD_xt(:,:,:,ADM_TI,GRD_ZDIR),                   &
+                          'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_DP, 0.0_DP )
+          call FIO_output_DP( GRD_xt(:,:,:,ADM_TI,GRD_ZDIR),                   &
                            basename, desc, '',                              &
                           'grd_xt_iz', 'GRD_xt (TI,Z_DIR)', '',             &
-                          'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_RP, 0.0_RP )
-          call FIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_ZDIR),                   &
+                          'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_DP, 0.0_DP )
+          call FIO_output_DP( GRD_xt(:,:,:,ADM_TJ,GRD_ZDIR),                   &
                            basename, desc, '',                              &
                           'grd_xt_jz', 'GRD_xt (TJ,Z_DIR)', '',             &
-                          'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_RP, 0.0_RP )
+                          'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_DP, 0.0_DP )
        endif
 
     elseif( io_mode == 'LEGACY' ) then
@@ -818,8 +820,8 @@ contains
           call ADM_proc_stop
        endif
 
-       GRD_gz (:) = real(gz ,kind=RP)
-       GRD_gzh(:) = real(gzh,kind=RP)
+       GRD_gz (:) = real(gz ,kind=DP)
+       GRD_gzh(:) = real(gzh,kind=DP)
 
     close(fid)
 
@@ -857,22 +859,22 @@ contains
     use mod_misc,  only: &
        MISC_make_idstr,        &
        MISC_get_available_fid, &
-       MISC_get_latlon
+       MISC_get_latlon_DP
     use mod_adm, only: &
        ADM_prc_tab, &
        ADM_prc_me
     use mod_fio, only: &
-       FIO_input
+       FIO_input_DP
     use mod_comm, only: &
-       COMM_var
+       COMM_var_DP
     use mod_ideal_topo, only: &
-       IDEAL_topo
+       IDEAL_topo_DP
     implicit none
 
     character(len=*), intent(in) :: basename
 
-    real(RP) :: lat(ADM_gall,ADM_KNONE,ADM_lall)
-    real(RP) :: lon(ADM_gall,ADM_KNONE,ADM_lall)
+    real(DP) :: lat(ADM_gall,ADM_KNONE,ADM_lall)
+    real(DP) :: lon(ADM_gall,ADM_KNONE,ADM_lall)
 
     character(len=128) :: fname
     integer            :: g, l, rgnid
@@ -884,7 +886,7 @@ contains
     if ( topo_io_mode == 'ADVANCED' ) then
 
        if ( basename /= 'NONE' ) then
-          call FIO_input(GRD_zs(:,:,:,GRD_ZSFC),basename,'topo','ZSSFC1',1,1,1)
+          call FIO_input_DP(GRD_zs(:,:,:,GRD_ZSFC),basename,'topo','ZSSFC1',1,1,1)
        endif
 
     elseif( topo_io_mode == 'LEGACY' ) then
@@ -914,7 +916,7 @@ contains
 
        do l = 1, ADM_lall
        do g = 1, ADM_gall
-          call MISC_get_latlon( lat  (g,ADM_KNONE,l),          &
+          call MISC_get_latlon_DP( lat  (g,ADM_KNONE,l),          &
                                 lon  (g,ADM_KNONE,l),          &
                                 GRD_x(g,ADM_KNONE,l,GRD_XDIR), &
                                 GRD_x(g,ADM_KNONE,l,GRD_YDIR), &
@@ -922,13 +924,13 @@ contains
        enddo
        enddo
 
-       call IDEAL_topo( lat   (:,:,:),         & !--- [IN]
+       call IDEAL_topo_DP( lat   (:,:,:),         & !--- [IN]
                         lon   (:,:,:),         & !--- [IN]
                         GRD_zs(:,:,:,GRD_ZSFC) ) !--- [OUT]
 
     endif !--- io_mode
 
-    call COMM_var( GRD_zs, GRD_zs_pl, ADM_KNONE, 1 )
+    call COMM_var_DP( GRD_zs, GRD_zs_pl, ADM_KNONE, 1 )
 
     return
   end subroutine GRD_input_topograph
@@ -957,7 +959,7 @@ contains
        ADM_gmin,       &
        ADM_gslf_pl
     use mod_comm, only: &
-       COMM_var
+       COMM_var_DP
     implicit none
 
     integer :: prctab   (ADM_VLINK_NMAX)
@@ -966,8 +968,8 @@ contains
     integer :: rreq     (ADM_VLINK_NMAX)
     logical :: send_flag(ADM_VLINK_NMAX)
 
-    real(RP) :: vsend_pl (ADM_nxyz,ADM_vlink_nmax)
-    real(RP) :: vrecv_pl (ADM_nxyz,ADM_vlink_nmax)
+    real(DP) :: vsend_pl (ADM_nxyz,ADM_vlink_nmax)
+    real(DP) :: vrecv_pl (ADM_nxyz,ADM_vlink_nmax)
 
     integer :: datatype
 
@@ -975,9 +977,9 @@ contains
     integer :: n, l, ierr
     !---------------------------------------------------------------------------
 
-    if ( RP == DP ) then
+    if ( DP == DP ) then
        datatype = MPI_DOUBLE_PRECISION
-    elseif( RP == SP ) then
+    elseif( DP == SP ) then
        datatype = MPI_REAL
     else
        write(*,*) 'xxx precision is not supportd'
@@ -1103,7 +1105,7 @@ contains
     endif
 
     !--- grid point communication
-    call COMM_var( GRD_x, GRD_x_pl, ADM_KNONE, 3 )
+    call COMM_var_DP( GRD_x, GRD_x_pl, ADM_KNONE, 3 )
 
     if (      ADM_prc_me == ADM_prc_npl &
          .OR. ADM_prc_me == ADM_prc_spl ) then
@@ -1120,7 +1122,7 @@ contains
        ADM_have_pl
     implicit none
 
-    real(RP), intent(in) :: fact ! scaling factor
+    real(DP), intent(in) :: fact ! scaling factor
     !---------------------------------------------------------------------------
 
     GRD_x (:,:,:,:)   = GRD_x (:,:,:,:)   * fact
@@ -1171,9 +1173,9 @@ contains
           ij     = n
           ijm1   = n     - ADM_gall_1d
 
-          GRD_xr(n,K0,l,ADM_AI ,GRD_XDIR) = 0.5_RP * ( GRD_xt(ijm1,K0,l,ADM_TJ,GRD_XDIR) + GRD_xt(ij,K0,l,ADM_TI,GRD_XDIR) )
-          GRD_xr(n,K0,l,ADM_AI ,GRD_YDIR) = 0.5_RP * ( GRD_xt(ijm1,K0,l,ADM_TJ,GRD_YDIR) + GRD_xt(ij,K0,l,ADM_TI,GRD_YDIR) )
-          GRD_xr(n,K0,l,ADM_AI ,GRD_ZDIR) = 0.5_RP * ( GRD_xt(ijm1,K0,l,ADM_TJ,GRD_ZDIR) + GRD_xt(ij,K0,l,ADM_TI,GRD_ZDIR) )
+          GRD_xr(n,K0,l,ADM_AI ,GRD_XDIR) = 0.5_DP * ( GRD_xt(ijm1,K0,l,ADM_TJ,GRD_XDIR) + GRD_xt(ij,K0,l,ADM_TI,GRD_XDIR) )
+          GRD_xr(n,K0,l,ADM_AI ,GRD_YDIR) = 0.5_DP * ( GRD_xt(ijm1,K0,l,ADM_TJ,GRD_YDIR) + GRD_xt(ij,K0,l,ADM_TI,GRD_YDIR) )
+          GRD_xr(n,K0,l,ADM_AI ,GRD_ZDIR) = 0.5_DP * ( GRD_xt(ijm1,K0,l,ADM_TJ,GRD_ZDIR) + GRD_xt(ij,K0,l,ADM_TI,GRD_ZDIR) )
        enddo
 
        nstart = suf(ADM_gmin-1,ADM_gmin-1)
@@ -1182,9 +1184,9 @@ contains
        do n = nstart, nend
           ij     = n
 
-          GRD_xr(n,K0,l,ADM_AIJ,GRD_XDIR) = 0.5_RP * ( GRD_xt(ij,K0,l,ADM_TI,GRD_XDIR) + GRD_xt(ij,K0,l,ADM_TJ,GRD_XDIR) )
-          GRD_xr(n,K0,l,ADM_AIJ,GRD_YDIR) = 0.5_RP * ( GRD_xt(ij,K0,l,ADM_TI,GRD_YDIR) + GRD_xt(ij,K0,l,ADM_TJ,GRD_YDIR) )
-          GRD_xr(n,K0,l,ADM_AIJ,GRD_ZDIR) = 0.5_RP * ( GRD_xt(ij,K0,l,ADM_TI,GRD_ZDIR) + GRD_xt(ij,K0,l,ADM_TJ,GRD_ZDIR) )
+          GRD_xr(n,K0,l,ADM_AIJ,GRD_XDIR) = 0.5_DP * ( GRD_xt(ij,K0,l,ADM_TI,GRD_XDIR) + GRD_xt(ij,K0,l,ADM_TJ,GRD_XDIR) )
+          GRD_xr(n,K0,l,ADM_AIJ,GRD_YDIR) = 0.5_DP * ( GRD_xt(ij,K0,l,ADM_TI,GRD_YDIR) + GRD_xt(ij,K0,l,ADM_TJ,GRD_YDIR) )
+          GRD_xr(n,K0,l,ADM_AIJ,GRD_ZDIR) = 0.5_DP * ( GRD_xt(ij,K0,l,ADM_TI,GRD_ZDIR) + GRD_xt(ij,K0,l,ADM_TJ,GRD_ZDIR) )
        enddo
 
        nstart = suf(ADM_gmin  ,ADM_gmin-1)
@@ -1194,9 +1196,9 @@ contains
           ij     = n
           im1j   = n - 1
 
-          GRD_xr(n,K0,l,ADM_AJ ,GRD_XDIR) = 0.5_RP * ( GRD_xt(ij,K0,l,ADM_TJ,GRD_XDIR) + GRD_xt(im1j,K0,l,ADM_TI,GRD_XDIR) )
-          GRD_xr(n,K0,l,ADM_AJ ,GRD_YDIR) = 0.5_RP * ( GRD_xt(ij,K0,l,ADM_TJ,GRD_YDIR) + GRD_xt(im1j,K0,l,ADM_TI,GRD_YDIR) )
-          GRD_xr(n,K0,l,ADM_AJ ,GRD_ZDIR) = 0.5_RP * ( GRD_xt(ij,K0,l,ADM_TJ,GRD_ZDIR) + GRD_xt(im1j,K0,l,ADM_TI,GRD_ZDIR) )
+          GRD_xr(n,K0,l,ADM_AJ ,GRD_XDIR) = 0.5_DP * ( GRD_xt(ij,K0,l,ADM_TJ,GRD_XDIR) + GRD_xt(im1j,K0,l,ADM_TI,GRD_XDIR) )
+          GRD_xr(n,K0,l,ADM_AJ ,GRD_YDIR) = 0.5_DP * ( GRD_xt(ij,K0,l,ADM_TJ,GRD_YDIR) + GRD_xt(im1j,K0,l,ADM_TI,GRD_YDIR) )
+          GRD_xr(n,K0,l,ADM_AJ ,GRD_ZDIR) = 0.5_DP * ( GRD_xt(ij,K0,l,ADM_TJ,GRD_ZDIR) + GRD_xt(im1j,K0,l,ADM_TI,GRD_ZDIR) )
        enddo
     enddo
 
@@ -1209,9 +1211,9 @@ contains
              ijm1 = v - 1
              if( ijm1 == ADM_gmin_pl - 1 ) ijm1 = ADM_gmax_pl
 
-             GRD_xr_pl(v,K0,l,GRD_XDIR) = 0.5_RP * (GRD_xt_pl(ijm1,K0,l,GRD_XDIR)+GRD_xt_pl(ij,K0,l,GRD_XDIR))
-             GRD_xr_pl(v,K0,l,GRD_YDIR) = 0.5_RP * (GRD_xt_pl(ijm1,K0,l,GRD_YDIR)+GRD_xt_pl(ij,K0,l,GRD_YDIR))
-             GRD_xr_pl(v,K0,l,GRD_ZDIR) = 0.5_RP * (GRD_xt_pl(ijm1,K0,l,GRD_ZDIR)+GRD_xt_pl(ij,K0,l,GRD_ZDIR))
+             GRD_xr_pl(v,K0,l,GRD_XDIR) = 0.5_DP * (GRD_xt_pl(ijm1,K0,l,GRD_XDIR)+GRD_xt_pl(ij,K0,l,GRD_XDIR))
+             GRD_xr_pl(v,K0,l,GRD_YDIR) = 0.5_DP * (GRD_xt_pl(ijm1,K0,l,GRD_YDIR)+GRD_xt_pl(ij,K0,l,GRD_YDIR))
+             GRD_xr_pl(v,K0,l,GRD_ZDIR) = 0.5_DP * (GRD_xt_pl(ijm1,K0,l,GRD_ZDIR)+GRD_xt_pl(ij,K0,l,GRD_ZDIR))
           enddo
        enddo
     endif

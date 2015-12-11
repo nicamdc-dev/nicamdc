@@ -46,11 +46,16 @@ module mod_src
   !++ Public procedure
   !
   public :: src_advection_convergence_momentum
+  public :: src_advection_convergence_momentum_dp
   public :: src_advection_convergence
+  public :: src_advection_convergence_dp
   public :: src_flux_convergence
+  public :: src_flux_convergence_dp
 
   public :: src_pres_gradient
+  public :: src_pres_gradient_dp
   public :: src_buoyancy
+  public :: src_buoyancy_dp
 
   !-----------------------------------------------------------------------------
   !
@@ -342,6 +347,274 @@ contains
     return
   end subroutine src_advection_convergence_momentum
 
+  subroutine src_advection_convergence_momentum_DP( &
+       vx,      vx_pl,      &
+       vy,      vy_pl,      &
+       vz,      vz_pl,      &
+       w,       w_pl,       &
+       rhog,    rhog_pl,    &
+       rhogvx,  rhogvx_pl,  &
+       rhogvy,  rhogvy_pl,  &
+       rhogvz,  rhogvz_pl,  &
+       rhogw,   rhogw_pl,   &
+       grhogvx, grhogvx_pl, &
+       grhogvy, grhogvy_pl, &
+       grhogvz, grhogvz_pl, &
+       grhogw,  grhogw_pl   )
+    use mod_adm, only: &
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_kmin,    &
+       ADM_kmax,    &
+       ADM_KNONE
+    use mod_cnst, only: &
+       OHM => CNST_EOHM
+    use mod_grd, only: &
+       GRD_rscale, &
+       GRD_XDIR,   &
+       GRD_YDIR,   &
+       GRD_ZDIR,   &
+       GRD_x,      &
+       GRD_x_pl,   &
+       GRD_cfac,   &
+       GRD_dfac
+    use mod_vmtr, only: &
+       VMTR_C2Wfact,    &
+       VMTR_C2Wfact_pl
+    use mod_runconf, only : &
+       NON_HYDRO_ALPHA
+    implicit none
+
+    real(DP), intent(in)  :: vx       (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP), intent(in)  :: vx_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(in)  :: vy       (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP), intent(in)  :: vy_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(in)  :: vz       (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP), intent(in)  :: vz_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(in)  :: w        (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP), intent(in)  :: w_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+
+    real(DP), intent(in)  :: rhog     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP), intent(in)  :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(in)  :: rhogvx   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP), intent(in)  :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(in)  :: rhogvy   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP), intent(in)  :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(in)  :: rhogvz   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP), intent(in)  :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(in)  :: rhogw    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP), intent(in)  :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+
+    real(DP), intent(out) :: grhogvx   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP), intent(out) :: grhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(out) :: grhogvy   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP), intent(out) :: grhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(out) :: grhogvz   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP), intent(out) :: grhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(out) :: grhogw    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP), intent(out) :: grhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+
+    real(DP) :: vvx       (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP) :: vvx_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP) :: vvy       (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP) :: vvy_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP) :: vvz       (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP) :: vvz_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP) :: dvvx      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP) :: dvvx_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP) :: dvvy      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP) :: dvvy_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP) :: dvvz      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP) :: dvvz_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP) :: grhogwc   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP) :: grhogwc_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+
+    real(DP) :: prd, wc
+
+    integer :: g, k, l
+    !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('____src_advection_convergence_m_DP')
+
+    !---< merge horizontal velocity & vertical velocity >
+
+    do l = 1, ADM_lall
+       do k = ADM_kmin,ADM_kmax
+       do g = 1, ADM_gall
+          wc = 0.5_DP * ( GRD_cfac(k) * w(g,k+1,l) &
+                       + GRD_dfac(k) * w(g,k  ,l) )
+
+          vvx(g,k,l) = vx(g,k,l) + wc * GRD_x(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
+          vvy(g,k,l) = vy(g,k,l) + wc * GRD_x(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
+          vvz(g,k,l) = vz(g,k,l) + wc * GRD_x(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
+       enddo
+       enddo
+
+       do g = 1, ADM_gall
+          vvx(g,ADM_kmin-1,l) = 0.0_DP
+          vvx(g,ADM_kmax+1,l) = 0.0_DP
+          vvy(g,ADM_kmin-1,l) = 0.0_DP
+          vvy(g,ADM_kmax+1,l) = 0.0_DP
+          vvz(g,ADM_kmin-1,l) = 0.0_DP
+          vvz(g,ADM_kmax+1,l) = 0.0_DP
+       enddo
+    enddo
+
+    if ( ADM_have_pl ) then
+       do l = 1, ADM_lall_pl
+          do k = ADM_kmin, ADM_kmax
+          do g = 1, ADM_gall_pl
+             wc = 0.5_DP * ( GRD_cfac(k) * w_pl(g,k+1,l) &
+                          + GRD_dfac(k) * w_pl(g,k  ,l) )
+
+             vvx_pl(g,k,l) = vx_pl(g,k,l) + wc * GRD_x_pl(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
+             vvy_pl(g,k,l) = vy_pl(g,k,l) + wc * GRD_x_pl(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
+             vvz_pl(g,k,l) = vz_pl(g,k,l) + wc * GRD_x_pl(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
+          enddo
+          enddo
+
+          do g = 1, ADM_gall_pl
+             vvx_pl(g,ADM_kmin-1,l) = 0.0_DP
+             vvx_pl(g,ADM_kmax+1,l) = 0.0_DP
+             vvy_pl(g,ADM_kmin-1,l) = 0.0_DP
+             vvy_pl(g,ADM_kmax+1,l) = 0.0_DP
+             vvz_pl(g,ADM_kmin-1,l) = 0.0_DP
+             vvz_pl(g,ADM_kmax+1,l) = 0.0_DP
+          enddo
+       enddo
+    endif
+
+    !---< advection term for momentum >
+
+    call src_advection_convergence_DP( rhogvx, rhogvx_pl, & ! [IN]
+                                    rhogvy, rhogvy_pl, & ! [IN]
+                                    rhogvz, rhogvz_pl, & ! [IN]
+                                    rhogw,  rhogw_pl,  & ! [IN]
+                                    vvx,    vvx_pl,    & ! [IN]
+                                    dvvx,   dvvx_pl,   & ! [OUT]
+                                    I_SRC_default      ) ! [IN]
+
+    call src_advection_convergence_DP( rhogvx, rhogvx_pl, & ! [IN]
+                                    rhogvy, rhogvy_pl, & ! [IN]
+                                    rhogvz, rhogvz_pl, & ! [IN]
+                                    rhogw,  rhogw_pl,  & ! [IN]
+                                    vvy,    vvy_pl,    & ! [IN]
+                                    dvvy,   dvvy_pl,   & ! [OUT]
+                                    I_SRC_default      ) ! [IN]
+
+    call src_advection_convergence_DP( rhogvx, rhogvx_pl, & ! [IN]
+                                    rhogvy, rhogvy_pl, & ! [IN]
+                                    rhogvz, rhogvz_pl, & ! [IN]
+                                    rhogw,  rhogw_pl,  & ! [IN]
+                                    vvz,    vvz_pl,    & ! [IN]
+                                    dvvz,   dvvz_pl,   & ! [OUT]
+                                    I_SRC_default      ) ! [IN]
+
+
+    do l = 1, ADM_lall
+       !---< coriolis force >
+       do k = ADM_kmin, ADM_kmax
+       do g = 1, ADM_gall
+          dvvx(g,k,l) = dvvx(g,k,l) - 2.0_DP * rhog(g,k,l) * ( -OHM * vvy(g,k,l) )
+          dvvy(g,k,l) = dvvy(g,k,l) - 2.0_DP * rhog(g,k,l) * (  OHM * vvx(g,k,l) )
+       enddo
+       enddo
+
+       !---< horizontalize & separate vertical velocity >
+       do k = ADM_kmin, ADM_kmax
+       do g = 1, ADM_gall
+          prd = dvvx(g,k,l) * GRD_x(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale &
+              + dvvy(g,k,l) * GRD_x(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale &
+              + dvvz(g,k,l) * GRD_x(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
+
+          grhogvx(g,k,l) = dvvx(g,k,l) - prd * GRD_x(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
+          grhogvy(g,k,l) = dvvy(g,k,l) - prd * GRD_x(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
+          grhogvz(g,k,l) = dvvz(g,k,l) - prd * GRD_x(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
+
+          grhogwc(g,k,l) = prd * real(NON_HYDRO_ALPHA,kind=DP)
+       enddo
+       enddo
+
+       do k = ADM_kmin+1, ADM_kmax
+       do g = 1, ADM_gall
+          grhogw(g,k,l) = ( VMTR_C2Wfact(g,k,1,l) * grhogwc(g,k  ,l) &
+                          + VMTR_C2Wfact(g,k,2,l) * grhogwc(g,k-1,l) )
+       enddo
+       enddo
+
+       do g = 1, ADM_gall
+          grhogvx(g,ADM_kmin-1,l) = 0.0_DP
+          grhogvx(g,ADM_kmax+1,l) = 0.0_DP
+          grhogvy(g,ADM_kmin-1,l) = 0.0_DP
+          grhogvy(g,ADM_kmax+1,l) = 0.0_DP
+          grhogvz(g,ADM_kmin-1,l) = 0.0_DP
+          grhogvz(g,ADM_kmax+1,l) = 0.0_DP
+          grhogw (g,ADM_kmin-1,l) = 0.0_DP
+          grhogw (g,ADM_kmin  ,l) = 0.0_DP
+          grhogw (g,ADM_kmax+1,l) = 0.0_DP
+       enddo
+    enddo
+
+    if ( ADM_have_pl ) then
+       do l = 1, ADM_lall_pl
+          !---< coriolis force >
+          do k = ADM_kmin, ADM_kmax
+          do g = 1, ADM_gall_pl
+             dvvx_pl(g,k,l) = dvvx_pl(g,k,l) - 2.0_DP * rhog_pl(g,k,l) * ( -OHM * vvy_pl(g,k,l) )
+             dvvy_pl(g,k,l) = dvvy_pl(g,k,l) - 2.0_DP * rhog_pl(g,k,l) * (  OHM * vvx_pl(g,k,l) )
+          enddo
+          enddo
+
+          !---< horizontalize & separate vertical velocity >
+          do k = ADM_kmin, ADM_kmax
+          do g = 1, ADM_gall_pl
+             prd = dvvx_pl(g,k,l) * GRD_x_pl(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale &
+                 + dvvy_pl(g,k,l) * GRD_x_pl(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale &
+                 + dvvz_pl(g,k,l) * GRD_x_pl(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
+
+             grhogvx_pl(g,k,l) = dvvx_pl(g,k,l) - prd * GRD_x_pl(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
+             grhogvy_pl(g,k,l) = dvvy_pl(g,k,l) - prd * GRD_x_pl(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
+             grhogvz_pl(g,k,l) = dvvz_pl(g,k,l) - prd * GRD_x_pl(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
+
+             grhogwc_pl(g,k,l) = prd * real(NON_HYDRO_ALPHA,kind=DP)
+          enddo
+          enddo
+
+          do k = ADM_kmin+1, ADM_kmax
+          do g = 1, ADM_gall_pl
+             grhogw_pl(g,k,l) = ( VMTR_C2Wfact_pl(g,k,1,l) * grhogwc_pl(g,k  ,l) &
+                                + VMTR_C2Wfact_pl(g,k,2,l) * grhogwc_pl(g,k-1,l) )
+          enddo
+          enddo
+
+          do g = 1, ADM_gall_pl
+             grhogvx_pl(g,ADM_kmin-1,l) = 0.0_DP
+             grhogvx_pl(g,ADM_kmax+1,l) = 0.0_DP
+             grhogvy_pl(g,ADM_kmin-1,l) = 0.0_DP
+             grhogvy_pl(g,ADM_kmax+1,l) = 0.0_DP
+             grhogvz_pl(g,ADM_kmin-1,l) = 0.0_DP
+             grhogvz_pl(g,ADM_kmax+1,l) = 0.0_DP
+             grhogw_pl (g,ADM_kmin-1,l) = 0.0_DP
+             grhogw_pl (g,ADM_kmin  ,l) = 0.0_DP
+             grhogw_pl (g,ADM_kmax+1,l) = 0.0_DP
+          enddo
+       enddo
+    else
+       grhogvx_pl(:,:,:) = 0.0_DP
+       grhogvy_pl(:,:,:) = 0.0_DP
+       grhogvz_pl(:,:,:) = 0.0_DP
+       grhogw_pl (:,:,:) = 0.0_DP
+    endif
+
+    call DEBUG_rapend('____src_advection_convergence_m_DP')
+
+    return
+  end subroutine src_advection_convergence_momentum_DP
+
   !-----------------------------------------------------------------------------
   !> Advection convergence
   subroutine src_advection_convergence( &
@@ -487,6 +760,149 @@ contains
     return
   end subroutine src_advection_convergence
 
+  subroutine src_advection_convergence_DP( &
+       rhogvx,   rhogvx_pl,   &
+       rhogvy,   rhogvy_pl,   &
+       rhogvz,   rhogvz_pl,   &
+       rhogw,    rhogw_pl,    &
+       scl,      scl_pl,      &
+       grhogscl, grhogscl_pl, &
+       fluxtype               )
+    use mod_adm, only: &
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_kmin,    &
+       ADM_kmax
+    use mod_grd, only: &
+       GRD_afac, &
+       GRD_bfac
+    implicit none
+
+    real(DP), intent(in)  :: rhogvx     (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vx ( G^1/2 x gam2 )
+    real(DP), intent(in)  :: rhogvx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(in)  :: rhogvy     (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vy ( G^1/2 x gam2 )
+    real(DP), intent(in)  :: rhogvy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(in)  :: rhogvz     (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vz ( G^1/2 x gam2 )
+    real(DP), intent(in)  :: rhogvz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(in)  :: rhogw      (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*w  ( G^1/2 x gam2 )
+    real(DP), intent(in)  :: rhogw_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(in)  :: scl        (ADM_gall,   ADM_kall,ADM_lall   ) ! scalar
+    real(DP), intent(in)  :: scl_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(out) :: grhogscl   (ADM_gall,   ADM_kall,ADM_lall   ) ! scalar tendency
+    real(DP), intent(out) :: grhogscl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    integer, intent(in)  :: fluxtype ! scheme type
+                                     ! I_SRC_default    : horizontal & vertical convergence
+                                     ! I_SRC_horizontal : horizontal convergence
+
+    real(DP) :: rhogvxscl   (ADM_gall,   ADM_kall,ADM_lall   ) ! scalar * rho*Vx ( G^1/2 x gam2 )
+    real(DP) :: rhogvxscl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP) :: rhogvyscl   (ADM_gall,   ADM_kall,ADM_lall   ) ! scalar * rho*Vy ( G^1/2 x gam2 )
+    real(DP) :: rhogvyscl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP) :: rhogvzscl   (ADM_gall,   ADM_kall,ADM_lall   ) ! scalar * rho*Vz ( G^1/2 x gam2 )
+    real(DP) :: rhogvzscl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP) :: rhogwscl    (ADM_gall,   ADM_kall,ADM_lall   ) ! scalar * rho*w  ( G^1/2 x gam2 )
+    real(DP) :: rhogwscl_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+
+    integer :: g, k, l
+    !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('____src_advection_convergence_DP')
+
+    ! rhogvh * scl
+!OCL SERIAL
+    do l = 1, ADM_lall
+!OCL PARALLEL
+    do k = 1, ADM_kall
+    do g = 1, ADM_gall
+       rhogvxscl(g,k,l) = rhogvx(g,k,l) * scl(g,k,l)
+       rhogvyscl(g,k,l) = rhogvy(g,k,l) * scl(g,k,l)
+       rhogvzscl(g,k,l) = rhogvz(g,k,l) * scl(g,k,l)
+    enddo
+    enddo
+    enddo
+
+    if ( ADM_have_pl ) then
+       do l = 1, ADM_lall_pl
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall_pl
+          rhogvxscl_pl(g,k,l) = rhogvx_pl(g,k,l) * scl_pl(g,k,l)
+          rhogvyscl_pl(g,k,l) = rhogvy_pl(g,k,l) * scl_pl(g,k,l)
+          rhogvzscl_pl(g,k,l) = rhogvz_pl(g,k,l) * scl_pl(g,k,l)
+       enddo
+       enddo
+       enddo
+    endif
+
+    ! rhogw * scl at half level
+    if ( fluxtype == I_SRC_default ) then
+
+       do l = 1, ADM_lall
+          do k = ADM_kmin, ADM_kmax+1
+          do g = 1, ADM_gall
+             rhogwscl(g,k,l) = rhogw(g,k,l) * 0.5_DP * ( GRD_afac(k) * scl(g,k,  l) &
+                                                      + GRD_bfac(k) * scl(g,k-1,l) )
+          enddo
+          enddo
+          do g = 1, ADM_gall
+             rhogwscl(g,ADM_kmin-1,l) = 0.0_DP
+          enddo
+       enddo
+
+       if ( ADM_have_pl ) then
+          do l = 1, ADM_lall_pl
+             do k = ADM_kmin, ADM_kmax+1
+             do g = 1, ADM_gall_pl
+                rhogwscl_pl(g,k,l) = rhogw_pl(g,k,l) * 0.5_DP * ( GRD_afac(k) * scl_pl(g,k  ,l) &
+                                                               + GRD_bfac(k) * scl_pl(g,k-1,l) )
+             enddo
+             enddo
+             do g = 1, ADM_gall_pl
+                rhogwscl_pl(g,ADM_kmin-1,l) = 0.0_DP
+             enddo
+          enddo
+       endif
+
+    elseif( fluxtype == I_SRC_horizontal ) then
+
+!OCL SERIAL
+       do l = 1, ADM_lall
+!OCL PARALLEL
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
+          rhogwscl(g,k,l) = 0.0_DP
+       enddo
+       enddo
+       enddo
+
+       if ( ADM_have_pl ) then
+          do l = 1, ADM_lall_pl
+          do k = 1, ADM_kall
+          do g = 1, ADM_gall_pl
+             rhogwscl_pl(g,k,l) = 0.0_DP
+          enddo
+          enddo
+          enddo
+       endif
+
+    endif
+
+    !--- flux convergence step
+    call src_flux_convergence_DP( rhogvxscl, rhogvxscl_pl, & ! [IN]
+                               rhogvyscl, rhogvyscl_pl, & ! [IN]
+                               rhogvzscl, rhogvzscl_pl, & ! [IN]
+                               rhogwscl,  rhogwscl_pl,  & ! [IN]
+                               grhogscl,  grhogscl_pl,  & ! [OUT]
+                               fluxtype                 ) ! [IN]
+
+    call DEBUG_rapend('____src_advection_convergence_DP')
+
+    return
+  end subroutine src_advection_convergence_DP
+  
   !-----------------------------------------------------------------------------
   !> Flux convergence calculation
   !! 1. Horizontal flux convergence is calculated by using rhovx, rhovy, and
@@ -665,6 +1081,178 @@ contains
     return
   end subroutine src_flux_convergence
 
+  subroutine src_flux_convergence_DP( &
+       rhogvx, rhogvx_pl, &
+       rhogvy, rhogvy_pl, &
+       rhogvz, rhogvz_pl, &
+       rhogw,  rhogw_pl,  &
+       grhog,  grhog_pl,  &
+       fluxtype           )
+    use mod_adm, only: &
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_kmin,    &
+       ADM_kmax
+    use mod_grd, only: &
+       GRD_rdgz
+    use mod_vmtr, only: &
+       VMTR_RGAM,         &
+       VMTR_RGAM_pl,      &
+       VMTR_RGAMH,        &
+       VMTR_RGAMH_pl,     &
+       VMTR_RGSQRTH,      &
+       VMTR_RGSQRTH_pl,   &
+       VMTR_C2WfactGz,    &
+       VMTR_C2WfactGz_pl
+    use mod_oprt, only: &
+       OPRT_divergence_DP
+    implicit none
+
+    real(DP), intent(in)  :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vx ( G^1/2 x gam2 )
+    real(DP), intent(in)  :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(in)  :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vy ( G^1/2 x gam2 )
+    real(DP), intent(in)  :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(in)  :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vz ( G^1/2 x gam2 )
+    real(DP), intent(in)  :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(in)  :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*w  ( G^1/2 x gam2 )
+    real(DP), intent(in)  :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(out) :: grhog    (ADM_gall,   ADM_kall,ADM_lall   ) ! source
+    real(DP), intent(out) :: grhog_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    integer, intent(in)  :: fluxtype ! scheme type
+                                     ! I_SRC_default    : horizontal & vertical convergence
+                                     ! I_SRC_horizontal : horizontal convergence
+
+    real(DP) :: div_rhogvh   (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal convergence
+    real(DP) :: div_rhogvh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+
+    real(DP) :: rhogvx_vm   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*vx / vertical metrics
+    real(DP) :: rhogvx_vm_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP) :: rhogvy_vm   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*vy / vertical metrics
+    real(DP) :: rhogvy_vm_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP) :: rhogvz_vm   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*vz / vertical metrics
+    real(DP) :: rhogvz_vm_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP) :: rhogw_vmh   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*w  / vertical metrics
+    real(DP) :: rhogw_vmh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+
+    real(DP) :: vertical_flag
+
+    integer :: g, k, l
+    !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('____src_flux_convergence_DP')
+
+    if ( fluxtype == I_SRC_default ) then ! Default
+       vertical_flag = 1.0_DP
+    elseif( fluxtype == I_SRC_horizontal ) then ! Horizontal
+       vertical_flag = 0.0_DP
+    endif
+
+    do l = 1, ADM_lall
+       !--- Horizontal flux
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
+          rhogvx_vm(g,k,l) = rhogvx(g,k,l) * VMTR_RGAM(g,k,l)
+          rhogvy_vm(g,k,l) = rhogvy(g,k,l) * VMTR_RGAM(g,k,l)
+          rhogvz_vm(g,k,l) = rhogvz(g,k,l) * VMTR_RGAM(g,k,l)
+       enddo
+       enddo
+
+       !--- Vertical flux
+       do k = ADM_kmin+1, ADM_kmax
+       do g = 1, ADM_gall
+          rhogw_vmh(g,k,l) = ( VMTR_C2WfactGz(g,k,1,l) * rhogvx(g,k  ,l) &
+                             + VMTR_C2WfactGz(g,k,2,l) * rhogvx(g,k-1,l) &
+                             + VMTR_C2WfactGz(g,k,3,l) * rhogvy(g,k  ,l) &
+                             + VMTR_C2WfactGz(g,k,4,l) * rhogvy(g,k-1,l) &
+                             + VMTR_C2WfactGz(g,k,5,l) * rhogvz(g,k  ,l) &
+                             + VMTR_C2WfactGz(g,k,6,l) * rhogvz(g,k-1,l) &
+                             ) * VMTR_RGAMH(g,k,l)                       &      ! horizontal contribution
+                           + vertical_flag * rhogw(g,k,l) * VMTR_RGSQRTH(g,k,l) ! vertical   contribution
+       enddo
+       enddo
+       do g = 1, ADM_gall
+          rhogw_vmh(g,ADM_kmin  ,l) = 0.0_DP
+          rhogw_vmh(g,ADM_kmax+1,l) = 0.0_DP
+       enddo
+    enddo
+
+    if ( ADM_have_pl ) then
+       do l = 1, ADM_lall_pl
+          !--- Horizontal flux
+          do k = 1, ADM_kall
+          do g = 1, ADM_gall_pl
+             rhogvx_vm_pl(g,k,l) = rhogvx_pl(g,k,l) * VMTR_RGAM_pl(g,k,l)
+             rhogvy_vm_pl(g,k,l) = rhogvy_pl(g,k,l) * VMTR_RGAM_pl(g,k,l)
+             rhogvz_vm_pl(g,k,l) = rhogvz_pl(g,k,l) * VMTR_RGAM_pl(g,k,l)
+          enddo
+          enddo
+
+          !--- Vertical flux
+          do k = ADM_kmin+1, ADM_kmax
+          do g = 1, ADM_gall_pl
+             rhogw_vmh_pl(g,k,l) = ( VMTR_C2WfactGz_pl(g,k,1,l) * rhogvx_pl(g,k  ,l) &
+                                   + VMTR_C2WfactGz_pl(g,k,2,l) * rhogvx_pl(g,k-1,l) &
+                                   + VMTR_C2WfactGz_pl(g,k,3,l) * rhogvy_pl(g,k  ,l) &
+                                   + VMTR_C2WfactGz_pl(g,k,4,l) * rhogvy_pl(g,k-1,l) &
+                                   + VMTR_C2WfactGz_pl(g,k,5,l) * rhogvz_pl(g,k  ,l) &
+                                   + VMTR_C2WfactGz_pl(g,k,6,l) * rhogvz_pl(g,k-1,l) &
+                                   ) * VMTR_RGAMH_pl(g,k,l)                          &      ! horizontal contribution
+                                 + vertical_flag * rhogw_pl(g,k,l) * VMTR_RGSQRTH_pl(g,k,l) ! vertical   contribution
+          enddo
+          enddo
+          do g = 1, ADM_gall_pl
+             rhogw_vmh_pl(g,ADM_kmin  ,l) = 0.0_DP
+             rhogw_vmh_pl(g,ADM_kmax+1,l) = 0.0_DP
+          enddo
+       enddo
+    endif
+
+    !--- Horizontal flux convergence
+    call OPRT_divergence_DP( div_rhogvh, div_rhogvh_pl, & ! [OUT]
+                          rhogvx_vm,  rhogvx_vm_pl,  & ! [IN]
+                          rhogvy_vm,  rhogvy_vm_pl,  & ! [IN]
+                          rhogvz_vm,  rhogvz_vm_pl   ) ! [IN]
+
+    !--- Total flux convergence
+    do l = 1, ADM_lall
+       do k = ADM_kmin, ADM_kmax
+       do g = 1, ADM_gall
+          grhog(g,k,l) = - div_rhogvh(g,k,l) &
+                         - ( rhogw_vmh(g,k+1,l)-rhogw_vmh(g,k,l) ) * GRD_rdgz(k)
+       enddo
+       enddo
+
+       do g = 1, ADM_gall
+          grhog(g,ADM_kmin-1,l) = 0.0_DP
+          grhog(g,ADM_kmax+1,l) = 0.0_DP
+       enddo
+    enddo
+
+    if ( ADM_have_pl ) then
+       do l = 1, ADM_lall_pl
+          do k = ADM_kmin, ADM_kmax
+          do g = 1, ADM_gall_pl
+             grhog_pl(g,k,l) = - div_rhogvh_pl(g,k,l) &
+                               - ( rhogw_vmh_pl(g,k+1,l)-rhogw_vmh_pl(g,k,l) ) * GRD_rdgz(k)
+          enddo
+          enddo
+
+          do g = 1, ADM_gall_pl
+             grhog_pl(g,ADM_kmin-1,l) = 0.0_DP
+             grhog_pl(g,ADM_kmax+1,l) = 0.0_DP
+          enddo
+       enddo
+    endif
+
+    call DEBUG_rapend('____src_flux_convergence_DP')
+
+    return
+  end subroutine src_flux_convergence_DP
+  
   !-----------------------------------------------------------------------------
   !> Gradient operator
   subroutine src_pres_gradient( &
@@ -884,6 +1472,223 @@ contains
     return
   end subroutine src_pres_gradient
 
+  subroutine src_pres_gradient_DP( &
+       P,      P_pl,      &
+       Pgrad,  Pgrad_pl,  &
+       Pgradw, Pgradw_pl, &
+       gradtype          )
+    use mod_adm, only: &
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_kmin,    &
+       ADM_kmax,    &
+       ADM_nxyz
+    use mod_grd, only: &
+       GRD_XDIR, &
+       GRD_YDIR, &
+       GRD_ZDIR, &
+       GRD_rdgz, &
+       GRD_rdgzh
+    use mod_vmtr, only: &
+       VMTR_RGAM,         &
+       VMTR_RGAM_pl,      &
+       VMTR_RGAMH,        &
+       VMTR_RGAMH_pl,     &
+       VMTR_RGSGAM2,      &
+       VMTR_RGSGAM2_pl,   &
+       VMTR_GAM2H,        &
+       VMTR_GAM2H_pl,     &
+       VMTR_C2WfactGz,    &
+       VMTR_C2WfactGz_pl
+    use mod_oprt, only: &
+       OPRT_gradient_DP,          &
+       OPRT_horizontalize_vec_DP
+    implicit none
+
+    real(DP), intent(in)  :: P        (ADM_gall   ,ADM_kall,ADM_lall   )          ! phi * G^1/2 * gamma^2
+    real(DP), intent(in)  :: P_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(out) :: Pgrad    (ADM_gall   ,ADM_kall,ADM_lall   ,ADM_nxyz) ! horizontal gradient
+    real(DP), intent(out) :: Pgrad_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,ADM_nxyz)
+    real(DP), intent(out) :: Pgradw   (ADM_gall   ,ADM_kall,ADM_lall   )          ! vertical gradient
+    real(DP), intent(out) :: Pgradw_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    integer, intent(in)  :: gradtype ! scheme type
+                                     ! I_SRC_default    : horizontal & vertical gradient
+                                     ! I_SRC_horizontal : horizontal gradient
+
+    real(DP) :: P_vm    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(DP) :: P_vm_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP) :: P_vmh   (ADM_gall   ,ADM_kall,ADM_lall   ,ADM_nxyz)
+    real(DP) :: P_vmh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,ADM_nxyz)
+
+    integer :: g, k, l, d
+    !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('____src_pres_gradient_DP')
+
+    !---< horizontal gradient, horizontal contribution >---
+
+!OCL SERIAL
+    do l = 1, ADM_lall
+!OCL PARALLEL
+    do k = 1, ADM_kall
+    do g = 1, ADM_gall
+       P_vm(g,k,l) = P(g,k,l) * VMTR_RGAM(g,k,l)
+    enddo
+    enddo
+    enddo
+
+    if ( ADM_have_pl) then
+       do l = 1, ADM_lall_pl
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall_pl
+          P_vm_pl(g,k,l) = P_pl(g,k,l) * VMTR_RGAM_pl(g,k,l)
+       enddo
+       enddo
+       enddo
+    endif
+
+    call OPRT_gradient_DP( P_vm (:,:,:),   P_vm_pl (:,:,:),  & ! [IN]
+                        Pgrad(:,:,:,:), Pgrad_pl(:,:,:,:) ) ! [OUT]
+
+    !---< horizontal gradient, vertical contribution >---
+
+!OCL SERIAL
+    do l = 1, ADM_lall
+!OCL PARALLEL
+    do k = ADM_kmin, ADM_kmax+1
+    do g = 1, ADM_gall
+       P_vmh(g,k,l,GRD_XDIR) = ( VMTR_C2WfactGz(g,k,1,l) * P(g,k  ,l) &
+                               + VMTR_C2WfactGz(g,k,2,l) * P(g,k-1,l) ) * VMTR_RGAMH(g,k,l)
+       P_vmh(g,k,l,GRD_YDIR) = ( VMTR_C2WfactGz(g,k,3,l) * P(g,k  ,l) &
+                               + VMTR_C2WfactGz(g,k,4,l) * P(g,k-1,l) ) * VMTR_RGAMH(g,k,l)
+       P_vmh(g,k,l,GRD_ZDIR) = ( VMTR_C2WfactGz(g,k,5,l) * P(g,k  ,l) &
+                               + VMTR_C2WfactGz(g,k,6,l) * P(g,k-1,l) ) * VMTR_RGAMH(g,k,l)
+    enddo
+    enddo
+    enddo
+
+!OCL SERIAL
+    do d = 1, ADM_nxyz
+    do l = 1, ADM_lall
+!OCL PARALLEL
+       do k = ADM_kmin, ADM_kmax
+       do g = 1, ADM_gall
+          Pgrad(g,k,l,d) = Pgrad(g,k,l,d) + ( P_vmh(g,k+1,l,d) - P_vmh(g,k,l,d) ) * GRD_rdgz(k)
+       enddo
+       enddo
+
+       if ( first_layer_remedy ) then !--- At the lowest layer, do not use the extrapolation value
+          do g = 1, ADM_gall
+             Pgrad(g,ADM_kmin,l,d) = Pgrad(g,ADM_kmin+1,l,d)
+          enddo
+       endif
+
+       do g = 1, ADM_gall
+          Pgrad(g,ADM_kmin-1,l,d) = 0.0_DP
+          Pgrad(g,ADM_kmax+1,l,d) = 0.0_DP
+       enddo
+    enddo
+    enddo
+
+    if ( ADM_have_pl ) then
+       do l = 1, ADM_lall_pl
+       do k = ADM_kmin, ADM_kmax+1
+       do g = 1, ADM_gall_pl
+          P_vmh_pl(g,k,l,GRD_XDIR) = ( VMTR_C2WfactGz_pl(g,k,1,l) * P_pl(g,k  ,l) &
+                                     + VMTR_C2WfactGz_pl(g,k,2,l) * P_pl(g,k-1,l) ) * VMTR_RGAMH_pl(g,k,l)
+          P_vmh_pl(g,k,l,GRD_YDIR) = ( VMTR_C2WfactGz_pl(g,k,3,l) * P_pl(g,k  ,l) &
+                                     + VMTR_C2WfactGz_pl(g,k,4,l) * P_pl(g,k-1,l) ) * VMTR_RGAMH_pl(g,k,l)
+          P_vmh_pl(g,k,l,GRD_ZDIR) = ( VMTR_C2WfactGz_pl(g,k,5,l) * P_pl(g,k  ,l) &
+                                     + VMTR_C2WfactGz_pl(g,k,6,l) * P_pl(g,k-1,l) ) * VMTR_RGAMH_pl(g,k,l)
+       enddo
+       enddo
+       enddo
+
+       do d = 1, ADM_nxyz
+       do l = 1, ADM_lall_pl
+          do k = ADM_kmin, ADM_kmax
+          do g = 1, ADM_gall_pl
+             Pgrad_pl(g,k,l,d) = Pgrad_pl(g,k,l,d) + ( P_vmh_pl(g,k+1,l,d) - P_vmh_pl(g,k,l,d) ) * GRD_rdgz(k)
+          enddo
+          enddo
+
+          if ( first_layer_remedy ) then !--- At the lowest layer, do not use the extrapolation value!
+             do g = 1, ADM_gall_pl
+                Pgrad_pl(g,ADM_kmin,l,d) = Pgrad_pl(g,ADM_kmin+1,l,d)
+             enddo
+          endif
+
+          do g = 1, ADM_gall_pl
+             Pgrad_pl(g,ADM_kmin-1,l,d) = 0.0_DP
+             Pgrad_pl(g,ADM_kmax+1,l,d) = 0.0_DP
+          enddo
+       enddo
+       enddo
+    endif
+
+    !--- horizontalize
+    call OPRT_horizontalize_vec_DP( Pgrad(:,:,:,GRD_XDIR), Pgrad_pl(:,:,:,GRD_XDIR), & ! [INOUT]
+                                 Pgrad(:,:,:,GRD_YDIR), Pgrad_pl(:,:,:,GRD_YDIR), & ! [INOUT]
+                                 Pgrad(:,:,:,GRD_ZDIR), Pgrad_pl(:,:,:,GRD_ZDIR)  ) ! [INOUT]
+
+
+
+    !---< vertical gradient (half level) >---
+
+    if ( gradtype == I_SRC_default ) then
+
+       do l = 1, ADM_lall
+          do k = ADM_kmin+1, ADM_kmax
+          do g = 1, ADM_gall
+             Pgradw(g,k,l) = VMTR_GAM2H(g,k,l) * ( P(g,k  ,l) * VMTR_RGSGAM2(g,k  ,l) &
+                                                 - P(g,k-1,l) * VMTR_RGSGAM2(g,k-1,l) &
+                                                 ) * GRD_rdgzh(k)
+          enddo
+          enddo
+
+          do g = 1, ADM_gall
+             Pgradw(g,ADM_kmin-1,l) = 0.0_DP
+             Pgradw(g,ADM_kmin  ,l) = 0.0_DP
+             Pgradw(g,ADM_kmax+1,l) = 0.0_DP
+          enddo
+       enddo
+
+       if ( ADM_have_pl ) then
+          do l = 1, ADM_lall_pl
+             do k = ADM_kmin+1, ADM_kmax
+             do g = 1, ADM_gall_pl
+                Pgradw_pl(g,k,l) = VMTR_GAM2H_pl(g,k,l) * ( P_pl(g,k  ,l) * VMTR_RGSGAM2_pl(g,k  ,l) &
+                                                          - P_pl(g,k-1,l) * VMTR_RGSGAM2_pl(g,k-1,l) &
+                                                          ) * GRD_rdgzh(k)
+             enddo
+             enddo
+
+             do g = 1, ADM_gall_pl
+                Pgradw_pl(g,ADM_kmin-1,l) = 0.0_DP
+                Pgradw_pl(g,ADM_kmin  ,l) = 0.0_DP
+                Pgradw_pl(g,ADM_kmax+1,l) = 0.0_DP
+             enddo
+          enddo
+       endif
+
+    elseif( gradtype == I_SRC_horizontal ) then
+
+       Pgradw(:,:,:) = 0.0_DP
+       if ( ADM_have_pl ) then
+          Pgradw_pl(:,:,:) = 0.0_DP
+       endif
+
+    endif
+
+    call DEBUG_rapend('____src_pres_gradient_DP')
+
+    return
+  end subroutine src_pres_gradient_DP
+
   !-----------------------------------------------------------------------------
   !> Calculation of buoyacy force
   !> NOTICE : Upward direction is positive for buoiw.
@@ -952,5 +1757,71 @@ contains
 
     return
   end subroutine src_buoyancy
+
+  subroutine src_buoyancy_DP( &
+       rhog,  rhog_pl, &
+       buoiw, buoiw_pl )
+    use mod_adm, only: &
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_kmin,    &
+       ADM_kmax
+    use mod_cnst, only: &
+       GRAV => CNST_EGRAV
+    use mod_vmtr, only: &
+       VMTR_C2Wfact,    &
+       VMTR_C2Wfact_pl
+    implicit none
+
+    real(DP), intent(in)  :: rhog    (ADM_gall   ,ADM_kall,ADM_lall   ) ! density perturbation ( G^1/2 x gam2 )
+    real(DP), intent(in)  :: rhog_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(DP), intent(out) :: buoiw   (ADM_gall   ,ADM_kall,ADM_lall   ) ! buoyancy force  at half level
+    real(DP), intent(out) :: buoiw_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+
+    integer :: g, k, l
+    !---------------------------------------------------------------------------
+
+    call DEBUG_rapstart('____src_buoyancy_DP')
+
+    do l = 1, ADM_lall
+       do k = ADM_kmin+1, ADM_kmax
+       do g = 1, ADM_gall
+          buoiw(g,k,l) = -GRAV * ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k  ,l) &
+                                 + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
+       enddo
+       enddo
+
+       do g = 1, ADM_gall
+          buoiw(g,ADM_kmin-1,l) = 0.0_DP
+          buoiw(g,ADM_kmin  ,l) = 0.0_DP
+          buoiw(g,ADM_kmax+1,l) = 0.0_DP
+       enddo
+    enddo
+
+    if ( ADM_have_pl ) then
+       do l = 1, ADM_lall_pl
+          do k = ADM_kmin+1, ADM_kmax
+          do g = 1, ADM_gall_pl
+             buoiw_pl(g,k,l) = -GRAV * ( VMTR_C2Wfact_pl(g,k,1,l) * rhog_pl(g,k  ,l) &
+                                       + VMTR_C2Wfact_pl(g,k,2,l) * rhog_pl(g,k-1,l) )
+          enddo
+          enddo
+
+          do g = 1, ADM_gall_pl
+             buoiw_pl(g,ADM_kmin-1,l) = 0.0_DP
+             buoiw_pl(g,ADM_kmin  ,l) = 0.0_DP
+             buoiw_pl(g,ADM_kmax+1,l) = 0.0_DP
+          enddo
+       enddo
+    endif
+
+    call DEBUG_rapend('____src_buoyancy_DP')
+
+    return
+  end subroutine src_buoyancy_DP
 
 end module mod_src
