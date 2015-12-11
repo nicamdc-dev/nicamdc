@@ -321,11 +321,11 @@ contains
     allocate( rayleigh_coef  (ADM_kall) )
     allocate( rayleigh_coef_h(ADM_kall) )
 
-    call height_factor( ADM_kall, real(GRD_gz(:)), real(GRD_htop), zlimit, fact(:) )
+    call height_factor( ADM_kall, real(GRD_gz(:),kind=RP), real(GRD_htop,kind=RP), zlimit, fact(:) )
 
     rayleigh_coef(:) = alpha * fact(:)
 
-    call height_factor( ADM_kall, real(GRD_gzh(:)), real(GRD_htop), zlimit, fact(:) )
+    call height_factor( ADM_kall, real(GRD_gzh(:),kind=RP), real(GRD_htop,kind=RP), zlimit, fact(:) )
 
     rayleigh_coef_h(:) = alpha * fact(:)
 
@@ -599,7 +599,7 @@ contains
 
     endif
 
-    call height_factor( ADM_kall, real(GRD_gz(:)), real(GRD_htop), zlimit_lap1, fact(:) )
+    call height_factor( ADM_kall, real(GRD_gz(:),kind=RP), real(GRD_htop,kind=RP), zlimit_lap1, fact(:) )
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
@@ -990,7 +990,7 @@ contains
        endif
     endif
 
-    call height_factor( ADM_kall, real(GRD_gz(:)), real(GRD_htop), zlimit, fact(:) )
+    call height_factor( ADM_kall, real(GRD_gz(:),kind=RP), real(GRD_htop,kind=RP), zlimit, fact(:) )
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
@@ -1265,7 +1265,7 @@ contains
 
 
     if ( hdiff_nonlinear ) then
-       call height_factor( ADM_kall, real(GRD_gz(:)), real(GRD_htop), ZD_hdiff_nl, fact(:) )
+       call height_factor( ADM_kall, real(GRD_gz(:),kind=RP), real(GRD_htop,kind=RP), ZD_hdiff_nl, fact(:) )
 
        kh_max(:) = ( 1.0_RP - fact(:) ) * Kh_coef_maxlim &
                  + (        fact(:) ) * Kh_coef_minlim

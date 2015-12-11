@@ -713,9 +713,9 @@ contains
 
           call MISC_get_latlon( lat,                    & ! [OUT]
                                 lon,                    & ! [OUT]
-                                real(GRD_x(ij,k,l,GRD_XDIR)), & ! [IN]
-                                real(GRD_x(ij,k,l,GRD_YDIR)), & ! [IN]
-                                real(GRD_x(ij,k,l,GRD_ZDIR))  ) ! [IN]
+                                real(GRD_x(ij,k,l,GRD_XDIR),kind=RP), & ! [IN]
+                                real(GRD_x(ij,k,l,GRD_YDIR),kind=RP), & ! [IN]
+                                real(GRD_x(ij,k,l,GRD_ZDIR),kind=RP)  ) ! [IN]
 
           if ( 0.5_RP*PI-abs(lat) > criteria ) then
              lat_trans = asin( ( MKGRD_stretch_alpha*(1.0_RP+sin(lat)) / (1.0_RP-sin(lat)) - 1.0_RP ) &
@@ -739,9 +739,9 @@ contains
 
           call MISC_get_latlon( lat,                       & ! [OUT]
                                 lon,                       & ! [OUT]
-                                real(GRD_x_pl(ij,k,l,GRD_XDIR)), & ! [IN]
-                                real(GRD_x_pl(ij,k,l,GRD_YDIR)), & ! [IN]
-                                real(GRD_x_pl(ij,k,l,GRD_ZDIR))  ) ! [IN]
+                                real(GRD_x_pl(ij,k,l,GRD_XDIR),kind=RP), & ! [IN]
+                                real(GRD_x_pl(ij,k,l,GRD_YDIR),kind=RP), & ! [IN]
+                                real(GRD_x_pl(ij,k,l,GRD_ZDIR),kind=RP)  ) ! [IN]
 
           if ( 0.5_RP*PI-abs(lat) > criteria ) then
              lat_trans = asin( ( MKGRD_stretch_alpha*(1.0_RP+sin(lat)) / (1.0_RP-sin(lat)) - 1.0_RP ) &

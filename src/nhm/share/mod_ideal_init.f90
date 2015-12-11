@@ -1342,9 +1342,9 @@ contains
                              GRD_x(n,K0,l,GRD_YDIR), &
                              GRD_x(n,K0,l,GRD_ZDIR)  )
 
-       call tomita_2004( kdim, real(lat), z_local, wix, wiy, tmp, prs, logout )
+       call tomita_2004( kdim, real(lat,kind=RP), z_local, wix, wiy, tmp, prs, logout )
        logout = .false.
-       call conv_vxvyvz ( kdim, real(lat), real(lon), wix, wiy, vx_local, vy_local, vz_local )
+       call conv_vxvyvz ( kdim, real(lat,kind=RP), real(lon,kind=RP), wix, wiy, vx_local, vy_local, vz_local )
 
        do k = 1, kdim
           DIAG_var(n,k,l,1) = prs(k)
@@ -1808,7 +1808,7 @@ contains
           ptb_wiy(k) = 0.0_RP
        enddo
 
-       call conv_vxvyvz( kdim, real(lat), real(lon), ptb_wix, ptb_wiy, ptb_vx, ptb_vy, ptb_vz )
+       call conv_vxvyvz( kdim, real(lat,kind=RP), real(lon,kind=RP), ptb_wix, ptb_wiy, ptb_vx, ptb_vy, ptb_vz )
        do k = 1, kdim
           DIAG_var(n,k,l,ID_vx) = DIAG_var(n,k,l,ID_vx) + ptb_vx(k)
           DIAG_var(n,k,l,ID_vy) = DIAG_var(n,k,l,ID_vy) + ptb_vy(k)
