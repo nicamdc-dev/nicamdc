@@ -36,6 +36,8 @@ module mod_oprt
   use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID,      &
+     ADM_NSYS,         &
+     ADM_MAXFNAME,     &
      TI  => ADM_TI,    &
      TJ  => ADM_TJ,    &
      AI  => ADM_AI,    &
@@ -147,9 +149,6 @@ module mod_oprt
 #endif
 #endif
 
-
-
-  
   !-----------------------------------------------------------------------------
   !
   !++ Private procedure
@@ -158,19 +157,24 @@ module mod_oprt
   !
   !++ Private parameters & variables
   !
+  character(len=ADM_MAXFNAME), private :: OPRT_fname   = ''
+  character(len=ADM_NSYS),     private :: OPRT_io_mode = 'LEGACY'
+
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
   !> Setup
   subroutine OPRT_setup
     use mod_adm, only: &
-       ADM_have_pl,    &
-       ADM_have_sgp,   &
-       ADM_gall_1d,    &
-       ADM_gmin,       &
-       ADM_gmax,       &
-       ADM_gslf_pl,    &
-       ADM_gmin_pl,    &
+       ADM_CTL_FID,   &
+       ADM_proc_stop, &
+       ADM_have_pl,   &
+       ADM_have_sgp,  &
+       ADM_gall_1d,   &
+       ADM_gmin,      &
+       ADM_gmax,      &
+       ADM_gslf_pl,   &
+       ADM_gmin_pl,   &
        ADM_gmax_pl
     use mod_gmtr, only: &
        GMTR_P_var,    &
@@ -188,10 +192,27 @@ contains
     integer :: im1j, ijm1, im1jm1
 
     integer :: n, l, m, md, v
+
+    namelist / OPRTPARAM / &
+       OPRT_io_mode, &
+       OPRT_fname
+
+    integer :: ierr
     !---------------------------------------------------------------------------
 
+    !--- read parameters
     write(ADM_LOG_FID,*)
     write(ADM_LOG_FID,*) '+++ Module[oprt]/Category[common share]'
+    rewind(ADM_CTL_FID)
+    read(ADM_CTL_FID,nml=OPRTPARAM,iostat=ierr)
+    if ( ierr < 0 ) then
+       write(ADM_LOG_FID,*) '*** OPRTPARAM is not specified. use default.'
+    elseif( ierr > 0 ) then
+       write(*,          *) 'xxx Not appropriate names in namelist OPRTPARAM. STOP.'
+       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist OPRTPARAM. STOP.'
+       call ADM_proc_stop
+    endif
+    write(ADM_LOG_FID,nml=OPRTPARAM)
 
     ! dummy call
     call DEBUG_rapstart('OPRT_divergence')
@@ -1620,6 +1641,11 @@ contains
        cinterp_PRA(n,l)    = GMTR_P_var(n,k0,l,P_RAREA)
     enddo
     enddo
+
+
+    if ( OPRT_fname /= "" ) then
+       call OPRT_output_coef( OPRT_fname )
+    endif
 
     return
   end subroutine OPRT_setup
@@ -3087,7 +3113,6 @@ contains
     return
   end subroutine OPRT_setup_DP
 
-  
   !-----------------------------------------------------------------------------
   subroutine OPRT_divergence( &
        scl, scl_pl, &
@@ -5201,6 +5226,143 @@ contains
 
     return
   end subroutine OPRT_divdamp_DP
+
+  !-----------------------------------------------------------------------------
+  subroutine OPRT_output_coef( &
+       basename )
+    use mod_misc, only: &
+       MISC_make_idstr,&
+       MISC_get_available_fid
+    use mod_adm, only: &
+       ADM_proc_stop, &
+       ADM_prc_tab,   &
+       ADM_prc_me
+    use mod_fio, only: &
+       FIO_output_DP, &
+       FIO_HMID,   &
+       FIO_REAL8
+    implicit none
+
+    character(LEN=*), intent(in) :: basename
+
+    character(LEN=128)      :: fname
+    character(LEN=FIO_HMID) :: desc = 'Coefficients info'
+
+    real(DP) :: tmp(ADM_gall,70,ADM_lall)
+
+    integer :: rgnid
+    integer :: fid
+    integer :: g, l
+    !---------------------------------------------------------------------------
+
+    do l = 1, ADM_lall
+    do g = 1, ADM_gall
+       tmp(g, 1,l) = cdiv (g,l,0,1)
+       tmp(g, 2,l) = cdiv (g,l,0,2)
+       tmp(g, 3,l) = cdiv (g,l,0,3)
+       tmp(g, 4,l) = cdiv (g,l,1,1)
+       tmp(g, 5,l) = cdiv (g,l,1,2)
+       tmp(g, 6,l) = cdiv (g,l,1,3)
+       tmp(g, 7,l) = cdiv (g,l,2,1)
+       tmp(g, 8,l) = cdiv (g,l,2,2)
+       tmp(g, 9,l) = cdiv (g,l,2,3)
+       tmp(g,10,l) = cdiv (g,l,3,1)
+       tmp(g,11,l) = cdiv (g,l,3,2)
+       tmp(g,12,l) = cdiv (g,l,3,3)
+       tmp(g,13,l) = cdiv (g,l,4,1)
+       tmp(g,14,l) = cdiv (g,l,4,2)
+       tmp(g,15,l) = cdiv (g,l,4,3)
+       tmp(g,16,l) = cdiv (g,l,5,1)
+       tmp(g,17,l) = cdiv (g,l,5,2)
+       tmp(g,18,l) = cdiv (g,l,5,3)
+       tmp(g,19,l) = cdiv (g,l,6,1)
+       tmp(g,20,l) = cdiv (g,l,6,2)
+       tmp(g,21,l) = cdiv (g,l,6,3)
+       tmp(g,22,l) = cgrad(g,l,0,1)
+       tmp(g,23,l) = cgrad(g,l,0,2)
+       tmp(g,24,l) = cgrad(g,l,0,3)
+       tmp(g,25,l) = cgrad(g,l,1,1)
+       tmp(g,26,l) = cgrad(g,l,1,2)
+       tmp(g,27,l) = cgrad(g,l,1,3)
+       tmp(g,28,l) = cgrad(g,l,2,1)
+       tmp(g,29,l) = cgrad(g,l,2,2)
+       tmp(g,30,l) = cgrad(g,l,2,3)
+       tmp(g,31,l) = cgrad(g,l,3,1)
+       tmp(g,32,l) = cgrad(g,l,3,2)
+       tmp(g,33,l) = cgrad(g,l,3,3)
+       tmp(g,34,l) = cgrad(g,l,4,1)
+       tmp(g,35,l) = cgrad(g,l,4,2)
+       tmp(g,36,l) = cgrad(g,l,4,3)
+       tmp(g,37,l) = cgrad(g,l,5,1)
+       tmp(g,38,l) = cgrad(g,l,5,2)
+       tmp(g,39,l) = cgrad(g,l,5,3)
+       tmp(g,40,l) = cgrad(g,l,6,1)
+       tmp(g,41,l) = cgrad(g,l,6,2)
+       tmp(g,42,l) = cgrad(g,l,6,3)
+       tmp(g,43,l) = clap (g,l,0)
+       tmp(g,44,l) = clap (g,l,1)
+       tmp(g,45,l) = clap (g,l,2)
+       tmp(g,46,l) = clap (g,l,3)
+       tmp(g,47,l) = clap (g,l,4)
+       tmp(g,48,l) = clap (g,l,5)
+       tmp(g,49,l) = clap (g,l,6)
+
+       tmp(g,50,l) = cinterp_TN(g,l,1,1)
+       tmp(g,51,l) = cinterp_TN(g,l,1,2)
+       tmp(g,52,l) = cinterp_TN(g,l,1,3)
+       tmp(g,53,l) = cinterp_TN(g,l,2,1)
+       tmp(g,54,l) = cinterp_TN(g,l,2,2)
+       tmp(g,55,l) = cinterp_TN(g,l,2,3)
+       tmp(g,56,l) = cinterp_TN(g,l,3,1)
+       tmp(g,57,l) = cinterp_TN(g,l,3,2)
+       tmp(g,58,l) = cinterp_TN(g,l,3,3)
+       tmp(g,59,l) = cinterp_HN(g,l,1,1)
+       tmp(g,60,l) = cinterp_HN(g,l,1,2)
+       tmp(g,61,l) = cinterp_HN(g,l,1,3)
+       tmp(g,62,l) = cinterp_HN(g,l,2,1)
+       tmp(g,63,l) = cinterp_HN(g,l,2,2)
+       tmp(g,64,l) = cinterp_HN(g,l,2,3)
+       tmp(g,65,l) = cinterp_HN(g,l,3,1)
+       tmp(g,66,l) = cinterp_HN(g,l,3,2)
+       tmp(g,67,l) = cinterp_HN(g,l,3,3)
+       tmp(g,68,l) = cinterp_TRA(g,l,1)
+       tmp(g,69,l) = cinterp_TRA(g,l,2)
+       tmp(g,70,l) = cinterp_PRA(g,l)
+    enddo
+    enddo
+
+    if ( OPRT_io_mode == 'ADVANCED' ) then
+
+       call FIO_output_DP( tmp(:,:,:),                                        &
+                           basename, desc, "",                                &
+                           "oprtcoef", "oprt coef", "",                       &
+                           "", FIO_REAL8, "LAYERNM", 1, 70, 1, 0.0_DP, 0.0_DP )
+
+    elseif( OPRT_io_mode == 'LEGACY' ) then
+
+       do l = 1, ADM_lall
+          rgnid = ADM_prc_tab(l,ADM_prc_me)
+          call MISC_make_idstr(fname,trim(basename),'rgn',rgnid)
+
+          fid = MISC_get_available_fid()
+          open( unit   = fid,           &
+                file   = trim(fname),   &
+                form   = 'unformatted', &
+                access = 'direct',      &
+                recl   = ADM_gall*70*8  )
+
+             write(fid,rec=1) tmp(:,:,l)
+
+          close(fid)
+       enddo
+
+    else
+       write(ADM_LOG_FID,*) 'Invalid io_mode!'
+       call ADM_proc_stop
+    endif
+
+    return
+  end subroutine OPRT_output_coef
 
   !-----------------------------------------------------------------------------
   integer function suf(i,j)

@@ -167,7 +167,9 @@ contains
     character(len=ADM_NSYS) :: polygon_type
 
     namelist / GMTRPARAM / &
-       polygon_type
+       polygon_type, &
+       GMTR_io_mode, &
+       GMTR_fname
 
     integer :: ierr
     integer :: K0
@@ -994,6 +996,8 @@ contains
     real(DP) :: tmp   (ADM_gall   ,ADM_KNONE,ADM_lall   ,2)
     real(DP) :: tmp_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,2)
 
+    real(DP) :: tmp2(ADM_gall,60,ADM_lall)
+
     integer :: rgnid
     integer, parameter :: I_rgn  = 1
     integer, parameter :: I_grid = 2
@@ -1003,6 +1007,73 @@ contains
     !---------------------------------------------------------------------------
 
     K0 = ADM_KNONE
+
+    do l = 1, ADM_lall
+    do g = 1, ADM_gall
+       tmp2(g, 1,l) = GMTR_P_var(g,K0,l,1)
+       tmp2(g, 2,l) = GMTR_P_var(g,K0,l,2)
+       tmp2(g, 3,l) = GMTR_P_var(g,K0,l,3)
+       tmp2(g, 4,l) = GMTR_P_var(g,K0,l,4)
+       tmp2(g, 5,l) = GMTR_P_var(g,K0,l,5)
+       tmp2(g, 6,l) = GMTR_P_var(g,K0,l,6)
+       tmp2(g, 7,l) = GMTR_P_var(g,K0,l,7)
+       tmp2(g, 8,l) = GMTR_P_var(g,K0,l,8)
+       tmp2(g, 9,l) = GMTR_P_var(g,K0,l,9)
+       tmp2(g,10,l) = GMTR_P_var(g,K0,l,10)
+
+       tmp2(g,11,l) = GMTR_T_var(g,K0,l,1,1)
+       tmp2(g,12,l) = GMTR_T_var(g,K0,l,1,2)
+       tmp2(g,13,l) = GMTR_T_var(g,K0,l,1,3)
+       tmp2(g,14,l) = GMTR_T_var(g,K0,l,1,4)
+       tmp2(g,15,l) = GMTR_T_var(g,K0,l,1,5)
+       tmp2(g,16,l) = GMTR_T_var(g,K0,l,1,6)
+       tmp2(g,17,l) = GMTR_T_var(g,K0,l,1,7)
+       tmp2(g,18,l) = GMTR_T_var(g,K0,l,2,1)
+       tmp2(g,19,l) = GMTR_T_var(g,K0,l,2,2)
+       tmp2(g,20,l) = GMTR_T_var(g,K0,l,2,3)
+       tmp2(g,21,l) = GMTR_T_var(g,K0,l,2,4)
+       tmp2(g,22,l) = GMTR_T_var(g,K0,l,2,5)
+       tmp2(g,23,l) = GMTR_T_var(g,K0,l,2,6)
+       tmp2(g,24,l) = GMTR_T_var(g,K0,l,2,7)
+
+       tmp2(g,25,l) = GMTR_A_var(g,K0,l,1, 1)
+       tmp2(g,26,l) = GMTR_A_var(g,K0,l,1, 2)
+       tmp2(g,27,l) = GMTR_A_var(g,K0,l,1, 3)
+       tmp2(g,28,l) = GMTR_A_var(g,K0,l,1, 4)
+       tmp2(g,29,l) = GMTR_A_var(g,K0,l,1, 5)
+       tmp2(g,30,l) = GMTR_A_var(g,K0,l,1, 6)
+       tmp2(g,31,l) = GMTR_A_var(g,K0,l,1, 7)
+       tmp2(g,32,l) = GMTR_A_var(g,K0,l,1, 8)
+       tmp2(g,33,l) = GMTR_A_var(g,K0,l,1, 9)
+       tmp2(g,34,l) = GMTR_A_var(g,K0,l,1,10)
+       tmp2(g,35,l) = GMTR_A_var(g,K0,l,1,11)
+       tmp2(g,36,l) = GMTR_A_var(g,K0,l,1,12)
+       tmp2(g,37,l) = GMTR_A_var(g,K0,l,2, 1)
+       tmp2(g,38,l) = GMTR_A_var(g,K0,l,2, 2)
+       tmp2(g,39,l) = GMTR_A_var(g,K0,l,2, 3)
+       tmp2(g,40,l) = GMTR_A_var(g,K0,l,2, 4)
+       tmp2(g,41,l) = GMTR_A_var(g,K0,l,2, 5)
+       tmp2(g,42,l) = GMTR_A_var(g,K0,l,2, 6)
+       tmp2(g,43,l) = GMTR_A_var(g,K0,l,2, 7)
+       tmp2(g,44,l) = GMTR_A_var(g,K0,l,2, 8)
+       tmp2(g,45,l) = GMTR_A_var(g,K0,l,2, 9)
+       tmp2(g,46,l) = GMTR_A_var(g,K0,l,2,10)
+       tmp2(g,47,l) = GMTR_A_var(g,K0,l,2,11)
+       tmp2(g,48,l) = GMTR_A_var(g,K0,l,2,12)
+       tmp2(g,49,l) = GMTR_A_var(g,K0,l,3, 1)
+       tmp2(g,50,l) = GMTR_A_var(g,K0,l,3, 2)
+       tmp2(g,51,l) = GMTR_A_var(g,K0,l,3, 3)
+       tmp2(g,52,l) = GMTR_A_var(g,K0,l,3, 4)
+       tmp2(g,53,l) = GMTR_A_var(g,K0,l,3, 5)
+       tmp2(g,54,l) = GMTR_A_var(g,K0,l,3, 6)
+       tmp2(g,55,l) = GMTR_A_var(g,K0,l,3, 7)
+       tmp2(g,56,l) = GMTR_A_var(g,K0,l,3, 8)
+       tmp2(g,57,l) = GMTR_A_var(g,K0,l,3, 9)
+       tmp2(g,58,l) = GMTR_A_var(g,K0,l,3,10)
+       tmp2(g,59,l) = GMTR_A_var(g,K0,l,3,11)
+       tmp2(g,60,l) = GMTR_A_var(g,K0,l,3,12)
+    enddo
+    enddo
 
     do l = 1, ADM_lall
        rgnid = ADM_prc_tab(l,ADM_prc_me)
@@ -1045,6 +1116,11 @@ contains
                         basename, desc, "",                                &
                         "grid", "grid number", "",                         &
                         "NIL", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP    )
+
+       call FIO_output_DP( tmp2(:,:,:),                                       &
+                           basename, desc, "",                                &
+                           "gmtrmetrics", "gmtr metrics", "",                 &
+                           "", FIO_REAL8, "LAYERNM", 1, 60, 1, 0.0_DP, 0.0_DP )
 
     elseif( GMTR_io_mode == 'LEGACY' ) then
 
