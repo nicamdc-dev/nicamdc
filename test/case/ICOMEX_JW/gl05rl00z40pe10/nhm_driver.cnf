@@ -21,11 +21,11 @@
 /
 
 &GMTRPARAM
-    GMTR_io_mode = 'ADVANCED', GMTR_fname = 'metrics_GL07RL03Az78',
+    GMTR_io_mode = 'ADVANCED', GMTR_fname = 'metrics_GL05RL00',
 /
 
 &OPRTPARAM
-    OPRT_io_mode = 'ADVANCED', OPRT_fname = 'metrics_GL07RL03Az78',
+    OPRT_io_mode = 'ADVANCED', OPRT_fname = 'metrics_GL05RL00',
 /
 
 &TIMEPARAM

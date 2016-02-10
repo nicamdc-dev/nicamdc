@@ -5236,11 +5236,14 @@ contains
     use mod_adm, only: &
        ADM_proc_stop, &
        ADM_prc_tab,   &
+       ADM_have_pl,   &
        ADM_prc_me
     use mod_fio, only: &
        FIO_output_DP, &
        FIO_HMID,   &
        FIO_REAL8
+    use mod_comm, only: &
+       COMM_data_transfer_DP
     implicit none
 
     character(LEN=*), intent(in) :: basename
@@ -5248,7 +5251,8 @@ contains
     character(LEN=128)      :: fname
     character(LEN=FIO_HMID) :: desc = 'Coefficients info'
 
-    real(DP) :: tmp(ADM_gall,70,ADM_lall)
+    real(DP) :: tmp   (ADM_gall   ,49,ADM_lall   ,1)
+    real(DP) :: tmp_pl(ADM_gall_pl,49,ADM_lall_pl,1)
 
     integer :: rgnid
     integer :: fid
@@ -5256,105 +5260,123 @@ contains
     !---------------------------------------------------------------------------
 
     do l = 1, ADM_lall
-    do g = 1, ADM_gall
-       tmp(g, 1,l) = cdiv (g,l,0,1)
-       tmp(g, 2,l) = cdiv (g,l,0,2)
-       tmp(g, 3,l) = cdiv (g,l,0,3)
-       tmp(g, 4,l) = cdiv (g,l,1,1)
-       tmp(g, 5,l) = cdiv (g,l,1,2)
-       tmp(g, 6,l) = cdiv (g,l,1,3)
-       tmp(g, 7,l) = cdiv (g,l,2,1)
-       tmp(g, 8,l) = cdiv (g,l,2,2)
-       tmp(g, 9,l) = cdiv (g,l,2,3)
-       tmp(g,10,l) = cdiv (g,l,3,1)
-       tmp(g,11,l) = cdiv (g,l,3,2)
-       tmp(g,12,l) = cdiv (g,l,3,3)
-       tmp(g,13,l) = cdiv (g,l,4,1)
-       tmp(g,14,l) = cdiv (g,l,4,2)
-       tmp(g,15,l) = cdiv (g,l,4,3)
-       tmp(g,16,l) = cdiv (g,l,5,1)
-       tmp(g,17,l) = cdiv (g,l,5,2)
-       tmp(g,18,l) = cdiv (g,l,5,3)
-       tmp(g,19,l) = cdiv (g,l,6,1)
-       tmp(g,20,l) = cdiv (g,l,6,2)
-       tmp(g,21,l) = cdiv (g,l,6,3)
-       tmp(g,22,l) = cgrad(g,l,0,1)
-       tmp(g,23,l) = cgrad(g,l,0,2)
-       tmp(g,24,l) = cgrad(g,l,0,3)
-       tmp(g,25,l) = cgrad(g,l,1,1)
-       tmp(g,26,l) = cgrad(g,l,1,2)
-       tmp(g,27,l) = cgrad(g,l,1,3)
-       tmp(g,28,l) = cgrad(g,l,2,1)
-       tmp(g,29,l) = cgrad(g,l,2,2)
-       tmp(g,30,l) = cgrad(g,l,2,3)
-       tmp(g,31,l) = cgrad(g,l,3,1)
-       tmp(g,32,l) = cgrad(g,l,3,2)
-       tmp(g,33,l) = cgrad(g,l,3,3)
-       tmp(g,34,l) = cgrad(g,l,4,1)
-       tmp(g,35,l) = cgrad(g,l,4,2)
-       tmp(g,36,l) = cgrad(g,l,4,3)
-       tmp(g,37,l) = cgrad(g,l,5,1)
-       tmp(g,38,l) = cgrad(g,l,5,2)
-       tmp(g,39,l) = cgrad(g,l,5,3)
-       tmp(g,40,l) = cgrad(g,l,6,1)
-       tmp(g,41,l) = cgrad(g,l,6,2)
-       tmp(g,42,l) = cgrad(g,l,6,3)
-       tmp(g,43,l) = clap (g,l,0)
-       tmp(g,44,l) = clap (g,l,1)
-       tmp(g,45,l) = clap (g,l,2)
-       tmp(g,46,l) = clap (g,l,3)
-       tmp(g,47,l) = clap (g,l,4)
-       tmp(g,48,l) = clap (g,l,5)
-       tmp(g,49,l) = clap (g,l,6)
+       do g = 1, ADM_gall
+          tmp(g, 1,l,1) = cdiv (g,l,0,1)
+          tmp(g, 2,l,1) = cdiv (g,l,0,2)
+          tmp(g, 3,l,1) = cdiv (g,l,0,3)
+          tmp(g, 4,l,1) = cdiv (g,l,1,1)
+          tmp(g, 5,l,1) = cdiv (g,l,1,2)
+          tmp(g, 6,l,1) = cdiv (g,l,1,3)
+          tmp(g, 7,l,1) = cdiv (g,l,2,1)
+          tmp(g, 8,l,1) = cdiv (g,l,2,2)
+          tmp(g, 9,l,1) = cdiv (g,l,2,3)
+          tmp(g,10,l,1) = cdiv (g,l,3,1)
+          tmp(g,11,l,1) = cdiv (g,l,3,2)
+          tmp(g,12,l,1) = cdiv (g,l,3,3)
+          tmp(g,13,l,1) = cdiv (g,l,4,1)
+          tmp(g,14,l,1) = cdiv (g,l,4,2)
+          tmp(g,15,l,1) = cdiv (g,l,4,3)
+          tmp(g,16,l,1) = cdiv (g,l,5,1)
+          tmp(g,17,l,1) = cdiv (g,l,5,2)
+          tmp(g,18,l,1) = cdiv (g,l,5,3)
+          tmp(g,19,l,1) = cdiv (g,l,6,1)
+          tmp(g,20,l,1) = cdiv (g,l,6,2)
+          tmp(g,21,l,1) = cdiv (g,l,6,3)
+          tmp(g,22,l,1) = cgrad(g,l,0,1)
+          tmp(g,23,l,1) = cgrad(g,l,0,2)
+          tmp(g,24,l,1) = cgrad(g,l,0,3)
+          tmp(g,25,l,1) = cgrad(g,l,1,1)
+          tmp(g,26,l,1) = cgrad(g,l,1,2)
+          tmp(g,27,l,1) = cgrad(g,l,1,3)
+          tmp(g,28,l,1) = cgrad(g,l,2,1)
+          tmp(g,29,l,1) = cgrad(g,l,2,2)
+          tmp(g,30,l,1) = cgrad(g,l,2,3)
+          tmp(g,31,l,1) = cgrad(g,l,3,1)
+          tmp(g,32,l,1) = cgrad(g,l,3,2)
+          tmp(g,33,l,1) = cgrad(g,l,3,3)
+          tmp(g,34,l,1) = cgrad(g,l,4,1)
+          tmp(g,35,l,1) = cgrad(g,l,4,2)
+          tmp(g,36,l,1) = cgrad(g,l,4,3)
+          tmp(g,37,l,1) = cgrad(g,l,5,1)
+          tmp(g,38,l,1) = cgrad(g,l,5,2)
+          tmp(g,39,l,1) = cgrad(g,l,5,3)
+          tmp(g,40,l,1) = cgrad(g,l,6,1)
+          tmp(g,41,l,1) = cgrad(g,l,6,2)
+          tmp(g,42,l,1) = cgrad(g,l,6,3)
+          tmp(g,43,l,1) = clap (g,l,0)
+          tmp(g,44,l,1) = clap (g,l,1)
+          tmp(g,45,l,1) = clap (g,l,2)
+          tmp(g,46,l,1) = clap (g,l,3)
+          tmp(g,47,l,1) = clap (g,l,4)
+          tmp(g,48,l,1) = clap (g,l,5)
+          tmp(g,49,l,1) = clap (g,l,6)
+       enddo
+    enddo
 
-       tmp(g,50,l) = cinterp_TN(g,l,1,1)
-       tmp(g,51,l) = cinterp_TN(g,l,1,2)
-       tmp(g,52,l) = cinterp_TN(g,l,1,3)
-       tmp(g,53,l) = cinterp_TN(g,l,2,1)
-       tmp(g,54,l) = cinterp_TN(g,l,2,2)
-       tmp(g,55,l) = cinterp_TN(g,l,2,3)
-       tmp(g,56,l) = cinterp_TN(g,l,3,1)
-       tmp(g,57,l) = cinterp_TN(g,l,3,2)
-       tmp(g,58,l) = cinterp_TN(g,l,3,3)
-       tmp(g,59,l) = cinterp_HN(g,l,1,1)
-       tmp(g,60,l) = cinterp_HN(g,l,1,2)
-       tmp(g,61,l) = cinterp_HN(g,l,1,3)
-       tmp(g,62,l) = cinterp_HN(g,l,2,1)
-       tmp(g,63,l) = cinterp_HN(g,l,2,2)
-       tmp(g,64,l) = cinterp_HN(g,l,2,3)
-       tmp(g,65,l) = cinterp_HN(g,l,3,1)
-       tmp(g,66,l) = cinterp_HN(g,l,3,2)
-       tmp(g,67,l) = cinterp_HN(g,l,3,3)
-       tmp(g,68,l) = cinterp_TRA(g,l,1)
-       tmp(g,69,l) = cinterp_TRA(g,l,2)
-       tmp(g,70,l) = cinterp_PRA(g,l)
-    enddo
-    enddo
+    if ( ADM_have_pl ) Then
+       do l = 1, ADM_lall_pl
+       do g = 1, ADM_gall_pl
+          tmp_pl(g, 1,l,1) = cdiv_pl (g,l,0,1)
+          tmp_pl(g, 2,l,1) = cdiv_pl (g,l,0,2)
+          tmp_pl(g, 3,l,1) = cdiv_pl (g,l,0,3)
+          tmp_pl(g, 4,l,1) = cdiv_pl (g,l,1,1)
+          tmp_pl(g, 5,l,1) = cdiv_pl (g,l,1,2)
+          tmp_pl(g, 6,l,1) = cdiv_pl (g,l,1,3)
+          tmp_pl(g, 7,l,1) = cdiv_pl (g,l,2,1)
+          tmp_pl(g, 8,l,1) = cdiv_pl (g,l,2,2)
+          tmp_pl(g, 9,l,1) = cdiv_pl (g,l,2,3)
+          tmp_pl(g,10,l,1) = cdiv_pl (g,l,3,1)
+          tmp_pl(g,11,l,1) = cdiv_pl (g,l,3,2)
+          tmp_pl(g,12,l,1) = cdiv_pl (g,l,3,3)
+          tmp_pl(g,13,l,1) = cdiv_pl (g,l,4,1)
+          tmp_pl(g,14,l,1) = cdiv_pl (g,l,4,2)
+          tmp_pl(g,15,l,1) = cdiv_pl (g,l,4,3)
+          tmp_pl(g,16,l,1) = cdiv_pl (g,l,5,1)
+          tmp_pl(g,17,l,1) = cdiv_pl (g,l,5,2)
+          tmp_pl(g,18,l,1) = cdiv_pl (g,l,5,3)
+          tmp_pl(g,19,l,1) = cdiv_pl (g,l,5,1)
+          tmp_pl(g,20,l,1) = cdiv_pl (g,l,5,2)
+          tmp_pl(g,21,l,1) = cdiv_pl (g,l,5,3)
+          tmp_pl(g,22,l,1) = cgrad_pl(g,l,0,1)
+          tmp_pl(g,23,l,1) = cgrad_pl(g,l,0,2)
+          tmp_pl(g,24,l,1) = cgrad_pl(g,l,0,3)
+          tmp_pl(g,25,l,1) = cgrad_pl(g,l,1,1)
+          tmp_pl(g,26,l,1) = cgrad_pl(g,l,1,2)
+          tmp_pl(g,27,l,1) = cgrad_pl(g,l,1,3)
+          tmp_pl(g,28,l,1) = cgrad_pl(g,l,2,1)
+          tmp_pl(g,29,l,1) = cgrad_pl(g,l,2,2)
+          tmp_pl(g,30,l,1) = cgrad_pl(g,l,2,3)
+          tmp_pl(g,31,l,1) = cgrad_pl(g,l,3,1)
+          tmp_pl(g,32,l,1) = cgrad_pl(g,l,3,2)
+          tmp_pl(g,33,l,1) = cgrad_pl(g,l,3,3)
+          tmp_pl(g,34,l,1) = cgrad_pl(g,l,4,1)
+          tmp_pl(g,35,l,1) = cgrad_pl(g,l,4,2)
+          tmp_pl(g,36,l,1) = cgrad_pl(g,l,4,3)
+          tmp_pl(g,37,l,1) = cgrad_pl(g,l,5,1)
+          tmp_pl(g,38,l,1) = cgrad_pl(g,l,5,2)
+          tmp_pl(g,39,l,1) = cgrad_pl(g,l,5,3)
+          tmp_pl(g,40,l,1) = cgrad_pl(g,l,5,1)
+          tmp_pl(g,41,l,1) = cgrad_pl(g,l,5,2)
+          tmp_pl(g,42,l,1) = cgrad_pl(g,l,5,3)
+          tmp_pl(g,43,l,1) = clap_pl (g,l,0)
+          tmp_pl(g,44,l,1) = clap_pl (g,l,1)
+          tmp_pl(g,45,l,1) = clap_pl (g,l,2)
+          tmp_pl(g,46,l,1) = clap_pl (g,l,3)
+          tmp_pl(g,47,l,1) = clap_pl (g,l,4)
+          tmp_pl(g,48,l,1) = clap_pl (g,l,5)
+          tmp_pl(g,49,l,1) = clap_pl (g,l,5)
+       enddo
+       enddo
+    endif
+
+    call COMM_data_transfer( tmp, tmp_pl )
 
     if ( OPRT_io_mode == 'ADVANCED' ) then
 
-       call FIO_output_DP( tmp(:,:,:),                                        &
-                           basename, desc, "",                                &
-                           "oprtcoef", "oprt coef", "",                       &
-                           "", FIO_REAL8, "LAYERNM", 1, 70, 1, 0.0_DP, 0.0_DP )
-
-    elseif( OPRT_io_mode == 'LEGACY' ) then
-
-       do l = 1, ADM_lall
-          rgnid = ADM_prc_tab(l,ADM_prc_me)
-          call MISC_make_idstr(fname,trim(basename),'rgn',rgnid)
-
-          fid = MISC_get_available_fid()
-          open( unit   = fid,           &
-                file   = trim(fname),   &
-                form   = 'unformatted', &
-                access = 'direct',      &
-                recl   = ADM_gall*70*8  )
-
-             write(fid,rec=1) tmp(:,:,l)
-
-          close(fid)
-       enddo
+       call FIO_output( tmp(:,:,:,1),                                      &
+                        basename, desc, "",                                &
+                        "oprtcoef", "oprt coef", "",                       &
+                        "", FIO_REAL8, "LAYERNM", 1, 49, 1, 0.0_RP, 0.0_RP )
 
     else
        write(ADM_LOG_FID,*) 'Invalid io_mode!'
