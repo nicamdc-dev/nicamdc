@@ -351,7 +351,7 @@ program fio_ico2ll
         call fio_mk_fname(infname,trim(infile(1)),'pe',p-1,6)
      endif
      allocate( prc_tab_C(MNG_prc_rnum(p))   )
-     prc_tab_C(:) = MNG_prc_tab(:,p)-1
+     prc_tab_C(1:MNG_prc_rnum(p)) = MNG_prc_tab(1:MNG_prc_rnum(p),p)-1
 
      call fio_put_commoninfo( fmode,           &
                               FIO_BIG_ENDIAN,  &

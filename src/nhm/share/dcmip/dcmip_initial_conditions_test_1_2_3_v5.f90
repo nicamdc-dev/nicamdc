@@ -71,7 +71,7 @@ MODULE dcmip_initial_conditions_test_1_2_3
         Rd  = 287.0d0,  & ! Ideal gas const dry air (J kg^-1 K^1)
         g = 9.80616d0,  & ! Gravity (m s^2)
         cp  = 1004.5d0, & ! Specific heat capacity (J kg^-1 K^1)
-        pi  = 4.d0*atan(1.d0)       ! pi
+        pi  = 3.141592653589793238D0       ! pi
 
 !-----------------------------------------------------------------------
 !     Additional constants

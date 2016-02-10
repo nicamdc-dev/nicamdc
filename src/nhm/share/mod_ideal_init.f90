@@ -1288,7 +1288,7 @@ contains
        lall,       &
        DIAG_var    )
     use mod_misc, only: &
-       MISC_get_latlon
+       MISC_get_latlon_DP
     use mod_adm, only: &
        ADM_KNONE,      &
        ADM_NSYS
@@ -1310,7 +1310,7 @@ contains
     real(RP), intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
     ! work paramters
-    real(RP) :: lat, lon                 ! latitude, longitude on Icosahedral grid
+    real(DP) :: lat, lon                 ! latitude, longitude on Icosahedral grid
     real(RP) :: prs(kdim),   tmp(kdim)   ! pressure & temperature in ICO-grid field
     real(RP) :: wix(kdim),   wiy(kdim)   ! zonal/meridional wind components in ICO-grid field
 
@@ -1337,14 +1337,14 @@ contains
           z_local(k) = GRD_vz(n,k,l,GRD_Z)
        enddo
 
-       call MISC_get_latlon( lat, lon,               &
+       call MISC_get_latlon_DP( lat, lon,               &
                              GRD_x(n,K0,l,GRD_XDIR), &
                              GRD_x(n,K0,l,GRD_YDIR), &
                              GRD_x(n,K0,l,GRD_ZDIR)  )
 
-       call tomita_2004( kdim, lat, z_local, wix, wiy, tmp, prs, logout )
+       call tomita_2004( kdim, real(lat,kind=RP), z_local, wix, wiy, tmp, prs, logout )
        logout = .false.
-       call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
+       call conv_vxvyvz ( kdim, real(lat,kind=RP), real(lon,kind=RP), wix, wiy, vx_local, vy_local, vz_local )
 
        do k = 1, kdim
           DIAG_var(n,k,l,1) = prs(k)
@@ -1774,7 +1774,7 @@ contains
        GRD_YDIR, &
        GRD_ZDIR
     use mod_misc, only: &
-       MISC_get_latlon
+       MISC_get_latlon_DP
     use mod_adm, only: &
        K0 => ADM_KNONE
     implicit none
@@ -1786,7 +1786,7 @@ contains
     integer, parameter :: ID_vy  = 4
     integer, parameter :: ID_vz  = 5
     integer :: n, k, l
-    real(RP) :: lat, lon
+    real(DP) :: lat, lon
     real(RP) :: r, rr, rbyrr, cla, clo
     real(RP) :: ptb_wix(kdim), ptb_wiy(kdim)
     real(RP) :: ptb_vx(kdim), ptb_vy(kdim), ptb_vz(kdim)
@@ -1796,7 +1796,7 @@ contains
 
     do l = 1, lall
     do n = 1, ijdim
-       call MISC_get_latlon( lat, lon,              &
+       call MISC_get_latlon_DP( lat, lon,              &
                              GRD_x(n,K0,l,GRD_XDIR), &
                              GRD_x(n,K0,l,GRD_YDIR), &
                              GRD_x(n,K0,l,GRD_ZDIR)  )
@@ -1808,7 +1808,7 @@ contains
           ptb_wiy(k) = 0.0_RP
        enddo
 
-       call conv_vxvyvz( kdim, lat, lon, ptb_wix, ptb_wiy, ptb_vx, ptb_vy, ptb_vz )
+       call conv_vxvyvz( kdim, real(lat,kind=RP), real(lon,kind=RP), ptb_wix, ptb_wiy, ptb_vx, ptb_vy, ptb_vz )
        do k = 1, kdim
           DIAG_var(n,k,l,ID_vx) = DIAG_var(n,k,l,ID_vx) + ptb_vx(k)
           DIAG_var(n,k,l,ID_vy) = DIAG_var(n,k,l,ID_vy) + ptb_vy(k)

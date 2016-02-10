@@ -761,8 +761,8 @@ contains
        call MISC_get_distance( CNST_ERADIUS,   & ! [IN]
                                center_lon_rad, & ! [IN]
                                center_lat_rad, & ! [IN]
-                               GMTR_lon(g,l),  & ! [IN]
-                               GMTR_lat(g,l),  & ! [IN]
+                               real(GMTR_lon(g,l),kind=RP),  & ! [IN]
+                               real(GMTR_lat(g,l),kind=RP),  & ! [IN]
                                dist            ) ! [OUT]
 
        if ( dist < halo1_dist ) then
@@ -786,8 +786,8 @@ contains
           call MISC_get_distance( CNST_ERADIUS,     & ! [IN]
                                   center_lon,       & ! [IN]
                                   center_lat,       & ! [IN]
-                                  GMTR_lon_pl(g,l), & ! [IN]
-                                  GMTR_lat_pl(g,l), & ! [IN]
+                                  real(GMTR_lon_pl(g,l),kind=RP), & ! [IN]
+                                  real(GMTR_lat_pl(g,l),kind=RP), & ! [IN]
                                   dist              ) ! [OUT]
 
           if ( dist < halo1_dist ) then

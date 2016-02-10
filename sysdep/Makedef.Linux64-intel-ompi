@@ -4,13 +4,13 @@
 
 ##### for computation
 
-FFLAGS_FAST = -fpp3 -O3 -xHost -ip                 \
+FFLAGS_FAST = -fpp -O3 -xHost -ip                 \
               -assume byterecl -convert big_endian \
               -ftz -fp-model precise -pc 80        \
               -mcmodel=medium -shared-intel        \
                -fno-alias
 
-FFLAGS_DEBUG = -fpp3 -O0 -m64                       \
+FFLAGS_DEBUG = -fpp -O0 -m64                       \
                -assume byterecl -convert big_endian \
                -fp-model precise -pc 80             \
                -check all -warn all -g -traceback   \

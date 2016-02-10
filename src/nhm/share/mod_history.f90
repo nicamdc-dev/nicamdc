@@ -1082,10 +1082,10 @@ contains
     call diag_pre_sfc( ADM_gall,                & ! [IN]
                        ADM_kall,                & ! [IN]
                        ADM_lall,                & ! [IN]
-                       GRD_vz (:,:,:,GRD_Z),    & ! [IN]
+                       real(GRD_vz (:,:,:,GRD_Z),kind=RP),    & ! [IN]
                        rho    (:,:,:),          & ! [IN]
                        pre    (:,:,:),          & ! [IN]
-                       GRD_zs (:,:,:,GRD_ZSFC), & ! [IN]
+                       real(GRD_zs (:,:,:,GRD_ZSFC),kind=RP), & ! [IN]
                        pre_sfc(:,:,:)           ) ! [OUT]
 
     do l = 1, ADM_lall

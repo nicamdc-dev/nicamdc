@@ -62,7 +62,9 @@ module mod_comm
   !
   public ::  COMM_setup
   public ::  COMM_data_transfer
+  public ::  COMM_data_transfer_DP
   public ::  COMM_var
+  public ::  COMM_var_DP
   public ::  COMM_Stat_sum
   public ::  COMM_Stat_sum_eachlayer
   public ::  COMM_Stat_avg
@@ -2705,6 +2707,420 @@ contains
     return
   end subroutine COMM_data_transfer
 
+  subroutine COMM_data_transfer_DP(&
+       var,   &
+       var_pl )
+    use mod_adm, only: &
+       ADM_COMM_world, &
+       ADM_proc_stop,  &
+       ADM_vlink_nmax, &
+       ADM_lall,       &
+       ADM_kall
+    implicit none
+
+    real(DP), intent(inout) ::  var   (:,:,:,:)
+    real(DP), intent(inout) ::  var_pl(:,:,:,:)
+
+    integer ::  shp(4)
+    integer ::  cmax, kmax, varmax
+
+    integer ::  acount
+    integer ::  areq(2*(ADM_lall*max_comm_r2r+ADM_vlink_nmax*4))
+    integer ::  stat(MPI_status_size,2*(ADM_lall*max_comm_r2r+ADM_vlink_nmax*4))
+    integer ::  ierr
+
+    integer ::  k, m, n
+    integer ::  nr, nc, ns
+    integer ::  sl, so, sb, ss
+    integer ::  rl, ro, rb, rs
+    integer ::  cl, scl, cs
+
+    integer ::  max_ssize
+    integer ::  max_rsize
+    integer ::  max_nsmax,max_nsmax_pl
+    integer ::  max_nrmax,max_nrmax_pl
+    integer ::  max_ss, max_ss_pl
+    integer ::  max_rs, max_rs_pl
+    integer ::  max_cs_r2r, max_cs_r2p, max_cs_p2r, max_cs_sgp
+    integer ::  cur_somax, cur_romax
+    integer ::  cur_ncmax_r2r, cur_ncmax_r2p, cur_ncmax_p2r, cur_ncmax_sgp
+    integer ::  cur_ssize, cur_rsize
+    integer ::  cur_nsmax, cur_nsmax_pl
+    integer ::  cur_nrmax, cur_nrmax_pl
+    !---------------------------------------------------------------------------
+
+    if ( opt_comm_barrier ) then
+       call DEBUG_rapstart('COMM_barrier')
+       call MPI_Barrier( ADM_COMM_world, ierr )
+       call DEBUG_rapend  ('COMM_barrier')
+    endif
+
+    !$acc wait
+
+    call DEBUG_rapstart('COMM_data_transfer')
+
+    shp    = shape(var)
+    kmax   = shp(2)
+    varmax = shp(4)
+
+    cmax = varmax * kmax
+
+    if( opt_check_varmax ) then
+       if ( cmax > max_varmax * ADM_kall ) then
+          write(ADM_LOG_FID,*)  'error: cmax >  max_varmax * ADM_kall, stop!'
+          write(ADM_LOG_FID,*)  'cmax=', cmax, 'max_varmax*ADM_kall=', max_varmax*ADM_kall
+          call ADM_proc_stop
+       endif
+    endif
+
+    max_rsize    = 1
+    max_nrmax    = 0
+    max_nrmax_pl = 0
+    max_rs       = 0
+    max_rs_pl    = 0
+    do ro = 1, romax(1)
+       max_rsize    = max( max_rsize,    rsize   (ro,1) )
+       max_nrmax    = max( max_nrmax,    nrmax   (ro,1) )
+       max_nrmax_pl = max( max_nrmax_pl, nrmax_pl(ro,1) )
+
+       do nr = 1, nrmax(ro,1)
+          max_rs = max( max_rs, recvinfo(SIZE_COMM,nr,ro,1) )
+       enddo
+
+       do nr = 1, nrmax_pl(ro,1)
+          max_rs_pl = max( max_rs_pl, recvinfo_pl(SIZE_COMM,nr,ro,1) )
+       enddo
+    enddo
+    max_rsize = max_rsize * cmax
+
+    max_ssize    = 1
+    max_nsmax    = 0
+    max_nsmax_pl = 0
+    max_ss       = 0
+    max_ss_pl    = 0
+    do so = 1, somax(1)
+       max_ssize    = max( max_ssize,    ssize   (so,1) )
+       max_nsmax    = max( max_nsmax,    nsmax   (so,1) )
+       max_nsmax_pl = max( max_nsmax_pl, nsmax_pl(so,1) )
+
+       do ns = 1, nsmax(so,1)
+          max_ss = max( max_ss, sendinfo(SIZE_COMM,ns,so,1) )
+       enddo
+
+       do ns = 1, nsmax_pl(so,1)
+          max_ss_pl = max( max_ss_pl, sendinfo_pl(SIZE_COMM,ns,so,1) )
+       enddo
+    enddo
+    max_ssize = max_ssize * cmax
+
+    max_cs_r2r = 0
+    max_cs_r2p = 0
+    max_cs_p2r = 0
+    max_cs_sgp = 0
+    do nc = 1, ncmax_r2r(1)
+       max_cs_r2r = max( max_cs_r2r, copyinfo_r2r(SIZE_COPY,nc,1) )
+    enddo
+    do nc = 1, ncmax_r2p(1)
+       max_cs_r2p = max( max_cs_r2p, copyinfo_r2p(SIZE_COPY,nc,1) )
+    enddo
+    do nc = 1, ncmax_p2r(1)
+       max_cs_p2r = max( max_cs_p2r, copyinfo_p2r(SIZE_COPY,nc,1) )
+    enddo
+    do nc = 1, ncmax_sgp(1)
+       max_cs_sgp = max( max_cs_sgp, copyinfo_sgp(SIZE_COPY,nc,1) )
+    enddo
+
+    cur_somax     = somax(1)
+    cur_romax     = romax(1)
+    cur_ncmax_r2r = ncmax_r2r(1)
+    cur_ncmax_r2p = ncmax_r2p(1)
+    cur_ncmax_p2r = ncmax_p2r(1)
+    cur_ncmax_sgp = ncmax_sgp(1)
+
+    !$acc data present(var) pcopy(var_pl) pcopyin(clist) async(0)
+
+    !-----------------------------------------
+    ! call MPI_IRECV
+    !-----------------------------------------
+    do ro = 1, romax(1)
+       call MPI_IRECV( recvbuf(1,ro),    &
+                       rsize(ro,1)*cmax, &
+                       MPI_DOUBLE_PRECISION,    &
+                       sourcerank(ro,1), &
+                       recvtag(ro,1),    &
+                       ADM_COMM_WORLD,   &
+                       areq(ro),         &
+                       ierr              )
+    enddo
+
+    !$acc data &
+    !$acc& pcopyin(sendlist,sendlist_pl) &
+    !$acc& pcopyin(sendinfo,sendinfo_pl) &
+    !$acc& pcopyin(nsmax,nsmax_pl) async(0)
+
+    !$acc wait
+
+    do so = 1, cur_somax
+       cur_ssize    = ssize   (so,1) * cmax
+       cur_nsmax    = nsmax   (so,1)
+       cur_nsmax_pl = nsmax_pl(so,1)
+
+       !$acc kernels copyout(sendbuf(1:cur_ssize,so)) async(so)
+
+       !-----------------------------------------
+       ! var -> sendbuf
+       !-----------------------------------------
+       !$acc loop independent gang
+       do m = 1, varmax
+       !$acc loop independent gang vector(8)
+       do k = 1, kmax
+       !$acc loop independent gang
+       do ns = 1, cur_nsmax
+       !$acc loop independent vector(32)
+       do n = 1, max_ss
+          if ( ns <= nsmax(so,1) ) then
+             ss = sendinfo(SIZE_COMM  ,ns,so,1)
+             sl = sendinfo(LRGNID_COMM,ns,so,1)
+             sb = sendinfo(BASE_COMM  ,ns,so,1) * cmax
+             if ( n <= ss ) then
+                sendbuf(n+(k-1)*ss+(m-1)*ss*kmax+sb,so) = var(sendlist(n,ns,so,1),k,sl,m)
+             endif
+          endif
+       enddo
+       enddo
+       enddo
+       enddo
+
+       !-----------------------------------------
+       !  var_pl -> sendbuf
+       !-----------------------------------------
+       !$acc loop independent gang
+       do m = 1, varmax
+       !$acc loop independent gang vector(8)
+       do k = 1, kmax
+       !$acc loop independent gang
+       do ns = 1, cur_nsmax_pl
+       !$acc loop independent vector(32)
+       do n = 1, max_ss_pl
+          if ( ns <= nsmax_pl(so,1) ) then
+             ss = sendinfo_pl(SIZE_COMM  ,ns,so,1)
+             sl = sendinfo_pl(LRGNID_COMM,ns,so,1)
+             sb = sendinfo_pl(BASE_COMM  ,ns,so,1) * cmax
+             if ( n <= ss ) then
+                sendbuf(n+(k-1)*ss+(m-1)*ss*kmax+sb,so) = var_pl(sendlist_pl(n,ns,so,1),k,sl,m)
+             endif
+          endif
+       enddo
+       enddo
+       enddo
+       enddo
+
+       !$acc end kernels
+    enddo
+
+    !$acc end data
+
+    !-----------------------------------------
+    ! call MPI_ISEND
+    !-----------------------------------------
+    do so = 1, somax(1)
+       !$acc wait(so)
+       call MPI_ISEND( sendbuf(1,so),     &
+                       ssize(so,1)*cmax,  &
+                       MPI_DOUBLE_PRECISION,     &
+                       destrank(so,1),    &
+                       sendtag(so,1),     &
+                       ADM_COMM_WORLD,    &
+                       areq(so+romax(1)), &
+                       ierr               )
+    enddo
+
+    !$acc wait
+
+    !---------------------------------------------------
+    !  var -> var (region to region copy in same rank)
+    !---------------------------------------------------
+    !$acc kernels present(var) &
+    !$acc& pcopyin(recvlist_r2r,sendlist_r2r,copyinfo_r2r) async(0)
+    !$acc loop independent gang
+    do m = 1, varmax
+    !$acc loop independent gang
+    do nc = 1, cur_ncmax_r2r
+    !$acc loop independent gang vector(8)
+    do k = 1, kmax
+    !$acc loop independent vector(32)
+    do n = 1, max_cs_r2r
+       cs  = copyinfo_r2r(SIZE_COPY      ,nc,1)
+       cl  = copyinfo_r2r(LRGNID_COPY    ,nc,1)
+       scl = copyinfo_r2r(SRC_LRGNID_COPY,nc,1)
+       if ( n <= cs ) then
+          var(recvlist_r2r(n,nc,1),k,cl ,m) = var(sendlist_r2r(n,nc,1),k,scl,m)
+       endif
+    enddo
+    enddo
+    enddo
+    enddo
+    !$acc end kernels
+
+    !------------------------------------------
+    !  var -> var_pl ( data copy in same rank)
+    !------------------------------------------
+    !$acc kernels present(var,var_pl) &
+    !$acc& pcopyin(recvlist_r2p,sendlist_r2p,copyinfo_r2p) async(0)
+    !$acc loop independent gang
+    do m = 1, varmax
+    !$acc loop independent gang
+    do nc = 1, cur_ncmax_r2p
+    !$acc loop independent gang vector(8)
+    do k = 1, kmax
+    !$acc loop independent vector(32)
+    do n = 1, max_cs_r2p
+       cs  = copyinfo_r2p(SIZE_COPY      ,nc,1)
+       cl  = copyinfo_r2p(LRGNID_COPY    ,nc,1)
+       scl = copyinfo_r2p(SRC_LRGNID_COPY,nc,1)
+       if ( n <= cs ) then
+          var_pl(recvlist_r2p(n,nc,1),k,cl,m) = var(sendlist_r2p(n,nc,1),k,scl,m)
+       endif
+    enddo
+    enddo
+    enddo
+    enddo
+    !$acc end kernels
+
+    !-----------------------------------------
+    !  var_pl -> var (data copy in same rank)
+    !-----------------------------------------
+    !$acc kernels present(var,var_pl) &
+    !$acc& pcopyin(recvlist_p2r,sendlist_p2r,copyinfo_p2r) async(0)
+    !$acc loop independent gang
+    do m = 1, varmax
+    !$acc loop independent gang
+    do nc = 1, cur_ncmax_p2r
+    !$acc loop independent gang vector(8)
+    do k = 1, kmax
+    !$acc loop independent vector(32)
+    do n = 1, max_cs_p2r
+       cs  = copyinfo_p2r(SIZE_COPY      ,nc,1)
+       cl  = copyinfo_p2r(LRGNID_COPY    ,nc,1)
+       scl = copyinfo_p2r(SRC_LRGNID_COPY,nc,1)
+       if ( n <= cs ) then
+          var(recvlist_p2r(n,nc,1),k,cl,m) = var_pl(sendlist_p2r(n,nc,1),k,scl,m)
+       endif
+    enddo
+    enddo
+    enddo
+    enddo
+    !$acc end kernels
+
+    acount = romax(1) + somax(1)
+
+    call MPI_WAITALL(acount,areq,stat,ierr)
+
+    if ( opt_comm_barrier ) then
+       call MPI_Barrier(ADM_COMM_world,ierr)
+    endif
+
+    !$acc data pcopyin(recvlist,recvlist_pl) &
+    !$acc& pcopyin(recvinfo,recvinfo_pl) &
+    !$acc& pcopyin(nrmax,nrmax_pl) async(0)
+
+    !$acc wait
+
+    do ro = 1, cur_romax
+       cur_rsize    = rsize(ro,1)*cmax
+       cur_nrmax    = nrmax(ro,1)
+       cur_nrmax_pl = nrmax_pl(ro,1)
+
+       !$acc kernels copyin(recvbuf(1:cur_rsize,ro)) async(ro)
+
+       !-----------------------------------------
+       !  recvbuf -> var ( recieve in region )
+       !-----------------------------------------
+       !$acc loop independent gang
+       do m = 1, varmax
+       !$acc loop independent gang vector(8)
+       do k = 1, kmax
+       !$acc loop independent gang
+       do nr = 1, cur_nrmax
+       !$acc loop independent vector(32)
+       do n = 1, max_rs
+          if ( nr <= nrmax(ro,1) ) then
+             rs = recvinfo(SIZE_COMM  ,nr,ro,1)
+             rl = recvinfo(LRGNID_COMM,nr,ro,1)
+             rb = recvinfo(BASE_COMM  ,nr,ro,1) * cmax
+             if ( n <= rs ) then
+                var(recvlist(n,nr,ro,1),k,rl,m) = recvbuf(n+(k-1)*rs+(m-1)*rs*kmax+rb,ro)
+             endif
+          endif
+       enddo
+       enddo
+       enddo
+       enddo
+
+       !-----------------------------------------
+       !  recvbuf -> var_pl ( recieve in pole )
+       !-----------------------------------------
+       !$acc loop independent gang
+       do m = 1, varmax
+       !$acc loop independent gang vector(8)
+       do k = 1, kmax
+       !$acc loop independent gang
+       do nr = 1, cur_nrmax_pl
+       !$acc loop independent vector(32)
+       do n = 1, max_rs_pl
+          if ( nr <= nrmax_pl(ro,1) ) then
+             rs = recvinfo_pl(SIZE_COMM  ,nr,ro,1)
+             rl = recvinfo_pl(LRGNID_COMM,nr,ro,1)
+             rb = recvinfo_pl(BASE_COMM  ,nr,ro,1) * cmax
+             if ( n <= rs ) then
+                var_pl(recvlist_pl(n,nr,ro,1),k,rl,m) = recvbuf(n+(k-1)*rs+(m-1)*rs*kmax+rb,ro)
+             endif
+          endif
+       enddo
+       enddo
+       enddo
+       enddo
+
+       !$acc end kernels
+    enddo
+
+    !$acc wait
+    !$acc end data
+
+    !-----------------------------------------
+    !  copy data around singular point
+    !-----------------------------------------
+    !$acc kernels present(var) &
+    !$acc& pcopyin(recvlist_sgp,sendlist_sgp,copyinfo_sgp) async(0)
+    !$acc loop independent gang
+    do m = 1, varmax
+    !$acc loop independent gang
+    do nc = 1, cur_ncmax_sgp
+    !$acc loop independent gang vector(8)
+    do k = 1, kmax
+    !$acc loop independent vector(32)
+    do n = 1, max_cs_sgp
+       cs  = copyinfo_sgp(SIZE_COPY      ,nc,1)
+       cl  = copyinfo_sgp(LRGNID_COPY    ,nc,1)
+       scl = copyinfo_sgp(SRC_LRGNID_COPY,nc,1)
+       if ( n <= cs ) then
+          var(recvlist_sgp(n,nc,1),k,cl ,m) = var(sendlist_sgp(n,nc,1),k,scl,m)
+       endif
+    enddo
+    enddo
+    enddo
+    enddo
+    !$acc end kernels
+
+    !$acc end data
+
+    !$acc wait
+
+    call DEBUG_rapend('COMM_data_transfer')
+
+    return
+  end subroutine COMM_data_transfer_DP
+
   !-----------------------------------------------------------------------------
   subroutine COMM_var( &
        var,    &
@@ -2882,6 +3298,183 @@ contains
 
     return
   end subroutine COMM_var
+
+  subroutine COMM_var_DP( &
+       var,    &
+       var_pl, &
+       knum,   &
+       nnum    )
+    use mod_adm, only: &
+       ADM_COMM_WORLD,     &
+       ADM_prc_tab,        &
+       ADM_rgn2prc,        &
+       ADM_prc_me,         &
+       ADM_NPL,            &
+       ADM_SPL,            &
+       ADM_prc_npl,        &
+       ADM_prc_spl,        &
+       ADM_rgnid_npl_mng,  &
+       ADM_rgnid_spl_mng,  &
+       ADM_gall,           &
+       ADM_gall_pl,        &
+       ADM_lall,           &
+       ADM_lall_pl,        &
+       ADM_gall_1d,        &
+       ADM_gmin,           &
+       ADM_gmax,           &
+       ADM_GSLF_PL
+    implicit none
+
+    integer, intent(in)  ::  knum
+    integer, intent(in)  ::  nnum
+    real(DP), intent(inout) ::  var   (ADM_gall,   knum,ADM_lall,   nnum)
+    real(DP), intent(inout) ::  var_pl(ADM_gall_pl,knum,ADM_lall_pl,nnum)
+
+    real(DP) ::  v_npl_send(knum,nnum)
+    real(DP) ::  v_spl_send(knum,nnum)
+    real(DP) ::  v_npl_recv(knum,nnum)
+    real(DP) ::  v_spl_recv(knum,nnum)
+
+    integer ::  ireq(4)
+    integer ::  istat(MPI_STATUS_SIZE)
+
+    integer ::  ierr
+    integer ::  k, l, n, rgnid
+
+    integer ::  i,j,suf
+    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+    !---------------------------------------------------------------------------
+
+    if ( opt_comm_barrier ) then
+       call DEBUG_rapstart('COMM_barrier')
+       call MPI_Barrier( ADM_COMM_world, ierr )
+       call DEBUG_rapend  ('COMM_barrier')
+    endif
+
+    call DEBUG_rapstart('COMM_var')
+
+    !$acc data present(var)
+
+    if( comm_pl ) then ! T.Ohno 110721
+
+       !--- recv pole value
+       !--- north pole
+       if ( ADM_prc_me == ADM_prc_npl ) then
+          call MPI_IRECV( v_npl_recv,                       &
+                          knum * nnum,                      &
+                          MPI_DOUBLE_PRECISION,                    &
+                          ADM_rgn2prc(ADM_rgnid_npl_mng)-1, &
+                          ADM_NPL,                          &
+                          ADM_COMM_WORLD,                   &
+                          ireq(3),                          &
+                          ierr                              )
+       endif
+
+       !--- south pole
+       if ( ADM_prc_me == ADM_prc_spl ) then
+          call MPI_IRECV( v_spl_recv,                       &
+                          knum * nnum,                      &
+                          MPI_DOUBLE_PRECISION,                    &
+                          ADM_rgn2prc(ADM_rgnid_spl_mng)-1, &
+                          ADM_SPL,                          &
+                          ADM_COMM_WORLD,                   &
+                          ireq(4),                          &
+                          ierr                              )
+       endif
+
+       !--- send pole value
+       do l = 1, ADM_lall
+          rgnid = ADM_prc_tab(l,ADM_prc_me)
+
+          !--- north pole
+          if ( rgnid == ADM_rgnid_npl_mng ) then
+             !$acc kernels copyout(v_npl_send) pcopyin(var) async(0)
+             do n = 1, nnum
+             do k = 1, knum
+                v_npl_send(k,n) = var(suf(ADM_gmin,ADM_gmax+1),k,l,n)
+             enddo
+             enddo
+             !$acc end kernels
+
+             !$acc wait
+
+             call MPI_ISEND( v_npl_send,     &
+                             knum * nnum,    &
+                             MPI_DOUBLE_PRECISION,  &
+                             ADM_prc_npl-1,  &
+                             ADM_NPL,        &
+                             ADM_COMM_WORLD, &
+                             ireq(1),        &
+                             ierr            )
+          endif
+
+          !--- south pole
+          if ( rgnid == ADM_rgnid_spl_mng ) then
+             !$acc kernels copyout(v_spl_send) pcopyin(var) async(0)
+             do n = 1, nnum
+             do k = 1, knum
+                v_spl_send(k,n) = var(suf(ADM_gmax+1,ADM_gmin),k,l,n)
+             enddo
+             enddo
+             !$acc end kernels
+
+             !$acc wait
+
+             call MPI_ISEND( v_spl_send,     &
+                             knum * nnum,    &
+                             MPI_DOUBLE_PRECISION,  &
+                             ADM_prc_spl-1,  &
+                             ADM_SPL,        &
+                             ADM_COMM_WORLD, &
+                             ireq(2),        &
+                             ierr            )
+          endif
+
+       enddo
+
+       do l = 1, ADM_lall
+          rgnid = ADM_prc_tab(l,ADM_prc_me)
+
+          !--- north pole
+          if( rgnid == ADM_rgnid_npl_mng ) call MPI_WAIT(ireq(1),istat,ierr)
+
+          !--- south pole
+          if( rgnid == ADM_rgnid_spl_mng ) call MPI_WAIT(ireq(2),istat,ierr)
+       enddo
+
+       if ( ADM_prc_me == ADM_prc_npl ) then
+          call MPI_WAIT(ireq(3),istat,ierr)
+
+          do n = 1, nnum
+          do k = 1, knum
+             var_pl(ADM_GSLF_PL,k,ADM_NPL,n) = v_npl_recv(k,n)
+          enddo
+          enddo
+       endif
+
+       if ( ADM_prc_me == ADM_prc_spl ) then
+          call MPI_WAIT(ireq(4),istat,ierr)
+
+          do n = 1, nnum
+          do k = 1, knum
+             var_pl(ADM_GSLF_PL,k,ADM_SPL,n) = v_spl_recv(k,n)
+          enddo
+          enddo
+       endif
+
+    endif
+
+    !$acc end data
+
+    call COMM_data_transfer_DP(var,var_pl)
+
+    var(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
+    var(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
+
+    call DEBUG_rapend('COMM_var')
+
+    return
+  end subroutine COMM_var_DP
 
   !-----------------------------------------------------------------------------
   subroutine COMM_Stat_sum( localsum, globalsum )

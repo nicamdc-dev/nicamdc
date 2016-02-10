@@ -30,24 +30,21 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
+# for RICC-FX100
+NNODE=`expr $NMPI / 4`
+
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for K computer
+# for FX100
 #
 ################################################################################
-#PJM --rsc-list "rscgrp=${rscgrp}"
-#PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=02:00:00"
-#PJM --stg-transfiles all
-#PJM --mpi "use-rankdir"
-#PJM --stgin  "rank=* ${TOPDIR}/bin/${BINNAME}           %r:./"
-#PJM --stgin  "rank=* ${outdir}/${RUNCONF}               %r:./"
-#PJM --stgin  "rank=* ${TOPDIR}/data/mnginfo/${MNGINFO}  %r:./"
-#PJM --stgin  "rank=* ${TOPDIR}/data/grid/vgrid/${VGRID} %r:./"
-#PJM --stgin  "rank=* ${TOPDIR}/data/grid/boundary/${dir2d}/boundary_${res2d}.pe%06r %r:./"
-#PJM --stgout "rank=* %r:./* ${outdir}/"
+#PJM -L rscunit=gwmpc
+#PJM -L rscgrp=batch
+#PJM -L node=${NNODE}
+#PJM --mpi proc=${NMPI}
+#PJM -L elapse=00:30:00
 #PJM -j
 #PJM -s
 #
@@ -55,39 +52,57 @@ cat << EOF1 > run.sh
 #
 export PARALLEL=8
 export OMP_NUM_THREADS=8
+#export fu08bf=1
+export XOS_MMM_L_ARENA_FREE=2
 
-# run
-${MPIEXEC} ./${BINNAME} || exit
-
-################################################################################
+ln -sv ${TOPDIR}/bin/${BINNAME} .
+ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
+ln -sv ${TOPDIR}/data/grid/vgrid/${VGRID} .
 EOF1
 
+for f in $( ls ${TOPDIR}/data/grid/boundary/${dir2d} )
+do
+   echo "ln -sv ${TOPDIR}/data/grid/boundary/${dir2d}/${f} ." >> run.sh
+done
+
+# run
+for PA_ID in `seq 1 11`; do
+   echo "rm -rf pa${PA_ID}" >> run.sh
+   echo "fapp -C -d pa${PA_ID} -Hpa=${PA_ID} -Hmethod=raw ${MPIEXEC} -n ${NMPI} ./${BINNAME} || exit" >> run.sh
+done
 
 cat << EOFICO2LL1 > ico2ll.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for K computer
+# for FX100
 #
 ################################################################################
-#PJM --rsc-list "rscgrp=${rscgrp}"
-#PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=02:00:00"
-#PJM --stg-transfiles all
-#PJM --mpi "use-rankdir"
-#PJM --stgin  "rank=* ${TOPDIR}/bin/fio_ico2ll_mpi      %r:./"
-#PJM --stgin  "rank=* ${TOPDIR}/data/mnginfo/${MNGINFO} %r:./"
-#PJM --stgin  "rank=* ${TOPDIR}/data/zaxis/*            %r:./"
-#PJM --stgin  "rank=* ${outdir}/history.pe%06r          %r:./"
-#PJM --stgin  "rank=* ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/llmap.* %r:./"
-#PJM --stgout "rank=* %r:./* ${outdir}/"
+#PJM -L rscunit=gwmpc
+#PJM -L rscgrp=batch
+#PJM -L node=${NNODE}
+#PJM --mpi proc=${NMPI}
+#PJM -L elapse=00:30:00
 #PJM -j
 #PJM -s
 #
 . /work/system/Env_base
 #
-export PARALLEL=8
-export OMP_NUM_THREADS=8
+export PARALLEL=16
+export OMP_NUM_THREADS=16
+#export fu08bf=1
+
+ln -sv ${TOPDIR}/bin/fio_ico2ll_mpi .
+ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
+ln -sv ${TOPDIR}/data/zaxis .
+EOFICO2LL1
+
+for f in $( ls ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/ )
+do
+   echo "ln -sv ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/${f} ." >> ico2ll.sh
+done
+
+cat << EOFICO2LL2 >> ico2ll.sh
 
 # run
 ${MPIEXEC} ./fio_ico2ll_mpi \
@@ -95,10 +110,10 @@ history \
 glevel=${GLEV} \
 rlevel=${RLEV} \
 mnginfo="./${MNGINFO}" \
-layerfile_dir="./." \
+layerfile_dir="./zaxis" \
 llmap_base="./llmap" \
 -lon_swap \
 -comm_smallchunk
 
 ################################################################################
-EOFICO2LL1
+EOFICO2LL2
