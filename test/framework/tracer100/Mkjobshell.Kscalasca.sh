@@ -72,6 +72,11 @@ do
    echo "ln -sv ${TOPDIR}/data/grid/boundary/${dir2d}/${f} ." >> run.sh
 done
 
+for f in $( ls ${TOPDIR}/data/initial/HS_spinup_300day/${dir3d} )
+do
+   echo "ln -sv ${TOPDIR}/data/initial/HS_spinup_300day/${dir3d}/${f} ./${f/restart/init}" >> run.sh
+done
+
 cat << EOF2 >> run.sh
 rm -rf ./epik_trace
 

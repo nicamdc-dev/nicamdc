@@ -73,7 +73,6 @@ do
 done
 
 cat << EOF2 >> run.sh
-rm -rf ./epik_trace
 
 # run
 ${PROF1} ${MPIEXEC} ./${BINNAME} || exit
