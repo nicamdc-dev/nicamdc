@@ -5240,10 +5240,12 @@ contains
        ADM_prc_me
     use mod_fio, only: &
        FIO_output_DP, &
-       FIO_HMID,   &
+       FIO_output,    &
+       FIO_HMID,      &
        FIO_REAL8
     use mod_comm, only: &
-       COMM_data_transfer_DP
+       COMM_data_transfer_DP, &
+       COMM_data_transfer
     implicit none
 
     character(LEN=*), intent(in) :: basename

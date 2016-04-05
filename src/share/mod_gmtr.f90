@@ -985,7 +985,8 @@ contains
        FIO_HMID,   &
        FIO_REAL8
     use mod_comm, only: &
-       COMM_data_transfer_DP
+       COMM_data_transfer_DP, &
+       COMM_data_transfer
     implicit none
 
     character(LEN=*), intent(in) :: basename
@@ -1189,7 +1190,7 @@ contains
                         "grid", "grid number", "",                         &
                         "NIL", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP    )
 
-       call FIO_output_DP( tmp2(:,:,:),                                       &
+       call FIO_output_DP( tmp2(:,:,:,1),                                     &
                            basename, desc, "",                                &
                            "gmtrmetrics", "gmtr metrics", "",                 &
                            "", FIO_REAL8, "LAYERNM", 1, 60, 1, 0.0_DP, 0.0_DP )
