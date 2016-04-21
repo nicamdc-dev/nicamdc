@@ -102,8 +102,8 @@ module mod_history
 
   character(len=ADM_NSYS),     private, allocatable :: lname_save   (:)
   integer,                     private, allocatable :: tmax_save    (:)
-  real(RP),                     private, allocatable :: tstr_save    (:)
-  real(RP),                     private, allocatable :: tend_save    (:)
+  real(DP),                     private, allocatable :: tstr_save    (:)
+  real(DP),                     private, allocatable :: tend_save    (:)
   integer,                     private, allocatable :: month_old    (:)
   integer,                     private, allocatable :: l_region_save(:)
 

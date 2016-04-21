@@ -51,51 +51,51 @@ module mod_gmtr
   !
   !++ Public parameters & variables
   !
-  integer, public, parameter :: GMTR_P_nmax_var = 10
+  integer,  public, parameter :: GMTR_P_nmax_var = 10
 
-  integer, public, parameter :: GMTR_P_AREA  = 1
-  integer, public, parameter :: GMTR_P_RAREA = 2
-  integer, public, parameter :: GMTR_P_IX    = 3
-  integer, public, parameter :: GMTR_P_IY    = 4
-  integer, public, parameter :: GMTR_P_IZ    = 5
-  integer, public, parameter :: GMTR_P_JX    = 6
-  integer, public, parameter :: GMTR_P_JY    = 7
-  integer, public, parameter :: GMTR_P_JZ    = 8
-  integer, public, parameter :: GMTR_P_LAT   = 9
-  integer, public, parameter :: GMTR_P_LON   = 10
+  integer,  public, parameter :: GMTR_P_AREA  = 1
+  integer,  public, parameter :: GMTR_P_RAREA = 2
+  integer,  public, parameter :: GMTR_P_IX    = 3
+  integer,  public, parameter :: GMTR_P_IY    = 4
+  integer,  public, parameter :: GMTR_P_IZ    = 5
+  integer,  public, parameter :: GMTR_P_JX    = 6
+  integer,  public, parameter :: GMTR_P_JY    = 7
+  integer,  public, parameter :: GMTR_P_JZ    = 8
+  integer,  public, parameter :: GMTR_P_LAT   = 9
+  integer,  public, parameter :: GMTR_P_LON   = 10
 
-  integer, public, parameter :: GMTR_T_nmax_var = 7
+  integer,  public, parameter :: GMTR_T_nmax_var = 7
 
-  integer, public, parameter :: GMTR_T_AREA  = 1
-  integer, public, parameter :: GMTR_T_RAREA = 2
-  integer, public, parameter :: GMTR_T_W1    = 3
-  integer, public, parameter :: GMTR_T_W2    = 4
-  integer, public, parameter :: GMTR_T_W3    = 5
-  integer, public, parameter :: GMTR_T_LAT   = 6
-  integer, public, parameter :: GMTR_T_LON   = 7
+  integer,  public, parameter :: GMTR_T_AREA  = 1
+  integer,  public, parameter :: GMTR_T_RAREA = 2
+  integer,  public, parameter :: GMTR_T_W1    = 3
+  integer,  public, parameter :: GMTR_T_W2    = 4
+  integer,  public, parameter :: GMTR_T_W3    = 5
+  integer,  public, parameter :: GMTR_T_LAT   = 6
+  integer,  public, parameter :: GMTR_T_LON   = 7
 
-  integer, public, parameter :: GMTR_A_nmax_var    = 12
-  integer, public, parameter :: GMTR_A_nmax_var_pl = 18
+  integer,  public, parameter :: GMTR_A_nmax_var    = 12
+  integer,  public, parameter :: GMTR_A_nmax_var_pl = 18
 
-  integer, public, parameter :: GMTR_A_HNX  = 1
-  integer, public, parameter :: GMTR_A_HNY  = 2
-  integer, public, parameter :: GMTR_A_HNZ  = 3
-  integer, public, parameter :: GMTR_A_HTX  = 4
-  integer, public, parameter :: GMTR_A_HTY  = 5
-  integer, public, parameter :: GMTR_A_HTZ  = 6
-  integer, public, parameter :: GMTR_A_TNX  = 7
-  integer, public, parameter :: GMTR_A_TNY  = 8
-  integer, public, parameter :: GMTR_A_TNZ  = 9
-  integer, public, parameter :: GMTR_A_TTX  = 10
-  integer, public, parameter :: GMTR_A_TTY  = 11
-  integer, public, parameter :: GMTR_A_TTZ  = 12
+  integer,  public, parameter :: GMTR_A_HNX  = 1
+  integer,  public, parameter :: GMTR_A_HNY  = 2
+  integer,  public, parameter :: GMTR_A_HNZ  = 3
+  integer,  public, parameter :: GMTR_A_HTX  = 4
+  integer,  public, parameter :: GMTR_A_HTY  = 5
+  integer,  public, parameter :: GMTR_A_HTZ  = 6
+  integer,  public, parameter :: GMTR_A_TNX  = 7
+  integer,  public, parameter :: GMTR_A_TNY  = 8
+  integer,  public, parameter :: GMTR_A_TNZ  = 9
+  integer,  public, parameter :: GMTR_A_TTX  = 10
+  integer,  public, parameter :: GMTR_A_TTY  = 11
+  integer,  public, parameter :: GMTR_A_TTZ  = 12
 
-  integer, public, parameter :: GMTR_A_TN2X = 13
-  integer, public, parameter :: GMTR_A_TN2Y = 14
-  integer, public, parameter :: GMTR_A_TN2Z = 15
-  integer, public, parameter :: GMTR_A_TT2X = 16
-  integer, public, parameter :: GMTR_A_TT2Y = 17
-  integer, public, parameter :: GMTR_A_TT2Z = 18
+  integer,  public, parameter :: GMTR_A_TN2X = 13
+  integer,  public, parameter :: GMTR_A_TN2Y = 14
+  integer,  public, parameter :: GMTR_A_TN2Z = 15
+  integer,  public, parameter :: GMTR_A_TT2X = 16
+  integer,  public, parameter :: GMTR_A_TT2Y = 17
+  integer,  public, parameter :: GMTR_A_TT2Z = 18
 
 #ifdef _FIXEDINDEX_
   real(DP), public              :: GMTR_P_var   (ADM_gall   ,ADM_KNONE,ADM_lall   ,              GMTR_P_nmax_var   )
@@ -981,7 +981,7 @@ contains
        ADM_have_pl, &
        ADM_prc_me
     use mod_fio, only: &
-       FIO_output_DP, &
+       FIO_output, &
        FIO_HMID,   &
        FIO_REAL8
     use mod_comm, only: &
@@ -1001,8 +1001,8 @@ contains
     real(DP) :: tmp2_pl(ADM_gall_pl,60,ADM_lall_pl,1)
 
     integer :: rgnid
-    integer, parameter :: I_rgn  = 1
-    integer, parameter :: I_grid = 2
+    integer,  parameter :: I_rgn  = 1
+    integer,  parameter :: I_grid = 2
 
     integer :: fid
     integer :: g, l, K0
@@ -1169,31 +1169,31 @@ contains
 
     if ( GMTR_io_mode == 'ADVANCED' ) then
 
-       call FIO_output_DP( GMTR_P_var(:,:,:,GMTR_P_AREA),                     &
+       call FIO_output( GMTR_P_var(:,:,:,GMTR_P_AREA),                     &
                         basename, desc, "",                                &
                         "area", "control area", "",                        &
-                        "m2", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP     )
-       call FIO_output_DP( GMTR_P_var(:,:,:,GMTR_P_LAT),                      &
-                        basename, desc, "",                                &
-                        "lat", "latitude", "",                             &
+                        "m2", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
+       call FIO_output( GMTR_P_var(:,:,:,GMTR_P_LAT),                          &
+                        basename, desc, "",                                    &
+                        "lat", "latitude", "",                                 &
                         "radian", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
-       call FIO_output_DP( GMTR_P_var(:,:,:,GMTR_P_LON),                      &
-                        basename, desc, "",                                &
-                        "lon", "longitude", "",                            &
+       call FIO_output( GMTR_P_var(:,:,:,GMTR_P_LON),                          &
+                        basename, desc, "",                                    &
+                        "lon", "longitude", "",                                &
                         "radian", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
-       call FIO_output_DP( tmp(:,:,:,I_rgn),                                  &
-                        basename, desc, "",                                &
-                        "rgn", "region number", "",                        &
-                        "NIL", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP    )
-       call FIO_output_DP( tmp(:,:,:,I_grid),                                 &
-                        basename, desc, "",                                &
-                        "grid", "grid number", "",                         &
-                        "NIL", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP    )
+       call FIO_output( tmp(:,:,:,I_rgn),                                   &
+                        basename, desc, "",                                 &
+                        "rgn", "region number", "",                         &
+                        "NIL", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
+       call FIO_output( tmp(:,:,:,I_grid),                                  &
+                        basename, desc, "",                                 &
+                        "grid", "grid number", "",                          &
+                        "NIL", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
 
-       call FIO_output_DP( tmp2(:,:,:,1),                                     &
-                           basename, desc, "",                                &
-                           "gmtrmetrics", "gmtr metrics", "",                 &
-                           "", FIO_REAL8, "LAYERNM", 1, 60, 1, 0.0_DP, 0.0_DP )
+       call FIO_output( tmp2(:,:,:,1),                                     &
+                        basename, desc, "",                                &
+                        "gmtrmetrics", "gmtr metrics", "",                 &
+                        "", FIO_REAL8, "LAYERNM", 1, 60, 1, 0.0_DP, 0.0_DP )
 
     elseif( GMTR_io_mode == 'LEGACY' ) then
 

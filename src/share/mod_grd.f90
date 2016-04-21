@@ -77,9 +77,9 @@ module mod_grd
   !
 
   !------ Indentifiers for the directions in the Cartesian coordinate.
-  integer, public, parameter :: GRD_XDIR = 1
-  integer, public, parameter :: GRD_YDIR = 2
-  integer, public, parameter :: GRD_ZDIR = 3
+  integer,  public, parameter :: GRD_XDIR = 1
+  integer,  public, parameter :: GRD_YDIR = 2
+  integer,  public, parameter :: GRD_ZDIR = 3
 
   !====== Horizontal Grid ======
   !<-----
@@ -158,7 +158,7 @@ module mod_grd
 
 
   !====== Topography ======
-  integer, public, parameter   :: GRD_ZSFC = 1
+  integer,  public, parameter   :: GRD_ZSFC = 1
 
 #ifdef _FIXEDINDEX_
   real(DP), public              :: GRD_zs   (ADM_gall   ,ADM_KNONE,ADM_lall   ,GRD_ZSFC)
@@ -185,8 +185,8 @@ module mod_grd
   !<-----                   GRD_Z:GRD_ZH   )
   !<-----
 
-  integer, public, parameter   :: GRD_Z  = 1
-  integer, public, parameter   :: GRD_ZH = 2
+  integer,  public, parameter   :: GRD_Z  = 1
+  integer,  public, parameter   :: GRD_ZH = 2
 
   real(DP), public              :: GRD_htop ! model top height [m]
 
@@ -233,19 +233,19 @@ module mod_grd
   !
   !++ Private parameters & variables
   !
-  character(len=ADM_NSYS),     private :: hgrid_io_mode   = 'LEGACY' ! [add] H.Yashiro 20110819
-  character(len=ADM_NSYS),     private :: topo_io_mode    = 'LEGACY' ! [add] H.Yashiro 20110819
-  character(len=ADM_MAXFNAME), private :: hgrid_fname     = ''       ! horizontal grid file
-  character(len=ADM_MAXFNAME), private :: topo_fname      = ''       ! topography file
+  character(len=ADM_NSYS),     private :: hgrid_io_mode   = 'ADVANCED'
+  character(len=ADM_NSYS),     private :: topo_io_mode    = 'ADVANCED'
+  character(len=ADM_MAXFNAME), private :: hgrid_fname     = ''         ! horizontal grid file
+  character(len=ADM_MAXFNAME), private :: topo_fname      = ''         ! topography file
 
-  character(len=ADM_MAXFNAME), private :: vgrid_fname     = ''       ! vertical grid file
-  character(len=ADM_NSYS),     private :: vgrid_scheme    = 'LINEAR' ! vertical coordinate scheme
-  real(DP),                     private :: h_efold         = 10000.0_DP ! e-folding height for hybrid vertical coordinate [m]
-  real(DP),                     private :: hflat           =  -999.0_DP ! [m]
-  logical,                     private :: output_vgrid    = .false.  ! output verical grid file?
+  character(len=ADM_MAXFNAME), private :: vgrid_fname     = ''         ! vertical grid file
+  character(len=ADM_NSYS),     private :: vgrid_scheme    = 'LINEAR'   ! vertical coordinate scheme
+  real(DP),                    private :: h_efold         = 10000.0_DP ! e-folding height for hybrid vertical coordinate [m]
+  real(DP),                    private :: hflat           =  -999.0_DP ! [m]
+  logical,                     private :: output_vgrid    = .false.    ! output verical grid file?
 
-  logical,                     private :: hgrid_comm_flg  = .true.   ! communicate GRD_x?          [add] T.Ohno 110722
-  real(DP),                     private :: triangle_size   = 0.0_DP     ! length of sides of triangle [add] T.Ohno 110722
+  logical,                     private :: hgrid_comm_flg  = .true.     ! communicate GRD_x?          [add] T.Ohno 110722
+  real(DP),                    private :: triangle_size   = 0.0_DP     ! length of sides of triangle [add] T.Ohno 110722
 
   !-----------------------------------------------------------------------------
 contains
@@ -578,82 +578,46 @@ contains
        basename,     &
        input_vertex, &
        io_mode       )
-    use mod_misc, only: &
-       MISC_make_idstr,       &
-       MISC_get_available_fid
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_prc_tab,   &
-       ADM_prc_me
+       ADM_proc_stop
     use mod_fio, only: &
-       FIO_input_DP
+       FIO_input
+    use mod_hio, only: &
+       HIO_input
     implicit none
 
     character(len=*), intent(in) :: basename     ! input basename
     logical,          intent(in) :: input_vertex ! flag of B-grid input
     character(len=*), intent(in) :: io_mode      ! io_mode
-
-    character(len=ADM_MAXFNAME) :: fname
-
-    integer :: fid, ierr
-    integer :: rgnid, l, K0
     !---------------------------------------------------------------------------
 
-    K0 = ADM_KNONE
+    if ( io_mode == 'POH5' ) then
 
-    if ( io_mode == 'ADVANCED' ) then
-
-       call FIO_input_DP(GRD_x(:,:,:,GRD_XDIR),basename,'grd_x_x','ZSSFC1',K0,K0,1)
-       call FIO_input_DP(GRD_x(:,:,:,GRD_YDIR),basename,'grd_x_y','ZSSFC1',K0,K0,1)
-       call FIO_input_DP(GRD_x(:,:,:,GRD_ZDIR),basename,'grd_x_z','ZSSFC1',K0,K0,1)
+       call HIO_input( GRD_x(:,:,:,GRD_XDIR),basename,'grd_x_x','ZSSFC1',1,1,1 )
+       call HIO_input( GRD_x(:,:,:,GRD_YDIR),basename,'grd_x_y','ZSSFC1',1,1,1 )
+       call HIO_input( GRD_x(:,:,:,GRD_ZDIR),basename,'grd_x_z','ZSSFC1',1,1,1 )
        if ( input_vertex ) then
-          call FIO_input_DP(GRD_xt(:,:,:,ADM_TI,GRD_XDIR),basename, &
-                         'grd_xt_ix','ZSSFC1',K0,K0,1            )
-          call FIO_input_DP(GRD_xt(:,:,:,ADM_TJ,GRD_XDIR),basename, &
-                         'grd_xt_jx','ZSSFC1',K0,K0,1            )
-          call FIO_input_DP(GRD_xt(:,:,:,ADM_TI,GRD_YDIR),basename, &
-                         'grd_xt_iy','ZSSFC1',K0,K0,1            )
-          call FIO_input_DP(GRD_xt(:,:,:,ADM_TJ,GRD_YDIR),basename, &
-                         'grd_xt_jy','ZSSFC1',K0,K0,1            )
-          call FIO_input_DP(GRD_xt(:,:,:,ADM_TI,GRD_ZDIR),basename, &
-                         'grd_xt_iz','ZSSFC1',K0,K0,1            )
-          call FIO_input_DP(GRD_xt(:,:,:,ADM_TJ,GRD_ZDIR),basename, &
-                         'grd_xt_jz','ZSSFC1',K0,K0,1            )
+          call HIO_input( GRD_xt(:,:,:,ADM_TI,GRD_XDIR),basename,'grd_xt_ix','ZSSFC1',1,1,1 )
+          call HIO_input( GRD_xt(:,:,:,ADM_TJ,GRD_XDIR),basename,'grd_xt_jx','ZSSFC1',1,1,1 )
+          call HIO_input( GRD_xt(:,:,:,ADM_TI,GRD_YDIR),basename,'grd_xt_iy','ZSSFC1',1,1,1 )
+          call HIO_input( GRD_xt(:,:,:,ADM_TJ,GRD_YDIR),basename,'grd_xt_jy','ZSSFC1',1,1,1 )
+          call HIO_input( GRD_xt(:,:,:,ADM_TI,GRD_ZDIR),basename,'grd_xt_iz','ZSSFC1',1,1,1 )
+          call HIO_input( GRD_xt(:,:,:,ADM_TJ,GRD_ZDIR),basename,'grd_xt_jz','ZSSFC1',1,1,1 )
        endif
 
-    elseif( io_mode == 'LEGACY' ) then
+     elseif ( io_mode == 'ADVANCED' ) then
 
-       do l = 1, ADM_lall
-          rgnid = ADM_prc_tab(l,ADM_prc_me)
-          call MISC_make_idstr(fname,trim(basename),'rgn',rgnid)
-
-          fid = MISC_get_available_fid()
-          open( unit   = fid,           &
-                file   = trim(fname),   &
-                form   = 'unformatted', &
-                access = 'direct',      &
-                recl   = ADM_gall*8,    &
-                status = 'old',         &
-                iostat = ierr           )
-
-             if ( ierr /= 0 ) then
-                write(ADM_LOG_FID,*) 'xxx Error occured in reading grid file.', trim(fname)
-                call ADM_proc_stop
-             endif
-
-             read(fid,rec=1) GRD_x(:,K0,l,GRD_XDIR)
-             read(fid,rec=2) GRD_x(:,K0,l,GRD_YDIR)
-             read(fid,rec=3) GRD_x(:,K0,l,GRD_ZDIR)
-             if ( input_vertex ) then
-                read(fid,rec=4) GRD_xt(:,K0,l,ADM_TI,GRD_XDIR)
-                read(fid,rec=5) GRD_xt(:,K0,l,ADM_TI,GRD_YDIR)
-                read(fid,rec=6) GRD_xt(:,K0,l,ADM_TI,GRD_ZDIR)
-                read(fid,rec=7) GRD_xt(:,K0,l,ADM_TJ,GRD_XDIR)
-                read(fid,rec=8) GRD_xt(:,K0,l,ADM_TJ,GRD_YDIR)
-                read(fid,rec=9) GRD_xt(:,K0,l,ADM_TJ,GRD_ZDIR)
-             endif
-          close(fid)
-       enddo
+       call FIO_input( GRD_x(:,:,:,GRD_XDIR),basename,'grd_x_x','ZSSFC1',1,1,1 )
+       call FIO_input( GRD_x(:,:,:,GRD_YDIR),basename,'grd_x_y','ZSSFC1',1,1,1 )
+       call FIO_input( GRD_x(:,:,:,GRD_ZDIR),basename,'grd_x_z','ZSSFC1',1,1,1 )
+       if ( input_vertex ) then
+          call FIO_input( GRD_xt(:,:,:,ADM_TI,GRD_XDIR),basename,'grd_xt_ix','ZSSFC1',1,1,1 )
+          call FIO_input( GRD_xt(:,:,:,ADM_TJ,GRD_XDIR),basename,'grd_xt_jx','ZSSFC1',1,1,1 )
+          call FIO_input( GRD_xt(:,:,:,ADM_TI,GRD_YDIR),basename,'grd_xt_iy','ZSSFC1',1,1,1 )
+          call FIO_input( GRD_xt(:,:,:,ADM_TJ,GRD_YDIR),basename,'grd_xt_jy','ZSSFC1',1,1,1 )
+          call FIO_input( GRD_xt(:,:,:,ADM_TI,GRD_ZDIR),basename,'grd_xt_iz','ZSSFC1',1,1,1 )
+          call FIO_input( GRD_xt(:,:,:,ADM_TJ,GRD_ZDIR),basename,'grd_xt_jz','ZSSFC1',1,1,1 )
+       endif
 
     else
        write(ADM_LOG_FID,*) 'Invalid io_mode!'
@@ -671,101 +635,108 @@ contains
        basename,      &
        output_vertex, &
        io_mode        )
-    use mod_misc, only: &
-       MISC_make_idstr,&
-       MISC_get_available_fid
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_prc_tab,   &
-       ADM_prc_me
+       ADM_proc_stop
     use mod_fio, only: &
-!       FIO_output, &
-       FIO_output_DP, &
+       FIO_output, &
        FIO_HMID,   &
        FIO_REAL8
+    use mod_hio, only: &
+       HIO_output, &
+       HIO_REAL8
     implicit none
 
     character(len=*), intent(in) :: basename      ! output basename
     logical,          intent(in) :: output_vertex ! output flag of B-grid
     character(len=*), intent(in) :: io_mode       ! io_mode
 
-    character(len=ADM_MAXFNAME) :: fname
-    character(len=FIO_HMID)     :: desc = 'HORIZONTAL GRID FILE'
-
-    integer :: fid
-    integer :: rgnid, l, K0
+    character(len=FIO_HMID) :: desc = 'HORIZONTAL GRID FILE'
     !---------------------------------------------------------------------------
 
-    K0 = ADM_KNONE
+    if ( io_mode == 'POH5' ) then
 
-    if ( io_mode == 'ADVANCED' ) then
-
-       call FIO_output_DP( GRD_x(:,:,:,GRD_XDIR),                           &
-                        basename, desc, "",                              &
-                       "grd_x_x", "GRD_x (X_DIR)", "",                   &
-                       "NIL", FIO_REAL8, "ZSSFC1", K0, K0, 1, 0.0_DP, 0.0_DP )
-       call FIO_output_DP( GRD_x(:,:,:,GRD_YDIR),                           &
-                        basename, desc, '',                              &
-                       'grd_x_y', 'GRD_x (Y_DIR)', '',                   &
-                       'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_DP, 0.0_DP )
-       call FIO_output_DP( GRD_x(:,:,:,GRD_ZDIR),                           &
-                        basename, desc, '',                              &
-                       'grd_x_z', 'GRD_x (Z_DIR)', '',                   &
-                       'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_DP, 0.0_DP )
+       call HIO_output( GRD_x(:,:,:,GRD_XDIR),                             &
+                        basename, desc, "",                                &
+                       "grd_x_x", "GRD_x (X_DIR)", "",                     &
+                       "NIL", HIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
+       call HIO_output( GRD_x(:,:,:,GRD_YDIR),                             &
+                        basename, desc, '',                                &
+                       'grd_x_y', 'GRD_x (Y_DIR)', '',                     &
+                       'NIL', HIO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
+       call HIO_output( GRD_x(:,:,:,GRD_ZDIR),                             &
+                        basename, desc, '',                                &
+                       'grd_x_z', 'GRD_x (Z_DIR)', '',                     &
+                       'NIL', HIO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
 
        if ( output_vertex ) then
-          call FIO_output_DP( GRD_xt(:,:,:,ADM_TI,GRD_XDIR),                   &
-                           basename, desc, '',                              &
-                          'grd_xt_ix', 'GRD_xt (TI,X_DIR)', '',             &
-                          'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_DP, 0.0_DP )
-          call FIO_output_DP( GRD_xt(:,:,:,ADM_TJ,GRD_XDIR),                   &
-                           basename, desc, '',                              &
-                          'grd_xt_jx', 'GRD_xt (TJ,X_DIR)', '',             &
-                          'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_DP, 0.0_DP )
-          call FIO_output_DP( GRD_xt(:,:,:,ADM_TI,GRD_YDIR),                   &
-                           basename, desc, '',                              &
-                          'grd_xt_iy', 'GRD_xt (TI,Y_DIR)', '',             &
-                          'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_DP, 0.0_DP )
-          call FIO_output_DP( GRD_xt(:,:,:,ADM_TJ,GRD_YDIR),                   &
-                           basename, desc, '',                              &
-                          'grd_xt_jy', 'GRD_xt (TJ,Y_DIR)', '',             &
-                          'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_DP, 0.0_DP )
-          call FIO_output_DP( GRD_xt(:,:,:,ADM_TI,GRD_ZDIR),                   &
-                           basename, desc, '',                              &
-                          'grd_xt_iz', 'GRD_xt (TI,Z_DIR)', '',             &
-                          'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_DP, 0.0_DP )
-          call FIO_output_DP( GRD_xt(:,:,:,ADM_TJ,GRD_ZDIR),                   &
-                           basename, desc, '',                              &
-                          'grd_xt_jz', 'GRD_xt (TJ,Z_DIR)', '',             &
-                          'NIL', FIO_REAL8, 'ZSSFC1', K0, K0, 1, 0.0_DP, 0.0_DP )
+          call HIO_output( GRD_xt(:,:,:,ADM_TI,GRD_XDIR),                     &
+                           basename, desc, '',                                &
+                          'grd_xt_ix', 'GRD_xt (TI,X_DIR)', '',               &
+                          'NIL', HIO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
+          call HIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_XDIR),                     &
+                           basename, desc, '',                                &
+                          'grd_xt_jx', 'GRD_xt (TJ,X_DIR)', '',               &
+                          'NIL', HIO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
+          call HIO_output( GRD_xt(:,:,:,ADM_TI,GRD_YDIR),                     &
+                           basename, desc, '',                                &
+                          'grd_xt_iy', 'GRD_xt (TI,Y_DIR)', '',               &
+                          'NIL', HIO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
+          call HIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_YDIR),                     &
+                           basename, desc, '',                                &
+                          'grd_xt_jy', 'GRD_xt (TJ,Y_DIR)', '',               &
+                          'NIL', HIO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
+          call HIO_output( GRD_xt(:,:,:,ADM_TI,GRD_ZDIR),                     &
+                           basename, desc, '',                                &
+                          'grd_xt_iz', 'GRD_xt (TI,Z_DIR)', '',               &
+                          'NIL', HIO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
+          call HIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_ZDIR),                     &
+                           basename, desc, '',                                &
+                          'grd_xt_jz', 'GRD_xt (TJ,Z_DIR)', '',               &
+                          'NIL', HIO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
        endif
 
-    elseif( io_mode == 'LEGACY' ) then
+    elseif ( io_mode == 'ADVANCED' ) then
 
-       do l = 1, ADM_lall
-          rgnid = ADM_prc_tab(l,ADM_prc_me)
-          call MISC_make_idstr(fname,trim(basename),'rgn',rgnid)
+       call FIO_output( GRD_x(:,:,:,GRD_XDIR),                             &
+                        basename, desc, "",                                &
+                       "grd_x_x", "GRD_x (X_DIR)", "",                     &
+                       "NIL", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
+       call FIO_output( GRD_x(:,:,:,GRD_YDIR),                             &
+                        basename, desc, '',                                &
+                       'grd_x_y', 'GRD_x (Y_DIR)', '',                     &
+                       'NIL', FIO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
+       call FIO_output( GRD_x(:,:,:,GRD_ZDIR),                             &
+                        basename, desc, '',                                &
+                       'grd_x_z', 'GRD_x (Z_DIR)', '',                     &
+                       'NIL', FIO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
 
-          fid = MISC_get_available_fid()
-          open( unit = fid, &
-               file=trim(fname),   &
-               form='unformatted', &
-               access='direct',    &
-               recl=ADM_gall*8     )
+       if ( output_vertex ) then
+          call FIO_output( GRD_xt(:,:,:,ADM_TI,GRD_XDIR),                     &
+                           basename, desc, '',                                &
+                          'grd_xt_ix', 'GRD_xt (TI,X_DIR)', '',               &
+                          'NIL', FIO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
+          call FIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_XDIR),                     &
+                           basename, desc, '',                                &
+                          'grd_xt_jx', 'GRD_xt (TJ,X_DIR)', '',               &
+                          'NIL', FIO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
+          call FIO_output( GRD_xt(:,:,:,ADM_TI,GRD_YDIR),                     &
+                           basename, desc, '',                                &
+                          'grd_xt_iy', 'GRD_xt (TI,Y_DIR)', '',               &
+                          'NIL', FIO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
+          call FIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_YDIR),                     &
+                           basename, desc, '',                                &
+                          'grd_xt_jy', 'GRD_xt (TJ,Y_DIR)', '',               &
+                          'NIL', FIO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
+          call FIO_output( GRD_xt(:,:,:,ADM_TI,GRD_ZDIR),                     &
+                           basename, desc, '',                                &
+                          'grd_xt_iz', 'GRD_xt (TI,Z_DIR)', '',               &
+                          'NIL', FIO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
+          call FIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_ZDIR),                     &
+                           basename, desc, '',                                &
+                          'grd_xt_jz', 'GRD_xt (TJ,Z_DIR)', '',               &
+                          'NIL', FIO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
+       endif
 
-             write(fid,rec=1) GRD_x(:,K0,l,GRD_XDIR)
-             write(fid,rec=2) GRD_x(:,K0,l,GRD_YDIR)
-             write(fid,rec=3) GRD_x(:,K0,l,GRD_ZDIR)
-             if ( output_vertex ) then
-                write(fid,rec=4) GRD_xt(:,K0,l,ADM_TI,GRD_XDIR)
-                write(fid,rec=5) GRD_xt(:,K0,l,ADM_TI,GRD_YDIR)
-                write(fid,rec=6) GRD_xt(:,K0,l,ADM_TI,GRD_ZDIR)
-                write(fid,rec=7) GRD_xt(:,K0,l,ADM_TJ,GRD_XDIR)
-                write(fid,rec=8) GRD_xt(:,K0,l,ADM_TJ,GRD_YDIR)
-                write(fid,rec=9) GRD_xt(:,K0,l,ADM_TJ,GRD_ZDIR)
-             endif
-          close(fid)
-       enddo
     else
        write(ADM_LOG_FID,*) 'Invalid io_mode!'
        call ADM_proc_stop
@@ -864,7 +835,7 @@ contains
        ADM_prc_tab, &
        ADM_prc_me
     use mod_fio, only: &
-       FIO_input_DP
+       FIO_input
     use mod_comm, only: &
        COMM_var_DP
     use mod_ideal_topo, only: &
@@ -886,7 +857,7 @@ contains
     if ( topo_io_mode == 'ADVANCED' ) then
 
        if ( basename /= 'NONE' ) then
-          call FIO_input_DP(GRD_zs(:,:,:,GRD_ZSFC),basename,'topo','ZSSFC1',1,1,1)
+          call FIO_input(GRD_zs(:,:,:,GRD_ZSFC),basename,'topo','ZSSFC1',1,1,1)
        endif
 
     elseif( topo_io_mode == 'LEGACY' ) then

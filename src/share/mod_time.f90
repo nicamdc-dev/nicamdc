@@ -53,7 +53,7 @@ module mod_time
   integer, public :: TIME_NSTART             ! Time step at the start
   integer, public :: TIME_NEND               ! Time step at the end
 
-  real(RP), public :: TIME_CTIME              ! Current time [sec]
+  real(DP), public :: TIME_CTIME              ! Current time [sec]
   integer, public :: TIME_CSTEP              ! Current time step
 
   !-----------------------------------------------------------------------------

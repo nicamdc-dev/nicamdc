@@ -31,7 +31,8 @@ endif
 ifeq ($(ENABLE_NETCDF),T)
 	NETCDF_INCLUDE ?= -I$(NETCDF3)/include
 	NETCDF_LIBS    ?= -L$(NETCDF3)/lib -lnetcdff -lnetcdf
-	FFLAGS += $(NETCDF_INCLUDE)
+	FFLAGS         += $(NETCDF_INCLUDE)
+	CFLAGS         += $(NETCDF_INCLUDE)
 endif
 
 ifeq ($(USE_NETCDF3),T)

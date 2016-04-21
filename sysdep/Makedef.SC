@@ -34,7 +34,8 @@ endif
 ifeq ($(ENABLE_NETCDF),T)
 	NETCDF_INCLUDE ?= -I$(NETCDF4)/include
 	NETCDF_LIBS    ?= -L$(NETCDF4)/lib -L$(HDF5)/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lm -lz
-	FFLAGS += $(NETCDF_INCLUDE)
+	FFLAGS         += $(NETCDF_INCLUDE)
+	CFLAGS         += $(NETCDF_INCLUDE)
 endif
 
 ###########################

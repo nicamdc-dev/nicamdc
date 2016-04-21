@@ -11,7 +11,7 @@ FFLAGS_DEBUG = -cpp -O0  -64 -noparallel -model=M1 \
                -loglist                            \
                -stackinit=nan -negativezero        \
                -g -debug -boundarycheck -s,TRACE
-               
+
 FC     = mpif90
 FFLAGS = $(FFLAGS_FAST) -D_NOF2003
 #FFLAGS = $(FFLAGS_DEBUG) -D_NOF2003
@@ -37,7 +37,8 @@ endif
 ifeq ($(ENABLE_NETCDF),T)
 	NETCDF_INCLUDE ?= -I/usr/local/include
 	NETCDF_LIBS    ?= -L/usr/local/lib -lpnetcdf
-	FFLAGS += $(NETCDF_INCLUDE)
+	FFLAGS         += $(NETCDF_INCLUDE)
+	CFLAGS         += $(NETCDF_INCLUDE)
 endif
 
 ###########################
@@ -53,5 +54,5 @@ AR      = ar
 ARFLAGS = r
 RANLIB  = ranlib
 
-##### OBJECT_MODE setting for AIX 
+##### OBJECT_MODE setting for AIX
 export OBJECT_MODE=64

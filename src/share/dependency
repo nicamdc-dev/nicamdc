@@ -1,3 +1,4 @@
+VPATH_SHARE = share:share/io:
 PRJ_SHARE   =
 LIB_SHARE   = libnicamshare.a
 
@@ -12,6 +13,10 @@ MODS_SHARE =	\
 	mod_fio.o	\
 	fio.o	\
 	fiof.o	\
+	mod_hio.o	\
+	hio.o	\
+	hiof.o	\
+	poh5.o	\
 	mod_comm.o	\
 	mod_grd.o	\
 	mod_ideal_topo.o	\

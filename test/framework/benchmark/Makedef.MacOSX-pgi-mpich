@@ -28,7 +28,8 @@ endif
 ifeq ($(ENABLE_NETCDF),T)
 	NETCDF_INCLUDE ?= -I/opt/local/include
 	NETCDF_LIBS    ?= -L/opt/local/lib -lnetcdff -lnetcdf
-	FFLAGS += $(NETCDF_INCLUDE)
+	FFLAGS         += $(NETCDF_INCLUDE)
+	CFLAGS         += $(NETCDF_INCLUDE)
 endif
 
 ###########################

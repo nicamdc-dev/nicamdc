@@ -5235,11 +5235,8 @@ contains
        MISC_get_available_fid
     use mod_adm, only: &
        ADM_proc_stop, &
-       ADM_prc_tab,   &
-       ADM_have_pl,   &
-       ADM_prc_me
+       ADM_have_pl
     use mod_fio, only: &
-       FIO_output_DP, &
        FIO_output,    &
        FIO_HMID,      &
        FIO_REAL8
@@ -5250,14 +5247,11 @@ contains
 
     character(LEN=*), intent(in) :: basename
 
-    character(LEN=128)      :: fname
     character(LEN=FIO_HMID) :: desc = 'Coefficients info'
 
     real(DP) :: tmp   (ADM_gall   ,49,ADM_lall   ,1)
     real(DP) :: tmp_pl(ADM_gall_pl,49,ADM_lall_pl,1)
 
-    integer :: rgnid
-    integer :: fid
     integer :: g, l
     !---------------------------------------------------------------------------
 
@@ -5378,7 +5372,7 @@ contains
        call FIO_output( tmp(:,:,:,1),                                      &
                         basename, desc, "",                                &
                         "oprtcoef", "oprt coef", "",                       &
-                        "", FIO_REAL8, "LAYERNM", 1, 49, 1, 0.0_RP, 0.0_RP )
+                        "", FIO_REAL8, "LAYERNM", 1, 49, 1, 0.0_DP, 0.0_DP )
 
     else
        write(ADM_LOG_FID,*) 'Invalid io_mode!'

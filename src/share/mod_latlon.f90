@@ -905,16 +905,16 @@ contains
 
        call FIO_output( SAMPLE(:,:,:,1), SAMPLE_OUT_BASENAME, "", "", &
                        "sample1", "sample data(prc)", "", "NIL",      &
-                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.0_RP, 0.0_RP   )
+                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP   )
        call FIO_output( SAMPLE(:,:,:,2), SAMPLE_OUT_BASENAME, "", "", &
                        "sample2", "sample data(rgn)", "", "NIL",      &
-                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.0_RP, 0.0_RP   )
+                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP   )
        call FIO_output( SAMPLE(:,:,:,3), SAMPLE_OUT_BASENAME, "", "", &
-                       "sample3", "sample data(i)", "", "NIL",      &
-                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.0_RP, 0.0_RP   )
+                       "sample3", "sample data(i)", "", "NIL",        &
+                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP   )
        call FIO_output( SAMPLE(:,:,:,4), SAMPLE_OUT_BASENAME, "", "", &
-                       "sample4", "sample data(j)", "", "NIL",      &
-                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.0_RP, 0.0_RP   )
+                       "sample4", "sample data(j)", "", "NIL",        &
+                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP   )
 
     elseif( sample_io_mode == 'LEGACY' ) then
 
