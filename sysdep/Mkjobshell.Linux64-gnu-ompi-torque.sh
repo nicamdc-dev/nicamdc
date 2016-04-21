@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpijob"
+MPIEXEC="mpirun --mca btl openib,self"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -30,7 +30,7 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-NNODE=`expr \( $NMPI - 1 \) / 32 + 1`
+NNODE=`expr \( $NMPI - 1 \) / 8 + 1`
 NPROC=`expr $NMPI / $NNODE`
 
 cat << EOF1 > run.sh
@@ -40,12 +40,14 @@ cat << EOF1 > run.sh
 # ------ FOR Linux64 & intel C&fortran & mpt & torque -----
 #
 ################################################################################
-#PBS -q quv
+#PBS -q s
 #PBS -l nodes=${NNODE}:ppn=${NPROC}
 #PBS -N ${res3d}
+#PBS -l walltime=00:30:00
 #PBS -o STDOUT
 #PBS -e STDERR
 export FORT_FMT_RECL=400
+export GFORTRAN_UNBUFFERED_ALL=Y
 
 cd \$PBS_O_WORKDIR
 
@@ -57,11 +59,6 @@ EOF1
 for f in $( ls ${TOPDIR}/data/grid/boundary/${dir2d} )
 do
    echo "ln -sv ${TOPDIR}/data/grid/boundary/${dir2d}/${f} ." >> run.sh
-done
-
-for f in $( ls ${TOPDIR}/data/initial/HS_spinup_300day/${dir3d} )
-do
-   echo "ln -sv ${TOPDIR}/data/initial/HS_spinup_300day/${dir3d}/${f} ./${f/restart/init}" >> run.sh
 done
 
 cat << EOF2 >> run.sh
@@ -80,12 +77,14 @@ cat << EOFICO2LL1 > ico2ll.sh
 # ------ FOR Linux64 & intel C&fortran & mpt & torque -----
 #
 ################################################################################
-#PBS -q quv
+#PBS -q s
 #PBS -l nodes=${NNODE}:ppn=${NPROC}
 #PBS -N ico2ll_${res3d}
+#PBS -l walltime=00:30:00
 #PBS -o STDOUT
 #PBS -e STDERR
 export FORT_FMT_RECL=400
+export GFORTRAN_UNBUFFERED_ALL=Y
 
 cd \$PBS_O_WORKDIR
 

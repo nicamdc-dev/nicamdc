@@ -10,32 +10,13 @@ SRCDIR = $(TOPDIR)/src
 
 ##### select special files #####
 
-ifeq ($(DISABLE_REAL16),T)
-	VPATH += share/extra:
-	mod_misc := mod_misc_noreal16
-else
-	mod_misc := mod_misc
-endif
-
-ifeq ($(NICAM_SYS),ES2)
-	VPATH += share/extra:
-	mod_oprt      := mod_oprt_SX
-	mod_oprt3d    := mod_oprt3d_SX
-	VPATH += nhm/dynamics/extra:
-	mod_dynamics   := mod_dynamics_AoS
-	mod_vi         := mod_vi_AoS
-	mod_src        := mod_src_AoS
-	mod_src_tracer := mod_src_tracer_AoS
-	mod_numfilter  := mod_numfilter_AoS
-else
-	mod_oprt      := mod_oprt
-	mod_oprt3d    := mod_oprt3d
-	mod_dynamics   := mod_dynamics
-	mod_vi         := mod_vi
-	mod_src        := mod_src
-	mod_src_tracer := mod_src_tracer
-	mod_numfilter  := mod_numfilter
-endif
+mod_oprt      := mod_oprt
+mod_oprt3d    := mod_oprt3d
+mod_dynamics   := mod_dynamics
+mod_vi         := mod_vi
+mod_src        := mod_src
+mod_src_tracer := mod_src_tracer
+mod_numfilter  := mod_numfilter
 
 ifeq ($(ENABLE_NETCDF),T)
 	mod_netcdf := mod_netcdf
