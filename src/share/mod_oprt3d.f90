@@ -95,17 +95,15 @@ contains
        ADM_kmax
     use mod_grd, only: &
        GRD_rdgz
-    use mod_gmtr, only: &
-       GMTR_P_var_pl, &
-       GMTR_T_var_pl, &
-       GMTR_A_var_pl
     use mod_oprt, only: &
-       OPRT_nstart, &
-       OPRT_nend,   &
-       cinterp_TN,  &
-       cinterp_HN,  &
-       cinterp_TRA, &
-       cinterp_PRA
+       cinterp_TN,     &
+       cinterp_TN_pl,  &
+       cinterp_HN,     &
+       cinterp_HN_pl,  &
+       cinterp_TRA,    &
+       cinterp_TRA_pl, &
+       cinterp_PRA,    &
+       cinterp_PRA_pl
     use mod_vmtr, only: &
        VMTR_RGAM,        &
        VMTR_RGAM_pl,     &
@@ -146,7 +144,7 @@ contains
     real(RP) :: rhogw_vm    (ADM_gall,   ADM_kall) ! rho*w  / vertical metrics
     real(RP) :: rhogw_vm_pl (ADM_gall_pl,ADM_kall)
 
-    integer :: nstart, nend
+    integer :: nstart1, nstart2, nend
     integer :: ij
     integer :: ip1j, ijp1, ip1jp1
     integer :: im1j, ijm1, im1jm1
@@ -163,8 +161,9 @@ contains
     kmin    = ADM_kmin
     kmax    = ADM_kmax
 
-    nstart = suf(ADM_gmin-1,ADM_gmin-1)
-    nend   = suf(ADM_gmax,  ADM_gmax  )
+    nstart1 = suf(ADM_gmin-1,ADM_gmin-1)
+    nstart2 = suf(ADM_gmin  ,ADM_gmin  )
+    nend    = suf(ADM_gmax  ,ADM_gmax  )
 
     do l = 1, ADM_lall
        do k = ADM_kmin+1, ADM_kmax
@@ -184,8 +183,8 @@ contains
           rhogw_vm(g,ADM_kmax+1) = 0.0_RP
        enddo
 
-       !$omp parallel default(none),private(g,n,k,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1,sclt_rhogw), &
-       !$omp shared(OPRT_nstart,OPRT_nend,gall,gall_1d,gmin,kmin,kmax,nstart,nend,l,ADM_have_sgp, &
+       !$omp parallel default(none), private(g,n,k,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1,sclt_rhogw), &
+       !$omp shared(gall,gall_1d,gmin,kmin,kmax,nstart1,nstart2,nend,l,ADM_have_sgp, &
        !$omp GRD_rdgz,VMTR_RGAM,rhogvx,rhogvy,rhogvz,ddivdx,ddivdy,ddivdz,sclt, &
        !$omp rhogvx_vm,rhogvy_vm,rhogvz_vm,rhogw_vm,cinterp_TN,cinterp_HN,cinterp_PRA,cinterp_TRA)
        do k = kmin, kmax
@@ -199,7 +198,7 @@ contains
           !$omp end do
 
           !$omp do
-          do n = nstart, nend
+          do n = nstart1, nend
              ij     = n
              ip1j   = n + 1
              ip1jp1 = n + 1 + gall_1d
@@ -223,7 +222,7 @@ contains
           !$omp end do nowait
 
           !$omp do
-          do n = nstart, nend
+          do n = nstart1, nend
              ij     = n
              ijp1   = n     + gall_1d
              ip1jp1 = n + 1 + gall_1d
@@ -247,7 +246,7 @@ contains
           !$omp end do
 
           !$omp do
-          do n = OPRT_nstart, OPRT_nend
+          do n = nstart2, nend
              ij     = n
              im1j   = n - 1
              ijm1   = n     - gall_1d
@@ -362,36 +361,36 @@ contains
                                 - ( rhogw_vm_pl(n,k  ) + rhogw_vm_pl(ij,k  ) + rhogw_vm_pl(ijp1,k  ) ) &
                                 ) / 3.0_RP * GRD_rdgz(k)
 
-                sclt_pl(v) = ( + ( rhogvx_vm_pl(n   ) + rhogvx_vm_pl(ij  ) ) * GMTR_A_var_pl(ij,  k0,l,TNX ) &
-                               + ( rhogvy_vm_pl(n   ) + rhogvy_vm_pl(ij  ) ) * GMTR_A_var_pl(ij,  k0,l,TNY ) &
-                               + ( rhogvz_vm_pl(n   ) + rhogvz_vm_pl(ij  ) ) * GMTR_A_var_pl(ij,  k0,l,TNZ ) &
-                               + ( rhogvx_vm_pl(ij  ) + rhogvx_vm_pl(ijp1) ) * GMTR_A_var_pl(ij,  k0,l,TN2X) &
-                               + ( rhogvy_vm_pl(ij  ) + rhogvy_vm_pl(ijp1) ) * GMTR_A_var_pl(ij,  k0,l,TN2Y) &
-                               + ( rhogvz_vm_pl(ij  ) + rhogvz_vm_pl(ijp1) ) * GMTR_A_var_pl(ij,  k0,l,TN2Z) &
-                               - ( rhogvx_vm_pl(ijp1) + rhogvx_vm_pl(n   ) ) * GMTR_A_var_pl(ijp1,k0,l,TNX ) &
-                               - ( rhogvy_vm_pl(ijp1) + rhogvy_vm_pl(n   ) ) * GMTR_A_var_pl(ijp1,k0,l,TNY ) &
-                               - ( rhogvz_vm_pl(ijp1) + rhogvz_vm_pl(n   ) ) * GMTR_A_var_pl(ijp1,k0,l,TNZ ) &
-                             ) * 0.5_RP * GMTR_T_var_pl(ij,k0,l,T_RAREA) &
+                sclt_pl(v) = ( + ( rhogvx_vm_pl(n   ) + rhogvx_vm_pl(ij  ) ) * cinterp_TN_pl(ij  ,l,1,1) &
+                               + ( rhogvy_vm_pl(n   ) + rhogvy_vm_pl(ij  ) ) * cinterp_TN_pl(ij  ,l,1,2) &
+                               + ( rhogvz_vm_pl(n   ) + rhogvz_vm_pl(ij  ) ) * cinterp_TN_pl(ij  ,l,1,3) &
+                               + ( rhogvx_vm_pl(ij  ) + rhogvx_vm_pl(ijp1) ) * cinterp_TN_pl(ij  ,l,2,1) &
+                               + ( rhogvy_vm_pl(ij  ) + rhogvy_vm_pl(ijp1) ) * cinterp_TN_pl(ij  ,l,2,2) &
+                               + ( rhogvz_vm_pl(ij  ) + rhogvz_vm_pl(ijp1) ) * cinterp_TN_pl(ij  ,l,2,3) &
+                               - ( rhogvx_vm_pl(ijp1) + rhogvx_vm_pl(n   ) ) * cinterp_TN_pl(ijp1,l,1,1) &
+                               - ( rhogvy_vm_pl(ijp1) + rhogvy_vm_pl(n   ) ) * cinterp_TN_pl(ijp1,l,1,2) &
+                               - ( rhogvz_vm_pl(ijp1) + rhogvz_vm_pl(n   ) ) * cinterp_TN_pl(ijp1,l,1,3) &
+                             ) * 0.5_RP * cinterp_TRA_pl(ij,l) &
                            + sclt_rhogw_pl
              enddo
 
-             ddivdx_pl(n,k,l) = 0.0_RP
-             ddivdy_pl(n,k,l) = 0.0_RP
-             ddivdz_pl(n,k,l) = 0.0_RP
+             ddivdx_pl(:,k,l) = 0.0_RP
+             ddivdy_pl(:,k,l) = 0.0_RP
+             ddivdz_pl(:,k,l) = 0.0_RP
 
              do v = ADM_gmin_pl, ADM_gmax_pl
                 ij   = v
                 ijm1 = v - 1
                 if( ijm1 < ADM_gmin_pl ) ijm1 = ADM_gmax_pl ! cyclic condition
 
-                ddivdx_pl(n,k,l) = ddivdx_pl(n,k,l) + ( sclt_pl(ijm1) + sclt_pl(ij) ) * GMTR_A_var_pl(ij,k0,l,HNX)
-                ddivdy_pl(n,k,l) = ddivdy_pl(n,k,l) + ( sclt_pl(ijm1) + sclt_pl(ij) ) * GMTR_A_var_pl(ij,k0,l,HNY)
-                ddivdz_pl(n,k,l) = ddivdz_pl(n,k,l) + ( sclt_pl(ijm1) + sclt_pl(ij) ) * GMTR_A_var_pl(ij,k0,l,HNZ)
+                ddivdx_pl(n,k,l) = ddivdx_pl(n,k,l) + ( sclt_pl(ijm1) + sclt_pl(ij) ) * cinterp_HN_pl(ij,l,1)
+                ddivdy_pl(n,k,l) = ddivdy_pl(n,k,l) + ( sclt_pl(ijm1) + sclt_pl(ij) ) * cinterp_HN_pl(ij,l,2)
+                ddivdz_pl(n,k,l) = ddivdz_pl(n,k,l) + ( sclt_pl(ijm1) + sclt_pl(ij) ) * cinterp_HN_pl(ij,l,3)
              enddo
 
-             ddivdx_pl(n,k,l) = ddivdx_pl(n,k,l) * 0.5_RP * GMTR_P_var_pl(n,k0,l,P_RAREA)
-             ddivdy_pl(n,k,l) = ddivdy_pl(n,k,l) * 0.5_RP * GMTR_P_var_pl(n,k0,l,P_RAREA)
-             ddivdz_pl(n,k,l) = ddivdz_pl(n,k,l) * 0.5_RP * GMTR_P_var_pl(n,k0,l,P_RAREA)
+             ddivdx_pl(n,k,l) = ddivdx_pl(n,k,l) * 0.5_RP * cinterp_PRA_pl(n,l)
+             ddivdy_pl(n,k,l) = ddivdy_pl(n,k,l) * 0.5_RP * cinterp_PRA_pl(n,l)
+             ddivdz_pl(n,k,l) = ddivdz_pl(n,k,l) * 0.5_RP * cinterp_PRA_pl(n,l)
           enddo
 
        enddo

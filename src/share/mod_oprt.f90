@@ -104,10 +104,14 @@ module mod_oprt
   real(DP), public              :: clap       (ADM_gall   ,ADM_lall   ,0:6                     )
   real(DP), public              :: clap_pl    (ADM_gall_pl,ADM_lall_pl,0:ADM_gall_pl-1         )
 
-  real(DP), public              :: cinterp_TN (ADM_gall,ADM_lall,AI:AJ,ADM_nxyz)
-  real(DP), public              :: cinterp_HN (ADM_gall,ADM_lall,AI:AJ,ADM_nxyz)
-  real(DP), public              :: cinterp_TRA(ADM_gall,ADM_lall,TI:TJ         )
-  real(DP), public              :: cinterp_PRA(ADM_gall,ADM_lall               )
+  real(DP), public              :: cinterp_TN    (ADM_gall   ,ADM_lall   ,AI:AJ,ADM_nxyz) ! coefficient for diffusion operator
+  real(DP), public              :: cinterp_TN_pl (ADM_gall_pl,ADM_lall_pl,2    ,ADM_nxyz)
+  real(DP), public              :: cinterp_HN    (ADM_gall   ,ADM_lall   ,AI:AJ,ADM_nxyz)
+  real(DP), public              :: cinterp_HN_pl (ADM_gall_pl,ADM_lall_pl,      ADM_nxyz)
+  real(DP), public              :: cinterp_TRA   (ADM_gall   ,ADM_lall   ,TI:TJ         )
+  real(DP), public              :: cinterp_TRA_pl(ADM_gall_pl,ADM_lall_pl               )
+  real(DP), public              :: cinterp_PRA   (ADM_gall   ,ADM_lall                  )
+  real(DP), public              :: cinterp_PRA_pl(ADM_gall_pl,ADM_lall_pl               )
 #else
   real(DP), public, allocatable :: cdiv       (:,:,:,:) ! coefficient for divergence operator
   real(DP), public, allocatable :: cdiv_pl    (:,:,:,:)
@@ -116,10 +120,14 @@ module mod_oprt
   real(DP), public, allocatable :: clap       (:,:,:)   ! coefficient for laplacian operator
   real(DP), public, allocatable :: clap_pl    (:,:,:)
 
-  real(DP), public, allocatable :: cinterp_TN (:,:,:,:) ! coefficient for diffusion operator
-  real(DP), public, allocatable :: cinterp_HN (:,:,:,:)
-  real(DP), public, allocatable :: cinterp_TRA(:,:,:)
-  real(DP), public, allocatable :: cinterp_PRA(:,:)
+  real(DP), public, allocatable :: cinterp_TN    (:,:,:,:) ! coefficient for diffusion operator
+  real(DP), public, allocatable :: cinterp_TN_pl (:,:,:,:)
+  real(DP), public, allocatable :: cinterp_HN    (:,:,:,:)
+  real(DP), public, allocatable :: cinterp_HN_pl (:,:,:)
+  real(DP), public, allocatable :: cinterp_TRA   (:,:,:)
+  real(DP), public, allocatable :: cinterp_TRA_pl(:,:)
+  real(DP), public, allocatable :: cinterp_PRA   (:,:)
+  real(DP), public, allocatable :: cinterp_PRA_pl(:,:)
 #endif
 #else
 #ifdef _FIXEDINDEX_
@@ -130,10 +138,14 @@ module mod_oprt
   real(RP), public              :: clap       (ADM_gall   ,ADM_lall   ,0:6                     )
   real(RP), public              :: clap_pl    (ADM_gall_pl,ADM_lall_pl,0:ADM_gall_pl-1         )
 
-  real(RP), public              :: cinterp_TN (ADM_gall,ADM_lall,AI:AJ,ADM_nxyz)
-  real(RP), public              :: cinterp_HN (ADM_gall,ADM_lall,AI:AJ,ADM_nxyz)
-  real(RP), public              :: cinterp_TRA(ADM_gall,ADM_lall,TI:TJ         )
-  real(RP), public              :: cinterp_PRA(ADM_gall,ADM_lall               )
+  real(RP), public              :: cinterp_TN    (ADM_gall   ,ADM_lall   ,AI:AJ,ADM_nxyz) ! coefficient for diffusion operator
+  real(RP), public              :: cinterp_TN_pl (ADM_gall_pl,ADM_lall_pl,2    ,ADM_nxyz)
+  real(RP), public              :: cinterp_HN    (ADM_gall   ,ADM_lall   ,AI:AJ,ADM_nxyz)
+  real(RP), public              :: cinterp_HN_pl (ADM_gall_pl,ADM_lall_pl,      ADM_nxyz)
+  real(RP), public              :: cinterp_TRA   (ADM_gall   ,ADM_lall   ,TI:TJ         )
+  real(RP), public              :: cinterp_TRA_pl(ADM_gall_pl,ADM_lall_pl               )
+  real(RP), public              :: cinterp_PRA   (ADM_gall   ,ADM_lall                  )
+  real(RP), public              :: cinterp_PRA_pl(ADM_gall_pl,ADM_lall_pl               )
 #else
   real(RP), public, allocatable :: cdiv       (:,:,:,:) ! coefficient for divergence operator
   real(RP), public, allocatable :: cdiv_pl    (:,:,:,:)
@@ -142,10 +154,14 @@ module mod_oprt
   real(RP), public, allocatable :: clap       (:,:,:)   ! coefficient for laplacian operator
   real(RP), public, allocatable :: clap_pl    (:,:,:)
 
-  real(RP), public, allocatable :: cinterp_TN (:,:,:,:) ! coefficient for diffusion operator
-  real(RP), public, allocatable :: cinterp_HN (:,:,:,:)
-  real(RP), public, allocatable :: cinterp_TRA(:,:,:)
-  real(RP), public, allocatable :: cinterp_PRA(:,:)
+  real(RP), public, allocatable :: cinterp_TN    (:,:,:,:) ! coefficient for diffusion operator
+  real(RP), public, allocatable :: cinterp_TN_pl (:,:,:,:)
+  real(RP), public, allocatable :: cinterp_HN    (:,:,:,:)
+  real(RP), public, allocatable :: cinterp_HN_pl (:,:,:)
+  real(RP), public, allocatable :: cinterp_TRA   (:,:,:)
+  real(RP), public, allocatable :: cinterp_TRA_pl(:,:)
+  real(RP), public, allocatable :: cinterp_PRA   (:,:)
+  real(RP), public, allocatable :: cinterp_PRA_pl(:,:)
 #endif
 #endif
 
@@ -243,11 +259,6 @@ contains
     allocate( cgrad_pl   (ADM_gall_pl,ADM_lall_pl,0:ADM_gall_pl-1,ADM_nxyz) )
     allocate( clap       (ADM_gall   ,ADM_lall   ,0:6                     ) )
     allocate( clap_pl    (ADM_gall_pl,ADM_lall_pl,0:ADM_gall_pl-1         ) )
-
-    allocate( cinterp_TN (ADM_gall,ADM_lall,AI:AJ,ADM_nxyz) )
-    allocate( cinterp_HN (ADM_gall,ADM_lall,AI:AJ,ADM_nxyz) )
-    allocate( cinterp_TRA(ADM_gall,ADM_lall,TI:TJ         ) )
-    allocate( cinterp_PRA(ADM_gall,ADM_lall               ) )
 #endif
 
     do l = 1, ADM_lall
@@ -1613,32 +1624,9 @@ contains
     endif
 
     ! ---- setup coefficient of diffusion operator
-
-    write(ADM_LOG_FID,*) '*** setup coefficient of diffusion operator'
-
-    do m = AI, AJ
-    do l = 1, ADM_lall
-    do n = 1, ADM_gall
-       cinterp_TN(n,l,m,1) = GMTR_A_var(n,k0,l,m,TNX)
-       cinterp_TN(n,l,m,2) = GMTR_A_var(n,k0,l,m,TNY)
-       cinterp_TN(n,l,m,3) = GMTR_A_var(n,k0,l,m,TNZ)
-
-       cinterp_HN(n,l,m,1) = GMTR_A_var(n,k0,l,m,HNX)
-       cinterp_HN(n,l,m,2) = GMTR_A_var(n,k0,l,m,HNY)
-       cinterp_HN(n,l,m,3) = GMTR_A_var(n,k0,l,m,HNZ)
-    enddo
-    enddo
-    enddo
-
-    do l = 1, ADM_lall
-    do n = 1, ADM_gall
-       cinterp_TRA(n,l,TI) = GMTR_T_var(n,k0,l,TI,T_RAREA)
-       cinterp_TRA(n,l,TJ) = GMTR_T_var(n,k0,l,TJ,T_RAREA)
-
-       cinterp_PRA(n,l)    = GMTR_P_var(n,k0,l,P_RAREA)
-    enddo
-    enddo
-
+    call OPRT_diffusion_setup( GMTR_P_var, GMTR_P_var_pl, & ! [IN]
+                               GMTR_T_var, GMTR_T_var_pl, & ! [IN]
+                               GMTR_A_var, GMTR_A_var_pl  ) ! [IN]
 
     if ( OPRT_fname /= "" ) then
        call OPRT_output_coef( OPRT_fname )
@@ -1707,11 +1695,6 @@ contains
     allocate( cgrad_pl   (ADM_gall_pl,ADM_lall_pl,0:ADM_gall_pl-1,ADM_nxyz) )
     allocate( clap       (ADM_gall   ,ADM_lall   ,0:6                     ) )
     allocate( clap_pl    (ADM_gall_pl,ADM_lall_pl,0:ADM_gall_pl-1         ) )
-
-    allocate( cinterp_TN (ADM_gall,ADM_lall,AI:AJ,ADM_nxyz) )
-    allocate( cinterp_HN (ADM_gall,ADM_lall,AI:AJ,ADM_nxyz) )
-    allocate( cinterp_TRA(ADM_gall,ADM_lall,TI:TJ         ) )
-    allocate( cinterp_PRA(ADM_gall,ADM_lall               ) )
 #endif
 
     do l = 1, ADM_lall
@@ -3076,12 +3059,57 @@ contains
       enddo
     endif
 
-
-
-
     ! ---- setup coefficient of diffusion operator
+    call OPRT_diffusion_setup_DP( GMTR_P_var, GMTR_P_var_pl, & ! [IN]
+                                  GMTR_T_var, GMTR_T_var_pl, & ! [IN]
+                                  GMTR_A_var, GMTR_A_var_pl  ) ! [IN]
+
+    if ( OPRT_fname /= "" ) then
+       call OPRT_output_coef( OPRT_fname )
+    endif
+
+    return
+  end subroutine OPRT_setup_DP
+
+  !-----------------------------------------------------------------------------
+  subroutine OPRT_diffusion_setup( &
+       GMTR_P_var, GMTR_P_var_pl, &
+       GMTR_T_var, GMTR_T_var_pl, &
+       GMTR_A_var, GMTR_A_var_pl  )
+    use mod_adm, only: &
+       ADM_have_pl
+    use mod_gmtr, only: &
+       GMTR_P_nmax_var, &
+       GMTR_T_nmax_var, &
+       GMTR_A_nmax_var, &
+       GMTR_A_nmax_var_pl
+    implicit none
+
+    real(RP), intent(in)  :: GMTR_P_var   (ADM_gall   ,K0,ADM_lall   ,      GMTR_P_nmax_var   )
+    real(RP), intent(in)  :: GMTR_P_var_pl(ADM_gall_pl,K0,ADM_lall_pl,      GMTR_P_nmax_var   )
+    real(RP), intent(in)  :: GMTR_T_var   (ADM_gall   ,K0,ADM_lall   ,TI:TJ,GMTR_T_nmax_var   )
+    real(RP), intent(in)  :: GMTR_T_var_pl(ADM_gall_pl,K0,ADM_lall_pl,      GMTR_T_nmax_var   )
+    real(RP), intent(in)  :: GMTR_A_var   (ADM_gall   ,K0,ADM_lall   ,AI:AJ,GMTR_A_nmax_var   )
+    real(RP), intent(in)  :: GMTR_A_var_pl(ADM_gall_pl,K0,ADM_lall_pl,      GMTR_A_nmax_var_pl)
+
+    integer :: n, l, m
+    !---------------------------------------------------------------------------
 
     write(ADM_LOG_FID,*) '*** setup coefficient of diffusion operator'
+
+#ifndef _FIXEDINDEX_
+    allocate( cinterp_TN    (ADM_gall   ,ADM_lall   ,AI:AJ,ADM_nxyz) )
+    allocate( cinterp_TN_pl (ADM_gall_pl,ADM_lall_pl,2    ,ADM_nxyz) )
+
+    allocate( cinterp_HN    (ADM_gall   ,ADM_lall   ,AI:AJ,ADM_nxyz) )
+    allocate( cinterp_HN_pl (ADM_gall_pl,ADM_lall_pl,      ADM_nxyz) )
+
+    allocate( cinterp_TRA   (ADM_gall   ,ADM_lall   ,TI:TJ         ) )
+    allocate( cinterp_TRA_pl(ADM_gall_pl,ADM_lall_pl               ) )
+
+    allocate( cinterp_PRA   (ADM_gall   ,ADM_lall                  ) )
+    allocate( cinterp_PRA_pl(ADM_gall_pl,ADM_lall_pl               ) )
+#endif
 
     do m = AI, AJ
     do l = 1, ADM_lall
@@ -3106,8 +3134,124 @@ contains
     enddo
     enddo
 
+    if ( ADM_have_pl ) then
+       do l = 1, ADM_lall_pl
+       do n = 1, ADM_gall_pl
+          cinterp_TN_pl(n,l,1,1) = GMTR_A_var_pl(n,k0,l,TNX )
+          cinterp_TN_pl(n,l,2,1) = GMTR_A_var_pl(n,k0,l,TN2X)
+          cinterp_TN_pl(n,l,1,2) = GMTR_A_var_pl(n,k0,l,TNY )
+          cinterp_TN_pl(n,l,2,2) = GMTR_A_var_pl(n,k0,l,TN2Y)
+          cinterp_TN_pl(n,l,1,3) = GMTR_A_var_pl(n,k0,l,TNZ )
+          cinterp_TN_pl(n,l,2,3) = GMTR_A_var_pl(n,k0,l,TN2Z)
+
+          cinterp_HN_pl(n,l,1) = GMTR_A_var_pl(n,k0,l,HNX)
+          cinterp_HN_pl(n,l,2) = GMTR_A_var_pl(n,k0,l,HNY)
+          cinterp_HN_pl(n,l,3) = GMTR_A_var_pl(n,k0,l,HNZ)
+       enddo
+       enddo
+
+       do l = 1, ADM_lall_pl
+       do n = 1, ADM_gall_pl
+          cinterp_TRA_pl(n,l) = GMTR_T_var_pl(n,k0,l,T_RAREA)
+
+          cinterp_PRA_pl(n,l) = GMTR_P_var_pl(n,k0,l,P_RAREA)
+       enddo
+       enddo
+    endif
+
     return
-  end subroutine OPRT_setup_DP
+  end subroutine OPRT_diffusion_setup
+
+  !-----------------------------------------------------------------------------
+  subroutine OPRT_diffusion_setup_DP( &
+       GMTR_P_var, GMTR_P_var_pl, &
+       GMTR_T_var, GMTR_T_var_pl, &
+       GMTR_A_var, GMTR_A_var_pl  )
+    use mod_adm, only: &
+       ADM_have_pl
+    use mod_gmtr, only: &
+       GMTR_P_nmax_var, &
+       GMTR_T_nmax_var, &
+       GMTR_A_nmax_var, &
+       GMTR_A_nmax_var_pl
+    implicit none
+
+    real(DP), intent(in)  :: GMTR_P_var   (ADM_gall   ,K0,ADM_lall   ,      GMTR_P_nmax_var   )
+    real(DP), intent(in)  :: GMTR_P_var_pl(ADM_gall_pl,K0,ADM_lall_pl,      GMTR_P_nmax_var   )
+    real(DP), intent(in)  :: GMTR_T_var   (ADM_gall   ,K0,ADM_lall   ,TI:TJ,GMTR_T_nmax_var   )
+    real(DP), intent(in)  :: GMTR_T_var_pl(ADM_gall_pl,K0,ADM_lall_pl,      GMTR_T_nmax_var   )
+    real(DP), intent(in)  :: GMTR_A_var   (ADM_gall   ,K0,ADM_lall   ,AI:AJ,GMTR_A_nmax_var   )
+    real(DP), intent(in)  :: GMTR_A_var_pl(ADM_gall_pl,K0,ADM_lall_pl,      GMTR_A_nmax_var_pl)
+
+    integer :: n, l, m
+    !---------------------------------------------------------------------------
+
+    write(ADM_LOG_FID,*) '*** setup coefficient of diffusion operator'
+
+#ifndef _FIXEDINDEX_
+    allocate( cinterp_TN    (ADM_gall   ,ADM_lall   ,AI:AJ,ADM_nxyz) )
+    allocate( cinterp_TN_pl (ADM_gall_pl,ADM_lall_pl,2    ,ADM_nxyz) )
+
+    allocate( cinterp_HN    (ADM_gall   ,ADM_lall   ,AI:AJ,ADM_nxyz) )
+    allocate( cinterp_HN_pl (ADM_gall_pl,ADM_lall_pl,      ADM_nxyz) )
+
+    allocate( cinterp_TRA   (ADM_gall   ,ADM_lall   ,TI:TJ         ) )
+    allocate( cinterp_TRA_pl(ADM_gall_pl,ADM_lall_pl               ) )
+
+    allocate( cinterp_PRA   (ADM_gall   ,ADM_lall                  ) )
+    allocate( cinterp_PRA_pl(ADM_gall_pl,ADM_lall_pl               ) )
+#endif
+
+    do m = AI, AJ
+    do l = 1, ADM_lall
+    do n = 1, ADM_gall
+       cinterp_TN(n,l,m,1) = GMTR_A_var(n,k0,l,m,TNX)
+       cinterp_TN(n,l,m,2) = GMTR_A_var(n,k0,l,m,TNY)
+       cinterp_TN(n,l,m,3) = GMTR_A_var(n,k0,l,m,TNZ)
+
+       cinterp_HN(n,l,m,1) = GMTR_A_var(n,k0,l,m,HNX)
+       cinterp_HN(n,l,m,2) = GMTR_A_var(n,k0,l,m,HNY)
+       cinterp_HN(n,l,m,3) = GMTR_A_var(n,k0,l,m,HNZ)
+    enddo
+    enddo
+    enddo
+
+    do l = 1, ADM_lall
+    do n = 1, ADM_gall
+       cinterp_TRA(n,l,TI) = GMTR_T_var(n,k0,l,TI,T_RAREA)
+       cinterp_TRA(n,l,TJ) = GMTR_T_var(n,k0,l,TJ,T_RAREA)
+
+       cinterp_PRA(n,l)    = GMTR_P_var(n,k0,l,P_RAREA)
+    enddo
+    enddo
+
+    if ( ADM_have_pl ) then
+       do l = 1, ADM_lall_pl
+       do n = 1, ADM_gall_pl
+          cinterp_TN_pl(n,l,1,1) = GMTR_A_var_pl(n,k0,l,TNX )
+          cinterp_TN_pl(n,l,2,1) = GMTR_A_var_pl(n,k0,l,TN2X)
+          cinterp_TN_pl(n,l,1,2) = GMTR_A_var_pl(n,k0,l,TNY )
+          cinterp_TN_pl(n,l,2,2) = GMTR_A_var_pl(n,k0,l,TN2Y)
+          cinterp_TN_pl(n,l,1,3) = GMTR_A_var_pl(n,k0,l,TNZ )
+          cinterp_TN_pl(n,l,2,3) = GMTR_A_var_pl(n,k0,l,TN2Z)
+
+          cinterp_HN_pl(n,l,1) = GMTR_A_var_pl(n,k0,l,HNX)
+          cinterp_HN_pl(n,l,2) = GMTR_A_var_pl(n,k0,l,HNY)
+          cinterp_HN_pl(n,l,3) = GMTR_A_var_pl(n,k0,l,HNZ)
+       enddo
+       enddo
+
+       do l = 1, ADM_lall_pl
+       do n = 1, ADM_gall_pl
+          cinterp_TRA_pl(n,l) = GMTR_T_var_pl(n,k0,l,T_RAREA)
+
+          cinterp_PRA_pl(n,l) = GMTR_P_var_pl(n,k0,l,P_RAREA)
+       enddo
+       enddo
+    endif
+
+    return
+  end subroutine OPRT_diffusion_setup_DP
 
   !-----------------------------------------------------------------------------
   subroutine OPRT_divergence( &
@@ -3663,10 +3807,6 @@ contains
        ADM_gslf_pl,  &
        ADM_gmin_pl,  &
        ADM_gmax_pl
-    use mod_gmtr, only: &
-       GMTR_P_var_pl, &
-       GMTR_T_var_pl, &
-       GMTR_A_var_pl
     implicit none
 
     real(RP), intent(out) :: dscl   (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -3687,7 +3827,7 @@ contains
 
     real(RP) :: u1, u2, u3, smean
 
-    integer :: nstart1, nstart2, nstart3, nend
+    integer :: nstart1, nstart2, nstart3, nstart4, nend
     integer :: ij
     integer :: ip1j, ijp1, ip1jp1
     integer :: im1j, ijm1, im1jm1
@@ -3706,11 +3846,12 @@ contains
     nstart1 = suf(ADM_gmin-1,ADM_gmin-1)
     nstart2 = suf(ADM_gmin-1,ADM_gmin  )
     nstart3 = suf(ADM_gmin  ,ADM_gmin-1)
+    nstart4 = suf(ADM_gmin  ,ADM_gmin  )
     nend    = suf(ADM_gmax  ,ADM_gmax  )
 
     do l = 1, ADM_lall
        !$omp parallel default(none),private(n,k,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1,smean,u1,u2,u3), &
-       !$omp shared(OPRT_nstart,OPRT_nend,gall,gall_1d,gmin,kall,nstart1,nstart2,nstart3,nend,l,ADM_have_sgp, &
+       !$omp shared(gall,gall_1d,gmin,kall,nstart1,nstart2,nstart3,nstart4,nend,l,ADM_have_sgp, &
        !$omp dscl,scl,kh,vxt,vyt,vzt,flux,cinterp_TN,cinterp_HN,cinterp_PRA,cinterp_TRA)
        do k = 1, kall
 
@@ -3820,7 +3961,7 @@ contains
           endif
 
           !$omp do
-          do n = OPRT_nstart, OPRT_nend
+          do n = nstart4, nend
              ij     = n
              im1j   = n - 1
              im1jm1 = n - 1 - gall_1d
@@ -3833,13 +3974,13 @@ contains
           !$omp end do nowait
 
           !$omp do
-          do n = 1, OPRT_nstart-1
+          do n = 1, nstart4-1
              dscl(n,k,l) = 0.0_RP
           enddo
           !$omp end do nowait
 
           !$omp do
-          do n = OPRT_nend+1, gall
+          do n = nend+1, gall
              dscl(n,k,l) = 0.0_RP
           enddo
           !$omp end do
@@ -3865,15 +4006,15 @@ contains
              u2 = 0.5_RP * (scl_pl(ij  ,k,l)+scl_pl(ijp1,k,l)) - smean
              u3 = 0.5_RP * (scl_pl(ijp1,k,l)+scl_pl(n   ,k,l)) - smean
 
-             vxt_pl(v) = ( + u1 * GMTR_A_var_pl(ij  ,k0,l,TNX ) &
-                           + u2 * GMTR_A_var_pl(ij  ,k0,l,TN2X) &
-                           - u3 * GMTR_A_var_pl(ijp1,k0,l,TNX ) ) * GMTR_T_var_pl(ij,k0,l,T_RAREA)
-             vyt_pl(v) = ( + u1 * GMTR_A_var_pl(ij  ,k0,l,TNY ) &
-                           + u2 * GMTR_A_var_pl(ij  ,k0,l,TN2Y) &
-                           - u3 * GMTR_A_var_pl(ijp1,k0,l,TNY ) ) * GMTR_T_var_pl(ij,k0,l,T_RAREA)
-             vzt_pl(v) = ( + u1 * GMTR_A_var_pl(ij  ,k0,l,TNZ ) &
-                           + u2 * GMTR_A_var_pl(ij  ,k0,l,TN2Z) &
-                           - u3 * GMTR_A_var_pl(ijp1,k0,l,TNZ ) ) * GMTR_T_var_pl(ij,k0,l,T_RAREA)
+             vxt_pl(v) = ( + u1 * cinterp_TN_pl(ij  ,l,1,1) &
+                           + u2 * cinterp_TN_pl(ij  ,l,2,1) &
+                           - u3 * cinterp_TN_pl(ijp1,l,1,1) ) * cinterp_TRA_pl(ij,l)
+             vyt_pl(v) = ( + u1 * cinterp_TN_pl(ij  ,l,1,2) &
+                           + u2 * cinterp_TN_pl(ij  ,l,2,2) &
+                           - u3 * cinterp_TN_pl(ijp1,l,1,2) ) * cinterp_TRA_pl(ij,l)
+             vzt_pl(v) = ( + u1 * cinterp_TN_pl(ij  ,l,1,3) &
+                           + u2 * cinterp_TN_pl(ij  ,l,2,3) &
+                           - u3 * cinterp_TN_pl(ijp1,l,1,3) ) * cinterp_TRA_pl(ij,l)
           enddo
 
           do v = ADM_gmin_pl, ADM_gmax_pl
@@ -3881,17 +4022,17 @@ contains
              ijm1 = v - 1
              if( ijm1 == ADM_gmin_pl - 1 ) ijm1 = ADM_gmax_pl
 
-             flux_pl(v) = 0.25_RP * ( (vxt_pl(ij)+vxt_pl(ijm1)) * GMTR_A_var_pl(ij,k0,l,HNX) &
-                                   + (vyt_pl(ij)+vyt_pl(ijm1)) * GMTR_A_var_pl(ij,k0,l,HNY) &
-                                   + (vzt_pl(ij)+vzt_pl(ijm1)) * GMTR_A_var_pl(ij,k0,l,HNZ) &
-                                   ) * (kh_pl(n,k,l)+kh_pl(ij,k,l))
+             flux_pl(v) = 0.25_RP * ( (vxt_pl(ij)+vxt_pl(ijm1)) * cinterp_HN_pl(ij,l,1) &
+                                    + (vyt_pl(ij)+vyt_pl(ijm1)) * cinterp_HN_pl(ij,l,2) &
+                                    + (vzt_pl(ij)+vzt_pl(ijm1)) * cinterp_HN_pl(ij,l,3) &
+                                    ) * (kh_pl(n,k,l)+kh_pl(ij,k,l))
           enddo
 
           dscl_pl(:,k,l) = 0.0_RP
           do v = ADM_gmin_pl, ADM_gmax_pl
              dscl_pl(n,k,l) = dscl_pl(n,k,l) + flux_pl(v)
           enddo
-          dscl_pl(n,k,l) = dscl_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_RAREA)
+          dscl_pl(n,k,l) = dscl_pl(n,k,l) * cinterp_PRA_pl(n,l)
 
        enddo
        enddo
@@ -3918,10 +4059,6 @@ contains
        ADM_gslf_pl,  &
        ADM_gmin_pl,  &
        ADM_gmax_pl
-    use mod_gmtr, only: &
-       GMTR_P_var_pl, &
-       GMTR_T_var_pl, &
-       GMTR_A_var_pl
     implicit none
 
     real(DP), intent(out) :: dscl   (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -3942,7 +4079,7 @@ contains
 
     real(DP) :: u1, u2, u3, smean
 
-    integer :: nstart1, nstart2, nstart3, nend
+    integer :: nstart1, nstart2, nstart3, nstart4, nend
     integer :: ij
     integer :: ip1j, ijp1, ip1jp1
     integer :: im1j, ijm1, im1jm1
@@ -3961,11 +4098,12 @@ contains
     nstart1 = suf(ADM_gmin-1,ADM_gmin-1)
     nstart2 = suf(ADM_gmin-1,ADM_gmin  )
     nstart3 = suf(ADM_gmin  ,ADM_gmin-1)
+    nstart4 = suf(ADM_gmin  ,ADM_gmin  )
     nend    = suf(ADM_gmax  ,ADM_gmax  )
 
     do l = 1, ADM_lall
        !$omp parallel default(none),private(n,k,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1,smean,u1,u2,u3), &
-       !$omp shared(OPRT_nstart,OPRT_nend,gall,gall_1d,gmin,kall,nstart1,nstart2,nstart3,nend,l,ADM_have_sgp, &
+       !$omp shared(gall,gall_1d,gmin,kall,nstart1,nstart2,nstart3,nstart4,nend,l,ADM_have_sgp, &
        !$omp dscl,scl,kh,vxt,vyt,vzt,flux,cinterp_TN,cinterp_HN,cinterp_PRA,cinterp_TRA)
        do k = 1, kall
 
@@ -4075,7 +4213,7 @@ contains
           endif
 
           !$omp do
-          do n = OPRT_nstart, OPRT_nend
+          do n = nstart4, nend
              ij     = n
              im1j   = n - 1
              im1jm1 = n - 1 - gall_1d
@@ -4088,13 +4226,13 @@ contains
           !$omp end do nowait
 
           !$omp do
-          do n = 1, OPRT_nstart-1
+          do n = 1, nstart4-1
              dscl(n,k,l) = 0.0_DP
           enddo
           !$omp end do nowait
 
           !$omp do
-          do n = OPRT_nend+1, gall
+          do n = nend+1, gall
              dscl(n,k,l) = 0.0_DP
           enddo
           !$omp end do
@@ -4120,15 +4258,15 @@ contains
              u2 = 0.5_DP * (scl_pl(ij  ,k,l)+scl_pl(ijp1,k,l)) - smean
              u3 = 0.5_DP * (scl_pl(ijp1,k,l)+scl_pl(n   ,k,l)) - smean
 
-             vxt_pl(v) = ( + u1 * GMTR_A_var_pl(ij  ,k0,l,TNX ) &
-                           + u2 * GMTR_A_var_pl(ij  ,k0,l,TN2X) &
-                           - u3 * GMTR_A_var_pl(ijp1,k0,l,TNX ) ) * GMTR_T_var_pl(ij,k0,l,T_RAREA)
-             vyt_pl(v) = ( + u1 * GMTR_A_var_pl(ij  ,k0,l,TNY ) &
-                           + u2 * GMTR_A_var_pl(ij  ,k0,l,TN2Y) &
-                           - u3 * GMTR_A_var_pl(ijp1,k0,l,TNY ) ) * GMTR_T_var_pl(ij,k0,l,T_RAREA)
-             vzt_pl(v) = ( + u1 * GMTR_A_var_pl(ij  ,k0,l,TNZ ) &
-                           + u2 * GMTR_A_var_pl(ij  ,k0,l,TN2Z) &
-                           - u3 * GMTR_A_var_pl(ijp1,k0,l,TNZ ) ) * GMTR_T_var_pl(ij,k0,l,T_RAREA)
+             vxt_pl(v) = ( + u1 * cinterp_TN_pl(ij  ,l,1,1) &
+                           + u2 * cinterp_TN_pl(ij  ,l,2,1) &
+                           - u3 * cinterp_TN_pl(ijp1,l,1,1) ) * cinterp_TRA_pl(ij,l)
+             vyt_pl(v) = ( + u1 * cinterp_TN_pl(ij  ,l,1,2) &
+                           + u2 * cinterp_TN_pl(ij  ,l,2,2) &
+                           - u3 * cinterp_TN_pl(ijp1,l,1,2) ) * cinterp_TRA_pl(ij,l)
+             vzt_pl(v) = ( + u1 * cinterp_TN_pl(ij  ,l,1,3) &
+                           + u2 * cinterp_TN_pl(ij  ,l,2,3) &
+                           - u3 * cinterp_TN_pl(ijp1,l,1,3) ) * cinterp_TRA_pl(ij,l)
           enddo
 
           do v = ADM_gmin_pl, ADM_gmax_pl
@@ -4136,17 +4274,17 @@ contains
              ijm1 = v - 1
              if( ijm1 == ADM_gmin_pl - 1 ) ijm1 = ADM_gmax_pl
 
-             flux_pl(v) = 0.25_DP * ( (vxt_pl(ij)+vxt_pl(ijm1)) * GMTR_A_var_pl(ij,k0,l,HNX) &
-                                   + (vyt_pl(ij)+vyt_pl(ijm1)) * GMTR_A_var_pl(ij,k0,l,HNY) &
-                                   + (vzt_pl(ij)+vzt_pl(ijm1)) * GMTR_A_var_pl(ij,k0,l,HNZ) &
-                                   ) * (kh_pl(n,k,l)+kh_pl(ij,k,l))
+             flux_pl(v) = 0.25_DP * ( (vxt_pl(ij)+vxt_pl(ijm1)) * cinterp_HN_pl(ij,l,1) &
+                                    + (vyt_pl(ij)+vyt_pl(ijm1)) * cinterp_HN_pl(ij,l,2) &
+                                    + (vzt_pl(ij)+vzt_pl(ijm1)) * cinterp_HN_pl(ij,l,3) &
+                                    ) * (kh_pl(n,k,l)+kh_pl(ij,k,l))
           enddo
 
           dscl_pl(:,k,l) = 0.0_DP
           do v = ADM_gmin_pl, ADM_gmax_pl
              dscl_pl(n,k,l) = dscl_pl(n,k,l) + flux_pl(v)
           enddo
-          dscl_pl(n,k,l) = dscl_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_RAREA)
+          dscl_pl(n,k,l) = dscl_pl(n,k,l) * cinterp_PRA_pl(n,l)
 
        enddo
        enddo
