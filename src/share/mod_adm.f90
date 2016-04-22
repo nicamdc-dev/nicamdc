@@ -47,52 +47,53 @@ module mod_adm
   !++ Public parameters & variables
   !
   ! Character length of system control
-  integer, public, parameter :: ADM_NSYS = 32
+  integer,  public, parameter :: ADM_NSYS = 32
   !
   ! Maximum length of file name
-  integer, public, parameter :: ADM_MAXFNAME = 128
+  integer,  public, parameter :: ADM_MAXFNAME = 128
 
   !
   !====== Basic definition & information ======
   !
   ! Log file ID & Control file ID
-  integer, public      :: ADM_LOG_FID = 6 ! default is STDOUT
-  integer, public, parameter :: ADM_CTL_FID = 35
+  integer,  public            :: ADM_LOG_FID = 6 ! default is STDOUT
+  integer,  public, parameter :: ADM_CTL_FID = 35
   !
   ! Identifier for single computation or parallel computation
-  integer, public, parameter :: ADM_MULTI_PRC  = 1
-  !
-  ! Identifiers of directions of region edges
-  integer, public, parameter :: ADM_SW = 1
-  integer, public, parameter :: ADM_NW = 2
-  integer, public, parameter :: ADM_NE = 3
-  integer, public, parameter :: ADM_SE = 4
-  !
-  ! Identifiers of directions of region vertices
-  integer, public, parameter :: ADM_W = 1
-  integer, public, parameter :: ADM_N = 2
-  integer, public, parameter :: ADM_E = 3
-  integer, public, parameter :: ADM_S = 4
-  !
-  !--- Identifier of triangle element (i-axis-side or j-axis side)
-  integer, public, parameter :: ADM_TI = 1
-  integer, public, parameter :: ADM_TJ = 2
-  !
-  !--- Identifier of line element (i-axis-side, ij-axis side, or j-axis side)
-  integer, public, parameter :: ADM_AI  = 1
-  integer, public, parameter :: ADM_AIJ = 2
-  integer, public, parameter :: ADM_AJ  = 3
-  !
-  ! Identifier of 1 variable
-  integer, public, parameter :: ADM_KNONE = 1
+  integer,  public, parameter :: ADM_MULTI_PRC  = 1
 
-  ! Identifier of poles (north pole or south pole)
-  integer, public, parameter :: ADM_NPL = 1
-  integer, public, parameter :: ADM_SPL = 2
 
   ! Fist colomn on the table for region and direction
-  integer, public, parameter :: ADM_RID = 1
-  integer, public, parameter :: ADM_DIR = 2
+  integer,  public, parameter :: ADM_RID = 1
+  integer,  public, parameter :: ADM_DIR = 2
+
+  ! Identifiers of directions of region edges
+  integer,  public, parameter :: ADM_SW = 1
+  integer,  public, parameter :: ADM_NW = 2
+  integer,  public, parameter :: ADM_NE = 3
+  integer,  public, parameter :: ADM_SE = 4
+
+  ! Identifiers of directions of region vertices
+  integer,  public, parameter :: ADM_W = 1
+  integer,  public, parameter :: ADM_N = 2
+  integer,  public, parameter :: ADM_E = 3
+  integer,  public, parameter :: ADM_S = 4
+
+  ! Identifier of triangle element (i-axis-side or j-axis side)
+  integer,  public, parameter :: ADM_TI = 1
+  integer,  public, parameter :: ADM_TJ = 2
+
+  ! Identifier of arc element (i-axis-side, ij-axis side, or j-axis side)
+  integer,  public, parameter :: ADM_AI  = 1
+  integer,  public, parameter :: ADM_AIJ = 2
+  integer,  public, parameter :: ADM_AJ  = 3
+
+  ! Identifier of 1 variable
+  integer,  public, parameter :: ADM_KNONE = 1
+
+  ! Identifier of poles (north pole or south pole)
+  integer,  public, parameter :: ADM_NPL = 1
+  integer,  public, parameter :: ADM_SPL = 2
 
 #ifdef _FIXEDINDEX_
   include "inc_index.h"
@@ -102,156 +103,156 @@ module mod_adm
   !#############################################################################
 
   ! main parameter
-  integer, public            :: ADM_glevel          ! grid   division level
-  integer, public            :: ADM_rlevel          ! region division level
-  integer, public            :: ADM_vlayer          ! number of vertical layer
-  integer, public            :: ADM_DMD             ! number of diamond
-  integer, public            :: ADM_prc_all         ! number of MPI process
+  integer,  public            :: ADM_glevel          ! grid   division level
+  integer,  public            :: ADM_rlevel          ! region division level
+  integer,  public            :: ADM_vlayer          ! number of vertical layer
+  integer,  public            :: ADM_DMD             ! number of diamond
+  integer,  public            :: ADM_prc_all         ! number of MPI process
 
   ! region
-  integer, public            :: ADM_rgn_nmax        ! number of regular region
-  integer, public            :: ADM_lall            ! number of regular region per process
-  integer, public, parameter :: ADM_rgn_nmax_pl = 2 ! number of pole    region
-  integer, public, parameter :: ADM_lall_pl     = 2 ! number of pole    region per process
+  integer,  public            :: ADM_rgn_nmax        ! number of regular region
+  integer,  public            :: ADM_lall            ! number of regular region per process
+  integer,  public, parameter :: ADM_rgn_nmax_pl = 2 ! number of pole    region
+  integer,  public, parameter :: ADM_lall_pl     = 2 ! number of pole    region per process
 
   ! horizontal grid
-  integer, public            :: ADM_gall            ! number of horizontal grid per regular region
-  integer, public            :: ADM_gall_in         ! number of horizontal grid (inner part)
-  integer, public            :: ADM_gall_1d         ! number of horizontal grid (1D)
-  integer, public            :: ADM_gmin            ! start index of 1D horizontal grid
-  integer, public            :: ADM_gmax            ! end   index of 1D horizontal grid
+  integer,  public            :: ADM_gall            ! number of horizontal grid per regular region
+  integer,  public            :: ADM_gall_in         ! number of horizontal grid (inner part)
+  integer,  public            :: ADM_gall_1d         ! number of horizontal grid (1D)
+  integer,  public            :: ADM_gmin            ! start index of 1D horizontal grid
+  integer,  public            :: ADM_gmax            ! end   index of 1D horizontal grid
 
-  integer, public            :: ADM_gall_pl         ! number of horizontal grid for pole region
-  integer, public, parameter :: ADM_gslf_pl     = 1 ! index for pole point
-  integer, public, parameter :: ADM_gmin_pl     = 2 ! start index of grid around the pole point
-  integer, public            :: ADM_gmax_pl         ! end   index of grid around the pole point
+  integer,  public            :: ADM_gall_pl         ! number of horizontal grid for pole region
+  integer,  public, parameter :: ADM_gslf_pl     = 1 ! index for pole point
+  integer,  public, parameter :: ADM_gmin_pl     = 2 ! start index of grid around the pole point
+  integer,  public            :: ADM_gmax_pl         ! end   index of grid around the pole point
 
   ! vertical grid
-  integer, public            :: ADM_kall            ! number of vertical grid
-  integer, public            :: ADM_kmin            ! start index of vertical grid
-  integer, public            :: ADM_kmax            ! end   index of vertical grid
+  integer,  public            :: ADM_kall            ! number of vertical grid
+  integer,  public            :: ADM_kmin            ! start index of vertical grid
+  integer,  public            :: ADM_kmax            ! end   index of vertical grid
 
   ! List vectors
-  integer, public            :: ADM_IooJoo_nmax
-  integer, public            :: ADM_IooJmo_nmax
-  integer, public            :: ADM_IooJop_nmax
-  integer, public            :: ADM_IooJmp_nmax
-  integer, public            :: ADM_ImoJoo_nmax
-  integer, public            :: ADM_ImoJmo_nmax
-  integer, public            :: ADM_ImoJop_nmax
-  integer, public            :: ADM_ImoJmp_nmax
-  integer, public            :: ADM_IopJoo_nmax
-  integer, public            :: ADM_IopJmo_nmax
-  integer, public            :: ADM_IopJop_nmax
-  integer, public            :: ADM_IopJmp_nmax
-  integer, public            :: ADM_ImpJoo_nmax
-  integer, public            :: ADM_ImpJmo_nmax
-  integer, public            :: ADM_ImpJop_nmax
-  integer, public            :: ADM_ImpJmp_nmax
+  integer,  public            :: ADM_IooJoo_nmax
+  integer,  public            :: ADM_IooJmo_nmax
+  integer,  public            :: ADM_IooJop_nmax
+  integer,  public            :: ADM_IooJmp_nmax
+  integer,  public            :: ADM_ImoJoo_nmax
+  integer,  public            :: ADM_ImoJmo_nmax
+  integer,  public            :: ADM_ImoJop_nmax
+  integer,  public            :: ADM_ImoJmp_nmax
+  integer,  public            :: ADM_IopJoo_nmax
+  integer,  public            :: ADM_IopJmo_nmax
+  integer,  public            :: ADM_IopJop_nmax
+  integer,  public            :: ADM_IopJmp_nmax
+  integer,  public            :: ADM_ImpJoo_nmax
+  integer,  public            :: ADM_ImpJmo_nmax
+  integer,  public            :: ADM_ImpJop_nmax
+  integer,  public            :: ADM_ImpJmp_nmax
 #endif
 
   !
   !====== Information for processes ======
   !
-  integer, public            :: ADM_COMM_WORLD          ! communication world per member
-  logical, public            :: ADM_MPI_alive = .false. ! MPI is alive?
+  integer,  public            :: ADM_COMM_WORLD           ! communication world per member
+  logical,  public            :: ADM_MPI_alive = .false.  ! MPI is alive?
 
-  integer, public            :: ADM_prc_me              ! my process ID
-  integer, public, parameter :: ADM_prc_run_master = 1  ! master process ID
-  integer, public            :: ADM_prc_pl              ! process ID which manages the pole regions
-  logical, public            :: ADM_have_pl             ! this ID manages pole region?
+  integer,  public            :: ADM_prc_me               ! my process ID
+  integer,  public, parameter :: ADM_prc_run_master = 1   ! master process ID
+  integer,  public            :: ADM_prc_pl               ! process ID which manages the pole regions
+  logical,  public            :: ADM_have_pl              ! this ID manages pole region?
 
-  integer, public            :: ADM_prc_npl             ! process ID which have the pole regions
-  integer, public            :: ADM_prc_spl             ! process ID which have the pole regions
-  integer, public            :: ADM_prc_nspl(ADM_NPL:ADM_SPL)
+  integer,  public            :: ADM_prc_npl              ! process ID which have the pole regions
+  integer,  public            :: ADM_prc_spl              ! process ID which have the pole regions
+  integer,  public            :: ADM_prc_nspl(ADM_NPL:ADM_SPL)
 
   !
   !====== Information for processes-region relationship ======
   !
-  character(len=ADM_MAXFNAME), public :: ADM_rgnmngfname ! file name for region management info
+  character(len=ADM_MAXFNAME), public :: ADM_rgnmngfname  ! file name for region management info
 
-  integer, public, parameter   :: PRC_RGN_NMAX   = 2560  ! maximum number of region per process.
-  integer, public              :: ADM_vlink_nmax = -1    ! maximum number of vertex linkage
-                                                         ! [XTMS] ICO:5, PSP:6, LCP, MLCP:k
+  integer,  public, parameter   :: PRC_RGN_NMAX   = 2560  ! maximum number of region per process.
+  integer,  public              :: ADM_vlink_nmax = -1    ! maximum number of vertex linkage
+                                                          ! [XTMS] ICO:5, PSP:6, LCP, MLCP:k
 
-  integer, public, allocatable :: ADM_prc_rnum(:)        ! number of regions managed by each process = ADM_lall
-  integer, public, allocatable :: ADM_prc_tab (:,:)      ! table  of regions managed by each process
+  integer,  public, allocatable :: ADM_prc_rnum(:)        ! number of regions managed by each process = ADM_lall
+  integer,  public, allocatable :: ADM_prc_tab (:,:)      ! table  of regions managed by each process
 
-  integer, public, allocatable :: ADM_rgn2prc (:)        ! Table of process ID from region ID
-                                                         ! ADM_rgn2prc(ADM_rgn_nmax)
-  integer, public, allocatable :: ADM_rgn_etab(:,:,:)    ! table  of edge link information
-                                                         ! ADM_rgn_etab( ADM_RID:ADM_DIR,ADM_SW:ADM_SE,ADM_rgn_nmax )
-  integer, public, allocatable :: ADM_rgn_vnum(:,:)      ! Table of n-vertex-link at the region vertex
-                                                         ! ADM_rgn_vnum( ADM_W:ADM_S,ADM_rgn_nmax )
-  integer, public, allocatable :: ADM_rgn_vtab(:,:,:,:)  ! Table of vertex link information
-                                                         ! ADM_rgn_vtab   ( ADM_RID:ADM_DIR, &
-                                                         !                  ADM_W:ADM_S,     &
-                                                         !                  ADM_rgn_nmax,    &
-                                                         !                  ADM_vlink_nmax   )
-  integer, public, allocatable :: ADM_rgn_vtab_pl(:,:,:) ! Table of vertex link information for poles
-                                                         ! ADM_rgn_vtab_pl( ADM_RID:ADM_DIR, &
-                                                         !                  ADM_rgn_nmax_pl, &
-                                                         !                  ADM_vlink_nmax   )
+  integer,  public, allocatable :: ADM_rgn2prc (:)        ! Table of process ID from region ID
+                                                          ! ADM_rgn2prc(ADM_rgn_nmax)
+  integer,  public, allocatable :: ADM_rgn_etab(:,:,:)    ! table  of edge link information
+                                                          ! ADM_rgn_etab( ADM_RID:ADM_DIR,ADM_SW:ADM_SE,ADM_rgn_nmax )
+  integer,  public, allocatable :: ADM_rgn_vnum(:,:)      ! Table of n-vertex-link at the region vertex
+                                                          ! ADM_rgn_vnum( ADM_W:ADM_S,ADM_rgn_nmax )
+  integer,  public, allocatable :: ADM_rgn_vtab(:,:,:,:)  ! Table of vertex link information
+                                                          ! ADM_rgn_vtab   ( ADM_RID:ADM_DIR, &
+                                                          !                  ADM_W:ADM_S,     &
+                                                          !                  ADM_rgn_nmax,    &
+                                                          !                  ADM_vlink_nmax   )
+  integer,  public, allocatable :: ADM_rgn_vtab_pl(:,:,:) ! Table of vertex link information for poles
+                                                          ! ADM_rgn_vtab_pl( ADM_RID:ADM_DIR, &
+                                                          !                  ADM_rgn_nmax_pl, &
+                                                          !                  ADM_vlink_nmax   )
 
-  integer, public              :: ADM_rgnid_npl_mng      ! Region ID of north pole management
-  integer, public              :: ADM_rgnid_spl_mng      ! Region ID of south pole management
+  integer,  public              :: ADM_rgnid_npl_mng      ! Region ID of north pole management
+  integer,  public              :: ADM_rgnid_spl_mng      ! Region ID of south pole management
 
   !
   !====== Information for regions ======
   !
-  integer, public              :: ADM_l_me        ! Present Local region number
+  integer,  public              :: ADM_l_me               ! Present Local region number
 
-  logical, public, allocatable :: ADM_have_sgp(:) ! region have singlar point?
+  logical,  public, allocatable :: ADM_have_sgp(:)        ! region have singlar point?
 
   !
   !====== Information for grids ======
   !
-  integer, public, parameter   :: ADM_nxyz = 3 ! dimension of the spacial vector
+  integer,  public, parameter   :: ADM_nxyz = 3 ! dimension of the spacial vector
 
   ! Identifiers of grid points around a grid point
-  integer, public, parameter   :: ADM_GIJ_nmax = 7
-  integer, public, parameter   :: ADM_GIoJo    = 1
-  integer, public, parameter   :: ADM_GIpJo    = 2
-  integer, public, parameter   :: ADM_GIpJp    = 3
-  integer, public, parameter   :: ADM_GIoJp    = 4
-  integer, public, parameter   :: ADM_GImJo    = 5
-  integer, public, parameter   :: ADM_GImJm    = 6
-  integer, public, parameter   :: ADM_GIoJm    = 7
+  integer,  public, parameter   :: ADM_GIJ_nmax = 7
+  integer,  public, parameter   :: ADM_GIoJo    = 1
+  integer,  public, parameter   :: ADM_GIpJo    = 2
+  integer,  public, parameter   :: ADM_GIpJp    = 3
+  integer,  public, parameter   :: ADM_GIoJp    = 4
+  integer,  public, parameter   :: ADM_GImJo    = 5
+  integer,  public, parameter   :: ADM_GImJm    = 6
+  integer,  public, parameter   :: ADM_GIoJm    = 7
 
 #ifdef _FIXEDINDEX_
-  integer, public              :: ADM_IooJoo(ADM_IooJoo_nmax,ADM_GIJ_nmax)
-  integer, public              :: ADM_IooJmo(ADM_IooJmo_nmax,ADM_GIJ_nmax)
-  integer, public              :: ADM_IooJop(ADM_IooJop_nmax,ADM_GIJ_nmax)
-  integer, public              :: ADM_IooJmp(ADM_IooJmp_nmax,ADM_GIJ_nmax)
-  integer, public              :: ADM_ImoJoo(ADM_ImoJoo_nmax,ADM_GIJ_nmax)
-  integer, public              :: ADM_ImoJmo(ADM_ImoJmo_nmax,ADM_GIJ_nmax)
-  integer, public              :: ADM_ImoJop(ADM_ImoJop_nmax,ADM_GIJ_nmax)
-  integer, public              :: ADM_ImoJmp(ADM_ImoJmp_nmax,ADM_GIJ_nmax)
-  integer, public              :: ADM_IopJoo(ADM_IopJoo_nmax,ADM_GIJ_nmax)
-  integer, public              :: ADM_IopJmo(ADM_IopJmo_nmax,ADM_GIJ_nmax)
-  integer, public              :: ADM_IopJop(ADM_IopJop_nmax,ADM_GIJ_nmax)
-  integer, public              :: ADM_IopJmp(ADM_IopJmp_nmax,ADM_GIJ_nmax)
-  integer, public              :: ADM_ImpJoo(ADM_ImpJoo_nmax,ADM_GIJ_nmax)
-  integer, public              :: ADM_ImpJmo(ADM_ImpJmo_nmax,ADM_GIJ_nmax)
-  integer, public              :: ADM_ImpJop(ADM_ImpJop_nmax,ADM_GIJ_nmax)
-  integer, public              :: ADM_ImpJmp(ADM_ImpJmp_nmax,ADM_GIJ_nmax)
+  integer,  public              :: ADM_IooJoo(ADM_IooJoo_nmax,ADM_GIJ_nmax)
+  integer,  public              :: ADM_IooJmo(ADM_IooJmo_nmax,ADM_GIJ_nmax)
+  integer,  public              :: ADM_IooJop(ADM_IooJop_nmax,ADM_GIJ_nmax)
+  integer,  public              :: ADM_IooJmp(ADM_IooJmp_nmax,ADM_GIJ_nmax)
+  integer,  public              :: ADM_ImoJoo(ADM_ImoJoo_nmax,ADM_GIJ_nmax)
+  integer,  public              :: ADM_ImoJmo(ADM_ImoJmo_nmax,ADM_GIJ_nmax)
+  integer,  public              :: ADM_ImoJop(ADM_ImoJop_nmax,ADM_GIJ_nmax)
+  integer,  public              :: ADM_ImoJmp(ADM_ImoJmp_nmax,ADM_GIJ_nmax)
+  integer,  public              :: ADM_IopJoo(ADM_IopJoo_nmax,ADM_GIJ_nmax)
+  integer,  public              :: ADM_IopJmo(ADM_IopJmo_nmax,ADM_GIJ_nmax)
+  integer,  public              :: ADM_IopJop(ADM_IopJop_nmax,ADM_GIJ_nmax)
+  integer,  public              :: ADM_IopJmp(ADM_IopJmp_nmax,ADM_GIJ_nmax)
+  integer,  public              :: ADM_ImpJoo(ADM_ImpJoo_nmax,ADM_GIJ_nmax)
+  integer,  public              :: ADM_ImpJmo(ADM_ImpJmo_nmax,ADM_GIJ_nmax)
+  integer,  public              :: ADM_ImpJop(ADM_ImpJop_nmax,ADM_GIJ_nmax)
+  integer,  public              :: ADM_ImpJmp(ADM_ImpJmp_nmax,ADM_GIJ_nmax)
 #else
-  integer, public, allocatable :: ADM_IooJoo(:,:)
-  integer, public, allocatable :: ADM_IooJmo(:,:)
-  integer, public, allocatable :: ADM_IooJop(:,:)
-  integer, public, allocatable :: ADM_IooJmp(:,:)
-  integer, public, allocatable :: ADM_ImoJoo(:,:)
-  integer, public, allocatable :: ADM_ImoJmo(:,:)
-  integer, public, allocatable :: ADM_ImoJop(:,:)
-  integer, public, allocatable :: ADM_ImoJmp(:,:)
-  integer, public, allocatable :: ADM_IopJoo(:,:)
-  integer, public, allocatable :: ADM_IopJmo(:,:)
-  integer, public, allocatable :: ADM_IopJop(:,:)
-  integer, public, allocatable :: ADM_IopJmp(:,:)
-  integer, public, allocatable :: ADM_ImpJoo(:,:)
-  integer, public, allocatable :: ADM_ImpJmo(:,:)
-  integer, public, allocatable :: ADM_ImpJop(:,:)
-  integer, public, allocatable :: ADM_ImpJmp(:,:)
+  integer,  public, allocatable :: ADM_IooJoo(:,:)
+  integer,  public, allocatable :: ADM_IooJmo(:,:)
+  integer,  public, allocatable :: ADM_IooJop(:,:)
+  integer,  public, allocatable :: ADM_IooJmp(:,:)
+  integer,  public, allocatable :: ADM_ImoJoo(:,:)
+  integer,  public, allocatable :: ADM_ImoJmo(:,:)
+  integer,  public, allocatable :: ADM_ImoJop(:,:)
+  integer,  public, allocatable :: ADM_ImoJmp(:,:)
+  integer,  public, allocatable :: ADM_IopJoo(:,:)
+  integer,  public, allocatable :: ADM_IopJmo(:,:)
+  integer,  public, allocatable :: ADM_IopJop(:,:)
+  integer,  public, allocatable :: ADM_IopJmp(:,:)
+  integer,  public, allocatable :: ADM_ImpJoo(:,:)
+  integer,  public, allocatable :: ADM_ImpJmo(:,:)
+  integer,  public, allocatable :: ADM_ImpJop(:,:)
+  integer,  public, allocatable :: ADM_ImpJmp(:,:)
 #endif
 
   character(len=ADM_MAXFNAME), public :: ADM_HGRID_SYSTEM = 'ICO' ! [XTMS] Horizontal Grid type
@@ -277,7 +278,7 @@ module mod_adm
   !
   !++ Private parameters & variables
   !
-  integer, private :: ADM_run_type ! Run type (single or multi processes)
+  integer,  private :: ADM_run_type ! Run type (single or multi processes)
 
   !-----------------------------------------------------------------------
 contains

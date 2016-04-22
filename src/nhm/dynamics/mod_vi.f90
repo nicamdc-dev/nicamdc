@@ -166,7 +166,7 @@ contains
     use mod_oprt, only: &
          OPRT_horizontalize_vec, &
          OPRT_horizontalize_vec_DP
-         
+
     use mod_vmtr, only: &
        VMTR_C2Wfact,    &
        VMTR_C2Wfact_pl, &
@@ -1451,7 +1451,7 @@ contains
 
     do l = 1, ADM_lall
        ! calc Sall
-       do k  = ADM_kmin+1, ADM_kmax
+       do k = ADM_kmin+1, ADM_kmax
        do g = 1, ADM_gall
           Sall(g,k) = (   ( rhogw0(g,k,  l)*alfa + dt * Sw(g,k,  l) ) * VMTR_RGAMH  (g,k,  l)**2            &
                       - ( ( preg0 (g,k,  l)      + dt * Sp(g,k,  l) ) * VMTR_RGSGAM2(g,k,  l)               &
@@ -1459,7 +1459,7 @@ contains
                         ) * dt * GRD_rdgzh(k)                                                               &
                       - ( ( rhog0 (g,k,  l)      + dt * Sr(g,k,  l) ) * VMTR_RGAM(g,k,  l)**2 * GRD_afac(k) &
                         + ( rhog0 (g,k-1,l)      + dt * Sr(g,k-1,l) ) * VMTR_RGAM(g,k-1,l)**2 * GRD_bfac(k) &
-                        ) * dt * 0.5_RP * GRAV                                                               &
+                        ) * dt * 0.5_RP * GRAV                                                              &
                       ) * CVovRt2
        enddo
        enddo
@@ -1516,7 +1516,7 @@ contains
                               ) * dt * GRD_rdgzh(k)                                                                        &
                             - ( ( rhog0_pl (g,k,  l)      + dt * Sr_pl(g,k,  l) ) * VMTR_RGAM_pl(g,k,  l)**2 * GRD_afac(k) &
                               + ( rhog0_pl (g,k-1,l)      + dt * Sr_pl(g,k-1,l) ) * VMTR_RGAM_pl(g,k-1,l)**2 * GRD_bfac(k) &
-                              ) * dt * 0.5_RP * GRAV                                                                        &
+                              ) * dt * 0.5_RP * GRAV                                                                       &
                             ) * CVovRt2
           enddo
           enddo

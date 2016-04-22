@@ -312,7 +312,6 @@ contains
              !$omp end master
              !$omp barrier
           endif
-
        enddo
        !$omp end parallel
 

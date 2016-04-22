@@ -59,41 +59,26 @@ module mod_misc
   !
   !++ Private parameters, variables & subroutines
   !
-  !--- minimum available fid
-  integer, parameter, private :: min_fid = 7
-  !
-  !--- maximum available fid.
-  integer, parameter, private :: max_fid = 99
-
-  !--- number of separated file starts from 0 ?
-  logical, private, parameter :: NSTR_ZERO_START = .true.
-
-  !--- digit of separated file
-  integer, private            :: NSTR_MAX_DIGIT  = 5
-  !
-  !<----  if running on ES,
-  !<----      NSTR_ZERO_START = .TRUE.
-  !<----      NSTR_MAX_DIGIT  = 5
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !>
-  !> Description of the subroutine MISC_make_idstr
-  !>
+  !> make extention with process number
   subroutine MISC_make_idstr( &
-       str,     & !--- [OUT]
-       prefix,  & !--- [IN]
-       ext,     & !--- [IN]
-       numID,   & !--- [IN]
-       digit    ) !--- [IN]
+       str,    &
+       prefix, &
+       ext,    &
+       numID,  &
+       digit   )
     implicit none
 
-    character(len=*), intent(out) :: str    ! combined string (file name)
-    character(len=*), intent(in)  :: prefix ! prefix
-    character(len=*), intent(in)  :: ext    ! extention( e.g. .rgn )
-    integer,          intent(in)  :: numID  ! number
+    character(len=*),  intent(out) :: str    !< combined extention string
+    character(len=*),  intent(in)  :: prefix !< prefix
+    character(len=*),  intent(in)  :: ext    !< extention ( e.g. .rgn )
+    integer,           intent(in)  :: numID  !< number
+    integer, optional, intent(in)  :: digit  !< digit
 
-    integer, optional, intent(in) :: digit  ! digit
+    logical, parameter            :: NSTR_ZERO_START = .true. ! number of separated file starts from 0 ?
+    integer, parameter            :: NSTR_MAX_DIGIT  = 5      ! digit of separated file
 
     character(len=128) :: rankstr
     integer            :: setdigit
@@ -120,23 +105,24 @@ contains
   end subroutine MISC_make_idstr
 
   !-----------------------------------------------------------------------------
-  !>
-  !> Description of the function %NAME
-  !> @return
-  !>
-  function MISC_get_available_fid()  &
-       result(fid)                     !--- file id
-    !
+  !> Search and get available machine id
+  !> @return fid
+  function MISC_get_available_fid() result(fid)
     implicit none
-    !
+
     integer :: fid
+
+    integer, parameter :: min_fid =  7 !< minimum available fid
+    integer, parameter :: max_fid = 99 !< maximum available fid
+
     logical :: i_opened
-    !
-    do fid = min_fid,max_fid
-       INQUIRE (fid, OPENED=I_OPENED)
-       if(.not.I_OPENED) return
+    !---------------------------------------------------------------------------
+
+    do fid = min_fid, max_fid
+       inquire(fid,opened=i_opened)
+       if( .NOT. i_opened ) return
     enddo
-    !
+
   end function MISC_get_available_fid
 
   !-----------------------------------------------------------------------------

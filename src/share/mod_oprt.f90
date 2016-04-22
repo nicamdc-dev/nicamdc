@@ -1612,9 +1612,6 @@ contains
       enddo
     endif
 
-
-
-
     ! ---- setup coefficient of diffusion operator
 
     write(ADM_LOG_FID,*) '*** setup coefficient of diffusion operator'
@@ -1649,7 +1646,6 @@ contains
 
     return
   end subroutine OPRT_setup
-
 
   subroutine OPRT_setup_DP
     use mod_adm, only: &
@@ -3785,9 +3781,9 @@ contains
              ijm1   = n     - gall_1d
 
              flux(n,AI ) = 0.25_RP * ( (vxt(ijm1,TJ)+vxt(ij,TI)) * cinterp_HN(ij,l,AI ,1) &
-                                    + (vyt(ijm1,TJ)+vyt(ij,TI)) * cinterp_HN(ij,l,AI ,2) &
-                                    + (vzt(ijm1,TJ)+vzt(ij,TI)) * cinterp_HN(ij,l,AI ,3) &
-                                    ) * (kh(ij,k,l)+kh(ip1j,k,l))
+                                     + (vyt(ijm1,TJ)+vyt(ij,TI)) * cinterp_HN(ij,l,AI ,2) &
+                                     + (vzt(ijm1,TJ)+vzt(ij,TI)) * cinterp_HN(ij,l,AI ,3) &
+                                     ) * (kh(ij,k,l)+kh(ip1j,k,l))
           enddo
           !$omp end do nowait
 
@@ -3797,9 +3793,9 @@ contains
              ip1jp1 = n + 1 + gall_1d
 
              flux(n,AIJ) = 0.25_RP * ( (vxt(ij ,TI)+vxt(ij ,TJ)) * cinterp_HN(ij,l,AIJ,1) &
-                                    + (vyt(ij ,TI)+vyt(ij ,TJ)) * cinterp_HN(ij,l,AIJ,2) &
-                                    + (vzt(ij ,TI)+vzt(ij ,TJ)) * cinterp_HN(ij,l,AIJ,3) &
-                                    ) * (kh(ij,k,l)+kh(ip1jp1,k,l))
+                                     + (vyt(ij ,TI)+vyt(ij ,TJ)) * cinterp_HN(ij,l,AIJ,2) &
+                                     + (vzt(ij ,TI)+vzt(ij ,TJ)) * cinterp_HN(ij,l,AIJ,3) &
+                                     ) * (kh(ij,k,l)+kh(ip1jp1,k,l))
           enddo
           !$omp end do nowait
 
@@ -3810,9 +3806,9 @@ contains
              im1j   = n - 1
 
              flux(n,AJ ) = 0.25_RP * ( (vxt(ij,TJ)+vxt(im1j,TI)) * cinterp_HN(ij,l,AJ ,1) &
-                                    + (vyt(ij,TJ)+vyt(im1j,TI)) * cinterp_HN(ij,l,AJ ,2) &
-                                    + (vzt(ij,TJ)+vzt(im1j,TI)) * cinterp_HN(ij,l,AJ ,3) &
-                                    ) * (kh(ij,k,l)+kh(ijp1,k,l))
+                                     + (vyt(ij,TJ)+vyt(im1j,TI)) * cinterp_HN(ij,l,AJ ,2) &
+                                     + (vzt(ij,TJ)+vzt(im1j,TI)) * cinterp_HN(ij,l,AJ ,3) &
+                                     ) * (kh(ij,k,l)+kh(ijp1,k,l))
           enddo
           !$omp end do
 
@@ -3899,7 +3895,6 @@ contains
 
        enddo
        enddo
-
     else
        dscl_pl(:,:,:) = 0.0_RP
     endif
@@ -3909,6 +3904,7 @@ contains
     return
   end subroutine OPRT_diffusion
 
+  !-----------------------------------------------------------------------------
   subroutine OPRT_diffusion_DP( &
        dscl, dscl_pl, &
        scl,  scl_pl,  &
@@ -3955,7 +3951,7 @@ contains
     integer :: n, k, l, v
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('OPRT_diffusion_DP')
+    call DEBUG_rapstart('OPRT_diffusion')
 
     gall    = ADM_gall
     gall_1d = ADM_gall_1d
@@ -4040,9 +4036,9 @@ contains
              ijm1   = n     - gall_1d
 
              flux(n,AI ) = 0.25_DP * ( (vxt(ijm1,TJ)+vxt(ij,TI)) * cinterp_HN(ij,l,AI ,1) &
-                                    + (vyt(ijm1,TJ)+vyt(ij,TI)) * cinterp_HN(ij,l,AI ,2) &
-                                    + (vzt(ijm1,TJ)+vzt(ij,TI)) * cinterp_HN(ij,l,AI ,3) &
-                                    ) * (kh(ij,k,l)+kh(ip1j,k,l))
+                                     + (vyt(ijm1,TJ)+vyt(ij,TI)) * cinterp_HN(ij,l,AI ,2) &
+                                     + (vzt(ijm1,TJ)+vzt(ij,TI)) * cinterp_HN(ij,l,AI ,3) &
+                                     ) * (kh(ij,k,l)+kh(ip1j,k,l))
           enddo
           !$omp end do nowait
 
@@ -4052,9 +4048,9 @@ contains
              ip1jp1 = n + 1 + gall_1d
 
              flux(n,AIJ) = 0.25_DP * ( (vxt(ij ,TI)+vxt(ij ,TJ)) * cinterp_HN(ij,l,AIJ,1) &
-                                    + (vyt(ij ,TI)+vyt(ij ,TJ)) * cinterp_HN(ij,l,AIJ,2) &
-                                    + (vzt(ij ,TI)+vzt(ij ,TJ)) * cinterp_HN(ij,l,AIJ,3) &
-                                    ) * (kh(ij,k,l)+kh(ip1jp1,k,l))
+                                     + (vyt(ij ,TI)+vyt(ij ,TJ)) * cinterp_HN(ij,l,AIJ,2) &
+                                     + (vzt(ij ,TI)+vzt(ij ,TJ)) * cinterp_HN(ij,l,AIJ,3) &
+                                     ) * (kh(ij,k,l)+kh(ip1jp1,k,l))
           enddo
           !$omp end do nowait
 
@@ -4065,9 +4061,9 @@ contains
              im1j   = n - 1
 
              flux(n,AJ ) = 0.25_DP * ( (vxt(ij,TJ)+vxt(im1j,TI)) * cinterp_HN(ij,l,AJ ,1) &
-                                    + (vyt(ij,TJ)+vyt(im1j,TI)) * cinterp_HN(ij,l,AJ ,2) &
-                                    + (vzt(ij,TJ)+vzt(im1j,TI)) * cinterp_HN(ij,l,AJ ,3) &
-                                    ) * (kh(ij,k,l)+kh(ijp1,k,l))
+                                     + (vyt(ij,TJ)+vyt(im1j,TI)) * cinterp_HN(ij,l,AJ ,2) &
+                                     + (vzt(ij,TJ)+vzt(im1j,TI)) * cinterp_HN(ij,l,AJ ,3) &
+                                     ) * (kh(ij,k,l)+kh(ijp1,k,l))
           enddo
           !$omp end do
 
@@ -4154,12 +4150,11 @@ contains
 
        enddo
        enddo
-
     else
        dscl_pl(:,:,:) = 0.0_DP
     endif
 
-    call DEBUG_rapend('OPRT_diffusion_DP')
+    call DEBUG_rapend('OPRT_diffusion')
 
     return
   end subroutine OPRT_diffusion_DP

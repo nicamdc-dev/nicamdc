@@ -208,15 +208,14 @@ program prg_driver
   !---< admin module setup >---
   call ADM_setup('nhm_driver.cnf')
 
+  call DEBUG_rapstart('Total')
   !#############################################################################
+  call DEBUG_rapstart('Setup_ALL')
 
   write(ADM_LOG_FID,*) '##### start  setup     #####'
   if ( ADM_prc_me == ADM_prc_run_master ) then
      write(*,*) '##### start  setup     #####'
   endif
-
-  call DEBUG_rapstart('Total')
-  call DEBUG_rapstart('Setup_ALL')
 
   !---< radom module setup >---
   call RANDOM_setup
@@ -280,19 +279,18 @@ program prg_driver
      write(*,*) '##### finish setup     #####'
   endif
 
-
   call DEBUG_rapend('Setup_ALL')
-
   !#############################################################################
-#ifdef _FIPP_
-  call fipp_start()
-#endif
   call DEBUG_rapstart('Main_ALL')
 
   write(ADM_LOG_FID,*) '##### start  main loop #####'
   if ( ADM_prc_me == ADM_prc_run_master ) then
      write(*,*) '##### start  main loop #####'
   endif
+
+#ifdef _FIPP_
+  call fipp_start()
+#endif
 
   !$acc data &
   !$acc& pcopyin(ADM_prc_tab,ADM_rgn_vnum,ADM_IopJop) &
@@ -355,18 +353,20 @@ program prg_driver
   enddo
 
   !$acc end data
+
+#ifdef _FIPP_
+  call fipp_stop()
+#endif
+
   write(ADM_LOG_FID,*) '##### finish main loop #####'
   if ( ADM_prc_me == ADM_prc_run_master ) then
      write(*,*) '##### finish main loop #####'
   endif
 
   call DEBUG_rapend('Main_ALL')
-#ifdef _FIPP_
-  call fipp_stop()
-#endif
   !#############################################################################
-
   call DEBUG_rapend('Total')
+
   call DEBUG_rapreport
 
   !--- finalize all process
