@@ -1,17 +1,17 @@
 !-------------------------------------------------------------------------------
 !>
-!! Module Held-Suarez forcing
+!! Module DCMIP2016 Physics forcing
 !!
 !! @par Description
-!!         This module contains subroutines for forcing term of GCSS CASE1.
+!!         This module contains subroutines for physics for DCMIP2016.
 !!
-!! @author H.Tomita
+!! @author R.Yoshida
 !!
 !! @par History
-!! @li      2004-02-17 (H.Tomita)  [NEW]
+!! @li      2016-04-28 (R.Yoshida)  [NEW]
 !!
 !<
-module mod_af_heldsuarez
+module mod_af_dcmip2016
   !-----------------------------------------------------------------------------
   !
   !++ Used modules
@@ -27,8 +27,8 @@ module mod_af_heldsuarez
   !
   !++ Public procedure
   !
-  public :: af_heldsuarez_init
-  public :: af_heldsuarez
+  public :: af_dcmip2016_init
+  public :: af_dcmip2016
 
   !-----------------------------------------------------------------------------
   !
@@ -45,15 +45,15 @@ module mod_af_heldsuarez
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  subroutine af_heldsuarez_init
+  subroutine af_dcmip2016_init
     implicit none
     !---------------------------------------------------------------------------
 
     return
-  end subroutine af_heldsuarez_init
+  end subroutine af_dcmip2016_init
 
   !-----------------------------------------------------------------------------
-  subroutine af_heldsuarez( &
+  subroutine af_dcmip2016( &
        ijdim, &
        lat,   &
        pre,   &
@@ -134,7 +134,7 @@ contains
     enddo
     enddo
 
-  end subroutine af_heldsuarez
+  end subroutine af_dcmip2016
 
-end module mod_af_heldsuarez
+end module mod_af_dcmip2016
 !-------------------------------------------------------------------------------
