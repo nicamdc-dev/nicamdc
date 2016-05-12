@@ -78,7 +78,7 @@ contains
     integer, optional, intent(in)  :: digit  !< digit
 
     logical, parameter            :: NSTR_ZERO_START = .true. ! number of separated file starts from 0 ?
-    integer, parameter            :: NSTR_MAX_DIGIT  = 5      ! digit of separated file
+    integer, parameter            :: NSTR_MAX_DIGIT  = 6      ! digit of separated file
 
     character(len=128) :: rankstr
     integer            :: setdigit

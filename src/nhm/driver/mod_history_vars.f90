@@ -102,9 +102,9 @@ contains
        HIST_req_nmax, &
        item_save
     use mod_adm, only: &
-         ADM_gall, &
-         ADM_kall, &
-         ADM_lall
+       ADM_gall, &
+       ADM_kall, &
+       ADM_lall
     use mod_runconf, only: &
        AF_TYPE
     use mod_history, only: &
@@ -521,7 +521,7 @@ contains
           do k = ADM_kmin, ADM_kmax
              tmp2d(:,K0,l) = tmp2d(:,K0,l) + rho(:,k,l) * q_clw(:,k,l) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
           enddo
-          call history_in( 'sl_', tmp2d(:,:,l) )
+          call history_in( 'sl_lwp', tmp2d(:,:,l) )
        enddo
     endif
 

@@ -315,7 +315,7 @@ program fio_ico2ll_mpi
   endif
 
   write(rankstr,'(I6.6)') prc_myrank
-  open(ADM_LOG_FID, file='msg.pe'//trim(rankstr) )
+  open(ADM_LOG_FID, file='msg_ico2ll.pe'//trim(rankstr) )
   write(ADM_LOG_FID,*) "+++ Parallel Execution, Use MPI"
 
   PALL_global = MNG_PALL
