@@ -34,6 +34,8 @@ module mod_ideal_init
      test2_steady_state_mountain, &
      test2_schaer_mountain,       &
      test3_gravity_wave
+  use Terminator, only: &
+     initial_value_Terminator
   use mod_cnst, only: &
      pi    => CNST_PI,      &
      a     => CNST_ERADIUS, &
@@ -129,12 +131,14 @@ contains
     character(len=ADM_NSYS) :: test_case   = ''
     real(RP)                :: eps_geo2prs = 1.E-2_RP
     logical                 :: nicamcore   = .true.
+    logical                 :: chemtracer  = .false.
 
     namelist / DYCORETESTPARAM / &
        init_type,   &
        test_case,   &
        eps_geo2prs, &
-       nicamcore
+       nicamcore,   &
+       chemtracer
 
     integer :: ierr
     !---------------------------------------------------------------------------
@@ -174,10 +178,19 @@ contains
 
     case ('Jablonowski')
 
-       write(ADM_LOG_FID,*) '*** test case  : ', trim(test_case)
-       write(ADM_LOG_FID,*) '*** eps_geo2prs= ', eps_geo2prs
-       write(ADM_LOG_FID,*) '*** nicamcore  = ', nicamcore
+       write(ADM_LOG_FID,*) '*** test case   : ', trim(test_case)
+       write(ADM_LOG_FID,*) '*** eps_geo2prs = ', eps_geo2prs
+       write(ADM_LOG_FID,*) '*** nicamcore   = ', nicamcore
        call jbw_init( ADM_gall, ADM_kall, ADM_lall, test_case, eps_geo2prs, nicamcore, DIAG_var(:,:,:,:) )
+
+    case ('Jablonowski-Moist')
+
+       write(ADM_LOG_FID,*) '*** test case   : ', trim(test_case)
+       write(ADM_LOG_FID,*) '*** eps_geo2prs = ', eps_geo2prs
+       write(ADM_LOG_FID,*) '*** nicamcore   = ', nicamcore
+       write(ADM_LOG_FID,*) '*** chemtracer  = ', chemtracer
+       call jbw_moist_init( ADM_gall, ADM_kall, ADM_lall, test_case,              &
+                            eps_geo2prs, nicamcore, chemtracer, DIAG_var(:,:,:,:) )
 
     case ('Traceradvection')
 
@@ -567,6 +580,179 @@ contains
 
     return
   end subroutine jbw_init
+
+  !-----------------------------------------------------------------------------
+  subroutine jbw_moist_init( &
+       ijdim,        &
+       kdim,         &
+       lall,         &
+       test_case,    &
+       eps_geo2prs,  &
+       nicamcore,    &
+       chemtracer,   &
+       DIAG_var      )
+    use mod_adm, only: &
+       ADM_proc_stop, &
+       ADM_kmin,      &
+       ADM_kmax
+    use mod_grd, only: &
+       GRD_Z,          &
+       GRD_ZH, &
+       GRD_vz
+    use mod_gmtr, only: &
+       GMTR_lat, &
+       GMTR_lon
+    use mod_runconf, only: &
+       TRC_vmax,  &
+       NCHEM_MAX, &
+       NCHEM_STR, &
+       NCHEM_END
+    implicit none
+
+    integer,          intent(in)  :: ijdim
+    integer,          intent(in)  :: kdim
+    integer,          intent(in)  :: lall
+    character(len=*), intent(in)  :: test_case
+    real(RP),         intent(in)  :: eps_geo2prs
+    logical,          intent(in)  :: nicamcore
+    logical,          intent(in)  :: chemtracer
+    real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+
+    real(RP) :: lat, lon               ! latitude, longitude on Icosahedral grid
+    real(RP) :: eta(kdim,2), geo(kdim) ! eta & geopotential in ICO-grid field
+    real(RP) :: prs(kdim),   tmp(kdim) ! pressure & temperature in ICO-grid field
+    real(RP) :: wix(kdim),   wiy(kdim) ! zonal/meridional wind components in ICO-grid field
+
+    real(RP) :: z_local (kdim)
+    real(RP) :: vx_local(kdim)
+    real(RP) :: vy_local(kdim)
+    real(RP) :: vz_local(kdim)
+    real(RP) :: ps
+
+    real(RP) :: cl, cl2
+
+    logical :: signal    ! if true, continue iteration
+    logical :: pertb     ! if true, with perturbation
+    logical :: psgm      ! if true, PS Gradient Method
+    logical :: eta_limit ! if true, value of eta is limited upto 1.0
+    logical :: logout    ! log output switch for Pressure Convert
+
+    integer :: n, k, l, itr
+    !---------------------------------------------------------------------------
+
+    DIAG_var(:,:,:,:) = 0.0_RP
+
+    eta_limit = .true.
+    psgm = .false.
+    logout = .true.
+
+    select case( trim(test_case) )
+    case ('1', '4-1')  ! with perturbation
+       write(ADM_LOG_FID,*) "Jablonowski Initialize - case 1: with perturbation (no rebalance)"
+       pertb = .true.
+    case ('2', '4-2')  ! without perturbation
+       write(ADM_LOG_FID,*) "Jablonowski Initialize - case 2: without perturbation (no rebalance)"
+       pertb = .false.
+    case ('3')  ! with perturbation (PS Distribution Method)
+       write(ADM_LOG_FID,*) "Jablonowski Initialize - PS Distribution Method: with perturbation"
+       write(ADM_LOG_FID,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
+       pertb = .true.
+       psgm = .true.
+       eta_limit = .false.
+    case ('4')  ! without perturbation (PS Distribution Method)
+       write(ADM_LOG_FID,*) "Jablonowski Initialize - PS Distribution Method: without perturbation"
+       write(ADM_LOG_FID,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
+       pertb = .false.
+       psgm = .true.
+       eta_limit = .false.
+    case default
+       write(ADM_LOG_FID,*) "Unknown test_case: '"//trim(test_case)//"' specified."
+       write(ADM_LOG_FID,*) "Force changed to case 1 (with perturbation)"
+       pertb = .true.
+    end select
+    write(ADM_LOG_FID,*) " | eps for geo2prs: ", eps_geo2prs
+    write(ADM_LOG_FID,*) " | nicamcore switch for geo2prs: ", nicamcore
+
+    do l = 1, lall
+    do n = 1, ijdim
+       z_local(ADM_kmin-1) = GRD_vz(n,2,l,GRD_ZH)
+       do k = ADM_kmin, ADM_kmax+1
+          z_local(k) = GRD_vz(n,k,l,GRD_Z)
+       enddo
+
+       lat = GMTR_lat(n,l)
+       lon = GMTR_lon(n,l)
+
+       signal = .true.
+
+       ! iteration
+       do itr = 1, itrmax
+
+          if ( itr == 1 ) then
+             eta(:,:) = 1.E-7_RP ! This initial value is recommended by Jablonowsky.
+          else
+             call eta_vert_coord_NW( kdim, itr, z_local, tmp, geo, eta_limit, eta, signal )
+          endif
+
+          call steady_state( kdim, lat, eta, wix, wiy, tmp, geo )
+
+          if( .NOT. signal ) exit
+       enddo
+
+       if ( itr > itrmax ) then
+          write(*          ,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
+          write(ADM_LOG_FID,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
+          call ADM_proc_stop
+       endif
+
+       if (psgm) then
+          call ps_estimation ( kdim, lat, eta(:,1), tmp, geo, wix, ps, nicamcore )
+          call geo2prs ( kdim, ps, lat, tmp, geo, wix, prs, eps_geo2prs, nicamcore, logout )
+       else
+          call geo2prs ( kdim, p0, lat, tmp, geo, wix, prs, eps_geo2prs, nicamcore, logout )
+       endif
+       logout = .false.
+
+       call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
+
+       do k = 1, kdim
+          DIAG_var(n,k,l,1) = prs(k)
+          DIAG_var(n,k,l,2) = tmp(k)
+          DIAG_var(n,k,l,3) = vx_local(k)
+          DIAG_var(n,k,l,4) = vy_local(k)
+          DIAG_var(n,k,l,5) = vz_local(k)
+       enddo
+
+       if ( chemtracer ) then
+          if ( NCHEM_MAX /= 2 ) then
+             write(*          ,*) 'NCHEM_MAX is not enough! requires 2.', NCHEM_MAX
+             write(ADM_LOG_FID,*) 'NCHEM_MAX is not enough! requires 2.', NCHEM_MAX
+             call ADM_proc_stop
+          endif
+
+          call initial_value_Terminator( lat*r2d, lon*r2d, cl, cl2 )
+
+          ! Todo : the mixing ratios are dry
+          ! i.e. the ratio between the density of the species and the density of dry air.
+          DIAG_var(n,:,l,6+NCHEM_STR) = cl
+          DIAG_var(n,:,l,6+NCHEM_END) = cl2
+       endif
+
+    enddo
+    enddo
+
+    if (pertb) call perturbation( ijdim, kdim, lall, 5, DIAG_var(:,:,:,1:5) )
+
+    write (ADM_LOG_FID,*) " |            Vertical Coordinate used in JBW initialization              |"
+    write (ADM_LOG_FID,*) " |------------------------------------------------------------------------|"
+    do k = 1, kdim
+       write (ADM_LOG_FID,'(3X,"(k=",I3,") HGT:",F8.2," [m]",2X,"PRS: ",F9.2," [Pa]",2X,"GH: ",F8.2," [m]",2X,"ETA: ",F9.5)') &
+       k, z_local(k), prs(k), geo(k)/g, eta(k,1)
+    enddo
+    write (ADM_LOG_FID,*) " |------------------------------------------------------------------------|"
+
+    return
+  end subroutine jbw_moist_init
 
   !-----------------------------------------------------------------------------
   subroutine tracer_init( &

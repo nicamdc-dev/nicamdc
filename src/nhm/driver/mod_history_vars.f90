@@ -105,9 +105,15 @@ contains
          ADM_gall, &
          ADM_kall, &
          ADM_lall
+    use mod_runconf, only: &
+       AF_TYPE
+    use mod_history, only: &
+       history_in
     implicit none
 
-    integer :: n
+    real(RP) :: tmp3d(ADM_gall,ADM_kall)
+
+    integer :: n, l
     !---------------------------------------------------------------------------
 
     do n = 1, HIST_req_nmax
@@ -138,6 +144,24 @@ contains
        allocate( v_old (ADM_gall,ADM_kall,ADM_lall) )
        allocate( wc_old(ADM_gall,ADM_kall,ADM_lall) )
     endif
+
+    tmp3d(:,:) = 0.0_RP
+
+    select case(AF_TYPE)
+    case('HELD-SUAREZ')
+       do l = 1, ADM_lall
+          call history_in( 'ml_af_fvx', tmp3d(:,:) )
+          call history_in( 'ml_af_fvy', tmp3d(:,:) )
+          call history_in( 'ml_af_fvz', tmp3d(:,:) )
+          call history_in( 'ml_af_fw',  tmp3d(:,:) )
+          call history_in( 'ml_af_fe',  tmp3d(:,:) )
+       enddo
+    case('TOY-CHEM')
+       do l = 1, ADM_lall
+          call history_in( 'ml_af_fq_cl',  tmp3d(:,:) )
+          call history_in( 'ml_af_fq_cl2', tmp3d(:,:) )
+       enddo
+    end select
 
     return
   end subroutine history_vars_setup
@@ -183,7 +207,10 @@ contains
        I_QR,      &
        I_QI,      &
        I_QS,      &
-       I_QG
+       I_QG,      &
+       AF_TYPE,   &
+       NCHEM_STR, &
+       NCHEM_END
     use mod_thrmdyn, only: &
        THRMDYN_th
     use mod_bndcnd, only: &
@@ -505,6 +532,22 @@ contains
              tmp2d(:,K0,l) = tmp2d(:,K0,l) + rho(:,k,l) * q_cli(:,k,l) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
           enddo
           call history_in( 'sl_iwp', tmp2d(:,:,l) )
+       enddo
+    endif
+
+    if ( AF_TYPE == 'TOY-CHEM' ) then
+       do l  = 1, ADM_lall
+          tmp2d(:,k0,l) = 0.0_RP
+          do k = ADM_kmin, ADM_kmax
+             tmp2d(:,k0,l) = tmp2d(:,k0,l) + rho(:,k,l) * q(:,k,l,NCHEM_STR) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
+          enddo
+          call history_in( 'sl_cl', tmp2d(:,:,l) )
+
+          tmp2d(:,k0,l) = 0.0_RP
+          do k = ADM_kmin, ADM_kmax
+             tmp2d(:,k0,l) = tmp2d(:,k0,l) + rho(:,k,l) * q(:,k,l,NCHEM_END) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
+          enddo
+          call history_in( 'sl_cl2', tmp2d(:,:,l) )
        enddo
     endif
 

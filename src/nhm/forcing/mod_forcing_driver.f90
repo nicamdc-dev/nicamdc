@@ -66,6 +66,8 @@ contains
        AF_TYPE
     use mod_af_heldsuarez, only: &
        AF_heldsuarez_init
+    use mod_af_toychem, only: &
+       AF_toychem_init
     implicit none
     !---------------------------------------------------------------------------
 
@@ -77,8 +79,9 @@ contains
     case('NONE')
        !--- do nothing
     case('HELD-SUAREZ')
-       write(ADM_LOG_FID,*) '+++ HELD-SUAREZ'
        call AF_heldsuarez_init
+    case('TOY-CHEM')
+       call AF_toychem_init
     case default
        write(ADM_LOG_FID,*) 'xxx unsupported forcing type! STOP.'
        call ADM_proc_stop
@@ -98,17 +101,23 @@ contains
     use mod_time, only: &
        TIME_DTL
     use mod_grd, only: &
-       GRD_vz, &
+       GRD_dgz, &
+       GRD_vz,  &
        GRD_Z
     use mod_gmtr, only: &
-       GMTR_lat
+       GMTR_lat, &
+       GMTR_lon
     use mod_vmtr, only: &
        VMTR_GSGAM2,  &
        VMTR_GSGAM2H, &
        VMTR_PHI
     use mod_runconf, only: &
-       AF_TYPE, &
-       TRC_VMAX
+       AF_TYPE,   &
+       TRC_VMAX,  &
+       NQW_STR,   &
+       NQW_END,   &
+       NCHEM_STR, &
+       NCHEM_END
     use mod_prgvar, only: &
        prgvar_get_in_withdiag, &
        prgvar_set_in
@@ -119,6 +128,8 @@ contains
        bndcnd_thermo
     use mod_af_heldsuarez, only: &
        AF_heldsuarez
+    use mod_af_toychem, only: &
+       AF_toychem
     use mod_history, only: &
        history_in
     implicit none
@@ -153,10 +164,13 @@ contains
     real(RP) :: phi    (ADM_gall_in,ADM_kall,ADM_lall)
     real(RP) :: z      (ADM_gall_in,ADM_kall,ADM_lall)
     real(RP) :: lat    (ADM_gall_in,ADM_lall)
+    real(RP) :: lon    (ADM_gall_in,ADM_lall)
 
     real(RP) :: frhogq(ADM_gall_in,ADM_kall,ADM_lall)
 
-    integer :: l, nq
+    real(RP) :: tmp2d(ADM_gall_in,1)
+
+    integer :: l, k, nq
     !---------------------------------------------------------------------------
 
     call DEBUG_rapstart('__Forcing')
@@ -167,6 +181,7 @@ contains
     call GTL_clip_region(real(GRD_vz(:,:,:,GRD_Z),kind=RP),z,      1,ADM_kall)
 
     call GTL_clip_region_1layer(real(GMTR_lat(:,:),kind=RP),lat)
+    call GTL_clip_region_1layer(real(GMTR_lon(:,:),kind=RP),lon)
 
     !--- get the prognostic and diagnostic variables
     call prgvar_get_in_withdiag( rhog,   & ! [IN]
@@ -230,6 +245,25 @@ contains
        enddo
        fq(:,:,:,:) = 0.0_RP
 
+    case('TOY-CHEM')
+
+       do l = 1, ADM_lall
+          call af_toychem( ADM_gall_in,  & ! [IN]
+                           lat(:,l),     & ! [IN]
+                           lon(:,l),     & ! [IN]
+                           q  (:,:,l,:), & ! [IN]
+                           fq (:,:,l,:), & ! [OUT]
+                           TIME_DTL      ) ! [IN]
+
+          call history_in( 'ml_af_fq_cl',  fq(:,:,l,NCHEM_STR) )
+          call history_in( 'ml_af_fq_cl2', fq(:,:,l,NCHEM_END) )
+       enddo
+       fvx(:,:,:) = 0.0_RP
+       fvy(:,:,:) = 0.0_RP
+       fvz(:,:,:) = 0.0_RP
+       fw (:,:,:) = 0.0_RP
+       fe (:,:,:) = 0.0_RP
+
     case default
 
        fvx(:,:,:) = 0.0_RP
@@ -251,8 +285,12 @@ contains
     do nq = 1, TRC_VMAX
        frhogq(:,:,:) = fq(:,:,:,nq) * rho(:,:,:) * GSGAM2(:,:,:)
 
-       rhog (:,:,:)    = rhog (:,:,:)    + TIME_DTL * frhogq(:,:,:)
        rhogq(:,:,:,nq) = rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:)
+
+       if (       nq >= NQW_STR &
+            .AND. nq <= NQW_END ) then ! update total density
+          rhog (:,:,:) = rhog (:,:,:) + TIME_DTL * frhogq(:,:,:)
+       endif
     enddo
 
     !--- set the prognostic variables
