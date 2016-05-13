@@ -91,11 +91,11 @@ module mod_numfilter
 
   real(RP), public,  allocatable :: rayleigh_coef  (:)             ! Rayleigh damping coefficient at cell center
   real(RP), private, allocatable :: rayleigh_coef_h(:)             ! Rayleigh damping coefficient at cell wall
-  logical, private              :: rayleigh_damp_only_w = .false. ! damp only w?
+  logical, private               :: rayleigh_damp_only_w = .false. ! damp only w?
 
   real(RP), public,  allocatable :: Kh_coef   (:,:,:)              ! horizontal diffusion coefficient at cell center
   real(RP), private, allocatable :: Kh_coef_pl(:,:,:)
-  integer, private              :: lap_order_hdiff = 2            ! laplacian order
+  integer, private               :: lap_order_hdiff = 2            ! laplacian order
   real(RP), private              :: hdiff_fact_rho  = 1.E-2_RP
   real(RP), private              :: hdiff_fact_q    = 0.0_RP
   real(RP), private              :: Kh_coef_minlim  = 0.E+00_RP

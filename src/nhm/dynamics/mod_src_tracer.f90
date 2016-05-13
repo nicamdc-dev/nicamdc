@@ -278,7 +278,7 @@ contains
 
           do k = ADM_kmin, ADM_kmax+1
              q_h(:,k,l) = 0.5_RP * ( GRD_afac(k) * q(:,k,  l) &
-                                  + GRD_bfac(k) * q(:,k-1,l) )
+                                   + GRD_bfac(k) * q(:,k-1,l) )
           enddo
           q_h(:,ADM_kmin-1,l) = 0.0_RP
        enddo
@@ -289,7 +289,7 @@ contains
 
              do k = ADM_kmin, ADM_kmax+1
                 q_h_pl(:,k,l) = 0.5_RP * ( GRD_afac(k) * q_pl(:,k,  l) &
-                                        + GRD_bfac(k) * q_pl(:,k-1,l) )
+                                         + GRD_bfac(k) * q_pl(:,k-1,l) )
              enddo
              q_h_pl(:,ADM_kmin-1,l) = 0.0_RP
           enddo
@@ -323,8 +323,8 @@ contains
 
              do k = ADM_kmin, ADM_kmax
              do g = 1, ADM_gall_pl
-                rhogq_pl(g,k,l,iq) = rhogq_pl(g,k,l,iq) - ( flx_v_pl(g,k+1,l)*q_h_pl(g,k+1,l) &
-                                                          - flx_v_pl(g,k,  l)*q_h_pl(g,k,  l) &
+                rhogq_pl(g,k,l,iq) = rhogq_pl(g,k,l,iq) - ( flx_v_pl(g,k+1,l) * q_h_pl(g,k+1,l) &
+                                                          - flx_v_pl(g,k,  l) * q_h_pl(g,k,  l) &
                                                           ) * GRD_rdgz(k)
              enddo
              enddo
@@ -571,7 +571,7 @@ contains
 
           do k = ADM_kmin, ADM_kmax+1
              q_h(:,k,l) = 0.5_RP * ( GRD_afac(k) * q(:,k,  l) &
-                                  + GRD_bfac(k) * q(:,k-1,l) )
+                                   + GRD_bfac(k) * q(:,k-1,l) )
           enddo
           q_h(:,ADM_kmin-1,l) = 0.0_RP
        enddo
@@ -582,7 +582,7 @@ contains
 
              do k = ADM_kmin, ADM_kmax+1
                 q_h_pl(:,k,l) = 0.5_RP * ( GRD_afac(k) * q_pl(:,k,  l) &
-                                        + GRD_bfac(k) * q_pl(:,k-1,l) )
+                                         + GRD_bfac(k) * q_pl(:,k-1,l) )
              enddo
              q_h_pl(:,ADM_kmin-1,l) = 0.0_RP
           enddo
