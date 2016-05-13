@@ -153,32 +153,32 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine af_dcmip2016( &
-       ijdim,  &
-       lat,    &
-       lon,    &
-       alt,    &
-       rho,    &
-       pre,    &
-       tem,    &
-       vx,     &
-       vy,     &
-       vz,     &
-       q,      &
-       ein,    &
-       ps,     &
-       fvx,    &
-       fvy,    &
-       fvz,    &
-       fe,     &
-       fq,     &
-       precip, &
-       ix,     &
-       iy,     &
-       iz,     &
-       jx,     &
-       jy,     &
-       jz,     &
-       dt      )
+       ijdim,   &
+       lat,     &
+       lon,     &
+       alt,     &
+       rho,     &
+       pre,     &
+       tem,     &
+       vx,      &
+       vy,      &
+       vz,      &
+       q,       &
+       ein,     &
+       pre_sfc, &
+       fvx,     &
+       fvy,     &
+       fvz,     &
+       fe,      &
+       fq,      &
+       precip,  &
+       ix,      &
+       iy,      &
+       iz,      &
+       jx,      &
+       jy,      &
+       jz,      &
+       dt       )
     use mod_adm, only: &
        vlayer => ADM_vlayer, &
        kdim   => ADM_kall,   &
@@ -204,30 +204,30 @@ contains
     implicit none
 
     integer,  intent(in)  :: ijdim
-    real(RP), intent(in)  :: lat   (ijdim)
-    real(RP), intent(in)  :: lon   (ijdim)
-    real(RP), intent(in)  :: alt   (ijdim,kdim)
-    real(RP), intent(in)  :: rho   (ijdim,kdim)
-    real(RP), intent(in)  :: pre   (ijdim,kdim)
-    real(RP), intent(in)  :: tem   (ijdim,kdim)
-    real(RP), intent(in)  :: vx    (ijdim,kdim)
-    real(RP), intent(in)  :: vy    (ijdim,kdim)
-    real(RP), intent(in)  :: vz    (ijdim,kdim)
-    real(RP), intent(in)  :: q     (ijdim,kdim,TRC_VMAX)
-    real(RP), intent(in)  :: ein   (ijdim,kdim)
-    real(RP), intent(in)  :: ps    (ijdim)
-    real(RP), intent(out) :: fvx   (ijdim,kdim)
-    real(RP), intent(out) :: fvy   (ijdim,kdim)
-    real(RP), intent(out) :: fvz   (ijdim,kdim)
-    real(RP), intent(out) :: fe    (ijdim,kdim)
-    real(RP), intent(out) :: fq    (ijdim,kdim,TRC_VMAX)
-    real(RP), intent(out) :: precip(ijdim)
-    real(RP), intent(in)  :: ix    (ijdim)
-    real(RP), intent(in)  :: iy    (ijdim)
-    real(RP), intent(in)  :: iz    (ijdim)
-    real(RP), intent(in)  :: jx    (ijdim)
-    real(RP), intent(in)  :: jy    (ijdim)
-    real(RP), intent(in)  :: jz    (ijdim)
+    real(RP), intent(in)  :: lat    (ijdim)
+    real(RP), intent(in)  :: lon    (ijdim)
+    real(RP), intent(in)  :: alt    (ijdim,kdim)
+    real(RP), intent(in)  :: rho    (ijdim,kdim)
+    real(RP), intent(in)  :: pre    (ijdim,kdim)
+    real(RP), intent(in)  :: tem    (ijdim,kdim)
+    real(RP), intent(in)  :: vx     (ijdim,kdim)
+    real(RP), intent(in)  :: vy     (ijdim,kdim)
+    real(RP), intent(in)  :: vz     (ijdim,kdim)
+    real(RP), intent(in)  :: q      (ijdim,kdim,TRC_VMAX)
+    real(RP), intent(in)  :: ein    (ijdim,kdim)
+    real(RP), intent(in)  :: pre_sfc(ijdim)
+    real(RP), intent(out) :: fvx    (ijdim,kdim)
+    real(RP), intent(out) :: fvy    (ijdim,kdim)
+    real(RP), intent(out) :: fvz    (ijdim,kdim)
+    real(RP), intent(out) :: fe     (ijdim,kdim)
+    real(RP), intent(out) :: fq     (ijdim,kdim,TRC_VMAX)
+    real(RP), intent(out) :: precip (ijdim)
+    real(RP), intent(in)  :: ix     (ijdim)
+    real(RP), intent(in)  :: iy     (ijdim)
+    real(RP), intent(in)  :: iz     (ijdim)
+    real(RP), intent(in)  :: jx     (ijdim)
+    real(RP), intent(in)  :: jy     (ijdim)
+    real(RP), intent(in)  :: jz     (ijdim)
     real(RP), intent(in)  :: dt
 
     ! for kessler
@@ -250,7 +250,7 @@ contains
     real(RP) :: pint (ijdim,vlayer+1) ! Pressure at model interfaces (Pa)
     real(RP) :: pdel (ijdim,vlayer)   ! Layer thickness (Pa)
     real(RP) :: rpdel(ijdim,vlayer)   ! Reciprocal of layer thickness (1/Pa)
-    real(RP) :: psout(ijdim)          ! surface pressure output [dummy]
+    real(RP) :: ps   (ijdim)          ! surface pressure output [dummy]
     integer  :: test
 
     ! for toy-chemistory
@@ -321,7 +321,7 @@ contains
        endif
 
        do k = 1, vlayer
-          kk = k + kmin - 1
+          kk = kmax - k + 1 ! reverse order
 
           t   (:,k) = tem(:,kk)
           qvv (:,k) = q  (:,kk,I_QV)
@@ -334,16 +334,18 @@ contains
           pmid(:,k) = pre(:,kk)
        enddo
 
-       pint(:,1) = ps(:)
+       pint(:,1) = 0.0_RP
        do k = 2, vlayer
           pint(:,k) = 0.5_RP * ( pmid(:,k-1) + pmid(:,k) )
        enddo
-       pint(:,vlayer+1) = 0.0_RP
+       pint(:,vlayer+1) = pre_sfc(:)
 
        do k = 1, vlayer
-          pdel  (:,k) = pint(:,k) - pint(:,k+1)
-          rpdel (:,k) = 1.0_RP / pdel(:,k)
+          pdel (:,k) = pint(:,k) - pint(:,k+1)
+          rpdel(:,k) = 1.0_RP / pdel(:,k)
        enddo
+
+       ps(:) = pre_sfc(:)
 
        call simple_physics( ijdim,             & ! [IN]
                             vlayer,            & ! [IN]
@@ -353,51 +355,55 @@ contains
                             qvv   (:,:),       & ! [INOUT]
                             u     (:,:),       & ! [INOUT]
                             v     (:,:),       & ! [INOUT]
-                            pmid  (:,:),       & ! [INOUT]
-                            pint  (:,:),       & ! [INOUT]
-                            pdel  (:,:),       & ! [INOUT]
-                            rpdel (:,:),       & ! [INOUT]
-                            psout (:),         & ! [INOUT]
+                            pmid  (:,:),       & ! [INOUT] but not changed
+                            pint  (:,:),       & ! [INOUT] but not changed
+                            pdel  (:,:),       & ! [INOUT] but not changed
+                            rpdel (:,:),       & ! [INOUT] but not changed
+                            ps    (:),         & ! [INOUT] but not changed
                             precip(:),         & ! [INOUT]
                             test,              & ! [IN]
                             SM_LargeScaleCond, & ! [IN]
                             SM_PBL_Bryan       ) ! [IN]
 
        do k = 1, vlayer
-          kk = k + kmin - 1
+          kk = kmax - k + 1 ! reverse order
 
           fvx(:,kk) = ( u(:,k) * ix(:) + v(:,k) * jx(:) - vx(:,kk) ) / dt
           fvy(:,kk) = ( u(:,k) * iy(:) + v(:,k) * jy(:) - vy(:,kk) ) / dt
           fvz(:,kk) = ( u(:,k) * iz(:) + v(:,k) * jz(:) - vz(:,kk) ) / dt
        enddo
 
-       do ij = 1, ijdim
-          if    ( RAIN_TYPE == 'DRY' ) then
-             qv(:) = qvv(ij,:)
+       do k = 1, vlayer
+          kk = kmax - k + 1 ! reverse order
 
-             qd(:) = 1.0_RP &
-                   - qv(:)
+          do ij = 1, ijdim
+             if    ( RAIN_TYPE == 'DRY' ) then
+                qv(k) = qvv(ij,k)
 
-             cv(:) = qd(:) * CVdry     &
-                   + qv(:) * CVW(I_QV)
-          elseif( RAIN_TYPE == 'WARM' ) then
-             qv(:) = qvv(ij,:)
-             qc(:) = q  (ij,kmin:kmax,I_QC)
-             qr(:) = q  (ij,kmin:kmax,I_QR)
+                qd(k) = 1.0_RP &
+                      - qv(k)
 
-             qd(:) = 1.0_RP &
-                   - qv(:)  &
-                   - qc(:)  &
-                   - qr(:)
+                cv(k) = qd(k) * CVdry     &
+                      + qv(k) * CVW(I_QV)
+             elseif( RAIN_TYPE == 'WARM' ) then
+                qv(k) = qvv(ij,k)
+                qc(k) = q  (ij,kk,I_QC)
+                qr(k) = q  (ij,kk,I_QR)
 
-             cv(:) = qd(:) * CVdry     &
-                   + qv(:) * CVW(I_QV) &
-                   + qc(:) * CVW(I_QC) &
-                   + qr(:) * CVW(I_QR)
-          endif
+                qd(k) = 1.0_RP &
+                      - qv(k)  &
+                      - qc(k)  &
+                      - qr(k)
 
-          fq(ij,kmin:kmax,I_QV) = ( qv(:) - q(ij,kmin:kmax,I_QV) ) / dt
-          fe(ij,kmin:kmax)      = ( cv(:) * t(ij,:) - ein(ij,kmin:kmax) ) / dt
+                cv(k) = qd(k) * CVdry     &
+                      + qv(k) * CVW(I_QV) &
+                      + qc(k) * CVW(I_QC) &
+                      + qr(k) * CVW(I_QR)
+             endif
+
+             fq(ij,kk,I_QV) = ( qv(k) - q(ij,kk,I_QV) ) / dt
+             fe(ij,kk)      = ( cv(k) * t(ij,k) - ein(ij,kk) ) / dt
+          enddo
        enddo
 
     endif
