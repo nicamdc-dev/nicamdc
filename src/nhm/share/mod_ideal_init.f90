@@ -34,6 +34,8 @@ module mod_ideal_init
      test2_steady_state_mountain, &
      test2_schaer_mountain,       &
      test3_gravity_wave
+  use baroclinic_wave, only: &
+     baroclinic_wave_test
   use Terminator, only: &
      initial_value_Terminator
   use mod_cnst, only: &
@@ -68,6 +70,7 @@ module mod_ideal_init
   !
   private :: hs_init
   private :: jbw_init
+  private :: jbw_moist_init
   private :: tracer_init
   private :: mountwave_init
   private :: gravwave_init
@@ -190,7 +193,7 @@ contains
        write(ADM_LOG_FID,*) '*** nicamcore   = ', nicamcore
        write(ADM_LOG_FID,*) '*** chemtracer  = ', chemtracer
        call jbw_moist_init( ADM_gall, ADM_kall, ADM_lall, test_case,              &
-                            eps_geo2prs, nicamcore, chemtracer, DIAG_var(:,:,:,:) )
+                            chemtracer, DIAG_var(:,:,:,:) )
 
     case ('Traceradvection')
 
@@ -587,8 +590,8 @@ contains
        kdim,         &
        lall,         &
        test_case,    &
-       eps_geo2prs,  &
-       nicamcore,    &
+!       eps_geo2prs,  &
+!       nicamcore,    &
        chemtracer,   &
        DIAG_var      )
     use mod_adm, only: &
@@ -603,6 +606,8 @@ contains
        GMTR_lat, &
        GMTR_lon
     use mod_runconf, only: &
+       I_QV,      &
+       NQW_MAX,   &
        TRC_vmax,  &
        NCHEM_MAX, &
        NCHEM_STR, &
@@ -613,114 +618,138 @@ contains
     integer,          intent(in)  :: kdim
     integer,          intent(in)  :: lall
     character(len=*), intent(in)  :: test_case
-    real(RP),         intent(in)  :: eps_geo2prs
-    logical,          intent(in)  :: nicamcore
+!    real(RP),         intent(in)  :: eps_geo2prs
+!    logical,          intent(in)  :: nicamcore
     logical,          intent(in)  :: chemtracer
     real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-    real(RP) :: lat, lon               ! latitude, longitude on Icosahedral grid
-    real(RP) :: eta(kdim,2), geo(kdim) ! eta & geopotential in ICO-grid field
-    real(RP) :: prs(kdim),   tmp(kdim) ! pressure & temperature in ICO-grid field
-    real(RP) :: wix(kdim),   wiy(kdim) ! zonal/meridional wind components in ICO-grid field
+    real(DP), parameter :: Xfact = 1.0_DP ! Earth scaling parameter
+    real(DP) :: lat, lon               ! latitude, longitude on Icosahedral grid
+!    real(DP) :: eta(kdim,2), geo(kdim) ! eta and geopotential in ICO-grid field
+    real(DP) :: prs(kdim), tmp(kdim)   ! presssure and temperature in ICO-grid field
+    real(DP) :: wix(kdim),   wiy(kdim) ! zonal/meridional wind components in ICO-grid field
+    real(DP) :: rho(kdim),   q(kdim)   ! density and water vapor mixing ratio in ICO-grid field
+    real(DP) :: thetav(kdim)           ! Virtual potential temperature in ICO-grid field
+    real(DP) :: p = 0.0_RP             ! dummy variable
 
-    real(RP) :: z_local (kdim)
+    real(DP) :: z_local
     real(RP) :: vx_local(kdim)
     real(RP) :: vy_local(kdim)
     real(RP) :: vz_local(kdim)
-    real(RP) :: ps
+    real(DP) :: ps, phis
 
     real(RP) :: cl, cl2
 
-    logical :: signal    ! if true, continue iteration
-    logical :: pertb     ! if true, with perturbation
-    logical :: psgm      ! if true, PS Gradient Method
-    logical :: eta_limit ! if true, value of eta is limited upto 1.0
-    logical :: logout    ! log output switch for Pressure Convert
+    integer, parameter :: deep    = 0 ! deep atmosphere (1 = yes or 0 = no)
+    integer, parameter :: zcoords = 1 ! 1 if z is specified, 0 if p is specified
+    integer            :: moist       ! include moisture (1 = yes or 0 = no)
+    integer            :: pertt       ! type of perturbation (0 = exponential, 1 = stream function)
+!    logical :: signal    ! if true, continue iteration
+!    logical :: pertb     ! if true, with perturbation
+!    logical :: psgm      ! if true, PS Gradient Method
+!    logical :: eta_limit ! if true, value of eta is limited upto 1.0
+!    logical :: logout    ! log output switch for Pressure Convert
 
-    integer :: n, k, l, itr
+    integer :: n, k, l
     !---------------------------------------------------------------------------
 
     DIAG_var(:,:,:,:) = 0.0_RP
+    p = 0.0_RP
 
-    eta_limit = .true.
-    psgm = .false.
-    logout = .true.
+    moist = 0
+    pertt = 0
 
     select case( trim(test_case) )
-    case ('1', '4-1')  ! with perturbation
-       write(ADM_LOG_FID,*) "Jablonowski Initialize - case 1: with perturbation (no rebalance)"
-       pertb = .true.
-    case ('2', '4-2')  ! without perturbation
-       write(ADM_LOG_FID,*) "Jablonowski Initialize - case 2: without perturbation (no rebalance)"
-       pertb = .false.
-    case ('3')  ! with perturbation (PS Distribution Method)
-       write(ADM_LOG_FID,*) "Jablonowski Initialize - PS Distribution Method: with perturbation"
-       write(ADM_LOG_FID,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
-       pertb = .true.
-       psgm = .true.
-       eta_limit = .false.
-    case ('4')  ! without perturbation (PS Distribution Method)
-       write(ADM_LOG_FID,*) "Jablonowski Initialize - PS Distribution Method: without perturbation"
-       write(ADM_LOG_FID,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
-       pertb = .false.
-       psgm = .true.
-       eta_limit = .false.
+    case ('1')  ! perturbation: exponential / with moisture
+       write(ADM_LOG_FID,*) "Moist Baroclinic Wave Initialize - case 1: perturbation: exponential / with moisture"
+       moist = 1
+       pertt = 0
+    case ('2')  ! perturbation: stream function / with moisture
+       write(ADM_LOG_FID,*) "Moist Baroclinic Wave Initialize - case 2: perturbation: stream function / with moisture"
+       moist = 1
+       pertt = 1
+    case ('3')  ! perturbation: exponential / without moisture
+       write(ADM_LOG_FID,*) "Moist Baroclinic Wave Initialize - case 3: perturbation: exponential / without moisture"
+       moist = 0
+       pertt = 0
+    case ('4')  ! perturbation: stream function / without moisture
+       write(ADM_LOG_FID,*) "Moist Baroclinic Wave Initialize - case 4: perturbation: stream function / without moisture"
+       moist = 0
+       pertt = 1
     case default
-       write(ADM_LOG_FID,*) "Unknown test_case: '"//trim(test_case)//"' specified."
-       write(ADM_LOG_FID,*) "Force changed to case 1 (with perturbation)"
-       pertb = .true.
+       write(ADM_LOG_FID,*) "xxx Invalid test_case: '"//trim(test_case)//"' specified."
+       write(ADM_LOG_FID,*) 'STOP.'
+       call ADM_proc_stop
     end select
-    write(ADM_LOG_FID,*) " | eps for geo2prs: ", eps_geo2prs
-    write(ADM_LOG_FID,*) " | nicamcore switch for geo2prs: ", nicamcore
+    write(ADM_LOG_FID,*) "Chemical Tracer: ", chemtracer
+    write(ADM_LOG_FID,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
+
+    if ( moist == 1 ) then
+       if ( NQW_MAX >= 3 ) then
+          write(*          ,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
+          write(ADM_LOG_FID,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
+          call ADM_proc_stop
+       endif
+    endif
 
     do l = 1, lall
     do n = 1, ijdim
-       z_local(ADM_kmin-1) = GRD_vz(n,2,l,GRD_ZH)
-       do k = ADM_kmin, ADM_kmax+1
-          z_local(k) = GRD_vz(n,k,l,GRD_Z)
-       enddo
-
        lat = GMTR_lat(n,l)
        lon = GMTR_lon(n,l)
 
-       signal = .true.
+!       z_local(ADM_kmin-1) = GRD_vz(n,2,l,GRD_ZH)
+       do k = ADM_kmin, ADM_kmax+1
+          z_local = GRD_vz(n,k,l,GRD_Z)
 
-       ! iteration
-       do itr = 1, itrmax
+          call baroclinic_wave_test( deep,    &  ! [IN ]
+                                     moist,   &  ! [IN ]
+                                     pertt,   &  ! [IN ]
+                                     Xfact,   &  ! [IN ]
+                                     lon,     &  ! [IN ]
+                                     lat,     &  ! [IN ]
+                                     p,       &  ! [IN ]
+                                     z_local, &  ! [IN ] (z)
+                                     zcoords, &  ! [IN ]
+                                     wix(k),     &  ! [OUT] Zonal wind (m s^-1)(u)
+                                     wiy(k),     &  ! [OUT] Meridional wind (m s^-1) (v)
+                                     tmp(k),     &  ! [OUT] Temperature (K) (t)
+                                     thetav(k),  &  ! [OUT] Virtual potential temperature (K)
+                                     phis,    &  ! [OUT] Surface Geopotential (m^2 s^-2)
+                                     ps,      &  ! [OUT] Surface Pressure (Pa)
+                                     rho(k),     &  ! [OUT] density (kg m^-3)
+                                     q(k)        )  ! [OUT] water vapor mixing ratio (kg/kg)
 
-          if ( itr == 1 ) then
-             eta(:,:) = 1.E-7_RP ! This initial value is recommended by Jablonowsky.
-          else
-             call eta_vert_coord_NW( kdim, itr, z_local, tmp, geo, eta_limit, eta, signal )
-          endif
-
-          call steady_state( kdim, lat, eta, wix, wiy, tmp, geo )
-
-          if( .NOT. signal ) exit
        enddo
 
-       if ( itr > itrmax ) then
-          write(*          ,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
-          write(ADM_LOG_FID,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
-          call ADM_proc_stop
-       endif
+!       ! iteration
+!       do itr = 1, itrmax
 
-       if (psgm) then
-          call ps_estimation ( kdim, lat, eta(:,1), tmp, geo, wix, ps, nicamcore )
-          call geo2prs ( kdim, ps, lat, tmp, geo, wix, prs, eps_geo2prs, nicamcore, logout )
-       else
-          call geo2prs ( kdim, p0, lat, tmp, geo, wix, prs, eps_geo2prs, nicamcore, logout )
-       endif
-       logout = .false.
+!          if ( itr == 1 ) then
+!             eta(:,:) = 1.E-7_RP ! This initial value is recommended by Jablonowsky.
+!          else
+!             call eta_vert_coord_NW( kdim, itr, z_local, tmp, geo, eta_limit, eta, signal )
+!          endif
+
+!          call steady_state( kdim, lat, eta, wix, wiy, tmp, geo )
+
+!          if( .NOT. signal ) exit
+!       enddo
+
+!       if ( itr > itrmax ) then
+!          write(*          ,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
+!          write(ADM_LOG_FID,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
+!          call ADM_proc_stop
+!       endif
 
        call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
        do k = 1, kdim
-          DIAG_var(n,k,l,1) = prs(k)
-          DIAG_var(n,k,l,2) = tmp(k)
-          DIAG_var(n,k,l,3) = vx_local(k)
-          DIAG_var(n,k,l,4) = vy_local(k)
-          DIAG_var(n,k,l,5) = vz_local(k)
+          DIAG_var(n,k,l,1   ) = prs(k)
+          DIAG_var(n,k,l,2   ) = tmp(k)
+          DIAG_var(n,k,l,3   ) = vx_local(k)
+          DIAG_var(n,k,l,4   ) = vy_local(k)
+          DIAG_var(n,k,l,5   ) = vz_local(k)
+          DIAG_var(n,k,l,I_QV) = q(k)
        enddo
 
        if ( chemtracer ) then
@@ -734,22 +763,20 @@ contains
 
           ! Todo : the mixing ratios are dry
           ! i.e. the ratio between the density of the species and the density of dry air.
-          DIAG_var(n,:,l,6+NCHEM_STR) = cl
-          DIAG_var(n,:,l,6+NCHEM_END) = cl2
+          DIAG_var(n,:,l,6+NQW_MAX+NCHEM_STR) = cl
+          DIAG_var(n,:,l,6+NQW_MAX+NCHEM_END) = cl2
        endif
 
     enddo
     enddo
 
-    if (pertb) call perturbation( ijdim, kdim, lall, 5, DIAG_var(:,:,:,1:5) )
-
-    write (ADM_LOG_FID,*) " |            Vertical Coordinate used in JBW initialization              |"
-    write (ADM_LOG_FID,*) " |------------------------------------------------------------------------|"
-    do k = 1, kdim
-       write (ADM_LOG_FID,'(3X,"(k=",I3,") HGT:",F8.2," [m]",2X,"PRS: ",F9.2," [Pa]",2X,"GH: ",F8.2," [m]",2X,"ETA: ",F9.5)') &
-       k, z_local(k), prs(k), geo(k)/g, eta(k,1)
-    enddo
-    write (ADM_LOG_FID,*) " |------------------------------------------------------------------------|"
+!    write (ADM_LOG_FID,*) " |            Vertical Coordinate used in JBW initialization              |"
+!    write (ADM_LOG_FID,*) " |------------------------------------------------------------------------|"
+!    do k = 1, kdim
+!       write (ADM_LOG_FID,'(3X,"(k=",I3,") HGT:",F8.2," [m]",2X,"PRS: ",F9.2," [Pa]",2X,"GH: ",F8.2," [m]",2X,"ETA: ",F9.5)') &
+!       k, z_local(k), prs(k), geo(k)/g, eta(k,1)
+!    enddo
+!    write (ADM_LOG_FID,*) " |------------------------------------------------------------------------|"
 
     return
   end subroutine jbw_moist_init

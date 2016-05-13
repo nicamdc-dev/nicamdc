@@ -22,6 +22,7 @@ MODS_NHM =	\
 	\
 	mod_ideal_init.o	\
 	dcmip_initial_conditions_test_1_2_3_v5.o	\
+	baroclinic_wave_test.o  \
 	simple_physics_v6.o	\
 	kessler.o	\
 	Terminator.o	\
@@ -65,9 +66,10 @@ mod_af_dcmip2016.o		: mod_af_dcmip2016.f90     mod_precision.o mod_adm.o mod_deb
 mod_nudge.o				: mod_nudge.f90          mod_precision.o mod_adm.o mod_debug.o mod_cnst.o mod_misc.o mod_time.o mod_calendar.o mod_grd.o mod_vmtr.o mod_history.o mod_gmtr.o mod_oprt.o mod_runconf.o mod_gtl.o mod_comm.o mod_extdata.o
 
 mod_ideal_init.o		: mod_ideal_init.f90 mod_precision.o mod_adm.o mod_debug.o mod_random.o mod_cnst.o mod_runconf.o mod_misc.o mod_vmtr.o mod_fio.o mod_time.o mod_cnvvar.o mod_vintrpl.o mod_comm.o mod_thrmdyn.o mod_vmtr.o mod_src.o \
-                       dcmip_initial_conditions_test_1_2_3_v5.o Terminator.o
+                       dcmip_initial_conditions_test_1_2_3_v5.o baroclinic_wave_test.o Terminator.o
 
 dcmip_initial_conditions_test_1_2_3_v5.o : dcmip_initial_conditions_test_1_2_3_v5.f90 mod_adm.o
+baroclinic_wave_test.o                   : baroclinic_wave_test.f90
 simple_physics_v6.o                      : simple_physics_v6.f90
 kessler.o                                : kessler.f90
 Terminator.o                             : Terminator.f90
