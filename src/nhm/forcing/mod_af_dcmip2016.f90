@@ -249,6 +249,7 @@ contains
     real(RP) :: pint (ijdim,vlayer+1) ! Pressure at model interfaces (Pa)
     real(RP) :: pdel (ijdim,vlayer)   ! Layer thickness (Pa)
     real(RP) :: rpdel(ijdim,vlayer)   ! Reciprocal of layer thickness (1/Pa)
+    real(RP) :: psout(ijdim)          ! surface pressure output [dummy]
     integer  :: test
 
     ! for toy-chemistory
@@ -348,7 +349,7 @@ contains
                             pint  (:,:),       & ! [INOUT]
                             pdel  (:,:),       & ! [INOUT]
                             rpdel (:,:),       & ! [INOUT]
-                            ps    (:),         & ! [INOUT]
+                            psout (:),         & ! [INOUT]
                             precip(:),         & ! [INOUT]
                             test,              & ! [IN]
                             SM_LargeScaleCond, & ! [IN]
