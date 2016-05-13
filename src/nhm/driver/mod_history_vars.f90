@@ -548,6 +548,14 @@ contains
              tmp2d(:,k0,l) = tmp2d(:,k0,l) + rho(:,k,l) * q(:,k,l,NCHEM_END) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
           enddo
           call history_in( 'sl_cl2', tmp2d(:,:,l) )
+
+          tmp2d(:,k0,l) = 0.0_RP
+          do k = ADM_kmin, ADM_kmax
+             tmp2d(:,k0,l) = tmp2d(:,k0,l) + rho(:,k,l) * (          q(:,k,l,NCHEM_STR) &
+                                                          + 2.0_RP * q(:,k,l,NCHEM_END) &
+                                                          ) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
+          enddo
+          call history_in( 'sl_cly', tmp2d(:,:,l) )
        enddo
     endif
 

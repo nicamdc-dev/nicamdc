@@ -66,8 +66,8 @@ contains
        AF_TYPE
     use mod_af_heldsuarez, only: &
        AF_heldsuarez_init
-    use mod_af_toychem, only: &
-       AF_toychem_init
+    use mod_af_dcmip2016, only: &
+       AF_dcmip2016_init
     implicit none
     !---------------------------------------------------------------------------
 
@@ -80,8 +80,8 @@ contains
        !--- do nothing
     case('HELD-SUAREZ')
        call AF_heldsuarez_init
-    case('TOY-CHEM')
-       call AF_toychem_init
+    case('DCMIP2016')
+       call AF_dcmip2016_init
     case default
        write(ADM_LOG_FID,*) 'xxx unsupported forcing type! STOP.'
        call ADM_proc_stop
@@ -128,8 +128,8 @@ contains
        bndcnd_thermo
     use mod_af_heldsuarez, only: &
        AF_heldsuarez
-    use mod_af_toychem, only: &
-       AF_toychem
+    use mod_af_dcmip2016, only: &
+       AF_dcmip2016
     use mod_history, only: &
        history_in
     implicit none
@@ -224,18 +224,18 @@ contains
     case('HELD-SUAREZ')
 
        do l = 1, ADM_lall
-          call af_HeldSuarez( ADM_gall_in, & ! [IN]
-                              lat(:,l),    & ! [IN]
-                              pre(:,:,l),  & ! [IN]
-                              tem(:,:,l),  & ! [IN]
-                              vx (:,:,l),  & ! [IN]
-                              vy (:,:,l),  & ! [IN]
-                              vz (:,:,l),  & ! [IN]
-                              fvx(:,:,l),  & ! [OUT]
-                              fvy(:,:,l),  & ! [OUT]
-                              fvz(:,:,l),  & ! [OUT]
-                              fw (:,:,l),  & ! [OUT]
-                              fe (:,:,l)   ) ! [OUT]
+          call af_HeldSuarez( ADM_gall_in,  & ! [IN]
+                              lat(:,l),     & ! [IN]
+                              pre(:,:,l),   & ! [IN]
+                              tem(:,:,l),   & ! [IN]
+                              vx (:,:,l),   & ! [IN]
+                              vy (:,:,l),   & ! [IN]
+                              vz (:,:,l),   & ! [IN]
+                              fvx(:,:,l),   & ! [OUT]
+                              fvy(:,:,l),   & ! [OUT]
+                              fvz(:,:,l),   & ! [OUT]
+                              fw (:,:,l),   & ! [OUT]
+                              fe (:,:,l)    ) ! [OUT]
 
           call history_in( 'ml_af_fvx', fvx(:,:,l) )
           call history_in( 'ml_af_fvy', fvy(:,:,l) )
@@ -245,24 +245,29 @@ contains
        enddo
        fq(:,:,:,:) = 0.0_RP
 
-    case('TOY-CHEM')
+    case('DCMIP2016')
 
        do l = 1, ADM_lall
-          call af_toychem( ADM_gall_in,  & ! [IN]
-                           lat(:,l),     & ! [IN]
-                           lon(:,l),     & ! [IN]
-                           q  (:,:,l,:), & ! [IN]
-                           fq (:,:,l,:), & ! [OUT]
-                           TIME_DTL      ) ! [IN]
+          call af_dcmip2016 ( ADM_gall_in,  & ! [IN]
+                              lat(:,l),     & ! [IN]
+                              lon(:,l),     & ! [IN]
+                              pre(:,:,l),   & ! [IN]
+                              tem(:,:,l),   & ! [IN]
+                              vx (:,:,l),   & ! [IN]
+                              vy (:,:,l),   & ! [IN]
+                              vz (:,:,l),   & ! [IN]
+                              q  (:,:,l,:), & ! [IN]
+                              fvx(:,:,l),   & ! [OUT]
+                              fvy(:,:,l),   & ! [OUT]
+                              fvz(:,:,l),   & ! [OUT]
+                              fe (:,:,l),   & ! [OUT]
+                              fq (:,:,l,:), & ! [OUT]
+                              TIME_DTL      ) ! [IN]
 
           call history_in( 'ml_af_fq_cl',  fq(:,:,l,NCHEM_STR) )
           call history_in( 'ml_af_fq_cl2', fq(:,:,l,NCHEM_END) )
        enddo
-       fvx(:,:,:) = 0.0_RP
-       fvy(:,:,:) = 0.0_RP
-       fvz(:,:,:) = 0.0_RP
        fw (:,:,:) = 0.0_RP
-       fe (:,:,:) = 0.0_RP
 
     case default
 
