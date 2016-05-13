@@ -428,7 +428,7 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
          do i=1,pcols
             rho = (pint(i,k+1)/(rair*(t(i,k+1)*(1._r8+zvir*q(i,k+1))+t(i,k)*(1._r8+zvir*q(i,k)))/2.0_r8)) 
             CAm(i,k) = rpdel(i,k)*dtime*gravit*gravit*Km(i,k+1)*rho*rho/(pmid(i,k+1)-pmid(i,k))    
-            CCm(i,k+1) = pdel(i,k+1)*dtime*gravit*gravit*Km(i,k+1)*rho*rho/(pmid(i,k+1)-pmid(i,k))
+            CCm(i,k+1) = rpdel(i,k+1)*dtime*gravit*gravit*Km(i,k+1)*rho*rho/(pmid(i,k+1)-pmid(i,k))
             CA(i,k) = rpdel(i,k)*dtime*gravit*gravit*Ke(i,k+1)*rho*rho/(pmid(i,k+1)-pmid(i,k))
             CC(i,k+1) = rpdel(i,k+1)*dtime*gravit*gravit*Ke(i,k+1)*rho*rho/(pmid(i,k+1)-pmid(i,k))
          end do

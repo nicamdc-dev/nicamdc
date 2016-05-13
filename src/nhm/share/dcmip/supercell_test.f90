@@ -8,14 +8,15 @@ MODULE supercell
 !  Klemp et al. supercell test.  Before sampling the result,
 !  supercell_test_init() must be called.
 !
-!  SUBROUTINE supercell_sample(
-!    lon,lat,p,z,zcoords,u,v,t,thetav,ps,rho,q)
+!  SUBROUTINE supercell_test(
+!    lon,lat,p,z,zcoords,u,v,t,thetav,ps,rho,q,pert)
 !
 !  Given a point specified by: 
 !      lon    longitude (radians) 
 !      lat    latitude (radians) 
 !      p/z    pressure (Pa) / height (m)
 !  zcoords    1 if z is specified, 0 if p is specified
+!     pert    1 if thermal perturbation included, 0 if not
 !
 !  the functions will return:
 !        p    pressure if z is specified (Pa)
@@ -73,7 +74,9 @@ MODULE supercell
        theta0     = 300.d0     ,      & ! theta at the equatorial surface
        theta_tr   = 343.d0     ,      & ! theta at the tropopause
        z_tr       = 12000.d0   ,      & ! altitude at the tropopause
-       T_tr       = 213.d0              ! temperature at the tropopause
+       T_tr       = 213.d0     ,      & ! temperature at the tropopause
+       pseq       = 100000.0d0          ! surface pressure at equator (Pa)
+       !pseq       = 95690.0d0           ! surface pressure at equator (Pa)
 
   REAL(8), PARAMETER ::               &
        us         = 30.d0      ,      & ! maximum zonal wind velocity
@@ -144,7 +147,7 @@ CONTAINS
     REAL(8), DIMENSION(nz) :: exnereq, H
 
     ! Variables for calculation of equatorial profile
-    REAL(8) :: p, T, qvs, qv
+    REAL(8) :: exnereqs, p, T, qvs, qv
 
     ! Error metric
     REAL(8) :: err
@@ -254,6 +257,9 @@ CONTAINS
     end do
     thetavyz(1,:) = thetaeq
 
+    ! Exner pressure at the equatorial surface
+    exnereqs = (pseq / p0)**(Rd/cp)
+
     ! Iterate on equatorial profile
     do iter = 1, 12
 
@@ -263,9 +269,9 @@ CONTAINS
         exnereq(k) = dot_product(intz(:,k), rhs(1,:))
       end do
       do k = 2, nz
-        exnereq(k) = exnereq(k) + (1.0d0 - exnereq(1))
+        exnereq(k) = exnereq(k) + (exnereqs - exnereq(1))
       end do
-      exnereq(1) = 1.0d0
+      exnereq(1) = exnereqs
 
       ! Calculate new pressure and temperature
       do k = 1, nz
@@ -278,6 +284,10 @@ CONTAINS
         thetavyz(1,k) = thetaeq(k) * (1.d0 + 0.61d0 * qveq(k))
       end do
     end do
+
+    !do k = 1, nz
+    !  write(*,*) exnereq(k) * thetaeq(k)
+    !end do
 
     ! Iterate on remainder of domain
     do iter = 1, 12
@@ -336,7 +346,7 @@ CONTAINS
 !-----------------------------------------------------------------------
 !    Evaluate the supercell initial conditions
 !-----------------------------------------------------------------------
-  SUBROUTINE supercell_test(lon,lat,p,z,zcoords,u,v,t,thetav,ps,rho,q) &
+  SUBROUTINE supercell_test(lon,lat,p,z,zcoords,u,v,t,thetav,ps,rho,q,pert) &
     BIND(c, name = "supercell_test")
  
     IMPLICIT NONE
@@ -364,6 +374,9 @@ CONTAINS
                 rho,        & ! density (kg m^-3)
                 q             ! water vapor mixing ratio (kg/kg)
 
+    INTEGER, INTENT(IN) :: pert  ! 1 if perturbation should be included
+                                 ! 0 if no perturbation should be included
+
     !------------------------------------------------
     !   Local variables
     !------------------------------------------------
@@ -389,13 +402,13 @@ CONTAINS
     end if
 
     ! Sample surface pressure
-    CALL supercell_z(lon, lat, 0.d0, ps, thetav, rho, q)
+    CALL supercell_z(lon, lat, 0.d0, ps, thetav, rho, q, pert)
 
     ! Calculate dependent variables
     if (zcoords .eq. 1) then
-      CALL supercell_z(lon, lat, z, p, thetav, rho, q)
+      CALL supercell_z(lon, lat, z, p, thetav, rho, q, pert)
     else
-      CALL supercell_p(lon, lat, p, z, thetav, rho, q)
+      CALL supercell_p(lon, lat, p, z, thetav, rho, q, pert)
     end if
 
     ! Sample the zonal velocity
@@ -412,12 +425,15 @@ CONTAINS
 !-----------------------------------------------------------------------
 !    Calculate pointwise pressure and temperature
 !-----------------------------------------------------------------------
-  SUBROUTINE supercell_z(lon, lat, z, p, thetav, rho, q)
+  SUBROUTINE supercell_z(lon, lat, z, p, thetav, rho, q, pert)
 
     REAL(8), INTENT(IN)  :: &
                 lon,        & ! Longitude (radians)
                 lat,        & ! Latitude (radians)
                 z             ! Altitude (m)
+
+    INTEGER, INTENT(IN) :: pert  ! 1 if perturbation should be included
+                                 ! 0 if no perturbation should be included
 
     ! Evaluated variables
     REAL(8), INTENT(OUT) :: p, thetav, rho, q
@@ -469,8 +485,10 @@ CONTAINS
     rho = p / (Rd * exner * thetav)
 
     ! Modified virtual potential temperature
-    thetav = thetav &
-      + thermal_perturbation(lon, lat, z) * (1.d0 + 0.61d0 * q)
+    if (pert .ne. 0) then
+        thetav = thetav &
+           + thermal_perturbation(lon, lat, z) * (1.d0 + 0.61d0 * q)
+    end if
 
     ! Updated pressure
     p = p0 * (rho * Rd * thetav / p0)**(cp/(cp-Rd))
@@ -480,12 +498,15 @@ CONTAINS
 !-----------------------------------------------------------------------
 !    Calculate pointwise z and temperature given pressure
 !-----------------------------------------------------------------------
-  SUBROUTINE supercell_p(lon, lat, p, z, thetav, rho, q)
+  SUBROUTINE supercell_p(lon, lat, p, z, thetav, rho, q, pert)
 
     REAL(8), INTENT(IN)  :: &
                 lon,        & ! Longitude (radians)
                 lat,        & ! Latitude (radians)
                 p             ! Pressure (Pa)
+
+    INTEGER, INTENT(IN) :: pert  ! 1 if perturbation should be included
+                                 ! 0 if no perturbation should be included
 
     ! Evaluated variables
     REAL(8), INTENT(OUT) :: z, thetav, rho, q
@@ -499,8 +520,8 @@ CONTAINS
     za = z1
     zb = z2
 
-    CALL supercell_z(lon, lat, za, pa, thetav, rho, q)
-    CALL supercell_z(lon, lat, zb, pb, thetav, rho, q)
+    CALL supercell_z(lon, lat, za, pa, thetav, rho, q, pert)
+    CALL supercell_z(lon, lat, zb, pb, thetav, rho, q, pert)
 
     if (pa .lt. p) then
       write(*,*) 'Requested pressure out of range on bottom, adjust sample interval'
@@ -518,7 +539,7 @@ CONTAINS
 
       zc = (za * (pb - p) - zb * (pa - p)) / (pb - pa)
 
-      CALL supercell_z(lon, lat, zc, pc, thetav, rho, q)
+      CALL supercell_z(lon, lat, zc, pc, thetav, rho, q, pert)
 
       !write(*,*) pc
 
@@ -615,7 +636,7 @@ CONTAINS
   END FUNCTION equator_theta
 
 !-----------------------------------------------------------------------
-!    Calculate pointwise relative humidity at the equator at the
+!    Calculate pointwise relative humidity (in %) at the equator at the
 !    given altitude
 !-----------------------------------------------------------------------
   REAL(8) FUNCTION equator_relative_humidity(z)
@@ -633,17 +654,23 @@ CONTAINS
   END FUNCTION equator_relative_humidity
 
 !-----------------------------------------------------------------------
-!    Calculate saturation mixing ratio in terms of pressure
-!    and temperature
+!    Calculate saturation mixing ratio (in kg/kg) in terms of pressure
+!    (in Pa) and temperature (in K)
 !-----------------------------------------------------------------------
   REAL(8) FUNCTION saturation_mixing_ratio(p, T)
 
+    IMPLICIT NONE
+
     REAL(8), INTENT(IN)  :: &
-                p,        & ! Pressure
+                p,        & ! Pressure in Pa
                 T           ! Temperature
 
     saturation_mixing_ratio = &
       380.d0 / p * exp(17.27d0 * (T - 273.d0) / (T - 36.d0))
+
+    if (saturation_mixing_ratio > 0.014) then
+      saturation_mixing_ratio = 0.014
+    end if
 
   END FUNCTION saturation_mixing_ratio
 
