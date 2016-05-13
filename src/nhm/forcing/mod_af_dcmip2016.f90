@@ -238,6 +238,7 @@ contains
     real(RP) :: rhod (vlayer) ! dry air density (not mean state as in KW) (kg/m^3)
     real(RP) :: pk   (vlayer) ! Exner function (p/p0)**(R/cp)
     real(RP) :: z    (vlayer) ! heights of thermo. levels in the grid column (m)
+    real(RP) :: qd   (vlayer)
     real(RP) :: cv   (vlayer)
 
     ! for simple physics
@@ -270,13 +271,15 @@ contains
 
     if ( USE_Kessler ) then
        do ij = 1, ijdim
-          rhod (:) = rho(ij,kmin:kmax)      &
-                   - q  (ij,kmin:kmax,I_QV) &
-                   - q  (ij,kmin:kmax,I_QC) &
-                   - q  (ij,kmin:kmax,I_QR)
-          qv   (:) = q  (ij,kmin:kmax,I_QV)
-          qc   (:) = q  (ij,kmin:kmax,I_QC)
-          qr   (:) = q  (ij,kmin:kmax,I_QR)
+          qd   (:) = 1.0_RP               &
+                   - q(ij,kmin:kmax,I_QV) &
+                   - q(ij,kmin:kmax,I_QC) &
+                   - q(ij,kmin:kmax,I_QR)
+
+          qv   (:) = q  (ij,kmin:kmax,I_QV) / qd(:)
+          qc   (:) = q  (ij,kmin:kmax,I_QC) / qd(:)
+          qr   (:) = q  (ij,kmin:kmax,I_QR) / qd(:)
+          rhod (:) = rho(ij,kmin:kmax)      * qd(:)
 
           pk   (:) = ( pre(ij,kmin:kmax) / PRE00 )**( Rdry / CPdry )
           theta(:) = tem(ij,kmin:kmax) / pk(:)
@@ -293,14 +296,19 @@ contains
                         vlayer,    & ! [IN]
                         precip(ij) ) ! [INOUT]
 
-          cv(:) = rhod(:) * CVdry     &
-                + qv  (:) * CVW(I_QV) &
-                + qc  (:) * CVW(I_QC) &
-                + qr  (:) * CVW(I_QR)
+          qd   (:) = 1.0_RP &
+                   + qv(:)  &
+                   + qc(:)  &
+                   + qr(:)
 
-          fq(ij,kmin:kmax,I_QV) = ( qv(:) - q(ij,kmin:kmax,I_QV) ) / dt
-          fq(ij,kmin:kmax,I_QC) = ( qc(:) - q(ij,kmin:kmax,I_QC) ) / dt
-          fq(ij,kmin:kmax,I_QR) = ( qr(:) - q(ij,kmin:kmax,I_QR) ) / dt
+          cv(:) = 1.0_RP * CVdry     &
+                + qv(:)  * CVW(I_QV) &
+                + qc(:)  * CVW(I_QC) &
+                + qr(:)  * CVW(I_QR)
+
+          fq(ij,kmin:kmax,I_QV) = ( qv(:) * qd(:) - q(ij,kmin:kmax,I_QV) ) / dt
+          fq(ij,kmin:kmax,I_QC) = ( qc(:) * qd(:) - q(ij,kmin:kmax,I_QC) ) / dt
+          fq(ij,kmin:kmax,I_QR) = ( qr(:) * qd(:) - q(ij,kmin:kmax,I_QR) ) / dt
           fe(ij,kmin:kmax)      = ( cv(:) * theta(:) * pk(:) - ein(ij,kmin:kmax) ) / dt
        enddo
     endif
@@ -365,27 +373,27 @@ contains
 
        do ij = 1, ijdim
           if    ( RAIN_TYPE == 'DRY' ) then
-             qv  (:) = qvv(ij,:)
+             qv(:) = qvv(ij,:)
 
-             rhod(:) = rho(ij,kmin:kmax) &
-                     - qv (:)
+             qd(:) = 1.0_RP &
+                   - qv(:)
 
-             cv  (:) = rhod(:) * CVdry     &
-                     + qv  (:) * CVW(I_QV)
+             cv(:) = qd(:) * CVdry     &
+                   + qv(:) * CVW(I_QV)
           elseif( RAIN_TYPE == 'WARM' ) then
-             qv  (:) = qvv(ij,:)
-             qc  (:) = q  (ij,kmin:kmax,I_QC)
-             qr  (:) = q  (ij,kmin:kmax,I_QR)
+             qv(:) = qvv(ij,:)
+             qc(:) = q  (ij,kmin:kmax,I_QC)
+             qr(:) = q  (ij,kmin:kmax,I_QR)
 
-             rhod(:) = rho(ij,kmin:kmax) &
-                     - qv (:) &
-                     - qc (:) &
-                     - qr (:)
+             qd(:) = 1.0_RP &
+                   - qv(:)  &
+                   - qc(:)  &
+                   - qr(:)
 
-             cv  (:) = rhod(:) * CVdry     &
-                     + qv  (:) * CVW(I_QV) &
-                     + qc  (:) * CVW(I_QC) &
-                     + qr  (:) * CVW(I_QR)
+             cv(:) = qd(:) * CVdry     &
+                   + qv(:) * CVW(I_QV) &
+                   + qc(:) * CVW(I_QC) &
+                   + qr(:) * CVW(I_QR)
           endif
 
           fq(ij,kmin:kmax,I_QV) = ( qv(:) - q(ij,kmin:kmax,I_QV) ) / dt
