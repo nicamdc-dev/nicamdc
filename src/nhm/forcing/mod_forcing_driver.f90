@@ -97,15 +97,27 @@ contains
        ADM_kall,    &
        ADM_lall,    &
        ADM_kmin,    &
-       ADM_kmax
+       ADM_kmax,    &
+       ADM_KNONE
+    use mod_cnst, only: &
+       GRAV => CNST_EGRAV
     use mod_time, only: &
        TIME_DTL
     use mod_grd, only: &
-       GRD_dgz, &
-       GRD_vz,  &
+       GRD_dgz,  &
+       GRD_zs,   &
+       GRD_ZSFC, &
+       GRD_vz,   &
        GRD_Z
     use mod_gmtr, only: &
-       GMTR_lat, &
+       GMTR_P_var, &
+       GMTR_P_IX,  &
+       GMTR_P_IY,  &
+       GMTR_P_IZ,  &
+       GMTR_P_JX,  &
+       GMTR_P_JY,  &
+       GMTR_P_JZ,  &
+       GMTR_lat,   &
        GMTR_lon
     use mod_vmtr, only: &
        VMTR_GSGAM2,  &
@@ -149,6 +161,10 @@ contains
     real(RP) :: vz    (ADM_gall_in,ADM_kall,ADM_lall)
     real(RP) :: w     (ADM_gall_in,ADM_kall,ADM_lall)
     real(RP) :: q     (ADM_gall_in,ADM_kall,ADM_lall,TRC_vmax)
+    real(RP) :: ein   (ADM_gall_in,ADM_kall,ADM_lall)
+
+    real(RP) :: rho_srf(ADM_gall_in,ADM_lall)
+    real(RP) :: pre_srf(ADM_gall_in,ADM_lall)
 
     ! forcing tendency
     real(RP) :: fvx(ADM_gall_in,ADM_kall,ADM_lall)
@@ -158,30 +174,51 @@ contains
     real(RP) :: fe (ADM_gall_in,ADM_kall,ADM_lall)
     real(RP) :: fq (ADM_gall_in,ADM_kall,ADM_lall,TRC_VMAX)
 
+    real(RP) :: precip(ADM_gall_in,ADM_KNONE,ADM_lall)
+
     ! geometry, coordinate
     real(RP) :: gsgam2 (ADM_gall_in,ADM_kall,ADM_lall)
     real(RP) :: gsgam2h(ADM_gall_in,ADM_kall,ADM_lall)
     real(RP) :: phi    (ADM_gall_in,ADM_kall,ADM_lall)
     real(RP) :: z      (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: z_srf  (ADM_gall_in,ADM_lall)
     real(RP) :: lat    (ADM_gall_in,ADM_lall)
     real(RP) :: lon    (ADM_gall_in,ADM_lall)
+    real(RP) :: ix     (ADM_gall_in,ADM_lall)
+    real(RP) :: iy     (ADM_gall_in,ADM_lall)
+    real(RP) :: iz     (ADM_gall_in,ADM_lall)
+    real(RP) :: jx     (ADM_gall_in,ADM_lall)
+    real(RP) :: jy     (ADM_gall_in,ADM_lall)
+    real(RP) :: jz     (ADM_gall_in,ADM_lall)
 
     real(RP) :: frhogq(ADM_gall_in,ADM_kall,ADM_lall)
 
     real(RP) :: tmp2d(ADM_gall_in,1)
 
-    integer :: l, k, nq
+    character(len=16) :: varname
+
+    integer :: l, k, nq, k0
     !---------------------------------------------------------------------------
 
     call DEBUG_rapstart('__Forcing')
 
+    k0 = ADM_KNONE
+
     call GTL_clip_region(VMTR_GSGAM2 (:,:,:),gsgam2, 1,ADM_kall)
     call GTL_clip_region(VMTR_GSGAM2H(:,:,:),gsgam2h,1,ADM_kall)
     call GTL_clip_region(VMTR_PHI    (:,:,:),phi,    1,ADM_kall)
-    call GTL_clip_region(real(GRD_vz(:,:,:,GRD_Z),kind=RP),z,      1,ADM_kall)
+    call GTL_clip_region(real(GRD_vz(:,:,:,GRD_Z),kind=RP),z,1,ADM_kall)
 
+    call GTL_clip_region_1layer(real(GRD_zs  (:,k0,:,GRD_ZSFC),kind=RP),z_srf)
     call GTL_clip_region_1layer(real(GMTR_lat(:,:),kind=RP),lat)
     call GTL_clip_region_1layer(real(GMTR_lon(:,:),kind=RP),lon)
+
+    call GTL_clip_region_1layer(real(GMTR_P_var(:,k0,:,GMTR_P_IX),kind=RP),ix)
+    call GTL_clip_region_1layer(real(GMTR_P_var(:,k0,:,GMTR_P_IY),kind=RP),iy)
+    call GTL_clip_region_1layer(real(GMTR_P_var(:,k0,:,GMTR_P_IZ),kind=RP),iz)
+    call GTL_clip_region_1layer(real(GMTR_P_var(:,k0,:,GMTR_P_JX),kind=RP),jx)
+    call GTL_clip_region_1layer(real(GMTR_P_var(:,k0,:,GMTR_P_JY),kind=RP),jy)
+    call GTL_clip_region_1layer(real(GMTR_P_var(:,k0,:,GMTR_P_JZ),kind=RP),jz)
 
     !--- get the prognostic and diagnostic variables
     call prgvar_get_in_withdiag( rhog,   & ! [IN]
@@ -200,6 +237,8 @@ contains
                                  w,      & ! [IN]
                                  q       ) ! [IN]
 
+    ein(:,:,:) = rhoge(:,:,:) / rhog(:,:,:)
+
     !--- boundary condition
     do l = 1, ADM_lall
        call bndcnd_thermo( ADM_gall_in, & ! [IN]
@@ -217,6 +256,16 @@ contains
 
        q(:,ADM_kmax+1,l,:) = 0.0_RP
        q(:,ADM_kmin-1,l,:) = 0.0_RP
+
+       !--- surface density ( extrapolation )
+       rho_srf(:,l) =   rho(:,ADM_kmin,l) &
+                    - ( rho(:,ADM_kmin+1,l) - rho  (:,ADM_kmin,l) ) &
+                    * ( z  (:,ADM_kmin  ,l) - z_srf(:,l)          ) &
+                    / ( z  (:,ADM_kmin+1,l) - z    (:,ADM_kmin,l) )
+
+       !--- surface pressure ( hydrostatic balance )
+       pre_srf(:,l) = pre(:,ADM_kmin,l) &
+                    + 0.5_RP * ( rho_srf(:,l)+rho(:,ADM_kmin,l) ) * GRAV * ( z(:,ADM_kmin,l)-z_srf(:,l) )
     enddo
 
     ! forcing
@@ -234,49 +283,68 @@ contains
                               fvx(:,:,l),   & ! [OUT]
                               fvy(:,:,l),   & ! [OUT]
                               fvz(:,:,l),   & ! [OUT]
-                              fw (:,:,l),   & ! [OUT]
                               fe (:,:,l)    ) ! [OUT]
 
           call history_in( 'ml_af_fvx', fvx(:,:,l) )
           call history_in( 'ml_af_fvy', fvy(:,:,l) )
           call history_in( 'ml_af_fvz', fvz(:,:,l) )
-          call history_in( 'ml_af_fw',  fw (:,:,l) )
           call history_in( 'ml_af_fe',  fe (:,:,l) )
        enddo
-       fq(:,:,:,:) = 0.0_RP
+       fw (:,:,:)   = 0.0_RP
+       fq (:,:,:,:) = 0.0_RP
 
     case('DCMIP2016')
 
        do l = 1, ADM_lall
-          call af_dcmip2016 ( ADM_gall_in,  & ! [IN]
-                              lat(:,l),     & ! [IN]
-                              lon(:,l),     & ! [IN]
-                              pre(:,:,l),   & ! [IN]
-                              tem(:,:,l),   & ! [IN]
-                              vx (:,:,l),   & ! [IN]
-                              vy (:,:,l),   & ! [IN]
-                              vz (:,:,l),   & ! [IN]
-                              q  (:,:,l,:), & ! [IN]
-                              fvx(:,:,l),   & ! [OUT]
-                              fvy(:,:,l),   & ! [OUT]
-                              fvz(:,:,l),   & ! [OUT]
-                              fe (:,:,l),   & ! [OUT]
-                              fq (:,:,l,:), & ! [OUT]
-                              TIME_DTL      ) ! [IN]
+          call af_dcmip2016 ( ADM_gall_in,      & ! [IN]
+                              lat    (:,l),     & ! [IN]
+                              lon    (:,l),     & ! [IN]
+                              z      (:,:,l),   & ! [IN]
+                              rho    (:,:,l),   & ! [IN]
+                              pre    (:,:,l),   & ! [IN]
+                              tem    (:,:,l),   & ! [IN]
+                              vx     (:,:,l),   & ! [IN]
+                              vy     (:,:,l),   & ! [IN]
+                              vz     (:,:,l),   & ! [IN]
+                              q      (:,:,l,:), & ! [IN]
+                              ein    (:,:,l),   & ! [IN]
+                              pre_srf(:,l),     & ! [IN]
+                              fvx    (:,:,l),   & ! [OUT]
+                              fvy    (:,:,l),   & ! [OUT]
+                              fvz    (:,:,l),   & ! [OUT]
+                              fe     (:,:,l),   & ! [OUT]
+                              fq     (:,:,l,:), & ! [OUT]
+                              precip (:,k0,l),  & ! [OUT]
+                              ix     (:,l),     & ! [IN]
+                              iy     (:,l),     & ! [IN]
+                              iz     (:,l),     & ! [IN]
+                              jx     (:,l),     & ! [IN]
+                              jy     (:,l),     & ! [IN]
+                              jz     (:,l),     & ! [IN]
+                              TIME_DTL          ) ! [IN]
 
-          call history_in( 'ml_af_fq_cl',  fq(:,:,l,NCHEM_STR) )
-          call history_in( 'ml_af_fq_cl2', fq(:,:,l,NCHEM_END) )
+          call history_in( 'ml_af_fvx', fvx(:,:,l) )
+          call history_in( 'ml_af_fvy', fvy(:,:,l) )
+          call history_in( 'ml_af_fvz', fvz(:,:,l) )
+          call history_in( 'ml_af_fe',  fe (:,:,l) )
+
+          do nq = 1, TRC_VMAX
+             write(varname,'(A,I2.2)') 'ml_af_fq', nq
+
+             call history_in( varname, fq(:,:,l,nq) )
+          enddo
+
+          call history_in( 'sl_af_prcp', precip(:,:,l) )
        enddo
-       fw (:,:,:) = 0.0_RP
+       fw (:,:,:)   = 0.0_RP
 
     case default
 
-       fvx(:,:,:) = 0.0_RP
-       fvy(:,:,:) = 0.0_RP
-       fvz(:,:,:) = 0.0_RP
-       fw (:,:,:) = 0.0_RP
-       fe (:,:,:) = 0.0_RP
-
+       fvx(:,:,:)   = 0.0_RP
+       fvy(:,:,:)   = 0.0_RP
+       fvz(:,:,:)   = 0.0_RP
+       fw (:,:,:)   = 0.0_RP
+       fe (:,:,:)   = 0.0_RP
        fq (:,:,:,:) = 0.0_RP
 
     end select

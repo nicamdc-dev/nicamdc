@@ -153,60 +153,110 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine af_dcmip2016( &
-       ijdim, &
-       lat,   &
-       lon,   &
-       pre,   &
-       tem,   &
-       vx,    &
-       vy,    &
-       vz,    &
-       q,     &
-       fvx,   &
-       fvy,   &
-       fvz,   &
-       fe,    &
-       fq,    &
-       dt     )
+       ijdim,  &
+       lat,    &
+       lon,    &
+       alt,    &
+       rho,    &
+       pre,    &
+       tem,    &
+       vx,     &
+       vy,     &
+       vz,     &
+       q,      &
+       ein,    &
+       ps,     &
+       fvx,    &
+       fvy,    &
+       fvz,    &
+       fe,     &
+       fq,     &
+       precip, &
+       ix,     &
+       iy,     &
+       iz,     &
+       jx,     &
+       jy,     &
+       jz,     &
+       dt      )
     use mod_adm, only: &
-       kdim => ADM_kall, &
-       kmin => ADM_kmin, &
-       kmax => ADM_kmax
+       vlayer => ADM_vlayer, &
+       kdim   => ADM_kall,   &
+       kmin   => ADM_kmin,   &
+       kmax   => ADM_kmax
     use mod_cnst, only: &
-       d2r => CNST_D2R
+       d2r   => CNST_D2R,  &
+       Rdry  => CNST_RAIR, &
+       CPdry => CNST_CP,   &
+       CVdry => CNST_CV,   &
+       PRE00 => CNST_PRE00
     use mod_runconf, only: &
        TRC_VMAX,  &
+       RAIN_TYPE, &
+       I_QV,      &
+       I_QC,      &
+       I_QR,      &
        NCHEM_STR, &
-       NCHEM_END
+       NCHEM_END, &
+       CVW
     use Terminator, only: &
        tendency_Terminator
     implicit none
 
     integer,  intent(in)  :: ijdim
-    real(RP), intent(in)  :: lat(ijdim)
-    real(RP), intent(in)  :: lon(ijdim)
-    real(RP), intent(in)  :: pre(ijdim,kdim)
-    real(RP), intent(in)  :: tem(ijdim,kdim)
-    real(RP), intent(in)  :: vx (ijdim,kdim)
-    real(RP), intent(in)  :: vy (ijdim,kdim)
-    real(RP), intent(in)  :: vz (ijdim,kdim)
-    real(RP), intent(in)  :: q  (ijdim,kdim,TRC_VMAX)
-    real(RP), intent(out) :: fvx(ijdim,kdim)
-    real(RP), intent(out) :: fvy(ijdim,kdim)
-    real(RP), intent(out) :: fvz(ijdim,kdim)
-    real(RP), intent(out) :: fe (ijdim,kdim)
-    real(RP), intent(out) :: fq (ijdim,kdim,TRC_VMAX)
+    real(RP), intent(in)  :: lat   (ijdim)
+    real(RP), intent(in)  :: lon   (ijdim)
+    real(RP), intent(in)  :: alt   (ijdim,kdim)
+    real(RP), intent(in)  :: rho   (ijdim,kdim)
+    real(RP), intent(in)  :: pre   (ijdim,kdim)
+    real(RP), intent(in)  :: tem   (ijdim,kdim)
+    real(RP), intent(in)  :: vx    (ijdim,kdim)
+    real(RP), intent(in)  :: vy    (ijdim,kdim)
+    real(RP), intent(in)  :: vz    (ijdim,kdim)
+    real(RP), intent(in)  :: q     (ijdim,kdim,TRC_VMAX)
+    real(RP), intent(in)  :: ein   (ijdim,kdim)
+    real(RP), intent(in)  :: ps    (ijdim)
+    real(RP), intent(out) :: fvx   (ijdim,kdim)
+    real(RP), intent(out) :: fvy   (ijdim,kdim)
+    real(RP), intent(out) :: fvz   (ijdim,kdim)
+    real(RP), intent(out) :: fe    (ijdim,kdim)
+    real(RP), intent(out) :: fq    (ijdim,kdim,TRC_VMAX)
+    real(RP), intent(out) :: precip(ijdim)
+    real(RP), intent(in)  :: ix    (ijdim)
+    real(RP), intent(in)  :: iy    (ijdim)
+    real(RP), intent(in)  :: iz    (ijdim)
+    real(RP), intent(in)  :: jx    (ijdim)
+    real(RP), intent(in)  :: jy    (ijdim)
+    real(RP), intent(in)  :: jz    (ijdim)
     real(RP), intent(in)  :: dt
 
-    real(RP) :: preh (ijdim,kdim+1)
-    real(RP) :: dpre (ijdim,kdim)
-    real(RP) :: rdpre(ijdim,kdim)
+    ! for kessler
+    real(RP) :: theta(vlayer) ! potential temperature (K)
+    real(RP) :: qv   (vlayer) ! water vapor mixing ratio (gm/gm)
+    real(RP) :: qc   (vlayer) ! cloud water mixing ratio (gm/gm)
+    real(RP) :: qr   (vlayer) ! rain  water mixing ratio (gm/gm)
+    real(RP) :: rhod (vlayer) ! dry air density (not mean state as in KW) (kg/m^3)
+    real(RP) :: pk   (vlayer) ! Exner function (p/p0)**(R/cp)
+    real(RP) :: z    (vlayer) ! heights of thermo. levels in the grid column (m)
+    real(RP) :: cv   (vlayer)
 
+    ! for simple physics
+    real(RP) :: t    (ijdim,vlayer)   ! Temperature at full-model level (K)
+    real(RP) :: qvv  (ijdim,vlayer)   ! Specific Humidity at full-model level (kg/kg)
+    real(RP) :: u    (ijdim,vlayer)   ! Zonal wind at full-model level (m/s)
+    real(RP) :: v    (ijdim,vlayer)   ! Meridional wind at full-model level (m/s)
+    real(RP) :: pmid (ijdim,vlayer)   ! Pressure is full-model level (Pa)
+    real(RP) :: pint (ijdim,vlayer+1) ! Pressure at model interfaces (Pa)
+    real(RP) :: pdel (ijdim,vlayer)   ! Layer thickness (Pa)
+    real(RP) :: rpdel(ijdim,vlayer)   ! Reciprocal of layer thickness (1/Pa)
+    integer  :: test
+
+    ! for toy-chemistory
     real(RP) :: lat_deg, lon_deg
     real(RP) :: cl, cl2
     real(RP) :: cl_f, cl2_f
 
-    integer :: n
+    integer :: ij, k, kk
     !---------------------------------------------------------------------------
 
     fvx(:,:)   = 0.0_RP
@@ -215,25 +265,148 @@ contains
     fe (:,:)   = 0.0_RP
     fq (:,:,:) = 0.0_RP
 
-    if ( USE_Kessler ) then
+    precip(:) = 0.0_RP
 
+    if ( USE_Kessler ) then
+       do ij = 1, ijdim
+          rhod (:) = rho(ij,kmin:kmax)      &
+                   - q  (ij,kmin:kmax,I_QV) &
+                   - q  (ij,kmin:kmax,I_QC) &
+                   - q  (ij,kmin:kmax,I_QR)
+          qv   (:) = q  (ij,kmin:kmax,I_QV)
+          qc   (:) = q  (ij,kmin:kmax,I_QC)
+          qr   (:) = q  (ij,kmin:kmax,I_QR)
+
+          pk   (:) = ( pre(ij,kmin:kmax) / PRE00 )**( Rdry / CPdry )
+          theta(:) = tem(ij,kmin:kmax) / pk(:)
+          z    (:) = alt(ij,kmin:kmax)
+
+          call kessler( theta(:),  & ! [INOUT]
+                        qv   (:),  & ! [INOUT]
+                        qc   (:),  & ! [INOUT]
+                        qr   (:),  & ! [INOUT]
+                        rhod (:),  & ! [INOUT] but not changed
+                        pk   (:),  & ! [IN]
+                        dt,        & ! [IN]
+                        z    (:),  & ! [IN]
+                        vlayer,    & ! [IN]
+                        precip(ij) ) ! [INOUT]
+
+          cv(:) = rhod(:) * CVdry     &
+                + qv  (:) * CVW(I_QV) &
+                + qc  (:) * CVW(I_QC) &
+                + qr  (:) * CVW(I_QR)
+
+          fq(ij,kmin:kmax,I_QV) = ( qv(:) - q(ij,kmin:kmax,I_QV) ) / dt
+          fq(ij,kmin:kmax,I_QC) = ( qc(:) - q(ij,kmin:kmax,I_QC) ) / dt
+          fq(ij,kmin:kmax,I_QR) = ( qr(:) - q(ij,kmin:kmax,I_QR) ) / dt
+          fe(ij,kmin:kmax)      = ( cv(:) * theta(:) * pk(:) - ein(ij,kmin:kmax) ) / dt
+       enddo
     endif
 
     if ( USE_SimpleMicrophys ) then
+       if ( SM_Latdepend_SST ) then
+          test = 1
+       else
+          test = 0
+       endif
+
+       do k = 1, vlayer
+          kk = k + kmin - 1
+
+          t   (:,k) = tem(:,kk)
+          qvv (:,k) = q  (:,kk,I_QV)
+          u   (:,k) = vx (:,kk) * ix(:) &
+                    + vy (:,kk) * iy(:) &
+                    + vz (:,kk) * iz(:)
+          v   (:,k) = vx (:,kk) * jx(:) &
+                    + vy (:,kk) * jy(:) &
+                    + vz (:,kk) * jz(:)
+          pmid(:,k) = pre(:,kk)
+       enddo
+
+       pint(:,1) = ps(:)
+       do k = 2, vlayer
+          pint(:,k) = 0.5_RP * ( pmid(:,k-1) + pmid(:,k) )
+       enddo
+       pint(:,vlayer+1) = 0.0_RP
+
+       do k = 1, vlayer
+          pdel  (:,k) = pint(:,k) - pint(:,k+1)
+          rpdel (:,k) = 1.0_RP / pdel(:,k)
+       enddo
+
+       call simple_physics( ijdim,             & ! [IN]
+                            vlayer,            & ! [IN]
+                            dt,                & ! [IN]
+                            lat   (:),         & ! [IN]
+                            t     (:,:),       & ! [INOUT]
+                            qvv   (:,:),       & ! [INOUT]
+                            u     (:,:),       & ! [INOUT]
+                            v     (:,:),       & ! [INOUT]
+                            pmid  (:,:),       & ! [INOUT]
+                            pint  (:,:),       & ! [INOUT]
+                            pdel  (:,:),       & ! [INOUT]
+                            rpdel (:,:),       & ! [INOUT]
+                            ps    (:),         & ! [INOUT]
+                            precip(:),         & ! [INOUT]
+                            test,              & ! [IN]
+                            SM_LargeScaleCond, & ! [IN]
+                            SM_PBL_Bryan       ) ! [IN]
+
+       do k = 1, vlayer
+          kk = k + kmin - 1
+
+          fvx(:,kk) = ( u(:,k) * ix(:) + v(:,k) * jx(:) - vx(:,kk) ) / dt
+          fvy(:,kk) = ( u(:,k) * iy(:) + v(:,k) * jy(:) - vy(:,kk) ) / dt
+          fvz(:,kk) = ( u(:,k) * iz(:) + v(:,k) * jz(:) - vz(:,kk) ) / dt
+       enddo
+
+       do ij = 1, ijdim
+          if    ( RAIN_TYPE == 'DRY' ) then
+             qv  (:) = qvv(ij,:)
+
+             rhod(:) = rho(ij,kmin:kmax) &
+                     - qv (:)
+
+             cv  (:) = rhod(:) * CVdry     &
+                     + qv  (:) * CVW(I_QV)
+          elseif( RAIN_TYPE == 'WARM' ) then
+             qv  (:) = qvv(ij,:)
+             qc  (:) = q  (ij,kmin:kmax,I_QC)
+             qr  (:) = q  (ij,kmin:kmax,I_QR)
+
+             rhod(:) = rho(ij,kmin:kmax) &
+                     - qv (:) &
+                     - qc (:) &
+                     - qr (:)
+
+             cv  (:) = rhod(:) * CVdry     &
+                     + qv  (:) * CVW(I_QV) &
+                     + qc  (:) * CVW(I_QC) &
+                     + qr  (:) * CVW(I_QR)
+          endif
+
+          fq(ij,kmin:kmax,I_QV) = ( qv(:) - q(ij,kmin:kmax,I_QV) ) / dt
+          fe(ij,kmin:kmax)      = ( cv(:) * t(ij,:) - ein(ij,kmin:kmax) ) / dt
+       enddo
 
     endif
 
     if ( USE_ToyChemistry ) then
-       do n = 1, ijdim
-          lat_deg = lat(n) / d2r
-          lon_deg = lon(n) / d2r
-          cl  = q(n,kmin,NCHEM_STR)
-          cl2 = q(n,kmin,NCHEM_END)
+       do k  = kmin, kmax
+       do ij = 1,    ijdim
+          lat_deg = lat(ij) / d2r
+          lon_deg = lon(ij) / d2r
+
+          cl  = q(ij,k,NCHEM_STR)
+          cl2 = q(ij,k,NCHEM_END)
 
           call tendency_Terminator( lat_deg, lon_deg, cl, cl2, dt, cl_f, cl2_f )
 
-          fq(n,:,NCHEM_STR) = cl_f
-          fq(n,:,NCHEM_END) = cl2_f
+          fq(ij,k,NCHEM_STR) = cl_f
+          fq(ij,k,NCHEM_END) = cl2_f
+       enddo
        enddo
     endif
 

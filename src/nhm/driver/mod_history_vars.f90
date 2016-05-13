@@ -104,16 +104,21 @@ contains
     use mod_adm, only: &
        ADM_gall, &
        ADM_kall, &
-       ADM_lall
+       ADM_lall, &
+       ADM_KNONE
     use mod_runconf, only: &
+       TRC_VMAX,  &
        AF_TYPE
     use mod_history, only: &
        history_in
     implicit none
 
     real(RP) :: tmp3d(ADM_gall,ADM_kall)
+    real(RP) :: tmp2d(ADM_gall,ADM_KNONE)
 
-    integer :: n, l
+    character(len=16) :: varname
+
+    integer :: n, l, nq
     !---------------------------------------------------------------------------
 
     do n = 1, HIST_req_nmax
@@ -145,6 +150,7 @@ contains
        allocate( wc_old(ADM_gall,ADM_kall,ADM_lall) )
     endif
 
+    tmp2d(:,:) = 0.0_RP
     tmp3d(:,:) = 0.0_RP
 
     select case(AF_TYPE)
@@ -153,13 +159,23 @@ contains
           call history_in( 'ml_af_fvx', tmp3d(:,:) )
           call history_in( 'ml_af_fvy', tmp3d(:,:) )
           call history_in( 'ml_af_fvz', tmp3d(:,:) )
-          call history_in( 'ml_af_fw',  tmp3d(:,:) )
           call history_in( 'ml_af_fe',  tmp3d(:,:) )
        enddo
-    case('TOY-CHEM')
+    case('DCMIP2016')
        do l = 1, ADM_lall
-          call history_in( 'ml_af_fq_cl',  tmp3d(:,:) )
-          call history_in( 'ml_af_fq_cl2', tmp3d(:,:) )
+
+          call history_in( 'ml_af_fvx', tmp3d(:,:) )
+          call history_in( 'ml_af_fvy', tmp3d(:,:) )
+          call history_in( 'ml_af_fvz', tmp3d(:,:) )
+          call history_in( 'ml_af_fe',  tmp3d(:,:) )
+
+          do nq = 1, TRC_VMAX
+             write(varname,'(A,I2.2)') 'ml_af_fq', nq
+
+             call history_in( varname, tmp3d(:,:) )
+          enddo
+
+          call history_in( 'sl_af_prcp', tmp2d(:,:) )
        enddo
     end select
 
@@ -535,7 +551,7 @@ contains
        enddo
     endif
 
-    if ( AF_TYPE == 'TOY-CHEM' ) then
+    if ( AF_TYPE == 'DCMIP2016' ) then
        do l  = 1, ADM_lall
           tmp2d(:,k0,l) = 0.0_RP
           do k = ADM_kmin, ADM_kmax
