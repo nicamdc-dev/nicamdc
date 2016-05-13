@@ -462,12 +462,17 @@ contains
     use mod_adm, only: &
        ADM_proc_stop
     use mod_cnst, only: &
+       CNST_CV,    &
        CNST_CVV,   &
+       CNST_CP,    &
        CNST_CPV,   &
        CNST_CL,    &
        CNST_CI,    &
+       CNST_LH0,   &
        CNST_LH00,  &
+       CNST_LHS0,  &
        CNST_LHS00, &
+       CNST_LHF0,  &
        CNST_LHF00
     implicit none
 
@@ -489,75 +494,75 @@ contains
        LHV = CNST_LH00
        LHS = CNST_LHS00
        LHF = CNST_LHF00
-       do nq = NQW_STR, NQW_END
-          if ( nq == I_QV ) then       ! vapor
-             CVW(nq) = CNST_CVV
-             CPW(nq) = CNST_CPV
-          else if ( nq == I_QC ) then  ! cloud
-             CVW(nq) = CNST_CL
-             CPW(nq) = CNST_CL
-          else if ( nq == I_QR ) then  ! rain
-             CVW(nq) = CNST_CL
-             CPW(nq) = CNST_CL
-          else if ( nq == I_QI ) then  ! ice
-             CVW(nq) = CNST_CI
-             CPW(nq) = CNST_CI
-          else if ( nq == I_QS ) then  ! snow
-             CVW(nq) = CNST_CI
-             CPW(nq) = CNST_CI
-          else if ( nq == I_QG ) then  ! graupel
-             CVW(nq) = CNST_CI
-             CPW(nq) = CNST_CI
+       do v = NQW_STR, NQW_END
+          if ( v == I_QV ) then       ! vapor
+             CVW(v) = CNST_CVV
+             CPW(v) = CNST_CPV
+          else if ( v == I_QC ) then  ! cloud
+             CVW(v) = CNST_CL
+             CPW(v) = CNST_CL
+          else if ( v == I_QR ) then  ! rain
+             CVW(v) = CNST_CL
+             CPW(v) = CNST_CL
+          else if ( v == I_QI ) then  ! ice
+             CVW(v) = CNST_CI
+             CPW(v) = CNST_CI
+          else if ( v == I_QS ) then  ! snow
+             CVW(v) = CNST_CI
+             CPW(v) = CNST_CI
+          else if ( v == I_QG ) then  ! graupel
+             CVW(v) = CNST_CI
+             CPW(v) = CNST_CI
           endif
        enddo
     elseif(EIN_TYPE=='SIMPLE2') then
        LHV = CNST_LH0
        LHS = CNST_LHS0
        LHF = CNST_LHF0
-       do nq = NQW_STR, NQW_END
-          if ( nq == I_QV ) then       ! vapor
-             CVW(nq) = CNST_CVV
-             CPW(nq) = CNST_CPV
-          else if ( nq == I_QC ) then  ! cloud
-             CVW(nq) = CNST_CPV
-             CPW(nq) = CNST_CPV
-          else if ( nq == I_QR ) then  ! rain
-             CVW(nq) = CNST_CPV
-             CPW(nq) = CNST_CPV
-          else if ( nq == I_QI ) then  ! ice
-             CVW(nq) = CNST_CPV
-             CPW(nq) = CNST_CPV
-          else if ( nq == I_QS ) then  ! snow
-             CVW(nq) = CNST_CPV
-             CPW(nq) = CNST_CPV
-          else if ( nq == I_QG ) then  ! graupel
-             CVW(nq) = CNST_CPV
-             CPW(nq) = CNST_CPV
+       do v = NQW_STR, NQW_END
+          if ( v == I_QV ) then       ! vapor
+             CVW(v) = CNST_CVV
+             CPW(v) = CNST_CPV
+          else if ( v == I_QC ) then  ! cloud
+             CVW(v) = CNST_CPV
+             CPW(v) = CNST_CPV
+          else if ( v == I_QR ) then  ! rain
+             CVW(v) = CNST_CPV
+             CPW(v) = CNST_CPV
+          else if ( v == I_QI ) then  ! ice
+             CVW(v) = CNST_CPV
+             CPW(v) = CNST_CPV
+          else if ( v == I_QS ) then  ! snow
+             CVW(v) = CNST_CPV
+             CPW(v) = CNST_CPV
+          else if ( v == I_QG ) then  ! graupel
+             CVW(v) = CNST_CPV
+             CPW(v) = CNST_CPV
           endif
        enddo
     elseif(EIN_TYPE=='SIMPLE') then
        LHV = CNST_LH0
        LHS = CNST_LHS0
        LHF = CNST_LHF0
-       do nq = NQW_STR, NQW_END
-          if ( nq == I_QV ) then       ! vapor
-             CVW(nq) = CNST_CV
-             CPW(nq) = CNST_CP
-          else if ( nq == I_QC ) then  ! cloud
-             CVW(nq) = CNST_CV
-             CPW(nq) = CNST_CV
-          else if ( nq == I_QR ) then  ! rain
-             CVW(nq) = CNST_CV
-             CPW(nq) = CNST_CV
-          else if ( nq == I_QI ) then  ! ice
-             CVW(nq) = CNST_CV
-             CPW(nq) = CNST_CV
-          else if ( nq == I_QS ) then  ! snow
-             CVW(nq) = CNST_CV
-             CPW(nq) = CNST_CV
-          else if ( nq == I_QG ) then  ! graupel
-             CVW(nq) = CNST_CV
-             CPW(nq) = CNST_CV
+       do v = NQW_STR, NQW_END
+          if ( v == I_QV ) then       ! vapor
+             CVW(v) = CNST_CV
+             CPW(v) = CNST_CP
+          else if ( v == I_QC ) then  ! cloud
+             CVW(v) = CNST_CV
+             CPW(v) = CNST_CV
+          else if ( v == I_QR ) then  ! rain
+             CVW(v) = CNST_CV
+             CPW(v) = CNST_CV
+          else if ( v == I_QI ) then  ! ice
+             CVW(v) = CNST_CV
+             CPW(v) = CNST_CV
+          else if ( v == I_QS ) then  ! snow
+             CVW(v) = CNST_CV
+             CPW(v) = CNST_CV
+          else if ( v == I_QG ) then  ! graupel
+             CVW(v) = CNST_CV
+             CPW(v) = CNST_CV
           endif
        enddo
     endif
