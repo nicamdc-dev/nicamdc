@@ -17,7 +17,7 @@
     VGRID_fname   = "vgrid40_stretch_45km.dat",
     vgrid_scheme  = "HYBRID",
     h_efold       = 40000,
-    topo_io_mode  = "IDEAL",
+    topo_fname    = "NONE",
 /
 
 &GMTRPARAM
@@ -65,11 +65,7 @@
 &DYCORETESTPARAM
     init_type  = 'Jablonowski-Moist',
     test_case  = '1',
-    chemtracer = .ture.,
-/
-
-&IDEALTOPOPARAM
-    topo_type = 'JW',
+    chemtracer = .true.,
 /
 
 &FORCING_DCMIP_PARAM
