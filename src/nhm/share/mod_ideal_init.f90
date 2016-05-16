@@ -678,6 +678,14 @@ contains
        write(ADM_LOG_FID,*) "Moist Baroclinic Wave Initialize - case 4: perturbation: stream function / without moisture"
        moist = 0
        pertt = 1
+    case ('5')  ! no perturbation / without moisture
+       write(ADM_LOG_FID,*) "Moist Baroclinic Wave Initialize - case 5: no perturbation / with moisture"
+       moist = 1
+       pertt = -99
+    case ('6')  ! no perturbation / without moisture
+       write(ADM_LOG_FID,*) "Moist Baroclinic Wave Initialize - case 6: no perturbation / without moisture"
+       moist = 0
+       pertt = -99
     case default
        write(ADM_LOG_FID,*) "xxx Invalid test_case: '"//trim(test_case)//"' specified."
        write(ADM_LOG_FID,*) 'STOP.'
