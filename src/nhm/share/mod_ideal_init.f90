@@ -192,7 +192,7 @@ contains
        write(ADM_LOG_FID,*) '*** eps_geo2prs = ', eps_geo2prs
        write(ADM_LOG_FID,*) '*** nicamcore   = ', nicamcore
        write(ADM_LOG_FID,*) '*** chemtracer  = ', chemtracer
-       call jbw_moist_init( ADM_gall, ADM_kall, ADM_lall, test_case,              &
+       call jbw_moist_init( ADM_gall, ADM_kall, ADM_lall, test_case, nicamcore, &
                             chemtracer, DIAG_var(:,:,:,:) )
 
     case ('Traceradvection')
@@ -591,7 +591,7 @@ contains
        lall,         &
        test_case,    &
 !       eps_geo2prs,  &
-!       nicamcore,    &
+       nicamcore,    &
        chemtracer,   &
        DIAG_var      )
     use mod_adm, only: &
@@ -619,7 +619,7 @@ contains
     integer,          intent(in)  :: lall
     character(len=*), intent(in)  :: test_case
 !    real(RP),         intent(in)  :: eps_geo2prs
-!    logical,          intent(in)  :: nicamcore
+    logical,          intent(in)  :: nicamcore
     logical,          intent(in)  :: chemtracer
     real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
@@ -632,13 +632,15 @@ contains
     real(DP) :: thetav(kdim)           ! Virtual potential temperature in ICO-grid field
     real(DP) :: p = 0.0_RP             ! dummy variable
 
-    real(DP) :: z_local
+    real(DP) :: z(kdim)
     real(RP) :: vx_local(kdim)
     real(RP) :: vy_local(kdim)
     real(RP) :: vz_local(kdim)
     real(DP) :: ps, phis
 
     real(RP) :: cl, cl2
+!    real(RP) :: uave, dz, f_cf
+    real(RP) :: tv(kdim)
 
     integer, parameter :: deep    = 0 ! deep atmosphere (1 = yes or 0 = no)
     integer, parameter :: zcoords = 1 ! 1 if z is specified, 0 if p is specified
@@ -685,7 +687,7 @@ contains
     write(ADM_LOG_FID,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
 
     if ( moist == 1 ) then
-       if ( NQW_MAX >= 3 ) then
+       if ( NQW_MAX < 3 ) then
           write(*          ,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
           write(ADM_LOG_FID,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
           call ADM_proc_stop
@@ -697,59 +699,54 @@ contains
        lat = GMTR_lat(n,l)
        lon = GMTR_lon(n,l)
 
-!       z_local(ADM_kmin-1) = GRD_vz(n,2,l,GRD_ZH)
+       z(ADM_kmin-1) = GRD_vz(n,2,l,GRD_ZH)
        do k = ADM_kmin, ADM_kmax+1
-          z_local = GRD_vz(n,k,l,GRD_Z)
+          z(k) = GRD_vz(n,k,l,GRD_Z)
+       enddo
 
-          call baroclinic_wave_test( deep,    &  ! [IN ]
-                                     moist,   &  ! [IN ]
-                                     pertt,   &  ! [IN ]
-                                     Xfact,   &  ! [IN ]
-                                     lon,     &  ! [IN ]
-                                     lat,     &  ! [IN ]
-                                     p,       &  ! [IN ]
-                                     z_local, &  ! [IN ] (z)
-                                     zcoords, &  ! [IN ]
+       do k = 1, kdim
+          call baroclinic_wave_test( deep,       &  ! [IN ]
+                                     moist,      &  ! [IN ]
+                                     pertt,      &  ! [IN ]
+                                     Xfact,      &  ! [IN ]
+                                     lon,        &  ! [IN ]
+                                     lat,        &  ! [IN ]
+                                     p,          &  ! [IN ]
+                                     z(k),       &  ! [IN ] (z)
+                                     zcoords,    &  ! [IN ]
                                      wix(k),     &  ! [OUT] Zonal wind (m s^-1)(u)
                                      wiy(k),     &  ! [OUT] Meridional wind (m s^-1) (v)
                                      tmp(k),     &  ! [OUT] Temperature (K) (t)
                                      thetav(k),  &  ! [OUT] Virtual potential temperature (K)
-                                     phis,    &  ! [OUT] Surface Geopotential (m^2 s^-2)
-                                     ps,      &  ! [OUT] Surface Pressure (Pa)
+                                     phis,       &  ! [OUT] Surface Geopotential (m^2 s^-2)
+                                     ps,         &  ! [OUT] Surface Pressure (Pa)
                                      rho(k),     &  ! [OUT] density (kg m^-3)
                                      q(k)        )  ! [OUT] water vapor mixing ratio (kg/kg)
-
+!          tv(k) = tmp(k) * (1.d0 + 0.61d0 * q(k))
+          if ( z(k) < 1.0D-7 ) then
+             prs(k) = ps
+          else
+             prs(k) = rho(k) * Rd * tmp(k)
+          endif
        enddo
 
-!       ! iteration
-!       do itr = 1, itrmax
-
-!          if ( itr == 1 ) then
-!             eta(:,:) = 1.E-7_RP ! This initial value is recommended by Jablonowsky.
-!          else
-!             call eta_vert_coord_NW( kdim, itr, z_local, tmp, geo, eta_limit, eta, signal )
-!          endif
-
-!          call steady_state( kdim, lat, eta, wix, wiy, tmp, geo )
-
-!          if( .NOT. signal ) exit
+!       ! pressure (upward: trapezoid)
+!       prs(1) = ps
+!       do k=2, kdim
+!          dz = (z(k) - z(k-1))
+!          prs(k) = prs(k-1) * ( 1.0_RP + dz*f_cf/(2.0_RP*Rd*tv(k-1)) ) &
+!                            / ( 1.0_RP - dz*f_cf/(2.0_RP*Rd*tv(k)) )
 !       enddo
-
-!       if ( itr > itrmax ) then
-!          write(*          ,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
-!          write(ADM_LOG_FID,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
-!          call ADM_proc_stop
-!       endif
 
        call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
        do k = 1, kdim
-          DIAG_var(n,k,l,1   ) = prs(k)
-          DIAG_var(n,k,l,2   ) = tmp(k)
-          DIAG_var(n,k,l,3   ) = vx_local(k)
-          DIAG_var(n,k,l,4   ) = vy_local(k)
-          DIAG_var(n,k,l,5   ) = vz_local(k)
-          DIAG_var(n,k,l,I_QV) = q(k)
+          DIAG_var(n,k,l,1     ) = real(prs(k),kind=RP)
+          DIAG_var(n,k,l,2     ) = real(tmp(k),kind=RP)
+          DIAG_var(n,k,l,3     ) = real(vx_local(k),kind=RP)
+          DIAG_var(n,k,l,4     ) = real(vy_local(k),kind=RP)
+          DIAG_var(n,k,l,5     ) = real(vz_local(k),kind=RP)
+          DIAG_var(n,k,l,6+I_QV) = real(q(k),kind=RP)
        enddo
 
        if ( chemtracer ) then
@@ -763,20 +760,13 @@ contains
 
           ! Todo : the mixing ratios are dry
           ! i.e. the ratio between the density of the species and the density of dry air.
-          DIAG_var(n,:,l,6+NQW_MAX+NCHEM_STR) = cl
-          DIAG_var(n,:,l,6+NQW_MAX+NCHEM_END) = cl2
+          ! calc density at reference level
+          DIAG_var(n,:,l,6+NCHEM_STR) = cl
+          DIAG_var(n,:,l,6+NCHEM_END) = cl2
        endif
 
     enddo
     enddo
-
-!    write (ADM_LOG_FID,*) " |            Vertical Coordinate used in JBW initialization              |"
-!    write (ADM_LOG_FID,*) " |------------------------------------------------------------------------|"
-!    do k = 1, kdim
-!       write (ADM_LOG_FID,'(3X,"(k=",I3,") HGT:",F8.2," [m]",2X,"PRS: ",F9.2," [Pa]",2X,"GH: ",F8.2," [m]",2X,"ETA: ",F9.5)') &
-!       k, z_local(k), prs(k), geo(k)/g, eta(k,1)
-!    enddo
-!    write (ADM_LOG_FID,*) " |------------------------------------------------------------------------|"
 
     return
   end subroutine jbw_moist_init
