@@ -29,9 +29,9 @@
 /
 
 &TIMEPARAM
-    DTL         = 1200.D0,
+    DTL         = 600.D0,
     INTEG_TYPE  = "RK3",
-    LSTEP_MAX   = 792,
+    LSTEP_MAX   = 1584,
     start_date  = 0000,1,1,0,0,0
 /
 
@@ -105,7 +105,7 @@
     hist3D_layername = 'ZSDEF40T',
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
-    step             = 72         ,
+    step             = 144        ,
     doout_step0      = .true.     ,
 /
 
