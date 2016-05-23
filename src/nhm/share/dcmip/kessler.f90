@@ -60,8 +60,8 @@
 !
 !=======================================================================
 
-SUBROUTINE KESSLER(theta, qv, qc, qr, rho, pk, dt, z, nz, rainnc) &
-  BIND(c, name = "kessler")
+SUBROUTINE KESSLER(theta, qv, qc, qr, rho, pk, dt, z, nz, rainnc) !&
+!  BIND(c, name = "kessler")
 
   IMPLICIT NONE
 
