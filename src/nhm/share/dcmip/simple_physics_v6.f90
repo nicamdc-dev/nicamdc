@@ -25,7 +25,7 @@
 ! Test:      0 = Reed and Jablonowski (2011) tropical cyclone test
 !            1 = Moist baroclinic instability test
 ! RJ2012_precip:
-!         true  = Turn on Reed and Jablonowski (2012) precip scheme
+!         true  = Turn on Reed and Jablonowski (2012) precip scheme 
 !         false = Turn off Reed and Jablonowski (2012) precip scheme
 ! TC_PBL_mod:
 !         true  = Turn on George Bryan PBL mod for tropical cyclone test
@@ -49,7 +49,7 @@
 !     ps     - surface pressure (Pa)
 !     test   - test case to use for sea-surface temperatures
 !     RJ2012_precip - RJ2012 precip flag
-!     TC_PBL_mod    - PCL modification for TC test
+!     TC_PBL_mod    - PCL modification for TC test 
 !
 !  Output variables:
 !     Increments are added into t, q, u, v, pmid, pint, pdel, rpdel and ps
@@ -82,7 +82,7 @@
 !      Also, included the virtual temperature, instead of temperature, for
 !      the calculation of rho in the PBL scheme
 !      (v6_1) Minor specification and generalization fixes.
-!
+!      
 ! Reference: Reed, K. A. and C. Jablonowski (2012), Idealized tropical cyclone
 !            simulations of intermediate complexity: A test case for AGCMs,
 !            J. Adv. Model. Earth Syst., Vol. 4, M04001, doi:10.1029/2011MS000099
@@ -149,7 +149,7 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
    real(r8) omega                       ! Reference rotation rate of the Earth (s^-1)
    real(r8) pi                          ! pi
 
-! Simple Physics Specific Constants
+! Simple Physics Specific Constants 
 
 !++++++++
    real(r8) Tsurf(pcols)                ! Sea Surface Temperature (constant for tropical cyclone)
@@ -190,7 +190,7 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
 
    real(r8) wind(pcols)                 ! Magnitude of Wind
    real(r8) Cd(pcols)                   ! Drag coefficient for momentum
-   real(r8) Km(pcols,pver+1)            ! Eddy diffusivity for boundary layer calculations
+   real(r8) Km(pcols,pver+1)            ! Eddy diffusivity for boundary layer calculations 
    real(r8) Ke(pcols,pver+1)            ! Eddy diffusivity for boundary layer calculations
    real(r8) rho                         ! Density at lower/upper interface
    real(r8) za(pcols)                   ! Heights at midpoints of first model level
@@ -198,9 +198,9 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
    real(r8) dlnpint                     ! Used for calculation of heights
    real(r8) pbltop                      ! Top of boundary layer
    real(r8) zpbltop                     ! Top of boundary layer for George Bryan Modifcation
-   real(r8) pblconst                    ! Constant for the calculation of the decay of diffusivity
-   real(r8) CA(pcols,pver)              ! Matrix Coefficents for PBL Scheme
-   real(r8) CC(pcols,pver)              ! Matrix Coefficents for PBL Scheme
+   real(r8) pblconst                    ! Constant for the calculation of the decay of diffusivity 
+   real(r8) CA(pcols,pver)              ! Matrix Coefficents for PBL Scheme 
+   real(r8) CC(pcols,pver)              ! Matrix Coefficents for PBL Scheme 
    real(r8) CE(pcols,pver+1)            ! Matrix Coefficents for PBL Scheme
    real(r8) CAm(pcols,pver)             ! Matrix Coefficents for PBL Scheme
    real(r8) CCm(pcols,pver)             ! Matrix Coefficents for PBL Scheme
@@ -241,7 +241,7 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
       SST_TC   = 302.15_r8      ! Constant Value for SST
       T0       = 273.16_r8      ! control temp for calculation of qsat
       e0       = 610.78_r8      ! saturation vapor pressure at T0 for calculation of qsat
-      rhow     = 1000.0_r8      ! Density of Liquid Water
+      rhow     = 1000.0_r8      ! Density of Liquid Water 
       Cd0      = 0.0007_r8      ! Constant for Cd calc. Simth and Vogl 2008
       Cd1      = 0.000065_r8    ! Constant for Cd calc. Simth and Vogl 2008
       Cm       = 0.002_r8       ! Constant for Cd calc. Simth and Vogl 2008
@@ -267,7 +267,7 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
 ! Calculate hydrostatic height
 !
      do i=1,pcols
-        dlnpint = log(ps(i)) - log(pint(i,pver))  ! ps(i) is identical to pint(i,pver+1), note: this is the correct sign (corrects typo in JAMES paper)
+        dlnpint = log(ps(i)) - log(pint(i,pver))  ! ps(i) is identical to pint(i,pver+1), note: this is the correct sign (corrects typo in JAMES paper) 
         za(i) = rair/gravit*t(i,pver)*(1._r8+zvir*q(i,pver))*0.5_r8*dlnpint
         zi(i,pver+1) = 0.0_r8
      end do
@@ -345,9 +345,9 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
 !       are somewhat in equilibrium.
 !===============================================================================
   !  call diag_phys_writeout(state)   ! This is for CESM/CAM
-
+    
       end if
-
+     
 !===============================================================================
 !
 ! Turbulent mixing coefficients for the PBL mixing of horizontal momentum,
@@ -365,31 +365,31 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
      end do
      do i=1,pcols
         if( wind(i) .lt. v20) then
-           Cd(i) = Cd0+Cd1*wind(i)
+           Cd(i) = Cd0+Cd1*wind(i) 
         else
            Cd(i) = Cm
         endif
      end do
 
-     if (TC_PBL_mod) then !Bryan TC PBL Modification
+     if (TC_PBL_mod) then !Bryan TC PBL Modification 
      do k=pver,1,-1
         do i=1,pcols
            dlnpint = log(pint(i,k+1)) - log(pint(i,k))
            zi(i,k) = zi(i,k+1)+rair/gravit*t(i,k)*(1._r8+zvir*q(i,k))*dlnpint
            if( zi(i,k) .le. zpbltop) then
               Km(i,k) = kappa*sqrt(Cd(i))*wind(i)*zi(i,k)*(1._r8-zi(i,k)/zpbltop)*(1._r8-zi(i,k)/zpbltop)
-              Ke(i,k) = kappa*sqrt(C)*wind(i)*zi(i,k)*(1._r8-zi(i,k)/zpbltop)*(1._r8-zi(i,k)/zpbltop)
+              Ke(i,k) = kappa*sqrt(C)*wind(i)*zi(i,k)*(1._r8-zi(i,k)/zpbltop)*(1._r8-zi(i,k)/zpbltop) 
            else
               Km(i,k) = 0.0_r8
               Ke(i,k) = 0.0_r8
-           end if
+           end if 
         end do
-     end do
+     end do     
      else ! Reed and Jablonowski (2012) Configuration
      do k=1,pver
         do i=1,pcols
            if( pint(i,k) .ge. pbltop) then
-              Km(i,k) = Cd(i)*wind(i)*za(i)
+              Km(i,k) = Cd(i)*wind(i)*za(i) 
               Ke(i,k) = C*wind(i)*za(i)
            else
               Km(i,k) = Cd(i)*wind(i)*za(i)*exp(-(pbltop-pint(i,k))**2/(pblconst)**2)
@@ -405,7 +405,7 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
 !
 ! Sea Surface Temperature Tsurf is constant for tropical cyclone test 5-1
 ! Tsurf needs to be dependent on latitude for the
-! moist baroclinic wave test
+! moist baroclinic wave test 
 !===============================================================================
      do i=1,pcols
         qsats = epsilo*e0/ps(i)*exp(-latvap/rh2o*((1._r8/Tsurf(i))-1._r8/T0))
@@ -413,8 +413,8 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
         dvdt(i,pver) = dvdt(i,pver) + (v(i,pver)/(1._r8+Cd(i)*wind(i)*dtime/za(i))-v(i,pver))/dtime
         u(i,pver) = u(i,pver)/(1._r8+Cd(i)*wind(i)*dtime/za(i))
         v(i,pver) = v(i,pver)/(1._r8+Cd(i)*wind(i)*dtime/za(i))
-        dtdt(i,pver) = dtdt(i,pver) +((t(i,pver)+C*wind(i)*Tsurf(i)*dtime/za(i))/(1._r8+C*wind(i)*dtime/za(i))-t(i,pver))/dtime
-        t(i,pver) = (t(i,pver)+C*wind(i)*Tsurf(i)*dtime/za(i))/(1._r8+C*wind(i)*dtime/za(i))
+        dtdt(i,pver) = dtdt(i,pver) +((t(i,pver)+C*wind(i)*Tsurf(i)*dtime/za(i))/(1._r8+C*wind(i)*dtime/za(i))-t(i,pver))/dtime 
+        t(i,pver) = (t(i,pver)+C*wind(i)*Tsurf(i)*dtime/za(i))/(1._r8+C*wind(i)*dtime/za(i))  
         dqdt(i,pver) = dqdt(i,pver) +((q(i,pver)+C*wind(i)*qsats*dtime/za(i))/(1._r8+C*wind(i)*dtime/za(i))-q(i,pver))/dtime
         q(i,pver) = (q(i,pver)+C*wind(i)*qsats*dtime/za(i))/(1._r8+C*wind(i)*dtime/za(i))
      end do
@@ -426,8 +426,8 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
 !
       do k=1,pver-1
          do i=1,pcols
-            rho = (pint(i,k+1)/(rair*(t(i,k+1)*(1._r8+zvir*q(i,k+1))+t(i,k)*(1._r8+zvir*q(i,k)))/2.0_r8))
-            CAm(i,k) = rpdel(i,k)*dtime*gravit*gravit*Km(i,k+1)*rho*rho/(pmid(i,k+1)-pmid(i,k))
+            rho = (pint(i,k+1)/(rair*(t(i,k+1)*(1._r8+zvir*q(i,k+1))+t(i,k)*(1._r8+zvir*q(i,k)))/2.0_r8)) 
+            CAm(i,k) = rpdel(i,k)*dtime*gravit*gravit*Km(i,k+1)*rho*rho/(pmid(i,k+1)-pmid(i,k))    
             CCm(i,k+1) = rpdel(i,k+1)*dtime*gravit*gravit*Km(i,k+1)*rho*rho/(pmid(i,k+1)-pmid(i,k))
             CA(i,k) = rpdel(i,k)*dtime*gravit*gravit*Ke(i,k+1)*rho*rho/(pmid(i,k+1)-pmid(i,k))
             CC(i,k+1) = rpdel(i,k+1)*dtime*gravit*gravit*Ke(i,k+1)*rho*rho/(pmid(i,k+1)-pmid(i,k))
@@ -443,15 +443,15 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
          CFu(i,pver+1) = 0._r8
          CFv(i,pver+1) = 0._r8
          CFt(i,pver+1) = 0._r8
-         CFq(i,pver+1) = 0._r8
+         CFq(i,pver+1) = 0._r8 
       end do
       do i=1,pcols
          do k=pver,1,-1
-            CE(i,k) = CC(i,k)/(1._r8+CA(i,k)+CC(i,k)-CA(i,k)*CE(i,k+1))
+            CE(i,k) = CC(i,k)/(1._r8+CA(i,k)+CC(i,k)-CA(i,k)*CE(i,k+1)) 
             CEm(i,k) = CCm(i,k)/(1._r8+CAm(i,k)+CCm(i,k)-CAm(i,k)*CEm(i,k+1))
             CFu(i,k) = (u(i,k)+CAm(i,k)*CFu(i,k+1))/(1._r8+CAm(i,k)+CCm(i,k)-CAm(i,k)*CEm(i,k+1))
             CFv(i,k) = (v(i,k)+CAm(i,k)*CFv(i,k+1))/(1._r8+CAm(i,k)+CCm(i,k)-CAm(i,k)*CEm(i,k+1))
-            CFt(i,k) = ((p0/pmid(i,k))**(rair/cpair)*t(i,k)+CA(i,k)*CFt(i,k+1))/(1._r8+CA(i,k)+CC(i,k)-CA(i,k)*CE(i,k+1))
+            CFt(i,k) = ((p0/pmid(i,k))**(rair/cpair)*t(i,k)+CA(i,k)*CFt(i,k+1))/(1._r8+CA(i,k)+CC(i,k)-CA(i,k)*CE(i,k+1)) 
             CFq(i,k) = (q(i,k)+CA(i,k)*CFq(i,k+1))/(1._r8+CA(i,k)+CC(i,k)-CA(i,k)*CE(i,k+1))
        end do
       end do
@@ -475,10 +475,9 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
          do k=2,pver
             dudt(i,k)  = dudt(i,k)+(CEm(i,k)*u(i,k-1)+CFu(i,k)-u(i,k))/dtime
             dvdt(i,k)  = dvdt(i,k)+(CEm(i,k)*v(i,k-1)+CFv(i,k)-v(i,k))/dtime
-            u(i,k)    = CEm(i,k)*u(i,k-1)+CFu(i,k)
+            u(i,k)    = CEm(i,k)*u(i,k-1)+CFu(i,k) 
             v(i,k)    = CEm(i,k)*v(i,k-1)+CFv(i,k)
-            dtdt(i,k)  = dtdt(i,k)+( (CE(i,k)*t(i,k-1)*(p0/pmid(i,k-1))**(rair/cpair) &
-                                   + CFt(i,k))*(pmid(i,k)/p0)**(rair/cpair)-t(i,k)    ) / dtime
+            dtdt(i,k)  = dtdt(i,k)+((CE(i,k)*t(i,k-1)*(p0/pmid(i,k-1))**(rair/cpair)+CFt(i,k))*(pmid(i,k)/p0)**(rair/cpair)-t(i,k))/dtime 
             t(i,k)    = (CE(i,k)*t(i,k-1)*(p0/pmid(i,k-1))**(rair/cpair)+CFt(i,k))*(pmid(i,k)/p0)**(rair/cpair)
             dqdt(i,k)  = dqdt(i,k)+(CE(i,k)*q(i,k-1)+CFq(i,k)-q(i,k))/dtime
             q(i,k)  = CE(i,k)*q(i,k-1)+CFq(i,k)
@@ -495,5 +494,5 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
   !  call physics_dme_adjust(state, tend, qini, dtime)   ! This is for CESM/CAM
 
    return
-end subroutine SIMPLE_PHYSICS
+end subroutine SIMPLE_PHYSICS 
 

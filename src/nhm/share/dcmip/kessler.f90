@@ -55,21 +55,19 @@
 !
 !    Klemp, J. B., W. C. Skamarock, W. C., and S.-H. Park, 2015:
 !    Idealized Global Nonhydrostatic Atmospheric Test Cases on a Reduced
-!    Radius Sphere. Journal of Advances in Modeling Earth Systems.
+!    Radius Sphere. Journal of Advances in Modeling Earth Systems. 
 !    doi:10.1002/2015MS000435
 !
 !=======================================================================
 
-SUBROUTINE KESSLER(theta, qv, qc, qr, rho, pk, dt, z, nz, rainnc) !&
-!  BIND(c, name = "kessler")
+SUBROUTINE KESSLER(theta, qv, qc, qr, rho, pk, dt, z, nz, rainnc) &
+  BIND(c, name = "kessler")
 
   IMPLICIT NONE
 
   !------------------------------------------------
   !   Input / output parameters
   !------------------------------------------------
-
-  INTEGER, INTENT(IN) :: nz ! Number of thermodynamic levels in the column
 
   REAL(8), DIMENSION(nz), INTENT(INOUT) :: &
             theta   ,     & ! Potential temperature (K)
@@ -85,8 +83,10 @@ SUBROUTINE KESSLER(theta, qv, qc, qr, rho, pk, dt, z, nz, rainnc) !&
             z       ,     & ! Heights of thermo. levels in the grid column (m)
             pk              ! Exner function (p/p0)**(R/cp)
 
-  REAL(8), INTENT(IN) :: &
+  REAL(8), INTENT(IN) :: & 
             dt              ! Time step (s)
+
+  INTEGER, INTENT(IN) :: nz ! Number of thermodynamic levels in the column
 
   !------------------------------------------------
   !   Local variables
@@ -117,7 +117,7 @@ SUBROUTINE KESSLER(theta, qv, qc, qr, rho, pk, dt, z, nz, rainnc) !&
   end do
 
   ! Maximum time step size in accordance with CFL condition
-  dt_max = 1.d0
+  dt_max = dt
   do k=1,nz-1
     if (velqr(k) .ne. 0.d0) then
       dt_max = min(dt_max, 0.8d0*(z(k+1)-z(k))/velqr(k))
@@ -144,9 +144,9 @@ SUBROUTINE KESSLER(theta, qv, qc, qr, rho, pk, dt, z, nz, rainnc) !&
     do k=1,nz
 
       ! Autoconversion and accretion rates following KW eq. 2.13a,b
-      qrprod = qc(k) - (qc(k)-dt0*max(.001*(qc(k)-.001d0),0.D0))/(1.d0+dt0*2.2d0*qr(k)**.875)
-      qc(k) = max(qc(k)-qrprod,0.D0)
-      qr(k) = max(qr(k)+qrprod+sed(k),0.D0)
+      qrprod = qc(k) - (qc(k)-dt0*amax1(.001*(qc(k)-.001d0),0.))/(1.d0+dt0*2.2d0*qr(k)**.875)
+      qc(k) = amax1(qc(k)-qrprod,0.)
+      qr(k) = amax1(qr(k)+qrprod+sed(k),0.)
 
       ! Saturation vapor mixing ratio (gm/gm) following KW eq. 2.11
       qvs = pc(k)*exp(f2x*(pk(k)*theta(k)-273.d0)   &
@@ -154,14 +154,14 @@ SUBROUTINE KESSLER(theta, qv, qc, qr, rho, pk, dt, z, nz, rainnc) !&
       prod = (qv(k)-qvs)/(1.d0+qvs*f5/(pk(k)*theta(k)-36.d0)**2)
 
       ! Evaporation rate following KW eq. 2.14a,b
-      ern = min(dt0*(((1.6d0+124.9d0*(r(k)*qr(k))**.2046)  &
+      ern = amin1(dt0*(((1.6d0+124.9d0*(r(k)*qr(k))**.2046)  &
             *(r(k)*qr(k))**.525)/(2550000d0*pc(k)            &
             /(3.8d0 *qvs)+540000d0))*(dim(qvs,qv(k))         &
-            /(r(k)*qvs)),max(-prod-qc(k),0.D0),qr(k))
+            /(r(k)*qvs)),amax1(-prod-qc(k),0.),qr(k))
 
       ! Saturation adjustment following KW eq. 3.10
-      theta(k)= theta(k) + 2500000d0/(1003.d0*pk(k))*(max( prod,-qc(k))-ern)
-      qv(k) = max(qv(k)-max(prod,-qc(k))+ern,0.D0)
+      theta(k)= theta(k) + 2500000d0/(1003.d0*pk(k))*(amax1( prod,-qc(k))-ern)
+      qv(k) = amax1(qv(k)-max(prod,-qc(k))+ern,0.)
       qc(k) = qc(k)+max(prod,-qc(k))
       qr(k) = qr(k)-ern
     end do
