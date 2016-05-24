@@ -67,12 +67,14 @@ contains
     logical :: SET_DCMIP2016_11 = .false.
     logical :: SET_DCMIP2016_12 = .false.
     logical :: SET_DCMIP2016_13 = .false.
+    logical :: SET_DCMIP2016_DRY = .false.
 
     namelist /FORCING_DCMIP_PARAM/ &
        SET_RJ2012,          &
        SET_DCMIP2016_11,    &
        SET_DCMIP2016_12,    &
        SET_DCMIP2016_13,    &
+       SET_DCMIP2016_DRY,   &
        USE_SimpleMicrophys, &
        SM_Latdepend_SST,    &
        SM_LargeScaleCond,   &
@@ -112,7 +114,12 @@ contains
        SM_Latdepend_SST    = .true.
        SM_LargeScaleCond   = .false.
        SM_PBL_Bryan        = .false.
-       USE_Kessler         = .true.
+       if ( SET_DCMIP2016_DRY ) then
+          write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016: DRY condition'
+          USE_Kessler      = .false.
+       else
+          USE_Kessler      = .true.
+       endif
        USE_ToyChemistry    = .true.
     elseif( SET_DCMIP2016_12 ) then
        write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016 Case 1-2 (Idealized tropical cyclone)'
@@ -120,7 +127,12 @@ contains
        SM_Latdepend_SST    = .true.
        SM_LargeScaleCond   = .false.
        SM_PBL_Bryan        = .false.
-       USE_Kessler         = .true.
+       if ( SET_DCMIP2016_DRY ) then
+          write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016: DRY condition'
+          USE_Kessler      = .false.
+       else
+          USE_Kessler      = .true.
+       endif
        USE_ToyChemistry    = .false.
     elseif( SET_DCMIP2016_13 ) then
        write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016 Case 1-3 (Mesoscale storm)'
@@ -128,7 +140,12 @@ contains
        SM_Latdepend_SST    = .false.
        SM_LargeScaleCond   = .false.
        SM_PBL_Bryan        = .false.
-       USE_Kessler         = .true.
+       if ( SET_DCMIP2016_DRY ) then
+          write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016: DRY condition'
+          USE_Kessler      = .false.
+       else
+          USE_Kessler      = .true.
+       endif
        USE_ToyChemistry    = .false.
     endif
 
