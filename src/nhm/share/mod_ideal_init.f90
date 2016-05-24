@@ -799,9 +799,6 @@ contains
        I_QV,      &
        NQW_MAX,   &
        TRC_vmax
-!       NCHEM_MAX, &
-!       NCHEM_STR, &
-!       NCHEM_END
     implicit none
 
     integer,          intent(in)  :: ijdim
@@ -811,7 +808,6 @@ contains
     logical,          intent(in)  :: nicamcore
     real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-!    real(DP), parameter :: Xfact = 1.0_DP ! Earth scaling parameter
     real(DP) :: lat, lon               ! latitude, longitude on Icosahedral grid
     real(DP) :: prs(kdim), tmp(kdim)   ! presssure and temperature in ICO-grid field
     real(DP) :: wix(kdim),   wiy(kdim) ! zonal/meridional wind components in ICO-grid field
@@ -824,7 +820,6 @@ contains
     real(RP) :: vy_local(kdim)
     real(RP) :: vz_local(kdim)
     real(DP) :: ps
-!, phis
 
     real(RP) :: cl, cl2
 !    real(RP) :: uave, dz, f_cf
@@ -832,7 +827,6 @@ contains
 
     integer, parameter :: deep    = 0 ! deep atmosphere (1 = yes or 0 = no)
     integer, parameter :: zcoords = 1 ! 1 if z is specified, 0 if p is specified
-!    integer            :: moist       ! include moisture (1 = yes or 0 = no)
     integer            :: pert       ! type of perturbation (0 = no perturbation, 1 = perturbation)
 
     integer :: n, k, l
@@ -882,7 +876,7 @@ contains
                                z(k),      &  ! [INOUT]
                                zcoords,   &  ! [IN ]
                                wix(k),    &  ! [OUT] Zonal wind (m s^-1)
-                               wix(k),    &  ! [OUT] Meridional wind (m s^-1)
+                               wiy(k),    &  ! [OUT] Meridional wind (m s^-1)
                                tmp(k),    &  ! [OUT] Temperature (K)
                                thetav(k), &  ! [OUT] Virtual potential Temperature (K)
                                ps,        &  ! [OUT] Surface Pressure (Pa)
@@ -914,7 +908,6 @@ contains
        ijdim,        &
        kdim,         &
        lall,         &
-!       test_case,    &
        nicamcore,    &
        DIAG_var      )
     use mod_adm, only: &
@@ -932,19 +925,14 @@ contains
        I_QV,      &
        NQW_MAX,   &
        TRC_vmax
-!       NCHEM_MAX, &
-!       NCHEM_STR, &
-!       NCHEM_END
     implicit none
 
     integer,          intent(in)  :: ijdim
     integer,          intent(in)  :: kdim
     integer,          intent(in)  :: lall
-!    character(len=*), intent(in)  :: test_case
     logical,          intent(in)  :: nicamcore
     real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-!    real(DP), parameter :: Xfact = 1.0_DP ! Earth scaling parameter
     real(DP) :: lat, lon               ! latitude, longitude on Icosahedral grid
     real(DP) :: prs(kdim), tmp(kdim)   ! presssure and temperature in ICO-grid field
     real(DP) :: wix(kdim),   wiy(kdim) ! zonal/meridional wind components in ICO-grid field
@@ -965,16 +953,12 @@ contains
     integer, parameter :: deep    = 0 ! deep atmosphere (1 = yes or 0 = no)
     integer, parameter :: zcoords = 1 ! 1 if z is specified, 0 if p is specified
     integer            :: moist       ! include moisture (1 = yes or 0 = no)
-!    integer            :: pertt       ! type of perturbation (0 = exponential, 1 = stream function)
 
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
     DIAG_var(:,:,:,:) = 0.0_RP
     p = 0.0_RP
-
-!    moist = 0
-!    pertt = 0
 
     write(ADM_LOG_FID,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
     if ( NQW_MAX < 3 ) then
@@ -1000,7 +984,7 @@ contains
                                       z(k),      &  ! [INOUT]
                                       zcoords,   &  ! [IN ]
                                       wix(k),    &  ! [OUT] Zonal wind (m s^-1)
-                                      wix(k),    &  ! [OUT] Meridional wind (m s^-1)
+                                      wiy(k),    &  ! [OUT] Meridional wind (m s^-1)
                                       tmp(k),    &  ! [OUT] Temperature (K)
                                       thetav(k), &  ! [OUT] Virtual potential Temperature (K)
                                       phis,      &  ! [OUT] Surface Geopotential (m^2 s^-2)
