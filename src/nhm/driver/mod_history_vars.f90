@@ -552,6 +552,7 @@ contains
     endif
 
     if ( AF_TYPE == 'DCMIP2016' ) then
+    if ( NCHEM_STR /= -1 .and. NCHEM_END /= -1 ) then ! substitution of [USE_ToyChemistry/mod_af_dcmip2016]
        do l  = 1, ADM_lall
           tmp2d(:,k0,l) = 0.0_RP
           do k = ADM_kmin, ADM_kmax
@@ -573,6 +574,7 @@ contains
           enddo
           call history_in( 'sl_cly', tmp2d(:,:,l) )
        enddo
+    endif
     endif
 
     return

@@ -71,6 +71,7 @@ module mod_history
   !++ Private parameters & variables
   !
   integer, private, parameter :: HIST_req_limit = 1000
+  real(RP),private, parameter :: EPS_ZERO = 1.E-16_RP
 
   character(len=ADM_MAXFNAME), private :: HIST_io_fname  = ''
   character(len=ADM_NSYS),     private :: HIST_io_desc   = ''
@@ -799,7 +800,11 @@ contains
           do l = 1, ADM_lall
           do k = ksumstr(n), ksumend(n)
           do g = 1, ADM_gall
-             v_save(g,k,l,1) = v_save(g,k,l,1) / tsum_save(n,l)
+             if ( abs(v_save(g,k,l,1)) < EPS_ZERO ) then ! tentaive: to avode floating invalid
+                v_save(g,k,l,1) = EPS_ZERO
+             else
+                v_save(g,k,l,1) = v_save(g,k,l,1) / tsum_save(n,l)
+             endif
           enddo
           enddo
           enddo
@@ -807,7 +812,11 @@ contains
           do l = 1, ADM_lall_pl
           do k = ksumstr(n), ksumend(n)
           do g = 1, ADM_gall_pl
-             v_save_pl(g,k,l,1) = v_save_pl(g,k,l,1) / tsum_save(n,1)
+             if ( abs(v_save_pl(g,k,l,1)) < EPS_ZERO ) then ! tentaive: to avode floating invalid
+                v_save_pl(g,k,l,1) = EPS_ZERO
+             else
+                v_save_pl(g,k,l,1) = v_save_pl(g,k,l,1) / tsum_save(n,1)
+             endif
           enddo
           enddo
           enddo
