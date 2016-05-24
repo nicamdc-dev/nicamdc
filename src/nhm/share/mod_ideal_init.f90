@@ -49,6 +49,7 @@ module mod_ideal_init
      omega => CNST_EOHM,    &
      g     => CNST_EGRAV,   &
      Rd    => CNST_RAIR,    &
+     Rv    => CNST_RVAP,    &
      Cp    => CNST_CP,      &
      KAPPA => CNST_KAPPA,   &
      PRE00 => CNST_PRE00
@@ -1086,7 +1087,8 @@ contains
 
     logical, parameter :: hybrid_eta = .false. ! dont use hybrid sigma-p (eta) coordinate
     integer, parameter :: zcoords    = 1       ! if zcoords = 1, then we use z and output p
-    integer, parameter :: cfv        = 2       ! if cfv = 2 then our velocities follow Gal-Chen coordinates and we need to specify w
+    integer, parameter :: cfv        = 2       ! if cfv = 2 then our velocities follow
+                                               ! Gal-Chen coordinates and we need to specify w
     real(DP)           :: hyam       = 0.0_DP  ! dont use hybrid sigma-p (eta) coordinate
     real(DP)           :: hybm       = 0.0_DP  ! dont use hybrid sigma-p (eta) coordinate
     real(DP)           :: DP_gc                ! bar{z} for Gal-Chen coordinate
@@ -2326,21 +2328,10 @@ contains
        if ( z(k) < 1.0D-7 ) then
           prs(k) = ps
        else
-          prs(k) = rho(k) * Rd * t(k)
+          prs(k) = rho(k) * t(k) * ( (1.0_RP-q(k))*Rd + q(k)*Rv )
        endif
     enddo
 
-!    ! pressure (upward: trapezoid)
-!    do k=1, kdim
-!       tv(k) = t(k) * (1.d0 + 0.61d0 * q(k))
-!    enddo
-!    prs(1) = ps
-!    do k=2, kdim
-!       dz = (z(k) - z(k-1))
-!       prs(k) = prs(k-1) * ( 1.0_RP + dz*f_cf/(2.0_RP*Rd*tv(k-1)) ) &
-!                         / ( 1.0_RP - dz*f_cf/(2.0_RP*Rd*tv(k)) )
-!    enddo
-    !
     return
   end subroutine diag_pressure
 
