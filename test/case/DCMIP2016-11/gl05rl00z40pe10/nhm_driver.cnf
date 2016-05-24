@@ -39,6 +39,7 @@
     RUNNAME        = 'DCMIP2016-11',
     NDIFF_LOCATION = 'IN_LARGE_STEP2',
     THUBURN_LIM    = .true.,
+    EIN_TYPE       = 'SIMPLE',
     RAIN_TYPE      = "WARM",
     CHEM_TYPE      = 'PASSIVE',
     AF_TYPE        = 'DCMIP2016',
@@ -59,9 +60,13 @@
     restart_layername = 'ZSALL42T',
 /
 
-##### ICOMEX Test case: Jablonowski Baroclinic Wave
-# test_case = 1: with initial perturbation
-#             2: without initial perturbation
+##### DCMIP2016-11: Moist Baroclinic Wave
+##case 1: perturbation: exponential / with moisture
+##case 2: perturbation: stream function / with moisture
+##case 3: perturbation: exponential / without moisture
+##case 4: perturbation: stream function / without moisture
+##case 5: no perturbation / with moisture
+##case 6: no perturbation / without moisture
 &DYCORETESTPARAM
     init_type  = 'Jablonowski-Moist',
     test_case  = '1',
