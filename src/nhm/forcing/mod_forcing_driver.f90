@@ -56,12 +56,15 @@ module mod_forcing_driver
   integer, private, parameter :: I_RHOGE    = 6 ! Density x G^1/2 x gamma^2 x Internal Energy
   integer, private, parameter :: I_RHOGETOT = 7 ! Density x G^1/2 x gamma^2 x Total Energy
 
+  logical, private            :: UPDATE_TOT_DENS = .true.
+
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
   subroutine forcing_setup
     use mod_adm, only: &
-       ADM_proc_stop
+       ADM_proc_stop,  &
+       ADM_CTL_FID
     use mod_runconf, only: &
        AF_TYPE
     use mod_af_heldsuarez, only: &
@@ -69,10 +72,26 @@ contains
     use mod_af_dcmip2016, only: &
        AF_dcmip2016_init
     implicit none
+
+    namelist /FORCING_PARAM/ &
+       UPDATE_TOT_DENS
+
+    integer :: ierr
     !---------------------------------------------------------------------------
 
+    !--- read parameters
     write(ADM_LOG_FID,*)
     write(ADM_LOG_FID,*) '+++ Module[forcing]/Category[nhm]'
+    rewind(ADM_CTL_FID)
+    read(ADM_CTL_FID,nml=FORCING_PARAM,iostat=ierr)
+    if ( ierr < 0 ) then
+       write(ADM_LOG_FID,*) '*** FORCING_PARAM is not specified. use default.'
+    elseif( ierr > 0 ) then
+       write(*,          *) 'xxx Not appropriate names in namelist FORCING_PARAM. STOP.'
+       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist FORCING_PARAM. STOP.'
+       call ADM_proc_stop
+    endif
+    write(ADM_LOG_FID,nml=FORCING_PARAM)
 
     write(ADM_LOG_FID,*) '+++ Artificial forcing type: ', trim(AF_TYPE)
     select case(AF_TYPE)
@@ -360,9 +379,11 @@ contains
 
        rhogq(:,:,:,nq) = rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:)
 
-       if (       nq >= NQW_STR &
-            .AND. nq <= NQW_END ) then ! update total density
-          rhog (:,:,:) = rhog (:,:,:) + TIME_DTL * frhogq(:,:,:)
+       if ( UPDATE_TOT_DENS ) then
+          if (       nq >= NQW_STR &
+               .AND. nq <= NQW_END ) then ! update total density
+             rhog (:,:,:) = rhog (:,:,:) + TIME_DTL * frhogq(:,:,:)
+          endif
        endif
     enddo
 
