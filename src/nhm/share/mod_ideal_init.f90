@@ -144,13 +144,15 @@ contains
     real(RP)                :: eps_geo2prs = 1.E-2_RP
     logical                 :: nicamcore   = .true.
     logical                 :: chemtracer  = .false.
+    logical                 :: prs_rebuild = .false.
 
     namelist / DYCORETESTPARAM / &
        init_type,   &
        test_case,   &
        eps_geo2prs, &
        nicamcore,   &
-       chemtracer
+       chemtracer,  &
+       prs_rebuild
 
     integer :: ierr
     !---------------------------------------------------------------------------
@@ -200,19 +202,19 @@ contains
        write(ADM_LOG_FID,*) '*** test case   : ', trim(test_case)
        write(ADM_LOG_FID,*) '*** nicamcore   = ', nicamcore
        write(ADM_LOG_FID,*) '*** chemtracer  = ', chemtracer
-       call jbw_moist_init( ADM_gall, ADM_kall, ADM_lall, test_case, nicamcore, &
+       call jbw_moist_init( ADM_gall, ADM_kall, ADM_lall, test_case, nicamcore, prs_rebuild, &
                             chemtracer, DIAG_var(:,:,:,:) )
 
     case ('Supercell')
 
        write(ADM_LOG_FID,*) '*** test case   : ', trim(test_case)
        write(ADM_LOG_FID,*) '*** nicamcore   = ', nicamcore
-       call sc_init( ADM_gall, ADM_kall, ADM_lall, test_case, nicamcore, DIAG_var(:,:,:,:) )
+       call sc_init( ADM_gall, ADM_kall, ADM_lall, test_case, nicamcore, prs_rebuild, DIAG_var(:,:,:,:) )
 
     case ('Tropical-Cyclone')
 
        write(ADM_LOG_FID,*) '*** nicamcore   = ', nicamcore
-       call tc_init( ADM_gall, ADM_kall, ADM_lall, nicamcore, DIAG_var(:,:,:,:) )
+       call tc_init( ADM_gall, ADM_kall, ADM_lall, nicamcore, prs_rebuild, DIAG_var(:,:,:,:) )
 
     case ('Traceradvection')
 
@@ -611,6 +613,7 @@ contains
        test_case,    &
        nicamcore,    &
        chemtracer,   &
+       prs_rebuild,  &
        DIAG_var      )
     use mod_adm, only: &
        ADM_proc_stop, &
@@ -638,6 +641,7 @@ contains
     character(len=*), intent(in)  :: test_case
     logical,          intent(in)  :: nicamcore
     logical,          intent(in)  :: chemtracer
+    logical,          intent(in)  :: prs_rebuild
     real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
     real(DP), parameter :: Xfact = 1.0_DP ! Earth scaling parameter
@@ -743,7 +747,7 @@ contains
                                      q(k)        )  ! [OUT] water vapor mixing ratio (kg/kg)
        enddo
 
-       call diag_pressure( kdim, z, rho, tmp, q, ps, prs )
+       call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild )
        call conv_vxvyvz  ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
        do k = 1, kdim
@@ -784,6 +788,7 @@ contains
        lall,         &
        test_case,    &
        nicamcore,    &
+       prs_rebuild,  &
        DIAG_var      )
     use mod_adm, only: &
        ADM_proc_stop, &
@@ -807,6 +812,7 @@ contains
     integer,          intent(in)  :: lall
     character(len=*), intent(in)  :: test_case
     logical,          intent(in)  :: nicamcore
+    logical,          intent(in)  :: prs_rebuild
     real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
     real(DP) :: lat, lon               ! latitude, longitude on Icosahedral grid
@@ -886,7 +892,7 @@ contains
                                pert       )  ! [IN ] perturbation switch
        enddo
 
-       call diag_pressure( kdim, z, rho, tmp, q, ps, prs )
+       call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild )
        call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
        do k = 1, kdim
@@ -910,6 +916,7 @@ contains
        kdim,         &
        lall,         &
        nicamcore,    &
+       prs_rebuild,  &
        DIAG_var      )
     use mod_adm, only: &
        ADM_proc_stop, &
@@ -932,6 +939,7 @@ contains
     integer,          intent(in)  :: kdim
     integer,          intent(in)  :: lall
     logical,          intent(in)  :: nicamcore
+    logical,          intent(in)  :: prs_rebuild
     real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
     real(DP) :: lat, lon               ! latitude, longitude on Icosahedral grid
@@ -994,7 +1002,7 @@ contains
                                       q(k)       )  ! [OUT] water vapor mixing ratio (kg/kg)
        enddo
 
-       call diag_pressure( kdim, z, rho, tmp, q, ps, prs )
+       call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild )
        call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
        do k = 1, kdim
@@ -2305,32 +2313,45 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine diag_pressure( &
-      kdim, &  !--- IN : # of z dimension
-      z,    &  !--- IN : height information
-      rho,  &  !--- IN : density
-      t,    &  !--- IN : temperature
-      q,    &  !--- IN : water vapor content
-      ps,   &  !--- IN : surface pressure
-      prs   )  !--- OUT: pressure
+      kdim,       &  !--- IN : # of z dimension
+      z,          &  !--- IN : height information
+      rho,        &  !--- IN : density
+      t,          &  !--- IN : temperature
+      q,          &  !--- IN : water vapor content
+      ps,         &  !--- IN : surface pressure
+      prs,        &  !--- OUT: pressure
+      prs_rebuild )  !--- IN : rebuild switch
     !
     implicit none
-    integer, intent(in)   :: kdim
+    integer,  intent(in)  :: kdim
     real(RP), intent(in)  :: z(:)
     real(RP), intent(in)  :: rho(:)
     real(RP), intent(in)  :: t(:)
     real(RP), intent(in)  :: q(:)
     real(RP), intent(in)  :: ps
     real(RP), intent(out) :: prs(:)
+    logical,  intent(in)  :: prs_rebuild
     !
-    integer :: k
+    real(RP) :: dz, R0, R1
+    integer  :: k
     !-----
     do k=1, kdim
-       if ( z(k) < 1.0D-7 ) then
-          prs(k) = ps
-       else
+       !if ( z(k) < 1.0D-7 ) then
+       !   prs(k) = ps
+       !else
           prs(k) = rho(k) * t(k) * ( (1.0_RP-q(k))*Rd + q(k)*Rv )
-       endif
+       !endif
     enddo
+
+    if ( prs_rebuild ) then ! rebuild
+       do k=2, kdim
+          dz = z(k) - z(k-1)
+          R0 = ( 1.0_RP - q(k-1) )*Rd + q(k-1)*Rv
+          R1 = ( 1.0_RP - q(k  ) )*Rd + q(k  )*Rv
+          prs(k) = prs(k-1) * ( 1.0_RP - dz*g/(2.0_RP*R0*t(k-1)) ) &
+                            / ( 1.0_RP + dz*g/(2.0_RP*R1*t(k  )) )
+       enddo
+    endif
 
     return
   end subroutine diag_pressure
