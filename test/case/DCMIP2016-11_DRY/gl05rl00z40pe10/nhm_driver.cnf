@@ -41,6 +41,7 @@
     THUBURN_LIM    = .true.,
     EIN_TYPE       = 'SIMPLE',
     RAIN_TYPE      = "DRY",
+    CHEM_TYPE      = 'PASSIVE',
     AF_TYPE        = 'NONE',
 /
 
