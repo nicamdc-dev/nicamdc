@@ -68,9 +68,14 @@
 ##case 5: no perturbation / with moisture
 ##case 6: no perturbation / without moisture
 &DYCORETESTPARAM
-    init_type  = 'Jablonowski-Moist',
-    test_case  = '1',
-    chemtracer = .true.,
+    init_type   = 'Jablonowski-Moist',
+    test_case   = '1',
+    chemtracer  = .true.,
+    prs_rebuild = .true.,
+/
+
+&FORCING_PARAM
+    UPDATE_TOT_DENS  = .false.,
 /
 
 &FORCING_DCMIP_PARAM
