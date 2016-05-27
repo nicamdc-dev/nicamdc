@@ -660,14 +660,12 @@ contains
     real(DP) :: ps, phis
 
     real(RP) :: cl, cl2
-!    real(RP) :: uave, dz, f_cf
-    real(RP) :: tv(kdim)
 
     integer, parameter :: deep    = 0 ! deep atmosphere (1 = yes or 0 = no)
     integer, parameter :: zcoords = 1 ! 1 if z is specified, 0 if p is specified
     integer            :: moist       ! include moisture (1 = yes or 0 = no)
     integer            :: pertt       ! type of perturbation (0 = exponential, 1 = stream function)
-    logical, parameter :: prs_dry = .true.
+    logical, parameter :: prs_dry = .false.
 
     integer :: n, k, l
     !---------------------------------------------------------------------------
@@ -747,12 +745,13 @@ contains
                                      ps,         &  ! [OUT] Surface Pressure (Pa)
                                      rho(k),     &  ! [OUT] density (kg m^-3)
                                      q(k)        )  ! [OUT] water vapor mixing ratio (kg/kg)
-          ! Re-Convert from temperature to virtual temperature
-          tmp(k) = tmp(k) * (1.d0 + Mvap * q(k))
        enddo
 
        call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild, prs_dry )
        call conv_vxvyvz  ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
+
+!       ! Re-Convert from temperature to virtual temperature
+!       tmp(:) = tmp(:) * (1.d0 + Mvap * q(:))
 
        do k = 1, kdim
           DIAG_var(n,k,l,1     ) = real(prs(k),kind=RP)
@@ -833,8 +832,6 @@ contains
     real(DP) :: ps
 
     real(RP) :: cl, cl2
-!    real(RP) :: uave, dz, f_cf
-    real(RP) :: tv(kdim)
 
     integer, parameter :: deep    = 0 ! deep atmosphere (1 = yes or 0 = no)
     integer, parameter :: zcoords = 1 ! 1 if z is specified, 0 if p is specified
@@ -961,8 +958,6 @@ contains
     real(DP) :: ps, phis
 
     real(RP) :: cl, cl2
-!    real(RP) :: uave, dz, f_cf
-    real(RP) :: tv(kdim)
 
     integer, parameter :: deep    = 0 ! deep atmosphere (1 = yes or 0 = no)
     integer, parameter :: zcoords = 1 ! 1 if z is specified, 0 if p is specified
