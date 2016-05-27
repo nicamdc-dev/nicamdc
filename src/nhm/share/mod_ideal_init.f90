@@ -644,7 +644,8 @@ contains
     logical,          intent(in)  :: prs_rebuild
     real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-    real(DP), parameter :: Xfact = 1.0_DP ! Earth scaling parameter
+    real(DP), parameter :: Mvap  = 0.608d0 ! Ratio of molar mass of dry air/water (imported from baroclinic_wave_test.f90)
+    real(DP), parameter :: Xfact = 1.0_DP  ! Earth scaling parameter
     real(DP) :: lat, lon               ! latitude, longitude on Icosahedral grid
     real(DP) :: prs(kdim), tmp(kdim)   ! presssure and temperature in ICO-grid field
     real(DP) :: wix(kdim),   wiy(kdim) ! zonal/meridional wind components in ICO-grid field
@@ -666,6 +667,7 @@ contains
     integer, parameter :: zcoords = 1 ! 1 if z is specified, 0 if p is specified
     integer            :: moist       ! include moisture (1 = yes or 0 = no)
     integer            :: pertt       ! type of perturbation (0 = exponential, 1 = stream function)
+    logical, parameter :: prs_dry = .true.
 
     integer :: n, k, l
     !---------------------------------------------------------------------------
@@ -745,9 +747,11 @@ contains
                                      ps,         &  ! [OUT] Surface Pressure (Pa)
                                      rho(k),     &  ! [OUT] density (kg m^-3)
                                      q(k)        )  ! [OUT] water vapor mixing ratio (kg/kg)
+          ! Re-Convert from temperature to virtual temperature
+          tmp(k) = tmp(k) * (1.d0 + Mvap * q(k))
        enddo
 
-       call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild )
+       call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild, prs_dry )
        call conv_vxvyvz  ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
        do k = 1, kdim
@@ -834,7 +838,8 @@ contains
 
     integer, parameter :: deep    = 0 ! deep atmosphere (1 = yes or 0 = no)
     integer, parameter :: zcoords = 1 ! 1 if z is specified, 0 if p is specified
-    integer            :: pert       ! type of perturbation (0 = no perturbation, 1 = perturbation)
+    integer            :: pert        ! type of perturbation (0 = no perturbation, 1 = perturbation)
+    logical, parameter :: prs_dry = .false.
 
     integer :: n, k, l
     !---------------------------------------------------------------------------
@@ -892,7 +897,7 @@ contains
                                pert       )  ! [IN ] perturbation switch
        enddo
 
-       call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild )
+       call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild, prs_dry )
        call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
        do k = 1, kdim
@@ -962,6 +967,7 @@ contains
     integer, parameter :: deep    = 0 ! deep atmosphere (1 = yes or 0 = no)
     integer, parameter :: zcoords = 1 ! 1 if z is specified, 0 if p is specified
     integer            :: moist       ! include moisture (1 = yes or 0 = no)
+    logical, parameter :: prs_dry = .false.
 
     integer :: n, k, l
     !---------------------------------------------------------------------------
@@ -1002,7 +1008,7 @@ contains
                                       q(k)       )  ! [OUT] water vapor mixing ratio (kg/kg)
        enddo
 
-       call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild )
+       call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild, prs_dry )
        call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
        do k = 1, kdim
@@ -2313,14 +2319,15 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine diag_pressure( &
-      kdim,       &  !--- IN : # of z dimension
-      z,          &  !--- IN : height information
-      rho,        &  !--- IN : density
-      t,          &  !--- IN : temperature
-      q,          &  !--- IN : water vapor content
-      ps,         &  !--- IN : surface pressure
-      prs,        &  !--- OUT: pressure
-      prs_rebuild )  !--- IN : rebuild switch
+      kdim,        &  !--- IN : # of z dimension
+      z,           &  !--- IN : height information
+      rho,         &  !--- IN : density
+      t,           &  !--- IN : temperature
+      q,           &  !--- IN : water vapor content
+      ps,          &  !--- IN : surface pressure
+      prs,         &  !--- OUT: pressure
+      prs_rebuild, &  !--- IN : rebuild switch
+      prs_dry      )  !--- IN : dry condition switch
     !
     implicit none
     integer,  intent(in)  :: kdim
@@ -2331,26 +2338,37 @@ contains
     real(RP), intent(in)  :: ps
     real(RP), intent(out) :: prs(:)
     logical,  intent(in)  :: prs_rebuild
+    logical,  intent(in)  :: prs_dry
     !
     real(RP) :: dz, R0, R1
     integer  :: k
     !-----
-    do k=1, kdim
-       !if ( z(k) < 1.0D-7 ) then
-       !   prs(k) = ps
-       !else
-          prs(k) = rho(k) * t(k) * ( (1.0_RP-q(k))*Rd + q(k)*Rv )
-       !endif
-    enddo
-
-    if ( prs_rebuild ) then ! rebuild
-       do k=2, kdim
-          dz = z(k) - z(k-1)
-          R0 = ( 1.0_RP - q(k-1) )*Rd + q(k-1)*Rv
-          R1 = ( 1.0_RP - q(k  ) )*Rd + q(k  )*Rv
-          prs(k) = prs(k-1) * ( 1.0_RP - dz*g/(2.0_RP*R0*t(k-1)) ) &
-                            / ( 1.0_RP + dz*g/(2.0_RP*R1*t(k  )) )
+    if ( prs_dry ) then
+       do k=1, kdim
+          prs(k) = rho(k) * t(k) * Rd
        enddo
+
+       if ( prs_rebuild ) then ! rebuild
+          do k=2, kdim
+             dz = z(k) - z(k-1)
+             prs(k) = prs(k-1) * ( 1.0_RP - dz*g/(2.0_RP*Rd*t(k-1)) ) &
+                               / ( 1.0_RP + dz*g/(2.0_RP*Rd*t(k  )) )
+          enddo
+       endif
+    else
+       do k=1, kdim
+          prs(k) = rho(k) * t(k) * ( (1.0_RP-q(k))*Rd + q(k)*Rv )
+       enddo
+
+       if ( prs_rebuild ) then ! rebuild
+          do k=2, kdim
+             dz = z(k) - z(k-1)
+             R0 = ( 1.0_RP - q(k-1) )*Rd + q(k-1)*Rv
+             R1 = ( 1.0_RP - q(k  ) )*Rd + q(k  )*Rv
+             prs(k) = prs(k-1) * ( 1.0_RP - dz*g/(2.0_RP*R0*t(k-1)) ) &
+                               / ( 1.0_RP + dz*g/(2.0_RP*R1*t(k  )) )
+          enddo
+       endif
     endif
 
     return
