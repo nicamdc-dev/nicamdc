@@ -7,14 +7,14 @@
 &ADMPARAM
     glevel      = 5,
     rlevel      = 0,
-    vlayer      = 40,
+    vlayer      = 30,
     rgnmngfname = "rl00-prc10.info",
 /
 
 &GRDPARAM
     hgrid_io_mode = "ADVANCED",
     hgrid_fname   = "boundary_GL05RL00",
-    VGRID_fname   = "vgrid40_stretch_45km.dat",
+    VGRID_fname   = "vgrid30_stretch_44km_dcmip2016.dat",
     vgrid_scheme  = "HYBRID",
     h_efold       = 40000,
     topo_fname    = "NONE",
@@ -57,7 +57,7 @@
     input_io_mode     = 'IDEAL',
     output_io_mode    = 'ADVANCED',
     output_basename   = 'restart_all_GL05RL00z40',
-    restart_layername = 'ZSALL42T',
+    restart_layername = 'ZSALL32_DCMIP16',
 /
 
 ##### DCMIP2016-11: Moist Baroclinic Wave
@@ -108,7 +108,7 @@
 &NMHISD
     output_io_mode   = 'ADVANCED' ,
     histall_fname    = 'history'  ,
-    hist3D_layername = 'ZSDEF40T',
+    hist3D_layername = 'ZSDEF30_DCMIP16',
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
     step             = 144        ,
