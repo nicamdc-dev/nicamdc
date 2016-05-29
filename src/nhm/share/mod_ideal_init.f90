@@ -202,8 +202,8 @@ contains
        write(ADM_LOG_FID,*) '*** test case   : ', trim(test_case)
        write(ADM_LOG_FID,*) '*** nicamcore   = ', nicamcore
        write(ADM_LOG_FID,*) '*** chemtracer  = ', chemtracer
-       call jbw_moist_init( ADM_gall, ADM_kall, ADM_lall, test_case, nicamcore, prs_rebuild, &
-                            chemtracer, DIAG_var(:,:,:,:) )
+       call jbw_moist_init( ADM_gall, ADM_kall, ADM_lall, test_case, nicamcore, chemtracer, &
+                            prs_rebuild, DIAG_var(:,:,:,:) )
 
     case ('Supercell')
 
