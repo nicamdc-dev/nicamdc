@@ -14,9 +14,8 @@
 &GRDPARAM
     hgrid_io_mode = "ADVANCED",
     hgrid_fname   = "boundary_GL05RL00",
-    VGRID_fname   = "vgrid40_stretch_45km.dat",
-    vgrid_scheme  = "HYBRID",
-    h_efold       = 40000,
+    VGRID_fname   = "vgrid40_cnst_20km_dcmip2016.dat",
+    vgrid_scheme  = "LINEAR",
     topo_fname    = "NONE",
 /
 
@@ -52,7 +51,7 @@
     input_io_mode     = 'IDEAL',
     output_io_mode    = 'ADVANCED',
     output_basename   = 'restart_all_GL05RL00z40',
-    restart_layername = 'ZSALL42T',
+    restart_layername = 'ZSALL42_DCMIP16',
 /
 
 &DYCORETESTPARAM
@@ -90,7 +89,7 @@
 &NMHISD
     output_io_mode   = 'ADVANCED' ,
     histall_fname    = 'history'  ,
-    hist3D_layername = 'ZSDEF40T',
+    hist3D_layername = 'ZSDEF40_DCMIP16',
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
     step             = 1          ,

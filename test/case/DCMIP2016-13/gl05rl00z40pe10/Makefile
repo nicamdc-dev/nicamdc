@@ -18,7 +18,7 @@ glevel      = 5
 rlevel      = 0
 nmpi        = 10
 zlayer      = 40
-vgrid       = vgrid40_stretch_45km.dat
+vgrid       = vgrid40_cnst_20km_dcmip2016.dat
 
 
 

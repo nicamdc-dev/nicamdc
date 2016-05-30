@@ -15,8 +15,7 @@
     hgrid_io_mode = "ADVANCED",
     hgrid_fname   = "boundary_GL05RL00",
     VGRID_fname   = "vgrid30_stretch_30km_dcmip2016.dat",
-    vgrid_scheme  = "HYBRID",
-    h_efold       = 40000,
+    vgrid_scheme  = "LINEAR",
     topo_fname    = "NONE",
 /
 
