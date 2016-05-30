@@ -55,7 +55,8 @@ module mod_forcing_driver
   integer, private, parameter :: I_RHOGW    = 5 ! Density x G^1/2 x gamma^2 x Vertical   velocity
   integer, private, parameter :: I_RHOGE    = 6 ! Density x G^1/2 x gamma^2 x Internal Energy
   integer, private, parameter :: I_RHOGETOT = 7 ! Density x G^1/2 x gamma^2 x Total Energy
-
+]
+  logical, private            :: NEGATIVE_FIXER  = .false.
   logical, private            :: UPDATE_TOT_DENS = .true.
 
   !-----------------------------------------------------------------------------
@@ -74,6 +75,7 @@ contains
     implicit none
 
     namelist /FORCING_PARAM/ &
+       NEGATIVE_FIXER,       &
        UPDATE_TOT_DENS
 
     integer :: ierr
@@ -287,6 +289,13 @@ contains
                     + 0.5_RP * ( rho_srf(:,l)+rho(:,ADM_kmin,l) ) * GRAV * ( z(:,ADM_kmin,l)-z_srf(:,l) )
     enddo
 
+    ! tentative negative fixer
+    if ( NEGATIVE_FIXER ) then
+       do nq = 1, TRC_VMAX
+          q(:,:,l,nq) = max( q(:,:,l,nq), 0.0D0 )
+       enddo
+    endif
+
     ! forcing
     select case(AF_TYPE)
     case('HELD-SUAREZ')
@@ -378,6 +387,11 @@ contains
        frhogq(:,:,:) = fq(:,:,:,nq) * rho(:,:,:) * GSGAM2(:,:,:)
 
        rhogq(:,:,:,nq) = rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:)
+
+       ! tentative negative fixer
+       if ( NEGATIVE_FIXER ) then
+          rhogq(:,:,:,nq) = max( rhogq(:,:,:,nq), 0.0D0 )
+       endif
 
        if ( UPDATE_TOT_DENS ) then
           if (       nq >= NQW_STR &

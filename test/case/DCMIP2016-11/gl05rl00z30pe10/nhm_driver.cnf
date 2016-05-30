@@ -74,6 +74,7 @@
 /
 
 &FORCING_PARAM
+    NEGATIVE_FIXER   = .true.,
     UPDATE_TOT_DENS  = .false.,
 /
 
