@@ -55,7 +55,7 @@ module mod_forcing_driver
   integer, private, parameter :: I_RHOGW    = 5 ! Density x G^1/2 x gamma^2 x Vertical   velocity
   integer, private, parameter :: I_RHOGE    = 6 ! Density x G^1/2 x gamma^2 x Internal Energy
   integer, private, parameter :: I_RHOGETOT = 7 ! Density x G^1/2 x gamma^2 x Total Energy
-]
+
   logical, private            :: NEGATIVE_FIXER  = .false.
   logical, private            :: UPDATE_TOT_DENS = .true.
 
