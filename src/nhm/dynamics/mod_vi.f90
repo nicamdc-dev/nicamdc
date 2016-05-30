@@ -502,16 +502,16 @@ contains
     ! initialization of mean mass flux
     rweight_itr = 1.0_RP / real(num_of_itr,kind=RP)
 
-    PROG_mean(:,:,:,1) = rhogvx(:,:,:)
-    PROG_mean(:,:,:,2) = rhogvy(:,:,:)
-    PROG_mean(:,:,:,3) = rhogvz(:,:,:)
-    PROG_mean(:,:,:,4) = rhog  (:,:,:)
+    PROG_mean(:,:,:,1) = rhog  (:,:,:)
+    PROG_mean(:,:,:,2) = rhogvx(:,:,:)
+    PROG_mean(:,:,:,3) = rhogvy(:,:,:)
+    PROG_mean(:,:,:,4) = rhogvz(:,:,:)
     PROG_mean(:,:,:,5) = rhogw (:,:,:)
 
-    PROG_mean_pl(:,:,:,1) = rhogvx_pl(:,:,:)
-    PROG_mean_pl(:,:,:,2) = rhogvy_pl(:,:,:)
-    PROG_mean_pl(:,:,:,3) = rhogvz_pl(:,:,:)
-    PROG_mean_pl(:,:,:,4) = rhog_pl  (:,:,:)
+    PROG_mean_pl(:,:,:,1) = rhog_pl  (:,:,:)
+    PROG_mean_pl(:,:,:,2) = rhogvx_pl(:,:,:)
+    PROG_mean_pl(:,:,:,3) = rhogvy_pl(:,:,:)
+    PROG_mean_pl(:,:,:,4) = rhogvz_pl(:,:,:)
     PROG_mean_pl(:,:,:,5) = rhogw_pl (:,:,:)
 
     ! update working matrix for vertical implicit solver
@@ -759,10 +759,10 @@ contains
           rhogw_split (g,k,l) = diff_we(g,k,l,2)
           rhoge_split (g,k,l) = diff_we(g,k,l,3)
 
-          PROG_mean(g,k,l,1) = PROG_mean(g,k,l,1) + rhogvx_split(g,k,l) * rweight_itr
-          PROG_mean(g,k,l,2) = PROG_mean(g,k,l,2) + rhogvy_split(g,k,l) * rweight_itr
-          PROG_mean(g,k,l,3) = PROG_mean(g,k,l,3) + rhogvz_split(g,k,l) * rweight_itr
-          PROG_mean(g,k,l,4) = PROG_mean(g,k,l,4) + rhog_split  (g,k,l) * rweight_itr
+          PROG_mean(g,k,l,1) = PROG_mean(g,k,l,1) + rhog_split  (g,k,l) * rweight_itr
+          PROG_mean(g,k,l,2) = PROG_mean(g,k,l,2) + rhogvx_split(g,k,l) * rweight_itr
+          PROG_mean(g,k,l,3) = PROG_mean(g,k,l,3) + rhogvy_split(g,k,l) * rweight_itr
+          PROG_mean(g,k,l,4) = PROG_mean(g,k,l,4) + rhogvz_split(g,k,l) * rweight_itr
           PROG_mean(g,k,l,5) = PROG_mean(g,k,l,5) + rhogw_split (g,k,l) * rweight_itr
        enddo
        enddo
@@ -779,10 +779,10 @@ contains
              rhogw_split_pl (g,k,l) = diff_we_pl(g,k,l,2)
              rhoge_split_pl (g,k,l) = diff_we_pl(g,k,l,3)
 
-             PROG_mean_pl(g,k,l,1) = PROG_mean_pl(g,k,l,1) + rhogvx_split_pl(g,k,l) * rweight_itr
-             PROG_mean_pl(g,k,l,2) = PROG_mean_pl(g,k,l,2) + rhogvy_split_pl(g,k,l) * rweight_itr
-             PROG_mean_pl(g,k,l,3) = PROG_mean_pl(g,k,l,3) + rhogvz_split_pl(g,k,l) * rweight_itr
-             PROG_mean_pl(g,k,l,4) = PROG_mean_pl(g,k,l,4) + rhog_split_pl  (g,k,l) * rweight_itr
+             PROG_mean_pl(g,k,l,1) = PROG_mean_pl(g,k,l,1) + rhog_split_pl  (g,k,l) * rweight_itr
+             PROG_mean_pl(g,k,l,2) = PROG_mean_pl(g,k,l,2) + rhogvx_split_pl(g,k,l) * rweight_itr
+             PROG_mean_pl(g,k,l,3) = PROG_mean_pl(g,k,l,3) + rhogvy_split_pl(g,k,l) * rweight_itr
+             PROG_mean_pl(g,k,l,4) = PROG_mean_pl(g,k,l,4) + rhogvz_split_pl(g,k,l) * rweight_itr
              PROG_mean_pl(g,k,l,5) = PROG_mean_pl(g,k,l,5) + rhogw_split_pl (g,k,l) * rweight_itr
           enddo
           enddo
