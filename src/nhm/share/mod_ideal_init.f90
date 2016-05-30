@@ -652,6 +652,8 @@ contains
     real(DP) :: rho(kdim),   q(kdim)   ! density and water vapor mixing ratio in ICO-grid field
     real(DP) :: thetav(kdim)           ! Virtual potential temperature in ICO-grid field
     real(DP) :: p = 0.0_RP             ! dummy variable
+    real(DP) :: Mvap2 ! Ratio of molar mass of dry air/water based on NICAM CONSTANTs
+    real(DP) :: RdovRv
 
     real(DP) :: z(kdim)
     real(RP) :: vx_local(kdim)
@@ -672,6 +674,8 @@ contains
 
     DIAG_var(:,:,:,:) = 0.0_RP
     p = 0.0_RP
+    RdovRv = Rd / Rv
+    Mvap2 = (1.0D0 - RdovRv)/RdovRv
 
     moist = 0
     pertt = 0
@@ -747,11 +751,11 @@ contains
                                      q(k)        )  ! [OUT] water vapor mixing ratio (kg/kg)
        enddo
 
+       ! Re-Evaluation of temperature from virtual temperature
+       tmp(:) = tmp(:) * ( (1.d0+Mvap*q(:)) / (1.d0+Mvap2*q(:)) )
+
        call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild, prs_dry )
        call conv_vxvyvz  ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
-
-!       ! Re-Convert from temperature to virtual temperature
-!       tmp(:) = tmp(:) * (1.d0 + Mvap * q(:))
 
        do k = 1, kdim
           DIAG_var(n,k,l,1     ) = real(prs(k),kind=RP)
@@ -774,8 +778,8 @@ contains
           ! Todo : the mixing ratios are dry
           ! i.e. the ratio between the density of the species and the density of dry air.
           ! calc density at reference level
-          DIAG_var(n,:,l,6+NCHEM_STR) = cl
-          DIAG_var(n,:,l,6+NCHEM_END) = cl2
+          DIAG_var(n,:,l,6+NCHEM_STR) = cl  / (1.0D0 - q(:))
+          DIAG_var(n,:,l,6+NCHEM_END) = cl2 / (1.0D0 - q(:))
        endif
 
     enddo
@@ -818,6 +822,7 @@ contains
     logical,          intent(in)  :: prs_rebuild
     real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
+    real(DP), parameter :: Mvap = 0.61d0 ! Ratio of molar mass of dry air/water (imported from supercell_test.f90)
     real(DP) :: lat, lon               ! latitude, longitude on Icosahedral grid
     real(DP) :: prs(kdim), tmp(kdim)   ! presssure and temperature in ICO-grid field
     real(DP) :: wix(kdim),   wiy(kdim) ! zonal/meridional wind components in ICO-grid field
@@ -894,6 +899,9 @@ contains
                                pert       )  ! [IN ] perturbation switch
        enddo
 
+       ! Re-Evaluation of temperature from virtual temperature
+       tmp(:) = tmp(:) * ( (1.d0+Mvap*q(:)) / (1.d0+Mvap2*q(:)) )
+
        call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild, prs_dry )
        call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
@@ -944,6 +952,7 @@ contains
     logical,          intent(in)  :: prs_rebuild
     real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
+    real(DP), parameter :: Mvap = 0.608d0 ! Ratio of molar mass of dry air/water (imported from tropical_cyclone_test.f90)
     real(DP) :: lat, lon               ! latitude, longitude on Icosahedral grid
     real(DP) :: prs(kdim), tmp(kdim)   ! presssure and temperature in ICO-grid field
     real(DP) :: wix(kdim),   wiy(kdim) ! zonal/meridional wind components in ICO-grid field
@@ -1002,6 +1011,9 @@ contains
                                       rho(k),    &  ! [OUT] density (kg m^-3)
                                       q(k)       )  ! [OUT] water vapor mixing ratio (kg/kg)
        enddo
+
+       ! Re-Evaluation of temperature from virtual temperature
+       tmp(:) = tmp(:) * ( (1.d0+Mvap*q(:)) / (1.d0+Mvap2*q(:)) )
 
        call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild, prs_dry )
        call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
