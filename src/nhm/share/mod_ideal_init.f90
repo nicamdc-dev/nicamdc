@@ -829,6 +829,8 @@ contains
     real(DP) :: rho(kdim),   q(kdim)   ! density and water vapor mixing ratio in ICO-grid field
     real(DP) :: thetav(kdim)           ! Virtual potential temperature in ICO-grid field
     real(DP) :: p = 0.0_RP             ! dummy variable
+    real(DP) :: Mvap2 ! Ratio of molar mass of dry air/water based on NICAM CONSTANTs
+    real(DP) :: RdovRv
 
     real(DP) :: z(kdim)
     real(RP) :: vx_local(kdim)
@@ -848,6 +850,8 @@ contains
 
     DIAG_var(:,:,:,:) = 0.0_RP
     p = 0.0_RP
+    RdovRv = Rd / Rv
+    Mvap2 = (1.0D0 - RdovRv)/RdovRv
 
     pert = 0
 
@@ -959,6 +963,8 @@ contains
     real(DP) :: rho(kdim),   q(kdim)   ! density and water vapor mixing ratio in ICO-grid field
     real(DP) :: thetav(kdim)           ! Virtual potential temperature in ICO-grid field
     real(DP) :: p = 0.0_RP             ! dummy variable
+    real(DP) :: Mvap2 ! Ratio of molar mass of dry air/water based on NICAM CONSTANTs
+    real(DP) :: RdovRv
 
     real(DP) :: z(kdim)
     real(RP) :: vx_local(kdim)
@@ -978,6 +984,8 @@ contains
 
     DIAG_var(:,:,:,:) = 0.0_RP
     p = 0.0_RP
+    RdovRv = Rd / Rv
+    Mvap2 = (1.0D0 - RdovRv)/RdovRv
 
     write(ADM_LOG_FID,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
     if ( NQW_MAX < 3 ) then
