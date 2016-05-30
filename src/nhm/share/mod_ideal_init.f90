@@ -726,12 +726,13 @@ contains
        lat = GMTR_lat(n,l)
        lon = GMTR_lon(n,l)
 
-       z(ADM_kmin-1) = GRD_vz(n,2,l,GRD_ZH)
-       do k = ADM_kmin, ADM_kmax+1
-          z(k) = GRD_vz(n,k,l,GRD_Z)
-       enddo
+!       z(ADM_kmin-1) = GRD_vz(n,2,l,GRD_ZH)
+!       do k = ADM_kmin, ADM_kmax+1
+!          z(k) = GRD_vz(n,k,l,GRD_Z)
+!       enddo
 
        do k = 1, kdim
+          z(k) = GRD_vz(n,k,l,GRD_Z)
           call baroclinic_wave_test( deep,       &  ! [IN ]
                                      moist,      &  ! [IN ]
                                      pertt,      &  ! [IN ]
@@ -882,12 +883,13 @@ contains
        lat = GMTR_lat(n,l)
        lon = GMTR_lon(n,l)
 
-       z(ADM_kmin-1) = GRD_vz(n,2,l,GRD_ZH)
-       do k = ADM_kmin, ADM_kmax+1
-          z(k) = GRD_vz(n,k,l,GRD_Z)
-       enddo
+!       z(ADM_kmin-1) = GRD_vz(n,2,l,GRD_ZH)
+!       do k = ADM_kmin, ADM_kmax+1
+!          z(k) = GRD_vz(n,k,l,GRD_Z)
+!       enddo
 
        do k = 1, kdim
+          z(k) = GRD_vz(n,k,l,GRD_Z)
           call supercell_test( lon,       &  ! [IN ]
                                lat,       &  ! [IN ]
                                p,         &  ! [INOUT]
@@ -999,12 +1001,13 @@ contains
        lat = GMTR_lat(n,l)
        lon = GMTR_lon(n,l)
 
-       z(ADM_kmin-1) = GRD_vz(n,2,l,GRD_ZH)
-       do k = ADM_kmin, ADM_kmax+1
-          z(k) = GRD_vz(n,k,l,GRD_Z)
-       enddo
+!       z(ADM_kmin-1) = GRD_vz(n,2,l,GRD_ZH)
+!       do k = ADM_kmin, ADM_kmax+1
+!          z(k) = GRD_vz(n,k,l,GRD_Z)
+!       enddo
 
        do k = 1, kdim
+          z(k) = GRD_vz(n,k,l,GRD_Z)
           call tropical_cyclone_test( lon,       &  ! [IN ]
                                       lat,       &  ! [IN ]
                                       p,         &  ! [INOUT]
