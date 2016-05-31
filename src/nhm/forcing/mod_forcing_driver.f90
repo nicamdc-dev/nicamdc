@@ -292,7 +292,7 @@ contains
     ! tentative negative fixer
     if ( NEGATIVE_FIXER ) then
        do nq = 1, TRC_VMAX
-          q(:,:,l,nq) = max( q(:,:,l,nq), 0.0D0 )
+          q(:,:,:,nq) = max( q(:,:,:,nq), 0.0D0 )
        enddo
     endif
 
