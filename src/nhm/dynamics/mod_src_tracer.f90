@@ -122,7 +122,7 @@ contains
        VMTR_RGAMH_pl
     implicit none
 
-    integer, intent(in)    :: vmax
+    integer,  intent(in)    :: vmax
     real(RP), intent(inout) :: rhogq         (ADM_gall,   ADM_kall,ADM_lall,   vmax)
     real(RP), intent(inout) :: rhogq_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl,vmax)
     real(RP), intent(in)    :: rhog_in       (ADM_gall,   ADM_kall,ADM_lall   )
@@ -140,7 +140,7 @@ contains
     real(RP), intent(in)    :: frhog         (ADM_gall,   ADM_kall,ADM_lall   )
     real(RP), intent(in)    :: frhog_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in)    :: dt
-    logical, intent(in)    :: thubern_lim  ![add] 20130613 R.Yoshida
+    logical,  intent(in)    :: thubern_lim  ![add] 20130613 R.Yoshida
 
     real(RP) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
     real(RP) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -1343,15 +1343,15 @@ contains
              qnext_min = min( Qin_minL, Qin_minU, q_pl(n,k,l) )
              qnext_max = max( Qin_maxL, Qin_maxU, q_pl(n,k,l) )
 
-             Cin      = (        inflagL ) * ( ck_pl(n,k  ,l,1) ) &
-                      + (        inflagU ) * ( ck_pl(n,k+1,l,2) )
-             Cout     = ( 1.0_RP-inflagL ) * ( ck_pl(n,k  ,l,1) ) &
-                      + ( 1.0_RP-inflagU ) * ( ck_pl(n,k+1,l,2) )
+             Cin      = (        inflagL ) * ( ck_pl(n,k,l,1) ) &
+                      + (        inflagU ) * ( ck_pl(n,k,l,2) )
+             Cout     = ( 1.0_RP-inflagL ) * ( ck_pl(n,k,l,1) ) &
+                      + ( 1.0_RP-inflagU ) * ( ck_pl(n,k,l,2) )
 
-             CQin_max = (        inflagL ) * ( ck_pl(n,k  ,l,1) * Qin_maxL ) &
-                      + (        inflagU ) * ( ck_pl(n,k+1,l,2) * Qin_maxU )
-             CQin_min = (        inflagL ) * ( ck_pl(n,k  ,l,1) * Qin_minL ) &
-                      + (        inflagU ) * ( ck_pl(n,k+1,l,2) * Qin_minU )
+             CQin_max = (        inflagL ) * ( ck_pl(n,k,l,1) * Qin_maxL ) &
+                      + (        inflagU ) * ( ck_pl(n,k,l,2) * Qin_maxU )
+             CQin_min = (        inflagL ) * ( ck_pl(n,k,l,1) * Qin_minL ) &
+                      + (        inflagU ) * ( ck_pl(n,k,l,2) * Qin_minU )
 
              zerosw = 0.5_RP - sign(0.5_RP,abs(Cout)-EPS) ! if Cout = 0, sw = 1
 
