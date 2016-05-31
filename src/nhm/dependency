@@ -86,7 +86,7 @@ $(NICAM_BINDIR)/$(PRJ_NHM01): $(BUILD_DIR)/$(PRJ_NHM01)
 	@echo; echo "##### PROGRAM $(notdir $<) is installed Successfully #####"; echo
 
 $(BUILD_DIR)/$(PRJ_NHM01) : $(PRG_NHM01).o $(NICAM_LIBDIR)/$(LIB_NHM) $(NICAM_LIBDIR)/$(LIB_SHARE)
-	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILD_DIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS) $(DCL_LIBS)
+	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILD_DIR)/,$(notdir $^)) $(LAPACK_LIBS) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
 
 $(NICAM_LIBDIR)/$(LIB_NHM): $(BUILD_DIR)/$(LIB_NHM)
 	$(INSTALL) $< $@

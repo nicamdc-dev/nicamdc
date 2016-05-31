@@ -33,6 +33,14 @@ MNGINFO=rl${RL}-prc${NP}.info
 NNODE=`expr \( $NMPI - 1 \) / 8 + 1`
 NPROC=`expr $NMPI / $NNODE`
 
+if [ ${NNODE} -gt 16 ]; then
+   rscgrp="l"
+elif [ ${TPROC} -gt 3 ]; then
+   rscgrp="m"
+else
+   rscgrp="s"
+fi
+
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
@@ -40,10 +48,10 @@ cat << EOF1 > run.sh
 # ------ FOR Linux64 & intel C&fortran & mpt & torque -----
 #
 ################################################################################
-#PBS -q s
+#PBS -q ${rscgrp}
 #PBS -l nodes=${NNODE}:ppn=${NPROC}
 #PBS -N ${res3d}
-#PBS -l walltime=00:30:00
+#PBS -l walltime=01:00:00
 #PBS -o STDOUT
 #PBS -e STDERR
 export FORT_FMT_RECL=400
@@ -77,7 +85,7 @@ cat << EOFICO2LL1 > ico2ll.sh
 # ------ FOR Linux64 & intel C&fortran & mpt & torque -----
 #
 ################################################################################
-#PBS -q s
+#PBS -q ${rscgrp}
 #PBS -l nodes=${NNODE}:ppn=${NPROC}
 #PBS -N ico2ll_${res3d}
 #PBS -l walltime=00:30:00
