@@ -1268,7 +1268,7 @@ contains
        call height_factor( ADM_kall, real(GRD_gz(:),kind=RP), real(GRD_htop,kind=RP), ZD_hdiff_nl, fact(:) )
 
        kh_max(:) = ( 1.0_RP - fact(:) ) * Kh_coef_maxlim &
-                 + (        fact(:) ) * Kh_coef_minlim
+                 + (          fact(:) ) * Kh_coef_minlim
     endif
 
     rhog_h(:,ADM_kmin-1,:) = 0.0_RP

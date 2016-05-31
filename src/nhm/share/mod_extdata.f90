@@ -515,7 +515,7 @@ contains
 
     do k = 1, kall
     do n = 1, ADM_gall_in
-       gdata(n,k) = info(np)%v(ADM_IopJop(n,ADM_GIoJo),k,l_region,1) * (     wt) &
+       gdata(n,k) = info(np)%v(ADM_IopJop(n,ADM_GIoJo),k,l_region,1) * (       wt) &
                   + info(np)%v(ADM_IopJop(n,ADM_GIoJo),k,l_region,2) * (1.0_RP-wt)
     enddo
     enddo

@@ -108,8 +108,8 @@ contains
     ptop   = p0 * exp(-12000.0_RP/H)
 
     s = 1.0_RP + exp( (ptop-p0) / (bs*ptop) ) &
-             - exp( (p-p0)    / (bs*ptop) ) &
-             - exp( (ptop-p)  / (bs*ptop) )
+               - exp( (p-p0)    / (bs*ptop) ) &
+               - exp( (ptop-p)  / (bs*ptop) )
 
     ud = (omega0*a) / (bs*ptop) * cos(lonp) * cos(lat)**2 * cos(dlon) &
        * ( -exp( (p-p0)/(bs*ptop) ) + exp( (ptop-p)/(bs*ptop) ) )

@@ -41,7 +41,8 @@ module mod_vi
      ADM_lall_pl, &
      ADM_gall,    &
      ADM_gall_pl, &
-     ADM_kall
+     ADM_kall,    &
+     ADM_gslf_pl
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -88,12 +89,6 @@ module mod_vi
 contains
   !-----------------------------------------------------------------------------
   subroutine vi_setup
-    use mod_adm, only: &
-       ADM_gall,    &
-       ADM_gall_pl, &
-       ADM_lall,    &
-       ADM_lall_pl, &
-       ADM_kall
     implicit none
     !---------------------------------------------------------------------------
 
@@ -141,11 +136,6 @@ contains
        dt                             )
     use mod_adm, only: &
        ADM_have_pl, &
-       ADM_gall,    &
-       ADM_gall_pl, &
-       ADM_lall,    &
-       ADM_lall_pl, &
-       ADM_kall,    &
        ADM_gall_1d, &
        ADM_gmax,    &
        ADM_gmin,    &
@@ -164,9 +154,8 @@ contains
        GRD_afac, &
        GRD_bfac
     use mod_oprt, only: &
-         OPRT_horizontalize_vec, &
-         OPRT_horizontalize_vec_DP
-
+       OPRT_horizontalize_vec,   &
+       OPRT_horizontalize_vec_DP
     use mod_vmtr, only: &
        VMTR_C2Wfact,    &
        VMTR_C2Wfact_pl, &
@@ -247,7 +236,7 @@ contains
     real(RP), intent(out)   :: PROG_mean      (ADM_gall   ,ADM_kall,ADM_lall   ,5) ! mean_flux for tracer advection
     real(RP), intent(out)   :: PROG_mean_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,5)
 
-    integer, intent(in)    :: num_of_itr
+    integer,  intent(in)    :: num_of_itr
     real(RP), intent(in)    :: dt
 
     ! merged array for communication
@@ -326,9 +315,9 @@ contains
 
     real(RP) :: rweight_itr
 
-    integer :: g, k, l, ns
+    integer  :: g, k, l, ns
 
-    integer :: i, j, suf
+    integer  :: i, j, suf
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
@@ -341,7 +330,7 @@ contains
           rhog_h(g,k,l) = ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k,  l) &
                           + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
           eth_h (g,k,l) = 0.5_RP * ( GRD_afac(k) * eth(g,k,  l) &
-                                  + GRD_bfac(k) * eth(g,k-1,l) )
+                                   + GRD_bfac(k) * eth(g,k-1,l) )
        enddo
        enddo
        do g = 1, ADM_gall
@@ -357,7 +346,7 @@ contains
              rhog_h_pl(g,k,l) = ( VMTR_C2Wfact_pl(g,k,1,l) * rhog_pl(g,k,  l) &
                                 + VMTR_C2Wfact_pl(g,k,2,l) * rhog_pl(g,k-1,l) )
              eth_h_pl (g,k,l) = 0.5_RP * ( GRD_afac(k) * eth_pl(g,k,  l) &
-                                        + GRD_bfac(k) * eth_pl(g,k-1,l) )
+                                         + GRD_bfac(k) * eth_pl(g,k-1,l) )
           enddo
           enddo
           do g = 1, ADM_gall_pl
@@ -1306,7 +1295,7 @@ contains
                     + GRD_rdgzh(k) * ( ( VMTR_RGSGAM2(g,k  ,l) * GRD_rdgz(k  )   &
                                        + VMTR_RGSGAM2(g,k-1,l) * GRD_rdgz(k-1) ) &
                                        * VMTR_GAM2H  (g,k  ,l) * eth(g,k,l)      &
-                                     - 0.5_RP * ( GRD_dfac(k) - GRD_cfac(k-1) )   &
+                                     - 0.5_RP * ( GRD_dfac(k) - GRD_cfac(k-1) )  &
                                      * ( g_tilde(g,k,l) + GCVovR )               )
        enddo
        enddo
@@ -1315,7 +1304,7 @@ contains
        do g = 1, ADM_gall
           Mu(g,k,l) = -GRD_rdgzh(k) * ( VMTR_RGSGAM2(g,k  ,l) * GRD_rdgz(k)                     &
                                       * VMTR_GAM2H  (g,k+1,l) * eth(g,k+1,l)                    &
-                                      + 0.5_RP * GRD_cfac(k)                                     &
+                                      + 0.5_RP * GRD_cfac(k)                                    &
                                       * ( g_tilde   (g,k+1,l)                                   &
                                         + VMTR_GAM2H(g,k+1,l)* VMTR_RGAMH(g,k,l)**2 * GCVovR  ) )
        enddo
@@ -1325,7 +1314,7 @@ contains
        do g = 1, ADM_gall
           Ml(g,k,l) = -GRD_rdgzh(k) * ( VMTR_RGSGAM2(g,k  ,l) * GRD_rdgz(k)                     &
                                       * VMTR_GAM2H  (g,k-1,l) * eth(g,k-1,l)                    &
-                                      - 0.5_RP * GRD_dfac(k-1)                                   &
+                                      - 0.5_RP * GRD_dfac(k-1)                                  &
                                       * ( g_tilde   (g,k-1,l)                                   &
                                         + VMTR_GAM2H(g,k-1,l) * VMTR_RGAMH(g,k,l)**2 * GCVovR ) )
        enddo
@@ -1340,7 +1329,7 @@ contains
                           + GRD_rdgzh(k) * ( ( VMTR_RGSGAM2_pl(g,k  ,l) * GRD_rdgz(k  )   &
                                              + VMTR_RGSGAM2_pl(g,k-1,l) * GRD_rdgz(k-1) ) &
                                              * VMTR_GAM2H_pl  (g,k  ,l) * eth_pl(g,k,l)   &
-                                           - 0.5_RP * ( GRD_dfac(k) - GRD_cfac(k-1) )      &
+                                           - 0.5_RP * ( GRD_dfac(k) - GRD_cfac(k-1) )     &
                                            * ( g_tilde_pl(g,k,l) + GCVovR )               )
           enddo
           enddo
@@ -1349,7 +1338,7 @@ contains
           do g = 1, ADM_gall_pl
              Mu_pl(g,k,l) = -GRD_rdgzh(k) * ( VMTR_RGSGAM2_pl(g,k  ,l) * GRD_rdgz(k)                        &
                                             * VMTR_GAM2H_pl  (g,k+1,l) * eth_pl(g,k+1,l)                    &
-                                            + 0.5_RP * GRD_cfac(k)                                           &
+                                            + 0.5_RP * GRD_cfac(k)                                          &
                                             * ( g_tilde_pl   (g,k+1,l)                                      &
                                               + VMTR_GAM2H_pl(g,k+1,l)* VMTR_RGAMH_pl(g,k,l)**2 * GCVovR  ) )
           enddo
@@ -1359,7 +1348,7 @@ contains
           do g = 1, ADM_gall_pl
              Ml_pl(g,k,l) = -GRD_rdgzh(k) * ( VMTR_RGSGAM2_pl(g,k  ,l) * GRD_rdgz(k)                        &
                                             * VMTR_GAM2H_pl  (g,k-1,l) * eth_pl(g,k-1,l)                    &
-                                            - 0.5_RP * GRD_dfac(k-1)                                         &
+                                            - 0.5_RP * GRD_dfac(k-1)                                        &
                                             * ( g_tilde_pl   (g,k-1,l)                                      &
                                               + VMTR_GAM2H_pl(g,k-1,l) * VMTR_RGAMH_pl(g,k,l)**2 * GCVovR ) )
           enddo

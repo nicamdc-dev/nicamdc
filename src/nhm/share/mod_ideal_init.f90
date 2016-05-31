@@ -753,6 +753,7 @@ contains
        enddo
 
        ! Re-Evaluation of temperature from virtual temperature
+
        tmp(:) = tmp(:) * ( (1.d0+Mvap*q(:)) / (1.d0+Mvap2*q(:)) )
 
        call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild, prs_dry )
@@ -906,6 +907,7 @@ contains
        enddo
 
        ! Re-Evaluation of temperature from virtual temperature
+
        tmp(:) = tmp(:) * ( (1.d0+Mvap*q(:)) / (1.d0+Mvap2*q(:)) )
 
        call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild, prs_dry )
@@ -1024,6 +1026,7 @@ contains
        enddo
 
        ! Re-Evaluation of temperature from virtual temperature
+
        tmp(:) = tmp(:) * ( (1.d0+Mvap*q(:)) / (1.d0+Mvap2*q(:)) )
 
        call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild, prs_dry )
@@ -2015,12 +2018,11 @@ contains
           geo(k) = t0*g/ganma * ( 1.0_RP - eta(k,1)**work2 )
        elseif( eta(k,1) < etaT ) then
           tmp(k) = t0 * eta(k,1)**work2 + delT*(etaT - eta(k,1))**5.0_RP
-          !
-          geo(k) = t0*g/ganma * ( 1.0_RP - eta(k,1)**work2 ) - Rd * delT *                              &
-                  ( ( log(eta(k,1)/etaT) + 137.0_RP/60.0_RP )*etaT**5.0_RP - 5.0_RP*(etaT**4.0_RP)*eta(k,1)     &
-                    + 5.0_RP*(etaT**3.0_RP)*(eta(k,1)**2.0_RP) - (10.0_RP/3.0_RP)*(etaT**2.0_RP)*(eta(k,1)**3.0_RP) &
-                    + (5.0_RP/4.0_RP)*etaT*(eta(k,1)**4.0_RP) - (1.0_RP/5.0_RP)*(eta(k,1)**5.0_RP)                &
-                  )
+
+          geo(k) = t0*g/ganma * ( 1.0_RP - eta(k,1)**work2 ) - Rd * delT *                                          &
+                 ( ( log(eta(k,1)/etaT) + 137.0_RP/60.0_RP )*etaT**5.0_RP - 5.0_RP*(etaT**4.0_RP)*eta(k,1)          &
+                   +  5.0_RP*(etaT**3.0_RP)*(eta(k,1)**2.0_RP) - (10.0_RP/3.0_RP)*(etaT**2.0_RP)*(eta(k,1)**3.0_RP) &
+                   + (5.0_RP/4.0_RP)*etaT*(eta(k,1)**4.0_RP) - (1.0_RP/5.0_RP)*(eta(k,1)**5.0_RP)                   )
        else
           write (ADM_LOG_FID,'(A)') "|-- ETA BOUNDARY ERROR: [steady state calc.]"
           write (ADM_LOG_FID,'("|-- (",I3,")  eta: ",F10.4)') k, eta(k,1)
@@ -2032,30 +2034,28 @@ contains
        !endif
        !
     enddo
-    !
+
     ! ---------- meridional distribution for temeperature and geopotential
     work1 = pi/2.0_RP
     work2 = 3.0_RP/4.0_RP * ( pi*u0 / Rd )
     do k = 1, kdim
        eta_v = (eta(k,1) - eta0)*(work1)
-       tmp(k) = tmp(k)                                           &
-                    + work2*eta(k,1) * sin(eta_v) * (cos(eta_v))**0.5_RP  &
-                    * ( ( -2.0_RP * (sin(lat))**6.0_RP * (cos(lat)**2.0_RP + 1.0_RP/3.0_RP) + 10.0_RP/63.0_RP )   &
-                         * 2.0_RP*u0*(cos(eta_v))**1.5_RP                   &
-                        + ( 8.0_RP/5.0_RP * (cos(lat))**3.0_RP * ((sin(lat))**2.0_RP + 2.0_RP/3.0_RP) - pi/4.0_RP ) &
-                         * a*omega                                       &
-                      )
-       geo(k) = geo(k)                                           &
-                    + u0*(cos(eta_v))**1.5_RP  &
-                    * ( ( -2.0_RP * (sin(lat))**6.0_RP * (cos(lat)**2.0_RP + 1.0_RP/3.0_RP) + 10.0_RP/63.0_RP )   &
-                         * u0*(cos(eta_v))**1.5_RP                        &
-                        + ( 8.0_RP/5.0_RP * (cos(lat))**3.0_RP * ((sin(lat))**2.0_RP + 2.0_RP/3.0_RP) - pi/4.0_RP ) &
-                         * a*omega                                       &
-                      )
+       tmp(k) = tmp(k)                                             &
+              + work2*eta(k,1) * sin(eta_v) * (cos(eta_v))**0.5_RP &
+              * ( ( -2.0_RP * (sin(lat))**6.0_RP * (cos(lat)**2.0_RP + 1.0_RP/3.0_RP) + 10.0_RP/63.0_RP )   &
+                * 2.0_RP*u0*(cos(eta_v))**1.5_RP                                                            &
+                + ( 8.0_RP/5.0_RP * (cos(lat))**3.0_RP * ((sin(lat))**2.0_RP + 2.0_RP/3.0_RP) - pi/4.0_RP ) &
+                * a*omega                                                                                   )
+       geo(k) = geo(k)                   &
+              + u0*(cos(eta_v))**1.5_RP  &
+              * ( ( -2.0_RP * (sin(lat))**6.0_RP * (cos(lat)**2.0_RP + 1.0_RP/3.0_RP) + 10.0_RP/63.0_RP )   &
+                * u0*(cos(eta_v))**1.5_RP                                                                   &
+                + ( 8.0_RP/5.0_RP * (cos(lat))**3.0_RP * ((sin(lat))**2.0_RP + 2.0_RP/3.0_RP) - pi/4.0_RP ) &
+                * a*omega                                                                                   )
     enddo
-    !
+
     wiy(:) = 0.0_RP
-    !
+
     return
   end subroutine steady_state
 
@@ -2106,8 +2106,8 @@ contains
           f_cf(1) = 0.0_RP
        endif
 
-       pp(k) = pp(k-1) * ( 1.0_RP + dz*(f_cf(1) - g)/(2.0_RP*Rd*tmp(k-1)) ) &
-                       / ( 1.0_RP - dz*(f_cf(1) - g)/(2.0_RP*Rd*tmp(k)) )
+       pp(k) = pp(k-1) * ( 1.0_RP + dz*(f_cf(1) - g ) / ( 2.0_RP*Rd*tmp(k-1) ) ) &
+                       / ( 1.0_RP - dz*(f_cf(1) - g ) / ( 2.0_RP*Rd*tmp(k  ) ) )
     enddo
     prs(:) = pp(:)
 
@@ -2437,11 +2437,11 @@ contains
 
     if (downward) then
        pout = pin1 - ( (1.0_RP/3.0_RP) * rho(1) * ( f_cf(1) - g ) &
-                       + (4.0_RP/3.0_RP) * rho(2) * ( f_cf(2) - g ) &
+                     + (4.0_RP/3.0_RP) * rho(2) * ( f_cf(2) - g ) &
                      + (1.0_RP/3.0_RP) * rho(3) * ( f_cf(3) - g ) ) * dz
     else
        pout = pin3 + ( (1.0_RP/3.0_RP) * rho(1) * ( f_cf(1) - g ) &
-                       + (4.0_RP/3.0_RP) * rho(2) * ( f_cf(2) - g ) &
+                     + (4.0_RP/3.0_RP) * rho(2) * ( f_cf(2) - g ) &
                      + (1.0_RP/3.0_RP) * rho(3) * ( f_cf(3) - g ) ) * dz
     endif
 

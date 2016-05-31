@@ -210,7 +210,7 @@ contains
     real(RP) :: center_lat =    0.0_RP ! Latitude  of Schar-type mountain center point [deg]
     real(RP) :: H0         = 2000.0_RP ! Maximum Schar-type mountain height [m]
     real(RP) :: Rm_deg     =  135.0_RP ! Schar-type mountain radius     [deg]
-    real(RP) :: QSIm_deg   = 11.25_RP ! Schar-type mountain wavelength [deg]
+    real(RP) :: QSIm_deg   =  11.25_RP ! Schar-type mountain wavelength [deg]
 
     namelist / IDEALTOPOPARAM_Schar_Moderate / &
        center_lon, &
@@ -263,7 +263,7 @@ contains
 
        Zsfc(g,ADM_KNONE,l) = H0/2.0_RP                              &
                            * ( 1.0_RP + cos( PI * distance / Rm ) ) &
-                           * cos( PI * distance / QSIm )**2       &
+                           * cos( PI * distance / QSIm )**2         &
                            * mask
     enddo
     enddo
@@ -539,8 +539,8 @@ contains
     real(RP), intent(out) :: Zsfc(ADM_gall,ADM_KNONE,ADM_lall)
 
     real(RP), parameter :: ETA0 = 0.252_RP ! Value of eta at a reference level (position of the jet)
-    real(RP), parameter :: ETAs =    1.0_RP ! Value of eta at the surface
-    real(RP), parameter :: u0   =   35.0_RP ! Maximum amplitude of the zonal wind
+    real(RP), parameter :: ETAs =   1.0_RP ! Value of eta at the surface
+    real(RP), parameter :: u0   =  35.0_RP ! Maximum amplitude of the zonal wind
 
     real(RP) :: PHI, ETAv, u0cos32ETAv
     real(RP) :: f1, f2
