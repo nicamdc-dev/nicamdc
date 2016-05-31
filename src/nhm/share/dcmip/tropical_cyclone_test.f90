@@ -31,7 +31,7 @@ MODULE tropical_cyclone
 !
 !       Reed, K. A., and C. Jablonowski, 2011: An analytic
 !       vortex initialization technique for idealized tropical
-!       cyclone studies in AGCMs. Mon. Wea. Rev., 139, 689-710. 
+!       cyclone studies in AGCMs. Mon. Wea. Rev., 139, 689-710.
 !
 !  Author: Kevin A. Reed
 !          Stony Brook University
@@ -40,7 +40,7 @@ MODULE tropical_cyclone
 !=======================================================================
 
   IMPLICIT NONE
-
+  PUBLIC :: tropical_cyclone_test
 !=======================================================================
 !    Physical constants
 !=======================================================================

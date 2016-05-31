@@ -41,6 +41,7 @@ MODULE baroclinic_wave
 !=======================================================================
 
   IMPLICIT NONE
+  PUBLIC :: baroclinic_wave_test
 
 !=======================================================================
 !    Physical constants

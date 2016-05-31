@@ -39,6 +39,8 @@ MODULE supercell
 !=======================================================================
 
   IMPLICIT NONE
+  PUBLIC :: supercell_init
+  PUBLIC :: supercell_test
 
 !=======================================================================
 !    Physical constants
