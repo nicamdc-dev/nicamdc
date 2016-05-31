@@ -313,19 +313,20 @@ contains
                         vlayer,    & ! [IN]
                         precip(ij) ) ! [INOUT]
 
-          qd   (:) = 1.0_RP &
-                   + qv(:)  &
-                   + qc(:)  &
-                   + qr(:)
+          qd(:) = 1.0_RP &
+                / ( 1.0_RP + qv(:) + qc(:) + qr(:) )
+          qv(:) = qv(:) * qd(:)
+          qc(:) = qc(:) * qd(:)
+          qr(:) = qr(:) * qd(:)
 
-          cv(:) = 1.0_RP * CVdry     &
-                + qv(:)  * CVW(I_QV) &
-                + qc(:)  * CVW(I_QC) &
-                + qr(:)  * CVW(I_QR)
+          cv(:) = qd(:) * CVdry     &
+                + qv(:) * CVW(I_QV) &
+                + qc(:) * CVW(I_QC) &
+                + qr(:) * CVW(I_QR)
 
-          fq(ij,kmin:kmax,I_QV) = ( qv(:) * qd(:) - q(ij,kmin:kmax,I_QV) ) / dt
-          fq(ij,kmin:kmax,I_QC) = ( qc(:) * qd(:) - q(ij,kmin:kmax,I_QC) ) / dt
-          fq(ij,kmin:kmax,I_QR) = ( qr(:) * qd(:) - q(ij,kmin:kmax,I_QR) ) / dt
+          fq(ij,kmin:kmax,I_QV) = ( qv(:) - q(ij,kmin:kmax,I_QV) ) / dt
+          fq(ij,kmin:kmax,I_QC) = ( qc(:) - q(ij,kmin:kmax,I_QC) ) / dt
+          fq(ij,kmin:kmax,I_QR) = ( qr(:) - q(ij,kmin:kmax,I_QR) ) / dt
           fe(ij,kmin:kmax)      = ( cv(:) * theta(:) * pk(:) - ein(ij,kmin:kmax) ) / dt
        enddo
     endif
