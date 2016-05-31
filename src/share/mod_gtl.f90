@@ -39,6 +39,7 @@ module mod_gtl
   public :: GTL_global_sum_srf
   public :: GTL_global_sum_eachlayer
   public :: GTL_global_mean
+  public :: GTL_global_mean_eachlayer
   public :: GTL_max
   public :: GTL_max_k
   public :: GTL_min
@@ -230,8 +231,6 @@ contains
        ADM_gall_pl, &
        ADM_lall_pl, &
        ADM_kall
-    use mod_comm, only: &
-       COMM_Stat_sum
     implicit none
 
     real(RP), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
@@ -240,7 +239,7 @@ contains
 
     real(RP)       :: one   (ADM_gall,   ADM_kall,ADM_lall   )
     real(RP)       :: one_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    logical, save :: first = .true.
+    logical,  save :: first = .true.
     real(RP), save :: volume_g
     !---------------------------------------------------------------------------
 
@@ -260,6 +259,36 @@ contains
 
     return
   end function GTL_global_mean
+
+  !-----------------------------------------------------------------------------
+  subroutine GTL_global_mean_eachlayer( var, var_pl, sum_g )
+    use mod_adm, only: &
+       ADM_gall,    &
+       ADM_lall,    &
+       ADM_gall_pl, &
+       ADM_lall_pl, &
+       ADM_kall
+    implicit none
+
+    real(RP), intent(in)  :: var   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: sum_g (ADM_kall)
+
+    real(RP)       :: one   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP)       :: one_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP)       :: area_g(ADM_kall)
+    !---------------------------------------------------------------------------
+
+    one   (:,:,:) = 1.0_RP
+    one_pl(:,:,:) = 1.0_RP
+
+    call GTL_global_sum_eachlayer( one(:,:,:), one_pl(:,:,:), area_g(:) )
+    call GTL_global_sum_eachlayer( var(:,:,:), var_pl(:,:,:), sum_g (:) )
+
+    sum_g(:) = sum_g(:) / area_g(:)
+
+    return
+  end subroutine GTL_global_mean_eachlayer
 
   !-----------------------------------------------------------------------------
   function GTL_max( var, var_pl, kdim, kstart, kend ) result( vmax_g )
