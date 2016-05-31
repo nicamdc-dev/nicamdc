@@ -750,6 +750,8 @@ contains
                                      ps,         &  ! [OUT] Surface Pressure (Pa)
                                      rho(k),     &  ! [OUT] density (kg m^-3)
                                      q(k)        )  ! [OUT] water vapor mixing ratio (kg/kg)
+
+          q(k) = max( q(k), 0.0D0 ) ! fix negative value
        enddo
 
        ! Re-Evaluation of temperature from virtual temperature
@@ -904,6 +906,10 @@ contains
                                rho(k),    &  ! [OUT] density (kg m^-3)
                                q(k),      &  ! [OUT] water vapor mixing ratio (kg/kg)
                                pert       )  ! [IN ] perturbation switch
+
+          q(k) = max( q(k), 0.0D0 ) ! fix negative value
+          ! force zero for q upper tropopause (12km)
+          if ( z(k) > 12000.D0 ) q(k) = 0.0D0
        enddo
 
        ! Re-Evaluation of temperature from virtual temperature
@@ -1023,6 +1029,8 @@ contains
                                       ps,        &  ! [OUT] Surface Pressure (Pa)
                                       rho(k),    &  ! [OUT] density (kg m^-3)
                                       q(k)       )  ! [OUT] water vapor mixing ratio (kg/kg)
+
+          q(k) = max( q(k), 0.0D0 ) ! fix negative value
        enddo
 
        ! Re-Evaluation of temperature from virtual temperature
