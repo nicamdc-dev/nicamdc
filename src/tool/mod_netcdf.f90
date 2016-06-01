@@ -476,7 +476,7 @@ contains
     call check( nf90_put_att( &
          nc%id_nc, nc%id_var_lon, 'units', trim(nc%lon_units) ) )
     call check( nf90_put_att( &
-         nc%id_nc, nc%id_var_lon, 'long_name', 'Longitude' ) )
+         nc%id_nc, nc%id_var_lon, 'long_name', 'longitude' ) )
 
     !--- latitude
     call check( nf90_def_dim( &
@@ -487,7 +487,7 @@ contains
     call check( nf90_put_att( &
          nc%id_nc, nc%id_var_lat, 'units', trim(nc%lat_units) ) )
     call check( nf90_put_att( &
-         nc%id_nc, nc%id_var_lat, 'long_name', 'Latitude' ) )
+         nc%id_nc, nc%id_var_lat, 'long_name', 'latitude' ) )
 
     !--- level
     call check( nf90_def_dim( &
@@ -498,7 +498,7 @@ contains
     call check( nf90_put_att( &
          nc%id_nc, nc%id_var_lev, 'units', trim(nc%lev_units) ) )
     call check( nf90_put_att( &
-         nc%id_nc, nc%id_var_lev, 'long_name', 'Level' ) )
+         nc%id_nc, nc%id_var_lev, 'long_name', 'level' ) )
 
     !--- time
     call check( nf90_def_dim( &
@@ -509,7 +509,7 @@ contains
     call check( nf90_put_att( &
          nc%id_nc, nc%id_var_time, 'units', trim(nc%time_units) ) )
     call check( nf90_put_att( &
-         nc%id_nc, nc%id_var_time, 'long_name', 'Time' ) )
+         nc%id_nc, nc%id_var_time, 'long_name', 'time' ) )
 
     !--- variable
     if( nc%nf90_cmode == NF90_HDF5 ) then
