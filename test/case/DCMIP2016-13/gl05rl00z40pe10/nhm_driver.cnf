@@ -28,9 +28,9 @@
 /
 
 &TIMEPARAM
-    DTL         = 60.D0,
+    DTL         = 5.D0,
     INTEG_TYPE  = "RK3",
-    LSTEP_MAX   = 120,
+    LSTEP_MAX   = 1440,
     start_date  = 0000,1,1,0,0,0
 /
 
@@ -54,6 +54,9 @@
     restart_layername = 'ZSALL42_DCMIP16',
 /
 
+##### DCMIP2016-13: Supercell Experiment
+##case 1: with initial perturbation
+##case 2: without initial perturbation
 &DYCORETESTPARAM
     init_type  = 'Supercell',
     test_case  = '1',
@@ -70,7 +73,7 @@
 
 &CNSTPARAM
     earth_radius        = 6.37122D+6,
-    earth_angvel        =   7.292D-5,
+    earth_angvel        =      0.0D0,
     small_planet_factor =     120.D0,
     earth_gravity       = 9.80616D0,
     gas_cnst            =   287.0D0,
@@ -80,16 +83,15 @@
 &NUMFILTERPARAM
     lap_order_hdiff   = 2,
     hdiff_type        = 'NONLINEAR1',
-    Kh_coef_maxlim    = 1.200D+17,
-    Kh_coef_minlim    = 1.200D+16,
-    ZD_hdiff_nl       = 20000.D0,
+    Kh_coef_maxlim    = 1.000D+11,
+    Kh_coef_minlim    = 1.000D+10,
+    ZD_hdiff_nl       = 12000.D0,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
-    alpha_d           = 1.20D16,
-!    gamma_h_lap1      = 1.20D7,
-!    ZD                = 20000.D0,
-!    alpha_r           = 1.00D-3,
-!    RAYLEIGH_DAMP_ONLY_W = .true.,
+    alpha_d           = 1.00D+10,
+    gamma_h_lap1      = 0.0D0,
+    ZD                = 40000.D0,
+    alpha_r           = 0.0D0,
 /
 
 &EMBUDGETPARAM
@@ -103,7 +105,7 @@
     hist3D_layername = 'ZSDEF40_DCMIP16',
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
-    step             = 1          ,
+    step             = 12         ,
     doout_step0      = .true.     ,
 /
 
@@ -131,6 +133,5 @@
 &NMHIST item='ml_qr',      file='qr',   ktype='3D' /
 
 &NMHIST item='sl_af_prcp', file='prcp', ktype='2D' /
-
 
 ################################################################################

@@ -70,7 +70,7 @@
     init_type   = 'Jablonowski-Moist',
     test_case   = '1',
     chemtracer  = .true.,
-    prs_rebuild = .true.,
+    prs_rebuild = .false.,
 /
 
 &FORCING_PARAM
@@ -100,10 +100,9 @@
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
     alpha_d           = 1.50D15,
-!    gamma_h_lap1      = 1.20D7,
-!    ZD                = 20000.D0,
-!    alpha_r           = 1.00D-3,
-!    RAYLEIGH_DAMP_ONLY_W = .true.,
+    gamma_h_lap1      = 0.0D0,
+    ZD                = 40000.D0,
+    alpha_r           = 0.0D0,
 /
 
 &EMBUDGETPARAM
@@ -117,7 +116,7 @@
     hist3D_layername = 'ZSDEF30_DCMIP16',
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
-    step             = 288        ,
+    step             = 144        ,
     doout_step0      = .true.     ,
 /
 
@@ -153,7 +152,5 @@
 &NMHIST item='sl_cl',    file='cl_column',  ktype='2D' /
 &NMHIST item='sl_cl2',   file='cl2_column', ktype='2D' /
 &NMHIST item='sl_cly',   file='cly_column', ktype='2D' /
-
-
 
 ################################################################################
