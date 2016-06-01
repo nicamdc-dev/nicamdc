@@ -838,7 +838,7 @@ program fio_ico2ll_mpi
               write( date_str_tmp(j), '(I4)' ) date_str(j)
               date_str_tmp(j) = adjustl( date_str_tmp(j) )
               if ( j == 1 ) then
-                 write(date_str_tmp(j),'(2A)') ('0',i=1,4-len_trim(date_str_tmp(j))), trim(date_str_tmp(j))
+                 write(date_str_tmp(j),'(4A)') ('0',i=1,4-len_trim(date_str_tmp(j))), trim(date_str_tmp(j))
               else
                  write(date_str_tmp(j),'(2A)') ('0',i=1,2-len_trim(date_str_tmp(j))), trim(date_str_tmp(j))
               endif
