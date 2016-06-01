@@ -87,6 +87,7 @@ module mod_history_vars
   logical, private :: out_th       = .false.
   logical, private :: out_th_prime = .false.
   logical, private :: out_850hPa   = .false.
+  logical, private :: out_500hPa   = .false.
 
   logical, private :: out_rh       = .false.
   logical, private :: out_pw       = .false.
@@ -131,6 +132,10 @@ contains
            .OR. item_save(n) == 'sl_v850'     &
            .OR. item_save(n) == 'sl_w850'     &
            .OR. item_save(n) == 'sl_t850'     ) out_850hPa   = .true.
+       if(      item_save(n) == 'sl_u500'     &
+           .OR. item_save(n) == 'sl_v500'     &
+           .OR. item_save(n) == 'sl_w500'     &
+           .OR. item_save(n) == 'sl_t500'     ) out_500hPa   = .true.
 
        if(      item_save(n) == 'ml_rh'       ) out_rh       = .true.
        if(      item_save(n) == 'sl_pw'       ) out_pw       = .true.
@@ -280,6 +285,10 @@ contains
     real(RP) :: v_850    (ADM_gall   ,ADM_KNONE,ADM_lall   )
     real(RP) :: w_850    (ADM_gall   ,ADM_KNONE,ADM_lall   )
     real(RP) :: t_850    (ADM_gall   ,ADM_KNONE,ADM_lall   )
+    real(RP) :: u_500    (ADM_gall   ,ADM_KNONE,ADM_lall   ) ! [add] 20130705 R.Yoshida
+    real(RP) :: v_500    (ADM_gall   ,ADM_KNONE,ADM_lall   )
+    real(RP) :: w_500    (ADM_gall   ,ADM_KNONE,ADM_lall   )
+    real(RP) :: t_500    (ADM_gall   ,ADM_KNONE,ADM_lall   )
     real(RP) :: rho_sfc  (ADM_gall   ,ADM_KNONE,ADM_lall   )
     real(RP) :: pre_sfc  (ADM_gall   ,ADM_KNONE,ADM_lall   )
 
@@ -461,6 +470,27 @@ contains
           call history_in( 'sl_v850', v_850(:,:,l) )
           call history_in( 'sl_w850', w_850(:,:,l) )
           call history_in( 'sl_t850', t_850(:,:,l) )
+       enddo
+    endif
+
+    if (out_500hPa) then
+       do l = 1, ADM_lall
+          call sv_plev_uvwt( ADM_gall,        & ! [IN]
+                             pre    (:,:,l),  & ! [IN]
+                             u      (:,:,l),  & ! [IN]
+                             v      (:,:,l),  & ! [IN]
+                             w      (:,:,l),  & ! [IN]
+                             tem    (:,:,l),  & ! [IN]
+                             50000.0_RP,      & ! [IN]
+                             u_500  (:,K0,l), & ! [OUT]
+                             v_500  (:,K0,l), & ! [OUT]
+                             w_500  (:,K0,l), & ! [OUT]
+                             t_500  (:,K0,l)  ) ! [OUT]
+
+          call history_in( 'sl_u500', u_500(:,:,l) )
+          call history_in( 'sl_v500', v_500(:,:,l) )
+          call history_in( 'sl_w500', w_500(:,:,l) )
+          call history_in( 'sl_t500', t_500(:,:,l) )
        enddo
     endif
 
@@ -667,8 +697,8 @@ contains
           if( pre(ij,k) < plev ) exit
        enddo
        if ( k >= kdim ) then
-          write(*,          *) 'xxx internal error! [sv_uvwp_850/mod_history_vars] STOP.'
-          write(ADM_LOG_FID,*) 'xxx internal error! [sv_uvwp_850/mod_history_vars] STOP.',kdim,k,plev,ij,pre(ij,:)
+          write(*,          *) 'xxx internal error! [sv_plev_uvwt/mod_history_vars] STOP.'
+          write(ADM_LOG_FID,*) 'xxx internal error! [sv_plev_uvwt/mod_history_vars] STOP.',kdim,k,plev,ij,pre(ij,:)
           call ADM_proc_stop
        endif
 

@@ -130,6 +130,8 @@
 &NMHIST item='sl_v850',  file='v850', ktype='2D' /
 &NMHIST item='sl_w850',  file='w850', ktype='2D' /
 &NMHIST item='sl_t850',  file='t850', ktype='2D' /
+&NMHIST item='sl_w500',  file='w500', ktype='2D' /
+&NMHIST item='sl_t500',  file='t500', ktype='2D' /
 
 &NMHIST item='ml_af_fvx',  file='forcing_vx',  ktype='3D' /
 &NMHIST item='ml_af_fvy',  file='forcing_vy',  ktype='3D' /
