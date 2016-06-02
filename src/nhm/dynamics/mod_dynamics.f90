@@ -523,18 +523,21 @@ contains
                            VMTR_C2WfactGz(:,:,:,l)  ) ! [IN]
        enddo
 
-       pre0_kappa = PRE00**KAPPA
 
-       !$acc kernels pcopy(th,eth) pcopyin(tem,pre,rho,ein) async(0)
-       do l = 1, ADM_lall
-       do k = 1, ADM_kall
-       do g = 1, ADM_gall
-          th (g,k,l) = tem(g,k,l) + pre(g,k,l)**KAPPA * pre0_kappa
-          eth(g,k,l) = ein(g,k,l) + pre(g,k,l) / rho(g,k,l)
-       enddo
-       enddo
-       enddo
-       !$acc end kernels
+       call THRMDYN_th ( ADM_gall,   & ! [IN]
+                         ADM_kall,   & ! [IN]
+                         ADM_lall,   & ! [IN]
+                         tem(:,:,:), & ! [IN]
+                         pre(:,:,:), & ! [IN]
+                         th (:,:,:)  ) ! [OUT]
+
+       call THRMDYN_eth( ADM_gall,   & ! [IN]
+                         ADM_kall,   & ! [IN]
+                         ADM_lall,   & ! [IN]
+                         ein(:,:,:), & ! [IN]
+                         pre(:,:,:), & ! [IN]
+                         rho(:,:,:), & ! [IN]
+                         eth(:,:,:)  ) ! [OUT]
 
        !--- perturbations ( pre, rho with metrics )
        !$acc  kernels pcopy(pregd,rhogd) pcopyin(pre,pre_bs,rho,rho_bs,VMTR_GSGAM2) async(0)
