@@ -68,6 +68,7 @@ contains
     logical :: SET_DCMIP2016_12 = .false.
     logical :: SET_DCMIP2016_13 = .false.
     logical :: SET_DCMIP2016_DRY = .false.
+    logical :: SET_DCMIP2016_LSC = .false. !large scale condensation
 
     namelist /FORCING_DCMIP_PARAM/ &
        SET_RJ2012,          &
@@ -75,6 +76,7 @@ contains
        SET_DCMIP2016_12,    &
        SET_DCMIP2016_13,    &
        SET_DCMIP2016_DRY,   &
+       SET_DCMIP2016_LSC,   &
        USE_SimpleMicrophys, &
        SM_Latdepend_SST,    &
        SM_LargeScaleCond,   &
@@ -110,41 +112,56 @@ contains
        USE_ToyChemistry    = .false.
     elseif( SET_DCMIP2016_11 ) then
        write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016 Case 1-1 (Moist baroclinic wave with terminator chemistry)'
+       USE_Kessler         = .true.
        USE_SimpleMicrophys = .true.
        SM_Latdepend_SST    = .true.
        SM_LargeScaleCond   = .false.
        SM_PBL_Bryan        = .false.
+       if ( SET_DCMIP2016_LSC ) then
+          write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
+          USE_Kessler      = .false.
+          SM_LargeScaleCond = .true.
+       endif
        if ( SET_DCMIP2016_DRY ) then
           write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016: DRY condition'
           USE_Kessler      = .false.
-       else
-          USE_Kessler      = .true.
+          SM_LargeScaleCond= .false.
        endif
        USE_ToyChemistry    = .true.
     elseif( SET_DCMIP2016_12 ) then
        write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016 Case 1-2 (Idealized tropical cyclone)'
+       USE_Kessler         = .true.
        USE_SimpleMicrophys = .true.
        SM_Latdepend_SST    = .true.
        SM_LargeScaleCond   = .false.
        SM_PBL_Bryan        = .false.
+       if ( SET_DCMIP2016_LSC ) then
+          write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
+          USE_Kessler      = .false.
+          SM_LargeScaleCond = .true.
+       endif
        if ( SET_DCMIP2016_DRY ) then
           write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016: DRY condition'
           USE_Kessler      = .false.
-       else
-          USE_Kessler      = .true.
+          SM_LargeScaleCond= .false.
        endif
        USE_ToyChemistry    = .false.
     elseif( SET_DCMIP2016_13 ) then
        write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016 Case 1-3 (Mesoscale storm)'
+       USE_Kessler         = .true.
        USE_SimpleMicrophys = .false.
        SM_Latdepend_SST    = .false.
        SM_LargeScaleCond   = .false.
        SM_PBL_Bryan        = .false.
+       if ( SET_DCMIP2016_LSC ) then
+          write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
+          USE_Kessler      = .false.
+          SM_LargeScaleCond = .true.
+       endif
        if ( SET_DCMIP2016_DRY ) then
           write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016: DRY condition'
           USE_Kessler      = .false.
-       else
-          USE_Kessler      = .true.
+          SM_LargeScaleCond= .false.
        endif
        USE_ToyChemistry    = .false.
     endif
