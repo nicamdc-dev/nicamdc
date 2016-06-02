@@ -240,10 +240,10 @@ contains
     real(RP), intent(in)    :: dt
 
     ! merged array for communication
-    real(RP) :: diff_vh   (ADM_gall   ,ADM_kall,ADM_lall   ,3)
-    real(RP) :: diff_vh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
-    real(RP) :: diff_we   (ADM_gall   ,ADM_kall,ADM_lall   ,3)
-    real(RP) :: diff_we_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
+    real(RP) :: diff_vh      (ADM_gall   ,ADM_kall,ADM_lall   ,3)
+    real(RP) :: diff_vh_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
+    real(RP) :: diff_we      (ADM_gall   ,ADM_kall,ADM_lall   ,3)
+    real(RP) :: diff_we_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
 
     ! tendency term (large step + small step)
     real(RP) :: grhog        (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -1531,16 +1531,19 @@ contains
           enddo
           enddo
 
+          ! backward
           do k = ADM_kmax-1, ADM_kmin+1, -1
           do g = 1, ADM_gall_pl
-             rhogw_pl(g,k,l) = rhogw_pl(g,k,l) - gamma_pl(g,k+1) * rhogw_pl(g,k+1,l)
+             rhogw_pl(g,k  ,l) = rhogw_pl(g,k  ,l) - gamma_pl(g,k+1) * rhogw_pl(g,k+1,l)
+             rhogw_pl(g,k+1,l) = rhogw_pl(g,k+1,l) * VMTR_GSGAM2H_pl(g,k+1,l) ! return value ( G^1/2 x gam2 )
           enddo
           enddo
 
-          do k = ADM_kmin, ADM_kmax+1
+          ! boundary treatment
           do g = 1, ADM_gall_pl
-             rhogw_pl(g,k,l) = rhogw_pl(g,k,l) * VMTR_GSGAM2H_pl(g,k,l)
-          enddo
+             rhogw_pl(g,ADM_kmin  ,l) = rhogw_pl(g,ADM_kmin  ,l) * VMTR_GSGAM2H_pl(g,ADM_kmin  ,l)
+             rhogw_pl(g,ADM_kmin+1,l) = rhogw_pl(g,ADM_kmin+1,l) * VMTR_GSGAM2H_pl(g,ADM_kmin+1,l)
+             rhogw_pl(g,ADM_kmax+1,l) = rhogw_pl(g,ADM_kmax+1,l) * VMTR_GSGAM2H_pl(g,ADM_kmax+1,l)
           enddo
        enddo
     endif

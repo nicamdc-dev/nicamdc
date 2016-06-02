@@ -92,15 +92,5 @@ llmap_base="./llmap" \
 -lon_swap \
 -comm_smallchunk
 
-${MPIEXEC} ./fio_ico2ll_mpi \
-history \
-glevel=${GLEV} \
-rlevel=${RLEV} \
-mnginfo="./${MNGINFO}" \
-layerfile_dir="./zaxis" \
-llmap_base="./llmap" \
--lon_swap \
--comm_smallchunk -output_gtool
-
 ################################################################################
 EOFICO2LL2
