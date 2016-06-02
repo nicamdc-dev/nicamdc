@@ -568,8 +568,8 @@ contains
        ijdim, &
        kdim,  &
        ein,   &
-       rho,   &
        pre,   &
+       rho,   &
        eth    )
     implicit none
 
@@ -601,8 +601,8 @@ contains
        kdim,  &
        ldim,  &
        ein,   &
-       rho,   &
        pre,   &
+       rho,   &
        eth    )
     implicit none
 

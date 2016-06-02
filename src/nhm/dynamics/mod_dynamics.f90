@@ -178,7 +178,6 @@ contains
        Rdry  => CNST_RAIR,  &
        Rvap  => CNST_RVAP,  &
        CVdry => CNST_CV,    &
-       KAPPA => CNST_KAPPA, &
        PRE00 => CNST_PRE00
     use mod_comm, only: &
        COMM_data_transfer
@@ -334,8 +333,6 @@ contains
     real(RP) :: qd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: cv   (ADM_gall,   ADM_kall,ADM_lall   )
     real(RP) :: cv_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-
-    real(RP) :: pre0_kappa
 
     real(RP), parameter :: TKE_MIN = 0.0_RP
     real(RP)            :: TKEg_corr
