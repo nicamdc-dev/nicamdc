@@ -81,7 +81,7 @@
     alpha_d           = 2.00D15,
     gamma_h_lap1      = 0.0D0,
     ZD                = 20000.D0,
-    alpha_r           = 1.00D-2,
+    alpha_r           = 1.00D-3,
 /
 
 &EMBUDGETPARAM
