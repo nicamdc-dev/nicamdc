@@ -132,7 +132,7 @@ contains
        write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016 Case 1-2 (Idealized tropical cyclone)'
        USE_Kessler         = .true.
        USE_SimpleMicrophys = .true.
-       SM_Latdepend_SST    = .true.
+       SM_Latdepend_SST    = .false.
        SM_LargeScaleCond   = .false.
        SM_PBL_Bryan        = .false.
        if ( SET_DCMIP2016_LSC ) then
