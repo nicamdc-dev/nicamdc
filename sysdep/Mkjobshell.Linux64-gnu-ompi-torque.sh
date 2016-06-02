@@ -35,7 +35,7 @@ NPROC=`expr $NMPI / $NNODE`
 
 if [ ${NNODE} -gt 16 ]; then
    rscgrp="l"
-elif [ ${TPROC} -gt 3 ]; then
+elif [ ${NNODE} -gt 3 ]; then
    rscgrp="m"
 else
    rscgrp="s"

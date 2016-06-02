@@ -395,12 +395,12 @@ contains
     logical,          intent(in) :: dep_hgrid       ! depend on each horizontal grid?
     logical,          intent(in) :: smooth_1var     ! apply smoothing to coef?
     integer,          intent(in) :: lap_order       ! laplacian order
-    real(RP),          intent(in) :: gamma           ! coefficient    for horizontal diffusion
-    real(RP),          intent(in) :: tau             ! e-folding time for horizontal diffusion
+    real(RP),         intent(in) :: gamma           ! coefficient    for horizontal diffusion
+    real(RP),         intent(in) :: tau             ! e-folding time for horizontal diffusion
     character(len=*), intent(in) :: hdiff_type_lap1 ! type of horizontal diffusion (lap1)
-    real(RP),          intent(in) :: gamma_lap1      ! coefficient    for horizontal diffusion (lap1)
-    real(RP),          intent(in) :: tau_lap1        ! e-folding time for horizontal diffusion (lap1)
-    real(RP),          intent(in) :: zlimit_lap1     ! lower limit of horizontal diffusion (lap1) [m]
+    real(RP),         intent(in) :: gamma_lap1      ! coefficient    for horizontal diffusion (lap1)
+    real(RP),         intent(in) :: tau_lap1        ! e-folding time for horizontal diffusion (lap1)
+    real(RP),         intent(in) :: zlimit_lap1     ! lower limit of horizontal diffusion (lap1) [m]
 
     real(RP) :: fact(ADM_kall)
 
@@ -1262,7 +1262,6 @@ contains
     !---------------------------------------------------------------------------
 
     call DEBUG_rapstart('____numfilter_hdiffusion')
-
 
     if ( hdiff_nonlinear ) then
        call height_factor( ADM_kall, real(GRD_gz(:),kind=RP), real(GRD_htop,kind=RP), ZD_hdiff_nl, fact(:) )
@@ -2441,7 +2440,7 @@ contains
        PI => CNST_PI
     implicit none
 
-    integer, intent(in)  :: kdim          ! number of vertical grid
+    integer,  intent(in)  :: kdim          ! number of vertical grid
     real(RP), intent(in)  :: z(kdim)       ! height [m]
     real(RP), intent(in)  :: z_top         ! height top [m]
     real(RP), intent(in)  :: z_bottomlimit ! bottom limit of the factor [m]
