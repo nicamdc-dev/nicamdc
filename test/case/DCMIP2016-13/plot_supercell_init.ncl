@@ -71,17 +71,17 @@ begin
 
 ;  qv = datafile->RhoQv / rho * 1000.0
   qv = datafile->Q * 1000.0
-printVarSummary (qv)
-printMinMax (qv, False)
+  printVarSummary (qv)
+  printMinMax (qv, False)
   copy_VarCoords(t, qv)
 
 ;  p = rho * 287.0 * t / 100.0
   p = datafile->P / 100.0
   copy_VarCoords(t, p)
-  theta = t/(p/1000)^(0.2875)
+  theta = (t * (1.0 + 0.608*(qv/1000)))/(p/1000)^(0.2875)
   copy_VarCoords(t, theta)
-printVarSummary (theta)
-printMinMax (theta, False)
+  printVarSummary (theta)
+  printMinMax (theta, False)
 
 ;  ps = (p(0,0,:,:) * lev(1) - p(0,1,:,:) * lev(0)) / (lev(1) - lev(0))
   ps = datafile->PS / 100.0
