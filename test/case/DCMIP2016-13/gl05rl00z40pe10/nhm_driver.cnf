@@ -19,14 +19,6 @@
     topo_fname    = "NONE",
 /
 
-&GMTRPARAM
-    GMTR_io_mode = 'ADVANCED', GMTR_fname = 'metrics_GL05RL00',
-/
-
-&OPRTPARAM
-    OPRT_io_mode = 'ADVANCED', OPRT_fname = 'metrics_GL05RL00',
-/
-
 &TIMEPARAM
     DTL         = 5.D0,
     INTEG_TYPE  = "RK3",

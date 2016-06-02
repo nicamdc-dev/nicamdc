@@ -20,14 +20,6 @@
     topo_io_mode  = "IDEAL",
 /
 
-&GMTRPARAM
-    GMTR_io_mode = 'ADVANCED', GMTR_fname = 'metrics_GL07RL00',
-/
-
-&OPRTPARAM
-    OPRT_io_mode = 'ADVANCED', OPRT_fname = 'metrics_GL07RL00',
-/
-
 &TIMEPARAM
     DTL         = 300.D0,
     INTEG_TYPE  = "RK3",
