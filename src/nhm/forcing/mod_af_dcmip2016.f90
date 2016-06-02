@@ -341,10 +341,10 @@ contains
                 + qc(:) * CVW(I_QC) &
                 + qr(:) * CVW(I_QR)
 
-          fq(ij,kmin:kmax,I_QV) = ( qv(:) - q(ij,kmin:kmax,I_QV) ) / dt
-          fq(ij,kmin:kmax,I_QC) = ( qc(:) - q(ij,kmin:kmax,I_QC) ) / dt
-          fq(ij,kmin:kmax,I_QR) = ( qr(:) - q(ij,kmin:kmax,I_QR) ) / dt
-          fe(ij,kmin:kmax)      = ( cv(:) * theta(:) * pk(:) - ein(ij,kmin:kmax) ) / dt
+          fq(ij,kmin:kmax,I_QV) = fq(ij,kmin:kmax,I_QV) + ( qv(:) - q(ij,kmin:kmax,I_QV) ) / dt
+          fq(ij,kmin:kmax,I_QC) = fq(ij,kmin:kmax,I_QC) + ( qc(:) - q(ij,kmin:kmax,I_QC) ) / dt
+          fq(ij,kmin:kmax,I_QR) = fq(ij,kmin:kmax,I_QR) + ( qr(:) - q(ij,kmin:kmax,I_QR) ) / dt
+          fe(ij,kmin:kmax)      = fe(ij,kmin:kmax)      + ( cv(:) * theta(:) * pk(:) - ein(ij,kmin:kmax) ) / dt
        enddo
     endif
 
@@ -403,9 +403,9 @@ contains
        do k = 1, vlayer
           kk = kmax - k + 1 ! reverse order
 
-          fvx(:,kk) = ( u(:,k) * ix(:) + v(:,k) * jx(:) - vx(:,kk) ) / dt
-          fvy(:,kk) = ( u(:,k) * iy(:) + v(:,k) * jy(:) - vy(:,kk) ) / dt
-          fvz(:,kk) = ( u(:,k) * iz(:) + v(:,k) * jz(:) - vz(:,kk) ) / dt
+          fvx(:,kk) = fvx(:,kk) + ( u(:,k) * ix(:) + v(:,k) * jx(:) - vx(:,kk) ) / dt
+          fvy(:,kk) = fvy(:,kk) + ( u(:,k) * iy(:) + v(:,k) * jy(:) - vy(:,kk) ) / dt
+          fvz(:,kk) = fvz(:,kk) + ( u(:,k) * iz(:) + v(:,k) * jz(:) - vz(:,kk) ) / dt
        enddo
 
        do k = 1, vlayer
@@ -436,8 +436,8 @@ contains
                       + qr(k) * CVW(I_QR)
              endif
 
-             fq(ij,kk,I_QV) = ( qv(k) - q(ij,kk,I_QV) ) / dt
-             fe(ij,kk)      = ( cv(k) * t(ij,k) - ein(ij,kk) ) / dt
+             fq(ij,kk,I_QV) = fq(ij,kk,I_QV) + ( qv(k) - q(ij,kk,I_QV) ) / dt
+             fe(ij,kk)      = fe(ij,kk)      + ( cv(k) * t(ij,k) - ein(ij,kk) ) / dt
           enddo
        enddo
 
@@ -454,8 +454,8 @@ contains
 
           call tendency_Terminator( lat_deg, lon_deg, cl, cl2, dt, cl_f, cl2_f )
 
-          fq(ij,k,NCHEM_STR) = cl_f
-          fq(ij,k,NCHEM_END) = cl2_f
+          fq(ij,k,NCHEM_STR) = fq(ij,k,NCHEM_STR) + cl_f
+          fq(ij,k,NCHEM_END) = fq(ij,k,NCHEM_END) + cl2_f
        enddo
        enddo
     endif
