@@ -13,7 +13,7 @@ MODS_SHARE =	\
 	mod_fio.o	\
 	fio.o	\
 	fiof.o	\
-	mod_hio.o	\
+	$(mod_hio).o	\
 	hio.o	\
 	hiof.o	\
 	poh5.o	\
@@ -43,8 +43,9 @@ mod_fio.o	: mod_fio.f90 mod_precision.o mod_adm.o mod_debug.o mod_calendar.o mod
 hio.o	: hio.c hio.h hio_def.h
 hiof.o	: hiof.c hiof.h hio.h hio_def.h
 mod_hio.o	: mod_hio.f90 mod_precision.o mod_adm.o mod_debug.o mod_calendar.o mod_cnst.o hio.o hiof.o
+mod_nohio.o	: mod_nohio.f90 mod_precision.o mod_adm.o mod_debug.o mod_calendar.o mod_cnst.o
 mod_comm.o	: mod_comm.f90 mod_precision.o mod_adm.o mod_debug.o mod_cnst.o
-mod_grd.o	: mod_grd.f90 mod_precision.o mod_adm.o mod_debug.o mod_cnst.o mod_comm.o mod_misc.o mod_fio.o mod_hio.o mod_ideal_topo.o
+mod_grd.o	: mod_grd.f90 mod_precision.o mod_adm.o mod_debug.o mod_cnst.o mod_comm.o mod_misc.o mod_fio.o $(mod_hio).o mod_ideal_topo.o
 mod_ideal_topo.o	: mod_ideal_topo.f90 mod_precision.o mod_adm.o mod_debug.o mod_cnst.o
 mod_gmtr.o	: mod_gmtr.f90 mod_precision.o mod_adm.o mod_debug.o mod_comm.o mod_misc.o mod_grd.o mod_cnst.o
 $(mod_oprt).o	: $(mod_oprt).f90 mod_precision.o mod_adm.o mod_debug.o mod_grd.o mod_gmtr.o mod_comm.o mod_cnst.o

@@ -25,6 +25,13 @@ else
 	mod_netcdf := mod_nonetcdf
 endif
 
+ifeq ($(ENABLE_POH5),T)
+	mod_hio := mod_hio
+else
+	VPATH += share/extra:
+	mod_hio := mod_nohio
+endif
+
 ifeq ($(ENABLE_FIXEDINDEX),T)
 	FFLAGS += -D_FIXEDINDEX_ -I$(SRCDIR)/include
 endif
