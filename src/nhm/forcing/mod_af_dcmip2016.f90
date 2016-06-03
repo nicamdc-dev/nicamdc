@@ -323,12 +323,12 @@ contains
                         qv   (:),  & ! [INOUT]
                         qc   (:),  & ! [INOUT]
                         qr   (:),  & ! [INOUT]
-                        rhod (:),  & ! [INOUT] but not changed
+                        rhod (:),  & ! [IN]
                         pk   (:),  & ! [IN]
                         dt,        & ! [IN]
                         z    (:),  & ! [IN]
                         vlayer,    & ! [IN]
-                        precip(ij) ) ! [INOUT]
+                        precip(ij) ) ! [OUT]
 
           qd(:) = 1.0_RP &
                 / ( 1.0_RP + qv(:) + qc(:) + qr(:) )

@@ -33,7 +33,7 @@
 !     dt     - time step (s)
 !     z      - heights of thermodynamic levels in the grid column (m)
 !     nz     - number of thermodynamic levels in the column
-!     rainnc - accumulated precip beneath the grid column (mm)
+!     precl  - Precipitation rate (m_water/s)
 !
 ! Output variables:
 !     Increments are added into t, qv, qc, qr, and rainnc which are
@@ -60,8 +60,7 @@
 !
 !=======================================================================
 
-SUBROUTINE KESSLER(theta, qv, qc, qr, rho, pk, dt, z, nz, rainnc) !&
-!  BIND(c, name = "kessler")
+SUBROUTINE KESSLER(theta, qv, qc, qr, rho, pk, dt, z, nz, precl)
 
   IMPLICIT NONE
 
@@ -75,11 +74,13 @@ SUBROUTINE KESSLER(theta, qv, qc, qr, rho, pk, dt, z, nz, rainnc) !&
             theta   ,     & ! Potential temperature (K)
             qv      ,     & ! Water vapor mixing ratio (gm/gm)
             qc      ,     & ! Cloud water mixing ratio (gm/gm)
-            qr      ,     & ! Rain  water mixing ratio (gm/gm)
+            qr              ! Rain  water mixing ratio (gm/gm)
+
+  REAL(8), DIMENSION(nz), INTENT(IN) :: &
             rho             ! Dry air density (not mean state as in KW) (kg/m^3)
 
-  REAL(8), INTENT(INOUT) :: &
-            rainnc          ! Accumulated precip beneath the grid column (mm)
+  REAL(8), INTENT(OUT) :: &
+            precl          ! Precipitation rate (m_water / s)
 
   REAL(8), DIMENSION(nz), INTENT(IN) :: &
             z       ,     & ! Heights of thermo. levels in the grid column (m)
@@ -117,6 +118,11 @@ SUBROUTINE KESSLER(theta, qv, qc, qr, rho, pk, dt, z, nz, rainnc) !&
   end do
 
   ! Maximum time step size in accordance with CFL condition
+  if (dt .le. 0.d0) then
+    write(*,*) 'kessler.f90 called with nonpositive dt'
+    stop
+  end if
+
   dt_max = dt
   do k=1,nz-1
     if (velqr(k) .ne. 0.d0) then
@@ -129,10 +135,12 @@ SUBROUTINE KESSLER(theta, qv, qc, qr, rho, pk, dt, z, nz, rainnc) !&
   dt0 = dt / real(rainsplit,8)
 
   ! Subcycle through rain process
+  precl = 0.d0
+
   do nt=1,rainsplit
 
-    ! Precipitation accumulated beneath the column (mm rain)
-    rainnc = rainnc + 1000.d0*rho(1)*qr(1)*velqr(1)*dt0/rhoqr
+    ! Precipitation rate (m/s)
+    precl = precl + rho(1) * qr(1) * velqr(1) / rhoqr
 
     ! Sedimentation term using upstream differencing
     do k=1,nz-1
@@ -144,9 +152,9 @@ SUBROUTINE KESSLER(theta, qv, qc, qr, rho, pk, dt, z, nz, rainnc) !&
     do k=1,nz
 
       ! Autoconversion and accretion rates following KW eq. 2.13a,b
-      qrprod = qc(k) - (qc(k)-dt0*max(.001*(qc(k)-.001d0),0.D0))/(1.d0+dt0*2.2d0*qr(k)**.875)
-      qc(k) = max(qc(k)-qrprod,0.D0)
-      qr(k) = max(qr(k)+qrprod+sed(k),0.D0)
+      qrprod = qc(k) - (qc(k)-dt0*amax1(.001*(qc(k)-.001d0),0.))/(1.d0+dt0*2.2d0*qr(k)**.875)
+      qc(k) = amax1(qc(k)-qrprod,0.)
+      qr(k) = amax1(qr(k)+qrprod+sed(k),0.)
 
       ! Saturation vapor mixing ratio (gm/gm) following KW eq. 2.11
       qvs = pc(k)*exp(f2x*(pk(k)*theta(k)-273.d0)   &
@@ -154,14 +162,14 @@ SUBROUTINE KESSLER(theta, qv, qc, qr, rho, pk, dt, z, nz, rainnc) !&
       prod = (qv(k)-qvs)/(1.d0+qvs*f5/(pk(k)*theta(k)-36.d0)**2)
 
       ! Evaporation rate following KW eq. 2.14a,b
-      ern = min(dt0*(((1.6d0+124.9d0*(r(k)*qr(k))**.2046)  &
+      ern = amin1(dt0*(((1.6d0+124.9d0*(r(k)*qr(k))**.2046)  &
             *(r(k)*qr(k))**.525)/(2550000d0*pc(k)            &
             /(3.8d0 *qvs)+540000d0))*(dim(qvs,qv(k))         &
-            /(r(k)*qvs)),max(-prod-qc(k),0.D0),qr(k))
+            /(r(k)*qvs)),amax1(-prod-qc(k),0.),qr(k))
 
       ! Saturation adjustment following KW eq. 3.10
-      theta(k)= theta(k) + 2500000d0/(1003.d0*pk(k))*(max( prod,-qc(k))-ern)
-      qv(k) = max(qv(k)-max(prod,-qc(k))+ern,0.D0)
+      theta(k)= theta(k) + 2500000d0/(1003.d0*pk(k))*(amax1( prod,-qc(k))-ern)
+      qv(k) = amax1(qv(k)-max(prod,-qc(k))+ern,0.)
       qc(k) = qc(k)+max(prod,-qc(k))
       qr(k) = qr(k)-ern
     end do
@@ -173,6 +181,8 @@ SUBROUTINE KESSLER(theta, qv, qc, qr, rho, pk, dt, z, nz, rainnc) !&
       end do
     end if
   end do
+
+  precl = precl / dble(rainsplit)
 
 END SUBROUTINE KESSLER
 
