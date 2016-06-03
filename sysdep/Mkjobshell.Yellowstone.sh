@@ -30,6 +30,8 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
+OMP_NUM_THREADS=1
+
 # for DCMIP2016
 prjcode="SCIS0006"
 
@@ -45,13 +47,14 @@ cat << EOF1 > run.sh
 #BSUB -J nicamdc              # job name
 #BSUB -W 00:10                # wall-clock time (hrs:mins)
 #BSUB -n ${NMPI}              # number of tasks in job
-#BSUB -R "span[ptile=4]"      # run four MPI tasks per node
+#BSUB -R "span[ptile=10]"     # run four MPI tasks per node
 #BSUB -q regular              # queue
 #BSUB -e errors.%J.nicamdc    # error file name in which %J is replaced by the job ID
 #BSUB -o output.%J.nicamdc    # output file name in which %J is replaced by the job ID
  
-export OMP_NUM_THREADS=4
-export MP_TASK_AFFINITY=core:$OMP_NUM_THREADS
+export OMP_NUM_THREADS=${OMP_NUM_THREADS}
+export MP_TASK_AFFINITY=core:${OMP_NUM_THREADS}
+module load mkl/10.3.11
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
@@ -68,7 +71,7 @@ cat << EOF2 >> run.sh
 ${MPIEXEC} ./${BINNAME}
 
 ################################################################################
-EOF1
+EOF2
 
 
 cat << EOFICO2LL1 > ico2ll.sh
@@ -83,13 +86,14 @@ cat << EOFICO2LL1 > ico2ll.sh
 #BSUB -J ico2ll               # job name
 #BSUB -W 00:10                # wall-clock time (hrs:mins)
 #BSUB -n ${NMPI}              # number of tasks in job
-#BSUB -R "span[ptile=4]"      # run four MPI tasks per node
+#BSUB -R "span[ptile=10]"     # run four MPI tasks per node
 #BSUB -q regular              # queue
 #BSUB -e errors.%J.ico2ll     # error file name in which %J is replaced by the job ID
 #BSUB -o output.%J.ico2ll     # output file name in which %J is replaced by the job ID
  
-export OMP_NUM_THREADS=4
-export MP_TASK_AFFINITY=core:$OMP_NUM_THREADS
+export OMP_NUM_THREADS=${OMP_NUM_THREADS}
+export MP_TASK_AFFINITY=core:${OMP_NUM_THREADS}
+module load mkl/10.3.11
 
 ln -sv ${TOPDIR}/bin/fio_ico2ll_mpi .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
@@ -131,13 +135,15 @@ cat << EOFICO2LLNC1 > ico2ll_netcdf.sh
 #BSUB -J ico2ll               # job name
 #BSUB -W 00:10                # wall-clock time (hrs:mins)
 #BSUB -n ${NMPI}              # number of tasks in job
-#BSUB -R "span[ptile=4]"      # run four MPI tasks per node
+#BSUB -R "span[ptile=10]"     # run four MPI tasks per node
 #BSUB -q regular              # queue
 #BSUB -e errors.%J.ico2ll     # error file name in which %J is replaced by the job ID
 #BSUB -o output.%J.ico2ll     # output file name in which %J is replaced by the job ID
 
-export OMP_NUM_THREADS=4
+export OMP_NUM_THREADS=1
 export MP_TASK_AFFINITY=core:$OMP_NUM_THREADS
+module load mkl/10.3.11
+module load cdo/1.6.3
 
 # User Settings
 # ------------------------------------------------------------------------------

@@ -1,8 +1,12 @@
 #
-# ------ FOR Linux 64bit & intel fortran&C & intel mpi -----
+# ------ FOR Linux 64bit & intel fortran&C & intel mpi on Yellowstone -----
 #
+#--------------------------------------------------------------------------
+#             LOAD MODULES BELOW BEFORE COMPILE SOFTWARES
+#       intel/12.1.5, ncarcompilers/1.0, mkl/10.3.11, netcdf/4.3.0
+#--------------------------------------------------------------------------
 
-FFLAGS_FAST  = -fpp -m64 -O3 -xHost                \
+FFLAGS_FAST  = -fpp -m64 -O3 -march=corei7 -axAVX   \
                -assume byterecl -convert big_endian \
                -fp-model source                     \
                -mcmodel=medium -heap-arrays
@@ -18,7 +22,7 @@ FFLAGS = $(FFLAGS_FAST)
 #FFLAGS = $(FFLAGS_DEBUG)
 
 CC     = mpicc
-CFLAGS = -O3 -xHost -ip -mcmodel=medium
+CFLAGS = -O3 -march=corei7 -axAVX -ip -mcmodel=medium
 
 ##### Special Options #####
 
@@ -46,4 +50,4 @@ INSTALL = install
 AR      = ar
 ARFLAGS = r
 RANLIB  = ranlib
-JOBSUB  = sh
+JOBSUB  = less
