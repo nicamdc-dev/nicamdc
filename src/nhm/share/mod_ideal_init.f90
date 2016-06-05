@@ -782,8 +782,8 @@ contains
           ! Todo : the mixing ratios are dry
           ! i.e. the ratio between the density of the species and the density of dry air.
           ! calc density at reference level
-          DIAG_var(n,:,l,6+NCHEM_STR) = cl  / (1.0D0 - q(:))
-          DIAG_var(n,:,l,6+NCHEM_END) = cl2 / (1.0D0 - q(:))
+          DIAG_var(n,:,l,6+NCHEM_STR) = cl  * (1.0D0 - q(:))
+          DIAG_var(n,:,l,6+NCHEM_END) = cl2 * (1.0D0 - q(:))
        endif
 
     enddo

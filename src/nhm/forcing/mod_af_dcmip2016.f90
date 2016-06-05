@@ -291,6 +291,7 @@ contains
     real(RP) :: lat_deg, lon_deg
     real(RP) :: cl, cl2
     real(RP) :: cl_f, cl2_f
+    real(RP) :: qvd
 
     integer :: ij, k, kk
     !---------------------------------------------------------------------------
@@ -448,14 +449,15 @@ contains
        do ij = 1,    ijdim
           lat_deg = lat(ij) / d2r
           lon_deg = lon(ij) / d2r
+          qvd     = 1.0_RP - q(ij,kk,I_QV)
 
-          cl  = q(ij,k,NCHEM_STR)
-          cl2 = q(ij,k,NCHEM_END)
+          cl  = q(ij,k,NCHEM_STR) / qvd
+          cl2 = q(ij,k,NCHEM_END) / qvd
 
           call tendency_Terminator( lat_deg, lon_deg, cl, cl2, dt, cl_f, cl2_f )
 
-          fq(ij,k,NCHEM_STR) = fq(ij,k,NCHEM_STR) + cl_f
-          fq(ij,k,NCHEM_END) = fq(ij,k,NCHEM_END) + cl2_f
+          fq(ij,k,NCHEM_STR) = fq(ij,k,NCHEM_STR) + cl_f  * qvd
+          fq(ij,k,NCHEM_END) = fq(ij,k,NCHEM_END) + cl2_f * qvd
        enddo
        enddo
     endif
