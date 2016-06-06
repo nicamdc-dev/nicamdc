@@ -195,6 +195,8 @@ contains
     real(RP) :: fe (ADM_gall_in,ADM_kall,ADM_lall)
     real(RP) :: fq (ADM_gall_in,ADM_kall,ADM_lall,TRC_VMAX)
 
+    real(RP) :: tmp (ADM_gall_in,ADM_kall,ADM_lall)
+
     real(RP) :: precip(ADM_gall_in,ADM_KNONE,ADM_lall)
 
     ! geometry, coordinate
@@ -386,12 +388,21 @@ contains
     do nq = 1, TRC_VMAX
        frhogq(:,:,:) = fq(:,:,:,nq) * rho(:,:,:) * GSGAM2(:,:,:)
 
-       rhogq(:,:,:,nq) = rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:)
-
+!       rhogq(:,:,:,nq) = rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:)
+!
+!       ! tentative negative fixer
+!       if ( NEGATIVE_FIXER ) then
+!          rhogq(:,:,:,nq) = max( rhogq(:,:,:,nq), 0.0D0 )
+!       endif
        ! tentative negative fixer
        if ( NEGATIVE_FIXER ) then
-          rhogq(:,:,:,nq) = max( rhogq(:,:,:,nq), 0.0D0 )
+         tmp(:,:,:)      = max(rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:), 0.d0)
+         frhogq(:,:,:)   = (tmp(:,:,:) - rhogq(:,:,:,nq))/TIME_DTL
+         rhogq(:,:,:,nq) = tmp(:,:,:)
+       else
+         rhogq(:,:,:,nq) = rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:)
        endif
+
 
        if ( UPDATE_TOT_DENS ) then
           if (       nq >= NQW_STR &
