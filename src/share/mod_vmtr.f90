@@ -156,7 +156,7 @@ contains
     use mod_cnst, only: &
        CNST_EGRAV
     use mod_comm, only: &
-       COMM_data_transfer_DP
+       COMM_data_transfer
     use mod_grd, only: &
        GRD_Z,        &
        GRD_ZH,       &
@@ -174,8 +174,8 @@ contains
        GMTR_area,   &
        GMTR_area_pl
     use mod_oprt, only: &
-       OPRT_gradient_DP,         &
-       OPRT_horizontalize_vec_DP
+       OPRT_gradient,         &
+       OPRT_horizontalize_vec
     implicit none
 
     integer, parameter :: var_max = 6
@@ -187,8 +187,8 @@ contains
     integer, parameter :: JY      = 5
     integer, parameter :: JZ      = 6
 
-    real(DP) :: var   (ADM_gall,   ADM_kall,ADM_lall,   var_max)
-    real(DP) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,var_max)
+    real(RP) :: var   (ADM_gall,   ADM_kall,ADM_lall,   var_max)
+    real(RP) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,var_max)
 
     !--- G^1/2
     real(RP) :: GSQRT    (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -282,27 +282,27 @@ contains
        return
     endif
 
-    var   (:,:,:,:) = 0.0_DP
-    var_pl(:,:,:,:) = 0.0_DP
+    var   (:,:,:,:) = 0.0_RP
+    var_pl(:,:,:,:) = 0.0_RP
 
     !--- calculation of Jxh, Jyh, and Jzh
-    call OPRT_gradient_DP( GRD_vz(:,:,:,GRD_ZH),  GRD_vz_pl(:,:,:,GRD_ZH), & !--- [IN]
+    call OPRT_gradient( GRD_vz(:,:,:,GRD_ZH),  GRD_vz_pl(:,:,:,GRD_ZH), & !--- [IN]
                         var   (:,:,:,JXH:JZH), var_pl   (:,:,:,JXH:JZH) ) !--- [OUT]
 
-    call OPRT_horizontalize_vec_DP( var(:,:,:,JXH), var_pl(:,:,:,JXH), & !--- [INOUT]
+    call OPRT_horizontalize_vec( var(:,:,:,JXH), var_pl(:,:,:,JXH), & !--- [INOUT]
                                  var(:,:,:,JYH), var_pl(:,:,:,JYH), & !--- [INOUT]
                                  var(:,:,:,JZH), var_pl(:,:,:,JZH)  ) !--- [INOUT]
 
     !--- calculation of Jx, Jy, and Jz
-    call OPRT_gradient_DP( GRD_vz(:,:,:,GRD_Z), GRD_vz_pl(:,:,:,GRD_Z), & !--- [IN]
+    call OPRT_gradient( GRD_vz(:,:,:,GRD_Z), GRD_vz_pl(:,:,:,GRD_Z), & !--- [IN]
                         var   (:,:,:,JX:JZ), var_pl   (:,:,:,JX:JZ)  ) !--- [OUT]
 
-    call OPRT_horizontalize_vec_DP( var(:,:,:,JX), var_pl(:,:,:,JX), & !--- [INOUT]
+    call OPRT_horizontalize_vec( var(:,:,:,JX), var_pl(:,:,:,JX), & !--- [INOUT]
                                  var(:,:,:,JY), var_pl(:,:,:,JY), & !--- [INOUT]
                                  var(:,:,:,JZ), var_pl(:,:,:,JZ)  ) !--- [INOUT]
 
     !--- fill HALO
-    call COMM_data_transfer_DP( var, var_pl )
+    call COMM_data_transfer( var, var_pl )
 
     var(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
     var(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = var(suf(ADM_gmin,ADM_gmax+1),:,:,:)

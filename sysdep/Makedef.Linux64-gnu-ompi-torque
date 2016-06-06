@@ -1,5 +1,5 @@
 #
-# ------ FOR Linux 64bit & intel fortran&C & mpt & torque -----
+# ------ FOR Linux 64bit & gfortran4.7 & OpenMPI1.10 -----
 #
 FFLAGS_FAST  = -cpp -O3 -m64 \
                -std=f2003 -fall-intrinsics -pedantic-errors -fimplicit-none -fmodule-private \

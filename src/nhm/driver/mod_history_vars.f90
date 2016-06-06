@@ -367,7 +367,7 @@ contains
        call history_in( 'ml_v',    v  (:,:,l) )
        call history_in( 'ml_w',    wc (:,:,l) )
 
-       call history_in( 'ml_hgt',  real(GRD_vz(:,:,l,GRD_Z),kind=RP) ) ! geopotential height: Hydrostatic assumption
+       call history_in( 'ml_hgt',  GRD_vz(:,:,l,GRD_Z) ) ! geopotential height: Hydrostatic assumption
     enddo
 
     if (out_duvw) then
@@ -499,8 +499,8 @@ contains
        call sv_pre_sfc( ADM_gall,                 & ! [IN]
                         rho    (:,:,l),           & ! [IN]
                         pre    (:,:,l),           & ! [IN]
-                        real(GRD_vz (:,:,l,GRD_Z),kind=RP),     & ! [IN]
-                        real(GRD_zs (:,K0,l,GRD_ZSFC),kind=RP), & ! [IN]
+                        GRD_vz (:,:,l,GRD_Z),     & ! [IN]
+                        GRD_zs (:,K0,l,GRD_ZSFC), & ! [IN]
                         rho_sfc(:,K0,l),          & ! [OUT]
                         pre_sfc(:,K0,l)           ) ! [OUT]
 

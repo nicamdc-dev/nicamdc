@@ -53,8 +53,8 @@ module mod_latlon
   integer, public, parameter :: GMTR_P_LAT = 1
   integer, public, parameter :: GMTR_P_LON = 2
 
-  real(DP), public, allocatable :: GMTR_P_ll   (:,:,:,:)
-  real(DP), public, allocatable :: GMTR_P_ll_pl(:,:,:,:)
+  real(RP), public, allocatable :: GMTR_P_ll   (:,:,:,:)
+  real(RP), public, allocatable :: GMTR_P_ll_pl(:,:,:,:)
 
   character(len=ADM_NSYS),  public :: polygon_type = 'ON_SPHERE' ! triangle is fit to the sphere
   !                                                  'ON_PLANE'  ! triangle is treated as 2D
@@ -115,7 +115,7 @@ contains
   !> setup lat/lon value of the ico-grid (without mod_gmtr)
   subroutine LATLON_ico_setup
     use mod_misc, only: &
-       MISC_get_latlon_DP
+       MISC_get_latlon
     use mod_adm, only: &
        ADM_have_pl,     &
        ADM_lall,        &
@@ -131,7 +131,7 @@ contains
        ADM_IooJoo,      &
        ADM_GIoJo
     use mod_comm, only: &
-       COMM_data_transfer_DP
+       COMM_data_transfer
     use mod_grd, only: &
        GRD_XDIR, &
        GRD_YDIR, &
@@ -151,13 +151,13 @@ contains
     !--- setup point data
     allocate( GMTR_P_ll   (ADM_gall,   ADM_KNONE,ADM_lall,   GMTR_P_nmax_var) )
     allocate( GMTR_P_ll_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,GMTR_P_nmax_var) )
-    GMTR_P_ll   (:,:,:,:) = 0.0_DP
-    GMTR_P_ll_pl(:,:,:,:) = 0.0_DP
+    GMTR_P_ll   (:,:,:,:) = 0.0_RP
+    GMTR_P_ll_pl(:,:,:,:) = 0.0_RP
 
     do l = 1, ADM_lall
        do n = 1, ADM_IooJoo_nmax
           ij = ADM_IooJoo(n,ADM_GIoJo)
-          call MISC_get_latlon_DP( GMTR_P_ll(ij,k,l,GMTR_P_LAT), &
+          call MISC_get_latlon( GMTR_P_ll(ij,k,l,GMTR_P_LAT), &
                                 GMTR_P_ll(ij,k,l,GMTR_P_LON), &
                                 GRD_x    (ij,k,l,GRD_XDIR),   &
                                 GRD_x    (ij,k,l,GRD_YDIR),   &
@@ -168,7 +168,7 @@ contains
     if ( ADM_have_pl ) then
        n = ADM_GSLF_PL
        do l = 1,ADM_lall_pl
-          call MISC_get_latlon_DP( GMTR_P_ll_pl(n,k,l,GMTR_P_LAT), &
+          call MISC_get_latlon( GMTR_P_ll_pl(n,k,l,GMTR_P_LAT), &
                                 GMTR_P_ll_pl(n,k,l,GMTR_P_LON), &
                                 GRD_x_pl    (n,k,l,GRD_XDIR),   &
                                 GRD_x_pl    (n,k,l,GRD_YDIR),   &
@@ -177,7 +177,7 @@ contains
     endif
 
     !--- communication of point data
-    call COMM_data_transfer_DP( GMTR_P_ll, GMTR_P_ll_pl )
+    call COMM_data_transfer( GMTR_P_ll, GMTR_P_ll_pl )
     ! fill unused grid (dummy)
     GMTR_P_ll(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = GMTR_P_ll(suf(ADM_gmax+1,ADM_gmin),:,:,:)
     GMTR_P_ll(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = GMTR_P_ll(suf(ADM_gmin,ADM_gmax+1),:,:,:)

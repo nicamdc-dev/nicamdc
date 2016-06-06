@@ -1,27 +1,29 @@
 #
-# ------ FOR Linux 64bit & gfortran4.3 & OpenMPI1.3 -----
+# ------ FOR Linux 64bit & gfortran4.7 & OpenMPI1.10 -----
 #
+FFLAGS_FAST  = -cpp -O3 -m64 \
+               -std=f2003 -fall-intrinsics -pedantic-errors -fimplicit-none -fmodule-private \
+               -fconvert=big-endian -frecord-marker=4 -ffree-line-length-none                \
+               -mcmodel=medium
 
-FFLAGS_FAST  = -O3 -m64                                                                \
-               -std=f2003 -pedantic-errors -fimplicit-none -fmodule-private            \
-               -mcmodel=medium -fconvert=big-endian -frecord-marker=4 -fall-intrinsics
-
-FFLAGS_DEBUG = -O0 -m64                                                                \
-               -std=f2003 -pedantic-errors -fimplicit-none -fmodule-private            \
-               -mcmodel=medium -fconvert=big-endian -frecord-marker=4 -fall-intrinsics \
+FFLAGS_DEBUG = -cpp -O0 -m64 \
+               -std=f2003 -fall-intrinsics -pedantic-errors -fimplicit-none -fmodule-private \
+               -fconvert=big-endian -frecord-marker=4 -ffree-line-length-none                \
                -ffpe-trap=invalid,zero,overflow -finit-integer=-32768 -finit-real=nan -finit-logical=false -finit-character=9 \
-               -Wall -Wextra -Wcharacter-truncation -Wunderflow \
-               -g -fbacktrace -fbounds-check
+               -Wall -Wextra -Wcharacter-truncation -Wunderflow -Warray-temporaries -Wuninitialized -Wconversion-extra        \
+               -g -fbacktrace -fbounds-check -mcmodel=medium \
+               -DDEBUG
 
-FC     = mpif90
+FC     = mpifort
 FFLAGS = $(FFLAGS_FAST)
 #FFLAGS = $(FFLAGS_DEBUG)
-FFLAGS += -I/usr/lib64/mpi/gcc/openmpi/lib64 -x f95-cpp-input
-
-F77FLAGS = -ffixed-form -ffixed-line-length-132
 
 CC     = mpicc
-CFLAGS = -O3 -m64 -mcmodel=medium
+CFLAGS_FAST  = -O3 -m64 -std=c99 -mcmodel=medium
+CFLAGS_DEBUG = -O0 -m64 -std=c99 -mcmodel=medium -g -fbacktrace
+
+CFLAGS = $(CFLAGS_FAST)
+#CFLAGS = $(CFLAGS_DEBUG)
 
 ##### Special Options #####
 
@@ -30,22 +32,20 @@ ifeq ($(ENABLE_OPENMP),T)
 endif
 
 ifeq ($(ENABLE_NETCDF),T)
-	NETCDF_INCLUDE ?= -I$(NETCDF4)/include
-	NETCDF_LIBS    ?= -L$(NETCDF4)/lib -L$(HDF5)/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lm -lz -llapack
-	FFLAGS         += $(NETCDF_INCLUDE)
-	CFLAGS         += $(NETCDF_INCLUDE)
+	FFLAGS      += $(shell nf-config --fflags)
+	CFLAGS      += $(shell nc-config --cflags)
+	NETCDF_LIBS ?= $(shell nf-config --flibs) $(shell nc-config --libs)
 endif
+
+LAPACK_LIBS    ?= -L/ap/lapack/3.6.0/lib -llapack
 
 ###########################
 
-# if gcc < 4.5: -M, else if gcc >= 4.6: -J
-MODDIROPT ?= -M $(BUILD_DIR)
+MODDIROPT ?= -J $(BUILD_DIR)
 OBJDIR    ?= $(BUILD_DIR)
 
 LD     = $(FC)
-# to avoid "-x f95-cpp-input" option
-LFLAGS = $(FFLAGS_FAST)
-#LFLAGS = $(FFLAGS_DEBUG)
+LFLAGS = $(FFLAGS)
 
 INSTALL = install
 AR      = ar

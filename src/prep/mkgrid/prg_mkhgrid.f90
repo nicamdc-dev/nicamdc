@@ -96,7 +96,7 @@ program mkhgrid
                          io_mode       = MKGRD_OUT_io_mode   )
 
   !---< gmtr module setup >---
-  call GRD_scaling( dble(RADIUS) )
+  call GRD_scaling( RADIUS )
 
   call GMTR_setup
 

@@ -228,22 +228,22 @@ contains
 
     k0 = ADM_KNONE
 
-    call GTL_clip_region(VMTR_GSGAM2 (:,:,:),gsgam2, 1,ADM_kall)
-    call GTL_clip_region(VMTR_GSGAM2H(:,:,:),gsgam2h,1,ADM_kall)
-    call GTL_clip_region(VMTR_PHI    (:,:,:),phi,    1,ADM_kall)
-    call GTL_clip_region(real(GRD_vz(:,:,:,GRD_Z),kind=RP),z,1,ADM_kall)
-    call GTL_clip_region(real(GRD_vz(:,:,:,GRD_ZH),kind=RP),zh,1,ADM_kall)
+    call GTL_clip_region(VMTR_GSGAM2 (:,:,:) ,gsgam2 ,1,ADM_kall)
+    call GTL_clip_region(VMTR_GSGAM2H(:,:,:) ,gsgam2h,1,ADM_kall)
+    call GTL_clip_region(VMTR_PHI    (:,:,:) ,phi    ,1,ADM_kall)
+    call GTL_clip_region(GRD_vz(:,:,:,GRD_Z) ,z      ,1,ADM_kall)
+    call GTL_clip_region(GRD_vz(:,:,:,GRD_ZH),zh     ,1,ADM_kall)
 
-    call GTL_clip_region_1layer(real(GRD_zs  (:,k0,:,GRD_ZSFC),kind=RP),z_srf)
-    call GTL_clip_region_1layer(real(GMTR_lat(:,:),kind=RP),lat)
-    call GTL_clip_region_1layer(real(GMTR_lon(:,:),kind=RP),lon)
+    call GTL_clip_region_1layer(GRD_zs  (:,k0,:,GRD_ZSFC),z_srf)
+    call GTL_clip_region_1layer(GMTR_lat(:,:)            ,lat  )
+    call GTL_clip_region_1layer(GMTR_lon(:,:)            ,lon  )
 
-    call GTL_clip_region_1layer(real(GMTR_P_var(:,k0,:,GMTR_P_IX),kind=RP),ix)
-    call GTL_clip_region_1layer(real(GMTR_P_var(:,k0,:,GMTR_P_IY),kind=RP),iy)
-    call GTL_clip_region_1layer(real(GMTR_P_var(:,k0,:,GMTR_P_IZ),kind=RP),iz)
-    call GTL_clip_region_1layer(real(GMTR_P_var(:,k0,:,GMTR_P_JX),kind=RP),jx)
-    call GTL_clip_region_1layer(real(GMTR_P_var(:,k0,:,GMTR_P_JY),kind=RP),jy)
-    call GTL_clip_region_1layer(real(GMTR_P_var(:,k0,:,GMTR_P_JZ),kind=RP),jz)
+    call GTL_clip_region_1layer(GMTR_P_var(:,k0,:,GMTR_P_IX),ix)
+    call GTL_clip_region_1layer(GMTR_P_var(:,k0,:,GMTR_P_IY),iy)
+    call GTL_clip_region_1layer(GMTR_P_var(:,k0,:,GMTR_P_IZ),iz)
+    call GTL_clip_region_1layer(GMTR_P_var(:,k0,:,GMTR_P_JX),jx)
+    call GTL_clip_region_1layer(GMTR_P_var(:,k0,:,GMTR_P_JY),jy)
+    call GTL_clip_region_1layer(GMTR_P_var(:,k0,:,GMTR_P_JZ),jz)
 
     !--- get the prognostic and diagnostic variables
     call prgvar_get_in_withdiag( rhog,   & ! [IN]
@@ -290,7 +290,7 @@ contains
     ! tentative negative fixer
     if ( NEGATIVE_FIXER ) then
        do nq = 1, TRC_VMAX
-          q(:,:,:,nq) = max( q(:,:,:,nq), 0.0D0 )
+          q(:,:,:,nq) = max( q(:,:,:,nq), 0.0_RP )
        enddo
     endif
 
@@ -385,21 +385,13 @@ contains
     do nq = 1, TRC_VMAX
        frhogq(:,:,:) = fq(:,:,:,nq) * rho(:,:,:) * GSGAM2(:,:,:)
 
-!       rhogq(:,:,:,nq) = rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:)
-!
-!       ! tentative negative fixer
-!       if ( NEGATIVE_FIXER ) then
-!          rhogq(:,:,:,nq) = max( rhogq(:,:,:,nq), 0.0D0 )
-!       endif
-       ! tentative negative fixer
        if ( NEGATIVE_FIXER ) then
-         tmp(:,:,:)      = max(rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:), 0.d0)
-         frhogq(:,:,:)   = (tmp(:,:,:) - rhogq(:,:,:,nq))/TIME_DTL
-         rhogq(:,:,:,nq) = tmp(:,:,:)
+          tmp   (:,:,:)    = max( rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:), 0.0_RP )
+          frhogq(:,:,:)    = ( tmp(:,:,:) - rhogq(:,:,:,nq) ) / TIME_DTL
+          rhogq (:,:,:,nq) = tmp(:,:,:)
        else
-         rhogq(:,:,:,nq) = rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:)
+          rhogq(:,:,:,nq) = rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:)
        endif
-
 
        if ( UPDATE_TOT_DENS ) then
           if (       nq >= NQW_STR &
@@ -484,10 +476,10 @@ contains
           ! full (1): u,v
           ! half (2): w
           call test11_velocity( time,                   & ![IN]
-                                real(GMTR_lon(n,l),kind=RP),          & ![IN]
-                                real(GMTR_lat(n,l),kind=RP),          & ![IN]
-                                real(GRD_vz  (n,k,l,GRD_Z ),kind=RP), & ![IN]
-                                real(GRD_vz  (n,k,l,GRD_ZH),kind=RP), & ![IN]
+                                GMTR_lon(n,l),          & ![IN]
+                                GMTR_lat(n,l),          & ![IN]
+                                GRD_vz  (n,k,l,GRD_Z ), & ![IN]
+                                GRD_vz  (n,k,l,GRD_ZH), & ![IN]
                                 vx      (n,k,l),        & ![OUT]
                                 vy      (n,k,l),        & ![OUT]
                                 vz      (n,k,l),        & ![OUT]
@@ -501,10 +493,10 @@ contains
           do k = 1, ADM_kall
           do n = 1, ADM_gall_pl
              call test11_velocity( time,                      & ![IN]
-                                   real(GMTR_lon_pl(n,l),kind=RP),          & ![IN]
-                                   real(GMTR_lat_pl(n,l),kind=RP),          & ![IN]
-                                   real(GRD_vz_pl  (n,k,l,GRD_Z ),kind=RP), & ![IN]
-                                   real(GRD_vz_pl  (n,k,l,GRD_ZH),kind=RP), & ![IN]
+                                   GMTR_lon_pl(n,l),          & ![IN]
+                                   GMTR_lat_pl(n,l),          & ![IN]
+                                   GRD_vz_pl  (n,k,l,GRD_Z ), & ![IN]
+                                   GRD_vz_pl  (n,k,l,GRD_ZH), & ![IN]
                                    vx_pl      (n,k,l),        & ![OUT]
                                    vy_pl      (n,k,l),        & ![OUT]
                                    vz_pl      (n,k,l),        & ![OUT]
@@ -522,10 +514,10 @@ contains
           ! full (1): u,v
           ! half (2): w
           call test12_velocity( time,                   & ![IN]
-                                real(GMTR_lon(n,l),kind=RP),          & ![IN]
-                                real(GMTR_lat(n,l),kind=RP),          & ![IN]
-                                real(GRD_vz  (n,k,l,GRD_Z ),kind=RP), & ![IN]
-                                real(GRD_vz  (n,k,l,GRD_ZH),kind=RP), & ![IN]
+                                GMTR_lon(n,l),          & ![IN]
+                                GMTR_lat(n,l),          & ![IN]
+                                GRD_vz  (n,k,l,GRD_Z ), & ![IN]
+                                GRD_vz  (n,k,l,GRD_ZH), & ![IN]
                                 vx      (n,k,l),        & ![OUT]
                                 vy      (n,k,l),        & ![OUT]
                                 vz      (n,k,l),        & ![OUT]
@@ -539,10 +531,10 @@ contains
           do k = 1, ADM_kall
           do n = 1, ADM_gall_pl
              call test12_velocity( time,                      & ![IN]
-                                   real(GMTR_lon_pl(n,l),kind=RP),          & ![IN]
-                                   real(GMTR_lat_pl(n,l),kind=RP),          & ![IN]
-                                   real(GRD_vz_pl  (n,k,l,GRD_Z ),kind=RP), & ![IN]
-                                   real(GRD_vz_pl  (n,k,l,GRD_ZH),kind=RP), & ![IN]
+                                   GMTR_lon_pl(n,l),          & ![IN]
+                                   GMTR_lat_pl(n,l),          & ![IN]
+                                   GRD_vz_pl  (n,k,l,GRD_Z ), & ![IN]
+                                   GRD_vz_pl  (n,k,l,GRD_ZH), & ![IN]
                                    vx_pl      (n,k,l),        & ![OUT]
                                    vy_pl      (n,k,l),        & ![OUT]
                                    vz_pl      (n,k,l),        & ![OUT]

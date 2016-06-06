@@ -337,14 +337,14 @@ contains
     real(RP), parameter :: TKE_MIN = 0.0_RP
     real(RP)            :: TKEg_corr
 
-    integer :: small_step_ite
+    integer  :: small_step_ite
     real(RP) :: large_step_dt
     real(RP) :: small_step_dt
 
-    logical :: ndg_TEND_out
-    logical :: do_tke_correction
+    logical  :: ndg_TEND_out
+    logical  :: do_tke_correction
 
-    integer :: g, k ,l, nq, nl, ndyn, m
+    integer  :: g, k ,l, nq, nl, ndyn, m
 
     integer :: i, j, suf
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
@@ -360,7 +360,7 @@ contains
 
     call DEBUG_rapstart('___Pre_Post')
 
-    large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=RP)
+    large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=DP)
 
     !--- get from prg0
     call prgvar_get( PROG(:,:,:,I_RHOG),   PROG_pl(:,:,:,I_RHOG),   & ! [OUT]

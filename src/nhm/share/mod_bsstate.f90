@@ -65,12 +65,12 @@ module mod_bsstate
 
   character(len=ADM_MAXFNAME), private :: ref_fname = 'ref.dat'
 
-  real(DP), private, allocatable :: phi_ref(:) ! reference phi
-  real(DP), private, allocatable :: rho_ref(:) ! reference density
-  real(DP), private, allocatable :: pre_ref(:) ! reference pressure
-  real(DP), private, allocatable :: tem_ref(:) ! reference temperature
-  real(DP), private, allocatable :: qv_ref (:) ! water vapor
-  real(DP), private, allocatable :: th_ref (:) ! reference potential temperature
+  real(RP), private, allocatable :: phi_ref(:) ! reference phi
+  real(RP), private, allocatable :: rho_ref(:) ! reference density
+  real(RP), private, allocatable :: pre_ref(:) ! reference pressure
+  real(RP), private, allocatable :: tem_ref(:) ! reference temperature
+  real(RP), private, allocatable :: qv_ref (:) ! water vapor
+  real(RP), private, allocatable :: th_ref (:) ! reference potential temperature
 
   !-----------------------------------------------------------------------------
 contains
@@ -114,12 +114,12 @@ contains
     allocate( tem_ref(ADM_kall) )
     allocate( th_ref (ADM_kall) )
     allocate( qv_ref (ADM_kall) )
-    phi_ref(:) = 0.0_DP
-    rho_ref(:) = 0.0_DP
-    pre_ref(:) = 0.0_DP
-    tem_ref(:) = 0.0_DP
-    th_ref (:) = 0.0_DP
-    qv_ref (:) = 0.0_DP
+    phi_ref(:) = 0.0_RP
+    rho_ref(:) = 0.0_RP
+    pre_ref(:) = 0.0_RP
+    tem_ref(:) = 0.0_RP
+    th_ref (:) = 0.0_RP
+    qv_ref (:) = 0.0_RP
 
     allocate( rho_bs   (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( rho_bs_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) )
@@ -171,10 +171,13 @@ contains
 
     Character(*), Intent(in) :: basename
 
-    real(RP) :: kappa
+    real(DP) :: pre_ref_DP(ADM_kall)
+    real(DP) :: tem_ref_DP(ADM_kall)
+    real(DP) :: qv_ref_DP (ADM_kall)
 
-    integer :: fid
-    integer :: k
+    real(RP) :: kappa
+    integer  :: fid
+    integer  :: k
     !---------------------------------------------------------------------------
 
     kappa = Rdry / CPdry
@@ -184,10 +187,14 @@ contains
           file   = trim(basename), &
           status = 'old',          &
           form   = 'unformatted'   )
-       read(fid) pre_ref(:)
-       read(fid) tem_ref(:)
-       read(fid) qv_ref (:)
+       read(fid) pre_ref_DP(:)
+       read(fid) tem_ref_DP(:)
+       read(fid) qv_ref_DP (:)
     close(fid)
+
+    pre_ref(:) = real(pre_ref_DP(:),kind=RP)
+    tem_ref(:) = real(tem_ref_DP(:),kind=RP)
+    qv_ref (:) = real(qv_ref_DP (:),kind=RP)
 
     !--- additional reference state.
     do k = 1, ADM_kall
@@ -372,20 +379,20 @@ contains
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
-       pre_bs(:,k,l) = real(pre_ref(k),kind=RP)
-       tem_bs(:,k,l) = real(tem_ref(k),kind=RP)
-       th_bs (:,k,l) = real(th_ref (k),kind=RP)
-       qv_bs (:,k,l) = real(qv_ref (k),kind=RP)
+       pre_bs(:,k,l) = pre_ref(k)
+       tem_bs(:,k,l) = tem_ref(k)
+       th_bs (:,k,l) = th_ref (k)
+       qv_bs (:,k,l) = qv_ref (k)
     enddo
     enddo
 
     if ( ADM_prc_me == ADM_prc_pl ) then
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
-          pre_bs_pl(:,k,l) = real(pre_ref(k),kind=RP)
-          tem_bs_pl(:,k,l) = real(tem_ref(k),kind=RP)
-          th_bs_pl (:,k,l) = real(th_ref (k),kind=RP)
-          qv_bs_pl (:,k,l) = real(qv_ref (k),kind=RP)
+          pre_bs_pl(:,k,l) = pre_ref(k)
+          tem_bs_pl(:,k,l) = tem_ref(k)
+          th_bs_pl (:,k,l) = th_ref (k)
+          qv_bs_pl (:,k,l) = qv_ref (k)
        enddo
        enddo
     endif

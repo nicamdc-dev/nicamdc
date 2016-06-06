@@ -252,10 +252,10 @@ contains
     write(ADM_LOG_FID,*) '*** check floating point precision'
     if    ( RP == SP ) then
        write(ADM_LOG_FID,*) '    -> single precision'
-       CNST_UNDEF = real(CNST_UNDEF4,kind=RP)
+       CNST_UNDEF = real(CNST_UNDEF4,kind=SP)
     elseif( RP == DP ) then
        write(ADM_LOG_FID,*) '    -> double precision'
-       CNST_UNDEF = real(CNST_UNDEF8,kind=RP)
+       CNST_UNDEF = real(CNST_UNDEF8,kind=DP)
     else
        write(*,*) 'xxx unsupported precision: ', RP
        call ADM_proc_stop

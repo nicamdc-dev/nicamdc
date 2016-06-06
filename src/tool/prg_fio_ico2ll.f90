@@ -464,7 +464,7 @@ program fio_ico2ll
   write(*,*) '########## Variable List ########## '
   write(*,*) 'ID |NAME            |STEPS|Layername       |START FROM         |DT [sec]'
   do v = 1, nvar
-     call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=RP) )
+     call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=DP) )
      write(tmpl,'(I4.4,"/",I2.2,"/",I2.2,1x,I2.2,":",I2.2,":",I2.2)') date_str(:)
      write(*,'(1x,I3,A1,A16,A1,I5,A1,A16,A1,A19,A1,I8)') &
               v,'|',var_name(v),'|',var_nstep(v),'|',var_layername(v),'|', tmpl,'|', var_dt(v)
@@ -530,7 +530,7 @@ program fio_ico2ll
         elseif(output_netcdf) then ! [add] 13-04-18 C.Kodama
            write(*,*) 'Output: ', trim(outbase)//'.nc'
 
-           call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=RP) )
+           call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=DP) )
            do j=1, 6
               write( date_str_tmp(j), '(I4)' ) date_str(j)
               date_str_tmp(j) = adjustl( date_str_tmp(j) )
@@ -571,7 +571,7 @@ program fio_ico2ll
                 lon=lon_tmp, &
                 lat=(/ ( lat(j) * 180.D0 / pi, j=1, jmax ) /), &
                 lev=var_zgrid(1:kmax,v), &
-                time=(/ (  real(t-1,8)*real(var_dt(v),8)/real(60.0,8), t=1, num_of_step ) /), &
+                time=(/ (  real(t-1,kind=DP)*real(var_dt(v),kind=DP)/60.0_DP, t=1, num_of_step ) /), &
                 lev_units='m', &
                 time_units=trim(nc_time_units), &
                 var_name=trim(var_name(v)), &
@@ -1146,7 +1146,7 @@ contains
     ! Prefer not to use calendar_dd2ym subroutine
     ! Epoch time is different between calendar_ss2yh and calendar_dd2ym
     ! New I/O stores timestamp, which is generated via calendar_yh2ss
-    call calendar_ss2yh( d(:), real(datesec,kind=RP) )
+    call calendar_ss2yh( d(:), real(datesec,kind=DP) )
 
     write(template,'(I2.2,A1,I2.2,A1,I2.2,A3,I4.4)') &
                               d(4), ':', d(5), 'Z', d(3), nmonth(d(2)), d(1)
@@ -1170,7 +1170,7 @@ contains
     ! Prefer not to use calendar_dd2ym subroutine
     ! Epoch time is different between calendar_ss2yh and calendar_dd2ym
     ! New I/O stores timestamp, which is generated via calendar_yh2ss
-    call calendar_ss2yh( d(:), real(datesec,kind=RP) )
+    call calendar_ss2yh( d(:), real(datesec,kind=DP) )
 
     write(template,'(I4.4,A1,I2.2,A1,I2.2,A1,I2.2,A1,I2.2,A1)') &
                           d(1), '-', d(2), '-', d(3), '-', d(4), 'h', d(5), 'm'
@@ -1209,7 +1209,7 @@ contains
     ! Prefer not to use calendar_dd2ym subroutine
     ! Epoch time is different between calendar_ss2yh and calendar_dd2ym
     ! New I/O stores timestamp, which is generated via calendar_yh2ss
-    call calendar_ss2yh( d(:), real(datesec,kind=RP) )
+    call calendar_ss2yh( d(:), real(datesec,kind=DP) )
 
     write (template,'(i4.4,i2.2,i2.2,1x,i2.2,i2.2,i2.2,1x)') (d(i),i=1,6)
 

@@ -36,14 +36,9 @@ module mod_misc
   public :: MISC_get_available_fid !--- get an available file ID
   public :: MISC_get_fid           !--- get an information of open or no
   public :: MISC_get_latlon        !--- calculate (lat,lon) from (x,y,z)
-  public :: MISC_get_latlon_DP        !--- calculate (lat,lon) from (x,y,z)
   public :: MISC_triangle_area     !--- calculate triangle area.
-  public :: MISC_triangle_area_DP     !--- calculate triangle area.
   public :: MISC_triangle_area_q   !--- calculate triangle area at quad precision.  ![Add] Y.Yamada 09/07/17
-  public :: MISC_mk_gmtrvec        !--- calculate normal and tangential vecs.
-  public :: MISC_mk_gmtrvec_DP        !--- calculate normal and tangential vecs.
   public :: MISC_msg_nmerror       !--- output error message
-  ![Add] H.Yashiro 11/11/11
   public :: MISC_3dvec_cross         !--- calc exterior product for 3D vector
   public :: MISC_3dvec_dot           !--- calc interior product for 3D vector
   public :: MISC_3dvec_abs           !--- calc absolute value for 3D vector
@@ -52,7 +47,6 @@ module mod_misc
   public :: MISC_3dvec_anticlockwise !--- sort 3D vectors anticlockwise
   public :: MISC_3Dvec_triangle      !--- calc triangle area on sphere, more precise
   public :: MISC_get_cartesian       !--- calc (x,y,z) from (lat,lon)
-  public :: MISC_get_cartesian_DP       !--- calc (x,y,z) from (lat,lon)
   public :: MISC_get_distance        !--- calc horizontal distance on the sphere
 
   !-----------------------------------------------------------------------------
@@ -200,58 +194,6 @@ contains
     if(y<0.0_RP) lon=-lon
     return
   end subroutine MISC_get_latlon
-
-  subroutine MISC_get_latlon_DP( &
-       lat, lon,              & !--- INOUT : latitude and longitude
-       x, y, z )                !--- IN : Cartesian coordinate ( on the sphere )
-    !
-    implicit none
-    !
-    real(DP),intent(inout) :: lat, lon
-    real(DP),intent(in) :: x,y,z
-    !
-    real(DP), parameter :: epsilon = 1.E-30_DP
-    real(DP) :: leng,leng_xy
-    !
-    leng=sqrt(x*x+y*y+z*z)
-    !
-    ! --- vector length equals to zero.
-    if(leng<epsilon) then
-       lat=0.0_DP
-       lon=0.0_DP
-       return
-    endif
-    ! --- vector is parallele to z axis.
-    if(z/leng>=1.0_DP) then
-       lat=asin(1.0_DP)
-       lon=0.0_DP
-       return
-    elseif(z/leng<=-1.0_DP) then
-       lat=asin(-1.0_DP)
-       lon=0.0_DP
-       return
-    endif
-    ! --- not parallele to z axis
-    lat=asin(z/leng)
-    !
-    leng_xy=sqrt(x*x+y*y)
-    if(leng_xy<epsilon) then
-       lon=0.0_DP
-       return
-    endif
-    if(x/leng_xy>=1.0_DP) then
-       lon=acos(1.0_DP)
-       if(y<0.0_DP) lon=-lon
-       return
-    elseif(x/leng_xy<=-1.0_DP) then
-       lon=acos(-1.0_DP)
-       if(y<0.0_DP) lon=-lon
-       return
-    endif
-    lon=acos(x/leng_xy)
-    if(y<0.0_DP) lon=-lon
-    return
-  end subroutine MISC_get_latlon_DP
 
   !-----------------------------------------------------------------------------
   !>
@@ -438,187 +380,6 @@ contains
     endif
     !
   end function MISC_triangle_area
-
-  function MISC_triangle_area_DP( &
-       a, b, c,                & !--- IN : three points vectors on a sphere.
-       polygon_type,           & !--- IN : sphere triangle or plane one?
-       radius,                 & !--- IN : radius
-       critical)               & !--- IN : critical value to handle the case
-                                 !         of ang=0 (optional) S.Iga060209
-       result( area )            !--- OUT : triangle area
-    !
-    implicit none
-    !
-    integer, parameter :: ix = 1
-    integer, parameter :: iy = 2
-    integer, parameter :: iz = 3
-    real(DP), parameter :: pi  = 3.14159265358979323846_DP
-    !
-    real(DP) :: area
-    real(DP),intent(in) :: a(ix:iz),b(ix:iz),c(ix:iz)
-    character(len=*), intent(in) :: polygon_type
-    real(DP) :: radius
-    !
-    !
-    real(DP) :: v01(ix:iz)
-    real(DP) :: v02(ix:iz)
-    real(DP) :: v03(ix:iz)
-    !
-    real(DP) :: v11(ix:iz)
-    real(DP) :: v12(ix:iz)
-    real(DP) :: v13(ix:iz)
-    !
-    real(DP) :: v21(ix:iz)
-    real(DP) :: v22(ix:iz)
-    real(DP) :: v23(ix:iz)
-    real(DP) :: w21(ix:iz)
-    real(DP) :: w22(ix:iz)
-    real(DP) :: w23(ix:iz)
-    real(DP) :: w11(ix:iz)
-    real(DP) :: w12(ix:iz)
-    real(DP) :: w13(ix:iz)
-
-    real(DP) :: v1(ix:iz)
-    real(DP) :: v2(ix:iz)
-    real(DP) :: w(ix:iz)
-    !
-    real(DP) :: fac11,fac12,fac13
-    real(DP) :: fac21,fac22,fac23
-    !
-    real(DP) :: r_v01_x_v01,r_v02_x_v02,r_v03_x_v03
-    !
-    real(DP) :: ang(3)
-    real(DP) :: len
-    !
-    ! S.Iga060209=>
-    real(DP), optional:: critical
-    ! S.Iga060209>=
-    real(DP):: epsi
-
-
-    ! S.Iga060209=>
-    if (.not.present(critical)) then
-       !       critical = 0 !1d-10e
-       epsi = 0.0_DP !1d-10e
-    else
-       epsi=critical  !060224
-    endif
-    ! S.Iga060209>=
-
-
-    !
-    if(trim(polygon_type)=='ON_PLANE') then
-       !
-       !---- Note : On a plane,
-       !----        area = | ourter product of two vectors |.
-       v1(ix:iz)=b(ix:iz)-a(ix:iz)
-       v2(ix:iz)=c(ix:iz)-a(ix:iz)
-       !----
-       w(ix) = v1(iy)*v2(iz)-v2(iy)*v1(iz)
-       w(iy) = v1(iz)*v2(ix)-v2(iz)*v1(ix)
-       w(iz) = v1(ix)*v2(iy)-v2(ix)*v1(iy)
-       !
-       area=0.5_DP*sqrt(w(ix)*w(ix)+w(iy)*w(iy)+w(iz)*w(iz))
-       !
-       len = sqrt(a(ix)*a(ix)+a(iy)*a(iy)+a(iz)*a(iz))
-       area=area*(radius/len)*(radius/len)
-       !
-       return
-    elseif(trim(polygon_type)=='ON_SPHERE') then
-       !
-       !---- NOTE : On a unit sphere,
-       !----        area = sum of angles - pi.
-       v01(ix:iz)=a(ix:iz)
-       v11(ix:iz)=b(ix:iz)-a(ix:iz)
-       v21(ix:iz)=c(ix:iz)-a(ix:iz)
-       !----
-       v02(ix:iz)=b(ix:iz)
-       v12(ix:iz)=a(ix:iz)-b(ix:iz)
-       v22(ix:iz)=c(ix:iz)-b(ix:iz)
-       !----
-       v03(ix:iz)=c(ix:iz)
-       v13(ix:iz)=a(ix:iz)-c(ix:iz)
-       v23(ix:iz)=b(ix:iz)-c(ix:iz)
-       !----
-       r_v01_x_v01&
-            =1.0_DP/(v01(ix)*v01(ix)+v01(iy)*v01(iy)+v01(iz)*v01(iz))
-       fac11=(v01(ix)*v11(ix)+v01(iy)*v11(iy)+v01(iz)*v11(iz))&
-            *r_v01_x_v01
-       fac21=(v01(ix)*v21(ix)+v01(iy)*v21(iy)+v01(iz)*v21(iz))&
-            *r_v01_x_v01
-       !---- Escape for the case arg=0 (S.Iga060209)
-       area = 0.0_DP
-       if ((v12(ix)**2+v12(iy)**2+v12(iz)**2) * r_v01_x_v01 <= epsi**2 ) return
-       if ((v13(ix)**2+v13(iy)**2+v13(iz)**2) * r_v01_x_v01 <= epsi**2 ) return
-       if ((v23(ix)**2+v23(iy)**2+v23(iz)**2) * r_v01_x_v01 <= epsi**2 ) return
-
-       !----       !
-       w11(ix)=v11(ix)-fac11*v01(ix)
-       w11(iy)=v11(iy)-fac11*v01(iy)
-       w11(iz)=v11(iz)-fac11*v01(iz)
-       !
-       w21(ix)=v21(ix)-fac21*v01(ix)
-       w21(iy)=v21(iy)-fac21*v01(iy)
-       w21(iz)=v21(iz)-fac21*v01(iz)
-       !
-       ang(1)=(w11(ix)*w21(ix)+w11(iy)*w21(iy)+w11(iz)*w21(iz))&
-            /( sqrt(w11(ix)*w11(ix)+w11(iy)*w11(iy)+w11(iz)*w11(iz))&
-            * sqrt(w21(ix)*w21(ix)+w21(iy)*w21(iy)+w21(iz)*w21(iz)) )
-       if(ang(1)>1.0_DP) ang(1) = 1.0_DP
-       if(ang(1)<-1.0_DP) ang(1) = -1.0_DP
-       ang(1)=acos(ang(1))
-       !
-       r_v02_x_v02&
-            =1.0_DP/(v02(ix)*v02(ix)+v02(iy)*v02(iy)+v02(iz)*v02(iz))
-       fac12=(v02(ix)*v12(ix)+v02(iy)*v12(iy)+v02(iz)*v12(iz))&
-            *r_v02_x_v02
-       fac22=(v02(ix)*v22(ix)+v02(iy)*v22(iy)+v02(iz)*v22(iz))&
-            *r_v02_x_v02
-       !
-       w12(ix)=v12(ix)-fac12*v02(ix)
-       w12(iy)=v12(iy)-fac12*v02(iy)
-       w12(iz)=v12(iz)-fac12*v02(iz)
-       !
-       w22(ix)=v22(ix)-fac22*v02(ix)
-       w22(iy)=v22(iy)-fac22*v02(iy)
-       w22(iz)=v22(iz)-fac22*v02(iz)
-       !
-       ang(2)=(w12(ix)*w22(ix)+w12(iy)*w22(iy)+w12(iz)*w22(iz))&
-            /( sqrt(w12(ix)*w12(ix)+w12(iy)*w12(iy)+w12(iz)*w12(iz))&
-            *sqrt(w22(ix)*w22(ix)+w22(iy)*w22(iy)+w22(iz)*w22(iz)) )
-       if(ang(2)>1.0_DP) ang(2) = 1.0_DP
-       if(ang(2)<-1.0_DP) ang(2) = -1.0_DP
-       ang(2)=acos(ang(2))
-       !
-       r_v03_x_v03&
-            =1.0_DP/(v03(ix)*v03(ix)+v03(iy)*v03(iy)+v03(iz)*v03(iz))
-       fac13=(v03(ix)*v13(ix)+v03(iy)*v13(iy)+v03(iz)*v13(iz))&
-            *r_v03_x_v03
-       fac23=(v03(ix)*v23(ix)+v03(iy)*v23(iy)+v03(iz)*v23(iz))&
-            *r_v03_x_v03
-       !
-       w13(ix)=v13(ix)-fac13*v03(ix)
-       w13(iy)=v13(iy)-fac13*v03(iy)
-       w13(iz)=v13(iz)-fac13*v03(iz)
-       !
-       w23(ix)=v23(ix)-fac23*v03(ix)
-       w23(iy)=v23(iy)-fac23*v03(iy)
-       w23(iz)=v23(iz)-fac23*v03(iz)
-       !
-       ang(3)=(w13(ix)*w23(ix)+w13(iy)*w23(iy)+w13(iz)*w23(iz))&
-            /( sqrt(w13(ix)*w13(ix)+w13(iy)*w13(iy)+w13(iz)*w13(iz))&
-            *sqrt(w23(ix)*w23(ix)+w23(iy)*w23(iy)+w23(iz)*w23(iz)) )
-       if(ang(3)>1.0_DP) ang(3) = 1.0_DP
-       if(ang(3)<-1.0_DP) ang(3) = -1.0_DP
-       ang(3)=acos(ang(3))
-       !----
-       area=(ang(1)+ang(2)+ang(3)-pi)*radius*radius
-       !
-       return
-       !
-    endif
-    !
-  end function MISC_triangle_area_DP
 
   !-----------------------------------------------------------------------------
   !>
@@ -808,152 +569,6 @@ contains
     endif
 
   end function MISC_triangle_area_q
-
-  !-----------------------------------------------------------------------------
-  !>
-  !> Description of the subroutine MISC_mk_gmtrvec
-  !>
-  subroutine MISC_mk_gmtrvec( &
-       vs, ve,                & !--- IN : vectors at the start and the end
-       tv,                    & !--- INOUT : tangential vector
-       nv,                    & !--- INOUT : normal vector
-       polygon_type,          & !--- IN : polygon type
-       radius )                 !--- IN : radius
-    !
-    implicit none
-    !
-    integer, parameter :: ix = 1
-    integer, parameter :: iy = 2
-    integer, parameter :: iz = 3
-    !
-    real(RP),intent(in) :: vs(ix:iz)
-    real(RP),intent(in) :: ve(ix:iz)
-    real(RP),intent(inout) :: tv(ix:iz)
-    real(RP),intent(inout) :: nv(ix:iz)
-    character(len=*), intent(in) :: polygon_type
-    real(RP), intent(in) :: radius
-    real(RP) :: vec_len
-    !
-    real(RP) :: len
-    real(RP) :: fact_nv,fact_tv
-    !
-    if(trim(polygon_type)=='ON_SPHERE') then
-       !
-       !--- NOTE : Length of a geodesic line is caluclatd
-       !---        by (angle X radius).
-       vec_len = sqrt(vs(ix)*vs(ix)+vs(iy)*vs(iy)+vs(iz)*vs(iz))
-       if(vec_len/=0.0_RP) then
-          len=acos((vs(ix)*ve(ix)+vs(iy)*ve(iy)+vs(iz)*ve(iz))/vec_len/vec_len)&
-               *radius
-       else
-          len = 0.0_RP
-       endif
-       !
-    elseif(trim(polygon_type)=='ON_PLANE') then
-       !
-       !--- NOTE : Length of a line
-       len=sqrt(&
-            +(vs(ix)-ve(ix))*(vs(ix)-ve(ix))&
-            +(vs(iy)-ve(iy))*(vs(iy)-ve(iy))&
-            +(vs(iz)-ve(iz))*(vs(iz)-ve(iz))&
-            )
-    endif
-    !
-    !
-    !--- calculate normal and tangential vecors
-    nv(ix)=vs(iy)*ve(iz)-vs(iz)*ve(iy)
-    nv(iy)=vs(iz)*ve(ix)-vs(ix)*ve(iz)
-    nv(iz)=vs(ix)*ve(iy)-vs(iy)*ve(ix)
-    tv(ix)=ve(ix)-vs(ix)
-    tv(iy)=ve(iy)-vs(iy)
-    tv(iz)=ve(iz)-vs(iz)
-    !
-    !--- scaling to radius ( normal vector )
-    fact_nv=len/sqrt(nv(ix)*nv(ix)+nv(iy)*nv(iy)+nv(iz)*nv(iz))
-    nv(ix)=nv(ix)*fact_nv
-    nv(iy)=nv(iy)*fact_nv
-    nv(iz)=nv(iz)*fact_nv
-    !
-    !--- scaling to radius ( tangential vector )
-    fact_tv=len/sqrt(tv(ix)*tv(ix)+tv(iy)*tv(iy)+tv(iz)*tv(iz))
-    tv(ix)=tv(ix)*fact_tv
-    tv(iy)=tv(iy)*fact_tv
-    tv(iz)=tv(iz)*fact_tv
-    !
-    return
-    !
-  end subroutine MISC_mk_gmtrvec
-
-  subroutine MISC_mk_gmtrvec_DP( &
-       vs, ve,                & !--- IN : vectors at the start and the end
-       tv,                    & !--- INOUT : tangential vector
-       nv,                    & !--- INOUT : normal vector
-       polygon_type,          & !--- IN : polygon type
-       radius )                 !--- IN : radius
-    !
-    implicit none
-    !
-    integer, parameter :: ix = 1
-    integer, parameter :: iy = 2
-    integer, parameter :: iz = 3
-    !
-    real(DP),intent(in) :: vs(ix:iz)
-    real(DP),intent(in) :: ve(ix:iz)
-    real(DP),intent(inout) :: tv(ix:iz)
-    real(DP),intent(inout) :: nv(ix:iz)
-    character(len=*), intent(in) :: polygon_type
-    real(DP), intent(in) :: radius
-    real(DP) :: vec_len
-    !
-    real(DP) :: len
-    real(DP) :: fact_nv,fact_tv
-    !
-    if(trim(polygon_type)=='ON_SPHERE') then
-       !
-       !--- NOTE : Length of a geodesic line is caluclatd
-       !---        by (angle X radius).
-       vec_len = sqrt(vs(ix)*vs(ix)+vs(iy)*vs(iy)+vs(iz)*vs(iz))
-       if(vec_len/=0.0_DP) then
-          len=acos((vs(ix)*ve(ix)+vs(iy)*ve(iy)+vs(iz)*ve(iz))/vec_len/vec_len)&
-               *radius
-       else
-          len = 0.0_DP
-       endif
-       !
-    elseif(trim(polygon_type)=='ON_PLANE') then
-       !
-       !--- NOTE : Length of a line
-       len=sqrt(&
-            +(vs(ix)-ve(ix))*(vs(ix)-ve(ix))&
-            +(vs(iy)-ve(iy))*(vs(iy)-ve(iy))&
-            +(vs(iz)-ve(iz))*(vs(iz)-ve(iz))&
-            )
-    endif
-    !
-    !
-    !--- calculate normal and tangential vecors
-    nv(ix)=vs(iy)*ve(iz)-vs(iz)*ve(iy)
-    nv(iy)=vs(iz)*ve(ix)-vs(ix)*ve(iz)
-    nv(iz)=vs(ix)*ve(iy)-vs(iy)*ve(ix)
-    tv(ix)=ve(ix)-vs(ix)
-    tv(iy)=ve(iy)-vs(iy)
-    tv(iz)=ve(iz)-vs(iz)
-    !
-    !--- scaling to radius ( normal vector )
-    fact_nv=len/sqrt(nv(ix)*nv(ix)+nv(iy)*nv(iy)+nv(iz)*nv(iz))
-    nv(ix)=nv(ix)*fact_nv
-    nv(iy)=nv(iy)*fact_nv
-    nv(iz)=nv(iz)*fact_nv
-    !
-    !--- scaling to radius ( tangential vector )
-    fact_tv=len/sqrt(tv(ix)*tv(ix)+tv(iy)*tv(iy)+tv(iz)*tv(iz))
-    tv(ix)=tv(ix)*fact_tv
-    tv(iy)=tv(iy)*fact_tv
-    tv(iz)=tv(iz)*fact_tv
-    !
-    return
-    !
-  end subroutine MISC_mk_gmtrvec_DP
 
   !-----------------------------------------------------------------------------
   !>
@@ -1315,24 +930,6 @@ contains
 
     return
   end subroutine MISC_get_cartesian
-
-  subroutine MISC_get_cartesian_DP( &
-       x, y, z,  & !--- INOUT : Cartesian coordinate ( on the sphere )
-       lat, lon, & !--- IN    : latitude and longitude, radian
-       radius    ) !--- IN    : radius
-    implicit none
-
-    real(DP),intent(inout) :: x, y, z
-    real(RP),intent(in)    :: lat, lon
-    real(RP),intent(in)    :: radius
-    !---------------------------------------------------------------------------
-
-    x = radius * cos(lat) * cos(lon)
-    y = radius * cos(lat) * sin(lon)
-    z = radius * sin(lat)
-
-    return
-  end subroutine MISC_get_cartesian_DP
 
   !-----------------------------------------------------------------------
   ! Get horizontal distance on the sphere

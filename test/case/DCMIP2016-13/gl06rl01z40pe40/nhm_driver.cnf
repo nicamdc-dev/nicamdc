@@ -64,26 +64,23 @@
 /
 
 &CNSTPARAM
-    earth_radius        = 6.37122D+6,
-    earth_angvel        =      0.0D0,
-    small_planet_factor =     120.D0,
-    earth_gravity       = 9.80616D0,
-    gas_cnst            =   287.0D0,
-    specific_heat_pre   =  1004.5D0,
+    earth_radius        = 6.37122E+6,
+    earth_angvel        =      0.E0,
+    small_planet_factor =    120.E0,
+    earth_gravity       = 9.80616E0,
+    gas_cnst            =   287.0E0,
+    specific_heat_pre   =  1004.5E0,
 /
 
 &NUMFILTERPARAM
     lap_order_hdiff   = 2,
     hdiff_type        = 'NONLINEAR1',
-    Kh_coef_maxlim    = 1.200D+10,
-    Kh_coef_minlim    = 1.200D+09,
-    ZD_hdiff_nl       = 12000.D0,
+    Kh_coef_maxlim    = 1.200E+10,
+    Kh_coef_minlim    = 1.200E+09,
+    ZD_hdiff_nl       = 12000.E0,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
-    alpha_d           = 1.20D+09,
-    gamma_h_lap1      = 0.0D0,
-    ZD                = 40000.D0,
-    alpha_r           = 0.0D0,
+    alpha_d           = 1.20E+09,
 /
 
 &EMBUDGETPARAM
