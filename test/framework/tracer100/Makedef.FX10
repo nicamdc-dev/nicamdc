@@ -51,6 +51,8 @@ ifeq ($(ENABLE_NETCDF),T)
 	CFLAGS         += $(NETCDF_INCLUDE)
 endif
 
+LAPACK_LIBS ?= -SSL2BLAMP -SCALAPACK
+
 ###########################
 
 MODDIROPT ?= -M $(BUILD_DIR)
