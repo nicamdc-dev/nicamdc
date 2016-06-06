@@ -134,7 +134,7 @@ contains
        USE_SimpleMicrophys = .true.
        SM_Latdepend_SST    = .false.
        SM_LargeScaleCond   = .false.
-       SM_PBL_Bryan        = .false.
+       !SM_PBL_Bryan        = .false.
        if ( SET_DCMIP2016_LSC ) then
           write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
           USE_Kessler      = .false.
@@ -166,8 +166,15 @@ contains
        USE_ToyChemistry    = .false.
     endif
 
-    ! initial value of the tracer is set in mod_prgvar - mod_ideal_init
+    write(ADM_LOG_FID,*) '*** Final Settings of FORCING_DCMIP_PARAM'
+    write(ADM_LOG_FID,*) '    USE_Kessler        : ', USE_Kessler
+    write(ADM_LOG_FID,*) '    USE_SimpleMicrophys: ', USE_SimpleMicrophys
+    write(ADM_LOG_FID,*) '    SM_LargeScaleCond  : ', SM_LargeScaleCond
+    write(ADM_LOG_FID,*) '    SM_Latdepend_SST   : ', SM_Latdepend_SST
+    write(ADM_LOG_FID,*) '    SM_PBL_Bryan       : ', SM_PBL_Bryan
+    write(ADM_LOG_FID,*) '    USE_ToyChemistry   : ', USE_ToyChemistry
 
+    ! initial value of the tracer is set in mod_prgvar - mod_ideal_init
     if ( USE_ToyChemistry ) then
        if ( CHEM_TYPE == 'PASSIVE' ) then
           if ( NCHEM_MAX /= 2 ) then
