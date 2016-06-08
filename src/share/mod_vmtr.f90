@@ -148,8 +148,6 @@ contains
        ADM_CTL_FID,   &
        ADM_proc_stop, &
        ADM_have_pl,   &
-       ADM_gmin,      &
-       ADM_gmax,      &
        ADM_KNONE,     &
        ADM_kmin,      &
        ADM_kmax
@@ -303,9 +301,6 @@ contains
 
     !--- fill HALO
     call COMM_data_transfer( var, var_pl )
-
-    var(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
-    var(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
 
 
 
@@ -602,19 +597,6 @@ contains
 
     return
   end subroutine VMTR_setup
-
-  !-----------------------------------------------------------------------------
-  integer function suf(i,j)
-    use mod_adm, only: &
-       ADM_gall_1d
-    implicit none
-
-    integer :: i, j
-    !---------------------------------------------------------------------------
-
-    suf = ADM_gall_1d * (j-1) + i
-
-  end function suf
 
 end module mod_vmtr
 !-------------------------------------------------------------------------------

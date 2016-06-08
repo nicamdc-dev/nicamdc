@@ -123,9 +123,6 @@ contains
        ADM_gall,        &
        ADM_gall_pl,     &
        ADM_KNONE,       &
-       ADM_gall_1d,     &
-       ADM_gmax,        &
-       ADM_gmin,        &
        ADM_GSLF_PL,     &
        ADM_IooJoo_nmax, &
        ADM_IooJoo,      &
@@ -141,9 +138,6 @@ contains
     implicit none
 
     integer :: ij, n, k, l
-
-    integer :: i, j, suf
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
     k = ADM_KNONE
@@ -178,9 +172,6 @@ contains
 
     !--- communication of point data
     call COMM_data_transfer( GMTR_P_ll, GMTR_P_ll_pl )
-    ! fill unused grid (dummy)
-    GMTR_P_ll(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = GMTR_P_ll(suf(ADM_gmax+1,ADM_gmin),:,:,:)
-    GMTR_P_ll(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = GMTR_P_ll(suf(ADM_gmin,ADM_gmax+1),:,:,:)
 
     return
   end subroutine LATLON_ico_setup

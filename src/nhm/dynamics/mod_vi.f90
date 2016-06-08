@@ -136,9 +136,6 @@ contains
        dt                             )
     use mod_adm, only: &
        ADM_have_pl, &
-       ADM_gall_1d, &
-       ADM_gmax,    &
-       ADM_gmin,    &
        ADM_kmax,    &
        ADM_kmin
     use mod_cnst, only: &
@@ -315,9 +312,6 @@ contains
     real(RP) :: rweight_itr
 
     integer  :: g, k, l, ns
-
-    integer  :: i, j, suf
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
     call DEBUG_rapstart('____vi_path0')
@@ -677,19 +671,6 @@ contains
 
        call COMM_data_transfer( diff_vh, diff_vh_pl )
 
-!OCL SERIAL
-       do l = 1, ADM_lall
-!OCL PARALLEL
-       do k = 1, ADM_kall
-          diff_vh(suf(ADM_gmax+1,ADM_gmin-1),k,l,1) = diff_vh(suf(ADM_gmax+1,ADM_gmin),k,l,1)
-          diff_vh(suf(ADM_gmin-1,ADM_gmax+1),k,l,1) = diff_vh(suf(ADM_gmin,ADM_gmax+1),k,l,1)
-          diff_vh(suf(ADM_gmax+1,ADM_gmin-1),k,l,2) = diff_vh(suf(ADM_gmax+1,ADM_gmin),k,l,2)
-          diff_vh(suf(ADM_gmin-1,ADM_gmax+1),k,l,2) = diff_vh(suf(ADM_gmin,ADM_gmax+1),k,l,2)
-          diff_vh(suf(ADM_gmax+1,ADM_gmin-1),k,l,3) = diff_vh(suf(ADM_gmax+1,ADM_gmin),k,l,3)
-          diff_vh(suf(ADM_gmin-1,ADM_gmax+1),k,l,3) = diff_vh(suf(ADM_gmin,ADM_gmax+1),k,l,3)
-       enddo
-       enddo
-
        call DEBUG_rapend  ('____vi_path1')
        call DEBUG_rapstart('____vi_path2')
 
@@ -722,19 +703,6 @@ contains
 
        ! treatment for boundary condition
        call COMM_data_transfer( diff_we, diff_we_pl )
-
-!OCL SERIAL
-       do l = 1, ADM_lall
-!OCL PARALLEL
-       do k = 1, ADM_kall
-          diff_we(suf(ADM_gmax+1,ADM_gmin-1),k,l,1) = diff_we(suf(ADM_gmax+1,ADM_gmin),k,l,1)
-          diff_we(suf(ADM_gmin-1,ADM_gmax+1),k,l,1) = diff_we(suf(ADM_gmin,ADM_gmax+1),k,l,1)
-          diff_we(suf(ADM_gmax+1,ADM_gmin-1),k,l,2) = diff_we(suf(ADM_gmax+1,ADM_gmin),k,l,2)
-          diff_we(suf(ADM_gmin-1,ADM_gmax+1),k,l,2) = diff_we(suf(ADM_gmin,ADM_gmax+1),k,l,2)
-          diff_we(suf(ADM_gmax+1,ADM_gmin-1),k,l,3) = diff_we(suf(ADM_gmax+1,ADM_gmin),k,l,3)
-          diff_we(suf(ADM_gmin-1,ADM_gmax+1),k,l,3) = diff_we(suf(ADM_gmin,ADM_gmax+1),k,l,3)
-       enddo
-       enddo
 
        ! update split value and mean mass flux
        do l = 1, ADM_lall

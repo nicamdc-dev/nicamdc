@@ -345,9 +345,6 @@ contains
     logical  :: do_tke_correction
 
     integer  :: g, k ,l, nq, nl, ndyn, m
-
-    integer :: i, j, suf
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
     !$acc wait
 
@@ -982,17 +979,6 @@ contains
        !------ Update
        if ( nl /= num_of_iteration_lstep ) then
           call COMM_data_transfer( PROG, PROG_pl )
-
-          !$acc kernels pcopy(PROG) async(0)
-          do m = 1, 6
-          do l = 1, ADM_lall
-          do k = 1, ADM_kall
-             PROG(suf(ADM_gmax+1,ADM_gmin-1),k,l,m) = PROG(suf(ADM_gmax+1,ADM_gmin),k,l,m)
-             PROG(suf(ADM_gmin-1,ADM_gmax+1),k,l,m) = PROG(suf(ADM_gmin,ADM_gmax+1),k,l,m)
-          enddo
-          enddo
-          enddo
-          !$acc end kernels
        endif
 
        call DEBUG_rapend  ('___Pre_Post')

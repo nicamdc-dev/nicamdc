@@ -158,9 +158,7 @@ contains
   subroutine GMTR_setup
     use mod_adm, only: &
        ADM_CTL_FID,   &
-       ADM_proc_stop, &
-       ADM_gmin,      &
-       ADM_gmax
+       ADM_proc_stop
     use mod_comm, only: &
        COMM_data_transfer
     implicit none
@@ -235,9 +233,6 @@ contains
 
     !--- fill HALO
     call COMM_data_transfer( GMTR_P_var, GMTR_P_var_pl )
-
-    GMTR_P_var(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = GMTR_P_var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
-    GMTR_P_var(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = GMTR_P_var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
 
     !--- for simple use
     GMTR_area   (:,:) = GMTR_P_var   (:,K0,:,GMTR_P_AREA)

@@ -331,7 +331,7 @@ contains
                           hgrid_io_mode ) ![IN]
 
     ! data transfer for GRD_x (note: do not communicate GRD_xt)
-    if( hgrid_comm_flg ) call COMM_data_transfer(GRD_x,GRD_x_pl) ! [mod] T.Ohno 110722
+    if( hgrid_comm_flg ) call COMM_data_transfer( GRD_x, GRD_x_pl )
 
     ! scaling
     if ( trim(GRD_grid_type) == 'ON_PLANE' ) then
@@ -520,11 +520,8 @@ contains
 
        endselect
 
-       !--- fill HALO
-       call COMM_data_transfer(GRD_vz,GRD_vz_pl)
-
-       GRD_vz(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = GRD_vz(suf(ADM_gmax+1,ADM_gmin),:,:,:)
-       GRD_vz(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = GRD_vz(suf(ADM_gmin,ADM_gmax+1),:,:,:)
+       ! fill HALO
+       call COMM_data_transfer( GRD_vz, GRD_vz_pl )
     endif
 
     !--- output information about grid.

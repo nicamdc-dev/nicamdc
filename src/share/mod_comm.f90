@@ -2298,8 +2298,11 @@ contains
        ADM_COMM_world, &
        ADM_proc_stop,  &
        ADM_vlink_nmax, &
+       ADM_gall_1d,    &
        ADM_lall,       &
-       ADM_kall
+       ADM_kall,       &
+       ADM_gmax,       &
+       ADM_gmin
     implicit none
 
     real(RP), intent(inout) ::  var   (:,:,:,:)
@@ -2331,6 +2334,9 @@ contains
     integer ::  cur_ssize, cur_rsize
     integer ::  cur_nsmax, cur_nsmax_pl
     integer ::  cur_nrmax, cur_nrmax_pl
+
+    integer ::  i,j,suf
+    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
     if ( opt_comm_barrier ) then
@@ -2696,9 +2702,15 @@ contains
     enddo
     !$acc end kernels
 
+    !$acc kernels present(var) async(0)
+    var(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
+    var(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
+    !$acc end kernels
+
     !$acc end data
 
     !$acc wait
+
 
     call DEBUG_rapend('COMM_data_transfer')
 
@@ -2874,9 +2886,6 @@ contains
     !$acc end data
 
     call COMM_data_transfer(var,var_pl)
-
-    var(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
-    var(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
 
     call DEBUG_rapend('COMM_var')
 

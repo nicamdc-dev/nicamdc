@@ -346,7 +346,6 @@ contains
     use mod_cnst, only: &
        PI => CNST_PI
     use mod_comm, only: &
-       COMM_data_transfer, &
        COMM_data_transfer
     use mod_gtl, only: &
        GTL_max, &
