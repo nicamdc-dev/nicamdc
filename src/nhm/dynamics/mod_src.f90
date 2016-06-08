@@ -172,8 +172,8 @@ contains
     do l = 1, ADM_lall
        do k = ADM_kmin,ADM_kmax
        do g = 1, ADM_gall
-          wc = 0.5_RP * ( GRD_cfac(k) * w(g,k+1,l) &
-                        + GRD_dfac(k) * w(g,k  ,l) )
+          wc = GRD_cfac(k) * w(g,k+1,l) &
+             + GRD_dfac(k) * w(g,k  ,l)
 
           vvx(g,k,l) = vx(g,k,l) + wc * GRD_x(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
           vvy(g,k,l) = vy(g,k,l) + wc * GRD_x(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
@@ -195,8 +195,8 @@ contains
        do l = 1, ADM_lall_pl
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
-             wc = 0.5_RP * ( GRD_cfac(k) * w_pl(g,k+1,l) &
-                           + GRD_dfac(k) * w_pl(g,k  ,l) )
+             wc = GRD_cfac(k) * w_pl(g,k+1,l) &
+                + GRD_dfac(k) * w_pl(g,k  ,l)
 
              vvx_pl(g,k,l) = vx_pl(g,k,l) + wc * GRD_x_pl(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
              vvy_pl(g,k,l) = vy_pl(g,k,l) + wc * GRD_x_pl(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
@@ -427,8 +427,8 @@ contains
        do l = 1, ADM_lall
           do k = ADM_kmin, ADM_kmax+1
           do g = 1, ADM_gall
-             rhogwscl(g,k,l) = rhogw(g,k,l) * 0.5_RP * ( GRD_afac(k) * scl(g,k,  l) &
-                                                       + GRD_bfac(k) * scl(g,k-1,l) )
+             rhogwscl(g,k,l) = rhogw(g,k,l) * ( GRD_afac(k) * scl(g,k,  l) &
+                                              + GRD_bfac(k) * scl(g,k-1,l) )
           enddo
           enddo
           do g = 1, ADM_gall
@@ -440,8 +440,8 @@ contains
           do l = 1, ADM_lall_pl
              do k = ADM_kmin, ADM_kmax+1
              do g = 1, ADM_gall_pl
-                rhogwscl_pl(g,k,l) = rhogw_pl(g,k,l) * 0.5_RP * ( GRD_afac(k) * scl_pl(g,k  ,l) &
-                                                                + GRD_bfac(k) * scl_pl(g,k-1,l) )
+                rhogwscl_pl(g,k,l) = rhogw_pl(g,k,l) * ( GRD_afac(k) * scl_pl(g,k  ,l) &
+                                                       + GRD_bfac(k) * scl_pl(g,k-1,l) )
              enddo
              enddo
              do g = 1, ADM_gall_pl

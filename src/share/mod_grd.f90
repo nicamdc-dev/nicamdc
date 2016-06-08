@@ -401,21 +401,21 @@ contains
 
        !--- vertical interpolation factor
        do k = ADM_kmin, ADM_kmax+1
-          GRD_afac(k) = 2.0_RP * ( GRD_gzh(k) - GRD_gz(k-1) ) &
-                               / ( GRD_gz (k) - GRD_gz(k-1) )
+          GRD_afac(k) = ( GRD_gzh(k) - GRD_gz(k-1) ) &
+                      / ( GRD_gz (k) - GRD_gz(k-1) )
        enddo
-       GRD_afac(ADM_kmin-1) = 2.0_RP
+       GRD_afac(ADM_kmin-1) = 1.0_RP
 
-       GRD_bfac(:) = 2.0_RP - GRD_afac(:)
+       GRD_bfac(:) = 1.0_RP - GRD_afac(:)
 
        do k = ADM_kmin, ADM_kmax
-          GRD_cfac(k) = 2.0_RP * ( GRD_gz (k  ) - GRD_gzh(k) ) &
-                               / ( GRD_gzh(k+1) - GRD_gzh(k) )
+          GRD_cfac(k) = ( GRD_gz (k  ) - GRD_gzh(k) ) &
+                      / ( GRD_gzh(k+1) - GRD_gzh(k) )
        enddo
-       GRD_cfac(ADM_kmin-1) = 2.0_RP
+       GRD_cfac(ADM_kmin-1) = 1.0_RP
        GRD_cfac(ADM_kmax+1) = 0.0_RP
 
-       GRD_dfac(:) = 2.0_RP - GRD_cfac(:)
+       GRD_dfac(:) = 1.0_RP - GRD_cfac(:)
 
        !--- setup z-coordinate
        nstart = suf(ADM_gmin,ADM_gmin)
