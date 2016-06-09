@@ -64,79 +64,49 @@ module mod_grd
   !++ Public procedure
   !
   public :: GRD_setup
-  public :: GRD_output_hgrid
   public :: GRD_input_hgrid
-  public :: GRD_scaling
-  public :: GRD_output_vgrid
+  public :: GRD_output_hgrid
   public :: GRD_input_vgrid
-  public :: GRD_gen_plgrid
+  public :: GRD_output_vgrid
+  public :: GRD_scaling
 
   !-----------------------------------------------------------------------------
   !
   !++ Public parameters & variables
   !
 
-  !------ Indentifiers for the directions in the Cartesian coordinate.
+  ! Indentifiers for the directions in the Cartesian coordinate
   integer,  public, parameter :: GRD_XDIR = 1
   integer,  public, parameter :: GRD_YDIR = 2
   integer,  public, parameter :: GRD_ZDIR = 3
 
-  !====== Horizontal Grid ======
-  !<-----
-  !------ Grid points ( X: CELL CENTER )
-  !<-----
-  !<-----         GRD_x(1:ADM_gall,       &   --- horizontal
-  !<-----               1:ADM_KNONE,      &   --- vertical
-  !<-----               1:ADM_lall,       &   --- local region
-  !<-----               GRD_XDIR:GRD_ZDIR )   --- three components
-  !<-----
-  !<-----         GRD_x_pl(1:ADM_gall_pl,   & --- horizontal
-  !<-----                  1:ADM_KNONE,     & --- vertical
-  !<-----                  1:ADM_lall_pl,   & --- pole regions
-  !<-----                  GRD_XDIR:GRD_ZDIR) --- three components
-  !<-----          .___.
-  !<-----         /     \
-  !<-----        .   p   .
-  !<-----         \ ___ /
-  !<-----          '   '
-  !<-----
-  !------ Grid points ( Xt: CELL VERTEX )
-  !<-----
-  !<-----         GRD_xt(1:ADM_gall,       &   --- horizontal
-  !<-----                1:ADM_KNONE,      &   --- vertical
-  !<-----                1:ADM_lall,       &   --- local region
-  !<-----                ADM_TI:ADM_TJ,    &   --- upper or lower triangle
-  !<-----                GRD_XDIR:GRD_ZDIR )   --- three components
-  !<-----
-  !<-----         GRD_xt_pl(1:ADM_gall_pl,   & --- horizontal
-  !<-----                  1:ADM_KNONE,      & --- vertical
-  !<-----                  1:ADM_lall_pl,    & --- pole regions
-  !<-----                  GRD_XDIR:GRD_ZDIR ) --- three components
-  !<-----          p___p
-  !<-----         /     \
-  !<-----        p       p
-  !<-----         \ ___ /
-  !<-----          p   p
-  !<-----
-  !------ Grid points ( Xr: CELL ARC )
-  !<-----
-  !<-----         GRD_xr(1:ADM_gall,       &   --- horizontal
-  !<-----                1:ADM_KNONE,      &   --- vertical
-  !<-----                1:ADM_lall,       &   --- local region
-  !<-----                ADM_TI:ADM_TJ,    &   --- upper / middle / lower arc
-  !<-----                GRD_XDIR:GRD_ZDIR )   --- three components
-  !<-----
-  !<-----         GRD_xr_pl(1:ADM_gall_pl,   & --- horizontal
-  !<-----                  1:ADM_KNONE,      & --- vertical
-  !<-----                  1:ADM_lall_pl,    & --- pole regions
-  !<-----                  GRD_XDIR:GRD_ZDIR ) --- three components
-  !<-----          ._p_.
-  !<-----         p     p
-  !<-----        .       .
-  !<-----         p _ _ p
-  !<-----          ' p '
-  !<-----
+  ! Indentifiers for the directions in the spherical coordinate
+  integer,  public, parameter :: GRD_LAT = 1
+  integer,  public, parameter :: GRD_LON = 2
 
+  !====== Horizontal Grid ======
+  !
+  ! Grid points ( X: CELL CENTER )
+  !          .___.
+  !         /     \
+  !        .   p   .
+  !         \ ___ /
+  !          '   '
+  !
+  ! Grid points ( Xt: CELL VERTEX )
+  !          p___p
+  !         /     \
+  !        p       p
+  !         \ ___ /
+  !          p   p
+  !
+  ! Grid points ( Xr: CELL ARC )
+  !          ._p_.
+  !         p     p
+  !        .       .
+  !         p _ _ p
+  !          ' p '
+  !
   real(RP), public              :: GRD_rscale ! scaling factor for the radius of the sphere
 
 #ifdef _FIXEDINDEX_
@@ -146,6 +116,11 @@ module mod_grd
   real(RP), public              :: GRD_xt_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              ADM_nxyz)
   real(RP), public              :: GRD_xr   (ADM_gall   ,ADM_KNONE,ADM_lall   ,ADM_AI:ADM_AJ,ADM_nxyz)
   real(RP), public              :: GRD_xr_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              ADM_nxyz)
+
+  real(RP), public              :: GRD_s    (ADM_gall   ,ADM_KNONE,ADM_lall   ,              2)
+  real(RP), public              :: GRD_s_pl (ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              2)
+  real(RP), public              :: GRD_st   (ADM_gall   ,ADM_KNONE,ADM_lall   ,ADM_TI:ADM_TJ,2)
+  real(RP), public              :: GRD_st_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              2)
 #else
   real(RP), public, allocatable :: GRD_x    (:,:,:,:)
   real(RP), public, allocatable :: GRD_x_pl (:,:,:,:)
@@ -153,6 +128,11 @@ module mod_grd
   real(RP), public, allocatable :: GRD_xt_pl(:,:,:,:)
   real(RP), public, allocatable :: GRD_xr   (:,:,:,:,:)
   real(RP), public, allocatable :: GRD_xr_pl(:,:,:,:)
+
+  real(RP), public, allocatable :: GRD_s    (:,:,:,:)
+  real(RP), public, allocatable :: GRD_s_pl (:,:,:,:)
+  real(RP), public, allocatable :: GRD_st   (:,:,:,:,:)
+  real(RP), public, allocatable :: GRD_st_pl(:,:,:,:)
 #endif
 
 
@@ -171,19 +151,19 @@ module mod_grd
 
 
   !====== Vertical Grid ======
-  !<-----
-  !------ z coordinate ( actual height )
-  !<-----
-  !<-----         GRD_vz(1:ADM_gall,  &
-  !<-----                1:ADM_kall,  &
-  !<-----                1:ADM_lall,  &
-  !<-----                GRD_Z:GRD_ZH )
-  !<-----
-  !<-----         GRD_vz_pl(1:ADM_gall_pl, &
-  !<-----                   1:ADM_kall,    &
-  !<-----                   1:ADM_lall_pl, &
-  !<-----                   GRD_Z:GRD_ZH   )
-  !<-----
+  !
+  ! z coordinate ( actual height )
+  !
+  !         GRD_vz(1:ADM_gall,  &
+  !                1:ADM_kall,  &
+  !                1:ADM_lall,  &
+  !                GRD_Z:GRD_ZH )
+  !
+  !         GRD_vz_pl(1:ADM_gall_pl, &
+  !                   1:ADM_kall,    &
+  !                   1:ADM_lall_pl, &
+  !                   GRD_Z:GRD_ZH   )
+  !
 
   integer,  public, parameter   :: GRD_Z  = 1
   integer,  public, parameter   :: GRD_ZH = 2
@@ -229,6 +209,10 @@ module mod_grd
   !
   !++ Private procedure
   !
+  private :: GRD_gen_plgrid
+  private :: GRD_makelatlon
+  private :: GRD_makearc
+
   !-----------------------------------------------------------------------------
   !
   !++ Private parameters & variables
@@ -292,7 +276,7 @@ contains
     integer  :: n, k, l, k0
     !---------------------------------------------------------------------------
 
-    K0 = ADM_KNONE
+    k0 = ADM_KNONE
 
     !--- read parameters
     write(ADM_LOG_FID,*)
@@ -312,12 +296,17 @@ contains
 
     !---< horizontal grid >---
 #ifndef _FIXEDINDEX_
-    allocate( GRD_x    (ADM_gall   ,K0,ADM_lall   ,              ADM_nxyz) )
-    allocate( GRD_x_pl (ADM_gall_pl,K0,ADM_lall_pl,              ADM_nxyz) )
-    allocate( GRD_xt   (ADM_gall   ,K0,ADM_lall   ,ADM_TI:ADM_TJ,ADM_nxyz) )
-    allocate( GRD_xt_pl(ADM_gall_pl,K0,ADM_lall_pl,              ADM_nxyz) )
-    allocate( GRD_xr   (ADM_gall   ,K0,ADM_lall   ,ADM_AI:ADM_AJ,ADM_nxyz) )
-    allocate( GRD_xr_pl(ADM_gall_pl,K0,ADM_lall_pl,              ADM_nxyz) )
+    allocate( GRD_x    (ADM_gall   ,k0,ADM_lall   ,              ADM_nxyz) )
+    allocate( GRD_x_pl (ADM_gall_pl,k0,ADM_lall_pl,              ADM_nxyz) )
+    allocate( GRD_xt   (ADM_gall   ,k0,ADM_lall   ,ADM_TI:ADM_TJ,ADM_nxyz) )
+    allocate( GRD_xt_pl(ADM_gall_pl,k0,ADM_lall_pl,              ADM_nxyz) )
+    allocate( GRD_xr   (ADM_gall   ,k0,ADM_lall   ,ADM_AI:ADM_AJ,ADM_nxyz) )
+    allocate( GRD_xr_pl(ADM_gall_pl,k0,ADM_lall_pl,              ADM_nxyz) )
+
+    allocate( GRD_s    (ADM_gall   ,k0,ADM_lall   ,              2) )
+    allocate( GRD_s_pl (ADM_gall_pl,k0,ADM_lall_pl,              2) )
+    allocate( GRD_st   (ADM_gall   ,k0,ADM_lall   ,ADM_TI:ADM_TJ,2) )
+    allocate( GRD_st_pl(ADM_gall_pl,k0,ADM_lall_pl,              2) )
 #endif
     GRD_x    (:,:,:,:)   = CNST_UNDEF
     GRD_x_pl (:,:,:,:)   = CNST_UNDEF
@@ -325,6 +314,11 @@ contains
     GRD_xt_pl(:,:,:,:)   = CNST_UNDEF
     GRD_xr   (:,:,:,:,:) = CNST_UNDEF
     GRD_xr_pl(:,:,:,:)   = CNST_UNDEF
+
+    GRD_s    (:,:,:,:)   = CNST_UNDEF
+    GRD_s_pl (:,:,:,:)   = CNST_UNDEF
+    GRD_st   (:,:,:,:,:) = CNST_UNDEF
+    GRD_st_pl(:,:,:,:)   = CNST_UNDEF
 
     call GRD_input_hgrid( hgrid_fname,  & ![IN]
                           .true.,       & ![IN]
@@ -340,6 +334,9 @@ contains
        call GRD_scaling(CNST_ERADIUS)
     endif
 
+    ! calc latitude/longitude of each grid point
+    call GRD_makelatlon
+
     ! calc position of cell arc
     call GRD_makearc
 
@@ -347,8 +344,8 @@ contains
 
     !---< surface height >---
 #ifndef _FIXEDINDEX_
-    allocate( GRD_zs   (ADM_gall,   K0,ADM_lall,   GRD_ZSFC) )
-    allocate( GRD_zs_pl(ADM_gall_pl,K0,ADM_lall_pl,GRD_ZSFC) )
+    allocate( GRD_zs   (ADM_gall,   k0,ADM_lall,   GRD_ZSFC) )
+    allocate( GRD_zs_pl(ADM_gall_pl,k0,ADM_lall_pl,GRD_ZSFC) )
 #endif
     GRD_zs   (:,:,:,:) = 0.0_RP
     GRD_zs_pl(:,:,:,:) = 0.0_RP
@@ -358,7 +355,6 @@ contains
 
 
     !---< vertical coordinate >---
-
     if ( ADM_kall /= ADM_KNONE ) then
 #ifndef _FIXEDINDEX_
        allocate( GRD_gz   (ADM_kall) )
@@ -399,7 +395,7 @@ contains
        ! hight top
        GRD_htop = GRD_gzh(ADM_kmax+1) - GRD_gzh(ADM_kmin)
 
-       !--- vertical interpolation factor
+       ! vertical interpolation factor
        do k = ADM_kmin, ADM_kmax+1
           GRD_afac(k) = ( GRD_gzh(k) - GRD_gz(k-1) ) &
                       / ( GRD_gz (k) - GRD_gz(k-1) )
@@ -417,7 +413,7 @@ contains
 
        GRD_dfac(:) = 1.0_RP - GRD_cfac(:)
 
-       !--- setup z-coordinate
+       ! setup z-coordinate
        nstart = suf(ADM_gmin,ADM_gmin)
        nend   = suf(ADM_gmax,ADM_gmax)
 
@@ -428,7 +424,7 @@ contains
           !    gz = H(z-zs)/(H-zs) -> z = (H-zs)/H * gz + zs
 
           kflat = -1
-          if ( hflat > 0.0_RP ) then !--- default : -999.0
+          if ( hflat > 0.0_RP ) then ! default = -999.0
              do k = ADM_kmin+1, ADM_kmax+1
                 if ( hflat < GRD_gzh(k) ) then
                    kflat = k
@@ -447,10 +443,10 @@ contains
           do l = 1, ADM_lall
              do k = ADM_kmin-1, kflat
              do n = nstart, nend
-                GRD_vz(n,k,l,GRD_Z ) = GRD_zs(n,K0,l,GRD_ZSFC) &
-                                     + ( htop - GRD_zs(n,K0,l,GRD_ZSFC) ) / htop * GRD_gz(k)
-                GRD_vz(n,k,l,GRD_ZH) = GRD_zs(n,K0,l,GRD_ZSFC) &
-                                     + ( htop - GRD_zs(n,K0,l,GRD_ZSFC) ) / htop * GRD_gzh(k)
+                GRD_vz(n,k,l,GRD_Z ) = GRD_zs(n,k0,l,GRD_ZSFC) &
+                                     + ( htop - GRD_zs(n,k0,l,GRD_ZSFC) ) / htop * GRD_gz(k)
+                GRD_vz(n,k,l,GRD_ZH) = GRD_zs(n,k0,l,GRD_ZSFC) &
+                                     + ( htop - GRD_zs(n,k0,l,GRD_ZSFC) ) / htop * GRD_gzh(k)
              enddo
              enddo
 
@@ -468,10 +464,10 @@ contains
              n = ADM_GSLF_PL
              do l = 1, ADM_lall_pl
                 do k = ADM_kmin-1, kflat
-                   GRD_vz_pl(n,k,l,GRD_Z)  = GRD_zs_pl(n,K0,l,GRD_ZSFC) &
-                                           + ( htop - GRD_zs_pl(n,K0,l,GRD_ZSFC) ) / htop * GRD_gz(k)
-                   GRD_vz_pl(n,k,l,GRD_ZH) = GRD_zs_pl(n,K0,l,GRD_ZSFC) &
-                                           + ( htop - GRD_zs_pl(n,K0,l,GRD_ZSFC) ) / htop * GRD_gzh(k)
+                   GRD_vz_pl(n,k,l,GRD_Z)  = GRD_zs_pl(n,k0,l,GRD_ZSFC) &
+                                           + ( htop - GRD_zs_pl(n,k0,l,GRD_ZSFC) ) / htop * GRD_gz(k)
+                   GRD_vz_pl(n,k,l,GRD_ZH) = GRD_zs_pl(n,k0,l,GRD_ZSFC) &
+                                           + ( htop - GRD_zs_pl(n,k0,l,GRD_ZSFC) ) / htop * GRD_gzh(k)
                 enddo
 
                 if ( kflat < ADM_kmax+1 ) then
@@ -491,11 +487,11 @@ contains
           do k = ADM_kmin-1, ADM_kmax+1
           do n = nstart, nend
              GRD_vz(n,k,l,GRD_Z)  = GRD_gz(k)                               &
-                                  + GRD_zs(n,K0,l,1)                        &
+                                  + GRD_zs(n,k0,l,1)                        &
                                   * sinh( (GRD_htop-GRD_gz (k)) / h_efold ) &
                                   / sinh(  GRD_htop             / h_efold )
              GRD_vz(n,k,l,GRD_ZH) = GRD_gzh(k)                              &
-                                  + GRD_zs(n,K0,l,1)                        &
+                                  + GRD_zs(n,k0,l,1)                        &
                                   * sinh( (GRD_htop-GRD_gzh(k)) / h_efold ) &
                                   / sinh(  GRD_htop             / h_efold )
           enddo
@@ -507,11 +503,11 @@ contains
              do l = 1, ADM_lall_pl
              do k = ADM_kmin-1, ADM_kmax+1
                 GRD_vz_pl(n,k,l,GRD_Z)  = GRD_gz(k)                               &
-                                        + GRD_zs_pl(n,K0,l,1)                     &
+                                        + GRD_zs_pl(n,k0,l,1)                     &
                                         * sinh( (GRD_htop-GRD_gz (k)) / h_efold ) &
                                         / sinh(  GRD_htop             / h_efold )
                 GRD_vz_pl(n,k,l,GRD_ZH) = GRD_gzh(k)                              &
-                                        + GRD_zs_pl(n,K0,l,1)                     &
+                                        + GRD_zs_pl(n,k0,l,1)                     &
                                         * sinh( (GRD_htop-GRD_gzh(k)) / h_efold ) &
                                         / sinh(  GRD_htop             / h_efold )
              enddo
@@ -806,14 +802,22 @@ contains
 
     character(len=*), intent(in) :: fname
 
-    integer :: fid
+    integer :: fid, ierr
     !---------------------------------------------------------------------------
 
+    write(ADM_LOG_FID,*) '*** Write vertical grid file: ', trim(fname)
+
     fid = MISC_get_available_fid()
-    open(fid,file=trim(fname),form='unformatted')
+    open( unit   = fid,           &
+          file   = trim(fname),   &
+          status = 'new',         &
+          form   = 'unformatted', &
+          iostat = ierr           )
+
        write(fid) ADM_vlayer
        write(fid) GRD_gz
        write(fid) GRD_gzh
+
     close(fid)
 
     return
@@ -825,8 +829,7 @@ contains
        basename )
     use mod_misc,  only: &
        MISC_make_idstr,        &
-       MISC_get_available_fid, &
-       MISC_get_latlon
+       MISC_get_available_fid
     use mod_adm, only: &
        ADM_prc_tab, &
        ADM_prc_me
@@ -840,11 +843,8 @@ contains
 
     character(len=*), intent(in) :: basename
 
-    real(RP) :: lat(ADM_gall,ADM_KNONE,ADM_lall)
-    real(RP) :: lon(ADM_gall,ADM_KNONE,ADM_lall)
-
     character(len=128) :: fname
-    integer            :: g, l, rgnid
+    integer            :: l, rgnid
     integer            :: fid
     !---------------------------------------------------------------------------
 
@@ -881,21 +881,11 @@ contains
 
        write(ADM_LOG_FID,*) '*** make ideal topography'
 
-       do l = 1, ADM_lall
-       do g = 1, ADM_gall
-          call MISC_get_latlon( lat  (g,ADM_KNONE,l),          &
-                                lon  (g,ADM_KNONE,l),          &
-                                GRD_x(g,ADM_KNONE,l,GRD_XDIR), &
-                                GRD_x(g,ADM_KNONE,l,GRD_YDIR), &
-                                GRD_x(g,ADM_KNONE,l,GRD_ZDIR)  )
-       enddo
-       enddo
+       call IDEAL_topo( GRD_s (:,:,:,GRD_LAT), & ! [IN]
+                        GRD_s (:,:,:,GRD_LON), & ! [IN]
+                        GRD_zs(:,:,:,GRD_ZSFC) ) ! [OUT]
 
-       call IDEAL_topo( lat   (:,:,:),         & !--- [IN]
-                        lon   (:,:,:),         & !--- [IN]
-                        GRD_zs(:,:,:,GRD_ZSFC) ) !--- [OUT]
-
-    endif !--- io_mode
+    endif ! io_mode
 
     call COMM_var( GRD_zs, GRD_zs_pl, ADM_KNONE, 1 )
 
@@ -953,7 +943,9 @@ contains
        call ADM_proc_stop
     endif
 
-    !--- control volume points at the north pole
+    !--- send information of grid around north pole from regular region
+
+    ! find region which has the north pole
     do l = ADM_rgn_nmax, 1, -1
        if ( ADM_rgn_vnum(ADM_N,l) == ADM_VLINK_NMAX ) then
           do n = 1, ADM_VLINK_NMAX
@@ -966,6 +958,7 @@ contains
 
     send_flag(:) = .false.
 
+    ! send grid position from regular region
     do n = 1, ADM_VLINK_NMAX
        do l = 1, ADM_lall
           if ( ADM_prc_tab(l,ADM_prc_me) == rgntab(n) ) then
@@ -998,6 +991,7 @@ contains
        enddo
     endif
 
+    ! wait and store
     do n = 1, ADM_VLINK_NMAX
        if ( send_flag(n) ) then
           call MPI_WAIT(sreq(n),istat,ierr)
@@ -1011,7 +1005,9 @@ contains
        enddo
     endif
 
-    !--- control volume points at the sourth pole
+    !--- send information of grid around south pole from regular region
+
+    ! find region which has the south pole
     do l = 1, ADM_rgn_nmax
        if ( ADM_rgn_vnum(ADM_S,l) == ADM_VLINK_NMAX ) then
           do n = 1, ADM_VLINK_NMAX
@@ -1058,6 +1054,7 @@ contains
        enddo
     endif
 
+    ! wait and store
     do n = 1, ADM_VLINK_NMAX
        if ( send_flag(n) ) then
           call MPI_WAIT(sreq(n),istat,ierr)
@@ -1071,7 +1068,7 @@ contains
        enddo
     endif
 
-    !--- grid point communication
+    ! grid point communication
     call COMM_var( GRD_x, GRD_x_pl, ADM_KNONE, 3 )
 
     if (      ADM_prc_me == ADM_prc_npl &
@@ -1111,6 +1108,63 @@ contains
   end subroutine GRD_scaling
 
   !-----------------------------------------------------------------------------
+  !> calculate longitude and latitude
+  subroutine GRD_makelatlon
+    use mod_misc,  only: &
+       MISC_get_latlon
+    use mod_adm, only: &
+       ADM_have_pl
+    implicit none
+
+    integer :: g, k0, l
+    !---------------------------------------------------------------------------
+
+    k0 = ADM_KNONE
+
+    do l = 1, ADM_lall
+    do g = 1, ADM_gall
+       call MISC_get_latlon( GRD_s(g,k0,l,GRD_LAT),  &
+                             GRD_s(g,k0,l,GRD_LON),  &
+                             GRD_x(g,k0,l,GRD_XDIR), &
+                             GRD_x(g,k0,l,GRD_YDIR), &
+                             GRD_x(g,k0,l,GRD_ZDIR)  )
+
+       call MISC_get_latlon( GRD_st(g,k0,l,ADM_TI,GRD_LAT),  &
+                             GRD_st(g,k0,l,ADM_TI,GRD_LON),  &
+                             GRD_xt(g,k0,l,ADM_TI,GRD_XDIR), &
+                             GRD_xt(g,k0,l,ADM_TI,GRD_YDIR), &
+                             GRD_xt(g,k0,l,ADM_TI,GRD_ZDIR)  )
+
+       call MISC_get_latlon( GRD_st(g,k0,l,ADM_TJ,GRD_LAT),  &
+                             GRD_st(g,k0,l,ADM_TJ,GRD_LON),  &
+                             GRD_xt(g,k0,l,ADM_TJ,GRD_XDIR), &
+                             GRD_xt(g,k0,l,ADM_TJ,GRD_YDIR), &
+                             GRD_xt(g,k0,l,ADM_TJ,GRD_ZDIR)  )
+    enddo
+    enddo
+
+    if ( ADM_have_pl ) then
+       do l = 1,ADM_lall_pl
+       do g = 1,ADM_gall_pl
+          call MISC_get_latlon( GRD_s_pl(g,k0,l,GRD_LAT),  &
+                                GRD_s_pl(g,k0,l,GRD_LON),  &
+                                GRD_x_pl(g,k0,l,GRD_XDIR), &
+                                GRD_x_pl(g,k0,l,GRD_YDIR), &
+                                GRD_x_pl(g,k0,l,GRD_ZDIR)  )
+
+          call MISC_get_latlon( GRD_st_pl(g,k0,l,GRD_LAT),  &
+                                GRD_st_pl(g,k0,l,GRD_LON),  &
+                                GRD_xt_pl(g,k0,l,GRD_XDIR), &
+                                GRD_xt_pl(g,k0,l,GRD_YDIR), &
+                                GRD_xt_pl(g,k0,l,GRD_ZDIR)  )
+       enddo
+       enddo
+    endif
+
+    return
+  end subroutine GRD_makelatlon
+
+  !-----------------------------------------------------------------------------
   !> calculate location of the mid-point of cell arc
   subroutine GRD_makearc
     use mod_adm, only: &
@@ -1127,10 +1181,10 @@ contains
     integer :: im1j, ijm1
 
     integer :: nstart,nend
-    integer :: n, l, v, K0
+    integer :: n, l, v, k0
     !---------------------------------------------------------------------------
 
-    K0 = ADM_KNONE
+    k0 = ADM_KNONE
 
     do l = 1, ADM_lall
        nstart = suf(ADM_gmin-1,ADM_gmin  )
@@ -1140,9 +1194,9 @@ contains
           ij     = n
           ijm1   = n     - ADM_gall_1d
 
-          GRD_xr(n,K0,l,ADM_AI ,GRD_XDIR) = 0.5_RP * ( GRD_xt(ijm1,K0,l,ADM_TJ,GRD_XDIR) + GRD_xt(ij,K0,l,ADM_TI,GRD_XDIR) )
-          GRD_xr(n,K0,l,ADM_AI ,GRD_YDIR) = 0.5_RP * ( GRD_xt(ijm1,K0,l,ADM_TJ,GRD_YDIR) + GRD_xt(ij,K0,l,ADM_TI,GRD_YDIR) )
-          GRD_xr(n,K0,l,ADM_AI ,GRD_ZDIR) = 0.5_RP * ( GRD_xt(ijm1,K0,l,ADM_TJ,GRD_ZDIR) + GRD_xt(ij,K0,l,ADM_TI,GRD_ZDIR) )
+          GRD_xr(n,k0,l,ADM_AI ,GRD_XDIR) = 0.5_RP * ( GRD_xt(ijm1,k0,l,ADM_TJ,GRD_XDIR) + GRD_xt(ij,k0,l,ADM_TI,GRD_XDIR) )
+          GRD_xr(n,k0,l,ADM_AI ,GRD_YDIR) = 0.5_RP * ( GRD_xt(ijm1,k0,l,ADM_TJ,GRD_YDIR) + GRD_xt(ij,k0,l,ADM_TI,GRD_YDIR) )
+          GRD_xr(n,k0,l,ADM_AI ,GRD_ZDIR) = 0.5_RP * ( GRD_xt(ijm1,k0,l,ADM_TJ,GRD_ZDIR) + GRD_xt(ij,k0,l,ADM_TI,GRD_ZDIR) )
        enddo
 
        nstart = suf(ADM_gmin-1,ADM_gmin-1)
@@ -1151,9 +1205,9 @@ contains
        do n = nstart, nend
           ij     = n
 
-          GRD_xr(n,K0,l,ADM_AIJ,GRD_XDIR) = 0.5_RP * ( GRD_xt(ij,K0,l,ADM_TI,GRD_XDIR) + GRD_xt(ij,K0,l,ADM_TJ,GRD_XDIR) )
-          GRD_xr(n,K0,l,ADM_AIJ,GRD_YDIR) = 0.5_RP * ( GRD_xt(ij,K0,l,ADM_TI,GRD_YDIR) + GRD_xt(ij,K0,l,ADM_TJ,GRD_YDIR) )
-          GRD_xr(n,K0,l,ADM_AIJ,GRD_ZDIR) = 0.5_RP * ( GRD_xt(ij,K0,l,ADM_TI,GRD_ZDIR) + GRD_xt(ij,K0,l,ADM_TJ,GRD_ZDIR) )
+          GRD_xr(n,k0,l,ADM_AIJ,GRD_XDIR) = 0.5_RP * ( GRD_xt(ij,k0,l,ADM_TI,GRD_XDIR) + GRD_xt(ij,k0,l,ADM_TJ,GRD_XDIR) )
+          GRD_xr(n,k0,l,ADM_AIJ,GRD_YDIR) = 0.5_RP * ( GRD_xt(ij,k0,l,ADM_TI,GRD_YDIR) + GRD_xt(ij,k0,l,ADM_TJ,GRD_YDIR) )
+          GRD_xr(n,k0,l,ADM_AIJ,GRD_ZDIR) = 0.5_RP * ( GRD_xt(ij,k0,l,ADM_TI,GRD_ZDIR) + GRD_xt(ij,k0,l,ADM_TJ,GRD_ZDIR) )
        enddo
 
        nstart = suf(ADM_gmin  ,ADM_gmin-1)
@@ -1163,9 +1217,9 @@ contains
           ij     = n
           im1j   = n - 1
 
-          GRD_xr(n,K0,l,ADM_AJ ,GRD_XDIR) = 0.5_RP * ( GRD_xt(ij,K0,l,ADM_TJ,GRD_XDIR) + GRD_xt(im1j,K0,l,ADM_TI,GRD_XDIR) )
-          GRD_xr(n,K0,l,ADM_AJ ,GRD_YDIR) = 0.5_RP * ( GRD_xt(ij,K0,l,ADM_TJ,GRD_YDIR) + GRD_xt(im1j,K0,l,ADM_TI,GRD_YDIR) )
-          GRD_xr(n,K0,l,ADM_AJ ,GRD_ZDIR) = 0.5_RP * ( GRD_xt(ij,K0,l,ADM_TJ,GRD_ZDIR) + GRD_xt(im1j,K0,l,ADM_TI,GRD_ZDIR) )
+          GRD_xr(n,k0,l,ADM_AJ ,GRD_XDIR) = 0.5_RP * ( GRD_xt(ij,k0,l,ADM_TJ,GRD_XDIR) + GRD_xt(im1j,k0,l,ADM_TI,GRD_XDIR) )
+          GRD_xr(n,k0,l,ADM_AJ ,GRD_YDIR) = 0.5_RP * ( GRD_xt(ij,k0,l,ADM_TJ,GRD_YDIR) + GRD_xt(im1j,k0,l,ADM_TI,GRD_YDIR) )
+          GRD_xr(n,k0,l,ADM_AJ ,GRD_ZDIR) = 0.5_RP * ( GRD_xt(ij,k0,l,ADM_TJ,GRD_ZDIR) + GRD_xt(im1j,k0,l,ADM_TI,GRD_ZDIR) )
        enddo
     enddo
 
@@ -1178,9 +1232,9 @@ contains
              ijm1 = v - 1
              if( ijm1 == ADM_gmin_pl - 1 ) ijm1 = ADM_gmax_pl
 
-             GRD_xr_pl(v,K0,l,GRD_XDIR) = 0.5_RP * (GRD_xt_pl(ijm1,K0,l,GRD_XDIR)+GRD_xt_pl(ij,K0,l,GRD_XDIR))
-             GRD_xr_pl(v,K0,l,GRD_YDIR) = 0.5_RP * (GRD_xt_pl(ijm1,K0,l,GRD_YDIR)+GRD_xt_pl(ij,K0,l,GRD_YDIR))
-             GRD_xr_pl(v,K0,l,GRD_ZDIR) = 0.5_RP * (GRD_xt_pl(ijm1,K0,l,GRD_ZDIR)+GRD_xt_pl(ij,K0,l,GRD_ZDIR))
+             GRD_xr_pl(v,k0,l,GRD_XDIR) = 0.5_RP * (GRD_xt_pl(ijm1,k0,l,GRD_XDIR)+GRD_xt_pl(ij,k0,l,GRD_XDIR))
+             GRD_xr_pl(v,k0,l,GRD_YDIR) = 0.5_RP * (GRD_xt_pl(ijm1,k0,l,GRD_YDIR)+GRD_xt_pl(ij,k0,l,GRD_YDIR))
+             GRD_xr_pl(v,k0,l,GRD_ZDIR) = 0.5_RP * (GRD_xt_pl(ijm1,k0,l,GRD_ZDIR)+GRD_xt_pl(ij,k0,l,GRD_ZDIR))
           enddo
        enddo
     endif

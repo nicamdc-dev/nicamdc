@@ -727,11 +727,11 @@ contains
        CNST_UNDEF
     use mod_comm, only: &
        COMM_data_transfer
-    use mod_gmtr, only: &
-       GMTR_lon,    &
-       GMTR_lon_pl, &
-       GMTR_lat,    &
-       GMTR_lat_pl
+    use mod_grd, only: &
+       GRD_LAT,  &
+       GRD_LON,  &
+       GRD_s,    &
+       GRD_s_pl
     use mod_history, only: &
        history_in
     implicit none
@@ -758,12 +758,12 @@ contains
     do l = 1, ADM_lall
     do g = 1, ADM_gall
 
-       call MISC_get_distance( CNST_ERADIUS,   & ! [IN]
-                               center_lon_rad, & ! [IN]
-                               center_lat_rad, & ! [IN]
-                               GMTR_lon(g,l),  & ! [IN]
-                               GMTR_lat(g,l),  & ! [IN]
-                               dist            ) ! [OUT]
+       call MISC_get_distance( CNST_ERADIUS,          & ! [IN]
+                               center_lon_rad,        & ! [IN]
+                               center_lat_rad,        & ! [IN]
+                               GRD_s(g,k0,l,GRD_LON), & ! [IN]
+                               GRD_s(g,k0,l,GRD_LAT), & ! [IN]
+                               dist                   ) ! [OUT]
 
        if ( dist < halo1_dist ) then
           fact = 0.0_RP
@@ -783,12 +783,12 @@ contains
        do l = 1, ADM_lall_pl
        do g = 1, ADM_gall_pl
 
-          call MISC_get_distance( CNST_ERADIUS,     & ! [IN]
-                                  center_lon,       & ! [IN]
-                                  center_lat,       & ! [IN]
-                                  GMTR_lon_pl(g,l), & ! [IN]
-                                  GMTR_lat_pl(g,l), & ! [IN]
-                                  dist              ) ! [OUT]
+          call MISC_get_distance( CNST_ERADIUS,             & ! [IN]
+                                  center_lon,               & ! [IN]
+                                  center_lat,               & ! [IN]
+                                  GRD_s_pl(g,k0,l,GRD_LON), & ! [IN]
+                                  GRD_s_pl(g,k0,l,GRD_LAT), & ! [IN]
+                                  dist                      ) ! [OUT]
 
           if ( dist < halo1_dist ) then
              fact = 0.0_RP

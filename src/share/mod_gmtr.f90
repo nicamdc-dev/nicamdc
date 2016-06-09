@@ -51,7 +51,7 @@ module mod_gmtr
   !
   !++ Public parameters & variables
   !
-  integer,  public, parameter :: GMTR_P_nmax_var = 10
+  integer,  public, parameter :: GMTR_P_nmax_var = 8
 
   integer,  public, parameter :: GMTR_P_AREA  = 1
   integer,  public, parameter :: GMTR_P_RAREA = 2
@@ -61,18 +61,14 @@ module mod_gmtr
   integer,  public, parameter :: GMTR_P_JX    = 6
   integer,  public, parameter :: GMTR_P_JY    = 7
   integer,  public, parameter :: GMTR_P_JZ    = 8
-  integer,  public, parameter :: GMTR_P_LAT   = 9
-  integer,  public, parameter :: GMTR_P_LON   = 10
 
-  integer,  public, parameter :: GMTR_T_nmax_var = 7
+  integer,  public, parameter :: GMTR_T_nmax_var = 5
 
   integer,  public, parameter :: GMTR_T_AREA  = 1
   integer,  public, parameter :: GMTR_T_RAREA = 2
   integer,  public, parameter :: GMTR_T_W1    = 3
   integer,  public, parameter :: GMTR_T_W2    = 4
   integer,  public, parameter :: GMTR_T_W3    = 5
-  integer,  public, parameter :: GMTR_T_LAT   = 6
-  integer,  public, parameter :: GMTR_T_LON   = 7
 
   integer,  public, parameter :: GMTR_A_nmax_var    = 12
   integer,  public, parameter :: GMTR_A_nmax_var_pl = 18
@@ -107,10 +103,6 @@ module mod_gmtr
 
   real(RP), public              :: GMTR_area    (ADM_gall   ,ADM_lall   )
   real(RP), public              :: GMTR_area_pl (ADM_gall_pl,ADM_lall_pl)
-  real(RP), public              :: GMTR_lat     (ADM_gall   ,ADM_lall   )
-  real(RP), public              :: GMTR_lat_pl  (ADM_gall_pl,ADM_lall_pl)
-  real(RP), public              :: GMTR_lon     (ADM_gall   ,ADM_lall   )
-  real(RP), public              :: GMTR_lon_pl  (ADM_gall_pl,ADM_lall_pl)
 #else
   real(RP), public, allocatable :: GMTR_P_var   (:,:,:,:)   ! geometrics for the cell point
   real(RP), public, allocatable :: GMTR_P_var_pl(:,:,:,:)
@@ -121,10 +113,6 @@ module mod_gmtr
 
   real(RP), public, allocatable :: GMTR_area    (:,:)       ! control area of the cell
   real(RP), public, allocatable :: GMTR_area_pl (:,:)
-  real(RP), public, allocatable :: GMTR_lat     (:,:)       ! latitude  of the cell point
-  real(RP), public, allocatable :: GMTR_lat_pl  (:,:)
-  real(RP), public, allocatable :: GMTR_lon     (:,:)       ! longitude of the cell point
-  real(RP), public, allocatable :: GMTR_lon_pl  (:,:)
 #endif
 
   character(len=ADM_NSYS), public :: GMTR_polygon_type = 'ON_SPHERE'
@@ -206,10 +194,6 @@ contains
 
     allocate( GMTR_area    (ADM_gall,   ADM_lall   ) )
     allocate( GMTR_area_pl (ADM_gall_pl,ADM_lall_pl) )
-    allocate( GMTR_lat     (ADM_gall,   ADM_lall   ) )
-    allocate( GMTR_lat_pl  (ADM_gall_pl,ADM_lall_pl) )
-    allocate( GMTR_lon     (ADM_gall,   ADM_lall   ) )
-    allocate( GMTR_lon_pl  (ADM_gall_pl,ADM_lall_pl) )
 #endif
     GMTR_P_var   (:,:,:,:)   = 0.0_RP
     GMTR_P_var_pl(:,:,:,:)   = 0.0_RP
@@ -237,10 +221,6 @@ contains
     !--- for simple use
     GMTR_area   (:,:) = GMTR_P_var   (:,K0,:,GMTR_P_AREA)
     GMTR_area_pl(:,:) = GMTR_P_var_pl(:,K0,:,GMTR_P_AREA)
-    GMTR_lat    (:,:) = GMTR_P_var   (:,K0,:,GMTR_P_LAT )
-    GMTR_lat_pl (:,:) = GMTR_P_var_pl(:,K0,:,GMTR_P_LAT )
-    GMTR_lon    (:,:) = GMTR_P_var   (:,K0,:,GMTR_P_LON )
-    GMTR_lon_pl (:,:) = GMTR_P_var_pl(:,K0,:,GMTR_P_LON )
 
     if ( GMTR_fname /= "" ) then
        call GMTR_output_metrics( GMTR_fname )
@@ -253,8 +233,7 @@ contains
   !> calc geometrical information for cell point
   subroutine GMTR_calc_P
     use mod_misc, only: &
-       MISC_triangle_area, &
-       MISC_get_latlon
+       MISC_triangle_area
     use mod_adm, only: &
        ADM_prc_me,      &
        ADM_have_pl,     &
@@ -276,10 +255,13 @@ contains
        GRD_XDIR,      &
        GRD_YDIR,      &
        GRD_ZDIR,      &
+       GRD_LON,       &
        GRD_x,         &
        GRD_x_pl,      &
        GRD_xt,        &
        GRD_xt_pl,     &
+       GRD_s,         &
+       GRD_s_pl,      &
        GRD_grid_type, &
        GRD_rscale
     implicit none
@@ -353,12 +335,6 @@ contains
           GMTR_P_var(ij,K0,l,GMTR_P_AREA)  = area
           GMTR_P_var(ij,K0,l,GMTR_P_RAREA) = 1.0_RP / GMTR_P_var(ij,K0,l,GMTR_P_AREA)
 
-          call MISC_get_latlon( GMTR_P_var(ij,K0,l,GMTR_P_LAT), &
-                                GMTR_P_var(ij,K0,l,GMTR_P_LON), &
-                                GRD_x     (ij,K0,l,GRD_XDIR),   &
-                                GRD_x     (ij,K0,l,GRD_YDIR),   &
-                                GRD_x     (ij,K0,l,GRD_ZDIR)    )
-
           if ( GRD_grid_type == 'ON_PLANE' ) then
 
              GMTR_P_var(ij,K0,l,GMTR_P_IX) = 1.0_RP
@@ -370,8 +346,8 @@ contains
 
           else
 
-             sin_lam = sin( GMTR_P_var(ij,K0,l,GMTR_P_LON) )
-             cos_lam = cos( GMTR_P_var(ij,K0,l,GMTR_P_LON) )
+             sin_lam = sin( GRD_s(ij,K0,l,GRD_LON) )
+             cos_lam = cos( GRD_s(ij,K0,l,GRD_LON) )
 
              GMTR_P_var(ij,K0,l,GMTR_P_IX) = -sin_lam
              GMTR_P_var(ij,K0,l,GMTR_P_IY) =  cos_lam
@@ -409,14 +385,8 @@ contains
           GMTR_P_var_pl(n,K0,l,GMTR_P_AREA)  = area
           GMTR_P_var_pl(n,K0,l,GMTR_P_RAREA) = 1.0_RP / GMTR_P_var_pl(n,K0,l,GMTR_P_AREA)
 
-          call MISC_get_latlon( GMTR_P_var_pl(n,K0,l,GMTR_P_LAT), &
-                                GMTR_P_var_pl(n,K0,l,GMTR_P_LON), &
-                                GRD_x_pl     (n,K0,l,GRD_XDIR),   &
-                                GRD_x_pl     (n,K0,l,GRD_YDIR),   &
-                                GRD_x_pl     (n,K0,l,GRD_ZDIR)    )
-
-          sin_lam = sin( GMTR_P_var_pl(n,K0,l,GMTR_P_LON) )
-          cos_lam = cos( GMTR_P_var_pl(n,K0,l,GMTR_P_LON) )
+          sin_lam = sin( GRD_s_pl(n,K0,l,GRD_LON) )
+          cos_lam = cos( GRD_s_pl(n,K0,l,GRD_LON) )
 
           GMTR_P_var_pl(n,K0,l,GMTR_P_IX) = -sin_lam
           GMTR_P_var_pl(n,K0,l,GMTR_P_IY) =  cos_lam
@@ -435,8 +405,7 @@ contains
   !> calc geometrical information for cell vertex (triangle)
   subroutine GMTR_calc_T
     use mod_misc, only: &
-       MISC_triangle_area, &
-       MISC_get_latlon
+       MISC_triangle_area
     use mod_adm, only: &
        ADM_prc_me,      &
        ADM_have_pl,     &
@@ -545,12 +514,6 @@ contains
           GMTR_T_var(ij,K0,l,t,GMTR_T_W1)    = area1 / area
           GMTR_T_var(ij,K0,l,t,GMTR_T_W2)    = area2 / area
           GMTR_T_var(ij,K0,l,t,GMTR_T_W3)    = area3 / area
-
-          call MISC_get_latlon( GMTR_T_var(ij,K0,l,t,GMTR_T_LAT), &
-                                GMTR_T_var(ij,K0,l,t,GMTR_T_LON), &
-                                GRD_xt    (ij,K0,l,t,GRD_XDIR),   &
-                                GRD_xt    (ij,K0,l,t,GRD_YDIR),   &
-                                GRD_xt    (ij,K0,l,t,GRD_ZDIR)    )
        enddo
        enddo
 
@@ -589,13 +552,6 @@ contains
              GMTR_T_var_pl(n,K0,l,GMTR_T_W1)    = area1 / area
              GMTR_T_var_pl(n,K0,l,GMTR_T_W2)    = area2 / area
              GMTR_T_var_pl(n,K0,l,GMTR_T_W3)    = area3 / area
-
-
-             call MISC_get_latlon( GMTR_T_var_pl(n,K0,l,GMTR_T_LAT), &
-                                   GMTR_T_var_pl(n,K0,l,GMTR_T_LON), &
-                                   GRD_xt_pl    (n,K0,l,GRD_XDIR),   &
-                                   GRD_xt_pl    (n,K0,l,GRD_YDIR),   &
-                                   GRD_xt_pl    (n,K0,l,GRD_ZDIR)    )
           enddo
 
        enddo
@@ -1166,14 +1122,6 @@ contains
                         basename, desc, "",                                &
                         "area", "control area", "",                        &
                         "m2", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
-       call FIO_output( GMTR_P_var(:,:,:,GMTR_P_LAT),                          &
-                        basename, desc, "",                                    &
-                        "lat", "latitude", "",                                 &
-                        "radian", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
-       call FIO_output( GMTR_P_var(:,:,:,GMTR_P_LON),                          &
-                        basename, desc, "",                                    &
-                        "lon", "longitude", "",                                &
-                        "radian", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
        call FIO_output( tmp(:,:,:,I_rgn),                                   &
                         basename, desc, "",                                 &
                         "rgn", "region number", "",                         &
@@ -1202,8 +1150,6 @@ contains
                 recl   = ADM_gall*8     )
 
              write(fid,rec=1) GMTR_P_var(:,K0,l,GMTR_P_AREA)
-             write(fid,rec=2) GMTR_P_var(:,K0,l,GMTR_P_LAT )
-             write(fid,rec=3) GMTR_P_var(:,K0,l,GMTR_P_LON )
              write(fid,rec=4) tmp       (:,K0,l,I_rgn      )
              write(fid,rec=5) tmp       (:,K0,l,I_grid     )
 

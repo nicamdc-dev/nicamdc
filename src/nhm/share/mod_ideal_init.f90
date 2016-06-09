@@ -29,7 +29,21 @@ module mod_ideal_init
   use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID, &
-     ADM_NSYS
+     ADM_NSYS,    &
+     ADM_KNONE,   &
+     ADM_gall,    &
+     ADM_kall,    &
+     ADM_lall
+  use mod_cnst, only: &
+     pi    => CNST_PI,      &
+     a     => CNST_ERADIUS, &
+     omega => CNST_EOHM,    &
+     g     => CNST_EGRAV,   &
+     Rd    => CNST_RAIR,    &
+     Rv    => CNST_RVAP,    &
+     Cp    => CNST_CP,      &
+     KAPPA => CNST_KAPPA,   &
+     PRE00 => CNST_PRE00
   use dcmip_initial_conditions_test_1_2_3, only: &
      test2_steady_state_mountain, &
      test2_schaer_mountain,       &
@@ -43,16 +57,6 @@ module mod_ideal_init
      supercell_test
   use tropical_cyclone, only: &
      tropical_cyclone_test
-  use mod_cnst, only: &
-     pi    => CNST_PI,      &
-     a     => CNST_ERADIUS, &
-     omega => CNST_EOHM,    &
-     g     => CNST_EGRAV,   &
-     Rd    => CNST_RAIR,    &
-     Rv    => CNST_RVAP,    &
-     Cp    => CNST_CP,      &
-     KAPPA => CNST_KAPPA,   &
-     PRE00 => CNST_PRE00
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -256,9 +260,10 @@ contains
        RANDOM_get
     use mod_cnst, only: &
        CNST_D2R
-    use mod_gmtr, only: &
-       GMTR_lon, &
-       GMTR_lat
+    use mod_grd, only: &
+       GRD_LAT, &
+       GRD_LON, &
+       GRD_s
     use mod_runconf, only: &
        TRC_vmax
     implicit none
@@ -268,10 +273,10 @@ contains
     real(RP) :: random(ADM_gall,ADM_kall,ADM_lall)
     integer :: deg
 
-    integer :: g, k, l, nq, K0
+    integer :: g, k, l, nq, k0
     !---------------------------------------------------------------------------
 
-    K0 = ADM_KNONE
+    k0 = ADM_KNONE
 
     do nq = 1, TRC_VMAX
        call RANDOM_get( random(:,:,:) )
@@ -288,7 +293,7 @@ contains
           do l = 1, ADM_lall
           do k = 1, ADM_kall
           do g = 1, ADM_gall
-             deg = nint( GMTR_lon(g,l) / CNST_D2R )
+             deg = nint( GRD_s(g,k0,l,GRD_LON) / CNST_D2R )
              if ( mod(deg,10) == 0 ) then
                 TRC_var(g,k,l,nq) = real(ADM_kall-k+1,kind=RP)
              else
@@ -301,7 +306,7 @@ contains
           do l = 1, ADM_lall
           do k = 1, ADM_kall
           do g = 1, ADM_gall
-             deg = nint( GMTR_lat(g,l) / CNST_D2R )
+             deg = nint( GRD_s(g,k0,l,GRD_LAT) / CNST_D2R )
              if ( mod(deg,10) == 0 ) then
                 TRC_var(g,k,l,nq) = real(ADM_kall-k+1,kind=RP)
              else
@@ -334,11 +339,11 @@ contains
        ADM_kmin,  &
        ADM_kmax
     use mod_grd, only: &
-       GRD_Z,    &
+       GRD_LAT, &
+       GRD_LON, &
+       GRD_s,   &
+       GRD_Z,   &
        GRD_vz
-    use mod_gmtr, only: &
-       GMTR_lat, &
-       GMTR_lon
     use mod_runconf, only: &
        TRC_vmax
     implicit none
@@ -360,10 +365,12 @@ contains
     real(RP) :: f, df
     real(RP) :: lat, lon
 
-    integer :: n, k, l, itr
+    integer :: n, k, l, k0, itr
     !---------------------------------------------------------------------------
 
     DIAG_var(:,:,:,:) = 0.0_RP
+
+    k0 = ADM_KNONE
 
     do l = 1, lall
     do n = 1, ijdim
@@ -373,8 +380,8 @@ contains
           dz(k) = GRD_vz(n,k,l,GRD_Z) - GRD_vz(n,k-1,l,GRD_Z)
        enddo
 
-       lat = GMTR_lat(n,l)
-       lon = GMTR_lon(n,l)
+       lat = GRD_s(n,k0,l,GRD_LAT)
+       lon = GRD_s(n,k0,l,GRD_LON)
 
        pre_sfc = PRE00
 !       tem_sfc = 300.0_RP
@@ -468,12 +475,12 @@ contains
        ADM_kmin,      &
        ADM_kmax
     use mod_grd, only: &
-       GRD_Z,          &
-       GRD_ZH, &
+       GRD_LAT, &
+       GRD_LON, &
+       GRD_s,   &
+       GRD_Z,   &
+       GRD_ZH,  &
        GRD_vz
-    use mod_gmtr, only: &
-       GMTR_lat, &
-       GMTR_lon
     use mod_runconf, only: &
        TRC_vmax
     implicit none
@@ -503,10 +510,12 @@ contains
     logical :: eta_limit ! if true, value of eta is limited upto 1.0
     logical :: logout    ! log output switch for Pressure Convert
 
-    integer :: n, k, l, itr
+    integer :: n, k, l, k0, itr
     !---------------------------------------------------------------------------
 
     DIAG_var(:,:,:,:) = 0.0_RP
+
+    k0 = ADM_KNONE
 
     eta_limit = .true.
     psgm = .false.
@@ -546,8 +555,8 @@ contains
           z_local(k) = GRD_vz(n,k,l,GRD_Z)
        enddo
 
-       lat = GMTR_lat(n,l)
-       lon = GMTR_lon(n,l)
+       lat = GRD_s(n,k0,l,GRD_LAT)
+       lon = GRD_s(n,k0,l,GRD_LON)
 
        signal = .true.
 
@@ -620,14 +629,14 @@ contains
        ADM_kmin,      &
        ADM_kmax
     use mod_grd, only: &
+       GRD_LAT,  &
+       GRD_LON,  &
+       GRD_s,    &
        GRD_afac, &
        GRD_bfac, &
        GRD_Z,    &
        GRD_ZH,   &
        GRD_vz
-    use mod_gmtr, only: &
-       GMTR_lat, &
-       GMTR_lon
     use mod_runconf, only: &
        I_QV,      &
        NQW_MAX,   &
@@ -690,8 +699,10 @@ contains
     integer,  parameter :: zcoords = 1      ! 1 if z is specified, 0 if p is specified
     logical,  parameter :: prs_dry = .false.
 
-    integer :: n, k, l
+    integer :: n, k, l, k0
     !---------------------------------------------------------------------------
+
+    k0 = ADM_KNONE
 
     DIAG_var(:,:,:,:) = 0.0_RP
 
@@ -740,10 +751,10 @@ contains
 
     do l = 1, lall
     do n = 1, ijdim
-       lat    = GMTR_lat(n,l)
-       lon    = GMTR_lon(n,l)
-       DP_lat = real(GMTR_lat(n,l),kind=DP)
-       DP_lon = real(GMTR_lon(n,l),kind=DP)
+       lat    = GRD_s(n,k0,l,GRD_LAT)
+       lon    = GRD_s(n,k0,l,GRD_LON)
+       DP_lat = real(GRD_s(n,k0,l,GRD_LAT),kind=DP)
+       DP_lon = real(GRD_s(n,k0,l,GRD_LON),kind=DP)
 
        do k = 1, kdim
           DP_z = GRD_vz(n,k,l,GRD_Z)
@@ -841,12 +852,12 @@ contains
        ADM_kmin,      &
        ADM_kmax
     use mod_grd, only: &
-       GRD_Z,  &
-       GRD_ZH, &
+       GRD_LAT, &
+       GRD_LON, &
+       GRD_s,   &
+       GRD_Z,   &
+       GRD_ZH,  &
        GRD_vz
-    use mod_gmtr, only: &
-       GMTR_lat, &
-       GMTR_lon
     use mod_runconf, only: &
        I_QV,    &
        NQW_MAX, &
@@ -895,10 +906,12 @@ contains
     integer             :: pert            ! type of perturbation (0 = no perturbation, 1 = perturbation)
     logical,  parameter :: prs_dry = .false.
 
-    integer :: n, k, l
+    integer :: n, k, l, k0
     !---------------------------------------------------------------------------
 
     DIAG_var(:,:,:,:) = 0.0_RP
+
+    k0 = ADM_KNONE
 
     DP_p   = 0.0_DP
     RdovRv = Rd / Rv
@@ -928,10 +941,10 @@ contains
 
     do l = 1, lall
     do n = 1, ijdim
-       lat    = GMTR_lat(n,l)
-       lon    = GMTR_lon(n,l)
-       DP_lat = real(GMTR_lat(n,l),kind=DP)
-       DP_lon = real(GMTR_lon(n,l),kind=DP)
+       lat    = GRD_s(n,k0,l,GRD_LAT)
+       lon    = GRD_s(n,k0,l,GRD_LON)
+       DP_lat = real(GRD_s(n,k0,l,GRD_LAT),kind=DP)
+       DP_lon = real(GRD_s(n,k0,l,GRD_LON),kind=DP)
 
        do k = 1, kdim
           DP_z = GRD_vz(n,k,l,GRD_Z)
@@ -997,12 +1010,12 @@ contains
        ADM_kmin,      &
        ADM_kmax
     use mod_grd, only: &
-       GRD_Z,          &
-       GRD_ZH, &
+       GRD_LAT, &
+       GRD_LON, &
+       GRD_s,   &
+       GRD_Z,   &
+       GRD_ZH,  &
        GRD_vz
-    use mod_gmtr, only: &
-       GMTR_lat, &
-       GMTR_lon
     use mod_runconf, only: &
        I_QV,      &
        NQW_MAX,   &
@@ -1051,10 +1064,12 @@ contains
     integer             :: moist           ! include moisture (1 = yes or 0 = no)
     logical,  parameter :: prs_dry = .false.
 
-    integer :: n, k, l
+    integer :: n, k, l, k0
     !---------------------------------------------------------------------------
 
     DIAG_var(:,:,:,:) = 0.0_RP
+
+    k0 = ADM_KNONE
 
     DP_p   = 0.0_DP
     RdovRv = Rd / Rv
@@ -1069,10 +1084,10 @@ contains
 
     do l = 1, lall
     do n = 1, ijdim
-       lat    = GMTR_lat(n,l)
-       lon    = GMTR_lon(n,l)
-       DP_lat = real(GMTR_lat(n,l),kind=DP)
-       DP_lon = real(GMTR_lon(n,l),kind=DP)
+       lat    = GRD_s(n,k0,l,GRD_LAT)
+       lon    = GRD_s(n,k0,l,GRD_LON)
+       DP_lat = real(GRD_s(n,k0,l,GRD_LAT),kind=DP)
+       DP_lon = real(GRD_s(n,k0,l,GRD_LON),kind=DP)
 
        do k = 1, kdim
           DP_z = GRD_vz(n,k,l,GRD_Z)
@@ -1133,13 +1148,13 @@ contains
        ADM_kmin,      &
        ADM_kmax
     use mod_grd, only: &
-       GRD_gz, &
-       GRD_Z,  &
-       GRD_ZH, &
+       GRD_LAT, &
+       GRD_LON, &
+       GRD_s,   &
+       GRD_gz,  &
+       GRD_Z,   &
+       GRD_ZH,  &
        GRD_vz
-    use mod_gmtr, only: &
-       GMTR_lon, &
-       GMTR_lat
     use mod_runconf, only: &
        TRC_vmax, &
        NCHEM_STR
@@ -1204,10 +1219,12 @@ contains
 
     integer :: I_pasv1, I_pasv2
     integer :: I_pasv3, I_pasv4
-    integer :: n, k, l
+    integer :: n, k, l, k0
     !---------------------------------------------------------------------------
 
     DIAG_var(:,:,:,:) = 0.0_RP
+
+    k0 = ADM_KNONE
 
     I_pasv1 = 6 + NCHEM_STR + chemvar_getid( "passive001" ) - 1
     I_pasv2 = 6 + NCHEM_STR + chemvar_getid( "passive002" ) - 1
@@ -1225,8 +1242,8 @@ contains
           enddo
           p(:) = 0.0_RP
 
-          lat = GMTR_lat(n,l)
-          lon = GMTR_lon(n,l)
+          lat = GRD_s(n,k0,l,GRD_LAT)
+          lon = GRD_s(n,k0,l,GRD_LON)
 
           do k = 1, kdim
              DP_lon = real(lon ,kind=DP)
@@ -1295,8 +1312,8 @@ contains
           enddo
           p(:) = 0.0_RP
 
-          lat = GMTR_lat(n,l)
-          lon = GMTR_lon(n,l)
+          lat = GRD_s(n,k0,l,GRD_LAT)
+          lon = GRD_s(n,k0,l,GRD_LON)
 
           do k = 1, kdim
              DP_lon = real(lon ,kind=DP)
@@ -1362,8 +1379,8 @@ contains
           enddo
           p(:) = 0.0_RP
 
-          lat = GMTR_lat(n,l)
-          lon = GMTR_lon(n,l)
+          lat = GRD_s(n,k0,l,GRD_LAT)
+          lon = GRD_s(n,k0,l,GRD_LON)
 
           do k = 1, kdim
              DP_gc = real(GRD_gz(k),kind=DP)
@@ -1453,12 +1470,12 @@ contains
        ADM_kmax,      &
        ADM_kmin
     use mod_grd, only: &
-       GRD_vz,   &
-       GRD_Z,    &
+       GRD_LAT, &
+       GRD_LON, &
+       GRD_s,   &
+       GRD_vz,  &
+       GRD_Z,   &
        GRD_ZH
-    use mod_gmtr, only: &
-       GMTR_lon, &
-       GMTR_lat
     use mod_runconf, only: &
        TRC_vmax, &
        NCHEM_STR
@@ -1510,10 +1527,12 @@ contains
     integer, parameter :: zcoords = 1
     integer  :: shear
 
-    integer :: n, l, k
+    integer :: n, l, k, k0
     !---------------------------------------------------------------------------
 
     DIAG_var(:,:,:,:) = 0.0_RP
+
+    k0 = ADM_KNONE
 
     I_pasv1 = 6 + chemvar_getid( "passive001" ) + NCHEM_STR - 1
 
@@ -1528,8 +1547,8 @@ contains
           enddo
           p(:) = 0.0_RP
 
-          lat = GMTR_lat(n,l)
-          lon = GMTR_lon(n,l)
+          lat = GRD_s(n,k0,l,GRD_LAT)
+          lon = GRD_s(n,k0,l,GRD_LON)
 
           do k = 1, kdim
              DP_lon = real(lon ,kind=DP)
@@ -1591,8 +1610,8 @@ contains
           enddo
           p(:) = 0.0_RP
 
-          lat = GMTR_lat(n,l)
-          lon = GMTR_lon(n,l)
+          lat = GRD_s(n,k0,l,GRD_LAT)
+          lon = GRD_s(n,k0,l,GRD_LON)
 
           do k = 1, kdim
              DP_lon = real(lon ,kind=DP)
@@ -1654,8 +1673,8 @@ contains
           enddo
           p(:) = 0.0_RP
 
-          lat = GMTR_lat(n,l)
-          lon = GMTR_lon(n,l)
+          lat = GRD_s(n,k0,l,GRD_LAT)
+          lon = GRD_s(n,k0,l,GRD_LON)
 
           do k = 1, kdim
              DP_lon = real(lon ,kind=DP)
@@ -1726,12 +1745,12 @@ contains
        ADM_kmin,      &
        ADM_kmax
     use mod_grd, only: &
-       GRD_Z,          &
-       GRD_ZH, &
+       GRD_LAT, &
+       GRD_LON, &
+       GRD_s,   &
+       GRD_Z,   &
+       GRD_ZH,  &
        GRD_vz
-    use mod_gmtr, only: &
-       GMTR_lon, &
-       GMTR_lat
     use mod_runconf, only: &
        TRC_vmax
     implicit none
@@ -1772,8 +1791,10 @@ contains
     real(DP) :: DP_rho  ! density              [kg/m3], not in use
     real(DP) :: DP_q    ! specific humidity    [kg/kg], not in use
 
-    integer :: n, k, l
+    integer :: n, k, l, k0
     !---------------------------------------------------------------------------
+
+    k0 = ADM_KNONE
 
     DIAG_var(:,:,:,:) = 0.0_RP
 
@@ -1785,8 +1806,8 @@ contains
        enddo
        p(:) = 0.0_RP
 
-       lat = GMTR_lat(n,l)
-       lon = GMTR_lon(n,l)
+       lat = GRD_s(n,k0,l,GRD_LAT)
+       lon = GRD_s(n,k0,l,GRD_LON)
 
        do k = 1, kdim
           DP_lon = real(lon ,kind=DP)

@@ -643,6 +643,10 @@ contains
        ADM_lall_pl, &
        ADM_kall,    &
        ADM_KNONE
+    use mod_grd, only: &
+       GRD_LAT, &
+       GRD_s,   &
+       GRD_s_pl
     use mod_gmtr, only: &
        P_IX  => GMTR_P_IX,  &
        P_IY  => GMTR_P_IY,  &
@@ -650,7 +654,6 @@ contains
        P_JX  => GMTR_P_JX,  &
        P_JY  => GMTR_P_JY,  &
        P_JZ  => GMTR_P_JZ,  &
-       P_LAT => GMTR_P_LAT, &
        GMTR_P_var,          &
        GMTR_P_var_pl
     implicit none
@@ -676,7 +679,7 @@ contains
     do l = 1, ADM_lall
     do k = 1, ADM_kall
     do n = 1, ADM_gall
-       coslat = cos(GMTR_P_var(n,k0,l,P_LAT))
+       coslat = cos(GRD_s(n,k0,l,GRD_LAT))
 
        sw = 0.5_RP + sign(0.5_RP,-abs(coslat)) ! if (coslat == 0), u=v=0
 
@@ -697,7 +700,7 @@ contains
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
        do n = 1, ADM_gall_pl
-          coslat = cos(GMTR_P_var_pl(n,k0,l,P_LAT))
+          coslat = cos(GRD_s_pl(n,k0,l,GRD_LAT))
 
           sw = 0.5_RP + sign(0.5_RP,-abs(coslat)) ! if (coslat == 0), u=v=0
 
@@ -734,6 +737,10 @@ contains
        ADM_lall_pl, &
        ADM_kall,    &
        ADM_KNONE
+    use mod_grd, only: &
+       GRD_LAT, &
+       GRD_s,   &
+       GRD_s_pl
     use mod_gmtr, only: &
        P_IX  => GMTR_P_IX,  &
        P_IY  => GMTR_P_IY,  &
@@ -741,7 +748,6 @@ contains
        P_JX  => GMTR_P_JX,  &
        P_JY  => GMTR_P_JY,  &
        P_JZ  => GMTR_P_JZ,  &
-       P_LAT => GMTR_P_LAT, &
        GMTR_P_var,          &
        GMTR_P_var_pl
     implicit none
@@ -772,10 +778,10 @@ contains
        do n = 1, ADM_gall
           u(n,k,l) = ( vx(n,k,l) * GMTR_P_var(n,k0,l,P_IX) &
                      + vy(n,k,l) * GMTR_P_var(n,k0,l,P_IY) &
-                     + vz(n,k,l) * GMTR_P_var(n,k0,l,P_IZ) ) * cos(GMTR_P_var(n,k0,l,P_LAT))
+                     + vz(n,k,l) * GMTR_P_var(n,k0,l,P_IZ) ) * cos(GRD_s(n,k0,l,GRD_LAT))
           v(n,k,l) = ( vx(n,k,l) * GMTR_P_var(n,k0,l,P_JX) &
                      + vy(n,k,l) * GMTR_P_var(n,k0,l,P_JY) &
-                     + vz(n,k,l) * GMTR_P_var(n,k0,l,P_JZ) ) * cos(GMTR_P_var(n,k0,l,P_LAT))
+                     + vz(n,k,l) * GMTR_P_var(n,k0,l,P_JZ) ) * cos(GRD_s(n,k0,l,GRD_LAT))
        enddo
        enddo
        enddo
@@ -786,10 +792,10 @@ contains
           do n = 1, ADM_gall_pl
              u_pl(n,k,l) = ( vx_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_IX) &
                            + vy_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_IY) &
-                           + vz_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_IZ) ) * cos(GMTR_P_var_pl(n,k0,l,P_LAT))
+                           + vz_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_IZ) ) * cos(GRD_s_pl(n,k0,l,GRD_LAT))
              v_pl(n,k,l) = ( vx_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_JX) &
                            + vy_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_JY) &
-                           + vz_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_JZ) ) * cos(GMTR_P_var_pl(n,k0,l,P_LAT))
+                           + vz_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_JZ) ) * cos(GRD_s_pl(n,k0,l,GRD_LAT))
           enddo
           enddo
           enddo
@@ -849,6 +855,11 @@ contains
        ADM_IooJoo,      &
        ADM_GIoJo,       &
        ADM_GSLF_PL
+    use mod_grd, only: &
+       GRD_LAT, &
+       GRD_LON, &
+       GRD_s,   &
+       GRD_s_pl
     use mod_gmtr, only: &
        P_IX  => GMTR_P_IX,  &
        P_IY  => GMTR_P_IY,  &
@@ -856,8 +867,6 @@ contains
        P_JX  => GMTR_P_JX,  &
        P_JY  => GMTR_P_JY,  &
        P_JZ  => GMTR_P_JZ,  &
-       P_LON => GMTR_P_LON, &
-       P_LAT => GMTR_P_LAT, &
        GMTR_P_var,          &
        GMTR_P_var_pl
     implicit none
@@ -882,10 +891,10 @@ contains
     do n = 1, ADM_IooJoo_nmax
        ij = ADM_IooJoo(n,ADM_GIoJo)
 
-       u =  vmax * ( cos(GMTR_P_var(ij,k0,l,P_LAT)) * cos(alpha) &
-                   + sin(GMTR_P_var(ij,k0,l,P_LAT))              &
-                   * cos(GMTR_P_var(ij,k0,l,P_LON)) * sin(alpha) )
-       v = -vmax * ( sin(GMTR_P_var(ij,k0,l,P_LON)) * sin(alpha) )
+       u =  vmax * ( cos(GRD_s(ij,k0,l,GRD_LAT)) * cos(alpha) &
+                   + sin(GRD_s(ij,k0,l,GRD_LAT))              &
+                   * cos(GRD_s(ij,k0,l,GRD_LON)) * sin(alpha) )
+       v = -vmax * ( sin(GRD_s(ij,k0,l,GRD_LON)) * sin(alpha) )
 
        vx(ij,k,l) = u * GMTR_P_var(ij,k0,l,P_IX) &
                   + v * GMTR_P_var(ij,k0,l,P_JX)
@@ -903,10 +912,10 @@ contains
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
 
-          u =  vmax * ( cos(GMTR_P_var_pl(ij,k0,l,P_LAT)) * cos(alpha) &
-                      + sin(GMTR_P_var_pl(ij,k0,l,P_LAT))              &
-                      * cos(GMTR_P_var_pl(ij,k0,l,P_LON)) * sin(alpha) )
-          v = -vmax * ( sin(GMTR_P_var_pl(ij,k0,l,P_LON)) * sin(alpha) )
+          u =  vmax * ( cos(GRD_s_pl(ij,k0,l,GRD_LAT)) * cos(alpha) &
+                      + sin(GRD_s_pl(ij,k0,l,GRD_LAT))              &
+                      * cos(GRD_s_pl(ij,k0,l,GRD_LON)) * sin(alpha) )
+          v = -vmax * ( sin(GRD_s_pl(ij,k0,l,GRD_LON)) * sin(alpha) )
 
           vx_pl(ij,k,l) = u * GMTR_P_var_pl(ij,k0,l,P_IX) &
                         + v * GMTR_P_var_pl(ij,k0,l,P_JX)
