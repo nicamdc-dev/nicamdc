@@ -292,6 +292,7 @@ contains
     real(RP) :: pdel (ijdim,vlayer)   ! Layer thickness (Pa)
     real(RP) :: rpdel(ijdim,vlayer)   ! Reciprocal of layer thickness (1/Pa)
     real(RP) :: ps   (ijdim)          ! surface pressure output [dummy]
+    real(RP) :: precip2 (ijdim)
     integer  :: test
 
     ! for toy-chemistory
@@ -403,7 +404,7 @@ contains
                             pdel  (:,:),       & ! [INOUT] but not changed
                             rpdel (:,:),       & ! [INOUT] but not changed
                             ps    (:),         & ! [INOUT] but not changed
-                            precip(:),         & ! [INOUT]
+                            precip2(:),        & ! [OUT]
                             test,              & ! [IN]
                             SM_LargeScaleCond, & ! [IN]
                             SM_PBL_Bryan       ) ! [IN]
@@ -448,6 +449,8 @@ contains
              fe(ij,kk)      = fe(ij,kk)      + ( cv(k) * t(ij,k) - ein(ij,kk) ) / dt
           enddo
        enddo
+
+       precip(:) = precip(:) + precip2(:)
 
     endif
 
