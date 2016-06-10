@@ -620,6 +620,8 @@ contains
        ADM_kmin,      &
        ADM_kmax
     use mod_grd, only: &
+       GRD_afac,       &
+       GRD_bfac,       &
        GRD_Z,          &
        GRD_ZH, &
        GRD_vz
@@ -633,6 +635,10 @@ contains
        NCHEM_MAX, &
        NCHEM_STR, &
        NCHEM_END
+    use mod_bndcnd, only : &
+      BNDCND_thermo
+    use mod_vmtr, only : &
+      phi => VMTR_PHI
     implicit none
 
     integer,          intent(in)  :: ijdim
@@ -660,6 +666,9 @@ contains
     real(RP) :: vy_local(kdim)
     real(RP) :: vz_local(kdim)
     real(DP) :: ps, phis
+
+    real(RP) :: dpdz
+    real(RP) :: rho0(ijdim,kdim)
 
     real(RP) :: cl, cl2
 
@@ -726,11 +735,6 @@ contains
        lat = GMTR_lat(n,l)
        lon = GMTR_lon(n,l)
 
-!       z(ADM_kmin-1) = GRD_vz(n,2,l,GRD_ZH)
-!       do k = ADM_kmin, ADM_kmax+1
-!          z(k) = GRD_vz(n,k,l,GRD_Z)
-!       enddo
-
        do k = 1, kdim
           z(k) = GRD_vz(n,k,l,GRD_Z)
           call baroclinic_wave_test( deep,       &  ! [IN ]
@@ -751,14 +755,21 @@ contains
                                      rho(k),     &  ! [OUT] density (kg m^-3)
                                      q(k)        )  ! [OUT] water vapor mixing ratio (kg/kg)
 
-          q(k) = max( q(k), 0.0D0 ) ! fix negative value
+          q(k) = max( q(k)/(1.d0+q(k)), 0.0D0 ) ! fix negative value
        enddo
 
-       ! Re-Evaluation of temperature from virtual temperature
+       k      = ADM_kmin
+       prs(k) = ps - rho(k)*g*(GRD_vz(n,k,l,GRD_Z)-GRD_vz(n,k,l,GRD_ZH))
+       do k = ADM_kmin+1, ADM_kmax
+          dpdz   = -g*0.5d0*(rho(k)*GRD_afac(k)+rho(k-1)*GRD_bfac(k))
+          prs(k) = prs(k-1)+dpdz*(z(k)-z(k-1))
+       enddo
 
-       tmp(:) = tmp(:) * ( (1.d0+Mvap*q(:)) / (1.d0+Mvap2*q(:)) )
+       do k = 1, kdim
+          tmp(k) = prs(k)/(rho(k)*(rd*(1.d0-q(k))+rv*q(k)))
+       enddo
+       rho0(n,:) = rho(:)
 
-       call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild, prs_dry )
        call conv_vxvyvz  ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
        do k = 1, kdim
@@ -787,6 +798,12 @@ contains
        endif
 
     enddo
+    call BNDCND_thermo(     &
+         ijdim,             &
+         DIAG_var(:,:,l,2), &
+         rho0,              &
+         DIAG_var(:,:,l,1), &
+         phi(:,:,l)         )
     enddo
 
     return
