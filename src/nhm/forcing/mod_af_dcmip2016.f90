@@ -198,6 +198,7 @@ contains
        lat,     &
        lon,     &
        alt,     &
+       alth,    &
        rho,     &
        pre,     &
        tem,     &
@@ -226,11 +227,12 @@ contains
        kmin   => ADM_kmin,   &
        kmax   => ADM_kmax
     use mod_cnst, only: &
-       d2r   => CNST_D2R,  &
-       Rdry  => CNST_RAIR, &
-       CPdry => CNST_CP,   &
-       CVdry => CNST_CV,   &
-       PRE00 => CNST_PRE00
+       d2r   => CNST_D2R,   &
+       Rdry  => CNST_RAIR,  &
+       CPdry => CNST_CP,    &
+       CVdry => CNST_CV,    &
+       PRE00 => CNST_PRE00, &
+       g     => CNst_EGRAV
     use mod_runconf, only: &
        TRC_VMAX,  &
        RAIN_TYPE, &
@@ -248,6 +250,7 @@ contains
     real(RP), intent(in)  :: lat    (ijdim)
     real(RP), intent(in)  :: lon    (ijdim)
     real(RP), intent(in)  :: alt    (ijdim,kdim)
+    real(RP), intent(in)  :: alth   (ijdim,kdim)
     real(RP), intent(in)  :: rho    (ijdim,kdim)
     real(RP), intent(in)  :: pre    (ijdim,kdim)
     real(RP), intent(in)  :: tem    (ijdim,kdim)
@@ -380,12 +383,17 @@ contains
 
        pint(:,1) = 0.0_RP
        do k = 2, vlayer
-          pint(:,k) = 0.5_RP * ( pmid(:,k-1) + pmid(:,k) )
+!          pint(:,k) = 0.5_RP * ( pmid(:,k-1) + pmid(:,k) )
+          kk = kmax - k + 1 ! reverse order
+          pint(:,k) = pre(:,kk)*exp(                          &
+            log(pre(:,kk+1)/pre(:,kk))                        &
+            *(alth(:,kk+1)-alt(:,kk))/(alt(:,kk+1)-alt(:,kk)) &
+            )
        enddo
        pint(:,vlayer+1) = pre_sfc(:)
 
        do k = 1, vlayer
-          pdel (:,k) = pint(:,k) - pint(:,k+1)
+          pdel (:,k) = pint(:,k+1) - pint(:,k)
           rpdel(:,k) = 1.0_RP / pdel(:,k)
        enddo
 

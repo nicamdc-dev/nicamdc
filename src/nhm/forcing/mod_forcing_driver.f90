@@ -129,7 +129,8 @@ contains
        GRD_zs,   &
        GRD_ZSFC, &
        GRD_vz,   &
-       GRD_Z
+       GRD_Z,    &
+       GRD_ZH
     use mod_gmtr, only: &
        GMTR_P_var, &
        GMTR_P_IX,  &
@@ -184,7 +185,6 @@ contains
     real(RP) :: q     (ADM_gall_in,ADM_kall,ADM_lall,TRC_vmax)
     real(RP) :: ein   (ADM_gall_in,ADM_kall,ADM_lall)
 
-    real(RP) :: rho_srf(ADM_gall_in,ADM_lall)
     real(RP) :: pre_srf(ADM_gall_in,ADM_lall)
 
     ! forcing tendency
@@ -204,6 +204,7 @@ contains
     real(RP) :: gsgam2h(ADM_gall_in,ADM_kall,ADM_lall)
     real(RP) :: phi    (ADM_gall_in,ADM_kall,ADM_lall)
     real(RP) :: z      (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP) :: zh     (ADM_gall_in,ADM_kall,ADM_lall)
     real(RP) :: z_srf  (ADM_gall_in,ADM_lall)
     real(RP) :: lat    (ADM_gall_in,ADM_lall)
     real(RP) :: lon    (ADM_gall_in,ADM_lall)
@@ -231,6 +232,7 @@ contains
     call GTL_clip_region(VMTR_GSGAM2H(:,:,:),gsgam2h,1,ADM_kall)
     call GTL_clip_region(VMTR_PHI    (:,:,:),phi,    1,ADM_kall)
     call GTL_clip_region(real(GRD_vz(:,:,:,GRD_Z),kind=RP),z,1,ADM_kall)
+    call GTL_clip_region(real(GRD_vz(:,:,:,GRD_ZH),kind=RP),zh,1,ADM_kall)
 
     call GTL_clip_region_1layer(real(GRD_zs  (:,k0,:,GRD_ZSFC),kind=RP),z_srf)
     call GTL_clip_region_1layer(real(GMTR_lat(:,:),kind=RP),lat)
@@ -280,15 +282,9 @@ contains
        q(:,ADM_kmax+1,l,:) = 0.0_RP
        q(:,ADM_kmin-1,l,:) = 0.0_RP
 
-       !--- surface density ( extrapolation )
-       rho_srf(:,l) =   rho(:,ADM_kmin,l) &
-                    - ( rho(:,ADM_kmin+1,l) - rho  (:,ADM_kmin,l) ) &
-                    * ( z  (:,ADM_kmin  ,l) - z_srf(:,l)          ) &
-                    / ( z  (:,ADM_kmin+1,l) - z    (:,ADM_kmin,l) )
-
        !--- surface pressure ( hydrostatic balance )
        pre_srf(:,l) = pre(:,ADM_kmin,l) &
-                    + 0.5_RP * ( rho_srf(:,l)+rho(:,ADM_kmin,l) ) * GRAV * ( z(:,ADM_kmin,l)-z_srf(:,l) )
+                    + rho(:,ADM_kmin,l)  * GRAV * ( z(:,ADM_kmin,l)-z_srf(:,l) )
     enddo
 
     ! tentative negative fixer
@@ -330,6 +326,7 @@ contains
                               lat    (:,l),     & ! [IN]
                               lon    (:,l),     & ! [IN]
                               z      (:,:,l),   & ! [IN]
+                              zh     (:,:,l),   & ! [IN]
                               rho    (:,:,l),   & ! [IN]
                               pre    (:,:,l),   & ! [IN]
                               tem    (:,:,l),   & ! [IN]
