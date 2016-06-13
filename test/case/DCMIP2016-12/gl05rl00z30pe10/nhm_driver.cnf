@@ -14,7 +14,7 @@
 &GRDPARAM
     hgrid_io_mode = "ADVANCED",
     hgrid_fname   = "boundary_GL05RL00",
-    VGRID_fname   = "vgrid30_stretch_30km_dcmip2016.dat",
+    VGRID_fname   = "vgrid30_stretch_30km_dcmip2016v2.dat",
     vgrid_scheme  = "LINEAR",
     topo_fname    = "NONE",
 /
@@ -43,7 +43,7 @@
     input_io_mode     = 'IDEAL',
     output_io_mode    = 'ADVANCED',
     output_basename   = 'restart_all_GL05RL00z30',
-    restart_layername = 'ZSALL32_DCMIP16',
+    restart_layername = 'ZSALL32_DMP16v2',
 /
 
 ##### DCMIP2016-12: Tropical Cyclone
@@ -92,7 +92,7 @@
 &NMHISD
     output_io_mode   = 'ADVANCED' ,
     histall_fname    = 'history'  ,
-    hist3D_layername = 'ZSDEF30_DCMIP16',
+    hist3D_layername = 'ZSDEF30_DMP16v2',
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
     step             = 36         ,
