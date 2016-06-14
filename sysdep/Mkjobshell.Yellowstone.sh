@@ -202,7 +202,7 @@ target=( u.nc v.nc w.nc prs.nc t.nc qv.nc qc.nc qr.nc pasv1.nc pasv2.nc \
 u850.nc v850.nc w850.nc t850.nc w500.nc t500.nc ps.nc prcp.nc \
 forcing_vx.nc forcing_vy.nc forcing_vz.nc forcing_e.nc \
 forcing_qv.nc forcing_qc.nc forcing_qr.nc forcing_cl.nc forcing_cl2.nc \
-cl_column.nc cl2_column.nc cly_column.nc )
+cl.nc cl2.nc cly.nc )
 ;;
 "162-rjpbl" | "162-bryanpbl") # Idealized tropical cyclone
 levs='L30'
@@ -235,23 +235,21 @@ input=\$input" "\${target[\$i]}
 done
 
 echo "start cdo process"
-cdo -s merge \${input}                                           temporary_A.nc
-cdo -s setgatt,model,\${model}                                   temporary_A.nc temporary_B.nc
-rm temporary_A.nc; cdo -s setgatt,test_case,\${case}             temporary_B.nc temporary_A.nc
-rm temporary_B.nc; cdo -s setgatt,horizontal_resolution,\${reso} temporary_A.nc temporary_B.nc
-rm temporary_A.nc; cdo -s setgatt,levels,\${levs}                temporary_B.nc temporary_A.nc
-rm temporary_B.nc; cdo -s setgatt,grid,\${dat_grid}              temporary_A.nc temporary_B.nc
-rm temporary_A.nc; cdo -s setgatt,equation,\${equation}          temporary_B.nc temporary_A.nc
-rm temporary_B.nc; cdo -s setgatt,time_frequency,\${out_intev}   temporary_A.nc temporary_B.nc
-rm temporary_A.nc; cdo -s setgatt,description,\${description}    temporary_B.nc temporary_A.nc
-rm temporary_B.nc; cdo -s setgatt,project_id,DCMIP2016           temporary_A.nc temporary_B.nc
-rm temporary_A.nc; cdo -s setgatt,modeling_realm,atmos           temporary_B.nc temporary_A.nc
-rm temporary_B.nc; cdo -s setgatt,Conventions,CF-1.0             temporary_A.nc temporary_B.nc
-rm temporary_A.nc; cdo -s setgatt,institute_id,'Univ-Tokyo JAMSTEC RIKEN' temporary_B.nc temporary_A.nc
-cdo -s setgatt,history,none                                      temporary_A.nc \${fname}.all.nc
-
-
-rm temporary_A.nc temporary_B.nc
+#cdo -s merge \${input}                                           temporary_A.nc
+#cdo -s setgatt,model,\${model}                                   temporary_A.nc temporary_B.nc
+#rm temporary_A.nc; cdo -s setgatt,test_case,\${case}             temporary_B.nc temporary_A.nc
+#rm temporary_B.nc; cdo -s setgatt,horizontal_resolution,\${reso} temporary_A.nc temporary_B.nc
+#rm temporary_A.nc; cdo -s setgatt,levels,\${levs}                temporary_B.nc temporary_A.nc
+#rm temporary_B.nc; cdo -s setgatt,grid,\${dat_grid}              temporary_A.nc temporary_B.nc
+#rm temporary_A.nc; cdo -s setgatt,equation,\${equation}          temporary_B.nc temporary_A.nc
+#rm temporary_B.nc; cdo -s setgatt,time_frequency,\${out_intev}   temporary_A.nc temporary_B.nc
+#rm temporary_A.nc; cdo -s setgatt,description,\${description}    temporary_B.nc temporary_A.nc
+#rm temporary_B.nc; cdo -s setgatt,project_id,DCMIP2016           temporary_A.nc temporary_B.nc
+#rm temporary_A.nc; cdo -s setgatt,modeling_realm,atmos           temporary_B.nc temporary_A.nc
+#rm temporary_B.nc; cdo -s setgatt,Conventions,CF-1.0             temporary_A.nc temporary_B.nc
+#rm temporary_A.nc; cdo -s setgatt,institute_id,'Univ-Tokyo JAMSTEC RIKEN' temporary_B.nc temporary_A.nc
+#cdo -s setgatt,history,none                                      temporary_A.nc \${fname}.all.nc
+#rm temporary_A.nc temporary_B.nc
 
 for (( i=0; i <\${#target[@]}; ++i ))
 do
