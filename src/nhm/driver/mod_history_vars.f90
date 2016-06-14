@@ -306,6 +306,7 @@ contains
     real(RP) :: qtot     (ADM_gall   ,ADM_kall,ADM_lall   )
 
     real(RP) :: tmp2d    (ADM_gall   ,ADM_KNONE,ADM_lall   )
+    real(RP) :: rhodz    (ADM_gall   ,ADM_KNONE,ADM_lall   )
 
     integer :: k, l, nq, K0
     !---------------------------------------------------------------------------
@@ -584,24 +585,34 @@ contains
     if ( AF_TYPE == 'DCMIP2016' ) then
     if ( NCHEM_STR /= -1 .and. NCHEM_END /= -1 ) then ! substitution of [USE_ToyChemistry/mod_af_dcmip2016]
        do l  = 1, ADM_lall
+          rhodz(:,k0,l) = 0.0_RP
+          do k = ADM_kmin, ADM_kmax
+             rhodz(:,k0,l) = rhodz(:,k0,l) + ( rho(:,k,l) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k) )
+          enddo
+
           tmp2d(:,k0,l) = 0.0_RP
           do k = ADM_kmin, ADM_kmax
-             tmp2d(:,k0,l) = tmp2d(:,k0,l) + rho(:,k,l) * q(:,k,l,NCHEM_STR) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
+             tmp2d(:,k0,l) = tmp2d(:,k0,l) &
+                           + rho(:,k,l) * q(:,k,l,NCHEM_STR) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
           enddo
+          tmp2d(:,k0,l) = tmp2d(:,k0,l) / rhodz(:,k0,l)
           call history_in( 'sl_cl', tmp2d(:,:,l) )
 
           tmp2d(:,k0,l) = 0.0_RP
           do k = ADM_kmin, ADM_kmax
-             tmp2d(:,k0,l) = tmp2d(:,k0,l) + rho(:,k,l) * q(:,k,l,NCHEM_END) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
+             tmp2d(:,k0,l) = tmp2d(:,k0,l) &
+                           + rho(:,k,l) * q(:,k,l,NCHEM_END) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
           enddo
+          tmp2d(:,k0,l) = tmp2d(:,k0,l) / rhodz(:,k0,l)
           call history_in( 'sl_cl2', tmp2d(:,:,l) )
 
           tmp2d(:,k0,l) = 0.0_RP
           do k = ADM_kmin, ADM_kmax
-             tmp2d(:,k0,l) = tmp2d(:,k0,l) + rho(:,k,l) * (          q(:,k,l,NCHEM_STR) &
-                                                          + 2.0_RP * q(:,k,l,NCHEM_END) &
-                                                          ) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
+             tmp2d(:,k0,l) = tmp2d(:,k0,l) &
+                           + rho(:,k,l) * ( q(:,k,l,NCHEM_STR) + 2.0_RP * q(:,k,l,NCHEM_END) ) &
+                           * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
           enddo
+          tmp2d(:,k0,l) = tmp2d(:,k0,l) / rhodz(:,k0,l)
           call history_in( 'sl_cly', tmp2d(:,:,l) )
        enddo
     endif
