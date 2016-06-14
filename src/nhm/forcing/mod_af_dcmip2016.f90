@@ -69,6 +69,7 @@ contains
     logical :: SET_DCMIP2016_13 = .false.
     logical :: SET_DCMIP2016_DRY = .false.
     logical :: SET_DCMIP2016_LSC = .false. !large scale condensation
+    logical :: SET_DCMIP2016_NOSST = .false.
 
     namelist /FORCING_DCMIP_PARAM/ &
        SET_RJ2012,          &
@@ -77,6 +78,7 @@ contains
        SET_DCMIP2016_13,    &
        SET_DCMIP2016_DRY,   &
        SET_DCMIP2016_LSC,   &
+       SET_DCMIP2016_NOSST, &
        USE_SimpleMicrophys, &
        SM_Latdepend_SST,    &
        SM_LargeScaleCond,   &
@@ -107,16 +109,23 @@ contains
        USE_SimpleMicrophys = .true.
        SM_Latdepend_SST    = .true.
        SM_LargeScaleCond   = .true.
-       SM_PBL_Bryan        = .false.
+       !SM_PBL_Bryan        = .false.
        USE_Kessler         = .false.
        USE_ToyChemistry    = .false.
     elseif( SET_DCMIP2016_11 ) then
        write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016 Case 1-1 (Moist baroclinic wave with terminator chemistry)'
        USE_Kessler         = .true.
-       USE_SimpleMicrophys = .true.
-       SM_Latdepend_SST    = .true.
        SM_LargeScaleCond   = .false.
-       SM_PBL_Bryan        = .false.
+       !SM_PBL_Bryan        = .false.
+       USE_ToyChemistry    = .true.
+       if ( SET_DCMIP2016_NOSST ) then
+          write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016: Only Precipitation'
+          USE_SimpleMicrophys = .false.
+          SM_Latdepend_SST    = .false.
+       else
+          USE_SimpleMicrophys = .true.
+          SM_Latdepend_SST    = .true.
+       endif
        if ( SET_DCMIP2016_LSC ) then
           write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
           USE_Kessler      = .false.
@@ -127,14 +136,19 @@ contains
           USE_Kessler      = .false.
           SM_LargeScaleCond= .false.
        endif
-       USE_ToyChemistry    = .true.
     elseif( SET_DCMIP2016_12 ) then
        write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016 Case 1-2 (Idealized tropical cyclone)'
        USE_Kessler         = .true.
-       USE_SimpleMicrophys = .true.
-       SM_Latdepend_SST    = .false.
        SM_LargeScaleCond   = .false.
        !SM_PBL_Bryan        = .false.
+       if ( SET_DCMIP2016_NOSST ) then
+          write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016: Only Precipitation'
+          USE_SimpleMicrophys = .false.
+          SM_Latdepend_SST    = .false.
+       else
+          USE_SimpleMicrophys = .true.
+          SM_Latdepend_SST    = .true.
+       endif
        if ( SET_DCMIP2016_LSC ) then
           write(ADM_LOG_FID,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
           USE_Kessler      = .false.
@@ -313,7 +327,8 @@ contains
     fe (:,:)   = 0.0_RP
     fq (:,:,:) = 0.0_RP
 
-    precip(:) = 0.0_RP
+    precip (:) = 0.0_RP
+    precip2(:) = 0.0_RP
 
     if ( USE_Kessler ) then
        do ij = 1, ijdim
