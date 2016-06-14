@@ -54,7 +54,7 @@
 
 &FORCING_PARAM
     NEGATIVE_FIXER   = .true.,
-    UPDATE_TOT_DENS  = .false.,
+    UPDATE_TOT_DENS  = .true.,
 /
 
 &FORCING_DCMIP_PARAM
@@ -73,15 +73,15 @@
 &NUMFILTERPARAM
     lap_order_hdiff   = 2,
     hdiff_type        = 'NONLINEAR1',
-    Kh_coef_maxlim    = 1.500D+17,
-    Kh_coef_minlim    = 1.500D+16,
+    Kh_coef_maxlim    = 1.200D+17,
+    Kh_coef_minlim    = 1.200D+16,
     ZD_hdiff_nl       = 20000.D0,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
-    alpha_d           = 1.50D16,
+    alpha_d           = 1.20D16,
     gamma_h_lap1      = 0.0D0,
     ZD                = 20000.D0,
-    alpha_r           = 1.00D-3,
+    alpha_r           = 0.00D0,
 /
 
 &EMBUDGETPARAM
@@ -124,6 +124,6 @@
 &NMHIST item='ml_qc',      file='qc',   ktype='3D' /
 &NMHIST item='ml_qr',      file='qr',   ktype='3D' /
 
-&NMHIST item='sl_af_prcp', file='prcp', ktype='2D' /
+&NMHIST item='sl_af_prcp', file='prcp', ktype='2D', output_type='AVERAGE' /
 
 ################################################################################

@@ -67,7 +67,7 @@
 
 &FORCING_PARAM
     NEGATIVE_FIXER   = .true.,
-    UPDATE_TOT_DENS  = .false.,
+    UPDATE_TOT_DENS  = .true.,
 /
 
 &FORCING_DCMIP_PARAM
@@ -108,7 +108,7 @@
     hist3D_layername = 'ZSDEF30_DMP16v2',
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
-    step             = 72         ,
+    step             = 144        ,
     doout_step0      = .true.     ,
 /
 
@@ -141,10 +141,10 @@
 &NMHIST item='ml_passive001', file='pasv1', ktype='3D' /
 &NMHIST item='ml_passive002', file='pasv2', ktype='3D' /
 
-&NMHIST item='sl_af_prcp', file='prcp', ktype='2D' /
+&NMHIST item='sl_af_prcp', file='prcp', ktype='2D', output_type='AVERAGE', step=36 /
 
-&NMHIST item='sl_cl',    file='cl_column',  ktype='2D' /
-&NMHIST item='sl_cl2',   file='cl2_column', ktype='2D' /
-&NMHIST item='sl_cly',   file='cly_column', ktype='2D' /
+&NMHIST item='sl_cl',    file='cl',  ktype='2D' /
+&NMHIST item='sl_cl2',   file='cl2', ktype='2D' /
+&NMHIST item='sl_cly',   file='cly', ktype='2D' /
 
 ################################################################################

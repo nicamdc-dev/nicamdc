@@ -56,7 +56,7 @@
 
 &FORCING_PARAM
     NEGATIVE_FIXER   = .true.,
-    UPDATE_TOT_DENS  = .false.,
+    UPDATE_TOT_DENS  = .true.,
 /
 
 &FORCING_DCMIP_PARAM
@@ -97,7 +97,7 @@
     hist3D_layername = 'ZSDEF40_DCMIP16',
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
-    step             = 12         ,
+    step             = 60         ,
     doout_step0      = .true.     ,
 /
 
@@ -126,6 +126,6 @@
 &NMHIST item='ml_qc',      file='qc',   ktype='3D' /
 &NMHIST item='ml_qr',      file='qr',   ktype='3D' /
 
-&NMHIST item='sl_af_prcp', file='prcp', ktype='2D' /
+&NMHIST item='sl_af_prcp', file='prcp', ktype='2D', output_type='AVERAGE' /
 
 ################################################################################

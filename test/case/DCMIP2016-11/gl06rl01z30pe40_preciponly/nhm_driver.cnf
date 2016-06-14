@@ -71,7 +71,8 @@
 /
 
 &FORCING_DCMIP_PARAM
-    SET_DCMIP2016_11 = .true.,
+    SET_DCMIP2016_11    = .true.,
+    SET_DCMIP2016_NOSST = .true.,
 /
 
 &CNSTPARAM

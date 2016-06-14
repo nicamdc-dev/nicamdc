@@ -5,39 +5,34 @@
 ################################################################################
 
 &ADMPARAM
-    glevel      = 6,
-    rlevel      = 1,
-    vlayer      = 30,
-    rgnmngfname = "rl01-prc40.info",
+    glevel      = 4,
+    rlevel      = 0,
+    vlayer      = 40,
+    rgnmngfname = "rl00-prc10.info",
 /
 
 &GRDPARAM
     hgrid_io_mode = "ADVANCED",
-    hgrid_fname   = "boundary_GL06RL01",
-    VGRID_fname   = "vgrid30_stretch_30km_dcmip2016v2.dat",
+    hgrid_fname   = "boundary_GL04RL00",
+    VGRID_fname   = "vgrid40_cnst_20km_dcmip2016.dat",
     vgrid_scheme  = "LINEAR",
     topo_fname    = "NONE",
 /
 
 &TIMEPARAM
-    DTL         = 300.D0,
+    DTL         = 10.D0,
     INTEG_TYPE  = "RK3",
-    LSTEP_MAX   = 4320,
+    LSTEP_MAX   = 720,
     start_date  = 0000,1,1,0,0,0
 /
 
 &RUNCONFPARAM
-    RUNNAME        = 'DCMIP2016-11',
+    RUNNAME        = 'DCMIP2016-13',
     NDIFF_LOCATION = 'IN_LARGE_STEP2',
     THUBURN_LIM    = .true.,
     EIN_TYPE       = 'SIMPLE',
     RAIN_TYPE      = "WARM",
-    CHEM_TYPE      = 'PASSIVE',
     AF_TYPE        = 'DCMIP2016',
-/
-
-&CHEMVARPARAM
-    CHEM_TRC_vmax = 2,
 /
 
 &BSSTATEPARAM
@@ -47,22 +42,16 @@
 &RESTARTPARAM
     input_io_mode     = 'IDEAL',
     output_io_mode    = 'ADVANCED',
-    output_basename   = 'restart_all_GL06RL01z30',
-    restart_layername = 'ZSALL32_DMP16v2',
+    output_basename   = 'restart_all_GL04RL00z40',
+    restart_layername = 'ZSALL42_DCMIP16',
 /
 
-##### DCMIP2016-11: Moist Baroclinic Wave
-##case 1: perturbation: exponential / with moisture
-##case 2: perturbation: stream function / with moisture
-##case 3: perturbation: exponential / without moisture
-##case 4: perturbation: stream function / without moisture
-##case 5: no perturbation / with moisture
-##case 6: no perturbation / without moisture
+##### DCMIP2016-13: Supercell Experiment
+##case 1: with initial perturbation
+##case 2: without initial perturbation
 &DYCORETESTPARAM
-    init_type   = 'Jablonowski-Moist',
-    test_case   = '1',
-    chemtracer  = .true.,
-    prs_rebuild = .false.,
+    init_type  = 'Supercell',
+    test_case  = '1',
 /
 
 &FORCING_PARAM
@@ -71,13 +60,13 @@
 /
 
 &FORCING_DCMIP_PARAM
-    SET_DCMIP2016_11 = .true.,
+    SET_DCMIP2016_13 = .true.,
 /
 
 &CNSTPARAM
     earth_radius        = 6.37122D+6,
-    earth_angvel        =   7.292D-5,
-    small_planet_factor =      1.D0,
+    earth_angvel        =      0.0D0,
+    small_planet_factor =     120.D0,
     earth_gravity       = 9.80616D0,
     gas_cnst            =   287.0D0,
     specific_heat_pre   =  1004.5D0,
@@ -86,12 +75,12 @@
 &NUMFILTERPARAM
     lap_order_hdiff   = 2,
     hdiff_type        = 'NONLINEAR1',
-    Kh_coef_maxlim    = 1.500D+16,
-    Kh_coef_minlim    = 1.500D+15,
-    ZD_hdiff_nl       = 20000.D0,
+    Kh_coef_maxlim    = 8.000D+11,
+    Kh_coef_minlim    = 8.000D+10,
+    ZD_hdiff_nl       = 12000.D0,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
-    alpha_d           = 1.50D15,
+    alpha_d           = 8.00D+10,
     gamma_h_lap1      = 0.0D0,
     ZD                = 40000.D0,
     alpha_r           = 0.0D0,
@@ -105,10 +94,10 @@
 &NMHISD
     output_io_mode   = 'ADVANCED' ,
     histall_fname    = 'history'  ,
-    hist3D_layername = 'ZSDEF30_DMP16v2',
+    hist3D_layername = 'ZSDEF40_DCMIP16',
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
-    step             = 288        ,
+    step             = 30         ,
     doout_step0      = .true.     ,
 /
 
@@ -132,19 +121,11 @@
 &NMHIST item='ml_af_fq01', file='forcing_qv',  ktype='3D' /
 &NMHIST item='ml_af_fq02', file='forcing_qc',  ktype='3D' /
 &NMHIST item='ml_af_fq03', file='forcing_qr',  ktype='3D' /
-&NMHIST item='ml_af_fq04', file='forcing_cl',  ktype='3D' /
-&NMHIST item='ml_af_fq05', file='forcing_cl2', ktype='3D' /
 
 &NMHIST item='ml_qv',      file='qv',   ktype='3D' /
 &NMHIST item='ml_qc',      file='qc',   ktype='3D' /
 &NMHIST item='ml_qr',      file='qr',   ktype='3D' /
-&NMHIST item='ml_passive001', file='pasv1', ktype='3D' /
-&NMHIST item='ml_passive002', file='pasv2', ktype='3D' /
 
-&NMHIST item='sl_af_prcp', file='prcp', ktype='2D', output_type='AVERAGE', step=72 /
-
-&NMHIST item='sl_cl',    file='cl',  ktype='2D' /
-&NMHIST item='sl_cl2',   file='cl2', ktype='2D' /
-&NMHIST item='sl_cly',   file='cly', ktype='2D' /
+&NMHIST item='sl_af_prcp', file='prcp', ktype='2D', output_type='AVERAGE' /
 
 ################################################################################
