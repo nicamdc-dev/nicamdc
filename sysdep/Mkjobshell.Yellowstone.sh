@@ -181,6 +181,9 @@ dcmip2016=.true. \
 
 # netcdf combine
 case \${glev} in
+4)
+ reso='r400'
+;;
 5)
  reso='r200'
 ;;
