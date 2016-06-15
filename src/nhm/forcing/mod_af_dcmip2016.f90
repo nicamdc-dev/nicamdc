@@ -482,7 +482,7 @@ contains
        do ij = 1,    ijdim
           lat_deg = lat(ij) / d2r
           lon_deg = lon(ij) / d2r
-          qvd     = 1.0_RP - q(ij,kk,I_QV)
+          qvd     = 1.0_RP - q(ij,k,I_QV)
 
           cl  = q(ij,k,NCHEM_STR) / qvd
           cl2 = q(ij,k,NCHEM_END) / qvd
