@@ -59,7 +59,7 @@
 
 &FORCING_DCMIP_PARAM
     SET_DCMIP2016_12 = .true.,
-    USE_PBL_Bryan    = .true.,
+    SM_PBL_Bryan     = .true.,
 /
 
 &CNSTPARAM
