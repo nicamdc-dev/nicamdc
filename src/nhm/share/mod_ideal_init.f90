@@ -206,19 +206,18 @@ contains
        write(ADM_LOG_FID,*) '*** test case   : ', trim(test_case)
        write(ADM_LOG_FID,*) '*** nicamcore   = ', nicamcore
        write(ADM_LOG_FID,*) '*** chemtracer  = ', chemtracer
-       call jbw_moist_init( ADM_gall, ADM_kall, ADM_lall, test_case, nicamcore, chemtracer, &
-                            prs_rebuild, DIAG_var(:,:,:,:) )
+       call jbw_moist_init( ADM_gall, ADM_kall, ADM_lall, test_case, chemtracer, DIAG_var(:,:,:,:) )
 
     case ('Supercell')
 
        write(ADM_LOG_FID,*) '*** test case   : ', trim(test_case)
        write(ADM_LOG_FID,*) '*** nicamcore   = ', nicamcore
-       call sc_init( ADM_gall, ADM_kall, ADM_lall, test_case, nicamcore, prs_rebuild, DIAG_var(:,:,:,:) )
+       call sc_init( ADM_gall, ADM_kall, ADM_lall, test_case, prs_rebuild, DIAG_var(:,:,:,:) )
 
     case ('Tropical-Cyclone')
 
        write(ADM_LOG_FID,*) '*** nicamcore   = ', nicamcore
-       call tc_init( ADM_gall, ADM_kall, ADM_lall, nicamcore, prs_rebuild, DIAG_var(:,:,:,:) )
+       call tc_init( ADM_gall, ADM_kall, ADM_lall, prs_rebuild, DIAG_var(:,:,:,:) )
 
     case ('Traceradvection')
 
@@ -620,9 +619,7 @@ contains
        kdim,        &
        lall,        &
        test_case,   &
-       nicamcore,   &
        chemtracer,  &
-       prs_rebuild, &
        DIAG_var     )
     use mod_adm, only: &
        ADM_proc_stop, &
@@ -654,9 +651,7 @@ contains
     integer,          intent(in)  :: kdim
     integer,          intent(in)  :: lall
     character(len=*), intent(in)  :: test_case
-    logical,          intent(in)  :: nicamcore
     logical,          intent(in)  :: chemtracer
-    logical,          intent(in)  :: prs_rebuild
     real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
     real(DP) :: DP_lon          ! latitude, longitude on Icosahedral grid
@@ -686,8 +681,6 @@ contains
     real(RP) :: q       (kdim)
     real(RP) :: thetav  (kdim)
     real(RP) :: ps
-    real(RP) :: RdovRv
-    real(RP) :: Mvap2           ! Ratio of molar mass of dry air/water based on NICAM CONSTANTs
 
     real(RP) :: dpdz
     real(RP) :: rho0(ijdim,kdim)
@@ -697,7 +690,6 @@ contains
     integer             :: pertt            ! type of perturbation (0 = exponential, 1 = stream function)
     real(DP), parameter :: Xfact   = 1.0_DP ! Earth scaling parameter
     integer,  parameter :: zcoords = 1      ! 1 if z is specified, 0 if p is specified
-    logical,  parameter :: prs_dry = .false.
 
     integer :: n, k, l, k0
     !---------------------------------------------------------------------------
@@ -757,7 +749,7 @@ contains
        DP_lon = real(GRD_s(n,k0,l,GRD_LON),kind=DP)
 
        do k = 1, kdim
-          DP_z = GRD_vz(n,k,l,GRD_Z)
+          DP_z = real(GRD_vz(n,k,l,GRD_Z),kind=DP)
           call baroclinic_wave_test( deep,      & ! [IN]
                                      moist,     & ! [IN]
                                      pertt,     & ! [IN]
@@ -844,19 +836,15 @@ contains
        kdim,        &
        lall,        &
        test_case,   &
-       nicamcore,   &
        prs_rebuild, &
        DIAG_var     )
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_kmin,      &
-       ADM_kmax
+       ADM_proc_stop
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
        GRD_s,   &
        GRD_Z,   &
-       GRD_ZH,  &
        GRD_vz
     use mod_runconf, only: &
        I_QV,    &
@@ -868,7 +856,6 @@ contains
     integer,          intent(in)  :: kdim
     integer,          intent(in)  :: lall
     character(len=*), intent(in)  :: test_case
-    logical,          intent(in)  :: nicamcore
     logical,          intent(in)  :: prs_rebuild
     real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
@@ -947,7 +934,7 @@ contains
        DP_lon = real(GRD_s(n,k0,l,GRD_LON),kind=DP)
 
        do k = 1, kdim
-          DP_z = GRD_vz(n,k,l,GRD_Z)
+          DP_z = real(GRD_vz(n,k,l,GRD_Z),kind=DP)
           call supercell_test( DP_lon,    & ! [IN]
                                DP_lat,    & ! [IN]
                                DP_p,      & ! [INOUT]
@@ -999,22 +986,18 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine tc_init( &
-       ijdim,        &
-       kdim,         &
-       lall,         &
-       nicamcore,    &
-       prs_rebuild,  &
-       DIAG_var      )
+       ijdim,       &
+       kdim,        &
+       lall,        &
+       prs_rebuild, &
+       DIAG_var     )
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_kmin,      &
-       ADM_kmax
+       ADM_proc_stop
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
        GRD_s,   &
        GRD_Z,   &
-       GRD_ZH,  &
        GRD_vz
     use mod_runconf, only: &
        I_QV,      &
@@ -1025,7 +1008,6 @@ contains
     integer,  intent(in)  :: ijdim
     integer,  intent(in)  :: kdim
     integer,  intent(in)  :: lall
-    logical,  intent(in)  :: nicamcore
     logical,  intent(in)  :: prs_rebuild
     real(RP), intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
@@ -1061,7 +1043,6 @@ contains
     real(RP)            :: Mvap2           ! Ratio of molar mass of dry air/water based on NICAM CONSTANTs
 
     integer,  parameter :: zcoords = 1     ! 1 if z is specified, 0 if p is specified
-    integer             :: moist           ! include moisture (1 = yes or 0 = no)
     logical,  parameter :: prs_dry = .false.
 
     integer :: n, k, l, k0
@@ -1090,7 +1071,7 @@ contains
        DP_lon = real(GRD_s(n,k0,l,GRD_LON),kind=DP)
 
        do k = 1, kdim
-          DP_z = GRD_vz(n,k,l,GRD_Z)
+          DP_z = real(GRD_vz(n,k,l,GRD_Z),kind=DP)
           call tropical_cyclone_test( DP_lon,    & ! [IN]
                                       DP_lat,    & ! [IN]
                                       DP_p,      & ! [INOUT]
@@ -1865,8 +1846,7 @@ contains
     use mod_misc, only: &
        MISC_get_latlon
     use mod_adm, only: &
-       ADM_KNONE,      &
-       ADM_NSYS
+       ADM_KNONE
     use mod_grd, only: &
        GRD_x,          &
        GRD_XDIR,       &
@@ -2287,7 +2267,7 @@ contains
     real(RP), intent(out) :: ps
     logical, intent(in) :: nicamcore
 
-    real(RP), parameter :: lat0 = 0.691590985442682
+    real(RP), parameter :: lat0 = 0.691590985442682_RP
     real(RP) :: cs32ev, f1, f2
     real(RP) :: eta_v, tmp0, tmp1
     real(RP) :: ux1, ux2, hgt0, hgt1

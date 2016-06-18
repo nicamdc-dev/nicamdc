@@ -128,7 +128,6 @@ contains
        GRD_LAT,  &
        GRD_LON,  &
        GRD_s,    &
-       GRD_dgz,  &
        GRD_zs,   &
        GRD_ZSFC, &
        GRD_vz,   &
@@ -147,12 +146,10 @@ contains
        VMTR_GSGAM2H, &
        VMTR_PHI
     use mod_runconf, only: &
-       AF_TYPE,   &
-       TRC_VMAX,  &
-       NQW_STR,   &
-       NQW_END,   &
-       NCHEM_STR, &
-       NCHEM_END
+       AF_TYPE,  &
+       TRC_VMAX, &
+       NQW_STR,  &
+       NQW_END
     use mod_prgvar, only: &
        prgvar_get_in_withdiag, &
        prgvar_set_in
@@ -218,11 +215,9 @@ contains
 
     real(RP) :: frhogq(ADM_gall_in,ADM_kall,ADM_lall)
 
-    real(RP) :: tmp2d(ADM_gall_in,1)
-
     character(len=16) :: varname
 
-    integer :: l, k, nq, k0
+    integer :: l, nq, k0
     !---------------------------------------------------------------------------
 
     call DEBUG_rapstart('__Forcing')
@@ -387,7 +382,7 @@ contains
        frhogq(:,:,:) = fq(:,:,:,nq) * rho(:,:,:) * GSGAM2(:,:,:)
 
        if ( NEGATIVE_FIXER ) then
-          tmp   (:,:,:)    = max( rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:), 0.0_RP )
+          tmp   (:,:,:)    = max( rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:), 0.0_DP )
           frhogq(:,:,:)    = ( tmp(:,:,:) - rhogq(:,:,:,nq) ) / TIME_DTL
           rhogq (:,:,:,nq) = tmp(:,:,:)
        else
@@ -459,7 +454,7 @@ contains
     real(RP) :: w      (ADM_gall,   ADM_kall,ADM_lall   ) ! vertical velocity
     real(RP) :: w_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(RP), save :: time = 0.0_RP ! for tracer advection test  [add; original by H.Miura] 20130612 R.Yoshida
+    real(RP), save :: time = 0.0_RP ! for tracer advection test [add; original by H.Miura] 20130612 R.Yoshida
 
     integer :: n, k ,l, k0
     !---------------------------------------------------------------------------

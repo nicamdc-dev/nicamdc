@@ -350,8 +350,8 @@ contains
     allocate( flag_save         (HIST_req_nmax) )
     lname_save        (:) = ""
     tmax_save         (:) = 0
-    tstr_save         (:) = 0.0_RP
-    tend_save         (:) = 0.0_RP
+    tstr_save         (:) = 0.0_DP
+    tend_save         (:) = 0.0_DP
     month_old         (:) = 0
     l_region_save     (:) = 0
     flag_save         (:) = .false.
@@ -457,7 +457,7 @@ contains
        lname_save        (n) = lname
        tmax_save         (n) = 0
        tstr_save         (n) = TIME_CTIME
-       tend_save         (n) = 0.0_RP
+       tend_save         (n) = 0.0_DP
 
        month_old         (n) = idate(2)
        l_region_save     (n) = 0

@@ -162,7 +162,6 @@ contains
        GRAV  => CNST_EGRAV, &
        Rdry  => CNST_RAIR,  &
        CPdry => CNST_CP,    &
-       CVdry => CNST_CV,    &
        Rvap  => CNST_RVAP,  &
        PRE00 => CNST_PRE00
     use mod_grd, only: &
@@ -243,7 +242,6 @@ contains
        GRAV  => CNST_EGRAV, &
        Rdry  => CNST_RAIR,  &
        CPdry => CNST_CP,    &
-       CVdry => CNST_CV,    &
        Rvap  => CNST_RVAP,  &
        PRE00 => CNST_PRE00
     use mod_grd, only: &
@@ -359,8 +357,8 @@ contains
     real(RP) :: phi_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: qd      (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: qd_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP) :: q       (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
-    real(RP) :: q_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
+    real(RP) :: q       (ADM_gall   ,ADM_kall,TRC_VMAX,ADM_lall   )
+    real(RP) :: q_pl    (ADM_gall_pl,ADM_kall,TRC_VMAX,ADM_lall_pl)
     real(RP) :: th_bs   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: th_bs_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: qv_bs   (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -405,12 +403,12 @@ contains
     do l = 1, ADM_lall
        !--- Setting of mass concentration
        !--- Note :: The basic state is "dry" and TKE=0
-       q(:,:,l,:)    = 0.0_RP
-       q(:,:,l,I_QV) = qv_bs(:,:,l)
+       q(:,:,:,l)    = 0.0_RP
+       q(:,:,I_QV,l) = qv_bs(:,:,l)
 
        call thrmdyn_qd( ADM_gall,    & ! [IN]
                         ADM_kall,    & ! [IN]
-                        q (:,:,l,:), & ! [IN]
+                        q (:,:,:,l), & ! [IN]
                         qd(:,:,l)    ) ! [OUT]
 
        !--- calculation of density
@@ -419,7 +417,7 @@ contains
                          pre_bs(:,:,l),   & ! [IN]
                          tem_bs(:,:,l),   & ! [IN]
                          qd    (:,:,l),   & ! [IN]
-                         q     (:,:,l,:), & ! [IN]
+                         q     (:,:,:,l), & ! [IN]
                          rho_bs(:,:,l)    )! [OUT]
 
        !--- set boundary conditions of basic state
@@ -438,12 +436,12 @@ contains
 
     if ( ADM_prc_me == ADM_prc_pl ) then
        do l = 1, ADM_lall_pl
-          q_pl(:,:,l,:)    = 0.0_RP
-          q_pl(:,:,l,I_QV) = qv_bs_pl(:,:,l)
+          q_pl(:,:,:,l)    = 0.0_RP
+          q_pl(:,:,I_QV,l) = qv_bs_pl(:,:,l)
 
           call thrmdyn_qd( ADM_gall_pl,    & ! [IN]
                            ADM_kall,       & ! [IN]
-                           q_pl (:,:,l,:), & ! [IN]
+                           q_pl (:,:,:,l), & ! [IN]
                            qd_pl(:,:,l)    ) ! [OUT]
 
           call thrmdyn_rho( ADM_gall_pl,        & ! [IN]
@@ -451,7 +449,7 @@ contains
                             tem_bs_pl(:,:,l),   & ! [IN]
                             pre_bs_pl(:,:,l),   & ! [IN]
                             qd_pl    (:,:,l),   & ! [IN]
-                            q_pl     (:,:,l,:), & ! [IN]
+                            q_pl     (:,:,:,l), & ! [IN]
                             rho_bs_pl(:,:,l)    ) ! [OUT]
 
           call bndcnd_thermo( ADM_gall_pl,      & ! [IN]

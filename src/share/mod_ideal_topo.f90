@@ -107,7 +107,6 @@ contains
     elseif( topo_type == 'JW' ) then
 
        call IDEAL_topo_JW( lat (:,:,:), & !--- [IN]
-                           lon (:,:,:), & !--- [IN]
                            Zsfc(:,:,:)  ) !--- [OUT]
 
     else
@@ -291,7 +290,6 @@ contains
   !> mountain for JW06 testcase
   subroutine IDEAL_topo_JW( &
        lat, &
-       lon, &
        Zsfc )
     use mod_adm, only: &
        ADM_KNONE, &
@@ -305,7 +303,6 @@ contains
     implicit none
 
     real(RP), intent(in)  :: lat (ADM_gall,ADM_KNONE,ADM_lall)
-    real(RP), intent(in)  :: lon (ADM_gall,ADM_KNONE,ADM_lall)
     real(RP), intent(out) :: Zsfc(ADM_gall,ADM_KNONE,ADM_lall)
 
     real(RP), parameter :: ETA0 = 0.252_RP ! Value of eta at a reference level (position of the jet)

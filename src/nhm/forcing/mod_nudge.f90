@@ -361,7 +361,7 @@ contains
     real(RP) :: temp(ADM_IopJop_nmax,ADM_kall)
 
     logical :: eflag
-    integer :: g, k, l, n
+    integer :: n, k, l
     !---------------------------------------------------------------------------
 
     if ( NDG_tau_vxvyvz > 0.0_RP ) then
@@ -372,7 +372,7 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do g = 1, ADM_IopJop_nmax
+          do n = 1, ADM_IopJop_nmax
              NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_vx) = temp(n,k)
           enddo
           enddo
@@ -383,7 +383,7 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do g = 1, ADM_IopJop_nmax
+          do n = 1, ADM_IopJop_nmax
              NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_vy) = temp(n,k)
           enddo
           enddo
@@ -394,7 +394,7 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do g = 1, ADM_IopJop_nmax
+          do n = 1, ADM_IopJop_nmax
              NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_vz) = temp(n,k)
           enddo
           enddo
@@ -409,7 +409,7 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do g = 1, ADM_IopJop_nmax
+          do n = 1, ADM_IopJop_nmax
              NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_w) = temp(n,k)
           enddo
           enddo
@@ -424,7 +424,7 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do g = 1, ADM_IopJop_nmax
+          do n = 1, ADM_IopJop_nmax
              NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_tem) = temp(n,k)
           enddo
           enddo
@@ -439,7 +439,7 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do g = 1, ADM_IopJop_nmax
+          do n = 1, ADM_IopJop_nmax
              NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_pre) = temp(n,k)
           enddo
           enddo
@@ -454,7 +454,7 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do g = 1, ADM_IopJop_nmax
+          do n = 1, ADM_IopJop_nmax
              NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_qv) = temp(n,k)
           enddo
           enddo

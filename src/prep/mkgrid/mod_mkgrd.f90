@@ -1329,7 +1329,7 @@ contains
 
     rho = sqrt( x*x + y*y )
 
-    if ( rho == 0 ) then ! singular point
+    if ( rho == 0.0_RP ) then ! singular point
        lat = lat_center
        lon = lon_center
        return

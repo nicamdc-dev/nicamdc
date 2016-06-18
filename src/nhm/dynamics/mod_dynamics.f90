@@ -169,16 +169,12 @@ contains
        ADM_kall,    &
        ADM_gall,    &
        ADM_gall_pl, &
-       ADM_gall_1d, &
-       ADM_gmax,    &
-       ADM_gmin,    &
        ADM_kmax,    &
        ADM_kmin
     use mod_cnst, only: &
-       Rdry  => CNST_RAIR,  &
-       Rvap  => CNST_RVAP,  &
-       CVdry => CNST_CV,    &
-       PRE00 => CNST_PRE00
+       Rdry  => CNST_RAIR, &
+       Rvap  => CNST_RVAP, &
+       CVdry => CNST_CV
     use mod_comm, only: &
        COMM_data_transfer
     use mod_vmtr, only: &
@@ -344,7 +340,7 @@ contains
     logical  :: ndg_TEND_out
     logical  :: do_tke_correction
 
-    integer  :: g, k ,l, nq, nl, ndyn, m
+    integer  :: g, k ,l, nq, nl, ndyn
     !---------------------------------------------------------------------------
     !$acc wait
 

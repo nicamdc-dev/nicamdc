@@ -58,9 +58,7 @@ contains
        ADM_proc_stop
     use mod_runconf, only: &
        CHEM_TYPE, &
-       NCHEM_MAX, &
-       NCHEM_STR, &
-       NCHEM_END
+       NCHEM_MAX
     implicit none
 
     logical :: SET_RJ2012       = .false.
@@ -245,8 +243,7 @@ contains
        Rdry  => CNST_RAIR,  &
        CPdry => CNST_CP,    &
        CVdry => CNST_CV,    &
-       PRE00 => CNST_PRE00, &
-       g     => CNst_EGRAV
+       PRE00 => CNST_PRE00
     use mod_runconf, only: &
        TRC_VMAX,  &
        RAIN_TYPE, &
