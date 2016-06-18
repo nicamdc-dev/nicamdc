@@ -47,11 +47,9 @@ program prg_mkllmap
   implicit none
 
   character(len=ADM_MAXFNAME) :: output_dir   = './'
-  logical                     :: use_quadprec = .false.
 
   namelist /mkllmap_param/ &
-      use_quadprec, &
-      output_dir
+     output_dir
 
   integer :: ierr
   !=============================================================================
@@ -90,12 +88,7 @@ program prg_mkllmap
 
   call LATLON_ico_setup
 
-  if ( use_quadprec ) then
-     call LATLON_setup( output_dir, 'mkllmap_q' )
-  else
-     call LATLON_setup( output_dir, 'mkllmap' )
-  endif
-
+  call LATLON_setup( output_dir )
 
   call ADM_proc_finish
 

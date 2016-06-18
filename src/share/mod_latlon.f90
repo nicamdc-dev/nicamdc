@@ -85,8 +85,6 @@ module mod_latlon
   character(len=ADM_MAXFNAME), private :: SAMPLE_OUT_BASENAME = ''
   character(len=ADM_NSYS),     private :: SAMPLE_io_mode      = 'ADVANCED'
 
-  character(len=ADM_NSYS),     private :: output_lldata_type = 'mkllmap'
-
   real(RP), private, allocatable :: lat(:)
   real(RP), private, allocatable :: lon(:)
 
@@ -178,7 +176,7 @@ contains
 
   !-----------------------------------------------------------------------------
   !> Setup
-  subroutine LATLON_setup( output_dirname, output_lldata_type_in )
+  subroutine LATLON_setup( output_dirname )
     use mod_misc, only: &
        MISC_get_available_fid, &
        MISC_make_idstr
@@ -196,7 +194,6 @@ contains
     implicit none
 
     character(len=*), intent(in) :: output_dirname
-    character(len=*), intent(in) :: output_lldata_type_in
 
     real(RP) :: latmax_deg      =   90.0_RP
     real(RP) :: latmin_deg      =  -90.0_RP
@@ -230,8 +227,6 @@ contains
     integer :: nstart, nend
     integer :: n, l, rgnid, i, j
     !---------------------------------------------------------------------------
-
-    output_lldata_type = output_lldata_type_in
 
     !--- read parameters
     write(ADM_LOG_FID,*)
@@ -472,11 +467,10 @@ contains
   !>
   subroutine mkrelmap_ico2ll( what_is_done )
     use mod_misc, only: &
-       MISC_get_latlon,      &
-       MISC_triangle_area_q, &
-       MISC_3dvec_triangle,  &
-       MISC_3dvec_cross,     &
-       MISC_3dvec_dot,       &
+       MISC_get_latlon,     &
+       MISC_3dvec_triangle, &
+       MISC_3dvec_cross,    &
+       MISC_3dvec_dot,      &
        MISC_3dvec_abs
     use mod_adm, only: &
        ADM_proc_stop,     &
@@ -682,24 +676,12 @@ contains
                       n3_index(nmax_llgrid) = ADM_IooJoo(n,ADM_GIoJp)
                    endif
 
-                   if ( output_lldata_type == 'mkllmap_q' ) then ! quad precision
-                      area1 = MISC_triangle_area_q( r0(:), r2(:), r3(:),  &
-                                                    polygon_type, rscale, &
-                                                    critical=eps_area     )
-                      area2 = MISC_triangle_area_q( r0(:), r3(:), r1(:),  &
-                                                    polygon_type, rscale, &
-                                                    critical=eps_area     )
-                      area3 = MISC_triangle_area_q( r0(:), r1(:), r2(:),  &
-                                                    polygon_type, rscale, &
-                                                    critical=eps_area     )
-                   else ! double precision
-                      area1 = MISC_3Dvec_triangle( r0(:), r2(:), r3(:), &
-                                                   polygon_type, rscale )
-                      area2 = MISC_3Dvec_triangle( r0(:), r3(:), r1(:), &
-                                                   polygon_type, rscale )
-                      area3 = MISC_3Dvec_triangle( r0(:), r1(:), r2(:), &
-                                                   polygon_type, rscale )
-                   endif
+                   area1 = MISC_3Dvec_triangle( r0(:), r2(:), r3(:), &
+                                                polygon_type, rscale )
+                   area2 = MISC_3Dvec_triangle( r0(:), r3(:), r1(:), &
+                                                polygon_type, rscale )
+                   area3 = MISC_3Dvec_triangle( r0(:), r1(:), r2(:), &
+                                                polygon_type, rscale )
 
                    if (      area1 * 0.0_RP /= 0.0_RP &
                         .OR. area2 * 0.0_RP /= 0.0_RP &

@@ -233,7 +233,7 @@ contains
   !> calc geometrical information for cell point
   subroutine GMTR_calc_P
     use mod_misc, only: &
-       MISC_triangle_area
+       MISC_3Dvec_triangle
     use mod_adm, only: &
        ADM_prc_me,      &
        ADM_have_pl,     &
@@ -327,8 +327,8 @@ contains
              enddo
           else
              do m = 1, 6
-                area = area + MISC_triangle_area( v(:,0,ij), v(:,m,ij), v(:,m+1,ij), &
-                                                  GMTR_polygon_type, GRD_rscale      )
+                area = area + MISC_3Dvec_triangle( v(:,0,ij), v(:,m,ij), v(:,m+1,ij), &
+                                                   GMTR_polygon_type, GRD_rscale      )
              enddo
           endif
 
@@ -378,8 +378,8 @@ contains
 
           area = 0.0_RP
           do m = 1, ADM_vlink_nmax ! (ICO=5)
-             area = area + MISC_triangle_area( v_pl(:,0), v_pl(:,m), v_pl(:,m+1), &
-                                               GMTR_polygon_type, GRD_rscale      )
+             area = area + MISC_3dvec_triangle( v_pl(:,0), v_pl(:,m), v_pl(:,m+1), &
+                                                GMTR_polygon_type, GRD_rscale      )
           enddo
 
           GMTR_P_var_pl(n,K0,l,GMTR_P_AREA)  = area
@@ -405,7 +405,7 @@ contains
   !> calc geometrical information for cell vertex (triangle)
   subroutine GMTR_calc_T
     use mod_misc, only: &
-       MISC_triangle_area
+       MISC_3Dvec_triangle
     use mod_adm, only: &
        ADM_prc_me,      &
        ADM_have_pl,     &
@@ -501,9 +501,9 @@ contains
              area2 = triangle_area_on_plane( v(:,0,ij,t), v(:,3,ij,t), v(:,1,ij,t) )
              area3 = triangle_area_on_plane( v(:,0,ij,t), v(:,1,ij,t), v(:,2,ij,t) )
           else
-             area1 = MISC_triangle_area( v(:,0,ij,t), v(:,2,ij,t), v(:,3,ij,t), GMTR_polygon_type, GRD_rscale )
-             area2 = MISC_triangle_area( v(:,0,ij,t), v(:,3,ij,t), v(:,1,ij,t), GMTR_polygon_type, GRD_rscale )
-             area3 = MISC_triangle_area( v(:,0,ij,t), v(:,1,ij,t), v(:,2,ij,t), GMTR_polygon_type, GRD_rscale )
+             area1 = MISC_3Dvec_triangle( v(:,0,ij,t), v(:,2,ij,t), v(:,3,ij,t), GMTR_polygon_type, GRD_rscale )
+             area2 = MISC_3Dvec_triangle( v(:,0,ij,t), v(:,3,ij,t), v(:,1,ij,t), GMTR_polygon_type, GRD_rscale )
+             area3 = MISC_3Dvec_triangle( v(:,0,ij,t), v(:,1,ij,t), v(:,2,ij,t), GMTR_polygon_type, GRD_rscale )
           endif
 
           area = area1 + area2 + area3
@@ -540,9 +540,9 @@ contains
           enddo
 
           do n = ADM_GMIN_PL, ADM_GMAX_PL
-             area1 = MISC_triangle_area( v_pl(:,0,n), v_pl(:,2,n), v_pl(:,3,n), GMTR_polygon_type, GRD_rscale )
-             area2 = MISC_triangle_area( v_pl(:,0,n), v_pl(:,3,n), v_pl(:,1,n), GMTR_polygon_type, GRD_rscale )
-             area3 = MISC_triangle_area( v_pl(:,0,n), v_pl(:,1,n), v_pl(:,2,n), GMTR_polygon_type, GRD_rscale )
+             area1 = MISC_3dvec_triangle( v_pl(:,0,n), v_pl(:,2,n), v_pl(:,3,n), GMTR_polygon_type, GRD_rscale )
+             area2 = MISC_3dvec_triangle( v_pl(:,0,n), v_pl(:,3,n), v_pl(:,1,n), GMTR_polygon_type, GRD_rscale )
+             area3 = MISC_3dvec_triangle( v_pl(:,0,n), v_pl(:,1,n), v_pl(:,2,n), GMTR_polygon_type, GRD_rscale )
 
              area = area1 + area2 + area3
 
