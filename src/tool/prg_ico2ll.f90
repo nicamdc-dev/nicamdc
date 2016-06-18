@@ -49,6 +49,7 @@ program ico2ll
   !
   !++ Used modules (shared)
   !
+  use mpi
   use mod_precision
   use mod_misc
   use mod_cnst, only : &
@@ -182,7 +183,9 @@ program ico2ll
   real(8) :: pi
   integer :: fnum
   integer :: ij ! 05/12/21 M.Satoh
-  !
+
+  call MPI_Init(ierr)
+
   ctl_fid = MISC_get_available_fid()
   open(CTL_FID,             &
        file='ico2ll.cnf',   &
@@ -662,6 +665,9 @@ program ico2ll
   deallocate(w2)
   deallocate(w3)
   deallocate(lon2)
+
+  call MPI_Finalize(ierr)
+
   stop
 contains
   ! [Add] 13/06/13  T.Seiki imported from mod_vintrpl.f90

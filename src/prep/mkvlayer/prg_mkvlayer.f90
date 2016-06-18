@@ -22,6 +22,7 @@ program prg_mkvlayer
   !
   !++ Used modules ( shared )
   !
+  use mpi
   use mod_precision
   !=============================================================================
   integer, parameter :: kdum=1
@@ -47,6 +48,9 @@ program prg_mkvlayer
   integer :: kmin
   integer :: kmax
   integer :: kall
+  integer :: ierr
+
+  call MPI_Init(ierr)
 
   open(fid,file='mkvlayer.cnf',status='old',form='formatted')
   read(fid,nml=mkvlayer_cnf)
@@ -61,6 +65,8 @@ program prg_mkvlayer
   end select
   !
   call output_layer(outfname)
+
+  call MPI_Finalize(ierr)
 
   !=============================================================================
 contains

@@ -32,6 +32,7 @@ program fio_ico2ll
   !
   !++ Used modules
   !
+  use mpi
   use mod_precision
   use mod_misc, only : &
     MISC_get_available_fid, &
@@ -201,6 +202,8 @@ program fio_ico2ll
   integer :: v, t, p, l, k, n, i, j
   real(8) :: pi
   !=============================================================================
+
+  call MPI_Init(ierr)
 
   pi = 4.D0 * atan( 1.D0 ) ! [add] 13-04-18
 
@@ -761,6 +764,7 @@ program fio_ico2ll
 !  do p = 1, MNG_PALL
 !     call fio_fclose(ifid(p))
 !  enddo
+  call MPI_Finalize(ierr)
 
 contains
   !-----------------------------------------------------------------------------

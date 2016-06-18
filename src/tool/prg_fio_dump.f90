@@ -6,14 +6,14 @@
 program prg_fio_dump
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
+  !++ Description:
   !      header/data veiwer for new format data
   !      ( packaged NICAM data format : PaNDa )
   !
   !++ Current Corresponding Author: H. Yashiro
-  ! 
-  !++ History: 
-  !      Version   Date       Comment 
+  !
+  !++ History:
+  !      Version   Date       Comment
   !      -----------------------------------------------------------------------
   !      0.90      11-09-01  H.Yashiro : [NEW]
   !
@@ -21,6 +21,7 @@ program prg_fio_dump
   !
   !++ Used modules
   !
+  use mpi
   use mod_fio, only : &
     FIO_HLONG,         &
     FIO_LITTLE_ENDIAN, &
@@ -49,8 +50,10 @@ program prg_fio_dump
   integer :: command_argument_count
 #endif
 
-  integer :: fid ! return from C program
+  integer :: fid, ierr ! return from C program
   !=============================================================================
+
+  call MPI_Init(ierr)
 
 #ifdef _NOF2003
   narg = IARGC()
@@ -77,7 +80,7 @@ program prg_fio_dump
 #endif
 
      if ( argstr(1:1) == '-' ) then
-        select case(argstr(2:2)) 
+        select case(argstr(2:2))
         case('h')
            if(.not. modelok) mode = FIO_DUMP_HEADER
            modelok = .true.
@@ -105,6 +108,8 @@ program prg_fio_dump
   call fio_register_file(fid,trim(fname))
 
   call fio_dump_finfo(fid,endian,mode)
+
+  call MPI_Finalize(ierr)
 
 end program prg_fio_dump
 !-------------------------------------------------------------------------------
