@@ -55,7 +55,6 @@ cat << EOF1 > run.sh
 #
 export PARALLEL=16
 export OMP_NUM_THREADS=16
-#export fu08bf=1
 export XOS_MMM_L_ARENA_FREE=2
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
@@ -106,7 +105,6 @@ cat << EOFICO2LL1 > ico2ll.sh
 #
 export PARALLEL=16
 export OMP_NUM_THREADS=16
-#export fu08bf=1
 
 ln -sv ${TOPDIR}/bin/fio_ico2ll_mpi .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
