@@ -42,8 +42,8 @@ endif
 
 ###########################
 
-MODDIROPT ?= -to $(BUILD_DIR) -I$(BUILD_DIR)
-OBJDIR    ?= $(BUILD_DIR)
+MODDIROPT ?= -to $(BUILDDIR) -I$(BUILDDIR)
+OBJDIR    ?= $(BUILDDIR)
 
 LD     = $(FC)
 LFLAGS = $(FFLAGS)

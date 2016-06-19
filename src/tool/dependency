@@ -39,44 +39,44 @@ prg_ico2ll.o	: prg_ico2ll.f90 mod_precision.o mod_misc.o mod_cnst.o mod_calendar
 prg_fio_cat.o	: prg_fio_cat.f90 mod_precision.o mod_misc.o mod_cnst.o mod_calendar.o mod_fio.o mod_mnginfo_light.o mod_option.o
 prg_fio_sel.o	: prg_fio_sel.f90 mod_precision.o mod_misc.o mod_cnst.o mod_calendar.o mod_fio.o mod_mnginfo_light.o mod_option.o
 
-$(NICAM_BINDIR)/$(PRJ_TOOL01): $(BUILD_DIR)/$(PRJ_TOOL01)
+$(NICAM_BINDIR)/$(PRJ_TOOL01): $(BUILDDIR)/$(PRJ_TOOL01)
 	$(INSTALL) $< $@
 	@echo; echo "##### PROGRAM $(notdir $<) is installed Successfully #####"; echo
-$(NICAM_BINDIR)/$(PRJ_TOOL02): $(BUILD_DIR)/$(PRJ_TOOL02)
+$(NICAM_BINDIR)/$(PRJ_TOOL02): $(BUILDDIR)/$(PRJ_TOOL02)
 	$(INSTALL) $< $@
 	@echo; echo "##### PROGRAM $(notdir $<) is installed Successfully #####"; echo
-$(NICAM_BINDIR)/$(PRJ_TOOL03): $(BUILD_DIR)/$(PRJ_TOOL03)
+$(NICAM_BINDIR)/$(PRJ_TOOL03): $(BUILDDIR)/$(PRJ_TOOL03)
 	$(INSTALL) $< $@
 	@echo; echo "##### PROGRAM $(notdir $<) is installed Successfully #####"; echo
-$(NICAM_BINDIR)/$(PRJ_TOOL04): $(BUILD_DIR)/$(PRJ_TOOL04)
+$(NICAM_BINDIR)/$(PRJ_TOOL04): $(BUILDDIR)/$(PRJ_TOOL04)
 	$(INSTALL) $< $@
 	@echo; echo "##### PROGRAM $(notdir $<) is installed Successfully #####"; echo
-$(NICAM_BINDIR)/$(PRJ_TOOL05): $(BUILD_DIR)/$(PRJ_TOOL05)
+$(NICAM_BINDIR)/$(PRJ_TOOL05): $(BUILDDIR)/$(PRJ_TOOL05)
 	$(INSTALL) $< $@
 	@echo; echo "##### PROGRAM $(notdir $<) is installed Successfully #####"; echo
-$(NICAM_BINDIR)/$(PRJ_TOOL06): $(BUILD_DIR)/$(PRJ_TOOL06)
+$(NICAM_BINDIR)/$(PRJ_TOOL06): $(BUILDDIR)/$(PRJ_TOOL06)
 	$(INSTALL) $< $@
 	@echo; echo "##### PROGRAM $(notdir $<) is installed Successfully #####"; echo
 
-$(BUILD_DIR)/$(PRJ_TOOL01) : $(PRG_TOOL01).o $(NICAM_LIBDIR)/$(LIB_TOOL) $(NICAM_LIBDIR)/$(LIB_SHARE)
-	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILD_DIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
-$(BUILD_DIR)/$(PRJ_TOOL02) : $(PRG_TOOL02).o $(NICAM_LIBDIR)/$(LIB_TOOL) $(NICAM_LIBDIR)/$(LIB_SHARE)
-	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILD_DIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
-$(BUILD_DIR)/$(PRJ_TOOL03) : $(PRG_TOOL03).o $(NICAM_LIBDIR)/$(LIB_TOOL) $(NICAM_LIBDIR)/$(LIB_SHARE)
-	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILD_DIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
-$(BUILD_DIR)/$(PRJ_TOOL04) : $(PRG_TOOL04).o $(NICAM_LIBDIR)/$(LIB_TOOL) $(NICAM_LIBDIR)/$(LIB_SHARE)
-	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILD_DIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
-$(BUILD_DIR)/$(PRJ_TOOL05) : $(PRG_TOOL05).o $(NICAM_LIBDIR)/$(LIB_TOOL) $(NICAM_LIBDIR)/$(LIB_SHARE)
-	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILD_DIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
-$(BUILD_DIR)/$(PRJ_TOOL06) : $(PRG_TOOL06).o $(NICAM_LIBDIR)/$(LIB_TOOL) $(NICAM_LIBDIR)/$(LIB_SHARE)
-	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILD_DIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
+$(BUILDDIR)/$(PRJ_TOOL01) : $(PRG_TOOL01).o $(NICAM_LIBDIR)/$(LIB_TOOL) $(NICAM_LIBDIR)/$(LIB_SHARE)
+	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILDDIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
+$(BUILDDIR)/$(PRJ_TOOL02) : $(PRG_TOOL02).o $(NICAM_LIBDIR)/$(LIB_TOOL) $(NICAM_LIBDIR)/$(LIB_SHARE)
+	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILDDIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
+$(BUILDDIR)/$(PRJ_TOOL03) : $(PRG_TOOL03).o $(NICAM_LIBDIR)/$(LIB_TOOL) $(NICAM_LIBDIR)/$(LIB_SHARE)
+	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILDDIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
+$(BUILDDIR)/$(PRJ_TOOL04) : $(PRG_TOOL04).o $(NICAM_LIBDIR)/$(LIB_TOOL) $(NICAM_LIBDIR)/$(LIB_SHARE)
+	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILDDIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
+$(BUILDDIR)/$(PRJ_TOOL05) : $(PRG_TOOL05).o $(NICAM_LIBDIR)/$(LIB_TOOL) $(NICAM_LIBDIR)/$(LIB_SHARE)
+	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILDDIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
+$(BUILDDIR)/$(PRJ_TOOL06) : $(PRG_TOOL06).o $(NICAM_LIBDIR)/$(LIB_TOOL) $(NICAM_LIBDIR)/$(LIB_SHARE)
+	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILDDIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
 
 $(LIB_TOOL) : $(NICAM_LIBDIR)/$(LIB_TOOL)
 
-$(NICAM_LIBDIR)/$(LIB_TOOL): $(BUILD_DIR)/$(LIB_TOOL)
+$(NICAM_LIBDIR)/$(LIB_TOOL): $(BUILDDIR)/$(LIB_TOOL)
 	$(INSTALL) $< $@
 	@echo; echo "##### LIBRARY $(LIB_TOOL) is Installed Successfully #####"; echo
 
-$(BUILD_DIR)/$(LIB_TOOL): $(MODS_TOOL)
-	$(AR) $(ARFLAGS) $@ $(patsubst %,$(BUILD_DIR)/%,$(notdir $^))
+$(BUILDDIR)/$(LIB_TOOL): $(MODS_TOOL)
+	$(AR) $(ARFLAGS) $@ $(patsubst %,$(BUILDDIR)/%,$(notdir $^))
 	$(RANLIB) $@

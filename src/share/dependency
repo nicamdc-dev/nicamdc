@@ -56,10 +56,10 @@ mod_gtl.o	: mod_gtl.f90 mod_precision.o mod_adm.o mod_debug.o mod_comm.o mod_gmt
 mod_vintrpl.o	: mod_vintrpl.f90 mod_precision.o mod_adm.o mod_debug.o mod_grd.o mod_cnst.o
 mod_latlon.o	: mod_latlon.f90 mod_precision.o mod_adm.o mod_debug.o mod_cnst.o mod_misc.o mod_grd.o $(mod_oprt).o mod_comm.o mod_gmtr.o
 
-$(NICAM_LIBDIR)/$(LIB_SHARE): $(BUILD_DIR)/$(LIB_SHARE)
+$(NICAM_LIBDIR)/$(LIB_SHARE): $(BUILDDIR)/$(LIB_SHARE)
 	$(INSTALL) $< $@
 	@echo; echo "##### LIBRARY $(LIB_SHARE) is Installed Successfully #####"; echo
 
-$(BUILD_DIR)/$(LIB_SHARE): $(MODS_SHARE)
-	$(AR) $(ARFLAGS) $@ $(patsubst %,$(BUILD_DIR)/%,$(notdir $^))
+$(BUILDDIR)/$(LIB_SHARE): $(MODS_SHARE)
+	$(AR) $(ARFLAGS) $@ $(patsubst %,$(BUILDDIR)/%,$(notdir $^))
 	$(RANLIB) $@

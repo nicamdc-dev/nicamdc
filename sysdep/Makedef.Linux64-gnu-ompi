@@ -41,8 +41,8 @@ LAPACK_LIBS    ?= -L/ap/lapack/3.6.0/lib -llapack
 
 ###########################
 
-MODDIROPT ?= -J $(BUILD_DIR)
-OBJDIR    ?= $(BUILD_DIR)
+MODDIROPT ?= -J $(BUILDDIR)
+OBJDIR    ?= $(BUILDDIR)
 
 LD     = $(FC)
 LFLAGS = $(FFLAGS)

@@ -3,22 +3,16 @@
 # Makefile for each test program
 #
 ################################################################################
-
-PWD         = $(shell pwd)
-TOPDIR      = $(abspath ../../../..)
-TESTDIR     = ../../..
-
-
-# user-defined source files
-CODE_DIR    = .
-ORG_SRCS    =
+PWD       = $(shell pwd)
+TOPDIR    = $(abspath ../../../..)
+TESTDIR   = ../../..
 
 # parameters for run
-glevel      = 6
-rlevel      = 0
-nmpi        = 10
-zlayer      = 60
-vgrid       = vgrid60_200m_dcmip.dat
+glevel    = 6
+rlevel    = 0
+nmpi      = 10
+zlayer    = 60
+vgrid     = vgrid60_200m_dcmip.dat
 
 
 

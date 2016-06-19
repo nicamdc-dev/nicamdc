@@ -44,8 +44,8 @@ LAPACK_LIBS    ?= -mkl
 
 ###########################
 
-MODDIROPT ?= -module $(BUILD_DIR)
-OBJDIR    ?= $(BUILD_DIR)
+MODDIROPT ?= -module $(BUILDDIR)
+OBJDIR    ?= $(BUILDDIR)
 
 LD     = $(FC)
 LFLAGS = $(FFLAGS)

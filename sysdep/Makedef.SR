@@ -43,8 +43,8 @@ endif
 
 ###########################
 
-MODDIROPT ?= -moddir=$(BUILD_DIR)
-OBJDIR    ?= $(BUILD_DIR)
+MODDIROPT ?= -moddir=$(BUILDDIR)
+OBJDIR    ?= $(BUILDDIR)
 
 LD     = $(FC)
 LFLAGS = $(FFLAGS) -lm

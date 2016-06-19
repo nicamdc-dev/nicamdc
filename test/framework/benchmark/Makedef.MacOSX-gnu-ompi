@@ -41,8 +41,8 @@ LAPACK_LIBS    ?= -L/opt/local/lib -llapack -lf77blas -lcblas -latlas
 
 ###########################
 
-MODDIROPT ?= -J $(BUILD_DIR)
-OBJDIR    ?= $(BUILD_DIR)
+MODDIROPT ?= -J $(BUILDDIR)
+OBJDIR    ?= $(BUILDDIR)
 
 LD     = $(FC)
 LFLAGS = $(FFLAGS)
