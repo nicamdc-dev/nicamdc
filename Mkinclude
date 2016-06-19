@@ -10,8 +10,8 @@ SRCDIR = $(TOPDIR)/src
 
 ##### select special files #####
 
-mod_oprt      := mod_oprt
-mod_oprt3d    := mod_oprt3d
+mod_oprt       := mod_oprt
+mod_oprt3d     := mod_oprt3d
 mod_dynamics   := mod_dynamics
 mod_vi         := mod_vi
 mod_src        := mod_src
