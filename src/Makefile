@@ -4,13 +4,13 @@
 #
 ################################################################################
 
-TOPDIR      = $(abspath ..)
-BUILD_DIR   = ./.libs
-SYSDEP_DIR  = ../sysdep
+TOPDIR    = $(abspath ..)
+BUILDDIR  = ./.libs
+SYSDEPDIR = ../sysdep
 
-VPATH = $(BUILD_DIR)
+VPATH = $(BUILDDIR)
 
-include $(SYSDEP_DIR)/Makedef.$(NICAM_SYS)
+include $(SYSDEPDIR)/Makedef.$(NICAM_SYS)
 include $(TOPDIR)/Mkinclude
 
 all:
@@ -45,7 +45,7 @@ PRJS  += $(PRJ_TOOL)
 LIBS  += $(LIB_TOOL)
 
 makedir:
-	mkdir -p $(BUILD_DIR)
+	mkdir -p $(BUILDDIR)
 	mkdir -p $(NICAM_BINDIR)
 	mkdir -p $(NICAM_LIBDIR)
 
@@ -74,11 +74,11 @@ cleandir:
 clean:
 	rm -f $(LIBS) $(PRJS)
 	rm -f *~ *.mod *.o *.lst *.L
-	cd $(BUILD_DIR); rm -f $(LIBS) $(PRJS); rm -f *~ *.mod *.o *.lst *.L
+	cd $(BUILDDIR); rm -f $(LIBS) $(PRJS); rm -f *~ *.mod *.o *.lst *.L
 
 .SUFFIXES: .o .f90 .c .mod
 %.o : %.f90
-	$(FC) $(FFLAGS) -I$(BUILD_DIR) $(MODDIROPT) -o $(OBJDIR)/$@ -c $<
+	$(FC) $(FFLAGS) -I$(BUILDDIR) $(MODDIROPT) -o $(OBJDIR)/$@ -c $<
 %.o : %.c
 	$(CC) $(CFLAGS) -o $(OBJDIR)/$@ -c $<
 

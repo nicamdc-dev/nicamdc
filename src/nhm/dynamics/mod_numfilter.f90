@@ -321,11 +321,11 @@ contains
     allocate( rayleigh_coef  (ADM_kall) )
     allocate( rayleigh_coef_h(ADM_kall) )
 
-    call height_factor( ADM_kall, real(GRD_gz(:),kind=RP), real(GRD_htop,kind=RP), zlimit, fact(:) )
+    call height_factor( ADM_kall, GRD_gz (:), GRD_htop, zlimit, fact(:) )
 
     rayleigh_coef(:) = alpha * fact(:)
 
-    call height_factor( ADM_kall, real(GRD_gzh(:),kind=RP), real(GRD_htop,kind=RP), zlimit, fact(:) )
+    call height_factor( ADM_kall, GRD_gzh(:), GRD_htop, zlimit, fact(:) )
 
     rayleigh_coef_h(:) = alpha * fact(:)
 
@@ -429,7 +429,7 @@ contains
     elseif( hdiff_type == "NONDIM_COEF" ) then
        if( gamma > 0.0_RP ) NUMFILTER_DOhorizontaldiff = .true.
 
-       large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=RP)
+       large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=DP)
 
        ! gamma is a non-dimensional number.
        if ( dep_hgrid ) then
@@ -548,7 +548,7 @@ contains
     elseif( hdiff_type_lap1 == "NONDIM_COEF" ) then
        if( gamma_lap1 > 0.0_RP ) NUMFILTER_DOhorizontaldiff_lap1 = .true.
 
-       large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=RP)
+       large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=DP)
 
        ! gamma is a non-dimensional number.
        if ( dep_hgrid ) then
@@ -599,7 +599,7 @@ contains
 
     endif
 
-    call height_factor( ADM_kall, real(GRD_gz(:),kind=RP), real(GRD_htop,kind=RP), zlimit_lap1, fact(:) )
+    call height_factor( ADM_kall, GRD_gz(:), GRD_htop, zlimit_lap1, fact(:) )
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
@@ -685,7 +685,7 @@ contains
     allocate( Kv_coef  (ADM_kall) )
     allocate( Kv_coef_h(ADM_kall) )
 
-    large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=RP)
+    large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=DP)
 
     ! 6th order vertical numerical diffusion
     Kv_coef  (:) = gamma * GRD_dgz (:)**6 / large_step_dt
@@ -786,7 +786,7 @@ contains
     elseif( divdamp_type == "NONDIM_COEF" ) then
        if( alpha > 0.0_RP ) NUMFILTER_DOdivdamp = .true.
 
-       small_step_dt = TIME_DTS / real(DYN_DIV_NUM,kind=RP)
+       small_step_dt = TIME_DTS / real(DYN_DIV_NUM,kind=DP)
 
        ! alpha_d is a non-dimensional number.
        ! alpha_d * (c_s)^p * dt^{2p-1}
@@ -870,7 +870,7 @@ contains
 
     if( alpha_v > 0.0_RP ) NUMFILTER_DOdivdamp_v = .true.
 
-    small_step_dt = TIME_DTS / real(DYN_DIV_NUM,kind=RP)
+    small_step_dt = TIME_DTS / real(DYN_DIV_NUM,kind=DP)
 
     divdamp_coef_v = -alpha_v * SOUND * SOUND * small_step_dt
 
@@ -952,7 +952,7 @@ contains
     elseif( divdamp_type == "NONDIM_COEF" ) then
        if( alpha > 0.0_RP ) NUMFILTER_DOdivdamp_2d = .true.
 
-       small_step_dt = TIME_DTS / real(DYN_DIV_NUM,kind=RP)
+       small_step_dt = TIME_DTS / real(DYN_DIV_NUM,kind=DP)
 
        ! alpha is the non-dimensional number.
        ! alpha * (c_s)^p * dt^{2p-1}
@@ -990,7 +990,7 @@ contains
        endif
     endif
 
-    call height_factor( ADM_kall, real(GRD_gz(:),kind=RP), real(GRD_htop,kind=RP), zlimit, fact(:) )
+    call height_factor( ADM_kall, GRD_gz(:), GRD_htop, zlimit, fact(:) )
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
@@ -1264,7 +1264,7 @@ contains
     call DEBUG_rapstart('____numfilter_hdiffusion')
 
     if ( hdiff_nonlinear ) then
-       call height_factor( ADM_kall, real(GRD_gz(:),kind=RP), real(GRD_htop,kind=RP), ZD_hdiff_nl, fact(:) )
+       call height_factor( ADM_kall, GRD_gz(:), GRD_htop, ZD_hdiff_nl, fact(:) )
 
        kh_max(:) = ( 1.0_RP - fact(:) ) * Kh_coef_maxlim &
                  + (          fact(:) ) * Kh_coef_minlim
@@ -1329,7 +1329,7 @@ contains
        if ( p == lap_order_hdiff ) then
 
           if ( hdiff_nonlinear ) then
-             large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=RP)
+             large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=DP)
 
              do l = 1, ADM_lall
              do k = 1, ADM_kall

@@ -81,7 +81,7 @@ module mod_history
   character(len=ADM_MAXFNAME), private :: output_io_mode != 'LEGACY'
   integer,                     private :: output_size    = 4
   integer,                     private :: npreslev       = 1
-  real(RP),                     private :: pres_levs(60)  != CNST_PRE00
+  real(RP),                    private :: pres_levs(60)  != CNST_PRE00
   logical,                     private :: check_flag     = .true.
 
   integer,                     private :: ksum
@@ -103,24 +103,24 @@ module mod_history
 
   character(len=ADM_NSYS),     private, allocatable :: lname_save   (:)
   integer,                     private, allocatable :: tmax_save    (:)
-  real(DP),                     private, allocatable :: tstr_save    (:)
-  real(DP),                     private, allocatable :: tend_save    (:)
+  real(DP),                    private, allocatable :: tstr_save    (:)
+  real(DP),                    private, allocatable :: tend_save    (:)
   integer,                     private, allocatable :: month_old    (:)
   integer,                     private, allocatable :: l_region_save(:)
 
   integer,                     public,  allocatable :: ksumstr  (:)
   integer,                     private, allocatable :: ksumend  (:)
-  real(RP),                     private, allocatable :: tsum_save(:,:)
+  real(RP),                    private, allocatable :: tsum_save(:,:)
   logical,                     private, allocatable :: flag_save(:)
 
-  real(RP),                     public,  allocatable :: v_save   (:,:,:,:)
-  real(RP),                     private, allocatable :: v_save_pl(:,:,:,:)
-  real(RP),                     private, allocatable :: zlev_save(:)
+  real(RP),                    public,  allocatable :: v_save   (:,:,:,:)
+  real(RP),                    private, allocatable :: v_save_pl(:,:,:,:)
+  real(RP),                    private, allocatable :: zlev_save(:)
 
-  real(RP),                     private, allocatable :: pres_levs_ln(:)
+  real(RP),                    private, allocatable :: pres_levs_ln(:)
   integer,                     public,  allocatable :: cnvpre_klev(:,:,:)
-  real(RP),                     public,  allocatable :: cnvpre_fac1(:,:,:)
-  real(RP),                     public,  allocatable :: cnvpre_fac2(:,:,:)
+  real(RP),                    public,  allocatable :: cnvpre_fac1(:,:,:)
+  real(RP),                    public,  allocatable :: cnvpre_fac2(:,:,:)
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
@@ -350,8 +350,8 @@ contains
     allocate( flag_save         (HIST_req_nmax) )
     lname_save        (:) = ""
     tmax_save         (:) = 0
-    tstr_save         (:) = 0.0_RP
-    tend_save         (:) = 0.0_RP
+    tstr_save         (:) = 0.0_DP
+    tend_save         (:) = 0.0_DP
     month_old         (:) = 0
     l_region_save     (:) = 0
     flag_save         (:) = .false.
@@ -457,7 +457,7 @@ contains
        lname_save        (n) = lname
        tmax_save         (n) = 0
        tstr_save         (n) = TIME_CTIME
-       tend_save         (n) = 0.0_RP
+       tend_save         (n) = 0.0_DP
 
        month_old         (n) = idate(2)
        l_region_save     (n) = 0
@@ -1091,10 +1091,10 @@ contains
     call diag_pre_sfc( ADM_gall,                & ! [IN]
                        ADM_kall,                & ! [IN]
                        ADM_lall,                & ! [IN]
-                       real(GRD_vz (:,:,:,GRD_Z),kind=RP),    & ! [IN]
+                       GRD_vz (:,:,:,GRD_Z),    & ! [IN]
                        rho    (:,:,:),          & ! [IN]
                        pre    (:,:,:),          & ! [IN]
-                       real(GRD_zs (:,:,:,GRD_ZSFC),kind=RP), & ! [IN]
+                       GRD_zs (:,:,:,GRD_ZSFC), & ! [IN]
                        pre_sfc(:,:,:)           ) ! [OUT]
 
     do l = 1, ADM_lall

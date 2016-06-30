@@ -582,10 +582,7 @@ contains
        ADM_gall_pl, &
        ADM_kall,    &
        ADM_lall,    &
-       ADM_lall_pl, &
-       ADM_gall_1d, &
-       ADM_gmin,    &
-       ADM_gmax
+       ADM_lall_pl
     use mod_comm, only: &
        COMM_data_transfer
     use mod_runconf, only: &
@@ -607,9 +604,6 @@ contains
     real(RP), intent(in)  :: rhogq    (ADM_gall,   ADM_kall,ADM_lall   ,TRC_vmax)
     real(RP), intent(in)  :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
     integer, intent(in)  :: num
-
-    integer :: i, j, suf
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
 
     integer :: n, k, l, nq
     !---------------------------------------------------------------------------
@@ -669,9 +663,6 @@ contains
        ! communication
        call COMM_data_transfer( PRG_var, PRG_var_pl )
 
-       PRG_var(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = PRG_var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
-       PRG_var(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = PRG_var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
-
     elseif( num == 1 ) then
 
        do l = 1, ADM_lall
@@ -726,9 +717,6 @@ contains
 
        ! communication
        call COMM_data_transfer( PRG_var1, PRG_var1_pl )
-
-       PRG_var1(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = PRG_var1(suf(ADM_gmax+1,ADM_gmin),:,:,:)
-       PRG_var1(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = PRG_var1(suf(ADM_gmin,ADM_gmax+1),:,:,:)
 
     endif
 
@@ -912,10 +900,7 @@ contains
        ADM_lall,        &
        ADM_IopJop_nmax, &
        ADM_IopJop,      &
-       ADM_GIoJo,       &
-       ADM_gall_1d,     &
-       ADM_gmax,        &
-       ADM_gmin
+       ADM_GIoJo
     use mod_comm, only: &
        COMM_var
     use mod_runconf, only: &
@@ -931,11 +916,7 @@ contains
     real(RP), intent(in) :: rhoge (ADM_IopJop_nmax,ADM_kall,ADM_lall)
     real(RP), intent(in) :: rhogq (ADM_IopJop_nmax,ADM_kall,ADM_lall,TRC_vmax)
 
-
     integer :: n, k, l, nq, ij
-
-    integer :: i,j,suf
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
     do l = 1, ADM_lall
@@ -967,9 +948,6 @@ contains
 
     ! communication
     call COMM_var( PRG_var, PRG_var_pl, ADM_kall, PRG_vmax )
-
-    PRG_var(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = PRG_var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
-    PRG_var(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = PRG_var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
 
     return
   end subroutine prgvar_set_in

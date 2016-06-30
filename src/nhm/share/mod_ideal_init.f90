@@ -29,7 +29,21 @@ module mod_ideal_init
   use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID, &
-     ADM_NSYS
+     ADM_NSYS,    &
+     ADM_KNONE,   &
+     ADM_gall,    &
+     ADM_kall,    &
+     ADM_lall
+  use mod_cnst, only: &
+     pi    => CNST_PI,      &
+     a     => CNST_ERADIUS, &
+     omega => CNST_EOHM,    &
+     g     => CNST_EGRAV,   &
+     Rd    => CNST_RAIR,    &
+     Rv    => CNST_RVAP,    &
+     Cp    => CNST_CP,      &
+     KAPPA => CNST_KAPPA,   &
+     PRE00 => CNST_PRE00
   use dcmip_initial_conditions_test_1_2_3, only: &
      test2_steady_state_mountain, &
      test2_schaer_mountain,       &
@@ -43,16 +57,6 @@ module mod_ideal_init
      supercell_test
   use tropical_cyclone, only: &
      tropical_cyclone_test
-  use mod_cnst, only: &
-     pi    => CNST_PI,      &
-     a     => CNST_ERADIUS, &
-     omega => CNST_EOHM,    &
-     g     => CNST_EGRAV,   &
-     Rd    => CNST_RAIR,    &
-     Rv    => CNST_RVAP,    &
-     Cp    => CNST_CP,      &
-     KAPPA => CNST_KAPPA,   &
-     PRE00 => CNST_PRE00
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -202,19 +206,18 @@ contains
        write(ADM_LOG_FID,*) '*** test case   : ', trim(test_case)
        write(ADM_LOG_FID,*) '*** nicamcore   = ', nicamcore
        write(ADM_LOG_FID,*) '*** chemtracer  = ', chemtracer
-       call jbw_moist_init( ADM_gall, ADM_kall, ADM_lall, test_case, nicamcore, chemtracer, &
-                            prs_rebuild, DIAG_var(:,:,:,:) )
+       call jbw_moist_init( ADM_gall, ADM_kall, ADM_lall, test_case, chemtracer, DIAG_var(:,:,:,:) )
 
     case ('Supercell')
 
        write(ADM_LOG_FID,*) '*** test case   : ', trim(test_case)
        write(ADM_LOG_FID,*) '*** nicamcore   = ', nicamcore
-       call sc_init( ADM_gall, ADM_kall, ADM_lall, test_case, nicamcore, prs_rebuild, DIAG_var(:,:,:,:) )
+       call sc_init( ADM_gall, ADM_kall, ADM_lall, test_case, prs_rebuild, DIAG_var(:,:,:,:) )
 
     case ('Tropical-Cyclone')
 
        write(ADM_LOG_FID,*) '*** nicamcore   = ', nicamcore
-       call tc_init( ADM_gall, ADM_kall, ADM_lall, nicamcore, prs_rebuild, DIAG_var(:,:,:,:) )
+       call tc_init( ADM_gall, ADM_kall, ADM_lall, prs_rebuild, DIAG_var(:,:,:,:) )
 
     case ('Traceradvection')
 
@@ -256,9 +259,10 @@ contains
        RANDOM_get
     use mod_cnst, only: &
        CNST_D2R
-    use mod_gmtr, only: &
-       GMTR_lon, &
-       GMTR_lat
+    use mod_grd, only: &
+       GRD_LAT, &
+       GRD_LON, &
+       GRD_s
     use mod_runconf, only: &
        TRC_vmax
     implicit none
@@ -268,10 +272,10 @@ contains
     real(RP) :: random(ADM_gall,ADM_kall,ADM_lall)
     integer :: deg
 
-    integer :: g, k, l, nq, K0
+    integer :: g, k, l, nq, k0
     !---------------------------------------------------------------------------
 
-    K0 = ADM_KNONE
+    k0 = ADM_KNONE
 
     do nq = 1, TRC_VMAX
        call RANDOM_get( random(:,:,:) )
@@ -288,7 +292,7 @@ contains
           do l = 1, ADM_lall
           do k = 1, ADM_kall
           do g = 1, ADM_gall
-             deg = nint( GMTR_lon(g,l) / CNST_D2R )
+             deg = nint( GRD_s(g,k0,l,GRD_LON) / CNST_D2R )
              if ( mod(deg,10) == 0 ) then
                 TRC_var(g,k,l,nq) = real(ADM_kall-k+1,kind=RP)
              else
@@ -301,7 +305,7 @@ contains
           do l = 1, ADM_lall
           do k = 1, ADM_kall
           do g = 1, ADM_gall
-             deg = nint( GMTR_lat(g,l) / CNST_D2R )
+             deg = nint( GRD_s(g,k0,l,GRD_LAT) / CNST_D2R )
              if ( mod(deg,10) == 0 ) then
                 TRC_var(g,k,l,nq) = real(ADM_kall-k+1,kind=RP)
              else
@@ -334,11 +338,11 @@ contains
        ADM_kmin,  &
        ADM_kmax
     use mod_grd, only: &
-       GRD_Z,    &
+       GRD_LAT, &
+       GRD_LON, &
+       GRD_s,   &
+       GRD_Z,   &
        GRD_vz
-    use mod_gmtr, only: &
-       GMTR_lat, &
-       GMTR_lon
     use mod_runconf, only: &
        TRC_vmax
     implicit none
@@ -360,10 +364,12 @@ contains
     real(RP) :: f, df
     real(RP) :: lat, lon
 
-    integer :: n, k, l, itr
+    integer :: n, k, l, k0, itr
     !---------------------------------------------------------------------------
 
     DIAG_var(:,:,:,:) = 0.0_RP
+
+    k0 = ADM_KNONE
 
     do l = 1, lall
     do n = 1, ijdim
@@ -373,8 +379,8 @@ contains
           dz(k) = GRD_vz(n,k,l,GRD_Z) - GRD_vz(n,k-1,l,GRD_Z)
        enddo
 
-       lat = GMTR_lat(n,l)
-       lon = GMTR_lon(n,l)
+       lat = GRD_s(n,k0,l,GRD_LAT)
+       lon = GRD_s(n,k0,l,GRD_LON)
 
        pre_sfc = PRE00
 !       tem_sfc = 300.0_RP
@@ -468,12 +474,12 @@ contains
        ADM_kmin,      &
        ADM_kmax
     use mod_grd, only: &
-       GRD_Z,          &
-       GRD_ZH, &
+       GRD_LAT, &
+       GRD_LON, &
+       GRD_s,   &
+       GRD_Z,   &
+       GRD_ZH,  &
        GRD_vz
-    use mod_gmtr, only: &
-       GMTR_lat, &
-       GMTR_lon
     use mod_runconf, only: &
        TRC_vmax
     implicit none
@@ -503,10 +509,12 @@ contains
     logical :: eta_limit ! if true, value of eta is limited upto 1.0
     logical :: logout    ! log output switch for Pressure Convert
 
-    integer :: n, k, l, itr
+    integer :: n, k, l, k0, itr
     !---------------------------------------------------------------------------
 
     DIAG_var(:,:,:,:) = 0.0_RP
+
+    k0 = ADM_KNONE
 
     eta_limit = .true.
     psgm = .false.
@@ -546,8 +554,8 @@ contains
           z_local(k) = GRD_vz(n,k,l,GRD_Z)
        enddo
 
-       lat = GMTR_lat(n,l)
-       lon = GMTR_lon(n,l)
+       lat = GRD_s(n,k0,l,GRD_LAT)
+       lon = GRD_s(n,k0,l,GRD_LON)
 
        signal = .true.
 
@@ -607,27 +615,25 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine jbw_moist_init( &
-       ijdim,        &
-       kdim,         &
-       lall,         &
-       test_case,    &
-       nicamcore,    &
-       chemtracer,   &
-       prs_rebuild,  &
-       DIAG_var      )
+       ijdim,       &
+       kdim,        &
+       lall,        &
+       test_case,   &
+       chemtracer,  &
+       DIAG_var     )
     use mod_adm, only: &
        ADM_proc_stop, &
        ADM_kmin,      &
        ADM_kmax
     use mod_grd, only: &
-       GRD_afac,       &
-       GRD_bfac,       &
-       GRD_Z,          &
-       GRD_ZH, &
+       GRD_LAT,  &
+       GRD_LON,  &
+       GRD_s,    &
+       GRD_afac, &
+       GRD_bfac, &
+       GRD_Z,    &
+       GRD_ZH,   &
        GRD_vz
-    use mod_gmtr, only: &
-       GMTR_lat, &
-       GMTR_lon
     use mod_runconf, only: &
        I_QV,      &
        NQW_MAX,   &
@@ -645,49 +651,54 @@ contains
     integer,          intent(in)  :: kdim
     integer,          intent(in)  :: lall
     character(len=*), intent(in)  :: test_case
-    logical,          intent(in)  :: nicamcore
     logical,          intent(in)  :: chemtracer
-    logical,          intent(in)  :: prs_rebuild
     real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-    real(DP), parameter :: Mvap  = 0.608d0 ! Ratio of molar mass of dry air/water (imported from baroclinic_wave_test.f90)
-    real(DP), parameter :: Xfact = 1.0_DP  ! Earth scaling parameter
-    real(DP) :: lat, lon               ! latitude, longitude on Icosahedral grid
-    real(DP) :: prs(kdim), tmp(kdim)   ! presssure and temperature in ICO-grid field
-    real(DP) :: wix(kdim),   wiy(kdim) ! zonal/meridional wind components in ICO-grid field
-    real(DP) :: rho(kdim),   q(kdim)   ! density and water vapor mixing ratio in ICO-grid field
-    real(DP) :: thetav(kdim)           ! Virtual potential temperature in ICO-grid field
-    real(DP) :: p = 0.0_RP             ! dummy variable
-    real(DP) :: Mvap2 ! Ratio of molar mass of dry air/water based on NICAM CONSTANTs
-    real(DP) :: RdovRv
+    real(DP) :: DP_lon          ! latitude, longitude on Icosahedral grid
+    real(DP) :: DP_lat          ! latitude, longitude on Icosahedral grid
+    real(DP) :: DP_p            ! dummy variable
+    real(DP) :: DP_z
+    real(DP) :: DP_wix          ! zonal/meridional wind components in ICO-grid field
+    real(DP) :: DP_wiy          ! zonal/meridional wind components in ICO-grid field
+    real(DP) :: DP_tmp          ! presssure and temperature in ICO-grid field
+    real(DP) :: DP_thetav       ! Virtual potential temperature in ICO-grid field
+    real(DP) :: DP_phis
+    real(DP) :: DP_ps
+    real(DP) :: DP_rho          ! density and water vapor mixing ratio in ICO-grid field
+    real(DP) :: DP_q            ! density and water vapor mixing ratio in ICO-grid field
+    real(DP) :: cl, cl2
 
-    real(DP) :: z(kdim)
+    real(RP) :: lat, lon
     real(RP) :: vx_local(kdim)
     real(RP) :: vy_local(kdim)
     real(RP) :: vz_local(kdim)
-    real(DP) :: ps, phis
+    real(RP) :: z       (kdim)
+    real(RP) :: prs     (kdim)
+    real(RP) :: tmp     (kdim)
+    real(RP) :: wix     (kdim)
+    real(RP) :: wiy     (kdim)
+    real(RP) :: rho     (kdim)
+    real(RP) :: q       (kdim)
+    real(RP) :: thetav  (kdim)
+    real(RP) :: ps
 
     real(RP) :: dpdz
     real(RP) :: rho0(ijdim,kdim)
 
-    real(RP) :: cl, cl2
+    integer,  parameter :: deep    = 0      ! deep atmosphere (1 = yes or 0 = no)
+    integer             :: moist            ! include moisture (1 = yes or 0 = no)
+    integer             :: pertt            ! type of perturbation (0 = exponential, 1 = stream function)
+    real(DP), parameter :: Xfact   = 1.0_DP ! Earth scaling parameter
+    integer,  parameter :: zcoords = 1      ! 1 if z is specified, 0 if p is specified
 
-    integer, parameter :: deep    = 0 ! deep atmosphere (1 = yes or 0 = no)
-    integer, parameter :: zcoords = 1 ! 1 if z is specified, 0 if p is specified
-    integer            :: moist       ! include moisture (1 = yes or 0 = no)
-    integer            :: pertt       ! type of perturbation (0 = exponential, 1 = stream function)
-    logical, parameter :: prs_dry = .false.
-
-    integer :: n, k, l
+    integer :: n, k, l, k0
     !---------------------------------------------------------------------------
 
-    DIAG_var(:,:,:,:) = 0.0_RP
-    p = 0.0_RP
-    RdovRv = Rd / Rv
-    Mvap2 = (1.0D0 - RdovRv)/RdovRv
+    k0 = ADM_KNONE
 
-    moist = 0
-    pertt = 0
+    DIAG_var(:,:,:,:) = 0.0_RP
+
+    DP_p = 0.0_DP
 
     select case( trim(test_case) )
     case ('1')  ! perturbation: exponential / with moisture
@@ -732,53 +743,63 @@ contains
 
     do l = 1, lall
     do n = 1, ijdim
-       lat = GMTR_lat(n,l)
-       lon = GMTR_lon(n,l)
+       lat    = GRD_s(n,k0,l,GRD_LAT)
+       lon    = GRD_s(n,k0,l,GRD_LON)
+       DP_lat = real(GRD_s(n,k0,l,GRD_LAT),kind=DP)
+       DP_lon = real(GRD_s(n,k0,l,GRD_LON),kind=DP)
 
        do k = 1, kdim
-          z(k) = GRD_vz(n,k,l,GRD_Z)
-          call baroclinic_wave_test( deep,       &  ! [IN ]
-                                     moist,      &  ! [IN ]
-                                     pertt,      &  ! [IN ]
-                                     Xfact,      &  ! [IN ]
-                                     lon,        &  ! [IN ]
-                                     lat,        &  ! [IN ]
-                                     p,          &  ! [IN ]
-                                     z(k),       &  ! [IN ] (z)
-                                     zcoords,    &  ! [IN ]
-                                     wix(k),     &  ! [OUT] Zonal wind (m s^-1)(u)
-                                     wiy(k),     &  ! [OUT] Meridional wind (m s^-1) (v)
-                                     tmp(k),     &  ! [OUT] Temperature (K) (t)
-                                     thetav(k),  &  ! [OUT] Virtual potential temperature (K)
-                                     phis,       &  ! [OUT] Surface Geopotential (m^2 s^-2)
-                                     ps,         &  ! [OUT] Surface Pressure (Pa)
-                                     rho(k),     &  ! [OUT] density (kg m^-3)
-                                     q(k)        )  ! [OUT] water vapor mixing ratio (kg/kg)
+          DP_z = real(GRD_vz(n,k,l,GRD_Z),kind=DP)
+          call baroclinic_wave_test( deep,      & ! [IN]
+                                     moist,     & ! [IN]
+                                     pertt,     & ! [IN]
+                                     Xfact,     & ! [IN]
+                                     DP_lon,    & ! [IN]
+                                     DP_lat,    & ! [IN]
+                                     DP_p,      & ! [INOUT]
+                                     DP_z,      & ! [INOUT]
+                                     zcoords,   & ! [IN]
+                                     DP_wix,    & ! [OUT] Zonal wind (m s^-1)
+                                     DP_wiy,    & ! [OUT] Meridional wind (m s^-1)
+                                     DP_tmp,    & ! [OUT] Temperature (K)
+                                     DP_thetav, & ! [OUT] Virtual potential Temperature (K)
+                                     DP_phis,   & ! [OUT] Surface Geopotential (m^2 s^-2)
+                                     DP_ps,     & ! [OUT] Surface Pressure (Pa)
+                                     DP_rho,    & ! [OUT] density (kg m^-3)
+                                     DP_q       ) ! [OUT] water vapor mixing ratio (kg/kg)
 
-          q(k) = max( q(k)/(1.d0+q(k)), 0.0D0 ) ! fix negative value
+          z     (k) = GRD_vz(n,k,l,GRD_Z)
+          wix   (k) = real( DP_wix   , kind=RP )
+          wiy   (k) = real( DP_wiy   , kind=RP )
+          tmp   (k) = real( DP_tmp   , kind=RP )
+          thetav(k) = real( DP_thetav, kind=RP )
+          rho   (k) = real( DP_rho   , kind=RP )
+          q     (k) = real( max( DP_q / (1.0_DP+DP_q), 0.0_DP ), kind=RP ) ! fix negative value
        enddo
+       ps = real( DP_ps, kind=RP )
 
        k      = ADM_kmin
-       prs(k) = ps - rho(k)*g*(GRD_vz(n,k,l,GRD_Z)-GRD_vz(n,k,l,GRD_ZH))
+       prs(k) = ps - rho(k) * g * ( GRD_vz(n,k,l,GRD_Z) - GRD_vz(n,k,l,GRD_ZH) )
        do k = ADM_kmin+1, ADM_kmax
-          dpdz   = -g*0.5d0*(rho(k)*GRD_afac(k)+rho(k-1)*GRD_bfac(k))
-          prs(k) = prs(k-1)+dpdz*(z(k)-z(k-1))
+          dpdz   = -g * ( rho(k)   * GRD_afac(k) &
+                        + rho(k-1) * GRD_bfac(k) )
+          prs(k) = prs(k-1) + dpdz * ( z(k)- z(k-1) )
        enddo
 
        do k = 1, kdim
-          tmp(k) = prs(k)/(rho(k)*(rd*(1.d0-q(k))+rv*q(k)))
+          tmp(k) = prs(k) / ( rho(k) * ( rd * (1.0_RP-q(k)) + rv * q(k) ) )
        enddo
        rho0(n,:) = rho(:)
 
        call conv_vxvyvz  ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
        do k = 1, kdim
-          DIAG_var(n,k,l,1     ) = real(prs(k),kind=RP)
-          DIAG_var(n,k,l,2     ) = real(tmp(k),kind=RP)
-          DIAG_var(n,k,l,3     ) = real(vx_local(k),kind=RP)
-          DIAG_var(n,k,l,4     ) = real(vy_local(k),kind=RP)
-          DIAG_var(n,k,l,5     ) = real(vz_local(k),kind=RP)
-          DIAG_var(n,k,l,6+I_QV) = real(q(k),kind=RP)
+          DIAG_var(n,k,l,1     ) = prs     (k)
+          DIAG_var(n,k,l,2     ) = tmp     (k)
+          DIAG_var(n,k,l,3     ) = vx_local(k)
+          DIAG_var(n,k,l,4     ) = vy_local(k)
+          DIAG_var(n,k,l,5     ) = vz_local(k)
+          DIAG_var(n,k,l,6+I_QV) = q       (k)
        enddo
 
        if ( chemtracer ) then
@@ -788,13 +809,13 @@ contains
              call ADM_proc_stop
           endif
 
-          call initial_value_Terminator( lat*r2d, lon*r2d, cl, cl2 )
+          call initial_value_Terminator( DP_lat*r2d, DP_lon*r2d, cl, cl2 )
 
           ! Todo : the mixing ratios are dry
           ! i.e. the ratio between the density of the species and the density of dry air.
           ! calc density at reference level
-          DIAG_var(n,:,l,6+NCHEM_STR) = cl  * (1.0D0 - q(:))
-          DIAG_var(n,:,l,6+NCHEM_END) = cl2 * (1.0D0 - q(:))
+          DIAG_var(n,:,l,6+NCHEM_STR) = real(cl ,kind=RP) * ( 1.0_RP - q(:) )
+          DIAG_var(n,:,l,6+NCHEM_END) = real(cl2,kind=RP) * ( 1.0_RP - q(:) )
        endif
 
     enddo
@@ -811,27 +832,23 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine sc_init( &
-       ijdim,        &
-       kdim,         &
-       lall,         &
-       test_case,    &
-       nicamcore,    &
-       prs_rebuild,  &
-       DIAG_var      )
+       ijdim,       &
+       kdim,        &
+       lall,        &
+       test_case,   &
+       prs_rebuild, &
+       DIAG_var     )
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_kmin,      &
-       ADM_kmax
+       ADM_proc_stop
     use mod_grd, only: &
-       GRD_Z,          &
-       GRD_ZH, &
+       GRD_LAT, &
+       GRD_LON, &
+       GRD_s,   &
+       GRD_Z,   &
        GRD_vz
-    use mod_gmtr, only: &
-       GMTR_lat, &
-       GMTR_lon
     use mod_runconf, only: &
-       I_QV,      &
-       NQW_MAX,   &
+       I_QV,    &
+       NQW_MAX, &
        TRC_vmax
     implicit none
 
@@ -839,42 +856,53 @@ contains
     integer,          intent(in)  :: kdim
     integer,          intent(in)  :: lall
     character(len=*), intent(in)  :: test_case
-    logical,          intent(in)  :: nicamcore
     logical,          intent(in)  :: prs_rebuild
     real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-    real(DP), parameter :: Mvap = 0.61d0 ! Ratio of molar mass of dry air/water (imported from supercell_test.f90)
-    real(DP) :: lat, lon               ! latitude, longitude on Icosahedral grid
-    real(DP) :: prs(kdim), tmp(kdim)   ! presssure and temperature in ICO-grid field
-    real(DP) :: wix(kdim),   wiy(kdim) ! zonal/meridional wind components in ICO-grid field
-    real(DP) :: rho(kdim),   q(kdim)   ! density and water vapor mixing ratio in ICO-grid field
-    real(DP) :: thetav(kdim)           ! Virtual potential temperature in ICO-grid field
-    real(DP) :: p = 0.0_RP             ! dummy variable
-    real(DP) :: Mvap2 ! Ratio of molar mass of dry air/water based on NICAM CONSTANTs
-    real(DP) :: RdovRv
+    real(DP) :: DP_lon          ! latitude, longitude on Icosahedral grid
+    real(DP) :: DP_lat          ! latitude, longitude on Icosahedral grid
+    real(DP) :: DP_p            ! dummy variable
+    real(DP) :: DP_z
+    real(DP) :: DP_wix          ! zonal/meridional wind components in ICO-grid field
+    real(DP) :: DP_wiy          ! zonal/meridional wind components in ICO-grid field
+    real(DP) :: DP_tmp          ! presssure and temperature in ICO-grid field
+    real(DP) :: DP_thetav       ! Virtual potential temperature in ICO-grid field
+    real(DP) :: DP_ps
+    real(DP) :: DP_rho          ! density and water vapor mixing ratio in ICO-grid field
+    real(DP) :: DP_q            ! density and water vapor mixing ratio in ICO-grid field
 
-    real(DP) :: z(kdim)
+    real(RP) :: lat, lon
     real(RP) :: vx_local(kdim)
     real(RP) :: vy_local(kdim)
     real(RP) :: vz_local(kdim)
-    real(DP) :: ps
+    real(RP) :: z       (kdim)
+    real(RP) :: prs     (kdim)
+    real(RP) :: tmp     (kdim)
+    real(RP) :: wix     (kdim)
+    real(RP) :: wiy     (kdim)
+    real(RP) :: rho     (kdim)
+    real(RP) :: q       (kdim)
+    real(RP) :: thetav  (kdim)
+    real(RP) :: ps
 
-    real(RP) :: cl, cl2
+    real(RP), parameter :: Mvap = 0.61_RP  ! Ratio of molar mass of dry air/water (imported from supercell_test.f90)
+    real(RP)            :: RdovRv
+    real(RP)            :: Mvap2           ! Ratio of molar mass of dry air/water based on NICAM CONSTANTs
 
-    integer, parameter :: deep    = 0 ! deep atmosphere (1 = yes or 0 = no)
-    integer, parameter :: zcoords = 1 ! 1 if z is specified, 0 if p is specified
-    integer            :: pert        ! type of perturbation (0 = no perturbation, 1 = perturbation)
-    logical, parameter :: prs_dry = .false.
+    integer,  parameter :: zcoords = 1     ! 1 if z is specified, 0 if p is specified
+    integer             :: pert            ! type of perturbation (0 = no perturbation, 1 = perturbation)
+    logical,  parameter :: prs_dry = .false.
 
-    integer :: n, k, l
+    integer :: n, k, l, k0
     !---------------------------------------------------------------------------
 
     DIAG_var(:,:,:,:) = 0.0_RP
-    p = 0.0_RP
-    RdovRv = Rd / Rv
-    Mvap2 = (1.0D0 - RdovRv)/RdovRv
 
-    pert = 0
+    k0 = ADM_KNONE
+
+    DP_p   = 0.0_DP
+    RdovRv = Rd / Rv
+    Mvap2  = ( 1.0_RP - RdovRv ) / RdovRv
 
     select case( trim(test_case) )
     case ('1')  ! with perturbation
@@ -900,49 +928,54 @@ contains
 
     do l = 1, lall
     do n = 1, ijdim
-       lat = GMTR_lat(n,l)
-       lon = GMTR_lon(n,l)
-
-!       z(ADM_kmin-1) = GRD_vz(n,2,l,GRD_ZH)
-!       do k = ADM_kmin, ADM_kmax+1
-!          z(k) = GRD_vz(n,k,l,GRD_Z)
-!       enddo
+       lat    = GRD_s(n,k0,l,GRD_LAT)
+       lon    = GRD_s(n,k0,l,GRD_LON)
+       DP_lat = real(GRD_s(n,k0,l,GRD_LAT),kind=DP)
+       DP_lon = real(GRD_s(n,k0,l,GRD_LON),kind=DP)
 
        do k = 1, kdim
-          z(k) = GRD_vz(n,k,l,GRD_Z)
-          call supercell_test( lon,       &  ! [IN ]
-                               lat,       &  ! [IN ]
-                               p,         &  ! [INOUT]
-                               z(k),      &  ! [INOUT]
-                               zcoords,   &  ! [IN ]
-                               wix(k),    &  ! [OUT] Zonal wind (m s^-1)
-                               wiy(k),    &  ! [OUT] Meridional wind (m s^-1)
-                               tmp(k),    &  ! [OUT] Temperature (K)
-                               thetav(k), &  ! [OUT] Virtual potential Temperature (K)
-                               ps,        &  ! [OUT] Surface Pressure (Pa)
-                               rho(k),    &  ! [OUT] density (kg m^-3)
-                               q(k),      &  ! [OUT] water vapor mixing ratio (kg/kg)
-                               pert       )  ! [IN ] perturbation switch
+          DP_z = real(GRD_vz(n,k,l,GRD_Z),kind=DP)
+          call supercell_test( DP_lon,    & ! [IN]
+                               DP_lat,    & ! [IN]
+                               DP_p,      & ! [INOUT]
+                               DP_z,      & ! [INOUT]
+                               zcoords,   & ! [IN]
+                               DP_wix,    & ! [OUT] Zonal wind (m s^-1)
+                               DP_wiy,    & ! [OUT] Meridional wind (m s^-1)
+                               DP_tmp,    & ! [OUT] Temperature (K)
+                               DP_thetav, & ! [OUT] Virtual potential Temperature (K)
+                               DP_ps,     & ! [OUT] Surface Pressure (Pa)
+                               DP_rho,    & ! [OUT] density (kg m^-3)
+                               DP_q,      & ! [OUT] water vapor mixing ratio (kg/kg)
+                               pert       ) ! [IN]  perturbation switch
 
-          q(k) = max( q(k), 0.0D0 ) ! fix negative value
+
+          z     (k) = GRD_vz(n,k,l,GRD_Z)
+          wix   (k) = real( DP_wix             , kind=RP )
+          wiy   (k) = real( DP_wiy             , kind=RP )
+          tmp   (k) = real( DP_tmp             , kind=RP )
+          thetav(k) = real( DP_thetav          , kind=RP )
+          rho   (k) = real( DP_rho             , kind=RP )
+          q     (k) = real( max( DP_q, 0.0_DP ), kind=RP ) ! fix negative value
+
           ! force zero for q upper tropopause (12km)
-          if ( z(k) > 12000.D0 ) q(k) = 0.0D0
+          if ( z(k) > 12000.0_RP ) q(k) = 0.0_RP
        enddo
+       ps = real( DP_ps, kind=RP )
 
        ! Re-Evaluation of temperature from virtual temperature
-
-       tmp(:) = tmp(:) * ( (1.d0+Mvap*q(:)) / (1.d0+Mvap2*q(:)) )
+       tmp(:) = tmp(:) * ( (1.0+RP + Mvap * q(:) ) / ( 1.0_RP + Mvap2 * q(:) ) )
 
        call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild, prs_dry )
        call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
        do k = 1, kdim
-          DIAG_var(n,k,l,1     ) = real(prs(k),kind=RP)
-          DIAG_var(n,k,l,2     ) = real(tmp(k),kind=RP)
-          DIAG_var(n,k,l,3     ) = real(vx_local(k),kind=RP)
-          DIAG_var(n,k,l,4     ) = real(vy_local(k),kind=RP)
-          DIAG_var(n,k,l,5     ) = real(vz_local(k),kind=RP)
-          DIAG_var(n,k,l,6+I_QV) = real(q(k),kind=RP)
+          DIAG_var(n,k,l,1     ) = prs     (k)
+          DIAG_var(n,k,l,2     ) = tmp     (k)
+          DIAG_var(n,k,l,3     ) = vx_local(k)
+          DIAG_var(n,k,l,4     ) = vy_local(k)
+          DIAG_var(n,k,l,5     ) = vz_local(k)
+          DIAG_var(n,k,l,6+I_QV) = q       (k)
        enddo
 
     enddo
@@ -953,66 +986,75 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine tc_init( &
-       ijdim,        &
-       kdim,         &
-       lall,         &
-       nicamcore,    &
-       prs_rebuild,  &
-       DIAG_var      )
+       ijdim,       &
+       kdim,        &
+       lall,        &
+       prs_rebuild, &
+       DIAG_var     )
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_kmin,      &
-       ADM_kmax
+       ADM_proc_stop
     use mod_grd, only: &
-       GRD_Z,          &
-       GRD_ZH, &
+       GRD_LAT, &
+       GRD_LON, &
+       GRD_s,   &
+       GRD_Z,   &
        GRD_vz
-    use mod_gmtr, only: &
-       GMTR_lat, &
-       GMTR_lon
     use mod_runconf, only: &
        I_QV,      &
        NQW_MAX,   &
        TRC_vmax
     implicit none
 
-    integer,          intent(in)  :: ijdim
-    integer,          intent(in)  :: kdim
-    integer,          intent(in)  :: lall
-    logical,          intent(in)  :: nicamcore
-    logical,          intent(in)  :: prs_rebuild
-    real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+    integer,  intent(in)  :: ijdim
+    integer,  intent(in)  :: kdim
+    integer,  intent(in)  :: lall
+    logical,  intent(in)  :: prs_rebuild
+    real(RP), intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
-    real(DP), parameter :: Mvap = 0.608d0 ! Ratio of molar mass of dry air/water (imported from tropical_cyclone_test.f90)
-    real(DP) :: lat, lon               ! latitude, longitude on Icosahedral grid
-    real(DP) :: prs(kdim), tmp(kdim)   ! presssure and temperature in ICO-grid field
-    real(DP) :: wix(kdim),   wiy(kdim) ! zonal/meridional wind components in ICO-grid field
-    real(DP) :: rho(kdim),   q(kdim)   ! density and water vapor mixing ratio in ICO-grid field
-    real(DP) :: thetav(kdim)           ! Virtual potential temperature in ICO-grid field
-    real(DP) :: p = 0.0_RP             ! dummy variable
-    real(DP) :: Mvap2 ! Ratio of molar mass of dry air/water based on NICAM CONSTANTs
-    real(DP) :: RdovRv
+    real(DP) :: DP_lon          ! latitude, longitude on Icosahedral grid
+    real(DP) :: DP_lat          ! latitude, longitude on Icosahedral grid
+    real(DP) :: DP_p            ! dummy variable
+    real(DP) :: DP_z
+    real(DP) :: DP_wix          ! zonal/meridional wind components in ICO-grid field
+    real(DP) :: DP_wiy          ! zonal/meridional wind components in ICO-grid field
+    real(DP) :: DP_tmp          ! presssure and temperature in ICO-grid field
+    real(DP) :: DP_thetav       ! Virtual potential temperature in ICO-grid field
+    real(DP) :: DP_phis
+    real(DP) :: DP_ps
+    real(DP) :: DP_rho          ! density and water vapor mixing ratio in ICO-grid field
+    real(DP) :: DP_q            ! density and water vapor mixing ratio in ICO-grid field
 
-    real(DP) :: z(kdim)
+    real(RP) :: lat, lon
     real(RP) :: vx_local(kdim)
     real(RP) :: vy_local(kdim)
     real(RP) :: vz_local(kdim)
-    real(DP) :: ps, phis
+    real(RP) :: z       (kdim)
+    real(RP) :: prs     (kdim)
+    real(RP) :: tmp     (kdim)
+    real(RP) :: wix     (kdim)
+    real(RP) :: wiy     (kdim)
+    real(RP) :: rho     (kdim)
+    real(RP) :: q       (kdim)
+    real(RP) :: thetav  (kdim)
+    real(RP) :: ps
 
-    real(RP) :: cl, cl2
+    real(RP), parameter :: Mvap = 0.608_RP ! Ratio of molar mass of dry air/water (imported from tropical_cyclone_test.f90)
+    real(RP)            :: RdovRv
+    real(RP)            :: Mvap2           ! Ratio of molar mass of dry air/water based on NICAM CONSTANTs
 
-    integer, parameter :: deep    = 0 ! deep atmosphere (1 = yes or 0 = no)
-    integer, parameter :: zcoords = 1 ! 1 if z is specified, 0 if p is specified
-    integer            :: moist       ! include moisture (1 = yes or 0 = no)
-    logical, parameter :: prs_dry = .false.
+    integer,  parameter :: zcoords = 1     ! 1 if z is specified, 0 if p is specified
+    logical,  parameter :: prs_dry = .false.
 
-    integer :: n, k, l
+    integer :: n, k, l, k0
     !---------------------------------------------------------------------------
 
     DIAG_var(:,:,:,:) = 0.0_RP
-    p = 0.0_RP
+
+    k0 = ADM_KNONE
+
+    DP_p   = 0.0_DP
     RdovRv = Rd / Rv
-    Mvap2 = (1.0D0 - RdovRv)/RdovRv
+    Mvap2  = ( 1.0_RP - RdovRv ) / RdovRv
 
     write(ADM_LOG_FID,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
     if ( NQW_MAX < 3 ) then
@@ -1023,47 +1065,50 @@ contains
 
     do l = 1, lall
     do n = 1, ijdim
-       lat = GMTR_lat(n,l)
-       lon = GMTR_lon(n,l)
-
-!       z(ADM_kmin-1) = GRD_vz(n,2,l,GRD_ZH)
-!       do k = ADM_kmin, ADM_kmax+1
-!          z(k) = GRD_vz(n,k,l,GRD_Z)
-!       enddo
+       lat    = GRD_s(n,k0,l,GRD_LAT)
+       lon    = GRD_s(n,k0,l,GRD_LON)
+       DP_lat = real(GRD_s(n,k0,l,GRD_LAT),kind=DP)
+       DP_lon = real(GRD_s(n,k0,l,GRD_LON),kind=DP)
 
        do k = 1, kdim
-          z(k) = GRD_vz(n,k,l,GRD_Z)
-          call tropical_cyclone_test( lon,       &  ! [IN ]
-                                      lat,       &  ! [IN ]
-                                      p,         &  ! [INOUT]
-                                      z(k),      &  ! [INOUT]
-                                      zcoords,   &  ! [IN ]
-                                      wix(k),    &  ! [OUT] Zonal wind (m s^-1)
-                                      wiy(k),    &  ! [OUT] Meridional wind (m s^-1)
-                                      tmp(k),    &  ! [OUT] Temperature (K)
-                                      thetav(k), &  ! [OUT] Virtual potential Temperature (K)
-                                      phis,      &  ! [OUT] Surface Geopotential (m^2 s^-2)
-                                      ps,        &  ! [OUT] Surface Pressure (Pa)
-                                      rho(k),    &  ! [OUT] density (kg m^-3)
-                                      q(k)       )  ! [OUT] water vapor mixing ratio (kg/kg)
+          DP_z = real(GRD_vz(n,k,l,GRD_Z),kind=DP)
+          call tropical_cyclone_test( DP_lon,    & ! [IN]
+                                      DP_lat,    & ! [IN]
+                                      DP_p,      & ! [INOUT]
+                                      DP_z,      & ! [INOUT]
+                                      zcoords,   & ! [IN]
+                                      DP_wix,    & ! [OUT] Zonal wind (m s^-1)
+                                      DP_wiy,    & ! [OUT] Meridional wind (m s^-1)
+                                      DP_tmp,    & ! [OUT] Temperature (K)
+                                      DP_thetav, & ! [OUT] Virtual potential Temperature (K)
+                                      DP_phis,   & ! [OUT] Surface Geopotential (m^2 s^-2)
+                                      DP_ps,     & ! [OUT] Surface Pressure (Pa)
+                                      DP_rho,    & ! [OUT] density (kg m^-3)
+                                      DP_q       ) ! [OUT] water vapor mixing ratio (kg/kg)
 
-          q(k) = max( q(k), 0.0D0 ) ! fix negative value
+          z     (k) = GRD_vz(n,k,l,GRD_Z)
+          wix   (k) = real( DP_wix             , kind=RP )
+          wiy   (k) = real( DP_wiy             , kind=RP )
+          tmp   (k) = real( DP_tmp             , kind=RP )
+          thetav(k) = real( DP_thetav          , kind=RP )
+          rho   (k) = real( DP_rho             , kind=RP )
+          q     (k) = real( max( DP_q, 0.0_DP ), kind=RP ) ! fix negative value
        enddo
+       ps = real( DP_ps, kind=RP )
 
        ! Re-Evaluation of temperature from virtual temperature
-
-       tmp(:) = tmp(:) * ( (1.d0+Mvap*q(:)) / (1.d0+Mvap2*q(:)) )
+       tmp(:) = tmp(:) * ( (1.0+RP + Mvap * q(:) ) / ( 1.0_RP + Mvap2 * q(:) ) )
 
        call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild, prs_dry )
        call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
        do k = 1, kdim
-          DIAG_var(n,k,l,1     ) = real(prs(k),kind=RP)
-          DIAG_var(n,k,l,2     ) = real(tmp(k),kind=RP)
-          DIAG_var(n,k,l,3     ) = real(vx_local(k),kind=RP)
-          DIAG_var(n,k,l,4     ) = real(vy_local(k),kind=RP)
-          DIAG_var(n,k,l,5     ) = real(vz_local(k),kind=RP)
-          DIAG_var(n,k,l,6+I_QV) = real(q(k),kind=RP)
+          DIAG_var(n,k,l,1     ) = prs     (k)
+          DIAG_var(n,k,l,2     ) = tmp     (k)
+          DIAG_var(n,k,l,3     ) = vx_local(k)
+          DIAG_var(n,k,l,4     ) = vy_local(k)
+          DIAG_var(n,k,l,5     ) = vz_local(k)
+          DIAG_var(n,k,l,6+I_QV) = q       (k)
        enddo
 
     enddo
@@ -1084,13 +1129,13 @@ contains
        ADM_kmin,      &
        ADM_kmax
     use mod_grd, only: &
-       GRD_gz, &
-       GRD_Z,  &
-       GRD_ZH, &
+       GRD_LAT, &
+       GRD_LON, &
+       GRD_s,   &
+       GRD_gz,  &
+       GRD_Z,   &
+       GRD_ZH,  &
        GRD_vz
-    use mod_gmtr, only: &
-       GMTR_lon, &
-       GMTR_lat
     use mod_runconf, only: &
        TRC_vmax, &
        NCHEM_STR
@@ -1155,10 +1200,12 @@ contains
 
     integer :: I_pasv1, I_pasv2
     integer :: I_pasv3, I_pasv4
-    integer :: n, k, l
+    integer :: n, k, l, k0
     !---------------------------------------------------------------------------
 
     DIAG_var(:,:,:,:) = 0.0_RP
+
+    k0 = ADM_KNONE
 
     I_pasv1 = 6 + NCHEM_STR + chemvar_getid( "passive001" ) - 1
     I_pasv2 = 6 + NCHEM_STR + chemvar_getid( "passive002" ) - 1
@@ -1176,8 +1223,8 @@ contains
           enddo
           p(:) = 0.0_RP
 
-          lat = GMTR_lat(n,l)
-          lon = GMTR_lon(n,l)
+          lat = GRD_s(n,k0,l,GRD_LAT)
+          lon = GRD_s(n,k0,l,GRD_LON)
 
           do k = 1, kdim
              DP_lon = real(lon ,kind=DP)
@@ -1246,8 +1293,8 @@ contains
           enddo
           p(:) = 0.0_RP
 
-          lat = GMTR_lat(n,l)
-          lon = GMTR_lon(n,l)
+          lat = GRD_s(n,k0,l,GRD_LAT)
+          lon = GRD_s(n,k0,l,GRD_LON)
 
           do k = 1, kdim
              DP_lon = real(lon ,kind=DP)
@@ -1313,8 +1360,8 @@ contains
           enddo
           p(:) = 0.0_RP
 
-          lat = GMTR_lat(n,l)
-          lon = GMTR_lon(n,l)
+          lat = GRD_s(n,k0,l,GRD_LAT)
+          lon = GRD_s(n,k0,l,GRD_LON)
 
           do k = 1, kdim
              DP_gc = real(GRD_gz(k),kind=DP)
@@ -1404,12 +1451,12 @@ contains
        ADM_kmax,      &
        ADM_kmin
     use mod_grd, only: &
-       GRD_vz,   &
-       GRD_Z,    &
+       GRD_LAT, &
+       GRD_LON, &
+       GRD_s,   &
+       GRD_vz,  &
+       GRD_Z,   &
        GRD_ZH
-    use mod_gmtr, only: &
-       GMTR_lon, &
-       GMTR_lat
     use mod_runconf, only: &
        TRC_vmax, &
        NCHEM_STR
@@ -1461,10 +1508,12 @@ contains
     integer, parameter :: zcoords = 1
     integer  :: shear
 
-    integer :: n, l, k
+    integer :: n, l, k, k0
     !---------------------------------------------------------------------------
 
     DIAG_var(:,:,:,:) = 0.0_RP
+
+    k0 = ADM_KNONE
 
     I_pasv1 = 6 + chemvar_getid( "passive001" ) + NCHEM_STR - 1
 
@@ -1479,8 +1528,8 @@ contains
           enddo
           p(:) = 0.0_RP
 
-          lat = GMTR_lat(n,l)
-          lon = GMTR_lon(n,l)
+          lat = GRD_s(n,k0,l,GRD_LAT)
+          lon = GRD_s(n,k0,l,GRD_LON)
 
           do k = 1, kdim
              DP_lon = real(lon ,kind=DP)
@@ -1542,8 +1591,8 @@ contains
           enddo
           p(:) = 0.0_RP
 
-          lat = GMTR_lat(n,l)
-          lon = GMTR_lon(n,l)
+          lat = GRD_s(n,k0,l,GRD_LAT)
+          lon = GRD_s(n,k0,l,GRD_LON)
 
           do k = 1, kdim
              DP_lon = real(lon ,kind=DP)
@@ -1605,8 +1654,8 @@ contains
           enddo
           p(:) = 0.0_RP
 
-          lat = GMTR_lat(n,l)
-          lon = GMTR_lon(n,l)
+          lat = GRD_s(n,k0,l,GRD_LAT)
+          lon = GRD_s(n,k0,l,GRD_LON)
 
           do k = 1, kdim
              DP_lon = real(lon ,kind=DP)
@@ -1677,12 +1726,12 @@ contains
        ADM_kmin,      &
        ADM_kmax
     use mod_grd, only: &
-       GRD_Z,          &
-       GRD_ZH, &
+       GRD_LAT, &
+       GRD_LON, &
+       GRD_s,   &
+       GRD_Z,   &
+       GRD_ZH,  &
        GRD_vz
-    use mod_gmtr, only: &
-       GMTR_lon, &
-       GMTR_lat
     use mod_runconf, only: &
        TRC_vmax
     implicit none
@@ -1723,8 +1772,10 @@ contains
     real(DP) :: DP_rho  ! density              [kg/m3], not in use
     real(DP) :: DP_q    ! specific humidity    [kg/kg], not in use
 
-    integer :: n, k, l
+    integer :: n, k, l, k0
     !---------------------------------------------------------------------------
+
+    k0 = ADM_KNONE
 
     DIAG_var(:,:,:,:) = 0.0_RP
 
@@ -1736,8 +1787,8 @@ contains
        enddo
        p(:) = 0.0_RP
 
-       lat = GMTR_lat(n,l)
-       lon = GMTR_lon(n,l)
+       lat = GRD_s(n,k0,l,GRD_LAT)
+       lon = GRD_s(n,k0,l,GRD_LON)
 
        do k = 1, kdim
           DP_lon = real(lon ,kind=DP)
@@ -1793,10 +1844,9 @@ contains
        lall,       &
        DIAG_var    )
     use mod_misc, only: &
-       MISC_get_latlon_DP
+       MISC_get_latlon
     use mod_adm, only: &
-       ADM_KNONE,      &
-       ADM_NSYS
+       ADM_KNONE
     use mod_grd, only: &
        GRD_x,          &
        GRD_XDIR,       &
@@ -1815,7 +1865,7 @@ contains
     real(RP), intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
     ! work paramters
-    real(DP) :: lat, lon                 ! latitude, longitude on Icosahedral grid
+    real(RP) :: lat, lon                 ! latitude, longitude on Icosahedral grid
     real(RP) :: prs(kdim),   tmp(kdim)   ! pressure & temperature in ICO-grid field
     real(RP) :: wix(kdim),   wiy(kdim)   ! zonal/meridional wind components in ICO-grid field
 
@@ -1842,14 +1892,14 @@ contains
           z_local(k) = GRD_vz(n,k,l,GRD_Z)
        enddo
 
-       call MISC_get_latlon_DP( lat, lon,               &
+       call MISC_get_latlon( lat, lon,               &
                              GRD_x(n,K0,l,GRD_XDIR), &
                              GRD_x(n,K0,l,GRD_YDIR), &
                              GRD_x(n,K0,l,GRD_ZDIR)  )
 
-       call tomita_2004( kdim, real(lat,kind=RP), z_local, wix, wiy, tmp, prs, logout )
+       call tomita_2004( kdim, lat, z_local, wix, wiy, tmp, prs, logout )
        logout = .false.
-       call conv_vxvyvz ( kdim, real(lat,kind=RP), real(lon,kind=RP), wix, wiy, vx_local, vy_local, vz_local )
+       call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
 
        do k = 1, kdim
           DIAG_var(n,k,l,1) = prs(k)
@@ -2217,7 +2267,7 @@ contains
     real(RP), intent(out) :: ps
     logical, intent(in) :: nicamcore
 
-    real(RP), parameter :: lat0 = 0.691590985442682
+    real(RP), parameter :: lat0 = 0.691590985442682_RP
     real(RP) :: cs32ev, f1, f2
     real(RP) :: eta_v, tmp0, tmp1
     real(RP) :: ux1, ux2, hgt0, hgt1
@@ -2276,7 +2326,7 @@ contains
        GRD_YDIR, &
        GRD_ZDIR
     use mod_misc, only: &
-       MISC_get_latlon_DP
+       MISC_get_latlon
     use mod_adm, only: &
        K0 => ADM_KNONE
     implicit none
@@ -2288,7 +2338,7 @@ contains
     integer, parameter :: ID_vy  = 4
     integer, parameter :: ID_vz  = 5
     integer :: n, k, l
-    real(DP) :: lat, lon
+    real(RP) :: lat, lon
     real(RP) :: r, rr, rbyrr, cla, clo
     real(RP) :: ptb_wix(kdim), ptb_wiy(kdim)
     real(RP) :: ptb_vx(kdim), ptb_vy(kdim), ptb_vz(kdim)
@@ -2298,7 +2348,7 @@ contains
 
     do l = 1, lall
     do n = 1, ijdim
-       call MISC_get_latlon_DP( lat, lon,              &
+       call MISC_get_latlon( lat, lon,              &
                              GRD_x(n,K0,l,GRD_XDIR), &
                              GRD_x(n,K0,l,GRD_YDIR), &
                              GRD_x(n,K0,l,GRD_ZDIR)  )
@@ -2310,7 +2360,7 @@ contains
           ptb_wiy(k) = 0.0_RP
        enddo
 
-       call conv_vxvyvz( kdim, real(lat,kind=RP), real(lon,kind=RP), ptb_wix, ptb_wiy, ptb_vx, ptb_vy, ptb_vz )
+       call conv_vxvyvz( kdim, lat, lon, ptb_wix, ptb_wiy, ptb_vx, ptb_vy, ptb_vz )
        do k = 1, kdim
           DIAG_var(n,k,l,ID_vx) = DIAG_var(n,k,l,ID_vx) + ptb_vx(k)
           DIAG_var(n,k,l,ID_vy) = DIAG_var(n,k,l,ID_vy) + ptb_vy(k)

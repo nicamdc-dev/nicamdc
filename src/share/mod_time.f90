@@ -45,11 +45,11 @@ module mod_time
   integer,  public :: TIME_LSTEP_MAX = 10     ! Max steps of large step
   integer,  public :: TIME_SSTEP_MAX          ! Max steps of small step
 
-  real(RP), public :: TIME_DTL       = 5.0_RP ! Time interval for large step [sec]
-  real(RP), public :: TIME_DTS                ! Time interval for small step [sec]
+  real(DP), public :: TIME_DTL       = 5.0_RP ! Time interval for large step [sec]
+  real(DP), public :: TIME_DTS                ! Time interval for small step [sec]
   !
-  real(RP), public :: TIME_START              ! Start time [sec]
-  real(RP), public :: TIME_END                ! End   time [sec]
+  real(DP), public :: TIME_START              ! Start time [sec]
+  real(DP), public :: TIME_END                ! End   time [sec]
   integer,  public :: TIME_NSTART             ! Time step at the start
   integer,  public :: TIME_NEND               ! Time step at the end
 
@@ -164,7 +164,7 @@ contains
     else
        TIME_sstep_max = sstep_max
     endif
-    TIME_dts = TIME_dtl / max(real(TIME_sstep_max,kind=RP),1.0_RP)
+    TIME_dts = TIME_dtl / max(real(TIME_sstep_max,kind=DP),1.0_DP)
 
     if ( start_date(1) == -999 ) start_date(1) = start_year
     if ( start_date(2) == -999 ) start_date(2) = start_month

@@ -58,9 +58,7 @@ contains
        ADM_proc_stop
     use mod_runconf, only: &
        CHEM_TYPE, &
-       NCHEM_MAX, &
-       NCHEM_STR, &
-       NCHEM_END
+       NCHEM_MAX
     implicit none
 
     logical :: SET_RJ2012       = .false.
@@ -245,8 +243,7 @@ contains
        Rdry  => CNST_RAIR,  &
        CPdry => CNST_CP,    &
        CVdry => CNST_CV,    &
-       PRE00 => CNST_PRE00, &
-       g     => CNst_EGRAV
+       PRE00 => CNST_PRE00
     use mod_runconf, only: &
        TRC_VMAX,  &
        RAIN_TYPE, &
@@ -286,7 +283,7 @@ contains
     real(RP), intent(in)  :: jx     (ijdim)
     real(RP), intent(in)  :: jy     (ijdim)
     real(RP), intent(in)  :: jz     (ijdim)
-    real(RP), intent(in)  :: dt
+    real(DP), intent(in)  :: dt
 
     ! for kessler
     real(RP) :: theta(vlayer) ! potential temperature (K)
@@ -313,10 +310,10 @@ contains
     integer  :: test
 
     ! for toy-chemistory
-    real(RP) :: lat_deg, lon_deg
-    real(RP) :: cl, cl2
-    real(RP) :: cl_f, cl2_f
-    real(RP) :: qvd
+    real(DP) :: lat_deg, lon_deg
+    real(DP) :: cl, cl2
+    real(DP) :: cl_f, cl2_f
+    real(DP) :: qvd
 
     integer :: ij, k, kk
     !---------------------------------------------------------------------------
@@ -480,17 +477,17 @@ contains
     if ( USE_ToyChemistry ) then
        do k  = kmin, kmax
        do ij = 1,    ijdim
-          lat_deg = lat(ij) / d2r
-          lon_deg = lon(ij) / d2r
-          qvd     = 1.0_RP - q(ij,k,I_QV)
+          lat_deg = real( lat(ij) / d2r, kind=DP )
+          lon_deg = real( lon(ij) / d2r, kind=DP )
+          qvd     = real( 1.0_RP - q(ij,k,I_QV), kind=DP )
 
-          cl  = q(ij,k,NCHEM_STR) / qvd
-          cl2 = q(ij,k,NCHEM_END) / qvd
+          cl  = real( q(ij,k,NCHEM_STR) / qvd, kind=DP )
+          cl2 = real( q(ij,k,NCHEM_END) / qvd, kind=DP )
 
           call tendency_Terminator( lat_deg, lon_deg, cl, cl2, dt, cl_f, cl2_f )
 
-          fq(ij,k,NCHEM_STR) = fq(ij,k,NCHEM_STR) + cl_f  * qvd
-          fq(ij,k,NCHEM_END) = fq(ij,k,NCHEM_END) + cl2_f * qvd
+          fq(ij,k,NCHEM_STR) = fq(ij,k,NCHEM_STR) + real( cl_f  * qvd, kind=RP )
+          fq(ij,k,NCHEM_END) = fq(ij,k,NCHEM_END) + real( cl2_f * qvd, kind=RP )
        enddo
        enddo
     endif

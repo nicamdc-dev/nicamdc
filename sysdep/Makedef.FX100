@@ -50,10 +50,12 @@ ifeq ($(ENABLE_NETCDF),T)
 	NETCDF_LIBS ?= $(shell nf-config --flibs) $(shell nc-config --libs)
 endif
 
+LAPACK_LIBS ?= -SSL2BLAMP -SCALAPACK
+
 ###########################
 
-MODDIROPT ?= -M $(BUILD_DIR)
-OBJDIR    ?= $(BUILD_DIR)
+MODDIROPT ?= -M $(BUILDDIR)
+OBJDIR    ?= $(BUILDDIR)
 
 LD     = $(FC)
 LFLAGS = $(FFLAGS)

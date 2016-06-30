@@ -277,8 +277,8 @@ contains
           q(:,:,l) = rhogq(:,:,l,iq) / rhog_in(:,:,l)
 
           do k = ADM_kmin, ADM_kmax+1
-             q_h(:,k,l) = 0.5_RP * ( GRD_afac(k) * q(:,k,  l) &
-                                   + GRD_bfac(k) * q(:,k-1,l) )
+             q_h(:,k,l) = GRD_afac(k) * q(:,k,  l) &
+                        + GRD_bfac(k) * q(:,k-1,l)
           enddo
           q_h(:,ADM_kmin-1,l) = 0.0_RP
        enddo
@@ -288,8 +288,8 @@ contains
              q_pl(:,:,l) = rhogq_pl(:,:,l,iq) / rhog_in_pl(:,:,l)
 
              do k = ADM_kmin, ADM_kmax+1
-                q_h_pl(:,k,l) = 0.5_RP * ( GRD_afac(k) * q_pl(:,k,  l) &
-                                         + GRD_bfac(k) * q_pl(:,k-1,l) )
+                q_h_pl(:,k,l) = GRD_afac(k) * q_pl(:,k,  l) &
+                              + GRD_bfac(k) * q_pl(:,k-1,l)
              enddo
              q_h_pl(:,ADM_kmin-1,l) = 0.0_RP
           enddo
@@ -342,11 +342,6 @@ contains
                                          ) * GRD_rdgz(k)  &
                                        + b1 * frhog(g,k,l) * dt
        enddo
-       enddo
-
-       do k = ADM_kmin, ADM_kmax
-          rhog(suf(ADM_gmax+1,ADM_gmin-1),k,l) = rhog(suf(ADM_gmax+1,ADM_gmin),k,l)
-          rhog(suf(ADM_gmin-1,ADM_gmax+1),k,l) = rhog(suf(ADM_gmin,ADM_gmax+1),k,l)
        enddo
        rhog(:,ADM_kmin-1,l) = rhog_in(:,ADM_kmin,l)
        rhog(:,ADM_kmax+1,l) = rhog_in(:,ADM_kmax,l)
@@ -473,11 +468,6 @@ contains
                                                  + flx_h(g,k,l,6) * q_a(g,k,l,6) )
           enddo
           enddo
-
-          do k = 1, ADM_kall
-             rhog(suf(ADM_gmax+1,ADM_gmin-1),k,l) = rhog(suf(ADM_gmax+1,ADM_gmin),k,l)
-             rhog(suf(ADM_gmin-1,ADM_gmax+1),k,l) = rhog(suf(ADM_gmin,ADM_gmax+1),k,l)
-          enddo
        enddo
 
        if ( ADM_have_pl ) then
@@ -508,11 +498,6 @@ contains
                                      + flx_h(g,k,l,5) &
                                      + flx_h(g,k,l,6) ) + b2 * frhog(g,k,l) * dt
        enddo
-       enddo
-
-       do k = 1, ADM_kall
-          rhog(suf(ADM_gmax+1,ADM_gmin-1),k,l) = rhog(suf(ADM_gmax+1,ADM_gmin),k,l)
-          rhog(suf(ADM_gmin-1,ADM_gmax+1),k,l) = rhog(suf(ADM_gmin,ADM_gmax+1),k,l)
        enddo
     enddo
 
@@ -570,8 +555,8 @@ contains
           q(:,:,l) = rhogq(:,:,l,iq) / rhog(:,:,l)
 
           do k = ADM_kmin, ADM_kmax+1
-             q_h(:,k,l) = 0.5_RP * ( GRD_afac(k) * q(:,k,  l) &
-                                   + GRD_bfac(k) * q(:,k-1,l) )
+             q_h(:,k,l) = GRD_afac(k) * q(:,k,  l) &
+                        + GRD_bfac(k) * q(:,k-1,l)
           enddo
           q_h(:,ADM_kmin-1,l) = 0.0_RP
        enddo
@@ -581,8 +566,8 @@ contains
              q_pl(:,:,l) = rhogq_pl(:,:,l,iq) / rhog_pl(:,:,l)
 
              do k = ADM_kmin, ADM_kmax+1
-                q_h_pl(:,k,l) = 0.5_RP * ( GRD_afac(k) * q_pl(:,k,  l) &
-                                         + GRD_bfac(k) * q_pl(:,k-1,l) )
+                q_h_pl(:,k,l) = GRD_afac(k) * q_pl(:,k,  l) &
+                              + GRD_bfac(k) * q_pl(:,k-1,l)
              enddo
              q_h_pl(:,ADM_kmin-1,l) = 0.0_RP
           enddo

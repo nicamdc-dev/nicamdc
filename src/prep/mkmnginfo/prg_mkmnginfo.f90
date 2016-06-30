@@ -27,6 +27,7 @@ Program prg_mkmnginfo
   !
   !++ Used modules
   !
+  use mpi
   use mod_precision
   use mod_debug
   use mod_adm, only: &
@@ -70,8 +71,12 @@ Program prg_mkmnginfo
        prc_num,              & !--- process number
        output_fname,         & !--- output region-management filename
        MAPPING_TYPE            !--- mapping method : [add] C.Kodama 2011/12/14
+
+  integer :: ierr
   !=============================================================================
   !
+  call MPI_Init(ierr)
+
   Open(fid,file='mkmnginfo.cnf',form='formatted')
   Read(fid,nml=mkmnginfo_cnf)
 
@@ -89,9 +94,10 @@ Program prg_mkmnginfo
   else !S.Iga100607
      Call generate_mngtab(rlevel,prc_num,output_fname)  !icosahedral
   endif!S.Iga100607
-  !
+
+  call MPI_Finalize(ierr)
+
   Stop
-  !
   !=============================================================================
 Contains
   !-----------------------------------------------------------------------------

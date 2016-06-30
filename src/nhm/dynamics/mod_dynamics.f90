@@ -169,16 +169,12 @@ contains
        ADM_kall,    &
        ADM_gall,    &
        ADM_gall_pl, &
-       ADM_gall_1d, &
-       ADM_gmax,    &
-       ADM_gmin,    &
        ADM_kmax,    &
        ADM_kmin
     use mod_cnst, only: &
-       Rdry  => CNST_RAIR,  &
-       Rvap  => CNST_RVAP,  &
-       CVdry => CNST_CV,    &
-       PRE00 => CNST_PRE00
+       Rdry  => CNST_RAIR, &
+       Rvap  => CNST_RVAP, &
+       CVdry => CNST_CV
     use mod_comm, only: &
        COMM_data_transfer
     use mod_vmtr, only: &
@@ -337,17 +333,14 @@ contains
     real(RP), parameter :: TKE_MIN = 0.0_RP
     real(RP)            :: TKEg_corr
 
-    integer :: small_step_ite
+    integer  :: small_step_ite
     real(RP) :: large_step_dt
     real(RP) :: small_step_dt
 
-    logical :: ndg_TEND_out
-    logical :: do_tke_correction
+    logical  :: ndg_TEND_out
+    logical  :: do_tke_correction
 
-    integer :: g, k ,l, nq, nl, ndyn, m
-
-    integer :: i, j, suf
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+    integer  :: g, k ,l, nq, nl, ndyn
     !---------------------------------------------------------------------------
     !$acc wait
 
@@ -360,7 +353,7 @@ contains
 
     call DEBUG_rapstart('___Pre_Post')
 
-    large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=RP)
+    large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=DP)
 
     !--- get from prg0
     call prgvar_get( PROG(:,:,:,I_RHOG),   PROG_pl(:,:,:,I_RHOG),   & ! [OUT]
@@ -982,17 +975,6 @@ contains
        !------ Update
        if ( nl /= num_of_iteration_lstep ) then
           call COMM_data_transfer( PROG, PROG_pl )
-
-          !$acc kernels pcopy(PROG) async(0)
-          do m = 1, 6
-          do l = 1, ADM_lall
-          do k = 1, ADM_kall
-             PROG(suf(ADM_gmax+1,ADM_gmin-1),k,l,m) = PROG(suf(ADM_gmax+1,ADM_gmin),k,l,m)
-             PROG(suf(ADM_gmin-1,ADM_gmax+1),k,l,m) = PROG(suf(ADM_gmin,ADM_gmax+1),k,l,m)
-          enddo
-          enddo
-          enddo
-          !$acc end kernels
        endif
 
        call DEBUG_rapend  ('___Pre_Post')

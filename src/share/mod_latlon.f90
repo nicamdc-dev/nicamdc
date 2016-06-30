@@ -53,8 +53,8 @@ module mod_latlon
   integer, public, parameter :: GMTR_P_LAT = 1
   integer, public, parameter :: GMTR_P_LON = 2
 
-  real(DP), public, allocatable :: GMTR_P_ll   (:,:,:,:)
-  real(DP), public, allocatable :: GMTR_P_ll_pl(:,:,:,:)
+  real(RP), public, allocatable :: GMTR_P_ll   (:,:,:,:)
+  real(RP), public, allocatable :: GMTR_P_ll_pl(:,:,:,:)
 
   character(len=ADM_NSYS),  public :: polygon_type = 'ON_SPHERE' ! triangle is fit to the sphere
   !                                                  'ON_PLANE'  ! triangle is treated as 2D
@@ -85,8 +85,6 @@ module mod_latlon
   character(len=ADM_MAXFNAME), private :: SAMPLE_OUT_BASENAME = ''
   character(len=ADM_NSYS),     private :: SAMPLE_io_mode      = 'ADVANCED'
 
-  character(len=ADM_NSYS),     private :: output_lldata_type = 'mkllmap'
-
   real(RP), private, allocatable :: lat(:)
   real(RP), private, allocatable :: lon(:)
 
@@ -115,7 +113,7 @@ contains
   !> setup lat/lon value of the ico-grid (without mod_gmtr)
   subroutine LATLON_ico_setup
     use mod_misc, only: &
-       MISC_get_latlon_DP
+       MISC_get_latlon
     use mod_adm, only: &
        ADM_have_pl,     &
        ADM_lall,        &
@@ -123,15 +121,12 @@ contains
        ADM_gall,        &
        ADM_gall_pl,     &
        ADM_KNONE,       &
-       ADM_gall_1d,     &
-       ADM_gmax,        &
-       ADM_gmin,        &
        ADM_GSLF_PL,     &
        ADM_IooJoo_nmax, &
        ADM_IooJoo,      &
        ADM_GIoJo
     use mod_comm, only: &
-       COMM_data_transfer_DP
+       COMM_data_transfer
     use mod_grd, only: &
        GRD_XDIR, &
        GRD_YDIR, &
@@ -141,9 +136,6 @@ contains
     implicit none
 
     integer :: ij, n, k, l
-
-    integer :: i, j, suf
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
     k = ADM_KNONE
@@ -151,13 +143,13 @@ contains
     !--- setup point data
     allocate( GMTR_P_ll   (ADM_gall,   ADM_KNONE,ADM_lall,   GMTR_P_nmax_var) )
     allocate( GMTR_P_ll_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,GMTR_P_nmax_var) )
-    GMTR_P_ll   (:,:,:,:) = 0.0_DP
-    GMTR_P_ll_pl(:,:,:,:) = 0.0_DP
+    GMTR_P_ll   (:,:,:,:) = 0.0_RP
+    GMTR_P_ll_pl(:,:,:,:) = 0.0_RP
 
     do l = 1, ADM_lall
        do n = 1, ADM_IooJoo_nmax
           ij = ADM_IooJoo(n,ADM_GIoJo)
-          call MISC_get_latlon_DP( GMTR_P_ll(ij,k,l,GMTR_P_LAT), &
+          call MISC_get_latlon( GMTR_P_ll(ij,k,l,GMTR_P_LAT), &
                                 GMTR_P_ll(ij,k,l,GMTR_P_LON), &
                                 GRD_x    (ij,k,l,GRD_XDIR),   &
                                 GRD_x    (ij,k,l,GRD_YDIR),   &
@@ -168,7 +160,7 @@ contains
     if ( ADM_have_pl ) then
        n = ADM_GSLF_PL
        do l = 1,ADM_lall_pl
-          call MISC_get_latlon_DP( GMTR_P_ll_pl(n,k,l,GMTR_P_LAT), &
+          call MISC_get_latlon( GMTR_P_ll_pl(n,k,l,GMTR_P_LAT), &
                                 GMTR_P_ll_pl(n,k,l,GMTR_P_LON), &
                                 GRD_x_pl    (n,k,l,GRD_XDIR),   &
                                 GRD_x_pl    (n,k,l,GRD_YDIR),   &
@@ -177,17 +169,14 @@ contains
     endif
 
     !--- communication of point data
-    call COMM_data_transfer_DP( GMTR_P_ll, GMTR_P_ll_pl )
-    ! fill unused grid (dummy)
-    GMTR_P_ll(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = GMTR_P_ll(suf(ADM_gmax+1,ADM_gmin),:,:,:)
-    GMTR_P_ll(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = GMTR_P_ll(suf(ADM_gmin,ADM_gmax+1),:,:,:)
+    call COMM_data_transfer( GMTR_P_ll, GMTR_P_ll_pl )
 
     return
   end subroutine LATLON_ico_setup
 
   !-----------------------------------------------------------------------------
   !> Setup
-  subroutine LATLON_setup( output_dirname, output_lldata_type_in )
+  subroutine LATLON_setup( output_dirname )
     use mod_misc, only: &
        MISC_get_available_fid, &
        MISC_make_idstr
@@ -205,7 +194,6 @@ contains
     implicit none
 
     character(len=*), intent(in) :: output_dirname
-    character(len=*), intent(in) :: output_lldata_type_in
 
     real(RP) :: latmax_deg      =   90.0_RP
     real(RP) :: latmin_deg      =  -90.0_RP
@@ -239,8 +227,6 @@ contains
     integer :: nstart, nend
     integer :: n, l, rgnid, i, j
     !---------------------------------------------------------------------------
-
-    output_lldata_type = output_lldata_type_in
 
     !--- read parameters
     write(ADM_LOG_FID,*)
@@ -481,11 +467,10 @@ contains
   !>
   subroutine mkrelmap_ico2ll( what_is_done )
     use mod_misc, only: &
-       MISC_get_latlon,      &
-       MISC_triangle_area_q, &
-       MISC_3dvec_triangle,  &
-       MISC_3dvec_cross,     &
-       MISC_3dvec_dot,       &
+       MISC_get_latlon,     &
+       MISC_3dvec_triangle, &
+       MISC_3dvec_cross,    &
+       MISC_3dvec_dot,      &
        MISC_3dvec_abs
     use mod_adm, only: &
        ADM_proc_stop,     &
@@ -691,24 +676,12 @@ contains
                       n3_index(nmax_llgrid) = ADM_IooJoo(n,ADM_GIoJp)
                    endif
 
-                   if ( output_lldata_type == 'mkllmap_q' ) then ! quad precision
-                      area1 = MISC_triangle_area_q( r0(:), r2(:), r3(:),  &
-                                                    polygon_type, rscale, &
-                                                    critical=eps_area     )
-                      area2 = MISC_triangle_area_q( r0(:), r3(:), r1(:),  &
-                                                    polygon_type, rscale, &
-                                                    critical=eps_area     )
-                      area3 = MISC_triangle_area_q( r0(:), r1(:), r2(:),  &
-                                                    polygon_type, rscale, &
-                                                    critical=eps_area     )
-                   else ! double precision
-                      area1 = MISC_3Dvec_triangle( r0(:), r2(:), r3(:), &
-                                                   polygon_type, rscale )
-                      area2 = MISC_3Dvec_triangle( r0(:), r3(:), r1(:), &
-                                                   polygon_type, rscale )
-                      area3 = MISC_3Dvec_triangle( r0(:), r1(:), r2(:), &
-                                                   polygon_type, rscale )
-                   endif
+                   area1 = MISC_3Dvec_triangle( r0(:), r2(:), r3(:), &
+                                                polygon_type, rscale )
+                   area2 = MISC_3Dvec_triangle( r0(:), r3(:), r1(:), &
+                                                polygon_type, rscale )
+                   area3 = MISC_3Dvec_triangle( r0(:), r1(:), r2(:), &
+                                                polygon_type, rscale )
 
                    if (      area1 * 0.0_RP /= 0.0_RP &
                         .OR. area2 * 0.0_RP /= 0.0_RP &

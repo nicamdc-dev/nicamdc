@@ -164,7 +164,7 @@ contains
     use mod_cnst, only: &
        PI => CNST_PI
     use mod_comm, only: &
-       COMM_data_transfer_DP
+       COMM_data_transfer
     implicit none
 
     real(RP), allocatable :: r0(:,:,:)
@@ -314,7 +314,7 @@ contains
     GRD_x_pl(ij,k,ADM_SPL,GRD_YDIR) =  0.0_RP
     GRD_x_pl(ij,k,ADM_SPL,GRD_ZDIR) = -1.0_RP
 
-    call COMM_data_transfer_DP( GRD_x(:,:,:,:), GRD_x_pl(:,:,:,:) )
+    call COMM_data_transfer( GRD_x(:,:,:,:), GRD_x_pl(:,:,:,:) )
 
     return
   end subroutine MKGRD_standard
@@ -346,8 +346,7 @@ contains
     use mod_cnst, only: &
        PI => CNST_PI
     use mod_comm, only: &
-       COMM_data_transfer, &
-       COMM_data_transfer_DP
+       COMM_data_transfer
     use mod_gtl, only: &
        GTL_max, &
        GTL_min
@@ -581,7 +580,7 @@ contains
     GRD_x   (:,:,:,GRD_XDIR:GRD_ZDIR) = var   (:,:,:,I_Rx:I_Rz)
     GRD_x_pl(:,:,:,GRD_XDIR:GRD_ZDIR) = var_pl(:,:,:,I_Rx:I_Rz)
 
-    call COMM_data_transfer_DP( GRD_x(:,:,:,:), GRD_x_pl(:,:,:,:) )
+    call COMM_data_transfer( GRD_x(:,:,:,:), GRD_x_pl(:,:,:,:) )
 
     return
   end subroutine MKGRD_spring
@@ -599,7 +598,7 @@ contains
     use mod_cnst, only: &
        PI => CNST_PI
     use mod_comm, only: &
-       COMM_data_transfer_DP
+       COMM_data_transfer
     implicit none
 
     real(RP) :: g(3)
@@ -670,7 +669,7 @@ contains
        enddo
     endif
 
-    call COMM_data_transfer_DP( GRD_x(:,:,:,:), GRD_x_pl(:,:,:,:) )
+    call COMM_data_transfer( GRD_x(:,:,:,:), GRD_x_pl(:,:,:,:) )
 
     return
   end subroutine MKGRD_prerotate
@@ -680,7 +679,7 @@ contains
   subroutine MKGRD_stretch
     use mod_misc, only: &
        MISC_get_latlon, &
-       MISC_get_cartesian_DP
+       MISC_get_cartesian
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_gall,    &
@@ -691,7 +690,7 @@ contains
     use mod_cnst, only: &
        PI => CNST_PI
     use mod_comm, only: &
-       COMM_data_transfer_DP
+       COMM_data_transfer
     implicit none
 
     real(RP) :: lat, lon, lat_trans
@@ -713,9 +712,9 @@ contains
 
           call MISC_get_latlon( lat,                    & ! [OUT]
                                 lon,                    & ! [OUT]
-                                real(GRD_x(ij,k,l,GRD_XDIR),kind=RP), & ! [IN]
-                                real(GRD_x(ij,k,l,GRD_YDIR),kind=RP), & ! [IN]
-                                real(GRD_x(ij,k,l,GRD_ZDIR),kind=RP)  ) ! [IN]
+                                GRD_x(ij,k,l,GRD_XDIR), & ! [IN]
+                                GRD_x(ij,k,l,GRD_YDIR), & ! [IN]
+                                GRD_x(ij,k,l,GRD_ZDIR)  ) ! [IN]
 
           if ( 0.5_RP*PI-abs(lat) > criteria ) then
              lat_trans = asin( ( MKGRD_stretch_alpha*(1.0_RP+sin(lat)) / (1.0_RP-sin(lat)) - 1.0_RP ) &
@@ -724,12 +723,12 @@ contains
              lat_trans = lat
           endif
 
-          call MISC_get_cartesian_DP( GRD_x(ij,k,l,GRD_XDIR), & ! [OUT]
-                                      GRD_x(ij,k,l,GRD_YDIR), & ! [OUT]
-                                      GRD_x(ij,k,l,GRD_ZDIR), & ! [OUT]
-                                      lat_trans,              & ! [IN]
-                                      lon,                    & ! [IN]
-                                      1.0_RP                  ) ! [IN]
+          call MISC_get_cartesian( GRD_x(ij,k,l,GRD_XDIR), & ! [OUT]
+                                   GRD_x(ij,k,l,GRD_YDIR), & ! [OUT]
+                                   GRD_x(ij,k,l,GRD_ZDIR), & ! [OUT]
+                                   lat_trans,              & ! [IN]
+                                   lon,                    & ! [IN]
+                                   1.0_RP                  ) ! [IN]
        enddo
     enddo
 
@@ -739,9 +738,9 @@ contains
 
           call MISC_get_latlon( lat,                       & ! [OUT]
                                 lon,                       & ! [OUT]
-                                real(GRD_x_pl(ij,k,l,GRD_XDIR),kind=RP), & ! [IN]
-                                real(GRD_x_pl(ij,k,l,GRD_YDIR),kind=RP), & ! [IN]
-                                real(GRD_x_pl(ij,k,l,GRD_ZDIR),kind=RP)  ) ! [IN]
+                                GRD_x_pl(ij,k,l,GRD_XDIR), & ! [IN]
+                                GRD_x_pl(ij,k,l,GRD_YDIR), & ! [IN]
+                                GRD_x_pl(ij,k,l,GRD_ZDIR)  ) ! [IN]
 
           if ( 0.5_RP*PI-abs(lat) > criteria ) then
              lat_trans = asin( ( MKGRD_stretch_alpha*(1.0_RP+sin(lat)) / (1.0_RP-sin(lat)) - 1.0_RP ) &
@@ -750,7 +749,7 @@ contains
              lat_trans = lat
           endif
 
-          call MISC_get_cartesian_DP( GRD_x_pl(ij,k,l,GRD_XDIR), & ! [OUT]
+          call MISC_get_cartesian( GRD_x_pl(ij,k,l,GRD_XDIR), & ! [OUT]
                                       GRD_x_pl(ij,k,l,GRD_YDIR), & ! [OUT]
                                       GRD_x_pl(ij,k,l,GRD_ZDIR), & ! [OUT]
                                       lat_trans,                 & ! [IN]
@@ -760,7 +759,7 @@ contains
        enddo
     endif
 
-    call COMM_data_transfer_DP( GRD_x(:,:,:,:), GRD_x_pl(:,:,:,:) )
+    call COMM_data_transfer( GRD_x(:,:,:,:), GRD_x_pl(:,:,:,:) )
 
     return
   end subroutine MKGRD_stretch
@@ -779,7 +778,7 @@ contains
        ADM_lall,    &
        ADM_lall_pl
     use mod_comm, only: &
-       COMM_data_transfer_DP
+       COMM_data_transfer
     implicit none
 
     real(RP) :: o(3), g(3), len
@@ -839,7 +838,7 @@ contains
     enddo
     endif
 
-    call COMM_data_transfer_DP( GRD_x(:,:,:,:), GRD_x_pl(:,:,:,:) )
+    call COMM_data_transfer( GRD_x(:,:,:,:), GRD_x_pl(:,:,:,:) )
 
     return
   end subroutine MKGRD_shrink
@@ -857,7 +856,7 @@ contains
     use mod_cnst, only: &
        PI => CNST_PI
     use mod_comm, only: &
-       COMM_data_transfer_DP
+       COMM_data_transfer
     implicit none
 
     real(RP) :: g(3)
@@ -915,7 +914,7 @@ contains
        enddo
     endif
 
-    call COMM_data_transfer_DP( GRD_x(:,:,:,:), GRD_x_pl(:,:,:,:) )
+    call COMM_data_transfer( GRD_x(:,:,:,:), GRD_x_pl(:,:,:,:) )
 
     return
   end subroutine MKGRD_rotate
@@ -924,7 +923,7 @@ contains
   !> Arrange gravitational center
   subroutine MKGRD_gravcenter
     use mod_comm, only: &
-       COMM_data_transfer_DP
+       COMM_data_transfer
     implicit none
     !---------------------------------------------------------------------------
 
@@ -936,7 +935,7 @@ contains
     write(ADM_LOG_FID,*) '*** vertex -> center'
     call MKGRD_vertex2center
 
-    call COMM_data_transfer_DP( GRD_x(:,:,:,:), GRD_x_pl(:,:,:,:) )
+    call COMM_data_transfer( GRD_x(:,:,:,:), GRD_x_pl(:,:,:,:) )
 
     return
   end subroutine MKGRD_gravcenter
@@ -1330,7 +1329,7 @@ contains
 
     rho = sqrt( x*x + y*y )
 
-    if ( rho == 0 ) then ! singular point
+    if ( rho == 0.0_RP ) then ! singular point
        lat = lat_center
        lon = lon_center
        return

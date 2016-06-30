@@ -356,12 +356,12 @@ contains
        extdata_update
     implicit none
 
-    real(RP), intent(in) :: ctime
+    real(DP), intent(in) :: ctime
 
     real(RP) :: temp(ADM_IopJop_nmax,ADM_kall)
 
     logical :: eflag
-    integer :: g, k, l, n
+    integer :: n, k, l
     !---------------------------------------------------------------------------
 
     if ( NDG_tau_vxvyvz > 0.0_RP ) then
@@ -372,7 +372,7 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do g = 1, ADM_IopJop_nmax
+          do n = 1, ADM_IopJop_nmax
              NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_vx) = temp(n,k)
           enddo
           enddo
@@ -383,7 +383,7 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do g = 1, ADM_IopJop_nmax
+          do n = 1, ADM_IopJop_nmax
              NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_vy) = temp(n,k)
           enddo
           enddo
@@ -394,7 +394,7 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do g = 1, ADM_IopJop_nmax
+          do n = 1, ADM_IopJop_nmax
              NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_vz) = temp(n,k)
           enddo
           enddo
@@ -409,7 +409,7 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do g = 1, ADM_IopJop_nmax
+          do n = 1, ADM_IopJop_nmax
              NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_w) = temp(n,k)
           enddo
           enddo
@@ -424,7 +424,7 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do g = 1, ADM_IopJop_nmax
+          do n = 1, ADM_IopJop_nmax
              NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_tem) = temp(n,k)
           enddo
           enddo
@@ -439,7 +439,7 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do g = 1, ADM_IopJop_nmax
+          do n = 1, ADM_IopJop_nmax
              NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_pre) = temp(n,k)
           enddo
           enddo
@@ -454,7 +454,7 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do g = 1, ADM_IopJop_nmax
+          do n = 1, ADM_IopJop_nmax
              NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_qv) = temp(n,k)
           enddo
           enddo
@@ -727,11 +727,11 @@ contains
        CNST_UNDEF
     use mod_comm, only: &
        COMM_data_transfer
-    use mod_gmtr, only: &
-       GMTR_lon,    &
-       GMTR_lon_pl, &
-       GMTR_lat,    &
-       GMTR_lat_pl
+    use mod_grd, only: &
+       GRD_LAT,  &
+       GRD_LON,  &
+       GRD_s,    &
+       GRD_s_pl
     use mod_history, only: &
        history_in
     implicit none
@@ -758,12 +758,12 @@ contains
     do l = 1, ADM_lall
     do g = 1, ADM_gall
 
-       call MISC_get_distance( CNST_ERADIUS,   & ! [IN]
-                               center_lon_rad, & ! [IN]
-                               center_lat_rad, & ! [IN]
-                               real(GMTR_lon(g,l),kind=RP),  & ! [IN]
-                               real(GMTR_lat(g,l),kind=RP),  & ! [IN]
-                               dist            ) ! [OUT]
+       call MISC_get_distance( CNST_ERADIUS,          & ! [IN]
+                               center_lon_rad,        & ! [IN]
+                               center_lat_rad,        & ! [IN]
+                               GRD_s(g,k0,l,GRD_LON), & ! [IN]
+                               GRD_s(g,k0,l,GRD_LAT), & ! [IN]
+                               dist                   ) ! [OUT]
 
        if ( dist < halo1_dist ) then
           fact = 0.0_RP
@@ -783,12 +783,12 @@ contains
        do l = 1, ADM_lall_pl
        do g = 1, ADM_gall_pl
 
-          call MISC_get_distance( CNST_ERADIUS,     & ! [IN]
-                                  center_lon,       & ! [IN]
-                                  center_lat,       & ! [IN]
-                                  real(GMTR_lon_pl(g,l),kind=RP), & ! [IN]
-                                  real(GMTR_lat_pl(g,l),kind=RP), & ! [IN]
-                                  dist              ) ! [OUT]
+          call MISC_get_distance( CNST_ERADIUS,             & ! [IN]
+                                  center_lon,               & ! [IN]
+                                  center_lat,               & ! [IN]
+                                  GRD_s_pl(g,k0,l,GRD_LON), & ! [IN]
+                                  GRD_s_pl(g,k0,l,GRD_LAT), & ! [IN]
+                                  dist                      ) ! [OUT]
 
           if ( dist < halo1_dist ) then
              fact = 0.0_RP

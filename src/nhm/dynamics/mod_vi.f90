@@ -136,9 +136,6 @@ contains
        dt                             )
     use mod_adm, only: &
        ADM_have_pl, &
-       ADM_gall_1d, &
-       ADM_gmax,    &
-       ADM_gmin,    &
        ADM_kmax,    &
        ADM_kmin
     use mod_cnst, only: &
@@ -154,8 +151,7 @@ contains
        GRD_afac, &
        GRD_bfac
     use mod_oprt, only: &
-       OPRT_horizontalize_vec,   &
-       OPRT_horizontalize_vec_DP
+       OPRT_horizontalize_vec
     use mod_vmtr, only: &
        VMTR_C2Wfact,    &
        VMTR_C2Wfact_pl, &
@@ -316,9 +312,6 @@ contains
     real(RP) :: rweight_itr
 
     integer  :: g, k, l, ns
-
-    integer  :: i, j, suf
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
     call DEBUG_rapstart('____vi_path0')
@@ -329,8 +322,8 @@ contains
        do g = 1, ADM_gall
           rhog_h(g,k,l) = ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k,  l) &
                           + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
-          eth_h (g,k,l) = 0.5_RP * ( GRD_afac(k) * eth(g,k,  l) &
-                                   + GRD_bfac(k) * eth(g,k-1,l) )
+          eth_h (g,k,l) = GRD_afac(k) * eth(g,k,  l) &
+                        + GRD_bfac(k) * eth(g,k-1,l)
        enddo
        enddo
        do g = 1, ADM_gall
@@ -345,8 +338,8 @@ contains
           do g = 1, ADM_gall_pl
              rhog_h_pl(g,k,l) = ( VMTR_C2Wfact_pl(g,k,1,l) * rhog_pl(g,k,  l) &
                                 + VMTR_C2Wfact_pl(g,k,2,l) * rhog_pl(g,k-1,l) )
-             eth_h_pl (g,k,l) = 0.5_RP * ( GRD_afac(k) * eth_pl(g,k,  l) &
-                                         + GRD_bfac(k) * eth_pl(g,k-1,l) )
+             eth_h_pl (g,k,l) = GRD_afac(k) * eth_pl(g,k,  l) &
+                              + GRD_bfac(k) * eth_pl(g,k-1,l)
           enddo
           enddo
           do g = 1, ADM_gall_pl
@@ -678,19 +671,6 @@ contains
 
        call COMM_data_transfer( diff_vh, diff_vh_pl )
 
-!OCL SERIAL
-       do l = 1, ADM_lall
-!OCL PARALLEL
-       do k = 1, ADM_kall
-          diff_vh(suf(ADM_gmax+1,ADM_gmin-1),k,l,1) = diff_vh(suf(ADM_gmax+1,ADM_gmin),k,l,1)
-          diff_vh(suf(ADM_gmin-1,ADM_gmax+1),k,l,1) = diff_vh(suf(ADM_gmin,ADM_gmax+1),k,l,1)
-          diff_vh(suf(ADM_gmax+1,ADM_gmin-1),k,l,2) = diff_vh(suf(ADM_gmax+1,ADM_gmin),k,l,2)
-          diff_vh(suf(ADM_gmin-1,ADM_gmax+1),k,l,2) = diff_vh(suf(ADM_gmin,ADM_gmax+1),k,l,2)
-          diff_vh(suf(ADM_gmax+1,ADM_gmin-1),k,l,3) = diff_vh(suf(ADM_gmax+1,ADM_gmin),k,l,3)
-          diff_vh(suf(ADM_gmin-1,ADM_gmax+1),k,l,3) = diff_vh(suf(ADM_gmin,ADM_gmax+1),k,l,3)
-       enddo
-       enddo
-
        call DEBUG_rapend  ('____vi_path1')
        call DEBUG_rapstart('____vi_path2')
 
@@ -723,19 +703,6 @@ contains
 
        ! treatment for boundary condition
        call COMM_data_transfer( diff_we, diff_we_pl )
-
-!OCL SERIAL
-       do l = 1, ADM_lall
-!OCL PARALLEL
-       do k = 1, ADM_kall
-          diff_we(suf(ADM_gmax+1,ADM_gmin-1),k,l,1) = diff_we(suf(ADM_gmax+1,ADM_gmin),k,l,1)
-          diff_we(suf(ADM_gmin-1,ADM_gmax+1),k,l,1) = diff_we(suf(ADM_gmin,ADM_gmax+1),k,l,1)
-          diff_we(suf(ADM_gmax+1,ADM_gmin-1),k,l,2) = diff_we(suf(ADM_gmax+1,ADM_gmin),k,l,2)
-          diff_we(suf(ADM_gmin-1,ADM_gmax+1),k,l,2) = diff_we(suf(ADM_gmin,ADM_gmax+1),k,l,2)
-          diff_we(suf(ADM_gmax+1,ADM_gmin-1),k,l,3) = diff_we(suf(ADM_gmax+1,ADM_gmin),k,l,3)
-          diff_we(suf(ADM_gmin-1,ADM_gmax+1),k,l,3) = diff_we(suf(ADM_gmin,ADM_gmax+1),k,l,3)
-       enddo
-       enddo
 
        ! update split value and mean mass flux
        do l = 1, ADM_lall
@@ -1295,7 +1262,7 @@ contains
                     + GRD_rdgzh(k) * ( ( VMTR_RGSGAM2(g,k  ,l) * GRD_rdgz(k  )   &
                                        + VMTR_RGSGAM2(g,k-1,l) * GRD_rdgz(k-1) ) &
                                        * VMTR_GAM2H  (g,k  ,l) * eth(g,k,l)      &
-                                     - 0.5_RP * ( GRD_dfac(k) - GRD_cfac(k-1) )  &
+                                     - ( GRD_dfac(k) - GRD_cfac(k-1) )           &
                                      * ( g_tilde(g,k,l) + GCVovR )               )
        enddo
        enddo
@@ -1304,7 +1271,7 @@ contains
        do g = 1, ADM_gall
           Mu(g,k,l) = -GRD_rdgzh(k) * ( VMTR_RGSGAM2(g,k  ,l) * GRD_rdgz(k)                     &
                                       * VMTR_GAM2H  (g,k+1,l) * eth(g,k+1,l)                    &
-                                      + 0.5_RP * GRD_cfac(k)                                    &
+                                      + GRD_cfac(k)                                             &
                                       * ( g_tilde   (g,k+1,l)                                   &
                                         + VMTR_GAM2H(g,k+1,l)* VMTR_RGAMH(g,k,l)**2 * GCVovR  ) )
        enddo
@@ -1314,7 +1281,7 @@ contains
        do g = 1, ADM_gall
           Ml(g,k,l) = -GRD_rdgzh(k) * ( VMTR_RGSGAM2(g,k  ,l) * GRD_rdgz(k)                     &
                                       * VMTR_GAM2H  (g,k-1,l) * eth(g,k-1,l)                    &
-                                      - 0.5_RP * GRD_dfac(k-1)                                  &
+                                      - GRD_dfac(k-1)                                           &
                                       * ( g_tilde   (g,k-1,l)                                   &
                                         + VMTR_GAM2H(g,k-1,l) * VMTR_RGAMH(g,k,l)**2 * GCVovR ) )
        enddo
@@ -1329,7 +1296,7 @@ contains
                           + GRD_rdgzh(k) * ( ( VMTR_RGSGAM2_pl(g,k  ,l) * GRD_rdgz(k  )   &
                                              + VMTR_RGSGAM2_pl(g,k-1,l) * GRD_rdgz(k-1) ) &
                                              * VMTR_GAM2H_pl  (g,k  ,l) * eth_pl(g,k,l)   &
-                                           - 0.5_RP * ( GRD_dfac(k) - GRD_cfac(k-1) )     &
+                                           - ( GRD_dfac(k) - GRD_cfac(k-1) )              &
                                            * ( g_tilde_pl(g,k,l) + GCVovR )               )
           enddo
           enddo
@@ -1338,7 +1305,7 @@ contains
           do g = 1, ADM_gall_pl
              Mu_pl(g,k,l) = -GRD_rdgzh(k) * ( VMTR_RGSGAM2_pl(g,k  ,l) * GRD_rdgz(k)                        &
                                             * VMTR_GAM2H_pl  (g,k+1,l) * eth_pl(g,k+1,l)                    &
-                                            + 0.5_RP * GRD_cfac(k)                                          &
+                                            + GRD_cfac(k)                                                   &
                                             * ( g_tilde_pl   (g,k+1,l)                                      &
                                               + VMTR_GAM2H_pl(g,k+1,l)* VMTR_RGAMH_pl(g,k,l)**2 * GCVovR  ) )
           enddo
@@ -1348,7 +1315,7 @@ contains
           do g = 1, ADM_gall_pl
              Ml_pl(g,k,l) = -GRD_rdgzh(k) * ( VMTR_RGSGAM2_pl(g,k  ,l) * GRD_rdgz(k)                        &
                                             * VMTR_GAM2H_pl  (g,k-1,l) * eth_pl(g,k-1,l)                    &
-                                            - 0.5_RP * GRD_dfac(k-1)                                        &
+                                            - GRD_dfac(k-1)                                                 &
                                             * ( g_tilde_pl   (g,k-1,l)                                      &
                                               + VMTR_GAM2H_pl(g,k-1,l) * VMTR_RGAMH_pl(g,k,l)**2 * GCVovR ) )
           enddo
@@ -1448,7 +1415,7 @@ contains
                         ) * dt * GRD_rdgzh(k)                                                               &
                       - ( ( rhog0 (g,k,  l)      + dt * Sr(g,k,  l) ) * VMTR_RGAM(g,k,  l)**2 * GRD_afac(k) &
                         + ( rhog0 (g,k-1,l)      + dt * Sr(g,k-1,l) ) * VMTR_RGAM(g,k-1,l)**2 * GRD_bfac(k) &
-                        ) * dt * 0.5_RP * GRAV                                                              &
+                        ) * dt * GRAV                                                                       &
                       ) * CVovRt2
        enddo
        enddo
@@ -1505,7 +1472,7 @@ contains
                               ) * dt * GRD_rdgzh(k)                                                                        &
                             - ( ( rhog0_pl (g,k,  l)      + dt * Sr_pl(g,k,  l) ) * VMTR_RGAM_pl(g,k,  l)**2 * GRD_afac(k) &
                               + ( rhog0_pl (g,k-1,l)      + dt * Sr_pl(g,k-1,l) ) * VMTR_RGAM_pl(g,k-1,l)**2 * GRD_bfac(k) &
-                              ) * dt * 0.5_RP * GRAV                                                                       &
+                              ) * dt * GRAV                                                                                &
                             ) * CVovRt2
           enddo
           enddo
