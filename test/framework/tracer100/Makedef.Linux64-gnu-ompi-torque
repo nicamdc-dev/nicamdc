@@ -1,0 +1,59 @@
+#
+# ------ FOR Linux 64bit & intel fortran&C & mpt & torque -----
+#
+
+FFLAGS_FAST  = -cpp -O3 -m64                                                           \
+               -std=f2003 -pedantic-errors -fimplicit-none -fmodule-private            \
+               -mcmodel=medium -fconvert=big-endian -frecord-marker=4 -fall-intrinsics
+
+FFLAGS_DEBUG = -cpp -O0 -m64                                                           \
+               -std=f2003 -pedantic-errors -fimplicit-none -fmodule-private            \
+               -mcmodel=medium -fconvert=big-endian -frecord-marker=4 -fall-intrinsics \
+               -ffpe-trap=invalid,zero,overflow -finit-integer=-32768 -finit-real=nan -finit-logical=false -finit-character=9 \
+               -Wall -Wextra -Wcharacter-truncation -Wunderflow \
+               -g -fbacktrace -fbounds-check
+
+FC     = mpifort
+#FFLAGS = $(FFLAGS_FAST)
+FFLAGS = $(FFLAGS_DEBUG)
+
+F77FLAGS = -ffixed-form -ffixed-line-length-132
+
+LD     = $(FC)
+# to avoid "-x f95-cpp-input" option
+#LFLAGS = $(FFLAGS_FAST)
+LFLAGS = $(FFLAGS_DEBUG)
+
+CC     = mpicc
+
+CFLAGS_FAST  = -O3 -m64 -std=c99 -mcmodel=medium
+CFLAGS_DEBUG = -O0 -m64 -std=c99 -g -fbacktrace
+
+#CFLAGS = $(CFLAGS_FAST)
+CFLAGS = $(CFLAGS_DEBUG)
+
+##### Special Options #####
+
+ifeq ($(ENABLE_OPENMP),T)
+	FFLAGS += -openmp -openmp-report
+endif
+
+ifeq ($(ENABLE_NETCDF),T)
+	NETCDF_INCLUDE ?= -I$(NETCDF4)/include
+	NETCDF_LIBS    ?= -L$(NETCDF4)/lib -L$(HDF5)/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lm -lz
+	FFLAGS         += $(NETCDF_INCLUDE)
+	CFLAGS         += $(NETCDF_INCLUDE)
+endif
+
+###########################
+
+# if gcc < 4.5: -M, else if gcc >= 4.6: -J
+MODDIROPT ?= -J $(BUILD_DIR)
+OBJDIR    ?= $(BUILD_DIR)
+
+MAKE    = make
+INSTALL = cp -u
+AR      = ar
+ARFLAGS = r
+RANLIB  = ranlib
+JOBSUB  = qsub

@@ -16,6 +16,8 @@ module mod_af_heldsuarez
   !
   !++ Used modules
   !
+  use mod_precision
+  use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID
   !-----------------------------------------------------------------------------
@@ -62,7 +64,6 @@ contains
        fvx,   &
        fvy,   &
        fvz,   &
-       fw,    &
        fe     )
     use mod_adm, only: &
        kdim => ADM_kall, &
@@ -74,39 +75,37 @@ contains
        PRE00 => CNST_PRE00
     implicit none
 
-    integer, intent(in)  :: ijdim 
-    real(8), intent(in)  :: lat(ijdim)
-    real(8), intent(in)  :: pre(ijdim,kdim)
-    real(8), intent(in)  :: tem(ijdim,kdim)
-    real(8), intent(in)  :: vx (ijdim,kdim)
-    real(8), intent(in)  :: vy (ijdim,kdim)
-    real(8), intent(in)  :: vz (ijdim,kdim)
-    real(8), intent(out) :: fvx(ijdim,kdim)
-    real(8), intent(out) :: fvy(ijdim,kdim)
-    real(8), intent(out) :: fvz(ijdim,kdim)
-    real(8), intent(out) :: fw (ijdim,kdim)
-    real(8), intent(out) :: fe (ijdim,kdim)
+    integer, intent(in)  :: ijdim
+    real(RP), intent(in)  :: lat(ijdim)
+    real(RP), intent(in)  :: pre(ijdim,kdim)
+    real(RP), intent(in)  :: tem(ijdim,kdim)
+    real(RP), intent(in)  :: vx (ijdim,kdim)
+    real(RP), intent(in)  :: vy (ijdim,kdim)
+    real(RP), intent(in)  :: vz (ijdim,kdim)
+    real(RP), intent(out) :: fvx(ijdim,kdim)
+    real(RP), intent(out) :: fvy(ijdim,kdim)
+    real(RP), intent(out) :: fvz(ijdim,kdim)
+    real(RP), intent(out) :: fe (ijdim,kdim)
 
-    real(8) :: T_eq, acl, asl, ap0
-    real(8), parameter :: T_eq2 = 200.D0
-    real(8), parameter :: DT_y  =  60.D0 ! [K]
-    real(8), parameter :: Dth_z =  10.D0 ! [K]
+    real(RP) :: T_eq, acl, asl, ap0
+    real(RP), parameter :: T_eq2 = 200.0_RP
+    real(RP), parameter :: DT_y  =  60.0_RP ! [K]
+    real(RP), parameter :: Dth_z =  10.0_RP ! [K]
 
-    real(8) :: k_t, k_v
-    real(8) :: sigma, fact_sig
-    real(8), parameter :: sigma_b = 0.7D0
-    real(8), parameter :: k_f     = 1.D0 / ( 1.D0 * 86400.D0 )
-    real(8), parameter :: k_a     = 1.D0 / (40.D0 * 86400.D0 )
-    real(8), parameter :: k_s     = 1.D0 / ( 4.D0 * 86400.D0 )
+    real(RP) :: k_t, k_v
+    real(RP) :: sigma, fact_sig
+    real(RP), parameter :: sigma_b = 0.7_RP
+    real(RP), parameter :: k_f     = 1.0_RP / ( 1.0_RP * 86400.0_RP )
+    real(RP), parameter :: k_a     = 1.0_RP / (40.0_RP * 86400.0_RP )
+    real(RP), parameter :: k_s     = 1.0_RP / ( 4.0_RP * 86400.0_RP )
 
     integer :: n, k
     !---------------------------------------------------------------------------
 
-    fvx(:,:) = 0.D0
-    fvy(:,:) = 0.D0
-    fvz(:,:) = 0.D0
-    fw (:,:) = 0.D0
-    fe (:,:) = 0.D0
+    fvx(:,:) = 0.0_RP
+    fvy(:,:) = 0.0_RP
+    fvz(:,:) = 0.0_RP
+    fe (:,:) = 0.0_RP
 
     do k = kmin, kmax
     do n = 1,    ijdim
@@ -114,11 +113,11 @@ contains
        acl = abs( cos(lat(n)) )
        ap0 = abs( pre(n,k) / PRE00 )
 
-       T_eq = (315.D0 - DT_y*asl*asl - Dth_z*log(ap0)*acl*acl ) * ap0**KAPPA
+       T_eq = (315.0_RP - DT_y*asl*asl - Dth_z*log(ap0)*acl*acl ) * ap0**KAPPA
        T_eq = max(T_eq,T_eq2)
 
-       sigma    = pre(n,k) / ( 0.5D0 * ( pre(n,kmin) + pre(n,kmin-1) ) )
-       fact_sig = max( 0.D0, (sigma-sigma_b) / (1.D0-sigma_b) )
+       sigma    = pre(n,k) / ( 0.5_RP * ( pre(n,kmin) + pre(n,kmin-1) ) )
+       fact_sig = max( 0.0_RP, (sigma-sigma_b) / (1.0_RP-sigma_b) )
 
        k_v = k_f * fact_sig
 

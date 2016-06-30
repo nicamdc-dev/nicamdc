@@ -30,7 +30,7 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-# for AICS-FX10
+# for K(micro)
 if [ ${NMPI} -gt 1152 ]; then
    rscgrp="invalid"
 else

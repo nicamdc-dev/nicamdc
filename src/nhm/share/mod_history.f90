@@ -33,6 +33,8 @@ module mod_history
   !
   !++ Used modules
   !
+  use mod_precision
+  use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID,  &
      ADM_MAXFNAME, &
@@ -52,9 +54,9 @@ module mod_history
   !
   !++ Public parameters & variables
   !
-  integer,                 public,              save :: HIST_req_nmax
-  character(len=ADM_NSYS), public, allocatable, save :: item_save(:)
-  logical,                 public,              save :: HIST_output_step0 = .false.
+  integer,                 public              :: HIST_req_nmax
+  character(len=ADM_NSYS), public, allocatable :: item_save(:)
+  logical,                 public              :: HIST_output_step0 = .false.
 
   !-----------------------------------------------------------------------------
   !
@@ -69,56 +71,56 @@ module mod_history
   !++ Private parameters & variables
   !
   integer, private, parameter :: HIST_req_limit = 1000
+  real(RP),private, parameter :: EPS_ZERO = 1.E-16_RP
 
-  character(len=ADM_MAXFNAME), private, save :: HIST_io_fname  = ''
-  character(len=ADM_NSYS),     private, save :: HIST_io_desc   = ''
-  integer,                     private, save :: HIST_dtype     = -1
-  character(len=ADM_MAXFNAME), private, save :: output_path    = ''
-  character(len=ADM_NSYS),     private, save :: histall_fname  = ''
-  character(len=ADM_MAXFNAME), private, save :: output_io_mode != 'LEGACY'
-  logical,                     private, save :: direct_access  = .false.
-  integer,                     private, save :: output_size    = 4
-  integer,                     private, save :: npreslev       = 1
-  real(8),                     private, save :: pres_levs(60)  != CNST_PRE00
-  logical,                     private, save :: check_flag     = .true.
+  character(len=ADM_MAXFNAME), private :: HIST_io_fname  = ''
+  character(len=ADM_NSYS),     private :: HIST_io_desc   = ''
+  integer,                     private :: HIST_dtype     = -1
+  character(len=ADM_MAXFNAME), private :: output_path    = ''
+  character(len=ADM_NSYS),     private :: histall_fname  = ''
+  character(len=ADM_MAXFNAME), private :: output_io_mode != 'LEGACY'
+  integer,                     private :: output_size    = 4
+  integer,                     private :: npreslev       = 1
+  real(RP),                     private :: pres_levs(60)  != CNST_PRE00
+  logical,                     private :: check_flag     = .true.
 
-  integer,                     private, save :: ksum
-  logical,                     private, save :: calc_pressure = .false.
+  integer,                     private :: ksum
+  logical,                     private :: calc_pressure = .false.
 
-  character(len=ADM_MAXFNAME), private, allocatable, save :: file_save (:)
-  character(len=ADM_NSYS),     private, allocatable, save :: desc_save (:)
-  character(len=ADM_NSYS),     private, allocatable, save :: unit_save (:)
-  integer,                     private, allocatable, save :: step_save (:)
-  character(len=ADM_NSYS),     private, allocatable, save :: ktype_save(:)
-  integer,                     private, allocatable, save :: kstr_save (:)
-  integer,                     private, allocatable, save :: kend_save (:)
-  integer,                     private, allocatable, save :: kmax_save (:)
-  character(len=ADM_NSYS),     private, allocatable, save :: output_type_save  (:)
-  logical,                     private, allocatable, save :: out_prelev_save   (:)
-  logical,                     private, allocatable, save :: out_vintrpl_save  (:)
-  logical,                     private, allocatable, save :: opt_wgrid_save    (:)
-  logical,                     private, allocatable, save :: opt_lagintrpl_save(:)
+  character(len=ADM_MAXFNAME), private, allocatable :: file_save (:)
+  character(len=ADM_NSYS),     private, allocatable :: desc_save (:)
+  character(len=ADM_NSYS),     private, allocatable :: unit_save (:)
+  integer,                     private, allocatable :: step_save (:)
+  character(len=ADM_NSYS),     private, allocatable :: ktype_save(:)
+  integer,                     private, allocatable :: kstr_save (:)
+  integer,                     private, allocatable :: kend_save (:)
+  integer,                     private, allocatable :: kmax_save (:)
+  character(len=ADM_NSYS),     private, allocatable :: output_type_save  (:)
+  logical,                     private, allocatable :: out_prelev_save   (:)
+  logical,                     private, allocatable :: out_vintrpl_save  (:)
+  logical,                     private, allocatable :: opt_wgrid_save    (:)
+  logical,                     private, allocatable :: opt_lagintrpl_save(:)
 
-  character(len=ADM_NSYS),     private, allocatable, save :: lname_save   (:)
-  integer,                     private, allocatable, save :: tmax_save    (:)
-  real(8),                     private, allocatable, save :: tstr_save    (:)
-  real(8),                     private, allocatable, save :: tend_save    (:)
-  integer,                     private, allocatable, save :: month_old    (:)
-  integer,                     private, allocatable, save :: l_region_save(:)
+  character(len=ADM_NSYS),     private, allocatable :: lname_save   (:)
+  integer,                     private, allocatable :: tmax_save    (:)
+  real(DP),                     private, allocatable :: tstr_save    (:)
+  real(DP),                     private, allocatable :: tend_save    (:)
+  integer,                     private, allocatable :: month_old    (:)
+  integer,                     private, allocatable :: l_region_save(:)
 
-  integer,                     private, allocatable, save :: ksumstr  (:)
-  integer,                     private, allocatable, save :: ksumend  (:)
-  real(8),                     private, allocatable, save :: tsum_save(:,:)
-  logical,                     private, allocatable, save :: flag_save(:)
+  integer,                     public,  allocatable :: ksumstr  (:)
+  integer,                     private, allocatable :: ksumend  (:)
+  real(RP),                     private, allocatable :: tsum_save(:,:)
+  logical,                     private, allocatable :: flag_save(:)
 
-  real(8),                     private, allocatable, save :: v_save   (:,:,:,:)
-  real(8),                     private, allocatable, save :: v_save_pl(:,:,:,:)
-  real(8),                     private, allocatable, save :: zlev_save(:)
+  real(RP),                     public,  allocatable :: v_save   (:,:,:,:)
+  real(RP),                     private, allocatable :: v_save_pl(:,:,:,:)
+  real(RP),                     private, allocatable :: zlev_save(:)
 
-  real(8),                     private, allocatable, save :: pres_levs_ln(:)
-  integer,                     private, allocatable, save :: cnvpre_klev(:,:,:)
-  real(8),                     private, allocatable, save :: cnvpre_fac1(:,:,:)
-  real(8),                     private, allocatable, save :: cnvpre_fac2(:,:,:)
+  real(RP),                     private, allocatable :: pres_levs_ln(:)
+  integer,                     public,  allocatable :: cnvpre_klev(:,:,:)
+  real(RP),                     public,  allocatable :: cnvpre_fac1(:,:,:)
+  real(RP),                     public,  allocatable :: cnvpre_fac2(:,:,:)
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
@@ -135,33 +137,17 @@ contains
        ADM_vlayer
     use mod_cnst, only: &
        CNST_PRE00
+    use mod_calendar, only: &
+       calendar_ss2yh
+    use mod_grd, only: &
+       GRD_gz
     use mod_fio, only: &
        FIO_REAL8, &
        FIO_REAL4
     use mod_time, only: &
        TIME_CTIME
-    use mod_calendar, only: &
-       calendar_ss2yh
-    use mod_grd, only: &
-       GRD_gz
     use mod_runconf, only: &
-       RUNNAME!,          &
-!         NTAU_ISCCP,        &
-!         NPRES_ISCCP,       &
-!         LAND_TYPE,         &
-!         OCEAN_TYPE
-!    use mod_landvar_bc, only: &
-!         KMAX_bc    => KMAX,    &
-!         GLVNAME_bc => GLVNAME, &
-!         I_ALL_bc   => I_ALL
-!    use mod_landvar_matsiro, only: &
-!         KMAX_mat    => KMAX,    &
-!         GLVNAME_mat => GLVNAME, &
-!         I_ALL_mat   => I_ALL
-!    use mod_oceanvar_mixedlayer, only: &
-!         KMAX_ocn  => KMAX, &
-!         GOVNAME,           &
-!         I_ALL_ocn => I_ALL
+       RUNNAME
     implicit none
 
     character(len=ADM_NSYS)     :: hist3D_layername  != ''
@@ -197,7 +183,6 @@ contains
          histall_fname,     &
          hist3D_layername,  &
          output_io_mode,    &
-         direct_access,     &
          output_size,       &
          step,              &
          ktype,             &
@@ -365,8 +350,8 @@ contains
     allocate( flag_save         (HIST_req_nmax) )
     lname_save        (:) = ""
     tmax_save         (:) = 0
-    tstr_save         (:) = 0.D0
-    tend_save         (:) = 0.D0
+    tstr_save         (:) = 0.0_RP
+    tend_save         (:) = 0.0_RP
     month_old         (:) = 0
     l_region_save     (:) = 0
     flag_save         (:) = .false.
@@ -428,37 +413,6 @@ contains
           kstr = 1
           kend = 1
           lname = "ZSSFC1"
-!       case('ISCCP')
-!          kstr = 1
-!          kend = NTAU_ISCCP*NPRES_ISCCP
-!       case('GL')
-!          kstr =  1
-!          kend = -1
-!          if ( trim(LAND_TYPE) == 'BUCKET' ) then
-!             do idx = 1, I_ALL_bc
-!                if( trim(GLVNAME_bc(idx) ) == trim(item) ) kend = KMAX_bc(idx)
-!             enddo
-!          elseif( trim(LAND_TYPE) == 'MATSIRO' ) then
-!             do idx = 1, I_ALL_mat
-!                if( trim(GLVNAME_mat(idx)) == trim(item) ) kend = KMAX_mat(idx)
-!             enddo
-!          endif
-!          if ( kend == -1 ) then
-!             write(ADM_LOG_FID,*) 'xxx History item=', trim(item), ' is not in LAND module=', trim(LAND_TYPE),'. STOP.'
-!             call ADM_proc_stop
-!          endif
-!       case('GO')
-!          kstr =  1
-!          kend = -1
-!          if ( trim(OCEAN_TYPE) == 'MIXEDLAYER' ) then
-!              do idx = 1, I_ALL_ocn
-!                 if( trim(GOVNAME(idx)) == trim(item) ) kend = KMAX_ocn(idx)
-!              enddo
-!          endif
-!          if ( kend == -1 ) then
-!             write(ADM_LOG_FID,*) 'xxx History item=', trim(item), ' is not in OCEAN module=', trim(OCEAN_TYPE),'. STOP.'
-!             call ADM_proc_stop
-!          endif
        endselect
 
        ! check consistensy between kend and kmax
@@ -503,7 +457,7 @@ contains
        lname_save        (n) = lname
        tmax_save         (n) = 0
        tstr_save         (n) = TIME_CTIME
-       tend_save         (n) = 0.D0
+       tend_save         (n) = 0.0_RP
 
        month_old         (n) = idate(2)
        l_region_save     (n) = 0
@@ -520,13 +474,13 @@ contains
     enddo
 
     allocate( tsum_save(HIST_req_nmax,ADM_lall) )
-    tsum_save(:,:) = 0.D0
+    tsum_save(:,:) = 0.0_RP
 
     ! k-merged history container
     allocate( v_save   (ADM_gall,   ksum,ADM_lall,   1) )
     allocate( v_save_pl(ADM_gall_pl,ksum,ADM_lall_pl,1) )
-    v_save   (:,:,:,:) = 0.D0
-    v_save_pl(:,:,:,:) = 0.D0
+    v_save   (:,:,:,:) = 0.0_RP
+    v_save_pl(:,:,:,:) = 0.0_RP
 
     allocate( zlev_save(ksum) )
 
@@ -539,15 +493,15 @@ contains
              zlev_save( ksumstr(n):ksumend(n) ) = GRD_gz(ADM_kmin:ADM_kmax)
           endif
        case('2D')
-          zlev_save( ksumstr(n):ksumend(n) ) = 0.D0
+          zlev_save( ksumstr(n):ksumend(n) ) = 0.0_RP
 !       case('ISCCP')
 !          do k = 1, NTAU_ISCCP*NPRES_ISCCP
-!             zlev_save( ksumstr(n) + k-1 ) = real(k,kind=8)
+!             zlev_save( ksumstr(n) + k-1 ) = real(k,kind=RP)
 !          enddo
 !       case('GL')
 !       case('GO')
 !          do k = 1, kmax_save(n)
-!             zlev_save( ksumstr(n) + k-1 ) = real(k,kind=8)
+!             zlev_save( ksumstr(n) + k-1 ) = real(k,kind=RP)
 !          enddo
        case default
           zlev_save( ksumstr(n):ksumend(n) ) = GRD_gz( ADM_kmin+kstr_save(n)-1:ADM_kmin+kend_save(n)-1 )
@@ -586,7 +540,7 @@ contains
     implicit none
 
     character(len=*), intent(in) :: item
-    real(8),          intent(in) :: gd(:,:)
+    real(RP),          intent(in) :: gd(:,:)
     integer,          intent(in), optional :: l_region
 
     character(len=ADM_NSYS) :: hitem
@@ -780,9 +734,9 @@ contains
        VINTRPL_z_level, &
        VINTRPL_z_level2
 
-    real(8) :: tmp   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(8) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: val_max, val_min
+    real(RP) :: tmp   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: val_max, val_min
 
     character(len=20)           :: HTIME
     character(len=ADM_NSYS)     :: item
@@ -846,7 +800,11 @@ contains
           do l = 1, ADM_lall
           do k = ksumstr(n), ksumend(n)
           do g = 1, ADM_gall
-             v_save(g,k,l,1) = v_save(g,k,l,1) / tsum_save(n,l)
+             if ( abs(v_save(g,k,l,1)) < EPS_ZERO ) then ! tentaive: to avode floating invalid
+                v_save(g,k,l,1) = EPS_ZERO
+             else
+                v_save(g,k,l,1) = v_save(g,k,l,1) / tsum_save(n,l)
+             endif
           enddo
           enddo
           enddo
@@ -854,7 +812,11 @@ contains
           do l = 1, ADM_lall_pl
           do k = ksumstr(n), ksumend(n)
           do g = 1, ADM_gall_pl
-             v_save_pl(g,k,l,1) = v_save_pl(g,k,l,1) / tsum_save(n,1)
+             if ( abs(v_save_pl(g,k,l,1)) < EPS_ZERO ) then ! tentaive: to avode floating invalid
+                v_save_pl(g,k,l,1) = EPS_ZERO
+             else
+                v_save_pl(g,k,l,1) = v_save_pl(g,k,l,1) / tsum_save(n,1)
+             endif
           enddo
           enddo
           enddo
@@ -924,11 +886,11 @@ contains
           endif
 
           ! reset saved variable
-          v_save   (:,ksumstr(n):ksumend(n),:,1) = 0.D0
-          v_save_pl(:,ksumstr(n):ksumend(n),:,1) = 0.D0
+          v_save   (:,ksumstr(n):ksumend(n),:,1) = 0.0_RP
+          v_save_pl(:,ksumstr(n):ksumend(n),:,1) = 0.0_RP
 
           tstr_save(n) = TIME_CTIME
-          tsum_save(n,:) = 0.D0
+          tsum_save(n,:) = 0.0_RP
        endif
     enddo
 
@@ -1031,130 +993,187 @@ contains
   end subroutine history_timeinfo
 
   !-----------------------------------------------------------------------------
-  subroutine get_log_pres  ! Y.Niwa add 071130
-    !
-    use mod_adm, only : &
-         ADM_gall,  &
-         ADM_kall,  &
-         ADM_kmax,  &
-         ADM_kmin,  &
-         ADM_lall,  &
-         ADM_GALL_PL, &
-         ADM_LALL_PL, &
-         ADM_KNONE
-    use mod_runconf, only : &
-         nqmax => TRC_VMAX
-    use mod_thrmdyn, only :    &
-         thrmdyn_tempre,   &
-         thrmdyn_qd
-    use mod_vmtr, only :        &
-         VMTR_GSGAM2
-    use mod_sfcvar, only :    &
-         sfcvar_get,          &
-         I_PRE_SFC
-    use mod_prgvar, only :     &
-         prgvar_get
-    !
+  subroutine get_log_pres
+    use mod_adm, only: &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_KNONE,   &
+       ADM_kmax,    &
+       ADM_kmin
+    use mod_grd, only: &
+       GRD_zs,   &
+       GRD_ZSFC, &
+       GRD_vz,   &
+       GRD_Z
+    use mod_vmtr, only: &
+       VMTR_GSGAM2
+    use mod_runconf, only: &
+       TRC_VMAX
+    use mod_prgvar, only: &
+       prgvar_get
+    use mod_thrmdyn, only: &
+       THRMDYN_tempre
     implicit none
-    !
-    integer :: l, nq, ij, kk, k
-    real(8) :: rhog(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: rhogvx(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: rhogvy(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: rhogvz(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: rhogw(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: rhoge(ADM_gall,ADM_kall,ADM_lall)
-    real(8) :: rhogq(ADM_gall,ADM_kall,ADM_lall,nqmax)
-    real(8) :: rhogq_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL,nqmax)
-    !
-    real(8) :: q(ADM_gall,ADM_kall,nqmax)
-    real(8) :: rho(ADM_gall,ADM_kall)
-    real(8) :: pre(ADM_gall,ADM_kall)
-    real(8) :: tem(ADM_gall,ADM_kall)
-    real(8) :: rgrho(ADM_gall,ADM_kall)
-    real(8) :: ein(ADM_gall,ADM_kall)
-    real(8) :: qd(ADM_gall,ADM_kall)
-    real(8) :: v2d_pl(ADM_GALL_PL,ADM_KNONE,ADM_LALL_PL)
-    real(8) :: v3d_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: v3d2_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: v3d3_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: v3d4_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: v3d5_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: v3d6_pl(ADM_GALL_PL,ADM_kall,ADM_LALL_PL)
-    real(8) :: pre_sfc(ADM_gall,ADM_KNONE,ADM_lall)
-    integer, parameter :: num = 0
 
-    real(8) :: lpres_sfc(ADM_gall,ADM_lall)
-    real(8) :: lpres(ADM_gall,ADM_kall)
+    real(RP) :: rhog     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhogvx   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhogvy   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhogvz   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhogw    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhoge    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhogq    (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
+    real(RP) :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    call prgvar_get(         &
-         rhog,   v3d_pl,   &  !--- out
-         rhogvx, v3d2_pl,  &  !--- out
-         rhogvy, v3d3_pl,  &  !--- out
-         rhogvz, v3d4_pl,  &  !--- out
-         rhogw,  v3d5_pl,  &  !--- out
-         rhoge,  v3d6_pl,  &  !--- out
-         rhogq,  rhogq_pl, &  !--- out
-         num )                !--- in
+    real(RP) :: rho(ADM_gall,ADM_kall,ADM_lall)
+    real(RP) :: ein(ADM_gall,ADM_kall,ADM_lall)
+    real(RP) :: q  (ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
+    real(RP) :: tem(ADM_gall,ADM_kall,ADM_lall)
+    real(RP) :: pre(ADM_gall,ADM_kall,ADM_lall)
 
-    call sfcvar_get(           &
-         pre_sfc, v2d_pl,      &  !--- out
-         vid = I_PRE_SFC       &  !--- in
-         )
-    lpres_sfc(:,:) = log(pre_sfc(:,ADM_KNONE,:))
+    real(RP) :: pre_sfc(ADM_gall,ADM_KNONE,ADM_lall)
 
-    cnvpre_fac1(:,:,:) = 0.D0
-    cnvpre_fac2(:,:,:) = 0.D0
+    real(RP) :: lpres_sfc(ADM_gall)
+    real(RP) :: lpres    (ADM_gall,ADM_kall)
+
+    integer :: g, k, l, nq, kk
+    !---------------------------------------------------------------------------
+
+    cnvpre_fac1(:,:,:) = 0.0_RP
+    cnvpre_fac2(:,:,:) = 0.0_RP
     cnvpre_klev(:,:,:) = -1
 
-    !--- calculation of tem, pre, and th
-    do l=1, ADM_lall
+    call prgvar_get( rhog,   rhog_pl,   &
+                     rhogvx, rhogvx_pl, &
+                     rhogvy, rhogvy_pl, &
+                     rhogvz, rhogvz_pl, &
+                     rhogw,  rhogw_pl,  &
+                     rhoge,  rhoge_pl,  &
+                     rhogq,  rhogq_pl,  &
+                     0                  )
 
-       rgrho(:,:) = 1.0d0/rhog(:,:,l)
-       ein(:,:) = rhoge(:,:,l) * rgrho(:,:)
+    do l = 1, ADM_lall
+    do k = 1, ADM_kall
+    do g = 1, ADM_gall
+       rho(g,k,l) = rhog (g,k,l) / VMTR_GSGAM2(g,k,l)
+       ein(g,k,l) = rhoge(g,k,l) / rhog(g,k,l)
+    enddo
+    enddo
+    enddo
 
-       do nq=1, nqmax
-          q(:,:,nq) = rhogq(:,:,l,nq) * rgrho(:,:)
+    do nq = 1, TRC_VMAX
+    do l = 1, ADM_lall
+    do k = 1, ADM_kall
+    do g = 1, ADM_gall
+       q(g,k,l,nq) = rhogq(g,k,l,nq) / rhog(g,k,l)
+    enddo
+    enddo
+    enddo
+    enddo
+
+    call THRMDYN_tempre( ADM_gall,     & ! [IN]
+                         ADM_kall,     & ! [IN]
+                         ADM_lall,     & ! [IN]
+                         ein(:,:,:),   & ! [IN]
+                         rho(:,:,:),   & ! [IN]
+                         q  (:,:,:,:), & ! [IN]
+                         tem(:,:,:),   & ! [OUT]
+                         pre(:,:,:)    ) ! [OUT]
+
+    call diag_pre_sfc( ADM_gall,                & ! [IN]
+                       ADM_kall,                & ! [IN]
+                       ADM_lall,                & ! [IN]
+                       real(GRD_vz (:,:,:,GRD_Z),kind=RP),    & ! [IN]
+                       rho    (:,:,:),          & ! [IN]
+                       pre    (:,:,:),          & ! [IN]
+                       real(GRD_zs (:,:,:,GRD_ZSFC),kind=RP), & ! [IN]
+                       pre_sfc(:,:,:)           ) ! [OUT]
+
+    do l = 1, ADM_lall
+       lpres_sfc(:)   = log( pre_sfc(:,ADM_KNONE,l) )
+       lpres    (:,:) = log( pre(:,:,l) )
+
+       do kk = 1, npreslev
+       do g  = 1, ADM_gall
+
+          if ( lpres_sfc(g) >= pres_levs_ln(kk) ) then
+
+             do k = ADM_kmin, ADM_kmax
+                if( pres_levs_ln(kk) > lpres(g,k) ) exit
+             enddo
+
+             if( k == ADM_kmin )     k = ADM_kmin + 1 ! extrapolation
+             if( k == ADM_kmax + 1 ) k = ADM_kmax     ! extrapolation
+
+             cnvpre_klev(g,kk,l) = k
+             cnvpre_fac1(g,kk,l) = ( lpres(g,k) - pres_levs_ln(kk)   ) / ( lpres(g,k) - lpres(g,k-1) )
+             cnvpre_fac2(g,kk,l) = ( pres_levs_ln(kk) - lpres(g,k-1) ) / ( lpres(g,k) - lpres(g,k-1) )
+
+          endif
        enddo
-
-       call thrmdyn_qd( ADM_gall, qd, q )
-
-       rho(:,:) = rhog(:,:,l)/VMTR_GSGAM2(:,:,l)
-       call thrmdyn_tempre( &
-            ADM_gall,       &
-            tem,            &  !--- out
-            pre,            &  !--- out
-            ein,            &  !--- in
-            rho,            &  !--- in
-            qd,             &  !--- in
-            q )                !--- in
-
-       lpres(:,:) = log(pre(:,:))
-
-       do kk=1, npreslev
-          do ij=1, ADM_gall
-             if(lpres_sfc(ij,l) < pres_levs_ln(kk)) then
-                !cnvpre_klev(ij,kk,l) = -1
-             else
-                do k=ADM_kmin, ADM_kmax
-                   if( pres_levs_ln(kk) > lpres(ij,k) ) exit
-                enddo
-
-                if( k == ADM_kmin )     k = ADM_kmin + 1 ! extrapolation
-                if( k == ADM_kmax + 1 ) k = ADM_kmax     ! extrapolation
-
-                cnvpre_klev(ij,kk,l) = k
-                cnvpre_fac1(ij,kk,l) = ( lpres(ij,k) - pres_levs_ln(kk) ) / ( lpres(ij,k) - lpres(ij,k-1) )
-                cnvpre_fac2(ij,kk,l) = ( pres_levs_ln(kk) - lpres(ij,k-1) ) / ( lpres(ij,k) - lpres(ij,k-1) )
-
-             endif
-          enddo
        enddo
-
     enddo
 
     return
   end subroutine get_log_pres
+
+  !-----------------------------------------------------------------------------
+  subroutine diag_pre_sfc( &
+       ijdim,  &
+       kdim,   &
+       ldim,   &
+       z,      &
+       rho,    &
+       pre,    &
+       z_sfc,  &
+       pre_sfc )
+    use mod_adm, only: &
+       knone => ADM_KNONE, &
+       kmin  => ADM_kmin
+    use mod_cnst, only: &
+       GRAV => CNST_EGRAV
+    implicit none
+
+    integer,  intent(in)  :: ijdim
+    integer,  intent(in)  :: kdim
+    integer,  intent(in)  :: ldim
+    real(RP), intent(in)  :: z      (ijdim,kdim ,ldim) ! altitude [m]
+    real(RP), intent(in)  :: rho    (ijdim,kdim ,ldim) ! density  [kg/m3]
+    real(RP), intent(in)  :: pre    (ijdim,kdim ,ldim) ! pressure [Pa]
+    real(RP), intent(in)  :: z_sfc  (ijdim,knone,ldim) ! surface altitude [m]
+    real(RP), intent(out) :: pre_sfc(ijdim,knone,ldim) ! surface pressure [Pa]
+
+    real(RP) :: rho_sfc ! surface density [kg/m3]
+
+    integer :: ij, l
+    !---------------------------------------------------------------------------
+
+    do l  = 1, ldim
+    do ij = 1, ijdim
+       ! surface density: extrapolation
+       rho_sfc = ( (z_sfc(ij,knone ,l)-z(ij,kmin+1,l)) * (z_sfc(ij,knone ,l)-z(ij,kmin+2,l)) )                    &
+               / ( (z    (ij,kmin  ,l)-z(ij,kmin+1,l)) * (z    (ij,kmin  ,l)-z(ij,kmin+2,l)) ) * rho(ij,kmin  ,l) &
+               + ( (z_sfc(ij,knone ,l)-z(ij,kmin  ,l)) * (z_sfc(ij,knone ,l)-z(ij,kmin+2,l)) )                    &
+               / ( (z    (ij,kmin+1,l)-z(ij,kmin  ,l)) * (z    (ij,kmin+1,l)-z(ij,kmin+2,l)) ) * rho(ij,kmin+1,l) &
+               + ( (z_sfc(ij,knone ,l)-z(ij,kmin  ,l)) * (z_sfc(ij,knone ,l)-z(ij,kmin+1,l)) )                    &
+               / ( (z    (ij,kmin+2,l)-z(ij,kmin  ,l)) * (z    (ij,kmin+2,l)-z(ij,kmin+1,l)) ) * rho(ij,kmin+2,l)
+
+       ! surface pressure: hydrostatic balance
+       pre_sfc(ij,knone,l) = pre(ij,kmin,l) + 0.5_RP * ( rho(ij,kmin,l)+rho_sfc           ) &
+                                            * GRAV   * ( z  (ij,kmin,l)-z_sfc(ij,knone,l) )
+    enddo
+    enddo
+
+    return
+  end subroutine diag_pre_sfc
 
 end module mod_history
 !-------------------------------------------------------------------------------

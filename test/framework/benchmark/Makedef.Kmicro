@@ -1,9 +1,9 @@
 #
 # ------ FOR K computer -----
 #
-FFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,noalias=s,mfunc=2 \
+FFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,noalias=s,mfunc=1 \
                -Qi -Qt -X03 -Ncompdisp -Koptmsg=1 -Cpp                   \
-               -Kdynamic_iteration -Ksimd                                \
+               -Kdynamic_iteration -Ksimd,openmp                         \
                -Kauto,threadsafe
 
 # note: Kauto,threadsafe,autoobjstack,temparraystack depends on the stacksize.
@@ -47,7 +47,8 @@ endif
 ifeq ($(ENABLE_NETCDF),T)
 	NETCDF_INCLUDE ?= -I/opt/aics/netcdf/k-serial-noszip/include
 	NETCDF_LIBS    ?= -L/opt/aics/netcdf/k-serial-noszip/lib-static -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm
-	FFLAGS += $(NETCDF_INCLUDE)
+	FFLAGS         += $(NETCDF_INCLUDE)
+	CFLAGS         += $(NETCDF_INCLUDE)
 endif
 
 ###########################

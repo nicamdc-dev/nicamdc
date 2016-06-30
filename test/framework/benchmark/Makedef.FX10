@@ -1,9 +1,9 @@
 #
 # ------ FOR FX10 -----
 #
-FFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,noalias=s,mfunc=2 \
+FFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,noalias=s,mfunc=1 \
                -Qi -Qt -X03 -Ncompdisp -Koptmsg=1 -Cpp                   \
-               -Kdynamic_iteration -Ksimd                                \
+               -Kdynamic_iteration -Ksimd,openmp                         \
                -Kauto,threadsafe
 
 # note: Kauto,threadsafe,autoobjstack,temparraystack depends on the stacksize.
@@ -47,7 +47,8 @@ endif
 ifeq ($(ENABLE_NETCDF),T)
 	NETCDF_INCLUDE ?= -I/data/share005/cross-K/include
 	NETCDF_LIBS    ?= -L/data/share005/cross-K/lib -lnetcdf -lhdf5_hl -lhdf5 -lsz -lz
-	FFLAGS += $(NETCDF_INCLUDE)
+	FFLAGS         += $(NETCDF_INCLUDE)
+	CFLAGS         += $(NETCDF_INCLUDE)
 endif
 
 ###########################

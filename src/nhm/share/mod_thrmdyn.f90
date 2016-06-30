@@ -18,34 +18,32 @@ module mod_thrmdyn
   !      -----------------------------------------------------------------------
   !      0.00      04-02-17   Imported from igdc-4.34
   !                07-01-26   H.Tomita: Support all type of EIN_TYPE
-  !                08-06-13   T.Mitsui: mod thrmdyn_ent as strict difinition
+  !                08-06-13   T.Mitsui: mod THRMDYN_ent as strict difinition
   !      -----------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------------
   !
   !++ Used modules
   !
+  use mod_precision
+  use mod_debug
   use mod_adm, only: &
+     ADM_LOG_FID,      &
+     ADM_MAXFNAME,     &
+     ADM_NSYS,         &
      kdim => ADM_kall, &
      kmin => ADM_kmin, &
      kmax => ADM_kmax
   use mod_cnst, only: &
-     CNST_RAIR,  &
-     CNST_CP,    &
-     CNST_CV,    &
-     CNST_RVAP,  &
-     CNST_CPV,   &
-     CNST_CI,    &
-     CNST_CL,    &
-     CNST_KAPPA, &
-     CNST_EPSV,  &
-     CNST_PRE00, &
-     CNST_TEM00, &
-     CNST_PSAT0, &
-     CNST_LHF0,  &
-     CNST_LH0,   &
-     CNST_LHF00, &
-     CNST_LH00
+     Rdry  => CNST_RAIR,  &
+     CPdry => CNST_CP,    &
+     CVdry => CNST_CV,    &
+     KAPPA => CNST_KAPPA, &
+     Rvap  => CNST_RVAP,  &
+     PRE00 => CNST_PRE00, &
+     TEM00 => CNST_TEM00, &
+     PSAT0 => CNST_PSAT0, &
+     EPSV  => CNST_EPSV
   use mod_runconf, only: &
      nqmax => TRC_VMAX, &
      NQW_STR,           &
@@ -56,6 +54,8 @@ module mod_thrmdyn
      I_QI,              &
      I_QS,              &
      I_QG,              &
+     LHV,               &
+     LHF,               &
      CVW,               &
      CPW
   !-----------------------------------------------------------------------------
@@ -73,23 +73,70 @@ module mod_thrmdyn
   !
   !++ Public procedure
   !
-  public :: thrmdyn_rho
-  public :: thrmdyn_ein
-  public :: thrmdyn_eth
-  public :: thrmdyn_tem
-  public :: thrmdyn_pre
-  public :: thrmdyn_th
-  public :: thrmdyn_tempreth
-  public :: thrmdyn_tempre
-  public :: thrmdyn_cv
-  public :: thrmdyn_cp
-  public :: thrmdyn_qd
-  public :: thrmdyn_ent
+  public :: THRMDYN_qd
+  public :: THRMDYN_cv
+  public :: THRMDYN_cp
+  public :: THRMDYN_rho
+  public :: THRMDYN_pre
+  public :: THRMDYN_ein
+  public :: THRMDYN_tem
+  public :: THRMDYN_th
+  public :: THRMDYN_eth
+  public :: THRMDYN_ent
+  public :: THRMDYN_rhoein
+  public :: THRMDYN_tempre
 
-  public :: THRMDYN_qd_ijkl
-  public :: THRMDYN_rho_ijkl
-  public :: THRMDYN_ein_ijkl
-  public :: THRMDYN_tempre_ijkl
+  interface THRMDYN_qd
+     module procedure THRMDYN_qd_ijk
+     module procedure THRMDYN_qd_ijkl
+  end interface THRMDYN_qd
+
+  interface THRMDYN_cv
+     module procedure THRMDYN_cv_ijk
+  end interface THRMDYN_cv
+
+  interface THRMDYN_cp
+     module procedure THRMDYN_cp_ijk
+  end interface THRMDYN_cp
+
+  interface THRMDYN_rho
+     module procedure THRMDYN_rho_ijk
+     module procedure THRMDYN_rho_ijkl
+  end interface THRMDYN_rho
+
+  interface THRMDYN_pre
+     module procedure THRMDYN_pre_ijk
+  end interface THRMDYN_pre
+
+  interface THRMDYN_ein
+     module procedure THRMDYN_ein_ijk
+  end interface THRMDYN_ein
+
+  interface THRMDYN_tem
+     module procedure THRMDYN_tem_ijk
+  end interface THRMDYN_tem
+
+  interface THRMDYN_th
+     module procedure THRMDYN_th_ijk
+     module procedure THRMDYN_th_ijkl
+  end interface THRMDYN_th
+
+  interface THRMDYN_eth
+     module procedure THRMDYN_eth_ijk
+     module procedure THRMDYN_eth_ijkl
+  end interface THRMDYN_eth
+
+  interface THRMDYN_ent
+     module procedure THRMDYN_ent_ijk
+  end interface THRMDYN_ent
+
+  interface THRMDYN_rhoein
+     module procedure THRMDYN_rhoein_ijkl
+  end interface THRMDYN_rhoein
+
+  interface THRMDYN_tempre
+     module procedure THRMDYN_tempre_ijkl
+  end interface THRMDYN_tempre
 
   !-----------------------------------------------------------------------------
   !
@@ -106,518 +153,657 @@ module mod_thrmdyn
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  subroutine thrmdyn_rho( &
-       ijdim,             & !--- IN : number of horizontal grid
-       rho,               & !--- OUT : density
-       pre,               & !--- IN  : pressure
-       tem,               & !--- IN  : temperature
-       qd,                & !--- IN  : dry concentration
-       q )                  !--- IN  : water concentration
-    !------
-    !------ Density calculation in all regions
-    !------    1. calculation region of rho
-    !------                   : (:,:,:)
-    !------
+  !> calculate dry air
+  subroutine THRMDYN_qd_ijk( &
+       ijdim, &
+       kdim,  &
+       q,     &
+       qd     )
     implicit none
-    !
-    integer, intent(in) :: ijdim
-    real(8), intent(out) :: rho(1:ijdim,1:kdim)
-    real(8), intent(in)  :: pre(1:ijdim,1:kdim)
-    real(8), intent(in)  :: tem(1:ijdim,1:kdim)
-    real(8), intent(in)  :: qd(1:ijdim,1:kdim)
-    real(8), intent(in)  :: q(1:ijdim,1:kdim,1:nqmax)
-    !
-    rho(:,:) = pre(:,:) / tem(:,:) &
-         / ( qd(:,:)*CNST_RAIR+q(:,:,I_QV)*CNST_RVAP )
-    !
-  end subroutine thrmdyn_rho
-  !-----------------------------------------------------------------------------
-  subroutine thrmdyn_ein( &
-       ijdim,             & !--- IN : number of horizontal grid
-       ein,               &  !--- OUT : internal energy
-       tem,               &  !--- IN  : temperature
-       qd,                &  !--- IN  : dry concentration
-       q )                   !--- IN  : water concentration
-    !------
-    !------ Internal energy calculation in all regions
-    !------    1. calculation region of ein
-    !------                   : (:,:)
-    !------
-    !------ CAUTION : ein = CV*T*qd + CVV*T*qv + CPL*T*qc
-    !------           ein_moist = CV*T*qd + (CVV*T+LH00)*qv + CPL*T*qc
-    !
-    implicit none
-    !
-    integer, intent(in)  :: ijdim
-    real(8), intent(out) :: ein(1:ijdim,1:kdim)
-    real(8), intent(in)  :: tem(1:ijdim,1:kdim)
-    real(8), intent(in)  :: qd(1:ijdim,1:kdim)
-    real(8), intent(in)  :: q(1:ijdim,1:kdim,1:nqmax)
-    !
-    real(8) :: cv(1:ijdim,1:kdim)
-    !
-    call thrmdyn_cv( &
-         ijdim,      & !--- in
-         cv,         & !--- out
-         q,          & !--- in
-         qd )          !--- in
-    ein(:,:) = cv(:,:) * tem(:,:)
-    !
-  end subroutine thrmdyn_ein
-  !-----------------------------------------------------------------------------
-  subroutine thrmdyn_eth( &
-       ijdim,             &  !--- IN : number of horizontal grid
-       eth,               &  !--- OUT : enthalpy
-       ein,               &  !--- IN  : internal energy
-       pre,               &  !--- IN  : pressure
-       rho )                 !--- IN  : density
-    !------
-    !------ Enthalpy calculation in all regions
-    !------    1. calculation region of eth
-    !------                   : (:,:)
-    !------
-    implicit none
-    !
-    integer, intent(in)  :: ijdim
-    real(8), intent(out) :: eth(1:ijdim,1:kdim)
-    real(8), intent(in)  :: ein(1:ijdim,1:kdim)
-    real(8), intent(in)  :: pre(1:ijdim,1:kdim)
-    real(8), intent(in)  :: rho(1:ijdim,1:kdim)
-    !
-    eth(:,:) = ein(:,:) + pre(:,:) / rho(:,:)
-    !
-  end subroutine thrmdyn_eth
-  !-----------------------------------------------------------------------------
-  subroutine thrmdyn_tem( &
-       ijdim,             &  !--- IN : number of horizontal grid
-       tem,               &  !--- OUT  : temperature
-       ein,               &  !--- IN : internal energy
-       qd,                &  !--- IN  : dry concentration
-       q )                   !--- IN  : water concentration
-    !------
-    !------ temperature calculation in all regions
-    !------    1. calculation region of tem
-    !------                   : (:,:)
-    !------
-    !------ CAUTION : ein = CV*T*qd + CVV*T*qv + CPL*T*qc
-    !------           ein_moist = CV*T*qd + (CVV*T+LH00)*qv + CPL*T*qc
-    implicit none
-    !
-    integer, intent(in)  :: ijdim
-    real(8), intent(out)  :: tem(1:ijdim,1:kdim)
-    real(8), intent(in)   :: ein(1:ijdim,1:kdim)
-    real(8), intent(in)  :: qd(1:ijdim,1:kdim)
-    real(8), intent(in)  :: q(1:ijdim,1:kdim,1:nqmax)
-    !
-    real(8)  :: cv(1:ijdim,1:kdim)
-    !
-    call thrmdyn_cv( &
-         ijdim,      & !--- in
-         cv,         & !--- out
-         q,          & !--- in
-         qd )          !--- in
-    tem(:,:) = ein(:,:) / cv(:,:)
-    !
-  end subroutine thrmdyn_tem
-  !-----------------------------------------------------------------------------
-  subroutine thrmdyn_pre( &
-       ijdim,             &  !--- IN : number of horizontal grid
-       pre,               &  !--- OUT : pressure
-       tem,               &  !--- IN  : temperature
-       rho,               &  !--- IN  : density
-       qd,                &  !--- IN  : dry concentration
-       q )                   !--- IN  : water concentration
 
-    !------
-    !------ Pressure calculation in all regions
-    !------    1. calculation region of pre
-    !------                   : (:,:)
-    !------
-    implicit none
-    !
     integer, intent(in)  :: ijdim
-    real(8), intent(out) :: pre(1:ijdim,1:kdim)
-    real(8), intent(in)  :: tem(1:ijdim,1:kdim)
-    real(8), intent(in)  :: rho(1:ijdim,1:kdim)
-    real(8), intent(in)  :: qd(1:ijdim,1:kdim)
-    real(8), intent(in)  :: q(1:ijdim,1:kdim,1:nqmax)
-    !
-    pre(:,:) = rho(:,:) * tem(:,:) &
-         * ( qd(:,:)*CNST_RAIR+q(:,:,I_QV)*CNST_RVAP )
-    !
-  end subroutine thrmdyn_pre
-  !-----------------------------------------------------------------------------
-  subroutine thrmdyn_th( &
-       ijdim,            &  !--- IN : number of horizontal grid
-       th,               &  !--- OUT : potential temperature
-       tem,              &  !--- IN  : temperature
-       pre )                !--- IN  : pressure
-    !------
-    !------ Potential temperature calculation in all regions
-    !------    1. calculation region of th
-    !------                   : (:,:)
-    !------
-    implicit none
-    !
-    integer, intent(in)  :: ijdim
-    real(8), intent(out) :: th(1:ijdim,1:kdim)
-    real(8), intent(in)  :: tem(1:ijdim,1:kdim)
-    real(8), intent(in)  :: pre(1:ijdim,1:kdim)
-    !
-    real(8) :: p0k
-    !
-    p0k=CNST_PRE00**CNST_KAPPA
-    !
-    th(:,:) =tem(:,:)*(abs(pre(:,:))**(-CNST_KAPPA))*p0k
-    !
-  end subroutine thrmdyn_th
-  !-----------------------------------------------------------------------------
-  subroutine thrmdyn_tempreth( &
-       ijdim,                  &  !--- IN : number of horizontal grid
-       tem,                    &  !--- OUT : temperature
-       pre,                    &  !--- OUT : pressure
-       th,                     &  !--- OUT : potential temperature
-       ein,                    &  !--- IN  : internal energy
-       rho,                    &  !--- IN  : density
-       qd,                     &  !--- IN  : dry concentration
-       q )                        !--- IN  : water concentration
-    !------
-    !------  Calculation of temperature, pressure,
-    !------  potential temperature in all regions.
-    !------    1. calculation region  : (:,:)
-    !------
-    implicit none
-    !
-    integer, intent(in)  :: ijdim
-    real(8), intent(out) :: tem(1:ijdim,1:kdim)
-    real(8), intent(out) :: pre(1:ijdim,1:kdim)
-    real(8), intent(out) :: th(1:ijdim,1:kdim)
-    real(8), intent(in)  :: ein(1:ijdim,1:kdim)
-    real(8), intent(in)  :: rho(1:ijdim,1:kdim)
-    real(8), intent(in)  :: qd(1:ijdim,1:kdim)
-    real(8), intent(in)  :: q(1:ijdim,1:kdim,1:nqmax)
-    !
-    real(8) :: cv(1:ijdim,1:kdim)
-    !
-    real(8) :: p0k
-    !
-    p0k=CNST_PRE00**CNST_KAPPA
-    !
-    call thrmdyn_cv( &
-         ijdim,      & !--- in
-         cv,         & !--- out
-         q,          & !--- in
-         qd )          !--- in
-    !
-    tem(:,:) = ein(:,:) / cv(:,:)
-    !
-    pre(:,:) = rho(:,:) * tem(:,:) &
-         * ( qd(:,:)*CNST_RAIR+q(:,:,I_QV)*CNST_RVAP )
-    th(:,:) =tem(:,:)*(abs(pre(:,:))**(-CNST_KAPPA))*p0k
-    !
-  end subroutine thrmdyn_tempreth
-  !-----------------------------------------------------------------------------
-  subroutine thrmdyn_tempre( &
-       ijdim,                &  !--- IN : number of horizontal grid
-       tem,                  &  !--- OUT : temperature
-       pre,                  &  !--- OUT : pressure
-       ein,                  &  !--- IN  : internal energy
-       rho,                  &  !--- IN  : density
-       qd,                   &  !--- IN  : dry concentration
-       q )                      !--- IN  : water concentration
-    !------
-    !------  Calculation of temperature, pressure,
-    !------  potential temperature in all regions.
-    !------    1. calculation region  : (:,:)
-    !------
-    implicit none
-    !
-    integer, intent(in)  :: ijdim
-    real(8), intent(out) :: tem(ijdim,kdim)
-    real(8), intent(out) :: pre(ijdim,kdim)
-    real(8), intent(in)  :: ein(ijdim,kdim)
-    real(8), intent(in)  :: rho(ijdim,kdim)
-    real(8), intent(in)  :: qd (ijdim,kdim)
-    real(8), intent(in)  :: q  (ijdim,kdim,nqmax)
+    integer, intent(in)  :: kdim
+    real(RP), intent(in)  :: q (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: qd(ijdim,kdim)       ! dry air mass concentration [kg/kg]
 
-    real(8) :: cv(1:ijdim,1:kdim)
+    integer :: ij, k, nq
+    !---------------------------------------------------------------------------
 
-    call thrmdyn_cv( &
-         ijdim,      & !--- in
-         cv,         & !--- out
-         q,          & !--- in
-         qd )          !--- in
+    !$acc kernels pcopy(qd) pcopyin(q) async(0)
+    do k  = 1, kdim
+    do ij = 1, ijdim
+       qd(ij,k) = 1.0_RP
 
-    tem(:,:) = ein(:,:) / cv(:,:)
+       !$acc loop seq
+       do nq = NQW_STR,NQW_END
+          qd(ij,k) = qd(ij,k) - q(ij,k,nq)
+       enddo
+       !$acc end loop
 
-    pre(:,:) = rho(:,:) * tem(:,:) &
-         * ( qd(:,:)*CNST_RAIR+q(:,:,I_QV)*CNST_RVAP )
+    enddo
+    enddo
+    !$acc end kernels
 
     return
-  end subroutine thrmdyn_tempre
+  end subroutine THRMDYN_qd_ijk
 
   !-----------------------------------------------------------------------------
-  subroutine thrmdyn_cv( &
-       ijdim,            & !--- IN : number of horizontal grid
-       cva,              & !--- OUT : specific heat
-       q,                & !--- IN  : mass concentration
-       qd)                 !--- IN  : dry mass concentration
-    !
-    implicit none
-    !
-    integer, intent(in)  :: ijdim
-    real(8), intent(out) :: cva(1:ijdim,1:kdim)
-    real(8), intent(in) :: q(1:ijdim,1:kdim,1:nqmax)
-    real(8), intent(in) :: qd(1:ijdim,1:kdim)
-    !
-    integer :: nq
-    !
-    cva(:,:) = qd(:,:) * CNST_CV
-    do nq = NQW_STR,NQW_END
-       cva(:,:) = cva(:,:) + q(:,:,nq) * CVW(nq)
-    end do
-    !
-  end subroutine thrmdyn_cv
-  !-----------------------------------------------------------------------------
-  subroutine thrmdyn_cp( &
-       ijdim,            & !--- IN : number of horizontal grid
-       kdim_local,       & !--- IN :
-       cpa,              & !--- OUT : specific heat
-       q,                & !--- IN  : mass concentration
-       qd )                !--- IN  : dry mass concentration
-    !
-    implicit none
-    !
-    integer, intent(in)  :: ijdim
-    integer, intent(in)  :: kdim_local
-    real(8), intent(out) :: cpa(1:ijdim,1:kdim_local)
-    real(8), intent(in) :: q(1:ijdim,1:kdim_local,1:nqmax)
-    real(8), intent(in) :: qd(1:ijdim,1:kdim_local)
-    !
-    integer :: nq
-    !
-    cpa(:,:) = qd(:,:) * CNST_CP
-    do nq = NQW_STR,NQW_END
-       cpa(:,:) = cpa(:,:) + q(:,:,nq) * CPW(nq)
-    end do
-    !
-  end subroutine thrmdyn_cp
-  !-----------------------------------------------------------------------------
-  subroutine thrmdyn_qd( &
-       ijdim,            & !--- IN : number of horizontal grid
-       qd,               & !--- OUT  : dry mass concentration
-       q )                 !--- IN  : mass concentration
-    !
-    implicit none
-    !
-    integer, intent(in)  :: ijdim
-    real(8), intent(out) :: qd(1:ijdim,1:kdim)
-    real(8), intent(in) :: q(1:ijdim,1:kdim,1:nqmax)
-    !
-    integer :: nq
-    !
-    qd(:,:) = 1.0D0
-    do nq = NQW_STR,NQW_END
-       qd(:,:) = qd(:,:) - q(:,:,nq)
-    end do
-    !
-  end subroutine thrmdyn_qd
-  !-----------------------------------------------------------------------------
-  subroutine thrmdyn_ent( &
-       ijdim,             & !--- IN :
-       kdim_local,        & !--- IN :
-       ent,               & !--- OUT :
-       tem,               & !--- IN
-       pre,               & !--- IN
-       q,                 & !--- IN
-       qd                 & !--- IN
-       )
-    implicit none
-
-    integer, intent(in) :: ijdim
-    integer, intent(in) :: kdim_local
-    real(8), intent(out) :: ent(1:ijdim,1:kdim_local)
-    real(8), intent(in) :: tem(1:ijdim,1:kdim_local)
-    real(8), intent(in) :: pre(1:ijdim,1:kdim_local)
-    real(8), intent(in) :: q(1:ijdim,1:kdim_local,1:nqmax)
-    real(8), intent(in) :: qd(1:ijdim,1:kdim_local)
-    !
-    real(8) :: pred(1:ijdim,1:kdim_local)
-    real(8) :: prev(1:ijdim,1:kdim_local)
-
-    real(8), parameter :: PREMIN = 1.d-10
-    !
-    integer :: nq
-
-    ! entropy
-    pred(:,:) = pre(:,:) * CNST_EPSV * qd(:,:) &
-         / ( CNST_EPSV * qd(:,:) + q(:,:,I_QV) )
-    prev(:,:) = pre(:,:) * q(:,:,I_QV) &
-         / ( CNST_EPSV * qd(:,:) + q(:,:,I_QV) )
-    pred(:,:) = max( pred(:,:), PREMIN )
-    prev(:,:) = max( prev(:,:), PREMIN )
-
-    ent(:,:) = qd(:,:) * CNST_CP   * log ( tem(:,:)  / CNST_TEM00 )   &
-         -     qd(:,:) * CNST_RAIR * log ( pred(:,:) / CNST_PRE00 )   &
-         + q(:,:,I_QV) * CNST_CPV  * log ( tem(:,:)  / CNST_TEM00 )   &
-         - q(:,:,I_QV) * CNST_RVAP * log ( prev(:,:) / CNST_PSAT0 )   &
-         + q(:,:,I_QV) * CNST_LH0 / CNST_TEM00
-    do nq = NQW_STR, NQW_END
-       if      ( (nq==I_QC) .or. (nq==I_QR) )then
-          ent(:,:) = ent(:,:) + q(:,:,nq) * CNST_CL * log( tem(:,:) / CNST_TEM00 )
-       else if ( (nq==I_QI) .or. (nq==I_QS) .or. (nq==I_QG) ) then
-          ent(:,:) = ent(:,:) + q(:,:,nq) * CNST_CI * log( tem(:,:) / CNST_TEM00 ) &
-               - q(:,:,nq) * CNST_LHF0 / CNST_TEM00
-       end if
-    end do
-    !
-    return
-  end subroutine thrmdyn_ent
-
-  !-----------------------------------------------------------------------------
+  !> calculate dry air
   subroutine THRMDYN_qd_ijkl( &
        ijdim, &
        kdim,  &
        ldim,  &
-       vmax,  &
-       wstr,  &
-       wend,  &
-       qd,    &
-       q      )
+       q,     &
+       qd     )
     implicit none
 
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
     integer, intent(in)  :: ldim
-    integer, intent(in)  :: vmax                     ! total number of tracers
-    integer, intent(in)  :: wstr                     ! start index of water mass tracers
-    integer, intent(in)  :: wend                     ! end   index of water mass tracers
-    real(8), intent(out) :: qd(ijdim,kdim,ldim)      ! dry air mass concentration [kg/kg]
-    real(8), intent(in)  :: q (ijdim,kdim,ldim,vmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(in)  :: q (ijdim,kdim,ldim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: qd(ijdim,kdim,ldim)       ! dry air mass concentration [kg/kg]
 
-    integer :: iw
+    integer :: ij, k, l,nq
     !---------------------------------------------------------------------------
 
-    qd(:,:,:) = 1.D0
+    !$acc kernels pcopy(qd) pcopyin(q) async(0)
+    do l  = 1, ldim
+    do k  = 1, kdim
+    do ij = 1, ijdim
+       qd(ij,k,l) = 1.0_RP
 
-    do iw = wstr, wend
-       qd(:,:,:) = qd(:,:,:) - q(:,:,:,iw)
+       !$acc loop seq
+       do nq = NQW_STR,NQW_END
+          qd(ij,k,l) = qd(ij,k,l) - q(ij,k,l,nq)
+       enddo
+       !$acc end loop
+
     enddo
+    enddo
+    enddo
+    !$acc end kernels
 
     return
   end subroutine THRMDYN_qd_ijkl
 
   !-----------------------------------------------------------------------------
+  !> calculate specific heat
+  subroutine THRMDYN_cv_ijk( &
+       ijdim, &
+       kdim,  &
+       qd,    &
+       q,     &
+       cv     )
+    implicit none
+
+    integer, intent(in)  :: ijdim
+    integer, intent(in)  :: kdim
+    real(RP), intent(in)  :: qd(ijdim,kdim)       ! dry air mass concentration [kg/kg]
+    real(RP), intent(in)  :: q (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: cv(ijdim,kdim)       ! specific heat [J/kg/K]
+
+    integer :: ij, k, nq
+    !---------------------------------------------------------------------------
+
+    !$acc kernels pcopy(cv) pcopyin(qd,q,CVW) async(0)
+    do k  = 1, kdim
+    do ij = 1, ijdim
+       cv(ij,k) = qd(ij,k) * CVdry
+
+       !$acc loop seq
+       do nq = NQW_STR, NQW_END
+          cv(ij,k) = cv(ij,k) + q(ij,k,nq) * CVW(nq)
+       enddo
+       !$acc end loop
+
+    enddo
+    enddo
+    !$acc end kernels
+
+    return
+  end subroutine THRMDYN_cv_ijk
+
+  !-----------------------------------------------------------------------------
+  !> calculate specific heat
+  subroutine THRMDYN_cp_ijk( &
+       ijdim, &
+       kdim,  &
+       qd,    &
+       q,     &
+       cp     )
+    implicit none
+
+    integer, intent(in)  :: ijdim
+    integer, intent(in)  :: kdim
+    real(RP), intent(in)  :: qd(ijdim,kdim)       ! dry air mass concentration [kg/kg]
+    real(RP), intent(in)  :: q (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: cp(ijdim,kdim)       ! specific heat [J/kg/K]
+
+    integer :: ij, k, nq
+    !---------------------------------------------------------------------------
+
+    !$acc kernels pcopy(cp) pcopyin(qd,q,cpW) async(0)
+    do k  = 1, kdim
+    do ij = 1, ijdim
+       cp(ij,k) = qd(ij,k) * CPdry
+
+       !$acc loop seq
+       do nq = NQW_STR, NQW_END
+          cp(ij,k) = cp(ij,k) + q(ij,k,nq) * CPW(nq)
+       enddo
+       !$acc end loop
+
+    enddo
+    enddo
+    !$acc end kernels
+
+    return
+  end subroutine THRMDYN_cp_ijk
+
+  !-----------------------------------------------------------------------------
+  !> calculate density
+  subroutine THRMDYN_rho_ijk( &
+       ijdim, &
+       kdim,  &
+       tem,   &
+       pre,   &
+       qd,    &
+       q,     &
+       rho    )
+    implicit none
+
+    integer, intent(in)  :: ijdim
+    integer, intent(in)  :: kdim
+    real(RP), intent(in)  :: tem(ijdim,kdim)       ! temperature [K]
+    real(RP), intent(in)  :: pre(ijdim,kdim)       ! pressure    [Pa]
+    real(RP), intent(in)  :: qd (ijdim,kdim)       ! dry air mass concentration [kg/kg]
+    real(RP), intent(in)  :: q  (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: rho(ijdim,kdim)       ! density     [kg/m3]
+
+    integer :: ij, k
+    !---------------------------------------------------------------------------
+
+    !$acc kernels pcopy(rho) pcopyin(pre,tem,qd,q) async(0)
+    do k  = 1, kdim
+    do ij = 1, ijdim
+       rho(ij,k) = pre(ij,k) / tem(ij,k) / ( qd(ij,k)*Rdry + q(ij,k,I_QV)*Rvap )
+    enddo
+    enddo
+    !$acc end kernels
+
+    return
+  end subroutine THRMDYN_rho_ijk
+
+  !-----------------------------------------------------------------------------
+  !> calculate density
   subroutine THRMDYN_rho_ijkl( &
        ijdim, &
        kdim,  &
        ldim,  &
-       rho,   &
-       pre,   &
        tem,   &
+       pre,   &
        qd,    &
-       qv     )
+       q,     &
+       rho    )
     implicit none
 
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
     integer, intent(in)  :: ldim
-    real(8), intent(out) :: rho(ijdim,kdim,ldim) ! density     [kg/m3]
-    real(8), intent(in)  :: pre(ijdim,kdim,ldim) ! pressure    [Pa]
-    real(8), intent(in)  :: tem(ijdim,kdim,ldim) ! temperature [K]
-    real(8), intent(in)  :: qd (ijdim,kdim,ldim) ! dry air     mass concentration [kg/kg]
-    real(8), intent(in)  :: qv (ijdim,kdim,ldim) ! water vapor mass concentration [kg/kg]
+    real(RP), intent(in)  :: tem(ijdim,kdim,ldim)       ! temperature [K]
+    real(RP), intent(in)  :: pre(ijdim,kdim,ldim)       ! pressure    [Pa]
+    real(RP), intent(in)  :: qd (ijdim,kdim,ldim)       ! dry air mass concentration [kg/kg]
+    real(RP), intent(in)  :: q  (ijdim,kdim,ldim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: rho(ijdim,kdim,ldim)       ! density     [kg/m3]
+
+    integer :: ij, k, l
     !---------------------------------------------------------------------------
 
-    rho(:,:,:) = pre(:,:,:) / ( ( qd(:,:,:)*CNST_RAIR + qv(:,:,:)*CNST_RVAP ) * tem(:,:,:) )
+    !$acc kernels pcopy(rho) pcopyin(pre,tem,qd,q) async(0)
+    do l  = 1, ldim
+    do k  = 1, kdim
+    do ij = 1, ijdim
+       rho(ij,k,l) = pre(ij,k,l) / tem(ij,k,l) / ( qd(ij,k,l)*Rdry + q(ij,k,l,I_QV)*Rvap )
+    enddo
+    enddo
+    enddo
+    !$acc end kernels
 
     return
   end subroutine THRMDYN_rho_ijkl
 
   !-----------------------------------------------------------------------------
-  subroutine THRMDYN_ein_ijkl( &
+  !> calculate pressure
+  subroutine THRMDYN_pre_ijk( &
+       ijdim, &
+       kdim,  &
+       rho,   &
+       tem,   &
+       qd,    &
+       q,     &
+       pre    )
+    implicit none
+
+    integer, intent(in)  :: ijdim
+    integer, intent(in)  :: kdim
+    real(RP), intent(in)  :: rho(ijdim,kdim)       ! density     [kg/m3]
+    real(RP), intent(in)  :: tem(ijdim,kdim)       ! temperature [K]
+    real(RP), intent(in)  :: qd (ijdim,kdim)       ! dry air mass concentration [kg/kg]
+    real(RP), intent(in)  :: q  (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: pre(ijdim,kdim)       ! pressure    [Pa]
+
+    integer :: ij, k
+    !---------------------------------------------------------------------------
+
+    !$acc kernels pcopy(pre) pcopyin(rho,tem,qd,q) async(0)
+    do k  = 1, kdim
+    do ij = 1, ijdim
+       pre(ij,k) = rho(ij,k) * tem(ij,k) * ( qd(ij,k)*Rdry + q(ij,k,I_QV)*Rvap )
+    enddo
+    enddo
+    !$acc end kernels
+
+    return
+  end subroutine THRMDYN_pre_ijk
+
+  !-----------------------------------------------------------------------------
+  !> calculate internal energy
+  subroutine THRMDYN_ein_ijk( &
+       ijdim, &
+       kdim,  &
+       tem,   &
+       qd,    &
+       q,     &
+       ein    )
+    implicit none
+
+    integer, intent(in)  :: ijdim
+    integer, intent(in)  :: kdim
+    real(RP), intent(in)  :: tem(ijdim,kdim)       ! temperature [K]
+    real(RP), intent(in)  :: qd (ijdim,kdim)       ! dry air mass concentration [kg/kg]
+    real(RP), intent(in)  :: q  (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: ein(ijdim,kdim)       ! internal energy [J]
+
+    real(RP) :: cv(ijdim,kdim)
+
+    integer :: ij, k, nq
+    !---------------------------------------------------------------------------
+
+    !$acc kernels pcopy(ein,cv) pcopyin(tem,qd,q,CVW) async(0)
+    do k  = 1, kdim
+    do ij = 1, ijdim
+       cv(ij,k) = qd(ij,k) * CVdry
+
+       !$acc loop seq
+       do nq = NQW_STR, NQW_END
+          cv(ij,k) = cv(ij,k) + q(ij,k,nq) * CVW(nq)
+       enddo
+       !$acc end loop
+
+       ein(ij,k) = tem(ij,k) * cv(ij,k)
+    enddo
+    enddo
+    !$acc end kernels
+
+    return
+  end subroutine THRMDYN_ein_ijk
+
+  !-----------------------------------------------------------------------------
+  !> calculate temperature
+  subroutine THRMDYN_tem_ijk( &
+       ijdim, &
+       kdim,  &
+       ein,   &
+       qd,    &
+       q,     &
+       tem    )
+    implicit none
+
+    integer, intent(in)  :: ijdim
+    integer, intent(in)  :: kdim
+    real(RP), intent(in)  :: ein(ijdim,kdim)       ! internal energy [J]
+    real(RP), intent(in)  :: qd (ijdim,kdim)       ! dry air mass concentration [kg/kg]
+    real(RP), intent(in)  :: q  (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: tem(ijdim,kdim)       ! temperature [K]
+
+    real(RP) :: cv(ijdim,kdim)
+
+    integer :: ij, k, nq
+    !---------------------------------------------------------------------------
+
+    !$acc kernels pcopy(tem,cv) pcopyin(ein,qd,q,CVW) async(0)
+    do k  = 1, kdim
+    do ij = 1, ijdim
+       cv(ij,k) = qd(ij,k) * CVdry
+
+       !$acc loop seq
+       do nq = NQW_STR, NQW_END
+          cv(ij,k) = cv(ij,k) + q(ij,k,nq) * CVW(nq)
+       enddo
+       !$acc end loop
+
+       tem(ij,k) = ein(ij,k) / cv(ij,k)
+    enddo
+    enddo
+    !$acc end kernels
+
+    return
+  end subroutine THRMDYN_tem_ijk
+
+  !-----------------------------------------------------------------------------
+  !> calculate potential temperature
+  subroutine THRMDYN_th_ijk( &
+       ijdim, &
+       kdim,  &
+       tem,   &
+       pre,   &
+       th     )
+    implicit none
+
+    integer, intent(in)  :: ijdim
+    integer, intent(in)  :: kdim
+    real(RP), intent(in)  :: tem(ijdim,kdim) ! temperature [K]
+    real(RP), intent(in)  :: pre(ijdim,kdim) ! pressure    [Pa]
+    real(RP), intent(out) :: th (ijdim,kdim) ! potential temperature [K]
+
+    real(RP) :: pre0_kappa
+
+    integer :: ij, k
+    !---------------------------------------------------------------------------
+
+    pre0_kappa = PRE00**KAPPA
+
+    !$acc kernels pcopy(th) pcopyin(tem,pre) async(0)
+    do k  = 1, kdim
+    do ij = 1, ijdim
+       th(ij,k) = tem(ij,k) + pre(ij,k)**KAPPA * pre0_kappa
+    enddo
+    enddo
+    !$acc end kernels
+
+    return
+  end subroutine THRMDYN_th_ijk
+
+  !-----------------------------------------------------------------------------
+  !> calculate potential temperature
+  subroutine THRMDYN_th_ijkl( &
        ijdim, &
        kdim,  &
        ldim,  &
-       vmax,  &
-       wstr,  &
-       wend,  &
-       ein,   &
        tem,   &
-       qd,    &
-       q      )
+       pre,   &
+       th     )
     implicit none
 
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
     integer, intent(in)  :: ldim
-    integer, intent(in)  :: vmax                      ! total number of tracers
-    integer, intent(in)  :: wstr                      ! start index of water mass tracers
-    integer, intent(in)  :: wend                      ! end   index of water mass tracers
-    real(8), intent(out) :: ein(ijdim,kdim,ldim)      ! internal energy [J]
-    real(8), intent(in)  :: tem(ijdim,kdim,ldim)      ! temperature     [K]
-    real(8), intent(in)  :: qd (ijdim,kdim,ldim)      ! dry air mass concentration [kg/kg]
-    real(8), intent(in)  :: q  (ijdim,kdim,ldim,vmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(in)  :: tem(ijdim,kdim,ldim) ! temperature [K]
+    real(RP), intent(in)  :: pre(ijdim,kdim,ldim) ! pressure    [Pa]
+    real(RP), intent(out) :: th (ijdim,kdim,ldim) ! potential temperature [K]
 
-    real(8) :: cv(ijdim,kdim,ldim)
+    real(RP) :: pre0_kappa
 
-    integer :: iw
+    integer :: ij, k, l
     !---------------------------------------------------------------------------
 
-    cv(:,:,:) = qd(:,:,:) * CNST_CV
+    pre0_kappa = PRE00**KAPPA
 
-    do iw = wstr, wend
-       cv(:,:,:) = cv(:,:,:) + q(:,:,:,iw) * CVW(iw)
+    !$acc kernels pcopy(th) pcopyin(tem,pre) async(0)
+    do l  = 1, ldim
+    do k  = 1, kdim
+    do ij = 1, ijdim
+       th(ij,k,l) = tem(ij,k,l) + pre(ij,k,l)**KAPPA * pre0_kappa
     enddo
-
-    ein(:,:,:) = tem(:,:,:) * cv(:,:,:)
+    enddo
+    enddo
+    !$acc end kernels
 
     return
-  end subroutine THRMDYN_ein_ijkl
+  end subroutine THRMDYN_th_ijkl
 
   !-----------------------------------------------------------------------------
+  !> calculate enthalpy
+  subroutine THRMDYN_eth_ijk( &
+       ijdim, &
+       kdim,  &
+       ein,   &
+       pre,   &
+       rho,   &
+       eth    )
+    implicit none
+
+    integer, intent(in)  :: ijdim
+    integer, intent(in)  :: kdim
+    real(RP), intent(in)  :: ein(ijdim,kdim) ! internal energy [J]
+    real(RP), intent(in)  :: pre(ijdim,kdim) ! pressure    [Pa]
+    real(RP), intent(in)  :: rho(ijdim,kdim) ! density     [kg/m3]
+    real(RP), intent(out) :: eth(ijdim,kdim) ! enthalpy
+
+    integer :: ij, k
+    !---------------------------------------------------------------------------
+
+    !$acc kernels pcopy(eth) pcopyin(ein,pre,rho) async(0)
+    do k  = 1, kdim
+    do ij = 1, ijdim
+       eth(ij,k) = ein(ij,k) + pre(ij,k) / rho(ij,k)
+    enddo
+    enddo
+    !$acc end kernels
+
+    return
+  end subroutine THRMDYN_eth_ijk
+
+  !-----------------------------------------------------------------------------
+  !> calculate enthalpy
+  subroutine THRMDYN_eth_ijkl( &
+       ijdim, &
+       kdim,  &
+       ldim,  &
+       ein,   &
+       pre,   &
+       rho,   &
+       eth    )
+    implicit none
+
+    integer, intent(in)  :: ijdim
+    integer, intent(in)  :: kdim
+    integer, intent(in)  :: ldim
+    real(RP), intent(in)  :: ein(ijdim,kdim,ldim) ! internal energy [J]
+    real(RP), intent(in)  :: pre(ijdim,kdim,ldim) ! pressure    [Pa]
+    real(RP), intent(in)  :: rho(ijdim,kdim,ldim) ! density     [kg/m3]
+    real(RP), intent(out) :: eth(ijdim,kdim,ldim) ! enthalpy
+
+    integer :: ij, k, l
+    !---------------------------------------------------------------------------
+
+    !$acc kernels pcopy(eth) pcopyin(ein,pre,rho) async(0)
+    do l  = 1, ldim
+    do k  = 1, kdim
+    do ij = 1, ijdim
+       eth(ij,k,l) = ein(ij,k,l) + pre(ij,k,l) / rho(ij,k,l)
+    enddo
+    enddo
+    enddo
+    !$acc end kernels
+
+    return
+  end subroutine THRMDYN_eth_ijkl
+
+  !-----------------------------------------------------------------------------
+  !> calculate entropy
+  subroutine THRMDYN_ent_ijk( &
+       ijdim, &
+       kdim,  &
+       tem,   &
+       pre,   &
+       qd,    &
+       q,     &
+       ent    )
+    implicit none
+
+    integer, intent(in)  :: ijdim
+    integer, intent(in)  :: kdim
+    real(RP), intent(in)  :: tem(ijdim,kdim)
+    real(RP), intent(in)  :: pre(ijdim,kdim)
+    real(RP), intent(in)  :: qd (ijdim,kdim)
+    real(RP), intent(in)  :: q  (ijdim,kdim,nqmax)
+    real(RP), intent(out) :: ent(ijdim,kdim)
+
+    real(RP) :: Pdry
+    real(RP) :: Pvap
+    real(RP) :: LH(nqmax)
+
+    real(RP), parameter :: EPS = 1.E-10_RP
+
+    integer :: ij, k, nq
+    !---------------------------------------------------------------------------
+
+    do nq = NQW_STR, NQW_END
+       if ( nq == I_QV ) then
+          LH(nq) =  LHV / TEM00
+       elseif( nq == I_QI .OR. nq == I_QS .OR. nq == I_QG ) then
+          LH(nq) = -LHF / TEM00
+       else
+          LH(nq) = 0.0_RP
+       endif
+    enddo
+
+    !$acc kernels pcopy(ent) pcopyin(tem,pre,qd,q) async(0)
+    do k  = 1, kdim
+    do ij = 1, ijdim
+       Pdry = max( pre(ij,k) * EPSV*qd(ij,k) / ( EPSV*qd(ij,k) + q(ij,k,I_QV) ), EPS )
+       Pvap = max( pre(ij,k) * q(ij,k,I_QV)  / ( EPSV*qd(ij,k) + q(ij,k,I_QV) ), EPS )
+
+       ent(ij,k) = qd(ij,k)      * CPdry * log( tem(ij,k)/TEM00 ) &
+                 - qd(ij,k)      * Rdry  * log( Pdry     /PRE00 ) &
+                 - q (ij,k,I_QV) * Rvap  * log( Pvap     /PSAT0 )
+    enddo
+    enddo
+    !$acc end kernels
+
+    !$acc kernels pcopy(ent) pcopyin(tem,q,CVW,LH) async(0)
+    do k  = 1, kdim
+    do ij = 1, ijdim
+
+       !$acc loop seq
+       do nq = NQW_STR, NQW_END
+          ent(ij,k) = ent(ij,k) + q(ij,k,nq) * CVW(nq) * log( tem(ij,k)/TEM00 ) &
+                                + q(ij,k,nq) * LH (nq) / TEM00
+       enddo
+       !$acc end loop
+
+    enddo
+    enddo
+    !$acc end kernels
+
+    return
+  end subroutine THRMDYN_ent_ijk
+
+  !-----------------------------------------------------------------------------
+  !> calculate density & internal energy
+  subroutine THRMDYN_rhoein_ijkl( &
+       ijdim, &
+       kdim,  &
+       ldim,  &
+       tem,   &
+       pre,   &
+       q,     &
+       rho,   &
+       ein    )
+    implicit none
+
+    integer, intent(in)  :: ijdim
+    integer, intent(in)  :: kdim
+    integer, intent(in)  :: ldim
+    real(RP), intent(in)  :: tem(ijdim,kdim,ldim)       ! temperature [K]
+    real(RP), intent(in)  :: pre(ijdim,kdim,ldim)       ! pressure    [Pa]
+    real(RP), intent(in)  :: q  (ijdim,kdim,ldim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: rho(ijdim,kdim,ldim)       ! density     [kg/m3]
+    real(RP), intent(out) :: ein(ijdim,kdim,ldim)       ! internal energy [J]
+
+    real(RP) :: cv(ijdim,kdim,ldim)
+    real(RP) :: qd(ijdim,kdim,ldim)
+
+    integer :: ij, k, l, nq
+    !---------------------------------------------------------------------------
+
+    !$acc kernels pcopy(rho,ein,cv,qd) pcopyin(pre,tem,q,CVW) async(0)
+    do l  = 1, ldim
+    do k  = 1, kdim
+    do ij = 1, ijdim
+       cv(ij,k,l) = 0.0_RP
+       qd(ij,k,l) = 1.0_RP
+
+       !$acc loop seq
+       do nq = NQW_STR, NQW_END
+          cv(ij,k,l) = cv(ij,k,l) + q(ij,k,l,nq) * CVW(nq)
+          qd(ij,k,l) = qd(ij,k,l) - q(ij,k,l,nq)
+       enddo
+       !$acc end loop
+
+       cv(ij,k,l) = cv(ij,k,l) + qd(ij,k,l) * CVdry
+
+       rho(ij,k,l) = pre(ij,k,l) / tem(ij,k,l) / ( qd(ij,k,l)*Rdry + q(ij,k,l,I_QV)*Rvap )
+       ein(ij,k,l) = tem(ij,k,l) * cv(ij,k,l)
+    enddo
+    enddo
+    enddo
+    !$acc end kernels
+
+    return
+  end subroutine THRMDYN_rhoein_ijkl
+
+  !-----------------------------------------------------------------------------
+  !> calculate temperature & pressure
   subroutine THRMDYN_tempre_ijkl( &
        ijdim, &
        kdim,  &
        ldim,  &
-       vmax,  &
-       wstr,  &
-       wend,  &
-       tem,   &
-       pre,   &
        ein,   &
        rho,   &
-       qd,    &
-       q      )
+       q,     &
+       tem,   &
+       pre    )
     implicit none
 
     integer, intent(in)  :: ijdim
     integer, intent(in)  :: kdim
     integer, intent(in)  :: ldim
-    integer, intent(in)  :: vmax                      ! total number of tracers
-    integer, intent(in)  :: wstr                      ! start index of water mass tracers
-    integer, intent(in)  :: wend                      ! end   index of water mass tracers
-    real(8), intent(out) :: tem(ijdim,kdim,ldim)      ! temperature     [K]
-    real(8), intent(out) :: pre(ijdim,kdim,ldim)      ! pressure    [Pa]
-    real(8), intent(in)  :: ein(ijdim,kdim,ldim)      ! internal energy [J]
-    real(8), intent(in)  :: rho(ijdim,kdim,ldim)      ! density     [kg/m3]
-    real(8), intent(in)  :: qd (ijdim,kdim,ldim)      ! dry air mass concentration [kg/kg]
-    real(8), intent(in)  :: q  (ijdim,kdim,ldim,vmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(in)  :: ein(ijdim,kdim,ldim)       ! internal energy [J]
+    real(RP), intent(in)  :: rho(ijdim,kdim,ldim)       ! density     [kg/m3]
+    real(RP), intent(in)  :: q  (ijdim,kdim,ldim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: tem(ijdim,kdim,ldim)       ! temperature [K]
+    real(RP), intent(out) :: pre(ijdim,kdim,ldim)       ! pressure    [Pa]
 
-    real(8) :: cv(ijdim,kdim,ldim)
+    real(RP) :: cv(ijdim,kdim,ldim)
+    real(RP) :: qd(ijdim,kdim,ldim)
 
-    integer :: iw
+    integer :: ij, k, l, nq
     !---------------------------------------------------------------------------
 
-    cv(:,:,:) = qd(:,:,:) * CNST_CV
+    !$acc kernels pcopy(tem,pre,cv,qd) pcopyin(ein,rho,q,CVW) async(0)
+    do l  = 1, ldim
+    do k  = 1, kdim
+    do ij = 1, ijdim
+       cv(ij,k,l) = 0.0_RP
+       qd(ij,k,l) = 1.0_RP
 
-    do iw = wstr, wend
-       cv(:,:,:) = cv(:,:,:) + q(:,:,:,iw) * CVW(iw)
+       !$acc loop seq
+       do nq = NQW_STR, NQW_END
+          cv(ij,k,l) = cv(ij,k,l) + q(ij,k,l,nq) * CVW(nq)
+          qd(ij,k,l) = qd(ij,k,l) - q(ij,k,l,nq)
+       enddo
+       !$acc end loop
+
+       cv(ij,k,l) = cv(ij,k,l) + qd(ij,k,l) * CVdry
+
+       tem(ij,k,l) = ein(ij,k,l) / cv(ij,k,l)
+       pre(ij,k,l) = rho(ij,k,l) * tem(ij,k,l) * ( qd(ij,k,l)*Rdry + q(ij,k,l,I_QV)*Rvap )
     enddo
-
-    tem(:,:,:) = ein(:,:,:) / cv(:,:,:)
-
-    pre(:,:,:) = rho(:,:,:) * tem(:,:,:) * ( qd(:,:,:)*CNST_RAIR + q(:,:,:,wstr)*CNST_RVAP )
+    enddo
+    enddo
+    !$acc end kernels
 
     return
   end subroutine THRMDYN_tempre_ijkl

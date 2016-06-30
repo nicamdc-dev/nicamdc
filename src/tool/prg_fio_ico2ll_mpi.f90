@@ -35,6 +35,7 @@ program fio_ico2ll_mpi
   !++ Used modules
   !
   use mpi
+  use mod_precision
   use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID,    &
@@ -115,6 +116,7 @@ program fio_ico2ll_mpi
   character(LEN=FIO_HSHORT) :: selectvar(max_nvar) = ''
   integer                   :: nlim_llgrid         = 10000000  ! limit number of lat-lon grid in 1 ico region
   logical                   :: comm_smallchunk     = .true.    ! apply MPI_Allreduce for each k-layer?
+  logical                   :: dcmip2016           = .false.   ! CF mode for dcmip2016
 
   logical                   :: help = .false.
 
@@ -142,6 +144,7 @@ program fio_ico2ll_mpi
                     selectvar,           &
                     nlim_llgrid,         &
                     comm_smallchunk,     &
+                    dcmip2016,           &
                     help
 
   !-----------------------------------------------------------------------------
@@ -179,6 +182,9 @@ program fio_ico2ll_mpi
   character(LEN=FIO_HSHORT), allocatable :: var_name(:)
   character(LEN=FIO_HMID),   allocatable :: var_desc(:)
   character(LEN=FIO_HSHORT), allocatable :: var_unit(:)
+  character(LEN=FIO_HSHORT)              :: var_name_nc
+  character(LEN=FIO_HMID)                :: var_desc_nc
+  character(LEN=FIO_HSHORT)              :: var_unit_nc
   character(LEN=FIO_HSHORT), allocatable :: var_layername(:)
   integer,                   allocatable :: var_datatype(:)
   integer,                   allocatable :: var_nlayer(:)
@@ -314,7 +320,7 @@ program fio_ico2ll_mpi
   endif
 
   write(rankstr,'(I6.6)') prc_myrank
-  open(ADM_LOG_FID, file='msg.pe'//trim(rankstr) )
+  open(ADM_LOG_FID, file='msg_ico2ll.pe'//trim(rankstr) )
   write(ADM_LOG_FID,*) "+++ Parallel Execution, Use MPI"
 
   PALL_global = MNG_PALL
@@ -737,7 +743,7 @@ program fio_ico2ll_mpi
   write(ADM_LOG_FID,*) '########## Variable List ########## '
   write(ADM_LOG_FID,*) 'ID |NAME            |STEPS|Layername       |START FROM         |DT [sec]|Xi2Z?'
   do v = 1, nvar
-     call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=8) )
+     call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=RP) )
      write(tmpl,'(I4.4,"/",I2.2,"/",I2.2,1x,I2.2,":",I2.2,":",I2.2)') date_str(:)
      write(ADM_LOG_FID,'(1x,I3,A1,A16,A1,I5,A1,A16,A1,A19,A1,I8,A1,L5)') &
               v,'|',var_name(v),'|',var_nstep(v),'|',var_layername(v),'|', tmpl,'|', var_dt(v), '|', var_xi2z(v)
@@ -831,13 +837,13 @@ program fio_ico2ll_mpi
            write(ADM_LOG_FID,*) 'Output: ', trim(outbase)//'.nc'
            write(*          ,*) 'Output: ', trim(outbase)//'.nc'
 
-           call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=8) )
+           call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=RP) )
 
            do j = 1, 6
               write( date_str_tmp(j), '(I4)' ) date_str(j)
               date_str_tmp(j) = adjustl( date_str_tmp(j) )
               if ( j == 1 ) then
-                 write(date_str_tmp(j),'(2A)') ('0',i=1,4-len_trim(date_str_tmp(j))), trim(date_str_tmp(j))
+                 write(date_str_tmp(j),'(4A)') ('0',i=1,4-len_trim(date_str_tmp(j))), trim(date_str_tmp(j))
               else
                  write(date_str_tmp(j),'(2A)') ('0',i=1,2-len_trim(date_str_tmp(j))), trim(date_str_tmp(j))
               endif
@@ -861,6 +867,17 @@ program fio_ico2ll_mpi
               lon_tmp(:) = lon(:) * 180.D0 / pi
            endif
 
+           if ( dcmip2016 ) then
+              call cf_desc_unit( var_name_nc, & ! [OUT]
+                                 var_desc_nc, & ! [OUT]
+                                 var_unit_nc, & ! [OUT]
+                                 var_name(v)  ) ! [IN]
+           else
+              var_name_nc = trim(var_name(v))
+              var_desc_nc = trim(var_desc(v))
+              var_unit_nc = trim(var_unit(v))
+           endif
+
            call netcdf_open_for_write( nc,                                       & ! [OUT]
                                        ncfile      = trim(outbase)//'.nc',       & ! [IN]
                                        count       = (/  imax, jmax, kmax, 1 /), & ! [IN]
@@ -875,9 +892,9 @@ program fio_ico2ll_mpi
                                        time        = (/ (real(t-1,8)*real(var_dt(v),8)/real(60,8),t=1,num_of_step) /), & ! [IN]
                                        lev_units   ='m',                         & ! [IN]
                                        time_units  = trim(nc_time_units),        & ! [IN]
-                                       var_name    = trim(var_name(v)),          & ! [IN]
-                                       var_desc    = trim(var_desc(v)),          & ! [IN]
-                                       var_units   = trim(var_unit(v)),          & ! [IN]
+                                       var_name    = trim(var_name_nc),          & ! [IN]
+                                       var_desc    = trim(var_desc_nc),          & ! [IN]
+                                       var_units   = trim(var_unit_nc),          & ! [IN]
                                        var_missing = CNST_UNDEF4                 ) ! [IN]
 
            deallocate(lon_tmp)
@@ -1561,7 +1578,7 @@ contains
     ! Prefer not to use calendar_dd2ym subroutine
     ! Epoch time is different between calendar_ss2yh and calendar_dd2ym
     ! New I/O stores timestamp, which is generated via calendar_yh2ss
-    call calendar_ss2yh( d(:), real(datesec,kind=8) )
+    call calendar_ss2yh( d(:), real(datesec,kind=RP) )
 
     write(template,'(I2.2,A1,I2.2,A1,I2.2,A3,I4.4)') &
                               d(4), ':', d(5), 'Z', d(3), nmonth(d(2)), d(1)
@@ -1585,7 +1602,7 @@ contains
     ! Prefer not to use calendar_dd2ym subroutine
     ! Epoch time is different between calendar_ss2yh and calendar_dd2ym
     ! New I/O stores timestamp, which is generated via calendar_yh2ss
-    call calendar_ss2yh( d(:), real(datesec,kind=8) )
+    call calendar_ss2yh( d(:), real(datesec,kind=RP) )
 
     write(template,'(I4.4,A1,I2.2,A1,I2.2,A1,I2.2,A1,I2.2,A1)') &
                           d(1), '-', d(2), '-', d(3), '-', d(4), 'h', d(5), 'm'
@@ -1624,7 +1641,7 @@ contains
     ! Prefer not to use calendar_dd2ym subroutine
     ! Epoch time is different between calendar_ss2yh and calendar_dd2ym
     ! New I/O stores timestamp, which is generated via calendar_yh2ss
-    call calendar_ss2yh( d(:), real(datesec,kind=8) )
+    call calendar_ss2yh( d(:), real(datesec,kind=RP) )
 
     write (template,'(i4.4,i2.2,i2.2,1x,i2.2,i2.2,i2.2,1x)') (d(i),i=1,6)
 
@@ -1745,6 +1762,157 @@ contains
 
     return
   end subroutine VINTRPL_Xi2Z
+
+  !-----------------------------------------------------------------------------
+  subroutine cf_desc_unit( &
+      var_name_nc, &
+      var_desc_nc, &
+      var_unit_nc, &
+      var_name     )
+    implicit none
+
+    character(LEN=FIO_HSHORT), intent(out) :: var_name_nc
+    character(LEN=FIO_HMID),   intent(out) :: var_desc_nc
+    character(LEN=FIO_HSHORT), intent(out) :: var_unit_nc
+    character(LEN=FIO_HSHORT), intent(in)  :: var_name
+    !---------------------------------------------------------------------------
+
+    select case( trim(var_name) )
+    case ( 'U', 'u' )
+       var_name_nc = "U"
+       var_desc_nc = "Zonal wind"
+       var_unit_nc = "m/s"
+    case ( 'V', 'v' )
+       var_name_nc = "V"
+       var_desc_nc = "Meridional wind"
+       var_unit_nc = "m/s"
+    case ( 'W', 'w' )
+       var_name_nc = "W"
+       var_desc_nc = "Vertical velocity"
+       var_unit_nc = "m/s"
+    case ( 'PRS', 'prs' )
+       var_name_nc = "P"
+       var_desc_nc = "Pressure"
+       var_unit_nc = "Pa"
+    case ( 'T', 't' )
+       var_name_nc = "T"
+       var_desc_nc = "Temperature"
+       var_unit_nc = "K"
+    case ( 'PS', 'ps' )
+       var_name_nc = "PS"
+       var_desc_nc = "Surface pressure"
+       var_unit_nc = "Pa"
+    case ( 'U500', 'u500' )
+       var_name_nc = "U500"
+       var_desc_nc = "Zonal wind at 500 hPa"
+       var_unit_nc = "m/s"
+    case ( 'U850', 'u850' )
+       var_name_nc = "U850"
+       var_desc_nc = "Zonal wind at 850 hPa"
+       var_unit_nc = "m/s"
+    case ( 'V500', 'v500' )
+       var_name_nc = "V500"
+       var_desc_nc = "Meridional wind at 500 hPa"
+       var_unit_nc = "m/s"
+    case ( 'V850', 'v850' )
+       var_name_nc = "V850"
+       var_desc_nc = "Meridional wind at 850 hPa"
+       var_unit_nc = "m/s"
+    case ( 'W500', 'w500' )
+       var_name_nc = "W500"
+       var_desc_nc = "Vertical velocity at 500 hPa"
+       var_unit_nc = "m/s"
+    case ( 'W850', 'w850' )
+       var_name_nc = "W850"
+       var_desc_nc = "Vertical velocity at 850 hPa"
+       var_unit_nc = "m/s"
+    case ( 'T500', 't500' )
+       var_name_nc = "T500"
+       var_desc_nc = "Temperature at 500 hPa"
+       var_unit_nc = "K"
+    case ( 'T850', 't850' )
+       var_name_nc = "T850"
+       var_desc_nc = "Temperature at 850 hPa"
+       var_unit_nc = "K"
+    case ( 'QV', 'qv' )
+       var_name_nc = "Q"
+       var_desc_nc = "Specific humidity"
+       var_unit_nc = "kg/kg"
+    case ( 'QC', 'qc' )
+       var_name_nc = "Qc"
+       var_desc_nc = "Cloud water mixing ratio"
+       var_unit_nc = "kg/kg"
+    case ( 'QR', 'qr' )
+       var_name_nc = "Qr"
+       var_desc_nc = "Rain water mixing ratio"
+       var_unit_nc = "kg/kg"
+    case ( 'PASV1', 'pasv1' )
+       var_name_nc = "Q1"
+       var_desc_nc = "Singlet chlorine mixing ratio"
+       var_unit_nc = "kg/kg"
+    case ( 'PASV2', 'pasv2' )
+       var_name_nc = "Q2"
+       var_desc_nc = "Chlorine gas mixing ratio"
+       var_unit_nc = "kg/kg"
+    case ( 'PRCP', 'prcp' )
+       var_name_nc = "PRECL"
+       var_desc_nc = "Large-scale precipitation rate"
+       var_unit_nc = "m/s"
+    case ( 'CL_COLUMN', 'cl_column' )
+       var_name_nc = "Q1c"
+       var_desc_nc = "Singlet chlorine mixing ratio (column)"
+       var_unit_nc = "kg/kg"
+    case ( 'CL2_COLUMN', 'cl2_column' )
+       var_name_nc = "Q2c"
+       var_desc_nc = "Chlorine gas mixing ratio (column)"
+       var_unit_nc = "kg/kg"
+    case ( 'CLY_COLUMN', 'cly_column' )
+       var_name_nc = "Cly"
+       var_desc_nc = "Cl and Cl2 the weighted sum (column)"
+       var_unit_nc = "kg/kg"
+    case ( 'FORCING_VX', 'forcing_vx' )
+       var_name_nc = "Fvx"
+       var_desc_nc = "Forcing term of horizontal velocity: vx"
+       var_unit_nc = "m/s-2"
+    case ( 'FORCING_VY', 'forcing_vy' )
+       var_name_nc = "Fvy"
+       var_desc_nc = "Forcing term of horizontal velocity: vx"
+       var_unit_nc = "m/s-2"
+    case ( 'FORCING_VZ', 'forcing_vz' )
+       var_name_nc = "Fvz"
+       var_desc_nc = "Forcing term of horizontal velocity: vx"
+       var_unit_nc = "m/s-2"
+    case ( 'FORCING_E', 'forcing_e' )
+       var_name_nc = "Fe"
+       var_desc_nc = "Forcing term of moist internal energy"
+       var_unit_nc = "J/kg/s"
+    case ( 'FORCING_QV', 'forcing_qv' )
+       var_name_nc = "Fqv"
+       var_desc_nc = "Forcing term of specific humidity"
+       var_unit_nc = "kg/kg/s"
+    case ( 'FORCING_QC', 'forcing_qc' )
+       var_name_nc = "Fqc"
+       var_desc_nc = "Forcing term of cloud water mixing ratio"
+       var_unit_nc = "mkg/kg/s"
+    case ( 'FORCING_QR', 'forcing_qr' )
+       var_name_nc = "Fqr"
+       var_desc_nc = "Forcing term of cloud water mixing ratio"
+       var_unit_nc = "kg/kg/s"
+    case ( 'FORCING_CL', 'forcing_cl' )
+       var_name_nc = "Fcl"
+       var_desc_nc = "Forcing term of Singlet chlorine mixing ratio"
+       var_unit_nc = "kg/kg/s"
+    case ( 'FORCING_CL2', 'forcing_cl2' )
+       var_name_nc = "Fcl2"
+       var_desc_nc = "Forcing term of Chlorine gas mixing ratio"
+       var_unit_nc = "kg/kg/s"
+    case default
+       var_name_nc = trim(var_name)
+       var_desc_nc = "NIL"
+       var_unit_nc = "NIL"
+    end select
+
+  end subroutine cf_desc_unit
 
 end program fio_ico2ll_mpi
 !-------------------------------------------------------------------------------

@@ -15,6 +15,10 @@
     max_varmax = 110,
 /
 
+&RANDOMPARAM
+    RANDOM_FIX = .true.,
+/
+
 &GRDPARAM
     hgrid_io_mode = "ADVANCED",
     hgrid_fname   = "boundary_GL05RL00",
@@ -67,8 +71,6 @@
     hdiff_type        = 'DIRECT',
     lap_order_hdiff   = 2,
     gamma_h           = 1.20D16,
-    Kh_coef_minlim    = 0.D0,
-    Kh_coef_maxlim    = 9.9D99,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
     alpha_d           = 1.20D16,
@@ -83,7 +85,6 @@
     output_io_mode   = 'ADVANCED' ,
     histall_fname    = 'history'  ,
     hist3D_layername = 'ZSDEF40'  ,
-    DIRECT_ACCESS    = .true.     ,
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
     step             = 2          ,

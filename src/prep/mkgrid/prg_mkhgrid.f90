@@ -17,7 +17,10 @@ program mkhgrid
   !
   !++ Used modules
   !
+  use mod_precision
+  use mod_debug
   use mod_adm, only: &
+     ADM_LOG_FID,     &
      ADM_MULTI_PRC,   &
      ADM_proc_init,   &
      ADM_proc_finish, &
@@ -93,7 +96,7 @@ program mkhgrid
                          io_mode       = MKGRD_OUT_io_mode   )
 
   !---< gmtr module setup >---
-  call GRD_scaling( RADIUS )
+  call GRD_scaling( dble(RADIUS) )
 
   call GMTR_setup
 

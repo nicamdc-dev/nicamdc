@@ -22,13 +22,15 @@ program prg_mkllmap
   !
   !++ Used modules (shared)
   !
+  use mod_precision
+  use mod_debug
   use mod_adm, only: &
+     ADM_LOG_FID,     &
      ADM_MULTI_PRC,   &
      ADM_proc_init,   &
      ADM_proc_stop,   &
      ADM_proc_finish, &
      ADM_setup,       &
-     ADM_LOG_FID,     &
      ADM_CTL_FID,     &
      ADM_MAXFNAME
   use mod_fio, only: &

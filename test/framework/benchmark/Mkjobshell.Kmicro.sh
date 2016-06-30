@@ -30,12 +30,13 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-# for AICS-FX10
+# for K(micro)
 if [ ${NMPI} -gt 1152 ]; then
    rscgrp="invalid"
 else
    rscgrp="micro"
 fi
+
 PROF1="fipp -C -Srange -Ihwm,nocall -d prof"
 PROF2="fipp -C -Srange -Inohwm,call -d prof_call"
 

@@ -57,6 +57,16 @@ nhm    : makedir $(addprefix $(NICAM_BINDIR)/,$(PRJ_NHM))
 prep   : makedir $(addprefix $(NICAM_BINDIR)/,$(PRJ_PREP))
 tool   : makedir $(addprefix $(NICAM_BINDIR)/,$(PRJ_TOOL))
 
+# parameters for fixed index
+glevel  =  5
+rlevel  =  0
+nmpi    = 10
+zlayer  = 38
+diamond = 10
+
+fixedindex:
+	@cd ./include; ruby ./setindex.rb $(glevel) $(rlevel) $(nmpi) $(zlayer) $(diamond)
+
 cleandir:
 	-rm -f $(addprefix $(NICAM_LIBDIR)/,$(LIBS))
 	-rm -f $(addprefix $(NICAM_BINDIR)/,$(PRJS))

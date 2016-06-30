@@ -30,6 +30,7 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
+# for K computer
 if [ ${NMPI} -gt 36864 ]; then
    rscgrp="huge"
 elif [ ${NMPI} -gt 384 ]; then
@@ -37,6 +38,7 @@ elif [ ${NMPI} -gt 384 ]; then
 else
    rscgrp="small"
 fi
+
 PROF1="fipp -C -Srange -Ihwm,nocall -d prof"
 PROF2="fipp -C -Srange -Inohwm,call -d prof_call"
 

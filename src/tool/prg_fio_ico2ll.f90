@@ -6,7 +6,7 @@
 program fio_ico2ll
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
+  !++ Description:
   !       This program converts from data on dataicosahedral grid (new I/O format)
   !       to that on latitude-longitude grid.
   !       (some part of source code is imported from ico2ll.f90)
@@ -16,8 +16,8 @@ program fio_ico2ll
   !++ Contributer of ico2ll.f90 : M.Satoh, S.Iga, Y.Niwa, H.Tomita, T.Mitsui,
   !                               W.Yanase,  H.Taniguchi, Y.Yamada, C.Kodama
   !
-  !++ History: 
-  !      Version   Date      Comment 
+  !++ History:
+  !      Version   Date      Comment
   !      -----------------------------------------------------------------------
   !      0.90      11-09-07  H.Yashiro : [NEW] partially imported from ico2ll.f90
   !      0.95      12-04-19  H.Yashiro : [mod] deal large record length
@@ -32,11 +32,12 @@ program fio_ico2ll
   !
   !++ Used modules
   !
+  use mod_precision
   use mod_misc, only : &
     MISC_get_available_fid, &
     MISC_make_idstr
   use mod_cnst, only : &
-    CNST_UNDEF, &
+    CNST_UNDEF8, &
     CNST_UNDEF4
   use mod_calendar, only : &
     calendar_ss2yh
@@ -155,8 +156,8 @@ program fio_ico2ll
   ! ico data information
   integer, allocatable :: ifid(:)
   integer, allocatable :: prc_tab_C(:)
-  type(headerinfo) hinfo 
-  type(datainfo)   dinfo 
+  type(headerinfo) hinfo
+  type(datainfo)   dinfo
 
   integer                                :: num_of_data
   integer                                :: nvar
@@ -178,7 +179,7 @@ program fio_ico2ll
   character(LEN=4)                       :: date_str_tmp(6) ! [add] 13-04-18
 
   ! ico data
-  integer              :: GALL 
+  integer              :: GALL
   real(4), allocatable :: data4allrgn(:)
   real(8), allocatable :: data8allrgn(:)
   real(4), allocatable :: icodata4(:,:,:)
@@ -350,7 +351,7 @@ program fio_ico2ll
         call fio_mk_fname(infname,trim(infile(1)),'pe',p-1,6)
      endif
      allocate( prc_tab_C(MNG_prc_rnum(p))   )
-     prc_tab_C(:) = MNG_prc_tab(:,p)-1
+     prc_tab_C(1:MNG_prc_rnum(p)) = MNG_prc_tab(1:MNG_prc_rnum(p),p)-1
 
      call fio_put_commoninfo( fmode,           &
                               FIO_BIG_ENDIAN,  &
@@ -362,7 +363,7 @@ program fio_ico2ll
 
      call fio_register_file(ifid(p),trim(infname))
      call fio_fopen(ifid(p),FIO_FREAD)
-     
+
      ! <-- [add] C.Kodama 13.04.18
      if( datainfo_nodep_pe .and. p > 1 ) then
         ! assume that datainfo do not depend on pe.
@@ -378,7 +379,7 @@ program fio_ico2ll
         call fio_read_allinfo( ifid(p) )
      endif
      ! -->
-     
+
      if ( p == 1 ) then ! only once
         allocate( hinfo%rgnid(MNG_prc_rnum(p)) )
 
@@ -463,7 +464,7 @@ program fio_ico2ll
   write(*,*) '########## Variable List ########## '
   write(*,*) 'ID |NAME            |STEPS|Layername       |START FROM         |DT [sec]'
   do v = 1, nvar
-     call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=8) )
+     call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=RP) )
      write(tmpl,'(I4.4,"/",I2.2,"/",I2.2,1x,I2.2,":",I2.2,":",I2.2)') date_str(:)
      write(*,'(1x,I3,A1,A16,A1,I5,A1,A16,A1,A19,A1,I8)') &
               v,'|',var_name(v),'|',var_nstep(v),'|',var_layername(v),'|', tmpl,'|', var_dt(v)
@@ -481,7 +482,7 @@ program fio_ico2ll
      !--- open output file
      outbase = trim(outfile_dir)//'/'//trim(outfile_prefix)//trim(var_name(v))
      ofid = MISC_get_available_fid()
- 
+
      num_of_step = min(step_end,var_nstep(v)) - step_str + 1  ! [mov] 13-04-18
 
      if (.not. devide_template) then
@@ -529,7 +530,7 @@ program fio_ico2ll
         elseif(output_netcdf) then ! [add] 13-04-18 C.Kodama
            write(*,*) 'Output: ', trim(outbase)//'.nc'
 
-           call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=8) )
+           call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=RP) )
            do j=1, 6
               write( date_str_tmp(j), '(I4)' ) date_str(j)
               date_str_tmp(j) = adjustl( date_str_tmp(j) )
@@ -604,7 +605,7 @@ program fio_ico2ll
                  access = 'direct',         &
                  recl   = recsize,          &
                  status = 'unknown'         )
-           irec = 1 
+           irec = 1
         endif
 
         step = t-1 + step_str
@@ -617,7 +618,7 @@ program fio_ico2ll
            allocate( data8allrgn(GALL*kmax*MNG_prc_rnum(p)) )
            allocate( icodata4   (GALL,kmax,MNG_prc_rnum(p)) )
            data4allrgn(:)  = CNST_UNDEF4
-           data8allrgn(:)  = CNST_UNDEF
+           data8allrgn(:)  = CNST_UNDEF8
            icodata4(:,:,:) = CNST_UNDEF4
 
            !--- seek data ID and get information
@@ -648,7 +649,7 @@ program fio_ico2ll
               endif
 
               data4allrgn(:) = real(data8allrgn(:),kind=4)
-              where( data8allrgn(:) == CNST_UNDEF )
+              where( data8allrgn(:) == CNST_UNDEF8 )
                  data4allrgn(:) = CNST_UNDEF4
               endwhere
 
@@ -688,7 +689,7 @@ program fio_ico2ll
         !--- swap longitude
         if (lon_swap) then
            allocate( temp(imax,jmax) )
-           do k = 1, kmax ! Mod 07.03.29 T.Mitsui saving memory 
+           do k = 1, kmax ! Mod 07.03.29 T.Mitsui saving memory
               temp(1:imax/2,     :) = lldata(imax/2+1:imax,:,k)
               temp(imax/2+1:imax,:) = lldata(1:imax/2     ,:,k)
               lldata(:,:,k)         = temp(:,:)
@@ -837,7 +838,7 @@ contains
     integer(8),         intent(in) :: dt
     logical,            intent(in) :: lon_swap
     logical,            intent(in) :: devide_template
- 
+
     real(8) :: pi
     real(8) :: temp(imax)
 
@@ -938,7 +939,7 @@ contains
     real(8),                   intent( in) :: alt(kmax)
     integer(8),                intent( in) :: dt
     logical,                   intent( in) :: lon_swap
- 
+
     character(LEN=16) :: axhead(64)
     character(LEN=16) :: hitem
     character(LEN=32) :: htitle
@@ -1000,7 +1001,7 @@ contains
     write(gthead(43),'(E16.7)') CNST_UNDEF4
     write(gthead(44),'(I16)'  ) 1
     write(gthead(46),'(I16)'  ) 0
-    write(gthead(47),'(E16.7)') 0. 
+    write(gthead(47),'(E16.7)') 0.
     write(gthead(48),'(I16)'  ) 0
     write(gthead(60),'(A16)'  ) kdate
     write(gthead(62),'(A16)'  ) kdate
@@ -1027,7 +1028,7 @@ contains
     write(axhead(39),'(E16.7)') -999.0
     write(axhead(44),'(I16)'  ) 1
     write(axhead(46),'(I16)'  ) 0
-    write(axhead(47),'(E16.7)') 0. 
+    write(axhead(47),'(E16.7)') 0.
     write(axhead(48),'(I16)'  ) 0
     write(axhead(60),'(A16)'  ) kdate
     write(axhead(62),'(A16)'  ) kdate
@@ -1145,7 +1146,7 @@ contains
     ! Prefer not to use calendar_dd2ym subroutine
     ! Epoch time is different between calendar_ss2yh and calendar_dd2ym
     ! New I/O stores timestamp, which is generated via calendar_yh2ss
-    call calendar_ss2yh( d(:), real(datesec,kind=8) )
+    call calendar_ss2yh( d(:), real(datesec,kind=RP) )
 
     write(template,'(I2.2,A1,I2.2,A1,I2.2,A3,I4.4)') &
                               d(4), ':', d(5), 'Z', d(3), nmonth(d(2)), d(1)
@@ -1169,7 +1170,7 @@ contains
     ! Prefer not to use calendar_dd2ym subroutine
     ! Epoch time is different between calendar_ss2yh and calendar_dd2ym
     ! New I/O stores timestamp, which is generated via calendar_yh2ss
-    call calendar_ss2yh( d(:), real(datesec,kind=8) )
+    call calendar_ss2yh( d(:), real(datesec,kind=RP) )
 
     write(template,'(I4.4,A1,I2.2,A1,I2.2,A1,I2.2,A1,I2.2,A1)') &
                           d(1), '-', d(2), '-', d(3), '-', d(4), 'h', d(5), 'm'
@@ -1208,7 +1209,7 @@ contains
     ! Prefer not to use calendar_dd2ym subroutine
     ! Epoch time is different between calendar_ss2yh and calendar_dd2ym
     ! New I/O stores timestamp, which is generated via calendar_yh2ss
-    call calendar_ss2yh( d(:), real(datesec,kind=8) )
+    call calendar_ss2yh( d(:), real(datesec,kind=RP) )
 
     write (template,'(i4.4,i2.2,i2.2,1x,i2.2,i2.2,i2.2,1x)') (d(i),i=1,6)
 

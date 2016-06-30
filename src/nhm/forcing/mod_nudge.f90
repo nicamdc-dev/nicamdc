@@ -23,6 +23,8 @@ module mod_nudge
   !
   !++ Used modules
   !
+  use mod_precision
+  use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID
   !-----------------------------------------------------------------------------
@@ -51,26 +53,26 @@ module mod_nudge
   !
   !++ Private parameters & variables
   !
-  real(8), private, allocatable, save :: NDG_fact   (:,:,:,:)
-  real(8), private, allocatable, save :: NDG_fact_pl(:,:,:,:)
+  real(RP), private, allocatable :: NDG_fact   (:,:,:,:)
+  real(RP), private, allocatable :: NDG_fact_pl(:,:,:,:)
 
-  real(8), private, allocatable, save :: NDG_ref   (:,:,:,:)
-  real(8), private, allocatable, save :: NDG_ref_pl(:,:,:,:)
+  real(RP), private, allocatable :: NDG_ref   (:,:,:,:)
+  real(RP), private, allocatable :: NDG_ref_pl(:,:,:,:)
 
-  integer, private, save :: NDG_VMAX = -1
-  integer, private, save :: I_vx  = -1
-  integer, private, save :: I_vy  = -1
-  integer, private, save :: I_vz  = -1
-  integer, private, save :: I_w   = -1
-  integer, private, save :: I_tem = -1
-  integer, private, save :: I_pre = -1
-  integer, private, save :: I_qv  = -1
+  integer, private :: NDG_VMAX = -1
+  integer, private :: I_vx  = -1
+  integer, private :: I_vy  = -1
+  integer, private :: I_vz  = -1
+  integer, private :: I_w   = -1
+  integer, private :: I_tem = -1
+  integer, private :: I_pre = -1
+  integer, private :: I_qv  = -1
 
-  real(8), private, save :: NDG_tau_vxvyvz = -999.D0
-  real(8), private, save :: NDG_tau_w      = -999.D0
-  real(8), private, save :: NDG_tau_tem    = -999.D0
-  real(8), private, save :: NDG_tau_pre    = -999.D0
-  real(8), private, save :: NDG_tau_qv     = -999.D0
+  real(RP), private :: NDG_tau_vxvyvz = -999.0_RP
+  real(RP), private :: NDG_tau_w      = -999.0_RP
+  real(RP), private :: NDG_tau_tem    = -999.0_RP
+  real(RP), private :: NDG_tau_pre    = -999.0_RP
+  real(RP), private :: NDG_tau_qv     = -999.0_RP
 
   !-----------------------------------------------------------------------------
 contains
@@ -80,8 +82,7 @@ contains
     use mod_adm, only: &
        ADM_CTL_FID,   &
        ADM_proc_stop, &
-       ADM_prc_me,    &
-       ADM_prc_pl,    &
+       ADM_have_pl,   &
        ADM_KNONE,     &
        ADM_lall,      &
        ADM_lall_pl,   &
@@ -89,7 +90,6 @@ contains
        ADM_gall_pl,   &
        ADM_kall,      &
        ADM_kmin,      &
-       ADM_kmax,      &
        ADM_vlayer
     use mod_cnst, only: &
        CNST_PI,    &
@@ -111,12 +111,12 @@ contains
     integer :: NDG_kmax1 = 1000
 
     logical :: NDG_hwgt            = .false.     ! weighted nudging option, depending on the distance from the pole
-    real(8) :: NDG_hwgt_center_lat =  35.D0      ! lat. of the pole ( -90<=v<=90 )
-    real(8) :: NDG_hwgt_center_lon = 135.D0      ! lon. of the pole (-180<=v<=180)
-    real(8) :: NDG_hwgt_halo1_dist =   0.D0      ! distance from the pole to the halo1 in [m] (0<=v<=NDG_hwgt_halo2_dist)
-    real(8) :: NDG_hwgt_halo2_dist = 2.0015778D7 ! distance from the pole to the halo2 in [m] (wt_ngd_halo1<=v<=pi*r_e)
-    real(8) :: NDG_hwgt_halo1_coef =   0.D0      ! min. coefficient (0<=v<=wt_ngd_max)
-    real(8) :: NDG_hwgt_halo2_coef =   1.D0      ! max. coefficient (wt_ngd_min<=v<=1)
+    real(RP) :: NDG_hwgt_center_lat =  35.0_RP      ! lat. of the pole ( -90<=v<=90 )
+    real(RP) :: NDG_hwgt_center_lon = 135.0_RP      ! lon. of the pole (-180<=v<=180)
+    real(RP) :: NDG_hwgt_halo1_dist =   0.0_RP      ! distance from the pole to the halo1 in [m] (0<=v<=NDG_hwgt_halo2_dist)
+    real(RP) :: NDG_hwgt_halo2_dist = 2.0015778E7_RP ! distance from the pole to the halo2 in [m] (wt_ngd_halo1<=v<=pi*r_e)
+    real(RP) :: NDG_hwgt_halo1_coef =   0.0_RP      ! min. coefficient (0<=v<=wt_ngd_max)
+    real(RP) :: NDG_hwgt_halo2_coef =   1.0_RP      ! max. coefficient (wt_ngd_min<=v<=1)
 
     namelist /NUDGEPARAM/ &
        NDG_tau_vxvyvz,      &
@@ -136,15 +136,15 @@ contains
        NDG_hwgt_halo1_coef, &
        NDG_hwgt_halo2_coef
 
-    real(8) :: NDG_rtau_vxvyvz
-    real(8) :: NDG_rtau_w
-    real(8) :: NDG_rtau_tem
-    real(8) :: NDG_rtau_pre
-    real(8) :: NDG_rtau_qv
+    real(RP) :: NDG_rtau_vxvyvz
+    real(RP) :: NDG_rtau_w
+    real(RP) :: NDG_rtau_tem
+    real(RP) :: NDG_rtau_pre
+    real(RP) :: NDG_rtau_qv
 
-    real(8) :: wgt_vertical     (ADM_kall)
-    real(8) :: wgt_horizontal   (ADM_gall   ,ADM_KNONE,ADM_lall   ,1) ! 2008/09/10 [Add] M.Hara
-    real(8) :: wgt_horizontal_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,1)
+    real(RP) :: wgt_vertical     (ADM_kall)
+    real(RP) :: wgt_horizontal   (ADM_gall   ,ADM_KNONE,ADM_lall   ,1) ! 2008/09/10 [Add] M.Hara
+    real(RP) :: wgt_horizontal_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,1)
 
     integer :: k0, k1
     integer :: g, k, l
@@ -170,52 +170,52 @@ contains
 
     NDG_VMAX = 0
 
-    if ( NDG_tau_vxvyvz > 0.D0 ) then
+    if ( NDG_tau_vxvyvz > 0.0_RP ) then
        NDG_VMAX = NDG_VMAX + 3
        I_vx     = 1
        I_vy     = 2
        I_vz     = 3
-       NDG_rtau_vxvyvz = 1.D0 / NDG_tau_vxvyvz
+       NDG_rtau_vxvyvz = 1.0_RP / NDG_tau_vxvyvz
     else
-       NDG_rtau_vxvyvz = 0.D0
+       NDG_rtau_vxvyvz = 0.0_RP
     endif
 
-    if ( NDG_tau_w > 0.D0 ) then
+    if ( NDG_tau_w > 0.0_RP ) then
        NDG_VMAX = NDG_VMAX + 1
        I_w      = NDG_VMAX
-       NDG_rtau_w = 1.D0 / NDG_tau_w
+       NDG_rtau_w = 1.0_RP / NDG_tau_w
     else
-       NDG_rtau_w = 0.D0
+       NDG_rtau_w = 0.0_RP
     endif
 
-    if ( NDG_tau_tem > 0.D0 ) then
+    if ( NDG_tau_tem > 0.0_RP ) then
        NDG_VMAX = NDG_VMAX + 1
        I_tem    = NDG_VMAX
-       NDG_rtau_tem = 1.D0 / NDG_tau_tem
+       NDG_rtau_tem = 1.0_RP / NDG_tau_tem
     else
-       NDG_rtau_tem = 0.D0
+       NDG_rtau_tem = 0.0_RP
     endif
 
-    if ( NDG_tau_pre > 0.D0 ) then
+    if ( NDG_tau_pre > 0.0_RP ) then
        NDG_VMAX = NDG_VMAX + 1
        I_pre    = NDG_VMAX
-       NDG_rtau_pre = 1.D0 / NDG_tau_pre
+       NDG_rtau_pre = 1.0_RP / NDG_tau_pre
     else
-       NDG_rtau_pre = 0.D0
+       NDG_rtau_pre = 0.0_RP
     endif
 
-    if ( NDG_tau_qv > 0.D0 ) then
+    if ( NDG_tau_qv > 0.0_RP ) then
        NDG_VMAX = NDG_VMAX + 1
        I_qv     = NDG_VMAX
-       NDG_rtau_qv = 1.D0 / NDG_tau_qv
+       NDG_rtau_qv = 1.0_RP / NDG_tau_qv
     else
-       NDG_rtau_qv = 0.D0
+       NDG_rtau_qv = 0.0_RP
     endif
 
     allocate( NDG_fact   (ADM_gall   ,ADM_kall,ADM_lall   ,NDG_VMAX) )
     allocate( NDG_fact_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,NDG_VMAX) )
-    NDG_fact   (:,:,:,:) = 0.D0
-    NDG_fact_pl(:,:,:,:) = 0.D0
+    NDG_fact   (:,:,:,:) = 0.0_RP
+    NDG_fact_pl(:,:,:,:) = 0.0_RP
 
     allocate( NDG_ref   (ADM_gall   ,ADM_kall,ADM_lall   ,NDG_VMAX) )
     allocate( NDG_ref_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,NDG_VMAX) )
@@ -249,17 +249,17 @@ contains
 
     do k = 1, ADM_kall
        if ( k < NDG_kmin0 ) then
-          wgt_vertical(k) = 0.D0
+          wgt_vertical(k) = 0.0_RP
        elseif( k >= NDG_kmin0 .AND. k < NDG_kmin1 ) then
-          wgt_vertical(k) = 0.5D0 * ( 1.D0 + cos(CNST_PI * (GRD_gz(k)        -GRD_gz(NDG_kmin1) ) &
-                                                         / (GRD_gz(NDG_kmin0)-GRD_gz(NDG_kmin1) ) ) )
+          wgt_vertical(k) = 0.5_RP * ( 1.0_RP + cos(CNST_PI * (GRD_gz(k)        -GRD_gz(NDG_kmin1) ) &
+                                                            / (GRD_gz(NDG_kmin0)-GRD_gz(NDG_kmin1) ) ) )
        elseif( k >= NDG_kmax0 .AND. k < NDG_kmax1 ) then
-          wgt_vertical(k) = 0.5D0 * ( 1.D0 + cos(CNST_PI * (GRD_gz(k)        -GRD_gz(NDG_kmax0) ) &
-                                                         / (GRD_gz(NDG_kmax1)-GRD_gz(NDG_kmax0) ) ) )
+          wgt_vertical(k) = 0.5_RP * ( 1.0_RP + cos(CNST_PI * (GRD_gz(k)        -GRD_gz(NDG_kmax0) ) &
+                                                            / (GRD_gz(NDG_kmax1)-GRD_gz(NDG_kmax0) ) ) )
        elseif( NDG_kmax1 <= k ) then
-          wgt_vertical(k) = 0.D0
+          wgt_vertical(k) = 0.0_RP
        else
-          wgt_vertical(k) = 1.D0
+          wgt_vertical(k) = 1.0_RP
        endif
     enddo
 
@@ -274,8 +274,8 @@ contains
                                  wgt_horizontal   (:,:,:,:), & ! [OUT]
                                  wgt_horizontal_pl(:,:,:,:)  ) ! [OUT]
     else
-       wgt_horizontal   (:,:,:,:) = 1.D0
-       wgt_horizontal_pl(:,:,:,:) = 1.D0
+       wgt_horizontal   (:,:,:,:) = 1.0_RP
+       wgt_horizontal_pl(:,:,:,:) = 1.0_RP
     endif
 
     !---< calc factor >---
@@ -295,7 +295,7 @@ contains
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall
        do k = 1, ADM_kall
        do g = 1, ADM_gall
@@ -356,15 +356,15 @@ contains
        extdata_update
     implicit none
 
-    real(8), intent(in) :: ctime
+    real(RP), intent(in) :: ctime
 
-    real(8) :: temp(ADM_IopJop_nmax,ADM_kall)
+    real(RP) :: temp(ADM_IopJop_nmax,ADM_kall)
 
     logical :: eflag
     integer :: g, k, l, n
     !---------------------------------------------------------------------------
 
-    if ( NDG_tau_vxvyvz > 0.D0 ) then
+    if ( NDG_tau_vxvyvz > 0.0_RP ) then
        do l = 1, ADM_lall
           call extdata_update(temp(:,:),'vx',l,ctime,eflag)
           if ( .NOT. eflag ) then
@@ -401,7 +401,7 @@ contains
        enddo
     endif
 
-    if ( NDG_tau_w > 0.D0 ) then
+    if ( NDG_tau_w > 0.0_RP ) then
        do l = 1, ADM_lall
           call extdata_update(temp(:,:),'w',l,ctime,eflag)
           if ( .NOT. eflag ) then
@@ -416,7 +416,7 @@ contains
        enddo
     endif
 
-    if ( NDG_tau_tem > 0.D0 ) then
+    if ( NDG_tau_tem > 0.0_RP ) then
        do l = 1, ADM_lall
           call extdata_update(temp(:,:),'tem',l,ctime,eflag)
           if ( .NOT. eflag ) then
@@ -431,7 +431,7 @@ contains
        enddo
     endif
 
-    if ( NDG_tau_pre > 0.D0 ) then
+    if ( NDG_tau_pre > 0.0_RP ) then
        do l = 1, ADM_lall
           call extdata_update(temp(:,:),'pre',l,ctime,eflag)
           if ( .NOT. eflag ) then
@@ -446,7 +446,7 @@ contains
        enddo
     endif
 
-    if ( NDG_tau_qv > 0.D0 ) then
+    if ( NDG_tau_qv > 0.0_RP ) then
        do l = 1, ADM_lall
           call extdata_update(temp(:,:),'qv',l,ctime,eflag)
           if ( .NOT. eflag ) then
@@ -483,8 +483,7 @@ contains
        frhogetot, frhogetot_pl, &
        out_tendency             )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_gall,    &
@@ -508,53 +507,53 @@ contains
        history_in
     implicit none
 
-    real(8), intent(in)    :: rhog        (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: rhog_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: vx          (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: vx_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: vy          (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: vy_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: vz          (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: vz_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: w           (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: w_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: tem         (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: tem_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(in)    :: pre         (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(in)    :: pre_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogvx     (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogvx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogvy     (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogvy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogvz     (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogvz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogw      (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogw_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhoge      (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhoge_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8), intent(inout) :: frhogetot   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8), intent(inout) :: frhogetot_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)    :: rhog        (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: rhog_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)    :: vx          (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: vx_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)    :: vy          (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: vy_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)    :: vz          (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: vz_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)    :: w           (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: w_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)    :: tem         (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: tem_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)    :: pre         (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: pre_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: frhogvx     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: frhogvx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: frhogvy     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: frhogvy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: frhogvz     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: frhogvz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: frhogw      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: frhogw_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: frhoge      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: frhoge_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(inout) :: frhogetot   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: frhogetot_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     logical, intent(in)    :: out_tendency
 
-    real(8) :: dvx    (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: dvx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: dvy    (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: dvy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: dvz    (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: dvz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: dw     (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: dw_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: dein   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: dein_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: dvx    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: dvx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: dvy    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: dvy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: dvz    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: dvz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: dw     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: dw_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: dein   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: dein_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(8) :: du     (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: du_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: dv     (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(8) :: dv_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(8) :: dtem   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: du     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: du_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: dv     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: dv_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: dtem   (ADM_gall   ,ADM_kall,ADM_lall   )
 
-    real(8) :: rhog_h
-    real(8) :: NDG_ref_w
+    real(RP) :: rhog_h
+    real(RP) :: NDG_ref_w
 
     integer :: g, k, l
     !---------------------------------------------------------------------------
@@ -565,7 +564,7 @@ contains
     dein(:,:,:) = NDG_fact(:,:,:,I_tem) * ( NDG_ref(:,:,:,I_tem) - tem(:,:,:) ) &
                 + NDG_fact(:,:,:,I_pre) * ( NDG_ref(:,:,:,I_pre) - pre(:,:,:) )
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        dvx_pl (:,:,:) = NDG_fact_pl(:,:,:,I_vx ) * ( NDG_ref_pl(:,:,:,I_vx ) - vx_pl (:,:,:) )
        dvy_pl (:,:,:) = NDG_fact_pl(:,:,:,I_vy ) * ( NDG_ref_pl(:,:,:,I_vy ) - vy_pl (:,:,:) )
        dvz_pl (:,:,:) = NDG_fact_pl(:,:,:,I_vz ) * ( NDG_ref_pl(:,:,:,I_vz ) - vz_pl (:,:,:) )
@@ -583,7 +582,7 @@ contains
     frhoge   (:,:,:) = frhoge   (:,:,:) + dein(:,:,:) * rhog(:,:,:)
     frhogetot(:,:,:) = frhogetot(:,:,:) + dein(:,:,:) * rhog(:,:,:)
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        frhogvx_pl  (:,:,:) = frhogvx_pl  (:,:,:) + dvx_pl (:,:,:) * rhog_pl(:,:,:)
        frhogvy_pl  (:,:,:) = frhogvy_pl  (:,:,:) + dvy_pl (:,:,:) * rhog_pl(:,:,:)
        frhogvz_pl  (:,:,:) = frhogvz_pl  (:,:,:) + dvz_pl (:,:,:) * rhog_pl(:,:,:)
@@ -591,12 +590,12 @@ contains
        frhogetot_pl(:,:,:) = frhogetot_pl(:,:,:) + dein_pl(:,:,:) * rhog_pl(:,:,:)
     endif
 
-    if ( NDG_tau_w > 0.D0 ) then
+    if ( NDG_tau_w > 0.0_RP ) then
        do l = 1, ADM_lall
        do k = ADM_kmin,ADM_kmax+1
        do g = 1, ADM_gall
-          rhog_h = ( VMTR_C2Wfact(1,g,k,l) * rhog(g,k  ,l) &
-                   + VMTR_C2Wfact(2,g,k,l) * rhog(g,k-1,l) )
+          rhog_h = ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k  ,l) &
+                   + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
 
           NDG_ref_w = NDG_ref(g,k,l,I_w) * VMTR_GSGAM2H(g,k,l) / ( rhog_h * CNST_EGRAV )
 
@@ -607,12 +606,12 @@ contains
        enddo
        enddo
 
-       if ( ADM_prc_me == ADM_prc_pl ) then
+       if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
           do k = ADM_kmin,ADM_kmax+1
           do g = 1, ADM_gall_pl
-             rhog_h = ( VMTR_C2Wfact_pl(1,g,k,l) * rhog_pl(g,k  ,l) &
-                      + VMTR_C2Wfact_pl(2,g,k,l) * rhog_pl(g,k-1,l) )
+             rhog_h = ( VMTR_C2Wfact_pl(g,k,1,l) * rhog_pl(g,k  ,l) &
+                      + VMTR_C2Wfact_pl(g,k,2,l) * rhog_pl(g,k-1,l) )
 
              NDG_ref_w = NDG_ref_pl(g,k,l,I_w) * VMTR_GSGAM2H_pl(g,k,l) / ( rhog_h * CNST_EGRAV )
 
@@ -633,13 +632,13 @@ contains
                              dvy, dvy_pl, & ! [IN]
                              dvz, dvz_pl  ) ! [IN]
 
-       dtem(:,:,:) = dein_pl(:,:,:) / CNST_CV
+       dtem(:,:,:) = dein(:,:,:) / CNST_CV
 
        do l = 1, ADM_lall
           call history_in('nudge_du',   du  (:,:,l))
           call history_in('nudge_dv',   dv  (:,:,l))
           call history_in('nudge_dtem', dtem(:,:,l))
-          if ( NDG_tau_w > 0.D0 ) then
+          if ( NDG_tau_w > 0.0_RP ) then
              call history_in('nudge_dw', dw(:,:,l))
           endif
        enddo
@@ -668,19 +667,19 @@ contains
        history_in
     implicit none
 
-    real(8), intent(inout) :: rhog (ADM_gall_in,ADM_kall,ADM_lall)
-    real(8), intent(inout) :: rhogq(ADM_gall_in,ADM_kall,ADM_lall,TRC_VMAX)
-    real(8), intent(in)    :: dt
+    real(RP), intent(inout) :: rhog (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(inout) :: rhogq(ADM_gall_in,ADM_kall,ADM_lall,TRC_VMAX)
+    real(RP), intent(in)    :: dt
 
-    real(8) :: NDG_ref_qv_in(ADM_gall_in,ADM_kall,ADM_lall) ! trimmed
-    real(8) :: dqv          (ADM_gall_in,ADM_kall,ADM_lall) ! tendency of qv     [kg/kg/s]
+    real(RP) :: NDG_ref_qv_in(ADM_gall_in,ADM_kall,ADM_lall) ! trimmed
+    real(RP) :: dqv          (ADM_gall_in,ADM_kall,ADM_lall) ! tendency of qv     [kg/kg/s]
 
-    real(8) :: drhogqv ! tendency of rhogqv [kg/m3/s]
+    real(RP) :: drhogqv ! tendency of rhogqv [kg/m3/s]
 
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
-    if ( NDG_tau_qv > 0.D0 ) then
+    if ( NDG_tau_qv > 0.0_RP ) then
        call GTL_clip_region(NDG_ref(:,:,:,I_qv),NDG_ref_qv_in(:,:,:),1,ADM_kall)
 
        do l = 1, ADM_lall
@@ -716,8 +715,7 @@ contains
     use mod_misc, only: &
        MISC_get_distance
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_gall,    &
@@ -738,24 +736,24 @@ contains
        history_in
     implicit none
 
-    real(8), intent(in)  :: center_lon ! nudging center longitude [degree]
-    real(8), intent(in)  :: center_lat ! nudging center latitude  [degree]
-    real(8), intent(in)  :: halo1_dist ! distance from the pole to the halo1 in [m] (0<=v<=halo2_dist)
-    real(8), intent(in)  :: halo2_dist ! distance from the pole to the halo2 in [m] (wt_ngd_halo1<=v<=pi*r_e)
-    real(8), intent(in)  :: halo1_coef ! coefficient (0<=v<=wt_ngd_max)
-    real(8), intent(in)  :: halo2_coef ! coefficient (wt_ngd_min<=v<=1)
-    real(8), intent(out) :: weight   (ADM_gall   ,ADM_KNONE,ADM_lall   ,1)
-    real(8), intent(out) :: weight_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,1)
+    real(RP), intent(in)  :: center_lon ! nudging center longitude [degree]
+    real(RP), intent(in)  :: center_lat ! nudging center latitude  [degree]
+    real(RP), intent(in)  :: halo1_dist ! distance from the pole to the halo1 in [m] (0<=v<=halo2_dist)
+    real(RP), intent(in)  :: halo2_dist ! distance from the pole to the halo2 in [m] (wt_ngd_halo1<=v<=pi*r_e)
+    real(RP), intent(in)  :: halo1_coef ! coefficient (0<=v<=wt_ngd_max)
+    real(RP), intent(in)  :: halo2_coef ! coefficient (wt_ngd_min<=v<=1)
+    real(RP), intent(out) :: weight   (ADM_gall   ,ADM_KNONE,ADM_lall   ,1)
+    real(RP), intent(out) :: weight_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,1)
 
-    real(8) :: center_lon_rad, center_lat_rad ! [rad]
-    real(8) :: dist, fact
+    real(RP) :: center_lon_rad, center_lat_rad ! [rad]
+    real(RP) :: dist, fact
     integer :: g, k0, l
     !---------------------------------------------------------------------------
 
     k0 = ADM_KNONE
 
-    center_lon_rad = center_lon / 180.D0 * CNST_PI
-    center_lat_rad = center_lat / 180.D0 * CNST_PI
+    center_lon_rad = center_lon / 180.0_RP * CNST_PI
+    center_lat_rad = center_lat / 180.0_RP * CNST_PI
 
     do l = 1, ADM_lall
     do g = 1, ADM_gall
@@ -763,45 +761,45 @@ contains
        call MISC_get_distance( CNST_ERADIUS,   & ! [IN]
                                center_lon_rad, & ! [IN]
                                center_lat_rad, & ! [IN]
-                               GMTR_lon(g,l),  & ! [IN]
-                               GMTR_lat(g,l),  & ! [IN]
+                               real(GMTR_lon(g,l),kind=RP),  & ! [IN]
+                               real(GMTR_lat(g,l),kind=RP),  & ! [IN]
                                dist            ) ! [OUT]
 
        if ( dist < halo1_dist ) then
-          fact = 0.D0
+          fact = 0.0_RP
        elseif( dist >= halo1_dist .AND. dist <= halo2_dist ) then
           fact = (dist-halo1_dist) / (halo2_dist-halo1_dist)
        elseif( dist > halo2_dist ) then
-          fact = 1.D0
+          fact = 1.0_RP
        endif
 
-       weight(g,k0,l,1) = ( 1.D0-fact ) * halo1_coef &
-                        + (      fact ) * halo2_coef
+       weight(g,k0,l,1) = ( 1.0_RP-fact ) * halo1_coef &
+                        + (        fact ) * halo2_coef
 
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
        do g = 1, ADM_gall_pl
 
           call MISC_get_distance( CNST_ERADIUS,     & ! [IN]
                                   center_lon,       & ! [IN]
                                   center_lat,       & ! [IN]
-                                  GMTR_lon_pl(g,l), & ! [IN]
-                                  GMTR_lat_pl(g,l), & ! [IN]
+                                  real(GMTR_lon_pl(g,l),kind=RP), & ! [IN]
+                                  real(GMTR_lat_pl(g,l),kind=RP), & ! [IN]
                                   dist              ) ! [OUT]
 
           if ( dist < halo1_dist ) then
-             fact = 0.D0
+             fact = 0.0_RP
           elseif( dist >= halo1_dist .AND. dist <= halo2_dist ) then
              fact = (dist-halo1_dist) / (halo2_dist-halo1_dist)
           elseif( dist > halo2_dist ) then
-             fact = 1.D0
+             fact = 1.0_RP
           endif
 
-          weight_pl(g,k0,l,1) = ( 1.D0-fact ) * halo1_coef &
-                              + (      fact ) * halo2_coef
+          weight_pl(g,k0,l,1) = ( 1.0_RP-fact ) * halo1_coef &
+                              + (        fact ) * halo2_coef
        enddo
        enddo
     else

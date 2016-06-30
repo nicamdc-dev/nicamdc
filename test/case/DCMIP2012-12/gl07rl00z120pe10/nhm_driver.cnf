@@ -32,7 +32,7 @@
 /
 
 &CHEMVARPARAM
-    CHEM_TRC_vmax = 1,
+    CHEM_TRC_vmax = 4,
 /
 
 &BSSTATEPARAM
@@ -65,8 +65,6 @@
     hdiff_type        = 'DIRECT',
     lap_order_hdiff   = 2,
     gamma_h           = 2.00D14,
-    Kh_coef_minlim    = 0.D0,
-    Kh_coef_maxlim    = 9.9D99,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
     alpha_d           = 2.00D14,
@@ -81,7 +79,6 @@
     output_io_mode   = 'ADVANCED' ,
     histall_fname    = 'history'  ,
     hist3D_layername = 'Z120_100m_DCMIP',
-    DIRECT_ACCESS    = .true.     ,
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
     step             = 12         ,
