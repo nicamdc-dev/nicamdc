@@ -554,8 +554,9 @@ int32_t hio_read_datainfo( int32_t fid )
 
   phid_t vid;
   int ret;
+  int nv;
 
-  for( int nv=0; nv<finfo[fid].header.num_of_var; nv++ ) {
+  for( nv=0; nv<finfo[fid].header.num_of_var; nv++ ) {
     vid = poh5_open_variable_by_idx(finfo[fid].status.hfid, nv);
     ret = poh5_read_variable_attr(vid,
                                   finfo[fid].dinfo[nv].varname,
@@ -648,8 +649,9 @@ int32_t hio_register_file( char *fname )
 {
   int32_t ierr;
   int32_t fid = -1;
+  int i;
 
-  for ( int i=0;i<hio_num_of_file; i++){
+  for ( i=0;i<hio_num_of_file; i++){
     if ( strcmp(finfo[i].header.fname,fname) == 0 ){
       fid = i;
     }
@@ -842,7 +844,8 @@ int32_t hio_read_allinfo( int32_t fid )
          sizeof(hio_datainfo_t)*finfo[fid].header.num_of_var)) == NULL ) {
     printf("Allocation error!\n");
   }
-  for ( int n=0; n<finfo[fid].header.num_of_var; n++){
+  int n;
+  for ( n=0; n<finfo[fid].header.num_of_var; n++){
     init_dinfo( finfo[fid].dinfo[n] );
   }
 
@@ -943,7 +946,7 @@ int32_t hio_dump_finfo( int32_t fid,
                         int32_t dumptype    )
 {
 
-  int32_t i,ij,k,l;
+  int32_t i,j,ij,k,l;
   int32_t did;
   int32_t ijall;
   int64_t ijklall,pos;
@@ -1083,10 +1086,10 @@ int32_t hio_dump_finfo( int32_t fid,
         int gall1d = pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel)+2;
         int ijkl = 0;
         
-        for( int l=0; l<finfo[fid].header.num_of_rgn; l++ ) {
-          for(int k=0; k<finfo[fid].dinfo[did].num_of_layer; k++ ) {
-            for(int j=0; j<gall1d; j++ ) {
-              for(int i=0; i<gall1d; i++ ) {
+        for( l=0; l<finfo[fid].header.num_of_rgn; l++ ) {
+          for( k=0; k<finfo[fid].dinfo[did].num_of_layer; k++ ) {
+            for( j=0; j<gall1d; j++ ) {
+              for( i=0; i<gall1d; i++ ) {
                 int ij = j*gall1d+i;
                 printf("+++ [%8s, %4d, %6d, %3d, %6d] ",
                        finfo[fid].dinfo[did].varname,step,ij,k,l);

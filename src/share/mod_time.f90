@@ -40,21 +40,21 @@ module mod_time
   !                                                  = 'RK4'    ! Runge-Kutta 4th
   !                                                  = 'TRCADV' ! Tracer advection only
 
-  logical, public :: TIME_SPLIT     = .true. ! Horizontally splitting?
+  logical,  public :: TIME_SPLIT     = .true. ! Horizontally splitting?
 
-  integer, public :: TIME_LSTEP_MAX = 10     ! Max steps of large step
-  integer, public :: TIME_SSTEP_MAX          ! Max steps of small step
+  integer,  public :: TIME_LSTEP_MAX = 10     ! Max steps of large step
+  integer,  public :: TIME_SSTEP_MAX          ! Max steps of small step
 
-  real(RP), public :: TIME_DTL       = 5.0_RP   ! Time interval for large step [sec]
+  real(RP), public :: TIME_DTL       = 5.0_RP ! Time interval for large step [sec]
   real(RP), public :: TIME_DTS                ! Time interval for small step [sec]
   !
   real(RP), public :: TIME_START              ! Start time [sec]
   real(RP), public :: TIME_END                ! End   time [sec]
-  integer, public :: TIME_NSTART             ! Time step at the start
-  integer, public :: TIME_NEND               ! Time step at the end
+  integer,  public :: TIME_NSTART             ! Time step at the start
+  integer,  public :: TIME_NEND               ! Time step at the end
 
   real(DP), public :: TIME_CTIME              ! Current time [sec]
-  integer, public :: TIME_CSTEP              ! Current time step
+  integer,  public :: TIME_CSTEP              ! Current time step
 
   !-----------------------------------------------------------------------------
   !

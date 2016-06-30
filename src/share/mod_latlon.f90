@@ -72,15 +72,15 @@ module mod_latlon
   !
   !++ Private parameters & variables
   !
-  character(len=ADM_NSYS), private :: latlon_type = 'EQUIDIST' ! grid type ( equidist or gaussian )
-  integer,                 private :: imax        = 360        ! number of longitude
-  integer,                 private :: jmax        = 180        ! number of latitude
-  real(RP),                 private :: lonmin      = -999.0_RP    ! minimun longitude of region window in deg
-  real(RP),                 private :: lonmax      = -999.0_RP    ! maximun longitude of region window in deg
-  real(RP),                 private :: latmin      = -999.0_RP    ! minimun latitude of region window in deg
-  real(RP),                 private :: latmax      = -999.0_RP    ! maximun latitude of region window in deg
-  logical,                 private :: lon_offset  = .true.     ! logitude offset
-  real(RP),                 private :: polar_limit = -999.0_RP    ! search all longitude if abs(lat) > polar_limit
+  character(len=ADM_NSYS),  private :: latlon_type = 'EQUIDIST' ! grid type ( equidist or gaussian )
+  integer,                  private :: imax        = 360        ! number of longitude
+  integer,                  private :: jmax        = 180        ! number of latitude
+  real(RP),                 private :: lonmin      = -999.0_RP  ! minimun longitude of region window in deg
+  real(RP),                 private :: lonmax      = -999.0_RP  ! maximun longitude of region window in deg
+  real(RP),                 private :: latmin      = -999.0_RP  ! minimun latitude of region window in deg
+  real(RP),                 private :: latmax      = -999.0_RP  ! maximun latitude of region window in deg
+  logical,                  private :: lon_offset  = .true.     ! logitude offset
+  real(RP),                 private :: polar_limit = -999.0_RP  ! search all longitude if abs(lat) > polar_limit
 
   character(len=ADM_MAXFNAME), private :: SAMPLE_OUT_BASENAME = ''
   character(len=ADM_NSYS),     private :: SAMPLE_io_mode      = 'ADVANCED'
@@ -616,8 +616,8 @@ contains
           do i = 1, imax
 
              if ( .NOT. near_pole ) then
-                if ( .NOT. (      (       ( lon(i)                <= lonmax_l ) &
-                                    .AND. ( lon(i)                >= lonmin_l ) ) &
+                if ( .NOT. (      (       ( lon(i)                  <= lonmax_l ) &
+                                    .AND. ( lon(i)                  >= lonmin_l ) ) &
                              .OR. (       ( lon(i) - 2.0_RP*CNST_PI <= lonmax_l ) &
                                     .AND. ( lon(i) - 2.0_RP*CNST_PI >= lonmin_l ) ) &
                              .OR. (       ( lon(i) + 2.0_RP*CNST_PI <= lonmax_l ) &

@@ -48,6 +48,8 @@ module mod_bsstate
   !++ Private procedures
   !
   private :: bsstate_input_ref
+  private :: bsstate_output_ref
+  private :: bsstate_generate
   private :: set_basicstate
   private :: output_info
 
@@ -134,8 +136,11 @@ contains
     tem_bs   (:,:,:) = 0.0_RP
     tem_bs_pl(:,:,:) = 0.0_RP
 
-    if ( ref_type == 'INPUT' ) then
+    if    ( ref_type == 'INPUT' ) then
        call bsstate_input_ref(ref_fname)
+    elseif( ref_type == 'INIT' ) then
+       call bsstate_generate
+       call bsstate_output_ref(ref_fname)
     endif
 
     !--- calculation of basic state
@@ -194,6 +199,124 @@ contains
 
     return
   end subroutine bsstate_input_ref
+
+  !-----------------------------------------------------------------------------
+  subroutine bsstate_output_ref( basename )
+    use mod_misc, only: &
+       MISC_get_available_fid
+    implicit none
+
+    Character(*), Intent(in) :: basename
+
+    integer :: fid
+    !---------------------------------------------------------------------------
+
+    fid = MISC_get_available_fid()
+    open( unit   = fid,            &
+          file   = trim(basename), &
+          status = 'replace',      &
+          form   = 'unformatted'   )
+       write(fid) pre_ref(:)
+       write(fid) tem_ref(:)
+       write(fid) qv_ref (:)
+    close(fid)
+
+    return
+  end subroutine bsstate_output_ref
+
+  !-----------------------------------------------------------------------------
+  subroutine bsstate_generate
+    use mod_adm, only: &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_lall,    &
+       ADM_lall_pl
+    use mod_cnst, only: &
+       GRAV  => CNST_EGRAV, &
+       Rdry  => CNST_RAIR,  &
+       CPdry => CNST_CP,    &
+       CVdry => CNST_CV,    &
+       Rvap  => CNST_RVAP,  &
+       PRE00 => CNST_PRE00
+    use mod_grd, only: &
+       GRD_gz
+    use mod_gtl, only: &
+       GTL_global_mean_eachlayer
+    use mod_runconf, only: &
+       TRC_vmax, &
+       I_QV
+    use mod_prgvar, only: &
+       prgvar_get_withdiag
+    implicit none
+
+    real(RP) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhoge    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhogq    (ADM_gall,   ADM_kall,ADM_lall   ,TRC_vmax)
+    real(RP) :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
+    real(RP) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: pre      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: pre_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: tem      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: tem_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: vx       (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: vx_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: vy       (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: vy_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: vz       (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: vz_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: w        (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: w_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: q        (ADM_gall,   ADM_kall,ADM_lall,   TRC_vmax)
+    real(RP) :: q_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
+    real(RP) :: kappa
+
+    integer :: k
+    !---------------------------------------------------------------------------
+
+    kappa = Rdry / CPdry
+
+    call prgvar_get_withdiag( rhog,   rhog_pl,   & ! [OUT]
+                              rhogvx, rhogvx_pl, & ! [OUT]
+                              rhogvy, rhogvy_pl, & ! [OUT]
+                              rhogvz, rhogvz_pl, & ! [OUT]
+                              rhogw,  rhogw_pl,  & ! [OUT]
+                              rhoge,  rhoge_pl,  & ! [OUT]
+                              rhogq,  rhogq_pl,  & ! [OUT]
+                              rho,    rho_pl,    & ! [OUT]
+                              pre,    pre_pl,    & ! [OUT]
+                              tem,    tem_pl,    & ! [OUT]
+                              vx,     vx_pl,     & ! [OUT]
+                              vy,     vy_pl,     & ! [OUT]
+                              vz,     vz_pl,     & ! [OUT]
+                              w,      w_pl,      & ! [OUT]
+                              q,      q_pl       ) ! [OUT]
+
+    call GTL_global_mean_eachlayer( pre(:,:,:),      pre_pl(:,:,:)     , pre_ref(:) )
+    call GTL_global_mean_eachlayer( tem(:,:,:),      tem_pl(:,:,:)     , tem_ref(:) )
+    call GTL_global_mean_eachlayer( q  (:,:,:,I_QV), q_pl  (:,:,:,I_QV), qv_ref (:) )
+
+    !--- additional reference state.
+    do k = 1, ADM_kall
+       th_ref (k) = tem_ref(k) * ( PRE00 / pre_ref(k) )**kappa
+       phi_ref(k) = GRAV * GRD_gz(k)
+       rho_ref(k) = pre_ref(k) / tem_ref(k) / ( ( 1.0_RP - qv_ref(k) ) * Rdry &
+                                              + (          qv_ref(k) ) * Rvap )
+    enddo
+
+    return
+  end subroutine bsstate_generate
 
   !-----------------------------------------------------------------------------
   !> generation of basic state from reference state

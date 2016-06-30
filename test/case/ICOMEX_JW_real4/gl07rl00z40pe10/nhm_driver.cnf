@@ -20,14 +20,6 @@
     topo_io_mode  = "IDEAL",
 /
 
-&GMTRPARAM
-    GMTR_io_mode = 'ADVANCED', GMTR_fname = 'metrics_GL07RL00',
-/
-
-&OPRTPARAM
-    OPRT_io_mode = 'ADVANCED', OPRT_fname = 'metrics_GL07RL00',
-/
-
 &TIMEPARAM
     DTL         = 300.D0,
     INTEG_TYPE  = "RK3",
@@ -76,8 +68,6 @@
     hdiff_type        = 'DIRECT',
     lap_order_hdiff   = 2,
     gamma_h           = 2.00E14,
-    Kh_coef_minlim    = 0.E0,
-    Kh_coef_maxlim    = 9.9E30,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
     alpha_d           = 2.00E14,

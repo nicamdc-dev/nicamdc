@@ -64,7 +64,6 @@ contains
        fvx,   &
        fvy,   &
        fvz,   &
-       fw,    &
        fe     )
     use mod_adm, only: &
        kdim => ADM_kall, &
@@ -86,7 +85,6 @@ contains
     real(RP), intent(out) :: fvx(ijdim,kdim)
     real(RP), intent(out) :: fvy(ijdim,kdim)
     real(RP), intent(out) :: fvz(ijdim,kdim)
-    real(RP), intent(out) :: fw (ijdim,kdim)
     real(RP), intent(out) :: fe (ijdim,kdim)
 
     real(RP) :: T_eq, acl, asl, ap0
@@ -107,7 +105,6 @@ contains
     fvx(:,:) = 0.0_RP
     fvy(:,:) = 0.0_RP
     fvz(:,:) = 0.0_RP
-    fw (:,:) = 0.0_RP
     fe (:,:) = 0.0_RP
 
     do k = kmin, kmax

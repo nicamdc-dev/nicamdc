@@ -456,12 +456,12 @@ contains
                                 - GMTR_T_var(im1jm1,k0,l,TI,W3) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
                                 - GMTR_T_var(im1jm1,k0,l,TJ,W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
                                 - GMTR_T_var(im1jm1,k0,l,TI,W3) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
-                                - 2.0_RP * GMTR_A_var(ij    ,k0,l,AI ,md)                          &
-                                - 2.0_RP * GMTR_A_var(ij    ,k0,l,AIJ,md)                          &
-                                - 2.0_RP * GMTR_A_var(ij    ,k0,l,AJ ,md)                          &
-                                + 2.0_RP * GMTR_A_var(im1j  ,k0,l,AI ,md)                          &
-                                + 2.0_RP * GMTR_A_var(im1jm1,k0,l,AIJ,md)                          &
-                                + 2.0_RP * GMTR_A_var(ijm1  ,k0,l,AJ ,md)                          &
+                                - 2.0_RP * GMTR_A_var(ij    ,k0,l,AI ,md)                        &
+                                - 2.0_RP * GMTR_A_var(ij    ,k0,l,AIJ,md)                        &
+                                - 2.0_RP * GMTR_A_var(ij    ,k0,l,AJ ,md)                        &
+                                + 2.0_RP * GMTR_A_var(im1j  ,k0,l,AI ,md)                        &
+                                + 2.0_RP * GMTR_A_var(im1jm1,k0,l,AIJ,md)                        &
+                                + 2.0_RP * GMTR_A_var(ijm1  ,k0,l,AJ ,md)                        &
                               ) * 0.5_RP * GMTR_P_var(ij,k0,l,P_RAREA)
              ! ip1j
              cgrad(n,l,1,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,W2) * GMTR_A_var(ijm1  ,k0,l,AJ ,md) &
@@ -527,11 +527,11 @@ contains
                                 - GMTR_T_var(im1j  ,k0,l,TI,W2) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
                                 - GMTR_T_var(im1jm1,k0,l,TJ,W2) * GMTR_A_var(im1j  ,k0,l,AI ,md) &
                                 - GMTR_T_var(im1jm1,k0,l,TJ,W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
-                                - 2.0_RP * GMTR_A_var(ij    ,k0,l,AI ,md)                          &
-                                - 2.0_RP * GMTR_A_var(ij    ,k0,l,AIJ,md)                          &
-                                - 2.0_RP * GMTR_A_var(ij    ,k0,l,AJ ,md)                          &
-                                + 2.0_RP * GMTR_A_var(im1j  ,k0,l,AI ,md)                          &
-                                + 2.0_RP * GMTR_A_var(im1jm1,k0,l,AIJ,md)                          &
+                                - 2.0_RP * GMTR_A_var(ij    ,k0,l,AI ,md)                        &
+                                - 2.0_RP * GMTR_A_var(ij    ,k0,l,AIJ,md)                        &
+                                - 2.0_RP * GMTR_A_var(ij    ,k0,l,AJ ,md)                        &
+                                + 2.0_RP * GMTR_A_var(im1j  ,k0,l,AI ,md)                        &
+                                + 2.0_RP * GMTR_A_var(im1jm1,k0,l,AIJ,md)                        &
                               ) * 0.5_RP * GMTR_P_var(ij,k0,l,P_RAREA)
              ! ip1j
              cgrad(n,l,1,m) = ( - GMTR_T_var(ijm1  ,k0,l,TJ,W2) * GMTR_A_var(im1jm1,k0,l,AIJ,md) &
@@ -4555,8 +4555,8 @@ contains
           ijm1   = n     - ADM_gall_1d
 
           flux(n,AI ) = 0.5_RP * ( (vxt(ijm1,TJ)+vxt(ij  ,TI)) * cinterp_HN(ij,l,AI ,1) &
-                                + (vyt(ijm1,TJ)+vyt(ij  ,TI)) * cinterp_HN(ij,l,AI ,2) &
-                                + (vzt(ijm1,TJ)+vzt(ij  ,TI)) * cinterp_HN(ij,l,AI ,3) )
+                                 + (vyt(ijm1,TJ)+vyt(ij  ,TI)) * cinterp_HN(ij,l,AI ,2) &
+                                 + (vzt(ijm1,TJ)+vzt(ij  ,TI)) * cinterp_HN(ij,l,AI ,3) )
        enddo
 
        nstart = suf(ADM_gmin-1,ADM_gmin-1)
@@ -4568,8 +4568,8 @@ contains
           ijm1   = n     - ADM_gall_1d
 
           flux(n,AIJ) = 0.5_RP * ( (vxt(ij  ,TI)+vxt(ij  ,TJ)) * cinterp_HN(ij,l,AIJ,1) &
-                                + (vyt(ij  ,TI)+vyt(ij  ,TJ)) * cinterp_HN(ij,l,AIJ,2) &
-                                + (vzt(ij  ,TI)+vzt(ij  ,TJ)) * cinterp_HN(ij,l,AIJ,3) )
+                                 + (vyt(ij  ,TI)+vyt(ij  ,TJ)) * cinterp_HN(ij,l,AIJ,2) &
+                                 + (vzt(ij  ,TI)+vzt(ij  ,TJ)) * cinterp_HN(ij,l,AIJ,3) )
        enddo
 
        nstart = suf(ADM_gmin  ,ADM_gmin-1)
@@ -4580,8 +4580,8 @@ contains
           im1j   = n - 1
 
           flux(n,AJ ) = 0.5_RP * ( (vxt(ij  ,TJ)+vxt(im1j,TI)) * cinterp_HN(ij,l,AJ ,1) &
-                                + (vyt(ij  ,TJ)+vyt(im1j,TI)) * cinterp_HN(ij,l,AJ ,2) &
-                                + (vzt(ij  ,TJ)+vzt(im1j,TI)) * cinterp_HN(ij,l,AJ ,3) )
+                                 + (vyt(ij  ,TJ)+vyt(im1j,TI)) * cinterp_HN(ij,l,AJ ,2) &
+                                 + (vzt(ij  ,TJ)+vzt(im1j,TI)) * cinterp_HN(ij,l,AJ ,3) )
        enddo
 
        if ( ADM_have_sgp(l) ) then ! pentagon
@@ -4633,8 +4633,8 @@ contains
              if( ijm1 == ADM_gmin_pl - 1 ) ijm1 = ADM_gmax_pl
 
              flux_pl(v) = 0.5_RP * ( (vxt_pl(ijm1)+vxt_pl(ij)) * GMTR_A_var_pl(ij,k0,l,HTX) &
-                                  + (vyt_pl(ijm1)+vyt_pl(ij)) * GMTR_A_var_pl(ij,k0,l,HTY) &
-                                  + (vzt_pl(ijm1)+vzt_pl(ij)) * GMTR_A_var_pl(ij,k0,l,HTZ) )
+                                   + (vyt_pl(ijm1)+vyt_pl(ij)) * GMTR_A_var_pl(ij,k0,l,HTY) &
+                                   + (vzt_pl(ijm1)+vzt_pl(ij)) * GMTR_A_var_pl(ij,k0,l,HTZ) )
           enddo
 
           scl_pl(:,k,l) = 0.0_RP

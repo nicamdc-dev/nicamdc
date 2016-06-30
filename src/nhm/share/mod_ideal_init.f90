@@ -34,12 +34,22 @@ module mod_ideal_init
      test2_steady_state_mountain, &
      test2_schaer_mountain,       &
      test3_gravity_wave
+  use baroclinic_wave, only: &
+     baroclinic_wave_test
+  use Terminator, only: &
+     initial_value_Terminator
+  use supercell, only: &
+     supercell_init,   &
+     supercell_test
+  use tropical_cyclone, only: &
+     tropical_cyclone_test
   use mod_cnst, only: &
      pi    => CNST_PI,      &
      a     => CNST_ERADIUS, &
      omega => CNST_EOHM,    &
      g     => CNST_EGRAV,   &
      Rd    => CNST_RAIR,    &
+     Rv    => CNST_RVAP,    &
      Cp    => CNST_CP,      &
      KAPPA => CNST_KAPPA,   &
      PRE00 => CNST_PRE00
@@ -66,6 +76,9 @@ module mod_ideal_init
   !
   private :: hs_init
   private :: jbw_init
+  private :: jbw_moist_init
+  private :: sc_init
+  private :: tc_init
   private :: tracer_init
   private :: mountwave_init
   private :: gravwave_init
@@ -78,6 +91,7 @@ module mod_ideal_init
   private :: ps_estimation
   private :: perturbation
   private :: conv_vxvyvz
+  private :: diag_pressure
   private :: simpson
 
   private :: Sp_Unit_East
@@ -129,12 +143,16 @@ contains
     character(len=ADM_NSYS) :: test_case   = ''
     real(RP)                :: eps_geo2prs = 1.E-2_RP
     logical                 :: nicamcore   = .true.
+    logical                 :: chemtracer  = .false.
+    logical                 :: prs_rebuild = .false.
 
     namelist / DYCORETESTPARAM / &
        init_type,   &
        test_case,   &
        eps_geo2prs, &
-       nicamcore
+       nicamcore,   &
+       chemtracer,  &
+       prs_rebuild
 
     integer :: ierr
     !---------------------------------------------------------------------------
@@ -174,10 +192,29 @@ contains
 
     case ('Jablonowski')
 
-       write(ADM_LOG_FID,*) '*** test case  : ', trim(test_case)
-       write(ADM_LOG_FID,*) '*** eps_geo2prs= ', eps_geo2prs
-       write(ADM_LOG_FID,*) '*** nicamcore  = ', nicamcore
+       write(ADM_LOG_FID,*) '*** test case   : ', trim(test_case)
+       write(ADM_LOG_FID,*) '*** eps_geo2prs = ', eps_geo2prs
+       write(ADM_LOG_FID,*) '*** nicamcore   = ', nicamcore
        call jbw_init( ADM_gall, ADM_kall, ADM_lall, test_case, eps_geo2prs, nicamcore, DIAG_var(:,:,:,:) )
+
+    case ('Jablonowski-Moist')
+
+       write(ADM_LOG_FID,*) '*** test case   : ', trim(test_case)
+       write(ADM_LOG_FID,*) '*** nicamcore   = ', nicamcore
+       write(ADM_LOG_FID,*) '*** chemtracer  = ', chemtracer
+       call jbw_moist_init( ADM_gall, ADM_kall, ADM_lall, test_case, nicamcore, chemtracer, &
+                            prs_rebuild, DIAG_var(:,:,:,:) )
+
+    case ('Supercell')
+
+       write(ADM_LOG_FID,*) '*** test case   : ', trim(test_case)
+       write(ADM_LOG_FID,*) '*** nicamcore   = ', nicamcore
+       call sc_init( ADM_gall, ADM_kall, ADM_lall, test_case, nicamcore, prs_rebuild, DIAG_var(:,:,:,:) )
+
+    case ('Tropical-Cyclone')
+
+       write(ADM_LOG_FID,*) '*** nicamcore   = ', nicamcore
+       call tc_init( ADM_gall, ADM_kall, ADM_lall, nicamcore, prs_rebuild, DIAG_var(:,:,:,:) )
 
     case ('Traceradvection')
 
@@ -569,6 +606,473 @@ contains
   end subroutine jbw_init
 
   !-----------------------------------------------------------------------------
+  subroutine jbw_moist_init( &
+       ijdim,        &
+       kdim,         &
+       lall,         &
+       test_case,    &
+       nicamcore,    &
+       chemtracer,   &
+       prs_rebuild,  &
+       DIAG_var      )
+    use mod_adm, only: &
+       ADM_proc_stop, &
+       ADM_kmin,      &
+       ADM_kmax
+    use mod_grd, only: &
+       GRD_afac,       &
+       GRD_bfac,       &
+       GRD_Z,          &
+       GRD_ZH, &
+       GRD_vz
+    use mod_gmtr, only: &
+       GMTR_lat, &
+       GMTR_lon
+    use mod_runconf, only: &
+       I_QV,      &
+       NQW_MAX,   &
+       TRC_vmax,  &
+       NCHEM_MAX, &
+       NCHEM_STR, &
+       NCHEM_END
+    use mod_bndcnd, only : &
+      BNDCND_thermo
+    use mod_vmtr, only : &
+      phi => VMTR_PHI
+    implicit none
+
+    integer,          intent(in)  :: ijdim
+    integer,          intent(in)  :: kdim
+    integer,          intent(in)  :: lall
+    character(len=*), intent(in)  :: test_case
+    logical,          intent(in)  :: nicamcore
+    logical,          intent(in)  :: chemtracer
+    logical,          intent(in)  :: prs_rebuild
+    real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+
+    real(DP), parameter :: Mvap  = 0.608d0 ! Ratio of molar mass of dry air/water (imported from baroclinic_wave_test.f90)
+    real(DP), parameter :: Xfact = 1.0_DP  ! Earth scaling parameter
+    real(DP) :: lat, lon               ! latitude, longitude on Icosahedral grid
+    real(DP) :: prs(kdim), tmp(kdim)   ! presssure and temperature in ICO-grid field
+    real(DP) :: wix(kdim),   wiy(kdim) ! zonal/meridional wind components in ICO-grid field
+    real(DP) :: rho(kdim),   q(kdim)   ! density and water vapor mixing ratio in ICO-grid field
+    real(DP) :: thetav(kdim)           ! Virtual potential temperature in ICO-grid field
+    real(DP) :: p = 0.0_RP             ! dummy variable
+    real(DP) :: Mvap2 ! Ratio of molar mass of dry air/water based on NICAM CONSTANTs
+    real(DP) :: RdovRv
+
+    real(DP) :: z(kdim)
+    real(RP) :: vx_local(kdim)
+    real(RP) :: vy_local(kdim)
+    real(RP) :: vz_local(kdim)
+    real(DP) :: ps, phis
+
+    real(RP) :: dpdz
+    real(RP) :: rho0(ijdim,kdim)
+
+    real(RP) :: cl, cl2
+
+    integer, parameter :: deep    = 0 ! deep atmosphere (1 = yes or 0 = no)
+    integer, parameter :: zcoords = 1 ! 1 if z is specified, 0 if p is specified
+    integer            :: moist       ! include moisture (1 = yes or 0 = no)
+    integer            :: pertt       ! type of perturbation (0 = exponential, 1 = stream function)
+    logical, parameter :: prs_dry = .false.
+
+    integer :: n, k, l
+    !---------------------------------------------------------------------------
+
+    DIAG_var(:,:,:,:) = 0.0_RP
+    p = 0.0_RP
+    RdovRv = Rd / Rv
+    Mvap2 = (1.0D0 - RdovRv)/RdovRv
+
+    moist = 0
+    pertt = 0
+
+    select case( trim(test_case) )
+    case ('1')  ! perturbation: exponential / with moisture
+       write(ADM_LOG_FID,*) "Moist Baroclinic Wave Initialize - case 1: perturbation: exponential / with moisture"
+       moist = 1
+       pertt = 0
+    case ('2')  ! perturbation: stream function / with moisture
+       write(ADM_LOG_FID,*) "Moist Baroclinic Wave Initialize - case 2: perturbation: stream function / with moisture"
+       moist = 1
+       pertt = 1
+    case ('3')  ! perturbation: exponential / without moisture
+       write(ADM_LOG_FID,*) "Moist Baroclinic Wave Initialize - case 3: perturbation: exponential / without moisture"
+       moist = 0
+       pertt = 0
+    case ('4')  ! perturbation: stream function / without moisture
+       write(ADM_LOG_FID,*) "Moist Baroclinic Wave Initialize - case 4: perturbation: stream function / without moisture"
+       moist = 0
+       pertt = 1
+    case ('5')  ! no perturbation / without moisture
+       write(ADM_LOG_FID,*) "Moist Baroclinic Wave Initialize - case 5: no perturbation / with moisture"
+       moist = 1
+       pertt = -99
+    case ('6')  ! no perturbation / without moisture
+       write(ADM_LOG_FID,*) "Moist Baroclinic Wave Initialize - case 6: no perturbation / without moisture"
+       moist = 0
+       pertt = -99
+    case default
+       write(ADM_LOG_FID,*) "xxx Invalid test_case: '"//trim(test_case)//"' specified."
+       write(ADM_LOG_FID,*) 'STOP.'
+       call ADM_proc_stop
+    end select
+    write(ADM_LOG_FID,*) "Chemical Tracer: ", chemtracer
+    write(ADM_LOG_FID,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
+
+    if ( moist == 1 ) then
+       if ( NQW_MAX < 3 ) then
+          write(*          ,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
+          write(ADM_LOG_FID,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
+          call ADM_proc_stop
+       endif
+    endif
+
+    do l = 1, lall
+    do n = 1, ijdim
+       lat = GMTR_lat(n,l)
+       lon = GMTR_lon(n,l)
+
+       do k = 1, kdim
+          z(k) = GRD_vz(n,k,l,GRD_Z)
+          call baroclinic_wave_test( deep,       &  ! [IN ]
+                                     moist,      &  ! [IN ]
+                                     pertt,      &  ! [IN ]
+                                     Xfact,      &  ! [IN ]
+                                     lon,        &  ! [IN ]
+                                     lat,        &  ! [IN ]
+                                     p,          &  ! [IN ]
+                                     z(k),       &  ! [IN ] (z)
+                                     zcoords,    &  ! [IN ]
+                                     wix(k),     &  ! [OUT] Zonal wind (m s^-1)(u)
+                                     wiy(k),     &  ! [OUT] Meridional wind (m s^-1) (v)
+                                     tmp(k),     &  ! [OUT] Temperature (K) (t)
+                                     thetav(k),  &  ! [OUT] Virtual potential temperature (K)
+                                     phis,       &  ! [OUT] Surface Geopotential (m^2 s^-2)
+                                     ps,         &  ! [OUT] Surface Pressure (Pa)
+                                     rho(k),     &  ! [OUT] density (kg m^-3)
+                                     q(k)        )  ! [OUT] water vapor mixing ratio (kg/kg)
+
+          q(k) = max( q(k)/(1.d0+q(k)), 0.0D0 ) ! fix negative value
+       enddo
+
+       k      = ADM_kmin
+       prs(k) = ps - rho(k)*g*(GRD_vz(n,k,l,GRD_Z)-GRD_vz(n,k,l,GRD_ZH))
+       do k = ADM_kmin+1, ADM_kmax
+          dpdz   = -g*0.5d0*(rho(k)*GRD_afac(k)+rho(k-1)*GRD_bfac(k))
+          prs(k) = prs(k-1)+dpdz*(z(k)-z(k-1))
+       enddo
+
+       do k = 1, kdim
+          tmp(k) = prs(k)/(rho(k)*(rd*(1.d0-q(k))+rv*q(k)))
+       enddo
+       rho0(n,:) = rho(:)
+
+       call conv_vxvyvz  ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
+
+       do k = 1, kdim
+          DIAG_var(n,k,l,1     ) = real(prs(k),kind=RP)
+          DIAG_var(n,k,l,2     ) = real(tmp(k),kind=RP)
+          DIAG_var(n,k,l,3     ) = real(vx_local(k),kind=RP)
+          DIAG_var(n,k,l,4     ) = real(vy_local(k),kind=RP)
+          DIAG_var(n,k,l,5     ) = real(vz_local(k),kind=RP)
+          DIAG_var(n,k,l,6+I_QV) = real(q(k),kind=RP)
+       enddo
+
+       if ( chemtracer ) then
+          if ( NCHEM_MAX /= 2 ) then
+             write(*          ,*) 'NCHEM_MAX is not enough! requires 2.', NCHEM_MAX
+             write(ADM_LOG_FID,*) 'NCHEM_MAX is not enough! requires 2.', NCHEM_MAX
+             call ADM_proc_stop
+          endif
+
+          call initial_value_Terminator( lat*r2d, lon*r2d, cl, cl2 )
+
+          ! Todo : the mixing ratios are dry
+          ! i.e. the ratio between the density of the species and the density of dry air.
+          ! calc density at reference level
+          DIAG_var(n,:,l,6+NCHEM_STR) = cl  * (1.0D0 - q(:))
+          DIAG_var(n,:,l,6+NCHEM_END) = cl2 * (1.0D0 - q(:))
+       endif
+
+    enddo
+    call BNDCND_thermo(     &
+         ijdim,             &
+         DIAG_var(:,:,l,2), &
+         rho0,              &
+         DIAG_var(:,:,l,1), &
+         phi(:,:,l)         )
+    enddo
+
+    return
+  end subroutine jbw_moist_init
+
+  !-----------------------------------------------------------------------------
+  subroutine sc_init( &
+       ijdim,        &
+       kdim,         &
+       lall,         &
+       test_case,    &
+       nicamcore,    &
+       prs_rebuild,  &
+       DIAG_var      )
+    use mod_adm, only: &
+       ADM_proc_stop, &
+       ADM_kmin,      &
+       ADM_kmax
+    use mod_grd, only: &
+       GRD_Z,          &
+       GRD_ZH, &
+       GRD_vz
+    use mod_gmtr, only: &
+       GMTR_lat, &
+       GMTR_lon
+    use mod_runconf, only: &
+       I_QV,      &
+       NQW_MAX,   &
+       TRC_vmax
+    implicit none
+
+    integer,          intent(in)  :: ijdim
+    integer,          intent(in)  :: kdim
+    integer,          intent(in)  :: lall
+    character(len=*), intent(in)  :: test_case
+    logical,          intent(in)  :: nicamcore
+    logical,          intent(in)  :: prs_rebuild
+    real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+
+    real(DP), parameter :: Mvap = 0.61d0 ! Ratio of molar mass of dry air/water (imported from supercell_test.f90)
+    real(DP) :: lat, lon               ! latitude, longitude on Icosahedral grid
+    real(DP) :: prs(kdim), tmp(kdim)   ! presssure and temperature in ICO-grid field
+    real(DP) :: wix(kdim),   wiy(kdim) ! zonal/meridional wind components in ICO-grid field
+    real(DP) :: rho(kdim),   q(kdim)   ! density and water vapor mixing ratio in ICO-grid field
+    real(DP) :: thetav(kdim)           ! Virtual potential temperature in ICO-grid field
+    real(DP) :: p = 0.0_RP             ! dummy variable
+    real(DP) :: Mvap2 ! Ratio of molar mass of dry air/water based on NICAM CONSTANTs
+    real(DP) :: RdovRv
+
+    real(DP) :: z(kdim)
+    real(RP) :: vx_local(kdim)
+    real(RP) :: vy_local(kdim)
+    real(RP) :: vz_local(kdim)
+    real(DP) :: ps
+
+    real(RP) :: cl, cl2
+
+    integer, parameter :: deep    = 0 ! deep atmosphere (1 = yes or 0 = no)
+    integer, parameter :: zcoords = 1 ! 1 if z is specified, 0 if p is specified
+    integer            :: pert        ! type of perturbation (0 = no perturbation, 1 = perturbation)
+    logical, parameter :: prs_dry = .false.
+
+    integer :: n, k, l
+    !---------------------------------------------------------------------------
+
+    DIAG_var(:,:,:,:) = 0.0_RP
+    p = 0.0_RP
+    RdovRv = Rd / Rv
+    Mvap2 = (1.0D0 - RdovRv)/RdovRv
+
+    pert = 0
+
+    select case( trim(test_case) )
+    case ('1')  ! with perturbation
+       write(ADM_LOG_FID,*) "Super-Cell Initialize - case 1: with perturbation"
+       pert = 1
+    case ('2')  ! without perturbation
+       write(ADM_LOG_FID,*) "Super-Cell Initialize - case 2: no perturbation"
+       pert = 0
+    case default
+       write(ADM_LOG_FID,*) "xxx Invalid test_case: '"//trim(test_case)//"' specified."
+       write(ADM_LOG_FID,*) 'STOP.'
+       call ADM_proc_stop
+    end select
+    write(ADM_LOG_FID,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
+
+    if ( NQW_MAX < 3 ) then
+       write(*          ,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
+       write(ADM_LOG_FID,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
+       call ADM_proc_stop
+    endif
+
+    call supercell_init
+
+    do l = 1, lall
+    do n = 1, ijdim
+       lat = GMTR_lat(n,l)
+       lon = GMTR_lon(n,l)
+
+!       z(ADM_kmin-1) = GRD_vz(n,2,l,GRD_ZH)
+!       do k = ADM_kmin, ADM_kmax+1
+!          z(k) = GRD_vz(n,k,l,GRD_Z)
+!       enddo
+
+       do k = 1, kdim
+          z(k) = GRD_vz(n,k,l,GRD_Z)
+          call supercell_test( lon,       &  ! [IN ]
+                               lat,       &  ! [IN ]
+                               p,         &  ! [INOUT]
+                               z(k),      &  ! [INOUT]
+                               zcoords,   &  ! [IN ]
+                               wix(k),    &  ! [OUT] Zonal wind (m s^-1)
+                               wiy(k),    &  ! [OUT] Meridional wind (m s^-1)
+                               tmp(k),    &  ! [OUT] Temperature (K)
+                               thetav(k), &  ! [OUT] Virtual potential Temperature (K)
+                               ps,        &  ! [OUT] Surface Pressure (Pa)
+                               rho(k),    &  ! [OUT] density (kg m^-3)
+                               q(k),      &  ! [OUT] water vapor mixing ratio (kg/kg)
+                               pert       )  ! [IN ] perturbation switch
+
+          q(k) = max( q(k), 0.0D0 ) ! fix negative value
+          ! force zero for q upper tropopause (12km)
+          if ( z(k) > 12000.D0 ) q(k) = 0.0D0
+       enddo
+
+       ! Re-Evaluation of temperature from virtual temperature
+
+       tmp(:) = tmp(:) * ( (1.d0+Mvap*q(:)) / (1.d0+Mvap2*q(:)) )
+
+       call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild, prs_dry )
+       call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
+
+       do k = 1, kdim
+          DIAG_var(n,k,l,1     ) = real(prs(k),kind=RP)
+          DIAG_var(n,k,l,2     ) = real(tmp(k),kind=RP)
+          DIAG_var(n,k,l,3     ) = real(vx_local(k),kind=RP)
+          DIAG_var(n,k,l,4     ) = real(vy_local(k),kind=RP)
+          DIAG_var(n,k,l,5     ) = real(vz_local(k),kind=RP)
+          DIAG_var(n,k,l,6+I_QV) = real(q(k),kind=RP)
+       enddo
+
+    enddo
+    enddo
+
+    return
+  end subroutine sc_init
+
+  !-----------------------------------------------------------------------------
+  subroutine tc_init( &
+       ijdim,        &
+       kdim,         &
+       lall,         &
+       nicamcore,    &
+       prs_rebuild,  &
+       DIAG_var      )
+    use mod_adm, only: &
+       ADM_proc_stop, &
+       ADM_kmin,      &
+       ADM_kmax
+    use mod_grd, only: &
+       GRD_Z,          &
+       GRD_ZH, &
+       GRD_vz
+    use mod_gmtr, only: &
+       GMTR_lat, &
+       GMTR_lon
+    use mod_runconf, only: &
+       I_QV,      &
+       NQW_MAX,   &
+       TRC_vmax
+    implicit none
+
+    integer,          intent(in)  :: ijdim
+    integer,          intent(in)  :: kdim
+    integer,          intent(in)  :: lall
+    logical,          intent(in)  :: nicamcore
+    logical,          intent(in)  :: prs_rebuild
+    real(RP),         intent(out) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+
+    real(DP), parameter :: Mvap = 0.608d0 ! Ratio of molar mass of dry air/water (imported from tropical_cyclone_test.f90)
+    real(DP) :: lat, lon               ! latitude, longitude on Icosahedral grid
+    real(DP) :: prs(kdim), tmp(kdim)   ! presssure and temperature in ICO-grid field
+    real(DP) :: wix(kdim),   wiy(kdim) ! zonal/meridional wind components in ICO-grid field
+    real(DP) :: rho(kdim),   q(kdim)   ! density and water vapor mixing ratio in ICO-grid field
+    real(DP) :: thetav(kdim)           ! Virtual potential temperature in ICO-grid field
+    real(DP) :: p = 0.0_RP             ! dummy variable
+    real(DP) :: Mvap2 ! Ratio of molar mass of dry air/water based on NICAM CONSTANTs
+    real(DP) :: RdovRv
+
+    real(DP) :: z(kdim)
+    real(RP) :: vx_local(kdim)
+    real(RP) :: vy_local(kdim)
+    real(RP) :: vz_local(kdim)
+    real(DP) :: ps, phis
+
+    real(RP) :: cl, cl2
+
+    integer, parameter :: deep    = 0 ! deep atmosphere (1 = yes or 0 = no)
+    integer, parameter :: zcoords = 1 ! 1 if z is specified, 0 if p is specified
+    integer            :: moist       ! include moisture (1 = yes or 0 = no)
+    logical, parameter :: prs_dry = .false.
+
+    integer :: n, k, l
+    !---------------------------------------------------------------------------
+
+    DIAG_var(:,:,:,:) = 0.0_RP
+    p = 0.0_RP
+    RdovRv = Rd / Rv
+    Mvap2 = (1.0D0 - RdovRv)/RdovRv
+
+    write(ADM_LOG_FID,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
+    if ( NQW_MAX < 3 ) then
+       write(*          ,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
+       write(ADM_LOG_FID,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
+       call ADM_proc_stop
+    endif
+
+    do l = 1, lall
+    do n = 1, ijdim
+       lat = GMTR_lat(n,l)
+       lon = GMTR_lon(n,l)
+
+!       z(ADM_kmin-1) = GRD_vz(n,2,l,GRD_ZH)
+!       do k = ADM_kmin, ADM_kmax+1
+!          z(k) = GRD_vz(n,k,l,GRD_Z)
+!       enddo
+
+       do k = 1, kdim
+          z(k) = GRD_vz(n,k,l,GRD_Z)
+          call tropical_cyclone_test( lon,       &  ! [IN ]
+                                      lat,       &  ! [IN ]
+                                      p,         &  ! [INOUT]
+                                      z(k),      &  ! [INOUT]
+                                      zcoords,   &  ! [IN ]
+                                      wix(k),    &  ! [OUT] Zonal wind (m s^-1)
+                                      wiy(k),    &  ! [OUT] Meridional wind (m s^-1)
+                                      tmp(k),    &  ! [OUT] Temperature (K)
+                                      thetav(k), &  ! [OUT] Virtual potential Temperature (K)
+                                      phis,      &  ! [OUT] Surface Geopotential (m^2 s^-2)
+                                      ps,        &  ! [OUT] Surface Pressure (Pa)
+                                      rho(k),    &  ! [OUT] density (kg m^-3)
+                                      q(k)       )  ! [OUT] water vapor mixing ratio (kg/kg)
+
+          q(k) = max( q(k), 0.0D0 ) ! fix negative value
+       enddo
+
+       ! Re-Evaluation of temperature from virtual temperature
+
+       tmp(:) = tmp(:) * ( (1.d0+Mvap*q(:)) / (1.d0+Mvap2*q(:)) )
+
+       call diag_pressure( kdim, z, rho, tmp, q, ps, prs, prs_rebuild, prs_dry )
+       call conv_vxvyvz ( kdim, lat, lon, wix, wiy, vx_local, vy_local, vz_local )
+
+       do k = 1, kdim
+          DIAG_var(n,k,l,1     ) = real(prs(k),kind=RP)
+          DIAG_var(n,k,l,2     ) = real(tmp(k),kind=RP)
+          DIAG_var(n,k,l,3     ) = real(vx_local(k),kind=RP)
+          DIAG_var(n,k,l,4     ) = real(vy_local(k),kind=RP)
+          DIAG_var(n,k,l,5     ) = real(vz_local(k),kind=RP)
+          DIAG_var(n,k,l,6+I_QV) = real(q(k),kind=RP)
+       enddo
+
+    enddo
+    enddo
+
+    return
+  end subroutine tc_init
+
+  !-----------------------------------------------------------------------------
   subroutine tracer_init( &
        ijdim,      &
        kdim,       &
@@ -643,7 +1147,8 @@ contains
 
     logical, parameter :: hybrid_eta = .false. ! dont use hybrid sigma-p (eta) coordinate
     integer, parameter :: zcoords    = 1       ! if zcoords = 1, then we use z and output p
-    integer, parameter :: cfv        = 2       ! if cfv = 2 then our velocities follow Gal-Chen coordinates and we need to specify w
+    integer, parameter :: cfv        = 2       ! if cfv = 2 then our velocities follow
+                                               ! Gal-Chen coordinates and we need to specify w
     real(DP)           :: hyam       = 0.0_DP  ! dont use hybrid sigma-p (eta) coordinate
     real(DP)           :: hybm       = 0.0_DP  ! dont use hybrid sigma-p (eta) coordinate
     real(DP)           :: DP_gc                ! bar{z} for Gal-Chen coordinate
@@ -1538,12 +2043,11 @@ contains
           geo(k) = t0*g/ganma * ( 1.0_RP - eta(k,1)**work2 )
        elseif( eta(k,1) < etaT ) then
           tmp(k) = t0 * eta(k,1)**work2 + delT*(etaT - eta(k,1))**5.0_RP
-          !
-          geo(k) = t0*g/ganma * ( 1.0_RP - eta(k,1)**work2 ) - Rd * delT *                              &
-                  ( ( log(eta(k,1)/etaT) + 137.0_RP/60.0_RP )*etaT**5.0_RP - 5.0_RP*(etaT**4.0_RP)*eta(k,1)     &
-                    + 5.0_RP*(etaT**3.0_RP)*(eta(k,1)**2.0_RP) - (10.0_RP/3.0_RP)*(etaT**2.0_RP)*(eta(k,1)**3.0_RP) &
-                    + (5.0_RP/4.0_RP)*etaT*(eta(k,1)**4.0_RP) - (1.0_RP/5.0_RP)*(eta(k,1)**5.0_RP)                &
-                  )
+
+          geo(k) = t0*g/ganma * ( 1.0_RP - eta(k,1)**work2 ) - Rd * delT *                                          &
+                 ( ( log(eta(k,1)/etaT) + 137.0_RP/60.0_RP )*etaT**5.0_RP - 5.0_RP*(etaT**4.0_RP)*eta(k,1)          &
+                   +  5.0_RP*(etaT**3.0_RP)*(eta(k,1)**2.0_RP) - (10.0_RP/3.0_RP)*(etaT**2.0_RP)*(eta(k,1)**3.0_RP) &
+                   + (5.0_RP/4.0_RP)*etaT*(eta(k,1)**4.0_RP) - (1.0_RP/5.0_RP)*(eta(k,1)**5.0_RP)                   )
        else
           write (ADM_LOG_FID,'(A)') "|-- ETA BOUNDARY ERROR: [steady state calc.]"
           write (ADM_LOG_FID,'("|-- (",I3,")  eta: ",F10.4)') k, eta(k,1)
@@ -1555,30 +2059,28 @@ contains
        !endif
        !
     enddo
-    !
+
     ! ---------- meridional distribution for temeperature and geopotential
     work1 = pi/2.0_RP
     work2 = 3.0_RP/4.0_RP * ( pi*u0 / Rd )
     do k = 1, kdim
        eta_v = (eta(k,1) - eta0)*(work1)
-       tmp(k) = tmp(k)                                           &
-                    + work2*eta(k,1) * sin(eta_v) * (cos(eta_v))**0.5_RP  &
-                    * ( ( -2.0_RP * (sin(lat))**6.0_RP * (cos(lat)**2.0_RP + 1.0_RP/3.0_RP) + 10.0_RP/63.0_RP )   &
-                         * 2.0_RP*u0*(cos(eta_v))**1.5_RP                   &
-                        + ( 8.0_RP/5.0_RP * (cos(lat))**3.0_RP * ((sin(lat))**2.0_RP + 2.0_RP/3.0_RP) - pi/4.0_RP ) &
-                         * a*omega                                       &
-                      )
-       geo(k) = geo(k)                                           &
-                    + u0*(cos(eta_v))**1.5_RP  &
-                    * ( ( -2.0_RP * (sin(lat))**6.0_RP * (cos(lat)**2.0_RP + 1.0_RP/3.0_RP) + 10.0_RP/63.0_RP )   &
-                         * u0*(cos(eta_v))**1.5_RP                        &
-                        + ( 8.0_RP/5.0_RP * (cos(lat))**3.0_RP * ((sin(lat))**2.0_RP + 2.0_RP/3.0_RP) - pi/4.0_RP ) &
-                         * a*omega                                       &
-                      )
+       tmp(k) = tmp(k)                                             &
+              + work2*eta(k,1) * sin(eta_v) * (cos(eta_v))**0.5_RP &
+              * ( ( -2.0_RP * (sin(lat))**6.0_RP * (cos(lat)**2.0_RP + 1.0_RP/3.0_RP) + 10.0_RP/63.0_RP )   &
+                * 2.0_RP*u0*(cos(eta_v))**1.5_RP                                                            &
+                + ( 8.0_RP/5.0_RP * (cos(lat))**3.0_RP * ((sin(lat))**2.0_RP + 2.0_RP/3.0_RP) - pi/4.0_RP ) &
+                * a*omega                                                                                   )
+       geo(k) = geo(k)                   &
+              + u0*(cos(eta_v))**1.5_RP  &
+              * ( ( -2.0_RP * (sin(lat))**6.0_RP * (cos(lat)**2.0_RP + 1.0_RP/3.0_RP) + 10.0_RP/63.0_RP )   &
+                * u0*(cos(eta_v))**1.5_RP                                                                   &
+                + ( 8.0_RP/5.0_RP * (cos(lat))**3.0_RP * ((sin(lat))**2.0_RP + 2.0_RP/3.0_RP) - pi/4.0_RP ) &
+                * a*omega                                                                                   )
     enddo
-    !
+
     wiy(:) = 0.0_RP
-    !
+
     return
   end subroutine steady_state
 
@@ -1629,8 +2131,8 @@ contains
           f_cf(1) = 0.0_RP
        endif
 
-       pp(k) = pp(k-1) * ( 1.0_RP + dz*(f_cf(1) - g)/(2.0_RP*Rd*tmp(k-1)) ) &
-                       / ( 1.0_RP - dz*(f_cf(1) - g)/(2.0_RP*Rd*tmp(k)) )
+       pp(k) = pp(k-1) * ( 1.0_RP + dz*(f_cf(1) - g ) / ( 2.0_RP*Rd*tmp(k-1) ) ) &
+                       / ( 1.0_RP - dz*(f_cf(1) - g ) / ( 2.0_RP*Rd*tmp(k  ) ) )
     enddo
     prs(:) = pp(:)
 
@@ -1859,6 +2361,63 @@ contains
   end subroutine conv_vxvyvz
 
   !-----------------------------------------------------------------------------
+  subroutine diag_pressure( &
+      kdim,        &  !--- IN : # of z dimension
+      z,           &  !--- IN : height information
+      rho,         &  !--- IN : density
+      t,           &  !--- IN : temperature
+      q,           &  !--- IN : water vapor content
+      ps,          &  !--- IN : surface pressure
+      prs,         &  !--- OUT: pressure
+      prs_rebuild, &  !--- IN : rebuild switch
+      prs_dry      )  !--- IN : dry condition switch
+    !
+    implicit none
+    integer,  intent(in)  :: kdim
+    real(RP), intent(in)  :: z(:)
+    real(RP), intent(in)  :: rho(:)
+    real(RP), intent(in)  :: t(:)
+    real(RP), intent(in)  :: q(:)
+    real(RP), intent(in)  :: ps
+    real(RP), intent(out) :: prs(:)
+    logical,  intent(in)  :: prs_rebuild
+    logical,  intent(in)  :: prs_dry
+    !
+    real(RP) :: dz, R0, R1
+    integer  :: k
+    !-----
+    if ( prs_dry ) then
+       do k=1, kdim
+          prs(k) = rho(k) * t(k) * Rd
+       enddo
+
+       if ( prs_rebuild ) then ! rebuild
+          do k=2, kdim
+             dz = z(k) - z(k-1)
+             prs(k) = prs(k-1) * ( 1.0_RP - dz*g/(2.0_RP*Rd*t(k-1)) ) &
+                               / ( 1.0_RP + dz*g/(2.0_RP*Rd*t(k  )) )
+          enddo
+       endif
+    else
+       do k=1, kdim
+          prs(k) = rho(k) * t(k) * ( (1.0_RP-q(k))*Rd + q(k)*Rv )
+       enddo
+
+       if ( prs_rebuild ) then ! rebuild
+          do k=2, kdim
+             dz = z(k) - z(k-1)
+             R0 = ( 1.0_RP - q(k-1) )*Rd + q(k-1)*Rv
+             R1 = ( 1.0_RP - q(k  ) )*Rd + q(k  )*Rv
+             prs(k) = prs(k-1) * ( 1.0_RP - dz*g/(2.0_RP*R0*t(k-1)) ) &
+                               / ( 1.0_RP + dz*g/(2.0_RP*R1*t(k  )) )
+          enddo
+       endif
+    endif
+
+    return
+  end subroutine diag_pressure
+
+  !-----------------------------------------------------------------------------
   function simpson( &
       pin1,        &  !--- IN : pressure (top)
       pin2,        &  !--- IN : pressure (middle)
@@ -1903,11 +2462,11 @@ contains
 
     if (downward) then
        pout = pin1 - ( (1.0_RP/3.0_RP) * rho(1) * ( f_cf(1) - g ) &
-                       + (4.0_RP/3.0_RP) * rho(2) * ( f_cf(2) - g ) &
+                     + (4.0_RP/3.0_RP) * rho(2) * ( f_cf(2) - g ) &
                      + (1.0_RP/3.0_RP) * rho(3) * ( f_cf(3) - g ) ) * dz
     else
        pout = pin3 + ( (1.0_RP/3.0_RP) * rho(1) * ( f_cf(1) - g ) &
-                       + (4.0_RP/3.0_RP) * rho(2) * ( f_cf(2) - g ) &
+                     + (4.0_RP/3.0_RP) * rho(2) * ( f_cf(2) - g ) &
                      + (1.0_RP/3.0_RP) * rho(3) * ( f_cf(3) - g ) ) * dz
     endif
 

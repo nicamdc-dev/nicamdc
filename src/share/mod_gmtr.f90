@@ -140,7 +140,8 @@ module mod_gmtr
   private :: GMTR_calc_A
   private :: GMTR_output_metrics
 
-  private :: mk_gmtrvec_on_plane
+  private :: GMTR_calc_vector
+  private :: GMTR_calc_vector_on_plane
   private :: triangle_area_on_plane
 
   !-----------------------------------------------------------------------------
@@ -704,9 +705,9 @@ contains
           ij = ADM_ImoJmp(n,ADM_GIoJo)
 
           if ( GRD_grid_type == 'ON_PLANE' ) then
-             call mk_gmtrvec_on_plane( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:) )
+             call GMTR_calc_vector_on_plane( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:) )
           else
-             call MISC_mk_gmtrvec_DP( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:), GMTR_polygon_type, GRD_rscale )
+             call GMTR_calc_vector( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:), GMTR_polygon_type, GRD_rscale )
           endif
 
           GMTR_A_var(ij,K0,l,ADM_AI,GMTR_A_TTX) = tvec(1)
@@ -735,9 +736,9 @@ contains
           ij = ADM_ImoJmo(n,ADM_GIoJo)
 
           if ( GRD_grid_type == 'ON_PLANE' ) then
-             call mk_gmtrvec_on_plane( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:) )
+             call GMTR_calc_vector_on_plane( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:) )
           else
-             call MISC_mk_gmtrvec_DP( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:), GMTR_polygon_type, GRD_rscale )
+             call GMTR_calc_vector( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:), GMTR_polygon_type, GRD_rscale )
           endif
 
           GMTR_A_var(ij,K0,l,ADM_AIJ,GMTR_A_TTX) = tvec(1)
@@ -776,9 +777,9 @@ contains
           ij = ADM_ImpJmo(n,ADM_GIoJo)
 
           if ( GRD_grid_type == 'ON_PLANE' ) then
-             call mk_gmtrvec_on_plane( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:) )
+             call GMTR_calc_vector_on_plane( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:) )
           else
-             call MISC_mk_gmtrvec_DP( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:), GMTR_polygon_type, GRD_rscale )
+             call GMTR_calc_vector( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:), GMTR_polygon_type, GRD_rscale )
           endif
 
           GMTR_A_var(ij,K0,l,ADM_AJ,GMTR_A_TTX) = tvec(1)
@@ -814,9 +815,9 @@ contains
           ij = ADM_ImoJoo(n,ADM_GIoJo)
 
           if ( GRD_grid_type == 'ON_PLANE' ) then
-             call mk_gmtrvec_on_plane( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:) )
+             call GMTR_calc_vector_on_plane( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:) )
           else
-             call MISC_mk_gmtrvec_DP( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:), GMTR_polygon_type, GRD_rscale )
+             call GMTR_calc_vector( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:), GMTR_polygon_type, GRD_rscale )
           endif
 
           GMTR_A_var(ij,K0,l,ADM_AI,GMTR_A_HTX) = tvec(1)
@@ -855,9 +856,9 @@ contains
           ij = ADM_ImoJmo(n,ADM_GIoJo)
 
           if ( GRD_grid_type == 'ON_PLANE' ) then
-             call mk_gmtrvec_on_plane( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:) )
+             call GMTR_calc_vector_on_plane( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:) )
           else
-             call MISC_mk_gmtrvec_DP( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:), GMTR_polygon_type, GRD_rscale )
+             call GMTR_calc_vector( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:), GMTR_polygon_type, GRD_rscale )
           endif
 
           GMTR_A_var(ij,K0,l,ADM_AIJ,GMTR_A_HTX) = tvec(1)
@@ -894,9 +895,9 @@ contains
           ij = ADM_IooJmo(n,ADM_GIoJo)
 
           if ( GRD_grid_type == 'ON_PLANE' ) then
-             call mk_gmtrvec_on_plane( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:) )
+             call GMTR_calc_vector_on_plane( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:) )
           else
-             call MISC_mk_gmtrvec_DP( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:), GMTR_polygon_type, GRD_rscale )
+             call GMTR_calc_vector( v(:,1,ij), v(:,2,ij), tvec(:), nvec(:), GMTR_polygon_type, GRD_rscale )
           endif
 
           GMTR_A_var(ij,K0,l,ADM_AJ,GMTR_A_HTX) = tvec(1)
@@ -918,8 +919,8 @@ contains
                 v_pl(d,2,ij) = GRD_x_pl(ij         ,K0,l,d)
              enddo
 
-             call MISC_mk_gmtrvec_DP( v_pl(:,1,ij), v_pl(:,2,ij), tvec(:), nvec(:), &
-                                   GMTR_polygon_type, GRD_rscale                 )
+             call GMTR_calc_vector( v_pl(:,1,ij), v_pl(:,2,ij), tvec(:), nvec(:), &
+                                    GMTR_polygon_type, GRD_rscale                 )
 
              GMTR_A_var_pl(ij,K0,l,GMTR_A_TTX:GMTR_A_TTZ) = tvec(1:3)
              GMTR_A_var_pl(ij,K0,l,GMTR_A_TNX:GMTR_A_TNZ) = nvec(1:3)
@@ -937,8 +938,8 @@ contains
           enddo
 
           do ij = ADM_GMIN_PL, ADM_GMAX_PL
-             call MISC_mk_gmtrvec_DP( v_pl(:,1,ij), v_pl(:,2,ij), tvec(:), nvec(:), &
-                                   GMTR_polygon_type, GRD_rscale                 )
+             call GMTR_calc_vector( v_pl(:,1,ij), v_pl(:,2,ij), tvec(:), nvec(:), &
+                                    GMTR_polygon_type, GRD_rscale                 )
 
              GMTR_A_var_pl(ij,K0,l,GMTR_A_TT2X:GMTR_A_TT2Z) = tvec(1:3)
              GMTR_A_var_pl(ij,K0,l,GMTR_A_TN2X:GMTR_A_TN2Z) = nvec(1:3)
@@ -956,8 +957,8 @@ contains
           enddo
 
           do ij = ADM_GMIN_PL, ADM_GMAX_PL
-             call MISC_mk_gmtrvec_DP( v_pl(:,1,ij), v_pl(:,2,ij), tvec(:), nvec(:), &
-                                   GMTR_polygon_type, GRD_rscale                 )
+             call GMTR_calc_vector( v_pl(:,1,ij), v_pl(:,2,ij), tvec(:), nvec(:), &
+                                    GMTR_polygon_type, GRD_rscale                 )
 
              GMTR_A_var_pl(ij,K0,l,GMTR_A_HTX:GMTR_A_HTZ) = tvec(1:3)
              GMTR_A_var_pl(ij,K0,l,GMTR_A_HNX:GMTR_A_HNZ) = nvec(1:3)
@@ -1226,22 +1227,85 @@ contains
   end subroutine GMTR_output_metrics
 
   !-----------------------------------------------------------------------------
-  !> calc vector on plane
-  subroutine mk_gmtrvec_on_plane( vFrom, vTo, vT, vN )
+  subroutine GMTR_calc_vector( &
+       vFrom,        &
+       vTo,          &
+       vT,           &
+       vN,           &
+       polygon_type, &
+       radius        )
+    use mod_misc, only: &
+       VECTR_cross => MISC_3dvec_cross, &
+       VECTR_abs   => MISC_3dvec_abs,   &
+       VECTR_angle => MISC_3dvec_angle
     implicit none
 
-    real(DP), intent(in)  :: vFrom(3), vTo(3)
-    real(DP), intent(out) :: vT(3),    vN(3)
+    real(RP),         intent(in)  :: vFrom(3)
+    real(RP),         intent(in)  :: vTo  (3)
+    real(RP),         intent(out) :: vT   (3)
+    real(RP),         intent(out) :: vN   (3)
+    character(len=*), intent(in)  :: polygon_type
+    real(RP),         intent(in)  :: radius
+
+    real(RP), parameter :: o(3) = 0.0_RP
+
+    real(RP) :: angle, length
+    real(RP) :: distance
     !---------------------------------------------------------------------------
 
+    if ( polygon_type == 'ON_PLANE' ) then ! length of a line
+
+       distance = sqrt( ( vFrom(1)-vTo(1) ) * ( vFrom(1)-vTo(1) ) &
+                      + ( vFrom(2)-vTo(2) ) * ( vFrom(2)-vTo(2) ) &
+                      + ( vFrom(3)-vTo(3) ) * ( vFrom(3)-vTo(3) ) )
+
+    elseif( polygon_type == 'ON_SPHERE' ) then ! length of a geodesic line ( angle * radius )
+
+       call VECTR_angle( angle, vFrom(:), o(:), vTo(:) )
+       distance = angle * radius
+
+    endif
+
+    ! calculate tangential vector
     vT(:) = vTo(:) - vFrom(:)
 
-    vN(1) = -vT(2)
-    vN(2) =  vT(1)
-    vN(3) =   0.0_DP
+    call VECTR_abs( length, vT(:) )
+    vT(:) = vT(:) * distance / length
+
+    ! calculate normal vector
+    call VECTR_cross( vN(:), o(:), vFrom(:), o(:), vTo(:) )
+
+    call VECTR_abs( length, vN(:) )
+    vN(:) = vN(:) * distance / length
 
     return
-  end subroutine mk_gmtrvec_on_plane
+  end subroutine GMTR_calc_vector
+
+  !-----------------------------------------------------------------------------
+  !> calc vector on plane
+  subroutine GMTR_calc_vector_on_plane( &
+       vFrom, &
+       vTo,   &
+       vT,    &
+       vN     )
+    implicit none
+
+    real(RP), intent(in)  :: vFrom(3)
+    real(RP), intent(in)  :: vTo  (3)
+    real(RP), intent(out) :: vT   (3)
+    real(RP), intent(out) :: vN   (3)
+    !---------------------------------------------------------------------------
+
+    ! calculate tangential vector
+    vT(:) = vTo(:) - vFrom(:)
+
+    ! calculate normal vector
+    vN(1) = -vT(2)
+    vN(2) =  vT(1)
+    vN(3) =   0.0_RP
+
+    return
+  end subroutine GMTR_calc_vector_on_plane
 
   !-----------------------------------------------------------------------------
   !> calc triangle area on plane

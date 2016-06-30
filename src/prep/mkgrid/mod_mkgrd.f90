@@ -78,11 +78,11 @@ module mod_mkgrd
   logical, private :: MKGRD_DOROTATE    = .false.
 
   real(RP), private :: MKGRD_spring_beta      = 1.15_RP ! parameter beta for spring dynamics
-  real(RP), private :: MKGRD_prerotation_tilt =   0.0_RP ! [deg]
+  real(RP), private :: MKGRD_prerotation_tilt =  0.0_RP ! [deg]
   real(RP), private :: MKGRD_stretch_alpha    = 1.00_RP ! parameter alpha for stretch
-  integer, private :: MKGRD_shrink_level     =      0 ! shrink level (only for 1-diamond experiment)
-  real(RP), private :: MKGRD_rotation_lon     =   0.0_RP ! [deg]
-  real(RP), private :: MKGRD_rotation_lat     =  90.0_RP ! [deg]
+  integer,  private :: MKGRD_shrink_level     = 0       ! shrink level (only for 1-diamond experiment)
+  real(RP), private :: MKGRD_rotation_lon     =  0.0_RP ! [deg]
+  real(RP), private :: MKGRD_rotation_lat     = 90.0_RP ! [deg]
 
   !-----------------------------------------------------------------------------
 contains
@@ -725,11 +725,11 @@ contains
           endif
 
           call MISC_get_cartesian_DP( GRD_x(ij,k,l,GRD_XDIR), & ! [OUT]
-                                   GRD_x(ij,k,l,GRD_YDIR), & ! [OUT]
-                                   GRD_x(ij,k,l,GRD_ZDIR), & ! [OUT]
-                                   lat_trans,              & ! [IN]
-                                   lon,                    & ! [IN]
-                                   1.0_RP                    ) ! [IN]
+                                      GRD_x(ij,k,l,GRD_YDIR), & ! [OUT]
+                                      GRD_x(ij,k,l,GRD_ZDIR), & ! [OUT]
+                                      lat_trans,              & ! [IN]
+                                      lon,                    & ! [IN]
+                                      1.0_RP                  ) ! [IN]
        enddo
     enddo
 
@@ -751,11 +751,11 @@ contains
           endif
 
           call MISC_get_cartesian_DP( GRD_x_pl(ij,k,l,GRD_XDIR), & ! [OUT]
-                                   GRD_x_pl(ij,k,l,GRD_YDIR), & ! [OUT]
-                                   GRD_x_pl(ij,k,l,GRD_ZDIR), & ! [OUT]
-                                   lat_trans,                 & ! [IN]
-                                   lon,                       & ! [IN]
-                                   1.0_RP                       ) ! [IN]
+                                      GRD_x_pl(ij,k,l,GRD_YDIR), & ! [OUT]
+                                      GRD_x_pl(ij,k,l,GRD_ZDIR), & ! [OUT]
+                                      lat_trans,                 & ! [IN]
+                                      lon,                       & ! [IN]
+                                      1.0_RP                     ) ! [IN]
        enddo
        enddo
     endif

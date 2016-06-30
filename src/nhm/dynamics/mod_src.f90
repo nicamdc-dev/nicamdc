@@ -178,7 +178,7 @@ contains
        do k = ADM_kmin,ADM_kmax
        do g = 1, ADM_gall
           wc = 0.5_RP * ( GRD_cfac(k) * w(g,k+1,l) &
-                       + GRD_dfac(k) * w(g,k  ,l) )
+                        + GRD_dfac(k) * w(g,k  ,l) )
 
           vvx(g,k,l) = vx(g,k,l) + wc * GRD_x(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
           vvy(g,k,l) = vy(g,k,l) + wc * GRD_x(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
@@ -201,7 +201,7 @@ contains
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
              wc = 0.5_RP * ( GRD_cfac(k) * w_pl(g,k+1,l) &
-                          + GRD_dfac(k) * w_pl(g,k  ,l) )
+                           + GRD_dfac(k) * w_pl(g,k  ,l) )
 
              vvx_pl(g,k,l) = vx_pl(g,k,l) + wc * GRD_x_pl(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
              vvy_pl(g,k,l) = vy_pl(g,k,l) + wc * GRD_x_pl(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
@@ -701,7 +701,7 @@ contains
           do k = ADM_kmin, ADM_kmax+1
           do g = 1, ADM_gall
              rhogwscl(g,k,l) = rhogw(g,k,l) * 0.5_RP * ( GRD_afac(k) * scl(g,k,  l) &
-                                                      + GRD_bfac(k) * scl(g,k-1,l) )
+                                                       + GRD_bfac(k) * scl(g,k-1,l) )
           enddo
           enddo
           do g = 1, ADM_gall
@@ -714,7 +714,7 @@ contains
              do k = ADM_kmin, ADM_kmax+1
              do g = 1, ADM_gall_pl
                 rhogwscl_pl(g,k,l) = rhogw_pl(g,k,l) * 0.5_RP * ( GRD_afac(k) * scl_pl(g,k  ,l) &
-                                                               + GRD_bfac(k) * scl_pl(g,k-1,l) )
+                                                                + GRD_bfac(k) * scl_pl(g,k-1,l) )
              enddo
              enddo
              do g = 1, ADM_gall_pl
@@ -794,9 +794,9 @@ contains
     real(DP), intent(in)  :: scl_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(DP), intent(out) :: grhogscl   (ADM_gall,   ADM_kall,ADM_lall   ) ! scalar tendency
     real(DP), intent(out) :: grhogscl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    integer, intent(in)  :: fluxtype ! scheme type
-                                     ! I_SRC_default    : horizontal & vertical convergence
-                                     ! I_SRC_horizontal : horizontal convergence
+    integer,  intent(in)  :: fluxtype ! scheme type
+                                      ! I_SRC_default    : horizontal & vertical convergence
+                                      ! I_SRC_horizontal : horizontal convergence
 
     real(DP) :: rhogvxscl   (ADM_gall,   ADM_kall,ADM_lall   ) ! scalar * rho*Vx ( G^1/2 x gam2 )
     real(DP) :: rhogvxscl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -902,7 +902,7 @@ contains
 
     return
   end subroutine src_advection_convergence_DP
-  
+
   !-----------------------------------------------------------------------------
   !> Flux convergence calculation
   !! 1. Horizontal flux convergence is calculated by using rhovx, rhovy, and
@@ -1252,14 +1252,14 @@ contains
 
     return
   end subroutine src_flux_convergence_DP
-  
+
   !-----------------------------------------------------------------------------
   !> Gradient operator
   subroutine src_pres_gradient( &
        P,      P_pl,      &
        Pgrad,  Pgrad_pl,  &
        Pgradw, Pgradw_pl, &
-       gradtype          )
+       gradtype           )
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -1298,9 +1298,9 @@ contains
     real(RP), intent(out) :: Pgrad_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,ADM_nxyz)
     real(RP), intent(out) :: Pgradw   (ADM_gall   ,ADM_kall,ADM_lall   )          ! vertical gradient
     real(RP), intent(out) :: Pgradw_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    integer, intent(in)  :: gradtype ! scheme type
-                                     ! I_SRC_default    : horizontal & vertical gradient
-                                     ! I_SRC_horizontal : horizontal gradient
+    integer,  intent(in)  :: gradtype ! scheme type
+                                      ! I_SRC_default    : horizontal & vertical gradient
+                                      ! I_SRC_horizontal : horizontal gradient
 
     real(RP) :: P_vm    (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: P_vm_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)

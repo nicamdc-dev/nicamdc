@@ -410,8 +410,8 @@ contains
        do k = ADM_kmin, ADM_kmax
        do g = 1, ADM_gall
           rhogkin_h(g,k) = 0.5_RP * ( rhogvx(g,k,l) * rhogvx(g,k,l) &
-                                   + rhogvy(g,k,l) * rhogvy(g,k,l) &
-                                   + rhogvz(g,k,l) * rhogvz(g,k,l) ) / rhog(g,k,l)
+                                    + rhogvy(g,k,l) * rhogvy(g,k,l) &
+                                    + rhogvz(g,k,l) * rhogvz(g,k,l) ) / rhog(g,k,l)
        enddo
        enddo
 
@@ -444,8 +444,8 @@ contains
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
              rhogkin_h_pl(g,k) = 0.5_RP * ( rhogvx_pl(g,k,l) * rhogvx_pl(g,k,l) &
-                                         + rhogvy_pl(g,k,l) * rhogvy_pl(g,k,l) &
-                                         + rhogvz_pl(g,k,l) * rhogvz_pl(g,k,l) ) / rhog_pl(g,k,l)
+                                          + rhogvy_pl(g,k,l) * rhogvy_pl(g,k,l) &
+                                          + rhogvz_pl(g,k,l) * rhogvz_pl(g,k,l) ) / rhog_pl(g,k,l)
           enddo
           enddo
 

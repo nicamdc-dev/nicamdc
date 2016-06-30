@@ -1270,7 +1270,7 @@ contains
     call MISC_3dvec_angle( angle2, v1(:), o, v3(:) )
 !    write(ADM_LOG_FID,*) ip, angle1, angle2, abs(angle1)-abs(angle2)
 
-    if (       abs(ip)                 < eps  &      ! on the same line
+    if (       abs(ip)                 < eps    &      ! on the same line
          .AND. abs(angle2)-abs(angle1) < 0.0_RP ) then ! which is far?
 !       write(ADM_LOG_FID,*) 'exchange by angle', 2, '<->', 3
        vertex(2,:) = v3(:)
@@ -1286,7 +1286,7 @@ contains
     call MISC_3dvec_angle( angle2, v1(:), o, v3(:) )
 !    write(ADM_LOG_FID,*) ip, angle1, angle2, abs(angle1)-abs(angle2)
 
-    if (       abs(ip)                 < eps  &      ! on the same line
+    if (       abs(ip)                 < eps    &      ! on the same line
          .AND. abs(angle2)-abs(angle1) < 0.0_RP ) then ! which is far?
 !       write(ADM_LOG_FID,*) 'exchange by angle', nvert, '<->', nvert-1
        vertex(nvert,  :) = v3(:)

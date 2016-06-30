@@ -709,7 +709,7 @@ int poh5_read_variable_time(
                    int64_t *ts,       /**< [out] array of start time of each steps */
                    int64_t *te)       /**< [out] array of end time of each steps */
 {
-  int32_t ns;
+  int32_t n,ns;
   herr_t res;
 
 #ifdef DEBUG
@@ -743,7 +743,7 @@ int poh5_read_variable_time(
     res = H5Dclose(did);
     res = H5Tclose(c_tid);
 
-    for ( int n=0; n<ns; n++ ){
+    for ( n=0; n<ns; n++ ){
       ts[n] = tp[n].s;
       te[n] = tp[n].e;
     }
@@ -914,6 +914,7 @@ int write_dataset(
                      const void   *data)    /**<[in] vardata itself. */
 {
   herr_t res;
+  int n;
 
 #ifdef DEBUG
   fprintf(DBGOUT,"dbg:write_dataset:step,dname=%d %s\n",step,dname);
@@ -935,11 +936,11 @@ int write_dataset(
   /* dataspace for hyperslab */
   hsize_t *cnt = (hsize_t *)malloc(rank * sizeof(hsize_t));
   cnt[0]  = 1;
-  for ( int n=1; n<rank; n++ ){    cnt[n]  = dim[n];  }
+  for ( n=1; n<rank; n++ ){    cnt[n]  = dim[n];  }
 
   hsize_t *ofs = (hsize_t *)malloc(rank * sizeof(hsize_t));
   ofs[0] = step-1;
-  for ( int n=1; n<rank; n++ ){    ofs[n] = 0;  }
+  for ( n=1; n<rank; n++ ){    ofs[n] = 0;  }
 
   res = H5Sselect_hyperslab(sid, H5S_SELECT_SET, ofs, NULL, cnt, NULL);
   hid_t mem_sid = H5Screate_simple(rank, cnt, NULL);
@@ -976,6 +977,7 @@ int write_dataset_1rgn(
                      const void   *data)    /**<[in] vardata itself. */
 {
   herr_t res;
+  int n;
 
 #ifdef DEBUG
   fprintf(DBGOUT,"dbg:write_dataset_1rgn:step, ll=%d %d\n",step,ll);
@@ -999,12 +1001,12 @@ int write_dataset_1rgn(
   hsize_t *cnt = (hsize_t *)malloc(rank * sizeof(hsize_t));
   cnt[0]  = 1;
   cnt[1]  = 1;
-  for ( int n=2; n<rank; n++ ){    cnt[n]  = dim[n];  }
+  for ( n=2; n<rank; n++ ){    cnt[n]  = dim[n];  }
 
   hsize_t *ofs = (hsize_t *)malloc(rank * sizeof(hsize_t));
   ofs[0] = step-1;
   ofs[1] = ll;
-  for ( int n=2; n<rank; n++ ){    ofs[n] = 0;  }
+  for ( n=2; n<rank; n++ ){    ofs[n] = 0;  }
 
   res = H5Sselect_hyperslab(sid, H5S_SELECT_SET, ofs, NULL, cnt, NULL);
   hid_t mem_sid = H5Screate_simple(rank, cnt, NULL);
@@ -1038,6 +1040,7 @@ int read_dataset(
                  void         *data)    /**<[out] vardata itself. */
 {
   herr_t res;
+  int n;
 
 #ifdef DEBUG
   fprintf(DBGOUT,"dbg:read_dataset:step=%d\n",step);
@@ -1060,11 +1063,11 @@ int read_dataset(
   /* dataspace for hyperslab */
   hsize_t *cnt = (hsize_t *)malloc(rank * sizeof(hsize_t));
   cnt[0]  = 1;
-  for ( int n=1; n<rank; n++ ){    cnt[n] = dim[n];  }
+  for ( n=1; n<rank; n++ ){    cnt[n] = dim[n];  }
 
   hsize_t *ofs = (hsize_t *)malloc(rank * sizeof(hsize_t));
   ofs[0] = step-1;
-  for ( int n=1; n<rank; n++ ){    ofs[n] = 0;  }
+  for ( n=1; n<rank; n++ ){    ofs[n] = 0;  }
 
   res = H5Sselect_hyperslab(sid, H5S_SELECT_SET, ofs, NULL, cnt, NULL);
   hid_t mem_sid = H5Screate_simple(rank, cnt, NULL);

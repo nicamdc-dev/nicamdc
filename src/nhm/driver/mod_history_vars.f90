@@ -87,6 +87,7 @@ module mod_history_vars
   logical, private :: out_th       = .false.
   logical, private :: out_th_prime = .false.
   logical, private :: out_850hPa   = .false.
+  logical, private :: out_500hPa   = .false.
 
   logical, private :: out_rh       = .false.
   logical, private :: out_pw       = .false.
@@ -102,12 +103,23 @@ contains
        HIST_req_nmax, &
        item_save
     use mod_adm, only: &
-         ADM_gall, &
-         ADM_kall, &
-         ADM_lall
+       ADM_gall, &
+       ADM_kall, &
+       ADM_lall, &
+       ADM_KNONE
+    use mod_runconf, only: &
+       TRC_VMAX,  &
+       AF_TYPE
+    use mod_history, only: &
+       history_in
     implicit none
 
-    integer :: n
+    real(RP) :: tmp3d(ADM_gall,ADM_kall)
+    real(RP) :: tmp2d(ADM_gall,ADM_KNONE)
+
+    character(len=16) :: varname
+
+    integer :: n, l, nq
     !---------------------------------------------------------------------------
 
     do n = 1, HIST_req_nmax
@@ -120,6 +132,10 @@ contains
            .OR. item_save(n) == 'sl_v850'     &
            .OR. item_save(n) == 'sl_w850'     &
            .OR. item_save(n) == 'sl_t850'     ) out_850hPa   = .true.
+       if(      item_save(n) == 'sl_u500'     &
+           .OR. item_save(n) == 'sl_v500'     &
+           .OR. item_save(n) == 'sl_w500'     &
+           .OR. item_save(n) == 'sl_t500'     ) out_500hPa   = .true.
 
        if(      item_save(n) == 'ml_rh'       ) out_rh       = .true.
        if(      item_save(n) == 'sl_pw'       ) out_pw       = .true.
@@ -138,6 +154,35 @@ contains
        allocate( v_old (ADM_gall,ADM_kall,ADM_lall) )
        allocate( wc_old(ADM_gall,ADM_kall,ADM_lall) )
     endif
+
+    tmp2d(:,:) = 0.0_RP
+    tmp3d(:,:) = 0.0_RP
+
+    select case(AF_TYPE)
+    case('HELD-SUAREZ')
+       do l = 1, ADM_lall
+          call history_in( 'ml_af_fvx', tmp3d(:,:) )
+          call history_in( 'ml_af_fvy', tmp3d(:,:) )
+          call history_in( 'ml_af_fvz', tmp3d(:,:) )
+          call history_in( 'ml_af_fe',  tmp3d(:,:) )
+       enddo
+    case('DCMIP2016')
+       do l = 1, ADM_lall
+
+          call history_in( 'ml_af_fvx', tmp3d(:,:) )
+          call history_in( 'ml_af_fvy', tmp3d(:,:) )
+          call history_in( 'ml_af_fvz', tmp3d(:,:) )
+          call history_in( 'ml_af_fe',  tmp3d(:,:) )
+
+          do nq = 1, TRC_VMAX
+             write(varname,'(A,I2.2)') 'ml_af_fq', nq
+
+             call history_in( varname, tmp3d(:,:) )
+          enddo
+
+          call history_in( 'sl_af_prcp', tmp2d(:,:) )
+       enddo
+    end select
 
     return
   end subroutine history_vars_setup
@@ -183,7 +228,10 @@ contains
        I_QR,      &
        I_QI,      &
        I_QS,      &
-       I_QG
+       I_QG,      &
+       AF_TYPE,   &
+       NCHEM_STR, &
+       NCHEM_END
     use mod_thrmdyn, only: &
        THRMDYN_th
     use mod_bndcnd, only: &
@@ -237,6 +285,10 @@ contains
     real(RP) :: v_850    (ADM_gall   ,ADM_KNONE,ADM_lall   )
     real(RP) :: w_850    (ADM_gall   ,ADM_KNONE,ADM_lall   )
     real(RP) :: t_850    (ADM_gall   ,ADM_KNONE,ADM_lall   )
+    real(RP) :: u_500    (ADM_gall   ,ADM_KNONE,ADM_lall   ) ! [add] 20130705 R.Yoshida
+    real(RP) :: v_500    (ADM_gall   ,ADM_KNONE,ADM_lall   )
+    real(RP) :: w_500    (ADM_gall   ,ADM_KNONE,ADM_lall   )
+    real(RP) :: t_500    (ADM_gall   ,ADM_KNONE,ADM_lall   )
     real(RP) :: rho_sfc  (ADM_gall   ,ADM_KNONE,ADM_lall   )
     real(RP) :: pre_sfc  (ADM_gall   ,ADM_KNONE,ADM_lall   )
 
@@ -254,6 +306,7 @@ contains
     real(RP) :: qtot     (ADM_gall   ,ADM_kall,ADM_lall   )
 
     real(RP) :: tmp2d    (ADM_gall   ,ADM_KNONE,ADM_lall   )
+    real(RP) :: rhodz    (ADM_gall   ,ADM_KNONE,ADM_lall   )
 
     integer :: k, l, nq, K0
     !---------------------------------------------------------------------------
@@ -421,6 +474,27 @@ contains
        enddo
     endif
 
+    if (out_500hPa) then
+       do l = 1, ADM_lall
+          call sv_plev_uvwt( ADM_gall,        & ! [IN]
+                             pre    (:,:,l),  & ! [IN]
+                             u      (:,:,l),  & ! [IN]
+                             v      (:,:,l),  & ! [IN]
+                             w      (:,:,l),  & ! [IN]
+                             tem    (:,:,l),  & ! [IN]
+                             50000.0_RP,      & ! [IN]
+                             u_500  (:,K0,l), & ! [OUT]
+                             v_500  (:,K0,l), & ! [OUT]
+                             w_500  (:,K0,l), & ! [OUT]
+                             t_500  (:,K0,l)  ) ! [OUT]
+
+          call history_in( 'sl_u500', u_500(:,:,l) )
+          call history_in( 'sl_v500', v_500(:,:,l) )
+          call history_in( 'sl_w500', w_500(:,:,l) )
+          call history_in( 'sl_t500', t_500(:,:,l) )
+       enddo
+    endif
+
     do l = 1, ADM_lall
        call sv_pre_sfc( ADM_gall,                 & ! [IN]
                         rho    (:,:,l),           & ! [IN]
@@ -494,7 +568,7 @@ contains
           do k = ADM_kmin, ADM_kmax
              tmp2d(:,K0,l) = tmp2d(:,K0,l) + rho(:,k,l) * q_clw(:,k,l) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
           enddo
-          call history_in( 'sl_', tmp2d(:,:,l) )
+          call history_in( 'sl_lwp', tmp2d(:,:,l) )
        enddo
     endif
 
@@ -506,6 +580,42 @@ contains
           enddo
           call history_in( 'sl_iwp', tmp2d(:,:,l) )
        enddo
+    endif
+
+    if ( AF_TYPE == 'DCMIP2016' ) then
+    if ( NCHEM_STR /= -1 .and. NCHEM_END /= -1 ) then ! substitution of [USE_ToyChemistry/mod_af_dcmip2016]
+       do l  = 1, ADM_lall
+          rhodz(:,k0,l) = 0.0_RP
+          do k = ADM_kmin, ADM_kmax
+             rhodz(:,k0,l) = rhodz(:,k0,l) + ( rho(:,k,l) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k) )
+          enddo
+
+          tmp2d(:,k0,l) = 0.0_RP
+          do k = ADM_kmin, ADM_kmax
+             tmp2d(:,k0,l) = tmp2d(:,k0,l) &
+                           + rho(:,k,l) * q(:,k,l,NCHEM_STR) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
+          enddo
+          tmp2d(:,k0,l) = tmp2d(:,k0,l) / rhodz(:,k0,l)
+          call history_in( 'sl_cl', tmp2d(:,:,l) )
+
+          tmp2d(:,k0,l) = 0.0_RP
+          do k = ADM_kmin, ADM_kmax
+             tmp2d(:,k0,l) = tmp2d(:,k0,l) &
+                           + rho(:,k,l) * q(:,k,l,NCHEM_END) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
+          enddo
+          tmp2d(:,k0,l) = tmp2d(:,k0,l) / rhodz(:,k0,l)
+          call history_in( 'sl_cl2', tmp2d(:,:,l) )
+
+          tmp2d(:,k0,l) = 0.0_RP
+          do k = ADM_kmin, ADM_kmax
+             tmp2d(:,k0,l) = tmp2d(:,k0,l) &
+                           + rho(:,k,l) * ( q(:,k,l,NCHEM_STR) + 2.0_RP * q(:,k,l,NCHEM_END) ) &
+                           * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
+          enddo
+          tmp2d(:,k0,l) = tmp2d(:,k0,l) / rhodz(:,k0,l)
+          call history_in( 'sl_cly', tmp2d(:,:,l) )
+       enddo
+    endif
     endif
 
     return
@@ -546,7 +656,7 @@ contains
 
     !--- surface pressure ( hydrostatic balance )
     do ij = 1, ijdim
-       pre_srf(ij) = pre(ij,kmin) + 0.5_RP * ( rho_srf(ij)+rho(ij,kmin) ) * CNST_EGRAV * ( z(ij,kmin)-z_srf(ij) )
+       pre_srf(ij) = pre(ij,kmin) + rho(ij,kmin) * CNST_EGRAV * ( z(ij,kmin)-z_srf(ij) )
     enddo
 
     return
@@ -598,8 +708,8 @@ contains
           if( pre(ij,k) < plev ) exit
        enddo
        if ( k >= kdim ) then
-          write(*,          *) 'xxx internal error! [sv_uvwp_850/mod_history_vars] STOP.'
-          write(ADM_LOG_FID,*) 'xxx internal error! [sv_uvwp_850/mod_history_vars] STOP.',kdim,k,plev,ij,pre(ij,:)
+          write(*,          *) 'xxx internal error! [sv_plev_uvwt/mod_history_vars] STOP.'
+          write(ADM_LOG_FID,*) 'xxx internal error! [sv_plev_uvwt/mod_history_vars] STOP.',kdim,k,plev,ij,pre(ij,:)
           call ADM_proc_stop
        endif
 
