@@ -18,9 +18,8 @@ module mod_forcing_driver
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -64,8 +63,7 @@ contains
   !-----------------------------------------------------------------------------
   subroutine forcing_setup
     use mod_adm, only: &
-       ADM_proc_stop,  &
-       ADM_CTL_FID
+       ADM_proc_stop
     use mod_runconf, only: &
        AF_TYPE
     use mod_af_heldsuarez, only: &
@@ -82,20 +80,20 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[forcing]/Category[nhm]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=FORCING_PARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[forcing]/Category[nhm]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=FORCING_PARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** FORCING_PARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** FORCING_PARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist FORCING_PARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist FORCING_PARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist FORCING_PARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=FORCING_PARAM)
+    write(IO_FID_LOG,nml=FORCING_PARAM)
 
-    write(ADM_LOG_FID,*) '+++ Artificial forcing type: ', trim(AF_TYPE)
+    write(IO_FID_LOG,*) '+++ Artificial forcing type: ', trim(AF_TYPE)
     select case(AF_TYPE)
     case('NONE')
        !--- do nothing
@@ -104,7 +102,7 @@ contains
     case('DCMIP2016')
        call AF_dcmip2016_init
     case default
-       write(ADM_LOG_FID,*) 'xxx unsupported forcing type! STOP.'
+       write(IO_FID_LOG,*) 'xxx unsupported forcing type! STOP.'
        call ADM_proc_stop
     end select
 

@@ -17,9 +17,8 @@ module mod_hio
   !
   use mod_precision
   use mod_io_param
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -97,9 +96,9 @@ contains
     implicit none
     !---------------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[hio]/Category[common share]'
-    write(ADM_LOG_FID,*) '+++ HIO is disabled.'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[hio]/Category[common share]'
+    write(IO_FID_LOG,*) '+++ HIO is disabled.'
 
     return
   end subroutine HIO_setup
@@ -129,8 +128,8 @@ contains
     logical, intent(in), optional :: allow_missingq !< if data is missing, set value to zero, else execution stops.
     !---------------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
     call ADM_proc_stop
 
     return
@@ -161,8 +160,8 @@ contains
     logical, intent(in), optional :: allow_missingq !< if data is missing, set value to zero, else execution stops.
     !---------------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
     call ADM_proc_stop
 
     return
@@ -199,8 +198,8 @@ contains
     logical,          intent(in)    :: opt_periodic_year
     !---------------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
     call ADM_proc_stop
 
     return
@@ -246,8 +245,8 @@ contains
     logical,intent(in), optional :: append
     !---------------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
     call ADM_proc_stop
 
     return
@@ -293,8 +292,8 @@ contains
     logical,intent(in), optional :: append
     !---------------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
     call ADM_proc_stop
 
     return
@@ -310,8 +309,8 @@ contains
     character(len=*), intent(in) :: basename
     !---------------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) 'xxx HIO is disabled. STOP!', trim(basename)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(basename)
     call ADM_proc_stop
 
     return
@@ -324,8 +323,8 @@ contains
     implicit none
     !---------------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) 'xxx HIO is disabled. STOP!'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!'
     call ADM_proc_stop
 
     return

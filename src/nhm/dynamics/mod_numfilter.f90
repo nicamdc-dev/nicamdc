@@ -35,10 +35,8 @@ module mod_numfilter
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID, &
-     ADM_NSYS
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -91,17 +89,17 @@ module mod_numfilter
 
   real(RP), public,  allocatable :: rayleigh_coef  (:)             ! Rayleigh damping coefficient at cell center
   real(RP), private, allocatable :: rayleigh_coef_h(:)             ! Rayleigh damping coefficient at cell wall
-  logical, private               :: rayleigh_damp_only_w = .false. ! damp only w?
+  logical,  private              :: rayleigh_damp_only_w = .false. ! damp only w?
 
   real(RP), public,  allocatable :: Kh_coef   (:,:,:)              ! horizontal diffusion coefficient at cell center
   real(RP), private, allocatable :: Kh_coef_pl(:,:,:)
-  integer, private               :: lap_order_hdiff = 2            ! laplacian order
+  integer,  private              :: lap_order_hdiff = 2            ! laplacian order
   real(RP), private              :: hdiff_fact_rho  = 1.E-2_RP
   real(RP), private              :: hdiff_fact_q    = 0.0_RP
   real(RP), private              :: Kh_coef_minlim  = 0.E+00_RP
   real(RP), private              :: Kh_coef_maxlim  = 1.E+30_RP
 
-  logical, private              :: hdiff_nonlinear = .false.
+  logical,  private              :: hdiff_nonlinear = .false.
   real(RP), private              :: ZD_hdiff_nl     = 25000.0_RP     ! hight for decay of nonlinear diffusion
 
   real(RP), public,  allocatable :: Kh_coef_lap1   (:,:,:)         ! Kh_coef but 1st order laplacian
@@ -112,19 +110,19 @@ module mod_numfilter
 
   real(RP), public,  allocatable :: divdamp_coef   (:,:,:)         ! divergence damping coefficient at cell center
   real(RP), private, allocatable :: divdamp_coef_pl(:,:,:)
-  integer, private              :: lap_order_divdamp = 2          ! laplacian order
+  integer,  private              :: lap_order_divdamp = 2          ! laplacian order
   real(RP), private              :: divdamp_coef_v    = 0.0_RP
 
   real(RP), public,  allocatable :: divdamp_2d_coef   (:,:,:)      ! divergence damping coefficient at cell center
   real(RP), private, allocatable :: divdamp_2d_coef_pl(:,:,:)
-  integer, private              :: lap_order_divdamp_2d = 1       ! laplacian order
+  integer,  private              :: lap_order_divdamp_2d = 1       ! laplacian order
 
-  logical, private              :: dep_hgrid = .false.            ! depend on the horizontal grid spacing?
+  logical,  private              :: dep_hgrid = .false.            ! depend on the horizontal grid spacing?
   real(RP), private              :: AREA_ave                       ! averaged grid area
 
-  logical, private              :: smooth_1var = .true.           ! should be false for stretched grid [add] S.Iga 20120721
+  logical,  private              :: smooth_1var = .true.           ! should be false for stretched grid [add] S.Iga 20120721
 
-  logical, private              :: deep_effect = .false.
+  logical,  private              :: deep_effect = .false.
   real(RP), private, allocatable :: Kh_deep_factor       (:)
   real(RP), private, allocatable :: Kh_deep_factor_h     (:)
   real(RP), private, allocatable :: Kh_lap1_deep_factor  (:)
@@ -138,7 +136,6 @@ contains
   !-----------------------------------------------------------------------------
   subroutine numfilter_setup
     use mod_adm, only: &
-       ADM_CTL_FID,   &
        ADM_proc_stop, &
        ADM_GLEVEL,    &
        ADM_kall
@@ -151,29 +148,29 @@ contains
     implicit none
 
     ! rayleigh damping
-    real(RP)                 :: alpha_r         = 0.0_RP                 ! coefficient for rayleigh damping
-    real(RP)                 :: ZD              = 25000.0_RP             ! lower limit of rayleigh damping [m]
+    real(RP)               :: alpha_r         = 0.0_RP                 ! coefficient for rayleigh damping
+    real(RP)               :: ZD              = 25000.0_RP             ! lower limit of rayleigh damping [m]
     ! horizontal diffusion
-    character(len=ADM_NSYS) :: hdiff_type      = 'NONDIM_COEF'        ! diffusion type
-    real(RP)                 :: gamma_h         = 1.0_RP / 16.0_RP / 10.0_RP ! coefficient    for horizontal diffusion
-    real(RP)                 :: tau_h           = 160000.0_RP            ! e-folding time for horizontal diffusion [sec]
+    character(len=H_SHORT) :: hdiff_type      = 'NONDIM_COEF'        ! diffusion type
+    real(RP)               :: gamma_h         = 1.0_RP / 16.0_RP / 10.0_RP ! coefficient    for horizontal diffusion
+    real(RP)               :: tau_h           = 160000.0_RP            ! e-folding time for horizontal diffusion [sec]
     ! horizontal diffusion (1st order laplacian)
-    character(len=ADM_NSYS) :: hdiff_type_lap1 = 'DIRECT'             ! diffusion type
-    real(RP)                 :: gamma_h_lap1    = 0.0_RP                 ! height-dependent gamma_h but 1st-order laplacian
-    real(RP)                 :: tau_h_lap1      = 160000.0_RP            ! height-dependent tau_h   but 1st-order laplacian [sec]
-    real(RP)                 :: ZD_hdiff_lap1   = 25000.0_RP             ! lower limit of horizontal diffusion [m]
+    character(len=H_SHORT) :: hdiff_type_lap1 = 'DIRECT'             ! diffusion type
+    real(RP)               :: gamma_h_lap1    = 0.0_RP                 ! height-dependent gamma_h but 1st-order laplacian
+    real(RP)               :: tau_h_lap1      = 160000.0_RP            ! height-dependent tau_h   but 1st-order laplacian [sec]
+    real(RP)               :: ZD_hdiff_lap1   = 25000.0_RP             ! lower limit of horizontal diffusion [m]
     ! vertical diffusion
-    real(RP)                 :: gamma_v         = 0.0_RP                 ! coefficient of vertical diffusion
+    real(RP)               :: gamma_v         = 0.0_RP                 ! coefficient of vertical diffusion
     ! 3D divergence damping
-    character(len=ADM_NSYS) :: divdamp_type    = 'NONDIM_COEF'        ! damping type
-    real(RP)                 :: alpha_d         = 0.0_RP                 ! coefficient    for divergence damping
-    real(RP)                 :: tau_d           = 132800.0_RP            ! e-folding time for divergence damping
-    real(RP)                 :: alpha_dv        = 0.0_RP                 ! vertical coefficient
+    character(len=H_SHORT) :: divdamp_type    = 'NONDIM_COEF'        ! damping type
+    real(RP)               :: alpha_d         = 0.0_RP                 ! coefficient    for divergence damping
+    real(RP)               :: tau_d           = 132800.0_RP            ! e-folding time for divergence damping
+    real(RP)               :: alpha_dv        = 0.0_RP                 ! vertical coefficient
     ! 2D divergence damping
-    character(len=ADM_NSYS) :: divdamp_2d_type = 'NONDIM_COEF'        ! damping type
-    real(RP)                 :: alpha_d_2d      = 0.0_RP                 ! coefficient    for divergence damping
-    real(RP)                 :: tau_d_2d        = 1328000.0_RP           ! e-folding time for divergence damping [sec]
-    real(RP)                 :: ZD_d_2d         = 25000.0_RP             ! lower limit of divergence damping [m]
+    character(len=H_SHORT) :: divdamp_2d_type = 'NONDIM_COEF'        ! damping type
+    real(RP)               :: alpha_d_2d      = 0.0_RP                 ! coefficient    for divergence damping
+    real(RP)               :: tau_d_2d        = 1328000.0_RP           ! e-folding time for divergence damping [sec]
+    real(RP)               :: ZD_d_2d         = 25000.0_RP             ! lower limit of divergence damping [m]
 
     namelist / NUMFILTERPARAM / &
        alpha_r,              &
@@ -215,18 +212,18 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[numfilter]/Category[nhm dynamics]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=NUMFILTERPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[numfilter]/Category[nhm dynamics]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=NUMFILTERPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** NUMFILTERPARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** NUMFILTERPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist NUMFILTERPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist NUMFILTERPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NUMFILTERPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=NUMFILTERPARAM)
+    write(IO_FID_LOG,nml=NUMFILTERPARAM)
 
     global_area = 4.0_RP * PI * RADIUS * RADIUS
     global_grid = 10.0_RP * 4.0_RP**ADM_GLEVEL
@@ -277,7 +274,7 @@ contains
     divdamp_deep_factor  (:) = 0.0_RP
 
     if ( deep_effect ) then
-       write(ADM_LOG_FID,*) 'xxx this feature is tentatively suspended. stop.'
+       write(IO_FID_LOG,*) 'xxx this feature is tentatively suspended. stop.'
        call ADM_proc_stop
        do k = 1, ADM_kall
           Kh_deep_factor       (k) = ( (GRD_gz (k)+RADIUS) / RADIUS )**(2*lap_order_hdiff)
@@ -329,23 +326,23 @@ contains
 
     rayleigh_coef_h(:) = alpha * fact(:)
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '-----   Rayleigh damping   -----'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '-----   Rayleigh damping   -----'
 
     if ( NUMFILTER_DOrayleigh ) then
        if ( debug ) then
-          write(ADM_LOG_FID,*) '    z[m]      ray.coef   e-time(2DX)'
+          write(IO_FID_LOG,*) '    z[m]      ray.coef   e-time(2DX)'
           k = ADM_kmax + 1
-          write(ADM_LOG_FID,'(1x,F8.2,3E14.6)') GRD_gzh(k), rayleigh_coef_h(k), 1.0_RP/( rayleigh_coef_h(k)+EPS )
+          write(IO_FID_LOG,'(1x,F8.2,3E14.6)') GRD_gzh(k), rayleigh_coef_h(k), 1.0_RP/( rayleigh_coef_h(k)+EPS )
           do k = ADM_kmax, ADM_kmin, -1
-             write(ADM_LOG_FID,'(1x,F8.2,3E14.6)') GRD_gz (k), rayleigh_coef  (k), 1.0_RP/( rayleigh_coef  (k)+EPS )
-             write(ADM_LOG_FID,'(1x,F8.2,3E14.6)') GRD_gzh(k), rayleigh_coef_h(k), 1.0_RP/( rayleigh_coef_h(k)+EPS )
+             write(IO_FID_LOG,'(1x,F8.2,3E14.6)') GRD_gz (k), rayleigh_coef  (k), 1.0_RP/( rayleigh_coef  (k)+EPS )
+             write(IO_FID_LOG,'(1x,F8.2,3E14.6)') GRD_gzh(k), rayleigh_coef_h(k), 1.0_RP/( rayleigh_coef_h(k)+EPS )
           enddo
        else
-          write(ADM_LOG_FID,*) '=> used.'
+          write(IO_FID_LOG,*) '=> used.'
        endif
     else
-       write(ADM_LOG_FID,*) '=> not used.'
+       write(IO_FID_LOG,*) '=> not used.'
     endif
 
     return
@@ -492,8 +489,8 @@ contains
 
     endif
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '-----   Horizontal numerical diffusion   -----'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '-----   Horizontal numerical diffusion   -----'
     if ( NUMFILTER_DOhorizontaldiff ) then
        if ( .NOT. hdiff_nonlinear ) then
           if ( debug ) then
@@ -513,22 +510,22 @@ contains
                 enddo
              endif
 
-             write(ADM_LOG_FID,*) '    z[m]      max coef      min coef  max eft(2DX)  min eft(2DX)'
+             write(IO_FID_LOG,*) '    z[m]      max coef      min coef  max eft(2DX)  min eft(2DX)'
              do k = ADM_kmax, ADM_kmin, -1
                 eft_max  = GTL_max_k( e_fold_time, e_fold_time_pl, k )
                 eft_min  = GTL_min_k( e_fold_time, e_fold_time_pl, k )
                 coef_max = GTL_max_k( Kh_coef, Kh_coef_pl, k )
                 coef_min = GTL_min_k( Kh_coef, Kh_coef_pl, k )
-                write(ADM_LOG_FID,'(1x,F8.2,4E14.6)') GRD_gz(k), coef_min, coef_max, eft_max, eft_min
+                write(IO_FID_LOG,'(1x,F8.2,4E14.6)') GRD_gz(k), coef_min, coef_max, eft_max, eft_min
              enddo
           else
-             write(ADM_LOG_FID,*) '=> used.'
+             write(IO_FID_LOG,*) '=> used.'
           endif
        else
-          write(ADM_LOG_FID,*) '=> Nonlinear filter is used.'
+          write(IO_FID_LOG,*) '=> Nonlinear filter is used.'
        endif
     else
-       write(ADM_LOG_FID,*) '=> not used.'
+       write(IO_FID_LOG,*) '=> not used.'
     endif
 
 
@@ -615,8 +612,8 @@ contains
        enddo
     endif
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '-----   Horizontal numerical diffusion (1st order laplacian)   -----'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '-----   Horizontal numerical diffusion (1st order laplacian)   -----'
     if ( NUMFILTER_DOhorizontaldiff_lap1 ) then
        if ( debug ) then
           do l = 1, ADM_lall
@@ -633,19 +630,19 @@ contains
              enddo
           endif
 
-          write(ADM_LOG_FID,*) '    z[m]      max coef      min coef  max eft(2DX)  min eft(2DX)'
+          write(IO_FID_LOG,*) '    z[m]      max coef      min coef  max eft(2DX)  min eft(2DX)'
           do k = ADM_kmax, ADM_kmin, -1
              eft_max  = GTL_max_k( e_fold_time,  e_fold_time_pl,  k )
              eft_min  = GTL_min_k( e_fold_time,  e_fold_time_pl,  k )
              coef_max = GTL_max_k( Kh_coef_lap1, Kh_coef_lap1_pl, k )
              coef_min = GTL_min_k( Kh_coef_lap1, Kh_coef_lap1_pl, k )
-             write(ADM_LOG_FID,'(1x,F8.2,4E14.6)') GRD_gz(k), coef_min, coef_max, eft_max, eft_min
+             write(IO_FID_LOG,'(1x,F8.2,4E14.6)') GRD_gz(k), coef_min, coef_max, eft_max, eft_min
           enddo
        else
-          write(ADM_LOG_FID,*) '=> used.'
+          write(IO_FID_LOG,*) '=> used.'
        endif
     else
-       write(ADM_LOG_FID,*) '=> not used.'
+       write(IO_FID_LOG,*) '=> not used.'
     endif
 
     return
@@ -691,22 +688,22 @@ contains
     Kv_coef  (:) = gamma * GRD_dgz (:)**6 / large_step_dt
     Kv_coef_h(:) = gamma * GRD_dgzh(:)**6 / large_step_dt
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '-----   Vertical numerical diffusion   -----'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '-----   Vertical numerical diffusion   -----'
     if ( NUMFILTER_DOverticaldiff ) then
        if ( debug ) then
-          write(ADM_LOG_FID,*) '    z[m]          coef   e-time(2DX)'
+          write(IO_FID_LOG,*) '    z[m]          coef   e-time(2DX)'
           k = ADM_kmax + 1
-          write(ADM_LOG_FID,'(1x,F8.2,3E14.6)') GRD_gzh(k), Kv_coef_h(k), (GRD_dgzh(k)/PI)**6 / ( Kv_coef_h(k)+EPS )
+          write(IO_FID_LOG,'(1x,F8.2,3E14.6)') GRD_gzh(k), Kv_coef_h(k), (GRD_dgzh(k)/PI)**6 / ( Kv_coef_h(k)+EPS )
           do k = ADM_kmax, ADM_kmin, -1
-             write(ADM_LOG_FID,'(1x,F8.2,3E14.6)') GRD_gzh(k), Kv_coef_h(k), (GRD_dgzh(k)/PI)**6 / ( Kv_coef_h(k)+EPS )
-             write(ADM_LOG_FID,'(1x,F8.2,3E14.6)') GRD_gz (k), Kv_coef  (k), (GRD_dgz (k)/PI)**6 / ( Kv_coef  (k)+EPS )
+             write(IO_FID_LOG,'(1x,F8.2,3E14.6)') GRD_gzh(k), Kv_coef_h(k), (GRD_dgzh(k)/PI)**6 / ( Kv_coef_h(k)+EPS )
+             write(IO_FID_LOG,'(1x,F8.2,3E14.6)') GRD_gz (k), Kv_coef  (k), (GRD_dgz (k)/PI)**6 / ( Kv_coef  (k)+EPS )
           enddo
        else
-          write(ADM_LOG_FID,*) '=> used.'
+          write(IO_FID_LOG,*) '=> used.'
        endif
     else
-       write(ADM_LOG_FID,*) '=> not used.'
+       write(IO_FID_LOG,*) '=> not used.'
     endif
 
     return
@@ -831,8 +828,8 @@ contains
        divdamp_coef(:,:,:) = max( divdamp_coef(:,:,:), Kh_coef_minlim )
     endif
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '-----   3D divergence damping   -----'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '-----   3D divergence damping   -----'
     if ( NUMFILTER_DOdivdamp ) then
        if ( debug ) then
           do l = 1, ADM_lall
@@ -853,19 +850,19 @@ contains
              enddo
           endif
 
-          write(ADM_LOG_FID,*) '    z[m]      max coef      min coef  max eft(2DX)  min eft(2DX)'
+          write(IO_FID_LOG,*) '    z[m]      max coef      min coef  max eft(2DX)  min eft(2DX)'
           do k = ADM_kmax, ADM_kmin, -1
              eft_max  = GTL_max_k( e_fold_time,  e_fold_time_pl,  k )
              eft_min  = GTL_min_k( e_fold_time,  e_fold_time_pl,  k )
              coef_max = GTL_max_k( divdamp_coef, divdamp_coef_pl, k )
              coef_min = GTL_min_k( divdamp_coef, divdamp_coef_pl, k )
-             write(ADM_LOG_FID,'(1x,F8.2,4E14.6)') GRD_gz(k), coef_min, coef_max, eft_max, eft_min
+             write(IO_FID_LOG,'(1x,F8.2,4E14.6)') GRD_gz(k), coef_min, coef_max, eft_max, eft_min
           enddo
        else
-          write(ADM_LOG_FID,*) '=> used.'
+          write(IO_FID_LOG,*) '=> used.'
        endif
     else
-       write(ADM_LOG_FID,*) '=> not used.'
+       write(IO_FID_LOG,*) '=> not used.'
     endif
 
     if( alpha_v > 0.0_RP ) NUMFILTER_DOdivdamp_v = .true.
@@ -1006,8 +1003,8 @@ contains
        enddo
     endif
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '-----   2D divergence damping   -----'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '-----   2D divergence damping   -----'
     if ( NUMFILTER_DOdivdamp_2d ) then
        if ( debug ) then
           do l = 1, ADM_lall
@@ -1028,19 +1025,19 @@ contains
              e_fold_time_pl(:,:,:) = 0.0_RP
           endif
 
-          write(ADM_LOG_FID,*) '    z[m]      max coef      min coef  max eft(2DX)  min eft(2DX)'
+          write(IO_FID_LOG,*) '    z[m]      max coef      min coef  max eft(2DX)  min eft(2DX)'
           do k = ADM_kmax, ADM_kmin, -1
              eft_max  = GTL_max_k( e_fold_time,  e_fold_time_pl,  k )
              eft_min  = GTL_min_k( e_fold_time,  e_fold_time_pl,  k )
              coef_max = GTL_max_k( divdamp_coef, divdamp_coef_pl, k )
              coef_min = GTL_min_k( divdamp_coef, divdamp_coef_pl, k )
-             write(ADM_LOG_FID,'(1x,F8.2,4E14.6)') GRD_gz(k), coef_min, coef_max, eft_max, eft_min
+             write(IO_FID_LOG,'(1x,F8.2,4E14.6)') GRD_gz(k), coef_min, coef_max, eft_max, eft_min
           enddo
        else
-          write(ADM_LOG_FID,*) '=> used.'
+          write(IO_FID_LOG,*) '=> used.'
        endif
     else
-       write(ADM_LOG_FID,*) '=> not used.'
+       write(IO_FID_LOG,*) '=> not used.'
     endif
 
     return

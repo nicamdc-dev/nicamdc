@@ -24,8 +24,7 @@ program fio_cat
   use mpi
   use mod_precision
   use mod_io_param
-  use mod_misc, only: &
-     MISC_get_available_fid
+  use mod_stdio
   use mod_fio, only: &
      headerinfo, &
      datainfo
@@ -107,7 +106,7 @@ program fio_cat
   GALL = ( (2**(glevel-rlevel))+2 ) &
        * ( (2**(glevel-rlevel))+2 )
 
-  fid_log = MISC_get_available_fid()
+  fid_log = IO_get_available_fid()
   if ( use_mpi ) then
      !--- Parallel Excution, No communication
      call MPI_Init(ierr)
@@ -293,8 +292,6 @@ contains
   !> read option
   !-----------------------------------------------------------------------------
   subroutine readoption
-    use mod_misc, only : &
-      MISC_get_available_fid
     use mod_tool_option, only: &
       OPT_convert, &
       OPT_fid
@@ -304,7 +301,7 @@ contains
     !---------------------------------------------------------------------------
 
     ! --- Set option
-    OPT_fid = MISC_get_available_fid()
+    OPT_fid = IO_get_available_fid()
     open(OPT_fid,status='SCRATCH')
 
       call OPT_convert( fmax )

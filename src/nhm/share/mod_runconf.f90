@@ -63,10 +63,8 @@ module mod_runconf
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID,  &
-     ADM_NSYS
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -80,38 +78,38 @@ module mod_runconf
   !
   !++ Public parameters & variables
   !
-  character(len=ADM_NSYS), public :: RUNNAME = ''
+  character(len=H_SHORT), public :: RUNNAME = ''
 
   !---< Component Selector >---
 
   !--- Dynamics
-  integer,                 public :: NON_HYDRO_ALPHA    = 1 ! Nonhydrostatic/hydrostatic flag
-  integer,                 public :: DYN_DIV_NUM        = 1
-  character(len=ADM_NSYS), public :: TRC_ADV_TYPE       = 'MIURA2004'
-  character(len=ADM_NSYS), public :: NDIFF_LOCATION     = 'IN_LARGE_STEP2'
-  logical,                 public :: FLAG_NUDGING       = .false.
-  logical,                 public :: THUBURN_LIM        = .true.  ! [add] 20130613 R.Yoshida
+  integer,                public :: NON_HYDRO_ALPHA    = 1 ! Nonhydrostatic/hydrostatic flag
+  integer,                public :: DYN_DIV_NUM        = 1
+  character(len=H_SHORT), public :: TRC_ADV_TYPE       = 'MIURA2004'
+  character(len=H_SHORT), public :: NDIFF_LOCATION     = 'IN_LARGE_STEP2'
+  logical,                public :: FLAG_NUDGING       = .false.
+  logical,                public :: THUBURN_LIM        = .true.  ! [add] 20130613 R.Yoshida
 
   !--- Physics
-  character(len=ADM_NSYS), public :: RAIN_TYPE          = 'DRY'
-  logical,                 public :: opt_2moment_water  = .false.
+  character(len=H_SHORT), public :: RAIN_TYPE          = 'DRY'
+  logical,                public :: opt_2moment_water  = .false.
 
-  character(len=ADM_NSYS), public :: CP_TYPE            = 'NONE'
-  character(len=ADM_NSYS), public :: MP_TYPE            = 'NONE'
-  character(len=ADM_NSYS), public :: RD_TYPE            = 'NONE'
-  character(len=ADM_NSYS), public :: SF_TYPE            = 'DEFAULT'
-  character(len=ADM_NSYS), public :: ROUGHNESS_SEA_TYPE = 'DEFAULT'
-  character(len=ADM_NSYS), public :: OCEAN_TYPE         = 'NONE'
-  character(len=ADM_NSYS), public :: RIV_TYPE           = 'NONE'
-  character(len=ADM_NSYS), public :: LAND_TYPE          = 'NONE'
-  character(len=ADM_NSYS), public :: TB_TYPE            = 'NONE'
-  character(len=ADM_NSYS), public :: AE_TYPE            = 'NONE'
-  character(len=ADM_NSYS), public :: CHEM_TYPE          = 'NONE'
-  character(len=ADM_NSYS), public :: GWD_TYPE           = 'NONE'
-  character(len=ADM_NSYS), public :: AF_TYPE            = 'NONE'
-  character(len=ADM_NSYS), public :: EIN_TYPE           = 'EXACT'
+  character(len=H_SHORT), public :: CP_TYPE            = 'NONE'
+  character(len=H_SHORT), public :: MP_TYPE            = 'NONE'
+  character(len=H_SHORT), public :: RD_TYPE            = 'NONE'
+  character(len=H_SHORT), public :: SF_TYPE            = 'DEFAULT'
+  character(len=H_SHORT), public :: ROUGHNESS_SEA_TYPE = 'DEFAULT'
+  character(len=H_SHORT), public :: OCEAN_TYPE         = 'NONE'
+  character(len=H_SHORT), public :: RIV_TYPE           = 'NONE'
+  character(len=H_SHORT), public :: LAND_TYPE          = 'NONE'
+  character(len=H_SHORT), public :: TB_TYPE            = 'NONE'
+  character(len=H_SHORT), public :: AE_TYPE            = 'NONE'
+  character(len=H_SHORT), public :: CHEM_TYPE          = 'NONE'
+  character(len=H_SHORT), public :: GWD_TYPE           = 'NONE'
+  character(len=H_SHORT), public :: AF_TYPE            = 'NONE'
+  character(len=H_SHORT), public :: EIN_TYPE           = 'EXACT'
 
-  character(len=ADM_NSYS), public :: OUT_FILE_TYPE      = 'DEFAULT'
+  character(len=H_SHORT), public :: OUT_FILE_TYPE      = 'DEFAULT'
 
   !---< tracer ID setting >---
 
@@ -147,8 +145,8 @@ module mod_runconf
 
   integer, public            :: TRC_vmax   =  0 ! total number of tracers
 
-  character(len=16),       public, allocatable :: TRC_name(:) ! short name  of tracer [add] H.Yashiro 20110819
-  character(len=ADM_NSYS), public, allocatable :: WLABEL  (:) ! description of tracer
+  character(len=16),      public, allocatable :: TRC_name(:) ! short name  of tracer [add] H.Yashiro 20110819
+  character(len=H_SHORT), public, allocatable :: WLABEL  (:) ! description of tracer
 
   integer, public            :: NQW_MAX    =  0 ! subtotal number of water mass tracers
   integer, public            :: NQW_STR    = -1 ! start index of water mass tracers
@@ -216,7 +214,6 @@ contains
   !> Setup
   subroutine RUNCONF_setup
     use mod_adm, only: &
-       ADM_CTL_FID, &
        ADM_proc_stop
     implicit none
 
@@ -249,18 +246,18 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[runconf]/Category[nhm share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=RUNCONFPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[runconf]/Category[nhm share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=RUNCONFPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** RUNCONFPARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** RUNCONFPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist RUNCONFPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist RUNCONFPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist RUNCONFPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=RUNCONFPARAM)
+    write(IO_FID_LOG,nml=RUNCONFPARAM)
 
     call RUNCONF_component_setup
 
@@ -280,9 +277,9 @@ contains
     !---------------------------------------------------------------------------
 
     if( THUBURN_LIM ) then  ![add] 20130613 R.Yoshida
-       write(ADM_LOG_FID,*) 'Run with \"Thuburn Limiter\" in MIURA2004 Advection'
+       write(IO_FID_LOG,*) 'Run with \"Thuburn Limiter\" in MIURA2004 Advection'
     else
-       write(ADM_LOG_FID,*) '### Without \"Thuburn Limiter\" in MIURA2004 Advection'
+       write(IO_FID_LOG,*) '### Without \"Thuburn Limiter\" in MIURA2004 Advection'
     endif
 
     return
@@ -329,7 +326,7 @@ contains
        I_QG    = TRC_vmax + 6
     else
        write(*,          *) 'xxx You must set RAIN_TYPE to DRY,CLOUD_PARAM,WARM or COLD. STOP.'
-       write(ADM_LOG_FID,*) 'xxx You must set RAIN_TYPE to DRY,CLOUD_PARAM,WARM or COLD. STOP.'
+       write(IO_FID_LOG,*) 'xxx You must set RAIN_TYPE to DRY,CLOUD_PARAM,WARM or COLD. STOP.'
        call ADM_proc_stop
     endif
     NQW_STR  = TRC_vmax + 1
@@ -441,17 +438,17 @@ contains
     DIAG_vmax  = DIAG_vmax0 + TRC_vmax
     I_qend     = DIAG_vmax
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '*** Prognostic Tracers'
-    write(ADM_LOG_FID,*) '|=========================================================|'
-    write(ADM_LOG_FID,*) '|       :varname         :description                     |'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '*** Prognostic Tracers'
+    write(IO_FID_LOG,*) '|=========================================================|'
+    write(IO_FID_LOG,*) '|       :varname         :description                     |'
     do v = 1, TRC_vmax
-       write(ADM_LOG_FID,'(1x,A,I4,A,A16,A,A,A)') '|ID=', v, ':', TRC_name(v), ':', WLABEL(v),'|'
+       write(IO_FID_LOG,'(1x,A,I4,A,A16,A,A,A)') '|ID=', v, ':', TRC_name(v), ':', WLABEL(v),'|'
     enddo
-    write(ADM_LOG_FID,*) '|=========================================================|'
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '*** thermodynamic(water) tracers'
-    write(ADM_LOG_FID,*) '-->', NQW_MAX, ' tracers(',NQW_STR,'-',NQW_END,')'
+    write(IO_FID_LOG,*) '|=========================================================|'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '*** thermodynamic(water) tracers'
+    write(IO_FID_LOG,*) '-->', NQW_MAX, ' tracers(',NQW_STR,'-',NQW_END,')'
 
     return
   end subroutine RUNCONF_tracer_setup

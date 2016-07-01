@@ -23,16 +23,14 @@ program prg_mkllmap
   !++ Used modules (shared)
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
   use mod_adm, only: &
-     ADM_LOG_FID,     &
      ADM_MULTI_PRC,   &
      ADM_proc_init,   &
      ADM_proc_stop,   &
      ADM_proc_finish, &
-     ADM_setup,       &
-     ADM_CTL_FID,     &
-     ADM_MAXFNAME
+     ADM_setup
   use mod_fio, only: &
      FIO_setup
   use mod_comm, only: &
@@ -46,7 +44,7 @@ program prg_mkllmap
      LATLON_ico_setup
   implicit none
 
-  character(len=ADM_MAXFNAME) :: output_dir   = './'
+  character(len=H_LONG) :: output_dir   = './'
 
   namelist /mkllmap_param/ &
      output_dir
@@ -73,18 +71,18 @@ program prg_mkllmap
   call GRD_setup
 
   !--- read parameters
-  write(ADM_LOG_FID,*)
-  write(ADM_LOG_FID,*) '+++ Program[mkllmap]/Category[tool]'
-  rewind(ADM_CTL_FID)
-  read(ADM_CTL_FID,nml=MKLLMAP_PARAM,iostat=ierr)
+  write(IO_FID_LOG,*)
+  write(IO_FID_LOG,*) '+++ Program[mkllmap]/Category[tool]'
+  rewind(IO_FID_CONF)
+  read(IO_FID_CONF,nml=MKLLMAP_PARAM,iostat=ierr)
   if ( ierr < 0 ) then
-     write(ADM_LOG_FID,*) '*** MKLLMAP_PARAM is not specified. use default.'
+     write(IO_FID_LOG,*) '*** MKLLMAP_PARAM is not specified. use default.'
   elseif( ierr > 0 ) then
      write(*,          *) 'xxx Not appropriate names in namelist MKLLMAP_PARAM. STOP.'
-     write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist MKLLMAP_PARAM. STOP.'
+     write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist MKLLMAP_PARAM. STOP.'
      call ADM_proc_stop
   endif
-  write(ADM_LOG_FID,nml=MKLLMAP_PARAM)
+  write(IO_FID_LOG,nml=MKLLMAP_PARAM)
 
   call LATLON_ico_setup
 

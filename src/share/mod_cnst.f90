@@ -18,10 +18,8 @@ module mod_cnst
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID, &
-     ADM_NSYS
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -182,8 +180,6 @@ contains
   !>
   subroutine CNST_setup
     use mod_adm, only: &
-       ADM_LOG_FID, &
-       ADM_CTL_FID, &
        ADM_proc_stop
     implicit none
 
@@ -225,18 +221,18 @@ contains
     latent_heat_sub       = CNST_LHS0
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[cnst]/Category[common share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=CNSTPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[cnst]/Category[common share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=CNSTPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** CNSTPARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** CNSTPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist CNSTPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist CNSTPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist CNSTPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=CNSTPARAM)
+    write(IO_FID_LOG,nml=CNSTPARAM)
 
     CNST_ERADIUS = earth_radius / small_planet_factor
     CNST_EOHM    = earth_angvel * small_planet_factor
@@ -249,12 +245,12 @@ contains
     CNST_LHS0    = latent_heat_sub
 
     !--- calculate other parameters
-    write(ADM_LOG_FID,*) '*** check floating point precision'
+    write(IO_FID_LOG,*) '*** check floating point precision'
     if    ( RP == SP ) then
-       write(ADM_LOG_FID,*) '    -> single precision'
+       write(IO_FID_LOG,*) '    -> single precision'
        CNST_UNDEF = real(CNST_UNDEF4,kind=RP)
     elseif( RP == DP ) then
-       write(ADM_LOG_FID,*) '    -> double precision'
+       write(IO_FID_LOG,*) '    -> double precision'
        CNST_UNDEF = real(CNST_UNDEF8,kind=RP)
     else
        write(*,*) 'xxx unsupported precision: ', RP
@@ -281,46 +277,46 @@ contains
     CNST_LHF0  = CNST_LHS0 - CNST_LH0
     CNST_LHF00 = CNST_LHF0 - ( CNST_CL - CNST_CI ) * CNST_TEM00 ! bugfix: CNST_LHS0 -> CNST_LHF0
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '====== Physical Constants ======'
-    write(ADM_LOG_FID,*) '--- The circluar constant PI                 : ', CNST_PI
-    write(ADM_LOG_FID,*) '--- Allowable minimum value                  : ', CNST_EPS_ZERO
-    write(ADM_LOG_FID,*) '--- Allowable maximum value                  : ', CNST_MAX_REAL
-    write(ADM_LOG_FID,*) '--- Missing value                            : ', CNST_VMISS
-    write(ADM_LOG_FID,*) '--- Radius of the Earth                      : ', CNST_ERADIUS
-    write(ADM_LOG_FID,*) '--- Angular velocity of the Earth            : ', CNST_EOHM
-    write(ADM_LOG_FID,*) '--- Gravitational accerlaration of the Earth : ', CNST_EGRAV
-    write(ADM_LOG_FID,*) '--- Gas constant of air                      : ', CNST_RAIR
-    write(ADM_LOG_FID,*) '--- Gas constant of vapor                    : ', CNST_RVAP
-    write(ADM_LOG_FID,*) '--- Specific heat of air (consant pressure)  : ', CNST_CP
-    write(ADM_LOG_FID,*) '--- Specific heat of air (consant volume)    : ', CNST_CV
-    write(ADM_LOG_FID,*) '--- Speed of sound at 0C                     : ', CNST_SOUND
-    write(ADM_LOG_FID,*) '--- Rair/Cp                                  : ', CNST_KAPPA
-    write(ADM_LOG_FID,*) '--- Surface pressure                         : ', CNST_PRES0
-    write(ADM_LOG_FID,*) '--- Standard pressure                        : ', CNST_PRE00
-    write(ADM_LOG_FID,*) '--- Standard temperature                     : ', CNST_TEM00
-    write(ADM_LOG_FID,*) '--- Standard density                         : ', CNST_RHO00
-    write(ADM_LOG_FID,*) '--- Specific heat of vapor (consant pressure): ', CNST_CPV
-    write(ADM_LOG_FID,*) '--- Specific heat of vapor (consant volume)  : ', CNST_CVV
-    write(ADM_LOG_FID,*) '--- Specific heat of water                   : ', CNST_CL
-    write(ADM_LOG_FID,*) '--- Specific heat of ice                     : ', CNST_CI
-    write(ADM_LOG_FID,*) '--- Mocular weight                           : ', CNST_EPSV
-    write(ADM_LOG_FID,*) '--- 1/epsv-1                                 : ', CNST_EPSVT
-    write(ADM_LOG_FID,*) '--- Density of water                         : ', CNST_DWATR
-    write(ADM_LOG_FID,*) '--- Saturate pressure of water vapor at 0C   : ', CNST_PSAT0
-    write(ADM_LOG_FID,*) '--- Latent heat of vaporizaion at 0C         : ', CNST_LH0
-    write(ADM_LOG_FID,*) '--- Latent heat of vaporizaion at 0K         : ', CNST_LH00
-    write(ADM_LOG_FID,*) '--- Latent heat of sublimation at 0C         : ', CNST_LHS0
-    write(ADM_LOG_FID,*) '--- Latent heat of sublimation at 0K         : ', CNST_LHS00
-    write(ADM_LOG_FID,*) '--- Latent heat of fusion at 0C              : ', CNST_LHF0
-    write(ADM_LOG_FID,*) '--- Latent heat of fusion at 0K              : ', CNST_LHF00
-    write(ADM_LOG_FID,*) '--- Latent heat of melt                      : ', CNST_EMELT
-    write(ADM_LOG_FID,*) '--- Melting temperature of water             : ', CNST_TMELT
-    write(ADM_LOG_FID,*) '--- Freeze point of sea                      : ', CNST_TFRZS
-    write(ADM_LOG_FID,*) '--- Wet-bulb temperature rain/snow           : ', CNST_TQICE
-    write(ADM_LOG_FID,*) '--- Stefan-Boltzman constant                 : ', CNST_STB
-    write(ADM_LOG_FID,*) '--- Karman constant                          : ', CNST_KARMAN
-    write(ADM_LOG_FID,*) '--- Cp/Cv                                    : ', CNST_GAMMA
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '====== Physical Constants ======'
+    write(IO_FID_LOG,*) '--- The circluar constant PI                 : ', CNST_PI
+    write(IO_FID_LOG,*) '--- Allowable minimum value                  : ', CNST_EPS_ZERO
+    write(IO_FID_LOG,*) '--- Allowable maximum value                  : ', CNST_MAX_REAL
+    write(IO_FID_LOG,*) '--- Missing value                            : ', CNST_VMISS
+    write(IO_FID_LOG,*) '--- Radius of the Earth                      : ', CNST_ERADIUS
+    write(IO_FID_LOG,*) '--- Angular velocity of the Earth            : ', CNST_EOHM
+    write(IO_FID_LOG,*) '--- Gravitational accerlaration of the Earth : ', CNST_EGRAV
+    write(IO_FID_LOG,*) '--- Gas constant of air                      : ', CNST_RAIR
+    write(IO_FID_LOG,*) '--- Gas constant of vapor                    : ', CNST_RVAP
+    write(IO_FID_LOG,*) '--- Specific heat of air (consant pressure)  : ', CNST_CP
+    write(IO_FID_LOG,*) '--- Specific heat of air (consant volume)    : ', CNST_CV
+    write(IO_FID_LOG,*) '--- Speed of sound at 0C                     : ', CNST_SOUND
+    write(IO_FID_LOG,*) '--- Rair/Cp                                  : ', CNST_KAPPA
+    write(IO_FID_LOG,*) '--- Surface pressure                         : ', CNST_PRES0
+    write(IO_FID_LOG,*) '--- Standard pressure                        : ', CNST_PRE00
+    write(IO_FID_LOG,*) '--- Standard temperature                     : ', CNST_TEM00
+    write(IO_FID_LOG,*) '--- Standard density                         : ', CNST_RHO00
+    write(IO_FID_LOG,*) '--- Specific heat of vapor (consant pressure): ', CNST_CPV
+    write(IO_FID_LOG,*) '--- Specific heat of vapor (consant volume)  : ', CNST_CVV
+    write(IO_FID_LOG,*) '--- Specific heat of water                   : ', CNST_CL
+    write(IO_FID_LOG,*) '--- Specific heat of ice                     : ', CNST_CI
+    write(IO_FID_LOG,*) '--- Mocular weight                           : ', CNST_EPSV
+    write(IO_FID_LOG,*) '--- 1/epsv-1                                 : ', CNST_EPSVT
+    write(IO_FID_LOG,*) '--- Density of water                         : ', CNST_DWATR
+    write(IO_FID_LOG,*) '--- Saturate pressure of water vapor at 0C   : ', CNST_PSAT0
+    write(IO_FID_LOG,*) '--- Latent heat of vaporizaion at 0C         : ', CNST_LH0
+    write(IO_FID_LOG,*) '--- Latent heat of vaporizaion at 0K         : ', CNST_LH00
+    write(IO_FID_LOG,*) '--- Latent heat of sublimation at 0C         : ', CNST_LHS0
+    write(IO_FID_LOG,*) '--- Latent heat of sublimation at 0K         : ', CNST_LHS00
+    write(IO_FID_LOG,*) '--- Latent heat of fusion at 0C              : ', CNST_LHF0
+    write(IO_FID_LOG,*) '--- Latent heat of fusion at 0K              : ', CNST_LHF00
+    write(IO_FID_LOG,*) '--- Latent heat of melt                      : ', CNST_EMELT
+    write(IO_FID_LOG,*) '--- Melting temperature of water             : ', CNST_TMELT
+    write(IO_FID_LOG,*) '--- Freeze point of sea                      : ', CNST_TFRZS
+    write(IO_FID_LOG,*) '--- Wet-bulb temperature rain/snow           : ', CNST_TQICE
+    write(IO_FID_LOG,*) '--- Stefan-Boltzman constant                 : ', CNST_STB
+    write(IO_FID_LOG,*) '--- Karman constant                          : ', CNST_KARMAN
+    write(IO_FID_LOG,*) '--- Cp/Cv                                    : ', CNST_GAMMA
 
     return
   end subroutine CNST_setup

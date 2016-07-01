@@ -17,11 +17,8 @@ module mod_chemvar
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID,  &
-     ADM_MAXFNAME, &
-     ADM_NSYS
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -39,7 +36,7 @@ module mod_chemvar
   integer,                 public, parameter   :: CHEM_TRC_vlim = 100
   integer,                 public              :: CHEM_TRC_vmax = 1
   character(len=16),       public, allocatable :: CHEM_TRC_name(:) ! short name  of tracer
-  character(len=ADM_NSYS), public, allocatable :: CHEM_TRC_desc(:) ! description of tracer
+  character(len=H_SHORT), public, allocatable :: CHEM_TRC_desc(:) ! description of tracer
 
   !-----------------------------------------------------------------------------
   !
@@ -55,7 +52,6 @@ contains
   !> Setup
   subroutine CHEMVAR_setup
     use mod_adm, only: &
-       ADM_CTL_FID, &
        ADM_proc_stop
     implicit none
 
@@ -67,18 +63,18 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[chemvar]/Category[nhm share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=CHEMVARPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[chemvar]/Category[nhm share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=CHEMVARPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** CHEMVARPARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** CHEMVARPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist CHEMVARPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist CHEMVARPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist CHEMVARPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=CHEMVARPARAM)
+    write(IO_FID_LOG,nml=CHEMVARPARAM)
 
     allocate( CHEM_TRC_name(CHEM_TRC_vmax) )
     allocate( CHEM_TRC_desc(CHEM_TRC_vmax) )
@@ -116,7 +112,7 @@ contains
     enddo
 
     if ( chemvar_getid <= 0 ) then
-       write(ADM_LOG_FID,*) 'xxx INDEX does not exist =>', tname
+       write(IO_FID_LOG,*) 'xxx INDEX does not exist =>', tname
        call ADM_proc_stop
     endif
 

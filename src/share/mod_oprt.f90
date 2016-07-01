@@ -33,12 +33,9 @@ module mod_oprt
   !++ used modules
   !
   use mod_precision
-  use mod_io_param
+  use mod_stdio
   use mod_debug
   use mod_adm, only: &
-     ADM_LOG_FID,      &
-     ADM_NSYS,         &
-     ADM_MAXFNAME,     &
      TI  => ADM_TI,    &
      TJ  => ADM_TJ,    &
      AI  => ADM_AI,    &
@@ -170,8 +167,8 @@ module mod_oprt
   !
   !++ Private parameters & variables
   !
-  character(len=ADM_MAXFNAME), private :: OPRT_fname   = ''
-  character(len=ADM_NSYS),     private :: OPRT_io_mode = 'LEGACY'
+  character(len=H_LONG),  private :: OPRT_fname   = ''
+  character(len=H_SHORT), private :: OPRT_io_mode = 'LEGACY'
 
   !-----------------------------------------------------------------------------
 contains
@@ -179,7 +176,6 @@ contains
   !> Setup
   subroutine OPRT_setup
     use mod_adm, only: &
-       ADM_CTL_FID,   &
        ADM_proc_stop, &
        ADM_have_pl,   &
        ADM_have_sgp,  &
@@ -214,18 +210,18 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[oprt]/Category[common share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=OPRTPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[oprt]/Category[common share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=OPRTPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** OPRTPARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** OPRTPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist OPRTPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist OPRTPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist OPRTPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=OPRTPARAM)
+    write(IO_FID_LOG,nml=OPRTPARAM)
 
     ! dummy call
     call DEBUG_rapstart('OPRT_divergence')
@@ -247,7 +243,7 @@ contains
     OPRT_nend   = suf(ADM_gmax,ADM_gmax)
 
     !---< setup coefficient of divergence operator >
-    write(ADM_LOG_FID,*) '*** setup coefficient of divergence operator'
+    write(IO_FID_LOG,*) '*** setup coefficient of divergence operator'
 
 #ifndef _FIXEDINDEX_
     allocate( cdiv       (ADM_gall   ,ADM_lall   ,0:6,            ADM_nxyz) )
@@ -425,7 +421,7 @@ contains
 
     !---< setup coefficient of gradient operator >
 
-    write(ADM_LOG_FID,*) '*** setup coefficient of gradient operator'
+    write(IO_FID_LOG,*) '*** setup coefficient of gradient operator'
 
     do l = 1, ADM_lall
 
@@ -602,7 +598,7 @@ contains
 
     ! ---- setup coefficient of laplacian operator
 
-    write(ADM_LOG_FID,*) '*** setup coefficient of laplacian operator'
+    write(IO_FID_LOG,*) '*** setup coefficient of laplacian operator'
 
     do l = 1, ADM_lall
 
@@ -1656,7 +1652,7 @@ contains
     integer :: n, l, m
     !---------------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*) '*** setup coefficient of diffusion operator'
+    write(IO_FID_LOG,*) '*** setup coefficient of diffusion operator'
 
 #ifndef _FIXEDINDEX_
     allocate( cinterp_TN    (ADM_gall   ,ADM_lall   ,AI:AJ,ADM_nxyz) )
@@ -2820,12 +2816,11 @@ contains
   !-----------------------------------------------------------------------------
   subroutine OPRT_output_coef( &
        basename )
-    use mod_misc, only: &
-       MISC_make_idstr,&
-       MISC_get_available_fid
     use mod_adm, only: &
        ADM_proc_stop, &
        ADM_have_pl
+    use mod_io_param, only: &
+       IO_REAL8
     use mod_fio, only: &
        FIO_output
     use mod_comm, only: &
@@ -2962,7 +2957,7 @@ contains
                         "", IO_REAL8, "LAYERNM", 1, 49, 1, 0.0_DP, 0.0_DP )
 
     else
-       write(ADM_LOG_FID,*) 'Invalid io_mode!'
+       write(IO_FID_LOG,*) 'Invalid io_mode!'
        call ADM_proc_stop
     endif
 

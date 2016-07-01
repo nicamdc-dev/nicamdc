@@ -22,9 +22,8 @@ module mod_fio
   !
   use mod_precision
   use mod_io_param
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -121,8 +120,8 @@ contains
     integer, allocatable :: prc_tab(:)
     !---------------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[fio]/Category[common share]'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[fio]/Category[common share]'
 
     ! dummy call
     call DEBUG_rapstart('FILEIO_in')
@@ -207,9 +206,9 @@ contains
 
        endif
 
-       write(ADM_LOG_FID,'(1x,A,A,A,I3)') '*** [FIO] File registration (ADVANCED) : ', &
+       write(IO_FID_LOG,'(1x,A,A,A,I3)') '*** [FIO] File registration (ADVANCED) : ', &
                             trim(rwname(rwtype)),' - ', FIO_fid_count
-       write(ADM_LOG_FID,'(1x,A,I3,A,A)') '*** fid= ', fid, ', name: ', trim(fname)
+       write(IO_FID_LOG,'(1x,A,I3,A,A)') '*** fid= ', fid, ', name: ', trim(fname)
 
        FIO_fname_list(FIO_fid_count) = trim(basename)
        FIO_fid_list  (FIO_fid_count) = fid
@@ -265,9 +264,9 @@ contains
     if ( did == -1 ) then
        if ( present(allow_missingq) ) then
           if ( allow_missingq ) then
-             write(ADM_LOG_FID,*) '*** [INPUT]/[FIO] data not found! : ', &
+             write(IO_FID_LOG,*) '*** [INPUT]/[FIO] data not found! : ', &
                                   'varname= ',trim(varname),', step=',step
-             write(ADM_LOG_FID,*) '*** [INPUT]/[FIO] Q Value is set to 0.'
+             write(IO_FID_LOG,*) '*** [INPUT]/[FIO] Q Value is set to 0.'
 
              var(:,k_start:k_end,:) = 0.0_SP
 
@@ -275,18 +274,18 @@ contains
              return
           endif
        else
-          write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] data not found! : ', &
+          write(IO_FID_LOG,*) 'xxx [INPUT]/[FIO] data not found! : ', &
                                'varname= ',trim(varname),', step=',step
           call ADM_proc_stop
        endif
     endif
 
     if ( dinfo%layername /= layername ) then
-       write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] layername mismatch! ', &
+       write(IO_FID_LOG,*) 'xxx [INPUT]/[FIO] layername mismatch! ', &
                             '[',trim(dinfo%layername),':',trim(layername),']'
        call ADM_proc_stop
     elseif( dinfo%num_of_layer /= k_end-k_start+1 ) then
-       write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] num_of_layer mismatch! ', &
+       write(IO_FID_LOG,*) 'xxx [INPUT]/[FIO] num_of_layer mismatch! ', &
                             dinfo%num_of_layer,k_end-k_start+1
        call ADM_proc_stop
     endif
@@ -355,9 +354,9 @@ contains
     if ( did == -1 ) then
        if ( present(allow_missingq) ) then
           if ( allow_missingq ) then
-             write(ADM_LOG_FID,*) '*** [INPUT]/[FIO] data not found! : ', &
+             write(IO_FID_LOG,*) '*** [INPUT]/[FIO] data not found! : ', &
                                   'varname= ',trim(varname),', step=',step
-             write(ADM_LOG_FID,*) '*** [INPUT]/[FIO] Q Value is set to 0.'
+             write(IO_FID_LOG,*) '*** [INPUT]/[FIO] Q Value is set to 0.'
 
              var(:,k_start:k_end,:) = 0.0_DP
 
@@ -365,18 +364,18 @@ contains
              return
           endif
        else
-          write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] data not found! : ', &
+          write(IO_FID_LOG,*) 'xxx [INPUT]/[FIO] data not found! : ', &
                                'varname= ',trim(varname),', step=',step
           call ADM_proc_stop
        endif
     endif
 
     if ( dinfo%layername /= layername ) then
-       write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] layername mismatch! ', &
+       write(IO_FID_LOG,*) 'xxx [INPUT]/[FIO] layername mismatch! ', &
                             '[',trim(dinfo%layername),':',trim(layername),']'
        call ADM_proc_stop
     elseif( dinfo%num_of_layer /= k_end-k_start+1 ) then
-       write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] num_of_layer mismatch! ', &
+       write(IO_FID_LOG,*) 'xxx [INPUT]/[FIO] num_of_layer mismatch! ', &
                             dinfo%num_of_layer,k_end-k_start+1
        call ADM_proc_stop
     endif
@@ -468,11 +467,11 @@ contains
 
        !--- verify
        if ( dinfo%layername /= layername ) then
-          write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] layername mismatch! ', &
+          write(IO_FID_LOG,*) 'xxx [INPUT]/[FIO] layername mismatch! ', &
                                '[',trim(dinfo%layername),':',trim(layername),']'
           call ADM_proc_stop
        elseif( dinfo%num_of_layer /= k_end-k_start+1 ) then
-          write(ADM_LOG_FID,*) 'xxx [INPUT]/[FIO] num_of_layer mismatch!', &
+          write(IO_FID_LOG,*) 'xxx [INPUT]/[FIO] num_of_layer mismatch!', &
                                dinfo%num_of_layer,k_end-k_start+1
           call ADM_proc_stop
        endif
@@ -581,7 +580,7 @@ contains
        call fio_put_write_datainfo_data(did,fid,dinfo,var8(:,:,:))
 
     else
-       write(ADM_LOG_FID,*) 'xxx [OUTPUT]/[FIO] Unsupported datatype!', dtype
+       write(IO_FID_LOG,*) 'xxx [OUTPUT]/[FIO] Unsupported datatype!', dtype
        call ADM_proc_stop
     endif
 
@@ -673,7 +672,7 @@ contains
        call fio_put_write_datainfo_data(did,fid,dinfo,var8(:,:,:))
 
     else
-       write(ADM_LOG_FID,*) 'xxx [OUTPUT]/[FIO] Unsupported datatype!', dtype
+       write(IO_FID_LOG,*) 'xxx [OUTPUT]/[FIO] Unsupported datatype!', dtype
        call ADM_proc_stop
     endif
 
@@ -705,7 +704,7 @@ contains
           call fio_fclose(fid)
           call fio_mk_fname(fname,trim(FIO_fname_list(n)),'pe',ADM_prc_me-1,6)
 
-          write(ADM_LOG_FID,'(1x,A,I3,A,A)') &
+          write(IO_FID_LOG,'(1x,A,I3,A,A)') &
           '*** [FIO] File close (ADVANCED) fid= ', fid, ', name: ', trim(fname)
 
           ! remove closed file info from the list
@@ -733,7 +732,7 @@ contains
        call fio_fclose(fid)
        call fio_mk_fname(fname,trim(FIO_fname_list(n)),'pe',ADM_prc_me-1,6)
 
-       write(ADM_LOG_FID,'(1x,A,I3,A,A)') &
+       write(IO_FID_LOG,'(1x,A,I3,A,A)') &
        '*** [FIO] File close (ADVANCED) fid= ', fid, ', name: ', trim(fname)
     enddo
 

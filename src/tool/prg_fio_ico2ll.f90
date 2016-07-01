@@ -35,9 +35,7 @@ program fio_ico2ll
   use mpi
   use mod_precision
   use mod_io_param
-  use mod_misc, only : &
-    MISC_get_available_fid, &
-    MISC_make_idstr
+  use mod_stdio
   use mod_cnst, only : &
     CNST_UNDEF8, &
     CNST_UNDEF4
@@ -248,7 +246,7 @@ program fio_ico2ll
 
   !#########################################################
   !--- Read lat-lon grid information
-  fid = MISC_get_available_fid()
+  fid = IO_get_available_fid()
   open(fid, file=trim(llmap_base)//'.info',form='unformatted',status='old',iostat=ierr)
      if (ierr/=0) then
         write(*,*) 'Cannot open llmap info file!',trim(llmap_base)//'.info'
@@ -285,8 +283,8 @@ program fio_ico2ll
   allocate( w3     (imax*jmax) )
 
   do l = 1, LALL
-     call MISC_make_idstr(fname,trim(llmap_base),'rgn',l)
-     fid = MISC_get_available_fid()
+     call IO_make_idstr(fname,trim(llmap_base),'rgn',l)
+     fid = IO_get_available_fid()
      open(fid,file=trim(fname),form='unformatted',status='old',iostat=ierr)
         if (ierr/=0) then
            write(*,*) 'Cannot open llmap file!',trim(fname)
@@ -427,7 +425,7 @@ program fio_ico2ll
 
               layerfile = trim(layerfile_dir)//'/'//trim(dinfo%layername)//'.txt'
 
-              fid = MISC_get_available_fid()
+              fid = IO_get_available_fid()
               open(fid,file=trim(layerfile),form='formatted',status='old',iostat=ierr)
                  if ( ierr /= 0 ) then
                     write(*,*) 'xxx layerfile doesnt exist!', trim(layerfile)
@@ -473,7 +471,7 @@ program fio_ico2ll
 
      !--- open output file
      outbase = trim(outfile_dir)//'/'//trim(outfile_prefix)//trim(var_name(v))
-     ofid = MISC_get_available_fid()
+     ofid = IO_get_available_fid()
 
      num_of_step = min(step_end,var_nstep(v)) - step_str + 1  ! [mov] 13-04-18
 
@@ -760,8 +758,6 @@ contains
   !> read option
   !-----------------------------------------------------------------------------
   subroutine readoption
-    use mod_misc, only : &
-      MISC_get_available_fid
     use mod_tool_option, only: &
       OPT_convert, &
       OPT_fid
@@ -771,7 +767,7 @@ contains
     !---------------------------------------------------------------------------
 
     ! --- Set option
-    OPT_fid = MISC_get_available_fid()
+    OPT_fid = IO_get_available_fid()
     open(OPT_fid,status='SCRATCH')
 
       call OPT_convert( fmax )
@@ -844,7 +840,7 @@ contains
 
     outfile = trim(outfile_prefix)//trim(var_name(v))
 
-    fid = MISC_get_available_fid()
+    fid = IO_get_available_fid()
     open( unit   = fid,         &
           file   = trim(outfile_dir)//'/'//trim(outfile)//'.ctl', &
           form   = 'formatted', &
@@ -1028,7 +1024,7 @@ contains
     write(axhead(61),'(A16)'  ) 'NICAM'
     write(axhead(63),'(A16)'  ) 'NICAM'
 
-    fid = MISC_get_available_fid()
+    fid = IO_get_available_fid()
     open( unit   = fid,           &
           file   = trim(trim(outfile_dir)//'/GTAXLOC.'//trim(gt_axisx)),&
           form   = 'unformatted', &

@@ -50,9 +50,8 @@ module mod_comm
   !
   use mpi
   use mod_precision
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -382,8 +381,6 @@ contains
        ADM_prc_nspl,    &
        ADM_COMM_world,  &
        ADM_rgn2prc,     &
-       ADM_CTL_FID,     &
-       ADM_LOG_FID,     &
        ADM_proc_stop
     implicit none
 
@@ -420,18 +417,18 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[comm]/Category[common share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=COMMPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[comm]/Category[common share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=COMMPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** COMMPARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** COMMPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist COMMPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist COMMPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist COMMPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=COMMPARAM)
+    write(IO_FID_LOG,nml=COMMPARAM)
 
     if ( RP == DP ) then
        COMM_datatype = MPI_DOUBLE_PRECISION
@@ -2151,9 +2148,8 @@ contains
   end subroutine COMM_setup
   !-----------------------------------------------------------------------------
   subroutine output_info
-    use mod_adm, only :    &
-         ADM_log_fid,    &
-         ADM_prc_all
+    use mod_adm, only: &
+       ADM_prc_all
     implicit none
 
     integer :: halo
@@ -2168,12 +2164,12 @@ contains
     integer ::  ro,rl,rb,rs
     integer ::  l,n
     !
-    write(ADM_log_fid,*)
-    write(ADM_log_fid,*) &
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) &
          'msg : sub[output_info]/mod[comm]'
-    write(ADM_log_fid,*) &
+    write(IO_FID_LOG,*) &
          'version : comm.f90.test5.2.1_wtime'
-    write(ADM_log_fid,*) &
+    write(IO_FID_LOG,*) &
          '---------------------------------------&
          &       commnication table  start       &
          &---------------------------------------'
@@ -2181,45 +2177,45 @@ contains
     varmax=1
     cmax=kmax*varmax
     do halo=1,halomax
-       write(ADM_log_fid,*) &
+       write(IO_FID_LOG,*) &
             '---------------------------------------&
             &       halo region =',halo,'           &
             &---------------------------------------'
-       write(ADM_log_fid,*) &
+       write(IO_FID_LOG,*) &
             '---------------------------------------&
             &                count                  &
             &---------------------------------------'
-       write(ADM_log_fid,*) &
+       write(IO_FID_LOG,*) &
             'romax =',romax(halo) &
             ,'somax =',somax(halo)
-       write(ADM_log_fid,*) &
+       write(IO_FID_LOG,*) &
             '---------------------------------------&
             &                send                   &
             &---------------------------------------'
        do so=1,somax(halo)
-          write(ADM_log_fid,*) &
+          write(IO_FID_LOG,*) &
                'so =',so   &
                ,'mrank =',rank_me   &
                ,'drank =',destrank(so,halo)
        enddo
-       write(ADM_log_fid,*) &
+       write(IO_FID_LOG,*) &
             '---------------------------------------&
             &                recv                   &
             &---------------------------------------'
        do ro=1,romax(halo)
-          write(ADM_log_fid,*) &
+          write(IO_FID_LOG,*) &
                'ro =',ro   &
                ,'mrank =',rank_me   &
                ,'srank =',sourcerank(ro,halo)
        enddo
-       write(ADM_log_fid,*) &
+       write(IO_FID_LOG,*) &
             '---------------------------------------&
             &                table                   &
             &---------------------------------------'
        do l=1,ADM_prc_all
           do n=1,max_comm_prc
              if (dest_rank_all(n,halo,l)==-1) cycle
-             write(ADM_log_fid,*) &
+             write(IO_FID_LOG,*) &
                   'n =',n   &
                   ,'rank =',l-1   &
                   ,'dest_rank =',dest_rank_all(n,halo,l) &
@@ -2231,7 +2227,7 @@ contains
              ss=sendinfo(SIZE_COMM,ns,so,halo)
              sl=sendinfo(LRGNID_COMM,ns,so,halo)
              sb=sendinfo(BASE_COMM,ns,so,halo)*cmax
-             write(ADM_log_fid,*) &
+             write(IO_FID_LOG,*) &
                   'so =',so   &
                   ,'rank =',rank_me   &
                   ,' dest_rank =', destrank(so,halo) &
@@ -2243,7 +2239,7 @@ contains
              ss=sendinfo_pl(SIZE_COMM,ns,so,halo)
              sl=sendinfo_pl(LRGNID_COMM,ns,so,halo)
              sb=sendinfo_pl(BASE_COMM,ns,so,halo)*cmax
-             write(ADM_log_fid,*) &
+             write(IO_FID_LOG,*) &
                   'so =',so   &
                   ,'rank =',rank_me   &
                   ,' dest_rank =', destrank(so,halo) &
@@ -2257,7 +2253,7 @@ contains
              rs=recvinfo(SIZE_COMM,nr,ro,halo)
              rl=recvinfo(LRGNID_COMM,nr,ro,halo)
              rb=recvinfo(BASE_COMM,nr,ro,halo)*cmax
-             write(ADM_log_fid,*) &
+             write(IO_FID_LOG,*) &
                   'ro =',ro   &
                   ,'rank =',rank_me   &
                   ,' src_rank =', sourcerank(ro,halo) &
@@ -2269,7 +2265,7 @@ contains
              rs=recvinfo_pl(SIZE_COMM,nr,ro,halo)
              rl=recvinfo_pl(LRGNID_COMM,nr,ro,halo)
              rb=recvinfo_pl(BASE_COMM,nr,ro,halo)*cmax
-             write(ADM_log_fid,*) &
+             write(IO_FID_LOG,*) &
                   'ro =',ro   &
                   ,'rank =',rank_me   &
                   ,' src_rank =', sourcerank(ro,halo) &
@@ -2280,7 +2276,7 @@ contains
        enddo !loop ro
     enddo !loop halo
     !
-    write(ADM_log_fid,*) &
+    write(IO_FID_LOG,*) &
          '---------------------------------------&
          &       commnication table  end         &
          &---------------------------------------'
@@ -2357,8 +2353,8 @@ contains
 
     if( opt_check_varmax ) then
        if ( cmax > max_varmax * ADM_kall ) then
-          write(ADM_LOG_FID,*)  'error: cmax >  max_varmax * ADM_kall, stop!'
-          write(ADM_LOG_FID,*)  'cmax=', cmax, 'max_varmax*ADM_kall=', max_varmax*ADM_kall
+          write(IO_FID_LOG,*)  'error: cmax >  max_varmax * ADM_kall, stop!'
+          write(IO_FID_LOG,*)  'cmax=', cmax, 'max_varmax*ADM_kall=', max_varmax*ADM_kall
           call ADM_proc_stop
        endif
     endif
@@ -3011,7 +3007,7 @@ contains
        globalavg = localavg
     endif
 
-    !write(ADM_LOG_FID,*) 'COMM_Stat_avg', sendbuf(1), recvbuf(:)
+    !write(IO_FID_LOG,*) 'COMM_Stat_avg', sendbuf(1), recvbuf(:)
 
     return
   end subroutine COMM_Stat_avg
@@ -3045,7 +3041,7 @@ contains
 
     globalmax = maxval( recvbuf(:) )
 
-    !write(ADM_LOG_FID,*) 'COMM_Stat_max', sendbuf(1), recvbuf(:)
+    !write(IO_FID_LOG,*) 'COMM_Stat_max', sendbuf(1), recvbuf(:)
 
     return
   end subroutine COMM_Stat_max
@@ -3079,7 +3075,7 @@ contains
 
     globalmin = minval( recvbuf(:) )
 
-    !write(ADM_LOG_FID,*) 'COMM_Stat_min', sendbuf(1), recvbuf(:)
+    !write(IO_FID_LOG,*) 'COMM_Stat_min', sendbuf(1), recvbuf(:)
 
     return
   end subroutine COMM_Stat_min

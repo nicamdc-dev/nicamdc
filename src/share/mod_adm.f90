@@ -28,6 +28,7 @@ module mod_adm
   !
   use mpi
   use mod_precision
+  use mod_stdio
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -46,22 +47,13 @@ module mod_adm
   !
   !++ Public parameters & variables
   !
-  ! Character length of system control
-  integer,  public, parameter :: ADM_NSYS = 32
-  !
-  ! Maximum length of file name
-  integer,  public, parameter :: ADM_MAXFNAME = 128
 
   !
   !====== Basic definition & information ======
   !
-  ! Log file ID & Control file ID
-  integer,  public            :: ADM_LOG_FID = 6 ! default is STDOUT
-  integer,  public, parameter :: ADM_CTL_FID = 35
-  !
+
   ! Identifier for single computation or parallel computation
   integer,  public, parameter :: ADM_MULTI_PRC  = 1
-
 
   ! Fist colomn on the table for region and direction
   integer,  public, parameter :: ADM_RID = 1
@@ -169,7 +161,7 @@ module mod_adm
   !
   !====== Information for processes-region relationship ======
   !
-  character(len=ADM_MAXFNAME), public :: ADM_rgnmngfname  ! file name for region management info
+  character(len=H_LONG), public :: ADM_rgnmngfname  ! file name for region management info
 
   integer,  public, parameter   :: PRC_RGN_NMAX   = 2560  ! maximum number of region per process.
   integer,  public              :: ADM_vlink_nmax = -1    ! maximum number of vertex linkage
@@ -255,12 +247,12 @@ module mod_adm
   integer,  public, allocatable :: ADM_ImpJmp(:,:)
 #endif
 
-  character(len=ADM_MAXFNAME), public :: ADM_HGRID_SYSTEM = 'ICO' ! [XTMS] Horizontal Grid type
-                                                          ! 'ICO'      icosahedral
-                                                          ! 'ICO-XTMS' icosahedral but XTMS is used in oprt
-                                                          ! 'LCP'      Lambert-cornial (including PSP)
-                                                          ! 'MLCP'     Mercator+Lambert-cornial
-                                                          ! 'MLCP-OLD' OLD vergion (only for s=1)
+  character(len=H_LONG), public :: ADM_HGRID_SYSTEM = 'ICO' ! [XTMS] Horizontal Grid type
+                                                    ! 'ICO'      icosahedral
+                                                    ! 'ICO-XTMS' icosahedral but XTMS is used in oprt
+                                                    ! 'LCP'      Lambert-cornial (including PSP)
+                                                    ! 'MLCP'     Mercator+Lambert-cornial
+                                                    ! 'MLCP-OLD' OLD vergion (only for s=1)
 
   integer,                     public :: ADM_XTMS_MLCP_S  = 1 ! [XTMS] Number of segment for MLCP
 
@@ -345,15 +337,15 @@ contains
     !---------------------------------------------------------------------
 
     ! flush 1kbyte
-    write(ADM_LOG_FID,'(32A32)') '                                '
+    write(IO_FID_LOG,'(32A32)') '                                '
 
-    write(ADM_LOG_FID,*) '+++ Abort MPI'
+    write(IO_FID_LOG,*) '+++ Abort MPI'
     if ( ADM_prc_me == ADM_prc_run_master ) then
        write(*,*) '+++ Abort MPI'
     endif
 
-    close(ADM_LOG_FID)
-    close(ADM_CTL_FID)
+    close(IO_FID_LOG)
+    close(IO_FID_CONF)
 
     ! Abort MPI
     call MPI_Abort(MPI_COMM_WORLD, 1, ierr)
@@ -377,8 +369,8 @@ contains
 
     if ( ADM_run_type == ADM_MULTI_PRC ) then
 
-       write(ADM_LOG_FID,*)
-       write(ADM_LOG_FID,*) '+++ finalize MPI'
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,*) '+++ finalize MPI'
        call MPI_Barrier(ADM_COMM_WORLD,ierr)
 
 #ifdef JCUP
@@ -392,14 +384,14 @@ contains
        call MPI_Finalize(ierr)
 #endif
 
-       write(ADM_LOG_FID,*) '*** MPI is peacefully finalized'
+       write(IO_FID_LOG,*) '*** MPI is peacefully finalized'
     else
-       write(ADM_LOG_FID,*)
-       write(ADM_LOG_FID,*) '+++ stop serial process.'
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,*) '+++ stop serial process.'
     endif
 
-    close(ADM_LOG_FID)
-    close(ADM_CTL_FID)
+    close(IO_FID_LOG)
+    close(IO_FID_CONF)
 
     return
   end subroutine ADM_proc_finish
@@ -411,19 +403,16 @@ contains
   subroutine ADM_setup( &
        param_fname, &
        msg_base     )
-    use mod_misc, only: &
-       MISC_make_idstr, &
-       MISC_get_available_fid
     implicit none
 
     character(LEN=*), intent(in) :: param_fname ! namelist file name
 
     character(len=*), intent(in), optional :: msg_base ! output file for msg.pexxxxx file
 
-    integer                     :: glevel      = -1
-    integer                     :: rlevel      = -1
-    integer                     :: vlayer      =  1
-    character(LEN=ADM_MAXFNAME) :: rgnmngfname = ''
+    integer               :: glevel      = -1
+    integer               :: rlevel      = -1
+    integer               :: vlayer      =  1
+    character(LEN=H_LONG) :: rgnmngfname = ''
 
     namelist / ADMPARAM / &
         glevel,           & !--- grid division level
@@ -439,28 +428,28 @@ contains
     integer :: l, rgnid
     integer :: ierr
 
-    character(LEN=ADM_MAXFNAME) :: fname
-    character(LEN=ADM_MAXFNAME) :: msg
+    character(LEN=H_LONG) :: fname
+    character(LEN=H_LONG) :: msg
     !---------------------------------------------------------------------
 
     msg = 'msg'
     if( present(msg_base) ) msg = msg_base ! [add] H.Yashiro 20110701
 
     !--- open message file
-    ADM_LOG_FID = MISC_get_available_fid()
-    call MISC_make_idstr(fname,trim(msg),'pe',ADM_prc_me)
-    open( unit = ADM_LOG_FID, &
+    IO_FID_LOG = IO_get_available_fid()
+    call IO_make_idstr(fname,trim(msg),'pe',ADM_prc_me)
+    open( unit = IO_FID_LOG, &
           file = trim(fname), &
           form = 'formatted'  )
 
-    write(ADM_LOG_FID,*) '############################################################'
-    write(ADM_LOG_FID,*) '#                                                          #'
-    write(ADM_LOG_FID,*) '#   NICAM : Nonhydrostatic ICosahedal Atmospheric Model    #'
-    write(ADM_LOG_FID,*) '#                                                          #'
-    write(ADM_LOG_FID,*) '############################################################'
+    write(IO_FID_LOG,*) '############################################################'
+    write(IO_FID_LOG,*) '#                                                          #'
+    write(IO_FID_LOG,*) '#   NICAM : Nonhydrostatic ICosahedal Atmospheric Model    #'
+    write(IO_FID_LOG,*) '#                                                          #'
+    write(IO_FID_LOG,*) '############################################################'
 
     !--- open control file
-    open( unit   = ADM_CTL_FID,       &
+    open( unit   = IO_FID_CONF,       &
           file   = trim(param_fname), &
           form   = 'formatted',       &
           status = 'old',             &
@@ -473,30 +462,30 @@ contains
     endif
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[adm]/Category[common share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=ADMPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[adm]/Category[common share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=ADMPARAM,iostat=ierr)
     if ( ierr < 0 ) then
        write(*,          *) 'xxx Not found namelist! STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not found namelist! STOP.'
+       write(IO_FID_LOG,*) 'xxx Not found namelist! STOP.'
        call ADM_proc_stop
     elseif ( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist ADMPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist ADMPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist ADMPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=ADMPARAM)
+    write(IO_FID_LOG,nml=ADMPARAM)
 
     ! Error if glevel & rlevel are not defined
     if ( glevel < 1 ) then
        write(*          ,*) 'xxx glevel is not appropriate :', glevel
-       write(ADM_LOG_FID,*) 'xxx glevel is not appropriate :', glevel
+       write(IO_FID_LOG,*) 'xxx glevel is not appropriate :', glevel
        call ADM_proc_stop
     endif
     if ( rlevel < 0 ) then
        write(*          ,*) 'xxx rlevel is not appropriate :', rlevel
-       write(ADM_LOG_FID,*) 'xxx rlevel is not appropriate :', rlevel
+       write(IO_FID_LOG,*) 'xxx rlevel is not appropriate :', rlevel
        call ADM_proc_stop
     endif
 
@@ -527,14 +516,14 @@ contains
        dmd            = 10
     else
        write(*          ,*) 'xxx Name of ADM_HGRID_SYSTEM is wrong. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Name of ADM_HGRID_SYSTEM is wrong. STOP.'
+       write(IO_FID_LOG,*) 'xxx Name of ADM_HGRID_SYSTEM is wrong. STOP.'
        call ADM_proc_stop
     endif
 
 #ifdef _FIXEDINDEX_
     if ( ADM_vlink_nmax /= 5 ) then
        write(*          ,*) 'xxx Sorry, fixed index is not implemented for XTMS. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Sorry, fixed index is not implemented for XTMS. STOP.'
+       write(IO_FID_LOG,*) 'xxx Sorry, fixed index is not implemented for XTMS. STOP.'
        call ADM_proc_stop
     endif
 #else
@@ -547,22 +536,22 @@ contains
 #ifdef _FIXEDINDEX_
     if ( ADM_glevel /= glevel ) then
        write(*,          *) 'xxx Fixed glevel is not match (fixed,requested): ', ADM_glevel, glevel
-       write(ADM_LOG_FID,*) 'xxx Fixed glevel is not match (fixed,requested): ', ADM_glevel, glevel
+       write(IO_FID_LOG,*) 'xxx Fixed glevel is not match (fixed,requested): ', ADM_glevel, glevel
        call ADM_proc_stop
     endif
     if ( ADM_rlevel /= rlevel ) then
        write(*,          *) 'xxx Fixed rlevel is not match (fixed,requested): ', ADM_rlevel, rlevel
-       write(ADM_LOG_FID,*) 'xxx Fixed rlevel is not match (fixed,requested): ', ADM_rlevel, rlevel
+       write(IO_FID_LOG,*) 'xxx Fixed rlevel is not match (fixed,requested): ', ADM_rlevel, rlevel
        call ADM_proc_stop
     endif
     if ( ADM_vlayer /= vlayer ) then
        write(*,          *) 'xxx Fixed vlayer is not match (fixed,requested): ', ADM_vlayer, vlayer
-       write(ADM_LOG_FID,*) 'xxx Fixed vlayer is not match (fixed,requested): ', ADM_vlayer, vlayer
+       write(IO_FID_LOG,*) 'xxx Fixed vlayer is not match (fixed,requested): ', ADM_vlayer, vlayer
        call ADM_proc_stop
     endif
     if ( ADM_DMD /= dmd ) then
        write(*,          *) 'xxx Fixed dmd is not match (fixed,requested): ', ADM_DMD, dmd
-       write(ADM_LOG_FID,*) 'xxx Fixed dmd is not match (fixed,requested): ', ADM_DMD, dmd
+       write(IO_FID_LOG,*) 'xxx Fixed dmd is not match (fixed,requested): ', ADM_DMD, dmd
        call ADM_proc_stop
     endif
 #else
@@ -636,11 +625,9 @@ contains
   !> Description of the subroutine input_mnginfo
   !>
   subroutine input_mnginfo( fname )
-    use mod_misc,  only :&
-       MISC_get_available_fid
     implicit none
 
-    character(len=ADM_MAXFNAME), intent(in) :: fname
+    character(len=H_LONG), intent(in) :: fname
 
     integer :: num_of_rgn !--- number of region
 
@@ -678,10 +665,10 @@ contains
     integer :: l, m, n
     !---------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[mnginfo]/Category[common share]'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[mnginfo]/Category[common share]'
 
-    fid = MISC_get_available_fid()
+    fid = IO_get_available_fid()
     open( unit   = fid,         &
           file   = trim(fname), &
           form   = 'formatted', &
@@ -691,15 +678,15 @@ contains
     !=> [add] H.Yashiro 20120611
     ! ERROR if filename are not defined
     if ( ierr /= 0 ) then
-       write(ADM_LOG_FID,*) 'xxx mnginfo file is not found! STOP. ', trim(fname)
+       write(IO_FID_LOG,*) 'xxx mnginfo file is not found! STOP. ', trim(fname)
        call ADM_proc_stop
     endif
     !<= [add] H.Yashiro 20120611
 
     read(fid,nml=rgn_info)
     if ( num_of_rgn /= ADM_rgn_nmax ) then
-       write(ADM_LOG_FID,*) 'xxx No match for region number! STOP.'
-       write(ADM_LOG_FID,*) 'xxx ADM_rgn_nmax= ',ADM_rgn_nmax,' num_of_rgn=',num_of_rgn
+       write(IO_FID_LOG,*) 'xxx No match for region number! STOP.'
+       write(IO_FID_LOG,*) 'xxx ADM_rgn_nmax= ',ADM_rgn_nmax,' num_of_rgn=',num_of_rgn
        call ADM_proc_stop
     endif
 
@@ -718,14 +705,14 @@ contains
 
     read(fid,nml=proc_info)
     if ( ADM_prc_all /= num_of_proc ) then
-       write(ADM_LOG_FID,*) ' xxx No match for  process number! STOP.'
-       write(ADM_LOG_FID,*) ' xxx ADM_prc_all= ',ADM_prc_all,' num_of_proc=',num_of_proc
+       write(IO_FID_LOG,*) ' xxx No match for  process number! STOP.'
+       write(IO_FID_LOG,*) ' xxx ADM_prc_all= ',ADM_prc_all,' num_of_proc=',num_of_proc
        call ADM_proc_stop
     endif
 
     if ( ADM_prc_all /= num_of_proc ) then
-       write(ADM_LOG_FID,*) 'Msg : Sub[ADM_input_mngtab]/Mod[admin]'
-       write(ADM_LOG_FID,*) ' --- No match for process number!'
+       write(IO_FID_LOG,*) 'Msg : Sub[ADM_input_mngtab]/Mod[admin]'
+       write(IO_FID_LOG,*) ' --- No match for process number!'
        call ADM_proc_stop
     endif
 
@@ -1172,51 +1159,51 @@ contains
     integer :: rgnid
     !---------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,'(1x,A)'   ) '====== Process management info. ======'
-    write(ADM_LOG_FID,'(1x,A,I7)') '--- Total number of process           : ', ADM_prc_all
-    write(ADM_LOG_FID,'(1x,A,I7)') '--- My Process rank                   : ', ADM_prc_me
-    write(ADM_LOG_FID,'(1x,A)'   ) '====== Region/Grid topology info. ======'
-    write(ADM_LOG_FID,'(1x,A,A)' ) '--- Grid sysytem                      : ', ADM_HGRID_SYSTEM
-    write(ADM_LOG_FID,'(1x,A,I7)') '--- #  of diamond                     : ', ADM_DMD
-    write(ADM_LOG_FID,'(1x,A)'   ) '====== Region management info. ======'
-    write(ADM_LOG_FID,'(1x,A,I7)') '--- Region level (RL)                 : ', ADM_rlevel
-    write(ADM_LOG_FID,'(1x,A,I7,3(A,I4),A)') '--- Total number of region            : ', ADM_rgn_nmax, &
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,'(1x,A)'   ) '====== Process management info. ======'
+    write(IO_FID_LOG,'(1x,A,I7)') '--- Total number of process           : ', ADM_prc_all
+    write(IO_FID_LOG,'(1x,A,I7)') '--- My Process rank                   : ', ADM_prc_me
+    write(IO_FID_LOG,'(1x,A)'   ) '====== Region/Grid topology info. ======'
+    write(IO_FID_LOG,'(1x,A,A)' ) '--- Grid sysytem                      : ', ADM_HGRID_SYSTEM
+    write(IO_FID_LOG,'(1x,A,I7)') '--- #  of diamond                     : ', ADM_DMD
+    write(IO_FID_LOG,'(1x,A)'   ) '====== Region management info. ======'
+    write(IO_FID_LOG,'(1x,A,I7)') '--- Region level (RL)                 : ', ADM_rlevel
+    write(IO_FID_LOG,'(1x,A,I7,3(A,I4),A)') '--- Total number of region            : ', ADM_rgn_nmax, &
                                              ' (', 2**ADM_rlevel, ' x', 2**ADM_rlevel, ' x', ADM_DMD, ' )'
-    write(ADM_LOG_FID,'(1x,A,I7)') '--- #  of region per process          : ', ADM_lall
-    write(ADM_LOG_FID,'(1x,A)'   ) '--- ID of region in my process        : '
-    write(ADM_LOG_FID,*) ADM_prc_tab(1:ADM_lall, ADM_prc_me)
+    write(IO_FID_LOG,'(1x,A,I7)') '--- #  of region per process          : ', ADM_lall
+    write(IO_FID_LOG,'(1x,A)'   ) '--- ID of region in my process        : '
+    write(IO_FID_LOG,*) ADM_prc_tab(1:ADM_lall, ADM_prc_me)
 
-    write(ADM_LOG_FID,'(1x,A,I7)') '--- Region ID, contains north pole    : ', ADM_rgnid_npl_mng
-    write(ADM_LOG_FID,'(1x,A,I7)') '--- Region ID, contains south pole    : ', ADM_rgnid_spl_mng
-    write(ADM_LOG_FID,'(1x,A,I7)') '--- Process rank, managing north pole : ', ADM_prc_npl
-    write(ADM_LOG_FID,'(1x,A,I7)') '--- Process rank, managing south pole : ', ADM_prc_spl
-    write(ADM_LOG_FID,'(1x,A)'   ) '====== Grid management info. ======'
-    write(ADM_LOG_FID,'(1x,A,I7)') '--- Grid level (GL)                   : ', ADM_glevel
-    write(ADM_LOG_FID,'(1x,A,I7,2(A,I4),A,I7,A)') '--- Total number of grid (horizontal) : ',  &
+    write(IO_FID_LOG,'(1x,A,I7)') '--- Region ID, contains north pole    : ', ADM_rgnid_npl_mng
+    write(IO_FID_LOG,'(1x,A,I7)') '--- Region ID, contains south pole    : ', ADM_rgnid_spl_mng
+    write(IO_FID_LOG,'(1x,A,I7)') '--- Process rank, managing north pole : ', ADM_prc_npl
+    write(IO_FID_LOG,'(1x,A,I7)') '--- Process rank, managing south pole : ', ADM_prc_spl
+    write(IO_FID_LOG,'(1x,A)'   ) '====== Grid management info. ======'
+    write(IO_FID_LOG,'(1x,A,I7)') '--- Grid level (GL)                   : ', ADM_glevel
+    write(IO_FID_LOG,'(1x,A,I7,2(A,I4),A,I7,A)') '--- Total number of grid (horizontal) : ',  &
                                                   4**(ADM_glevel-ADM_rlevel)*ADM_rgn_nmax, &
                                                   ' (', 2**(ADM_glevel-ADM_rlevel),         &
                                                   ' x', 2**(ADM_glevel-ADM_rlevel),         &
                                                   ' x', ADM_rgn_nmax, ' )'
-    write(ADM_LOG_FID,'(1x,A,I7)') '--- Number of vertical layer          : ', ADM_kmax-ADM_kmin+1
+    write(IO_FID_LOG,'(1x,A,I7)') '--- Number of vertical layer          : ', ADM_kmax-ADM_kmin+1
 
     if ( ADM_debug ) then
        do n = 1, ADM_lall
           rgnid = ADM_prc_tab(n, ADM_prc_me)
-          write(ADM_LOG_FID,*) ' --- Link information for region', rgnid
+          write(IO_FID_LOG,*) ' --- Link information for region', rgnid
 
-          write(ADM_LOG_FID,*) '     < edge link >   --- ( rgnid , edgid )'
+          write(IO_FID_LOG,*) '     < edge link >   --- ( rgnid , edgid )'
           do k = ADM_SW, ADM_SE
-             write(ADM_LOG_FID,*) '     (',rgnid,',',k,') -> ',         &
+             write(IO_FID_LOG,*) '     (',rgnid,',',k,') -> ',         &
                                   '(', ADM_rgn_etab(ADM_RID,k,rgnid),   &
                                   ',', ADM_rgn_etab(ADM_DIR,k,rgnid), ')'
           enddo
 
-          write(ADM_LOG_FID,*) '     < vertex link > --- ( rgnid , edgid )'
+          write(IO_FID_LOG,*) '     < vertex link > --- ( rgnid , edgid )'
           do k = ADM_W, ADM_S
-             write(ADM_LOG_FID,*) '     (',rgnid,',',k,') : ', ADM_rgn_vnum(k,rgnid), 'point link'
+             write(IO_FID_LOG,*) '     (',rgnid,',',k,') : ', ADM_rgn_vnum(k,rgnid), 'point link'
              do m = 1, ADM_rgn_vnum(k,rgnid)
-                write(ADM_LOG_FID,*) '                -> ',                  &
+                write(IO_FID_LOG,*) '                -> ',                  &
                                      '(', ADM_rgn_vtab(ADM_RID,k,rgnid,m),   &
                                      ',', ADM_rgn_vtab(ADM_DIR,k,rgnid,m), ')'
              enddo
@@ -1224,10 +1211,10 @@ contains
 
        enddo
 
-       write(ADM_LOG_FID,*) ' --- Table of corresponding between region ID and process ID'
-       write(ADM_LOG_FID,*) '    region ID :  process ID'
+       write(IO_FID_LOG,*) ' --- Table of corresponding between region ID and process ID'
+       write(IO_FID_LOG,*) '    region ID :  process ID'
        do n = 1, ADM_rgn_nmax
-          write(ADM_LOG_FID,'(I13,I14)') n, ADM_rgn2prc(n)
+          write(IO_FID_LOG,'(I13,I14)') n, ADM_rgn2prc(n)
        enddo
     endif
 

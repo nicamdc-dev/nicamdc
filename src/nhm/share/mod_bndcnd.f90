@@ -18,10 +18,8 @@ module mod_bndcnd
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID,  &
-     ADM_NSYS
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -49,21 +47,21 @@ module mod_bndcnd
   !++ Private parameters & variables
   !
   !--- Vertical boundary condition for temperature at the top
-  character(len=ADM_NSYS), private :: BND_TYPE_T_TOP    != 'TEM' : tem(kmax+1) = tem(kmax)
-                                                        != 'EPL' : lagrange extrapolation
+  character(len=H_SHORT), private :: BND_TYPE_T_TOP    != 'TEM' : tem(kmax+1) = tem(kmax)
+                                                       != 'EPL' : lagrange extrapolation
 
   !--- Vertical boundary condition for temperature at the ground
-  character(len=ADM_NSYS), private :: BND_TYPE_T_BOTTOM != 'FIX' : tems fix
-                                                        != 'TEM' : tem(kmin-1) = tem(kmin)
-                                                        != 'EPL' : lagrange extrapolation
+  character(len=H_SHORT), private :: BND_TYPE_T_BOTTOM != 'FIX' : tems fix
+                                                       != 'TEM' : tem(kmin-1) = tem(kmin)
+                                                       != 'EPL' : lagrange extrapolation
 
   !--- Vertical boundary condition for momentum at the top
-  character(len=ADM_NSYS), private :: BND_TYPE_M_TOP    != 'RIGID' : rigid surface
-                                                        != 'FREE'  : free surface
+  character(len=H_SHORT), private :: BND_TYPE_M_TOP    != 'RIGID' : rigid surface
+                                                       != 'FREE'  : free surface
 
   !--- Vertical boundary condition for momentum at the ground
-  character(len=ADM_NSYS), private :: BND_TYPE_M_BOTTOM != 'RIGID' : rigid surface
-                                                        != 'FREE'  : free surface
+  character(len=H_SHORT), private :: BND_TYPE_M_BOTTOM != 'RIGID' : rigid surface
+                                                       != 'FREE'  : free surface
 
   logical, private :: is_top_tem   = .true.
   logical, private :: is_top_epl   = .false.
@@ -83,7 +81,6 @@ contains
   !>
   subroutine BNDCND_setup
     use mod_adm, only: &
-       ADM_CTL_FID, &
        ADM_proc_stop
     use mod_cnst, only: &
        CNST_TEMS0
@@ -105,18 +102,18 @@ contains
     BND_TYPE_M_BOTTOM = 'RIGID'
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[bndcnd]/Category[nhm share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=BNDCNDPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[bndcnd]/Category[nhm share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=BNDCNDPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** BNDCNDPARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** BNDCNDPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist BNDCNDPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist BNDCNDPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist BNDCNDPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=BNDCNDPARAM)
+    write(IO_FID_LOG,nml=BNDCNDPARAM)
 
     is_top_tem = .false.
     is_top_epl = .false.
@@ -125,28 +122,28 @@ contains
     is_btm_epl = .false.
 
     if    ( BND_TYPE_T_TOP == 'TEM' ) then
-       write(ADM_LOG_FID,*) '*** Boundary setting type (temperature, top   ) : equal to uppermost atmosphere'
+       write(IO_FID_LOG,*) '*** Boundary setting type (temperature, top   ) : equal to uppermost atmosphere'
        is_top_tem = .true.
     elseif( BND_TYPE_T_TOP == 'EPL' ) then
-       write(ADM_LOG_FID,*) '*** Boundary setting type (temperature, top   ) : lagrange extrapolation'
+       write(IO_FID_LOG,*) '*** Boundary setting type (temperature, top   ) : lagrange extrapolation'
        is_top_epl = .true.
     else
-       write(ADM_LOG_FID,*) 'xxx Invalid BND_TYPE_T_TOP. STOP.'
+       write(IO_FID_LOG,*) 'xxx Invalid BND_TYPE_T_TOP. STOP.'
        call ADM_proc_stop
     endif
 
     if    ( BND_TYPE_T_BOTTOM == 'FIX' ) then
-       write(ADM_LOG_FID,*) '*** Boundary setting type (temperature, bottom) : fixed'
-       write(ADM_LOG_FID,*) '***           boundary temperature (CNST_TEMS0) : ', CNST_TEMS0
+       write(IO_FID_LOG,*) '*** Boundary setting type (temperature, bottom) : fixed'
+       write(IO_FID_LOG,*) '***           boundary temperature (CNST_TEMS0) : ', CNST_TEMS0
        is_btm_fix = .true.
     elseif( BND_TYPE_T_BOTTOM == 'TEM' ) then
-       write(ADM_LOG_FID,*) '*** Boundary setting type (temperature, bottom) : equal to lowermost atmosphere'
+       write(IO_FID_LOG,*) '*** Boundary setting type (temperature, bottom) : equal to lowermost atmosphere'
        is_btm_tem = .true.
     elseif( BND_TYPE_T_BOTTOM == 'EPL' ) then
-       write(ADM_LOG_FID,*) '*** Boundary setting type (temperature, bottom) : lagrange extrapolation'
+       write(IO_FID_LOG,*) '*** Boundary setting type (temperature, bottom) : lagrange extrapolation'
        is_btm_epl = .true.
     else
-       write(ADM_LOG_FID,*) 'xxx Invalid BND_TYPE_T_BOTTOM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Invalid BND_TYPE_T_BOTTOM. STOP.'
        call ADM_proc_stop
     endif
 
@@ -156,24 +153,24 @@ contains
     is_btm_free  = .false.
 
     if    ( BND_TYPE_M_TOP == 'RIGID' ) then
-       write(ADM_LOG_FID,*) '*** Boundary setting type (momentum,    top   ) : rigid'
+       write(IO_FID_LOG,*) '*** Boundary setting type (momentum,    top   ) : rigid'
        is_top_rigid = .true.
     elseif( BND_TYPE_M_TOP == 'FREE' ) then
-       write(ADM_LOG_FID,*) '*** Boundary setting type (momentum,    top   ) : free'
+       write(IO_FID_LOG,*) '*** Boundary setting type (momentum,    top   ) : free'
        is_top_free  = .true.
     else
-       write(ADM_LOG_FID,*) 'xxx Invalid BND_TYPE_M_TOP. STOP.'
+       write(IO_FID_LOG,*) 'xxx Invalid BND_TYPE_M_TOP. STOP.'
        call ADM_proc_stop
     endif
 
     if    ( BND_TYPE_M_BOTTOM == 'RIGID' ) then
-       write(ADM_LOG_FID,*) '*** Boundary setting type (momentum,    bottom) : rigid'
+       write(IO_FID_LOG,*) '*** Boundary setting type (momentum,    bottom) : rigid'
        is_btm_rigid = .true.
     elseif( BND_TYPE_M_BOTTOM == 'FREE' ) then
-       write(ADM_LOG_FID,*) '*** Boundary setting type (momentum,    bottom) : free'
+       write(IO_FID_LOG,*) '*** Boundary setting type (momentum,    bottom) : free'
        is_btm_free  = .true.
     else
-       write(ADM_LOG_FID,*) 'xxx Invalid BND_TYPE_M_BOTTOM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Invalid BND_TYPE_M_BOTTOM. STOP.'
        call ADM_proc_stop
     endif
 

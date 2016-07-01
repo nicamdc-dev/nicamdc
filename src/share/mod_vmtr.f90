@@ -19,9 +19,8 @@ module mod_vmtr
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID
   use mod_adm, only: &
      ADM_TI,      &
      ADM_TJ,      &
@@ -145,7 +144,6 @@ contains
   !> Setup
   subroutine VMTR_setup
     use mod_adm, only: &
-       ADM_CTL_FID,   &
        ADM_proc_stop, &
        ADM_have_pl,   &
        ADM_KNONE,     &
@@ -221,18 +219,18 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[vmtr]/Category[common share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=VMTRPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[vmtr]/Category[common share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=VMTRPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** VMTRPARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** VMTRPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist VMTRPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist VMTRPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist VMTRPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=VMTRPARAM)
+    write(IO_FID_LOG,nml=VMTRPARAM)
 
 #ifndef _FIXEDINDEX_
     allocate( VMTR_GAM2        (ADM_gall,   ADM_kall,ADM_lall   ) )

@@ -51,7 +51,7 @@ program ico2ll
   !
   use mpi
   use mod_precision
-  use mod_misc
+  use mod_stdio
   use mod_cnst, only : &
        CNST_UNDEF,     & ! 05/12/21 M.Satoh
        CNST_UNDEF4
@@ -186,7 +186,7 @@ program ico2ll
 
   call MPI_Init(ierr)
 
-  ctl_fid = MISC_get_available_fid()
+  ctl_fid = IO_get_available_fid()
   open(CTL_FID,             &
        file='ico2ll.cnf',   &
        form='formatted',    &
@@ -200,7 +200,7 @@ program ico2ll
   read(ctl_fid,nml=ico2ll_param)
   close(ctl_fid)
   !
-  info_fid = MISC_get_available_fid()
+  info_fid = IO_get_available_fid()
   open(info_fid,file=trim(info_fname),form='formatted',status='old' ,iostat=ierr)
   if(ierr/=0) then
      write(*,*) 'nothing info file!'
@@ -214,7 +214,7 @@ program ico2ll
   allocate(nend(lall))
   gall = (2**(glevel-rlevel)+2)*(2**(glevel-rlevel)+2)
 
-  llmap_fid = MISC_get_available_fid()
+  llmap_fid = IO_get_available_fid()
   open(llmap_fid,file=trim(trim(llmap_dir)//'/'//trim(llmap_base))//'.info',&
        form='unformatted',status='old' ,iostat=ierr)
   if(ierr/=0) then
@@ -242,9 +242,9 @@ program ico2ll
   allocate(topog(gall,lall)) ! [Add] 13/06/13 T.Seiki
   !
   do l= 1,lall
-     call MISC_make_idstr(fname,trim(trim(llmap_dir)//'/'//trim(llmap_base)),'rgn',l)
+     call IO_make_idstr(fname,trim(trim(llmap_dir)//'/'//trim(llmap_base)),'rgn',l)
      ! write(*,*) trim(fname)
-     fid = MISC_get_available_fid()
+     fid = IO_get_available_fid()
      open(fid,file=trim(fname),form='unformatted',status='old')
      read(fid) max_num_latlon(l)
      nend(l) = sum(max_num_latlon(1:l))
@@ -262,8 +262,8 @@ program ico2ll
      close(fid)
      ! [Add] 13/06/13 T.Seiki
      if ( opt_zstar2z )then
-        call MISC_make_idstr(fname,trim(topo_fname),'rgn',l)
-        fid = MISC_get_available_fid()
+        call IO_make_idstr(fname,trim(topo_fname),'rgn',l)
+        fid = IO_get_available_fid()
         open(fid,file=trim(fname),form='unformatted',status='old')
         read(fid) topog(:,l)
         close(fid)
@@ -395,7 +395,7 @@ program ico2ll
         write(unit=fid,fmt='(a)')        'ENDVARS '
         close(fid)
         !
-        ofid = MISC_get_available_fid()
+        ofid = IO_get_available_fid()
         if (trim(separate_time) == 'no') then !S.Iga051226
            !
            open(ofid,file=trim(trim(output_dir)//'/'//trim(header_strings)//trim(base_name(v))&
@@ -405,7 +405,7 @@ program ico2ll
            !     write(*,*) '#### ',trim(base_name(v))
            ! 09-09-09 Y.Yamada ->
 !           if( compress )then
-!              ofid2b=MISC_get_available_fid()
+!              ofid2b=IO_get_available_fid()
 !              !              write(*,*) '#### ',trim(trim(output_dir)//'/'//trim(base_name(v))//'_2byte.grd'),ofid2b
 !              open(ofid2b,file=trim(trim(output_dir)//'/'//trim(header_strings)//trim(base_name(v))&
 !                   //'_2byte.grd'),form='unformatted')
@@ -459,13 +459,13 @@ program ico2ll
 
               !
               if (sepdir) then
-                 call MISC_make_idstr(ifname,trim(trim(input_dir)//'/'//&
+                 call IO_make_idstr(ifname,trim(trim(input_dir)//'/'//&
                       trim(base_name(v))//'/'//trim(base_name(v))),'rgn',l)
               else
-                 call MISC_make_idstr(ifname,trim(trim(input_dir)//'/'//trim(base_name(v))),'rgn',l)
+                 call IO_make_idstr(ifname,trim(trim(input_dir)//'/'//trim(base_name(v))),'rgn',l)
               endif
               !write(*,*) trim(ifname)
-              ifid = MISC_get_available_fid()
+              ifid = IO_get_available_fid()
 
               ! 05/12/21 M.Satoh =>
               !           open(ifid,file=trim(ifname),form='unformatted',access='direct',recl=kall*gall*4,status='old')

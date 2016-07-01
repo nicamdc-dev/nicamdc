@@ -38,12 +38,8 @@ module mod_grd
   !
   use mpi
   use mod_precision
-  use mod_io_param
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID, &
-     ADM_NSYS,    &
-     ADM_MAXFNAME
   use mod_adm, only: &
      ADM_TI,      &
      ADM_TJ,      &
@@ -203,8 +199,8 @@ module mod_grd
   real(RP), public, allocatable :: GRD_vz_pl(:,:,:,:)
 #endif
 
-  character(len=ADM_NSYS), public :: GRD_grid_type = 'ON_SPHERE' ! grid type [add] T.Ohno 110722
-                                                   ! 'ON_PLANE'
+  character(len=H_SHORT), public :: GRD_grid_type = 'ON_SPHERE' ! grid type [add] T.Ohno 110722
+                                                  ! 'ON_PLANE'
 
   !-----------------------------------------------------------------------------
   !
@@ -218,19 +214,19 @@ module mod_grd
   !
   !++ Private parameters & variables
   !
-  character(len=ADM_NSYS),     private :: hgrid_io_mode   = 'ADVANCED'
-  character(len=ADM_NSYS),     private :: topo_io_mode    = 'ADVANCED'
-  character(len=ADM_MAXFNAME), private :: hgrid_fname     = ''         ! horizontal grid file
-  character(len=ADM_MAXFNAME), private :: topo_fname      = ''         ! topography file
+  character(len=H_SHORT), private :: hgrid_io_mode  = 'ADVANCED'
+  character(len=H_SHORT), private :: topo_io_mode   = 'ADVANCED'
+  character(len=H_LONG),  private :: hgrid_fname    = ''         ! horizontal grid file
+  character(len=H_LONG),  private :: topo_fname     = ''         ! topography file
 
-  character(len=ADM_MAXFNAME), private :: vgrid_fname     = ''         ! vertical grid file
-  character(len=ADM_NSYS),     private :: vgrid_scheme    = 'LINEAR'   ! vertical coordinate scheme
-  real(RP),                    private :: h_efold         = 10000.0_RP ! e-folding height for hybrid vertical coordinate [m]
-  real(RP),                    private :: hflat           =  -999.0_RP ! [m]
-  logical,                     private :: output_vgrid    = .false.    ! output verical grid file?
+  character(len=H_LONG),  private :: vgrid_fname    = ''         ! vertical grid file
+  character(len=H_SHORT), private :: vgrid_scheme   = 'LINEAR'   ! vertical coordinate scheme
+  real(RP),               private :: h_efold        = 10000.0_RP ! e-folding height for hybrid vertical coordinate [m]
+  real(RP),               private :: hflat          =  -999.0_RP ! [m]
+  logical,                private :: output_vgrid   = .false.    ! output verical grid file?
 
-  logical,                     private :: hgrid_comm_flg  = .true.     ! communicate GRD_x?          [add] T.Ohno 110722
-  real(RP),                    private :: triangle_size   = 0.0_RP     ! length of sides of triangle [add] T.Ohno 110722
+  logical,                private :: hgrid_comm_flg = .true.     ! communicate GRD_x?          [add] T.Ohno 110722
+  real(RP),               private :: triangle_size  = 0.0_RP     ! length of sides of triangle [add] T.Ohno 110722
 
   !-----------------------------------------------------------------------------
 contains
@@ -238,7 +234,6 @@ contains
   !> Setup
   subroutine GRD_setup
     use mod_adm, only:  &
-       ADM_CTL_FID,        &
        ADM_proc_stop,      &
        ADM_prc_me,         &
        ADM_prc_run_master, &
@@ -280,18 +275,18 @@ contains
     k0 = ADM_KNONE
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[grd]/Category[common share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=GRDPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[grd]/Category[common share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=GRDPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** GRDPARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** GRDPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist GRDPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist GRDPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist GRDPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=GRDPARAM)
+    write(IO_FID_LOG,nml=GRDPARAM)
 
 
 
@@ -523,33 +518,33 @@ contains
 
     !--- output information about grid.
     if ( ADM_kall /= ADM_KNONE ) then
-       write(ADM_LOG_FID,*)
-       write(ADM_LOG_FID,'(5x,A)')             '|======      Vertical Coordinate [m]      ======|'
-       write(ADM_LOG_FID,'(5x,A)')             '|                                               |'
-       write(ADM_LOG_FID,'(5x,A)')             '|          -GRID CENTER-       -GRID INTERFACE- |'
-       write(ADM_LOG_FID,'(5x,A)')             '|  k        gz     d(gz)      gzh    d(gzh)   k |'
-       write(ADM_LOG_FID,'(5x,A)')             '|                                               |'
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,'(5x,A)')             '|======      Vertical Coordinate [m]      ======|'
+       write(IO_FID_LOG,'(5x,A)')             '|                                               |'
+       write(IO_FID_LOG,'(5x,A)')             '|          -GRID CENTER-       -GRID INTERFACE- |'
+       write(IO_FID_LOG,'(5x,A)')             '|  k        gz     d(gz)      gzh    d(gzh)   k |'
+       write(IO_FID_LOG,'(5x,A)')             '|                                               |'
        k = ADM_kmax + 1
-       write(ADM_LOG_FID,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        | dummy'
-       write(ADM_LOG_FID,'(5x,A,2F10.1,I4,A)') '|                      ',GRD_gzh(k),GRD_dgzh(k),k,' | TOA'
+       write(IO_FID_LOG,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        | dummy'
+       write(IO_FID_LOG,'(5x,A,2F10.1,I4,A)') '|                      ',GRD_gzh(k),GRD_dgzh(k),k,' | TOA'
        k = ADM_kmax
-       write(ADM_LOG_FID,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        | kmax'
-       write(ADM_LOG_FID,'(5x,A,2F10.1,I4,A)') '|                      ',GRD_gzh(k),GRD_dgzh(k),k,' |'
+       write(IO_FID_LOG,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        | kmax'
+       write(IO_FID_LOG,'(5x,A,2F10.1,I4,A)') '|                      ',GRD_gzh(k),GRD_dgzh(k),k,' |'
        do k = ADM_kmax-1, ADM_kmin+1, -1
-       write(ADM_LOG_FID,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        |'
-       write(ADM_LOG_FID,'(5x,A,2F10.1,I4,A)') '|                      ',GRD_gzh(k),GRD_dgzh(k),k,' |'
+       write(IO_FID_LOG,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        |'
+       write(IO_FID_LOG,'(5x,A,2F10.1,I4,A)') '|                      ',GRD_gzh(k),GRD_dgzh(k),k,' |'
        enddo
        k = ADM_kmin
-       write(ADM_LOG_FID,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        | kmin'
-       write(ADM_LOG_FID,'(5x,A,2F10.1,I4,A)') '|                      ',GRD_gzh(k),GRD_dgzh(k),k,' | ground'
+       write(IO_FID_LOG,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        | kmin'
+       write(IO_FID_LOG,'(5x,A,2F10.1,I4,A)') '|                      ',GRD_gzh(k),GRD_dgzh(k),k,' | ground'
        k = ADM_kmin-1
-       write(ADM_LOG_FID,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        | dummy'
-       write(ADM_LOG_FID,'(5x,A)')             '|===============================================|'
+       write(IO_FID_LOG,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        | dummy'
+       write(IO_FID_LOG,'(5x,A)')             '|===============================================|'
 
-       write(ADM_LOG_FID,*)
-       write(ADM_LOG_FID,*) '--- Vertical layer scheme = ', trim(vgrid_scheme)
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,*) '--- Vertical layer scheme = ', trim(vgrid_scheme)
        if ( vgrid_scheme == 'HYBRID' ) then
-          write(ADM_LOG_FID,*) '--- e-folding height = ', h_efold
+          write(IO_FID_LOG,*) '--- e-folding height = ', h_efold
        endif
 
        if ( output_vgrid ) then
@@ -558,8 +553,8 @@ contains
           endif
        endif
     else
-       write(ADM_LOG_FID,*)
-       write(ADM_LOG_FID,*) '--- vartical layer = 1'
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,*) '--- vartical layer = 1'
     endif
 
     return
@@ -613,7 +608,7 @@ contains
        endif
 
     else
-       write(ADM_LOG_FID,*) 'Invalid io_mode!'
+       write(IO_FID_LOG,*) 'Invalid io_mode!'
        call ADM_proc_stop
     endif
 
@@ -630,6 +625,8 @@ contains
        io_mode        )
     use mod_adm, only: &
        ADM_proc_stop
+    use mod_io_param, only: &
+       IO_REAL8
     use mod_fio, only: &
        FIO_output
     use mod_hio, only: &
@@ -728,7 +725,7 @@ contains
        endif
 
     else
-       write(ADM_LOG_FID,*) 'Invalid io_mode!'
+       write(IO_FID_LOG,*) 'Invalid io_mode!'
        call ADM_proc_stop
     endif
 
@@ -738,14 +735,12 @@ contains
   !-----------------------------------------------------------------------------
   !> Input vertical grid
   subroutine GRD_input_vgrid( fname )
-    use mod_misc, only: &
-       MISC_get_available_fid
     use mod_adm, only: &
        ADM_proc_stop, &
        ADM_vlayer
     implicit none
 
-    character(len=ADM_MAXFNAME), intent(in) :: fname ! vertical grid file name
+    character(len=H_LONG), intent(in) :: fname ! vertical grid file name
 
     integer               :: num_of_layer
     real(DP), allocatable :: gz (:)
@@ -754,9 +749,9 @@ contains
     integer :: fid, ierr
     !---------------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*) '*** Read vertical grid file: ', trim(fname)
+    write(IO_FID_LOG,*) '*** Read vertical grid file: ', trim(fname)
 
-    fid = MISC_get_available_fid()
+    fid = IO_get_available_fid()
     open( unit   = fid,           &
           file   = trim(fname),   &
           status = 'old',         &
@@ -764,7 +759,7 @@ contains
           iostat = ierr           )
 
        if ( ierr /= 0 ) then
-          write(ADM_LOG_FID,*) 'xxx No vertical grid file.'
+          write(IO_FID_LOG,*) 'xxx No vertical grid file.'
           call ADM_proc_stop
        endif
 
@@ -777,7 +772,7 @@ contains
        read(fid) gzh(:)
 
        if ( num_of_layer /= ADM_vlayer ) then
-          write(ADM_LOG_FID,*) 'xxx inconsistency in number of vertical layers.'
+          write(IO_FID_LOG,*) 'xxx inconsistency in number of vertical layers.'
           call ADM_proc_stop
        endif
 
@@ -792,8 +787,6 @@ contains
   !-----------------------------------------------------------------------------
   !> Output vertical grid
   subroutine GRD_output_vgrid( fname )
-    use mod_misc, only: &
-       MISC_get_available_fid
     use mod_adm, only: &
        ADM_vlayer
     implicit none
@@ -803,9 +796,9 @@ contains
     integer :: fid, ierr
     !---------------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*) '*** Write vertical grid file: ', trim(fname)
+    write(IO_FID_LOG,*) '*** Write vertical grid file: ', trim(fname)
 
-    fid = MISC_get_available_fid()
+    fid = IO_get_available_fid()
     open( unit   = fid,           &
           file   = trim(fname),   &
           status = 'new',         &
@@ -825,9 +818,6 @@ contains
   !> Input topography data
   subroutine GRD_input_topograph( &
        basename )
-    use mod_misc,  only: &
-       MISC_make_idstr,        &
-       MISC_get_available_fid
     use mod_adm, only: &
        ADM_prc_tab, &
        ADM_prc_me
@@ -846,7 +836,7 @@ contains
     integer            :: fid
     !---------------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*) '*** topography data input'
+    write(IO_FID_LOG,*) '*** topography data input'
 
     if ( topo_io_mode == 'ADVANCED' ) then
 
@@ -859,8 +849,8 @@ contains
        if ( basename /= 'NONE' ) then
           do l = 1, ADM_lall
              rgnid = ADM_prc_tab(l,ADM_prc_me)
-             call MISC_make_idstr(fname,trim(basename),'rgn',rgnid)
-             fid = MISC_get_available_fid()
+             call IO_make_idstr(fname,trim(basename),'rgn',rgnid)
+             fid = IO_get_available_fid()
 
              open( fid,                    &
                    file   = trim(fname),   &
@@ -877,7 +867,7 @@ contains
 
     elseif( topo_io_mode == 'IDEAL' ) then
 
-       write(ADM_LOG_FID,*) '*** make ideal topography'
+       write(IO_FID_LOG,*) '*** make ideal topography'
 
        call IDEAL_topo( GRD_s (:,:,:,GRD_LAT), & ! [IN]
                         GRD_s (:,:,:,GRD_LON), & ! [IN]

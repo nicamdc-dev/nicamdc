@@ -18,9 +18,9 @@ program mkrawgrid
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
   use mod_adm, only: &
-     ADM_LOG_FID,     &
      ADM_MULTI_PRC,   &
      ADM_proc_init,   &
      ADM_proc_finish, &

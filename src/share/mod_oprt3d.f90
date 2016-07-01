@@ -18,9 +18,9 @@ module mod_oprt3d
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
   use mod_adm, only: &
-     ADM_LOG_FID,    &
      TI  => ADM_TI,  &
      TJ  => ADM_TJ,  &
      AI  => ADM_AI,  &

@@ -20,9 +20,8 @@ module mod_calendar
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -111,8 +110,6 @@ contains
   !>
   subroutine calendar_setup
     use mod_adm, only: &
-       ADM_LOG_FID, &
-       ADM_CTL_FID, &
        ADM_proc_stop
     implicit none
 
@@ -134,18 +131,18 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[calendar]/Category[common share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=NM_CALENDAR,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[calendar]/Category[common share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=NM_CALENDAR,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** NM_CALENDAR is not specified. use default.'
+       write(IO_FID_LOG,*) '*** NM_CALENDAR is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist NM_CALENDAR. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist NM_CALENDAR. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NM_CALENDAR. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=NM_CALENDAR)
+    write(IO_FID_LOG,nml=NM_CALENDAR)
 
     return
   end subroutine calendar_setup

@@ -34,12 +34,8 @@ module mod_history
   !++ Used modules
   !
   use mod_precision
-  use mod_io_param
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID,  &
-     ADM_MAXFNAME, &
-     ADM_NSYS
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -55,9 +51,9 @@ module mod_history
   !
   !++ Public parameters & variables
   !
-  integer,                 public              :: HIST_req_nmax
-  character(len=ADM_NSYS), public, allocatable :: item_save(:)
-  logical,                 public              :: HIST_output_step0 = .false.
+  integer,                public              :: HIST_req_nmax
+  character(len=H_SHORT), public, allocatable :: item_save(:)
+  logical,                public              :: HIST_output_step0 = .false.
 
   !-----------------------------------------------------------------------------
   !
@@ -74,60 +70,59 @@ module mod_history
   integer, private, parameter :: HIST_req_limit = 1000
   real(RP),private, parameter :: EPS_ZERO = 1.E-16_RP
 
-  character(len=ADM_MAXFNAME), private :: HIST_io_fname  = ''
-  character(len=ADM_NSYS),     private :: HIST_io_desc   = ''
-  integer,                     private :: HIST_dtype     = -1
-  character(len=ADM_MAXFNAME), private :: output_path    = ''
-  character(len=ADM_NSYS),     private :: histall_fname  = ''
-  character(len=ADM_MAXFNAME), private :: output_io_mode != 'LEGACY'
-  integer,                     private :: output_size    = 4
-  integer,                     private :: npreslev       = 1
-  real(RP),                    private :: pres_levs(60)  != CNST_PRE00
-  logical,                     private :: check_flag     = .true.
+  character(len=H_LONG),  private :: HIST_io_fname  = ''
+  character(len=H_SHORT), private :: HIST_io_desc   = ''
+  integer,                private :: HIST_dtype     = -1
+  character(len=H_LONG),  private :: output_path    = ''
+  character(len=H_SHORT), private :: histall_fname  = ''
+  character(len=H_LONG),  private :: output_io_mode != 'LEGACY'
+  integer,                private :: output_size    = 4
+  integer,                private :: npreslev       = 1
+  real(RP),               private :: pres_levs(60)  != CNST_PRE00
+  logical,                private :: check_flag     = .true.
 
-  integer,                     private :: ksum
-  logical,                     private :: calc_pressure = .false.
+  integer,                private :: ksum
+  logical,                private :: calc_pressure = .false.
 
-  character(len=ADM_MAXFNAME), private, allocatable :: file_save (:)
-  character(len=ADM_NSYS),     private, allocatable :: desc_save (:)
-  character(len=ADM_NSYS),     private, allocatable :: unit_save (:)
-  integer,                     private, allocatable :: step_save (:)
-  character(len=ADM_NSYS),     private, allocatable :: ktype_save(:)
-  integer,                     private, allocatable :: kstr_save (:)
-  integer,                     private, allocatable :: kend_save (:)
-  integer,                     private, allocatable :: kmax_save (:)
-  character(len=ADM_NSYS),     private, allocatable :: output_type_save  (:)
-  logical,                     private, allocatable :: out_prelev_save   (:)
-  logical,                     private, allocatable :: out_vintrpl_save  (:)
-  logical,                     private, allocatable :: opt_wgrid_save    (:)
-  logical,                     private, allocatable :: opt_lagintrpl_save(:)
+  character(len=H_LONG),  private, allocatable :: file_save (:)
+  character(len=H_SHORT), private, allocatable :: desc_save (:)
+  character(len=H_SHORT), private, allocatable :: unit_save (:)
+  integer,                private, allocatable :: step_save (:)
+  character(len=H_SHORT), private, allocatable :: ktype_save(:)
+  integer,                private, allocatable :: kstr_save (:)
+  integer,                private, allocatable :: kend_save (:)
+  integer,                private, allocatable :: kmax_save (:)
+  character(len=H_SHORT), private, allocatable :: output_type_save  (:)
+  logical,                private, allocatable :: out_prelev_save   (:)
+  logical,                private, allocatable :: out_vintrpl_save  (:)
+  logical,                private, allocatable :: opt_wgrid_save    (:)
+  logical,                private, allocatable :: opt_lagintrpl_save(:)
 
-  character(len=ADM_NSYS),     private, allocatable :: lname_save   (:)
-  integer,                     private, allocatable :: tmax_save    (:)
-  real(DP),                    private, allocatable :: tstr_save    (:)
-  real(DP),                    private, allocatable :: tend_save    (:)
-  integer,                     private, allocatable :: month_old    (:)
-  integer,                     private, allocatable :: l_region_save(:)
+  character(len=H_SHORT), private, allocatable :: lname_save   (:)
+  integer,                private, allocatable :: tmax_save    (:)
+  real(DP),               private, allocatable :: tstr_save    (:)
+  real(DP),               private, allocatable :: tend_save    (:)
+  integer,                private, allocatable :: month_old    (:)
+  integer,                private, allocatable :: l_region_save(:)
 
-  integer,                     public,  allocatable :: ksumstr  (:)
-  integer,                     private, allocatable :: ksumend  (:)
-  real(RP),                    private, allocatable :: tsum_save(:,:)
-  logical,                     private, allocatable :: flag_save(:)
+  integer,                public,  allocatable :: ksumstr  (:)
+  integer,                private, allocatable :: ksumend  (:)
+  real(RP),               private, allocatable :: tsum_save(:,:)
+  logical,                private, allocatable :: flag_save(:)
 
-  real(RP),                    public,  allocatable :: v_save   (:,:,:,:)
-  real(RP),                    private, allocatable :: v_save_pl(:,:,:,:)
-  real(RP),                    private, allocatable :: zlev_save(:)
+  real(RP),               public,  allocatable :: v_save   (:,:,:,:)
+  real(RP),               private, allocatable :: v_save_pl(:,:,:,:)
+  real(RP),               private, allocatable :: zlev_save(:)
 
-  real(RP),                    private, allocatable :: pres_levs_ln(:)
-  integer,                     public,  allocatable :: cnvpre_klev(:,:,:)
-  real(RP),                    public,  allocatable :: cnvpre_fac1(:,:,:)
-  real(RP),                    public,  allocatable :: cnvpre_fac2(:,:,:)
+  real(RP),               private, allocatable :: pres_levs_ln(:)
+  integer,                public,  allocatable :: cnvpre_klev(:,:,:)
+  real(RP),               public,  allocatable :: cnvpre_fac1(:,:,:)
+  real(RP),               public,  allocatable :: cnvpre_fac2(:,:,:)
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
   subroutine history_setup
     use mod_adm, only: &
-       ADM_CTL_FID,   &
        ADM_proc_stop, &
        ADM_gall,      &
        ADM_gall_pl,   &
@@ -136,6 +131,9 @@ contains
        ADM_kmin,      &
        ADM_kmax,      &
        ADM_vlayer
+    use mod_io_param, only: &
+       IO_REAL4, &
+       IO_REAL8
     use mod_cnst, only: &
        CNST_PRE00
     use mod_calendar, only: &
@@ -148,33 +146,33 @@ contains
        RUNNAME
     implicit none
 
-    character(len=ADM_NSYS)     :: hist3D_layername  != ''
-    integer                     :: step_def          = 1
-    character(len=ADM_NSYS)     :: ktype_def         != ''
-    integer                     :: kstr_def          = 1
-    integer                     :: kend_def          != ADM_vlayer
-    integer                     :: kmax_def          != ADM_vlayer
-    character(len=ADM_NSYS)     :: output_type_def   != 'SNAPSHOT'
-    logical                     :: out_prelev_def    = .false.
-    logical                     :: no_vintrpl        = .true.
-    logical                     :: opt_wgrid_def     = .false.
-    logical                     :: opt_lagintrpl_def = .true.
-    logical                     :: doout_step0
+    character(len=H_SHORT) :: hist3D_layername  != ''
+    integer                :: step_def          = 1
+    character(len=H_SHORT) :: ktype_def         != ''
+    integer                :: kstr_def          = 1
+    integer                :: kend_def          != ADM_vlayer
+    integer                :: kmax_def          != ADM_vlayer
+    character(len=H_SHORT) :: output_type_def   != 'SNAPSHOT'
+    logical                :: out_prelev_def    = .false.
+    logical                :: no_vintrpl        = .true.
+    logical                :: opt_wgrid_def     = .false.
+    logical                :: opt_lagintrpl_def = .true.
+    logical                :: doout_step0
 
-    character(len=ADM_NSYS)     :: item
-    character(len=ADM_MAXFNAME) :: file
-    character(len=ADM_NSYS)     :: desc
-    character(len=ADM_NSYS)     :: unit
-    integer                     :: step
-    character(len=ADM_NSYS)     :: ktype
-    integer                     :: kstr
-    integer                     :: kend
-    integer                     :: kmax
-    character(len=ADM_NSYS)     :: output_type
-    logical                     :: out_prelev
-    logical                     :: out_vintrpl
-    logical                     :: opt_wgrid
-    logical                     :: opt_lagintrpl
+    character(len=H_SHORT) :: item
+    character(len=H_LONG)  :: file
+    character(len=H_SHORT) :: desc
+    character(len=H_SHORT) :: unit
+    integer                :: step
+    character(len=H_SHORT) :: ktype
+    integer                :: kstr
+    integer                :: kend
+    integer                :: kmax
+    character(len=H_SHORT) :: output_type
+    logical                :: out_prelev
+    logical                :: out_vintrpl
+    logical                :: opt_wgrid
+    logical                :: opt_lagintrpl
 
     namelist / NMHISD / &
          output_path,       &
@@ -213,7 +211,7 @@ contains
          opt_wgrid,    &
          opt_lagintrpl
 
-    character(len=ADM_NSYS) :: lname
+    character(len=H_SHORT) :: lname
 
     integer :: idate(6)
     integer :: ierr
@@ -243,18 +241,18 @@ contains
     doout_step0 = HIST_output_step0
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[history]/Category[nhm share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=NMHISD,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[history]/Category[nhm share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=NMHISD,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** NMHISD is not specified. use default.'
+       write(IO_FID_LOG,*) '*** NMHISD is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist NMHISD. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist NMHISD. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NMHISD. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=NMHISD)
+    write(IO_FID_LOG,nml=NMHISD)
 
     ! nonsence restore
     step_def        = step
@@ -269,9 +267,9 @@ contains
 
     if (      trim(output_io_mode) == 'ADVANCED' &
          .OR. trim(output_io_mode) == 'LEGACY'   ) then
-       write(ADM_LOG_FID,*) '*** History output type:', trim(output_io_mode)
+       write(IO_FID_LOG,*) '*** History output type:', trim(output_io_mode)
     else
-       write(ADM_LOG_FID,*) 'xxx Invalid output_io_mode!', trim(output_io_mode)
+       write(IO_FID_LOG,*) 'xxx Invalid output_io_mode!', trim(output_io_mode)
        call ADM_proc_stop
     endif
     HIST_io_fname = trim(output_path)//trim(histall_fname)
@@ -288,26 +286,26 @@ contains
 
 
     ! listup history request
-    rewind(ADM_CTL_FID)
+    rewind(IO_FID_CONF)
     do n = 1, HIST_req_limit
-       read(ADM_CTL_FID,nml=NMHIST,iostat=ierr)
+       read(IO_FID_CONF,nml=NMHIST,iostat=ierr)
        if ( ierr < 0 ) then
           exit
        elseif( ierr > 0 ) then
           write(*,          *) 'xxx Not appropriate names in namelist NMHIST. STOP.'
-          write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist NMHIST. STOP.'
+          write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NMHIST. STOP.'
           call ADM_proc_stop
       endif
     enddo
     HIST_req_nmax = n - 1
 
     if    ( HIST_req_nmax > HIST_req_limit ) then
-       write(ADM_LOG_FID,*) '*** request of history file is exceed! n >', HIST_req_limit
+       write(IO_FID_LOG,*) '*** request of history file is exceed! n >', HIST_req_limit
     elseif( HIST_req_nmax == 0 ) then
-       write(ADM_LOG_FID,*) '*** No history file specified.'
+       write(IO_FID_LOG,*) '*** No history file specified.'
        return
     else
-       write(ADM_LOG_FID,*) '*** Number of requested history item : ', HIST_req_nmax
+       write(IO_FID_LOG,*) '*** Number of requested history item : ', HIST_req_nmax
     endif
 
     allocate( item_save         (HIST_req_nmax) )
@@ -356,7 +354,7 @@ contains
 
     call calendar_ss2yh( idate, TIME_CTIME )
 
-    rewind(ADM_CTL_FID)
+    rewind(IO_FID_CONF)
     do n = 1, HIST_req_limit
 
        ! set default
@@ -380,11 +378,11 @@ contains
        opt_lagintrpl = opt_lagintrpl_def
 
        ! read namelist
-       read(ADM_CTL_FID,nml=NMHIST,iostat=ierr)
+       read(IO_FID_CONF,nml=NMHIST,iostat=ierr)
        if( ierr /= 0 ) exit
 
        if ( item == '' ) then
-          write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist NMHIST. STOP.'
+          write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NMHIST. STOP.'
           call ADM_proc_stop
        endif
 
@@ -424,7 +422,7 @@ contains
 
        if ( out_prelev ) then
           if ( ktype /= '3D' ) then
-             write(ADM_LOG_FID,*) '*** Only 3D vars can be output by pressure coordinates. item=', trim(item)
+             write(IO_FID_LOG,*) '*** Only 3D vars can be output by pressure coordinates. item=', trim(item)
              out_prelev = .false.
           else
              calc_pressure = .true.
@@ -541,7 +539,7 @@ contains
     real(RP),          intent(in) :: gd(:,:)
     integer,          intent(in), optional :: l_region
 
-    character(len=ADM_NSYS) :: hitem
+    character(len=H_SHORT) :: hitem
     integer                 :: ijdim_input
     integer                 :: kdim_input
 
@@ -557,11 +555,11 @@ contains
 
     if (       ijdim_input /= ADM_gall_in &
          .AND. ijdim_input /= ADM_gall    ) then
-       write(ADM_LOG_FID,*) '+++ Module[history]/Category[nhm share]'
-       write(ADM_LOG_FID,*) 'xxx invalid dimension, item=', hitem, &
-                            ', ijdim_input=', ijdim_input, &
-                            ', ADM_gall_in=', ADM_gall_in, &
-                            ', ADM_gall=',    ADM_gall
+       write(IO_FID_LOG,*) '+++ Module[history]/Category[nhm share]'
+       write(IO_FID_LOG,*) 'xxx invalid dimension, item=', hitem, &
+                           ', ijdim_input=', ijdim_input, &
+                           ', ADM_gall_in=', ADM_gall_in, &
+                           ', ADM_gall=',    ADM_gall
        call ADM_proc_stop
     endif
 
@@ -580,17 +578,17 @@ contains
 
           if ( ktype_save(n) == '3D' ) then ! trim HALO
              if ( kdim_input-2 /= kmax_save(n) ) then
-                write(ADM_LOG_FID,*) '+++ Module[history]/Category[nhm share]'
-                write(ADM_LOG_FID,*) '*** Size unmatch, item=', hitem, &
-                                     ', kdim_input=', kdim_input, &
-                                     ', kmax_save=',  kmax_save(n)
+                write(IO_FID_LOG,*) '+++ Module[history]/Category[nhm share]'
+                write(IO_FID_LOG,*) '*** Size unmatch, item=', hitem, &
+                                    ', kdim_input=', kdim_input, &
+                                    ', kmax_save=',  kmax_save(n)
              endif
           else
              if ( kdim_input /= kmax_save(n) ) then
-                write(ADM_LOG_FID,*) '+++ Module[history]/Category[nhm share]'
-                write(ADM_LOG_FID,*) '*** Size unmatch, item=', hitem, &
-                                     ', kdim_input=', kdim_input, &
-                                     ', kmax_save=',  kmax_save(n)
+                write(IO_FID_LOG,*) '+++ Module[history]/Category[nhm share]'
+                write(IO_FID_LOG,*) '*** Size unmatch, item=', hitem, &
+                                    ', kdim_input=', kdim_input, &
+                                    ', kmax_save=',  kmax_save(n)
              endif
           endif
 
@@ -737,8 +735,8 @@ contains
     real(RP) :: val_max, val_min
 
     character(len=20)           :: HTIME
-    character(len=ADM_NSYS)     :: item
-    character(len=ADM_MAXFNAME) :: basename
+    character(len=H_SHORT)     :: item
+    character(len=H_LONG) :: basename
 
     logical, save :: first = .true.
 
@@ -779,9 +777,9 @@ contains
 
     ! At least one variable will output, do communication
     if ( num_output > 0 ) then
-       write(ADM_LOG_FID,*) '### HISTORY num_output = ', num_output
+       write(IO_FID_LOG,*) '### HISTORY num_output = ', num_output
        call Calendar_SS2CC ( HTIME, TIME_CTIME )
-       write(ADM_LOG_FID,*) '###         date-time  = ', HTIME
+       write(IO_FID_LOG,*) '###         date-time  = ', HTIME
 
        call COMM_var( v_save, v_save_pl, KSUM, 1 )
     else
@@ -850,7 +848,7 @@ contains
              enddo
           endif
 
-          write(ADM_LOG_FID,'(A,A16,A,1PE24.17,A,E24.17)') ' [', item(1:16), '] max=', val_max, ', min=', val_min
+          write(IO_FID_LOG,'(A,A16,A,1PE24.17,A,E24.17)') ' [', item(1:16), '] max=', val_max, ', min=', val_min
 
           if ( trim(output_io_mode) == 'ADVANCED' ) then
 
@@ -900,22 +898,22 @@ contains
        ADM_proc_stop
     implicit none
 
-    character(len=ADM_NSYS)     :: item
-    character(len=ADM_MAXFNAME) :: file
-    character(len=ADM_NSYS)     :: unit
-    character(len=ADM_NSYS)     :: ktype
-    character(len=ADM_NSYS)     :: otype
+    character(len=H_SHORT)     :: item
+    character(len=H_LONG) :: file
+    character(len=H_SHORT)     :: unit
+    character(len=H_SHORT)     :: ktype
+    character(len=H_SHORT)     :: otype
 
     integer :: n
     !---------------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '*** [HIST] Output item list '
-    write(ADM_LOG_FID,*) '*** Total number of requested history item :', HIST_req_nmax
-    write(ADM_LOG_FID,*) '============================================================================'
-    write(ADM_LOG_FID,*) 'NAME            :Save name       :UNIT            :Avg.type        :interval'
-    write(ADM_LOG_FID,*) '                :Vert.type       :# of layer      :p?  :z?  :zh? :lag.intrp?'
-    write(ADM_LOG_FID,*) '============================================================================'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '*** [HIST] Output item list '
+    write(IO_FID_LOG,*) '*** Total number of requested history item :', HIST_req_nmax
+    write(IO_FID_LOG,*) '============================================================================'
+    write(IO_FID_LOG,*) 'NAME            :Save name       :UNIT            :Avg.type        :interval'
+    write(IO_FID_LOG,*) '                :Vert.type       :# of layer      :p?  :z?  :zh? :lag.intrp?'
+    write(IO_FID_LOG,*) '============================================================================'
 
     do n = 1, HIST_req_nmax
        item  = item_save(n)
@@ -924,38 +922,36 @@ contains
        ktype = ktype_save(n)
        otype = output_type_save(n)
 
-       write(ADM_LOG_FID,'(1x,A16,A,A16,A,A16,A,A16,A,I8)')      item (1:16), &
-                                                            ":", file (1:16), &
-                                                            ":", unit (1:16), &
-                                                            ":", otype(1:16), &
-                                                            ":", step_save(n)
+       write(IO_FID_LOG,'(1x,A16,A,A16,A,A16,A,A16,A,I8)')      item (1:16), &
+                                                           ":", file (1:16), &
+                                                           ":", unit (1:16), &
+                                                           ":", otype(1:16), &
+                                                           ":", step_save(n)
 
-       write(ADM_LOG_FID,'(17x,A,A16,A,I016,A,L04,A,L04,A,L04,A,L04)') ":", ktype(1:16),           &
-                                                                       ":", kmax_save(n),          &
-                                                                       ":", out_prelev_save   (n), &
-                                                                       ":", out_vintrpl_save  (n), &
-                                                                       ":", opt_wgrid_save    (n), &
-                                                                       ":", opt_lagintrpl_save(n)
+       write(IO_FID_LOG,'(17x,A,A16,A,I016,A,L04,A,L04,A,L04,A,L04)') ":", ktype(1:16),           &
+                                                                      ":", kmax_save(n),          &
+                                                                      ":", out_prelev_save   (n), &
+                                                                      ":", out_vintrpl_save  (n), &
+                                                                      ":", opt_wgrid_save    (n), &
+                                                                      ":", opt_lagintrpl_save(n)
 
        if ( .NOT. flag_save(n) ) then ! not stored yet or never
-          write(ADM_LOG_FID,*) '+++ this variable is requested but not stored yet. check!'
+          write(IO_FID_LOG,*) '+++ this variable is requested but not stored yet. check!'
           if ( check_flag ) then
-             write(ADM_LOG_FID,*) 'xxx history check_flag is on. stop!'
+             write(IO_FID_LOG,*) 'xxx history check_flag is on. stop!'
              call ADM_proc_stop
           endif
        endif
     enddo
 
-    write(ADM_LOG_FID,*) '============================================================================'
-    write(ADM_LOG_FID,*)
+    write(IO_FID_LOG,*) '============================================================================'
+    write(IO_FID_LOG,*)
 
     return
   end subroutine history_outlist
 
   !-----------------------------------------------------------------------------
   subroutine history_timeinfo
-    use mod_misc, only: &
-       MISC_get_available_fid
     use mod_adm, only: &
        ADM_prc_me,         &
        ADM_prc_run_master
@@ -968,7 +964,7 @@ contains
     !---------------------------------------------------------------------------
 
     if ( ADM_prc_me == ADM_prc_run_master ) then
-       fid = MISC_get_available_fid()
+       fid = IO_get_available_fid()
        open( unit   = fid,                               &
              file   = trim(output_path)//'history.info', &
              form   = 'formatted',                       &

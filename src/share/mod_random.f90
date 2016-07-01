@@ -13,9 +13,8 @@ module mod_random
   !++ used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -50,7 +49,6 @@ contains
   !> Setup
   subroutine RANDOM_setup
     use mod_adm, only: &
-       ADM_CTL_FID,   &
        ADM_proc_stop
     implicit none
 
@@ -61,28 +59,28 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[random]/Category[common share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=RANDOMPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[random]/Category[common share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=RANDOMPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** RANDOMPARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** RANDOMPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist RANDOMPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist RANDOMPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist RANDOMPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=RANDOMPARAM)
+    write(IO_FID_LOG,nml=RANDOMPARAM)
 
     call random_seed
     call random_seed(size=nseeds)
 
     allocate( RANDOM_seedvar(nseeds))
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '*** Array size for random seed:', nseeds
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '*** Array size for random seed:', nseeds
     if ( RANDOM_FIX ) then
-       write(ADM_LOG_FID,*) '*** random seed is fixed.'
+       write(IO_FID_LOG,*) '*** random seed is fixed.'
     endif
 
     return

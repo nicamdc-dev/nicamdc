@@ -28,9 +28,6 @@ module mod_thrmdyn
   use mod_precision
   use mod_debug
   use mod_adm, only: &
-     ADM_LOG_FID,      &
-     ADM_MAXFNAME,     &
-     ADM_NSYS,         &
      kdim => ADM_kall, &
      kmin => ADM_kmin, &
      kmax => ADM_kmax

@@ -21,12 +21,8 @@ module mod_gmtr
   !++ Used modules
   !
   use mod_precision
-  use mod_io_param
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID, &
-     ADM_NSYS,    &
-     ADM_MAXFNAME
   use mod_adm, only: &
      ADM_TI,      &
      ADM_TJ,      &
@@ -116,9 +112,9 @@ module mod_gmtr
   real(RP), public, allocatable :: GMTR_area_pl (:,:)
 #endif
 
-  character(len=ADM_NSYS), public :: GMTR_polygon_type = 'ON_SPHERE'
-                                                       ! 'ON_SPHERE' triangle is fit to the sphere
-                                                       ! 'ON_PLANE'  triangle is treated as 2D
+  character(len=H_SHORT), public :: GMTR_polygon_type = 'ON_SPHERE'
+                                                      ! 'ON_SPHERE' triangle is fit to the sphere
+                                                      ! 'ON_PLANE'  triangle is treated as 2D
 
   !-----------------------------------------------------------------------------
   !
@@ -137,8 +133,8 @@ module mod_gmtr
   !
   !++ Private parameters & variables
   !
-  character(len=ADM_MAXFNAME), private :: GMTR_fname   = ''
-  character(len=ADM_NSYS),     private :: GMTR_io_mode = 'LEGACY'
+  character(len=H_LONG),  private :: GMTR_fname   = ''
+  character(len=H_SHORT), private :: GMTR_io_mode = 'LEGACY'
 
   !-----------------------------------------------------------------------------
 contains
@@ -146,13 +142,12 @@ contains
   !> Setup
   subroutine GMTR_setup
     use mod_adm, only: &
-       ADM_CTL_FID,   &
        ADM_proc_stop
     use mod_comm, only: &
        COMM_data_transfer
     implicit none
 
-    character(len=ADM_NSYS) :: polygon_type
+    character(len=H_SHORT) :: polygon_type
 
     namelist / GMTRPARAM / &
        polygon_type, &
@@ -168,18 +163,18 @@ contains
     polygon_type = GMTR_polygon_type
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[gmtr]/Category[common share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=GMTRPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[gmtr]/Category[common share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=GMTRPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** GMTRPARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** GMTRPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist GMTRPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist GMTRPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist GMTRPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=GMTRPARAM)
+    write(IO_FID_LOG,nml=GMTRPARAM)
 
     GMTR_polygon_type = polygon_type
 
@@ -923,14 +918,13 @@ contains
   !-----------------------------------------------------------------------------
   subroutine GMTR_output_metrics( &
        basename )
-    use mod_misc, only: &
-       MISC_make_idstr,&
-       MISC_get_available_fid
     use mod_adm, only: &
        ADM_proc_stop, &
        ADM_prc_tab,   &
        ADM_have_pl, &
        ADM_prc_me
+    use mod_io_param, only: &
+       IO_REAL8
     use mod_fio, only: &
        FIO_output
     use mod_comm, only: &
@@ -1138,9 +1132,9 @@ contains
 
        do l = 1, ADM_lall
           rgnid = ADM_prc_tab(l,ADM_prc_me)
-          call MISC_make_idstr(fname,trim(basename),'rgn',rgnid)
+          call IO_make_idstr(fname,trim(basename),'rgn',rgnid)
 
-          fid = MISC_get_available_fid()
+          fid = IO_get_available_fid()
           open( unit   = fid,           &
                 file   = trim(fname),   &
                 form   = 'unformatted', &
@@ -1155,7 +1149,7 @@ contains
        enddo
 
     else
-       write(ADM_LOG_FID,*) 'Invalid io_mode!'
+       write(IO_FID_LOG,*) 'Invalid io_mode!'
        call ADM_proc_stop
     endif
 

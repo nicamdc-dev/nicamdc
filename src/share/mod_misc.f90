@@ -9,7 +9,7 @@
 !!
 !! @par History
 !! @li      2004-02-17 (H.Tomita)  Imported from igdc-4.33
-!! @li      2005-11-15 (M.Satoh)   [mod] MISC_make_idstr
+!! @li      2005-11-15 (M.Satoh)   [mod] IO_make_idstr
 !! @li      2006-02-12 (S.Iga)     add critical value in MISC_triangle_area for the case angle=0
 !!                                 integer(4) -> integer  for 'second'
 !! @li      2006-02-25 (S.Iga)     bugfix on 06-02-12
@@ -32,11 +32,7 @@ module mod_misc
   !
   !++ Public parameters, variables & subroutines
   !
-  public :: MISC_make_idstr        !--- make file name with a number
-  public :: MISC_get_available_fid !--- get an available file ID
-  public :: MISC_get_fid           !--- get an information of open or no
-  public :: MISC_get_latlon        !--- calculate (lat,lon) from (x,y,z)
-  public :: MISC_msg_nmerror       !--- output error message
+  public :: MISC_get_latlon          !--- calculate (lat,lon) from (x,y,z)
   public :: MISC_3dvec_cross         !--- calc exterior product for 3D vector
   public :: MISC_3dvec_dot           !--- calc interior product for 3D vector
   public :: MISC_3dvec_abs           !--- calc absolute value for 3D vector
@@ -53,90 +49,6 @@ module mod_misc
   !
   !-----------------------------------------------------------------------------
 contains
-  !-----------------------------------------------------------------------------
-  !> make extention with process number
-  subroutine MISC_make_idstr( &
-       str,    &
-       prefix, &
-       ext,    &
-       numID,  &
-       digit   )
-    implicit none
-
-    character(len=*),  intent(out) :: str    !< combined extention string
-    character(len=*),  intent(in)  :: prefix !< prefix
-    character(len=*),  intent(in)  :: ext    !< extention ( e.g. .rgn )
-    integer,           intent(in)  :: numID  !< number
-    integer, optional, intent(in)  :: digit  !< digit
-
-    logical, parameter            :: NSTR_ZERO_START = .true. ! number of separated file starts from 0 ?
-    integer, parameter            :: NSTR_MAX_DIGIT  = 5      ! digit of separated file
-
-    character(len=128) :: rankstr
-    integer            :: setdigit
-    !---------------------------------------------------------------------------
-
-    if ( NSTR_ZERO_START ) then
-       write(rankstr,'(I128.128)') numID-1
-    else
-       write(rankstr,'(I128.128)') numID
-    endif
-
-    if ( present(digit) ) then
-       setdigit = digit
-    else
-       setdigit = NSTR_MAX_DIGIT
-    endif
-
-    rankstr(1:setdigit) = rankstr(128-(setdigit-1):128)
-    rankstr(setdigit+1:128) = ' '
-
-    str = trim(prefix)//'.'//trim(ext)//trim(rankstr) ! -> prefix.ext00000
-
-    return
-  end subroutine MISC_make_idstr
-
-  !-----------------------------------------------------------------------------
-  !> Search and get available machine id
-  !> @return fid
-  function MISC_get_available_fid() result(fid)
-    implicit none
-
-    integer :: fid
-
-    integer, parameter :: min_fid =  7 !< minimum available fid
-    integer, parameter :: max_fid = 99 !< maximum available fid
-
-    logical :: i_opened
-    !---------------------------------------------------------------------------
-
-    do fid = min_fid, max_fid
-       inquire(fid,opened=i_opened)
-       if( .NOT. i_opened ) return
-    enddo
-
-  end function MISC_get_available_fid
-
-  !-----------------------------------------------------------------------------
-  !>
-  !> Description of the function %NAME
-  !> @return
-  !>
-  function MISC_get_fid( fname )  &
-       result(fid)                   !--- file ID
-    !
-    implicit none
-    !
-    character(*), intent(in) :: fname
-    !
-    integer :: fid
-    logical :: i_opened
-    !
-    INQUIRE (FILE=trim(fname), OPENED=i_opened, NUMBER=fid)
-    if(.not.i_opened) fid = -1
-    !
-  end function MISC_get_fid
-
   !-----------------------------------------------------------------------------
   !>
   !> Description of the subroutine MISC_get_latlon
@@ -192,39 +104,6 @@ contains
     if(y<0.0_RP) lon=-lon
     return
   end subroutine MISC_get_latlon
-
-  !-----------------------------------------------------------------------------
-  !>
-  !> Description of the subroutine MISC_msg_nmerror
-  !>
-  subroutine MISC_msg_nmerror( &
-       ierr,                 & !--- IN : error id
-       fid,                  & !--- IN : file id
-       namelist_name,        & !--- IN : namelist name
-       sub_name,             & !--- IN : subroutine name
-       mod_name              & !--- IN : module name
-       )
-    implicit none
-    integer, intent(in) ::  ierr
-    integer, intent(in) ::  fid
-    character(len=*) :: namelist_name
-    character(len=*) :: sub_name
-    character(len=*) :: mod_name
-    if(ierr<0) then
-       write(fid,*) &
-            'Msg : Sub[',trim(sub_name),']/Mod[',trim(mod_name),']'
-       write(fid,*) &
-            ' *** Not found namelist. ',trim(namelist_name)
-       write(fid,*) &
-            ' *** Use default values.'
-    elseif(ierr>0) then !--- fatal error
-       write(*,*) &
-            'Msg : Sub[',trim(sub_name),']/Mod[',trim(mod_name),']'
-       write(*,*) &
-            ' *** WARNING : Not appropriate names in namelist!! ',&
-            trim(namelist_name),' CHECK!!'
-    endif
-  end subroutine MISC_msg_nmerror
 
   !-----------------------------------------------------------------------------
   subroutine MISC_3dvec_cross( nv, a, b, c, d )
@@ -432,19 +311,19 @@ contains
     call MISC_3dvec_dot  ( ip, o, cdab, o, a )
 
     p(:) = cdab(:) / sign(length,ip)
-!    write(ADM_LOG_FID,*), "p:", p(:)
+!    write(IO_FID_LOG,*), "p:", p(:)
 
     call MISC_3dvec_angle( angle_aop, a, o, p )
     call MISC_3dvec_angle( angle_pob, p, o, b )
     call MISC_3dvec_angle( angle_aob, a, o, b )
-!    write(ADM_LOG_FID,*), "angle a-p-b:", angle_aop, angle_pob, angle_aob
+!    write(IO_FID_LOG,*), "angle a-p-b:", angle_aop, angle_pob, angle_aob
 
     call MISC_3dvec_angle( angle_cop, c, o, p )
     call MISC_3dvec_angle( angle_pod, p, o, d )
     call MISC_3dvec_angle( angle_cod, c, o, d )
-!    write(ADM_LOG_FID,*), "angle c-p-d:", angle_cop, angle_pod, angle_cod
+!    write(IO_FID_LOG,*), "angle c-p-d:", angle_cop, angle_pod, angle_cod
 
-!    write(ADM_LOG_FID,*), "judge:", angle_aob-(angle_aop+angle_pob), angle_cod-(angle_cop+angle_pod)
+!    write(IO_FID_LOG,*), "judge:", angle_aob-(angle_aop+angle_pob), angle_cod-(angle_cop+angle_pod)
 
     ! --- judge intersection
     if (       abs(angle_aob-(angle_aop+angle_pob)) < eps &
@@ -490,7 +369,7 @@ contains
        call MISC_3dvec_dot  ( ip, o(:), v1(:), o(:), xp(:) )
 
        if ( ip < -eps ) then ! right hand : exchange
-!          write(ADM_LOG_FID,*) 'exchange by ip', i, '<->',j
+!          write(IO_FID_LOG,*) 'exchange by ip', i, '<->',j
           vertex(i,:) = v2(:)
           vertex(j,:) = v3(:)
        endif
@@ -506,11 +385,11 @@ contains
     call MISC_3dvec_dot  ( ip, o(:), v1(:), o(:), xp(:) )
     call MISC_3dvec_angle( angle1, v1(:), o, v2(:) )
     call MISC_3dvec_angle( angle2, v1(:), o, v3(:) )
-!    write(ADM_LOG_FID,*) ip, angle1, angle2, abs(angle1)-abs(angle2)
+!    write(IO_FID_LOG,*) ip, angle1, angle2, abs(angle1)-abs(angle2)
 
     if (       abs(ip)                 < eps    &      ! on the same line
          .AND. abs(angle2)-abs(angle1) < 0.0_RP ) then ! which is far?
-!       write(ADM_LOG_FID,*) 'exchange by angle', 2, '<->', 3
+!       write(IO_FID_LOG,*) 'exchange by angle', 2, '<->', 3
        vertex(2,:) = v3(:)
        vertex(3,:) = v2(:)
     endif
@@ -522,11 +401,11 @@ contains
     call MISC_3dvec_dot  ( ip, o(:), v1(:), o(:), xp(:) )
     call MISC_3dvec_angle( angle1, v1(:), o, v2(:) )
     call MISC_3dvec_angle( angle2, v1(:), o, v3(:) )
-!    write(ADM_LOG_FID,*) ip, angle1, angle2, abs(angle1)-abs(angle2)
+!    write(IO_FID_LOG,*) ip, angle1, angle2, abs(angle1)-abs(angle2)
 
     if (       abs(ip)                 < eps    &      ! on the same line
          .AND. abs(angle2)-abs(angle1) < 0.0_RP ) then ! which is far?
-!       write(ADM_LOG_FID,*) 'exchange by angle', nvert, '<->', nvert-1
+!       write(IO_FID_LOG,*) 'exchange by angle', nvert, '<->', nvert-1
        vertex(nvert,  :) = v3(:)
        vertex(nvert-1,:) = v2(:)
     endif

@@ -37,15 +37,12 @@ program fio_ico2ll_mpi
   use mpi
   use mod_precision
   use mod_io_param
+  use mod_stdio
   use mod_debug
   use mod_adm, only: &
-     ADM_LOG_FID,    &
      ADM_mpi_alive,  &
      ADM_COMM_WORLD, &
      ADM_prc_all
-  use mod_misc, only: &
-     MISC_get_available_fid, &
-     MISC_make_idstr
   use mod_cnst, only: &
      CNST_UNDEF, &
      CNST_UNDEF4
@@ -302,22 +299,22 @@ program fio_ico2ll_mpi
 
   call DEBUG_rapstart('FIO_ICO2LL_MPI')
 
-  ! borrow ADM_LOG_FID to share log file id between other module
-  ADM_LOG_FID = MISC_get_available_fid()
+  ! borrow IO_FID_LOG to share log file id between other module
+  IO_FID_LOG = IO_get_available_fid()
   if (output_netcdf) then
-     call NETCDF_set_logfid( ADM_LOG_FID )
+     call NETCDF_set_logfid( IO_FID_LOG )
   endif
 
   write(rankstr,'(I6.6)') prc_myrank
-  open(ADM_LOG_FID, file='msg_ico2ll.pe'//trim(rankstr) )
-  write(ADM_LOG_FID,*) "+++ Parallel Execution, Use MPI"
+  open(IO_FID_LOG, file='msg_ico2ll.pe'//trim(rankstr) )
+  write(IO_FID_LOG,*) "+++ Parallel Execution, Use MPI"
 
   PALL_global = MNG_PALL
   LALL_global = 10 * (4**rlevel)
   LALL_local  = LALL_global / PALL_global
 
   if ( mod( PALL_global, prc_nall) /= 0 ) then
-     write(ADM_LOG_FID,*) "*** Invalid processor number, STOP:", PALL_global, prc_nall
+     write(IO_FID_LOG,*) "*** Invalid processor number, STOP:", PALL_global, prc_nall
      call MPI_Barrier(MPI_COMM_WORLD,ierr)
      call MPI_FINALIZE(ierr)
      stop
@@ -326,22 +323,22 @@ program fio_ico2ll_mpi
   prc_nlocal = PALL_global / prc_nall
   pstr       = prc_myrank*prc_nlocal + 1
   pend       = prc_myrank*prc_nlocal + prc_nlocal
-  write(ADM_LOG_FID,*) "*** Number of Total .pexxxxxx files: ", PALL_global
-  write(ADM_LOG_FID,*) "*** Number of PE to packing precess: ", prc_nall
-  write(ADM_LOG_FID,*) "*** The rank of this process       : ", prc_myrank
-  write(ADM_LOG_FID,*) "*** Number of files for this rank  : ", prc_nlocal
-  write(ADM_LOG_FID,*) "*** file ID to pack                : ", pstr-1, " - ", pend-1
+  write(IO_FID_LOG,*) "*** Number of Total .pexxxxxx files: ", PALL_global
+  write(IO_FID_LOG,*) "*** Number of PE to packing precess: ", prc_nall
+  write(IO_FID_LOG,*) "*** The rank of this process       : ", prc_myrank
+  write(IO_FID_LOG,*) "*** Number of files for this rank  : ", prc_nlocal
+  write(IO_FID_LOG,*) "*** file ID to pack                : ", pstr-1, " - ", pend-1
 
   !--- setup
   call fio_syscheck()
 
   !#########################################################
 
-  write(ADM_LOG_FID,*) '*** llmap read start'
+  write(IO_FID_LOG,*) '*** llmap read start'
   call DEBUG_rapstart('READ LLMAP')
 
   !--- Read lat-lon grid information
-  fid = MISC_get_available_fid()
+  fid = IO_get_available_fid()
   open(fid, file=trim(llmap_base)//'.info',form='unformatted',status='old',iostat=ierr)
      if (ierr/=0) then
         write(*,*) 'Cannot open llmap info file!',trim(llmap_base)//'.info'
@@ -377,10 +374,10 @@ program fio_ico2ll_mpi
      pp = p - pstr + 1
 
      do l = 1, LALL_local
-        call MISC_make_idstr(fname,trim(llmap_base),'rgn',MNG_prc_tab(l,p))
-        write(ADM_LOG_FID,*) 'l=', MNG_prc_tab(l,p)
+        call IO_make_idstr(fname,trim(llmap_base),'rgn',MNG_prc_tab(l,p))
+        write(IO_FID_LOG,*) 'l=', MNG_prc_tab(l,p)
 
-        fid = MISC_get_available_fid()
+        fid = IO_get_available_fid()
         open(fid,file=trim(fname),form='unformatted',status='old',iostat=ierr)
            if (ierr/=0) then
               write(*,*) 'Cannot open llmap file!',trim(fname)
@@ -439,11 +436,11 @@ program fio_ico2ll_mpi
   enddo
 
   call DEBUG_rapend('READ LLMAP')
-  write(ADM_LOG_FID,*) '*** llmap read end'
+  write(IO_FID_LOG,*) '*** llmap read end'
 
   !#########################################################
 
-  write(ADM_LOG_FID,*) '*** icodata read start'
+  write(IO_FID_LOG,*) '*** icodata read start'
   call DEBUG_rapstart('OPEN ICODATA')
 
   ! Read icodata information (all process)
@@ -453,7 +450,7 @@ program fio_ico2ll_mpi
 
   do p = pstr, pend
      pp = p - pstr + 1
-     write(ADM_LOG_FID,*) 'p=', pp
+     write(IO_FID_LOG,*) 'p=', pp
 
      if (complete) then ! all region
         infname = trim(infile(1))//'.rgnall'
@@ -486,11 +483,11 @@ program fio_ico2ll_mpi
   enddo
 
   call DEBUG_rapend('OPEN ICODATA')
-  write(ADM_LOG_FID,*) '*** icodata read end'
+  write(IO_FID_LOG,*) '*** icodata read end'
 
   !#########################################################
 
-  write(ADM_LOG_FID,*) '*** header check start'
+  write(IO_FID_LOG,*) '*** header check start'
   call DEBUG_rapstart('CHECK HEADER')
 
   !--- check all header
@@ -571,7 +568,7 @@ program fio_ico2ll_mpi
         else ! read from file
            layerfile = trim(layerfile_dir)//'/'//trim(dinfo%layername)//'.txt'
 
-           fid = MISC_get_available_fid()
+           fid = IO_get_available_fid()
            open(fid,file=trim(layerfile),form='formatted',status='old',iostat=ierr)
               if ( ierr /= 0 ) then
                  write(*,*) 'xxx layerfile doesnt exist!', trim(layerfile)
@@ -584,12 +581,12 @@ program fio_ico2ll_mpi
               enddo
 
               if ( dinfo%layername(1:5) == 'ZSALL' ) then ! check Xi2Z
-                 write(ADM_LOG_FID,*) '*** Try to convert Xi -> Z : ', dinfo%varname
+                 write(IO_FID_LOG,*) '*** Try to convert Xi -> Z : ', dinfo%varname
                  var_xi2z(nvar) = .true.
                  var_ztop(nvar) = 0.5D0 * ( var_zgrid(kmax-1,nvar) + var_zgrid(kmax,nvar) )
 
                  if ( kmax == dinfo%num_of_layer+2 ) then ! trim HALO
-                    write(ADM_LOG_FID,*) '*** trim HALO: ', trim(dinfo%layername)
+                    write(IO_FID_LOG,*) '*** trim HALO: ', trim(dinfo%layername)
                     do k = 1, kmax-2
                        var_zgrid(k,nvar) = var_zgrid(k+1,nvar)
                     enddo
@@ -607,8 +604,8 @@ program fio_ico2ll_mpi
   GALL = ( (2**(glevel-rlevel))+2 ) &
        * ( (2**(glevel-rlevel))+2 )
 
-  write(ADM_LOG_FID,*) '*** get variable informations'
-  write(ADM_LOG_FID,*) 'num_of_data    : ', num_of_data
+  write(IO_FID_LOG,*) '*** get variable informations'
+  write(IO_FID_LOG,*) 'num_of_data    : ', num_of_data
 
   if ( nvar == 0 ) then
      write(*,*) 'No variables to convert. Finish.'
@@ -616,11 +613,11 @@ program fio_ico2ll_mpi
   endif
 
   call DEBUG_rapend('CHECK HEADER')
-  write(ADM_LOG_FID,*) '*** header check end'
+  write(IO_FID_LOG,*) '*** header check end'
 
   !#########################################################
 
-  write(ADM_LOG_FID,*) '*** topography read start'
+  write(IO_FID_LOG,*) '*** topography read start'
   call DEBUG_rapstart('READ TOPOGRAPHY')
 
   call DEBUG_rapstart('+Communication')
@@ -649,7 +646,7 @@ program fio_ico2ll_mpi
 
   if ( topo_base == '' ) then
 
-     write(ADM_LOG_FID,*) '*** topography file is not specified. no vertical conversion.'
+     write(IO_FID_LOG,*) '*** topography file is not specified. no vertical conversion.'
      var_xi2z(:) = .false. ! reset flag
 
   else
@@ -664,7 +661,7 @@ program fio_ico2ll_mpi
 
      do p = pstr, pend
         pp = p - pstr + 1
-        write(ADM_LOG_FID,*) 'p=', pp
+        write(IO_FID_LOG,*) 'p=', pp
 
         prc_tab_C(1:LALL_local) = MNG_prc_tab(1:LALL_local,p)-1
 
@@ -712,7 +709,7 @@ program fio_ico2ll_mpi
         enddo
 
         if ( .NOT. exist_topo ) then
-           write(ADM_LOG_FID,*) '*** topography data topo is not found in ', trim(infname), " ! STOP."
+           write(IO_FID_LOG,*) '*** topography data topo is not found in ', trim(infname), " ! STOP."
            stop
         endif
 
@@ -727,20 +724,20 @@ program fio_ico2ll_mpi
   endif
 
   call DEBUG_rapend('READ TOPOGRAPHY')
-  write(ADM_LOG_FID,*) '*** topography read end'
+  write(IO_FID_LOG,*) '*** topography read end'
 
-  write(ADM_LOG_FID,*) '########## Variable List ########## '
-  write(ADM_LOG_FID,*) 'ID |NAME            |STEPS|Layername       |START FROM         |DT [sec]|Xi2Z?'
+  write(IO_FID_LOG,*) '########## Variable List ########## '
+  write(IO_FID_LOG,*) 'ID |NAME            |STEPS|Layername       |START FROM         |DT [sec]|Xi2Z?'
   do v = 1, nvar
      call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=DP) )
      write(tmpl,'(I4.4,"/",I2.2,"/",I2.2,1x,I2.2,":",I2.2,":",I2.2)') date_str(:)
-     write(ADM_LOG_FID,'(1x,I3,A1,A16,A1,I5,A1,A16,A1,A19,A1,I8,A1,L5)') &
+     write(IO_FID_LOG,'(1x,I3,A1,A16,A1,I5,A1,A16,A1,A19,A1,I8,A1,L5)') &
               v,'|',var_name(v),'|',var_nstep(v),'|',var_layername(v),'|', tmpl,'|', var_dt(v), '|', var_xi2z(v)
   enddo
 
   !#########################################################
 
-  write(ADM_LOG_FID,*) '*** convert start : PaNDa format to lat-lon data'
+  write(IO_FID_LOG,*) '*** convert start : PaNDa format to lat-lon data'
   call DEBUG_rapstart('CONVERT')
 
   !--- start weighting summation
@@ -764,15 +761,15 @@ program fio_ico2ll_mpi
 
      !--- open output file
      outbase = trim(outfile_dir)//'/'//trim(outfile_prefix)//trim(var_name(v))
-     ofid    = MISC_get_available_fid()
+     ofid    = IO_get_available_fid()
 
      if ( .NOT. devide_template ) then
 
         if (output_grads) then ! GrADS Format
 
            call DEBUG_rapstart('+FILE O GRADS')
-           write(ADM_LOG_FID,*)
-           write(ADM_LOG_FID,*) 'Output: ', trim(outbase)//'.grd', recsize, imax, jmax, kmax
+           write(IO_FID_LOG,*)
+           write(IO_FID_LOG,*) 'Output: ', trim(outbase)//'.grd', recsize, imax, jmax, kmax
            write(*          ,*) 'Output: ', trim(outbase)//'.grd'
 
            open( unit   = ofid,                  &
@@ -784,7 +781,7 @@ program fio_ico2ll_mpi
            irec = 1
 
            if ( outfile_rec > 1 ) then
-              write(ADM_LOG_FID,*) 'Change output record position : start from step ', outfile_rec
+              write(IO_FID_LOG,*) 'Change output record position : start from step ', outfile_rec
               irec = outfile_rec
            endif
            call DEBUG_rapend  ('+FILE O GRADS')
@@ -792,8 +789,8 @@ program fio_ico2ll_mpi
         elseif(output_gtool) then ! GTOOL3 Format
 
            call DEBUG_rapstart('+FILE O GTOOL')
-           write(ADM_LOG_FID,*)
-           write(ADM_LOG_FID,*) 'Output: ', trim(outbase)//'.gt3', recsize, imax, jmax, kmax
+           write(IO_FID_LOG,*)
+           write(IO_FID_LOG,*) 'Output: ', trim(outbase)//'.gt3', recsize, imax, jmax, kmax
            write(*          ,*) 'Output: ', trim(outbase)//'.gt3'
 
            open( unit   = ofid,                  &
@@ -822,8 +819,8 @@ program fio_ico2ll_mpi
         elseif(output_netcdf) then ! NetCDF format [add] 13-04-18 C.Kodama
 
            call DEBUG_rapstart('+FILE O NETCDF')
-           write(ADM_LOG_FID,*)
-           write(ADM_LOG_FID,*) 'Output: ', trim(outbase)//'.nc'
+           write(IO_FID_LOG,*)
+           write(IO_FID_LOG,*) 'Output: ', trim(outbase)//'.nc'
            write(*          ,*) 'Output: ', trim(outbase)//'.nc'
 
            call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=DP) )
@@ -845,7 +842,7 @@ program fio_ico2ll_mpi
                                            ':',              trim(date_str_tmp(5)), &
                                            ':',              trim(date_str_tmp(6))
 
-           write(ADM_LOG_FID,*) '  nc_time_units = ', trim(nc_time_units)
+           write(IO_FID_LOG,*) '  nc_time_units = ', trim(nc_time_units)
 
            allocate( lon_tmp(imax) )
 
@@ -907,8 +904,8 @@ program fio_ico2ll_mpi
         !--- open output file (every timestep)
         if (devide_template) then
            tmpl = sec2template(nowsec)
-           write(ADM_LOG_FID,*)
-           write(ADM_LOG_FID,*) 'Output: ', trim(outbase)//'.'//trim(tmpl)//'.grd'
+           write(IO_FID_LOG,*)
+           write(IO_FID_LOG,*) 'Output: ', trim(outbase)//'.'//trim(tmpl)//'.grd'
 
            open( unit   = ofid,             &
                  file   = trim(outbase)//'.'//trim(tmpl)//'.grd', &
@@ -958,10 +955,10 @@ program fio_ico2ll_mpi
            do l = 1, LALL_local
               if ( t == 1 ) then
                  if ( mod(l,10) == 0 ) then
-                    write(ADM_LOG_FID,'(1x,I6.6)')              MNG_prc_tab(l,p)
-                    write(ADM_LOG_FID,'(A)',advance='no')       '          '
+                    write(IO_FID_LOG,'(1x,I6.6)')              MNG_prc_tab(l,p)
+                    write(IO_FID_LOG,'(A)',advance='no')       '          '
                  else
-                    write(ADM_LOG_FID,'(1x,I6.6)',advance='no') MNG_prc_tab(l,p)
+                    write(IO_FID_LOG,'(1x,I6.6)',advance='no') MNG_prc_tab(l,p)
                  endif
               endif
 
@@ -970,8 +967,8 @@ program fio_ico2ll_mpi
                  call DEBUG_rapstart('+Xi2Z')
 
                  if ( var_ztop(v) < 0.D0 ) then
-                    write(ADM_LOG_FID,*) '*** Ztop is not specified.'
-                    write(ADM_LOG_FID,*) '*** It will be determined by the vertical axis info in ZSALL**.txt.'
+                    write(IO_FID_LOG,*) '*** Ztop is not specified.'
+                    write(IO_FID_LOG,*) '*** It will be determined by the vertical axis info in ZSALL**.txt.'
                     stop
                  endif
 
@@ -1035,7 +1032,7 @@ program fio_ico2ll_mpi
 
            enddo ! region LOOP
 
-           if ( t==1 ) write(ADM_LOG_FID,*)
+           if ( t==1 ) write(IO_FID_LOG,*)
 
         enddo ! PE LOOP
 
@@ -1114,7 +1111,7 @@ program fio_ico2ll_mpi
            close(ofid)
         endif
 
-        write(ADM_LOG_FID,*) ' +append step:', step
+        write(IO_FID_LOG,*) ' +append step:', step
 
         endif ! ##### master?
 
@@ -1172,7 +1169,7 @@ program fio_ico2ll_mpi
   enddo ! PE LOOP
 
   call DEBUG_rapend('CONVERT')
-  write(ADM_LOG_FID,*) '*** convert finished! '
+  write(IO_FID_LOG,*) '*** convert finished! '
 
   call DEBUG_rapend('FIO_ICO2LL_MPI')
   call DEBUG_rapreport
@@ -1180,15 +1177,13 @@ program fio_ico2ll_mpi
   call MPI_Barrier(MPI_COMM_WORLD,ierr)
   call MPI_FINALIZE(ierr)
 
-  close(ADM_LOG_FID)
+  close(IO_FID_LOG)
 
 contains
   !-----------------------------------------------------------------------------
   !> read option
   !-----------------------------------------------------------------------------
   subroutine readoption
-    use mod_misc, only : &
-      MISC_get_available_fid
     use mod_tool_option, only: &
       OPT_convert, &
       OPT_fid
@@ -1198,7 +1193,7 @@ contains
     !---------------------------------------------------------------------------
 
     ! --- Set option
-    OPT_fid = MISC_get_available_fid()
+    OPT_fid = IO_get_available_fid()
     open(OPT_fid,status='SCRATCH')
 
       call OPT_convert( fmax )
@@ -1271,7 +1266,7 @@ contains
 
     outfile = trim(outfile_prefix)//trim(var_name(v))
 
-    fid = MISC_get_available_fid()
+    fid = IO_get_available_fid()
     open( unit   = fid,         &
           file   = trim(outfile_dir)//'/'//trim(outfile)//'.ctl', &
           form   = 'formatted', &
@@ -1323,7 +1318,7 @@ contains
        write(fid,'(a)') 'ENDVARS '
     close(fid)
 
-    write(ADM_LOG_FID,'(A,A)') 'Generate ',trim(outfile)//'.ctl'
+    write(IO_FID_LOG,'(A,A)') 'Generate ',trim(outfile)//'.ctl'
     write(*          ,'(A,A)') 'Generate ',trim(outfile)//'.ctl'
 
   end subroutine makegradsctl
@@ -1456,7 +1451,7 @@ contains
     write(axhead(61),'(A16)'  ) 'NICAM'
     write(axhead(63),'(A16)'  ) 'NICAM'
 
-    fid = MISC_get_available_fid()
+    fid = IO_get_available_fid()
     open( unit   = fid,           &
           file   = trim(trim(outfile_dir)//'/GTAXLOC.'//trim(gt_axisx)),&
           form   = 'unformatted', &

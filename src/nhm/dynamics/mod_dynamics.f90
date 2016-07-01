@@ -32,9 +32,8 @@ module mod_dynamics
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -95,20 +94,20 @@ contains
     implicit none
     !---------------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[dynamics]/Category[nhm]'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[dynamics]/Category[nhm]'
 
-    write(ADM_LOG_FID,*) '+++ Time integration type: ', trim(TIME_INTEG_TYPE)
+    write(IO_FID_LOG,*) '+++ Time integration type: ', trim(TIME_INTEG_TYPE)
     select case(TIME_INTEG_TYPE)
     case('RK2')
-       write(ADM_LOG_FID,*) '+++ 2-stage Runge-Kutta'
+       write(IO_FID_LOG,*) '+++ 2-stage Runge-Kutta'
 
        num_of_iteration_lstep    = 2
        num_of_iteration_sstep(1) = TIME_SSTEP_MAX / 2
        num_of_iteration_sstep(2) = TIME_SSTEP_MAX
 
     case('RK3')
-       write(ADM_LOG_FID,*) '+++ 3-stage Runge-Kutta'
+       write(IO_FID_LOG,*) '+++ 3-stage Runge-Kutta'
 
        num_of_iteration_lstep    = 3
        num_of_iteration_sstep(1) = TIME_SSTEP_MAX / 3
@@ -116,7 +115,7 @@ contains
        num_of_iteration_sstep(3) = TIME_SSTEP_MAX
 
     case('RK4')
-       write(ADM_LOG_FID,*) '+++ 4-stage Runge-Kutta'
+       write(IO_FID_LOG,*) '+++ 4-stage Runge-Kutta'
 
        num_of_iteration_lstep    = 4
        num_of_iteration_sstep(1) = TIME_SSTEP_MAX / 4
@@ -125,17 +124,17 @@ contains
        num_of_iteration_sstep(4) = TIME_SSTEP_MAX
 
     case('TRCADV')
-       write(ADM_LOG_FID,*) '+++ Offline tracer experiment'
+       write(IO_FID_LOG,*) '+++ Offline tracer experiment'
 
        num_of_iteration_lstep    = 0
 
        if ( TRC_ADV_TYPE == 'DEFAULT' ) then
-          write(ADM_LOG_FID,*) 'xxx unsupported advection scheme for TRCADV test! STOP.'
+          write(IO_FID_LOG,*) 'xxx unsupported advection scheme for TRCADV test! STOP.'
           call ADM_proc_stop
        endif
 
     case default
-       write(ADM_LOG_FID,*) 'xxx unsupported integration type! STOP.'
+       write(IO_FID_LOG,*) 'xxx unsupported integration type! STOP.'
        call ADM_proc_stop
     endselect
 

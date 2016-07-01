@@ -17,10 +17,7 @@ module mod_debug
   !
   use mpi
   use mod_precision
-  use mod_adm, only: &
-     ADM_LOG_FID, &
-     ADM_NSYS,    &
-     ADM_MAXFNAME
+  use mod_stdio
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -49,13 +46,13 @@ module mod_debug
   !
   !++ Private parameters & variables
   !
-  integer,                 private, parameter :: DEBUG_rapnlimit = 100
-  integer,                 private            :: DEBUG_rapnmax   = 0
-  character(len=ADM_NSYS), private            :: DEBUG_rapname(DEBUG_rapnlimit)
-  real(RP),                 private            :: DEBUG_raptstr(DEBUG_rapnlimit)
-  real(RP),                 private            :: DEBUG_rapttot(DEBUG_rapnlimit)
-  integer,                 private            :: DEBUG_rapnstr(DEBUG_rapnlimit)
-  integer,                 private            :: DEBUG_rapnend(DEBUG_rapnlimit)
+  integer,                private, parameter :: DEBUG_rapnlimit = 100
+  integer,                private            :: DEBUG_rapnmax   = 0
+  character(len=H_SHORT), private            :: DEBUG_rapname(DEBUG_rapnlimit)
+  real(RP),               private            :: DEBUG_raptstr(DEBUG_rapnlimit)
+  real(RP),               private            :: DEBUG_rapttot(DEBUG_rapnlimit)
+  integer,                private            :: DEBUG_rapnstr(DEBUG_rapnlimit)
+  integer,                private            :: DEBUG_rapnend(DEBUG_rapnlimit)
 
 #ifdef PAPI_OPS
   integer(8),public :: papi_flpops      ! total floating point operations since the first call
@@ -76,9 +73,6 @@ contains
       basename, & !--- [IN]
       var,      & !--- [IN]
       var_pl    ) !--- [IN]
-    use mod_misc, only: &
-       MISC_make_idstr, &
-       MISC_get_available_fid
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_prc_me
@@ -90,15 +84,15 @@ contains
 
     integer :: shp(4)
 
-    character(LEN=ADM_MAXFNAME) :: fname
+    character(LEN=H_LONG) :: fname
 
     integer :: fid
     !---------------------------------------------------------------------------
 
     shp(:) = shape(var)
 
-    call MISC_make_idstr(fname,trim(basename),'pe',ADM_prc_me)
-    fid = MISC_get_available_fid()
+    call IO_make_idstr(fname,trim(basename),'pe',ADM_prc_me)
+    fid = IO_get_available_fid()
     open( unit   = fid,                           &
           file   = trim(fname),                   &
           form   = 'unformatted',                 &
@@ -114,7 +108,7 @@ contains
        shp(:) = shape(var_pl)
 
        fname = trim(basename)//'.pl'
-       fid = MISC_get_available_fid()
+       fid = IO_get_available_fid()
        open( unit   = fid,                           &
              file   = trim(fname),                   &
              form   = 'unformatted',                 &
@@ -138,9 +132,6 @@ contains
       basename, & !--- [IN]
       var,      & !--- [IN]
       var_pl    ) !--- [IN]
-    use mod_misc, only: &
-       MISC_make_idstr, &
-       MISC_get_available_fid
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_prc_me
@@ -152,7 +143,7 @@ contains
 
     integer :: shp(4)
 
-    character(LEN=ADM_MAXFNAME) :: fname
+    character(LEN=H_LONG) :: fname
 
     integer :: fid
     integer :: i1,i2,i3,i4
@@ -160,8 +151,8 @@ contains
 
     shp(:) = shape(var)
 
-    call MISC_make_idstr(fname,trim(basename),'txt',ADM_prc_me)
-    fid = MISC_get_available_fid()
+    call IO_make_idstr(fname,trim(basename),'txt',ADM_prc_me)
+    fid = IO_get_available_fid()
     open( unit   = fid,         &
           file   = trim(fname), &
           form   = 'formatted', &
@@ -183,7 +174,7 @@ contains
        shp(:) = shape(var_pl)
 
        fname = trim(basename)//'.txtpl'
-       fid = MISC_get_available_fid()
+       fid = IO_get_available_fid()
        open( unit   = fid,         &
              file   = trim(fname), &
              form   = 'formatted', &
@@ -213,9 +204,6 @@ contains
       basename, & !--- [IN]
       var,      & !--- [IN]
       var_pl    ) !--- [IN]
-    use mod_misc, only: &
-       MISC_make_idstr, &
-       MISC_get_available_fid
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_prc_me
@@ -227,7 +215,7 @@ contains
 
     integer :: shp(3)
 
-    character(LEN=ADM_MAXFNAME) :: fname
+    character(LEN=H_LONG) :: fname
 
     integer :: fid
     integer :: i1,i2,i3
@@ -235,8 +223,8 @@ contains
 
     shp(:) = shape(var)
 
-    call MISC_make_idstr(fname,trim(basename),'txt',ADM_prc_me)
-    fid = MISC_get_available_fid()
+    call IO_make_idstr(fname,trim(basename),'txt',ADM_prc_me)
+    fid = IO_get_available_fid()
     open( unit   = fid,         &
           file   = trim(fname), &
           form   = 'formatted', &
@@ -256,7 +244,7 @@ contains
        shp(:) = shape(var_pl)
 
        fname = trim(basename)//'.txtpl'
-       fid = MISC_get_available_fid()
+       fid = IO_get_available_fid()
        open( unit   = fid,         &
              file   = trim(fname), &
              form   = 'formatted', &
@@ -317,7 +305,7 @@ contains
     DEBUG_raptstr(id) = ADM_MPItime()
     DEBUG_rapnstr(id) = DEBUG_rapnstr(id) + 1
 
-    !write(ADM_LOG_FID,*) rapname, DEBUG_rapnstr(id)
+    !write(IO_FID_LOG,*) rapname, DEBUG_rapnstr(id)
 
 #ifdef _FAPP_
     call fapp_start( rapname, id, 1 )
@@ -394,11 +382,11 @@ contains
           endif
        enddo
 
-       write(ADM_LOG_FID,*)
-       write(ADM_LOG_FID,*) '*** Computational Time Report'
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,*) '*** Computational Time Report'
 
        !do id = 1, DEBUG_rapnmax
-       !   write(ADM_LOG_FID,'(1x,A,I3.3,A,A,A,F10.3,A,I7)') &
+       !   write(IO_FID_LOG,'(1x,A,I3.3,A,A,A,F10.3,A,I7)') &
        !   '*** ID=',id,' : ',DEBUG_rapname(id),' T=',DEBUG_rapttot(id),' N=',DEBUG_rapnstr(id)
        !enddo
 
@@ -417,7 +405,7 @@ contains
           globalmax = maxval( recvbuf(:) )
           globalmin = minval( recvbuf(:) )
 
-          write(ADM_LOG_FID,'(1x,A,I3.3,A,A,A,F10.3,A,F10.3,A,F10.3,A,I7)') &
+          write(IO_FID_LOG,'(1x,A,I3.3,A,A,A,F10.3,A,F10.3,A,F10.3,A,I7)') &
                             '*** ID=',   id,                &
                             ' : ',       DEBUG_rapname(id), &
                             '  T(avg)=', globalavg,         &
@@ -426,24 +414,24 @@ contains
                             ', N=',      DEBUG_rapnstr(id)
        enddo
     else
-       write(ADM_LOG_FID,*)
-       write(ADM_LOG_FID,*) '*** Computational Time Report: NO item.'
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,*) '*** Computational Time Report: NO item.'
     endif
 
 #ifdef PAPI_OPS
     ! [add] PAPI R.Yoshida 20121022
-    !write(ADM_LOG_FID,*) ' *** Type: Instructions'
-    !write(ADM_LOG_FID,*) ' --- Real Time:',papi_real_time_i*2.0_RP,' Proc. Time:',papi_proc_time_i*2.0_RP
-    !write(ADM_LOG_FID,*) ' --- flop inst:',papi_flpins*2,'  Gflins/s:',papi_mflins*2.0_RP/1.0d3  !GIGA
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '********* PAPI report *********'
-    write(ADM_LOG_FID,*) '*** Type: Operations'
-    write(ADM_LOG_FID,*) '--- Wall clock Time      [sec] (this PE):', papi_real_time_o
-    write(ADM_LOG_FID,*) '--- Processor Time       [sec] (this PE):', papi_proc_time_o
-    write(ADM_LOG_FID,*) '--- Floating Operations [FLOP] (this PE):', papi_flpops
-    write(ADM_LOG_FID,*) '--- FLOPS by PAPI     [MFLOPS] (this PE):', papi_mflops
-    write(ADM_LOG_FID,*) '--- FLOP / Time       [MFLOPS] (this PE):', papi_flpops / papi_proc_time_o / 1024.0_RP**2 !GIGA
-    write(ADM_LOG_FID,*)
+    !write(IO_FID_LOG,*) ' *** Type: Instructions'
+    !write(IO_FID_LOG,*) ' --- Real Time:',papi_real_time_i*2.0_RP,' Proc. Time:',papi_proc_time_i*2.0_RP
+    !write(IO_FID_LOG,*) ' --- flop inst:',papi_flpins*2,'  Gflins/s:',papi_mflins*2.0_RP/1.0d3  !GIGA
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '********* PAPI report *********'
+    write(IO_FID_LOG,*) '*** Type: Operations'
+    write(IO_FID_LOG,*) '--- Wall clock Time      [sec] (this PE):', papi_real_time_o
+    write(IO_FID_LOG,*) '--- Processor Time       [sec] (this PE):', papi_proc_time_o
+    write(IO_FID_LOG,*) '--- Floating Operations [FLOP] (this PE):', papi_flpops
+    write(IO_FID_LOG,*) '--- FLOPS by PAPI     [MFLOPS] (this PE):', papi_mflops
+    write(IO_FID_LOG,*) '--- FLOP / Time       [MFLOPS] (this PE):', papi_flpops / papi_proc_time_o / 1024.0_RP**2 !GIGA
+    write(IO_FID_LOG,*)
 
     sendbuf(1) = real(papi_proc_time_o,kind=RP)
     call MPI_Allgather( sendbuf,        &
@@ -463,7 +451,7 @@ contains
     call COMM_Stat_max( real(papi_proc_time_o,kind=RP), globalmax )
     call COMM_Stat_min( real(papi_proc_time_o,kind=RP), globalmin )
 
-    write(ADM_LOG_FID,'(1x,A,F10.3,A,F10.3,A,F10.3)') &
+    write(IO_FID_LOG,'(1x,A,F10.3,A,F10.3,A,F10.3)') &
                       '--- Processor Time        [sec] (avg)=', globalavg, &
                                                     ', (max)=', globalmax, &
                                                     ', (min)=', globalmin
@@ -485,11 +473,11 @@ contains
 
     total_flops = globalsum / globalmax / 1024.0_RP**3
 
-    write(ADM_LOG_FID,'(1x,A,F10.3,A,F10.3,A,F10.3)') &
+    write(IO_FID_LOG,'(1x,A,F10.3,A,F10.3,A,F10.3)') &
                       '--- Floating Operations [GFLOP] (avg)=', globalavg / 1024.0_RP**3, &
                                                     ', (max)=', globalmax / 1024.0_RP**3, &
                                                     ', (min)=', globalmin / 1024.0_RP**3
-    write(ADM_LOG_FID,'(1x,A,F10.3)') &
+    write(IO_FID_LOG,'(1x,A,F10.3)') &
                       '--- Total Flops [GFLOPS] (all PE):',total_flops
 
     call PAPIF_shutdown

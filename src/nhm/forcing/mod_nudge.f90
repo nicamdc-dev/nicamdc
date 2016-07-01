@@ -24,9 +24,8 @@ module mod_nudge
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -80,7 +79,6 @@ contains
   !> Setup
   subroutine NDG_setup
     use mod_adm, only: &
-       ADM_CTL_FID,   &
        ADM_proc_stop, &
        ADM_have_pl,   &
        ADM_KNONE,     &
@@ -155,18 +153,18 @@ contains
     if( .NOT. FLAG_NUDGING ) return
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[nudging]/Category[nhm forcing]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=NUDGEPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[nudging]/Category[nhm forcing]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=NUDGEPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** NUDGEPARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** NUDGEPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist NUDGEPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist NUDGEPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NUDGEPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=NUDGEPARAM)
+    write(IO_FID_LOG,nml=NUDGEPARAM)
 
     NDG_VMAX = 0
 
@@ -238,7 +236,7 @@ contains
     NDG_kmax1 = max(k0,k1)
 
     if ( NDG_kmin1 > NDG_kmax0 ) then
-       write(ADM_LOG_FID,*) 'xxx Invalid vertical layers! STOP', NDG_kmin1, NDG_kmax0
+       write(IO_FID_LOG,*) 'xxx Invalid vertical layers! STOP', NDG_kmin1, NDG_kmax0
        call ADM_proc_stop
     endif
 
@@ -313,29 +311,29 @@ contains
        enddo
     endif
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '*** Nudging factors'
-    write(ADM_LOG_FID,*) '*** Tau(vxvyvz) [sec]: ', NDG_tau_vxvyvz
-    write(ADM_LOG_FID,*) '*** Tau(w)      [sec]: ', NDG_tau_w
-    write(ADM_LOG_FID,*) '*** Tau(tem)    [sec]: ', NDG_tau_tem
-    write(ADM_LOG_FID,*) '*** Tau(pre)    [sec]: ', NDG_tau_pre
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '*** Nudging factors'
+    write(IO_FID_LOG,*) '*** Tau(vxvyvz) [sec]: ', NDG_tau_vxvyvz
+    write(IO_FID_LOG,*) '*** Tau(w)      [sec]: ', NDG_tau_w
+    write(IO_FID_LOG,*) '*** Tau(tem)    [sec]: ', NDG_tau_tem
+    write(IO_FID_LOG,*) '*** Tau(pre)    [sec]: ', NDG_tau_pre
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '*** vertical weight'
-    write(ADM_LOG_FID,*) '   k       z   weight[0-1]'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '*** vertical weight'
+    write(IO_FID_LOG,*) '   k       z   weight[0-1]'
     do k = 1, ADM_kall
-       write(ADM_LOG_FID,'(1x,I3,1x,F7.1,1x,E14.6)') k, GRD_gz(k), wgt_vertical(k)
+       write(IO_FID_LOG,'(1x,I3,1x,F7.1,1x,E14.6)') k, GRD_gz(k), wgt_vertical(k)
     enddo
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '*** horizontal weight: ', NDG_hwgt
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '*** horizontal weight: ', NDG_hwgt
     if ( NDG_hwgt ) then
-       write(ADM_LOG_FID,*) '*** center point(lat) [deg]                      : ', NDG_hwgt_center_lat
-       write(ADM_LOG_FID,*) '*** center point(lon) [deg]                      : ', NDG_hwgt_center_lon
-       write(ADM_LOG_FID,*) '*** distance to inner boundary of sponge zone [m]: ', NDG_hwgt_halo1_dist
-       write(ADM_LOG_FID,*) '*** distance to outer boundary of sponge zone [m]: ', NDG_hwgt_halo2_dist
-       write(ADM_LOG_FID,*) '*** weight at inner boundary [0-1]               : ', NDG_hwgt_halo1_coef
-       write(ADM_LOG_FID,*) '*** weight at outer boundary [0-1]               : ', NDG_hwgt_halo2_coef
+       write(IO_FID_LOG,*) '*** center point(lat) [deg]                      : ', NDG_hwgt_center_lat
+       write(IO_FID_LOG,*) '*** center point(lon) [deg]                      : ', NDG_hwgt_center_lon
+       write(IO_FID_LOG,*) '*** distance to inner boundary of sponge zone [m]: ', NDG_hwgt_halo1_dist
+       write(IO_FID_LOG,*) '*** distance to outer boundary of sponge zone [m]: ', NDG_hwgt_halo2_dist
+       write(IO_FID_LOG,*) '*** weight at inner boundary [0-1]               : ', NDG_hwgt_halo1_coef
+       write(IO_FID_LOG,*) '*** weight at outer boundary [0-1]               : ', NDG_hwgt_halo2_coef
     endif
 
     return
@@ -368,7 +366,7 @@ contains
        do l = 1, ADM_lall
           call extdata_update(temp(:,:),'vx',l,ctime,eflag)
           if ( .NOT. eflag ) then
-             write(ADM_LOG_FID,*) 'Not found reference file! :  vx (at ', ctime
+             write(IO_FID_LOG,*) 'Not found reference file! :  vx (at ', ctime
           endif
 
           do k = 1, ADM_kall
@@ -379,7 +377,7 @@ contains
 
           call extdata_update(temp(:,:),'vy',l,ctime,eflag)
           if ( .NOT. eflag ) then
-             write(ADM_LOG_FID,*) 'Not found reference file! :  vy (at ', ctime
+             write(IO_FID_LOG,*) 'Not found reference file! :  vy (at ', ctime
           endif
 
           do k = 1, ADM_kall
@@ -390,7 +388,7 @@ contains
 
           call extdata_update(temp(:,:),'vz',l,ctime,eflag)
           if ( .NOT. eflag ) then
-             write(ADM_LOG_FID,*) 'Not found reference file! :  vz (at ', ctime
+             write(IO_FID_LOG,*) 'Not found reference file! :  vz (at ', ctime
           endif
 
           do k = 1, ADM_kall
@@ -405,7 +403,7 @@ contains
        do l = 1, ADM_lall
           call extdata_update(temp(:,:),'w',l,ctime,eflag)
           if ( .NOT. eflag ) then
-             write(ADM_LOG_FID,*) 'Not found reference file! :   w (at ', ctime
+             write(IO_FID_LOG,*) 'Not found reference file! :   w (at ', ctime
           endif
 
           do k = 1, ADM_kall
@@ -420,7 +418,7 @@ contains
        do l = 1, ADM_lall
           call extdata_update(temp(:,:),'tem',l,ctime,eflag)
           if ( .NOT. eflag ) then
-             write(ADM_LOG_FID,*) 'Not found reference file! : tem (at ', ctime
+             write(IO_FID_LOG,*) 'Not found reference file! : tem (at ', ctime
           endif
 
           do k = 1, ADM_kall
@@ -435,7 +433,7 @@ contains
        do l = 1, ADM_lall
           call extdata_update(temp(:,:),'pre',l,ctime,eflag)
           if ( .NOT. eflag ) then
-             write(ADM_LOG_FID,*) 'Not found reference file! : pre (at ', ctime
+             write(IO_FID_LOG,*) 'Not found reference file! : pre (at ', ctime
           endif
 
           do k = 1, ADM_kall
@@ -450,7 +448,7 @@ contains
        do l = 1, ADM_lall
           call extdata_update(temp(:,:),'qv',l,ctime,eflag)
           if ( .NOT. eflag ) then
-             write(ADM_LOG_FID,*) 'Not found reference file! :  qv (at ', ctime
+             write(IO_FID_LOG,*) 'Not found reference file! :  qv (at ', ctime
           endif
 
           do k = 1, ADM_kall

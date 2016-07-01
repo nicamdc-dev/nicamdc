@@ -30,12 +30,8 @@ module mod_latlon
   !
   use mpi
   use mod_precision
-  use mod_io_param
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID, &
-     ADM_NSYS,    &
-     ADM_MAXFNAME
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -57,8 +53,8 @@ module mod_latlon
   real(RP), public, allocatable :: GMTR_P_ll   (:,:,:,:)
   real(RP), public, allocatable :: GMTR_P_ll_pl(:,:,:,:)
 
-  character(len=ADM_NSYS),  public :: polygon_type = 'ON_SPHERE' ! triangle is fit to the sphere
-  !                                                  'ON_PLANE'  ! triangle is treated as 2D
+  character(len=H_SHORT),  public :: polygon_type = 'ON_SPHERE' ! triangle is fit to the sphere
+  !                                                 'ON_PLANE'  ! triangle is treated as 2D
 
   !-----------------------------------------------------------------------------
   !
@@ -73,40 +69,40 @@ module mod_latlon
   !
   !++ Private parameters & variables
   !
-  character(len=ADM_NSYS),  private :: latlon_type = 'EQUIDIST' ! grid type ( equidist or gaussian )
-  integer,                  private :: imax        = 360        ! number of longitude
-  integer,                  private :: jmax        = 180        ! number of latitude
-  real(RP),                 private :: lonmin      = -999.0_RP  ! minimun longitude of region window in deg
-  real(RP),                 private :: lonmax      = -999.0_RP  ! maximun longitude of region window in deg
-  real(RP),                 private :: latmin      = -999.0_RP  ! minimun latitude of region window in deg
-  real(RP),                 private :: latmax      = -999.0_RP  ! maximun latitude of region window in deg
-  logical,                  private :: lon_offset  = .true.     ! logitude offset
-  real(RP),                 private :: polar_limit = -999.0_RP  ! search all longitude if abs(lat) > polar_limit
+  character(len=H_SHORT), private :: latlon_type = 'EQUIDIST' ! grid type ( equidist or gaussian )
+  integer,                private :: imax        = 360        ! number of longitude
+  integer,                private :: jmax        = 180        ! number of latitude
+  real(RP),               private :: lonmin      = -999.0_RP  ! minimun longitude of region window in deg
+  real(RP),               private :: lonmax      = -999.0_RP  ! maximun longitude of region window in deg
+  real(RP),               private :: latmin      = -999.0_RP  ! minimun latitude of region window in deg
+  real(RP),               private :: latmax      = -999.0_RP  ! maximun latitude of region window in deg
+  logical,                private :: lon_offset  = .true.     ! logitude offset
+  real(RP),               private :: polar_limit = -999.0_RP  ! search all longitude if abs(lat) > polar_limit
 
-  character(len=ADM_MAXFNAME), private :: SAMPLE_OUT_BASENAME = ''
-  character(len=ADM_NSYS),     private :: SAMPLE_io_mode      = 'ADVANCED'
+  character(len=H_LONG),  private :: SAMPLE_OUT_BASENAME = ''
+  character(len=H_SHORT), private :: SAMPLE_io_mode      = 'ADVANCED'
 
   real(RP), private, allocatable :: lat(:)
   real(RP), private, allocatable :: lon(:)
 
-  integer, private              :: nmax_llgrid
-  integer, private, allocatable :: nmax_llgrid_rgn(:)
+  integer,  private              :: nmax_llgrid
+  integer,  private, allocatable :: nmax_llgrid_rgn(:)
 
-  integer, private, allocatable :: lon_index(:)
-  integer, private, allocatable :: lat_index(:)
-  integer, private, allocatable :: l_index  (:)
-  integer, private, allocatable :: t_index  (:)
-  integer, private, allocatable :: n1_index (:)
-  integer, private, allocatable :: n2_index (:)
-  integer, private, allocatable :: n3_index (:)
+  integer,  private, allocatable :: lon_index(:)
+  integer,  private, allocatable :: lat_index(:)
+  integer,  private, allocatable :: l_index  (:)
+  integer,  private, allocatable :: t_index  (:)
+  integer,  private, allocatable :: n1_index (:)
+  integer,  private, allocatable :: n2_index (:)
+  integer,  private, allocatable :: n3_index (:)
   real(RP), private, allocatable :: w1       (:)
   real(RP), private, allocatable :: w2       (:)
   real(RP), private, allocatable :: w3       (:)
 
-  real(4), private, allocatable :: checkmap   (:,:)
-  real(4), private, allocatable :: checkmapsum(:,:)
+  real(4),  private, allocatable :: checkmap   (:,:)
+  real(4),  private, allocatable :: checkmapsum(:,:)
 
-  logical, private :: debug = .false.
+  logical,  private :: debug = .false.
   !-----------------------------------------------------------------------------
 contains
 
@@ -178,13 +174,9 @@ contains
   !-----------------------------------------------------------------------------
   !> Setup
   subroutine LATLON_setup( output_dirname )
-    use mod_misc, only: &
-       MISC_get_available_fid, &
-       MISC_make_idstr
     use mod_adm, only: &
-       ADM_CTL_FID,        &
        ADM_proc_stop,      &
-       ADM_COMM_WORLD, &
+       ADM_COMM_WORLD,     &
        ADM_prc_all,        &
        ADM_prc_tab,        &
        ADM_prc_run_master, &
@@ -216,7 +208,7 @@ contains
          SAMPLE_io_mode,      &
          debug
 
-    character(len=ADM_MAXFNAME) :: fname
+    character(len=H_LONG) :: fname
 
     real(RP) :: d2r
 
@@ -230,18 +222,18 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[latlon]/Category[common share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=LATLONPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[latlon]/Category[common share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=LATLONPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** LATLONPARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** LATLONPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist LATLONPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist LATLONPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist LATLONPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=LATLONPARAM)
+    write(IO_FID_LOG,nml=LATLONPARAM)
 
     d2r    = CNST_PI / 180.0_RP
     latmax = latmax_deg * d2r
@@ -258,7 +250,7 @@ contains
     call setup_latlon
 
     if( ADM_prc_me == ADM_prc_run_master ) then
-       fid = MISC_get_available_fid()
+       fid = IO_get_available_fid()
        open( unit   = fid,                                 &
              file   = trim(output_dirname)//'/llmap.info', &
              form   = 'unformatted',                       &
@@ -275,26 +267,26 @@ contains
     checkmap   (:,:) = 0.0
     checkmapsum(:,:) = 0.0
 
-    write(ADM_LOG_FID,*) '====== Lat-Lon grid info. ======'
+    write(IO_FID_LOG,*) '====== Lat-Lon grid info. ======'
     if ( latlon_type == 'EQUIDIST' ) then
-       write(ADM_LOG_FID,*) '--- Latitude  type   : Equal distance'
+       write(IO_FID_LOG,*) '--- Latitude  type   : Equal distance'
     elseif( latlon_type == 'GAUSSIAN' ) then
-       write(ADM_LOG_FID,*) '--- Latitude  type   : Gaussian'
+       write(IO_FID_LOG,*) '--- Latitude  type   : Gaussian'
     endif
     if ( lon_offset ) then
-       write(ADM_LOG_FID,*) '--- Longitude offset : yes'
+       write(IO_FID_LOG,*) '--- Longitude offset : yes'
     else
-       write(ADM_LOG_FID,*) '--- Longitude offset : no'
+       write(IO_FID_LOG,*) '--- Longitude offset : no'
     endif
-    write(ADM_LOG_FID,*)    '--- # of Latitude    :', jmax
-    write(ADM_LOG_FID,*)    '--- # of Longitude   :', imax
-    write(ADM_LOG_FID,*)    '--- Latitude  range  :', lat(1)/d2r,' - ', lat(jmax)/d2r
-    write(ADM_LOG_FID,*)    '--- Longitude range  :', lon(1)/d2r,' - ', lon(imax)/d2r
+    write(IO_FID_LOG,*)    '--- # of Latitude    :', jmax
+    write(IO_FID_LOG,*)    '--- # of Longitude   :', imax
+    write(IO_FID_LOG,*)    '--- Latitude  range  :', lat(1)/d2r,' - ', lat(jmax)/d2r
+    write(IO_FID_LOG,*)    '--- Longitude range  :', lon(1)/d2r,' - ', lon(imax)/d2r
 
     allocate( nmax_llgrid_rgn(ADM_lall) )
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '*** Start counting grid.'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '*** Start counting grid.'
 
     ! count lat-lon number
     call mkrelmap_ico2ll( 'GET_NUM' )
@@ -309,26 +301,26 @@ contains
                            ierr                )
     endif
 
-    write(ADM_LOG_FID,*) '# of managing llgrid'
+    write(IO_FID_LOG,*) '# of managing llgrid'
     do l = 1, ADM_lall
        rgnid = ADM_prc_tab(l,ADM_prc_me)
 
-       write(ADM_LOG_FID,*) 'region=', rgnid, ', llgrid=', nmax_llgrid_rgn(l)
+       write(IO_FID_LOG,*) 'region=', rgnid, ', llgrid=', nmax_llgrid_rgn(l)
 
        if ( debug ) then
           do j = 1, jmax
           do i = 1, imax
              if    ( checkmapsum(i,j) >  1.0 ) then
-                write(ADM_LOG_FID,*) 'dupicate! (i,j)=', i, j, checkmapsum(i,j)
+                write(IO_FID_LOG,*) 'dupicate! (i,j)=', i, j, checkmapsum(i,j)
              elseif( checkmapsum(i,j) == 0.0 ) then
-                write(ADM_LOG_FID,*) 'missed!   (i,j)=', i, j, checkmapsum(i,j)
+                write(IO_FID_LOG,*) 'missed!   (i,j)=', i, j, checkmapsum(i,j)
              endif
           enddo
           enddo
 
-          call MISC_make_idstr(fname,trim(output_dirname)//'/checkmap','grd',rgnid)
+          call IO_make_idstr(fname,trim(output_dirname)//'/checkmap','grd',rgnid)
 
-          fid = MISC_get_available_fid()
+          fid = IO_get_available_fid()
           open( unit   = fid,           &
                 file   = trim(fname),   &
                 form   = 'unformatted', &
@@ -354,12 +346,12 @@ contains
 
     globalsum = sum( recvbuf(:) )
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) 'imax x jmax                    = ', imax*jmax
-    write(ADM_LOG_FID,*) 'global total of counted llgrid = ', globalsum
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) 'imax x jmax                    = ', imax*jmax
+    write(IO_FID_LOG,*) 'global total of counted llgrid = ', globalsum
     if ( globalsum /= imax*jmax ) then
        write(*,          *) 'counted llgrid does not match!'
-       write(ADM_LOG_FID,*) 'counted llgrid does not match!'
+       write(IO_FID_LOG,*) 'counted llgrid does not match!'
 !       call ADM_proc_stop
     endif
 
@@ -374,13 +366,13 @@ contains
     allocate( w2       (nmax_llgrid) )
     allocate( w3       (nmax_llgrid) )
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '*** Start calc relation map.'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '*** Start calc relation map.'
 
     ! calc relation map
     call mkrelmap_ico2ll( 'SET_INDEX' )
 
-    write(ADM_LOG_FID,*) '*** OK.'
+    write(IO_FID_LOG,*) '*** OK.'
 
     ! output relation map
     if ( debug ) then
@@ -390,7 +382,7 @@ contains
 
           do n = nstart, nend
              if ( abs(w1(n)+w2(n)+w3(n)-1.0_RP) > 1.E-15_RP ) then
-                write(ADM_LOG_FID,'(A,2I6,E30.20)') '(lat,lon,area)=', &
+                write(IO_FID_LOG,'(A,2I6,E30.20)') '(lat,lon,area)=', &
                 lat_index(n),lon_index(n),w1(n)+w2(n)+w3(n)
              endif
           enddo
@@ -401,9 +393,9 @@ contains
     do l = 1, ADM_lall
        rgnid = ADM_prc_tab(l,ADM_prc_me)
 
-       call MISC_make_idstr(fname,trim(output_dirname)//'/llmap','rgn',rgnid)
+       call IO_make_idstr(fname,trim(output_dirname)//'/llmap','rgn',rgnid)
 
-       fid = MISC_get_available_fid()
+       fid = IO_get_available_fid()
        open( unit   = fid,           &
              file   = trim(fname),   &
              form   = 'unformatted', &
@@ -434,9 +426,9 @@ contains
 !    do l = 1, ADM_lall
 !       rgnid = ADM_prc_tab(l,ADM_prc_me)
 !
-!       call MISC_make_idstr(fname,trim(output_dirname)//'/llmap','rgntxt',rgnid)
+!       call IO_make_idstr(fname,trim(output_dirname)//'/llmap','rgntxt',rgnid)
 !
-!       fid = MISC_get_available_fid()
+!       fid = IO_get_available_fid()
 !       open( unit   = fid,           &
 !             file   = trim(fname),   &
 !             form   = 'formatted', &
@@ -689,8 +681,8 @@ contains
                         .OR. area3 * 0.0_RP /= 0.0_RP ) then ! Nan?
                       write(*,          *) 'Nan! (i,j,n,t,l)=', i,j,n,t,l
                       write(*,          *) '(area1,area2,area3)=', area1,area2,area3
-                      write(ADM_LOG_FID,*) 'Nan! (i,j,n,t,l)=', i,j,n,t,l
-                      write(ADM_LOG_FID,*) '(area1,area2,area3)=', area1,area2,area3
+                      write(IO_FID_LOG,*) 'Nan! (i,j,n,t,l)=', i,j,n,t,l
+                      write(IO_FID_LOG,*) '(area1,area2,area3)=', area1,area2,area3
                       call ADM_proc_stop
                    endif
 
@@ -808,9 +800,6 @@ contains
   !-----------------------------------------------------------------------------
   !> Output sample output
   subroutine LL_outputsample
-    use mod_misc, only: &
-       MISC_make_idstr,&
-       MISC_get_available_fid
     use mod_adm, only: &
        ADM_proc_stop, &
        ADM_prc_tab,   &
@@ -825,6 +814,8 @@ contains
        ADM_KNONE
     use mod_comm, only: &
        COMM_data_transfer
+    use mod_io_param, only: &
+       IO_REAL8
     use mod_fio, only: &
        FIO_output
     implicit none
@@ -832,7 +823,7 @@ contains
     real(RP) :: SAMPLE   ( ADM_gall,   ADM_KNONE,ADM_lall,   4)
     real(RP) :: SAMPLE_pl( ADM_gall_pl,ADM_KNONE,ADM_lall_pl,4)
 
-    character(len=ADM_MAXFNAME) :: fname
+    character(len=H_LONG) :: fname
 
     integer :: fid
     integer :: rgnid, prc
@@ -893,9 +884,9 @@ contains
 
        do l = 1, ADM_lall
           rgnid = ADM_prc_tab(l,ADM_prc_me)
-          call MISC_make_idstr(fname,trim(sample_io_mode),'rgn',rgnid)
+          call IO_make_idstr(fname,trim(sample_io_mode),'rgn',rgnid)
 
-          fid = MISC_get_available_fid()
+          fid = IO_get_available_fid()
           open( unit = fid, &
                file=trim(fname),   &
                form='unformatted', &
@@ -909,7 +900,7 @@ contains
           close(fid)
        enddo
     else
-       write(ADM_LOG_FID,*) 'Invalid io_mode!'
+       write(IO_FID_LOG,*) 'Invalid io_mode!'
        call ADM_proc_stop
     endif
 

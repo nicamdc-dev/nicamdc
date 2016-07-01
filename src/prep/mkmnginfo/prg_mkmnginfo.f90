@@ -29,9 +29,9 @@ Program prg_mkmnginfo
   !
   use mpi
   use mod_precision
+  use mod_stdio
   use mod_debug
   use mod_adm, only: &
-     ADM_LOG_FID, &
      ADM_RID,     &
      ADM_DIR,     &
      ADM_SW,      &

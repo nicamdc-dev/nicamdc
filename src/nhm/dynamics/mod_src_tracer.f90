@@ -20,7 +20,6 @@ module mod_src_tracer
   use mod_precision
   use mod_debug
   use mod_adm, only: &
-     ADM_LOG_FID,    &
      TI  => ADM_TI,  &
      TJ  => ADM_TJ,  &
      AI  => ADM_AI,  &

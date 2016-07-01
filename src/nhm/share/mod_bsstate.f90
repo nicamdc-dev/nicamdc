@@ -18,11 +18,8 @@ module mod_bsstate
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID,  &
-     ADM_MAXFNAME, &
-     ADM_NSYS
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -57,13 +54,13 @@ module mod_bsstate
   !
   !++ Private parameters & variables
   !
-  character(len=ADM_NSYS), private :: ref_type = 'NOBASE'  !--- Basic state type
-  !                                            = 'NOBASE' : no basic state
-  !                                            = 'INPUT'  : input
-  !                                            = 'TEM'    : temperature is given.
-  !                                            = 'TH'     : potential temperature is given.
+  character(len=H_SHORT), private :: ref_type = 'NOBASE' !--- Basic state type
+                                              ! 'NOBASE' : no basic state
+                                              ! 'INPUT'  : input
+                                              ! 'TEM'    : temperature is given.
+                                              ! 'TH'     : potential temperature is given.
 
-  character(len=ADM_MAXFNAME), private :: ref_fname = 'ref.dat'
+  character(len=H_LONG), private :: ref_fname = 'ref.dat'
 
   real(RP), private, allocatable :: phi_ref(:) ! reference phi
   real(RP), private, allocatable :: rho_ref(:) ! reference density
@@ -77,7 +74,6 @@ contains
   !-----------------------------------------------------------------------------
   subroutine bsstate_setup
     use mod_adm, only: &
-       ADM_CTL_FID,   &
        ADM_proc_stop, &
        ADM_lall,      &
        ADM_lall_pl,   &
@@ -94,18 +90,18 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[basic state]/Category[nhm share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=BSSTATEPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[basic state]/Category[nhm share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=BSSTATEPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** BSSTATEPARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** BSSTATEPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist BSSTATEPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist BSSTATEPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist BSSTATEPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=BSSTATEPARAM)
+    write(IO_FID_LOG,nml=BSSTATEPARAM)
 
     !--- allocation of reference variables
     allocate( phi_ref(ADM_kall) )
@@ -154,8 +150,6 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine bsstate_input_ref( basename )
-    use mod_misc, only: &
-       MISC_get_available_fid
     use mod_adm, only: &
        ADM_kall
     use mod_cnst, only: &
@@ -181,7 +175,7 @@ contains
 
     kappa = Rdry / CPdry
 
-    fid = MISC_get_available_fid()
+    fid = IO_get_available_fid()
     open( unit   = fid,            &
           file   = trim(basename), &
           status = 'old',          &
@@ -208,16 +202,14 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine bsstate_output_ref( basename )
-    use mod_misc, only: &
-       MISC_get_available_fid
     implicit none
 
-    Character(*), Intent(in) :: basename
+    Character(len=*), Intent(in) :: basename
 
     integer :: fid
     !---------------------------------------------------------------------------
 
-    fid = MISC_get_available_fid()
+    fid = IO_get_available_fid()
     open( unit   = fid,            &
           file   = trim(basename), &
           status = 'replace',      &
@@ -472,7 +464,6 @@ contains
   !-----------------------------------------------------------------------------
   subroutine output_info
     use mod_adm, only: &
-       ADM_LOG_FID, &
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
@@ -481,15 +472,15 @@ contains
     integer :: k
     !---------------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*) '*** Basic state information ***'
-    write(ADM_LOG_FID,*) '--- Basic state type         : ', trim(ref_type)
+    write(IO_FID_LOG,*) '*** Basic state information ***'
+    write(IO_FID_LOG,*) '--- Basic state type         : ', trim(ref_type)
 
-    write(ADM_LOG_FID,*) '-------------------------------------------------------'
-    write(ADM_LOG_FID,*) 'Level   Density  Pressure     Temp. Pot. Tem.        qv'
+    write(IO_FID_LOG,*) '-------------------------------------------------------'
+    write(IO_FID_LOG,*) 'Level   Density  Pressure     Temp. Pot. Tem.        qv'
     do k = 1, ADM_kall
-       write(ADM_LOG_FID,'(I4,F12.4,F10.2,F10.2,F10.2,F10.7)') k, rho_ref(k), pre_ref(k), tem_ref(k),th_ref(k), qv_ref(k)
-       if (  k == ADM_kmin-1 ) write(ADM_LOG_FID,*) '-------------------------------------------------------'
-       if (  k == ADM_kmax   ) write(ADM_LOG_FID,*) '-------------------------------------------------------'
+       write(IO_FID_LOG,'(I4,F12.4,F10.2,F10.2,F10.2,F10.7)') k, rho_ref(k), pre_ref(k), tem_ref(k),th_ref(k), qv_ref(k)
+       if (  k == ADM_kmin-1 ) write(IO_FID_LOG,*) '-------------------------------------------------------'
+       if (  k == ADM_kmax   ) write(IO_FID_LOG,*) '-------------------------------------------------------'
     enddo
 
     return

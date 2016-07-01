@@ -30,12 +30,8 @@ module mod_prgvar
   !++ Used modules
   !
   use mod_precision
-  use mod_io_param
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID,  &
-     ADM_MAXFNAME, &
-     ADM_NSYS
   use mod_runconf, only: &
      PRG_vmax0,  &
      I_RHOG,     &
@@ -82,8 +78,8 @@ module mod_prgvar
   real(RP), public, allocatable :: PRG_var1(:,:,:,:)
   real(RP), public, allocatable :: DIAG_var(:,:,:,:)
 
-  character(len=ADM_MAXFNAME), public :: restart_input_basename  = ''
-  character(len=ADM_MAXFNAME), public :: restart_output_basename = ''
+  character(len=H_LONG), public :: restart_input_basename  = ''
+  character(len=H_LONG), public :: restart_output_basename = ''
 
   !-----------------------------------------------------------------------------
   !
@@ -99,10 +95,10 @@ module mod_prgvar
 
   integer, private :: TRC_vmax_input ! number of input tracer variables
 
-  character(len=ADM_MAXFNAME), private :: layername      = ''
-  character(len=ADM_MAXFNAME), private :: input_io_mode  = 'ADVANCED'
-  character(len=ADM_MAXFNAME), private :: output_io_mode = 'ADVANCED'
-  logical,                     private :: allow_missingq = .false.
+  character(len=H_LONG), private :: layername      = ''
+  character(len=H_LONG), private :: input_io_mode  = 'ADVANCED'
+  character(len=H_LONG), private :: output_io_mode = 'ADVANCED'
+  logical,               private :: allow_missingq = .false.
 
   !-----------------------------------------------------------------------------
 contains
@@ -113,7 +109,6 @@ contains
   !>
   subroutine prgvar_setup
     use mod_adm, only: &
-       ADM_CTL_FID,   &
        ADM_proc_stop, &
        ADM_gall,      &
        ADM_gall_pl,   &
@@ -126,9 +121,9 @@ contains
        TRC_vmax
     implicit none
 
-    character(len=ADM_MAXFNAME) :: input_basename    = ''
-    character(len=ADM_MAXFNAME) :: output_basename   = 'restart'
-    character(len=ADM_MAXFNAME) :: restart_layername = ''
+    character(len=H_LONG) :: input_basename    = ''
+    character(len=H_LONG) :: output_basename   = 'restart'
+    character(len=H_LONG) :: restart_layername = ''
 
     namelist / RESTARTPARAM / &
        TRC_vmax_input,    &
@@ -145,45 +140,45 @@ contains
     TRC_vmax_input = TRC_vmax
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[prgvar]/Category[nhm share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=RESTARTPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[prgvar]/Category[nhm share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=RESTARTPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** RESTARTPARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** RESTARTPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist RESTARTPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist RESTARTPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist RESTARTPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=RESTARTPARAM)
+    write(IO_FID_LOG,nml=RESTARTPARAM)
 
     restart_input_basename  = input_basename
     restart_output_basename = output_basename
     layername               = restart_layername
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '*** io_mode for restart, input : ', trim(input_io_mode)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '*** io_mode for restart, input : ', trim(input_io_mode)
     if    ( input_io_mode == 'ADVANCED'     ) then
     elseif( input_io_mode == 'LEGACY'       ) then
     elseif( input_io_mode == 'IDEAL'        ) then
     elseif( input_io_mode == 'IDEAL_TRACER' ) then
     else
-       write(ADM_LOG_FID,*) 'xxx Invalid input_io_mode. STOP.'
+       write(IO_FID_LOG,*) 'xxx Invalid input_io_mode. STOP.'
        call ADM_proc_stop
     endif
 
-    write(ADM_LOG_FID,*) '*** io_mode for restart, output: ', trim(output_io_mode)
+    write(IO_FID_LOG,*) '*** io_mode for restart, output: ', trim(output_io_mode)
     if    ( output_io_mode == 'ADVANCED' ) then
     elseif( output_io_mode == 'LEGACY'   ) then
     else
-       write(ADM_LOG_FID,*) 'xxx Invalid output_io_mode. STOP'
+       write(IO_FID_LOG,*) 'xxx Invalid output_io_mode. STOP'
        call ADM_proc_stop
     endif
 
     if ( allow_missingq ) then
-       write(ADM_LOG_FID,*) '*** Allow missing tracer in restart file.'
-       write(ADM_LOG_FID,*) '*** Value will set to zero for missing tracer.'
+       write(IO_FID_LOG,*) '*** Allow missing tracer in restart file.'
+       write(IO_FID_LOG,*) '*** Value will set to zero for missing tracer.'
     endif
 
     allocate( PRG_var    (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax) )
@@ -955,9 +950,6 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine restart_input( basename )
-    use mod_misc, only: &
-       MISC_get_available_fid, &
-       MISC_make_idstr
     use mod_adm, only: &
        ADM_prc_tab, &
        ADM_prc_me,  &
@@ -986,9 +978,9 @@ contains
        tracer_input
     implicit none
 
-    character(len=ADM_MAXFNAME), intent(in) :: basename
+    character(len=H_LONG), intent(in) :: basename
 
-    character(len=ADM_MAXFNAME) :: fname
+    character(len=H_LONG) :: fname
 
     real(RP) :: val_max, val_min
     logical :: nonzero
@@ -997,8 +989,8 @@ contains
     integer :: l, rgnid, nq
     !---------------------------------------------------------------------------
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '*** read restart/initial data'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '*** read restart/initial data'
 
     if ( input_io_mode == 'ADVANCED' ) then
 
@@ -1017,8 +1009,8 @@ contains
 
        do l = 1, ADM_lall
           rgnid = ADM_prc_tab(l,ADM_prc_me)
-          call MISC_make_idstr(fname,trim(basename),'rgn',rgnid)
-          fid = MISC_get_available_fid()
+          call IO_make_idstr(fname,trim(basename),'rgn',rgnid)
+          fid = IO_get_available_fid()
           open( unit   = fid,                 &
                 file   = trim(fname),         &
                 form   = 'unformatted',       &
@@ -1035,7 +1027,7 @@ contains
 
     elseif( input_io_mode == 'IDEAL' ) then
 
-       write(ADM_LOG_FID,*) '*** make ideal initials'
+       write(IO_FID_LOG,*) '*** make ideal initials'
 
        call dycore_input( DIAG_var(:,:,:,:) ) !--- [OUT]
 
@@ -1046,7 +1038,7 @@ contains
                           layername,1,ADM_kall,1                     )
        enddo
 
-       write(ADM_LOG_FID,*) '*** make ideal initials for tracer'
+       write(IO_FID_LOG,*) '*** make ideal initials for tracer'
 
        call tracer_input( DIAG_var(:,:,:,DIAG_vmax0+1:DIAG_vmax0+TRC_vmax) ) !--- [OUT]
 
@@ -1054,12 +1046,12 @@ contains
 
     call COMM_var( DIAG_var, DIAG_var_pl, ADM_kall, DIAG_vmax )
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '====== data range check : diagnostic variables ======'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '====== data range check : diagnostic variables ======'
     do nq = 1, DIAG_vmax0
        val_max = GTL_max( DIAG_var(:,:,:,nq), DIAG_var_pl(:,:,:,nq), ADM_kall, ADM_kmin, ADM_kmax )
        val_min = GTL_min( DIAG_var(:,:,:,nq), DIAG_var_pl(:,:,:,nq), ADM_kall, ADM_kmin, ADM_kmax )
-       write(ADM_LOG_FID,'(1x,A,A16,2(A,1PE24.17))') '--- ', DIAG_name(nq), ': max=', val_max, ', min=', val_min
+       write(IO_FID_LOG,'(1x,A,A16,2(A,1PE24.17))') '--- ', DIAG_name(nq), ': max=', val_max, ', min=', val_min
     enddo
 
     do nq = 1, TRC_vmax
@@ -1077,18 +1069,18 @@ contains
                           DIAG_var_pl(:,:,:,DIAG_vmax0+nq), &
                           ADM_kall, ADM_kmin, ADM_kmax, nonzero)
 
-       write(ADM_LOG_FID,'(1x,A,A16,2(A,1PE24.17))') '--- ', TRC_name(nq),  ': max=', val_max, ', min=', val_min
+       write(IO_FID_LOG,'(1x,A,A16,2(A,1PE24.17))') '--- ', TRC_name(nq),  ': max=', val_max, ', min=', val_min
     enddo
 
     call cnvvar_diag2prg( PRG_var (:,:,:,:), PRG_var_pl (:,:,:,:), & !--- [OUT]
                           DIAG_var(:,:,:,:), DIAG_var_pl(:,:,:,:)  ) !--- [IN]
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '====== data range check : prognostic variables ======'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '====== data range check : prognostic variables ======'
     do nq = 1, PRG_vmax0
        val_max = GTL_max( PRG_var(:,:,:,nq), PRG_var_pl(:,:,:,nq), ADM_kall, ADM_kmin, ADM_kmax )
        val_min = GTL_min( PRG_var(:,:,:,nq), PRG_var_pl(:,:,:,nq), ADM_kall, ADM_kmin, ADM_kmax )
-       write(ADM_LOG_FID,'(1x,A,A16,2(A,1PE24.17))') '--- ', PRG_name(nq), ': max=', val_max, ', min=', val_min
+       write(IO_FID_LOG,'(1x,A,A16,2(A,1PE24.17))') '--- ', PRG_name(nq), ': max=', val_max, ', min=', val_min
     enddo
 
     do nq = 1, TRC_vmax
@@ -1106,7 +1098,7 @@ contains
                           PRG_var_pl(:,:,:,PRG_vmax0+nq),      &
                           ADM_kall, ADM_kmin, ADM_kmax, nonzero)
 
-       write(ADM_LOG_FID,'(1x,A,A16,2(A,1PE24.17))') '--- rhog * ', TRC_name(nq),  ': max=', val_max, ', min=', val_min
+       write(IO_FID_LOG,'(1x,A,A16,2(A,1PE24.17))') '--- rhog * ', TRC_name(nq),  ': max=', val_max, ', min=', val_min
     enddo
 
     return
@@ -1114,9 +1106,6 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine restart_output( basename )
-    use mod_misc, only: &
-       MISC_get_available_fid, &
-       MISC_make_idstr
     use mod_adm, only: &
        ADM_prc_tab, &
        ADM_prc_me,  &
@@ -1125,6 +1114,8 @@ contains
        ADM_kall,    &
        ADM_kmax,    &
        ADM_kmin
+    use mod_io_param, only: &
+       IO_REAL8
     use mod_fio, only: &
        FIO_output
     use mod_time, only : &
@@ -1142,7 +1133,7 @@ contains
        cnvvar_prg2diag
     implicit none
 
-    character(len=ADM_MAXFNAME), intent(in) :: basename
+    character(len=H_LONG), intent(in) :: basename
 
     character(len=H_MID)   :: desc = 'INITIAL/RESTART_data_of_prognostic_variables' ! [add] H.Yashiro 20110819
 
@@ -1176,8 +1167,8 @@ contains
     call cnvvar_prg2diag( PRG_var (:,:,:,:), PRG_var_pl (:,:,:,:), & !--- [IN]
                           DIAG_var(:,:,:,:), DIAG_var_pl(:,:,:,:)  ) !--- [OUT]
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '====== data range check : prognostic variables ======'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '====== data range check : prognostic variables ======'
     do nq = 1, DIAG_vmax0
        val_max = GTL_max( DIAG_var   (:,:,:,nq),       &
                           DIAG_var_pl(:,:,:,nq),       &
@@ -1186,7 +1177,7 @@ contains
                           DIAG_var_pl(:,:,:,nq),       &
                           ADM_kall, ADM_kmin, ADM_kmax )
 
-       write(ADM_LOG_FID,'(1x,A,A16,2(A,1PE24.17))') '--- ', DIAG_name(nq), ': max=', val_max, ', min=', val_min
+       write(IO_FID_LOG,'(1x,A,A16,2(A,1PE24.17))') '--- ', DIAG_name(nq), ': max=', val_max, ', min=', val_min
     enddo
 
     do nq = 1, TRC_vmax
@@ -1204,7 +1195,7 @@ contains
                           DIAG_var_pl(:,:,:,DIAG_vmax0+nq), &
                           ADM_kall, ADM_kmin, ADM_kmax, nonzero)
 
-       write(ADM_LOG_FID,'(1x,A,A16,2(A,1PE24.17))') '--- ', TRC_name(nq),  ': max=', val_max, ', min=', val_min
+       write(IO_FID_LOG,'(1x,A,A16,2(A,1PE24.17))') '--- ', TRC_name(nq),  ': max=', val_max, ', min=', val_min
     enddo
 
     if ( output_io_mode == 'ADVANCED' ) then
@@ -1223,8 +1214,8 @@ contains
 
        do l = 1, ADM_lall
           rgnid = ADM_prc_tab(l,ADM_prc_me)
-          call MISC_make_idstr(fname,trim(basename),'rgn',rgnid)
-          fid = MISC_get_available_fid()
+          call IO_make_idstr(fname,trim(basename),'rgn',rgnid)
+          fid = IO_get_available_fid()
           open( unit   = fid,                 &
                 file   = trim(fname),         &
                 form   = 'unformatted',       &

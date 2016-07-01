@@ -14,6 +14,7 @@ module mod_stdio
   !
   !++ used modules
   !
+  use mod_io_param
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -36,14 +37,14 @@ module mod_stdio
   !
   !++ Public parameters & variables
   !
-  integer,               public, parameter :: H_SHORT     =  16             !< Character length (short=16)
-  integer,               public, parameter :: H_MID       =  64             !< Character length (short=64)
-  integer,               public, parameter :: H_LONG      = 256             !< Character length (short=256)
+  integer,               public, parameter :: H_SHORT     = IO_HSHORT    !< Character length (short=16)
+  integer,               public, parameter :: H_MID       = IO_HMID      !< Character length (short=64)
+  integer,               public, parameter :: H_LONG      = IO_HLONG     !< Character length (short=256)
 
-  character(len=H_MID),  public            :: H_MODELNAME = ''              !< name and version of the model
-  character(len=H_MID),  public            :: H_LIBNAME   = ''              !< name and version of the library
-  character(len=H_MID),  public            :: H_SOURCE    = ''              !< for file header
-  character(len=H_MID),  public            :: H_INSTITUTE = ''              !< for file header
+  character(len=H_MID),  public            :: H_MODELNAME                !< name and version of the model
+  character(len=H_MID),  public            :: H_LIBNAME                  !< name and version of the library
+  character(len=H_MID),  public            :: H_SOURCE                   !< for file header
+  character(len=H_MID),  public            :: H_INSTITUTE = 'NICAM team' !< for file header
 
   character(len=6),      public, parameter :: IO_STDOUT     = "STDOUT"
   integer,               public, parameter :: IO_FID_STDOUT = 6
@@ -77,8 +78,6 @@ contains
        MODELNAME )
     implicit none
 
-    character(len=H_MID),  intent(in) :: MODELNAME !< name of the model
-
     namelist / PARAM_IO / &
        H_SOURCE,            &
        H_INSTITUTE,         &
@@ -87,11 +86,13 @@ contains
        IO_LOG_ALLNODE,      &
        IO_LOG_NML_SUPPRESS
 
+    character(len=H_MID),  intent(in) :: MODELNAME !< name of the model
+
     character(len=H_LONG) :: fname
     integer :: ierr
     !---------------------------------------------------------------------------
 
-    fname = IO_ARG_getfname( is_master=.true. )
+       fname = IO_ARG_getfname( is_master=.true. )
 
     !--- Open config file till end
     IO_FID_CONF = IO_CNF_open( fname,           & ! [IN]
@@ -100,7 +101,6 @@ contains
     H_MODELNAME = trim(MODELNAME)
     H_LIBNAME   = trim(MODELNAME)
     H_SOURCE    = trim(MODELNAME)
-    H_INSTITUTE = 'the NICAM team'
 
     !--- read PARAM
     rewind(IO_FID_CONF)

@@ -19,9 +19,8 @@ module mod_embudget
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -68,10 +67,7 @@ module mod_embudget
 contains
   !-----------------------------------------------------------------------------
   subroutine embudget_setup
-    use mod_misc, only: &
-       MISC_get_available_fid
     use mod_adm, only: &
-       ADM_CTL_FID,        &
        ADM_proc_stop,      &
        ADM_prc_me,         &
        ADM_prc_run_master
@@ -90,35 +86,35 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[embudget]/Category[nhm share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=EMBUDGETPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[embudget]/Category[nhm share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=EMBUDGETPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** EMBUDGETPARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** EMBUDGETPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist EMBUDGETPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist EMBUDGETPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist EMBUDGETPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=EMBUDGETPARAM)
+    write(IO_FID_LOG,nml=EMBUDGETPARAM)
 
     if(.not.MNT_ON) return
 
     Mass_budget_factor   = 1.0_RP / ( TIME_DTL * real(MNT_INTV,kind=RP) * 4.D0 * PI * ERADIUS * ERADIUS ) ! [kg/step] -> [kg/m2/s]
     Energy_budget_factor = 1.0_RP / ( TIME_DTL * real(MNT_INTV,kind=RP) * 4.D0 * PI * ERADIUS * ERADIUS ) ! [J /step] -> [W/m2]
-    write(ADM_LOG_FID,*) "Mass_budget_factor   = ", Mass_budget_factor
-    write(ADM_LOG_FID,*) "Energy_budget_factor = ", Energy_budget_factor
+    write(IO_FID_LOG,*) "Mass_budget_factor   = ", Mass_budget_factor
+    write(IO_FID_LOG,*) "Energy_budget_factor = ", Energy_budget_factor
 
     ! open budget.info file
     if ( ADM_prc_me == ADM_prc_run_master ) then
-       MNT_m_fid  = MISC_get_available_fid()
+       MNT_m_fid  = IO_get_available_fid()
        open( unit   = MNT_m_fid,          &
              file   = 'MASS_BUDGET.info', &
              form   = 'formatted',        &
              status = 'unknown'           )
 
-       MNT_e_fid = MISC_get_available_fid()
+       MNT_e_fid = IO_get_available_fid()
        open( unit   = MNT_e_fid,            &
              file   = 'ENERGY_BUDGET.info', &
              form   = 'formatted',          &

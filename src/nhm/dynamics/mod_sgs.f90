@@ -34,9 +34,9 @@ module mod_sgs
   !
   !++ Used modules
   !
+  use mod_precision
+  use mod_debug
   use mod_adm, only: &
-     ADM_LOG_FID, &
-     ADM_NSYS,    &
      ADM_prc_me,  &
      ADM_have_pl, &
      ADM_lall,    &
@@ -185,7 +185,6 @@ contains
   !-----------------------------------------------------------------------------
   subroutine sgs_setup
     use mod_adm, only: &
-       ADM_CTL_FID, &
        ADM_proc_stop
     implicit none
 
@@ -201,18 +200,18 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[SGS turbulence]/Category[nhm dynamics]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=SMGPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[SGS turbulence]/Category[nhm dynamics]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=SMGPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** SMGPARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** SMGPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist SMGPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist SMGPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist SMGPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=SMGPARAM)
+    write(IO_FID_LOG,nml=SMGPARAM)
 
     call tb_smg_oprt_init
 

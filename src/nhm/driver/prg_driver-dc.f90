@@ -57,10 +57,10 @@ program prg_driver
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
   use mod_adm, only: &
      ADM_MULTI_PRC,      &
-     ADM_LOG_FID,        &
      ADM_prc_me,         &
      ADM_prc_run_master, &
      ADM_proc_init,      &
@@ -203,6 +203,8 @@ program prg_driver
   integer :: n
   !-----------------------------------------------------------------------------
 
+  call IO_setup('NICAM-DC')
+
   call ADM_proc_init(ADM_MULTI_PRC)
 
   !---< admin module setup >---
@@ -212,7 +214,7 @@ program prg_driver
   !#############################################################################
   call DEBUG_rapstart('Setup_ALL')
 
-  write(ADM_LOG_FID,*) '##### start  setup     #####'
+  write(IO_FID_LOG,*) '##### start  setup     #####'
   if ( ADM_prc_me == ADM_prc_run_master ) then
      write(*,*) '##### start  setup     #####'
   endif
@@ -274,7 +276,7 @@ program prg_driver
   !---< history variable module setup >---
   call history_vars_setup
 
-  write(ADM_LOG_FID,*) '##### finish setup     #####'
+  write(IO_FID_LOG,*) '##### finish setup     #####'
   if ( ADM_prc_me == ADM_prc_run_master ) then
      write(*,*) '##### finish setup     #####'
   endif
@@ -283,7 +285,7 @@ program prg_driver
   !#############################################################################
   call DEBUG_rapstart('Main_ALL')
 
-  write(ADM_LOG_FID,*) '##### start  main loop #####'
+  write(IO_FID_LOG,*) '##### start  main loop #####'
   if ( ADM_prc_me == ADM_prc_run_master ) then
      write(*,*) '##### start  main loop #####'
   endif
@@ -358,7 +360,7 @@ program prg_driver
   call fipp_stop()
 #endif
 
-  write(ADM_LOG_FID,*) '##### finish main loop #####'
+  write(IO_FID_LOG,*) '##### finish main loop #####'
   if ( ADM_prc_me == ADM_prc_run_master ) then
      write(*,*) '##### finish main loop #####'
   endif

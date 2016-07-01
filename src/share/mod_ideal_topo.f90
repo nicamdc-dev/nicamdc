@@ -22,10 +22,8 @@ module mod_ideal_topo
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID,  &
-     ADM_NSYS
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -59,7 +57,6 @@ contains
        lon, &
        Zsfc )
     use mod_adm, only: &
-       ADM_CTL_FID,   &
        ADM_proc_stop, &
        ADM_KNONE,     &
        ADM_gall,      &
@@ -70,7 +67,7 @@ contains
     real(RP), intent(in)  :: lon (ADM_gall,ADM_KNONE,ADM_lall)
     real(RP), intent(out) :: Zsfc(ADM_gall,ADM_KNONE,ADM_lall)
 
-    character(len=ADM_NSYS) :: topo_type = ''
+    character(len=H_SHORT) :: topo_type = ''
 
     namelist / IDEALTOPOPARAM / &
        topo_type
@@ -79,18 +76,18 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[ideal topo]/Category[common share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=IDEALTOPOPARAM,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[ideal topo]/Category[common share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=IDEALTOPOPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** IDEALTOPOPARAM is not specified. use default.'
+       write(IO_FID_LOG,*) '*** IDEALTOPOPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist IDEALTOPOPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=IDEALTOPOPARAM)
+    write(IO_FID_LOG,nml=IDEALTOPOPARAM)
 
     if    ( topo_type == 'Schar_Moderate' ) then
 
@@ -111,7 +108,7 @@ contains
 
     else
        write(*,          *) 'xxx Not appropriate topo_type. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate topo_type. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate topo_type. STOP.'
        call ADM_proc_stop
     endif
 
@@ -125,7 +122,6 @@ contains
        lon, &
        Zsfc )
     use mod_adm, only: &
-       ADM_CTL_FID,   &
        ADM_proc_stop, &
        ADM_KNONE,     &
        ADM_lall,      &
@@ -162,18 +158,18 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[topo Schar Moderate]/Category[common share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=IDEALTOPOPARAM_Schar_Moderate,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[topo Schar Moderate]/Category[common share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=IDEALTOPOPARAM_Schar_Moderate,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** IDEALTOPOPARAM_Schar_Moderate is not specified. use default.'
+       write(IO_FID_LOG,*) '*** IDEALTOPOPARAM_Schar_Moderate is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Moderate. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Moderate. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Moderate. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=IDEALTOPOPARAM_Schar_Moderate)
+    write(IO_FID_LOG,nml=IDEALTOPOPARAM_Schar_Moderate)
 
     K0 = ADM_KNONE
 
@@ -211,7 +207,6 @@ contains
        lon, &
        Zsfc )
     use mod_adm, only: &
-       ADM_CTL_FID,   &
        ADM_proc_stop, &
        ADM_KNONE,     &
        ADM_lall,      &
@@ -249,18 +244,18 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[topo Schar Steep]/Category[common share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=IDEALTOPOPARAM_Schar_Steep,iostat=ierr)
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[topo Schar Steep]/Category[common share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=IDEALTOPOPARAM_Schar_Steep,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** IDEALTOPOPARAM_Schar_Steep is not specified. use default.'
+       write(IO_FID_LOG,*) '*** IDEALTOPOPARAM_Schar_Steep is not specified. use default.'
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Steep. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Steep. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Steep. STOP.'
        call ADM_proc_stop
     endif
-    write(ADM_LOG_FID,nml=IDEALTOPOPARAM_Schar_Steep)
+    write(IO_FID_LOG,nml=IDEALTOPOPARAM_Schar_Steep)
 
     K0 = ADM_KNONE
 

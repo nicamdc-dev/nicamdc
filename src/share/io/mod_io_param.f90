@@ -29,9 +29,9 @@ module mod_io_param
   !++ Public parameters & variables
   !
   !--- character length
-  integer, public, parameter :: H_SHORT =  16 !< character length for short var.
-  integer, public, parameter :: H_MID   =  64 !< character length for middle var.
-  integer, public, parameter :: H_LONG  = 256 !< character length for long var.
+  integer, public, parameter :: IO_HSHORT =  16 !< character length for short var.
+  integer, public, parameter :: IO_HMID   =  64 !< character length for middle var.
+  integer, public, parameter :: IO_HLONG  = 256 !< character length for long var.
 
   !--- data type
   integer, public, parameter :: IO_REAL4    = 0 !< ID for 4byte real

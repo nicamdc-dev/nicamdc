@@ -6,13 +6,13 @@
 module mod_mnginfo_light
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
+  !++ Description:
   !      mnginfo reader (extraced from mod_adm)
   !
   !++ Current Corresponding Author: H.Yashiro
-  ! 
-  !++ History: 
-  !      Version   Date      Comment 
+  !
+  !++ History:
+  !      Version   Date      Comment
   !      -----------------------------------------------------------------------
   !      0.90      11-09-01  H.Yashiro : [NEW]
   !
@@ -20,8 +20,7 @@ module mod_mnginfo_light
   !
   !++ Used modules
   !
-  use mod_misc, only : &
-    MISC_get_available_fid
+  use mod_stdio
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -78,14 +77,14 @@ contains
 
     mng_rgnid(:)=-1
 
-    fid = MISC_get_available_fid()
+    fid = IO_get_available_fid()
     open(fid,file=trim(fname),status='old',form='formatted',iostat=ierr)
        if (ierr /= 0) then
           write(*,*) "cannot read mnginfo file :",trim(fname)
           stop
        endif
 
-       read(fid,nml=rgn_info) 
+       read(fid,nml=rgn_info)
        if ( num_of_rgn /= lall ) then ! [add] H.Yashiro 20120621
           write(*,*) "Inconsintent between rlevel and mnginfo."
           write(*,*) "rlevel,  num_of_mng=", rlevel, lall
@@ -93,7 +92,7 @@ contains
           stop
        endif
 
-       read(fid,nml=proc_info) 
+       read(fid,nml=proc_info)
        MNG_PALL = num_of_proc
 
        allocate( MNG_prc_rnum(num_of_proc) )
@@ -102,7 +101,7 @@ contains
        MNG_prc_tab(:,:) = -1
 
        do m = 1, num_of_proc
-          read(fid,nml=rgn_mng_info) 
+          read(fid,nml=rgn_mng_info)
 
           MNG_prc_rnum(m)                = num_of_mng
           MNG_prc_tab(1:num_of_mng,peid) = mng_rgnid(1:num_of_mng)

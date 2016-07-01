@@ -52,11 +52,8 @@ module mod_history_vars
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID,  &
-     ADM_MAXFNAME, &
-     ADM_NSYS
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -709,7 +706,7 @@ contains
        enddo
        if ( k >= kdim ) then
           write(*,          *) 'xxx internal error! [sv_plev_uvwt/mod_history_vars] STOP.'
-          write(ADM_LOG_FID,*) 'xxx internal error! [sv_plev_uvwt/mod_history_vars] STOP.',kdim,k,plev,ij,pre(ij,:)
+          write(IO_FID_LOG,*) 'xxx internal error! [sv_plev_uvwt/mod_history_vars] STOP.',kdim,k,plev,ij,pre(ij,:)
           call ADM_proc_stop
        endif
 
