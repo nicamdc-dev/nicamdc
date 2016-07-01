@@ -167,41 +167,41 @@ contains
        var_comp_table_file         &  ! [add] C.Kodama 2014.05.09
        )
     type(netcdf_handler),intent(out)          :: nc        ! handler
-    character(*),        intent( in)          :: ncfile    ! output netcdf filename
-    integer,             intent( in),optional :: count(4)  ! unit array size to write
-    character(*),        intent( in),optional :: title
-    character(*),        intent( in),optional :: history
-    character(*),        intent( in),optional :: comment
+    character(*),        intent(in)           :: ncfile    ! output netcdf filename
+    integer,             intent(in) ,optional :: count(4)  ! unit array size to write
+    character(*),        intent(in) ,optional :: title
+    character(*),        intent(in) ,optional :: history
+    character(*),        intent(in) ,optional :: comment
 
-    integer,             intent( in),optional :: imax
-    integer,             intent( in),optional :: jmax
-    integer,             intent( in),optional :: kmax
-    integer,             intent( in),optional :: tmax
+    integer,             intent(in) ,optional :: imax
+    integer,             intent(in) ,optional :: jmax
+    integer,             intent(in) ,optional :: kmax
+    integer,             intent(in) ,optional :: tmax
 
-    real(8),             intent( in),optional :: lon(:)
-    real(8),             intent( in),optional :: lat(:)
-    real(8),             intent( in),optional :: lev(:)
-    real(8),             intent( in),optional :: time(:)
+    real(8),             intent(in) ,optional :: lon(:)
+    real(8),             intent(in) ,optional :: lat(:)
+    real(8),             intent(in) ,optional :: lev(:)
+    real(8),             intent(in) ,optional :: time(:)
 
-    character(*),        intent( in),optional :: lon_units
-    character(*),        intent( in),optional :: lat_units
-    character(*),        intent( in),optional :: lev_units
-    character(*),        intent( in),optional :: time_units
+    character(*),        intent(in) ,optional :: lon_units
+    character(*),        intent(in) ,optional :: lat_units
+    character(*),        intent(in) ,optional :: lev_units
+    character(*),        intent(in) ,optional :: time_units
 
-    character(*),        intent( in),optional :: var_name  ! e.g. 'ms_tem', 'sa_u10m'
-    character(*),        intent( in),optional :: var_desc  ! description of the variable
-    character(*),        intent( in),optional :: var_units
-    real(4),             intent( in),optional :: var_missing
+    character(*),        intent(in) ,optional :: var_name  ! e.g. 'ms_tem', 'sa_u10m'
+    character(*),        intent(in) ,optional :: var_desc  ! description of the variable
+    character(*),        intent(in) ,optional :: var_units
+    real(4),             intent(in) ,optional :: var_missing
 
-    logical,             intent( in),optional :: var_try_comp_2byte ! just try to
-    logical,             intent( in),optional :: var_comp_2byte     ! force to
-    logical,             intent( in),optional :: var_comp_hdf5      ! force to
-    real(4),             intent( in),optional :: var_valid_min
-    real(4),             intent( in),optional :: var_valid_max
-    real(4),             intent( in),optional :: var_force_to_set_valid_min
-    real(4),             intent( in),optional :: var_force_to_set_valid_max
-    integer,             intent( in),optional :: chunksizes(4)
-    character(*),        intent( in),optional :: var_comp_table_file  ! [add] C.Kodama 2014.05.09
+    logical,             intent(in) ,optional :: var_try_comp_2byte ! just try to
+    logical,             intent(in) ,optional :: var_comp_2byte     ! force to
+    logical,             intent(in) ,optional :: var_comp_hdf5      ! force to
+    real(4),             intent(in) ,optional :: var_valid_min
+    real(4),             intent(in) ,optional :: var_valid_max
+    real(4),             intent(in) ,optional :: var_force_to_set_valid_min
+    real(4),             intent(in) ,optional :: var_force_to_set_valid_max
+    integer,             intent(in) ,optional :: chunksizes(4)
+    character(*),        intent(in) ,optional :: var_comp_table_file  ! [add] C.Kodama 2014.05.09
 
     write(*,*) 'netcdf is NOT supported in this build.'
     stop 1
@@ -233,7 +233,7 @@ contains
        var_missing &
        )
     type(netcdf_handler),intent(out)          :: nc
-    character(*),        intent( in)          :: ncfile
+    character(*),        intent(in)           :: ncfile
     integer,             intent(out),optional :: count(4)
     character(*),        intent(out),optional :: title
     character(*),        intent(out),optional :: history
@@ -374,9 +374,9 @@ contains
   end subroutine netcdf_read_4d
 
   subroutine netcdf_read_main( nc, wrk_var_real4, i, j, k, t )
-    type(netcdf_handler),intent( in)          :: nc
+    type(netcdf_handler),intent(in)           :: nc
     real(4),             intent(out)          :: wrk_var_real4(:,:,:,:)
-    integer,             intent( in),optional :: i, j, k, t  ! record position to read
+    integer,             intent(in) ,optional :: i, j, k, t  ! record position to read
 
     write(*,*) 'netcdf is NOT supported in this build.'
     stop 1
@@ -411,9 +411,9 @@ contains
 
   ! based on mod_grads.f90 and prg_ico2ll.f90 in NICAM
   subroutine netcdf_create_grads_ctl( nc, fid_ctl, endian )
-    type(netcdf_handler),intent( in)          :: nc
-    integer,             intent( in)          :: fid_ctl
-    character(*),        intent( in),optional :: endian
+    type(netcdf_handler),intent(in)           :: nc
+    integer,             intent(in)           :: fid_ctl
+    character(*),        intent(in) ,optional :: endian
 
     write(*,*) 'netcdf is NOT supported in this build.'
     stop 1
@@ -422,7 +422,7 @@ contains
 
   subroutine check( status )
     implicit none
-    integer,intent( in) :: status
+    integer,intent(in)  :: status
 
     write(*,*) 'netcdf is NOT supported in this build.'
     stop 1

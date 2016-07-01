@@ -33,6 +33,7 @@ module mod_oprt
   !++ used modules
   !
   use mod_precision
+  use mod_io_param
   use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID,      &
@@ -2826,16 +2827,14 @@ contains
        ADM_proc_stop, &
        ADM_have_pl
     use mod_fio, only: &
-       FIO_output,    &
-       FIO_HMID,      &
-       FIO_REAL8
+       FIO_output
     use mod_comm, only: &
        COMM_data_transfer
     implicit none
 
     character(LEN=*), intent(in) :: basename
 
-    character(LEN=FIO_HMID) :: desc = 'Coefficients info'
+    character(LEN=H_MID) :: desc = 'Coefficients info'
 
     real(RP) :: tmp   (ADM_gall   ,49,ADM_lall   ,1)
     real(RP) :: tmp_pl(ADM_gall_pl,49,ADM_lall_pl,1)
@@ -2957,10 +2956,10 @@ contains
 
     if ( OPRT_io_mode == 'ADVANCED' ) then
 
-       call FIO_output( tmp(:,:,:,1),                                      &
-                        basename, desc, "",                                &
-                        "oprtcoef", "oprt coef", "",                       &
-                        "", FIO_REAL8, "LAYERNM", 1, 49, 1, 0.0_DP, 0.0_DP )
+       call FIO_output( tmp(:,:,:,1),                                     &
+                        basename, desc, "",                               &
+                        "oprtcoef", "oprt coef", "",                      &
+                        "", IO_REAL8, "LAYERNM", 1, 49, 1, 0.0_DP, 0.0_DP )
 
     else
        write(ADM_LOG_FID,*) 'Invalid io_mode!'

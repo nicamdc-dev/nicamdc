@@ -21,6 +21,7 @@ module mod_gmtr
   !++ Used modules
   !
   use mod_precision
+  use mod_io_param
   use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID, &
@@ -931,17 +932,15 @@ contains
        ADM_have_pl, &
        ADM_prc_me
     use mod_fio, only: &
-       FIO_output, &
-       FIO_HMID,   &
-       FIO_REAL8
+       FIO_output
     use mod_comm, only: &
        COMM_data_transfer
     implicit none
 
     character(LEN=*), intent(in) :: basename
 
-    character(LEN=128)      :: fname
-    character(LEN=FIO_HMID) :: desc = 'Metrics info'
+    character(LEN=H_LONG) :: fname
+    character(LEN=H_MID)  :: desc = 'Metrics info'
 
     real(RP) :: tmp    (ADM_gall   ,ADM_KNONE,ADM_lall   ,2)
     real(RP) :: tmp_pl (ADM_gall_pl,ADM_KNONE,ADM_lall_pl,2)
@@ -1121,20 +1120,19 @@ contains
        call FIO_output( GMTR_P_var(:,:,:,GMTR_P_AREA),                     &
                         basename, desc, "",                                &
                         "area", "control area", "",                        &
-                        "m2", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
-       call FIO_output( tmp(:,:,:,I_rgn),                                   &
-                        basename, desc, "",                                 &
-                        "rgn", "region number", "",                         &
-                        "NIL", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
-       call FIO_output( tmp(:,:,:,I_grid),                                  &
-                        basename, desc, "",                                 &
-                        "grid", "grid number", "",                          &
-                        "NIL", FIO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
-
+                        "m2", IO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP  )
+       call FIO_output( tmp(:,:,:,I_rgn),                                  &
+                        basename, desc, "",                                &
+                        "rgn", "region number", "",                        &
+                        "NIL", IO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
+       call FIO_output( tmp(:,:,:,I_grid),                                 &
+                        basename, desc, "",                                &
+                        "grid", "grid number", "",                         &
+                        "NIL", IO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
        call FIO_output( tmp2(:,:,:,1),                                     &
                         basename, desc, "",                                &
                         "gmtrmetrics", "gmtr metrics", "",                 &
-                        "", FIO_REAL8, "LAYERNM", 1, 60, 1, 0.0_DP, 0.0_DP )
+                        "", IO_REAL8, "LAYERNM", 1, 60, 1, 0.0_DP, 0.0_DP  )
 
     elseif( GMTR_io_mode == 'LEGACY' ) then
 

@@ -34,6 +34,7 @@ program fio_ico2ll
   !
   use mpi
   use mod_precision
+  use mod_io_param
   use mod_misc, only : &
     MISC_get_available_fid, &
     MISC_make_idstr
@@ -42,20 +43,8 @@ program fio_ico2ll
     CNST_UNDEF4
   use mod_calendar, only : &
     calendar_ss2yh
-  use mod_fio, only : &
-    FIO_HSHORT,       &
-    FIO_HMID,         &
-    FIO_HLONG,        &
-    FIO_REAL4,        &
-    FIO_REAL8,        &
-    FIO_BIG_ENDIAN,   &
-    FIO_ICOSAHEDRON,  &
-    FIO_IGA_LCP,      &
-    FIO_IGA_MLCP,     &
-    FIO_INTEG_FILE,   &
-    FIO_SPLIT_FILE,   &
-    FIO_FREAD,        &
-    headerinfo,       &
+  use mod_fio, only: &
+    headerinfo, &
     datainfo
   use mod_mnginfo_light, only : &
     MNG_mnginfo_input,   &
@@ -83,30 +72,30 @@ program fio_ico2ll
   integer,      save :: fmax
 
   !--- NAMELIST
-  integer                   :: glevel              = -1
-  integer                   :: rlevel              = -1
-  character(LEN=FIO_HSHORT) :: grid_topology       = 'ICOSAHEDRON'
+  integer                :: glevel              = -1
+  integer                :: rlevel              = -1
+  character(LEN=H_SHORT) :: grid_topology       = 'ICOSAHEDRON'
                                                    ! 'LCP'
                                                    ! 'MLCP'
-  logical                   :: complete            = .false.
-  character(LEN=FIO_HLONG)  :: mnginfo             = ''
-  character(LEN=FIO_HLONG)  :: layerfile_dir       = ''
-  character(LEN=FIO_HLONG)  :: llmap_base          = ''
-  character(LEN=FIO_HLONG)  :: infile(flim)        = ''
-  integer                   :: step_str            = 1
-  integer                   :: step_end            = max_nstep
-  character(LEN=FIO_HLONG)  :: outfile_dir         = '.'
-  character(LEN=FIO_HSHORT) :: outfile_prefix      = ''
-  integer                   :: outfile_rec         = 1
-  logical                   :: lon_swap            = .false.
-  logical                   :: devide_template     = .false.
-  logical                   :: output_grads        = .true.
-  logical                   :: output_gtool        = .false.
-  logical                   :: output_netcdf       = .false.   ! [add] 13-04-18
-  logical                   :: datainfo_nodep_pe   = .false.   !   <- can be .true. if data header do not depend on pe.
-  character(LEN=FIO_HSHORT) :: selectvar(max_nvar) = ''
-  character(LEN=FIO_HSHORT) :: large_memory_var(max_nvar) = '' ! [add] 13-04-18
-  character(LEN=FIO_HLONG)  :: var_comp_table_file = ''        ! [add] 14-05-09
+  logical                :: complete            = .false.
+  character(LEN=H_LONG)  :: mnginfo             = ''
+  character(LEN=H_LONG)  :: layerfile_dir       = ''
+  character(LEN=H_LONG)  :: llmap_base          = ''
+  character(LEN=H_LONG)  :: infile(flim)        = ''
+  integer                :: step_str            = 1
+  integer                :: step_end            = max_nstep
+  character(LEN=H_LONG)  :: outfile_dir         = '.'
+  character(LEN=H_SHORT) :: outfile_prefix      = ''
+  integer                :: outfile_rec         = 1
+  logical                :: lon_swap            = .false.
+  logical                :: devide_template     = .false.
+  logical                :: output_grads        = .true.
+  logical                :: output_gtool        = .false.
+  logical                :: output_netcdf       = .false.   ! [add] 13-04-18
+  logical                :: datainfo_nodep_pe   = .false.   !   <- can be .true. if data header do not depend on pe.
+  character(LEN=H_SHORT) :: selectvar(max_nvar) = ''
+  character(LEN=H_SHORT) :: large_memory_var(max_nvar) = '' ! [add] 13-04-18
+  character(LEN=H_LONG)  :: var_comp_table_file = ''        ! [add] 14-05-09
 
   logical                   :: help = .false.
 
@@ -134,12 +123,12 @@ program fio_ico2ll
                     var_comp_table_file, &  ! [add] 14-05-09
                     help
   !-----------------------------------------------------------------------------
-  character(LEN=FIO_HLONG) :: infname   = ""
-  character(LEN=FIO_HLONG) :: outbase   = ""
-  character(LEN=FIO_HLONG) :: layerfile = ""
-  integer                  :: fmode
-  integer                  :: gtopology
-  logical                  :: allvar = .true.
+  character(LEN=H_LONG) :: infname   = ""
+  character(LEN=H_LONG) :: outbase   = ""
+  character(LEN=H_LONG) :: layerfile = ""
+  integer               :: fmode
+  integer               :: gtopology
+  logical               :: allvar = .true.
 
   ! ll grid coordinate
   integer              :: imax, jmax
@@ -160,24 +149,24 @@ program fio_ico2ll
   type(headerinfo) hinfo
   type(datainfo)   dinfo
 
-  integer                                :: num_of_data
-  integer                                :: nvar
-  character(LEN=FIO_HSHORT), allocatable :: var_name(:)
-  character(LEN=FIO_HMID),   allocatable :: var_desc(:)
-  character(LEN=FIO_HSHORT), allocatable :: var_unit(:)
-  character(LEN=FIO_HSHORT), allocatable :: var_layername(:)
-  integer,                   allocatable :: var_datatype(:)
-  integer,                   allocatable :: var_nlayer(:)
-  integer,                   allocatable :: var_nstep(:)
-  integer(8),                allocatable :: var_time_str(:)
-  integer(8),                allocatable :: var_dt(:)
-  real(8),                   allocatable :: var_zgrid(:,:)
+  integer                             :: num_of_data
+  integer                             :: nvar
+  character(LEN=H_SHORT), allocatable :: var_name(:)
+  character(LEN=H_MID),   allocatable :: var_desc(:)
+  character(LEN=H_SHORT), allocatable :: var_unit(:)
+  character(LEN=H_SHORT), allocatable :: var_layername(:)
+  integer,                allocatable :: var_datatype(:)
+  integer,                allocatable :: var_nlayer(:)
+  integer,                allocatable :: var_nstep(:)
+  integer(8),             allocatable :: var_time_str(:)
+  integer(8),             allocatable :: var_dt(:)
+  real(8),                allocatable :: var_zgrid(:,:)
   ! header
-  character(LEN=16),         allocatable :: var_gthead(:,:)
+  character(LEN=16),      allocatable :: var_gthead(:,:)
   ! NetCDF handler
-  type(netcdf_handler)                   :: nc              ! [add] 13-04-18
-  character(LEN=1024)                    :: nc_time_units   ! [add] 13-04-18
-  character(LEN=4)                       :: date_str_tmp(6) ! [add] 13-04-18
+  type(netcdf_handler)                :: nc              ! [add] 13-04-18
+  character(LEN=1024)                 :: nc_time_units   ! [add] 13-04-18
+  character(LEN=4)                    :: date_str_tmp(6) ! [add] 13-04-18
 
   ! ico data
   integer              :: GALL
@@ -190,12 +179,12 @@ program fio_ico2ll
   real(4), allocatable :: temp(:,:)
 
 
-  character(LEN=FIO_HLONG) :: fname
-  character(LEN=20)        :: tmpl
-  character(LEN=16)        :: gthead(64)
-  integer(8)               :: nowsec
-  integer(8)               :: recsize ! [mod] 12-04-19 H.Yashiro
-  integer                  :: kmax, num_of_step, step, date_str(6)
+  character(LEN=H_LONG) :: fname
+  character(LEN=20)     :: tmpl
+  character(LEN=16)     :: gthead(64)
+  integer(8)            :: nowsec
+  integer(8)            :: recsize ! [mod] 12-04-19 H.Yashiro
+  integer               :: kmax, num_of_step, step, date_str(6)
 
   logical :: addvar
   integer :: fid, did, ofid, ierr, irec
@@ -223,11 +212,11 @@ program fio_ico2ll
   endif
 
   if ( grid_topology=="ICOSAHEDRON" ) then
-     gtopology = FIO_ICOSAHEDRON
+     gtopology = IO_ICOSAHEDRON
   elseif( grid_topology=="LCP" ) then
-     gtopology = FIO_IGA_LCP
+     gtopology = IO_IGA_LCP
   elseif( grid_topology=="MLCP" ) then
-     gtopology = FIO_IGA_MLCP
+     gtopology = IO_IGA_MLCP
   else
      write(*,*) "Unknown type of Grid toporogy:",grid_topology
      stop
@@ -247,10 +236,10 @@ program fio_ico2ll
 
   !--- prepare region infomation
   if (complete) then ! all region
-    fmode = FIO_INTEG_FILE
+    fmode = IO_INTEG_FILE
     call MNG_mnginfo_noinput( rlevel )
   else               ! region specified by mnginfo
-    fmode = FIO_SPLIT_FILE
+    fmode = IO_SPLIT_FILE
     call MNG_mnginfo_input( rlevel, trim(mnginfo) )
   endif
 
@@ -357,7 +346,7 @@ program fio_ico2ll
      prc_tab_C(1:MNG_prc_rnum(p)) = MNG_prc_tab(1:MNG_prc_rnum(p),p)-1
 
      call fio_put_commoninfo( fmode,           &
-                              FIO_BIG_ENDIAN,  &
+                              IO_BIG_ENDIAN,   &
                               gtopology,       &
                               glevel,          &
                               rlevel,          &
@@ -365,7 +354,7 @@ program fio_ico2ll
                               prc_tab_C        )
 
      call fio_register_file(ifid(p),trim(infname))
-     call fio_fopen(ifid(p),FIO_FREAD)
+     call fio_fopen(ifid(p),IO_FREAD)
 
      ! <-- [add] C.Kodama 13.04.18
      if( datainfo_nodep_pe .and. p > 1 ) then
@@ -614,7 +603,7 @@ program fio_ico2ll
         step = t-1 + step_str
 
         do p = 1, MNG_PALL
-           call fio_fopen(ifid(p),FIO_FREAD)  ! [add] 13-04-18
+           call fio_fopen(ifid(p),IO_FREAD)  ! [add] 13-04-18
            if ( t==1 ) write(*,'(A10)',advance='no') ' ->region:'
 
            allocate( data4allrgn(GALL*kmax*MNG_prc_rnum(p)) )
@@ -637,14 +626,14 @@ program fio_ico2ll
            !--- read from pe000xx file
 
 
-           if ( dinfo%datatype == FIO_REAL4 ) then
+           if ( dinfo%datatype == IO_REAL4 ) then
               if ( trim(large_memory_var(1)) /= '' ) then
                  call fio_read_data_tmpdata(ifid(p),did,data4allrgn(:))
               else
                  call fio_read_data(ifid(p),did,data4allrgn(:))
               endif
 
-           elseif( dinfo%datatype == FIO_REAL8 ) then
+           elseif( dinfo%datatype == IO_REAL8 ) then
               if ( trim(large_memory_var(1)) /= '' ) then
                  call fio_read_data_tmpdata(ifid(p),did,data8allrgn(:))
               else
@@ -930,19 +919,19 @@ contains
     implicit none
 
     character(LEN=16),         intent(out) :: gthead(64)
-    character(LEN=FIO_HLONG),  intent( in) :: outfile_dir
-    character(LEN=FIO_HSHORT), intent( in) :: varname
-    character(LEN=FIO_HMID),   intent( in) :: description
-    character(LEN=FIO_HSHORT), intent( in) :: unit
-    character(LEN=FIO_HSHORT), intent( in) :: layername
-    integer,                   intent( in) :: imax
-    integer,                   intent( in) :: jmax
-    integer,                   intent( in) :: kmax
-    real(8),                   intent( in) :: lon(imax)
-    real(8),                   intent( in) :: lat(jmax)
-    real(8),                   intent( in) :: alt(kmax)
-    integer(8),                intent( in) :: dt
-    logical,                   intent( in) :: lon_swap
+    character(LEN=H_LONG),  intent(in)  :: outfile_dir
+    character(LEN=H_SHORT), intent(in)  :: varname
+    character(LEN=H_MID),   intent(in)  :: description
+    character(LEN=H_SHORT), intent(in)  :: unit
+    character(LEN=H_SHORT), intent(in)  :: layername
+    integer,                   intent(in)  :: imax
+    integer,                   intent(in)  :: jmax
+    integer,                   intent(in)  :: kmax
+    real(8),                   intent(in)  :: lon(imax)
+    real(8),                   intent(in)  :: lat(jmax)
+    real(8),                   intent(in)  :: alt(kmax)
+    integer(8),                intent(in)  :: dt
+    logical,                   intent(in)  :: lon_swap
 
     character(LEN=16) :: axhead(64)
     character(LEN=16) :: hitem

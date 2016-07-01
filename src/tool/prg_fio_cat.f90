@@ -23,17 +23,10 @@ program fio_cat
   !
   use mpi
   use mod_precision
+  use mod_io_param
   use mod_misc, only: &
      MISC_get_available_fid
-  use mod_fio, only : &
-     FIO_HSHORT,      &
-     FIO_HMID,        &
-     FIO_HLONG,       &
-     FIO_REAL4,       &
-     FIO_REAL8,       &
-     FIO_BIG_ENDIAN,  &
-     FIO_FREAD,       &
-     FIO_FWRITE,      &
+  use mod_fio, only: &
      headerinfo, &
      datainfo
   use mod_mnginfo_light, only : &
@@ -52,15 +45,15 @@ program fio_cat
   integer,      save :: fmax
 
   !--- NAMELIST
-  integer                   :: glevel       = -1
-  integer                   :: rlevel       = -1
-  character(LEN=FIO_HLONG)  :: mnginfo      = ""
-  character(LEN=FIO_HLONG)  :: infile(flim) = ""
-  character(LEN=FIO_HLONG)  :: outfile      = ""
-  logical                   :: use_mpi      = .true.
-  integer                   :: pe_str       =  0
-  integer                   :: pe_end       = -1
-  logical                   :: help         = .false.
+  integer               :: glevel       = -1
+  integer               :: rlevel       = -1
+  character(LEN=H_LONG) :: mnginfo      = ""
+  character(LEN=H_LONG) :: infile(flim) = ""
+  character(LEN=H_LONG) :: outfile      = ""
+  logical               :: use_mpi      = .true.
+  integer               :: pe_str       =  0
+  integer               :: pe_end       = -1
+  logical               :: help         = .false.
 
   namelist /OPTION/ glevel,  &
                     rlevel,  &
@@ -73,32 +66,32 @@ program fio_cat
                     help
 
   !-----------------------------------------------------------------------------
-  character(LEN=FIO_HLONG)  :: infname  = ""
-  character(LEN=FIO_HLONG)  :: outfname = ""
+  character(LEN=H_LONG)  :: infname  = ""
+  character(LEN=H_LONG)  :: outfname = ""
 
-  type(headerinfo)          :: hinfo
-  type(datainfo)            :: dinfo
+  type(headerinfo)       :: hinfo
+  type(datainfo)         :: dinfo
 
-  character(LEN=FIO_HMID)   :: pkg_desc
-  character(LEN=FIO_HLONG)  :: pkg_note
-  integer                   :: nmax_data
+  character(LEN=H_MID)   :: pkg_desc
+  character(LEN=H_LONG)  :: pkg_note
+  integer                :: nmax_data
 
-  integer                   :: nvar
-  character(LEN=FIO_HSHORT) :: var_name (max_nvar)
-  integer                   :: var_nstep(max_nvar)
+  integer                :: nvar
+  character(LEN=H_SHORT) :: var_name (max_nvar)
+  integer                :: var_nstep(max_nvar)
 
-  integer              :: GALL
-  integer              :: KALL
-  integer              :: LALL
-  real(4), allocatable :: data4_1D(:)
-  real(8), allocatable :: data8_1D(:)
+  integer                :: GALL
+  integer                :: KALL
+  integer                :: LALL
+  real(4), allocatable   :: data4_1D(:)
+  real(8), allocatable   :: data8_1D(:)
 
   ! for MPI
-  integer              :: pe_all
-  integer              :: prc_nall, prc_nlocal
-  integer              :: prc_myrank, pstr, pend
-  integer              :: fid_log
-  character(LEN=6)     :: rankstr
+  integer                :: pe_all
+  integer                :: prc_nall, prc_nlocal
+  integer                :: prc_myrank, pstr, pend
+  integer                :: fid_log
+  character(LEN=6)       :: rankstr
 
   logical :: addvar
   integer :: p, f, v, vid
@@ -177,9 +170,9 @@ program fio_cat
      write(fid_log,*) '++output : ', trim(outfname)
 
      call fio_register_file(ifid,trim(infname))
-     call fio_fopen(ifid,FIO_FREAD)
+     call fio_fopen(ifid,IO_FREAD)
      ! put information from 1st input file
-     call fio_put_commoninfo_fromfile(ifid,FIO_BIG_ENDIAN)
+     call fio_put_commoninfo_fromfile(ifid,IO_BIG_ENDIAN)
 
      call fio_read_allinfo(ifid)
      allocate( hinfo%rgnid(LALL) )
@@ -190,7 +183,7 @@ program fio_cat
      write(fid_log,*) '++input', 1, ' : ', trim(infname), "(n=", nmax_data, ")"
 
      call fio_register_file(ofid,trim(outfname))
-     call fio_fopen(ofid,FIO_FWRITE)
+     call fio_fopen(ofid,IO_FWRITE)
      call fio_put_write_pkginfo(ofid,pkg_desc,pkg_note)
 
      nvar = 0
@@ -219,12 +212,12 @@ program fio_cat
         dinfo%step = var_nstep(vid)
 
         ! read->write data
-        if ( dinfo%datatype == FIO_REAL4 ) then
+        if ( dinfo%datatype == IO_REAL4 ) then
            allocate( data4_1D(GALL*KALL*LALL) )
            call fio_read_data(ifid,idid,data4_1D)
            call fio_put_write_datainfo_data(odid,ofid,dinfo,data4_1D)
            deallocate( data4_1D )
-        elseif( dinfo%datatype == FIO_REAL8 ) then
+        elseif( dinfo%datatype == IO_REAL8 ) then
            allocate( data8_1D(GALL*KALL*LALL) )
            call fio_read_data(ifid,idid,data8_1D)
            call fio_put_write_datainfo_data(odid,ofid,dinfo,data8_1D)
@@ -238,7 +231,7 @@ program fio_cat
         call fio_mk_fname(infname, trim(infile(f)),'pe',p-1,6)
 
         call fio_register_file(ifid,trim(infname))
-        call fio_fopen(ifid,FIO_FREAD)
+        call fio_fopen(ifid,IO_FREAD)
         call fio_read_allinfo(ifid)
         call fio_get_pkginfo(ifid,hinfo)
         nmax_data = hinfo%num_of_data
@@ -267,12 +260,12 @@ program fio_cat
            dinfo%step = var_nstep(v)
 
            ! read->write data
-           if ( dinfo%datatype == FIO_REAL4 ) then
+           if ( dinfo%datatype == IO_REAL4 ) then
               allocate( data4_1D(GALL*KALL*LALL) )
               call fio_read_data(ifid,idid,data4_1D)
               call fio_put_write_datainfo_data(odid,ofid,dinfo,data4_1D)
               deallocate( data4_1D )
-           elseif( dinfo%datatype == FIO_REAL8 ) then
+           elseif( dinfo%datatype == IO_REAL8 ) then
               allocate( data8_1D(GALL*KALL*LALL) )
               call fio_read_data(ifid,idid,data8_1D)
               call fio_put_write_datainfo_data(odid,ofid,dinfo,data8_1D)

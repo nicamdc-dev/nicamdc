@@ -34,6 +34,7 @@ module mod_history
   !++ Used modules
   !
   use mod_precision
+  use mod_io_param
   use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID,  &
@@ -141,9 +142,6 @@ contains
        calendar_ss2yh
     use mod_grd, only: &
        GRD_gz
-    use mod_fio, only: &
-       FIO_REAL8, &
-       FIO_REAL4
     use mod_time, only: &
        TIME_CTIME
     use mod_runconf, only: &
@@ -280,9 +278,9 @@ contains
     HIST_io_desc  = trim(RUNNAME)
 
     if ( output_size == 4 ) then
-       HIST_dtype = FIO_REAL4
+       HIST_dtype = IO_REAL4
     elseif ( output_size == 8 ) then
-       HIST_dtype = FIO_REAL8
+       HIST_dtype = IO_REAL8
     else
        write(*,*) 'output_size is not appropriate:',output_size
        call ADM_proc_stop

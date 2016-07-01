@@ -30,6 +30,7 @@ module mod_latlon
   !
   use mpi
   use mod_precision
+  use mod_io_param
   use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID, &
@@ -824,9 +825,8 @@ contains
        ADM_KNONE
     use mod_comm, only: &
        COMM_data_transfer
-    use mod_fio, only: & ! [add] H.Yashiro 20110819
-       FIO_output, &
-       FIO_REAL8
+    use mod_fio, only: &
+       FIO_output
     implicit none
 
     real(RP) :: SAMPLE   ( ADM_gall,   ADM_KNONE,ADM_lall,   4)
@@ -878,16 +878,16 @@ contains
 
        call FIO_output( SAMPLE(:,:,:,1), SAMPLE_OUT_BASENAME, "", "", &
                        "sample1", "sample data(prc)", "", "NIL",      &
-                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP   )
+                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    )
        call FIO_output( SAMPLE(:,:,:,2), SAMPLE_OUT_BASENAME, "", "", &
                        "sample2", "sample data(rgn)", "", "NIL",      &
-                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP   )
+                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    )
        call FIO_output( SAMPLE(:,:,:,3), SAMPLE_OUT_BASENAME, "", "", &
                        "sample3", "sample data(i)", "", "NIL",        &
-                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP   )
+                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    )
        call FIO_output( SAMPLE(:,:,:,4), SAMPLE_OUT_BASENAME, "", "", &
                        "sample4", "sample data(j)", "", "NIL",        &
-                       FIO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP   )
+                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    )
 
     elseif( sample_io_mode == 'LEGACY' ) then
 

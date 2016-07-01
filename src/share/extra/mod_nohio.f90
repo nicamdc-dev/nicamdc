@@ -16,6 +16,7 @@ module mod_hio
   !++ Used modules
   !
   use mod_precision
+  use mod_io_param
   use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID
@@ -47,72 +48,32 @@ module mod_hio
   !
   !++ Public parameters & variables
   !
-  !--- character length
-  integer, public, parameter :: HIO_HSHORT =  16 !< character length for short var.
-  integer, public, parameter :: HIO_HMID   =  64 !< character length for middle var.
-  integer, public, parameter :: HIO_HLONG  = 256 !< character length for long var.
-
-  !--- data type
-  integer, public, parameter :: HIO_REAL4    = 0 !< ID for 4byte real
-  integer, public, parameter :: HIO_REAL8    = 1 !< ID for 8byte real
-  integer, public, parameter :: HIO_INTEGER4 = 2 !< ID for 4byte int
-  integer, public, parameter :: HIO_INTEGER8 = 3 !< ID for 8byte int
-
-  !--- data endian
-  integer, public, parameter :: HIO_UNKNOWN_ENDIAN = 0 !< ID for unknown endian
-  integer, public, parameter :: HIO_LITTLE_ENDIAN  = 1 !< ID for little endian
-  integer, public, parameter :: HIO_BIG_ENDIAN     = 2 !< ID for big endian
-
-  !--- topology
-  integer, public, parameter :: HIO_ICOSAHEDRON = 0 !< ID for ico grid
-  integer, public, parameter :: HIO_IGA_LCP     = 1 !< ID for LCP grid
-  integer, public, parameter :: HIO_IGA_MLCP    = 2 !< ID for MLCP grid
-
-  !--- file mode (partial or complete)
-  integer, public, parameter :: HIO_SPLIT_FILE = 0 !< ID for split(partical) file
-  integer, public, parameter :: HIO_INTEG_FILE = 1 !< ID for integrated(complete) file
-
-  !--- proccessor type
-  integer, public, parameter :: HIO_SINGLE_PROC = 0 !< ID for single processor
-  integer, public, parameter :: HIO_MULTI_PROC  = 1 !< ID for multi processor
-
-  !--- action type
-  integer, public, parameter :: HIO_FREAD   = 0 !< ID for read file
-  integer, public, parameter :: HIO_FWRITE  = 1 !< ID for write file
-  integer, public, parameter :: HIO_FAPPEND = 2 !< ID for append file
-
-  !--- data dump type
-  integer, public, parameter :: HIO_DUMP_OFF      = 0 !< Dumping off
-  integer, public, parameter :: HIO_DUMP_HEADER   = 1 !< Dump header only
-  integer, public, parameter :: HIO_DUMP_ALL      = 2 !< Dump all
-  integer, public, parameter :: HIO_DUMP_ALL_MORE = 3 !< Dump all and more
-
   !> struct for package infomation
   type, public :: headerinfo
-     character(len=HIO_HLONG) :: fname         !< file name
-     character(len=HIO_HMID)  :: description   !< file description
-     character(len=HIO_HLONG) :: note          !< longer note of file
-     integer                  :: num_of_var    !< number of data
-     integer                  :: fmode         !< file mode(0,1,2)
-     integer                  :: endiantype    !< endian type(0,1,2)
-     integer                  :: grid_topology !< grid topology(0,1,2)
-     integer                  :: glevel        !< glevel
-     integer                  :: rlevel        !< rlevel
-     integer                  :: num_of_rgn    !< number of region
-     integer, pointer         :: rgnid(:)      !< array of region id
+     character(len=H_LONG)  :: fname         !< file name
+     character(len=H_MID)   :: description   !< file description
+     character(len=H_LONG)  :: note          !< longer note of file
+     integer                :: num_of_var    !< number of data
+     integer                :: fmode         !< file mode(0,1,2)
+     integer                :: endiantype    !< endian type(0,1,2)
+     integer                :: grid_topology !< grid topology(0,1,2)
+     integer                :: glevel        !< glevel
+     integer                :: rlevel        !< rlevel
+     integer                :: num_of_rgn    !< number of region
+     integer, pointer       :: rgnid(:)      !< array of region id
   endtype headerinfo
 
   !> struct for data infomation
   type, public :: datainfo
-     character(len=HIO_HSHORT) :: varname      !< variable name
-     character(len=HIO_HMID)   :: description  !< variable description
-     character(len=HIO_HSHORT) :: unit         !< unit of variable
-     character(len=HIO_HSHORT) :: layername    !< layer name
-     character(len=HIO_HLONG)  :: note         !< longer note of variable
-     integer(DP)               :: datasize     !< data size
-     integer                   :: datatype     !< data type(0,1,2,3)
-     integer                   :: num_of_layer !< number of layer
-     integer                   :: num_of_step  !< number of step
+     character(len=H_SHORT) :: varname      !< variable name
+     character(len=H_MID)   :: description  !< variable description
+     character(len=H_SHORT) :: unit         !< unit of variable
+     character(len=H_SHORT) :: layername    !< layer name
+     character(len=H_LONG)  :: note         !< longer note of variable
+     integer(DP)            :: datasize     !< data size
+     integer                :: datatype     !< data type(0,1,2,3)
+     integer                :: num_of_layer !< number of layer
+     integer                :: num_of_step  !< number of step
   endtype datainfo
 
   !-----------------------------------------------------------------------------

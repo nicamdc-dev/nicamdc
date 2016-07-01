@@ -305,9 +305,9 @@ contains
     implicit none
 
     real(RP) :: area
-    real(RP),          intent( in) :: a(3), b(3), c(3)
-    character(len=*), intent( in) :: polygon_type
-    real(RP),          intent( in) :: radius
+    real(RP),          intent(in)  :: a(3), b(3), c(3)
+    character(len=*), intent(in)  :: polygon_type
+    real(RP),          intent(in)  :: radius
 
     real(RP), parameter :: o(3) = 0.0_RP
 

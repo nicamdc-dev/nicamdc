@@ -30,6 +30,7 @@ module mod_prgvar
   !++ Used modules
   !
   use mod_precision
+  use mod_io_param
   use mod_debug
   use mod_adm, only: &
      ADM_LOG_FID,  &
@@ -1124,11 +1125,8 @@ contains
        ADM_kall,    &
        ADM_kmax,    &
        ADM_kmin
-    use mod_fio, only : & ! [add] H.Yashiro 20110819
-       FIO_output, &
-       FIO_HSHORT, &
-       FIO_HMID,   &
-       FIO_REAL8
+    use mod_fio, only: &
+       FIO_output
     use mod_time, only : &
        TIME_CTIME
     use mod_gtl, only: &
@@ -1146,9 +1144,9 @@ contains
 
     character(len=ADM_MAXFNAME), intent(in) :: basename
 
-    character(len=FIO_HMID)   :: desc = 'INITIAL/RESTART_data_of_prognostic_variables' ! [add] H.Yashiro 20110819
+    character(len=H_MID)   :: desc = 'INITIAL/RESTART_data_of_prognostic_variables' ! [add] H.Yashiro 20110819
 
-    character(len=FIO_HSHORT) :: DLABEL(DIAG_vmax0)
+    character(len=H_SHORT) :: DLABEL(DIAG_vmax0)
     data DLABEL / 'Pressure ',        &
                   'Temperature ',     &
                   'H-Velocity(XDIR)', &
@@ -1156,7 +1154,7 @@ contains
                   'H-Velocity(ZDIR)', &
                   'V-Velocity '       /
 
-    character(len=FIO_HSHORT) :: DUNIT(DIAG_vmax0)
+    character(len=H_SHORT) :: DUNIT(DIAG_vmax0)
     data DUNIT /  'Pa',  &
                   'K',   &
                   'm/s', &
@@ -1164,15 +1162,15 @@ contains
                   'm/s', &
                   'm/s'  /
 
-    character(len=FIO_HSHORT) :: WUNIT = 'kg/kg'
+    character(len=H_SHORT) :: WUNIT = 'kg/kg'
 
-    character(len=ADM_MAXFNAME) :: fname
+    character(len=H_LONG) :: fname
 
     real(RP) :: val_max, val_min
-    logical :: nonzero
+    logical  :: nonzero
 
-    integer :: fid
-    integer :: l, rgnid, nq
+    integer  :: fid
+    integer  :: l, rgnid, nq
     !---------------------------------------------------------------------------
 
     call cnvvar_prg2diag( PRG_var (:,:,:,:), PRG_var_pl (:,:,:,:), & !--- [IN]
@@ -1213,12 +1211,12 @@ contains
 
        do nq = 1, DIAG_vmax0
           call FIO_output( DIAG_var(:,:,:,nq), basename, desc, '', DIAG_name(nq), DLABEL(nq), '', DUNIT(nq), &
-                           FIO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                      )
+                           IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                       )
        enddo
 
        do nq = 1, TRC_vmax
           call FIO_output( DIAG_var(:,:,:,DIAG_vmax0+nq), basename, desc, '', TRC_name(nq), WLABEL(nq), '', WUNIT, &
-                           FIO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                            )
+                           IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                             )
        enddo
 
     elseif( output_io_mode == 'LEGACY' ) then
