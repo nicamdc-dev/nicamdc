@@ -16,7 +16,6 @@ module mod_io_param
   !
   !++ Used modules
   !
-  use mod_precision
   !-----------------------------------------------------------------------------
   implicit none
   private

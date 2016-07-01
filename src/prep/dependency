@@ -21,7 +21,7 @@ PRG_PREP05 = prg_mkllmap
 MODS_PREP =	\
 	mod_mkgrd.o
 
-mod_mkgrd.o	: mod_mkgrd.f90 mod_precision.o mod_adm.o mod_debug.o mod_grd.o mod_cnst.o mod_comm.o mod_gtl.o mod_misc.o mod_gmtr.o
+mod_mkgrd.o	: mod_mkgrd.f90 mod_precision.o mod_adm.o mod_debug.o mod_grd.o mod_cnst.o mod_comm.o mod_gtl.o mod_vector.o mod_gmtr.o
 
 prg_mkmnginfo.o	: prg_mkmnginfo.f90 mod_precision.o mod_adm.o mod_debug.o
 prg_mkrawgrid.o	: prg_mkrawgrid.f90 mod_precision.o mod_adm.o mod_debug.o mod_fio.o mod_comm.o mod_cnst.o mod_grd.o mod_mkgrd.o

@@ -109,8 +109,6 @@ contains
   !-----------------------------------------------------------------------------
   !> setup lat/lon value of the ico-grid (without mod_gmtr)
   subroutine LATLON_ico_setup
-    use mod_misc, only: &
-       MISC_get_latlon
     use mod_adm, only: &
        ADM_have_pl,     &
        ADM_lall,        &
@@ -122,6 +120,8 @@ contains
        ADM_IooJoo_nmax, &
        ADM_IooJoo,      &
        ADM_GIoJo
+    use mod_vector, only: &
+       VECTR_xyz2latlon
     use mod_comm, only: &
        COMM_data_transfer
     use mod_grd, only: &
@@ -146,22 +146,22 @@ contains
     do l = 1, ADM_lall
        do n = 1, ADM_IooJoo_nmax
           ij = ADM_IooJoo(n,ADM_GIoJo)
-          call MISC_get_latlon( GMTR_P_ll(ij,k,l,GMTR_P_LAT), &
-                                GMTR_P_ll(ij,k,l,GMTR_P_LON), &
-                                GRD_x    (ij,k,l,GRD_XDIR),   &
-                                GRD_x    (ij,k,l,GRD_YDIR),   &
-                                GRD_x    (ij,k,l,GRD_ZDIR)    )
+          call VECTR_xyz2latlon( GMTR_P_ll(ij,k,l,GMTR_P_LAT), &
+                                 GMTR_P_ll(ij,k,l,GMTR_P_LON), &
+                                 GRD_x    (ij,k,l,GRD_XDIR),   &
+                                 GRD_x    (ij,k,l,GRD_YDIR),   &
+                                 GRD_x    (ij,k,l,GRD_ZDIR)    )
        enddo ! ij loop
     enddo ! l loop
 
     if ( ADM_have_pl ) then
        n = ADM_GSLF_PL
        do l = 1,ADM_lall_pl
-          call MISC_get_latlon( GMTR_P_ll_pl(n,k,l,GMTR_P_LAT), &
-                                GMTR_P_ll_pl(n,k,l,GMTR_P_LON), &
-                                GRD_x_pl    (n,k,l,GRD_XDIR),   &
-                                GRD_x_pl    (n,k,l,GRD_YDIR),   &
-                                GRD_x_pl    (n,k,l,GRD_ZDIR)    )
+          call VECTR_xyz2latlon( GMTR_P_ll_pl(n,k,l,GMTR_P_LAT), &
+                                 GMTR_P_ll_pl(n,k,l,GMTR_P_LON), &
+                                 GRD_x_pl    (n,k,l,GRD_XDIR),   &
+                                 GRD_x_pl    (n,k,l,GRD_YDIR),   &
+                                 GRD_x_pl    (n,k,l,GRD_ZDIR)    )
        enddo ! l loop
     endif
 
@@ -459,12 +459,6 @@ contains
   !> Description of the subroutine mkrelmap_ico2ll
   !>
   subroutine mkrelmap_ico2ll( what_is_done )
-    use mod_misc, only: &
-       MISC_get_latlon,     &
-       MISC_3dvec_triangle, &
-       MISC_3dvec_cross,    &
-       MISC_3dvec_dot,      &
-       MISC_3dvec_abs
     use mod_adm, only: &
        ADM_proc_stop,     &
        ADM_prc_tab,       &
@@ -486,6 +480,11 @@ contains
        ADM_GIoJp
     use mod_cnst, only: &
        CNST_PI
+    use mod_vector, only: &
+       VECTR_triangle, &
+       VECTR_cross,    &
+       VECTR_dot,      &
+       VECTR_abs
     use mod_grd, only: &
        GRD_rscale, &
        GRD_x
@@ -610,20 +609,20 @@ contains
              r0(3) = sinlat(j)
 
              !--- remove the case inner product is negative
-             call MISC_3dvec_dot( ip, o(:), r1(:), o(:), r0(:) )
+             call VECTR_dot( ip, o(:), r1(:), o(:), r0(:) )
              if( ip < 0.0_RP ) cycle
              v01(:) = r1(:) - r0(:)
 
              !--- normal vector
-             call MISC_3dvec_cross( nvec(:), r1(:), r2(:), r2(:), r3(:) )
-             call MISC_3dvec_abs( len, nvec(:) )
+             call VECTR_cross( nvec(:), r1(:), r2(:), r2(:), r3(:) )
+             call VECTR_abs( len, nvec(:) )
 
              nvec(:) = nvec(:) / len
 
              !------ distance from origin to a plane with r0.
-             call MISC_3dvec_dot( rf, o(:), nvec(:), o(:), r0(:) )
+             call VECTR_dot( rf, o(:), nvec(:), o(:), r0(:) )
              !------ distance from origin to a plane with r1 or (r2,r3).
-             call MISC_3dvec_dot( rn, o(:), nvec(:), o(:), r1(:) )
+             call VECTR_dot( rn, o(:), nvec(:), o(:), r1(:) )
 
              !------ mapping r0
              r0(1) = r0(1) * (rn/rf)
@@ -631,13 +630,13 @@ contains
              r0(3) = r0(3) * (rn/rf)
 
              !--- calculate vectors from triangler points
-             call MISC_3dvec_cross( v12xv10(:), r1(:), r2(:), r0(:), r1(:) )
-             call MISC_3dvec_cross( v23xv20(:), r2(:), r3(:), r0(:), r2(:) )
-             call MISC_3dvec_cross( v31xv30(:), r3(:), r1(:), r0(:), r3(:) )
+             call VECTR_cross( v12xv10(:), r1(:), r2(:), r0(:), r1(:) )
+             call VECTR_cross( v23xv20(:), r2(:), r3(:), r0(:), r2(:) )
+             call VECTR_cross( v31xv30(:), r3(:), r1(:), r0(:), r3(:) )
 
-             call MISC_3dvec_dot( judge12, o(:), nvec(:), o(:), v12xv10(:) )
-             call MISC_3dvec_dot( judge23, o(:), nvec(:), o(:), v23xv20(:) )
-             call MISC_3dvec_dot( judge31, o(:), nvec(:), o(:), v31xv30(:) )
+             call VECTR_dot( judge12, o(:), nvec(:), o(:), v12xv10(:) )
+             call VECTR_dot( judge23, o(:), nvec(:), o(:), v23xv20(:) )
+             call VECTR_dot( judge31, o(:), nvec(:), o(:), v31xv30(:) )
 
              if (       judge12 < eps_judge &
                   .AND. judge23 < eps_judge &
@@ -669,12 +668,12 @@ contains
                       n3_index(nmax_llgrid) = ADM_IooJoo(n,ADM_GIoJp)
                    endif
 
-                   area1 = MISC_3Dvec_triangle( r0(:), r2(:), r3(:), &
-                                                polygon_type, rscale )
-                   area2 = MISC_3Dvec_triangle( r0(:), r3(:), r1(:), &
-                                                polygon_type, rscale )
-                   area3 = MISC_3Dvec_triangle( r0(:), r1(:), r2(:), &
-                                                polygon_type, rscale )
+                   area1 = VECTR_triangle( r0(:), r2(:), r3(:), &
+                                           polygon_type, rscale )
+                   area2 = VECTR_triangle( r0(:), r3(:), r1(:), &
+                                           polygon_type, rscale )
+                   area3 = VECTR_triangle( r0(:), r1(:), r2(:), &
+                                           polygon_type, rscale )
 
                    if (      area1 * 0.0_RP /= 0.0_RP &
                         .OR. area2 * 0.0_RP /= 0.0_RP &
@@ -755,7 +754,7 @@ contains
           r0(3) = sinlat(j)
 
           !--- remove the case inner product is negative
-          call MISC_3dvec_dot( ip, o(:), r1(:), o(:), r0(:) )
+          call VECTR_dot( ip, o(:), r1(:), o(:), r0(:) )
           if( ip < 0.0_RP ) cycle
           v01(:) = r1(:) - r0(:)
 
