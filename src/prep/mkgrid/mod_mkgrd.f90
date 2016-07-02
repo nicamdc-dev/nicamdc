@@ -121,7 +121,7 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** PARAM_MKGRD is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist PARAM_MKGRD. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist PARAM_MKGRD. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist PARAM_MKGRD. STOP.'
        call PRC_MPIstop
     endif
@@ -544,8 +544,8 @@ contains
 
              ! kinetic energy
              var(ij,k,l,I_Ek) = 0.5_RP * ( var(ij,k,l,I_Wx)*var(ij,k,l,I_Wx) &
-                                        + var(ij,k,l,I_Wy)*var(ij,k,l,I_Wy) &
-                                        + var(ij,k,l,I_Wz)*var(ij,k,l,I_Wz) )
+                                         + var(ij,k,l,I_Wy)*var(ij,k,l,I_Wy) &
+                                         + var(ij,k,l,I_Wz)*var(ij,k,l,I_Wz) )
           enddo
 
           ! restore value of fixed point

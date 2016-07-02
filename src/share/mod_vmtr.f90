@@ -227,7 +227,7 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** VMTRPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist VMTRPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist VMTRPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist VMTRPARAM. STOP.'
        call PRC_MPIstop
     endif

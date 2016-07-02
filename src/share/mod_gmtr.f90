@@ -170,7 +170,7 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** GMTRPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist GMTRPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist GMTRPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist GMTRPARAM. STOP.'
        call PRC_MPIstop
     endif

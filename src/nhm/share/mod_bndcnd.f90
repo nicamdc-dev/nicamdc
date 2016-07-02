@@ -109,7 +109,7 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** BNDCNDPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist BNDCNDPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist BNDCNDPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist BNDCNDPARAM. STOP.'
        call PRC_MPIstop
     endif

@@ -87,7 +87,7 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** FORCING_PARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist FORCING_PARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist FORCING_PARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist FORCING_PARAM. STOP.'
        call PRC_MPIstop
     endif

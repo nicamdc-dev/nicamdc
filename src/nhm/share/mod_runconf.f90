@@ -253,7 +253,7 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** RUNCONFPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist RUNCONFPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist RUNCONFPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist RUNCONFPARAM. STOP.'
        call PRC_MPIstop
     endif

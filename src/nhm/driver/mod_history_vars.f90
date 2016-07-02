@@ -706,7 +706,7 @@ contains
           if( pre(ij,k) < plev ) exit
        enddo
        if ( k >= kdim ) then
-          write(*,          *) 'xxx internal error! [sv_plev_uvwt/mod_history_vars] STOP.'
+          write(*         ,*) 'xxx internal error! [sv_plev_uvwt/mod_history_vars] STOP.'
           write(IO_FID_LOG,*) 'xxx internal error! [sv_plev_uvwt/mod_history_vars] STOP.',kdim,k,plev,ij,pre(ij,:)
           call PRC_MPIstop
        endif

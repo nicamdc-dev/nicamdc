@@ -66,7 +66,7 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** RANDOMPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist RANDOMPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist RANDOMPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist RANDOMPARAM. STOP.'
        call PRC_MPIstop
     endif

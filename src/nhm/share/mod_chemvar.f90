@@ -33,10 +33,10 @@ module mod_chemvar
   !
   !++ Public parameters & variables
   !
-  integer,                 public, parameter   :: CHEM_TRC_vlim = 100
-  integer,                 public              :: CHEM_TRC_vmax = 1
-  character(len=16),       public, allocatable :: CHEM_TRC_name(:) ! short name  of tracer
-  character(len=H_SHORT), public, allocatable :: CHEM_TRC_desc(:) ! description of tracer
+  integer,              public, parameter   :: CHEM_TRC_vlim = 100
+  integer,              public              :: CHEM_TRC_vmax = 1
+  character(len=16),    public, allocatable :: CHEM_TRC_name(:) ! short name  of tracer
+  character(len=H_MID), public, allocatable :: CHEM_TRC_desc(:) ! description of tracer
 
   !-----------------------------------------------------------------------------
   !
@@ -70,7 +70,7 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** CHEMVARPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist CHEMVARPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist CHEMVARPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist CHEMVARPARAM. STOP.'
        call PRC_MPIstop
     endif

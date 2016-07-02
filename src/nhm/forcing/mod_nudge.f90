@@ -161,7 +161,7 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** NUDGEPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist NUDGEPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist NUDGEPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NUDGEPARAM. STOP.'
        call PRC_MPIstop
     endif

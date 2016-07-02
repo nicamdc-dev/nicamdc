@@ -228,7 +228,7 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** CNSTPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist CNSTPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist CNSTPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist CNSTPARAM. STOP.'
        call PRC_MPIstop
     endif

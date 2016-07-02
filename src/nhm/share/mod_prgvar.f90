@@ -148,7 +148,7 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** RESTARTPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist RESTARTPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist RESTARTPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist RESTARTPARAM. STOP.'
        call PRC_MPIstop
     endif

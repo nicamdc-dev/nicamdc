@@ -220,7 +220,7 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** NUMFILTERPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist NUMFILTERPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist NUMFILTERPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NUMFILTERPARAM. STOP.'
        call PRC_MPIstop
     endif

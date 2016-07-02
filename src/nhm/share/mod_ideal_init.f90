@@ -172,7 +172,7 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** DYCORETESTPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist DYCORETESTPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist DYCORETESTPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist DYCORETESTPARAM. STOP.'
        call PRC_MPIstop
     endif
@@ -410,7 +410,7 @@ contains
 
        if ( itr > itrmax ) then
           write(IO_FID_LOG,*) 'xxx iteration not converged!', k, pre_save-pre(k), pre(k), pre_sfc, tem(k), tem_sfc
-          write(*,          *) 'xxx iteration not converged!', k, pre_save-pre(k), pre(k), pre_sfc, tem(k), tem_sfc
+          write(*         ,*) 'xxx iteration not converged!', k, pre_save-pre(k), pre(k), pre_sfc, tem(k), tem_sfc
           stop
        endif
 
@@ -441,7 +441,7 @@ contains
 
           if ( itr > itrmax ) then
              write(IO_FID_LOG,*) 'xxx iteration not converged!', k, pre_save-pre(k), pre(k), pre(k-1), tem(k), tem(k-1)
-             write(*,          *) 'xxx iteration not converged!', k, pre_save-pre(k), pre(k), pre(k-1), tem(k), tem(k-1)
+             write(*         ,*) 'xxx iteration not converged!', k, pre_save-pre(k), pre(k), pre(k-1), tem(k), tem(k-1)
              stop
           endif
        enddo
@@ -574,7 +574,7 @@ contains
        enddo
 
        if ( itr > itrmax ) then
-          write(*          ,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
+          write(*         ,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
           write(IO_FID_LOG,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
           call PRC_MPIstop
        endif
@@ -736,7 +736,7 @@ contains
 
     if ( moist == 1 ) then
        if ( NQW_MAX < 3 ) then
-          write(*          ,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
+          write(*         ,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
           write(IO_FID_LOG,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
           call PRC_MPIstop
        endif
@@ -805,7 +805,7 @@ contains
 
        if ( chemtracer ) then
           if ( NCHEM_MAX /= 2 ) then
-             write(*          ,*) 'NCHEM_MAX is not enough! requires 2.', NCHEM_MAX
+             write(*         ,*) 'NCHEM_MAX is not enough! requires 2.', NCHEM_MAX
              write(IO_FID_LOG,*) 'NCHEM_MAX is not enough! requires 2.', NCHEM_MAX
              call PRC_MPIstop
           endif
@@ -920,7 +920,7 @@ contains
     write(IO_FID_LOG,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
 
     if ( NQW_MAX < 3 ) then
-       write(*          ,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
+       write(*         ,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
        write(IO_FID_LOG,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
        call PRC_MPIstop
     endif
@@ -1059,7 +1059,7 @@ contains
 
     write(IO_FID_LOG,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
     if ( NQW_MAX < 3 ) then
-       write(*          ,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
+       write(*         ,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
        write(IO_FID_LOG,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
        call PRC_MPIstop
     endif
@@ -1430,7 +1430,7 @@ contains
        enddo
 
     case default
-       write(*          ,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
+       write(*         ,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
        write(IO_FID_LOG,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
        call PRC_MPIstop
     end select
@@ -1707,7 +1707,7 @@ contains
        enddo
 
     case default
-       write(*          ,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
+       write(*         ,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
        write(IO_FID_LOG,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
        call PRC_MPIstop
     end select

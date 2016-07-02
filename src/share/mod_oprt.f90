@@ -218,7 +218,7 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** OPRTPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist OPRTPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist OPRTPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist OPRTPARAM. STOP.'
        call PRC_MPIstop
     endif

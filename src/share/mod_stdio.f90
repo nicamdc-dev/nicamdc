@@ -51,11 +51,11 @@ module mod_stdio
   integer,               public            :: IO_FID_CONF   = 7             !< Config file ID
   integer,               public            :: IO_FID_LOG    = 8             !< Log file ID
 
-  character(len=H_LONG), public            :: IO_LOG_BASENAME     = 'LOG'   !< basename of logfile
+  character(len=H_LONG), public            :: IO_LOG_BASENAME     = 'msg'   !< basename of logfile
   logical,               public            :: IO_L                = .false. !< output log or not? (this process)
   logical,               public            :: IO_LNML             = .false. !< output log or not? (for namelist, this process)
   logical,               public            :: IO_LOG_SUPPRESS     = .false. !< suppress all of log output?
-  logical,               public            :: IO_LOG_ALLNODE      = .false. !< output log for each node?
+  logical,               public            :: IO_LOG_ALLNODE      = .true.  !< output log for each node?
   logical,               public            :: IO_LOG_NML_SUPPRESS = .false. !< suppress all of log output?
 
   !-----------------------------------------------------------------------------
@@ -166,7 +166,11 @@ contains
        endif
 
        write(IO_FID_LOG,*) ''
+       write(IO_FID_LOG,*) '########################################################################'
+       write(IO_FID_LOG,*) ''
        write(IO_FID_LOG,*) ' NICAM-DC (dynamical core package of NICAM)'
+       write(IO_FID_LOG,*) ''
+       write(IO_FID_LOG,*) '########################################################################'
        write(IO_FID_LOG,*) ''
        write(IO_FID_LOG,*) '++++++ Module[STDIO] / Categ[IO] / Origin[SCALElib]'
        write(IO_FID_LOG,*) ''

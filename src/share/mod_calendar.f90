@@ -138,7 +138,7 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** NM_CALENDAR is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist NM_CALENDAR. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist NM_CALENDAR. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NM_CALENDAR. STOP.'
        call PRC_MPIstop
     endif

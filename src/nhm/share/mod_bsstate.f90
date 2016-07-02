@@ -98,7 +98,7 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** BSSTATEPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist BSSTATEPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist BSSTATEPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist BSSTATEPARAM. STOP.'
        call PRC_MPIstop
     endif

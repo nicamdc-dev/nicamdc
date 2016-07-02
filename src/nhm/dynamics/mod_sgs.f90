@@ -207,7 +207,7 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** SMGPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist SMGPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist SMGPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist SMGPARAM. STOP.'
        call PRC_MPIstop
     endif
