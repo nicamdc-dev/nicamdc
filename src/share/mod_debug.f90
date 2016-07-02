@@ -291,8 +291,8 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine DEBUG_rapstart( rapname )
-    use mod_adm, only: &
-       ADM_MPItime
+    use mod_process, only: &
+       PRC_MPItime
     implicit none
 
     character(len=*), intent(in) :: rapname
@@ -302,7 +302,7 @@ contains
 
     id = DEBUG_rapid( rapname )
 
-    DEBUG_raptstr(id) = ADM_MPItime()
+    DEBUG_raptstr(id) = PRC_MPItime()
     DEBUG_rapnstr(id) = DEBUG_rapnstr(id) + 1
 
     !write(IO_FID_LOG,*) rapname, DEBUG_rapnstr(id)
@@ -319,8 +319,8 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine DEBUG_rapend( rapname )
-    use mod_adm, only: &
-       ADM_MPItime
+    use mod_process, only: &
+       PRC_MPItime
     implicit none
 
     character(len=*), intent(in) :: rapname
@@ -330,7 +330,7 @@ contains
 
     id = DEBUG_rapid( rapname )
 
-    DEBUG_rapttot(id) = DEBUG_rapttot(id) + ( ADM_MPItime()-DEBUG_raptstr(id) )
+    DEBUG_rapttot(id) = DEBUG_rapttot(id) + ( PRC_MPItime()-DEBUG_raptstr(id) )
     DEBUG_rapnend(id) = DEBUG_rapnend(id) + 1
 
 #ifdef _FAPP_
@@ -345,14 +345,14 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine DEBUG_rapreport
-    use mod_adm, only: &
-       ADM_COMM_WORLD, &
-       ADM_prc_all,    &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_LOCAL_COMM_WORLD, &
+       PRC_nprocs,           &
+       PRC_MPIstop
     implicit none
 
     real(RP) :: sendbuf(1)
-    real(RP) :: recvbuf(ADM_prc_all)
+    real(RP) :: recvbuf(PRC_nprocs)
 
     real(RP) :: globalavg, globalmax, globalmin
 #ifdef PAPI_OPS
@@ -371,7 +371,7 @@ contains
        datatype = MPI_REAL
     else
        write(*,*) 'xxx precision is not supportd'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     if ( DEBUG_rapnmax >= 1 ) then
@@ -392,16 +392,16 @@ contains
 
        do id = 1, DEBUG_rapnmax
           sendbuf(1) = DEBUG_rapttot(id)
-          call MPI_Allgather( sendbuf,        &
-                              1,              &
-                              datatype,       &
-                              recvbuf,        &
-                              1,              &
-                              datatype,       &
-                              ADM_COMM_WORLD, &
-                              ierr            )
+          call MPI_Allgather( sendbuf,              &
+                              1,                    &
+                              datatype,             &
+                              recvbuf,              &
+                              1,                    &
+                              datatype,             &
+                              PRC_LOCAL_COMM_WORLD, &
+                              ierr                  )
 
-          globalavg = sum( recvbuf(:) ) / real(ADM_prc_all,kind=RP)
+          globalavg = sum( recvbuf(:) ) / real(PRC_nprocs,kind=RP)
           globalmax = maxval( recvbuf(:) )
           globalmin = minval( recvbuf(:) )
 
@@ -435,15 +435,15 @@ contains
 
     sendbuf(1) = real(papi_proc_time_o,kind=RP)
     call MPI_Allgather( sendbuf,        &
-                        1,              &
-                        datatype,       &
-                        recvbuf,        &
-                        1,              &
-                        datatype,       &
-                        ADM_COMM_WORLD, &
-                        ierr            )
+                        1,                    &
+                        datatype,             &
+                        recvbuf,              &
+                        1,                    &
+                        datatype,             &
+                        PRC_LOCAL_COMM_WORLD, &
+                        ierr                  )
 
-    globalavg = sum( recvbuf(:) ) / real(ADM_prc_all,kind=RP)
+    globalavg = sum( recvbuf(:) ) / real(PRC_nprocs,kind=RP)
     globalmax = maxval( recvbuf(:) )
     globalmin = minval( recvbuf(:) )
 
@@ -458,16 +458,16 @@ contains
 
     sendbuf(1) = real(papi_flpops,kind=RP)
     call MPI_Allgather( sendbuf,        &
-                        1,              &
-                        datatype,       &
-                        recvbuf,        &
-                        1,              &
-                        datatype,       &
-                        ADM_COMM_WORLD, &
-                        ierr            )
+                        1,                    &
+                        datatype,             &
+                        recvbuf,              &
+                        1,                    &
+                        datatype,             &
+                        PRC_LOCAL_COMM_WORLD, &
+                        ierr                  )
 
     globalsum = sum( recvbuf(:) )
-    globalavg = globalsum / real(ADM_prc_all,kind=RP)
+    globalavg = globalsum / real(PRC_nprocs,kind=RP)
     globalmax = maxval( recvbuf(:) )
     globalmin = minval( recvbuf(:) )
 

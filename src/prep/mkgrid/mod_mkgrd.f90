@@ -80,15 +80,16 @@ contains
   !-----------------------------------------------------------------------------
   !> Setup
   subroutine MKGRD_setup
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_nxyz,      &
-       ADM_proc_stop, &
-       ADM_gall,      &
-       ADM_gall_pl,   &
-       ADM_KNONE,     &
-       ADM_lall,      &
-       ADM_lall_pl,   &
-       ADM_TI,        &
+       ADM_nxyz,    &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_KNONE,   &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_TI,      &
        ADM_TJ
     implicit none
 
@@ -122,7 +123,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist PARAM_MKGRD. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist PARAM_MKGRD. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=PARAM_MKGRD)
 

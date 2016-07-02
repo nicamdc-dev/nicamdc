@@ -130,8 +130,9 @@ contains
   !-----------------------------------------------------------------------------
   subroutine dycore_input( &
        DIAG_var )
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
        ADM_gall,      &
        ADM_kall,      &
        ADM_lall
@@ -173,7 +174,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist DYCORETESTPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist DYCORETESTPARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=DYCORETESTPARAM)
 
@@ -238,7 +239,7 @@ contains
     case default
 
        write(IO_FID_LOG,*) 'xxx Invalid init_type. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
 
     end select
 
@@ -467,8 +468,9 @@ contains
        eps_geo2prs,  &
        nicamcore,    &
        DIAG_var      )
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
        ADM_kmin,      &
        ADM_kmax
     use mod_grd, only: &
@@ -574,7 +576,7 @@ contains
        if ( itr > itrmax ) then
           write(*          ,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
           write(IO_FID_LOG,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
-          call ADM_proc_stop
+          call PRC_MPIstop
        endif
 
        if (psgm) then
@@ -619,8 +621,9 @@ contains
        test_case,   &
        chemtracer,  &
        DIAG_var     )
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
        ADM_kmin,      &
        ADM_kmax
     use mod_grd, only: &
@@ -726,7 +729,7 @@ contains
     case default
        write(IO_FID_LOG,*) "xxx Invalid test_case: '"//trim(test_case)//"' specified."
        write(IO_FID_LOG,*) 'STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     end select
     write(IO_FID_LOG,*) "Chemical Tracer: ", chemtracer
     write(IO_FID_LOG,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
@@ -735,7 +738,7 @@ contains
        if ( NQW_MAX < 3 ) then
           write(*          ,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
           write(IO_FID_LOG,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
-          call ADM_proc_stop
+          call PRC_MPIstop
        endif
     endif
 
@@ -804,7 +807,7 @@ contains
           if ( NCHEM_MAX /= 2 ) then
              write(*          ,*) 'NCHEM_MAX is not enough! requires 2.', NCHEM_MAX
              write(IO_FID_LOG,*) 'NCHEM_MAX is not enough! requires 2.', NCHEM_MAX
-             call ADM_proc_stop
+             call PRC_MPIstop
           endif
 
           call initial_value_Terminator( DP_lat*r2d, DP_lon*r2d, cl, cl2 )
@@ -836,8 +839,8 @@ contains
        test_case,   &
        prs_rebuild, &
        DIAG_var     )
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
@@ -912,14 +915,14 @@ contains
     case default
        write(IO_FID_LOG,*) "xxx Invalid test_case: '"//trim(test_case)//"' specified."
        write(IO_FID_LOG,*) 'STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     end select
     write(IO_FID_LOG,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
 
     if ( NQW_MAX < 3 ) then
        write(*          ,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
        write(IO_FID_LOG,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     call supercell_init
@@ -989,8 +992,8 @@ contains
        lall,        &
        prs_rebuild, &
        DIAG_var     )
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
@@ -1058,7 +1061,7 @@ contains
     if ( NQW_MAX < 3 ) then
        write(*          ,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
        write(IO_FID_LOG,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     do l = 1, lall
@@ -1122,9 +1125,10 @@ contains
        lall,       &
        test_case,  &
        DIAG_var    )
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_kmin,      &
+       ADM_kmin, &
        ADM_kmax
     use mod_grd, only: &
        GRD_LAT, &
@@ -1428,7 +1432,7 @@ contains
     case default
        write(*          ,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
        write(IO_FID_LOG,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
-       call ADM_proc_stop
+       call PRC_MPIstop
     end select
 
     return
@@ -1441,9 +1445,10 @@ contains
        lall,      &
        test_case, &
        DIAG_var   )
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_kmax,      &
+       ADM_kmax, &
        ADM_kmin
     use mod_grd, only: &
        GRD_LAT, &
@@ -1704,7 +1709,7 @@ contains
     case default
        write(*          ,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
        write(IO_FID_LOG,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
-       call ADM_proc_stop
+       call PRC_MPIstop
     end select
 
     return
@@ -1717,8 +1722,7 @@ contains
      lall,    &
      DIAG_var )
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_kmin,      &
+       ADM_kmin, &
        ADM_kmax
     use mod_grd, only: &
        GRD_LAT, &

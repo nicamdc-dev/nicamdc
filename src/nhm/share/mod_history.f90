@@ -122,8 +122,9 @@ module mod_history
 contains
   !-----------------------------------------------------------------------------
   subroutine history_setup
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
        ADM_gall,      &
        ADM_gall_pl,   &
        ADM_lall,      &
@@ -248,9 +249,9 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** NMHISD is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist NMHISD. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist NMHISD. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NMHISD. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=NMHISD)
 
@@ -270,7 +271,7 @@ contains
        write(IO_FID_LOG,*) '*** History output type:', trim(output_io_mode)
     else
        write(IO_FID_LOG,*) 'xxx Invalid output_io_mode!', trim(output_io_mode)
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     HIST_io_fname = trim(output_path)//trim(histall_fname)
     HIST_io_desc  = trim(RUNNAME)
@@ -281,7 +282,7 @@ contains
        HIST_dtype = IO_REAL8
     else
        write(*,*) 'output_size is not appropriate:',output_size
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
 
@@ -292,9 +293,9 @@ contains
        if ( ierr < 0 ) then
           exit
        elseif( ierr > 0 ) then
-          write(*,          *) 'xxx Not appropriate names in namelist NMHIST. STOP.'
+          write(*         ,*) 'xxx Not appropriate names in namelist NMHIST. STOP.'
           write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NMHIST. STOP.'
-          call ADM_proc_stop
+          call PRC_MPIstop
       endif
     enddo
     HIST_req_nmax = n - 1
@@ -383,7 +384,7 @@ contains
 
        if ( item == '' ) then
           write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NMHIST. STOP.'
-          call ADM_proc_stop
+          call PRC_MPIstop
        endif
 
        if( file == '' ) file = item
@@ -516,8 +517,9 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine  history_in( item, gd, l_region )
+    use mod_process, only : &
+       PRC_MPIstop
     use mod_adm, only : &
-       ADM_proc_stop,   &
        ADM_l_me,        &
        ADM_gall,        &
        ADM_gall_in,     &
@@ -560,7 +562,7 @@ contains
                            ', ijdim_input=', ijdim_input, &
                            ', ADM_gall_in=', ADM_gall_in, &
                            ', ADM_gall=',    ADM_gall
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     if ( calc_pressure ) then
@@ -703,8 +705,9 @@ contains
 
   !----------------------------------------------------------------------------
   subroutine history_out
+    use mod_process, only : &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
        ADM_gall,      &
        ADM_gall_pl,   &
        ADM_lall,      &
@@ -894,8 +897,8 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine history_outlist
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only : &
+       PRC_MPIstop
     implicit none
 
     character(len=H_SHORT)     :: item
@@ -939,7 +942,7 @@ contains
           write(IO_FID_LOG,*) '+++ this variable is requested but not stored yet. check!'
           if ( check_flag ) then
              write(IO_FID_LOG,*) 'xxx history check_flag is on. stop!'
-             call ADM_proc_stop
+             call PRC_MPIstop
           endif
        endif
     enddo
@@ -952,9 +955,8 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine history_timeinfo
-    use mod_adm, only: &
-       ADM_prc_me,         &
-       ADM_prc_run_master
+    use mod_process, only: &
+       PRC_IsMaster
     use mod_time, only: &
        TIME_DTL
     implicit none
@@ -963,7 +965,7 @@ contains
     integer :: n, k
     !---------------------------------------------------------------------------
 
-    if ( ADM_prc_me == ADM_prc_run_master ) then
+    if ( PRC_IsMaster ) then
        fid = IO_get_available_fid()
        open( unit   = fid,                               &
              file   = trim(output_path)//'history.info', &

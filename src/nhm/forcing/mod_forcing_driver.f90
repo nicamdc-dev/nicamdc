@@ -62,8 +62,8 @@ module mod_forcing_driver
 contains
   !-----------------------------------------------------------------------------
   subroutine forcing_setup
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_runconf, only: &
        AF_TYPE
     use mod_af_heldsuarez, only: &
@@ -89,7 +89,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist FORCING_PARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist FORCING_PARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=FORCING_PARAM)
 
@@ -103,7 +103,7 @@ contains
        call AF_dcmip2016_init
     case default
        write(IO_FID_LOG,*) 'xxx unsupported forcing type! STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     end select
 
     return

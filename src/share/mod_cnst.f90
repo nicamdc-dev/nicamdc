@@ -179,8 +179,8 @@ contains
   !> Description of the subroutine CNST_setup
   !>
   subroutine CNST_setup
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     implicit none
 
     real(RP) :: earth_radius                 ! Earth radius
@@ -230,7 +230,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist CNSTPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist CNSTPARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=CNSTPARAM)
 
@@ -254,7 +254,7 @@ contains
        CNST_UNDEF = real(CNST_UNDEF8,kind=RP)
     else
        write(*,*) 'xxx unsupported precision: ', RP
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     CNST_EPS_ZERO = epsilon(0.0_RP)
 

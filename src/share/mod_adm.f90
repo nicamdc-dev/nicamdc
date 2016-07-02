@@ -36,24 +36,14 @@ module mod_adm
   !
   !++ Public procedure
   !
-  public :: ADM_proc_init
-  public :: ADM_proc_stop
-  public :: ADM_proc_finish
   public :: ADM_setup
   public :: ADM_mk_suffix
-  public :: ADM_MPItime
 
   !-----------------------------------------------------------------------
   !
   !++ Public parameters & variables
   !
-
-  !
   !====== Basic definition & information ======
-  !
-
-  ! Identifier for single computation or parallel computation
-  integer,  public, parameter :: ADM_MULTI_PRC  = 1
 
   ! Fist colomn on the table for region and direction
   integer,  public, parameter :: ADM_RID = 1
@@ -87,6 +77,9 @@ module mod_adm
   integer,  public, parameter :: ADM_NPL = 1
   integer,  public, parameter :: ADM_SPL = 2
 
+  ! dimension of the spacial vector
+  integer,  public, parameter :: ADM_nxyz = 3
+
 #ifdef _FIXEDINDEX_
   include "inc_index.h"
 #else
@@ -99,7 +92,6 @@ module mod_adm
   integer,  public            :: ADM_rlevel          ! region division level
   integer,  public            :: ADM_vlayer          ! number of vertical layer
   integer,  public            :: ADM_DMD             ! number of diamond
-  integer,  public            :: ADM_prc_all         ! number of MPI process
 
   ! region
   integer,  public            :: ADM_rgn_nmax        ! number of regular region
@@ -146,11 +138,9 @@ module mod_adm
   !
   !====== Information for processes ======
   !
-  integer,  public            :: ADM_COMM_WORLD           ! communication world per member
-  logical,  public            :: ADM_MPI_alive = .false.  ! MPI is alive?
 
   integer,  public            :: ADM_prc_me               ! my process ID
-  integer,  public, parameter :: ADM_prc_run_master = 1   ! master process ID
+  integer,  public, parameter :: ADM_prc_master = 1       ! master process ID
   integer,  public            :: ADM_prc_pl               ! process ID which manages the pole regions
   logical,  public            :: ADM_have_pl              ! this ID manages pole region?
 
@@ -161,7 +151,7 @@ module mod_adm
   !
   !====== Information for processes-region relationship ======
   !
-  character(len=H_LONG), public :: ADM_rgnmngfname  ! file name for region management info
+  character(len=H_LONG), public :: ADM_rgnmngfname        ! file name for region management info
 
   integer,  public, parameter   :: PRC_RGN_NMAX   = 2560  ! maximum number of region per process.
   integer,  public              :: ADM_vlink_nmax = -1    ! maximum number of vertex linkage
@@ -199,7 +189,6 @@ module mod_adm
   !
   !====== Information for grids ======
   !
-  integer,  public, parameter   :: ADM_nxyz = 3 ! dimension of the spacial vector
 
   ! Identifiers of grid points around a grid point
   integer,  public, parameter   :: ADM_GIJ_nmax = 7
@@ -254,7 +243,7 @@ module mod_adm
                                                     ! 'MLCP'     Mercator+Lambert-cornial
                                                     ! 'MLCP-OLD' OLD vergion (only for s=1)
 
-  integer,                     public :: ADM_XTMS_MLCP_S  = 1 ! [XTMS] Number of segment for MLCP
+  integer,               public :: ADM_XTMS_MLCP_S  = 1 ! [XTMS] Number of segment for MLCP
 
   logical, public :: ADM_debug = .false.
 
@@ -270,144 +259,16 @@ module mod_adm
   !
   !++ Private parameters & variables
   !
-  integer,  private :: ADM_run_type ! Run type (single or multi processes)
-
   !-----------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------
-  !> Description of the subroutine ADM_proc_init
-  subroutine ADM_proc_init( &
-       rtype )
-#ifdef JCUP
-    use jsp_nicam, only: &
-       jsp_n_init, &
-       jsp_n_get_my_mpi
-#endif
+  !> Setup
+  subroutine ADM_setup
+    use mod_process, only: &
+       PRC_MPIstop, &
+       PRC_myrank,  &
+       PRC_nprocs
     implicit none
-
-    integer, intent(in) :: rtype
-
-#ifdef JCUP
-    integer :: my_comm, my_group
-#endif
-    integer :: my_rank, prc_all
-    integer :: ierr
-    !---------------------------------------------------------------------
-
-    ADM_run_type = rtype
-
-    if ( rtype == ADM_MULTI_PRC ) then
-#ifdef JCUP
-       call jsp_n_init("./nhm_driver.cnf")
-       call jsp_n_get_my_mpi(my_comm, my_group, prc_all, my_rank)
-       ADM_COMM_WORLD = my_comm
-#else
-       call MPI_Init(ierr)
-       call MPI_Comm_size(MPI_COMM_WORLD, prc_all, ierr)
-       call MPI_Comm_rank(MPI_COMM_WORLD, my_rank, ierr)
-       ADM_COMM_WORLD = MPI_COMM_WORLD
-#endif
-       ADM_mpi_alive  = .true.
-    else
-       prc_all = 1
-       my_rank = 0
-    endif
-
-    ADM_prc_me = my_rank + 1
-    ADM_prc_pl = 1
-
-#ifdef _FIXEDINDEX_
-    if ( ADM_prc_all /= prc_all ) then
-       write(*,*) 'xxx Fixed prc_all is not match (fixed,requested): ', ADM_prc_all, prc_all
-       stop
-    endif
-#else
-    ADM_prc_all = prc_all
-#endif
-
-    return
-  end subroutine ADM_proc_init
-
-  !-----------------------------------------------------------------------
-  !> Abort MPI process
-  subroutine ADM_proc_stop
-    implicit none
-
-    integer :: ierr
-    !---------------------------------------------------------------------
-
-    ! flush 1kbyte
-    write(IO_FID_LOG,'(32A32)') '                                '
-
-    write(IO_FID_LOG,*) '+++ Abort MPI'
-    if ( ADM_prc_me == ADM_prc_run_master ) then
-       write(*,*) '+++ Abort MPI'
-    endif
-
-    close(IO_FID_LOG)
-    close(IO_FID_CONF)
-
-    ! Abort MPI
-    call MPI_Abort(MPI_COMM_WORLD, 1, ierr)
-
-    stop
-  end subroutine ADM_proc_stop
-
-  !-----------------------------------------------------------------------
-  !> Finish MPI process
-  subroutine ADM_proc_finish
-#ifdef JCUP
-    use jsp_nicam, only: &
-       jsp_n_finish,         &
-       jsp_n_is_io_coupled,  &
-       jsp_n_is_coco_coupled
-#endif
-    implicit none
-
-    integer :: ierr
-    !---------------------------------------------------------------------
-
-    if ( ADM_run_type == ADM_MULTI_PRC ) then
-
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) '+++ finalize MPI'
-       call MPI_Barrier(ADM_COMM_WORLD,ierr)
-
-#ifdef JCUP
-       if (      jsp_n_is_io_coupled()   &
-            .OR. jsp_n_is_coco_coupled() ) then
-          call jsp_n_finish()
-       else
-          call MPI_Finalize(ierr)
-       endif
-#else
-       call MPI_Finalize(ierr)
-#endif
-
-       write(IO_FID_LOG,*) '*** MPI is peacefully finalized'
-    else
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) '+++ stop serial process.'
-    endif
-
-    close(IO_FID_LOG)
-    close(IO_FID_CONF)
-
-    return
-  end subroutine ADM_proc_finish
-
-  !-----------------------------------------------------------------------
-  !>
-  !> Description of the subroutine ADM_setup
-  !>
-  subroutine ADM_setup( &
-       param_fname, &
-       msg_base     )
-    implicit none
-
-    character(LEN=*), intent(in) :: param_fname ! namelist file name
-
-    character(len=*), intent(in), optional :: msg_base ! output file for msg.pexxxxx file
 
     integer               :: glevel      = -1
     integer               :: rlevel      = -1
@@ -432,34 +293,15 @@ contains
     character(LEN=H_LONG) :: msg
     !---------------------------------------------------------------------
 
-    msg = 'msg'
-    if( present(msg_base) ) msg = msg_base ! [add] H.Yashiro 20110701
+    ADM_prc_me = PRC_myrank + 1
+    ADM_prc_pl = 1
 
-    !--- open message file
-    IO_FID_LOG = IO_get_available_fid()
-    call IO_make_idstr(fname,trim(msg),'pe',ADM_prc_me)
-    open( unit = IO_FID_LOG, &
-          file = trim(fname), &
-          form = 'formatted'  )
-
-    write(IO_FID_LOG,*) '############################################################'
-    write(IO_FID_LOG,*) '#                                                          #'
-    write(IO_FID_LOG,*) '#   NICAM : Nonhydrostatic ICosahedal Atmospheric Model    #'
-    write(IO_FID_LOG,*) '#                                                          #'
-    write(IO_FID_LOG,*) '############################################################'
-
-    !--- open control file
-    open( unit   = IO_FID_CONF,       &
-          file   = trim(param_fname), &
-          form   = 'formatted',       &
-          status = 'old',             &
-          iostat = ierr               )
-
-    if ( ierr /= 0 ) then
-       write(*,*) 'xxx Cannot open parameter control file!'
-       write(*,*) 'xxx filename:', trim(param_fname)
-       call ADM_proc_stop
+#ifdef _FIXEDINDEX_
+    if ( ADM_prc_all /= PRC_nprocs ) then
+       write(*,*) 'xxx Fixed prc_all is not match (fixed,requested): ', ADM_prc_all, PRC_nprocs
+       stop
     endif
+#endif
 
     !--- read parameters
     write(IO_FID_LOG,*)
@@ -467,26 +309,26 @@ contains
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=ADMPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(*,          *) 'xxx Not found namelist! STOP.'
+       write(*         ,*) 'xxx Not found namelist! STOP.'
        write(IO_FID_LOG,*) 'xxx Not found namelist! STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     elseif ( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist ADMPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist ADMPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist ADMPARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=ADMPARAM)
 
     ! Error if glevel & rlevel are not defined
     if ( glevel < 1 ) then
-       write(*          ,*) 'xxx glevel is not appropriate :', glevel
+       write(*         ,*) 'xxx glevel is not appropriate :', glevel
        write(IO_FID_LOG,*) 'xxx glevel is not appropriate :', glevel
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     if ( rlevel < 0 ) then
-       write(*          ,*) 'xxx rlevel is not appropriate :', rlevel
+       write(*         ,*) 'xxx rlevel is not appropriate :', rlevel
        write(IO_FID_LOG,*) 'xxx rlevel is not appropriate :', rlevel
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     ADM_rgnmngfname = trim(rgnmngfname)
@@ -515,16 +357,16 @@ contains
        ADM_vlink_nmax = 5
        dmd            = 10
     else
-       write(*          ,*) 'xxx Name of ADM_HGRID_SYSTEM is wrong. STOP.'
+       write(*         ,*) 'xxx Name of ADM_HGRID_SYSTEM is wrong. STOP.'
        write(IO_FID_LOG,*) 'xxx Name of ADM_HGRID_SYSTEM is wrong. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
 #ifdef _FIXEDINDEX_
     if ( ADM_vlink_nmax /= 5 ) then
-       write(*          ,*) 'xxx Sorry, fixed index is not implemented for XTMS. STOP.'
+       write(*         ,*) 'xxx Sorry, fixed index is not implemented for XTMS. STOP.'
        write(IO_FID_LOG,*) 'xxx Sorry, fixed index is not implemented for XTMS. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 #else
     ADM_gall_pl = ADM_vlink_nmax + 1
@@ -535,24 +377,24 @@ contains
 
 #ifdef _FIXEDINDEX_
     if ( ADM_glevel /= glevel ) then
-       write(*,          *) 'xxx Fixed glevel is not match (fixed,requested): ', ADM_glevel, glevel
+       write(*,         *) 'xxx Fixed glevel is not match (fixed,requested): ', ADM_glevel, glevel
        write(IO_FID_LOG,*) 'xxx Fixed glevel is not match (fixed,requested): ', ADM_glevel, glevel
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     if ( ADM_rlevel /= rlevel ) then
-       write(*,          *) 'xxx Fixed rlevel is not match (fixed,requested): ', ADM_rlevel, rlevel
+       write(*         ,*) 'xxx Fixed rlevel is not match (fixed,requested): ', ADM_rlevel, rlevel
        write(IO_FID_LOG,*) 'xxx Fixed rlevel is not match (fixed,requested): ', ADM_rlevel, rlevel
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     if ( ADM_vlayer /= vlayer ) then
-       write(*,          *) 'xxx Fixed vlayer is not match (fixed,requested): ', ADM_vlayer, vlayer
+       write(*         ,*) 'xxx Fixed vlayer is not match (fixed,requested): ', ADM_vlayer, vlayer
        write(IO_FID_LOG,*) 'xxx Fixed vlayer is not match (fixed,requested): ', ADM_vlayer, vlayer
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     if ( ADM_DMD /= dmd ) then
-       write(*,          *) 'xxx Fixed dmd is not match (fixed,requested): ', ADM_DMD, dmd
+       write(*         ,*) 'xxx Fixed dmd is not match (fixed,requested): ', ADM_DMD, dmd
        write(IO_FID_LOG,*) 'xxx Fixed dmd is not match (fixed,requested): ', ADM_DMD, dmd
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 #else
     ADM_glevel   = glevel
@@ -561,7 +403,7 @@ contains
     ADM_DMD      = dmd
 
     ADM_rgn_nmax = 2**ADM_rlevel * 2**ADM_rlevel * ADM_DMD
-    ADM_lall     = ADM_rgn_nmax / ADM_prc_all
+    ADM_lall     = ADM_rgn_nmax / PRC_nprocs
 
     nmax         = 2**(ADM_glevel-ADM_rlevel)
     ADM_gall_1d  = 1 + nmax + 1
@@ -625,6 +467,9 @@ contains
   !> Description of the subroutine input_mnginfo
   !>
   subroutine input_mnginfo( fname )
+    use mod_process, only: &
+       PRC_nprocs, &
+       PRC_MPIstop
     implicit none
 
     character(len=H_LONG), intent(in) :: fname
@@ -679,7 +524,7 @@ contains
     ! ERROR if filename are not defined
     if ( ierr /= 0 ) then
        write(IO_FID_LOG,*) 'xxx mnginfo file is not found! STOP. ', trim(fname)
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     !<= [add] H.Yashiro 20120611
 
@@ -687,7 +532,7 @@ contains
     if ( num_of_rgn /= ADM_rgn_nmax ) then
        write(IO_FID_LOG,*) 'xxx No match for region number! STOP.'
        write(IO_FID_LOG,*) 'xxx ADM_rgn_nmax= ',ADM_rgn_nmax,' num_of_rgn=',num_of_rgn
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     allocate( ADM_rgn_etab( ADM_RID:ADM_DIR, &
@@ -704,24 +549,24 @@ contains
     enddo
 
     read(fid,nml=proc_info)
-    if ( ADM_prc_all /= num_of_proc ) then
+    if ( PRC_nprocs /= num_of_proc ) then
        write(IO_FID_LOG,*) ' xxx No match for  process number! STOP.'
-       write(IO_FID_LOG,*) ' xxx ADM_prc_all= ',ADM_prc_all,' num_of_proc=',num_of_proc
-       call ADM_proc_stop
+       write(IO_FID_LOG,*) ' xxx PRC_nprocs= ',PRC_nprocs,' num_of_proc=',num_of_proc
+       call PRC_MPIstop
     endif
 
-    if ( ADM_prc_all /= num_of_proc ) then
+    if ( PRC_nprocs /= num_of_proc ) then
        write(IO_FID_LOG,*) 'Msg : Sub[ADM_input_mngtab]/Mod[admin]'
        write(IO_FID_LOG,*) ' --- No match for process number!'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
-    allocate( ADM_prc_rnum(ADM_prc_all)              )
-    allocate( ADM_prc_tab (PRC_RGN_NMAX,ADM_prc_all) )
-    allocate( ADM_rgn2prc (ADM_rgn_nmax)             )
+    allocate( ADM_prc_rnum(PRC_nprocs)              )
+    allocate( ADM_prc_tab (PRC_RGN_NMAX,PRC_nprocs) )
+    allocate( ADM_rgn2prc (ADM_rgn_nmax)            )
     ADM_prc_tab = -1 ! [Fix] 11/06/30  T.Seiki, fill undefined value
 
-    do m = 1, ADM_prc_all
+    do m = 1, PRC_nprocs
        read(fid,nml=rgn_mng_info)
 
        ADM_prc_rnum(m)      = num_of_mng
@@ -1153,6 +998,8 @@ contains
   !> Description of the subroutine output_info
   !>
   subroutine output_info
+    use mod_process, only: &
+       PRC_nprocs
     implicit none
 
     integer :: n, k, m
@@ -1161,7 +1008,7 @@ contains
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,'(1x,A)'   ) '====== Process management info. ======'
-    write(IO_FID_LOG,'(1x,A,I7)') '--- Total number of process           : ', ADM_prc_all
+    write(IO_FID_LOG,'(1x,A,I7)') '--- Total number of process           : ', PRC_nprocs
     write(IO_FID_LOG,'(1x,A,I7)') '--- My Process rank                   : ', ADM_prc_me
     write(IO_FID_LOG,'(1x,A)'   ) '====== Region/Grid topology info. ======'
     write(IO_FID_LOG,'(1x,A,A)' ) '--- Grid sysytem                      : ', ADM_HGRID_SYSTEM
@@ -1220,23 +1067,6 @@ contains
 
     return
   end subroutine output_info
-
-  !-----------------------------------------------------------------------------
-  !> Get MPI time
-  !> @return time
-  function ADM_MPItime() result(time)
-    implicit none
-
-    real(RP) :: time
-    !---------------------------------------------------------------------------
-
-    if ( ADM_mpi_alive ) then
-       time = real(MPI_WTIME(),kind=RP)
-    else
-       call cpu_time(time)
-    endif
-
-  end function ADM_MPItime
 
   !-----------------------------------------------------------------------------
   integer function suf(i,j)

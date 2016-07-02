@@ -174,13 +174,14 @@ contains
   !-----------------------------------------------------------------------------
   !> Setup
   subroutine LATLON_setup( output_dirname )
+    use mod_process, only: &
+       PRC_LOCAL_COMM_WORLD, &
+       PRC_nprocs,           &
+       PRC_IsMaster,         &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop,      &
-       ADM_COMM_WORLD,     &
-       ADM_prc_all,        &
-       ADM_prc_tab,        &
-       ADM_prc_run_master, &
-       ADM_prc_me,         &
+       ADM_prc_me,  &
+       ADM_prc_tab, &
        ADM_lall
     use mod_cnst, only: &
        CNST_PI
@@ -214,7 +215,7 @@ contains
 
     integer :: globalsum
     integer :: sendbuf(1)
-    integer :: recvbuf(ADM_prc_all)
+    integer :: recvbuf(PRC_nprocs)
 
     integer :: fid, ierr
     integer :: nstart, nend
@@ -229,9 +230,9 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** LATLONPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist LATLONPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist LATLONPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist LATLONPARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=LATLONPARAM)
 
@@ -249,7 +250,7 @@ contains
 
     call setup_latlon
 
-    if( ADM_prc_me == ADM_prc_run_master ) then
+    if( PRC_IsMaster ) then
        fid = IO_get_available_fid()
        open( unit   = fid,                                 &
              file   = trim(output_dirname)//'/llmap.info', &
@@ -292,13 +293,13 @@ contains
     call mkrelmap_ico2ll( 'GET_NUM' )
 
     if ( debug ) then
-       call MPI_Allreduce( checkmap(1,1),      &
-                           checkmapsum(1,1),   &
-                           imax*jmax,          &
-                           MPI_REAL,           &
-                           MPI_SUM,            &
-                           ADM_COMM_WORLD, &
-                           ierr                )
+       call MPI_Allreduce( checkmap(1,1),        &
+                           checkmapsum(1,1),     &
+                           imax*jmax,            &
+                           MPI_REAL,             &
+                           MPI_SUM,              &
+                           PRC_LOCAL_COMM_WORLD, &
+                           ierr                  )
     endif
 
     write(IO_FID_LOG,*) '# of managing llgrid'
@@ -335,14 +336,14 @@ contains
     ! check total lat-lon number
     sendbuf(1) = nmax_llgrid
 
-    call MPI_Allgather( sendbuf,            &
-                        1,                  &
-                        MPI_INTEGER,        &
-                        recvbuf,            &
-                        1,                  &
-                        MPI_INTEGER,        &
-                        ADM_COMM_WORLD, &
-                        ierr                )
+    call MPI_Allgather( sendbuf,              &
+                        1,                    &
+                        MPI_INTEGER,          &
+                        recvbuf,              &
+                        1,                    &
+                        MPI_INTEGER,          &
+                        PRC_LOCAL_COMM_WORLD, &
+                        ierr                  )
 
     globalsum = sum( recvbuf(:) )
 
@@ -350,9 +351,9 @@ contains
     write(IO_FID_LOG,*) 'imax x jmax                    = ', imax*jmax
     write(IO_FID_LOG,*) 'global total of counted llgrid = ', globalsum
     if ( globalsum /= imax*jmax ) then
-       write(*,          *) 'counted llgrid does not match!'
+       write(*,         *) 'counted llgrid does not match!'
        write(IO_FID_LOG,*) 'counted llgrid does not match!'
-!       call ADM_proc_stop
+!       call PRC_MPIstop
     endif
 
     allocate( lon_index(nmax_llgrid) )
@@ -459,8 +460,9 @@ contains
   !> Description of the subroutine mkrelmap_ico2ll
   !>
   subroutine mkrelmap_ico2ll( what_is_done )
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop,     &
        ADM_prc_tab,       &
        ADM_prc_me,        &
        ADM_rgnid_npl_mng, &
@@ -678,11 +680,11 @@ contains
                    if (      area1 * 0.0_RP /= 0.0_RP &
                         .OR. area2 * 0.0_RP /= 0.0_RP &
                         .OR. area3 * 0.0_RP /= 0.0_RP ) then ! Nan?
-                      write(*,          *) 'Nan! (i,j,n,t,l)=', i,j,n,t,l
-                      write(*,          *) '(area1,area2,area3)=', area1,area2,area3
+                      write(*         ,*) 'Nan! (i,j,n,t,l)=', i,j,n,t,l
+                      write(*         ,*) '(area1,area2,area3)=', area1,area2,area3
                       write(IO_FID_LOG,*) 'Nan! (i,j,n,t,l)=', i,j,n,t,l
                       write(IO_FID_LOG,*) '(area1,area2,area3)=', area1,area2,area3
-                      call ADM_proc_stop
+                      call PRC_MPIstop
                    endif
 
                    area_total = area1 + area2 + area3
@@ -799,8 +801,9 @@ contains
   !-----------------------------------------------------------------------------
   !> Output sample output
   subroutine LL_outputsample
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
        ADM_prc_tab,   &
        ADM_prc_me,    &
        ADM_lall,      &
@@ -900,7 +903,7 @@ contains
        enddo
     else
        write(IO_FID_LOG,*) 'Invalid io_mode!'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     return

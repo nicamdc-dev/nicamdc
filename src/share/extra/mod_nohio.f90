@@ -113,8 +113,8 @@ contains
        k_end,         &
        step,          &
        allow_missingq ) !--- optional
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     implicit none
 
     real(SP),         intent(out) :: var(:,:,:) !< variable(ij,k,l)
@@ -130,7 +130,7 @@ contains
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
-    call ADM_proc_stop
+    call PRC_MPIstop
 
     return
   end subroutine HIO_input_SP
@@ -145,8 +145,8 @@ contains
        k_end,         &
        step,          &
        allow_missingq ) !--- optional
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     implicit none
 
     real(DP),         intent(out) :: var(:,:,:) !< variable(ij,k,l)
@@ -162,7 +162,7 @@ contains
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
-    call ADM_proc_stop
+    call PRC_MPIstop
 
     return
   end subroutine HIO_input_DP
@@ -181,8 +181,8 @@ contains
        ctime,            &
        cdate,            &
        opt_periodic_year )
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     implicit none
 
     integer,          intent(inout) :: start_step
@@ -200,7 +200,7 @@ contains
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
-    call ADM_proc_stop
+    call PRC_MPIstop
 
     return
   end subroutine HIO_seek
@@ -224,8 +224,8 @@ contains
        t_start,   &
        t_end,     &
        append     )
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     implicit none
 
     real(SP),         intent(in) :: var(:,:,:)
@@ -247,7 +247,7 @@ contains
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
-    call ADM_proc_stop
+    call PRC_MPIstop
 
     return
   end subroutine HIO_output_SP
@@ -271,8 +271,8 @@ contains
        t_start,   &
        t_end,     &
        append     )
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     implicit none
 
     real(DP),         intent(in) :: var(:,:,:)
@@ -294,7 +294,7 @@ contains
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
-    call ADM_proc_stop
+    call PRC_MPIstop
 
     return
   end subroutine HIO_output_DP
@@ -302,8 +302,8 @@ contains
   !-----------------------------------------------------------------------------
   subroutine HIO_close( &
        basename )
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     implicit none
 
     character(len=*), intent(in) :: basename
@@ -311,21 +311,21 @@ contains
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(basename)
-    call ADM_proc_stop
+    call PRC_MPIstop
 
     return
   end subroutine HIO_close
 
   !-----------------------------------------------------------------------------
   subroutine HIO_finalize
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     implicit none
     !---------------------------------------------------------------------------
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!'
-    call ADM_proc_stop
+    call PRC_MPIstop
 
     return
   end subroutine HIO_finalize

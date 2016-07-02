@@ -141,8 +141,8 @@ contains
   !-----------------------------------------------------------------------------
   !> Setup
   subroutine GMTR_setup
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_comm, only: &
        COMM_data_transfer
     implicit none
@@ -172,7 +172,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist GMTRPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist GMTRPARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=GMTRPARAM)
 
@@ -918,9 +918,10 @@ contains
   !-----------------------------------------------------------------------------
   subroutine GMTR_output_metrics( &
        basename )
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_prc_tab,   &
+       ADM_prc_tab, &
        ADM_have_pl, &
        ADM_prc_me
     use mod_io_param, only: &
@@ -1150,7 +1151,7 @@ contains
 
     else
        write(IO_FID_LOG,*) 'Invalid io_mode!'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     return

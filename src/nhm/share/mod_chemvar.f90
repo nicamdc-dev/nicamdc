@@ -51,8 +51,8 @@ contains
   !-----------------------------------------------------------------------------
   !> Setup
   subroutine CHEMVAR_setup
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     implicit none
 
     namelist /CHEMVARPARAM/ &
@@ -72,7 +72,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist CHEMVARPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist CHEMVARPARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=CHEMVARPARAM)
 
@@ -89,8 +89,8 @@ contains
 
   !-----------------------------------------------------------------------------
   function chemvar_getid( tracername )
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     implicit none
 
     character(len=*), intent(in) :: tracername
@@ -113,7 +113,7 @@ contains
 
     if ( chemvar_getid <= 0 ) then
        write(IO_FID_LOG,*) 'xxx INDEX does not exist =>', tname
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
   end function chemvar_getid

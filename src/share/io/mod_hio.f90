@@ -222,9 +222,10 @@ contains
        k_end,         &
        step,          &
        allow_missingq ) !--- optional
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_gall,      &
+       ADM_gall, &
        ADM_lall
     implicit none
 
@@ -272,18 +273,18 @@ contains
        else
           write(IO_FID_LOG,*) 'xxx [INPUT]/[HIO] data not found! : ', &
                                'varname= ',trim(varname),', step=',step
-          call ADM_proc_stop
+          call PRC_MPIstop
        endif
     endif
 
     if ( dinfo%layername /= layername ) then
        write(IO_FID_LOG,*) 'xxx [INPUT]/[HIO] layername mismatch! ', &
                             '[',trim(dinfo%layername),':',trim(layername),']'
-       call ADM_proc_stop
+       call PRC_MPIstop
     elseif( dinfo%num_of_layer /= k_end-k_start+1 ) then
        write(IO_FID_LOG,*) 'xxx [INPUT]/[HIO] num_of_layer mismatch! ', &
                             dinfo%num_of_layer,k_end-k_start+1
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     !--- read data
@@ -315,9 +316,10 @@ contains
        k_end,         &
        step,          &
        allow_missingq ) !--- optional
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_gall,      &
+       ADM_gall, &
        ADM_lall
     implicit none
 
@@ -365,18 +367,18 @@ contains
        else
           write(IO_FID_LOG,*) 'xxx [INPUT]/[HIO] data not found! : ', &
                                'varname= ',trim(varname),', step=',step
-          call ADM_proc_stop
+          call PRC_MPIstop
        endif
     endif
 
     if ( dinfo%layername /= layername ) then
        write(IO_FID_LOG,*) 'xxx [INPUT]/[HIO] layername mismatch! ', &
                             '[',trim(dinfo%layername),':',trim(layername),']'
-       call ADM_proc_stop
+       call PRC_MPIstop
     elseif( dinfo%num_of_layer /= k_end-k_start+1 ) then
        write(IO_FID_LOG,*) 'xxx [INPUT]/[HIO] num_of_layer mismatch! ', &
                             dinfo%num_of_layer,k_end-k_start+1
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     !--- read data
@@ -422,8 +424,8 @@ contains
        ctime,            &
        cdate,            &
        opt_periodic_year )
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_calendar, only: &
        calendar_ss2yh, &
        calendar_yh2ss
@@ -473,11 +475,11 @@ contains
     if ( dinfo%layername /= layername ) then
        write(IO_FID_LOG,*) 'xxx [INPUT]/[HIO] layername mismatch! ', &
                             '[',trim(dinfo%layername),':',trim(layername),']'
-       call ADM_proc_stop
+       call PRC_MPIstop
     elseif( dinfo%num_of_layer /= k_end-k_start+1 ) then
        write(IO_FID_LOG,*) 'xxx [INPUT]/[HIO] num_of_layer mismatch!', &
                             dinfo%num_of_layer,k_end-k_start+1
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     do i = 1, num_of_step
@@ -524,9 +526,10 @@ contains
        t_start,   &
        t_end,     &
        append     )
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_gall,      &
+       ADM_gall, &
        ADM_lall
     use mod_cnst, only: &
        CNST_UNDEF4
@@ -591,7 +594,7 @@ contains
 
     else
        write(IO_FID_LOG,*) 'xxx [OUTPUT]/[FIO] Unsupported datatype!', dtype
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     call DEBUG_rapend('FILEIO_out')
@@ -618,9 +621,10 @@ contains
        t_start,   &
        t_end,     &
        append     )
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_gall,      &
+       ADM_gall, &
        ADM_lall
     use mod_cnst, only: &
        CNST_UNDEF4
@@ -685,7 +689,7 @@ contains
 
     else
        write(IO_FID_LOG,*) 'xxx [OUTPUT]/[FIO] Unsupported datatype!', dtype
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     call DEBUG_rapend('FILEIO_out')

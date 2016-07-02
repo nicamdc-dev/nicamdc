@@ -78,8 +78,9 @@ contains
   !-----------------------------------------------------------------------------
   !> Setup
   subroutine NDG_setup
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
        ADM_have_pl,   &
        ADM_KNONE,     &
        ADM_lall,      &
@@ -162,7 +163,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist NUDGEPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NUDGEPARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=NUDGEPARAM)
 
@@ -237,7 +238,7 @@ contains
 
     if ( NDG_kmin1 > NDG_kmax0 ) then
        write(IO_FID_LOG,*) 'xxx Invalid vertical layers! STOP', NDG_kmin1, NDG_kmax0
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     NDG_kmin0 = NDG_kmin0 + ADM_kmin - 1

@@ -6,6 +6,7 @@ MODS_SHARE =	\
 	mod_precision.o	\
 	mod_io_param.o	\
 	mod_stdio.o	\
+	mod_process.o	\
 	mod_adm.o	\
 	mod_debug.o	\
 	mod_random.o	\
@@ -34,19 +35,20 @@ MODS_SHARE =	\
 mod_precision.o : mod_precision.f90
 mod_io_param.o  : mod_io_param.f90
 mod_stdio.o     : mod_stdio.f90    mod_io_param.o
-mod_adm.o       : mod_adm.f90      mod_precision.o mod_stdio.o
-mod_debug.o     : mod_debug.f90    mod_precision.o mod_stdio.o mod_adm.o
-mod_random.o    : mod_random.f90   mod_precision.o mod_stdio.o mod_adm.o mod_debug.o
-mod_cnst.o      : mod_cnst.f90     mod_precision.o mod_stdio.o mod_adm.o mod_debug.o
-mod_calendar.o  : mod_calendar.f90 mod_precision.o mod_stdio.o mod_adm.o mod_debug.o
-mod_vector.o    : mod_vector.f90   mod_precision.o mod_stdio.o           mod_debug.o mod_cnst.o
+mod_process.o   : mod_process.f90  mod_precision.o mod_stdio.o
+mod_adm.o       : mod_adm.f90      mod_precision.o mod_stdio.o mod_process.o
+mod_debug.o     : mod_debug.f90    mod_precision.o mod_stdio.o mod_process.o mod_adm.o
+mod_random.o    : mod_random.f90   mod_precision.o mod_stdio.o mod_process.o mod_debug.o
+mod_cnst.o      : mod_cnst.f90     mod_precision.o mod_stdio.o mod_process.o mod_debug.o
+mod_calendar.o  : mod_calendar.f90 mod_precision.o mod_stdio.o mod_process.o mod_debug.o
+mod_vector.o    : mod_vector.f90   mod_precision.o mod_stdio.o               mod_debug.o mod_cnst.o
 fio.o           : fio.c  fio.h  fio_def.h
 fiof.o          : fiof.c fiof.h fio.h fio_def.h
 hio.o           : hio.c  hio.h hio_def.h
 hiof.o          : hiof.c hiof.h hio.h hio_def.h
-mod_fio.o       : mod_fio.f90      mod_precision.o mod_io_param.f90 mod_stdio.o mod_adm.o mod_debug.o mod_cnst.o mod_calendar.o fio.o fiof.o
-mod_hio.o       : mod_hio.f90      mod_precision.o mod_io_param.f90 mod_stdio.o mod_adm.o mod_debug.o mod_cnst.o mod_calendar.o hio.o hiof.o
-mod_nohio.o     : mod_nohio.f90    mod_precision.o mod_io_param.f90 mod_stdio.o mod_adm.o mod_debug.o mod_cnst.o mod_calendar.o
+mod_fio.o       : mod_fio.f90      mod_precision.o mod_io_param.f90 mod_stdio.o mod_process.o mod_adm.o mod_debug.o mod_cnst.o mod_calendar.o fio.o fiof.o
+mod_hio.o       : mod_hio.f90      mod_precision.o mod_io_param.f90 mod_stdio.o mod_process.o mod_adm.o mod_debug.o mod_cnst.o mod_calendar.o hio.o hiof.o
+mod_nohio.o     : mod_nohio.f90    mod_precision.o mod_io_param.f90 mod_stdio.o mod_process.o mod_adm.o mod_debug.o mod_cnst.o mod_calendar.o
 
 mod_comm.o	: mod_comm.f90 mod_precision.o mod_adm.o mod_debug.o mod_cnst.o
 mod_grd.o	: mod_grd.f90 mod_precision.o mod_adm.o mod_debug.o mod_cnst.o mod_comm.o mod_vector.o mod_fio.o $(mod_hio).o mod_ideal_topo.o

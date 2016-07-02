@@ -175,8 +175,9 @@ contains
   !-----------------------------------------------------------------------------
   !> Setup
   subroutine OPRT_setup
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
        ADM_have_pl,   &
        ADM_have_sgp,  &
        ADM_gall_1d,   &
@@ -219,7 +220,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist OPRTPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist OPRTPARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=OPRTPARAM)
 
@@ -2816,8 +2817,9 @@ contains
   !-----------------------------------------------------------------------------
   subroutine OPRT_output_coef( &
        basename )
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
        ADM_have_pl
     use mod_io_param, only: &
        IO_REAL8
@@ -2958,7 +2960,7 @@ contains
 
     else
        write(IO_FID_LOG,*) 'Invalid io_mode!'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     return

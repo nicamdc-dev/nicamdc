@@ -56,10 +56,11 @@ contains
        lat, &
        lon, &
        Zsfc )
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_KNONE,     &
-       ADM_gall,      &
+       ADM_KNONE, &
+       ADM_gall,  &
        ADM_lall
     implicit none
 
@@ -85,7 +86,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist IDEALTOPOPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=IDEALTOPOPARAM)
 
@@ -109,7 +110,7 @@ contains
     else
        write(*,          *) 'xxx Not appropriate topo_type. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate topo_type. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     return
@@ -121,10 +122,11 @@ contains
        lat, &
        lon, &
        Zsfc )
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_KNONE,     &
-       ADM_lall,      &
+       ADM_KNONE, &
+       ADM_lall,  &
        ADM_gall
     use mod_cnst, only: &
        PI     => CNST_PI, &
@@ -167,7 +169,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Moderate. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Moderate. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=IDEALTOPOPARAM_Schar_Moderate)
 
@@ -206,10 +208,11 @@ contains
        lat, &
        lon, &
        Zsfc )
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_KNONE,     &
-       ADM_lall,      &
+       ADM_KNONE, &
+       ADM_lall,  &
        ADM_gall
     use mod_cnst, only: &
        PI     => CNST_PI,      &
@@ -253,7 +256,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Steep. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Steep. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=IDEALTOPOPARAM_Schar_Steep)
 

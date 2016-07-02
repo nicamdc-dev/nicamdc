@@ -68,8 +68,8 @@ contains
   !-----------------------------------------------------------------------------
   !> Setup the temporal scheme and time management
   subroutine TIME_setup
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_calendar, only: &
        calendar_yh2ss, &
        calendar_ss2cc
@@ -131,9 +131,9 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** TIMEPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist TIMEPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist TIMEPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist TIMEPARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=TIMEPARAM)
 
@@ -202,9 +202,8 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine TIME_report
-    use mod_adm, only: &
-       ADM_prc_run_master, &
-       ADM_prc_me
+    use mod_process, only: &
+       PRC_IsMaster
     use mod_calendar, only: &
        calendar_ss2cc
     implicit none
@@ -215,7 +214,7 @@ contains
     call calendar_ss2cc ( HTIME, TIME_CTIME )
 
     write(IO_FID_LOG,*) '### TIME =', HTIME,'( step = ', TIME_CSTEP, ' )'
-    if( ADM_prc_me == ADM_prc_run_master ) then
+    if( PRC_IsMaster ) then
        write(*,*) '### TIME = ', HTIME,'( step = ', TIME_CSTEP, ' )'
     endif
 

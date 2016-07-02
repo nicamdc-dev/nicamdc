@@ -135,8 +135,9 @@ module mod_numfilter
 contains
   !-----------------------------------------------------------------------------
   subroutine numfilter_setup
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
        ADM_GLEVEL,    &
        ADM_kall
     use mod_cnst, only: &
@@ -221,7 +222,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist NUMFILTERPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NUMFILTERPARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=NUMFILTERPARAM)
 
@@ -275,7 +276,7 @@ contains
 
     if ( deep_effect ) then
        write(IO_FID_LOG,*) 'xxx this feature is tentatively suspended. stop.'
-       call ADM_proc_stop
+       call PRC_MPIstop
        do k = 1, ADM_kall
           Kh_deep_factor       (k) = ( (GRD_gz (k)+RADIUS) / RADIUS )**(2*lap_order_hdiff)
           Kh_deep_factor_h     (k) = ( (GRD_gzh(k)+RADIUS) / RADIUS )**(2*lap_order_hdiff)

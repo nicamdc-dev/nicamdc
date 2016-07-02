@@ -59,12 +59,12 @@ program prg_driver
   use mod_precision
   use mod_stdio
   use mod_debug
+  use mod_process, only: &
+     PRC_IsMaster,    &
+     PRC_MPIstart,    &
+     PRC_LOCAL_setup, &
+     PRC_MPIfinish
   use mod_adm, only: &
-     ADM_MULTI_PRC,      &
-     ADM_prc_me,         &
-     ADM_prc_run_master, &
-     ADM_proc_init,      &
-     ADM_proc_finish,    &
      ADM_setup
   use mod_random, only: &
      RANDOM_setup
@@ -197,27 +197,44 @@ program prg_driver
      cnvpre_fac2
   !##### OpenACC #####
   implicit none
+  !-----------------------------------------------------------------------------
+  !
+  !++ parameters & variables
+  !
+  integer :: comm_world
+  integer :: myrank
+  logical :: ismaster
 
   character(len=14) :: cdate
 
   integer :: n
-  !-----------------------------------------------------------------------------
+  !=============================================================================
 
-  call IO_setup('NICAM-DC')
+  !---< MPI start >---
+  call PRC_MPIstart( comm_world ) ! [OUT]
 
-  call ADM_proc_init(ADM_MULTI_PRC)
+  !---< STDIO setup >---
+  call IO_setup( 'NICAM-DC',      & ! [IN]
+                 'nhm_driver.cnf' ) ! [IN]
 
-  !---< admin module setup >---
-  call ADM_setup('nhm_driver.cnf')
+  !---< Local process management setup >---
+  call PRC_LOCAL_setup( comm_world, & ! [IN]
+                        myrank,     & ! [OUT]
+                        ismaster    ) ! [OUT]
 
-  call DEBUG_rapstart('Total')
+  !---< Logfile setup >---
+  call IO_LOG_setup( myrank,  & ! [IN]
+                     ismaster ) ! [IN]
+
   !#############################################################################
+  call DEBUG_rapstart('Total')
   call DEBUG_rapstart('Setup_ALL')
 
-  write(IO_FID_LOG,*) '##### start  setup     #####'
-  if ( ADM_prc_me == ADM_prc_run_master ) then
-     write(*,*) '##### start  setup     #####'
-  endif
+  write(IO_FID_LOG,*)           '##### start  setup     #####'
+  if( PRC_IsMaster ) write(*,*) '##### start  setup     #####'
+
+  !---< admin module setup >---
+  call ADM_setup
 
   !---< radom module setup >---
   call RANDOM_setup
@@ -276,19 +293,15 @@ program prg_driver
   !---< history variable module setup >---
   call history_vars_setup
 
-  write(IO_FID_LOG,*) '##### finish setup     #####'
-  if ( ADM_prc_me == ADM_prc_run_master ) then
-     write(*,*) '##### finish setup     #####'
-  endif
+  write(IO_FID_LOG,*)           '##### finish setup     #####'
+  if( PRC_IsMaster ) write(*,*) '##### finish setup     #####'
 
   call DEBUG_rapend('Setup_ALL')
   !#############################################################################
   call DEBUG_rapstart('Main_ALL')
 
-  write(IO_FID_LOG,*) '##### start  main loop #####'
-  if ( ADM_prc_me == ADM_prc_run_master ) then
-     write(*,*) '##### start  main loop #####'
-  endif
+  write(IO_FID_LOG,*)           '##### start  main loop #####'
+  if( PRC_IsMaster ) write(*,*) '##### start  main loop #####'
 
 #ifdef _FIPP_
   call fipp_start()
@@ -360,19 +373,17 @@ program prg_driver
   call fipp_stop()
 #endif
 
-  write(IO_FID_LOG,*) '##### finish main loop #####'
-  if ( ADM_prc_me == ADM_prc_run_master ) then
-     write(*,*) '##### finish main loop #####'
-  endif
+  write(IO_FID_LOG,*)           '##### finish main loop #####'
+  if( PRC_IsMaster ) write(*,*) '##### finish main loop #####'
 
   call DEBUG_rapend('Main_ALL')
-  !#############################################################################
   call DEBUG_rapend('Total')
+  !#############################################################################
 
   call DEBUG_rapreport
 
   !--- finalize all process
-  call ADM_proc_finish
+  call PRC_MPIfinish
 
   stop
 end program prg_driver

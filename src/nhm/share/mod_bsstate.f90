@@ -73,12 +73,13 @@ module mod_bsstate
 contains
   !-----------------------------------------------------------------------------
   subroutine bsstate_setup
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_lall,      &
-       ADM_lall_pl,   &
-       ADM_kall,      &
-       ADM_gall_pl,   &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_kall,    &
+       ADM_gall_pl, &
        ADM_gall
     implicit none
 
@@ -99,7 +100,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist BSSTATEPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist BSSTATEPARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=BSSTATEPARAM)
 

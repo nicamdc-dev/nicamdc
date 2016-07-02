@@ -80,8 +80,8 @@ contains
   !> Description of the subroutine CNST_setup
   !>
   subroutine BNDCND_setup
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_cnst, only: &
        CNST_TEMS0
     implicit none
@@ -111,7 +111,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist BNDCNDPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist BNDCNDPARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=BNDCNDPARAM)
 
@@ -129,7 +129,7 @@ contains
        is_top_epl = .true.
     else
        write(IO_FID_LOG,*) 'xxx Invalid BND_TYPE_T_TOP. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     if    ( BND_TYPE_T_BOTTOM == 'FIX' ) then
@@ -144,7 +144,7 @@ contains
        is_btm_epl = .true.
     else
        write(IO_FID_LOG,*) 'xxx Invalid BND_TYPE_T_BOTTOM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     is_top_rigid = .false.
@@ -160,7 +160,7 @@ contains
        is_top_free  = .true.
     else
        write(IO_FID_LOG,*) 'xxx Invalid BND_TYPE_M_TOP. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     if    ( BND_TYPE_M_BOTTOM == 'RIGID' ) then
@@ -171,7 +171,7 @@ contains
        is_btm_free  = .true.
     else
        write(IO_FID_LOG,*) 'xxx Invalid BND_TYPE_M_BOTTOM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     return

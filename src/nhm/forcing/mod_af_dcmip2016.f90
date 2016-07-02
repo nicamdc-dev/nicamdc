@@ -52,8 +52,8 @@ module mod_af_dcmip2016
 contains
   !-----------------------------------------------------------------------------
   subroutine af_dcmip2016_init
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_runconf, only: &
        CHEM_TYPE, &
        NCHEM_MAX
@@ -95,7 +95,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist FORCING_DCMIP_PARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist FORCING_DCMIP_PARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=FORCING_DCMIP_PARAM)
 
@@ -190,12 +190,12 @@ contains
           if ( NCHEM_MAX /= 2 ) then
              write(*,          *) 'xxx Not appropriate number of passive tracer. STOP.', NCHEM_MAX
              write(IO_FID_LOG,*) 'xxx Not appropriate number of passive tracer. STOP.', NCHEM_MAX
-             call ADM_proc_stop
+             call PRC_MPIstop
           endif
        else
           write(*,          *) 'xxx CHEM_TYPE must be set to PASSIVE. STOP.', trim(CHEM_TYPE)
           write(IO_FID_LOG,*) 'xxx CHEM_TYPE must be set to PASSIVE. STOP.', trim(CHEM_TYPE)
-          call ADM_proc_stop
+          call PRC_MPIstop
        endif
     endif
 

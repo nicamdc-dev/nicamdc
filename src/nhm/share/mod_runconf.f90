@@ -213,8 +213,8 @@ contains
   !-----------------------------------------------------------------------------
   !> Setup
   subroutine RUNCONF_setup
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     implicit none
 
     namelist /RUNCONFPARAM/ &
@@ -255,7 +255,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist RUNCONFPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist RUNCONFPARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=RUNCONFPARAM)
 
@@ -271,8 +271,6 @@ contains
   !-----------------------------------------------------------------------------
   !> component check
   subroutine RUNCONF_component_setup
-    use mod_adm, only: &
-       ADM_proc_stop
     implicit none
     !---------------------------------------------------------------------------
 
@@ -288,8 +286,8 @@ contains
   !-----------------------------------------------------------------------------
   !> tracer setup
   subroutine RUNCONF_tracer_setup
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_chemvar, only: &
        CHEMVAR_setup, &
        CHEM_TRC_vmax, &
@@ -325,9 +323,9 @@ contains
        I_QS    = TRC_vmax + 5
        I_QG    = TRC_vmax + 6
     else
-       write(*,          *) 'xxx You must set RAIN_TYPE to DRY,CLOUD_PARAM,WARM or COLD. STOP.'
+       write(*,         *) 'xxx You must set RAIN_TYPE to DRY,CLOUD_PARAM,WARM or COLD. STOP.'
        write(IO_FID_LOG,*) 'xxx You must set RAIN_TYPE to DRY,CLOUD_PARAM,WARM or COLD. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     NQW_STR  = TRC_vmax + 1
     NQW_END  = TRC_vmax + NQW_MAX
@@ -456,8 +454,6 @@ contains
   !-----------------------------------------------------------------------------
   !> thermodynamic setup
   subroutine RUNCONF_thermodyn_setup
-    use mod_adm, only: &
-       ADM_proc_stop
     use mod_cnst, only: &
        CNST_CV,    &
        CNST_CVV,   &

@@ -25,11 +25,12 @@ program prg_mkllmap
   use mod_precision
   use mod_stdio
   use mod_debug
+  use mod_process, only: &
+     PRC_MPIstart,    &
+     PRC_LOCAL_setup, &
+     PRC_MPIstop,     &
+     PRC_MPIfinish
   use mod_adm, only: &
-     ADM_MULTI_PRC,   &
-     ADM_proc_init,   &
-     ADM_proc_stop,   &
-     ADM_proc_finish, &
      ADM_setup
   use mod_fio, only: &
      FIO_setup
@@ -43,6 +44,13 @@ program prg_mkllmap
      LATLON_setup, &
      LATLON_ico_setup
   implicit none
+  !-----------------------------------------------------------------------------
+  !
+  !++ parameters & variables
+  !
+  integer :: comm_world
+  integer :: myrank
+  logical :: ismaster
 
   character(len=H_LONG) :: output_dir   = './'
 
@@ -51,13 +59,25 @@ program prg_mkllmap
 
   integer :: ierr
   !=============================================================================
-  !
-  !--- start process
-  !
-  call ADM_proc_init(ADM_MULTI_PRC)
-  !
+
+  !---< MPI start >---
+  call PRC_MPIstart( comm_world ) ! [OUT]
+
+  !---< STDIO setup >---
+  call IO_setup( 'NICAM-DC',   & ! [IN]
+                 'mkllmap.cnf' ) ! [IN]
+
+  !---< Local process management setup >---
+  call PRC_LOCAL_setup( comm_world, & ! [IN]
+                        myrank,     & ! [OUT]
+                        ismaster    ) ! [OUT]
+
+  !---< Logfile setup >---
+  call IO_LOG_setup( myrank,  & ! [IN]
+                     ismaster ) ! [IN]
+
   !--- < admin module setup > ---
-  call ADM_setup('mkllmap.cnf')
+  call ADM_setup
   !
   call FIO_setup
   !
@@ -78,9 +98,9 @@ program prg_mkllmap
   if ( ierr < 0 ) then
      write(IO_FID_LOG,*) '*** MKLLMAP_PARAM is not specified. use default.'
   elseif( ierr > 0 ) then
-     write(*,          *) 'xxx Not appropriate names in namelist MKLLMAP_PARAM. STOP.'
+     write(*         ,*) 'xxx Not appropriate names in namelist MKLLMAP_PARAM. STOP.'
      write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist MKLLMAP_PARAM. STOP.'
-     call ADM_proc_stop
+     call PRC_MPIstop
   endif
   write(IO_FID_LOG,nml=MKLLMAP_PARAM)
 
@@ -88,7 +108,7 @@ program prg_mkllmap
 
   call LATLON_setup( output_dir )
 
-  call ADM_proc_finish
+  call PRC_MPIfinish
 
 end program prg_mkllmap
 !-------------------------------------------------------------------------------

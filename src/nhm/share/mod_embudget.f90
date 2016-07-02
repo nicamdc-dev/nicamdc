@@ -67,10 +67,9 @@ module mod_embudget
 contains
   !-----------------------------------------------------------------------------
   subroutine embudget_setup
-    use mod_adm, only: &
-       ADM_proc_stop,      &
-       ADM_prc_me,         &
-       ADM_prc_run_master
+    use mod_process, only: &
+       PRC_IsMaster, &
+       PRC_MPIstop
     use mod_cnst, only: &
        ERADIUS => CNST_ERADIUS, &
        PI      => CNST_PI
@@ -93,9 +92,9 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** EMBUDGETPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist EMBUDGETPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist EMBUDGETPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist EMBUDGETPARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=EMBUDGETPARAM)
 
@@ -107,7 +106,7 @@ contains
     write(IO_FID_LOG,*) "Energy_budget_factor = ", Energy_budget_factor
 
     ! open budget.info file
-    if ( ADM_prc_me == ADM_prc_run_master ) then
+    if ( PRC_IsMaster ) then
        MNT_m_fid  = IO_get_available_fid()
        open( unit   = MNT_m_fid,          &
              file   = 'MASS_BUDGET.info', &
@@ -144,14 +143,14 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine diagnose_energy_mass
+    use mod_process, only: &
+       PRC_IsMaster
     use mod_adm, only: &
-       ADM_prc_me,         &
-       ADM_prc_run_master, &
-       ADM_have_pl,        &
-       ADM_lall,           &
-       ADM_lall_pl,        &
-       ADM_gall,           &
-       ADM_gall_pl,        &
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
        ADM_kall
     use mod_cnst, only: &
        ERADIUS => CNST_ERADIUS, &
@@ -410,7 +409,7 @@ contains
        rhoetot_sum_diff = ( rhoetot_sum - rhoetot_sum_old ) * Energy_budget_factor
     endif
 
-    if ( ADM_prc_me == ADM_prc_run_master ) then
+    if ( PRC_IsMaster ) then
        if ( first ) then
           write(MNT_m_fid,'(A6)' ,advance='no') '#STEP'
           write(MNT_m_fid,'(A16)',advance='no') 'Day'

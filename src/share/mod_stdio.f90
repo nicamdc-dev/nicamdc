@@ -75,7 +75,8 @@ contains
   !-----------------------------------------------------------------------------
   !> Setup
   subroutine IO_setup( &
-       MODELNAME )
+       MODELNAME, &
+       fname_in   )
     implicit none
 
     namelist / PARAM_IO / &
@@ -86,13 +87,18 @@ contains
        IO_LOG_ALLNODE,      &
        IO_LOG_NML_SUPPRESS
 
-    character(len=H_MID),  intent(in) :: MODELNAME !< name of the model
+    character(len=*), intent(in) :: MODELNAME !< name of the model
+    character(len=*), intent(in), optional :: fname_in !< name of config file for each process
 
     character(len=H_LONG) :: fname
     integer :: ierr
     !---------------------------------------------------------------------------
 
+    if ( present(fname_in) ) then
+       fname = fname_in
+    else
        fname = IO_ARG_getfname( is_master=.true. )
+    endif
 
     !--- Open config file till end
     IO_FID_CONF = IO_CNF_open( fname,           & ! [IN]

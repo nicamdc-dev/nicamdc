@@ -109,8 +109,8 @@ contains
   !> Description of the subroutine calendar_setup
   !>
   subroutine calendar_setup
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     implicit none
 
     namelist  / NM_CALENDAR /  &
@@ -140,7 +140,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist NM_CALENDAR. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NM_CALENDAR. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=NM_CALENDAR)
 

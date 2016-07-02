@@ -72,8 +72,8 @@ contains
   !-----------------------------------------------------------------------------
   !> setup
   subroutine dynamics_setup
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_time, only: &
        TIME_INTEG_TYPE, &
        TIME_SSTEP_MAX
@@ -130,12 +130,12 @@ contains
 
        if ( TRC_ADV_TYPE == 'DEFAULT' ) then
           write(IO_FID_LOG,*) 'xxx unsupported advection scheme for TRCADV test! STOP.'
-          call ADM_proc_stop
+          call PRC_MPIstop
        endif
 
     case default
        write(IO_FID_LOG,*) 'xxx unsupported integration type! STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endselect
 
     !---< boundary condition module setup >---

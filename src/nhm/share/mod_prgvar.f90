@@ -108,8 +108,9 @@ contains
   !> Description of the subroutine prgvar_setup
   !>
   subroutine prgvar_setup
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
        ADM_gall,      &
        ADM_gall_pl,   &
        ADM_kall,      &
@@ -149,7 +150,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist RESTARTPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist RESTARTPARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=RESTARTPARAM)
 
@@ -165,7 +166,7 @@ contains
     elseif( input_io_mode == 'IDEAL_TRACER' ) then
     else
        write(IO_FID_LOG,*) 'xxx Invalid input_io_mode. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     write(IO_FID_LOG,*) '*** io_mode for restart, output: ', trim(output_io_mode)
@@ -173,7 +174,7 @@ contains
     elseif( output_io_mode == 'LEGACY'   ) then
     else
        write(IO_FID_LOG,*) 'xxx Invalid output_io_mode. STOP'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     if ( allow_missingq ) then

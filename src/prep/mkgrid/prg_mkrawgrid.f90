@@ -20,10 +20,11 @@ program mkrawgrid
   use mod_precision
   use mod_stdio
   use mod_debug
+  use mod_process, only: &
+     PRC_MPIstart,    &
+     PRC_LOCAL_setup, &
+     PRC_MPIfinish
   use mod_adm, only: &
-     ADM_MULTI_PRC,   &
-     ADM_proc_init,   &
-     ADM_proc_finish, &
      ADM_setup
   use mod_fio, only: &
      FIO_setup
@@ -39,18 +40,35 @@ program mkrawgrid
      MKGRD_spring,       &
      MKGRD_OUT_BASENAME, &
      MKGRD_OUT_io_mode
-  !-----------------------------------------------------------------------------
   implicit none
   !-----------------------------------------------------------------------------
   !
   !++ parameters & variables
   !
+  integer :: comm_world
+  integer :: myrank
+  logical :: ismaster
+
   !=============================================================================
 
-  call ADM_proc_init(ADM_MULTI_PRC)
+  !---< MPI start >---
+  call PRC_MPIstart( comm_world ) ! [OUT]
+
+  !---< STDIO setup >---
+  call IO_setup( 'NICAM-DC',     & ! [IN]
+                 'mkrawgrid.cnf' ) ! [IN]
+
+  !---< Local process management setup >---
+  call PRC_LOCAL_setup( comm_world, & ! [IN]
+                        myrank,     & ! [OUT]
+                        ismaster    ) ! [OUT]
+
+  !---< Logfile setup >---
+  call IO_LOG_setup( myrank,  & ! [IN]
+                     ismaster ) ! [IN]
 
   !---< admin module setup >---
-  call ADM_setup('mkrawgrid.cnf')
+  call ADM_setup
 
   !---< I/O module setup >---
   call FIO_setup
@@ -77,7 +95,7 @@ program mkrawgrid
   !########## Finalize ##########
 
   !--- all processes stop
-  call ADM_proc_finish
+  call PRC_MPIfinish
 
   stop
 end program mkrawgrid

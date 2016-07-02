@@ -233,15 +233,15 @@ contains
   !-----------------------------------------------------------------------------
   !> Setup
   subroutine GRD_setup
-    use mod_adm, only:  &
-       ADM_proc_stop,      &
-       ADM_prc_me,         &
-       ADM_prc_run_master, &
-       ADM_have_pl,        &
-       ADM_gmin,           &
-       ADM_gmax,           &
-       ADM_gslf_pl,        &
-       ADM_kmin,           &
+    use mod_process, only: &
+       PRC_IsMaster, &
+       PRC_MPIstop
+    use mod_adm, only: &
+       ADM_have_pl, &
+       ADM_gmin,    &
+       ADM_gmax,    &
+       ADM_gslf_pl, &
+       ADM_kmin,    &
        ADM_kmax
     use mod_cnst, only: &
        CNST_ERADIUS, &
@@ -282,9 +282,9 @@ contains
     if ( ierr < 0 ) then
        write(IO_FID_LOG,*) '*** GRDPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist GRDPARAM. STOP.'
+       write(*         ,*) 'xxx Not appropriate names in namelist GRDPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist GRDPARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=GRDPARAM)
 
@@ -548,7 +548,7 @@ contains
        endif
 
        if ( output_vgrid ) then
-          if ( ADM_prc_me == ADM_prc_run_master ) then
+          if ( PRC_IsMaster ) then
              call GRD_output_vgrid('./vgrid_used.dat')
           endif
        endif
@@ -566,8 +566,8 @@ contains
        basename,     &
        input_vertex, &
        io_mode       )
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_fio, only: &
        FIO_input
     use mod_hio, only: &
@@ -609,7 +609,7 @@ contains
 
     else
        write(IO_FID_LOG,*) 'Invalid io_mode!'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     call GRD_gen_plgrid
@@ -623,8 +623,8 @@ contains
        basename,      &
        output_vertex, &
        io_mode        )
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_io_param, only: &
        IO_REAL8
     use mod_fio, only: &
@@ -726,7 +726,7 @@ contains
 
     else
        write(IO_FID_LOG,*) 'Invalid io_mode!'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     return
@@ -735,8 +735,9 @@ contains
   !-----------------------------------------------------------------------------
   !> Input vertical grid
   subroutine GRD_input_vgrid( fname )
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
        ADM_vlayer
     implicit none
 
@@ -760,7 +761,7 @@ contains
 
        if ( ierr /= 0 ) then
           write(IO_FID_LOG,*) 'xxx No vertical grid file.'
-          call ADM_proc_stop
+          call PRC_MPIstop
        endif
 
        read(fid) num_of_layer
@@ -773,7 +774,7 @@ contains
 
        if ( num_of_layer /= ADM_vlayer ) then
           write(IO_FID_LOG,*) 'xxx inconsistency in number of vertical layers.'
-          call ADM_proc_stop
+          call PRC_MPIstop
        endif
 
        GRD_gz (:) = real(gz ,kind=RP)
@@ -883,15 +884,16 @@ contains
   !-----------------------------------------------------------------------------
   !> Communicate grid data for pole region: This routine is NOT same as COMM_var
   subroutine GRD_gen_plgrid
+    use mod_process, only: &
+       PRC_LOCAL_COMM_WORLD, &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop,  &
        ADM_rgn_nmax,   &
        ADM_rgn_vnum,   &
        ADM_rgn_vtab,   &
        ADM_rgn2prc,    &
        ADM_RID,        &
        ADM_VLINK_NMAX, &
-       ADM_COMM_WORLD, &
        ADM_prc_tab,    &
        ADM_prc_me,     &
        ADM_prc_npl,    &
@@ -928,7 +930,7 @@ contains
        datatype = MPI_REAL
     else
        write(*,*) 'xxx precision is not supportd'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     !--- send information of grid around north pole from regular region
@@ -952,14 +954,14 @@ contains
           if ( ADM_prc_tab(l,ADM_prc_me) == rgntab(n) ) then
              vsend_pl(:,n) = GRD_xt(suf(ADM_gmin,ADM_gmax),ADM_KNONE,l,ADM_TJ,:) ! [mod] H.Yashiro 20120525
 
-             call MPI_ISEND( vsend_pl(:,n),  &
-                             3,              &
-                             datatype,       &
-                             ADM_prc_npl-1,  &
-                             rgntab(n),      &
-                             ADM_COMM_WORLD, &
-                             sreq(n),        &
-                             ierr            )
+             call MPI_ISEND( vsend_pl(:,n),        &
+                             3,                    &
+                             datatype,             &
+                             ADM_prc_npl-1,        &
+                             rgntab(n),            &
+                             PRC_LOCAL_COMM_WORLD, &
+                             sreq(n),              &
+                             ierr                  )
 
              send_flag(n) = .true.
           endif
@@ -968,14 +970,14 @@ contains
 
     if ( ADM_prc_me == ADM_prc_npl ) then
        do n = 1, ADM_VLINK_NMAX
-          call MPI_IRECV( vrecv_pl(:,n),  &
-                          3,              &
-                          datatype,       &
-                          prctab(n)-1,    &
-                          rgntab(n),      &
-                          ADM_COMM_WORLD, &
-                          rreq(n),        &
-                          ierr            )
+          call MPI_IRECV( vrecv_pl(:,n),        &
+                          3,                    &
+                          datatype,             &
+                          prctab(n)-1,          &
+                          rgntab(n),            &
+                          PRC_LOCAL_COMM_WORLD, &
+                          rreq(n),              &
+                          ierr                  )
        enddo
     endif
 
@@ -1006,7 +1008,7 @@ contains
        endif
     enddo
 
-    call MPI_Barrier(ADM_COMM_world,ierr)
+    call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
 
     send_flag(:) = .false.
 
@@ -1015,14 +1017,14 @@ contains
           if (ADM_prc_tab(l,ADM_prc_me) == rgntab(n) ) then
              vsend_pl(:,n) = GRD_xt(suf(ADM_gmax,ADM_gmin),ADM_KNONE,l,ADM_TI,:) ! [mod] H.Yashiro 20120525
 
-             call MPI_ISEND( vsend_pl(:,n),  &
-                             3,              &
-                             datatype,       &
-                             ADM_prc_spl-1,  &
-                             rgntab(n),      &
-                             ADM_COMM_WORLD, &
-                             sreq(n),        &
-                             ierr            )
+             call MPI_ISEND( vsend_pl(:,n),        &
+                             3,                    &
+                             datatype,             &
+                             ADM_prc_spl-1,        &
+                             rgntab(n),            &
+                             PRC_LOCAL_COMM_WORLD, &
+                             sreq(n),              &
+                             ierr                  )
 
              send_flag(n) = .true.
           endif
@@ -1031,14 +1033,14 @@ contains
 
     if ( ADM_prc_me == ADM_prc_spl ) then
        do n = 1, ADM_VLINK_NMAX
-          call MPI_IRECV( vrecv_pl(:,n),  &
-                          3,              &
-                          datatype,       &
-                          prctab(n)-1,    &
-                          rgntab(n),      &
-                          ADM_COMM_WORLD, &
-                          rreq(n),        &
-                          ierr            )
+          call MPI_IRECV( vrecv_pl(:,n),        &
+                          3,                    &
+                          datatype,             &
+                          prctab(n)-1,          &
+                          rgntab(n),            &
+                          PRC_LOCAL_COMM_WORLD, &
+                          rreq(n),              &
+                          ierr                  )
        enddo
     endif
 

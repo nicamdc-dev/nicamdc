@@ -39,10 +39,10 @@ program fio_ico2ll_mpi
   use mod_io_param
   use mod_stdio
   use mod_debug
-  use mod_adm, only: &
-     ADM_mpi_alive,  &
-     ADM_COMM_WORLD, &
-     ADM_prc_all
+  use mod_process, only: &
+     PRC_LOCAL_COMM_WORLD, &
+     PRC_nprocs,           &
+     PRC_mpi_alive
   use mod_cnst, only: &
      CNST_UNDEF, &
      CNST_UNDEF4
@@ -293,9 +293,9 @@ program fio_ico2ll_mpi
   call MPI_Comm_size(MPI_COMM_WORLD, prc_nall,   ierr)
   call MPI_Comm_rank(MPI_COMM_WORLD, prc_myrank, ierr)
   call MPI_Barrier(MPI_COMM_WORLD,ierr)
-  ADM_mpi_alive  = .true.
-  ADM_COMM_WORLD = MPI_COMM_WORLD
-  ADM_prc_all    = prc_nall
+  PRC_mpi_alive        = .true.
+  PRC_LOCAL_COMM_WORLD = MPI_COMM_WORLD
+  PRC_nprocs           = prc_nall
 
   call DEBUG_rapstart('FIO_ICO2LL_MPI')
 
@@ -770,7 +770,7 @@ program fio_ico2ll_mpi
            call DEBUG_rapstart('+FILE O GRADS')
            write(IO_FID_LOG,*)
            write(IO_FID_LOG,*) 'Output: ', trim(outbase)//'.grd', recsize, imax, jmax, kmax
-           write(*          ,*) 'Output: ', trim(outbase)//'.grd'
+           write(*         ,*) 'Output: ', trim(outbase)//'.grd'
 
            open( unit   = ofid,                  &
                  file   = trim(outbase)//'.grd', &
@@ -791,7 +791,7 @@ program fio_ico2ll_mpi
            call DEBUG_rapstart('+FILE O GTOOL')
            write(IO_FID_LOG,*)
            write(IO_FID_LOG,*) 'Output: ', trim(outbase)//'.gt3', recsize, imax, jmax, kmax
-           write(*          ,*) 'Output: ', trim(outbase)//'.gt3'
+           write(*         ,*) 'Output: ', trim(outbase)//'.gt3'
 
            open( unit   = ofid,                  &
                  file   = trim(outbase)//'.gt3', &
@@ -821,7 +821,7 @@ program fio_ico2ll_mpi
            call DEBUG_rapstart('+FILE O NETCDF')
            write(IO_FID_LOG,*)
            write(IO_FID_LOG,*) 'Output: ', trim(outbase)//'.nc'
-           write(*          ,*) 'Output: ', trim(outbase)//'.nc'
+           write(*         ,*) 'Output: ', trim(outbase)//'.nc'
 
            call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=DP) )
 

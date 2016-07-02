@@ -82,14 +82,15 @@ module mod_extdata
 contains
   !-----------------------------------------------------------------------------
   subroutine extdata_setup
-    use mod_adm, only : &
+    use mod_process, only: &
+       PRC_MPIstop
+    use mod_adm, only: &
        ADM_KNONE,    &
        ADM_kall,     &
        ADM_gall,     &
        ADM_lall,     &
        ADM_gall_pl,  &
-       ADM_lall_pl,  &
-       ADM_proc_stop
+       ADM_lall_pl
     use mod_fio, only: &
        FIO_seek
     use mod_calendar, only: &
@@ -153,7 +154,7 @@ contains
        if ( ierr>0 ) then
           write(IO_FID_LOG,*) 'Msg : Sub[extdata_setup]/Mod[mod_extdata]'
           write(IO_FID_LOG,*) ' *** WARNING : Not appropriate names in namelist!! CHECK!!'
-          call ADM_proc_stop
+          call PRC_MPIstop
        endif
 
        if(ierr < 0) exit
@@ -199,7 +200,7 @@ contains
        else
           write(IO_FID_LOG,*) 'Msg : Sub[extdata_setup]/Mod[mod_extdata]'
           write(IO_FID_LOG,*) 'xxx invlalid type of layer_type.', trim(layer_type)
-          call ADM_proc_stop
+          call PRC_MPIstop
        endif
 
        ! <- [add] H.Yashiro 20110826
@@ -241,7 +242,7 @@ contains
           endif
        else
           write(IO_FID_LOG,*) 'xxx Invalid input_io_mode!', trim(input_io_mode)
-          call ADM_proc_stop
+          call PRC_MPIstop
        endif
        ! -> [add] H.Yashiro 20110826
 
@@ -272,7 +273,7 @@ contains
        if ( opt_monthly_cnst .AND. num_of_data /= 12 ) then
           write(*,*) 'Msg : Sub[extdata_setup]/Mod[mod_extdata]'
           write(*,*) '---- ERROR! : inconsistent data num in monthly fix version!'
-          call ADM_proc_stop
+          call PRC_MPIstop
        endif
 
        info(np)%data_date(:,1:num_of_data) = data_date(:,1:num_of_data)
@@ -329,7 +330,7 @@ contains
              write(IO_FID_LOG,*) 'Msg : Sub[extdata_setup]/Mod[mod_extdata]'
              write(IO_FID_LOG,*) '--- ERROR : data time is not consistent ', &
                        'with the simulation time! : ', trim(info(np)%dataname )
-             call ADM_proc_stop
+             call PRC_MPIstop
           else !--- default
              info(np)%data_rec(2) = info(np)%data_rec(1)-1
           endif
@@ -385,11 +386,12 @@ contains
        l_region, & !--- IN    : index of region
        ctime,    & !--- IN    : record number of data on current time
        eflag     )
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
       ADM_gall_in,     &
       ADM_IopJop,      &
-      ADM_GIoJo,       &
-      ADM_proc_stop
+      ADM_GIoJo
     use mod_calendar, only: &
       calendar_yh2ss, &
       calendar_ss2yh
@@ -431,7 +433,7 @@ contains
     if (      kall /= info(np)%kall &
          .OR. gall /= ADM_gall_in   ) then
        write(*,*) 'xxx Array size of gdata is not consistent!', trim(DNAME)
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
 
     !--- update external data
@@ -464,7 +466,7 @@ contains
                   .AND. ( .not. info(np)%opt_periodic_year )            ) then
 
                 write(IO_FID_LOG,*) 'xxx This run is over the land surface data range.'
-                call ADM_proc_stop
+                call PRC_MPIstop
 
              elseif( ( info(np)%data_rec(1) > info(np)%num_of_data ) .and. &
                      ( info(np)%opt_periodic_year ) ) then

@@ -143,11 +143,12 @@ contains
   !-----------------------------------------------------------------------------
   !> Setup
   subroutine VMTR_setup
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop, &
-       ADM_have_pl,   &
-       ADM_KNONE,     &
-       ADM_kmin,      &
+       ADM_have_pl, &
+       ADM_KNONE,   &
+       ADM_kmin,    &
        ADM_kmax
     use mod_cnst, only: &
        CNST_EGRAV
@@ -228,7 +229,7 @@ contains
     elseif( ierr > 0 ) then
        write(*,          *) 'xxx Not appropriate names in namelist VMTRPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist VMTRPARAM. STOP.'
-       call ADM_proc_stop
+       call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=VMTRPARAM)
 

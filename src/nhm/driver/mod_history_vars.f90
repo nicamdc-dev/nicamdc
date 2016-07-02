@@ -673,8 +673,9 @@ contains
        v_p,   &
        w_p,   &
        t_p    )
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_adm, only: &
-       ADM_proc_stop,    &
        kdim => ADM_kall, &
        kmin => ADM_kmin
     implicit none
@@ -707,7 +708,7 @@ contains
        if ( k >= kdim ) then
           write(*,          *) 'xxx internal error! [sv_plev_uvwt/mod_history_vars] STOP.'
           write(IO_FID_LOG,*) 'xxx internal error! [sv_plev_uvwt/mod_history_vars] STOP.',kdim,k,plev,ij,pre(ij,:)
-          call ADM_proc_stop
+          call PRC_MPIstop
        endif
 
        ku(ij) = k
