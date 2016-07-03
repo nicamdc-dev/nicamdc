@@ -153,8 +153,8 @@ contains
        ADM_gslf_pl, &
        ADM_NPL,     &
        ADM_SPL
-    use mod_cnst, only: &
-       PI => CNST_PI
+    use mod_const, only: &
+       PI => CONST_PI
     use mod_comm, only: &
        COMM_data_transfer
     implicit none
@@ -335,8 +335,8 @@ contains
        ADM_GImJm,       &
        ADM_GIoJm,       &
        ADM_gmin
-    use mod_cnst, only: &
-       PI => CNST_PI
+    use mod_const, only: &
+       PI => CONST_PI
     use mod_comm, only: &
        COMM_data_transfer
     use mod_gtl, only: &
@@ -587,8 +587,8 @@ contains
        ADM_KNONE,   &
        ADM_lall,    &
        ADM_lall_pl
-    use mod_cnst, only: &
-       PI => CNST_PI
+    use mod_const, only: &
+       PI => CONST_PI
     use mod_vector, only: &
        VECTR_rotation, &
        I_Yaxis,        &
@@ -680,8 +680,8 @@ contains
        ADM_KNONE,   &
        ADM_lall,    &
        ADM_lall_pl
-    use mod_cnst, only: &
-       PI => CNST_PI
+    use mod_const, only: &
+       PI => CONST_PI
     use mod_vector, only: &
        VECTR_xyz2latlon, &
        VECTR_latlon2xyz
@@ -846,8 +846,8 @@ contains
        ADM_KNONE,   &
        ADM_lall,    &
        ADM_lall_pl
-    use mod_cnst, only: &
-       PI => CNST_PI
+    use mod_const, only: &
+       PI => CONST_PI
     use mod_vector, only: &
        VECTR_rotation, &
        I_Yaxis,        &
@@ -956,9 +956,9 @@ contains
        ADM_TJ,       &
        ADM_gmax,     &
        ADM_gmin
-    use mod_cnst, only: &
-       PI     => CNST_PI,     &
-       RADIUS => CNST_ERADIUS
+    use mod_const, only: &
+       PI     => CONST_PI,     &
+       RADIUS => CONST_RADIUS
     use mod_vector, only: &
        VECTR_cross, &
        VECTR_dot,   &

@@ -33,11 +33,11 @@ mod_option.o	: mod_option.f90
 $(mod_netcdf).o	: $(mod_netcdf).f90
 
 prg_fio_dump.o	: prg_fio_dump.f90 mod_fio.o
-prg_fio_ico2ll.o	: prg_fio_ico2ll.f90 mod_precision.o mod_stdio.o mod_adm.o mod_debug.o mod_cnst.o mod_calendar.o mod_fio.o mod_mnginfo_light.o mod_option.o $(mod_netcdf).o
-prg_fio_ico2ll_mpi.o	: prg_fio_ico2ll_mpi.f90 mod_precision.o mod_stdio.o mod_adm.o mod_debug.o mod_cnst.o mod_calendar.o mod_fio.o mod_mnginfo_light.o mod_option.o $(mod_netcdf).o
-prg_ico2ll.o	: prg_ico2ll.f90 mod_precision.o mod_stdio.o mod_cnst.o mod_calendar.o
-prg_fio_cat.o	: prg_fio_cat.f90 mod_precision.o mod_stdio.o mod_cnst.o mod_calendar.o mod_fio.o mod_mnginfo_light.o mod_option.o
-prg_fio_sel.o	: prg_fio_sel.f90 mod_precision.o mod_stdio.o mod_cnst.o mod_calendar.o mod_fio.o mod_mnginfo_light.o mod_option.o
+prg_fio_ico2ll.o	: prg_fio_ico2ll.f90 mod_precision.o mod_stdio.o mod_adm.o mod_debug.o mod_const.o mod_calendar.o mod_fio.o mod_mnginfo_light.o mod_option.o $(mod_netcdf).o
+prg_fio_ico2ll_mpi.o	: prg_fio_ico2ll_mpi.f90 mod_precision.o mod_stdio.o mod_adm.o mod_debug.o mod_const.o mod_calendar.o mod_fio.o mod_mnginfo_light.o mod_option.o $(mod_netcdf).o
+prg_ico2ll.o	: prg_ico2ll.f90 mod_precision.o mod_stdio.o mod_const.o mod_calendar.o
+prg_fio_cat.o	: prg_fio_cat.f90 mod_precision.o mod_stdio.o mod_const.o mod_calendar.o mod_fio.o mod_mnginfo_light.o mod_option.o
+prg_fio_sel.o	: prg_fio_sel.f90 mod_precision.o mod_stdio.o mod_const.o mod_calendar.o mod_fio.o mod_mnginfo_light.o mod_option.o
 
 $(NICAM_BINDIR)/$(PRJ_TOOL01): $(BUILDDIR)/$(PRJ_TOOL01)
 	$(INSTALL) $< $@

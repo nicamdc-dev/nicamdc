@@ -43,9 +43,9 @@ program fio_ico2ll_mpi
      PRC_LOCAL_COMM_WORLD, &
      PRC_nprocs,           &
      PRC_mpi_alive
-  use mod_cnst, only: &
-     CNST_UNDEF, &
-     CNST_UNDEF4
+  use mod_const, only: &
+     CONST_UNDEF, &
+     CONST_UNDEF4
   use mod_calendar, only: &
      calendar_ss2yh
   use mod_fio, only: &
@@ -556,8 +556,8 @@ program fio_ico2ll_mpi
         var_time_str (nvar) = dinfo%time_start
         var_dt       (nvar) = dinfo%time_end - dinfo%time_start
         var_xi2z     (nvar) = .false.
-        var_ztop     (nvar) = CNST_UNDEF
-        var_zgrid  (:,nvar) = CNST_UNDEF
+        var_ztop     (nvar) = CONST_UNDEF
+        var_zgrid  (:,nvar) = CONST_UNDEF
 
         if ( prc_myrank == 0 ) then ! ##### only for master process
 
@@ -881,7 +881,7 @@ program fio_ico2ll_mpi
                                        var_name    = trim(var_name_nc),          & ! [IN]
                                        var_desc    = trim(var_desc_nc),          & ! [IN]
                                        var_units   = trim(var_unit_nc),          & ! [IN]
-                                       var_missing = CNST_UNDEF4                 ) ! [IN]
+                                       var_missing = CONST_UNDEF4                 ) ! [IN]
 
            deallocate(lon_tmp)
            call DEBUG_rapend  ('+FILE O NETCDF')
@@ -921,9 +921,9 @@ program fio_ico2ll_mpi
         do p = pstr, pend
            pp = p - pstr + 1
 
-           data4allrgn(:)  = CNST_UNDEF4
-           data8allrgn(:)  = CNST_UNDEF
-           icodata4(:,:,:) = CNST_UNDEF4
+           data4allrgn(:)  = CONST_UNDEF4
+           data8allrgn(:)  = CONST_UNDEF
+           icodata4(:,:,:) = CONST_UNDEF4
 
            call DEBUG_rapstart('+FILE I FIO')
            !--- seek data ID and get information
@@ -944,8 +944,8 @@ program fio_ico2ll_mpi
               call fio_read_data(ifid(pp),did,data8allrgn(:))
 
               data4allrgn(:) = real(data8allrgn(:),kind=4)
-              where( data8allrgn(:) < CNST_UNDEF*0.1 )
-                 data4allrgn(:) = CNST_UNDEF4
+              where( data8allrgn(:) < CONST_UNDEF*0.1 )
+                 data4allrgn(:) = CONST_UNDEF4
               endwhere
 
            endif
@@ -977,7 +977,7 @@ program fio_ico2ll_mpi
                                      var_zgrid (:,v),    & ! [IN]
                                      var_ztop  (v),      & ! [IN]
                                      topo      (:,l,pp), & ! [IN]
-                                     CNST_UNDEF4,        & ! [IN]
+                                     CONST_UNDEF4,        & ! [IN]
                                      icodata4  (:,:,l),  & ! [IN]
                                      icodata4_z(:,:)     ) ! [OUT]
 
@@ -992,21 +992,21 @@ program fio_ico2ll_mpi
                  if ( use_NearestNeighbor ) then ! nearest neighbor
                     do k = 1, kmax
                     do n = 1, nmax_llgrid(l,pp)
-                       if    ( icodata4_z(n1(n,l,pp),k) /= CNST_UNDEF4 ) then
+                       if    ( icodata4_z(n1(n,l,pp),k) /= CONST_UNDEF4 ) then
 
                           lldata(lon_idx(n,l,pp),lat_idx(n,l,pp),k) = icodata4_z(n1(n,l,pp),k)
 
-                       elseif( icodata4_z(n2(n,l,pp),k) /= CNST_UNDEF4 ) then
+                       elseif( icodata4_z(n2(n,l,pp),k) /= CONST_UNDEF4 ) then
 
                           lldata(lon_idx(n,l,pp),lat_idx(n,l,pp),k) = icodata4_z(n2(n,l,pp),k)
 
-                       elseif( icodata4_z(n3(n,l,pp),k) /= CNST_UNDEF4 ) then
+                       elseif( icodata4_z(n3(n,l,pp),k) /= CONST_UNDEF4 ) then
 
                           lldata(lon_idx(n,l,pp),lat_idx(n,l,pp),k) = icodata4_z(n3(n,l,pp),k)
 
                        else
 
-                          lldata(lon_idx(n,l,pp),lat_idx(n,l,pp),k) = CNST_UNDEF4
+                          lldata(lon_idx(n,l,pp),lat_idx(n,l,pp),k) = CONST_UNDEF4
 
                        endif
                     enddo
@@ -1014,11 +1014,11 @@ program fio_ico2ll_mpi
                  else
                     do k = 1, kmax
                     do n = 1, nmax_llgrid(l,pp)
-                       if (      icodata4_z(n1(n,l,pp),k) < CNST_UNDEF4*0.1 &
-                            .OR. icodata4_z(n2(n,l,pp),k) < CNST_UNDEF4*0.1 &
-                            .OR. icodata4_z(n3(n,l,pp),k) < CNST_UNDEF4*0.1 ) then
+                       if (      icodata4_z(n1(n,l,pp),k) < CONST_UNDEF4*0.1 &
+                            .OR. icodata4_z(n2(n,l,pp),k) < CONST_UNDEF4*0.1 &
+                            .OR. icodata4_z(n3(n,l,pp),k) < CONST_UNDEF4*0.1 ) then
 
-                          lldata(lon_idx(n,l,pp),lat_idx(n,l,pp),k) = CNST_UNDEF4
+                          lldata(lon_idx(n,l,pp),lat_idx(n,l,pp),k) = CONST_UNDEF4
                        else
                           lldata(lon_idx(n,l,pp),lat_idx(n,l,pp),k) = w1(n,l,pp) * icodata4_z(n1(n,l,pp),k) &
                                                                     + w2(n,l,pp) * icodata4_z(n2(n,l,pp),k) &
@@ -1284,7 +1284,7 @@ contains
 
        write(fid,'(A)')      'TITLE NICAM data output'
        write(fid,'(A)')      'OPTIONS BIG_ENDIAN '
-       write(fid,'(A,E12.5)') 'UNDEF ', CNST_UNDEF4
+       write(fid,'(A,E12.5)') 'UNDEF ', CONST_UNDEF4
 
        write(fid,'(A,I5,A)') 'XDEF ', imax, ' LEVELS'
        if (lon_swap) then
@@ -1410,11 +1410,11 @@ contains
     write(gthead(36),'(I16)'  ) 1
     write(gthead(37),'(I16)'  ) kmax
     write(gthead(38),'(A16)'  ) '             UR4'
-    write(gthead(39),'(E16.7)') CNST_UNDEF4
-    write(gthead(40),'(E16.7)') CNST_UNDEF4
-    write(gthead(41),'(E16.7)') CNST_UNDEF4
-    write(gthead(42),'(E16.7)') CNST_UNDEF4
-    write(gthead(43),'(E16.7)') CNST_UNDEF4
+    write(gthead(39),'(E16.7)') CONST_UNDEF4
+    write(gthead(40),'(E16.7)') CONST_UNDEF4
+    write(gthead(41),'(E16.7)') CONST_UNDEF4
+    write(gthead(42),'(E16.7)') CONST_UNDEF4
+    write(gthead(43),'(E16.7)') CONST_UNDEF4
     write(gthead(44),'(I16)'  ) 1
     write(gthead(46),'(I16)'  ) 0
     write(gthead(47),'(E16.7)') 0.

@@ -51,8 +51,7 @@ module mod_bndcnd
                                                        != 'EPL' : lagrange extrapolation
 
   !--- Vertical boundary condition for temperature at the ground
-  character(len=H_SHORT), private :: BND_TYPE_T_BOTTOM != 'FIX' : tems fix
-                                                       != 'TEM' : tem(kmin-1) = tem(kmin)
+  character(len=H_SHORT), private :: BND_TYPE_T_BOTTOM != 'TEM' : tem(kmin-1) = tem(kmin)
                                                        != 'EPL' : lagrange extrapolation
 
   !--- Vertical boundary condition for momentum at the top
@@ -65,7 +64,6 @@ module mod_bndcnd
 
   logical, private :: is_top_tem   = .true.
   logical, private :: is_top_epl   = .false.
-  logical, private :: is_btm_fix   = .false.
   logical, private :: is_btm_tem   = .true.
   logical, private :: is_btm_epl   = .false.
   logical, private :: is_top_rigid = .false.
@@ -76,14 +74,10 @@ module mod_bndcnd
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !>
-  !> Description of the subroutine CNST_setup
-  !>
+  !> Setup
   subroutine BNDCND_setup
     use mod_process, only: &
        PRC_MPIstop
-    use mod_cnst, only: &
-       CNST_TEMS0
     implicit none
 
     namelist / BNDCNDPARAM / &
@@ -117,7 +111,6 @@ contains
 
     is_top_tem = .false.
     is_top_epl = .false.
-    is_btm_fix = .false.
     is_btm_tem = .false.
     is_btm_epl = .false.
 
@@ -132,11 +125,7 @@ contains
        call PRC_MPIstop
     endif
 
-    if    ( BND_TYPE_T_BOTTOM == 'FIX' ) then
-       write(IO_FID_LOG,*) '*** Boundary setting type (temperature, bottom) : fixed'
-       write(IO_FID_LOG,*) '***           boundary temperature (CNST_TEMS0) : ', CNST_TEMS0
-       is_btm_fix = .true.
-    elseif( BND_TYPE_T_BOTTOM == 'TEM' ) then
+    if    ( BND_TYPE_T_BOTTOM == 'TEM' ) then
        write(IO_FID_LOG,*) '*** Boundary setting type (temperature, bottom) : equal to lowermost atmosphere'
        is_btm_tem = .true.
     elseif( BND_TYPE_T_BOTTOM == 'EPL' ) then
@@ -203,11 +192,11 @@ contains
        kdim => ADM_kall, &
        kmin => ADM_kmin, &
        kmax => ADM_kmax
-    use mod_cnst, only: &
-       CVdry => CNST_CV
+    use mod_const, only: &
+       CVdry => CONST_CVdry
     implicit none
 
-    integer, intent(in)    :: ijdim           ! number of horizontal grid
+    integer,  intent(in)    :: ijdim           ! number of horizontal grid
     real(RP), intent(inout) :: rho(ijdim,kdim) ! density
     real(RP), intent(inout) :: vx (ijdim,kdim) ! horizontal wind (x)
     real(RP), intent(inout) :: vy (ijdim,kdim) ! horizontal wind (y)
@@ -315,19 +304,18 @@ contains
        kdim => ADM_kall, &
        kmin => ADM_kmin, &
        kmax => ADM_kmax
-    use mod_cnst, only: &
-       CNST_RAIR,  &
-       CNST_EGRAV, &
-       CNST_TEMS0
+    use mod_const, only: &
+       GRAV => CONST_GRAV, &
+       Rdry => CONST_Rdry
     implicit none
 
-    integer, intent(in)    :: ijdim           ! number of horizontal grid
+    integer,  intent(in)    :: ijdim           ! number of horizontal grid
     real(RP), intent(inout) :: tem(ijdim,kdim) ! temperature
     real(RP), intent(inout) :: rho(ijdim,kdim) ! density
     real(RP), intent(inout) :: pre(ijdim,kdim) ! pressure
     real(RP), intent(in)    :: phi(ijdim,kdim) ! geopotential
 
-    integer :: ij
+    integer  :: ij
 
     real(RP) :: z,z1,z2,z3,p1,p2,p3
     real(RP) :: lag_intpl
@@ -346,28 +334,26 @@ contains
           tem(ij,kmax+1) = tem(ij,kmax) ! dT/dz = 0
 
        elseif( is_top_epl ) then
-
-          z  = phi(ij,kmax+1) / CNST_EGRAV
-          z1 = phi(ij,kmax  ) / CNST_EGRAV
-          z2 = phi(ij,kmax-1) / CNST_EGRAV
-          z3 = phi(ij,kmax-2) / CNST_EGRAV
+          z  = phi(ij,kmax+1) / GRAV
+          z1 = phi(ij,kmax  ) / GRAV
+          z2 = phi(ij,kmax-1) / GRAV
+          z3 = phi(ij,kmax-2) / GRAV
 
           tem(ij,kmax+1) = lag_intpl( z ,                 &
                                       z1, tem(ij,kmax  ), &
                                       z2, tem(ij,kmax-1), &
                                       z3, tem(ij,kmax-2)  )
-
        endif
 
-       if    ( is_btm_fix ) then
-          tem(ij,kmin-1) = CNST_TEMS0
-       elseif( is_btm_tem ) then
+       if   ( is_btm_tem ) then
+
           tem(ij,kmin-1) = tem(ij,kmin) ! dT/dz = 0
+
        elseif( is_btm_epl ) then
-          z1 = phi(ij,kmin+2) / CNST_EGRAV
-          z2 = phi(ij,kmin+1) / CNST_EGRAV
-          z3 = phi(ij,kmin  ) / CNST_EGRAV
-          z  = phi(ij,kmin-1) / CNST_EGRAV
+          z1 = phi(ij,kmin+2) / GRAV
+          z2 = phi(ij,kmin+1) / GRAV
+          z3 = phi(ij,kmin  ) / GRAV
+          z  = phi(ij,kmin-1) / GRAV
 
           tem(ij,kmin-1) = lag_intpl( z,                  &
                                       z1, tem(ij,kmin+2), &
@@ -386,8 +372,8 @@ contains
        pre(ij,kmin-1) = pre(ij,kmin+1) - rho(ij,kmin) * ( phi(ij,kmin-1) - phi(ij,kmin+1) )
 
        !--- set the boundary of density ( equation of state )
-       rho(ij,kmax+1) = pre(ij,kmax+1) / ( CNST_RAIR * tem(ij,kmax+1) )
-       rho(ij,kmin-1) = pre(ij,kmin-1) / ( CNST_RAIR * tem(ij,kmin-1) )
+       rho(ij,kmax+1) = pre(ij,kmax+1) / ( Rdry * tem(ij,kmax+1) )
+       rho(ij,kmin-1) = pre(ij,kmin-1) / ( Rdry * tem(ij,kmin-1) )
 
     enddo
     !$acc end kernels

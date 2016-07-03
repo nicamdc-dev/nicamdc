@@ -118,8 +118,8 @@ contains
        ADM_kmin,    &
        ADM_kmax,    &
        ADM_KNONE
-    use mod_cnst, only: &
-       GRAV => CNST_EGRAV
+    use mod_const, only: &
+       GRAV => CONST_GRAV
     use mod_time, only: &
        TIME_DTL
     use mod_grd, only: &

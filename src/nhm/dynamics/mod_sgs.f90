@@ -47,8 +47,8 @@ module mod_sgs
      ADM_kmin,    &
      ADM_kmax,    &
      ADM_KNONE
-  use mod_cnst, only: &
-     EPS => CNST_EPS_ZERO
+  use mod_const, only: &
+     EPS => CONST_EPS
   use mod_vmtr,only:&
      VMTR_GSGAM2,&
      VMTR_RGAM2,&
@@ -263,10 +263,8 @@ contains
          GRD_vz_pl,    &
          GRD_gz,         &
          GRD_gzh
-    use mod_cnst, only : &
-         CNST_CV,        &
-         CNST_CP,        &
-         CNST_PI
+    use mod_const, only : &
+         CPdry => CONST_CPdry
     use mod_runconf, only : &
          I_QV
     use mod_oprt, only :        &
@@ -619,7 +617,7 @@ contains
 !!$       do l = 1, ADM_lall_pl
 !!$          do k = ADM_kmin+1, ADM_kmax
 !!$             do n = 1, ADM_gall_pl
-!!$                n2= CNST_EGRAV/(potemh(n,k,l) * (potem(n,k,l)-potem(n,k-1,l))/ ( GRD_vz(n,k,l,GRD_Z)-GRD_vz(n,k-1,l,GRD_Z) ))
+!!$                n2= CONST_EGRAV/(potemh(n,k,l) * (potem(n,k,l)-potem(n,k-1,l))/ ( GRD_vz(n,k,l,GRD_Z)-GRD_vz(n,k-1,l,GRD_Z) ))
 !!$                ri= n2/max(  (vx(n,k,l)-vx(n,k-1,l))**2+(vy(n,k,l)-vy(n,k-1,l))**2+(vz(n,k,l)-vz(n,k-1,l))**2, EPS) *&
 !!$                     ( GRD_vz(n,k,l,GRD_Z)-GRD_vz(n,k-1,l,GRD_Z) )**2
 !!$                qtot =
@@ -814,9 +812,9 @@ contains
           varh(:,ADM_kmin:ADM_kmax,:,idir,ivar)=Sijh(:,ADM_kmin:ADM_kmax,:,idir,ivar) * 2*K_coefH(:,ADM_kmin:ADM_kmax,:) * GAMMA
        enddo
        var(:,ADM_kmin:ADM_kmax,:,idir,IPOTEM)=var(:,ADM_kmin:ADM_kmax,:,idir,IPOTEM)*K_coef(:,ADM_kmin:ADM_kmax,:)&
-            / Pr * CNST_CP * pi(:,ADM_kmin:ADM_kmax,:) ! energy
+            / Pr * CPdry * pi(:,ADM_kmin:ADM_kmax,:) ! energy
        varh(:,ADM_kmin:ADM_kmax,:,idir,IPOTEM)=varh(:,ADM_kmin:ADM_kmax,:,idir,IPOTEM)*K_coefH(:,ADM_kmin:ADM_kmax,:)&
-            / Pr * CNST_CP * pih(:,ADM_kmin:ADM_kmax,:) ! energy
+            / Pr * CPdry * pih(:,ADM_kmin:ADM_kmax,:) ! energy
        do ivar=IMAX+1,IMAX+TRC_VMAX
           var(:,ADM_kmin:ADM_kmax,:,idir,ivar)=var(:,ADM_kmin:ADM_kmax,:,idir,ivar)*K_coef(:,ADM_kmin:ADM_kmax,:) / Pr
           varh(:,ADM_kmin:ADM_kmax,:,idir,ivar)=varh(:,ADM_kmin:ADM_kmax,:,idir,ivar)*K_coefh(:,ADM_kmin:ADM_kmax,:) / Pr
@@ -829,9 +827,9 @@ contains
                   * 2*K_coefH_pl(:,ADM_kmin:ADM_kmax,:) * GAMMA
           enddo
           var_pl(:,ADM_kmin:ADM_kmax,:,idir,IPOTEM)=var_pl(:,ADM_kmin:ADM_kmax,:,idir,IPOTEM)*&
-               K_coef_pl(:,ADM_kmin:ADM_kmax,:) / Pr * CNST_CP * pi_pl(:,ADM_kmin:ADM_kmax,:) ! energy
+               K_coef_pl(:,ADM_kmin:ADM_kmax,:) / Pr * CPdry * pi_pl(:,ADM_kmin:ADM_kmax,:) ! energy
           varh_pl(:,ADM_kmin:ADM_kmax,:,idir,IPOTEM)=varh_pl(:,ADM_kmin:ADM_kmax,:,idir,IPOTEM)&
-               *K_coefH_pl(:,ADM_kmin:ADM_kmax,:) / Pr * CNST_CP * pih_pl(:,ADM_kmin:ADM_kmax,:) ! energy
+               *K_coefH_pl(:,ADM_kmin:ADM_kmax,:) / Pr * CPdry * pih_pl(:,ADM_kmin:ADM_kmax,:) ! energy
           do ivar=IMAX+1,IMAX+TRC_VMAX
              var_pl(:,ADM_kmin:ADM_kmax,:,idir,ivar)=var_pl(:,ADM_kmin:ADM_kmax,:,idir,ivar)&
                   *K_coef_pl(:,ADM_kmin:ADM_kmax,:) / Pr

@@ -36,9 +36,9 @@ program fio_ico2ll
   use mod_precision
   use mod_io_param
   use mod_stdio
-  use mod_cnst, only : &
-    CNST_UNDEF8, &
-    CNST_UNDEF4
+  use mod_const, only : &
+    CONST_UNDEF8, &
+    CONST_UNDEF4
   use mod_calendar, only : &
     calendar_ss2yh
   use mod_fio, only: &
@@ -567,7 +567,7 @@ program fio_ico2ll
                 var_name=trim(var_name(v)), &
                 var_desc=trim(var_desc(v)), &
                 var_units=trim(var_unit(v)), &
-                var_missing=CNST_UNDEF4, &
+                var_missing=CONST_UNDEF4, &
                 var_comp_table_file=var_comp_table_file & ! [add] 14-05-08
            )
            deallocate(lon_tmp)
@@ -579,7 +579,7 @@ program fio_ico2ll
      do t = 1, num_of_step
 
         allocate( lldata(imax,jmax,kmax) )
-        lldata(:,:,:) = CNST_UNDEF4
+        lldata(:,:,:) = CONST_UNDEF4
 
         nowsec = var_time_str(v) + (t-1)*var_dt(v)
 
@@ -607,9 +607,9 @@ program fio_ico2ll
            allocate( data4allrgn(GALL*kmax*MNG_prc_rnum(p)) )
            allocate( data8allrgn(GALL*kmax*MNG_prc_rnum(p)) )
            allocate( icodata4   (GALL,kmax,MNG_prc_rnum(p)) )
-           data4allrgn(:)  = CNST_UNDEF4
-           data8allrgn(:)  = CNST_UNDEF8
-           icodata4(:,:,:) = CNST_UNDEF4
+           data4allrgn(:)  = CONST_UNDEF4
+           data8allrgn(:)  = CONST_UNDEF8
+           icodata4(:,:,:) = CONST_UNDEF4
 
            !--- seek data ID and get information
            call fio_seek_datainfo(did,ifid(p),var_name(v),step)
@@ -639,8 +639,8 @@ program fio_ico2ll
               endif
 
               data4allrgn(:) = real(data8allrgn(:),kind=4)
-              where( data8allrgn(:) == CNST_UNDEF8 )
-                 data4allrgn(:) = CNST_UNDEF4
+              where( data8allrgn(:) == CONST_UNDEF8 )
+                 data4allrgn(:) = CONST_UNDEF4
               endwhere
 
            endif
@@ -653,11 +653,11 @@ program fio_ico2ll
               if ( num_llgrid(MNG_prc_tab(l,p)) /= 0 ) then
                  do k = 1, kmax
                  do n = llstr(MNG_prc_tab(l,p)), llend(MNG_prc_tab(l,p))
-                    if (      icodata4(n1(n),k,l) == CNST_UNDEF4 &
-                         .OR. icodata4(n2(n),k,l) == CNST_UNDEF4 &
-                         .OR. icodata4(n3(n),k,l) == CNST_UNDEF4 ) then
+                    if (      icodata4(n1(n),k,l) == CONST_UNDEF4 &
+                         .OR. icodata4(n2(n),k,l) == CONST_UNDEF4 &
+                         .OR. icodata4(n3(n),k,l) == CONST_UNDEF4 ) then
 
-                       lldata(lon_idx(n),lat_idx(n),k) = CNST_UNDEF4
+                       lldata(lon_idx(n),lat_idx(n),k) = CONST_UNDEF4
                     else
                        lldata(lon_idx(n),lat_idx(n),k) = real(w1(n),kind=4) * icodata4(n1(n),k,l) &
                                                        + real(w2(n),kind=4) * icodata4(n2(n),k,l) &
@@ -858,7 +858,7 @@ contains
 
        write(fid,'(A)')      'TITLE NICAM data output'
        write(fid,'(A)')      'OPTIONS BIG_ENDIAN '
-       write(fid,'(A,E12.5)') 'UNDEF ', CNST_UNDEF4
+       write(fid,'(A,E12.5)') 'UNDEF ', CONST_UNDEF4
 
        write(fid,'(A,I5,A)') 'XDEF ', imax, ' LEVELS'
        if (lon_swap) then
@@ -983,11 +983,11 @@ contains
     write(gthead(36),'(I16)'  ) 1
     write(gthead(37),'(I16)'  ) kmax
     write(gthead(38),'(A16)'  ) 'UR4'
-    write(gthead(39),'(E16.7)') CNST_UNDEF4
-    write(gthead(40),'(E16.7)') CNST_UNDEF4
-    write(gthead(41),'(E16.7)') CNST_UNDEF4
-    write(gthead(42),'(E16.7)') CNST_UNDEF4
-    write(gthead(43),'(E16.7)') CNST_UNDEF4
+    write(gthead(39),'(E16.7)') CONST_UNDEF4
+    write(gthead(40),'(E16.7)') CONST_UNDEF4
+    write(gthead(41),'(E16.7)') CONST_UNDEF4
+    write(gthead(42),'(E16.7)') CONST_UNDEF4
+    write(gthead(43),'(E16.7)') CONST_UNDEF4
     write(gthead(44),'(I16)'  ) 1
     write(gthead(46),'(I16)'  ) 0
     write(gthead(47),'(E16.7)') 0.

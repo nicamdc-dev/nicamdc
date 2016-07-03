@@ -52,9 +52,9 @@ program ico2ll
   use mpi
   use mod_precision
   use mod_stdio
-  use mod_cnst, only : &
-       CNST_UNDEF,     & ! 05/12/21 M.Satoh
-       CNST_UNDEF4
+  use mod_const, only : &
+       CONST_UNDEF,     & ! 05/12/21 M.Satoh
+       CONST_UNDEF4
   use mod_calendar, only : &
        calendar_ym2dd
   ! Y.Yamada 09-09-09 ->
@@ -147,7 +147,7 @@ program ico2ll
   real(8),allocatable :: topog(:,:)        ! [Add] 13/06/13 T.Seiki
   real(8),allocatable :: gz(:), gzh(:)     ! [Add] 13/06/13 T.Seiki
   real(8),allocatable :: vz(:,:), vzh(:,:) ! [Add] 13/06/13 T.Seiki
-  real(8)             :: ztop=CNST_UNDEF4  ! [Add] 13/06/13 T.Seiki
+  real(8)             :: ztop=CONST_UNDEF4  ! [Add] 13/06/13 T.Seiki
   integer             :: kvgrid            ! [Add] 13/06/13 T.Seiki
   integer             :: kmin, kmax, kdim
   integer, parameter  :: khalo=1
@@ -505,8 +505,8 @@ program ico2ll
 
                  do k = 1, kall
                     do ij = 1, gall
-                       if ( ico_data8(ij,k) == CNST_UNDEF ) then
-                          ico_data(ij,k) = CNST_UNDEF4
+                       if ( ico_data8(ij,k) == CONST_UNDEF ) then
+                          ico_data(ij,k) = CONST_UNDEF4
                        else
                           ico_data(ij,k) = ico_data8(ij,k)
                        endif
@@ -549,12 +549,12 @@ program ico2ll
                  if( .not. opt_nearest_neighbor )then
                     do k=kdum+1,kall-kdum
                        do n = nstart(l),nend(l)
-                          if(ico_data(n1_index(n),k)==CNST_UNDEF4) then
-                             latlon_data(lon_index(n),lat_index(n),k) = CNST_UNDEF4
-                          else if(ico_data(n2_index(n),k)==CNST_UNDEF4) then
-                             latlon_data(lon_index(n),lat_index(n),k) = CNST_UNDEF4
-                          else if(ico_data(n3_index(n),k)==CNST_UNDEF4) then
-                             latlon_data(lon_index(n),lat_index(n),k) = CNST_UNDEF4
+                          if(ico_data(n1_index(n),k)==CONST_UNDEF4) then
+                             latlon_data(lon_index(n),lat_index(n),k) = CONST_UNDEF4
+                          else if(ico_data(n2_index(n),k)==CONST_UNDEF4) then
+                             latlon_data(lon_index(n),lat_index(n),k) = CONST_UNDEF4
+                          else if(ico_data(n3_index(n),k)==CONST_UNDEF4) then
+                             latlon_data(lon_index(n),lat_index(n),k) = CONST_UNDEF4
                           else
 ! del 06/08/21 M.Satoh
 !                          latlon_data(lon_index(n),lat_index(n),k) &
@@ -572,14 +572,14 @@ program ico2ll
                     ! [Add] 13/06/13 T.Seiki, finding the value at the nearest neighbor grid
                     do k=kdum+1,kall-kdum
                        do n = nstart(l),nend(l)
-                          if     (max(w1(n),w2(n),w3(n))==w1(n) .and. ico_data(n1_index(n),k) /= CNST_UNDEF4)then
+                          if     (max(w1(n),w2(n),w3(n))==w1(n) .and. ico_data(n1_index(n),k) /= CONST_UNDEF4)then
                              latlon_data(lon_index(n),lat_index(n),k) = ico_data(n1_index(n),k)
-                          else if(max(w2(n),w3(n)      )==w2(n) .and. ico_data(n2_index(n),k) /= CNST_UNDEF4)then
+                          else if(max(w2(n),w3(n)      )==w2(n) .and. ico_data(n2_index(n),k) /= CONST_UNDEF4)then
                              latlon_data(lon_index(n),lat_index(n),k) = ico_data(n2_index(n),k)
-                          else if(                                    ico_data(n3_index(n),k) /= CNST_UNDEF4)then
+                          else if(                                    ico_data(n3_index(n),k) /= CONST_UNDEF4)then
                              latlon_data(lon_index(n),lat_index(n),k) = ico_data(n3_index(n),k)
                           else
-                             latlon_data(lon_index(n),lat_index(n),k) = CNST_UNDEF4
+                             latlon_data(lon_index(n),lat_index(n),k) = CONST_UNDEF4
                           endif
                        enddo
                     enddo
@@ -706,7 +706,7 @@ contains
        do n=1, ijdim
           if(      (gz(k)<vzh(n,kmin))&
                .or.(gz(k)>vzh(n,kmax+1)) ) then
-             v(n,k) = CNST_UNDEF
+             v(n,k) = CONST_UNDEF
           else
              do kk = kmin-1,kmax+1
                 kp=kk
@@ -718,10 +718,10 @@ contains
                 kp=kmax-1
              endif
              !
-             if ( tmp(n,kp+1) == CNST_UNDEF ) then
-                if ( tmp(n,kp) == CNST_UNDEF ) then
+             if ( tmp(n,kp+1) == CONST_UNDEF ) then
+                if ( tmp(n,kp) == CONST_UNDEF ) then
                    v(n,k) = tmp(n,kp-1)
-                else if ( tmp(n,kp-1) == CNST_UNDEF ) then
+                else if ( tmp(n,kp-1) == CONST_UNDEF ) then
                    v(n,k) = tmp(n,kp)
                 else
                    v(n,k) &
@@ -729,9 +729,9 @@ contains
                         vz(n,kp  ),tmp(n,kp  ),   &
                         vz(n,kp-1),tmp(n,kp-1)    )
                 endif
-             else if ( tmp(n,kp) == CNST_UNDEF ) then
+             else if ( tmp(n,kp) == CONST_UNDEF ) then
                 v(n,k) = tmp(n,kp-1)
-             else if ( tmp(n,kp-1) == CNST_UNDEF ) then
+             else if ( tmp(n,kp-1) == CONST_UNDEF ) then
                 v(n,k) = tmp(n,kp)
              else
                 v(n,k)                        &
@@ -776,7 +776,7 @@ contains
        do n=1, ijdim
           if(      (gz(k)<vzh(n,kmin)  ) &
                .or.(gz(k)>vzh(n,kmax+1)) ) then
-             v(n,k) = CNST_UNDEF
+             v(n,k) = CONST_UNDEF
           else
              do kk = kmin-1, kmax+1
                 kp=kk
@@ -788,9 +788,9 @@ contains
                 v(n,k)=tmp(n,kmax)
              else
                 !
-                if ( tmp(n,kp) == CNST_UNDEF ) then
+                if ( tmp(n,kp) == CONST_UNDEF ) then
                    v(n,k) = tmp(n,kp-1)
-                else if ( tmp(n,kp-1) == CNST_UNDEF ) then
+                else if ( tmp(n,kp-1) == CONST_UNDEF ) then
                    v(n,k) = tmp(n,kp)
                 else
                    v(n,k)                        &

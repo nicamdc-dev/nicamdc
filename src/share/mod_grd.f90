@@ -243,9 +243,9 @@ contains
        ADM_gslf_pl, &
        ADM_kmin,    &
        ADM_kmax
-    use mod_cnst, only: &
-       CNST_ERADIUS, &
-       CNST_UNDEF
+    use mod_const, only: &
+       UNDEF  => CONST_UNDEF,  &
+       RADIUS => CONST_RADIUS
     use mod_comm, only:  &
        COMM_data_transfer
     implicit none
@@ -304,17 +304,17 @@ contains
     allocate( GRD_st   (ADM_gall   ,k0,ADM_lall   ,ADM_TI:ADM_TJ,2) )
     allocate( GRD_st_pl(ADM_gall_pl,k0,ADM_lall_pl,              2) )
 #endif
-    GRD_x    (:,:,:,:)   = CNST_UNDEF
-    GRD_x_pl (:,:,:,:)   = CNST_UNDEF
-    GRD_xt   (:,:,:,:,:) = CNST_UNDEF
-    GRD_xt_pl(:,:,:,:)   = CNST_UNDEF
-    GRD_xr   (:,:,:,:,:) = CNST_UNDEF
-    GRD_xr_pl(:,:,:,:)   = CNST_UNDEF
+    GRD_x    (:,:,:,:)   = UNDEF
+    GRD_x_pl (:,:,:,:)   = UNDEF
+    GRD_xt   (:,:,:,:,:) = UNDEF
+    GRD_xt_pl(:,:,:,:)   = UNDEF
+    GRD_xr   (:,:,:,:,:) = UNDEF
+    GRD_xr_pl(:,:,:,:)   = UNDEF
 
-    GRD_s    (:,:,:,:)   = CNST_UNDEF
-    GRD_s_pl (:,:,:,:)   = CNST_UNDEF
-    GRD_st   (:,:,:,:,:) = CNST_UNDEF
-    GRD_st_pl(:,:,:,:)   = CNST_UNDEF
+    GRD_s    (:,:,:,:)   = UNDEF
+    GRD_s_pl (:,:,:,:)   = UNDEF
+    GRD_st   (:,:,:,:,:) = UNDEF
+    GRD_st_pl(:,:,:,:)   = UNDEF
 
     call GRD_input_hgrid( hgrid_fname,  & ![IN]
                           .true.,       & ![IN]
@@ -327,7 +327,7 @@ contains
     if ( trim(GRD_grid_type) == 'ON_PLANE' ) then
        call GRD_scaling(triangle_size)
     else
-       call GRD_scaling(CNST_ERADIUS)
+       call GRD_scaling(RADIUS)
     endif
 
     ! calc latitude/longitude of each grid point

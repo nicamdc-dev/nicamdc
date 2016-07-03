@@ -531,8 +531,8 @@ contains
     use mod_adm, only: &
        ADM_gall, &
        ADM_lall
-    use mod_cnst, only: &
-       CNST_UNDEF4
+    use mod_const, only: &
+       UNDEF4 => CONST_UNDEF4
     implicit none
 
     real(SP),         intent(in) :: var(:,:,:)
@@ -580,8 +580,8 @@ contains
     if ( dtype == IO_REAL4 ) then
 
        var4(:,k_start:k_end,:) = real( var(:,k_start:k_end,:), kind=SP )
-       where( var4(:,:,:) < (CNST_UNDEF4+1.0_SP) )
-          var4(:,:,:) = CNST_UNDEF4
+       where( var4(:,:,:) < (UNDEF4+1.0_SP) )
+          var4(:,:,:) = UNDEF4
        endwhere
 
        call hio_put_write_datainfo_data(did,fid,step,ts,te,dinfo,var4(:,:,:))
@@ -626,8 +626,8 @@ contains
     use mod_adm, only: &
        ADM_gall, &
        ADM_lall
-    use mod_cnst, only: &
-       CNST_UNDEF4
+    use mod_const, only: &
+       UNDEF4 => CONST_UNDEF4
     implicit none
 
     real(DP),         intent(in) :: var(:,:,:)
@@ -675,8 +675,8 @@ contains
     if ( dtype == IO_REAL4 ) then
 
        var4(:,k_start:k_end,:) = real( var(:,k_start:k_end,:), kind=SP )
-       where( var4(:,:,:) < (CNST_UNDEF4+1.0_SP) )
-          var4(:,:,:) = CNST_UNDEF4
+       where( var4(:,:,:) < (UNDEF4+1.0_SP) )
+          var4(:,:,:) = UNDEF4
        endwhere
 
        call hio_put_write_datainfo_data(did,fid,step,ts,te,dinfo,var4(:,:,:))

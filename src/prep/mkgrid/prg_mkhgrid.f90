@@ -30,9 +30,9 @@ program mkhgrid
      FIO_setup
   use mod_comm, only: &
      COMM_setup
-  use mod_cnst, only: &
-     CNST_setup, &
-     RADIUS => CNST_ERADIUS
+  use mod_const, only: &
+     RADIUS => CONST_RADIUS, &
+     CONST_setup
   use mod_grd, only: &
      GRD_input_hgrid,  &
      GRD_output_hgrid, &
@@ -88,7 +88,7 @@ program mkhgrid
   call COMM_setup
 
   !---< cnst module setup >---
-  call CNST_setup
+  call CONST_setup
 
   !---< mkgrid module setup >---
   call MKGRD_setup

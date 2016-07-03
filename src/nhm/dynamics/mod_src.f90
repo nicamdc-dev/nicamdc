@@ -96,8 +96,8 @@ contains
        ADM_kmin,    &
        ADM_kmax,    &
        ADM_KNONE
-    use mod_cnst, only: &
-       OHM => CNST_EOHM
+    use mod_const, only: &
+       OHM => CONST_OHM
     use mod_grd, only: &
        GRD_rscale, &
        GRD_XDIR,   &
@@ -897,8 +897,8 @@ contains
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_cnst, only: &
-       GRAV => CNST_EGRAV
+    use mod_const, only: &
+       GRAV => CONST_GRAV
     use mod_vmtr, only: &
        VMTR_C2Wfact,    &
        VMTR_C2Wfact_pl

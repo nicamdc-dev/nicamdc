@@ -67,10 +67,11 @@ contains
        kdim => ADM_kall, &
        kmin => ADM_kmin, &
        kmax => ADM_kmax
-    use mod_cnst, only: &
-       CV    => CNST_CV,    &
-       KAPPA => CNST_KAPPA, &
-       PRE00 => CNST_PRE00
+    use mod_const, only: &
+       Rdry  => CONST_Rdry,  &
+       CPdry => CONST_CPdry, &
+       CVdry => CONST_CVdry, &
+       PRE00 => CONST_PRE00
     implicit none
 
     integer, intent(in)  :: ijdim
@@ -111,7 +112,7 @@ contains
        acl = abs( cos(lat(n)) )
        ap0 = abs( pre(n,k) / PRE00 )
 
-       T_eq = (315.0_RP - DT_y*asl*asl - Dth_z*log(ap0)*acl*acl ) * ap0**KAPPA
+       T_eq = (315.0_RP - DT_y*asl*asl - Dth_z*log(ap0)*acl*acl ) * ap0**(Rdry/CPdry)
        T_eq = max(T_eq,T_eq2)
 
        sigma    = pre(n,k) / ( 0.5_RP * ( pre(n,kmin) + pre(n,kmin-1) ) )
@@ -125,7 +126,7 @@ contains
 
        k_t = k_a + ( k_s-k_a ) * fact_sig * acl**4
 
-       fe(n,k) = -k_t * CV * ( tem(n,k)-T_eq )
+       fe(n,k) = -k_t * CVdry * ( tem(n,k)-T_eq )
     enddo
     enddo
 

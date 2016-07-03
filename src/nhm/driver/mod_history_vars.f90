@@ -196,8 +196,8 @@ contains
        ADM_KNONE,   &
        ADM_kmin,    &
        ADM_kmax
-    use mod_cnst, only: &
-       CNST_EGRAV
+    use mod_const, only: &
+       GRAV => CONST_GRAV
     use mod_grd, only: &
        GRD_dgz,  &
        GRD_ZSFC, &
@@ -305,7 +305,7 @@ contains
     real(RP) :: tmp2d    (ADM_gall   ,ADM_KNONE,ADM_lall   )
     real(RP) :: rhodz    (ADM_gall   ,ADM_KNONE,ADM_lall   )
 
-    integer :: k, l, nq, K0
+    integer  :: k, l, nq, K0
     !---------------------------------------------------------------------------
 
     K0 = ADM_KNONE
@@ -397,7 +397,7 @@ contains
     ! omega
     if (out_omg) then
        do l = 1, ADM_lall
-          omg(:,:,l) = -CNST_EGRAV * rho(:,:,l) * wc(:,:,l)
+          omg(:,:,l) = -GRAV * rho(:,:,l) * wc(:,:,l)
 
           call history_in( 'ml_omg', omg(:,:,l) )
        enddo
@@ -627,14 +627,14 @@ contains
        z_srf,   &
        rho_srf, &
        pre_srf  )
-    use mod_adm, only :  &
-       kdim => ADM_kall,    &
+    use mod_adm, only: &
+       kdim => ADM_kall, &
        kmin => ADM_kmin
-    use mod_cnst, only :  &
-       CNST_EGRAV
+    use mod_const, only: &
+       GRAV => CONST_GRAV
     implicit none
 
-    integer, intent(in)  :: ijdim
+    integer,  intent(in)  :: ijdim
     real(RP), intent(in)  :: rho    (ijdim,kdim)
     real(RP), intent(in)  :: pre    (ijdim,kdim)
     real(RP), intent(in)  :: z      (ijdim,kdim)
@@ -653,7 +653,7 @@ contains
 
     !--- surface pressure ( hydrostatic balance )
     do ij = 1, ijdim
-       pre_srf(ij) = pre(ij,kmin) + rho(ij,kmin) * CNST_EGRAV * ( z(ij,kmin)-z_srf(ij) )
+       pre_srf(ij) = pre(ij,kmin) + rho(ij,kmin) * GRAV * ( z(ij,kmin)-z_srf(ij) )
     enddo
 
     return

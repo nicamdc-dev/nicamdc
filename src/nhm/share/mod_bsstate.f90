@@ -153,12 +153,12 @@ contains
   subroutine bsstate_input_ref( basename )
     use mod_adm, only: &
        ADM_kall
-    use mod_cnst, only: &
-       GRAV  => CNST_EGRAV, &
-       Rdry  => CNST_RAIR,  &
-       CPdry => CNST_CP,    &
-       Rvap  => CNST_RVAP,  &
-       PRE00 => CNST_PRE00
+    use mod_const, only: &
+       GRAV  => CONST_GRAV,  &
+       Rdry  => CONST_Rdry,  &
+       CPdry => CONST_CPdry, &
+       Rvap  => CONST_Rvap,  &
+       PRE00 => CONST_PRE00
     use mod_grd, only: &
        GRD_gz
     implicit none
@@ -231,12 +231,12 @@ contains
        ADM_kall,    &
        ADM_lall,    &
        ADM_lall_pl
-    use mod_cnst, only: &
-       GRAV  => CNST_EGRAV, &
-       Rdry  => CNST_RAIR,  &
-       CPdry => CNST_CP,    &
-       Rvap  => CNST_RVAP,  &
-       PRE00 => CNST_PRE00
+    use mod_const, only: &
+       GRAV  => CONST_GRAV,  &
+       Rdry  => CONST_Rdry,  &
+       CPdry => CONST_CPdry, &
+       Rvap  => CONST_Rvap,  &
+       PRE00 => CONST_PRE00
     use mod_grd, only: &
        GRD_gz
     use mod_gtl, only: &
@@ -319,8 +319,8 @@ contains
   !-----------------------------------------------------------------------------
   !> generation of basic state from reference state
   subroutine set_basicstate
-    use mod_cnst, only: &
-       GRAV  => CNST_EGRAV
+    use mod_const, only: &
+       GRAV => CONST_GRAV
     use mod_adm, only: &
        ADM_prc_pl,  &
        ADM_prc_me,  &

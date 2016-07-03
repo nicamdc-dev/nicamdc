@@ -21,13 +21,13 @@ PRG_PREP05 = prg_mkllmap
 MODS_PREP =	\
 	mod_mkgrd.o
 
-mod_mkgrd.o	: mod_mkgrd.f90 mod_precision.o mod_adm.o mod_debug.o mod_grd.o mod_cnst.o mod_comm.o mod_gtl.o mod_vector.o mod_gmtr.o
+mod_mkgrd.o	: mod_mkgrd.f90 mod_precision.o mod_adm.o mod_debug.o mod_grd.o mod_const.o mod_comm.o mod_gtl.o mod_vector.o mod_gmtr.o
 
 prg_mkmnginfo.o	: prg_mkmnginfo.f90 mod_precision.o mod_adm.o mod_debug.o
-prg_mkrawgrid.o	: prg_mkrawgrid.f90 mod_precision.o mod_adm.o mod_debug.o mod_fio.o mod_comm.o mod_cnst.o mod_grd.o mod_mkgrd.o
-prg_mkhgrid.o	: prg_mkhgrid.f90 mod_precision.o mod_adm.o mod_debug.o mod_fio.o mod_comm.o mod_cnst.o mod_grd.o mod_gmtr.o mod_mkgrd.o
+prg_mkrawgrid.o	: prg_mkrawgrid.f90 mod_precision.o mod_adm.o mod_debug.o mod_fio.o mod_comm.o mod_const.o mod_grd.o mod_mkgrd.o
+prg_mkhgrid.o	: prg_mkhgrid.f90 mod_precision.o mod_adm.o mod_debug.o mod_fio.o mod_comm.o mod_const.o mod_grd.o mod_gmtr.o mod_mkgrd.o
 prg_mkvlayer.o	: prg_mkvlayer.f90 mod_precision.o
-prg_mkllmap.o	: prg_mkllmap.f90 mod_precision.o mod_adm.o mod_debug.o mod_fio.o mod_comm.o mod_cnst.o mod_grd.o mod_latlon.o
+prg_mkllmap.o	: prg_mkllmap.f90 mod_precision.o mod_adm.o mod_debug.o mod_fio.o mod_comm.o mod_const.o mod_grd.o mod_latlon.o
 
 $(NICAM_BINDIR)/$(PRJ_PREP01) : $(BUILDDIR)/$(PRJ_PREP01)
 	$(INSTALL) $< $@

@@ -236,12 +236,12 @@ contains
        kdim   => ADM_kall,   &
        kmin   => ADM_kmin,   &
        kmax   => ADM_kmax
-    use mod_cnst, only: &
-       d2r   => CNST_D2R,   &
-       Rdry  => CNST_RAIR,  &
-       CPdry => CNST_CP,    &
-       CVdry => CNST_CV,    &
-       PRE00 => CNST_PRE00
+    use mod_const, only: &
+       d2r   => CONST_D2R,   &
+       Rdry  => CONST_Rdry,  &
+       CPdry => CONST_CPdry, &
+       CVdry => CONST_CVdry, &
+       PRE00 => CONST_PRE00
     use mod_runconf, only: &
        TRC_VMAX,  &
        RAIN_TYPE, &

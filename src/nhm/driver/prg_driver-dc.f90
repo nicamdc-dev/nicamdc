@@ -68,8 +68,8 @@ program prg_driver
      ADM_setup
   use mod_random, only: &
      RANDOM_setup
-  use mod_cnst, only: &
-     CNST_setup
+  use mod_const, only: &
+     CONST_setup
   use mod_calendar, only: &
      calendar_setup
   use mod_fio, only: &
@@ -240,7 +240,7 @@ program prg_driver
   call RANDOM_setup
 
   !---< cnst module setup >---
-  call CNST_setup
+  call CONST_setup
 
   !---< calendar module setup >---
   call calendar_setup

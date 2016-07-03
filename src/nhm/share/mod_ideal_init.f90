@@ -33,16 +33,15 @@ module mod_ideal_init
      ADM_gall,  &
      ADM_kall,  &
      ADM_lall
-  use mod_cnst, only: &
-     pi    => CNST_PI,      &
-     a     => CNST_ERADIUS, &
-     omega => CNST_EOHM,    &
-     g     => CNST_EGRAV,   &
-     Rd    => CNST_RAIR,    &
-     Rv    => CNST_RVAP,    &
-     Cp    => CNST_CP,      &
-     KAPPA => CNST_KAPPA,   &
-     PRE00 => CNST_PRE00
+  use mod_const, only: &
+     pi    => CONST_PI,     &
+     g     => CONST_GRAV,   &
+     a     => CONST_RADIUS, &
+     omega => CONST_OHM,    &
+     Rd    => CONST_Rdry,   &
+     Rv    => CONST_Rvap,   &
+     Cp    => CONST_CPdry,  &
+     PRE00 => CONST_PRE00
   use dcmip_initial_conditions_test_1_2_3, only: &
      test2_steady_state_mountain, &
      test2_schaer_mountain,       &
@@ -256,8 +255,8 @@ contains
        ADM_lall
     use mod_random, only: &
        RANDOM_get
-    use mod_cnst, only: &
-       CNST_D2R
+    use mod_const, only: &
+       D2R => CONST_D2R
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
@@ -291,7 +290,7 @@ contains
           do l = 1, ADM_lall
           do k = 1, ADM_kall
           do g = 1, ADM_gall
-             deg = nint( GRD_s(g,k0,l,GRD_LON) / CNST_D2R )
+             deg = nint( GRD_s(g,k0,l,GRD_LON) / D2R )
              if ( mod(deg,10) == 0 ) then
                 TRC_var(g,k,l,nq) = real(ADM_kall-k+1,kind=RP)
              else
@@ -304,7 +303,7 @@ contains
           do l = 1, ADM_lall
           do k = 1, ADM_kall
           do g = 1, ADM_gall
-             deg = nint( GRD_s(g,k0,l,GRD_LAT) / CNST_D2R )
+             deg = nint( GRD_s(g,k0,l,GRD_LAT) / D2R )
              if ( mod(deg,10) == 0 ) then
                 TRC_var(g,k,l,nq) = real(ADM_kall-k+1,kind=RP)
              else
@@ -399,9 +398,9 @@ contains
           df = 1.0_RP / (pre(k)*dz(k))
 
           pre(k) = pre(k) - f / df
-!          tem(k) = 300.0_RP * ( pre(k)/PRE00 )**KAPPA
+!          tem(k) = 300.0_RP * ( pre(k)/PRE00 )**(Rd/Cp)
           tem(k) = ( 315.0_RP - deltaT*sin(lat)**2 - deltaTh*log(pre(k)/PRE00)*cos(lat)**2 ) &
-                 * ( pre(k)/PRE00 )**KAPPA
+                 * ( pre(k)/PRE00 )**(Rd/Cp)
           tem(k) = max( 200.0_RP, tem(k) )
 
 !          if( abs(pre_save-pre(k)) <= eps_hs ) exit
@@ -419,7 +418,7 @@ contains
 
           ! first guess
           pre(k) = pre(k-1)
-          tem(k) = 300.0_RP * ( pre(k)/PRE00 )**KAPPA
+          tem(k) = 300.0_RP * ( pre(k)/PRE00 )**(Rd/Cp)
           tem(k) = max( 200.0_RP, tem(k) )
 
           ! Newton-Lapson
@@ -430,9 +429,9 @@ contains
              df = 1.0_RP / (pre(k)*dz(k))
 
              pre(k) = pre(k) - f / df
-!             tem(k) = 300.0_RP * ( pre(k)/PRE00 )**KAPPA
+!             tem(k) = 300.0_RP * ( pre(k)/PRE00 )**(Rd/Cp)
              tem(k) = ( 315.0_RP - deltaT*sin(lat)**2 - deltaTh*log(pre(k)/PRE00)*cos(lat)**2 ) &
-                    * ( pre(k)/PRE00 )**KAPPA
+                    * ( pre(k)/PRE00 )**(Rd/Cp)
              tem(k) = max( 200.0_RP, tem(k) )
 
 !             if( abs(pre_save-pre(k)) <= eps_hs ) exit
@@ -2005,8 +2004,8 @@ contains
       eta_limit, &
       eta,       &
       signal     )
-    use mod_cnst, only: &
-       CNST_EPS_ZERO
+    use mod_const, only: &
+       EPS => CONST_EPS
     implicit none
 
     integer,  intent(in)    :: kdim        ! # of z dimension
@@ -2024,7 +2023,7 @@ contains
     integer  :: k
     !---------------------------------------------------------------------------
 
-    criteria = max( CNST_EPS_ZERO * 10.0_RP, 1.E-14_RP )
+    criteria = max( EPS * 10.0_RP, 1.E-14_RP )
 
     do k = 1, kdim
        F   (k) = -g*z(k) + geo(k)
@@ -2036,7 +2035,7 @@ contains
           eta(k,2) = min(eta(k,2),1.0_RP) ! not allow over 1.0 for eta
        endif
 
-       eta(k,2) = max(eta(k,2),CNST_EPS_ZERO) ! not allow over 1.0 for eta
+       eta(k,2) = max(eta(k,2),EPS) ! not allow over 1.0 for eta
 
        diff(k) = abs( eta(k,2) - eta(k,1) )
     enddo

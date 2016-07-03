@@ -70,9 +70,9 @@ contains
     use mod_process, only: &
        PRC_IsMaster, &
        PRC_MPIstop
-    use mod_cnst, only: &
-       ERADIUS => CNST_ERADIUS, &
-       PI      => CNST_PI
+    use mod_const, only: &
+       RADIUS => CONST_RADIUS, &
+       PI      => CONST_PI
     use mod_time, only: &
        TIME_DTL
     implicit none
@@ -100,8 +100,8 @@ contains
 
     if(.not.MNT_ON) return
 
-    Mass_budget_factor   = 1.0_RP / ( TIME_DTL * real(MNT_INTV,kind=RP) * 4.D0 * PI * ERADIUS * ERADIUS ) ! [kg/step] -> [kg/m2/s]
-    Energy_budget_factor = 1.0_RP / ( TIME_DTL * real(MNT_INTV,kind=RP) * 4.D0 * PI * ERADIUS * ERADIUS ) ! [J /step] -> [W/m2]
+    Mass_budget_factor   = 1.0_RP / ( TIME_DTL * real(MNT_INTV,kind=RP) * 4.D0 * PI * RADIUS * RADIUS ) ! [kg/step] -> [kg/m2/s]
+    Energy_budget_factor = 1.0_RP / ( TIME_DTL * real(MNT_INTV,kind=RP) * 4.D0 * PI * RADIUS * RADIUS ) ! [J /step] -> [W/m2]
     write(IO_FID_LOG,*) "Mass_budget_factor   = ", Mass_budget_factor
     write(IO_FID_LOG,*) "Energy_budget_factor = ", Energy_budget_factor
 
@@ -152,10 +152,12 @@ contains
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kall
-    use mod_cnst, only: &
-       ERADIUS => CNST_ERADIUS, &
-       PI      => CNST_PI,      &
-       CV      => CNST_CV
+    use mod_const, only: &
+       RADIUS => CONST_RADIUS, &
+       PI     => CONST_PI,     &
+       CVdry  => CONST_CVdry,  &
+       LHV    => CONST_LHV,    &
+       LHF    => CONST_LHF
     use mod_vmtr, only: &
        VMTR_RGSGAM2,    &
        VMTR_RGSGAM2_pl, &
@@ -177,8 +179,6 @@ contains
        I_QI,     &
        I_QS,     &
        I_QG,     &
-       LHV,      &
-       LHF,      &
        CVW
     use mod_prgvar, only: &
        prgvar_get_withdiag
@@ -328,9 +328,9 @@ contains
     rhophi_sum = GTL_global_sum( tmp, tmp_pl )
 
     !--- internal energy (dry air)
-    tmp = rho * qd * CV * tem
+    tmp = rho * qd * CVdry * tem
     if ( ADM_have_pl ) then
-       tmp_pl = rho_pl * qd_pl * CV * tem_pl
+       tmp_pl = rho_pl * qd_pl * CVdry * tem_pl
     endif
     rhoein_qd_sum = GTL_global_sum( tmp, tmp_pl )
 
@@ -385,16 +385,16 @@ contains
 
     if ( first ) then
        ! [kg/m2], absolute value
-       rhoqd_sum_diff   = rhoqd_sum   / ( 4.D0 * PI * ERADIUS * ERADIUS )
-       rhoqv_sum_diff   = rhoqv_sum   / ( 4.D0 * PI * ERADIUS * ERADIUS )
-       rhoql_sum_diff   = rhoql_sum   / ( 4.D0 * PI * ERADIUS * ERADIUS )
-       rhoqi_sum_diff   = rhoqi_sum   / ( 4.D0 * PI * ERADIUS * ERADIUS )
-       rhoqt_sum_diff   = rhoqt_sum   / ( 4.D0 * PI * ERADIUS * ERADIUS )
+       rhoqd_sum_diff   = rhoqd_sum   / ( 4.D0 * PI * RADIUS * RADIUS )
+       rhoqv_sum_diff   = rhoqv_sum   / ( 4.D0 * PI * RADIUS * RADIUS )
+       rhoql_sum_diff   = rhoql_sum   / ( 4.D0 * PI * RADIUS * RADIUS )
+       rhoqi_sum_diff   = rhoqi_sum   / ( 4.D0 * PI * RADIUS * RADIUS )
+       rhoqt_sum_diff   = rhoqt_sum   / ( 4.D0 * PI * RADIUS * RADIUS )
        ! [J/m2], absolute value
-       rhophi_sum_diff  = rhophi_sum  / ( 4.D0 * PI * ERADIUS * ERADIUS )
-       rhoein_sum_diff  = rhoein_sum  / ( 4.D0 * PI * ERADIUS * ERADIUS )
-       rhokin_sum_diff  = rhokin_sum  / ( 4.D0 * PI * ERADIUS * ERADIUS )
-       rhoetot_sum_diff = rhoetot_sum / ( 4.D0 * PI * ERADIUS * ERADIUS )
+       rhophi_sum_diff  = rhophi_sum  / ( 4.D0 * PI * RADIUS * RADIUS )
+       rhoein_sum_diff  = rhoein_sum  / ( 4.D0 * PI * RADIUS * RADIUS )
+       rhokin_sum_diff  = rhokin_sum  / ( 4.D0 * PI * RADIUS * RADIUS )
+       rhoetot_sum_diff = rhoetot_sum / ( 4.D0 * PI * RADIUS * RADIUS )
     else
        ! [kg/m2/s], difference from previous step
        rhoqd_sum_diff   = ( rhoqd_sum   - rhoqd_sum_old   ) * Mass_budget_factor

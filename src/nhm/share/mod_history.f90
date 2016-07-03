@@ -78,7 +78,7 @@ module mod_history
   character(len=H_LONG),  private :: output_io_mode != 'LEGACY'
   integer,                private :: output_size    = 4
   integer,                private :: npreslev       = 1
-  real(RP),               private :: pres_levs(60)  != CNST_PRE00
+  real(RP),               private :: pres_levs(60)  != CONST_PRE00
   logical,                private :: check_flag     = .true.
 
   integer,                private :: ksum
@@ -135,8 +135,8 @@ contains
     use mod_io_param, only: &
        IO_REAL4, &
        IO_REAL8
-    use mod_cnst, only: &
-       CNST_PRE00
+    use mod_const, only: &
+       PRE00 => CONST_PRE00
     use mod_calendar, only: &
        calendar_ss2yh
     use mod_grd, only: &
@@ -228,7 +228,7 @@ contains
     kend_def          = ADM_vlayer
     kmax_def          = ADM_vlayer
     output_type_def   = 'SNAPSHOT'
-    pres_levs(:)      = CNST_PRE00
+    pres_levs(:)      = PRE00
 
     ! nonsence prepare
     step        = step_def
@@ -528,8 +528,8 @@ contains
        ADM_IopJop_nmax, &
        ADM_IopJop,      &
        ADM_GIoJo
-    use mod_cnst, only: &
-       CNST_UNDEF
+    use mod_const, only: &
+       UNDEF => CONST_UNDEF
     use mod_time, only: &
        TIME_CSTEP, &
        TIME_DTL
@@ -674,7 +674,7 @@ contains
                       v_save(g2,k2,l,1) = ( cnvpre_fac1(g2,k2,l) * gd(g,k-1) &
                                           + cnvpre_fac2(g2,k2,l) * gd(g,k  ) ) * TIME_DTL
                    else
-                      v_save(g2,k2,l,1) = CNST_UNDEF
+                      v_save(g2,k2,l,1) = UNDEF
                    endif
                 enddo
                 enddo
@@ -687,7 +687,7 @@ contains
                       v_save(g,k2,l,1) = ( cnvpre_fac1(g,k2,l) * gd(g,k-1) &
                                          + cnvpre_fac2(g,k2,l) * gd(g,k  ) ) * TIME_DTL
                    else
-                      v_save(g,k2,l,1) = CNST_UNDEF
+                      v_save(g,k2,l,1) = UNDEF
                    endif
                 enddo
                 enddo
@@ -1134,8 +1134,8 @@ contains
     use mod_adm, only: &
        knone => ADM_KNONE, &
        kmin  => ADM_kmin
-    use mod_cnst, only: &
-       GRAV => CNST_EGRAV
+    use mod_const, only: &
+       GRAV => CONST_GRAV
     implicit none
 
     integer,  intent(in)  :: ijdim

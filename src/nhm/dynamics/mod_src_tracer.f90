@@ -104,8 +104,8 @@ contains
        ADM_gslf_pl, &
        ADM_gmin_pl, &
        ADM_gmax_pl
-    use mod_cnst, only: &
-       EPS => CNST_EPS_ZERO
+    use mod_const, only: &
+       EPS => CONST_EPS
     use mod_grd, only: &
        GRD_rdgz, &
        GRD_afac, &
@@ -638,8 +638,8 @@ contains
        ADM_gslf_pl,    &
        ADM_gmin_pl,    &
        ADM_gmax_pl
-    use mod_cnst, only: &
-       EPS => CNST_EPS_ZERO
+    use mod_const, only: &
+       EPS => CONST_EPS
     use mod_grd, only: &
        GRD_xr,   &
        GRD_xr_pl
@@ -1232,9 +1232,9 @@ contains
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_cnst, only: &
-       BIG => CNST_MAX_REAL, &
-       EPS => CNST_EPS_ZERO
+    use mod_const, only: &
+       BIG => CONST_HUGE, &
+       EPS => CONST_EPS
     implicit none
 
     real(RP), intent(inout) :: q_h   (ADM_gall,   ADM_kall,ADM_lall   )
@@ -1387,9 +1387,9 @@ contains
        ADM_gslf_pl,    &
        ADM_gmin_pl,    &
        ADM_gmax_pl
-    use mod_cnst, only: &
-       CNST_MAX_REAL, &
-       CNST_EPS_ZERO
+    use mod_const, only: &
+       BIG => CONST_HUGE, &
+       EPS => CONST_EPS
     use mod_comm, only: &
        COMM_data_transfer
     implicit none
@@ -1465,31 +1465,31 @@ contains
           q_min_AJ  = min( q(ij,k,l), q(ip1jp1,k,l), q(ijp1,k,l), q(im1j,k,l) )
           q_max_AJ  = max( q(ij,k,l), q(ip1jp1,k,l), q(ijp1,k,l), q(im1j,k,l) )
 
-          Qin(ij,    k,l,I_min,1) = (        cmask(n,k,l,1) ) * q_min_AI         &
-                                  + ( 1.0_RP-cmask(n,k,l,1) ) * CNST_MAX_REAL
-          Qin(ip1j,  k,l,I_min,4) = (        cmask(n,k,l,1) ) * CNST_MAX_REAL    &
+          Qin(ij,    k,l,I_min,1) = (        cmask(n,k,l,1) ) * q_min_AI &
+                                  + ( 1.0_RP-cmask(n,k,l,1) ) * BIG
+          Qin(ip1j,  k,l,I_min,4) = (        cmask(n,k,l,1) ) * BIG      &
                                   + ( 1.0_RP-cmask(n,k,l,1) ) * q_min_AI
-          Qin(ij,    k,l,I_max,1) = (        cmask(n,k,l,1) ) * q_max_AI         &
-                                  + ( 1.0_RP-cmask(n,k,l,1) ) * (-CNST_MAX_REAL)
-          Qin(ip1j,  k,l,I_max,4) = (        cmask(n,k,l,1) ) * (-CNST_MAX_REAL) &
+          Qin(ij,    k,l,I_max,1) = (        cmask(n,k,l,1) ) * q_max_AI &
+                                  + ( 1.0_RP-cmask(n,k,l,1) ) * (-BIG)
+          Qin(ip1j,  k,l,I_max,4) = (        cmask(n,k,l,1) ) * (-BIG)   &
                                   + ( 1.0_RP-cmask(n,k,l,1) ) * q_max_AI
 
-          Qin(ij,    k,l,I_min,2) = (        cmask(n,k,l,2) ) * q_min_AIJ        &
-                                  + ( 1.0_RP-cmask(n,k,l,2) ) * CNST_MAX_REAL
-          Qin(ip1jp1,k,l,I_min,5) = (        cmask(n,k,l,2) ) * CNST_MAX_REAL    &
+          Qin(ij,    k,l,I_min,2) = (        cmask(n,k,l,2) ) * q_min_AIJ &
+                                  + ( 1.0_RP-cmask(n,k,l,2) ) * BIG
+          Qin(ip1jp1,k,l,I_min,5) = (        cmask(n,k,l,2) ) * BIG       &
                                   + ( 1.0_RP-cmask(n,k,l,2) ) * q_min_AIJ
-          Qin(ij,    k,l,I_max,2) = (        cmask(n,k,l,2) ) * q_max_AIJ        &
-                                  + ( 1.0_RP-cmask(n,k,l,2) ) * (-CNST_MAX_REAL)
-          Qin(ip1jp1,k,l,I_max,5) = (        cmask(n,k,l,2) ) * (-CNST_MAX_REAL) &
+          Qin(ij,    k,l,I_max,2) = (        cmask(n,k,l,2) ) * q_max_AIJ &
+                                  + ( 1.0_RP-cmask(n,k,l,2) ) * (-BIG)
+          Qin(ip1jp1,k,l,I_max,5) = (        cmask(n,k,l,2) ) * (-BIG)    &
                                   + ( 1.0_RP-cmask(n,k,l,2) ) * q_max_AIJ
 
-          Qin(ij,    k,l,I_min,3) = (        cmask(n,k,l,3) ) * q_min_AJ         &
-                                  + ( 1.0_RP-cmask(n,k,l,3) ) * CNST_MAX_REAL
-          Qin(ijp1,  k,l,I_min,6) = (        cmask(n,k,l,3) ) * CNST_MAX_REAL    &
+          Qin(ij,    k,l,I_min,3) = (        cmask(n,k,l,3) ) * q_min_AJ &
+                                  + ( 1.0_RP-cmask(n,k,l,3) ) * BIG
+          Qin(ijp1,  k,l,I_min,6) = (        cmask(n,k,l,3) ) * BIG      &
                                   + ( 1.0_RP-cmask(n,k,l,3) ) * q_min_AJ
-          Qin(ij,    k,l,I_max,3) = (        cmask(n,k,l,3) ) * q_max_AJ         &
-                                  + ( 1.0_RP-cmask(n,k,l,3) ) * (-CNST_MAX_REAL)
-          Qin(ijp1,  k,l,I_max,6) = (        cmask(n,k,l,3) ) * (-CNST_MAX_REAL) &
+          Qin(ij,    k,l,I_max,3) = (        cmask(n,k,l,3) ) * q_max_AJ &
+                                  + ( 1.0_RP-cmask(n,k,l,3) ) * (-BIG)
+          Qin(ijp1,  k,l,I_max,6) = (        cmask(n,k,l,3) ) * (-BIG)   &
                                   + ( 1.0_RP-cmask(n,k,l,3) ) * q_max_AJ
        enddo
 
@@ -1506,13 +1506,13 @@ contains
           q_min_AI  = min( q(ij,k,l), q(ip1j,k,l), q(ip1jp1,k,l), q(ijm1,k,l) )
           q_max_AI  = max( q(ij,k,l), q(ip1j,k,l), q(ip1jp1,k,l), q(ijm1,k,l) )
 
-          Qin(ij,    k,l,I_min,1) = (        cmask(n,k,l,1) ) * q_min_AI         &
-                                  + ( 1.0_RP-cmask(n,k,l,1) ) * CNST_MAX_REAL
-          Qin(ip1j,  k,l,I_min,4) = (        cmask(n,k,l,1) ) * CNST_MAX_REAL    &
+          Qin(ij,    k,l,I_min,1) = (        cmask(n,k,l,1) ) * q_min_AI &
+                                  + ( 1.0_RP-cmask(n,k,l,1) ) * BIG
+          Qin(ip1j,  k,l,I_min,4) = (        cmask(n,k,l,1) ) * BIG      &
                                   + ( 1.0_RP-cmask(n,k,l,1) ) * q_min_AI
-          Qin(ij,    k,l,I_max,1) = (        cmask(n,k,l,1) ) * q_max_AI         &
-                                  + ( 1.0_RP-cmask(n,k,l,1) ) * (-CNST_MAX_REAL)
-          Qin(ip1j,  k,l,I_max,4) = (        cmask(n,k,l,1) ) * (-CNST_MAX_REAL) &
+          Qin(ij,    k,l,I_max,1) = (        cmask(n,k,l,1) ) * q_max_AI &
+                                  + ( 1.0_RP-cmask(n,k,l,1) ) * (-BIG)
+          Qin(ip1j,  k,l,I_max,4) = (        cmask(n,k,l,1) ) * (-BIG)   &
                                   + ( 1.0_RP-cmask(n,k,l,1) ) * q_max_AI
        enddo
 
@@ -1529,13 +1529,13 @@ contains
           q_min_AIJ = min( q(ij,k,l), q(ip1jp1,k,l), q(ip1j,k,l), q(ijp1,k,l) )
           q_max_AIJ = max( q(ij,k,l), q(ip1jp1,k,l), q(ip1j,k,l), q(ijp1,k,l) )
 
-          Qin(ij,    k,l,I_min,2) = (        cmask(n,k,l,2) ) * q_min_AIJ        &
-                                  + ( 1.0_RP-cmask(n,k,l,2) ) * CNST_MAX_REAL
-          Qin(ip1jp1,k,l,I_min,5) = (        cmask(n,k,l,2) ) * CNST_MAX_REAL    &
+          Qin(ij,    k,l,I_min,2) = (        cmask(n,k,l,2) ) * q_min_AIJ &
+                                  + ( 1.0_RP-cmask(n,k,l,2) ) * BIG
+          Qin(ip1jp1,k,l,I_min,5) = (        cmask(n,k,l,2) ) * BIG       &
                                   + ( 1.0_RP-cmask(n,k,l,2) ) * q_min_AIJ
-          Qin(ij,    k,l,I_max,2) = (        cmask(n,k,l,2) ) * q_max_AIJ        &
-                                  + ( 1.0_RP-cmask(n,k,l,2) ) * (-CNST_MAX_REAL)
-          Qin(ip1jp1,k,l,I_max,5) = (        cmask(n,k,l,2) ) * (-CNST_MAX_REAL) &
+          Qin(ij,    k,l,I_max,2) = (        cmask(n,k,l,2) ) * q_max_AIJ &
+                                  + ( 1.0_RP-cmask(n,k,l,2) ) * (-BIG)
+          Qin(ip1jp1,k,l,I_max,5) = (        cmask(n,k,l,2) ) * (-BIG)    &
                                   + ( 1.0_RP-cmask(n,k,l,2) ) * q_max_AIJ
        enddo
 
@@ -1552,13 +1552,13 @@ contains
           q_min_AJ  = min( q(ij,k,l), q(ijp1,k,l), q(ip1jp1,k,l), q(im1j,k,l) )
           q_max_AJ  = max( q(ij,k,l), q(ijp1,k,l), q(ip1jp1,k,l), q(im1j,k,l) )
 
-          Qin(ij,    k,l,I_min,3) = (        cmask(n,k,l,3) ) * q_min_AJ         &
-                                  + ( 1.0_RP-cmask(n,k,l,3) ) * CNST_MAX_REAL
-          Qin(ijp1,  k,l,I_min,6) = (        cmask(n,k,l,3) ) * CNST_MAX_REAL    &
+          Qin(ij,    k,l,I_min,3) = (        cmask(n,k,l,3) ) * q_min_AJ &
+                                  + ( 1.0_RP-cmask(n,k,l,3) ) * BIG
+          Qin(ijp1,  k,l,I_min,6) = (        cmask(n,k,l,3) ) * BIG      &
                                   + ( 1.0_RP-cmask(n,k,l,3) ) * q_min_AJ
-          Qin(ij,    k,l,I_max,3) = (        cmask(n,k,l,3) ) * q_max_AJ         &
-                                  + ( 1.0_RP-cmask(n,k,l,3) ) * (-CNST_MAX_REAL)
-          Qin(ijp1,  k,l,I_max,6) = (        cmask(n,k,l,3) ) * (-CNST_MAX_REAL) &
+          Qin(ij,    k,l,I_max,3) = (        cmask(n,k,l,3) ) * q_max_AJ &
+                                  + ( 1.0_RP-cmask(n,k,l,3) ) * (-BIG)
+          Qin(ijp1,  k,l,I_max,6) = (        cmask(n,k,l,3) ) * (-BIG)   &
                                   + ( 1.0_RP-cmask(n,k,l,3) ) * q_max_AJ
        enddo
 
@@ -1572,13 +1572,13 @@ contains
           q_min_AIJ = min( q(ij,k,l), q(ip1jp1,k,l), q(ip2jp1,k,l), q(ijp1,k,l) )
           q_max_AIJ = max( q(ij,k,l), q(ip1jp1,k,l), q(ip2jp1,k,l), q(ijp1,k,l) )
 
-          Qin(ij,    k,l,I_min,2) = (        cmask(n,k,l,2) ) * q_min_AIJ        &
-                                  + ( 1.0_RP-cmask(n,k,l,2) ) * CNST_MAX_REAL
-          Qin(ip1jp1,k,l,I_min,5) = (        cmask(n,k,l,2) ) * CNST_MAX_REAL    &
+          Qin(ij,    k,l,I_min,2) = (        cmask(n,k,l,2) ) * q_min_AIJ &
+                                  + ( 1.0_RP-cmask(n,k,l,2) ) * BIG
+          Qin(ip1jp1,k,l,I_min,5) = (        cmask(n,k,l,2) ) * BIG       &
                                   + ( 1.0_RP-cmask(n,k,l,2) ) * q_min_AIJ
-          Qin(ij,    k,l,I_max,2) = (        cmask(n,k,l,2) ) * q_max_AIJ        &
-                                  + ( 1.0_RP-cmask(n,k,l,2) ) * (-CNST_MAX_REAL)
-          Qin(ip1jp1,k,l,I_max,5) = (        cmask(n,k,l,2) ) * (-CNST_MAX_REAL) &
+          Qin(ij,    k,l,I_max,2) = (        cmask(n,k,l,2) ) * q_max_AIJ &
+                                  + ( 1.0_RP-cmask(n,k,l,2) ) * (-BIG)
+          Qin(ip1jp1,k,l,I_max,5) = (        cmask(n,k,l,2) ) * (-BIG)    &
                                   + ( 1.0_RP-cmask(n,k,l,2) ) * q_max_AIJ
        endif
 
@@ -1639,7 +1639,7 @@ contains
        enddo
 
        do n = nstart, nend
-          zerosw = 0.5_RP - sign(0.5_RP,abs(Cout_sum(n))-CNST_EPS_ZERO) ! if Cout_sum = 0, sw = 1
+          zerosw = 0.5_RP - sign(0.5_RP,abs(Cout_sum(n))-EPS) ! if Cout_sum = 0, sw = 1
 
           Qout(n,k,l,I_min) = ( q(n,k,l) - CQin_max_sum(n) - qnext_max(n)*(1.0_RP-Cin_sum(n)-Cout_sum(n)+d(n,k,l)) ) &
                             / ( Cout_sum(n) + zerosw ) * ( 1.0_RP - zerosw )                                         &
@@ -1671,13 +1671,13 @@ contains
                 q_min_pl = min( q_pl(n,k,l), q_pl(ij,k,l), q_pl(ijm1,k,l), q_pl(ijp1,k,l) )
                 q_max_pl = max( q_pl(n,k,l), q_pl(ij,k,l), q_pl(ijm1,k,l), q_pl(ijp1,k,l) )
 
-                Qin_pl(ij,k,l,I_min,1) = (        cmask_pl(ij,k,l) ) * q_min_pl         &
-                                       + ( 1.0_RP-cmask_pl(ij,k,l) ) * CNST_MAX_REAL
-                Qin_pl(ij,k,l,I_min,2) = (        cmask_pl(ij,k,l) ) * CNST_MAX_REAL    &
+                Qin_pl(ij,k,l,I_min,1) = (        cmask_pl(ij,k,l) ) * q_min_pl &
+                                       + ( 1.0_RP-cmask_pl(ij,k,l) ) * BIG
+                Qin_pl(ij,k,l,I_min,2) = (        cmask_pl(ij,k,l) ) * BIG      &
                                        + ( 1.0_RP-cmask_pl(ij,k,l) ) * q_min_pl
-                Qin_pl(ij,k,l,I_max,1) = (        cmask_pl(ij,k,l) ) * q_max_pl         &
-                                       + ( 1.0_RP-cmask_pl(ij,k,l) ) * (-CNST_MAX_REAL)
-                Qin_pl(ij,k,l,I_max,2) = (        cmask_pl(ij,k,l) ) * (-CNST_MAX_REAL) &
+                Qin_pl(ij,k,l,I_max,1) = (        cmask_pl(ij,k,l) ) * q_max_pl &
+                                       + ( 1.0_RP-cmask_pl(ij,k,l) ) * (-BIG)
+                Qin_pl(ij,k,l,I_max,2) = (        cmask_pl(ij,k,l) ) * (-BIG)   &
                                        + ( 1.0_RP-cmask_pl(ij,k,l) ) * q_max_pl
              enddo
           enddo
@@ -1703,7 +1703,7 @@ contains
                 CQin_max_sum_pl = CQin_max_sum_pl + ch_masked * Qin_pl(v,k,l,I_max,1)
              enddo
 
-             zerosw = 0.5_RP - sign(0.5_RP,abs(Cout_sum_pl)-CNST_EPS_ZERO) ! if Cout_sum_pl = 0, sw = 1
+             zerosw = 0.5_RP - sign(0.5_RP,abs(Cout_sum_pl)-EPS) ! if Cout_sum_pl = 0, sw = 1
 
              Qout_pl(n,k,l,I_min) = ( q_pl(n,k,l) - CQin_max_sum_pl - qnext_max_pl*(1.0_RP-Cin_sum_pl-Cout_sum_pl+d_pl(n,k,l)) ) &
                                   / ( Cout_sum_pl + zerosw ) * ( 1.0_RP - zerosw )                                               &

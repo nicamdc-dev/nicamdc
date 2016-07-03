@@ -136,10 +136,10 @@ contains
        ADM_have_pl, &
        ADM_kmax,    &
        ADM_kmin
-    use mod_cnst, only: &
-       GRAV  => CNST_EGRAV, &
-       Rdry  => CNST_RAIR,  &
-       CVdry => CNST_CV
+    use mod_const, only: &
+       GRAV  => CONST_GRAV, &
+       Rdry  => CONST_Rdry, &
+       CVdry => CONST_CVdry
     use mod_comm, only: &
        COMM_data_transfer
     use mod_grd, only: &
@@ -827,9 +827,9 @@ contains
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_kall
-    use mod_cnst, only: &
-       Rdry  => CNST_RAIR, &
-       CVdry => CNST_CV
+    use mod_const, only: &
+       Rdry  => CONST_Rdry, &
+       CVdry => CONST_CVdry
     use mod_vmtr, only: &
        VMTR_PHI,          &
        VMTR_PHI_pl,       &
@@ -1190,10 +1190,10 @@ contains
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_cnst, only: &
-       GRAV  => CNST_EGRAV, &
-       Rdry  => CNST_RAIR,  &
-       CVdry => CNST_CV
+    use mod_const, only: &
+       GRAV  => CONST_GRAV, &
+       Rdry  => CONST_Rdry, &
+       CVdry => CONST_CVdry
     use mod_grd, only: &
        GRD_rdgzh, &
        GRD_rdgz,  &
@@ -1345,10 +1345,10 @@ contains
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_cnst, only: &
-       GRAV  => CNST_EGRAV, &
-       Rdry  => CNST_RAIR,  &
-       CVdry => CNST_CV
+    use mod_const, only: &
+       GRAV  => CONST_GRAV, &
+       Rdry  => CONST_Rdry, &
+       CVdry => CONST_CVdry
     use mod_grd, only: &
        GRD_rdgzh, &
        GRD_afac,  &

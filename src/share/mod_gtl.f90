@@ -568,8 +568,8 @@ contains
        ADM_prc_me,  &
        ADM_gall,    &
        ADM_lall
-    use mod_cnst, only: &
-       CNST_UNDEF4
+    use mod_const, only: &
+       UNDEF4 => CONST_UNDEF4
     implicit none
 
     character(len=H_LONG), intent(in)  :: basename
@@ -603,8 +603,8 @@ contains
        if ( output_size == 4 ) then
          var4(:,k_start:k_end) = real(var(:,k_start:k_end,l),kind=4)
 
-         where( var4(:,k_start:k_end) < CNST_UNDEF4+1.0_RP )
-            var4(:,k_start:k_end) = CNST_UNDEF4
+         where( var4(:,k_start:k_end) < UNDEF4+1.0_RP )
+            var4(:,k_start:k_end) = UNDEF4
          end where
 
          write(fid,rec=recnum) var4(:,:)

@@ -140,9 +140,9 @@ contains
     use mod_adm, only: &
        ADM_GLEVEL,    &
        ADM_kall
-    use mod_cnst, only: &
-       PI     => CNST_PI, &
-       RADIUS => CNST_ERADIUS
+    use mod_const, only: &
+       PI     => CONST_PI,    &
+       RADIUS => CONST_RADIUS
     use mod_grd, only: &
        GRD_gz,   &
        GRD_gzh
@@ -298,8 +298,8 @@ contains
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_cnst, only: &
-       EPS => CNST_EPS_ZERO
+    use mod_const, only: &
+       EPS => CONST_EPS
     use mod_grd, only: &
        GRD_htop, &
        GRD_gz,   &
@@ -371,9 +371,9 @@ contains
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_cnst, only: &
-       PI  => CNST_PI,       &
-       EPS => CNST_EPS_ZERO
+    use mod_const, only: &
+       PI  => CONST_PI, &
+       EPS => CONST_EPS
     use mod_grd, only: &
        GRD_htop, &
        GRD_gz
@@ -657,9 +657,9 @@ contains
        ADM_kall, &
        ADM_kmin, &
        ADM_kmax
-    use mod_cnst, only: &
-       PI  => CNST_PI,       &
-       EPS => CNST_EPS_ZERO
+    use mod_const, only: &
+       PI  => CONST_PI, &
+       EPS => CONST_EPS
     use mod_grd, only: &
        GRD_gz,   &
        GRD_gzh,  &
@@ -729,10 +729,10 @@ contains
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_cnst, only: &
-       PI    => CNST_PI,       &
-       EPS   => CNST_EPS_ZERO, &
-       SOUND => CNST_SOUND
+    use mod_const, only: &
+       PI    => CONST_PI,   &
+       EPS   => CONST_EPS,  &
+       SOUND => CONST_SOUND
     use mod_grd, only: &
        GRD_gz
     use mod_gmtr, only: &
@@ -893,10 +893,10 @@ contains
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_cnst, only: &
-       PI    => CNST_PI,       &
-       EPS   => CNST_EPS_ZERO, &
-       SOUND => CNST_SOUND
+    use mod_const, only: &
+       PI    => CONST_PI,   &
+       EPS   => CONST_EPS,  &
+       SOUND => CONST_SOUND
     use mod_grd, only: &
        GRD_htop, &
        GRD_gz
@@ -1174,8 +1174,8 @@ contains
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_cnst, only: &
-       CVdry => CNST_CV
+    use mod_const, only: &
+       CVdry => CONST_CVdry
     use mod_comm, only: &
        COMM_data_transfer
     use mod_grd, only: &
@@ -1607,8 +1607,8 @@ contains
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_cnst, only: &
-       CVdry => CNST_CV
+    use mod_const, only: &
+       CVdry => CONST_CVdry
     use mod_grd, only: &
        GRD_rdgz,  &
        GRD_rdgzh
@@ -2434,8 +2434,8 @@ contains
        z_top,         &
        z_bottomlimit, &
        factor         )
-    use mod_cnst, only: &
-       PI => CNST_PI
+    use mod_const, only: &
+       PI => CONST_PI
     implicit none
 
     integer,  intent(in)  :: kdim          ! number of vertical grid

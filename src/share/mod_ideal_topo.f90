@@ -128,9 +128,9 @@ contains
        ADM_KNONE, &
        ADM_lall,  &
        ADM_gall
-    use mod_cnst, only: &
-       PI     => CNST_PI, &
-       D2R    => CNST_D2R
+    use mod_const, only: &
+       PI  => CONST_PI, &
+       D2R => CONST_D2R
     implicit none
 
     real(RP), intent(in)  :: lat (ADM_gall,ADM_KNONE,ADM_lall)
@@ -214,10 +214,10 @@ contains
        ADM_KNONE, &
        ADM_lall,  &
        ADM_gall
-    use mod_cnst, only: &
-       PI     => CNST_PI,      &
-       D2R    => CNST_D2R,     &
-       RADIUS => CNST_ERADIUS
+    use mod_const, only: &
+       PI     => CONST_PI,     &
+       D2R    => CONST_D2R,    &
+       RADIUS => CONST_RADIUS
     implicit none
 
     real(RP), intent(in)  :: lat (ADM_gall,ADM_KNONE,ADM_lall)
@@ -293,11 +293,11 @@ contains
        ADM_KNONE, &
        ADM_lall,  &
        ADM_gall
-    use mod_cnst, only: &
-       PI     => CNST_PI,      &
-       RADIUS => CNST_ERADIUS, &
-       OHM    => CNST_EOHM,    &
-       GRAV   => CNST_EGRAV
+    use mod_const, only: &
+       PI     => CONST_PI,     &
+       GRAV   => CONST_GRAV,   &
+       RADIUS => CONST_RADIUS, &
+       OHM    => CONST_OHM
     implicit none
 
     real(RP), intent(in)  :: lat (ADM_gall,ADM_KNONE,ADM_lall)

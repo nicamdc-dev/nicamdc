@@ -27,22 +27,24 @@ module mod_vintrpl
   use mod_stdio
   use mod_debug
   use mod_adm, only: &
-       ADM_gall,        &
-       ADM_kall,        &
-       ADM_lall,        &
-       ADM_gall_pl,     &
-       ADM_lall_pl,     &
-       ADM_KNONE,       &
-       ADM_kmin,        &
-       ADM_kmax,        &
-       ADM_have_pl
-  use mod_grd, only :   &
-       GRD_vz,GRD_vz_pl,&
-       GRD_gz,          &
-       GRD_ZH,GRD_Z,    &
-       GRD_gzh
-  use mod_cnst, only :  &
-       CNST_UNDEF
+     ADM_gall,    &
+     ADM_kall,    &
+     ADM_lall,    &
+     ADM_gall_pl, &
+     ADM_lall_pl, &
+     ADM_KNONE,   &
+     ADM_kmin,    &
+     ADM_kmax,    &
+     ADM_have_pl
+  use mod_const, only: &
+     UNDEF => CONST_UNDEF
+  use mod_grd, only: &
+     GRD_ZH,   &
+     GRD_Z,    &
+     GRD_gz,   &
+     GRD_gzh,  &
+     GRD_vz,   &
+     GRD_vz_pl
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -143,9 +145,9 @@ contains
        do l=1,ADM_lall
        do k=ADM_kmin,ADM_kmax
        do n=1,ADM_gall
-          if ( v(n,k+1,l) == CNST_UNDEF ) then
+          if ( v(n,k+1,l) == UNDEF ) then
             tmp(n,k,l) = v(n,k,l)
-          else if ( v(n,k,l) == CNST_UNDEF ) then
+          else if ( v(n,k,l) == UNDEF ) then
             tmp(n,k,l) = v(n,k+1,l)
           else
             tmp(n,k,l) = 0.5_RP*(v(n,k+1,l)+v(n,k,l))
@@ -161,9 +163,9 @@ contains
           do l=1,ADM_lall
           do k=ADM_kmin,ADM_kmax
           do n=1,ADM_gall
-            if ( v_pl(n,k+1,l) == CNST_UNDEF ) then
+            if ( v_pl(n,k+1,l) == UNDEF ) then
               tmp_pl(n,k,l) = v_pl(n,k,l)
-            else if ( v_pl(n,k,l) == CNST_UNDEF ) then
+            else if ( v_pl(n,k,l) == UNDEF ) then
               tmp_pl(n,k,l) = v_pl(n,k+1,l)
             else
               tmp_pl(n,k,l) = 0.5_RP*(v_pl(n,k+1,l)+v_pl(n,k,l))
@@ -184,7 +186,7 @@ contains
           do n=1, ADM_gall
              if(      (GRD_gz(k)<GRD_vz(n,ADM_kmin,l,GRD_ZH))&
                   .or.(GRD_gz(k)>GRD_vz(n,ADM_kmax+1,l,GRD_ZH)) ) then
-                v(n,k,l) = CNST_UNDEF
+                v(n,k,l) = UNDEF
              else
                 do kk = ADM_kmin-1,ADM_kmax+1
                    kp=kk
@@ -201,10 +203,10 @@ contains
                    kp=ADM_kmax-1
                 endif
                 ! 07/01/24 K.Suzuki: consider undefined value
-                if ( tmp(n,kp+1,l) == CNST_UNDEF ) then
-                  if ( tmp(n,kp,l) == CNST_UNDEF ) then
+                if ( tmp(n,kp+1,l) == UNDEF ) then
+                  if ( tmp(n,kp,l) == UNDEF ) then
                     v(n,k,l) = tmp(n,kp-1,l)
-                  else if ( tmp(n,kp-1,l) == CNST_UNDEF ) then
+                  else if ( tmp(n,kp-1,l) == UNDEF ) then
                     v(n,k,l) = tmp(n,kp,l)
                   else
                     v(n,k,l) &
@@ -212,9 +214,9 @@ contains
                          GRD_vz(n,kp  ,l,GRD_Z),tmp(n,kp  ,l), &
                          GRD_vz(n,kp-1,l,GRD_Z),tmp(n,kp-1,l)  )
                   endif
-                else if ( tmp(n,kp,l) == CNST_UNDEF ) then
+                else if ( tmp(n,kp,l) == UNDEF ) then
                    v(n,k,l) = tmp(n,kp-1,l)
-                else if ( tmp(n,kp-1,l) == CNST_UNDEF ) then
+                else if ( tmp(n,kp-1,l) == UNDEF ) then
                    v(n,k,l) = tmp(n,kp,l)
                 else
                    v(n,k,l)                                    &
@@ -233,7 +235,7 @@ contains
              do n=1, ADM_gall_pl
                 if(  (GRD_gz(k)<GRD_vz_pl(n,ADM_kmin,l,GRD_ZH)).or.&
                      (GRD_gz(k)>GRD_vz_pl(n,ADM_kmax+1,l,GRD_ZH)) ) then
-                   v_pl(n,k,l) = CNST_UNDEF
+                   v_pl(n,k,l) = UNDEF
                 else
                    do kk = ADM_kmin-1,ADM_kmax+1
                      kp=kk
@@ -250,10 +252,10 @@ contains
                       kp=ADM_kmax-1
                    endif
                    ! 07/01/24 K.Suzuki: consider undefined value
-                   if ( tmp_pl(n,kp+1,l) == CNST_UNDEF ) then
-                     if ( tmp_pl(n,kp,l) == CNST_UNDEF ) then
+                   if ( tmp_pl(n,kp+1,l) == UNDEF ) then
+                     if ( tmp_pl(n,kp,l) == UNDEF ) then
                        v_pl(n,k,l) = tmp_pl(n,kp-1,l)
-                     else if ( tmp_pl(n,kp-1,l) == CNST_UNDEF ) then
+                     else if ( tmp_pl(n,kp-1,l) == UNDEF ) then
                        v_pl(n,k,l) = tmp_pl(n,kp,l)
                      else
                        v_pl(n,k,l)                                  &
@@ -261,9 +263,9 @@ contains
                               GRD_vz_pl(n,kp  ,l,GRD_Z),tmp_pl(n,kp  ,l), &
                               GRD_vz_pl(n,kp-1,l,GRD_Z),tmp_pl(n,kp-1,l) )
                      endif
-                   else if ( tmp_pl(n,kp,l) == CNST_UNDEF ) then
+                   else if ( tmp_pl(n,kp,l) == UNDEF ) then
                       v_pl(n,k,l) = tmp_pl(n,kp-1,l)
-                   else if ( tmp_pl(n,kp-1,l) == CNST_UNDEF ) then
+                   else if ( tmp_pl(n,kp-1,l) == UNDEF ) then
                       v_pl(n,k,l) = tmp_pl(n,kp,l)
                    else
                       v_pl(n,k,l)                                       &
@@ -302,9 +304,9 @@ contains
        do l=1, ADM_lall
        do k=ADM_kmin,ADM_kmax
        do n=1, ADM_gall
-         if ( v(n,k+1,l) == CNST_UNDEF ) then
+         if ( v(n,k+1,l) == UNDEF ) then
            tmp(n,k,l) = v(n,k,l)
-         else if ( v(n,k,l) == CNST_UNDEF ) then
+         else if ( v(n,k,l) == UNDEF ) then
            tmp(n,k,l) = v(n,k+1,l)
          else
            tmp(n,k,l) = 0.5_RP*(v(n,k+1,l)+v(n,k,l))
@@ -319,9 +321,9 @@ contains
           do l=1,ADM_lall
           do k=ADM_kmin,ADM_kmax
           do n=1,ADM_gall
-            if ( v_pl(n,k+1,l) == CNST_UNDEF ) then
+            if ( v_pl(n,k+1,l) == UNDEF ) then
               tmp_pl(n,k,l) = v_pl(n,k,l)
-            else if ( v_pl(n,k,l) == CNST_UNDEF ) then
+            else if ( v_pl(n,k,l) == UNDEF ) then
               tmp_pl(n,k,l) = v_pl(n,k+1,l)
             else
               tmp_pl(n,k,l) = 0.5_RP*(v_pl(n,k+1,l)+v_pl(n,k,l))
@@ -342,7 +344,7 @@ contains
           do n=1, ADM_gall
              if(      (GRD_gz(k)<GRD_vz(n,ADM_kmin,l,GRD_ZH))&
                   .or.(GRD_gz(k)>GRD_vz(n,ADM_kmax+1,l,GRD_ZH)) ) then
-                v(n,k,l) = CNST_UNDEF
+                v(n,k,l) = UNDEF
              else
                 do kk = ADM_kmin-1,ADM_kmax+1
                    kp=kk
@@ -354,9 +356,9 @@ contains
                    v(n,k,l)=tmp(n,ADM_kmax,l)
                 else
                   ! 07/01/24 K.Suzuki: consider undefined value
-                  if ( tmp(n,kp,l) == CNST_UNDEF ) then
+                  if ( tmp(n,kp,l) == UNDEF ) then
                      v(n,k,l) = tmp(n,kp-1,l)
-                  else if ( tmp(n,kp-1,l) == CNST_UNDEF ) then
+                  else if ( tmp(n,kp-1,l) == UNDEF ) then
                      v(n,k,l) = tmp(n,kp,l)
                   else
                      v(n,k,l)                                    &
@@ -375,7 +377,7 @@ contains
              do n=1, ADM_gall_pl
                 if(  (GRD_gz(k)<GRD_vz_pl(n,ADM_kmin,l,GRD_ZH)).or.&
                      (GRD_gz(k)>GRD_vz_pl(n,ADM_kmax+1,l,GRD_ZH)) ) then
-                   v_pl(n,k,l) = CNST_UNDEF
+                   v_pl(n,k,l) = UNDEF
                 else
                    do kk = ADM_kmin-1,ADM_kmax+1
                      kp=kk
@@ -387,9 +389,9 @@ contains
                       v_pl(n,k,l) = tmp_pl(n,ADM_kmax,l)
                    else
                      ! 07/01/24 K.Suzuki: consider undefined value
-                     if ( tmp_pl(n,kp,l) == CNST_UNDEF ) then
+                     if ( tmp_pl(n,kp,l) == UNDEF ) then
                         v_pl(n,k,l) = tmp_pl(n,kp-1,l)
-                     else if ( tmp_pl(n,kp-1,l) == CNST_UNDEF ) then
+                     else if ( tmp_pl(n,kp-1,l) == UNDEF ) then
                         v_pl(n,k,l) = tmp_pl(n,kp,l)
                      else
                         v_pl(n,k,l)                                      &
@@ -430,7 +432,7 @@ contains
 
     if ( wgrid ) then
        tmp = v
-       v(:,ADM_kmin-1,:) = CNST_UNDEF
+       v(:,ADM_kmin-1,:) = UNDEF
        do l=1,ADM_lall
           do n = 1, ADM_gall
              do k = ADM_kmin, ADM_kmax+1
@@ -456,7 +458,7 @@ contains
 
        if ( ADM_have_pl ) Then
           tmp_pl = v_pl
-          v_pl(:,ADM_kmin-1,:) = CNST_UNDEF
+          v_pl(:,ADM_kmin-1,:) = UNDEF
           do l=1,ADM_lall_pl
              do n = 1, ADM_gall_pl
                 do k = ADM_kmin, ADM_kmax+1
@@ -484,8 +486,8 @@ contains
     else !--- full grid
 
        tmp(:,:,:) = v(:,:,:)
-       v(:,ADM_kmin-1,:) = CNST_UNDEF
-       v(:,ADM_kmax+1,:) = CNST_UNDEF
+       v(:,ADM_kmin-1,:) = UNDEF
+       v(:,ADM_kmax+1,:) = UNDEF
 
        do l = 1, ADM_lall
        do n = 1, ADM_gall
@@ -513,8 +515,8 @@ contains
 
        if ( ADM_have_pl ) Then
           tmp_pl = v_pl
-          v_pl(:,ADM_kmin-1,:) = CNST_UNDEF
-          v_pl(:,ADM_kmax+1,:) = CNST_UNDEF
+          v_pl(:,ADM_kmin-1,:) = UNDEF
+          v_pl(:,ADM_kmax+1,:) = UNDEF
           do l=1,ADM_lall_pl
              do n = 1, ADM_gall_pl
                 do k = ADM_kmin, ADM_kmax

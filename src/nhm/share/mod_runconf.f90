@@ -145,8 +145,8 @@ module mod_runconf
 
   integer, public            :: TRC_vmax   =  0 ! total number of tracers
 
-  character(len=16),      public, allocatable :: TRC_name(:) ! short name  of tracer [add] H.Yashiro 20110819
-  character(len=H_SHORT), public, allocatable :: WLABEL  (:) ! description of tracer
+  character(len=16),    public, allocatable :: TRC_name(:) ! short name  of tracer [add] H.Yashiro 20110819
+  character(len=H_MID), public, allocatable :: WLABEL  (:) ! description of tracer
 
   integer, public            :: NQW_MAX    =  0 ! subtotal number of water mass tracers
   integer, public            :: NQW_STR    = -1 ! start index of water mass tracers
@@ -181,19 +181,18 @@ module mod_runconf
   !--- specific heat of water on const pressure
   real(RP), public, allocatable :: CVW(:)
   real(RP), public, allocatable :: CPW(:)
-  !--- Latent heat
-  real(RP), public            :: LHV
-  real(RP), public            :: LHF
-  real(RP), public            :: LHS
+
   !--- No. of band for rad.
   integer, public, parameter :: NRBND     = 3
   integer, public, parameter :: NRBND_VIS = 1
   integer, public, parameter :: NRBND_NIR = 2
   integer, public, parameter :: NRBND_IR  = 3
+
   !--- direct/diffuse
   integer, public, parameter :: NRDIR         = 2
   integer, public, parameter :: NRDIR_DIRECT  = 1
   integer, public, parameter :: NRDIR_DIFFUSE = 2
+
   !--- roughness  parameter
   integer, public, parameter :: NTYPE_Z0 = 3
   integer, public, parameter :: N_Z0M    = 1
@@ -274,7 +273,7 @@ contains
     implicit none
     !---------------------------------------------------------------------------
 
-    if( THUBURN_LIM ) then  ![add] 20130613 R.Yoshida
+    if( THUBURN_LIM ) then ![add] 20130613 R.Yoshida
        write(IO_FID_LOG,*) 'Run with \"Thuburn Limiter\" in MIURA2004 Advection'
     else
        write(IO_FID_LOG,*) '### Without \"Thuburn Limiter\" in MIURA2004 Advection'
@@ -454,19 +453,13 @@ contains
   !-----------------------------------------------------------------------------
   !> thermodynamic setup
   subroutine RUNCONF_thermodyn_setup
-    use mod_cnst, only: &
-       CNST_CV,    &
-       CNST_CVV,   &
-       CNST_CP,    &
-       CNST_CPV,   &
-       CNST_CL,    &
-       CNST_CI,    &
-       CNST_LH0,   &
-       CNST_LH00,  &
-       CNST_LHS0,  &
-       CNST_LHS00, &
-       CNST_LHF0,  &
-       CNST_LHF00
+    use mod_const, only: &
+       CPdry => CONST_CPdry, &
+       CPvap => CONST_CPvap, &
+       CVdry => CONST_CVdry, &
+       CVvap => CONST_CVvap, &
+       CL    => CONST_CL,    &
+       CI    => CONST_CI
     implicit none
 
     integer :: v
@@ -483,79 +476,70 @@ contains
     allocate( CVW(NQW_STR:NQW_END) )
     allocate( CPW(NQW_STR:NQW_END) )
 
-    if(EIN_TYPE=='EXACT') then
-       LHV = CNST_LH00
-       LHS = CNST_LHS00
-       LHF = CNST_LHF00
+    if ( EIN_TYPE == 'SIMPLE' ) then
        do v = NQW_STR, NQW_END
-          if ( v == I_QV ) then       ! vapor
-             CVW(v) = CNST_CVV
-             CPW(v) = CNST_CPV
-          else if ( v == I_QC ) then  ! cloud
-             CVW(v) = CNST_CL
-             CPW(v) = CNST_CL
-          else if ( v == I_QR ) then  ! rain
-             CVW(v) = CNST_CL
-             CPW(v) = CNST_CL
-          else if ( v == I_QI ) then  ! ice
-             CVW(v) = CNST_CI
-             CPW(v) = CNST_CI
-          else if ( v == I_QS ) then  ! snow
-             CVW(v) = CNST_CI
-             CPW(v) = CNST_CI
-          else if ( v == I_QG ) then  ! graupel
-             CVW(v) = CNST_CI
-             CPW(v) = CNST_CI
+          if    ( v == I_QV ) then ! vapor
+             CVW(v) = CVdry
+             CPW(v) = CPdry
+          elseif( v == I_QC ) then ! cloud
+             CVW(v) = CVdry
+             CPW(v) = CVdry
+          elseif( v == I_QR ) then ! rain
+             CVW(v) = CVdry
+             CPW(v) = CVdry
+          elseif( v == I_QI ) then ! ice
+             CVW(v) = CVdry
+             CPW(v) = CVdry
+          elseif( v == I_QS ) then ! snow
+             CVW(v) = CVdry
+             CPW(v) = CVdry
+          elseif( v == I_QG ) then ! graupel
+             CVW(v) = CVdry
+             CPW(v) = CVdry
           endif
        enddo
-    elseif(EIN_TYPE=='SIMPLE2') then
-       LHV = CNST_LH0
-       LHS = CNST_LHS0
-       LHF = CNST_LHF0
+    elseif( EIN_TYPE == 'SIMPLE2' ) then
        do v = NQW_STR, NQW_END
-          if ( v == I_QV ) then       ! vapor
-             CVW(v) = CNST_CVV
-             CPW(v) = CNST_CPV
-          else if ( v == I_QC ) then  ! cloud
-             CVW(v) = CNST_CPV
-             CPW(v) = CNST_CPV
-          else if ( v == I_QR ) then  ! rain
-             CVW(v) = CNST_CPV
-             CPW(v) = CNST_CPV
-          else if ( v == I_QI ) then  ! ice
-             CVW(v) = CNST_CPV
-             CPW(v) = CNST_CPV
-          else if ( v == I_QS ) then  ! snow
-             CVW(v) = CNST_CPV
-             CPW(v) = CNST_CPV
-          else if ( v == I_QG ) then  ! graupel
-             CVW(v) = CNST_CPV
-             CPW(v) = CNST_CPV
+          if    ( v == I_QV ) then ! vapor
+             CVW(v) = CVvap
+             CPW(v) = CPvap
+          elseif( v == I_QC ) then ! cloud
+             CVW(v) = CPvap
+             CPW(v) = CPvap
+          elseif( v == I_QR ) then ! rain
+             CVW(v) = CPvap
+             CPW(v) = CPvap
+          elseif( v == I_QI ) then ! ice
+             CVW(v) = CPvap
+             CPW(v) = CPvap
+          elseif( v == I_QS ) then ! snow
+             CVW(v) = CPvap
+             CPW(v) = CPvap
+          elseif( v == I_QG ) then ! graupel
+             CVW(v) = CPvap
+             CPW(v) = CPvap
           endif
        enddo
-    elseif(EIN_TYPE=='SIMPLE') then
-       LHV = CNST_LH0
-       LHS = CNST_LHS0
-       LHF = CNST_LHF0
+    elseif( EIN_TYPE == 'EXACT' ) then
        do v = NQW_STR, NQW_END
-          if ( v == I_QV ) then       ! vapor
-             CVW(v) = CNST_CV
-             CPW(v) = CNST_CP
-          else if ( v == I_QC ) then  ! cloud
-             CVW(v) = CNST_CV
-             CPW(v) = CNST_CV
-          else if ( v == I_QR ) then  ! rain
-             CVW(v) = CNST_CV
-             CPW(v) = CNST_CV
-          else if ( v == I_QI ) then  ! ice
-             CVW(v) = CNST_CV
-             CPW(v) = CNST_CV
-          else if ( v == I_QS ) then  ! snow
-             CVW(v) = CNST_CV
-             CPW(v) = CNST_CV
-          else if ( v == I_QG ) then  ! graupel
-             CVW(v) = CNST_CV
-             CPW(v) = CNST_CV
+          if    ( v == I_QV ) then ! vapor
+             CVW(v) = CVvap
+             CPW(v) = CPvap
+          elseif( v == I_QC ) then ! cloud
+             CVW(v) = CL
+             CPW(v) = CL
+          elseif( v == I_QR ) then ! rain
+             CVW(v) = CL
+             CPW(v) = CL
+          elseif( v == I_QI ) then ! ice
+             CVW(v) = CI
+             CPW(v) = CI
+          elseif( v == I_QS ) then ! snow
+             CVW(v) = CI
+             CPW(v) = CI
+          elseif( v == I_QG ) then ! graupel
+             CVW(v) = CI
+             CPW(v) = CI
           endif
        enddo
     endif

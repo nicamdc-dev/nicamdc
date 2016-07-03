@@ -31,16 +31,17 @@ module mod_thrmdyn
      kdim => ADM_kall, &
      kmin => ADM_kmin, &
      kmax => ADM_kmax
-  use mod_cnst, only: &
-     Rdry  => CNST_RAIR,  &
-     CPdry => CNST_CP,    &
-     CVdry => CNST_CV,    &
-     KAPPA => CNST_KAPPA, &
-     Rvap  => CNST_RVAP,  &
-     PRE00 => CNST_PRE00, &
-     TEM00 => CNST_TEM00, &
-     PSAT0 => CNST_PSAT0, &
-     EPSV  => CNST_EPSV
+  use mod_const, only: &
+     Rdry   => CONST_Rdry,  &
+     CPdry  => CONST_CPdry, &
+     CVdry  => CONST_CVdry, &
+     Rvap   => CONST_Rvap,  &
+     LHV    => CONST_LHV,   &
+     LHF    => CONST_LHF,   &
+     PRE00  => CONST_PRE00, &
+     TEM00  => CONST_TEM00, &
+     PSAT0  => CONST_PSAT0, &
+     EPSvap => CONST_EPSvap
   use mod_runconf, only: &
      nqmax => TRC_VMAX, &
      NQW_STR,           &
@@ -51,8 +52,6 @@ module mod_thrmdyn
      I_QI,              &
      I_QS,              &
      I_QG,              &
-     LHV,               &
-     LHF,               &
      CVW,               &
      CPW
   !-----------------------------------------------------------------------------
@@ -508,12 +507,12 @@ contains
     integer :: ij, k
     !---------------------------------------------------------------------------
 
-    pre0_kappa = PRE00**KAPPA
+    pre0_kappa = PRE00**(Rdry/CPdry)
 
     !$acc kernels pcopy(th) pcopyin(tem,pre) async(0)
     do k  = 1, kdim
     do ij = 1, ijdim
-       th(ij,k) = tem(ij,k) + pre(ij,k)**KAPPA * pre0_kappa
+       th(ij,k) = tem(ij,k) + pre(ij,k)**(Rdry/CPdry) * pre0_kappa
     enddo
     enddo
     !$acc end kernels
@@ -544,13 +543,13 @@ contains
     integer :: ij, k, l
     !---------------------------------------------------------------------------
 
-    pre0_kappa = PRE00**KAPPA
+    pre0_kappa = PRE00**(Rdry/CPdry)
 
     !$acc kernels pcopy(th) pcopyin(tem,pre) async(0)
     do l  = 1, ldim
     do k  = 1, kdim
     do ij = 1, ijdim
-       th(ij,k,l) = tem(ij,k,l) + pre(ij,k,l)**KAPPA * pre0_kappa
+       th(ij,k,l) = tem(ij,k,l) + pre(ij,k,l)**(Rdry/CPdry) * pre0_kappa
     enddo
     enddo
     enddo
@@ -669,8 +668,8 @@ contains
     !$acc kernels pcopy(ent) pcopyin(tem,pre,qd,q) async(0)
     do k  = 1, kdim
     do ij = 1, ijdim
-       Pdry = max( pre(ij,k) * EPSV*qd(ij,k) / ( EPSV*qd(ij,k) + q(ij,k,I_QV) ), EPS )
-       Pvap = max( pre(ij,k) * q(ij,k,I_QV)  / ( EPSV*qd(ij,k) + q(ij,k,I_QV) ), EPS )
+       Pdry = max( pre(ij,k) * EPSvap*qd(ij,k) / ( EPSvap*qd(ij,k) + q(ij,k,I_QV) ), EPS )
+       Pvap = max( pre(ij,k) * q(ij,k,I_QV)    / ( EPSvap*qd(ij,k) + q(ij,k,I_QV) ), EPS )
 
        ent(ij,k) = qd(ij,k)      * CPdry * log( tem(ij,k)/TEM00 ) &
                  - qd(ij,k)      * Rdry  * log( Pdry     /PRE00 ) &

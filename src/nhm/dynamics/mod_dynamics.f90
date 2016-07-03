@@ -170,10 +170,10 @@ contains
        ADM_gall_pl, &
        ADM_kmax,    &
        ADM_kmin
-    use mod_cnst, only: &
-       Rdry  => CNST_RAIR, &
-       Rvap  => CNST_RVAP, &
-       CVdry => CNST_CV
+    use mod_const, only: &
+       Rdry  => CONST_Rdry, &
+       Rvap  => CONST_Rvap, &
+       CVdry => CONST_CVdry
     use mod_comm, only: &
        COMM_data_transfer
     use mod_vmtr, only: &
