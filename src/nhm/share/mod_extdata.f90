@@ -58,13 +58,13 @@ module mod_extdata
   type, private :: extdatainfo
      character(len=H_LONG)  :: fname             !--- data file name
      character(len=H_LONG)  :: dataname          !--- data name
-     character(len=H_LONG)  :: input_io_mode     !--- io mode                  ! [add] H.Yashiro 20110826
+     character(len=H_SHORT) :: input_io_mode     !--- io mode                  ! [add] H.Yashiro 20110826
      integer                :: input_size        !--- double/single precision
      character(len=H_SHORT) :: layer_type        !--- type of layer : 'ATM' or 'SFC'
      character(len=H_SHORT) :: layername         !--- name of layer            ! [add] H.Yashiro 20110826
      integer                :: kall              !--- number of layer
      integer                :: num_of_data       !--- number of data
-     integer, pointer       :: data_date(:,:)    !--- date of each data piece
+     integer,  pointer      :: data_date(:,:)    !--- date of each data piece
      real(DP), pointer      :: data_time(:)      !--- time[sec] of each data piecce
      integer                :: data_rec(2)       !--- data record ( forward & backward )
      integer                :: fix_rec           !--- record number if it's fixed
@@ -100,20 +100,20 @@ contains
        ctime => TIME_CTIME
     implicit none
 
-    character(len=H_LONG) :: fname
-    character(len=H_LONG) :: dataname
-    character(len=H_LONG) :: input_io_mode ! [add] H.Yashiro 20110826
-    integer                     :: input_size
-    character(LEN=H_SHORT)     :: layer_type
-    character(LEN=H_SHORT)     :: layername ! [add] H.Yashiro 20110826
-    integer                     :: nlayer    ! [add] H.Yashiro 20131030
-    integer                     :: num_of_data
-    integer                     :: data_date(6,max_num_of_data)
-    integer                     :: fix_rec
-    logical                     :: opt_fix_rec
-    logical                     :: opt_monthly_cnst
-    logical                     :: opt_periodic_year
-    real(RP)                    :: defval
+    character(len=H_LONG)  :: fname
+    character(len=H_LONG)  :: dataname
+    character(len=H_SHORT) :: input_io_mode ! [add] H.Yashiro 20110826
+    integer                :: input_size
+    character(len=H_SHORT) :: layer_type
+    character(len=H_SHORT) :: layername ! [add] H.Yashiro 20110826
+    integer                :: nlayer    ! [add] H.Yashiro 20131030
+    integer                :: num_of_data
+    integer                :: data_date(6,max_num_of_data)
+    integer                :: fix_rec
+    logical                :: opt_fix_rec
+    logical                :: opt_monthly_cnst
+    logical                :: opt_periodic_year
+    real(RP)               :: defval
     ! [Add] 12/02/01 T.Seiki
     integer :: ddata_date(6)
     logical :: opt_increment_date

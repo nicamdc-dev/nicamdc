@@ -1528,7 +1528,7 @@ contains
   end subroutine gsqrt_Div3dfh
   !-------------------------------------------------------------------------------
   subroutine dbgmx(cha,var)
-    character(*):: cha
+    character(len=*):: cha
     real(RP):: var(:,:,:)
 !    if (ADM_prc_me.eq.1) then
 !      write(*,*) trim(cha),maxval(var),minval(var), maxloc(var),minloc(var)

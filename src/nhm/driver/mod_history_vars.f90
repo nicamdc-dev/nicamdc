@@ -114,7 +114,7 @@ contains
     real(RP) :: tmp3d(ADM_gall,ADM_kall)
     real(RP) :: tmp2d(ADM_gall,ADM_KNONE)
 
-    character(len=16) :: varname
+    character(len=H_SHORT) :: varname
 
     integer :: n, l, nq
     !---------------------------------------------------------------------------

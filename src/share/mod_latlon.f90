@@ -53,7 +53,7 @@ module mod_latlon
   real(RP), public, allocatable :: GMTR_P_ll   (:,:,:,:)
   real(RP), public, allocatable :: GMTR_P_ll_pl(:,:,:,:)
 
-  character(len=H_SHORT),  public :: polygon_type = 'ON_SPHERE' ! triangle is fit to the sphere
+  character(len=H_SHORT), public :: polygon_type = 'ON_SPHERE' ! triangle is fit to the sphere
   !                                                 'ON_PLANE'  ! triangle is treated as 2D
 
   !-----------------------------------------------------------------------------

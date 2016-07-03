@@ -95,10 +95,10 @@ module mod_prgvar
 
   integer, private :: TRC_vmax_input ! number of input tracer variables
 
-  character(len=H_LONG), private :: layername      = ''
-  character(len=H_LONG), private :: input_io_mode  = 'ADVANCED'
-  character(len=H_LONG), private :: output_io_mode = 'ADVANCED'
-  logical,               private :: allow_missingq = .false.
+  character(len=H_SHORT), private :: layername      = ''
+  character(len=H_SHORT), private :: input_io_mode  = 'ADVANCED'
+  character(len=H_SHORT), private :: output_io_mode = 'ADVANCED'
+  logical,                private :: allow_missingq = .false.
 
   !-----------------------------------------------------------------------------
 contains
@@ -979,7 +979,7 @@ contains
        tracer_input
     implicit none
 
-    character(len=H_LONG), intent(in) :: basename
+    character(len=*), intent(in) :: basename
 
     character(len=H_LONG) :: fname
 
@@ -1134,7 +1134,7 @@ contains
        cnvvar_prg2diag
     implicit none
 
-    character(len=H_LONG), intent(in) :: basename
+    character(len=*), intent(in) :: basename
 
     character(len=H_MID)   :: desc = 'INITIAL/RESTART_data_of_prognostic_variables' ! [add] H.Yashiro 20110819
 

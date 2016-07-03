@@ -125,7 +125,7 @@ module mod_runconf
   integer, public, parameter :: I_RHOGQstr =  7 ! tracers
   integer, public            :: I_RHOGQend = -1 !
 
-  character(len=16), public  :: PRG_name(PRG_vmax0)
+  character(len=H_SHORT), public  :: PRG_name(PRG_vmax0)
   data PRG_name / 'rhog', 'rhogvx', 'rhogvy', 'rhogvz', 'rhogw', 'rhoge' /
 
   integer, public            :: DIAG_vmax       ! total number of diagnostic variables
@@ -140,13 +140,13 @@ module mod_runconf
   integer, public, parameter :: I_qstr     =  7 ! tracers
   integer, public            :: I_qend     = -1 !
 
-  character(len=16), public  :: DIAG_name(DIAG_vmax0)
+  character(len=H_SHORT), public  :: DIAG_name(DIAG_vmax0)
   data DIAG_name / 'pre', 'tem', 'vx', 'vy', 'vz', 'w' /
 
   integer, public            :: TRC_vmax   =  0 ! total number of tracers
 
-  character(len=16),    public, allocatable :: TRC_name(:) ! short name  of tracer [add] H.Yashiro 20110819
-  character(len=H_MID), public, allocatable :: WLABEL  (:) ! description of tracer
+  character(len=H_SHORT), public, allocatable :: TRC_name(:) ! short name  of tracer [add] H.Yashiro 20110819
+  character(len=H_MID),   public, allocatable :: WLABEL  (:) ! description of tracer
 
   integer, public            :: NQW_MAX    =  0 ! subtotal number of water mass tracers
   integer, public            :: NQW_STR    = -1 ! start index of water mass tracers

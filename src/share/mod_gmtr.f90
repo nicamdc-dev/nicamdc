@@ -932,10 +932,10 @@ contains
        COMM_data_transfer
     implicit none
 
-    character(LEN=*), intent(in) :: basename
+    character(len=*), intent(in) :: basename
 
-    character(LEN=H_LONG) :: fname
-    character(LEN=H_MID)  :: desc = 'Metrics info'
+    character(len=H_LONG) :: fname
+    character(len=H_MID)  :: desc = 'Metrics info'
 
     real(RP) :: tmp    (ADM_gall   ,ADM_KNONE,ADM_lall   ,2)
     real(RP) :: tmp_pl (ADM_gall_pl,ADM_KNONE,ADM_lall_pl,2)

@@ -33,10 +33,10 @@ module mod_chemvar
   !
   !++ Public parameters & variables
   !
-  integer,              public, parameter   :: CHEM_TRC_vlim = 100
-  integer,              public              :: CHEM_TRC_vmax = 1
-  character(len=16),    public, allocatable :: CHEM_TRC_name(:) ! short name  of tracer
-  character(len=H_MID), public, allocatable :: CHEM_TRC_desc(:) ! description of tracer
+  integer,                public, parameter   :: CHEM_TRC_vlim = 100
+  integer,                public              :: CHEM_TRC_vmax = 1
+  character(len=H_SHORT), public, allocatable :: CHEM_TRC_name(:) ! short name  of tracer
+  character(len=H_MID),   public, allocatable :: CHEM_TRC_desc(:) ! description of tracer
 
   !-----------------------------------------------------------------------------
   !
@@ -96,8 +96,8 @@ contains
     character(len=*), intent(in) :: tracername
     integer                      :: chemvar_getid
 
-    character(len=16) :: tname
-    integer           :: itrc
+    character(len=H_SHORT) :: tname
+    integer                :: itrc
     !---------------------------------------------------------------------------
 
     tname = trim(tracername)

@@ -72,18 +72,18 @@ program fio_ico2ll
   !--- NAMELIST
   integer                :: glevel              = -1
   integer                :: rlevel              = -1
-  character(LEN=H_SHORT) :: grid_topology       = 'ICOSAHEDRON'
+  character(len=H_SHORT) :: grid_topology       = 'ICOSAHEDRON'
                                                    ! 'LCP'
                                                    ! 'MLCP'
   logical                :: complete            = .false.
-  character(LEN=H_LONG)  :: mnginfo             = ''
-  character(LEN=H_LONG)  :: layerfile_dir       = ''
-  character(LEN=H_LONG)  :: llmap_base          = ''
-  character(LEN=H_LONG)  :: infile(flim)        = ''
+  character(len=H_LONG)  :: mnginfo             = ''
+  character(len=H_LONG)  :: layerfile_dir       = ''
+  character(len=H_LONG)  :: llmap_base          = ''
+  character(len=H_LONG)  :: infile(flim)        = ''
   integer                :: step_str            = 1
   integer                :: step_end            = max_nstep
-  character(LEN=H_LONG)  :: outfile_dir         = '.'
-  character(LEN=H_SHORT) :: outfile_prefix      = ''
+  character(len=H_LONG)  :: outfile_dir         = '.'
+  character(len=H_SHORT) :: outfile_prefix      = ''
   integer                :: outfile_rec         = 1
   logical                :: lon_swap            = .false.
   logical                :: devide_template     = .false.
@@ -91,9 +91,9 @@ program fio_ico2ll
   logical                :: output_gtool        = .false.
   logical                :: output_netcdf       = .false.   ! [add] 13-04-18
   logical                :: datainfo_nodep_pe   = .false.   !   <- can be .true. if data header do not depend on pe.
-  character(LEN=H_SHORT) :: selectvar(max_nvar) = ''
-  character(LEN=H_SHORT) :: large_memory_var(max_nvar) = '' ! [add] 13-04-18
-  character(LEN=H_LONG)  :: var_comp_table_file = ''        ! [add] 14-05-09
+  character(len=H_SHORT) :: selectvar(max_nvar) = ''
+  character(len=H_SHORT) :: large_memory_var(max_nvar) = '' ! [add] 13-04-18
+  character(len=H_LONG)  :: var_comp_table_file = ''        ! [add] 14-05-09
 
   logical                   :: help = .false.
 
@@ -121,9 +121,9 @@ program fio_ico2ll
                     var_comp_table_file, &  ! [add] 14-05-09
                     help
   !-----------------------------------------------------------------------------
-  character(LEN=H_LONG) :: infname   = ""
-  character(LEN=H_LONG) :: outbase   = ""
-  character(LEN=H_LONG) :: layerfile = ""
+  character(len=H_LONG) :: infname   = ""
+  character(len=H_LONG) :: outbase   = ""
+  character(len=H_LONG) :: layerfile = ""
   integer               :: fmode
   integer               :: gtopology
   logical               :: allvar = .true.
@@ -149,10 +149,10 @@ program fio_ico2ll
 
   integer                             :: num_of_data
   integer                             :: nvar
-  character(LEN=H_SHORT), allocatable :: var_name(:)
-  character(LEN=H_MID),   allocatable :: var_desc(:)
-  character(LEN=H_SHORT), allocatable :: var_unit(:)
-  character(LEN=H_SHORT), allocatable :: var_layername(:)
+  character(len=H_SHORT), allocatable :: var_name(:)
+  character(len=H_MID),   allocatable :: var_desc(:)
+  character(len=H_SHORT), allocatable :: var_unit(:)
+  character(len=H_SHORT), allocatable :: var_layername(:)
   integer,                allocatable :: var_datatype(:)
   integer,                allocatable :: var_nlayer(:)
   integer,                allocatable :: var_nstep(:)
@@ -160,11 +160,11 @@ program fio_ico2ll
   integer(8),             allocatable :: var_dt(:)
   real(8),                allocatable :: var_zgrid(:,:)
   ! header
-  character(LEN=16),      allocatable :: var_gthead(:,:)
+  character(len=16),      allocatable :: var_gthead(:,:)
   ! NetCDF handler
   type(netcdf_handler)                :: nc              ! [add] 13-04-18
-  character(LEN=1024)                 :: nc_time_units   ! [add] 13-04-18
-  character(LEN=4)                    :: date_str_tmp(6) ! [add] 13-04-18
+  character(len=1024)                 :: nc_time_units   ! [add] 13-04-18
+  character(len=4)                    :: date_str_tmp(6) ! [add] 13-04-18
 
   ! ico data
   integer              :: GALL
@@ -177,9 +177,9 @@ program fio_ico2ll
   real(4), allocatable :: temp(:,:)
 
 
-  character(LEN=H_LONG) :: fname
-  character(LEN=20)     :: tmpl
-  character(LEN=16)     :: gthead(64)
+  character(len=H_LONG) :: fname
+  character(len=20)     :: tmpl
+  character(len=16)     :: gthead(64)
   integer(8)            :: nowsec
   integer(8)            :: recsize ! [mod] 12-04-19 H.Yashiro
   integer               :: kmax, num_of_step, step, date_str(6)
@@ -813,9 +813,9 @@ contains
       devide_template )
     implicit none
 
-    character(LEN=256), intent(in) :: outfile_dir  ! 14-05-09: 128->256
-    character(LEN=16),  intent(in) :: outfile_prefix
-    character(LEN=16),  intent(in) :: varname
+    character(len=256), intent(in) :: outfile_dir  ! 14-05-09: 128->256
+    character(len=16),  intent(in) :: outfile_prefix
+    character(len=16),  intent(in) :: varname
     integer,            intent(in) :: imax
     integer,            intent(in) :: jmax
     integer,            intent(in) :: kmax
@@ -831,9 +831,9 @@ contains
     real(8) :: pi
     real(8) :: temp(imax)
 
-    character(LEN=32)  :: outfile
+    character(len=32)  :: outfile
     integer            :: fid
-    character(LEN=20)  :: s1, s2
+    character(len=20)  :: s1, s2
     integer            :: i, j, k
     !---------------------------------------------------------------------------
     pi = 4.D0 * atan( 1.D0 )
@@ -914,12 +914,12 @@ contains
       lon_swap     )
     implicit none
 
-    character(LEN=16),         intent(out) :: gthead(64)
-    character(LEN=H_LONG),  intent(in)  :: outfile_dir
-    character(LEN=H_SHORT), intent(in)  :: varname
-    character(LEN=H_MID),   intent(in)  :: description
-    character(LEN=H_SHORT), intent(in)  :: unit
-    character(LEN=H_SHORT), intent(in)  :: layername
+    character(len=16),         intent(out) :: gthead(64)
+    character(len=H_LONG),  intent(in)  :: outfile_dir
+    character(len=H_SHORT), intent(in)  :: varname
+    character(len=H_MID),   intent(in)  :: description
+    character(len=H_SHORT), intent(in)  :: unit
+    character(len=H_SHORT), intent(in)  :: layername
     integer,                   intent(in)  :: imax
     integer,                   intent(in)  :: jmax
     integer,                   intent(in)  :: kmax
@@ -929,15 +929,15 @@ contains
     integer(8),                intent(in)  :: dt
     logical,                   intent(in)  :: lon_swap
 
-    character(LEN=16) :: axhead(64)
-    character(LEN=16) :: hitem
-    character(LEN=32) :: htitle
-    character(LEN=16) :: gt_axisx
-    character(LEN=16) :: gt_axisy
-    character(LEN=16) :: kdate
+    character(len=16) :: axhead(64)
+    character(len=16) :: hitem
+    character(len=32) :: htitle
+    character(len=16) :: gt_axisx
+    character(len=16) :: gt_axisy
+    character(len=16) :: kdate
 
     integer           :: ndttm(8)
-    character(LEN=10) :: ndate, ntime, nzone
+    character(len=10) :: ndate, ntime, nzone
 
     real(8) :: pi
     real(8) :: temp(imax)
@@ -1123,11 +1123,11 @@ contains
     integer(8)        :: datesec
     ! [mod] 10/08/03 T.Mitsui, can be compiled by gfortran
 !!$  character(*):: template
-    character(LEN=20) :: template
+    character(len=20) :: template
 
     integer :: d(6)
 
-    character(LEN=3) :: nmonth(12)
+    character(len=3) :: nmonth(12)
     data nmonth / 'JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC' /
     !---------------------------------------------------------------------------
 
@@ -1150,7 +1150,7 @@ contains
     integer(8)        :: datesec
     ! [mod] 10/08/03 T.Mitsui, can be compiled by gfortran
 !!$  character(*):: template
-    character(LEN=20) :: template
+    character(len=20) :: template
 
     integer :: d(6)
     !---------------------------------------------------------------------------
@@ -1189,7 +1189,7 @@ contains
     implicit none
 
     integer(8)        :: datesec
-    character(LEN=16) :: template
+    character(len=16) :: template
 
     integer :: d(6), i
     !---------------------------------------------------------------------------

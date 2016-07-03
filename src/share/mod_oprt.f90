@@ -2829,9 +2829,9 @@ contains
        COMM_data_transfer
     implicit none
 
-    character(LEN=*), intent(in) :: basename
+    character(len=*), intent(in) :: basename
 
-    character(LEN=H_MID) :: desc = 'Coefficients info'
+    character(len=H_MID) :: desc = 'Coefficients info'
 
     real(RP) :: tmp   (ADM_gall   ,49,ADM_lall   ,1)
     real(RP) :: tmp_pl(ADM_gall_pl,49,ADM_lall_pl,1)

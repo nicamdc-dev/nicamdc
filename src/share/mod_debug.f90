@@ -79,8 +79,8 @@ contains
     implicit none
 
     character(len=*), intent(in) :: basename
-    real(RP),          intent(in) :: var   (:,:,:,:)
-    real(RP),          intent(in) :: var_pl(:,:,:,:)
+    real(RP),         intent(in) :: var   (:,:,:,:)
+    real(RP),         intent(in) :: var_pl(:,:,:,:)
 
     integer :: shp(4)
 
@@ -138,8 +138,8 @@ contains
     implicit none
 
     character(len=*), intent(in) :: basename
-    real(RP),          intent(in) :: var   (:,:,:,:)
-    real(RP),          intent(in) :: var_pl(:,:,:,:)
+    real(RP),         intent(in) :: var   (:,:,:,:)
+    real(RP),         intent(in) :: var_pl(:,:,:,:)
 
     integer :: shp(4)
 
@@ -210,8 +210,8 @@ contains
     implicit none
 
     character(len=*), intent(in) :: basename
-    real(RP),          intent(in) :: var   (:,:,:)
-    real(RP),          intent(in) :: var_pl(:,:,:)
+    real(RP),         intent(in) :: var   (:,:,:)
+    real(RP),         intent(in) :: var_pl(:,:,:)
 
     integer :: shp(3)
 

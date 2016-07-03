@@ -236,7 +236,7 @@ module mod_adm
   integer,  public, allocatable :: ADM_ImpJmp(:,:)
 #endif
 
-  character(len=H_LONG), public :: ADM_HGRID_SYSTEM = 'ICO' ! [XTMS] Horizontal Grid type
+  character(len=H_SHORT), public :: ADM_HGRID_SYSTEM = 'ICO' ! [XTMS] Horizontal Grid type
                                                     ! 'ICO'      icosahedral
                                                     ! 'ICO-XTMS' icosahedral but XTMS is used in oprt
                                                     ! 'LCP'      Lambert-cornial (including PSP)
@@ -469,7 +469,7 @@ contains
        PRC_MPIstop
     implicit none
 
-    character(len=H_LONG), intent(in) :: fname
+    character(len=*), intent(in) :: fname
 
     integer :: num_of_rgn !--- number of region
 

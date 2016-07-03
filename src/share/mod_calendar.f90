@@ -903,7 +903,7 @@ contains
 
     real(DP), intent(out) :: ddsec
     real(DP), intent(in) :: rtdur
-    character, intent(in) :: hunit *(*)
+    character(len=*), intent(in) :: hunit
     real(DP), intent(in) :: dsec
 
     character(len=10) :: hunitx
@@ -963,7 +963,7 @@ contains
     implicit none
 
     integer, intent(out) :: itime ( 6 )
-    character, intent(in) :: htime *(*)
+    character(len=*), intent(in) :: htime
 
     integer :: i
     !---------------------------------------------------------------------------
@@ -984,7 +984,7 @@ contains
        )
     implicit none
 
-    character, intent(out) :: htime *(*)
+    character(len=*), intent(out) :: htime
     integer, intent(in) :: itime ( 6 )
 
     integer :: i
@@ -1006,7 +1006,7 @@ contains
        )
     implicit none
 
-    character, intent(out) :: htime *(*)
+    character(len=*), intent(out) :: htime
     real(DP), intent(in) :: dsec
 
     integer :: itime(6), i
@@ -1067,7 +1067,7 @@ contains
     real(DP), intent(out) :: dseca
     real(DP), intent(in) :: dsec
     real(DP), intent(in) :: raftr
-    character, intent(in) :: hunit *(*)
+    character(len=*), intent(in) :: hunit
 
     integer :: idays, iyear, imonth, iday
     real(DP) :: rsec
@@ -1123,7 +1123,7 @@ contains
     real(DP), intent(in) :: dtprev
     real(DP), intent(in) :: dtorgn
     real(DP), intent(in) :: rintv
-    character, intent(in) :: htunit *(*)
+    character(len=*), intent(in) :: htunit
 
     real(DP) :: ddtime
     character(len=5) :: hunit

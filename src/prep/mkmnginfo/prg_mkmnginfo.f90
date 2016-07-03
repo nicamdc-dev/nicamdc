@@ -51,14 +51,14 @@ Program prg_mkmnginfo
   !
   Integer :: rlevel
   Integer :: prc_num
-  character(128) :: output_fname
-  character(128) :: HGRID_SYSTEM = 'ICO' ! S.Iga100607
+  character(len=256) :: output_fname
+  character(len=16)  :: HGRID_SYSTEM = 'ICO' ! S.Iga100607
                                   !'LCP' ! S.Iga100607
                                   !'MLCP' ! S.Iga100607
                                   !'MLCP-OLD' ! S.Iga100607
                                   !'PERIODIC-1DMD' ! T.Ohno 110721
                                   !'1DMD-ON-SPHERE' ! M.Hara 110721
-  character(128) :: MAPPING_TYPE = '' ! [add] C.Kodama 2011/12/14
+  character(len=16)  :: MAPPING_TYPE = '' ! [add] C.Kodama 2011/12/14
                                       ! ''        : standard
                                       ! 'K-TERAI' : TERAI Mapping for K-Computer
   integer ::  XTMS_K= 6 ! S.Iga100607 (it is not used for icosahedral)

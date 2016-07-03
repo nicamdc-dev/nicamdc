@@ -46,9 +46,9 @@ program fio_cat
   !--- NAMELIST
   integer               :: glevel       = -1
   integer               :: rlevel       = -1
-  character(LEN=H_LONG) :: mnginfo      = ""
-  character(LEN=H_LONG) :: infile(flim) = ""
-  character(LEN=H_LONG) :: outfile      = ""
+  character(len=H_LONG) :: mnginfo      = ""
+  character(len=H_LONG) :: infile(flim) = ""
+  character(len=H_LONG) :: outfile      = ""
   logical               :: use_mpi      = .true.
   integer               :: pe_str       =  0
   integer               :: pe_end       = -1
@@ -65,18 +65,18 @@ program fio_cat
                     help
 
   !-----------------------------------------------------------------------------
-  character(LEN=H_LONG)  :: infname  = ""
-  character(LEN=H_LONG)  :: outfname = ""
+  character(len=H_LONG)  :: infname  = ""
+  character(len=H_LONG)  :: outfname = ""
 
   type(headerinfo)       :: hinfo
   type(datainfo)         :: dinfo
 
-  character(LEN=H_MID)   :: pkg_desc
-  character(LEN=H_LONG)  :: pkg_note
+  character(len=H_MID)   :: pkg_desc
+  character(len=H_LONG)  :: pkg_note
   integer                :: nmax_data
 
   integer                :: nvar
-  character(LEN=H_SHORT) :: var_name (max_nvar)
+  character(len=H_SHORT) :: var_name (max_nvar)
   integer                :: var_nstep(max_nvar)
 
   integer                :: GALL
@@ -90,7 +90,7 @@ program fio_cat
   integer                :: prc_nall, prc_nlocal
   integer                :: prc_myrank, pstr, pend
   integer                :: fid_log
-  character(LEN=6)       :: rankstr
+  character(len=6)       :: rankstr
 
   logical :: addvar
   integer :: p, f, v, vid

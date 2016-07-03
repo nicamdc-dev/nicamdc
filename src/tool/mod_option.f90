@@ -6,14 +6,14 @@
 module mod_tool_option
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
+  !++ Description:
   !      Read argument and convert to namelist format
   !      This idea is referenced from GTOOL3 suite
   !
   !++ Current Corresponding Author: H.Yashiro
-  ! 
-  !++ History: 
-  !      Version   Date      Comment 
+  !
+  !++ History:
+  !      Version   Date      Comment
   !      -----------------------------------------------------------------------
   !      0.90      11-09-01  H.Yashiro : [NEW]
   !
@@ -52,8 +52,8 @@ contains
 
     integer, intent(out) :: ninfile !< [out] nuber of input files
 
-    character(LEN=256) :: argstr
-    character(LEN=2)   :: snf
+    character(len=256) :: argstr
+    character(len=2)   :: snf
 
 #ifdef _NOF2003
   integer :: IARGC

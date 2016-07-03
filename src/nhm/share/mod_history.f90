@@ -71,11 +71,11 @@ module mod_history
   real(RP),private, parameter :: EPS_ZERO = 1.E-16_RP
 
   character(len=H_LONG),  private :: HIST_io_fname  = ''
-  character(len=H_SHORT), private :: HIST_io_desc   = ''
+  character(len=H_MID),   private :: HIST_io_desc   = ''
   integer,                private :: HIST_dtype     = -1
   character(len=H_LONG),  private :: output_path    = ''
-  character(len=H_SHORT), private :: histall_fname  = ''
-  character(len=H_LONG),  private :: output_io_mode != 'LEGACY'
+  character(len=H_LONG),  private :: histall_fname  = ''
+  character(len=H_SHORT), private :: output_io_mode != 'LEGACY'
   integer,                private :: output_size    = 4
   integer,                private :: npreslev       = 1
   real(RP),               private :: pres_levs(60)  != CONST_PRE00
@@ -85,7 +85,7 @@ module mod_history
   logical,                private :: calc_pressure = .false.
 
   character(len=H_LONG),  private, allocatable :: file_save (:)
-  character(len=H_SHORT), private, allocatable :: desc_save (:)
+  character(len=H_MID),   private, allocatable :: desc_save (:)
   character(len=H_SHORT), private, allocatable :: unit_save (:)
   integer,                private, allocatable :: step_save (:)
   character(len=H_SHORT), private, allocatable :: ktype_save(:)
@@ -162,7 +162,7 @@ contains
 
     character(len=H_SHORT) :: item
     character(len=H_LONG)  :: file
-    character(len=H_SHORT) :: desc
+    character(len=H_MID)   :: desc
     character(len=H_SHORT) :: unit
     integer                :: step
     character(len=H_SHORT) :: ktype
@@ -538,7 +538,7 @@ contains
     implicit none
 
     character(len=*), intent(in) :: item
-    real(RP),          intent(in) :: gd(:,:)
+    real(RP),         intent(in) :: gd(:,:)
     integer,          intent(in), optional :: l_region
 
     character(len=H_SHORT) :: hitem
@@ -737,9 +737,9 @@ contains
     real(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: val_max, val_min
 
-    character(len=20)           :: HTIME
-    character(len=H_SHORT)     :: item
-    character(len=H_LONG) :: basename
+    character(len=20)      :: HTIME
+    character(len=H_SHORT) :: item
+    character(len=H_LONG)  :: basename
 
     logical, save :: first = .true.
 
@@ -901,11 +901,11 @@ contains
        PRC_MPIstop
     implicit none
 
-    character(len=H_SHORT)     :: item
-    character(len=H_LONG) :: file
-    character(len=H_SHORT)     :: unit
-    character(len=H_SHORT)     :: ktype
-    character(len=H_SHORT)     :: otype
+    character(len=H_SHORT) :: item
+    character(len=H_LONG)  :: file
+    character(len=H_SHORT) :: unit
+    character(len=H_SHORT) :: ktype
+    character(len=H_SHORT) :: otype
 
     integer :: n
     !---------------------------------------------------------------------------

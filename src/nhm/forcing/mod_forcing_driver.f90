@@ -213,7 +213,7 @@ contains
 
     real(RP) :: frhogq(ADM_gall_in,ADM_kall,ADM_lall)
 
-    character(len=16) :: varname
+    character(len=H_SHORT) :: varname
 
     integer :: l, nq, k0
     !---------------------------------------------------------------------------

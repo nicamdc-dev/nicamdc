@@ -832,9 +832,9 @@ contains
 
     character(len=*), intent(in) :: basename
 
-    character(len=128) :: fname
-    integer            :: l, rgnid
-    integer            :: fid
+    character(len=H_LONG) :: fname
+    integer               :: l, rgnid
+    integer               :: fid
     !---------------------------------------------------------------------------
 
     write(IO_FID_LOG,*) '*** topography data input'

@@ -522,7 +522,7 @@ contains
     character(len=*), intent(in)  :: basename
     integer,          intent(in)  :: k_start
     integer,          intent(in)  :: k_end
-    real(RP),          intent(out) :: var(ADM_gall,k_start:k_end,ADM_lall)
+    real(RP),         intent(out) :: var(ADM_gall,k_start:k_end,ADM_lall)
     integer,          intent(in)  :: recnum
     integer,          intent(in)  :: input_size
 
@@ -573,11 +573,11 @@ contains
     implicit none
 
     character(len=H_LONG), intent(in)  :: basename
-    integer,                     intent(in)  :: k_start
-    integer,                     intent(in)  :: k_end
-    real(RP),                     intent(in)  :: var(:,:,:)
-    integer,                     intent(in)  :: recnum
-    integer,                     intent(in)  :: output_size
+    integer,               intent(in)  :: k_start
+    integer,               intent(in)  :: k_end
+    real(RP),              intent(in)  :: var(:,:,:)
+    integer,               intent(in)  :: recnum
+    integer,               intent(in)  :: output_size
 
     real(4) :: var4(ADM_gall,k_start:k_end)
     real(RP) :: var8(ADM_gall,k_start:k_end)

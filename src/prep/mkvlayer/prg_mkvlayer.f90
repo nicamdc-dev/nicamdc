@@ -29,9 +29,9 @@ program prg_mkvlayer
   integer, parameter :: fid=11
   integer :: num_of_layer = 10
   real(RP) :: ztop = 1.E4_RP
-  character(256) :: outfname = 'outfile'
-  character(256) :: infname = 'infile'
-  character(16) :: layer_type = 'POWER'
+  character(len=256) :: outfname = 'outfile'
+  character(len=256) :: infname = 'infile'
+  character(len=16)  :: layer_type = 'POWER'
   real(RP) :: fact = 1.0_RP
 
   namelist / mkvlayer_cnf / &

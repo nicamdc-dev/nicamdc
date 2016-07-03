@@ -1148,11 +1148,11 @@ contains
        test1_advection_orography
     implicit none
 
-    integer,                 intent(in)    :: ijdim
-    integer,                 intent(in)    :: kdim
-    integer,                 intent(in)    :: lall
-    character(len=H_SHORT), intent(in)    :: test_case
-    real(RP),                 intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+    integer,          intent(in)    :: ijdim
+    integer,          intent(in)    :: kdim
+    integer,          intent(in)    :: lall
+    character(len=*), intent(in)    :: test_case
+    real(RP),         intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
     real(RP) :: lon      ! longitude            [rad]
     real(RP) :: lat      ! latitude             [rad]
@@ -1463,11 +1463,11 @@ contains
        chemvar_getid
     implicit none
 
-    integer,                 intent(in)    :: ijdim
-    integer,                 intent(in)    :: kdim
-    integer,                 intent(in)    :: lall
-    character(len=H_SHORT), intent(in)    :: test_case
-    real(RP),                intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
+    integer,          intent(in)    :: ijdim
+    integer,          intent(in)    :: kdim
+    integer,          intent(in)    :: lall
+    character(len=*), intent(in)    :: test_case
+    real(RP),         intent(inout) :: DIAG_var(ijdim,kdim,lall,6+TRC_VMAX)
 
     real(RP) :: lon      ! longitude            [rad]
     real(RP) :: lat      ! latitude             [rad]

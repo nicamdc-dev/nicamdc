@@ -163,7 +163,7 @@ contains
        GRD_gz
     implicit none
 
-    Character(*), Intent(in) :: basename
+    Character(len=*), Intent(in) :: basename
 
     real(DP) :: pre_ref_DP(ADM_kall)
     real(DP) :: tem_ref_DP(ADM_kall)

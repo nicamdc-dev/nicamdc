@@ -29,14 +29,14 @@ program prg_fio_dump
   !-----------------------------------------------------------------------------
   !
   !++ parameters & variables
-  character(LEN=H_LONG) :: fname     = ""
+  character(len=H_LONG) :: fname     = ""
   integer               :: mode      = IO_DUMP_HEADER
   integer               :: endian    = IO_BIG_ENDIAN
   logical               :: filelok   = .false.
   logical               :: modelok   = .false.
   logical               :: endianlok = .false.
 
-  character(LEN=H_LONG) :: argstr
+  character(len=H_LONG) :: argstr
   integer :: n, narg
 
 #ifdef _NOF2003
