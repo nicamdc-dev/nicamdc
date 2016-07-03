@@ -26,7 +26,6 @@ module mod_thrmdyn
   !++ Used modules
   !
   use mod_precision
-  use mod_debug
   use mod_adm, only: &
      kdim => ADM_kall, &
      kmin => ADM_kmin, &

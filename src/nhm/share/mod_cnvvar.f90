@@ -19,7 +19,7 @@ module mod_cnvvar
   !++ Used modules
   !
   use mod_precision
-  use mod_debug
+  use mod_prof
   use mod_runconf, only: &
      PRG_vmax0,  &
      I_RHOG,     &
@@ -401,7 +401,7 @@ contains
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('cnvvar_rhogkin')
+    call PROF_rapstart('cnvvar_rhogkin',2)
 
     do l = 1, ADM_lall
        !--- horizontal kinetic energy
@@ -471,7 +471,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('cnvvar_rhogkin')
+    call PROF_rapend('cnvvar_rhogkin',2)
 
     return
   end subroutine cnvvar_rhogkin

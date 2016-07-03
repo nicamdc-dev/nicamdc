@@ -35,7 +35,6 @@ module mod_history
   !
   use mod_precision
   use mod_stdio
-  use mod_debug
   !-----------------------------------------------------------------------------
   implicit none
   private

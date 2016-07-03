@@ -31,7 +31,6 @@ module mod_prgvar
   !
   use mod_precision
   use mod_stdio
-  use mod_debug
   use mod_runconf, only: &
      PRG_vmax0,  &
      I_RHOG,     &

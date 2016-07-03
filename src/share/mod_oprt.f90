@@ -34,7 +34,7 @@ module mod_oprt
   !
   use mod_precision
   use mod_stdio
-  use mod_debug
+  use mod_prof
   use mod_adm, only: &
      TI  => ADM_TI,    &
      TJ  => ADM_TJ,    &
@@ -223,22 +223,6 @@ contains
        call PRC_MPIstop
     endif
     write(IO_FID_LOG,nml=OPRTPARAM)
-
-    ! dummy call
-    call DEBUG_rapstart('OPRT_divergence')
-    call DEBUG_rapend  ('OPRT_divergence')
-    call DEBUG_rapstart('OPRT_gradient')
-    call DEBUG_rapend  ('OPRT_gradient')
-    call DEBUG_rapstart('OPRT_laplacian')
-    call DEBUG_rapend  ('OPRT_laplacian')
-    call DEBUG_rapstart('OPRT_diffusion')
-    call DEBUG_rapend  ('OPRT_diffusion')
-    call DEBUG_rapstart('OPRT_horizontalize_vec')
-    call DEBUG_rapend  ('OPRT_horizontalize_vec')
-    call DEBUG_rapstart('OPRT_divdamp')
-    call DEBUG_rapend  ('OPRT_divdamp')
-    call DEBUG_rapstart('OPRT3D_divdamp')
-    call DEBUG_rapend  ('OPRT3D_divdamp')
 
     OPRT_nstart = suf(ADM_gmin,ADM_gmin)
     OPRT_nend   = suf(ADM_gmax,ADM_gmax)
@@ -1759,7 +1743,7 @@ contains
     integer :: n, k, l, v
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('OPRT_divergence')
+    call PROF_rapstart('OPRT_divergence',2)
 
     gall    = ADM_gall
     gall_1d = ADM_gall_1d
@@ -1868,7 +1852,7 @@ contains
        scl_pl(:,:,:) = 0.0_RP
     endif
 
-    call DEBUG_rapend('OPRT_divergence')
+    call PROF_rapend('OPRT_divergence',2)
 
     return
   end subroutine OPRT_divergence
@@ -1903,7 +1887,7 @@ contains
     integer :: n, k, l, v, d
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('OPRT_gradient')
+    call PROF_rapstart('OPRT_gradient',2)
 
 !OCL SERIAL
     do d = 1, ADM_nxyz
@@ -1949,7 +1933,7 @@ contains
        grad_pl(:,:,:,:) = 0.0_RP
     endif
 
-    call DEBUG_rapend('OPRT_gradient')
+    call PROF_rapend('OPRT_gradient',2)
 
     return
   end subroutine OPRT_gradient
@@ -1982,7 +1966,7 @@ contains
     integer :: n, k, l, v
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('OPRT_laplacian')
+    call PROF_rapstart('OPRT_laplacian',2)
 
 !OCL SERIAL
     do l = 1, ADM_lall
@@ -2024,7 +2008,7 @@ contains
        dscl_pl(:,:,:) = 0.0_RP
     endif
 
-    call DEBUG_rapend('OPRT_laplacian')
+    call PROF_rapend('OPRT_laplacian',2)
 
     return
   end subroutine OPRT_laplacian
@@ -2072,7 +2056,7 @@ contains
     integer :: n, k, l, v
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('OPRT_diffusion')
+    call PROF_rapstart('OPRT_diffusion',2)
 
     gall    = ADM_gall
     gall_1d = ADM_gall_1d
@@ -2276,7 +2260,7 @@ contains
        dscl_pl(:,:,:) = 0.0_RP
     endif
 
-    call DEBUG_rapend('OPRT_diffusion')
+    call PROF_rapend('OPRT_diffusion',2)
 
     return
   end subroutine OPRT_diffusion
@@ -2314,7 +2298,7 @@ contains
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('OPRT_horizontalize_vec')
+    call PROF_rapstart('OPRT_horizontalize_vec',2)
 
 !OCL SERIAL
     do l = 1, ADM_lall
@@ -2352,7 +2336,7 @@ contains
        vz_pl(:,:,:) = 0.0_RP
     endif
 
-    call DEBUG_rapend('OPRT_horizontalize_vec')
+    call PROF_rapend('OPRT_horizontalize_vec',2)
 
     return
   end subroutine OPRT_horizontalize_vec
@@ -2410,7 +2394,7 @@ contains
     integer :: n, k, l, v
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('OPRT_vorticity')
+    call PROF_rapstart('OPRT_vorticity',2)
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
@@ -2558,7 +2542,7 @@ contains
        scl_pl(:,:,:) = 0.0_RP
     endif
 
-    call DEBUG_rapend('OPRT_vorticity')
+    call PROF_rapend('OPRT_vorticity',2)
 
     return
   end subroutine OPRT_vorticity
@@ -2618,7 +2602,7 @@ contains
     integer :: n, k, l, v
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('OPRT_divdamp')
+    call PROF_rapstart('OPRT_divdamp',2)
 
     gall    = ADM_gall
     gall_1d = ADM_gall_1d
@@ -2809,7 +2793,7 @@ contains
        ddivdz_pl(:,:,:) = 0.0_RP
     endif
 
-    call DEBUG_rapend('OPRT_divdamp')
+    call PROF_rapend('OPRT_divdamp',2)
 
     return
   end subroutine OPRT_divdamp

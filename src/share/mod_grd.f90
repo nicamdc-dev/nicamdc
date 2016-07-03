@@ -39,7 +39,6 @@ module mod_grd
   use mpi
   use mod_precision
   use mod_stdio
-  use mod_debug
   use mod_adm, only: &
      ADM_TI,      &
      ADM_TJ,      &

@@ -58,7 +58,7 @@ program prg_driver
   !
   use mod_precision
   use mod_stdio
-  use mod_debug
+  use mod_prof
   use mod_process, only: &
      PRC_IsMaster,    &
      PRC_MPIstart,    &
@@ -226,9 +226,12 @@ program prg_driver
   call IO_LOG_setup( myrank,  & ! [IN]
                      ismaster ) ! [IN]
 
+  !---< profiler module setup >---
+  call PROF_setup
+
   !#############################################################################
-  call DEBUG_rapstart('Total')
-  call DEBUG_rapstart('Setup_ALL')
+  call PROF_setprefx('INIT')
+  call PROF_rapstart('Initialize',0)
 
   write(IO_FID_LOG,*)           '##### start  setup     #####'
   if( PRC_IsMaster ) write(*,*) '##### start  setup     #####'
@@ -296,9 +299,10 @@ program prg_driver
   write(IO_FID_LOG,*)           '##### finish setup     #####'
   if( PRC_IsMaster ) write(*,*) '##### finish setup     #####'
 
-  call DEBUG_rapend('Setup_ALL')
+  call PROF_rapend('Initialize',0)
   !#############################################################################
-  call DEBUG_rapstart('Main_ALL')
+  call PROF_setprefx('MAIN')
+  call PROF_rapstart('Main_Loop',0)
 
   write(IO_FID_LOG,*)           '##### start  main loop #####'
   if( PRC_IsMaster ) write(*,*) '##### start  main loop #####'
@@ -346,12 +350,12 @@ program prg_driver
 
   do n = 1, TIME_LSTEP_MAX
 
-     call DEBUG_rapstart('_Atmos')
+     call PROF_rapstart('_Atmos',1)
      call dynamics_step
      call forcing_step
-     call DEBUG_rapend  ('_Atmos')
+     call PROF_rapend  ('_Atmos',1)
 
-     call DEBUG_rapstart('_History')
+     call PROF_rapstart('_History',1)
      call history_vars
      call TIME_advance
 
@@ -363,7 +367,7 @@ program prg_driver
         cdate = ""
         call restart_output( restart_output_basename )
      endif
-     call DEBUG_rapend  ('_History')
+     call PROF_rapend  ('_History',1)
 
   enddo
 
@@ -376,11 +380,10 @@ program prg_driver
   write(IO_FID_LOG,*)           '##### finish main loop #####'
   if( PRC_IsMaster ) write(*,*) '##### finish main loop #####'
 
-  call DEBUG_rapend('Main_ALL')
-  call DEBUG_rapend('Total')
+  call PROF_rapend('Main_Loop',0)
   !#############################################################################
 
-  call DEBUG_rapreport
+  call PROF_rapreport
 
   !--- finalize all process
   call PRC_MPIfinish

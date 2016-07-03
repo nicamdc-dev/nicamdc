@@ -33,7 +33,7 @@ module mod_dynamics
   !
   use mod_precision
   use mod_stdio
-  use mod_debug
+  use mod_prof
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -343,14 +343,14 @@ contains
     !---------------------------------------------------------------------------
     !$acc wait
 
-    call DEBUG_rapstart('__Dynamics')
+    call PROF_rapstart('__Dynamics',1)
 
     !$acc  data &
     !$acc& create(PROG,PROGq,g_TEND,g_TENDq,f_TEND,f_TENDq,PROG0,PROGq0,PROG_split,PROG_mean) &
     !$acc& create(rho,vx,vy,vz,w,ein,tem,pre,eth,th,rhogd,pregd,q,qd,cv) &
     !$acc& pcopy(PRG_var,PRG_var1)
 
-    call DEBUG_rapstart('___Pre_Post')
+    call PROF_rapstart('___Pre_Post',1)
 
     large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=DP)
 
@@ -364,11 +364,11 @@ contains
                      PROGq(:,:,:,:),       PROGq_pl(:,:,:,:),       & ! [OUT]
                      0                                              ) ! [IN]
 
-    call DEBUG_rapend  ('___Pre_Post')
+    call PROF_rapend  ('___Pre_Post',1)
 
     do ndyn = 1, DYN_DIV_NUM
 
-    call DEBUG_rapstart('___Pre_Post')
+    call PROF_rapstart('___Pre_Post',1)
 
     !--- save
     !$acc kernels pcopy(PROG0) pcopyin(PROG) async(0)
@@ -389,11 +389,11 @@ contains
        endif
     endif
 
-    call DEBUG_rapend  ('___Pre_Post')
+    call PROF_rapend  ('___Pre_Post',1)
 
     if ( TIME_INTEG_TYPE == 'TRCADV' ) then  ! TRC-ADV Test Bifurcation
 
-       call DEBUG_rapstart('___Tracer_Advection')
+       call PROF_rapstart('___Tracer_Advection',1)
 
        !$acc kernels pcopy(f_TEND) async(0)
        f_TEND   (:,:,:,:) = 0.0_RP
@@ -412,7 +412,7 @@ contains
                                   large_step_dt,                                     & ! [IN]
                                   THUBURN_LIM                                        ) ! [IN]
 
-       call DEBUG_rapend  ('___Tracer_Advection')
+       call PROF_rapend  ('___Tracer_Advection',1)
 
        call forcing_update( PROG(:,:,:,:), PROG_pl(:,:,:,:) ) ! [INOUT]
     endif
@@ -424,7 +424,7 @@ contains
     !---------------------------------------------------------------------------
     do nl = 1, num_of_iteration_lstep
 
-       call DEBUG_rapstart('___Pre_Post')
+       call PROF_rapstart('___Pre_Post',1)
 
        !---< Generate diagnostic values and set the boudary conditions
        !$acc  kernels pcopy(rho,vx,vy,vz,ein) pcopyin(PROG,VMTR_GSGAM2) async(0)
@@ -628,11 +628,11 @@ contains
        endif
 
        !$acc wait
-       call DEBUG_rapend  ('___Pre_Post')
+       call PROF_rapend  ('___Pre_Post',1)
        !------------------------------------------------------------------------
        !> LARGE step
        !------------------------------------------------------------------------
-       call DEBUG_rapstart('___Large_step')
+       call PROF_rapstart('___Large_step',1)
 
        !--- calculation of advection tendency including Coriolis force
        call src_advection_convergence_momentum( vx,                     vx_pl,                     & ! [IN]
@@ -798,11 +798,11 @@ contains
        g_TEND_pl(:,:,:,:) = g_TEND_pl(:,:,:,:) + f_TEND_pl(:,:,:,:)
 
        !$acc wait
-       call DEBUG_rapend  ('___Large_step')
+       call PROF_rapend  ('___Large_step',1)
        !------------------------------------------------------------------------
        !> SMALL step
        !------------------------------------------------------------------------
-       call DEBUG_rapstart('___Small_step')
+       call PROF_rapstart('___Small_step',1)
 
        if ( nl /= 1 ) then ! update split values
           !$acc kernels pcopy(PROG_split) pcopyin(PROG0,PROG) async(0)
@@ -860,11 +860,11 @@ contains
                            small_step_dt                                              ) ! [IN]
 
        !$acc wait
-       call DEBUG_rapend  ('___Small_step')
+       call PROF_rapend  ('___Small_step',1)
        !------------------------------------------------------------------------
        !>  Tracer advection
        !------------------------------------------------------------------------
-       call DEBUG_rapstart('___Tracer_Advection')
+       call PROF_rapstart('___Tracer_Advection',1)
        do_tke_correction = .false.
 
        if ( TRC_ADV_TYPE == 'MIURA2004' ) then
@@ -938,9 +938,9 @@ contains
 
        endif
 
-       call DEBUG_rapend  ('___Tracer_Advection')
+       call PROF_rapend  ('___Tracer_Advection',1)
 
-       call DEBUG_rapstart('___Pre_Post')
+       call PROF_rapstart('___Pre_Post',1)
 
        !--- TKE fixer [comment] 2011/08/16 M.Satoh: this fixer is needed for every small time steps
        if ( do_tke_correction ) then
@@ -976,13 +976,13 @@ contains
           call COMM_data_transfer( PROG, PROG_pl )
        endif
 
-       call DEBUG_rapend  ('___Pre_Post')
+       call PROF_rapend  ('___Pre_Post',1)
 
     enddo !--- large step
 
     enddo !--- divided step for dynamics
 
-    call DEBUG_rapstart('___Pre_Post')
+    call PROF_rapstart('___Pre_Post',1)
 
     call prgvar_set( PROG(:,:,:,I_RHOG),   PROG_pl(:,:,:,I_RHOG),   & ! [IN]
                      PROG(:,:,:,I_RHOGVX), PROG_pl(:,:,:,I_RHOGVX), & ! [IN]
@@ -993,12 +993,12 @@ contains
                      PROGq(:,:,:,:),       PROGq_pl(:,:,:,:),       & ! [IN]
                      0                                              ) ! [IN]
 
-    call DEBUG_rapend  ('___Pre_Post')
+    call PROF_rapend  ('___Pre_Post',1)
 
     !$acc end data
 
     !$acc wait
-    call DEBUG_rapend  ('__Dynamics')
+    call PROF_rapend  ('__Dynamics',1)
 
     return
   end subroutine dynamics_step

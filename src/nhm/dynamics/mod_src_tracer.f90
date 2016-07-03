@@ -18,7 +18,7 @@ module mod_src_tracer
   !++ Used modules
   !
   use mod_precision
-  use mod_debug
+  use mod_prof
   use mod_adm, only: &
      TI  => ADM_TI,  &
      TJ  => ADM_TJ,  &
@@ -187,7 +187,7 @@ contains
     !---------------------------------------------------------------------------
     ! Vertical Advection (fractioanl step) : 1st
     !---------------------------------------------------------------------------
-    call DEBUG_rapstart('____Vertical_Adv')
+    call PROF_rapstart('____Vertical_Adv',2)
 
     do l = 1, ADM_lall
        do k = ADM_kmin+1, ADM_kmax
@@ -362,11 +362,11 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('____Vertical_Adv')
+    call PROF_rapend('____Vertical_Adv',2)
     !---------------------------------------------------------------------------
     ! Horizontal advection by MIURA scheme
     !---------------------------------------------------------------------------
-    call DEBUG_rapstart('____Horizontal_Adv')
+    call PROF_rapstart('____Horizontal_Adv',2)
 
     do l = 1, ADM_lall
        d(:,:,l) = b2 * frhog(:,:,l) / rhog(:,:,l) * dt
@@ -513,11 +513,11 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('____Horizontal_Adv')
+    call PROF_rapend('____Horizontal_Adv',2)
     !---------------------------------------------------------------------------
     ! Vertical Advection (fractioanl step) : 2nd
     !---------------------------------------------------------------------------
-    call DEBUG_rapstart('____Vertical_Adv')
+    call PROF_rapstart('____Vertical_Adv',2)
 
     do l = 1, ADM_lall
        d(:,:,l) = b3 * frhog(:,:,l) * dt / rhog(:,:,l)
@@ -609,7 +609,7 @@ contains
        endif
     enddo ! tracer q LOOP
 
-    call DEBUG_rapend('____Vertical_Adv')
+    call PROF_rapend('____Vertical_Adv',2)
 
     return
   end subroutine src_tracer_advection
@@ -697,7 +697,7 @@ contains
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('____Horizontal_Adv_flux')
+    call PROF_rapstart('____Horizontal_Adv_flux',2)
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
@@ -893,7 +893,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend  ('____Horizontal_Adv_flux')
+    call PROF_rapend  ('____Horizontal_Adv_flux',2)
 
     return
   end subroutine horizontal_flux
@@ -959,7 +959,7 @@ contains
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('____Horizontal_Adv_remap')
+    call PROF_rapstart('____Horizontal_Adv_remap',2)
 
     call OPRT_gradient( q    (:,:,:),   q_pl    (:,:,:),  & ![IN]
                         gradq(:,:,:,:), gradq_pl(:,:,:,:) ) ![OUT]
@@ -1212,7 +1212,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend  ('____Horizontal_Adv_remap')
+    call PROF_rapend  ('____Horizontal_Adv_remap',2)
 
     return
   end subroutine horizontal_remap
@@ -1262,7 +1262,7 @@ contains
     integer :: n, k, l
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('____Vertical_Adv_limiter')
+    call PROF_rapstart('____Vertical_Adv_limiter',2)
 
     do l = 1, ADM_lall
 
@@ -1360,7 +1360,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend  ('____Vertical_Adv_limiter')
+    call PROF_rapend  ('____Vertical_Adv_limiter',2)
 
     return
   end subroutine vertical_limiter_thuburn
@@ -1442,7 +1442,7 @@ contains
     suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('____Horizontal_Adv_limiter')
+    call PROF_rapstart('____Horizontal_Adv_limiter',2)
 
     !---< (i) define inflow bounds, eq.(32)&(33) >---
     do l = 1, ADM_lall
@@ -1765,7 +1765,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend  ('____Horizontal_Adv_limiter')
+    call PROF_rapend  ('____Horizontal_Adv_limiter',2)
 
     return
   end subroutine horizontal_limiter_thuburn

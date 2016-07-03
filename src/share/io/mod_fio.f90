@@ -23,7 +23,7 @@ module mod_fio
   use mod_precision
   use mod_io_param
   use mod_stdio
-  use mod_debug
+  use mod_prof
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -122,12 +122,6 @@ contains
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) '+++ Module[fio]/Category[common share]'
-
-    ! dummy call
-    call DEBUG_rapstart('FILEIO_in')
-    call DEBUG_rapend  ('FILEIO_in')
-    call DEBUG_rapstart('FILEIO_out')
-    call DEBUG_rapend  ('FILEIO_out')
 
     allocate( prc_tab(ADM_lall) )
     prc_tab(1:ADM_lall) = ADM_prc_tab(1:ADM_lall,ADM_prc_me)-1
@@ -252,7 +246,7 @@ contains
     integer :: did, fid
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('FILEIO_in')
+    call PROF_rapstart('FILEIO_in',2)
 
     !--- search/register file
     call FIO_getfid( fid, basename, IO_FREAD, '', '' )
@@ -271,7 +265,7 @@ contains
 
              var(:,k_start:k_end,:) = 0.0_SP
 
-             call DEBUG_rapend('FILEIO_in')
+             call PROF_rapend('FILEIO_in',2)
              return
           endif
        else
@@ -304,7 +298,7 @@ contains
 
     endif
 
-    call DEBUG_rapend('FILEIO_in')
+    call PROF_rapend('FILEIO_in',2)
 
     return
   end subroutine FIO_input_SP
@@ -343,7 +337,7 @@ contains
     integer :: did, fid
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('FILEIO_in')
+    call PROF_rapstart('FILEIO_in',2)
 
     !--- search/register file
     call FIO_getfid( fid, basename, IO_FREAD, '', '' )
@@ -362,7 +356,7 @@ contains
 
              var(:,k_start:k_end,:) = 0.0_DP
 
-             call DEBUG_rapend('FILEIO_in')
+             call PROF_rapend('FILEIO_in',2)
              return
           endif
        else
@@ -395,7 +389,7 @@ contains
 
     endif
 
-    call DEBUG_rapend('FILEIO_in')
+    call PROF_rapend('FILEIO_in',2)
 
     return
   end subroutine FIO_input_DP
@@ -450,7 +444,7 @@ contains
     integer  :: i
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('FILEIO_in')
+    call PROF_rapstart('FILEIO_in',2)
 
     !--- search/register file
     call FIO_getfid( fid, basename, IO_FREAD, '', '' )
@@ -494,7 +488,7 @@ contains
        endif
     enddo
 
-    call DEBUG_rapend('FILEIO_in')
+    call PROF_rapend('FILEIO_in',2)
 
     return
   end subroutine FIO_seek
@@ -549,7 +543,7 @@ contains
     integer :: did, fid
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('FILEIO_out')
+    call PROF_rapstart('FILEIO_out',2)
 
     !--- search/register file
     call FIO_getfid( fid, basename, IO_FWRITE, pkg_desc, pkg_note )
@@ -587,7 +581,7 @@ contains
        call PRC_MPIstop
     endif
 
-    call DEBUG_rapend('FILEIO_out')
+    call PROF_rapend('FILEIO_out',2)
 
     return
   end subroutine FIO_output_SP
@@ -642,7 +636,7 @@ contains
     integer :: did, fid
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('FILEIO_out')
+    call PROF_rapstart('FILEIO_out',2)
 
     !--- search/register file
     call FIO_getfid( fid, basename, IO_FWRITE, pkg_desc, pkg_note )
@@ -680,7 +674,7 @@ contains
        call PRC_MPIstop
     endif
 
-    call DEBUG_rapend('FILEIO_out')
+    call PROF_rapend('FILEIO_out',2)
 
     return
   end subroutine FIO_output_DP

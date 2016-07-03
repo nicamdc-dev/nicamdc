@@ -20,7 +20,6 @@ module mod_embudget
   !
   use mod_precision
   use mod_stdio
-  use mod_debug
   !-----------------------------------------------------------------------------
   implicit none
   private

@@ -19,7 +19,7 @@ program mkhgrid
   !
   use mod_precision
   use mod_stdio
-  use mod_debug
+  use mod_prof
   use mod_process, only: &
      PRC_MPIstart,    &
      PRC_LOCAL_setup, &

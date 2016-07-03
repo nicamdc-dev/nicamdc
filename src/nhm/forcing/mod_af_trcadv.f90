@@ -24,7 +24,6 @@ module mod_af_trcadv
   !++ Used modules
   !
   use mod_precision
-  use mod_debug
   !-----------------------------------------------------------------------------
   implicit none
   private

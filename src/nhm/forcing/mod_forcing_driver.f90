@@ -19,7 +19,7 @@ module mod_forcing_driver
   !
   use mod_precision
   use mod_stdio
-  use mod_debug
+  use mod_prof
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -218,7 +218,7 @@ contains
     integer :: l, nq, k0
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('__Forcing')
+    call PROF_rapstart('__Forcing',1)
 
     k0 = ADM_KNONE
 
@@ -404,7 +404,7 @@ contains
                         rhoge,  & ! [IN]
                         rhogq   ) ! [IN]
 
-    call DEBUG_rapend  ('__Forcing')
+    call PROF_rapend  ('__Forcing',1)
 
     return
   end subroutine forcing_step
@@ -457,7 +457,7 @@ contains
     integer :: n, k ,l, k0
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('__Forcing')
+    call PROF_rapstart('__Forcing',1)
 
     k0 = ADM_KNONE
 
@@ -554,7 +554,7 @@ contains
        PROG_pl(:,:,:,I_RHOGW ) = w_pl (:,:,:) * PROG_pl(:,:,:,I_RHOG)
     endif
 
-    call DEBUG_rapend  ('__Forcing')
+    call PROF_rapend  ('__Forcing',1)
 
     return
   end subroutine forcing_update

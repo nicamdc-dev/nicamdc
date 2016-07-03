@@ -38,7 +38,7 @@ program fio_ico2ll_mpi
   use mod_precision
   use mod_io_param
   use mod_stdio
-  use mod_debug
+  use mod_prof
   use mod_process, only: &
      PRC_LOCAL_COMM_WORLD, &
      PRC_nprocs,           &
@@ -258,18 +258,18 @@ program fio_ico2ll_mpi
      devide_template = .false.
      outfile_rec     = 1
      output_netcdf   = .false.
-     call DEBUG_rapstart('+FILE O GTOOL')
-     call DEBUG_rapend  ('+FILE O GTOOL')
+     call PROF_rapstart('+FILE O GTOOL')
+     call PROF_rapend  ('+FILE O GTOOL')
   elseif(output_netcdf) then
      output_grads    = .false.
      devide_template = .false.
      outfile_rec     = 1
      output_gtool    = .false.
-     call DEBUG_rapstart('+FILE O NETCDF')
-     call DEBUG_rapend  ('+FILE O NETCDF')
+     call PROF_rapstart('+FILE O NETCDF')
+     call PROF_rapend  ('+FILE O NETCDF')
   elseif(output_grads) then
-     call DEBUG_rapstart('+FILE O GRADS')
-     call DEBUG_rapend  ('+FILE O GRADS')
+     call PROF_rapstart('+FILE O GRADS')
+     call PROF_rapend  ('+FILE O GRADS')
   endif
 
 
@@ -297,7 +297,7 @@ program fio_ico2ll_mpi
   PRC_LOCAL_COMM_WORLD = MPI_COMM_WORLD
   PRC_nprocs           = prc_nall
 
-  call DEBUG_rapstart('FIO_ICO2LL_MPI')
+  call PROF_rapstart('FIO_ICO2LL_MPI')
 
   ! borrow IO_FID_LOG to share log file id between other module
   IO_FID_LOG = IO_get_available_fid()
@@ -335,7 +335,7 @@ program fio_ico2ll_mpi
   !#########################################################
 
   write(IO_FID_LOG,*) '*** llmap read start'
-  call DEBUG_rapstart('READ LLMAP')
+  call PROF_rapstart('READ LLMAP')
 
   !--- Read lat-lon grid information
   fid = IO_get_available_fid()
@@ -435,13 +435,13 @@ program fio_ico2ll_mpi
      enddo
   enddo
 
-  call DEBUG_rapend('READ LLMAP')
+  call PROF_rapend('READ LLMAP')
   write(IO_FID_LOG,*) '*** llmap read end'
 
   !#########################################################
 
   write(IO_FID_LOG,*) '*** icodata read start'
-  call DEBUG_rapstart('OPEN ICODATA')
+  call PROF_rapstart('OPEN ICODATA')
 
   ! Read icodata information (all process)
   allocate( ifid(prc_nlocal) )
@@ -482,13 +482,13 @@ program fio_ico2ll_mpi
 
   enddo
 
-  call DEBUG_rapend('OPEN ICODATA')
+  call PROF_rapend('OPEN ICODATA')
   write(IO_FID_LOG,*) '*** icodata read end'
 
   !#########################################################
 
   write(IO_FID_LOG,*) '*** header check start'
-  call DEBUG_rapstart('CHECK HEADER')
+  call PROF_rapstart('CHECK HEADER')
 
   !--- check all header
   allocate( hinfo%rgnid(LALL_local) )
@@ -612,15 +612,15 @@ program fio_ico2ll_mpi
      stop
   endif
 
-  call DEBUG_rapend('CHECK HEADER')
+  call PROF_rapend('CHECK HEADER')
   write(IO_FID_LOG,*) '*** header check end'
 
   !#########################################################
 
   write(IO_FID_LOG,*) '*** topography read start'
-  call DEBUG_rapstart('READ TOPOGRAPHY')
+  call PROF_rapstart('READ TOPOGRAPHY')
 
-  call DEBUG_rapstart('+Communication')
+  call PROF_rapstart('+Communication')
   ! broadcast var_xi2z, var_ztop and var_zgrid from master process
   call MPI_Bcast( var_xi2z(1),    &
                   max_nvar,       &
@@ -642,7 +642,7 @@ program fio_ico2ll_mpi
                   0,                   &
                   MPI_COMM_WORLD,      &
                   ierr                 )
-  call DEBUG_rapend  ('+Communication')
+  call PROF_rapend  ('+Communication')
 
   if ( topo_base == '' ) then
 
@@ -723,7 +723,7 @@ program fio_ico2ll_mpi
 
   endif
 
-  call DEBUG_rapend('READ TOPOGRAPHY')
+  call PROF_rapend('READ TOPOGRAPHY')
   write(IO_FID_LOG,*) '*** topography read end'
 
   write(IO_FID_LOG,*) '########## Variable List ########## '
@@ -738,7 +738,7 @@ program fio_ico2ll_mpi
   !#########################################################
 
   write(IO_FID_LOG,*) '*** convert start : PaNDa format to lat-lon data'
-  call DEBUG_rapstart('CONVERT')
+  call PROF_rapstart('CONVERT')
 
   !--- start weighting summation
   do v = 1, nvar
@@ -767,7 +767,7 @@ program fio_ico2ll_mpi
 
         if (output_grads) then ! GrADS Format
 
-           call DEBUG_rapstart('+FILE O GRADS')
+           call PROF_rapstart('+FILE O GRADS')
            write(IO_FID_LOG,*)
            write(IO_FID_LOG,*) 'Output: ', trim(outbase)//'.grd', recsize, imax, jmax, kmax
            write(*         ,*) 'Output: ', trim(outbase)//'.grd'
@@ -784,11 +784,11 @@ program fio_ico2ll_mpi
               write(IO_FID_LOG,*) 'Change output record position : start from step ', outfile_rec
               irec = outfile_rec
            endif
-           call DEBUG_rapend  ('+FILE O GRADS')
+           call PROF_rapend  ('+FILE O GRADS')
 
         elseif(output_gtool) then ! GTOOL3 Format
 
-           call DEBUG_rapstart('+FILE O GTOOL')
+           call PROF_rapstart('+FILE O GTOOL')
            write(IO_FID_LOG,*)
            write(IO_FID_LOG,*) 'Output: ', trim(outbase)//'.gt3', recsize, imax, jmax, kmax
            write(*         ,*) 'Output: ', trim(outbase)//'.gt3'
@@ -814,11 +814,11 @@ program fio_ico2ll_mpi
                                  var_zgrid(1:kmax,v), &
                                  var_dt(v),           &
                                  lon_swap             )
-           call DEBUG_rapend  ('+FILE O GTOOL')
+           call PROF_rapend  ('+FILE O GTOOL')
 
         elseif(output_netcdf) then ! NetCDF format [add] 13-04-18 C.Kodama
 
-           call DEBUG_rapstart('+FILE O NETCDF')
+           call PROF_rapstart('+FILE O NETCDF')
            write(IO_FID_LOG,*)
            write(IO_FID_LOG,*) 'Output: ', trim(outbase)//'.nc'
            write(*         ,*) 'Output: ', trim(outbase)//'.nc'
@@ -884,7 +884,7 @@ program fio_ico2ll_mpi
                                        var_missing = CONST_UNDEF4                 ) ! [IN]
 
            deallocate(lon_tmp)
-           call DEBUG_rapend  ('+FILE O NETCDF')
+           call PROF_rapend  ('+FILE O NETCDF')
 
         endif
 
@@ -925,7 +925,7 @@ program fio_ico2ll_mpi
            data8allrgn(:)  = CONST_UNDEF
            icodata4(:,:,:) = CONST_UNDEF4
 
-           call DEBUG_rapstart('+FILE I FIO')
+           call PROF_rapstart('+FILE I FIO')
            !--- seek data ID and get information
            call fio_seek_datainfo(did,ifid(pp),var_name(v),step)
            !--- verify
@@ -950,7 +950,7 @@ program fio_ico2ll_mpi
 
            endif
            icodata4(:,:,:) = reshape( data4allrgn(:), shape(icodata4) )
-           call DEBUG_rapend('+FILE I FIO')
+           call PROF_rapend('+FILE I FIO')
 
            do l = 1, LALL_local
               if ( t == 1 ) then
@@ -964,7 +964,7 @@ program fio_ico2ll_mpi
 
               !--- Zstar(Xi) -> Z coordinate
               if ( var_xi2z(v) ) then
-                 call DEBUG_rapstart('+Xi2Z')
+                 call PROF_rapstart('+Xi2Z')
 
                  if ( var_ztop(v) < 0.D0 ) then
                     write(IO_FID_LOG,*) '*** Ztop is not specified.'
@@ -981,12 +981,12 @@ program fio_ico2ll_mpi
                                      icodata4  (:,:,l),  & ! [IN]
                                      icodata4_z(:,:)     ) ! [OUT]
 
-                 call DEBUG_rapend('+Xi2Z')
+                 call PROF_rapend('+Xi2Z')
               else
                  icodata4_z(:,:) = icodata4(:,:,l)
               endif
 
-              call DEBUG_rapstart('+Interpolation')
+              call PROF_rapstart('+Interpolation')
               !--- ico -> lat-lon
               if ( nmax_llgrid(l,pp) /= 0 ) then
                  if ( use_NearestNeighbor ) then ! nearest neighbor
@@ -1028,7 +1028,7 @@ program fio_ico2ll_mpi
                     enddo
                  endif
               endif
-              call DEBUG_rapend('+Interpolation')
+              call PROF_rapend('+Interpolation')
 
            enddo ! region LOOP
 
@@ -1045,7 +1045,7 @@ program fio_ico2ll_mpi
            enddo
         endif
 
-        call DEBUG_rapstart('+Communication')
+        call PROF_rapstart('+Communication')
         !--- Gather Lat-Lon data
         if ( comm_smallchunk ) then
            do k = 1, kmax
@@ -1066,21 +1066,21 @@ program fio_ico2ll_mpi
                                MPI_COMM_WORLD,      &
                                ierr                 )
         endif
-        call DEBUG_rapend  ('+Communication')
+        call PROF_rapend  ('+Communication')
 
         if ( prc_myrank == 0 ) then ! ##### only for master process
 
         !--- output lat-lon data file
         if (output_grads) then
 
-           call DEBUG_rapstart('+FILE O GRADS')
+           call PROF_rapstart('+FILE O GRADS')
            write(ofid,rec=irec) lldata_total(:,:,:)
            irec = irec + 1
-           call DEBUG_rapend  ('+FILE O GRADS')
+           call PROF_rapend  ('+FILE O GRADS')
 
         elseif(output_gtool) then
 
-           call DEBUG_rapstart('+FILE O GTOOL')
+           call PROF_rapstart('+FILE O GTOOL')
            if ( nowsec < 2*365*24*60*60 ) then ! short term
               write(var_gthead(25,v),'(I16)') int(nowsec,kind=4)
               write(var_gthead(26,v),'(A16)') 'SEC             '
@@ -1093,16 +1093,16 @@ program fio_ico2ll_mpi
 
            write(ofid) gthead(:)
            write(ofid) lldata_total(:,:,:)
-           call DEBUG_rapend  ('+FILE O GTOOL')
+           call PROF_rapend  ('+FILE O GTOOL')
 
         elseif(output_netcdf) then ! [add] 13.04.18 C.Kodama
 
-           call DEBUG_rapstart('+FILE O NETCDF')
+           call PROF_rapstart('+FILE O NETCDF')
            call netcdf_write( nc, lldata_total(:,:,:), t=t )
 !           do k=1,kmax
 !              call netcdf_write( nc, lldata(:,:,k), k=k, t=t)
 !           enddo
-           call DEBUG_rapend  ('+FILE O NETCDF')
+           call PROF_rapend  ('+FILE O NETCDF')
 
         endif
 
@@ -1126,7 +1126,7 @@ program fio_ico2ll_mpi
 
      if (output_grads) then
 
-        call DEBUG_rapstart('+FILE O GRADS')
+        call PROF_rapstart('+FILE O GRADS')
         call makegradsctl( outfile_dir,         &
                            outfile_prefix,      &
                            var_name(v),         &
@@ -1141,13 +1141,13 @@ program fio_ico2ll_mpi
                            var_dt(v),           &
                            lon_swap,            &
                            devide_template      )
-        call DEBUG_rapend  ('+FILE O GRADS')
+        call PROF_rapend  ('+FILE O GRADS')
 
      elseif(output_netcdf) then ! [add] 13.04.18 C.Kodama
 
-        call DEBUG_rapstart('+FILE O NETCDF')
+        call PROF_rapstart('+FILE O NETCDF')
         call netcdf_close( nc )
-        call DEBUG_rapend  ('+FILE O NETCDF')
+        call PROF_rapend  ('+FILE O NETCDF')
 
      endif
 
@@ -1168,11 +1168,11 @@ program fio_ico2ll_mpi
      call fio_fclose(ifid(pp))
   enddo ! PE LOOP
 
-  call DEBUG_rapend('CONVERT')
+  call PROF_rapend('CONVERT')
   write(IO_FID_LOG,*) '*** convert finished! '
 
-  call DEBUG_rapend('FIO_ICO2LL_MPI')
-  call DEBUG_rapreport
+  call PROF_rapend('FIO_ICO2LL_MPI')
+  call PROF_rapreport
 
   call MPI_Barrier(MPI_COMM_WORLD,ierr)
   call MPI_FINALIZE(ierr)

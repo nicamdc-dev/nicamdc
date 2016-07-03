@@ -18,7 +18,6 @@ module mod_hio
   use mod_precision
   use mod_io_param
   use mod_stdio
-  use mod_debug
   !-----------------------------------------------------------------------------
   implicit none
   private

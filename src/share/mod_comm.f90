@@ -51,7 +51,7 @@ module mod_comm
   use mpi
   use mod_precision
   use mod_stdio
-  use mod_debug
+  use mod_prof
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -2336,14 +2336,14 @@ contains
     !---------------------------------------------------------------------------
 
     if ( opt_comm_barrier ) then
-       call DEBUG_rapstart('COMM_barrier')
+       call PROF_rapstart('COMM_barrier',2)
        call MPI_Barrier( PRC_LOCAL_COMM_WORLD, ierr )
-       call DEBUG_rapend  ('COMM_barrier')
+       call PROF_rapend  ('COMM_barrier',2)
     endif
 
     !$acc wait
 
-    call DEBUG_rapstart('COMM_data_transfer')
+    call PROF_rapstart('COMM_data_transfer',2)
 
     shp    = shape(var)
     kmax   = shp(2)
@@ -2708,7 +2708,7 @@ contains
     !$acc wait
 
 
-    call DEBUG_rapend('COMM_data_transfer')
+    call PROF_rapend('COMM_data_transfer',2)
 
     return
   end subroutine COMM_data_transfer
@@ -2762,12 +2762,12 @@ contains
     !---------------------------------------------------------------------------
 
     if ( opt_comm_barrier ) then
-       call DEBUG_rapstart('COMM_barrier')
+       call PROF_rapstart('COMM_barrier',2)
        call MPI_Barrier( PRC_LOCAL_COMM_WORLD, ierr )
-       call DEBUG_rapend  ('COMM_barrier')
+       call PROF_rapend  ('COMM_barrier',2)
     endif
 
-    call DEBUG_rapstart('COMM_var')
+    call PROF_rapstart('COMM_var',2)
 
     !$acc data present(var)
 
@@ -2884,7 +2884,7 @@ contains
 
     call COMM_data_transfer(var,var_pl)
 
-    call DEBUG_rapend('COMM_var')
+    call PROF_rapend('COMM_var',2)
 
     return
   end subroutine COMM_var

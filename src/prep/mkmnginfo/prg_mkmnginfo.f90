@@ -30,7 +30,7 @@ Program prg_mkmnginfo
   use mpi
   use mod_precision
   use mod_stdio
-  use mod_debug
+  use mod_prof
   use mod_adm, only: &
      ADM_RID,     &
      ADM_DIR,     &

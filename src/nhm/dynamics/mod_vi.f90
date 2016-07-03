@@ -33,7 +33,7 @@ module mod_vi
   !++ Used modules
   !
   use mod_precision
-  use mod_debug
+  use mod_prof
   use mod_adm, only: &
      ADM_lall,    &
      ADM_lall_pl, &
@@ -312,7 +312,7 @@ contains
     integer  :: g, k, l, ns
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('____vi_path0')
+    call PROF_rapstart('____vi_path0',2)
 
     ! full level -> half level
     do l = 1, ADM_lall
@@ -499,7 +499,7 @@ contains
                                 gz_tilde, gz_tilde_pl, & ! [IN]
                                 dt                     ) ! [IN]
 
-    call DEBUG_rapend  ('____vi_path0')
+    call PROF_rapend  ('____vi_path0',2)
 
     !---------------------------------------------------------------------------
     !
@@ -508,7 +508,7 @@ contains
     !---------------------------------------------------------------------------
     do ns = 1, num_of_itr
 
-       call DEBUG_rapstart('____vi_path1')
+       call PROF_rapstart('____vi_path1',2)
 
        !---< calculation of preg_prim(*) from rhog(*) & rhoge(*) >
 
@@ -669,8 +669,8 @@ contains
 
        call COMM_data_transfer( diff_vh, diff_vh_pl )
 
-       call DEBUG_rapend  ('____vi_path1')
-       call DEBUG_rapstart('____vi_path2')
+       call PROF_rapend  ('____vi_path1',2)
+       call PROF_rapstart('____vi_path2',2)
 
        !---< vertical implicit scheme >
 
@@ -743,7 +743,7 @@ contains
           enddo
        endif
 
-       call DEBUG_rapend  ('____vi_path2')
+       call PROF_rapend  ('____vi_path2',2)
 
     enddo  ! small step end
 
@@ -1248,7 +1248,7 @@ contains
     !                * ( B(:,k-1,:) + C_o(:,k,:) * C_i(:,k-1,:) )
     ! enddo
 
-    call DEBUG_rapstart('____vi_rhow_update_matrix')
+    call PROF_rapstart('____vi_rhow_update_matrix',2)
 
     GCVovR   = GRAV * CVdry / Rdry
     ACVovRt2 = real(NON_HYDRO_ALPHA,kind=RP) * CVdry / Rdry / ( dt*dt )
@@ -1321,7 +1321,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('____vi_rhow_update_matrix')
+    call PROF_rapend('____vi_rhow_update_matrix',2)
 
     return
   end subroutine vi_rhow_update_matrix
@@ -1398,7 +1398,7 @@ contains
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('____vi_rhow_solver')
+    call PROF_rapstart('____vi_rhow_solver',2)
 
     alfa = real(NON_HYDRO_ALPHA,kind=RP)
     CVovRt2 = CVdry / Rdry / (dt*dt)
@@ -1513,7 +1513,7 @@ contains
        enddo
     endif
 
-    call DEBUG_rapend('____vi_rhow_solver')
+    call PROF_rapend('____vi_rhow_solver',2)
 
     return
   end subroutine vi_rhow_solver

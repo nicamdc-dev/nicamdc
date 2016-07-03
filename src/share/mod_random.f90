@@ -14,7 +14,6 @@ module mod_random
   !
   use mod_precision
   use mod_stdio
-  use mod_debug
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -89,8 +88,8 @@ contains
   !-----------------------------------------------------------------------------
   !> Reset random seed
   subroutine RANDOM_reset
-    use mod_adm, only: &
-       ADM_prc_me
+    use mod_process, only: &
+       PRC_myrank
     implicit none
 
     integer :: time1(8)
@@ -118,7 +117,7 @@ contains
          + time1(5) * 3600 &
          + time1(6) * 60 &
          + time1(7) &
-         + int(time2*1.E6_RP) + ADM_prc_me
+         + int(time2*1.E6_RP) + PRC_myrank
 
     call random_seed(put=RANDOM_seedvar)
 

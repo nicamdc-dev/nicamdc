@@ -27,7 +27,6 @@ module mod_ideal_init
   !
   use mod_precision
   use mod_stdio
-  use mod_debug
   use mod_adm, only: &
      ADM_KNONE, &
      ADM_gall,  &

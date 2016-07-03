@@ -19,7 +19,7 @@ module mod_mkgrd
   !
   use mod_precision
   use mod_stdio
-  use mod_debug
+  use mod_prof
   use mod_grd, only: &
      GRD_XDIR, &
      GRD_YDIR, &

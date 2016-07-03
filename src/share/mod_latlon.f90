@@ -31,7 +31,6 @@ module mod_latlon
   use mpi
   use mod_precision
   use mod_stdio
-  use mod_debug
   !-----------------------------------------------------------------------------
   implicit none
   private

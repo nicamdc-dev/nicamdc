@@ -19,7 +19,7 @@ module mod_oprt3d
   !
   use mod_precision
   use mod_stdio
-  use mod_debug
+  use mod_prof
   use mod_adm, only: &
      TI  => ADM_TI,  &
      TJ  => ADM_TJ,  &
@@ -153,7 +153,7 @@ contains
     integer :: g, k, l, v, n
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('OPRT3D_divdamp')
+    call PROF_rapstart('OPRT3D_divdamp',2)
 
     gall    = ADM_gall
     gall_1d = ADM_gall_1d
@@ -400,7 +400,7 @@ contains
        ddivdz_pl(:,:,:) = 0.0_RP
     endif
 
-    call DEBUG_rapend('OPRT3D_divdamp')
+    call PROF_rapend('OPRT3D_divdamp',2)
 
     return
   end subroutine OPRT3D_divdamp

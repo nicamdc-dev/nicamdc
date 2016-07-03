@@ -18,7 +18,7 @@ module mod_hio
   use mod_precision
   use mod_io_param
   use mod_stdio
-  use mod_debug
+  use mod_prof
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -114,12 +114,6 @@ contains
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) '+++ Module[hio]/Category[common share]'
-
-    ! dummy call
-    call DEBUG_rapstart('FILEIO_in')
-    call DEBUG_rapend  ('FILEIO_in')
-    call DEBUG_rapstart('FILEIO_out')
-    call DEBUG_rapend  ('FILEIO_out')
 
     allocate( prc_tab(ADM_lall) )
 
@@ -248,7 +242,7 @@ contains
     integer :: did, fid
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('FILEIO_in')
+    call PROF_rapstart('FILEIO_in',2)
 
     !--- search/register file
     call HIO_getfid( fid, basename, HIO_FREAD, '', '' )
@@ -267,7 +261,7 @@ contains
 
              var(:,k_start:k_end,:) = 0.0_SP
 
-             call DEBUG_rapend('FILEIO_in')
+             call PROF_rapend('FILEIO_in',2)
              return
           endif
        else
@@ -300,7 +294,7 @@ contains
 
     endif
 
-    call DEBUG_rapend('FILEIO_in')
+    call PROF_rapend('FILEIO_in',2)
 
     return
   end subroutine HIO_input_SP
@@ -342,7 +336,7 @@ contains
     integer :: did, fid
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('FILEIO_in')
+    call PROF_rapstart('FILEIO_in',2)
 
     !--- search/register file
     call HIO_getfid( fid, basename, HIO_FREAD, '', '' )
@@ -361,7 +355,7 @@ contains
 
              var(:,k_start:k_end,:) = 0.0_DP
 
-             call DEBUG_rapend('FILEIO_in')
+             call PROF_rapend('FILEIO_in',2)
              return
           endif
        else
@@ -394,7 +388,7 @@ contains
 
     endif
 
-    call DEBUG_rapend('FILEIO_in')
+    call PROF_rapend('FILEIO_in',2)
 
     return
   end subroutine HIO_input_DP
@@ -453,7 +447,7 @@ contains
     integer  :: i
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('FILEIO_in')
+    call PROF_rapstart('FILEIO_in',2)
 
     !--- search/register file
     call HIO_getfid( fid, basename, HIO_FREAD, '', '' )
@@ -502,7 +496,7 @@ contains
     deallocate( ts )
     deallocate( te )
 
-    call DEBUG_rapend('FILEIO_in')
+    call PROF_rapend('FILEIO_in',2)
 
     return
   end subroutine HIO_seek
@@ -559,7 +553,7 @@ contains
     integer :: did, fid
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('FILEIO_out')
+    call PROF_rapstart('FILEIO_out',2)
 
     !--- search/register file
     call HIO_getfid( fid, basename, HIO_FWRITE, pkg_desc, pkg_note )
@@ -597,7 +591,7 @@ contains
        call PRC_MPIstop
     endif
 
-    call DEBUG_rapend('FILEIO_out')
+    call PROF_rapend('FILEIO_out',2)
 
     return
   end subroutine HIO_output_SP
@@ -654,7 +648,7 @@ contains
     integer :: did, fid
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('FILEIO_out')
+    call PROF_rapstart('FILEIO_out',2)
 
     !--- search/register file
     call HIO_getfid( fid, basename, HIO_FWRITE, pkg_desc, pkg_note )
@@ -692,7 +686,7 @@ contains
        call PRC_MPIstop
     endif
 
-    call DEBUG_rapend('FILEIO_out')
+    call PROF_rapend('FILEIO_out',2)
 
     return
   end subroutine HIO_output_DP
