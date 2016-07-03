@@ -1113,40 +1113,40 @@ contains
 
     do l = 1, ADM_lall
     do g = 1, ADM_gall
-       call VECTR_xyz2latlon( GRD_s(g,k0,l,GRD_LAT),  &
-                              GRD_s(g,k0,l,GRD_LON),  &
-                              GRD_x(g,k0,l,GRD_XDIR), &
+       call VECTR_xyz2latlon( GRD_x(g,k0,l,GRD_XDIR), &
                               GRD_x(g,k0,l,GRD_YDIR), &
-                              GRD_x(g,k0,l,GRD_ZDIR)  )
+                              GRD_x(g,k0,l,GRD_ZDIR), &
+                              GRD_s(g,k0,l,GRD_LAT),  &
+                              GRD_s(g,k0,l,GRD_LON)   )
 
-       call VECTR_xyz2latlon( GRD_st(g,k0,l,ADM_TI,GRD_LAT),  &
-                              GRD_st(g,k0,l,ADM_TI,GRD_LON),  &
-                              GRD_xt(g,k0,l,ADM_TI,GRD_XDIR), &
+       call VECTR_xyz2latlon( GRD_xt(g,k0,l,ADM_TI,GRD_XDIR), &
                               GRD_xt(g,k0,l,ADM_TI,GRD_YDIR), &
-                              GRD_xt(g,k0,l,ADM_TI,GRD_ZDIR)  )
+                              GRD_xt(g,k0,l,ADM_TI,GRD_ZDIR), &
+                              GRD_st(g,k0,l,ADM_TI,GRD_LAT),  &
+                              GRD_st(g,k0,l,ADM_TI,GRD_LON)   )
 
-       call VECTR_xyz2latlon( GRD_st(g,k0,l,ADM_TJ,GRD_LAT),  &
-                              GRD_st(g,k0,l,ADM_TJ,GRD_LON),  &
-                              GRD_xt(g,k0,l,ADM_TJ,GRD_XDIR), &
+       call VECTR_xyz2latlon( GRD_xt(g,k0,l,ADM_TJ,GRD_XDIR), &
                               GRD_xt(g,k0,l,ADM_TJ,GRD_YDIR), &
-                              GRD_xt(g,k0,l,ADM_TJ,GRD_ZDIR)  )
+                              GRD_xt(g,k0,l,ADM_TJ,GRD_ZDIR), &
+                              GRD_st(g,k0,l,ADM_TJ,GRD_LAT),  &
+                              GRD_st(g,k0,l,ADM_TJ,GRD_LON)   )
     enddo
     enddo
 
     if ( ADM_have_pl ) then
        do l = 1,ADM_lall_pl
        do g = 1,ADM_gall_pl
-          call VECTR_xyz2latlon( GRD_s_pl(g,k0,l,GRD_LAT),  &
-                                 GRD_s_pl(g,k0,l,GRD_LON),  &
-                                 GRD_x_pl(g,k0,l,GRD_XDIR), &
+          call VECTR_xyz2latlon( GRD_x_pl(g,k0,l,GRD_XDIR), &
                                  GRD_x_pl(g,k0,l,GRD_YDIR), &
-                                 GRD_x_pl(g,k0,l,GRD_ZDIR)  )
+                                 GRD_x_pl(g,k0,l,GRD_ZDIR), &
+                                 GRD_s_pl(g,k0,l,GRD_LAT),  &
+                                 GRD_s_pl(g,k0,l,GRD_LON)   )
 
-          call VECTR_xyz2latlon( GRD_st_pl(g,k0,l,GRD_LAT),  &
-                                 GRD_st_pl(g,k0,l,GRD_LON),  &
-                                 GRD_xt_pl(g,k0,l,GRD_XDIR), &
+          call VECTR_xyz2latlon( GRD_xt_pl(g,k0,l,GRD_XDIR), &
                                  GRD_xt_pl(g,k0,l,GRD_YDIR), &
-                                 GRD_xt_pl(g,k0,l,GRD_ZDIR)  )
+                                 GRD_xt_pl(g,k0,l,GRD_ZDIR), &
+                                 GRD_st_pl(g,k0,l,GRD_LAT),  &
+                                 GRD_st_pl(g,k0,l,GRD_LON)   )
        enddo
        enddo
     endif

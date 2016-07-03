@@ -706,11 +706,11 @@ contains
     do l = 1, ADM_lall
        do ij = 1, ADM_gall
 
-          call VECTR_xyz2latlon( lat,                    & ! [OUT]
-                                 lon,                    & ! [OUT]
-                                 GRD_x(ij,k,l,GRD_XDIR), & ! [IN]
+          call VECTR_xyz2latlon( GRD_x(ij,k,l,GRD_XDIR), & ! [IN]
                                  GRD_x(ij,k,l,GRD_YDIR), & ! [IN]
-                                 GRD_x(ij,k,l,GRD_ZDIR)  ) ! [IN]
+                                 GRD_x(ij,k,l,GRD_ZDIR), & ! [IN]
+                                 lat,                    & ! [OUT]
+                                 lon                     ) ! [OUT]
 
           if ( 0.5_RP*PI-abs(lat) > criteria ) then
              lat_trans = asin( ( MKGRD_stretch_alpha*(1.0_RP+sin(lat)) / (1.0_RP-sin(lat)) - 1.0_RP ) &
@@ -719,11 +719,11 @@ contains
              lat_trans = lat
           endif
 
-          call VECTR_latlon2xyz( GRD_x(ij,k,l,GRD_XDIR), & ! [OUT]
+          call VECTR_latlon2xyz( lat_trans,              & ! [IN]
+                                 lon,                    & ! [IN]
+                                 GRD_x(ij,k,l,GRD_XDIR), & ! [OUT]
                                  GRD_x(ij,k,l,GRD_YDIR), & ! [OUT]
                                  GRD_x(ij,k,l,GRD_ZDIR), & ! [OUT]
-                                 lat_trans,              & ! [IN]
-                                 lon,                    & ! [IN]
                                  1.0_RP                  ) ! [IN]
        enddo
     enddo
@@ -732,11 +732,11 @@ contains
        do l  = 1, ADM_lall_pl
        do ij = 1, ADM_gall_pl
 
-          call VECTR_xyz2latlon( lat,                       & ! [OUT]
-                                 lon,                       & ! [OUT]
-                                 GRD_x_pl(ij,k,l,GRD_XDIR), & ! [IN]
+          call VECTR_xyz2latlon( GRD_x_pl(ij,k,l,GRD_XDIR), & ! [IN]
                                  GRD_x_pl(ij,k,l,GRD_YDIR), & ! [IN]
-                                 GRD_x_pl(ij,k,l,GRD_ZDIR)  ) ! [IN]
+                                 GRD_x_pl(ij,k,l,GRD_ZDIR), & ! [IN]
+                                 lat,                       & ! [OUT]
+                                 lon                        ) ! [OUT]
 
           if ( 0.5_RP*PI-abs(lat) > criteria ) then
              lat_trans = asin( ( MKGRD_stretch_alpha*(1.0_RP+sin(lat)) / (1.0_RP-sin(lat)) - 1.0_RP ) &
@@ -745,11 +745,11 @@ contains
              lat_trans = lat
           endif
 
-          call VECTR_latlon2xyz( GRD_x_pl(ij,k,l,GRD_XDIR), & ! [OUT]
+          call VECTR_latlon2xyz( lat_trans,                 & ! [IN]
+                                 lon,                       & ! [IN]
+                                 GRD_x_pl(ij,k,l,GRD_XDIR), & ! [OUT]
                                  GRD_x_pl(ij,k,l,GRD_YDIR), & ! [OUT]
                                  GRD_x_pl(ij,k,l,GRD_ZDIR), & ! [OUT]
-                                 lat_trans,                 & ! [IN]
-                                 lon,                       & ! [IN]
                                  1.0_RP                     ) ! [IN]
        enddo
        enddo

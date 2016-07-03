@@ -288,9 +288,6 @@ contains
     integer :: nmax, dmd
     integer :: l, rgnid
     integer :: ierr
-
-    character(LEN=H_LONG) :: fname
-    character(LEN=H_LONG) :: msg
     !---------------------------------------------------------------------
 
     ADM_prc_me = PRC_myrank + 1

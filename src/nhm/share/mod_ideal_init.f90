@@ -1891,10 +1891,11 @@ contains
           z_local(k) = GRD_vz(n,k,l,GRD_Z)
        enddo
 
-       call VECTR_xyz2latlon( lat, lon,               &
-                              GRD_x(n,K0,l,GRD_XDIR), &
-                              GRD_x(n,K0,l,GRD_YDIR), &
-                              GRD_x(n,K0,l,GRD_ZDIR)  )
+       call VECTR_xyz2latlon( GRD_x(n,K0,l,GRD_XDIR), & ! [IN]
+                              GRD_x(n,K0,l,GRD_YDIR), & ! [IN]
+                              GRD_x(n,K0,l,GRD_ZDIR), & ! [IN]
+                              lat,                    & ! [OUT]
+                              lon                     ) ! [OUT]
 
        call tomita_2004( kdim, lat, z_local, wix, wiy, tmp, prs, logout )
        logout = .false.
@@ -2346,10 +2347,11 @@ contains
 
     do l = 1, lall
     do n = 1, ijdim
-       call VECTR_xyz2latlon( lat, lon,               &
-                              GRD_x(n,K0,l,GRD_XDIR), &
-                              GRD_x(n,K0,l,GRD_YDIR), &
-                              GRD_x(n,K0,l,GRD_ZDIR)  )
+       call VECTR_xyz2latlon( GRD_x(n,K0,l,GRD_XDIR), & ! [IN]
+                              GRD_x(n,K0,l,GRD_YDIR), & ! [IN]
+                              GRD_x(n,K0,l,GRD_ZDIR), & ! [IN]
+                              lat,                    & ! [OUT]
+                              lon                     ) ! [OUT]
        r = a * acos( sin(cla)*sin(lat) + cos(cla)*cos(lat)*cos(lon-clo) )
        rr = a / 10.0_RP
        rbyrr = r/rr

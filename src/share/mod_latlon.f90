@@ -146,22 +146,22 @@ contains
     do l = 1, ADM_lall
        do n = 1, ADM_IooJoo_nmax
           ij = ADM_IooJoo(n,ADM_GIoJo)
-          call VECTR_xyz2latlon( GMTR_P_ll(ij,k,l,GMTR_P_LAT), &
-                                 GMTR_P_ll(ij,k,l,GMTR_P_LON), &
-                                 GRD_x    (ij,k,l,GRD_XDIR),   &
+          call VECTR_xyz2latlon( GRD_x    (ij,k,l,GRD_XDIR),   &
                                  GRD_x    (ij,k,l,GRD_YDIR),   &
-                                 GRD_x    (ij,k,l,GRD_ZDIR)    )
+                                 GRD_x    (ij,k,l,GRD_ZDIR),   &
+                                 GMTR_P_ll(ij,k,l,GMTR_P_LAT), &
+                                 GMTR_P_ll(ij,k,l,GMTR_P_LON)  )
        enddo ! ij loop
     enddo ! l loop
 
     if ( ADM_have_pl ) then
        n = ADM_GSLF_PL
        do l = 1,ADM_lall_pl
-          call VECTR_xyz2latlon( GMTR_P_ll_pl(n,k,l,GMTR_P_LAT), &
-                                 GMTR_P_ll_pl(n,k,l,GMTR_P_LON), &
-                                 GRD_x_pl    (n,k,l,GRD_XDIR),   &
+          call VECTR_xyz2latlon( GRD_x_pl    (n,k,l,GRD_XDIR),   &
                                  GRD_x_pl    (n,k,l,GRD_YDIR),   &
-                                 GRD_x_pl    (n,k,l,GRD_ZDIR)    )
+                                 GRD_x_pl    (n,k,l,GRD_ZDIR),   &
+                                 GMTR_P_ll_pl(n,k,l,GMTR_P_LAT), &
+                                 GMTR_P_ll_pl(n,k,l,GMTR_P_LON)  )
        enddo ! l loop
     endif
 
