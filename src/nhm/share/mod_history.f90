@@ -137,7 +137,7 @@ contains
     use mod_const, only: &
        PRE00 => CONST_PRE00
     use mod_calendar, only: &
-       calendar_ss2yh
+       CALENDAR_ss2yh
     use mod_grd, only: &
        GRD_gz
     use mod_time, only: &
@@ -352,7 +352,7 @@ contains
     l_region_save     (:) = 0
     flag_save         (:) = .false.
 
-    call calendar_ss2yh( idate, TIME_CTIME )
+    call CALENDAR_ss2yh( idate, TIME_CTIME )
 
     rewind(IO_FID_CONF)
     do n = 1, HIST_req_limit
@@ -533,7 +533,7 @@ contains
        TIME_CSTEP, &
        TIME_DTL
     use mod_calendar, only: &
-       calendar_ss2yh
+       CALENDAR_ss2yh
     implicit none
 
     character(len=*), intent(in) :: item
@@ -718,7 +718,7 @@ contains
        TIME_CSTEP, &
        TIME_CTIME
     use mod_calendar, only : &
-       calendar_ss2yh, &
+       CALENDAR_ss2yh, &
        Calendar_SS2CC
     use mod_comm, only : &
        COMM_var
@@ -753,7 +753,7 @@ contains
        first = .false.
     endif
 
-    call calendar_ss2yh( idate, TIME_CTIME )
+    call CALENDAR_ss2yh( idate, TIME_CTIME )
 
     ! count up output vars at this time
     out_var(:) = .false.

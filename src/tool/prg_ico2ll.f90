@@ -56,7 +56,7 @@ program ico2ll
        CONST_UNDEF,     & ! 05/12/21 M.Satoh
        CONST_UNDEF4
   use mod_calendar, only : &
-       calendar_ym2dd
+       CALENDAR_ym2dd
   ! Y.Yamada 09-09-09 ->
 !  use mod_comp, only :&
 !       comp_output,   &
@@ -321,7 +321,7 @@ program ico2ll
      endif
 
      !S.Iga051226 =>
-     call calendar_ym2dd(absoday,init_year,init_month,init_day)
+     call CALENDAR_ym2dd(absoday,init_year,init_month,init_day)
 ! W.Yanase  2007/10/24   debug in calculation of 8-byte integer
      initsecond= absoday*int(86400,8) + init_hour*3600 + init_min*60
      !S.Iga051226 <=
@@ -813,7 +813,7 @@ function sec2initplate(absosecond) & !in
      result(plate)
   !
   use mod_calendar, only : &
-       calendar_dd2ym
+       CALENDAR_dd2ym
   !
   implicit none
   integer(8) :: absosecond
@@ -829,7 +829,7 @@ function sec2initplate(absosecond) & !in
   iday= absosecond/86400
   hour=mod(absosecond,int(86400,8))/3600 !! Y.Niwa 86400 -> int(86400,8)
   min=mod(absosecond,int(3600,8))/60 !! Y.Niwa 3600 -> int(3600,8)
-  call calendar_dd2ym(year,month,day,iday)
+  call CALENDAR_dd2ym(year,month,day,iday)
   write(nyear,'(I4.4)') year
   write(nday,'(I2.2)') day
   write(nmin,'(I2.2)') min
@@ -844,7 +844,7 @@ function sec2template(absosecond) & !in
      result(plate)
   !
   use mod_calendar, only : &
-       calendar_dd2ym
+       CALENDAR_dd2ym
   !
   implicit none
   integer(8) :: absosecond
@@ -858,7 +858,7 @@ function sec2template(absosecond) & !in
   iday= absosecond/86400
   hour=mod(absosecond,int(86400,8))/3600 !! Y.Niwa 86400 -> int(86400,8)
   min=mod(absosecond,int(3600,8))/60 !! Y.Niwa 3600 -> int(3600,8)
-  call calendar_dd2ym(year,month,day,iday)
+  call CALENDAR_dd2ym(year,month,day,iday)
   write(nyear,'(I4.4)') year
   write(nday,'(I2.2)') day
   write(nmin,'(I2.2)') min

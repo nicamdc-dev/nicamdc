@@ -93,8 +93,8 @@ contains
     use mod_fio, only: &
        FIO_seek
     use mod_calendar, only: &
-       calendar_yh2ss, &
-       calendar_ss2yh
+       CALENDAR_yh2ss, &
+       CALENDAR_ss2yh
     use mod_time, only: &
        ctime => TIME_CTIME
     implicit none
@@ -142,7 +142,7 @@ contains
     integer  :: np, im
     !---------------------------------------------------------------------------
 
-    call calendar_ss2yh( cdate, ctime )
+    call CALENDAR_ss2yh( cdate, ctime )
 
     !--- search the number of data files.
     max_extdata = 0
@@ -232,8 +232,8 @@ contains
           if (opt_increment_date)then
              do im=2, num_of_data
                 data_date(1:6,im) = data_date(1:6,im-1) + ddata_date(1:6)
-                call calendar_yh2ss( csec, data_date(:,im))
-                call calendar_ss2yh( data_date(:,im), csec )
+                call CALENDAR_yh2ss( csec, data_date(:,im))
+                call CALENDAR_ss2yh( data_date(:,im), csec )
              enddo
           endif
           if (opt_periodic_year) then ! [add] C.Kodama 2010.07.26
@@ -277,7 +277,7 @@ contains
 
        info(np)%data_date(:,1:num_of_data) = data_date(:,1:num_of_data)
        do im = 1, num_of_data
-          call calendar_yh2ss( info(np)%data_time(im), info(np)%data_date(:,im) )
+          call CALENDAR_yh2ss( info(np)%data_time(im), info(np)%data_date(:,im) )
        enddo
 
     enddo
@@ -392,8 +392,8 @@ contains
       ADM_IopJop,      &
       ADM_GIoJo
     use mod_calendar, only: &
-      calendar_yh2ss, &
-      calendar_ss2yh
+      CALENDAR_yh2ss, &
+      CALENDAR_ss2yh
     implicit none
 
     real(RP),         intent(inout) :: gdata(:,:) ! data is inout to retain initilized value.
@@ -442,7 +442,7 @@ contains
        !--- data time advance
        if ( info(np)%opt_monthly_cnst ) then
 
-          call calendar_ss2yh(cdate,ctime)
+          call CALENDAR_ss2yh(cdate,ctime)
 
           if (cdate(2) /= info(np)%data_rec(1)) then
              info(np)%data_rec(1) = cdate(2)
@@ -475,7 +475,7 @@ contains
                 !--- re-setting of data_date and data_time
                 info(np)%data_date(1,1:info(np)%num_of_data) = info(np)%data_date(1,1:info(np)%num_of_data) + 1
                 do im = 1, info(np)%num_of_data
-                   call calendar_yh2ss(info(np)%data_time(im),info(np)%data_date(:,im))
+                   call CALENDAR_yh2ss(info(np)%data_time(im),info(np)%data_date(:,im))
                 enddo
 
                 !--- output of message.
@@ -497,7 +497,7 @@ contains
     elseif(info(np)%data_rec(1) == 1) then !<--- this case is only periodic one.
        data_date_prev(:) = info(np)%data_date(:,info(np)%num_of_data)
        data_date_prev(1) = data_date_prev(1) - 1
-       call calendar_yh2ss(data_time_prev,data_date_prev(:))
+       call CALENDAR_yh2ss(data_time_prev,data_date_prev(:))
 
        dt = info(np)%data_time(info(np)%data_rec(1)) &
           - data_time_prev

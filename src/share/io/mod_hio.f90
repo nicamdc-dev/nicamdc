@@ -421,8 +421,8 @@ contains
     use mod_process, only: &
        PRC_MPIstop
     use mod_calendar, only: &
-       calendar_ss2yh, &
-       calendar_yh2ss
+       CALENDAR_ss2yh, &
+       CALENDAR_yh2ss
     implicit none
 
     integer,          intent(inout) :: start_step
@@ -478,11 +478,11 @@ contains
 
     do i = 1, num_of_step
        midtime = real( int( (ts(i)+te(i))*0.5_DP+1.0_DP, kind=DP ), kind=DP )
-       call calendar_ss2yh( data_date(:,i), midtime )
+       call CALENDAR_ss2yh( data_date(:,i), midtime )
 
        if ( opt_periodic_year ) then
           data_date(1,i) = cdate(1)
-          call calendar_yh2ss( midtime, data_date(:,i) )
+          call CALENDAR_yh2ss( midtime, data_date(:,i) )
        endif
 
        if (       ( .not. startflag ) &

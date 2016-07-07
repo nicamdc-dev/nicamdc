@@ -70,8 +70,8 @@ contains
     use mod_process, only: &
        PRC_MPIstop
     use mod_calendar, only: &
-       calendar_yh2ss, &
-       calendar_ss2cc
+       CALENDAR_yh2ss, &
+       CALENDAR_ss2cc
     implicit none
 
     character(len=H_SHORT) :: integ_type !--- integration method
@@ -168,7 +168,7 @@ contains
     if ( start_date(4) == -999 ) start_date(4) = start_hour
     if ( start_date(5) == -999 ) start_date(5) = start_min
     if ( start_date(6) == -999 ) start_date(6) = start_sec
-    call calendar_yh2ss( TIME_start, start_date )
+    call CALENDAR_yh2ss( TIME_start, start_date )
 
     TIME_END    = TIME_START  + TIME_LSTEP_MAX * TIME_DTL
     TIME_NSTART = 0
@@ -178,8 +178,8 @@ contains
     TIME_CSTEP  = TIME_NSTART
 
     !--- output the information for debug
-    call calendar_ss2cc ( HTIME_start, TIME_START )
-    call calendar_ss2cc ( HTIME_end,   TIME_END   )
+    call CALENDAR_ss2cc( HTIME_start, TIME_START )
+    call CALENDAR_ss2cc( HTIME_end,   TIME_END   )
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) '====== Time management ======'
@@ -204,13 +204,13 @@ contains
     use mod_process, only: &
        PRC_IsMaster
     use mod_calendar, only: &
-       calendar_ss2cc
+       CALENDAR_ss2cc
     implicit none
 
     character(len=20) :: HTIME
     !---------------------------------------------------------------------------
 
-    call calendar_ss2cc ( HTIME, TIME_CTIME )
+    call CALENDAR_ss2cc( HTIME, TIME_CTIME )
 
     write(IO_FID_LOG,*) '### TIME =', HTIME,'( step = ', TIME_CSTEP, ' )'
     if( PRC_IsMaster ) then

@@ -71,7 +71,7 @@ program prg_driver
   use mod_const, only: &
      CONST_setup
   use mod_calendar, only: &
-     calendar_setup
+     CALENDAR_setup
   use mod_fio, only: &
      FIO_setup
   use mod_comm, only: &
@@ -246,7 +246,7 @@ program prg_driver
   call CONST_setup
 
   !---< calendar module setup >---
-  call calendar_setup
+  call CALENDAR_setup
 
   !---< I/O module setup >---
   call FIO_setup

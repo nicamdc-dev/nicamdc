@@ -40,7 +40,7 @@ program fio_ico2ll
     CONST_UNDEF8, &
     CONST_UNDEF4
   use mod_calendar, only : &
-    calendar_ss2yh
+    CALENDAR_ss2yh
   use mod_fio, only: &
     headerinfo, &
     datainfo
@@ -454,7 +454,7 @@ program fio_ico2ll
   write(*,*) '########## Variable List ########## '
   write(*,*) 'ID |NAME            |STEPS|Layername       |START FROM         |DT [sec]'
   do v = 1, nvar
-     call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=DP) )
+     call CALENDAR_ss2yh( date_str(:), real(var_time_str(v),kind=DP) )
      write(tmpl,'(I4.4,"/",I2.2,"/",I2.2,1x,I2.2,":",I2.2,":",I2.2)') date_str(:)
      write(*,'(1x,I3,A1,A16,A1,I5,A1,A16,A1,A19,A1,I8)') &
               v,'|',var_name(v),'|',var_nstep(v),'|',var_layername(v),'|', tmpl,'|', var_dt(v)
@@ -520,7 +520,7 @@ program fio_ico2ll
         elseif(output_netcdf) then ! [add] 13-04-18 C.Kodama
            write(*,*) 'Output: ', trim(outbase)//'.nc'
 
-           call calendar_ss2yh( date_str(:), real(var_time_str(v),kind=DP) )
+           call CALENDAR_ss2yh( date_str(:), real(var_time_str(v),kind=DP) )
            do j=1, 6
               write( date_str_tmp(j), '(I4)' ) date_str(j)
               date_str_tmp(j) = adjustl( date_str_tmp(j) )
@@ -699,7 +699,7 @@ program fio_ico2ll
            else
               write(var_gthead(25,v),'(I16)') int( nowsec/60,kind=4 )
            endif
-           write(var_gthead(27,v),'(A16)') calendar_ss2cc_gtool(nowsec)
+           write(var_gthead(27,v),'(A16)') CALENDAR_ss2cc_gtool(nowsec)
            gthead(:) = var_gthead(:,v)
 
            write(ofid) gthead(:)
@@ -1132,10 +1132,10 @@ contains
     !---------------------------------------------------------------------------
 
     ! [Comment] H.Yashiro 20110903
-    ! Prefer not to use calendar_dd2ym subroutine
-    ! Epoch time is different between calendar_ss2yh and calendar_dd2ym
-    ! New I/O stores timestamp, which is generated via calendar_yh2ss
-    call calendar_ss2yh( d(:), real(datesec,kind=DP) )
+    ! Prefer not to use CALENDAR_dd2ym subroutine
+    ! Epoch time is different between CALENDAR_ss2yh and CALENDAR_dd2ym
+    ! New I/O stores timestamp, which is generated via CALENDAR_yh2ss
+    call CALENDAR_ss2yh( d(:), real(datesec,kind=DP) )
 
     write(template,'(I2.2,A1,I2.2,A1,I2.2,A3,I4.4)') &
                               d(4), ':', d(5), 'Z', d(3), nmonth(d(2)), d(1)
@@ -1156,10 +1156,10 @@ contains
     !---------------------------------------------------------------------------
 
     ! [Comment] H.Yashiro 20110903
-    ! Prefer not to use calendar_dd2ym subroutine
-    ! Epoch time is different between calendar_ss2yh and calendar_dd2ym
-    ! New I/O stores timestamp, which is generated via calendar_yh2ss
-    call calendar_ss2yh( d(:), real(datesec,kind=DP) )
+    ! Prefer not to use CALENDAR_dd2ym subroutine
+    ! Epoch time is different between CALENDAR_ss2yh and CALENDAR_dd2ym
+    ! New I/O stores timestamp, which is generated via CALENDAR_yh2ss
+    call CALENDAR_ss2yh( d(:), real(datesec,kind=DP) )
 
     write(template,'(I4.4,A1,I2.2,A1,I2.2,A1,I2.2,A1,I2.2,A1)') &
                           d(1), '-', d(2), '-', d(3), '-', d(4), 'h', d(5), 'm'
@@ -1184,7 +1184,7 @@ contains
   !S.Iga051226 <=
 
   !-----------------------------------------------------------------------------
-  function calendar_ss2cc_gtool(datesec) result(template)
+  function CALENDAR_ss2cc_gtool(datesec) result(template)
     !--- calendar, sec. -> character (YYYYMMDD HHMMSS)
     implicit none
 
@@ -1195,14 +1195,14 @@ contains
     !---------------------------------------------------------------------------
 
     ! [Comment] H.Yashiro 20110903
-    ! Prefer not to use calendar_dd2ym subroutine
-    ! Epoch time is different between calendar_ss2yh and calendar_dd2ym
-    ! New I/O stores timestamp, which is generated via calendar_yh2ss
-    call calendar_ss2yh( d(:), real(datesec,kind=DP) )
+    ! Prefer not to use CALENDAR_dd2ym subroutine
+    ! Epoch time is different between CALENDAR_ss2yh and CALENDAR_dd2ym
+    ! New I/O stores timestamp, which is generated via CALENDAR_yh2ss
+    call CALENDAR_ss2yh( d(:), real(datesec,kind=DP) )
 
     write (template,'(i4.4,i2.2,i2.2,1x,i2.2,i2.2,i2.2,1x)') (d(i),i=1,6)
 
-  end function calendar_ss2cc_gtool
+  end function CALENDAR_ss2cc_gtool
 
 end program fio_ico2ll
 !-------------------------------------------------------------------------------
