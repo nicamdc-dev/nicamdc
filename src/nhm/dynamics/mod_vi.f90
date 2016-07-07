@@ -33,6 +33,7 @@ module mod_vi
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_prof
   use mod_adm, only: &
      ADM_lall,    &
@@ -1332,9 +1333,9 @@ contains
        rhogw0, rhogw0_pl, &
        preg0,  preg0_pl,  &
        rhog0,  rhog0_pl,  &
-       Sr,     Sr_pl,     &
+       Srho,   Srho_pl,   &
        Sw,     Sw_pl,     &
-       Sp,     Sp_pl,     &
+       Spre,   Spre_pl,   &
        dt                 )
     use mod_adm, only: &
        ADM_have_pl, &
@@ -1377,12 +1378,12 @@ contains
     real(RP), intent(in)    :: preg0_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in)    :: rhog0    (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho            ( G^1/2 x gam2 )
     real(RP), intent(in)    :: rhog0_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)    :: Sr       (ADM_gall   ,ADM_kall,ADM_lall   ) ! source term for rho  at the full level
-    real(RP), intent(in)    :: Sr_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)    :: Srho     (ADM_gall   ,ADM_kall,ADM_lall   ) ! source term for rho  at the full level
+    real(RP), intent(in)    :: Srho_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in)    :: Sw       (ADM_gall   ,ADM_kall,ADM_lall   ) ! source term for rhow at the half level
     real(RP), intent(in)    :: Sw_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)    :: Sp       (ADM_gall   ,ADM_kall,ADM_lall   ) ! source term for pres at the full level
-    real(RP), intent(in)    :: Sp_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)    :: Spre     (ADM_gall   ,ADM_kall,ADM_lall   ) ! source term for pres at the full level
+    real(RP), intent(in)    :: Spre_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in)    :: dt
 
     real(RP) :: Sall    (ADM_gall,   ADM_kall)
@@ -1407,13 +1408,13 @@ contains
        ! calc Sall
        do k = ADM_kmin+1, ADM_kmax
        do g = 1, ADM_gall
-          Sall(g,k) = (   ( rhogw0(g,k,  l)*alfa + dt * Sw(g,k,  l) ) * VMTR_RGAMH  (g,k,  l)**2            &
-                      - ( ( preg0 (g,k,  l)      + dt * Sp(g,k,  l) ) * VMTR_RGSGAM2(g,k,  l)               &
-                        - ( preg0 (g,k-1,l)      + dt * Sp(g,k-1,l) ) * VMTR_RGSGAM2(g,k-1,l)               &
-                        ) * dt * GRD_rdgzh(k)                                                               &
-                      - ( ( rhog0 (g,k,  l)      + dt * Sr(g,k,  l) ) * VMTR_RGAM(g,k,  l)**2 * GRD_afac(k) &
-                        + ( rhog0 (g,k-1,l)      + dt * Sr(g,k-1,l) ) * VMTR_RGAM(g,k-1,l)**2 * GRD_bfac(k) &
-                        ) * dt * GRAV                                                                       &
+          Sall(g,k) = (   ( rhogw0(g,k,  l)*alfa + dt * Sw  (g,k,  l) ) * VMTR_RGAMH  (g,k,  l)**2            &
+                      - ( ( preg0 (g,k,  l)      + dt * Spre(g,k,  l) ) * VMTR_RGSGAM2(g,k,  l)               &
+                        - ( preg0 (g,k-1,l)      + dt * Spre(g,k-1,l) ) * VMTR_RGSGAM2(g,k-1,l)               &
+                        ) * dt * GRD_rdgzh(k)                                                                 &
+                      - ( ( rhog0 (g,k,  l)      + dt * Srho(g,k,  l) ) * VMTR_RGAM(g,k,  l)**2 * GRD_afac(k) &
+                        + ( rhog0 (g,k-1,l)      + dt * Srho(g,k-1,l) ) * VMTR_RGAM(g,k-1,l)**2 * GRD_bfac(k) &
+                        ) * dt * GRAV                                                                         &
                       ) * CVovRt2
        enddo
        enddo
@@ -1464,13 +1465,13 @@ contains
        do l = 1, ADM_lall_pl
           do k  = ADM_kmin+1, ADM_kmax
           do g = 1, ADM_gall_pl
-             Sall_pl(g,k) = (   ( rhogw0_pl(g,k,  l)*alfa + dt * Sw_pl(g,k,  l) ) * VMTR_RGAMH_pl  (g,k,  l)**2            &
-                            - ( ( preg0_pl (g,k,  l)      + dt * Sp_pl(g,k,  l) ) * VMTR_RGSGAM2_pl(g,k,  l)               &
-                              - ( preg0_pl (g,k-1,l)      + dt * Sp_pl(g,k-1,l) ) * VMTR_RGSGAM2_pl(g,k-1,l)               &
-                              ) * dt * GRD_rdgzh(k)                                                                        &
-                            - ( ( rhog0_pl (g,k,  l)      + dt * Sr_pl(g,k,  l) ) * VMTR_RGAM_pl(g,k,  l)**2 * GRD_afac(k) &
-                              + ( rhog0_pl (g,k-1,l)      + dt * Sr_pl(g,k-1,l) ) * VMTR_RGAM_pl(g,k-1,l)**2 * GRD_bfac(k) &
-                              ) * dt * GRAV                                                                                &
+             Sall_pl(g,k) = (   ( rhogw0_pl(g,k,  l)*alfa + dt * Sw_pl  (g,k,  l) ) * VMTR_RGAMH_pl  (g,k,  l)**2            &
+                            - ( ( preg0_pl (g,k,  l)      + dt * Spre_pl(g,k,  l) ) * VMTR_RGSGAM2_pl(g,k,  l)               &
+                              - ( preg0_pl (g,k-1,l)      + dt * Spre_pl(g,k-1,l) ) * VMTR_RGSGAM2_pl(g,k-1,l)               &
+                              ) * dt * GRD_rdgzh(k)                                                                          &
+                            - ( ( rhog0_pl (g,k,  l)      + dt * Srho_pl(g,k,  l) ) * VMTR_RGAM_pl(g,k,  l)**2 * GRD_afac(k) &
+                              + ( rhog0_pl (g,k-1,l)      + dt * Srho_pl(g,k-1,l) ) * VMTR_RGAM_pl(g,k-1,l)**2 * GRD_bfac(k) &
+                              ) * dt * GRAV                                                                                  &
                             ) * CVovRt2
           enddo
           enddo
