@@ -3,41 +3,35 @@ PRJ_TOOL   = $(PRJ_TOOL01) \
              $(PRJ_TOOL02) \
              $(PRJ_TOOL03) \
              $(PRJ_TOOL04) \
-             $(PRJ_TOOL05) \
-             $(PRJ_TOOL06)
+             $(PRJ_TOOL05)
 LIB_TOOL   = libnicamtool.a
 
 PRJ_TOOL01 = fio_dump
 PRJ_TOOL02 = fio_cat
 PRJ_TOOL03 = fio_sel
-PRJ_TOOL04 = fio_ico2ll
+PRJ_TOOL04 = fio_sub
 PRJ_TOOL05 = fio_ico2ll_mpi
-PRJ_TOOL06 = ico2ll
 
 PRG_TOOL01 = prg_fio_dump
 PRG_TOOL02 = prg_fio_cat
 PRG_TOOL03 = prg_fio_sel
-PRG_TOOL04 = prg_fio_ico2ll
+PRG_TOOL04 = prg_fio_sub
 PRG_TOOL05 = prg_fio_ico2ll_mpi
-PRG_TOOL06 = prg_ico2ll
 
 MODS_TOOL =	\
-	orgico.o	\
 	mod_mnginfo_light.o	\
 	mod_option.o	\
 	$(mod_netcdf).o
 
-orgico.o	: orgico.c orgico.h fio_def.h
 mod_mnginfo_light.o	: mod_mnginfo_light.f90 mod_stdio.o
 mod_option.o	: mod_option.f90
 $(mod_netcdf).o	: $(mod_netcdf).f90
 
 prg_fio_dump.o	: prg_fio_dump.f90 mod_fio.o
-prg_fio_ico2ll.o	: prg_fio_ico2ll.f90 mod_precision.o mod_stdio.o mod_adm.o mod_const.o mod_calendar.o mod_fio.o mod_mnginfo_light.o mod_option.o $(mod_netcdf).o
-prg_fio_ico2ll_mpi.o	: prg_fio_ico2ll_mpi.f90 mod_precision.o mod_stdio.o mod_adm.o mod_prof.o mod_const.o mod_calendar.o mod_fio.o mod_mnginfo_light.o mod_option.o $(mod_netcdf).o
-prg_ico2ll.o	: prg_ico2ll.f90 mod_precision.o mod_stdio.o mod_const.o mod_calendar.o
 prg_fio_cat.o	: prg_fio_cat.f90 mod_precision.o mod_stdio.o mod_const.o mod_calendar.o mod_fio.o mod_mnginfo_light.o mod_option.o
 prg_fio_sel.o	: prg_fio_sel.f90 mod_precision.o mod_stdio.o mod_const.o mod_calendar.o mod_fio.o mod_mnginfo_light.o mod_option.o
+prg_fio_sub.o	: prg_fio_sub.f90 mod_precision.o mod_stdio.o mod_const.o mod_calendar.o mod_fio.o mod_mnginfo_light.o mod_option.o
+prg_fio_ico2ll_mpi.o	: prg_fio_ico2ll_mpi.f90 mod_precision.o mod_stdio.o mod_adm.o mod_prof.o mod_const.o mod_calendar.o mod_fio.o mod_mnginfo_light.o mod_option.o $(mod_netcdf).o
 
 $(NICAM_BINDIR)/$(PRJ_TOOL01): $(BUILDDIR)/$(PRJ_TOOL01)
 	$(INSTALL) $< $@
@@ -54,9 +48,6 @@ $(NICAM_BINDIR)/$(PRJ_TOOL04): $(BUILDDIR)/$(PRJ_TOOL04)
 $(NICAM_BINDIR)/$(PRJ_TOOL05): $(BUILDDIR)/$(PRJ_TOOL05)
 	$(INSTALL) $< $@
 	@echo; echo "##### PROGRAM $(notdir $<) is installed Successfully #####"; echo
-$(NICAM_BINDIR)/$(PRJ_TOOL06): $(BUILDDIR)/$(PRJ_TOOL06)
-	$(INSTALL) $< $@
-	@echo; echo "##### PROGRAM $(notdir $<) is installed Successfully #####"; echo
 
 $(BUILDDIR)/$(PRJ_TOOL01) : $(PRG_TOOL01).o $(NICAM_LIBDIR)/$(LIB_TOOL) $(NICAM_LIBDIR)/$(LIB_SHARE)
 	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILDDIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
@@ -67,8 +58,6 @@ $(BUILDDIR)/$(PRJ_TOOL03) : $(PRG_TOOL03).o $(NICAM_LIBDIR)/$(LIB_TOOL) $(NICAM_
 $(BUILDDIR)/$(PRJ_TOOL04) : $(PRG_TOOL04).o $(NICAM_LIBDIR)/$(LIB_TOOL) $(NICAM_LIBDIR)/$(LIB_SHARE)
 	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILDDIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
 $(BUILDDIR)/$(PRJ_TOOL05) : $(PRG_TOOL05).o $(NICAM_LIBDIR)/$(LIB_TOOL) $(NICAM_LIBDIR)/$(LIB_SHARE)
-	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILDDIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
-$(BUILDDIR)/$(PRJ_TOOL06) : $(PRG_TOOL06).o $(NICAM_LIBDIR)/$(LIB_TOOL) $(NICAM_LIBDIR)/$(LIB_SHARE)
 	$(LD) $(LFLAGS) -o $@ $(addprefix $(BUILDDIR)/,$(notdir $^)) $(NETCDF_LIBS) $(JCUP_JSP_LIBS)
 
 $(LIB_TOOL) : $(NICAM_LIBDIR)/$(LIB_TOOL)

@@ -40,7 +40,7 @@ program fio_cat
   !
   integer, parameter :: max_nvar = 1000
 
-  integer, parameter :: flim = 100
+  integer, parameter :: flim = 2
   integer,      save :: fmax
 
   !--- NAMELIST
@@ -65,11 +65,13 @@ program fio_cat
                     help
 
   !-----------------------------------------------------------------------------
-  character(len=H_LONG)  :: infname  = ""
+  character(len=H_LONG)  :: infname1 = ""
+  character(len=H_LONG)  :: infname2 = ""
   character(len=H_LONG)  :: outfname = ""
 
   type(headerinfo)       :: hinfo
-  type(datainfo)         :: dinfo
+  type(datainfo)         :: dinfo1
+  type(datainfo)         :: dinfo2
 
   character(len=H_MID)   :: pkg_desc
   character(len=H_LONG)  :: pkg_note
@@ -82,8 +84,10 @@ program fio_cat
   integer                :: GALL
   integer                :: KALL
   integer                :: LALL
-  real(4), allocatable   :: data4_1D(:)
-  real(8), allocatable   :: data8_1D(:)
+  real(4), allocatable   :: data4_1D1(:)
+  real(8), allocatable   :: data8_1D1(:)
+  real(4), allocatable   :: data4_1D2(:)
+  real(8), allocatable   :: data8_1D2(:)
 
   ! for MPI
   integer                :: pe_all
@@ -93,8 +97,8 @@ program fio_cat
   character(len=6)       :: rankstr
 
   logical :: addvar
-  integer :: p, f, v, vid
-  integer :: ifid, idid, ofid, odid, ierr
+  integer :: p, v, vid
+  integer :: ifid1, ifid2, idid, ofid, odid, ierr
   !=====================================================================
 
   !--- read option and preprocess
@@ -115,7 +119,7 @@ program fio_cat
      call MPI_Barrier(MPI_COMM_WORLD,ierr)
 
      write(rankstr,'(I6.6)') prc_myrank
-     open(fid_log, file='msg_cat.pe'//trim(rankstr) )
+     open(fid_log, file='msg_sub.pe'//trim(rankstr) )
      write(fid_log,*) "+++ Parallel Execution, Use MPI"
 
      if( mod( MNG_PALL, prc_nall) /= 0)then
@@ -157,29 +161,42 @@ program fio_cat
 
   !--- setup
   call fio_syscheck()
-
   write(fid_log,*) '*** combine start : PaNDa format to PaNDa format data'
 
   do p = pstr, pend
      write(fid_log,*) '+pe:', p-1
      LALL = MNG_prc_rnum(p)
 
-     call fio_mk_fname(infname, trim(infile(1)),'pe',p-1,6)
+     call fio_mk_fname(infname1,trim(infile(1)),'pe',p-1,6)
+     call fio_mk_fname(infname2,trim(infile(2)),'pe',p-1,6)
      call fio_mk_fname(outfname,trim(outfile),  'pe',p-1,6)
      write(fid_log,*) '++output : ', trim(outfname)
 
-     call fio_register_file(ifid,trim(infname))
-     call fio_fopen(ifid,IO_FREAD)
+     call fio_register_file(ifid1,trim(infname1))
+     call fio_fopen(ifid1,IO_FREAD)
      ! put information from 1st input file
-     call fio_put_commoninfo_fromfile(ifid,IO_BIG_ENDIAN)
+     call fio_put_commoninfo_fromfile(ifid1,IO_BIG_ENDIAN)
 
-     call fio_read_allinfo(ifid)
+     call fio_read_allinfo(ifid1)
      allocate( hinfo%rgnid(LALL) )
-     call fio_get_pkginfo(ifid,hinfo)
+     call fio_get_pkginfo(ifid1,hinfo)
      pkg_desc  = hinfo%description
      pkg_note  = hinfo%note
      nmax_data = hinfo%num_of_data
-     write(fid_log,*) '++input', 1, ' : ', trim(infname), "(n=", nmax_data, ")"
+     write(fid_log,*) '++input', 1, ' : ', trim(infname1), "(n=", nmax_data, ")"
+
+     call fio_register_file(ifid2,trim(infname2))
+     call fio_fopen(ifid2,IO_FREAD)
+     call fio_read_allinfo(ifid2)
+     call fio_get_pkginfo(ifid2,hinfo)
+     write(fid_log,*) '++input', 2, ' : ', trim(infname2), "(n=", nmax_data, ")"
+
+     if ( hinfo%num_of_data /= nmax_data ) then
+        write(fid_log,*) "*** Mismatch number of data, STOP:", hinfo%num_of_data, nmax_data
+        call MPI_Barrier(MPI_COMM_WORLD,ierr)
+        call MPI_FINALIZE(ierr)
+        stop
+     endif
 
      call fio_register_file(ofid,trim(outfname))
      call fio_fopen(ofid,IO_FWRITE)
@@ -188,12 +205,20 @@ program fio_cat
      nvar = 0
      do idid = 0, nmax_data-1
         ! get datainfo from input file
-        call fio_get_datainfo(ifid,idid,dinfo)
-        KALL = dinfo%num_of_layer
+        call fio_get_datainfo(ifid1,idid,dinfo1)
+        call fio_get_datainfo(ifid2,idid,dinfo2)
+        KALL = dinfo1%num_of_layer
+
+        if ( dinfo2%num_of_layer /= KALL ) then
+           write(fid_log,*) "*** Mismatch number of layer, STOP:", dinfo2%num_of_layer, KALL
+           call MPI_Barrier(MPI_COMM_WORLD,ierr)
+           call MPI_FINALIZE(ierr)
+           stop
+        endif
 
         addvar = .true.
         do v = 1, nvar
-           if ( var_name(v) == dinfo%varname ) then
+           if ( var_name(v) == dinfo1%varname ) then
               var_nstep(v) = var_nstep(v) + 1
               vid = v
               addvar = .false.
@@ -204,77 +229,51 @@ program fio_cat
         if (addvar) then
            nvar = nvar + 1
            var_nstep(nvar) = 1
-           var_name (nvar) = dinfo%varname
+           var_name (nvar) = dinfo1%varname
            vid = nvar
         endif
 
-        dinfo%step = var_nstep(vid)
+        dinfo1%step = var_nstep(vid)
 
         ! read->write data
-        if ( dinfo%datatype == IO_REAL4 ) then
-           allocate( data4_1D(GALL*KALL*LALL) )
-           call fio_read_data(ifid,idid,data4_1D)
-           call fio_put_write_datainfo_data(odid,ofid,dinfo,data4_1D)
-           deallocate( data4_1D )
-        elseif( dinfo%datatype == IO_REAL8 ) then
-           allocate( data8_1D(GALL*KALL*LALL) )
-           call fio_read_data(ifid,idid,data8_1D)
-           call fio_put_write_datainfo_data(odid,ofid,dinfo,data8_1D)
-           deallocate( data8_1D )
+        if ( dinfo1%datatype == IO_REAL4 ) then
+           allocate( data4_1D1(GALL*KALL*LALL) )
+           call fio_read_data(ifid1,idid,data4_1D1)
+           if ( dinfo2%datatype == IO_REAL4 ) then
+              allocate( data4_1D2(GALL*KALL*LALL) )
+              call fio_read_data(ifid2,idid,data4_1D2)
+              data4_1D1(:) = data4_1D1(:) - data4_1D2(:)
+              deallocate( data4_1D2 )
+           elseif( dinfo2%datatype == IO_REAL8 ) then
+              allocate( data8_1D2(GALL*KALL*LALL) )
+              call fio_read_data(ifid2,idid,data8_1D2)
+              data4_1D1(:) = data4_1D1(:) - real(data8_1D2(:),kind=4)
+              deallocate( data8_1D2 )
+           endif
+           call fio_put_write_datainfo_data(odid,ofid,dinfo1,data4_1D1)
+           deallocate( data4_1D1 )
+        elseif( dinfo1%datatype == IO_REAL8 ) then
+           allocate( data8_1D1(GALL*KALL*LALL) )
+           call fio_read_data(ifid1,idid,data8_1D1)
+           if ( dinfo2%datatype == IO_REAL4 ) then
+              allocate( data4_1D2(GALL*KALL*LALL) )
+              call fio_read_data(ifid2,idid,data4_1D2)
+              data8_1D1(:) = data8_1D1(:) - real(data4_1D2(:),kind=8)
+              deallocate( data4_1D2 )
+           elseif( dinfo2%datatype == IO_REAL8 ) then
+              allocate( data8_1D2(GALL*KALL*LALL) )
+              call fio_read_data(ifid2,idid,data8_1D2)
+              data8_1D1(:) = data8_1D1(:) - data8_1D2(:)
+              deallocate( data8_1D2 )
+           endif
+           call fio_put_write_datainfo_data(odid,ofid,dinfo1,data8_1D1)
+           deallocate( data8_1D1 )
         endif
+
      enddo
 
-     call fio_fclose(ifid)
-
-     do f = 2, fmax
-        call fio_mk_fname(infname, trim(infile(f)),'pe',p-1,6)
-
-        call fio_register_file(ifid,trim(infname))
-        call fio_fopen(ifid,IO_FREAD)
-        call fio_read_allinfo(ifid)
-        call fio_get_pkginfo(ifid,hinfo)
-        nmax_data = hinfo%num_of_data
-        write(fid_log,*) '++input', f, ' : ', trim(infname), "(n=", nmax_data, ")"
-
-        do idid = 0, nmax_data-1
-           ! get datainfo from input file
-           call fio_get_datainfo(ifid,idid,dinfo)
-           KALL = dinfo%num_of_layer
-
-           addvar = .true.
-           do v = 1, nvar
-              if ( var_name(v) == dinfo%varname ) then
-                 var_nstep(v) = var_nstep(v) + 1
-                 addvar = .false.
-                 exit
-              endif
-           enddo
-
-           if (addvar) then
-              nvar = nvar + 1
-              var_nstep(nvar) = 1
-              var_name (nvar) = dinfo%varname
-           endif
-
-           dinfo%step = var_nstep(v)
-
-           ! read->write data
-           if ( dinfo%datatype == IO_REAL4 ) then
-              allocate( data4_1D(GALL*KALL*LALL) )
-              call fio_read_data(ifid,idid,data4_1D)
-              call fio_put_write_datainfo_data(odid,ofid,dinfo,data4_1D)
-              deallocate( data4_1D )
-           elseif( dinfo%datatype == IO_REAL8 ) then
-              allocate( data8_1D(GALL*KALL*LALL) )
-              call fio_read_data(ifid,idid,data8_1D)
-              call fio_put_write_datainfo_data(odid,ofid,dinfo,data8_1D)
-              deallocate( data8_1D )
-           endif
-        enddo
-
-        call fio_fclose(ifid)
-     enddo
-
+     call fio_fclose(ifid1)
+     call fio_fclose(ifid2)
      call fio_fclose(ofid)
 
      deallocate( hinfo%rgnid )

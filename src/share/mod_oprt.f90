@@ -2806,7 +2806,8 @@ contains
     use mod_adm, only: &
        ADM_have_pl
     use mod_io_param, only: &
-       IO_REAL8
+       IO_REAL8, &
+       IO_REAL4
     use mod_fio, only: &
        FIO_output
     use mod_comm, only: &
@@ -2820,8 +2821,15 @@ contains
     real(RP) :: tmp   (ADM_gall   ,49,ADM_lall   ,1)
     real(RP) :: tmp_pl(ADM_gall_pl,49,ADM_lall_pl,1)
 
+    integer :: dtype
     integer :: g, l
     !---------------------------------------------------------------------------
+
+    if    ( RP == SP ) then
+       dtype = IO_REAL4
+    elseif( RP == DP ) then
+       dtype = IO_REAL8
+    endif
 
     do l = 1, ADM_lall
        do g = 1, ADM_gall
@@ -2937,10 +2945,9 @@ contains
 
     if ( OPRT_io_mode == 'ADVANCED' ) then
 
-       call FIO_output( tmp(:,:,:,1),                                     &
-                        basename, desc, "",                               &
-                        "oprtcoef", "oprt coef", "",                      &
-                        "", IO_REAL8, "LAYERNM", 1, 49, 1, 0.0_DP, 0.0_DP )
+       call FIO_output( tmp(:,:,:,1), basename, desc, "",              &
+                        "oprtcoef", "oprt coef", "",                   &
+                        "", dtype, "LAYERNM", 1, 49, 1, 0.0_DP, 0.0_DP )
 
     else
        write(IO_FID_LOG,*) 'Invalid io_mode!'

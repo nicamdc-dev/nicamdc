@@ -315,7 +315,7 @@ contains
           enddo
           enddo
 
-          call IO_make_idstr(fname,trim(output_dirname)//'/checkmap','grd',rgnid)
+          call IO_make_idstr(fname,trim(output_dirname)//'/checkmap','grd',rgnid,isrgn=.true.)
 
           fid = IO_get_available_fid()
           open( unit   = fid,           &
@@ -390,7 +390,7 @@ contains
     do l = 1, ADM_lall
        rgnid = ADM_prc_tab(l,ADM_prc_me)
 
-       call IO_make_idstr(fname,trim(output_dirname)//'/llmap','rgn',rgnid)
+       call IO_make_idstr(fname,trim(output_dirname)//'/llmap','rgn',rgnid,isrgn=.true.)
 
        fid = IO_get_available_fid()
        open( unit   = fid,           &
@@ -423,7 +423,7 @@ contains
 !    do l = 1, ADM_lall
 !       rgnid = ADM_prc_tab(l,ADM_prc_me)
 !
-!       call IO_make_idstr(fname,trim(output_dirname)//'/llmap','rgntxt',rgnid)
+!       call IO_make_idstr(fname,trim(output_dirname)//'/llmap','rgntxt',rgnid,isrgn=.true.)
 !
 !       fid = IO_get_available_fid()
 !       open( unit   = fid,           &
@@ -882,7 +882,7 @@ contains
 
        do l = 1, ADM_lall
           rgnid = ADM_prc_tab(l,ADM_prc_me)
-          call IO_make_idstr(fname,trim(sample_io_mode),'rgn',rgnid)
+          call IO_make_idstr(fname,trim(sample_io_mode),'rgn',rgnid,isrgn=.true.)
 
           fid = IO_get_available_fid()
           open( unit = fid, &

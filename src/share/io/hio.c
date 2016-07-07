@@ -504,7 +504,7 @@ int32_t hio_read_pkginfo( int32_t fid )
                          finfo[fid].header.description,
                          finfo[fid].header.note,
                          &finfo[fid].header.num_of_var);
-                        
+
 #ifdef DEBUG
   fprintf(DBGOUT,"dbg:hio_read_pkginfo:num_of_var=%d\n",finfo[fid].header.num_of_var);
 #endif
@@ -593,7 +593,7 @@ int32_t hio_write_data( int32_t fid,
                            finfo[fid].dinfo[did].datatype,
                            data);
   poh5_close_variable( v_gid );
-  
+
 
   return(SUCCESS_CODE);
 }
@@ -627,10 +627,10 @@ int32_t hio_read_data( int32_t fid,
                        int32_t did,
                        const int32_t step,
                        int64_t *ts,
-                       int64_t *te,  
+                       int64_t *te,
                        void *data   )
 {
-  phid_t v_gid 
+  phid_t v_gid
     = poh5_open_variable( finfo[fid].status.hfid, finfo[fid].dinfo[did].varname);
   poh5_read_variable_data(
                    v_gid, /**< [in] group id of variable */
@@ -779,7 +779,7 @@ int32_t hio_valid_datainfo( int32_t fid )
  /*      fprintf(stdout,"dbg:te[%d]=%ld\n",ns,finfo[fid].dinfo[did].te[n]); */
  /*    } */
  /* } */
-    
+
   /* fprintf(stdout,"dbg:hio_valid_datainfo:end\n"); */
   return(SUCCESS_CODE);
 }
@@ -801,7 +801,7 @@ int32_t hio_put_write_datainfo_data( int32_t fid,
 
   hio_put_datainfo( fid, did, ditem );
 
-  hio_write_pkginfo( fid ); 
+  hio_write_pkginfo( fid );
   hio_write_datainfo( fid, did );
   hio_write_data( fid, did, step, ts, te, data );
 
@@ -1059,15 +1059,15 @@ int32_t hio_dump_finfo( int32_t fid,
         * finfo[fid].dinfo[did].num_of_layer
         * finfo[fid].header.num_of_rgn;
 
-      
+
       for ( step=1;step<=finfo[fid].dinfo[did].num_of_step;step++){
         switch(finfo[fid].dinfo[did].datatype){
-        case HIO_INTEGER4 : 
+        case HIO_INTEGER4 :
           printf(" %15s: %s\n","datatype","INTEGER 4byte\n");
           vdatai4 = (int32_t *)malloc(datasize * sizeof(int32_t) );
           status = hio_read_data(fid,did,step,&ts,&te, vdatai4);
           break;
-        case HIO_INTEGER8 : 
+        case HIO_INTEGER8 :
           printf(" %15s: %s\n","datatype","INTEGER 8byte\n");
           vdatai8 = (int64_t *)malloc(datasize * sizeof(int64_t) );
           status = hio_read_data(fid,did,step,&ts,&te, vdatai8);
@@ -1085,7 +1085,7 @@ int32_t hio_dump_finfo( int32_t fid,
         };
         int gall1d = pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel)+2;
         int ijkl = 0;
-        
+
         for( l=0; l<finfo[fid].header.num_of_rgn; l++ ) {
           for( k=0; k<finfo[fid].dinfo[did].num_of_layer; k++ ) {
             for( j=0; j<gall1d; j++ ) {

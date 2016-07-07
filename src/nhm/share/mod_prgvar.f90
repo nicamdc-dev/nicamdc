@@ -1009,7 +1009,7 @@ contains
 
        do l = 1, ADM_lall
           rgnid = ADM_prc_tab(l,ADM_prc_me)
-          call IO_make_idstr(fname,trim(basename),'rgn',rgnid)
+          call IO_make_idstr(fname,trim(basename),'rgn',rgnid,isrgn=.true.)
           fid = IO_get_available_fid()
           open( unit   = fid,                 &
                 file   = trim(fname),         &
@@ -1214,7 +1214,7 @@ contains
 
        do l = 1, ADM_lall
           rgnid = ADM_prc_tab(l,ADM_prc_me)
-          call IO_make_idstr(fname,trim(basename),'rgn',rgnid)
+          call IO_make_idstr(fname,trim(basename),'rgn',rgnid,isrgn=.true.)
           fid = IO_get_available_fid()
           open( unit   = fid,                 &
                 file   = trim(fname),         &

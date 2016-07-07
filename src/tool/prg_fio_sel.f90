@@ -127,7 +127,7 @@ program fio_sel
      call MPI_Barrier(MPI_COMM_WORLD,ierr)
 
      write(rankstr,'(I6.6)') prc_myrank
-     open(fid_log, file='msg.pe'//trim(rankstr) )
+     open(fid_log, file='msg_sel.pe'//trim(rankstr) )
      write(fid_log,*) "+++ Parallel Execution, Use MPI"
 
      if( mod( MNG_PALL, prc_nall) /= 0)then

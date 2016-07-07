@@ -924,7 +924,8 @@ contains
        ADM_have_pl, &
        ADM_prc_me
     use mod_io_param, only: &
-       IO_REAL8
+       IO_REAL8, &
+       IO_REAL4
     use mod_fio, only: &
        FIO_output
     use mod_comm, only: &
@@ -946,11 +947,17 @@ contains
     integer,  parameter :: I_rgn  = 1
     integer,  parameter :: I_grid = 2
 
-    integer :: fid
+    integer :: fid, dtype
     integer :: g, l, K0
     !---------------------------------------------------------------------------
 
     K0 = ADM_KNONE
+
+    if    ( RP == SP ) then
+       dtype = IO_REAL4
+    elseif( RP == DP ) then
+       dtype = IO_REAL8
+    endif
 
     do l = 1, ADM_lall
        rgnid = ADM_prc_tab(l,ADM_prc_me)
@@ -1111,28 +1118,25 @@ contains
 
     if ( GMTR_io_mode == 'ADVANCED' ) then
 
-       call FIO_output( GMTR_P_var(:,:,:,GMTR_P_AREA),                     &
-                        basename, desc, "",                                &
+       call FIO_output( GMTR_P_var(:,:,:,GMTR_P_AREA), basename, desc, "", &
                         "area", "control area", "",                        &
-                        "m2", IO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP  )
-       call FIO_output( tmp(:,:,:,I_rgn),                                  &
-                        basename, desc, "",                                &
-                        "rgn", "region number", "",                        &
-                        "NIL", IO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
-       call FIO_output( tmp(:,:,:,I_grid),                                 &
-                        basename, desc, "",                                &
-                        "grid", "grid number", "",                         &
-                        "NIL", IO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
-       call FIO_output( tmp2(:,:,:,1),                                     &
-                        basename, desc, "",                                &
-                        "gmtrmetrics", "gmtr metrics", "",                 &
-                        "", IO_REAL8, "LAYERNM", 1, 60, 1, 0.0_DP, 0.0_DP  )
+                        "m2", dtype, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP     )
+
+       call FIO_output( tmp(:,:,:,I_rgn),  basename, desc, "",          &
+                        "rgn", "region number", "",                     &
+                        "NIL", dtype, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
+       call FIO_output( tmp(:,:,:,I_grid), basename, desc, "",          &
+                        "grid", "grid number", "",                      &
+                        "NIL", dtype, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
+       call FIO_output( tmp2(:,:,:,1),     basename, desc, "",          &
+                        "gmtrmetrics", "gmtr metrics", "",              &
+                        "", dtype, "LAYERNM", 1, 60, 1, 0.0_DP, 0.0_DP  )
 
     elseif( GMTR_io_mode == 'LEGACY' ) then
 
        do l = 1, ADM_lall
           rgnid = ADM_prc_tab(l,ADM_prc_me)
-          call IO_make_idstr(fname,trim(basename),'rgn',rgnid)
+          call IO_make_idstr(fname,trim(basename),'rgn',rgnid,isrgn=.true.)
 
           fid = IO_get_available_fid()
           open( unit   = fid,           &

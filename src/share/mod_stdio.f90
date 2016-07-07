@@ -68,7 +68,6 @@ module mod_stdio
   !
   integer, private, parameter :: IO_MINFID    = 10 !< minimum available fid
   integer, private, parameter :: IO_MAXFID    = 99 !< maximum available fid
-  integer, private, parameter :: IO_RGNOFFSET = 0  !< offset number of process file
 
   !-----------------------------------------------------------------------------
 contains
@@ -209,18 +208,24 @@ contains
        outstr, &
        instr,  &
        ext,    &
-       rank    )
+       rank,   &
+       isrgn   )
     implicit none
 
     character(len=*), intent(out) :: outstr !< generated string
     character(len=*), intent(in)  :: instr  !< strings
     character(len=*), intent(in)  :: ext    !< extention
     integer,          intent(in)  :: rank   !< number
+    logical,          intent(in), optional :: isrgn !< for region? (8 digits)
 
     character(len=H_SHORT) :: srank
     !---------------------------------------------------------------------------
 
-    write(srank,'(I6.6)') rank + IO_RGNOFFSET
+    write(srank,'(I6.6)') rank
+
+    if ( present(isrgn) ) then
+       if(isrgn) write(srank,'(I8.8)') rank-1
+    endif
 
     outstr = trim(instr)//'.'//trim(ext)//trim(srank)
 

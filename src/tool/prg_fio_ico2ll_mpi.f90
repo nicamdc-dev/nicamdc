@@ -221,7 +221,7 @@ program fio_ico2ll_mpi
   integer :: ntemp
   real(8) :: wtemp
   integer :: fid, did, ofid, irec, ierr
-  integer :: v, t, p, l, k, n, i, j
+  integer :: v, t, p, l, k, n, i, j, rgnid
   real(8) :: pi
   !=============================================================================
 
@@ -374,8 +374,9 @@ program fio_ico2ll_mpi
      pp = p - pstr + 1
 
      do l = 1, LALL_local
-        call IO_make_idstr(fname,trim(llmap_base),'rgn',MNG_prc_tab(l,p))
-        write(IO_FID_LOG,*) 'l=', MNG_prc_tab(l,p)
+        rgnid = MNG_prc_tab(l,p)
+        call IO_make_idstr(fname,trim(llmap_base),'rgn',rgnid,isrgn=.true.)
+        write(IO_FID_LOG,*) 'p=', p, 'l=', l, 'rgnid=', rgnid
 
         fid = IO_get_available_fid()
         open(fid,file=trim(fname),form='unformatted',status='old',iostat=ierr)

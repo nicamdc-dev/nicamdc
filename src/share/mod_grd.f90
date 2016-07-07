@@ -849,7 +849,7 @@ contains
        if ( basename /= 'NONE' ) then
           do l = 1, ADM_lall
              rgnid = ADM_prc_tab(l,ADM_prc_me)
-             call IO_make_idstr(fname,trim(basename),'rgn',rgnid)
+             call IO_make_idstr(fname,trim(basename),'rgn',rgnid,isrgn=.true.)
              fid = IO_get_available_fid()
 
              open( fid,                    &
