@@ -28,8 +28,6 @@ module mod_oprt3d
      AJ  => ADM_AJ,  &
      K0  => ADM_KNONE
   use mod_gmtr, only: &
-     P_RAREA => GMTR_P_RAREA, &
-     T_RAREA => GMTR_T_RAREA, &
      W1      => GMTR_T_W1,    &
      W2      => GMTR_T_W2,    &
      W3      => GMTR_T_W3,    &

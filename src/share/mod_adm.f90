@@ -446,9 +446,6 @@ contains
        ADM_have_pl = .false.
     endif
 
-    ! 2010.4.26 M.Satoh; 2010.5.11 M.Satoh
-    ! ADM_l_me: this spans from 1 to ADM_lall, if effective.
-    ! Otherwise, ADM_l_me = 0 should be set. see mod_history
     ADM_l_me = 0
 
     !--- make suffix for list-vector loop.

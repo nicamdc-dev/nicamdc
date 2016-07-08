@@ -183,13 +183,13 @@ program fio_cat
      pkg_desc  = hinfo%description
      pkg_note  = hinfo%note
      nmax_data = hinfo%num_of_data
-     write(fid_log,*) '++input', 1, ' : ', trim(infname1), "(n=", nmax_data, ")"
+     write(fid_log,*) '++input', 1, ' : ', trim(infname1), "(n=", hinfo%num_of_data, ")"
 
      call fio_register_file(ifid2,trim(infname2))
      call fio_fopen(ifid2,IO_FREAD)
      call fio_read_allinfo(ifid2)
      call fio_get_pkginfo(ifid2,hinfo)
-     write(fid_log,*) '++input', 2, ' : ', trim(infname2), "(n=", nmax_data, ")"
+     write(fid_log,*) '++input', 2, ' : ', trim(infname2), "(n=", hinfo%num_of_data, ")"
 
      if ( hinfo%num_of_data /= nmax_data ) then
         write(fid_log,*) "*** Mismatch number of data, STOP:", hinfo%num_of_data, nmax_data
