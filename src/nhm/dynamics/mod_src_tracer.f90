@@ -31,17 +31,14 @@ module mod_src_tracer
      YDIR => GRD_YDIR, &
      ZDIR => GRD_ZDIR
   use mod_gmtr, only: &
-     P_RAREA => GMTR_P_RAREA, &
-     T_RAREA => GMTR_T_RAREA, &
-     W1      => GMTR_T_W1,    &
-     W2      => GMTR_T_W2,    &
-     W3      => GMTR_T_W3,    &
+     P_RAREA => GMTR_p_RAREA, &
+     T_RAREA => GMTR_t_RAREA, &
+     W1      => GMTR_t_W1,    &
+     W2      => GMTR_t_W2,    &
+     W3      => GMTR_t_W3,    &
      HNX     => GMTR_A_HNX,   &
      HNY     => GMTR_A_HNY,   &
      HNZ     => GMTR_A_HNZ,   &
-     HTX     => GMTR_A_HTX,   &
-     HTY     => GMTR_A_HTY,   &
-     HTZ     => GMTR_A_HTZ,   &
      TNX     => GMTR_A_TNX,   &
      TNY     => GMTR_A_TNY,   &
      TNZ     => GMTR_A_TNZ,   &
@@ -644,10 +641,10 @@ contains
        GRD_xr,   &
        GRD_xr_pl
     use mod_gmtr, only: &
-       GMTR_P_var_pl, &
-       GMTR_T_var,    &
-       GMTR_T_var_pl, &
-       GMTR_A_var_pl
+       GMTR_p_pl, &
+       GMTR_t,    &
+       GMTR_t_pl, &
+       GMTR_a_pl
     use mod_oprt, only: &
        cinterp_HN,  &
        cinterp_PRA
@@ -710,19 +707,19 @@ contains
           ij     = n
           ip1j   = n + 1
 
-          rhot_TI  (n) = rho  (ij  ,k,l) * GMTR_T_var(n,K0,l,TI,W1) &
-                       + rho  (ip1j,k,l) * GMTR_T_var(n,K0,l,TI,W2)
-          rhovxt_TI(n) = rhovx(ij  ,k,l) * GMTR_T_var(n,K0,l,TI,W1) &
-                       + rhovx(ip1j,k,l) * GMTR_T_var(n,K0,l,TI,W2)
-          rhovyt_TI(n) = rhovy(ij  ,k,l) * GMTR_T_var(n,K0,l,TI,W1) &
-                       + rhovy(ip1j,k,l) * GMTR_T_var(n,K0,l,TI,W2)
-          rhovzt_TI(n) = rhovz(ij  ,k,l) * GMTR_T_var(n,K0,l,TI,W1) &
-                       + rhovz(ip1j,k,l) * GMTR_T_var(n,K0,l,TI,W2)
+          rhot_TI  (n) = rho  (ij  ,k,l) * GMTR_t(n,K0,l,TI,W1) &
+                       + rho  (ip1j,k,l) * GMTR_t(n,K0,l,TI,W2)
+          rhovxt_TI(n) = rhovx(ij  ,k,l) * GMTR_t(n,K0,l,TI,W1) &
+                       + rhovx(ip1j,k,l) * GMTR_t(n,K0,l,TI,W2)
+          rhovyt_TI(n) = rhovy(ij  ,k,l) * GMTR_t(n,K0,l,TI,W1) &
+                       + rhovy(ip1j,k,l) * GMTR_t(n,K0,l,TI,W2)
+          rhovzt_TI(n) = rhovz(ij  ,k,l) * GMTR_t(n,K0,l,TI,W1) &
+                       + rhovz(ip1j,k,l) * GMTR_t(n,K0,l,TI,W2)
 
-          rhot_TJ  (n) = rho  (ij  ,k,l) * GMTR_T_var(n,K0,l,TJ,W1)
-          rhovxt_TJ(n) = rhovx(ij  ,k,l) * GMTR_T_var(n,K0,l,TJ,W1)
-          rhovyt_TJ(n) = rhovy(ij  ,k,l) * GMTR_T_var(n,K0,l,TJ,W1)
-          rhovzt_TJ(n) = rhovz(ij  ,k,l) * GMTR_T_var(n,K0,l,TJ,W1)
+          rhot_TJ  (n) = rho  (ij  ,k,l) * GMTR_t(n,K0,l,TJ,W1)
+          rhovxt_TJ(n) = rhovx(ij  ,k,l) * GMTR_t(n,K0,l,TJ,W1)
+          rhovyt_TJ(n) = rhovy(ij  ,k,l) * GMTR_t(n,K0,l,TJ,W1)
+          rhovzt_TJ(n) = rhovz(ij  ,k,l) * GMTR_t(n,K0,l,TJ,W1)
        enddo
 
        ! (i,j+1),(i+1,j+1)
@@ -731,26 +728,26 @@ contains
           ip1jp1 = n + 1 + ADM_gall_1d
 
           rhot_TI  (n) = rhot_TI  (n) &
-                       + rho  (ip1jp1,k,l) * GMTR_T_var(n,K0,l,TI,W3)
+                       + rho  (ip1jp1,k,l) * GMTR_t(n,K0,l,TI,W3)
           rhovxt_TI(n) = rhovxt_TI(n) &
-                       + rhovx(ip1jp1,k,l) * GMTR_T_var(n,K0,l,TI,W3)
+                       + rhovx(ip1jp1,k,l) * GMTR_t(n,K0,l,TI,W3)
           rhovyt_TI(n) = rhovyt_TI(n) &
-                       + rhovy(ip1jp1,k,l) * GMTR_T_var(n,K0,l,TI,W3)
+                       + rhovy(ip1jp1,k,l) * GMTR_t(n,K0,l,TI,W3)
           rhovzt_TI(n) = rhovzt_TI(n) &
-                       + rhovz(ip1jp1,k,l) * GMTR_T_var(n,K0,l,TI,W3)
+                       + rhovz(ip1jp1,k,l) * GMTR_t(n,K0,l,TI,W3)
 
           rhot_TJ  (n) = rhot_TJ  (n) &
-                       + rho  (ip1jp1,k,l) * GMTR_T_var(n,K0,l,TJ,W2) &
-                       + rho  (ijp1  ,k,l) * GMTR_T_var(n,K0,l,TJ,W3)
+                       + rho  (ip1jp1,k,l) * GMTR_t(n,K0,l,TJ,W2) &
+                       + rho  (ijp1  ,k,l) * GMTR_t(n,K0,l,TJ,W3)
           rhovxt_TJ(n) = rhovxt_TJ(n) &
-                       + rhovx(ip1jp1,k,l) * GMTR_T_var(n,K0,l,TJ,W2) &
-                       + rhovx(ijp1  ,k,l) * GMTR_T_var(n,K0,l,TJ,W3)
+                       + rhovx(ip1jp1,k,l) * GMTR_t(n,K0,l,TJ,W2) &
+                       + rhovx(ijp1  ,k,l) * GMTR_t(n,K0,l,TJ,W3)
           rhovyt_TJ(n) = rhovyt_TJ(n) &
-                       + rhovy(ip1jp1,k,l) * GMTR_T_var(n,K0,l,TJ,W2) &
-                       + rhovy(ijp1  ,k,l) * GMTR_T_var(n,K0,l,TJ,W3)
+                       + rhovy(ip1jp1,k,l) * GMTR_t(n,K0,l,TJ,W2) &
+                       + rhovy(ijp1  ,k,l) * GMTR_t(n,K0,l,TJ,W3)
           rhovzt_TJ(n) = rhovzt_TJ(n) &
-                       + rhovz(ip1jp1,k,l) * GMTR_T_var(n,K0,l,TJ,W2) &
-                       + rhovz(ijp1  ,k,l) * GMTR_T_var(n,K0,l,TJ,W3)
+                       + rhovz(ip1jp1,k,l) * GMTR_t(n,K0,l,TJ,W2) &
+                       + rhovz(ijp1  ,k,l) * GMTR_t(n,K0,l,TJ,W3)
        enddo
 
        if ( ADM_have_sgp(l) ) then
@@ -854,18 +851,18 @@ contains
              ijp1 = v + 1
              if( ijp1 == ADM_gmax_pl + 1 ) ijp1 = ADM_gmin_pl
 
-             rhot_pl  (v) = rho_pl  (n   ,k,l) * GMTR_T_var_pl(ij,K0,l,W1) &
-                          + rho_pl  (ij  ,k,l) * GMTR_T_var_pl(ij,K0,l,W2) &
-                          + rho_pl  (ijp1,k,l) * GMTR_T_var_pl(ij,K0,l,W3)
-             rhovxt_pl(v) = rhovx_pl(n   ,k,l) * GMTR_T_var_pl(ij,K0,l,W1) &
-                          + rhovx_pl(ij  ,k,l) * GMTR_T_var_pl(ij,K0,l,W2) &
-                          + rhovx_pl(ijp1,k,l) * GMTR_T_var_pl(ij,K0,l,W3)
-             rhovyt_pl(v) = rhovy_pl(n   ,k,l) * GMTR_T_var_pl(ij,K0,l,W1) &
-                          + rhovy_pl(ij  ,k,l) * GMTR_T_var_pl(ij,K0,l,W2) &
-                          + rhovy_pl(ijp1,k,l) * GMTR_T_var_pl(ij,K0,l,W3)
-             rhovzt_pl(v) = rhovz_pl(n   ,k,l) * GMTR_T_var_pl(ij,K0,l,W1) &
-                          + rhovz_pl(ij  ,k,l) * GMTR_T_var_pl(ij,K0,l,W2) &
-                          + rhovz_pl(ijp1,k,l) * GMTR_T_var_pl(ij,K0,l,W3)
+             rhot_pl  (v) = rho_pl  (n   ,k,l) * GMTR_t_pl(ij,K0,l,W1) &
+                          + rho_pl  (ij  ,k,l) * GMTR_t_pl(ij,K0,l,W2) &
+                          + rho_pl  (ijp1,k,l) * GMTR_t_pl(ij,K0,l,W3)
+             rhovxt_pl(v) = rhovx_pl(n   ,k,l) * GMTR_t_pl(ij,K0,l,W1) &
+                          + rhovx_pl(ij  ,k,l) * GMTR_t_pl(ij,K0,l,W2) &
+                          + rhovx_pl(ijp1,k,l) * GMTR_t_pl(ij,K0,l,W3)
+             rhovyt_pl(v) = rhovy_pl(n   ,k,l) * GMTR_t_pl(ij,K0,l,W1) &
+                          + rhovy_pl(ij  ,k,l) * GMTR_t_pl(ij,K0,l,W2) &
+                          + rhovy_pl(ijp1,k,l) * GMTR_t_pl(ij,K0,l,W3)
+             rhovzt_pl(v) = rhovz_pl(n   ,k,l) * GMTR_t_pl(ij,K0,l,W1) &
+                          + rhovz_pl(ij  ,k,l) * GMTR_t_pl(ij,K0,l,W2) &
+                          + rhovz_pl(ijp1,k,l) * GMTR_t_pl(ij,K0,l,W3)
           enddo
 
           do v = ADM_gmin_pl, ADM_gmax_pl
@@ -878,11 +875,11 @@ contains
              rhovyt2 = rhovyt_pl(ijm1) + rhovyt_pl(ij)
              rhovzt2 = rhovzt_pl(ijm1) + rhovzt_pl(ij)
 
-             flux = 0.5_RP * ( rhovxt2 * GMTR_A_var_pl(ij,K0,l,HNX) &
-                             + rhovyt2 * GMTR_A_var_pl(ij,K0,l,HNY) &
-                             + rhovzt2 * GMTR_A_var_pl(ij,K0,l,HNZ) )
+             flux = 0.5_RP * ( rhovxt2 * GMTR_a_pl(ij,K0,l,HNX) &
+                             + rhovyt2 * GMTR_a_pl(ij,K0,l,HNY) &
+                             + rhovzt2 * GMTR_a_pl(ij,K0,l,HNZ) )
 
-             flx_h_pl(v,k,l) = flux * GMTR_P_var_pl(n,K0,l,P_RAREA) * dt
+             flx_h_pl(v,k,l) = flux * GMTR_p_pl(n,K0,l,P_RAREA) * dt
 
              GRD_xc_pl(v,k,l,XDIR) = GRD_xr_pl(v,K0,l,XDIR) - rhovxt2 * rrhoa2 * dt * 0.5_RP
              GRD_xc_pl(v,k,l,YDIR) = GRD_xr_pl(v,K0,l,YDIR) - rhovyt2 * rrhoa2 * dt * 0.5_RP

@@ -964,9 +964,9 @@ contains
        VECTR_dot,   &
        VECTR_abs
     use mod_gmtr, only: &
-       GMTR_P_AREA, &
-       GMTR_P_var,  &
-       GMTR_P_var_pl
+       GMTR_p_AREA, &
+       GMTR_p,  &
+       GMTR_p_pl
     use mod_gtl, only: &
        GTL_global_sum_srf, &
        GTL_max,            &
@@ -1048,7 +1048,7 @@ contains
              angle(ij,k,l) = maxval( ang(1:5) ) / minval( ang(1:5) ) - 1.0_RP
 
              ! l_mean: side length of regular pentagon =sqrt(area/1.7204774005)
-             area   = GMTR_P_var(ij,k,l,GMTR_P_AREA)
+             area   = GMTR_p(ij,k,l,GMTR_p_AREA)
              l_mean = sqrt( 4.0_RP / sqrt( 25.0_RP + 10.0_RP*sqrt(5.0_RP)) * area )
 
              temp = 0.0_RP
@@ -1091,7 +1091,7 @@ contains
              angle(ij,k,l) = maxval( ang(:) ) / minval( ang(:) ) - 1.0_RP
 
              ! l_mean: side length of equilateral triangle
-             area   = GMTR_P_var(ij,k,l,GMTR_P_AREA)
+             area   = GMTR_p(ij,k,l,GMTR_p_AREA)
              l_mean = sqrt( 4.0_RP / sqrt(3.0_RP) / 6.0_RP * area )
 
              temp = 0.0_RP
@@ -1116,8 +1116,8 @@ contains
     global_grid = 10*4**ADM_glevel + 2
     sqarea_avg = sqrt( global_area / real(global_grid,kind=RP) )
 
-    sqarea   (:,:,:) = sqrt( GMTR_P_var   (:,:,:,GMTR_P_AREA) )
-    sqarea_pl(:,:,:) = sqrt( GMTR_P_var_pl(:,:,:,GMTR_P_AREA) )
+    sqarea   (:,:,:) = sqrt( GMTR_p   (:,:,:,GMTR_p_AREA) )
+    sqarea_pl(:,:,:) = sqrt( GMTR_p_pl(:,:,:,GMTR_p_AREA) )
     sqarea_max = GTL_max ( sqarea(:,:,:), sqarea_pl(:,:,:), 1, 1, 1 )
     sqarea_min = GTL_min ( sqarea(:,:,:), sqarea_pl(:,:,:), 1, 1, 1 )
 

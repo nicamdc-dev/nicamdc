@@ -30,6 +30,7 @@ module mod_vector
   public :: VECTR_intersec
   public :: VECTR_anticlockwise
   public :: VECTR_triangle
+  public :: VECTR_triangle_plane
   public :: VECTR_rotation
   public :: VECTR_distance
 
@@ -339,6 +340,8 @@ contains
   end subroutine VECTR_anticlockwise
 
   !-----------------------------------------------------------------------------
+  !> calc triangle area
+  !> @return area
   function VECTR_triangle( &
        a, b, c,      &
        polygon_type, &
@@ -379,7 +382,7 @@ contains
        call VECTR_abs( r  , a(:)   )
 
        prd = 0.5_RP * prd !! triangle area
-       if ( r < EPS * radius ) then
+       if ( r < EPS ) then
           print *, "zero length?", a(:)
        else
           r = 1.0_RP / r   !! 1 / length
@@ -395,8 +398,8 @@ contains
        call VECTR_abs( abab, oaob(:) )
        call VECTR_abs( acac, oaoc(:) )
 
-       if ( abab < EPS * radius .OR. acac < EPS * radius ) then
-          !write(*,'(A,3(ES20.10))') "zero length abab or acac:", abab/radius, acac/radius
+       if ( abab < EPS .OR. acac < EPS ) then
+          !write(*,'(A,3(ES20.10))') "zero length abab or acac:", abab, acac
           return
        endif
 
@@ -408,8 +411,8 @@ contains
        call VECTR_abs( bcbc, oboc(:) )
        baba = abab
 
-       if ( bcbc < EPS * radius .OR. baba < EPS * radius ) then
-          !write(*,'(A,3(ES20.10))') "zero length bcbc or baba:", bcbc/radius, baba/radius
+       if ( bcbc < EPS .OR. baba < EPS ) then
+          !write(*,'(A,3(ES20.10))') "zero length bcbc or baba:", bcbc, baba
           return
        endif
 
@@ -421,8 +424,8 @@ contains
        caca = acac
        cbcb = bcbc
 
-       if ( caca < EPS * radius .OR. cbcb < EPS * radius ) then
-          !write(*,'(A,3(ES20.10))') "zero length caca or cbcb:", caca/radius, cbcb/radius
+       if ( caca < EPS .OR. cbcb < EPS ) then
+          !write(*,'(A,3(ES20.10))') "zero length caca or cbcb:", caca, cbcb
           return
        endif
 
@@ -435,6 +438,28 @@ contains
 
     return
   end function VECTR_triangle
+
+  !-----------------------------------------------------------------------------
+  !> calc triangle area on plane
+  !> @return area
+  function VECTR_triangle_plane( &
+       a, b, c ) &
+       result(area)
+    implicit none
+
+    real(RP), intent(in) :: a(3), b(3), c(3)
+    real(RP)             :: area
+    !
+    real(RP) :: len_ab, len_ac, prd
+    !---------------------------------------------------------------------------
+
+    call VECTR_dot( len_ab, a, b, a, b )
+    call VECTR_dot( len_ac, a, c, a, c )
+    call VECTR_dot( prd   , a, b, a, c )
+
+    area = 0.5_RP * sqrt( len_ab * len_ac - prd * prd )
+
+  end function VECTR_triangle_plane
 
   !-----------------------------------------------------------------------------
   !> Apply rotation matrix

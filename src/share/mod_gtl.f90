@@ -638,14 +638,14 @@ contains
        GRD_s,   &
        GRD_s_pl
     use mod_gmtr, only: &
-       P_IX  => GMTR_P_IX,  &
-       P_IY  => GMTR_P_IY,  &
-       P_IZ  => GMTR_P_IZ,  &
-       P_JX  => GMTR_P_JX,  &
-       P_JY  => GMTR_P_JY,  &
-       P_JZ  => GMTR_P_JZ,  &
-       GMTR_P_var,          &
-       GMTR_P_var_pl
+       P_IX  => GMTR_p_IX,  &
+       P_IY  => GMTR_p_IY,  &
+       P_IZ  => GMTR_p_IZ,  &
+       P_JX  => GMTR_p_JX,  &
+       P_JY  => GMTR_p_JY,  &
+       P_JZ  => GMTR_p_JZ,  &
+       GMTR_p,          &
+       GMTR_p_pl
     implicit none
 
     real(RP), intent(in)  :: ucos   (ADM_gall,   ADM_kall,ADM_lall   )
@@ -676,12 +676,12 @@ contains
        u = ucos(n,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
        v = vcos(n,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
 
-       vx(n,k,l) = u * GMTR_P_var(n,k0,l,P_IX) &
-                 + v * GMTR_P_var(n,k0,l,P_JX)
-       vy(n,k,l) = u * GMTR_P_var(n,k0,l,P_IY) &
-                 + v * GMTR_P_var(n,k0,l,P_JY)
-       vz(n,k,l) = u * GMTR_P_var(n,k0,l,P_IZ) &
-                 + v * GMTR_P_var(n,k0,l,P_JZ)
+       vx(n,k,l) = u * GMTR_p(n,k0,l,P_IX) &
+                 + v * GMTR_p(n,k0,l,P_JX)
+       vy(n,k,l) = u * GMTR_p(n,k0,l,P_IY) &
+                 + v * GMTR_p(n,k0,l,P_JY)
+       vz(n,k,l) = u * GMTR_p(n,k0,l,P_IZ) &
+                 + v * GMTR_p(n,k0,l,P_JZ)
     enddo
     enddo
     enddo
@@ -697,12 +697,12 @@ contains
           u = ucos_pl(n,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
           v = vcos_pl(n,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
 
-          vx_pl(n,k,l) = u * GMTR_P_var_pl(n,k0,l,P_IX) &
-                       + v * GMTR_P_var_pl(n,k0,l,P_JX)
-          vy_pl(n,k,l) = u * GMTR_P_var_pl(n,k0,l,P_IY) &
-                       + v * GMTR_P_var_pl(n,k0,l,P_JY)
-          vz_pl(n,k,l) = u * GMTR_P_var_pl(n,k0,l,P_IZ) &
-                       + v * GMTR_P_var_pl(n,k0,l,P_JZ)
+          vx_pl(n,k,l) = u * GMTR_p_pl(n,k0,l,P_IX) &
+                       + v * GMTR_p_pl(n,k0,l,P_JX)
+          vy_pl(n,k,l) = u * GMTR_p_pl(n,k0,l,P_IY) &
+                       + v * GMTR_p_pl(n,k0,l,P_JY)
+          vz_pl(n,k,l) = u * GMTR_p_pl(n,k0,l,P_IZ) &
+                       + v * GMTR_p_pl(n,k0,l,P_JZ)
        enddo
        enddo
        enddo
@@ -732,14 +732,14 @@ contains
        GRD_s,   &
        GRD_s_pl
     use mod_gmtr, only: &
-       P_IX  => GMTR_P_IX,  &
-       P_IY  => GMTR_P_IY,  &
-       P_IZ  => GMTR_P_IZ,  &
-       P_JX  => GMTR_P_JX,  &
-       P_JY  => GMTR_P_JY,  &
-       P_JZ  => GMTR_P_JZ,  &
-       GMTR_P_var,          &
-       GMTR_P_var_pl
+       P_IX  => GMTR_p_IX,  &
+       P_IY  => GMTR_p_IY,  &
+       P_IZ  => GMTR_p_IZ,  &
+       P_JX  => GMTR_p_JX,  &
+       P_JY  => GMTR_p_JY,  &
+       P_JZ  => GMTR_p_JZ,  &
+       GMTR_p,          &
+       GMTR_p_pl
     implicit none
 
     real(RP), intent(out) :: u    (ADM_gall,   ADM_kall,ADM_lall   )
@@ -766,12 +766,12 @@ contains
        do l = 1, ADM_lall
        do k = 1, ADM_kall
        do n = 1, ADM_gall
-          u(n,k,l) = ( vx(n,k,l) * GMTR_P_var(n,k0,l,P_IX) &
-                     + vy(n,k,l) * GMTR_P_var(n,k0,l,P_IY) &
-                     + vz(n,k,l) * GMTR_P_var(n,k0,l,P_IZ) ) * cos(GRD_s(n,k0,l,GRD_LAT))
-          v(n,k,l) = ( vx(n,k,l) * GMTR_P_var(n,k0,l,P_JX) &
-                     + vy(n,k,l) * GMTR_P_var(n,k0,l,P_JY) &
-                     + vz(n,k,l) * GMTR_P_var(n,k0,l,P_JZ) ) * cos(GRD_s(n,k0,l,GRD_LAT))
+          u(n,k,l) = ( vx(n,k,l) * GMTR_p(n,k0,l,P_IX) &
+                     + vy(n,k,l) * GMTR_p(n,k0,l,P_IY) &
+                     + vz(n,k,l) * GMTR_p(n,k0,l,P_IZ) ) * cos(GRD_s(n,k0,l,GRD_LAT))
+          v(n,k,l) = ( vx(n,k,l) * GMTR_p(n,k0,l,P_JX) &
+                     + vy(n,k,l) * GMTR_p(n,k0,l,P_JY) &
+                     + vz(n,k,l) * GMTR_p(n,k0,l,P_JZ) ) * cos(GRD_s(n,k0,l,GRD_LAT))
        enddo
        enddo
        enddo
@@ -780,12 +780,12 @@ contains
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do n = 1, ADM_gall_pl
-             u_pl(n,k,l) = ( vx_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_IX) &
-                           + vy_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_IY) &
-                           + vz_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_IZ) ) * cos(GRD_s_pl(n,k0,l,GRD_LAT))
-             v_pl(n,k,l) = ( vx_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_JX) &
-                           + vy_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_JY) &
-                           + vz_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_JZ) ) * cos(GRD_s_pl(n,k0,l,GRD_LAT))
+             u_pl(n,k,l) = ( vx_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_IX) &
+                           + vy_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_IY) &
+                           + vz_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_IZ) ) * cos(GRD_s_pl(n,k0,l,GRD_LAT))
+             v_pl(n,k,l) = ( vx_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_JX) &
+                           + vy_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_JY) &
+                           + vz_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_JZ) ) * cos(GRD_s_pl(n,k0,l,GRD_LAT))
           enddo
           enddo
           enddo
@@ -796,12 +796,12 @@ contains
        do l = 1, ADM_lall
        do k = 1, ADM_kall
        do n = 1, ADM_gall
-          u(n,k,l) = ( vx(n,k,l) * GMTR_P_var(n,k0,l,P_IX) &
-                     + vy(n,k,l) * GMTR_P_var(n,k0,l,P_IY) &
-                     + vz(n,k,l) * GMTR_P_var(n,k0,l,P_IZ) )
-          v(n,k,l) = ( vx(n,k,l) * GMTR_P_var(n,k0,l,P_JX) &
-                     + vy(n,k,l) * GMTR_P_var(n,k0,l,P_JY) &
-                     + vz(n,k,l) * GMTR_P_var(n,k0,l,P_JZ) )
+          u(n,k,l) = ( vx(n,k,l) * GMTR_p(n,k0,l,P_IX) &
+                     + vy(n,k,l) * GMTR_p(n,k0,l,P_IY) &
+                     + vz(n,k,l) * GMTR_p(n,k0,l,P_IZ) )
+          v(n,k,l) = ( vx(n,k,l) * GMTR_p(n,k0,l,P_JX) &
+                     + vy(n,k,l) * GMTR_p(n,k0,l,P_JY) &
+                     + vz(n,k,l) * GMTR_p(n,k0,l,P_JZ) )
        enddo
        enddo
        enddo
@@ -810,12 +810,12 @@ contains
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do n = 1, ADM_gall_pl
-             u_pl(n,k,l) = ( vx_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_IX) &
-                           + vy_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_IY) &
-                           + vz_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_IZ) )
-             v_pl(n,k,l) = ( vx_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_JX) &
-                           + vy_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_JY) &
-                           + vz_pl(n,k,l) * GMTR_P_var_pl(n,k0,l,P_JZ) )
+             u_pl(n,k,l) = ( vx_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_IX) &
+                           + vy_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_IY) &
+                           + vz_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_IZ) )
+             v_pl(n,k,l) = ( vx_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_JX) &
+                           + vy_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_JY) &
+                           + vz_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_JZ) )
           enddo
           enddo
           enddo
@@ -851,14 +851,14 @@ contains
        GRD_s,   &
        GRD_s_pl
     use mod_gmtr, only: &
-       P_IX  => GMTR_P_IX,  &
-       P_IY  => GMTR_P_IY,  &
-       P_IZ  => GMTR_P_IZ,  &
-       P_JX  => GMTR_P_JX,  &
-       P_JY  => GMTR_P_JY,  &
-       P_JZ  => GMTR_P_JZ,  &
-       GMTR_P_var,          &
-       GMTR_P_var_pl
+       P_IX  => GMTR_p_IX,  &
+       P_IY  => GMTR_p_IY,  &
+       P_IZ  => GMTR_p_IZ,  &
+       P_JX  => GMTR_p_JX,  &
+       P_JY  => GMTR_p_JY,  &
+       P_JZ  => GMTR_p_JZ,  &
+       GMTR_p,          &
+       GMTR_p_pl
     implicit none
 
     real(RP), intent(inout) :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
@@ -886,12 +886,12 @@ contains
                    * cos(GRD_s(ij,k0,l,GRD_LON)) * sin(alpha) )
        v = -vmax * ( sin(GRD_s(ij,k0,l,GRD_LON)) * sin(alpha) )
 
-       vx(ij,k,l) = u * GMTR_P_var(ij,k0,l,P_IX) &
-                  + v * GMTR_P_var(ij,k0,l,P_JX)
-       vy(ij,k,l) = u * GMTR_P_var(ij,k0,l,P_IY) &
-                  + v * GMTR_P_var(ij,k0,l,P_JY)
-       vz(ij,k,l) = u * GMTR_P_var(ij,k0,l,P_IZ) &
-                  + v * GMTR_P_var(ij,k0,l,P_JZ)
+       vx(ij,k,l) = u * GMTR_p(ij,k0,l,P_IX) &
+                  + v * GMTR_p(ij,k0,l,P_JX)
+       vy(ij,k,l) = u * GMTR_p(ij,k0,l,P_IY) &
+                  + v * GMTR_p(ij,k0,l,P_JY)
+       vz(ij,k,l) = u * GMTR_p(ij,k0,l,P_IZ) &
+                  + v * GMTR_p(ij,k0,l,P_JZ)
     enddo
     enddo
     enddo
@@ -907,12 +907,12 @@ contains
                       * cos(GRD_s_pl(ij,k0,l,GRD_LON)) * sin(alpha) )
           v = -vmax * ( sin(GRD_s_pl(ij,k0,l,GRD_LON)) * sin(alpha) )
 
-          vx_pl(ij,k,l) = u * GMTR_P_var_pl(ij,k0,l,P_IX) &
-                        + v * GMTR_P_var_pl(ij,k0,l,P_JX)
-          vy_pl(ij,k,l) = u * GMTR_P_var_pl(ij,k0,l,P_IY) &
-                        + v * GMTR_P_var_pl(ij,k0,l,P_JY)
-          vz_pl(ij,k,l) = u * GMTR_P_var_pl(ij,k0,l,P_IZ) &
-                        + v * GMTR_P_var_pl(ij,k0,l,P_JZ)
+          vx_pl(ij,k,l) = u * GMTR_p_pl(ij,k0,l,P_IX) &
+                        + v * GMTR_p_pl(ij,k0,l,P_JX)
+          vy_pl(ij,k,l) = u * GMTR_p_pl(ij,k0,l,P_IY) &
+                        + v * GMTR_p_pl(ij,k0,l,P_JY)
+          vz_pl(ij,k,l) = u * GMTR_p_pl(ij,k0,l,P_IZ) &
+                        + v * GMTR_p_pl(ij,k0,l,P_JZ)
        enddo
        enddo
     endif

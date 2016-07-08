@@ -45,12 +45,12 @@ module mod_latlon
   !
   !++ Public parameters & variables
   !
-  integer, public, parameter :: GMTR_P_nmax_var = 2
-  integer, public, parameter :: GMTR_P_LAT = 1
-  integer, public, parameter :: GMTR_P_LON = 2
+  integer, public, parameter :: GMTR_p_nmax_var = 2
+  integer, public, parameter :: GMTR_p_LAT = 1
+  integer, public, parameter :: GMTR_p_LON = 2
 
-  real(RP), public, allocatable :: GMTR_P_ll   (:,:,:,:)
-  real(RP), public, allocatable :: GMTR_P_ll_pl(:,:,:,:)
+  real(RP), public, allocatable :: GMTR_p_ll   (:,:,:,:)
+  real(RP), public, allocatable :: GMTR_p_ll_pl(:,:,:,:)
 
   character(len=H_SHORT), public :: polygon_type = 'ON_SPHERE' ! triangle is fit to the sphere
   !                                                 'ON_PLANE'  ! triangle is treated as 2D
@@ -137,10 +137,10 @@ contains
     k = ADM_KNONE
 
     !--- setup point data
-    allocate( GMTR_P_ll   (ADM_gall,   ADM_KNONE,ADM_lall,   GMTR_P_nmax_var) )
-    allocate( GMTR_P_ll_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,GMTR_P_nmax_var) )
-    GMTR_P_ll   (:,:,:,:) = 0.0_RP
-    GMTR_P_ll_pl(:,:,:,:) = 0.0_RP
+    allocate( GMTR_p_ll   (ADM_gall,   ADM_KNONE,ADM_lall,   GMTR_p_nmax_var) )
+    allocate( GMTR_p_ll_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,GMTR_p_nmax_var) )
+    GMTR_p_ll   (:,:,:,:) = 0.0_RP
+    GMTR_p_ll_pl(:,:,:,:) = 0.0_RP
 
     do l = 1, ADM_lall
        do n = 1, ADM_IooJoo_nmax
@@ -148,8 +148,8 @@ contains
           call VECTR_xyz2latlon( GRD_x    (ij,k,l,GRD_XDIR),   &
                                  GRD_x    (ij,k,l,GRD_YDIR),   &
                                  GRD_x    (ij,k,l,GRD_ZDIR),   &
-                                 GMTR_P_ll(ij,k,l,GMTR_P_LAT), &
-                                 GMTR_P_ll(ij,k,l,GMTR_P_LON)  )
+                                 GMTR_p_ll(ij,k,l,GMTR_p_LAT), &
+                                 GMTR_p_ll(ij,k,l,GMTR_p_LON)  )
        enddo ! ij loop
     enddo ! l loop
 
@@ -159,13 +159,13 @@ contains
           call VECTR_xyz2latlon( GRD_x_pl    (n,k,l,GRD_XDIR),   &
                                  GRD_x_pl    (n,k,l,GRD_YDIR),   &
                                  GRD_x_pl    (n,k,l,GRD_ZDIR),   &
-                                 GMTR_P_ll_pl(n,k,l,GMTR_P_LAT), &
-                                 GMTR_P_ll_pl(n,k,l,GMTR_P_LON)  )
+                                 GMTR_p_ll_pl(n,k,l,GMTR_p_LAT), &
+                                 GMTR_p_ll_pl(n,k,l,GMTR_p_LON)  )
        enddo ! l loop
     endif
 
     !--- communication of point data
-    call COMM_data_transfer( GMTR_P_ll, GMTR_P_ll_pl )
+    call COMM_data_transfer( GMTR_p_ll, GMTR_p_ll_pl )
 
     return
   end subroutine LATLON_ico_setup
@@ -490,8 +490,6 @@ contains
 
     character(len=*), intent(in) :: what_is_done
 
-    real(RP), parameter :: rscale = 1.0_RP
-
     real(RP), parameter :: o(3) = 0.0_RP
     real(RP) :: r0(3), r1(3), r2(3), r3(3)
     real(RP) :: nvec(3), v12xv10(3), v23xv20(3), v31xv30(3)
@@ -541,23 +539,23 @@ contains
           r2(:) = GRD_x(ADM_IooJoo(n,ADM_GIpJo),k,l,:) / GRD_rscale
           r3(:) = GRD_x(ADM_IooJoo(n,ADM_GIpJp),k,l,:) / GRD_rscale
 
-          lat1 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIoJo),k,l,GMTR_P_LAT)
-          lon1 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIoJo),k,l,GMTR_P_LON)
-          lat2 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIpJo),k,l,GMTR_P_LAT)
-          lon2 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIpJo),k,l,GMTR_P_LON)
-          lat3 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIpJp),k,l,GMTR_P_LAT)
-          lon3 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIpJp),k,l,GMTR_P_LON)
+          lat1 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIoJo),k,l,GMTR_p_LAT)
+          lon1 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIoJo),k,l,GMTR_p_LON)
+          lat2 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIpJo),k,l,GMTR_p_LAT)
+          lon2 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIpJo),k,l,GMTR_p_LON)
+          lat3 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIpJp),k,l,GMTR_p_LAT)
+          lon3 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIpJp),k,l,GMTR_p_LON)
        else !--- ADM_TJ
           r1(:) = GRD_x(ADM_IooJoo(n,ADM_GIoJo),k,l,:) / GRD_rscale
           r2(:) = GRD_x(ADM_IooJoo(n,ADM_GIpJp),k,l,:) / GRD_rscale
           r3(:) = GRD_x(ADM_IooJoo(n,ADM_GIoJp),k,l,:) / GRD_rscale
 
-          lat1 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIoJo),k,l,GMTR_P_LAT)
-          lon1 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIoJo),k,l,GMTR_P_LON)
-          lat2 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIpJp),k,l,GMTR_P_LAT)
-          lon2 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIpJp),k,l,GMTR_P_LON)
-          lat3 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIoJp),k,l,GMTR_P_LAT)
-          lon3 = GMTR_P_ll(ADM_IooJoo(n,ADM_GIoJp),k,l,GMTR_P_LON)
+          lat1 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIoJo),k,l,GMTR_p_LAT)
+          lon1 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIoJo),k,l,GMTR_p_LON)
+          lat2 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIpJp),k,l,GMTR_p_LAT)
+          lon2 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIpJp),k,l,GMTR_p_LON)
+          lat3 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIoJp),k,l,GMTR_p_LAT)
+          lon3 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIoJp),k,l,GMTR_p_LON)
        endif
 
        latmax_l = max(lat1,lat2,lat3) + eps_latlon
@@ -666,12 +664,12 @@ contains
                       n3_index(nmax_llgrid) = ADM_IooJoo(n,ADM_GIoJp)
                    endif
 
-                   area1 = VECTR_triangle( r0(:), r2(:), r3(:), &
-                                           polygon_type, rscale )
-                   area2 = VECTR_triangle( r0(:), r3(:), r1(:), &
-                                           polygon_type, rscale )
-                   area3 = VECTR_triangle( r0(:), r1(:), r2(:), &
-                                           polygon_type, rscale )
+                   area1 = VECTR_triangle( r0(:), r2(:), r3(:),     &
+                                           polygon_type, GRD_rscale )
+                   area2 = VECTR_triangle( r0(:), r3(:), r1(:),     &
+                                           polygon_type, GRD_rscale )
+                   area3 = VECTR_triangle( r0(:), r1(:), r2(:),     &
+                                           polygon_type, GRD_rscale )
 
                    if (      area1 * 0.0_RP /= 0.0_RP &
                         .OR. area2 * 0.0_RP /= 0.0_RP &

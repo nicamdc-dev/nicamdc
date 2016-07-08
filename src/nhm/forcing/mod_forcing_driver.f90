@@ -132,13 +132,13 @@ contains
        GRD_Z,    &
        GRD_ZH
     use mod_gmtr, only: &
-       GMTR_P_var, &
-       GMTR_P_IX,  &
-       GMTR_P_IY,  &
-       GMTR_P_IZ,  &
-       GMTR_P_JX,  &
-       GMTR_P_JY,  &
-       GMTR_P_JZ
+       GMTR_p, &
+       GMTR_p_IX,  &
+       GMTR_p_IY,  &
+       GMTR_p_IZ,  &
+       GMTR_p_JX,  &
+       GMTR_p_JY,  &
+       GMTR_p_JZ
     use mod_vmtr, only: &
        VMTR_GSGAM2,  &
        VMTR_GSGAM2H, &
@@ -232,12 +232,12 @@ contains
     call GTL_clip_region_1layer(GRD_s (:,k0,:,GRD_LAT) ,lat  )
     call GTL_clip_region_1layer(GRD_s (:,k0,:,GRD_LON) ,lon  )
 
-    call GTL_clip_region_1layer(GMTR_P_var(:,k0,:,GMTR_P_IX),ix)
-    call GTL_clip_region_1layer(GMTR_P_var(:,k0,:,GMTR_P_IY),iy)
-    call GTL_clip_region_1layer(GMTR_P_var(:,k0,:,GMTR_P_IZ),iz)
-    call GTL_clip_region_1layer(GMTR_P_var(:,k0,:,GMTR_P_JX),jx)
-    call GTL_clip_region_1layer(GMTR_P_var(:,k0,:,GMTR_P_JY),jy)
-    call GTL_clip_region_1layer(GMTR_P_var(:,k0,:,GMTR_P_JZ),jz)
+    call GTL_clip_region_1layer(GMTR_p(:,k0,:,GMTR_p_IX),ix)
+    call GTL_clip_region_1layer(GMTR_p(:,k0,:,GMTR_p_IY),iy)
+    call GTL_clip_region_1layer(GMTR_p(:,k0,:,GMTR_p_IZ),iz)
+    call GTL_clip_region_1layer(GMTR_p(:,k0,:,GMTR_p_JX),jx)
+    call GTL_clip_region_1layer(GMTR_p(:,k0,:,GMTR_p_JY),jy)
+    call GTL_clip_region_1layer(GMTR_p(:,k0,:,GMTR_p_JZ),jz)
 
     !--- get the prognostic and diagnostic variables
     call prgvar_get_in_withdiag( rhog,   & ! [IN]

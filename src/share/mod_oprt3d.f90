@@ -28,15 +28,12 @@ module mod_oprt3d
      AJ  => ADM_AJ,  &
      K0  => ADM_KNONE
   use mod_gmtr, only: &
-     W1      => GMTR_T_W1,    &
-     W2      => GMTR_T_W2,    &
-     W3      => GMTR_T_W3,    &
+     W1      => GMTR_t_W1,    &
+     W2      => GMTR_t_W2,    &
+     W3      => GMTR_t_W3,    &
      HNX     => GMTR_A_HNX,   &
      HNY     => GMTR_A_HNY,   &
      HNZ     => GMTR_A_HNZ,   &
-     HTX     => GMTR_A_HTX,   &
-     HTY     => GMTR_A_HTY,   &
-     HTZ     => GMTR_A_HTZ,   &
      TNX     => GMTR_A_TNX,   &
      TNY     => GMTR_A_TNY,   &
      TNZ     => GMTR_A_TNZ,   &

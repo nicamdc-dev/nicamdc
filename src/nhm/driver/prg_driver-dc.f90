@@ -147,9 +147,9 @@ program prg_driver
      GRD_rdgzh, &
      GRD_vz
   use mod_gmtr, only: &
-     GMTR_P_var, &
-     GMTR_T_var, &
-     GMTR_A_var
+     GMTR_p, &
+     GMTR_t, &
+     GMTR_a
   use mod_oprt, only: &
      cdiv,        &
      cgrad,       &
@@ -325,7 +325,7 @@ program prg_driver
   !$acc& pcopyin(nsmax,nsmax_pl,nrmax,nrmax_pl) &
   !$acc& pcopyin(ncmax_r2r,ncmax_sgp,ncmax_r2p,ncmax_p2r) &
   !$acc& pcopyin(GRD_rdgz,GRD_rdgzh,GRD_x,GRD_xt,GRD_vz,GRD_zs) &
-  !$acc& pcopyin(GMTR_P_var,GMTR_T_var,GMTR_A_var) &
+  !$acc& pcopyin(GMTR_p,GMTR_t,GMTR_a) &
   !$acc& pcopyin(cdiv,cgrad,clap,cinterp_TN,cinterp_HN,cinterp_TRA,cinterp_PRA) &
   !$acc& pcopyin(VMTR_GAM2,VMTR_GAM2H,VMTR_GSGAM2,VMTR_GSGAM2H) &
   !$acc& pcopyin(VMTR_RGSQRTH,VMTR_RGAM,VMTR_RGAMH,VMTR_RGSGAM2,VMTR_RGSGAM2H) &
