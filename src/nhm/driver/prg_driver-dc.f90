@@ -150,14 +150,6 @@ program prg_driver
      GMTR_p, &
      GMTR_t, &
      GMTR_a
-  use mod_oprt, only: &
-     cdiv,        &
-     cgrad,       &
-     clap,        &
-     cinterp_TN,  &
-     cinterp_HN,  &
-     cinterp_TRA, &
-     cinterp_PRA
   use mod_vmtr, only: &
      VMTR_GAM2,      &
      VMTR_GAM2H,     &

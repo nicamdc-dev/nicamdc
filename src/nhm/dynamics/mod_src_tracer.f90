@@ -176,9 +176,6 @@ contains
 
     integer :: nstart, nend
     integer :: g, k, l, v, iq
-
-    integer :: suf, i, j
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
     !---------------------------------------------------------------------------
@@ -641,13 +638,12 @@ contains
        GRD_xr,   &
        GRD_xr_pl
     use mod_gmtr, only: &
+       GMTR_p,    &
        GMTR_p_pl, &
        GMTR_t,    &
        GMTR_t_pl, &
+       GMTR_a,    &
        GMTR_a_pl
-    use mod_oprt, only: &
-       cinterp_HN,  &
-       cinterp_PRA
     implicit none
 
     real(RP), intent(out) :: flx_h    (ADM_gall   ,ADM_kall,ADM_lall   ,6)               ! horizontal mass flux
@@ -689,9 +685,6 @@ contains
 
     integer :: nstart,nend
     integer :: n, k, l, v
-
-    integer :: suf,i,j
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____Horizontal_Adv_flux',2)
@@ -727,27 +720,19 @@ contains
           ijp1   = n     + ADM_gall_1d
           ip1jp1 = n + 1 + ADM_gall_1d
 
-          rhot_TI  (n) = rhot_TI  (n) &
-                       + rho  (ip1jp1,k,l) * GMTR_t(n,K0,l,TI,W3)
-          rhovxt_TI(n) = rhovxt_TI(n) &
-                       + rhovx(ip1jp1,k,l) * GMTR_t(n,K0,l,TI,W3)
-          rhovyt_TI(n) = rhovyt_TI(n) &
-                       + rhovy(ip1jp1,k,l) * GMTR_t(n,K0,l,TI,W3)
-          rhovzt_TI(n) = rhovzt_TI(n) &
-                       + rhovz(ip1jp1,k,l) * GMTR_t(n,K0,l,TI,W3)
+          rhot_TI  (n) = rhot_TI  (n) + rho  (ip1jp1,k,l) * GMTR_t(n,K0,l,TI,W3)
+          rhovxt_TI(n) = rhovxt_TI(n) + rhovx(ip1jp1,k,l) * GMTR_t(n,K0,l,TI,W3)
+          rhovyt_TI(n) = rhovyt_TI(n) + rhovy(ip1jp1,k,l) * GMTR_t(n,K0,l,TI,W3)
+          rhovzt_TI(n) = rhovzt_TI(n) + rhovz(ip1jp1,k,l) * GMTR_t(n,K0,l,TI,W3)
 
-          rhot_TJ  (n) = rhot_TJ  (n) &
-                       + rho  (ip1jp1,k,l) * GMTR_t(n,K0,l,TJ,W2) &
-                       + rho  (ijp1  ,k,l) * GMTR_t(n,K0,l,TJ,W3)
-          rhovxt_TJ(n) = rhovxt_TJ(n) &
-                       + rhovx(ip1jp1,k,l) * GMTR_t(n,K0,l,TJ,W2) &
-                       + rhovx(ijp1  ,k,l) * GMTR_t(n,K0,l,TJ,W3)
-          rhovyt_TJ(n) = rhovyt_TJ(n) &
-                       + rhovy(ip1jp1,k,l) * GMTR_t(n,K0,l,TJ,W2) &
-                       + rhovy(ijp1  ,k,l) * GMTR_t(n,K0,l,TJ,W3)
-          rhovzt_TJ(n) = rhovzt_TJ(n) &
-                       + rhovz(ip1jp1,k,l) * GMTR_t(n,K0,l,TJ,W2) &
-                       + rhovz(ijp1  ,k,l) * GMTR_t(n,K0,l,TJ,W3)
+          rhot_TJ  (n) = rhot_TJ  (n) + rho  (ip1jp1,k,l) * GMTR_t(n,K0,l,TJ,W2) &
+                                      + rho  (ijp1  ,k,l) * GMTR_t(n,K0,l,TJ,W3)
+          rhovxt_TJ(n) = rhovxt_TJ(n) + rhovx(ip1jp1,k,l) * GMTR_t(n,K0,l,TJ,W2) &
+                                      + rhovx(ijp1  ,k,l) * GMTR_t(n,K0,l,TJ,W3)
+          rhovyt_TJ(n) = rhovyt_TJ(n) + rhovy(ip1jp1,k,l) * GMTR_t(n,K0,l,TJ,W2) &
+                                      + rhovy(ijp1  ,k,l) * GMTR_t(n,K0,l,TJ,W3)
+          rhovzt_TJ(n) = rhovzt_TJ(n) + rhovz(ip1jp1,k,l) * GMTR_t(n,K0,l,TJ,W2) &
+                                      + rhovz(ijp1  ,k,l) * GMTR_t(n,K0,l,TJ,W3)
        enddo
 
        if ( ADM_have_sgp(l) ) then
@@ -772,12 +757,12 @@ contains
           rhovyt2 = rhovyt_TJ(ijm1) + rhovyt_TI(ij)
           rhovzt2 = rhovzt_TJ(ijm1) + rhovzt_TI(ij)
 
-          flux = 0.5_RP * ( rhovxt2 * cinterp_HN(ij,l,AI ,1) &
-                          + rhovyt2 * cinterp_HN(ij,l,AI ,2) &
-                          + rhovzt2 * cinterp_HN(ij,l,AI ,3) )
+          flux = 0.5_RP * ( rhovxt2 * GMTR_a(ij,k0,l,AI ,HNX) &
+                          + rhovyt2 * GMTR_a(ij,k0,l,AI ,HNY) &
+                          + rhovzt2 * GMTR_a(ij,k0,l,AI ,HNZ) )
 
-          flx_h(ij  ,k,l,1) =  flux * cinterp_PRA(ij  ,l) * dt
-          flx_h(ip1j,k,l,4) = -flux * cinterp_PRA(ip1j,l) * dt
+          flx_h(ij  ,k,l,1) =  flux * GMTR_p(ij  ,k0,l,P_RAREA) * dt
+          flx_h(ip1j,k,l,4) = -flux * GMTR_p(ip1j,k0,l,P_RAREA) * dt
 
           GRD_xc(n,k,l,AI,XDIR) = GRD_xr(n,K0,l,AI,XDIR) - rhovxt2 * rrhoa2 * dt * 0.5_RP
           GRD_xc(n,k,l,AI,YDIR) = GRD_xr(n,K0,l,AI,YDIR) - rhovyt2 * rrhoa2 * dt * 0.5_RP
@@ -796,12 +781,12 @@ contains
           rhovyt2 = rhovyt_TI(ij) + rhovyt_TJ(ij)
           rhovzt2 = rhovzt_TI(ij) + rhovzt_TJ(ij)
 
-          flux = 0.5_RP * ( rhovxt2 * cinterp_HN(ij,l,AIJ,1) &
-                          + rhovyt2 * cinterp_HN(ij,l,AIJ,2) &
-                          + rhovzt2 * cinterp_HN(ij,l,AIJ,3) )
+          flux = 0.5_RP * ( rhovxt2 * GMTR_a(ij,k0,l,AIJ,HNX) &
+                          + rhovyt2 * GMTR_a(ij,k0,l,AIJ,HNY) &
+                          + rhovzt2 * GMTR_a(ij,k0,l,AIJ,HNZ) )
 
-          flx_h(ij    ,k,l,2) =  flux * cinterp_PRA(ij    ,l) * dt
-          flx_h(ip1jp1,k,l,5) = -flux * cinterp_PRA(ip1jp1,l) * dt
+          flx_h(ij    ,k,l,2) =  flux * GMTR_p(ij    ,k0,l,P_RAREA) * dt
+          flx_h(ip1jp1,k,l,5) = -flux * GMTR_p(ip1jp1,k0,l,P_RAREA) * dt
 
           GRD_xc(n,k,l,AIJ,XDIR) = GRD_xr(n,K0,l,AIJ,XDIR) - rhovxt2 * rrhoa2 * dt * 0.5_RP
           GRD_xc(n,k,l,AIJ,YDIR) = GRD_xr(n,K0,l,AIJ,YDIR) - rhovyt2 * rrhoa2 * dt * 0.5_RP
@@ -821,12 +806,12 @@ contains
           rhovyt2 = rhovyt_TJ(ij) + rhovyt_TI(im1j)
           rhovzt2 = rhovzt_TJ(ij) + rhovzt_TI(im1j)
 
-          flux = 0.5_RP * ( rhovxt2 * cinterp_HN(ij,l,AJ ,1) &
-                          + rhovyt2 * cinterp_HN(ij,l,AJ ,2) &
-                          + rhovzt2 * cinterp_HN(ij,l,AJ ,3) )
+          flux = 0.5_RP * ( rhovxt2 * GMTR_a(ij,k0,l,AJ ,HNX) &
+                          + rhovyt2 * GMTR_a(ij,k0,l,AJ ,HNY) &
+                          + rhovzt2 * GMTR_a(ij,k0,l,AJ ,HNZ) )
 
-          flx_h(ij  ,k,l,3) =  flux * cinterp_PRA(ij  ,l) * dt
-          flx_h(ijp1,k,l,6) = -flux * cinterp_PRA(ijp1,l) * dt
+          flx_h(ij  ,k,l,3) =  flux * GMTR_p(ij  ,k0,l,P_RAREA) * dt
+          flx_h(ijp1,k,l,6) = -flux * GMTR_p(ijp1,k0,l,P_RAREA) * dt
 
           GRD_xc(n,k,l,AJ,XDIR) = GRD_xr(n,K0,l,AJ,XDIR) - rhovxt2 * rrhoa2 * dt * 0.5_RP
           GRD_xc(n,k,l,AJ,YDIR) = GRD_xr(n,K0,l,AJ,YDIR) - rhovyt2 * rrhoa2 * dt * 0.5_RP
@@ -951,9 +936,6 @@ contains
     integer :: kall, gall_1d
     integer :: nstart1, nstart2, nstart3, nstart4, nend
     integer :: n, k, l, v
-
-    integer :: suf,i,j
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____Horizontal_Adv_remap',2)
@@ -1434,9 +1416,6 @@ contains
 
     integer :: nstart, nend
     integer :: n, k, l, v
-
-    integer :: suf,i,j
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____Horizontal_Adv_limiter',2)
@@ -1766,6 +1745,19 @@ contains
 
     return
   end subroutine horizontal_limiter_thuburn
+
+  !-----------------------------------------------------------------------------
+  integer function suf(i,j)
+    use mod_adm, only: &
+       ADM_gall_1d
+    implicit none
+
+    integer :: i, j
+    !---------------------------------------------------------------------------
+
+    suf = ADM_gall_1d * (j-1) + i
+
+  end function suf
 
 end module mod_src_tracer
 !-------------------------------------------------------------------------------------
