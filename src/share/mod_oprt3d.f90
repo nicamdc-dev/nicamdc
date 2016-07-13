@@ -67,13 +67,15 @@ module mod_oprt3d
 contains
   !-----------------------------------------------------------------------------
   subroutine OPRT3D_divdamp( &
-       ddivdx, ddivdx_pl, &
-       ddivdy, ddivdy_pl, &
-       ddivdz, ddivdz_pl, &
-       rhogvx, rhogvx_pl, &
-       rhogvy, rhogvy_pl, &
-       rhogvz, rhogvz_pl, &
-       rhogw,  rhogw_pl   )
+       ddivdx,    ddivdx_pl,    &
+       ddivdy,    ddivdy_pl,    &
+       ddivdz,    ddivdz_pl,    &
+       rhogvx,    rhogvx_pl,    &
+       rhogvy,    rhogvy_pl,    &
+       rhogvz,    rhogvz_pl,    &
+       rhogw,     rhogw_pl,     &
+       coef_intp, coef_intp_pl, &
+       coef_diff, coef_diff_pl  )
     use mod_adm, only: &
        ADM_have_pl,  &
        ADM_have_sgp, &
@@ -94,11 +96,6 @@ contains
        YDIR => GRD_YDIR, &
        ZDIR => GRD_ZDIR, &
        GRD_rdgz
-    use mod_oprt, only: &
-       OPRT_coef_intp,    &
-       OPRT_coef_intp_pl, &
-       OPRT_coef_diff,    &
-       OPRT_coef_diff_pl
     use mod_vmtr, only: &
        VMTR_RGAM,        &
        VMTR_RGAM_pl,     &
@@ -110,20 +107,24 @@ contains
        VMTR_C2WfactGz_pl
     implicit none
 
-    real(RP), intent(out) :: ddivdx   (ADM_gall   ,ADM_kall,ADM_lall   ) ! tendency
-    real(RP), intent(out) :: ddivdx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(out) :: ddivdy   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP), intent(out) :: ddivdy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(out) :: ddivdz   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP), intent(out) :: ddivdz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: rhogvx   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*vx { gam2 x G^1/2 }
-    real(RP), intent(in)  :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: rhogvy   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*vy { gam2 x G^1/2 }
-    real(RP), intent(in)  :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: rhogvz   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*vz { gam2 x G^1/2 }
-    real(RP), intent(in)  :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: rhogw    (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*w  { gam2 x G^1/2 }
-    real(RP), intent(in)  :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: ddivdx      (ADM_gall   ,ADM_kall,ADM_lall   ) ! tendency
+    real(RP), intent(out) :: ddivdx_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: ddivdy      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: ddivdy_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(out) :: ddivdz      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: ddivdz_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogvx      (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*vx { gam2 x G^1/2 }
+    real(RP), intent(in)  :: rhogvx_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogvy      (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*vy { gam2 x G^1/2 }
+    real(RP), intent(in)  :: rhogvy_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogvz      (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*vz { gam2 x G^1/2 }
+    real(RP), intent(in)  :: rhogvz_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: rhogw       (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*w  { gam2 x G^1/2 }
+    real(RP), intent(in)  :: rhogw_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in)  :: coef_intp   (ADM_nxyz,ADM_gall   ,1:3,TI:TJ,ADM_lall   )
+    real(RP), intent(in)  :: coef_intp_pl(ADM_nxyz,ADM_gall_pl,1:3,      ADM_lall_pl)
+    real(RP), intent(in)  :: coef_diff   (ADM_nxyz,ADM_gall,1:6    ,ADM_lall   )
+    real(RP), intent(in)  :: coef_diff_pl(ADM_nxyz,         1:vlink,ADM_lall_pl)
 
     real(RP) :: sclt   (ADM_gall   ,TI:TJ) ! scalar on the hexagon vertex
     real(RP) :: sclt_pl(ADM_gall_pl)
@@ -175,7 +176,7 @@ contains
 
        !$omp parallel default(none), private(i,j,k,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1,sclt_rhogw), &
        !$omp shared(l,ADM_have_sgp,gmin,gmax,gall,kmin,kmax,ddivdx,ddivdy,ddivdz,rhogvx,rhogvy,rhogvz, &
-       !$omp rhogvx_vm,rhogvy_vm,rhogvz_vm,rhogw_vm,sclt,GRD_rdgz,VMTR_RGAM,OPRT_coef_intp,OPRT_coef_diff)
+       !$omp rhogvx_vm,rhogvy_vm,rhogvz_vm,rhogw_vm,sclt,GRD_rdgz,VMTR_RGAM,coef_intp,coef_diff)
        do k = kmin, kmax
 
           !$omp do
@@ -197,15 +198,15 @@ contains
                           - ( rhogw_vm(ij,k  ) + rhogw_vm(ip1j,k  ) + rhogw_vm(ip1jp1,k  ) ) &
                           ) / 3.0_RP * GRD_rdgz(k)
 
-             sclt(ij,TI) = OPRT_coef_intp(XDIR,ij,1,TI,l) * rhogvx_vm(ij    ) &
-                         + OPRT_coef_intp(XDIR,ij,2,TI,l) * rhogvx_vm(ip1j  ) &
-                         + OPRT_coef_intp(XDIR,ij,3,TI,l) * rhogvx_vm(ip1jp1) &
-                         + OPRT_coef_intp(YDIR,ij,1,TI,l) * rhogvy_vm(ij    ) &
-                         + OPRT_coef_intp(YDIR,ij,2,TI,l) * rhogvy_vm(ip1j  ) &
-                         + OPRT_coef_intp(YDIR,ij,3,TI,l) * rhogvy_vm(ip1jp1) &
-                         + OPRT_coef_intp(ZDIR,ij,1,TI,l) * rhogvz_vm(ij    ) &
-                         + OPRT_coef_intp(ZDIR,ij,2,TI,l) * rhogvz_vm(ip1j  ) &
-                         + OPRT_coef_intp(ZDIR,ij,3,TI,l) * rhogvz_vm(ip1jp1) &
+             sclt(ij,TI) = coef_intp(XDIR,ij,1,TI,l) * rhogvx_vm(ij    ) &
+                         + coef_intp(XDIR,ij,2,TI,l) * rhogvx_vm(ip1j  ) &
+                         + coef_intp(XDIR,ij,3,TI,l) * rhogvx_vm(ip1jp1) &
+                         + coef_intp(YDIR,ij,1,TI,l) * rhogvy_vm(ij    ) &
+                         + coef_intp(YDIR,ij,2,TI,l) * rhogvy_vm(ip1j  ) &
+                         + coef_intp(YDIR,ij,3,TI,l) * rhogvy_vm(ip1jp1) &
+                         + coef_intp(ZDIR,ij,1,TI,l) * rhogvz_vm(ij    ) &
+                         + coef_intp(ZDIR,ij,2,TI,l) * rhogvz_vm(ip1j  ) &
+                         + coef_intp(ZDIR,ij,3,TI,l) * rhogvz_vm(ip1jp1) &
                          + sclt_rhogw
           enddo
           enddo
@@ -222,15 +223,15 @@ contains
                           - ( rhogw_vm(ij,k  ) + rhogw_vm(ip1jp1,k  ) + rhogw_vm(ijp1,k  ) ) &
                           ) / 3.0_RP * GRD_rdgz(k)
 
-             sclt(ij,TJ) = OPRT_coef_intp(XDIR,ij,1,TJ,l) * rhogvx_vm(ij    ) &
-                         + OPRT_coef_intp(XDIR,ij,2,TJ,l) * rhogvx_vm(ip1jp1) &
-                         + OPRT_coef_intp(XDIR,ij,3,TJ,l) * rhogvx_vm(ijp1  ) &
-                         + OPRT_coef_intp(YDIR,ij,1,TJ,l) * rhogvy_vm(ij    ) &
-                         + OPRT_coef_intp(YDIR,ij,2,TJ,l) * rhogvy_vm(ip1jp1) &
-                         + OPRT_coef_intp(YDIR,ij,3,TJ,l) * rhogvy_vm(ijp1  ) &
-                         + OPRT_coef_intp(ZDIR,ij,1,TJ,l) * rhogvz_vm(ij    ) &
-                         + OPRT_coef_intp(ZDIR,ij,2,TJ,l) * rhogvz_vm(ip1jp1) &
-                         + OPRT_coef_intp(ZDIR,ij,3,TJ,l) * rhogvz_vm(ijp1  ) &
+             sclt(ij,TJ) = coef_intp(XDIR,ij,1,TJ,l) * rhogvx_vm(ij    ) &
+                         + coef_intp(XDIR,ij,2,TJ,l) * rhogvx_vm(ip1jp1) &
+                         + coef_intp(XDIR,ij,3,TJ,l) * rhogvx_vm(ijp1  ) &
+                         + coef_intp(YDIR,ij,1,TJ,l) * rhogvy_vm(ij    ) &
+                         + coef_intp(YDIR,ij,2,TJ,l) * rhogvy_vm(ip1jp1) &
+                         + coef_intp(YDIR,ij,3,TJ,l) * rhogvy_vm(ijp1  ) &
+                         + coef_intp(ZDIR,ij,1,TJ,l) * rhogvz_vm(ij    ) &
+                         + coef_intp(ZDIR,ij,2,TJ,l) * rhogvz_vm(ip1jp1) &
+                         + coef_intp(ZDIR,ij,3,TJ,l) * rhogvz_vm(ijp1  ) &
                          + sclt_rhogw
           enddo
           enddo
@@ -249,9 +250,9 @@ contains
           do i = gmin, gmax
              ij     = suf(i  ,j  )
 
-             ddivdx(ij,k,l) = ddivdx(ij,k,l) + OPRT_coef_diff(XDIR,ij,1,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) )
-             ddivdy(ij,k,l) = ddivdy(ij,k,l) + OPRT_coef_diff(YDIR,ij,1,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) )
-             ddivdz(ij,k,l) = ddivdz(ij,k,l) + OPRT_coef_diff(ZDIR,ij,1,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) )
+             ddivdx(ij,k,l) = ddivdx(ij,k,l) + coef_diff(XDIR,ij,1,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) )
+             ddivdy(ij,k,l) = ddivdy(ij,k,l) + coef_diff(YDIR,ij,1,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) )
+             ddivdz(ij,k,l) = ddivdz(ij,k,l) + coef_diff(ZDIR,ij,1,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) )
           enddo
           enddo
           !$omp end do
@@ -262,9 +263,9 @@ contains
              ij     = suf(i  ,j  )
              im1j   = suf(i-1,j  )
 
-             ddivdx(ij,k,l) = ddivdx(ij,k,l) + OPRT_coef_diff(XDIR,ij,2,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) )
-             ddivdy(ij,k,l) = ddivdy(ij,k,l) + OPRT_coef_diff(YDIR,ij,2,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) )
-             ddivdz(ij,k,l) = ddivdz(ij,k,l) + OPRT_coef_diff(ZDIR,ij,2,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) )
+             ddivdx(ij,k,l) = ddivdx(ij,k,l) + coef_diff(XDIR,ij,2,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) )
+             ddivdy(ij,k,l) = ddivdy(ij,k,l) + coef_diff(YDIR,ij,2,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) )
+             ddivdz(ij,k,l) = ddivdz(ij,k,l) + coef_diff(ZDIR,ij,2,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) )
           enddo
           enddo
           !$omp end do
@@ -276,9 +277,9 @@ contains
              im1j   = suf(i-1,j  )
              im1jm1 = suf(i-1,j-1)
 
-             ddivdx(ij,k,l) = ddivdx(ij,k,l) + OPRT_coef_diff(XDIR,ij,3,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) )
-             ddivdy(ij,k,l) = ddivdy(ij,k,l) + OPRT_coef_diff(YDIR,ij,3,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) )
-             ddivdz(ij,k,l) = ddivdz(ij,k,l) + OPRT_coef_diff(ZDIR,ij,3,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) )
+             ddivdx(ij,k,l) = ddivdx(ij,k,l) + coef_diff(XDIR,ij,3,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) )
+             ddivdy(ij,k,l) = ddivdy(ij,k,l) + coef_diff(YDIR,ij,3,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) )
+             ddivdz(ij,k,l) = ddivdz(ij,k,l) + coef_diff(ZDIR,ij,3,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) )
           enddo
           enddo
           !$omp end do
@@ -289,9 +290,9 @@ contains
              ij     = suf(i  ,j  )
              im1jm1 = suf(i-1,j-1)
 
-             ddivdx(ij,k,l) = ddivdx(ij,k,l) + OPRT_coef_diff(XDIR,ij,4,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) )
-             ddivdy(ij,k,l) = ddivdy(ij,k,l) + OPRT_coef_diff(YDIR,ij,4,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) )
-             ddivdz(ij,k,l) = ddivdz(ij,k,l) + OPRT_coef_diff(ZDIR,ij,4,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) )
+             ddivdx(ij,k,l) = ddivdx(ij,k,l) + coef_diff(XDIR,ij,4,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) )
+             ddivdy(ij,k,l) = ddivdy(ij,k,l) + coef_diff(YDIR,ij,4,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) )
+             ddivdz(ij,k,l) = ddivdz(ij,k,l) + coef_diff(ZDIR,ij,4,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) )
           enddo
           enddo
           !$omp end do
@@ -303,9 +304,9 @@ contains
              im1jm1 = suf(i-1,j-1)
              ijm1   = suf(i  ,j-1)
 
-             ddivdx(ij,k,l) = ddivdx(ij,k,l) + OPRT_coef_diff(XDIR,ij,5,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) )
-             ddivdy(ij,k,l) = ddivdy(ij,k,l) + OPRT_coef_diff(YDIR,ij,5,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) )
-             ddivdz(ij,k,l) = ddivdz(ij,k,l) + OPRT_coef_diff(ZDIR,ij,5,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) )
+             ddivdx(ij,k,l) = ddivdx(ij,k,l) + coef_diff(XDIR,ij,5,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) )
+             ddivdy(ij,k,l) = ddivdy(ij,k,l) + coef_diff(YDIR,ij,5,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) )
+             ddivdz(ij,k,l) = ddivdz(ij,k,l) + coef_diff(ZDIR,ij,5,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) )
           enddo
           enddo
           !$omp end do
@@ -316,9 +317,9 @@ contains
              ij     = suf(i  ,j  )
              ijm1   = suf(i  ,j-1)
 
-             ddivdx(ij,k,l) = ddivdx(ij,k,l) + OPRT_coef_diff(XDIR,ij,6,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) )
-             ddivdy(ij,k,l) = ddivdy(ij,k,l) + OPRT_coef_diff(YDIR,ij,6,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) )
-             ddivdz(ij,k,l) = ddivdz(ij,k,l) + OPRT_coef_diff(ZDIR,ij,6,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) )
+             ddivdx(ij,k,l) = ddivdx(ij,k,l) + coef_diff(XDIR,ij,6,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) )
+             ddivdy(ij,k,l) = ddivdy(ij,k,l) + coef_diff(YDIR,ij,6,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) )
+             ddivdz(ij,k,l) = ddivdz(ij,k,l) + coef_diff(ZDIR,ij,6,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) )
           enddo
           enddo
           !$omp end do
@@ -373,15 +374,15 @@ contains
                                 - ( rhogw_vm_pl(n,k  ) + rhogw_vm_pl(ij,k  ) + rhogw_vm_pl(ijp1,k  ) ) &
                                 ) / 3.0_RP * GRD_rdgz(k)
 
-                sclt_pl(ij) = OPRT_coef_intp_pl(XDIR,v,1,l) * rhogvx_vm_pl(n   ) &
-                            + OPRT_coef_intp_pl(XDIR,v,2,l) * rhogvx_vm_pl(ij  ) &
-                            + OPRT_coef_intp_pl(XDIR,v,3,l) * rhogvx_vm_pl(ijp1) &
-                            + OPRT_coef_intp_pl(YDIR,v,1,l) * rhogvy_vm_pl(n   ) &
-                            + OPRT_coef_intp_pl(YDIR,v,2,l) * rhogvy_vm_pl(ij  ) &
-                            + OPRT_coef_intp_pl(YDIR,v,3,l) * rhogvy_vm_pl(ijp1) &
-                            + OPRT_coef_intp_pl(ZDIR,v,1,l) * rhogvz_vm_pl(n   ) &
-                            + OPRT_coef_intp_pl(ZDIR,v,2,l) * rhogvz_vm_pl(ij  ) &
-                            + OPRT_coef_intp_pl(ZDIR,v,3,l) * rhogvz_vm_pl(ijp1) &
+                sclt_pl(ij) = coef_intp_pl(XDIR,v,1,l) * rhogvx_vm_pl(n   ) &
+                            + coef_intp_pl(XDIR,v,2,l) * rhogvx_vm_pl(ij  ) &
+                            + coef_intp_pl(XDIR,v,3,l) * rhogvx_vm_pl(ijp1) &
+                            + coef_intp_pl(YDIR,v,1,l) * rhogvy_vm_pl(n   ) &
+                            + coef_intp_pl(YDIR,v,2,l) * rhogvy_vm_pl(ij  ) &
+                            + coef_intp_pl(YDIR,v,3,l) * rhogvy_vm_pl(ijp1) &
+                            + coef_intp_pl(ZDIR,v,1,l) * rhogvz_vm_pl(n   ) &
+                            + coef_intp_pl(ZDIR,v,2,l) * rhogvz_vm_pl(ij  ) &
+                            + coef_intp_pl(ZDIR,v,3,l) * rhogvz_vm_pl(ijp1) &
                             + sclt_rhogw_pl
              enddo
 
@@ -394,9 +395,9 @@ contains
                 ijm1 = v - 1
                 if( ijm1 == ADM_gmin_pl-1 ) ijm1 = ADM_gmax_pl ! cyclic condition
 
-                ddivdx_pl(n,k,l) = ddivdx_pl(n,k,l) + OPRT_coef_diff_pl(XDIR,v-1,l) * ( sclt_pl(ijm1) + sclt_pl(ij) )
-                ddivdy_pl(n,k,l) = ddivdy_pl(n,k,l) + OPRT_coef_diff_pl(YDIR,v-1,l) * ( sclt_pl(ijm1) + sclt_pl(ij) )
-                ddivdz_pl(n,k,l) = ddivdz_pl(n,k,l) + OPRT_coef_diff_pl(ZDIR,v-1,l) * ( sclt_pl(ijm1) + sclt_pl(ij) )
+                ddivdx_pl(n,k,l) = ddivdx_pl(n,k,l) + coef_diff_pl(XDIR,v-1,l) * ( sclt_pl(ijm1) + sclt_pl(ij) )
+                ddivdy_pl(n,k,l) = ddivdy_pl(n,k,l) + coef_diff_pl(YDIR,v-1,l) * ( sclt_pl(ijm1) + sclt_pl(ij) )
+                ddivdz_pl(n,k,l) = ddivdz_pl(n,k,l) + coef_diff_pl(ZDIR,v-1,l) * ( sclt_pl(ijm1) + sclt_pl(ij) )
              enddo
           enddo
 

@@ -519,7 +519,9 @@ contains
        VMTR_C2WfactGz,    &
        VMTR_C2WfactGz_pl
     use mod_oprt, only: &
-       OPRT_divergence
+       OPRT_divergence, &
+       OPRT_coef_div,   &
+       OPRT_coef_div_pl
     implicit none
 
     real(RP), intent(in)  :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vx ( G^1/2 x gam2 )
@@ -622,10 +624,11 @@ contains
     endif
 
     !--- Horizontal flux convergence
-    call OPRT_divergence( div_rhogvh, div_rhogvh_pl, & ! [OUT]
-                          rhogvx_vm,  rhogvx_vm_pl,  & ! [IN]
-                          rhogvy_vm,  rhogvy_vm_pl,  & ! [IN]
-                          rhogvz_vm,  rhogvz_vm_pl   ) ! [IN]
+    call OPRT_divergence( div_rhogvh   (:,:,:),   div_rhogvh_pl   (:,:,:), & ! [OUT]
+                          rhogvx_vm    (:,:,:),   rhogvx_vm_pl    (:,:,:), & ! [IN]
+                          rhogvy_vm    (:,:,:),   rhogvy_vm_pl    (:,:,:), & ! [IN]
+                          rhogvz_vm    (:,:,:),   rhogvz_vm_pl    (:,:,:), & ! [IN]
+                          OPRT_coef_div(:,:,:,:), OPRT_coef_div_pl(:,:,:)  ) ! [IN]
 
     !--- Total flux convergence
     do l = 1, ADM_lall
@@ -699,7 +702,9 @@ contains
        VMTR_C2WfactGz_pl
     use mod_oprt, only: &
        OPRT_gradient,          &
-       OPRT_horizontalize_vec
+       OPRT_horizontalize_vec, &
+       OPRT_coef_grad,         &
+       OPRT_coef_grad_pl
     implicit none
 
     real(RP), intent(in)  :: P        (ADM_gall   ,ADM_kall,ADM_lall   )          ! phi * G^1/2 * gamma^2
@@ -744,8 +749,9 @@ contains
        enddo
     endif
 
-    call OPRT_gradient( P_vm (:,:,:),   P_vm_pl (:,:,:),  & ! [IN]
-                        Pgrad(:,:,:,:), Pgrad_pl(:,:,:,:) ) ! [OUT]
+    call OPRT_gradient( Pgrad         (:,:,:,:), Pgrad_pl         (:,:,:,:), & ! [OUT]
+                        P_vm          (:,:,:),   P_vm_pl          (:,:,:),   & ! [IN]
+                        OPRT_coef_grad(:,:,:,:), OPRT_coef_grad_pl(:,:,:)    ) ! [IN]
 
     !---< horizontal gradient, vertical contribution >---
 

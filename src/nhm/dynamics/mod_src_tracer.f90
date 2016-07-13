@@ -906,7 +906,9 @@ contains
        GRD_x,   &
        GRD_x_pl
     use mod_oprt, only: &
-       OPRT_gradient
+       OPRT_gradient,    &
+       OPRT_coef_grad,   &
+       OPRT_coef_grad_pl
     implicit none
 
     real(RP), intent(out) :: q_a      (ADM_gall   ,ADM_kall,ADM_lall   ,6)               ! q at cell face
@@ -940,8 +942,9 @@ contains
 
     call PROF_rapstart('____Horizontal_Adv_remap',2)
 
-    call OPRT_gradient( q    (:,:,:),   q_pl    (:,:,:),  & ![IN]
-                        gradq(:,:,:,:), gradq_pl(:,:,:,:) ) ![OUT]
+    call OPRT_gradient( gradq         (:,:,:,:), gradq_pl         (:,:,:,:), & ! [OUT]
+                        q             (:,:,:),   q_pl             (:,:,:),   & ! [IN]
+                        OPRT_coef_grad(:,:,:,:), OPRT_coef_grad_pl(:,:,:)    ) ! [IN]
 
     call COMM_data_transfer( gradq(:,:,:,:), gradq_pl(:,:,:,:) )
 

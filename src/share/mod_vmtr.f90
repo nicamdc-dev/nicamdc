@@ -170,8 +170,10 @@ contains
        GMTR_area,   &
        GMTR_area_pl
     use mod_oprt, only: &
-       OPRT_gradient,         &
-       OPRT_horizontalize_vec
+       OPRT_gradient,          &
+       OPRT_horizontalize_vec, &
+       OPRT_coef_grad,         &
+       OPRT_coef_grad_pl
     implicit none
 
     integer, parameter :: var_max = 6
@@ -282,16 +284,18 @@ contains
     var_pl(:,:,:,:) = 0.0_RP
 
     !--- calculation of Jxh, Jyh, and Jzh
-    call OPRT_gradient( GRD_vz(:,:,:,GRD_ZH),  GRD_vz_pl(:,:,:,GRD_ZH), & !--- [IN]
-                        var   (:,:,:,JXH:JZH), var_pl   (:,:,:,JXH:JZH) ) !--- [OUT]
+    call OPRT_gradient( var           (:,:,:,JXH:JZH), var_pl           (:,:,:,JXH:JZH), & ! [OUT]
+                        GRD_vz        (:,:,:,GRD_ZH),  GRD_vz_pl        (:,:,:,GRD_ZH),  & ! [IN]
+                        OPRT_coef_grad(:,:,:,:),       OPRT_coef_grad_pl(:,:,:)          ) ! [IN]
 
     call OPRT_horizontalize_vec( var(:,:,:,JXH), var_pl(:,:,:,JXH), & !--- [INOUT]
                                  var(:,:,:,JYH), var_pl(:,:,:,JYH), & !--- [INOUT]
                                  var(:,:,:,JZH), var_pl(:,:,:,JZH)  ) !--- [INOUT]
 
     !--- calculation of Jx, Jy, and Jz
-    call OPRT_gradient( GRD_vz(:,:,:,GRD_Z), GRD_vz_pl(:,:,:,GRD_Z), & !--- [IN]
-                        var   (:,:,:,JX:JZ), var_pl   (:,:,:,JX:JZ)  ) !--- [OUT]
+    call OPRT_gradient( var           (:,:,:,JX:JZ), var_pl           (:,:,:,JX:JZ), & ! [OUT]
+                        GRD_vz        (:,:,:,GRD_Z), GRD_vz_pl        (:,:,:,GRD_Z), & ! [IN]
+                        OPRT_coef_grad(:,:,:,:),     OPRT_coef_grad_pl(:,:,:)        ) ! [IN]
 
     call OPRT_horizontalize_vec( var(:,:,:,JX), var_pl(:,:,:,JX), & !--- [INOUT]
                                  var(:,:,:,JY), var_pl(:,:,:,JY), & !--- [INOUT]
