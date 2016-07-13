@@ -20,28 +20,6 @@ module mod_oprt3d
   use mod_precision
   use mod_stdio
   use mod_prof
-  use mod_adm, only: &
-     TI  => ADM_TI,    &
-     TJ  => ADM_TJ,    &
-     AI  => ADM_AI,    &
-     AIJ => ADM_AIJ,   &
-     AJ  => ADM_AJ,    &
-     K0  => ADM_KNONE, &
-     ADM_nxyz,         &
-     vlink => ADM_vlink_nmax
-  use mod_gmtr, only: &
-     W1   => GMTR_t_W1,   &
-     W2   => GMTR_t_W2,   &
-     W3   => GMTR_t_W3,   &
-     HNX  => GMTR_A_HNX,  &
-     HNY  => GMTR_A_HNY,  &
-     HNZ  => GMTR_A_HNZ,  &
-     TNX  => GMTR_A_TNX,  &
-     TNY  => GMTR_A_TNY,  &
-     TNZ  => GMTR_A_TNZ,  &
-     TN2X => GMTR_A_TN2X, &
-     TN2Y => GMTR_A_TN2Y, &
-     TN2Z => GMTR_A_TN2Z
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -77,19 +55,23 @@ contains
        coef_intp, coef_intp_pl, &
        coef_diff, coef_diff_pl  )
     use mod_adm, only: &
-       ADM_have_pl,  &
-       ADM_have_sgp, &
-       ADM_lall,     &
-       ADM_lall_pl,  &
-       ADM_gall,     &
-       ADM_gall_pl,  &
-       ADM_kall,     &
-       ADM_gmin,     &
-       ADM_gmax,     &
-       ADM_gslf_pl,  &
-       ADM_gmin_pl,  &
-       ADM_gmax_pl,  &
-       ADM_kmin,     &
+       TI  => ADM_TI,  &
+       TJ  => ADM_TJ,  &
+       ADM_nxyz,       &
+       ADM_have_pl,    &
+       ADM_have_sgp,   &
+       ADM_vlink_nmax, &
+       ADM_lall,       &
+       ADM_lall_pl,    &
+       ADM_gall,       &
+       ADM_gall_pl,    &
+       ADM_kall,       &
+       ADM_gmin,       &
+       ADM_gmax,       &
+       ADM_gslf_pl,    &
+       ADM_gmin_pl,    &
+       ADM_gmax_pl,    &
+       ADM_kmin,       &
        ADM_kmax
     use mod_grd, only: &
        XDIR => GRD_XDIR, &
@@ -123,8 +105,8 @@ contains
     real(RP), intent(in)  :: rhogw_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in)  :: coef_intp   (ADM_nxyz,ADM_gall   ,1:3,TI:TJ,ADM_lall   )
     real(RP), intent(in)  :: coef_intp_pl(ADM_nxyz,ADM_gall_pl,1:3,      ADM_lall_pl)
-    real(RP), intent(in)  :: coef_diff   (ADM_nxyz,ADM_gall,1:6    ,ADM_lall   )
-    real(RP), intent(in)  :: coef_diff_pl(ADM_nxyz,         1:vlink,ADM_lall_pl)
+    real(RP), intent(in)  :: coef_diff   (ADM_nxyz,ADM_gall,1:6             ,ADM_lall   )
+    real(RP), intent(in)  :: coef_diff_pl(ADM_nxyz,         1:ADM_vlink_nmax,ADM_lall_pl)
 
     real(RP) :: sclt   (ADM_gall   ,TI:TJ) ! scalar on the hexagon vertex
     real(RP) :: sclt_pl(ADM_gall_pl)

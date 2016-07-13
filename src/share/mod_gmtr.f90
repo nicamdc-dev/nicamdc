@@ -22,30 +22,6 @@ module mod_gmtr
   !
   use mod_precision
   use mod_stdio
-  use mod_adm, only: &
-     ADM_nxyz,       &
-     ADM_TI,         &
-     ADM_TJ,         &
-     ADM_AI,         &
-     ADM_AIJ,        &
-     ADM_AJ,         &
-     ADM_lall,       &
-     ADM_lall_pl,    &
-     ADM_gall,       &
-     ADM_gall_pl,    &
-     ADM_gmin,       &
-     ADM_gmax,       &
-     ADM_gslf_pl,    &
-     ADM_gmin_pl,    &
-     ADM_gmax_pl,    &
-     ADM_vlink_nmax, &
-     ADM_KNONE
-  use mod_grd, only: &
-     GRD_XDIR,      &
-     GRD_YDIR,      &
-     GRD_ZDIR,      &
-     GRD_LON,       &
-     GRD_grid_type
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -152,6 +128,18 @@ contains
   subroutine GMTR_setup
     use mod_process, only: &
        PRC_MPIstop
+    use mod_adm, only: &
+       ADM_TI,      &
+       ADM_TJ,      &
+       ADM_AI,      &
+       ADM_AJ,      &
+       ADM_KNONE,   &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl
+    use mod_comm, only: &
+       COMM_data_transfer
     use mod_grd, only: &
        GRD_rscale, &
        GRD_x,      &
@@ -160,8 +148,6 @@ contains
        GRD_xt_pl,  &
        GRD_s,      &
        GRD_s_pl
-    use mod_comm, only: &
-       COMM_data_transfer
     implicit none
 
     namelist / GMTRPARAM / &
@@ -244,8 +230,26 @@ contains
        GMTR_p, GMTR_p_pl, &
        GRD_rscale         )
     use mod_adm, only: &
-       ADM_have_pl, &
-       ADM_have_sgp
+       ADM_nxyz,       &
+       ADM_TI,         &
+       ADM_TJ,         &
+       ADM_KNONE,      &
+       ADM_have_pl,    &
+       ADM_have_sgp,   &
+       ADM_vlink_nmax, &
+       ADM_lall,       &
+       ADM_lall_pl,    &
+       ADM_gall,       &
+       ADM_gall_pl,    &
+       ADM_gmin,       &
+       ADM_gmax,       &
+       ADM_gslf_pl
+    use mod_grd, only: &
+       GRD_XDIR,     &
+       GRD_YDIR,     &
+       GRD_ZDIR,     &
+       GRD_LON,      &
+       GRD_grid_type
     use mod_vector, only: &
        VECTR_triangle,      &
        VECTR_triangle_plane
@@ -422,8 +426,23 @@ contains
        GMTR_t, GMTR_t_pl, &
        GRD_rscale         )
     use mod_adm, only: &
-       ADM_have_pl, &
-       ADM_have_sgp
+       ADM_nxyz,       &
+       ADM_TI,         &
+       ADM_TJ,         &
+       ADM_KNONE,      &
+       ADM_have_pl,    &
+       ADM_have_sgp,   &
+       ADM_lall,       &
+       ADM_lall_pl,    &
+       ADM_gall,       &
+       ADM_gall_pl,    &
+       ADM_gmin,       &
+       ADM_gmax,       &
+       ADM_gslf_pl,    &
+       ADM_gmin_pl,    &
+       ADM_gmax_pl
+    use mod_grd, only: &
+       GRD_grid_type
     use mod_vector, only: &
        VECTR_triangle,      &
        VECTR_triangle_plane
@@ -580,8 +599,26 @@ contains
        GMTR_a, GMTR_a_pl, &
        GRD_rscale         )
     use mod_adm, only: &
-       ADM_have_pl, &
-       ADM_have_sgp
+       ADM_nxyz,       &
+       ADM_TI,         &
+       ADM_TJ,         &
+       ADM_AI,         &
+       ADM_AIJ,        &
+       ADM_AJ,         &
+       ADM_KNONE,      &
+       ADM_have_pl,    &
+       ADM_have_sgp,   &
+       ADM_lall,       &
+       ADM_lall_pl,    &
+       ADM_gall,       &
+       ADM_gall_pl,    &
+       ADM_gmin,       &
+       ADM_gmax,       &
+       ADM_gslf_pl,    &
+       ADM_gmin_pl,    &
+       ADM_gmax_pl
+    use mod_grd, only: &
+       GRD_grid_type
     implicit none
 
     real(RP), intent(in)  :: GRD_x    (ADM_gall   ,ADM_KNONE,ADM_lall   ,              ADM_nxyz)
@@ -978,9 +1015,19 @@ contains
     use mod_process, only: &
        PRC_MPIstop
     use mod_adm, only: &
+       ADM_TI,      &
+       ADM_TJ,      &
+       ADM_AI,      &
+       ADM_AIJ,     &
+       ADM_AJ,      &
+       ADM_KNONE,   &
        ADM_prc_tab, &
+       ADM_prc_me,  &
        ADM_have_pl, &
-       ADM_prc_me
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl
     use mod_io_param, only: &
        IO_REAL8, &
        IO_REAL4
