@@ -1421,9 +1421,11 @@ contains
        !$omp shared(l,gmin,gmax,kall,scl,vx,vy,vz,coef_div)
        do k = 1, kall
 
+          !$omp workshare
           scl(:,k,l) = 0.0_RP
+          !$omp end workshare
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1435,7 +1437,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1448,7 +1450,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1461,7 +1463,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1474,7 +1476,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1487,7 +1489,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1500,7 +1502,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1579,9 +1581,11 @@ contains
        !$omp shared(l,gmin,gmax,kall,scl,vx,vy,vz,coef_rot)
        do k = 1, kall
 
+          !$omp workshare
           scl(:,k,l) = 0.0_RP
+          !$omp end workshare
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1593,7 +1597,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1606,7 +1610,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1619,7 +1623,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1632,7 +1636,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1645,7 +1649,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1658,7 +1662,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1732,11 +1736,13 @@ contains
        !$omp shared(l,gmin,gmax,kall,grad,scl,coef_grad)
        do k = 1, kall
 
+          !$omp workshare
           grad(:,k,l,XDIR) = 0.0_RP
           grad(:,k,l,YDIR) = 0.0_RP
           grad(:,k,l,ZDIR) = 0.0_RP
+          !$omp end workshare
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1748,7 +1754,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1761,7 +1767,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1774,7 +1780,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1787,7 +1793,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1800,7 +1806,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1813,7 +1819,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1888,9 +1894,11 @@ contains
        !$omp shared(l,gmin,gmax,kall,dscl,scl,coef_lap)
        do k = 1, kall
 
+          !$omp workshare
           dscl(:,k,l) = 0.0_RP
+          !$omp end workshare
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1900,7 +1908,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1911,7 +1919,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1922,7 +1930,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1933,7 +1941,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1944,7 +1952,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -1955,7 +1963,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -2033,7 +2041,7 @@ contains
        !$omp shared(l,ADM_have_sgp,gmin,gmax,kall,dscl,scl,kh,vt,coef_intp,coef_diff)
        do k = 1, kall
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin-1, gmax
           do i = gmin-1, gmax
              ij     = suf(i  ,j  )
@@ -2056,7 +2064,7 @@ contains
           enddo
           !$omp end do nowait
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin-1, gmax
           do i = gmin-1, gmax
              ij     = suf(i  ,j  )
@@ -2080,12 +2088,16 @@ contains
           !$omp end do
 
           if ( ADM_have_sgp(l) ) then ! pentagon
+             !$omp master
              vt(:,suf(gmin-1,gmin-1),TI) = vt(:,suf(gmin,gmin-1),TJ)
+             !$omp end master
           endif
 
+          !$omp workshare
           dscl(:,k,l) = 0.0_RP
+          !$omp end workshare
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin  , gmax
           do i = gmin  , gmax
              ij     = suf(i  ,j  )
@@ -2100,7 +2112,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin  , gmax
           do i = gmin  , gmax
              ij     = suf(i  ,j  )
@@ -2116,7 +2128,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin  , gmax
           do i = gmin  , gmax
              ij     = suf(i  ,j  )
@@ -2132,7 +2144,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin  , gmax
           do i = gmin  , gmax
              ij     = suf(i  ,j  )
@@ -2147,7 +2159,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin  , gmax
           do i = gmin  , gmax
              ij     = suf(i  ,j  )
@@ -2163,7 +2175,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin  , gmax
           do i = gmin  , gmax
              ij     = suf(i  ,j  )
@@ -2286,7 +2298,7 @@ contains
        !$omp sclt,coef_intp,coef_diff)
        do k = 1, kall
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin-1, gmax
           do i = gmin-1, gmax
              ij     = suf(i  ,j  )
@@ -2318,14 +2330,18 @@ contains
           !$omp end do
 
           if ( ADM_have_sgp(l) ) then ! pentagon
+             !$omp master
              sclt(suf(gmin-1,gmin-1),TI) = sclt(suf(gmin,gmin-1),TJ)
+             !$omp end master
           endif
 
+          !$omp workshare
           ddivdx(:,k,l) = 0.0_RP
           ddivdy(:,k,l) = 0.0_RP
           ddivdz(:,k,l) = 0.0_RP
+          !$omp end workshare
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -2337,7 +2353,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -2350,7 +2366,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -2364,7 +2380,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -2379,7 +2395,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -2394,7 +2410,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )

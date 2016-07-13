@@ -79,12 +79,12 @@ contains
        ZDIR => GRD_ZDIR, &
        GRD_rdgz
     use mod_vmtr, only: &
+       VMTR_RGSQRTH,     &
+       VMTR_RGSQRTH_pl,  &
        VMTR_RGAM,        &
        VMTR_RGAM_pl,     &
        VMTR_RGAMH,       &
        VMTR_RGAMH_pl,    &
-       VMTR_RGSQRTH,     &
-       VMTR_RGSQRTH_pl,  &
        VMTR_C2WfactGz,   &
        VMTR_C2WfactGz_pl
     implicit none
@@ -169,7 +169,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin-1, gmax
           do i = gmin-1, gmax
              ij     = suf(i  ,j  )
@@ -194,7 +194,7 @@ contains
           enddo
           !$omp end do nowait
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin-1, gmax
           do i = gmin-1, gmax
              ij     = suf(i  ,j  )
@@ -227,7 +227,7 @@ contains
           ddivdy(:,k,l) = 0.0_RP
           ddivdz(:,k,l) = 0.0_RP
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -239,7 +239,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -252,7 +252,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -266,7 +266,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -279,7 +279,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -293,7 +293,7 @@ contains
           enddo
           !$omp end do
 
-          !$omp do
+          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
              ij     = suf(i  ,j  )
@@ -309,6 +309,7 @@ contains
        enddo
        !$omp end parallel
 
+       !$omp parallel do
        do ij = 1, ADM_gall
           ddivdx(ij,ADM_kmin-1,l) = 0.0_RP
           ddivdx(ij,ADM_kmax+1,l) = 0.0_RP
