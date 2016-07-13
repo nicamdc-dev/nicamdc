@@ -1,8 +1,9 @@
 #
 # ------ FOR K computer -----
 #
-FFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,noalias=s,mfunc=1 \
+FFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,noalias=s,mfunc=2 \
                -Qi -Qt -X03 -Ncompdisp -Koptmsg=1 -Cpp                   \
+               -x-                                                       \
                -Kdynamic_iteration -Ksimd,openmp                         \
                -Kauto,threadsafe
 
