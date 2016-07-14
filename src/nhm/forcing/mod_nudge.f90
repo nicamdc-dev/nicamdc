@@ -343,11 +343,11 @@ contains
   subroutine NDG_update_reference( &
        ctime )
     use mod_adm, only: &
-       ADM_lall,        &
-       ADM_kall,        &
-       ADM_IopJop_nmax, &
-       ADM_IopJop,      &
-       ADM_GIoJo
+       ADM_lall,    &
+       ADM_gall_in, &
+       ADM_kall,    &
+       ADM_gmin,    &
+       ADM_gmax
     use mod_comm, only: &
        COMM_var
     use mod_extdata, only: &
@@ -356,10 +356,10 @@ contains
 
     real(DP), intent(in) :: ctime
 
-    real(RP) :: temp(ADM_IopJop_nmax,ADM_kall)
+    real(RP) :: temp(ADM_gall_in,ADM_kall)
 
     logical :: eflag
-    integer :: n, k, l
+    integer :: i, j, n, k, l
     !---------------------------------------------------------------------------
 
     if ( NDG_tau_vxvyvz > 0.0_RP ) then
@@ -370,9 +370,13 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do n = 1, ADM_IopJop_nmax
-             NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_vx) = temp(n,k)
-          enddo
+             n = 1
+             do j = ADM_gmin, ADM_gmax+1
+             do i = ADM_gmin, ADM_gmax+1
+                NDG_ref(suf(i,j),k,l,I_vx) = temp(n,k)
+                n = n + 1
+             enddo
+             enddo
           enddo
 
           call extdata_update(temp(:,:),'vy',l,ctime,eflag)
@@ -381,9 +385,13 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do n = 1, ADM_IopJop_nmax
-             NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_vy) = temp(n,k)
-          enddo
+             n = 1
+             do j = ADM_gmin, ADM_gmax+1
+             do i = ADM_gmin, ADM_gmax+1
+                NDG_ref(suf(i,j),k,l,I_vy) = temp(n,k)
+                n = n + 1
+             enddo
+             enddo
           enddo
 
           call extdata_update(temp(:,:),'vz',l,ctime,eflag)
@@ -392,9 +400,13 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do n = 1, ADM_IopJop_nmax
-             NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_vz) = temp(n,k)
-          enddo
+             n = 1
+             do j = ADM_gmin, ADM_gmax+1
+             do i = ADM_gmin, ADM_gmax+1
+                NDG_ref(suf(i,j),k,l,I_vz) = temp(n,k)
+                n = n + 1
+             enddo
+             enddo
           enddo
        enddo
     endif
@@ -407,9 +419,13 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do n = 1, ADM_IopJop_nmax
-             NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_w) = temp(n,k)
-          enddo
+             n = 1
+             do j = ADM_gmin, ADM_gmax+1
+             do i = ADM_gmin, ADM_gmax+1
+                NDG_ref(suf(i,j),k,l,I_w) = temp(n,k)
+                n = n + 1
+             enddo
+             enddo
           enddo
        enddo
     endif
@@ -422,9 +438,13 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do n = 1, ADM_IopJop_nmax
-             NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_tem) = temp(n,k)
-          enddo
+             n = 1
+             do j = ADM_gmin, ADM_gmax+1
+             do i = ADM_gmin, ADM_gmax+1
+                NDG_ref(suf(i,j),k,l,I_tem) = temp(n,k)
+                n = n + 1
+             enddo
+             enddo
           enddo
        enddo
     endif
@@ -437,9 +457,13 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do n = 1, ADM_IopJop_nmax
-             NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_pre) = temp(n,k)
-          enddo
+             n = 1
+             do j = ADM_gmin, ADM_gmax+1
+             do i = ADM_gmin, ADM_gmax+1
+                NDG_ref(suf(i,j),k,l,I_pre) = temp(n,k)
+                n = n + 1
+             enddo
+             enddo
           enddo
        enddo
     endif
@@ -452,9 +476,13 @@ contains
           endif
 
           do k = 1, ADM_kall
-          do n = 1, ADM_IopJop_nmax
-             NDG_ref(ADM_IopJop(n,ADM_GIoJo),k,l,I_qv) = temp(n,k)
-          enddo
+             n = 1
+             do j = ADM_gmin, ADM_gmax+1
+             do i = ADM_gmin, ADM_gmax+1
+                NDG_ref(suf(i,j),k,l,I_qv) = temp(n,k)
+                n = n + 1
+             enddo
+             enddo
           enddo
        enddo
     endif
@@ -812,6 +840,19 @@ contains
 
     return
   end subroutine calc_wgt_horizontal
+
+  !-----------------------------------------------------------------------------
+  integer function suf(i,j)
+    use mod_adm, only: &
+       ADM_gall_1d
+    implicit none
+
+    integer :: i, j
+    !---------------------------------------------------------------------------
+
+    suf = ADM_gall_1d * (j-1) + i
+
+  end function suf
 
 end module mod_nudge
 !-------------------------------------------------------------------------------

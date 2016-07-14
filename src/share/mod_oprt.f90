@@ -2547,7 +2547,7 @@ contains
     enddo ! l loop
 
     if ( ADM_have_pl ) then
-       n = ADM_GSLF_PL
+       n = ADM_gslf_pl
 
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall

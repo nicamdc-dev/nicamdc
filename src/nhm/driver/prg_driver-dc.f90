@@ -124,8 +124,7 @@ program prg_driver
   !##### OpenACC (for data copy) #####
   use mod_adm, only: &
      ADM_prc_tab,  &
-     ADM_rgn_vnum, &
-     ADM_IopJop
+     ADM_rgn_vnum
   use mod_comm, only: &
      sendlist,     sendlist_pl,  &
      sendinfo,     sendinfo_pl,  &
@@ -305,7 +304,7 @@ program prg_driver
 #endif
 
   !$acc data &
-  !$acc& pcopyin(ADM_prc_tab,ADM_rgn_vnum,ADM_IopJop) &
+  !$acc& pcopyin(ADM_prc_tab,ADM_rgn_vnum) &
   !$acc& pcopyin(sendlist,sendlist_pl) &
   !$acc& pcopyin(sendinfo,sendinfo_pl) &
   !$acc& pcopyin(recvlist,recvlist_pl) &

@@ -36,7 +36,6 @@ module mod_adm
   !++ Public procedure
   !
   public :: ADM_setup
-  public :: ADM_mk_suffix
 
   !-----------------------------------------------------------------------
   !
@@ -115,24 +114,6 @@ module mod_adm
   integer,  public            :: ADM_kall             ! number of vertical grid
   integer,  public            :: ADM_kmin             ! start index of vertical grid
   integer,  public            :: ADM_kmax             ! end   index of vertical grid
-
-  ! List vectors
-  integer,  public            :: ADM_IooJoo_nmax
-  integer,  public            :: ADM_IooJmo_nmax
-  integer,  public            :: ADM_IooJop_nmax
-  integer,  public            :: ADM_IooJmp_nmax
-  integer,  public            :: ADM_ImoJoo_nmax
-  integer,  public            :: ADM_ImoJmo_nmax
-  integer,  public            :: ADM_ImoJop_nmax
-  integer,  public            :: ADM_ImoJmp_nmax
-  integer,  public            :: ADM_IopJoo_nmax
-  integer,  public            :: ADM_IopJmo_nmax
-  integer,  public            :: ADM_IopJop_nmax
-  integer,  public            :: ADM_IopJmp_nmax
-  integer,  public            :: ADM_ImpJoo_nmax
-  integer,  public            :: ADM_ImpJmo_nmax
-  integer,  public            :: ADM_ImpJop_nmax
-  integer,  public            :: ADM_ImpJmp_nmax
 #endif
 
   !
@@ -187,53 +168,6 @@ module mod_adm
   !
   !====== Information for grids ======
   !
-
-  ! Identifiers of grid points around a grid point
-  integer,  public, parameter   :: ADM_GIJ_nmax = 7
-  integer,  public, parameter   :: ADM_GIoJo    = 1
-  integer,  public, parameter   :: ADM_GIpJo    = 2
-  integer,  public, parameter   :: ADM_GIpJp    = 3
-  integer,  public, parameter   :: ADM_GIoJp    = 4
-  integer,  public, parameter   :: ADM_GImJo    = 5
-  integer,  public, parameter   :: ADM_GImJm    = 6
-  integer,  public, parameter   :: ADM_GIoJm    = 7
-
-#ifdef _FIXEDINDEX_
-  integer,  public              :: ADM_IooJoo(ADM_IooJoo_nmax,ADM_GIJ_nmax)
-  integer,  public              :: ADM_IooJmo(ADM_IooJmo_nmax,ADM_GIJ_nmax)
-  integer,  public              :: ADM_IooJop(ADM_IooJop_nmax,ADM_GIJ_nmax)
-  integer,  public              :: ADM_IooJmp(ADM_IooJmp_nmax,ADM_GIJ_nmax)
-  integer,  public              :: ADM_ImoJoo(ADM_ImoJoo_nmax,ADM_GIJ_nmax)
-  integer,  public              :: ADM_ImoJmo(ADM_ImoJmo_nmax,ADM_GIJ_nmax)
-  integer,  public              :: ADM_ImoJop(ADM_ImoJop_nmax,ADM_GIJ_nmax)
-  integer,  public              :: ADM_ImoJmp(ADM_ImoJmp_nmax,ADM_GIJ_nmax)
-  integer,  public              :: ADM_IopJoo(ADM_IopJoo_nmax,ADM_GIJ_nmax)
-  integer,  public              :: ADM_IopJmo(ADM_IopJmo_nmax,ADM_GIJ_nmax)
-  integer,  public              :: ADM_IopJop(ADM_IopJop_nmax,ADM_GIJ_nmax)
-  integer,  public              :: ADM_IopJmp(ADM_IopJmp_nmax,ADM_GIJ_nmax)
-  integer,  public              :: ADM_ImpJoo(ADM_ImpJoo_nmax,ADM_GIJ_nmax)
-  integer,  public              :: ADM_ImpJmo(ADM_ImpJmo_nmax,ADM_GIJ_nmax)
-  integer,  public              :: ADM_ImpJop(ADM_ImpJop_nmax,ADM_GIJ_nmax)
-  integer,  public              :: ADM_ImpJmp(ADM_ImpJmp_nmax,ADM_GIJ_nmax)
-#else
-  integer,  public, allocatable :: ADM_IooJoo(:,:)
-  integer,  public, allocatable :: ADM_IooJmo(:,:)
-  integer,  public, allocatable :: ADM_IooJop(:,:)
-  integer,  public, allocatable :: ADM_IooJmp(:,:)
-  integer,  public, allocatable :: ADM_ImoJoo(:,:)
-  integer,  public, allocatable :: ADM_ImoJmo(:,:)
-  integer,  public, allocatable :: ADM_ImoJop(:,:)
-  integer,  public, allocatable :: ADM_ImoJmp(:,:)
-  integer,  public, allocatable :: ADM_IopJoo(:,:)
-  integer,  public, allocatable :: ADM_IopJmo(:,:)
-  integer,  public, allocatable :: ADM_IopJop(:,:)
-  integer,  public, allocatable :: ADM_IopJmp(:,:)
-  integer,  public, allocatable :: ADM_ImpJoo(:,:)
-  integer,  public, allocatable :: ADM_ImpJmo(:,:)
-  integer,  public, allocatable :: ADM_ImpJop(:,:)
-  integer,  public, allocatable :: ADM_ImpJmp(:,:)
-#endif
-
   character(len=H_SHORT), public :: ADM_HGRID_SYSTEM = 'ICO' ! [XTMS] Horizontal Grid type
                                                     ! 'ICO'      icosahedral
                                                     ! 'ICO-XTMS' icosahedral but XTMS is used in oprt
@@ -242,8 +176,6 @@ module mod_adm
                                                     ! 'MLCP-OLD' OLD vergion (only for s=1)
 
   integer,               public :: ADM_XTMS_MLCP_S  = 1 ! [XTMS] Number of segment for MLCP
-
-  logical, public :: ADM_debug = .false.
 
   !-----------------------------------------------------------------------
   !
@@ -257,6 +189,8 @@ module mod_adm
   !
   !++ Private parameters & variables
   !
+  logical, private :: ADM_debug = .false.
+
   !-----------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------
@@ -456,18 +390,12 @@ contains
 
     ADM_l_me = 0
 
-    ! make suffix for list-vector loop.
-    call ADM_mk_suffix
-
     call output_info
 
     return
   end subroutine ADM_setup
 
   !-----------------------------------------------------------------------
-  !>
-  !> Description of the subroutine input_mnginfo
-  !>
   subroutine input_mnginfo( fname )
     use mod_process, only: &
        PRC_nprocs, &
@@ -586,9 +514,6 @@ contains
   end subroutine input_mnginfo
 
   !-----------------------------------------------------------------------
-  !>
-  !> Description of the subroutine setup_vtab
-  !>
   subroutine setup_vtab
     implicit none
 
@@ -651,9 +576,6 @@ contains
   end subroutine setup_vtab
 
   !-----------------------------------------------------------------------
-  !>
-  !> Description of the subroutine set_vinfo
-  !>
   subroutine set_vinfo( vert_num, nrgnid, nvertid, rgnid, vertid )
     implicit none
 
@@ -704,301 +626,6 @@ contains
   end subroutine set_vinfo
 
   !-----------------------------------------------------------------------
-  !>
-  !> Description of the subroutine ADM_mk_suffix
-  !>
-  subroutine ADM_mk_suffix
-    implicit none
-
-    integer :: gall_in
-    integer :: i, j, n
-    !---------------------------------------------------------------------
-
-    gall_in = ADM_gmax - ADM_gmin + 1
-
-#ifndef _FIXEDINDEX_
-    ADM_IooJoo_nmax = ( gall_in   ) * ( gall_in   )
-    ADM_IooJmo_nmax = ( gall_in   ) * ( gall_in+1 )
-    ADM_IooJop_nmax = ( gall_in   ) * ( gall_in+1 )
-    ADM_IooJmp_nmax = ( gall_in   ) * ( gall_in+2 )
-    ADM_ImoJoo_nmax = ( gall_in+1 ) * ( gall_in   )
-    ADM_ImoJmo_nmax = ( gall_in+1 ) * ( gall_in+1 )
-    ADM_ImoJop_nmax = ( gall_in+1 ) * ( gall_in+1 )
-    ADM_ImoJmp_nmax = ( gall_in+1 ) * ( gall_in+2 )
-    ADM_IopJoo_nmax = ( gall_in+1 ) * ( gall_in   )
-    ADM_IopJmo_nmax = ( gall_in+1 ) * ( gall_in+1 )
-    ADM_IopJop_nmax = ( gall_in+1 ) * ( gall_in+1 )
-    ADM_IopJmp_nmax = ( gall_in+1 ) * ( gall_in+2 )
-    ADM_ImpJoo_nmax = ( gall_in+2 ) * ( gall_in   )
-    ADM_ImpJmo_nmax = ( gall_in+2 ) * ( gall_in+1 )
-    ADM_ImpJop_nmax = ( gall_in+2 ) * ( gall_in+1 )
-    ADM_ImpJmp_nmax = ( gall_in+2 ) * ( gall_in+2 )
-
-    allocate( ADM_IooJoo(ADM_IooJoo_nmax,ADM_GIJ_nmax) )
-    allocate( ADM_IooJmo(ADM_IooJmo_nmax,ADM_GIJ_nmax) )
-    allocate( ADM_IooJop(ADM_IooJop_nmax,ADM_GIJ_nmax) )
-    allocate( ADM_IooJmp(ADM_IooJmp_nmax,ADM_GIJ_nmax) )
-    allocate( ADM_ImoJoo(ADM_ImoJoo_nmax,ADM_GIJ_nmax) )
-    allocate( ADM_ImoJmo(ADM_ImoJmo_nmax,ADM_GIJ_nmax) )
-    allocate( ADM_ImoJop(ADM_ImoJop_nmax,ADM_GIJ_nmax) )
-    allocate( ADM_ImoJmp(ADM_ImoJmp_nmax,ADM_GIJ_nmax) )
-    allocate( ADM_IopJoo(ADM_IopJoo_nmax,ADM_GIJ_nmax) )
-    allocate( ADM_IopJmo(ADM_IopJmo_nmax,ADM_GIJ_nmax) )
-    allocate( ADM_IopJop(ADM_IopJop_nmax,ADM_GIJ_nmax) )
-    allocate( ADM_IopJmp(ADM_IopJmp_nmax,ADM_GIJ_nmax) )
-    allocate( ADM_ImpJoo(ADM_ImpJoo_nmax,ADM_GIJ_nmax) )
-    allocate( ADM_ImpJmo(ADM_ImpJmo_nmax,ADM_GIJ_nmax) )
-    allocate( ADM_ImpJop(ADM_ImpJop_nmax,ADM_GIJ_nmax) )
-    allocate( ADM_ImpJmp(ADM_ImpJmp_nmax,ADM_GIJ_nmax) )
-#endif
-
-    ! ADM_IooJoo
-    n = 1
-    do j = ADM_gmin, ADM_gmax
-    do i = ADM_gmin, ADM_gmax
-       ADM_IooJoo(n,ADM_GIoJo) = suf(i  ,j  )
-       ADM_IooJoo(n,ADM_GIpJo) = suf(i+1,j  )
-       ADM_IooJoo(n,ADM_GIpJp) = suf(i+1,j+1)
-       ADM_IooJoo(n,ADM_GIoJp) = suf(i  ,j+1)
-       ADM_IooJoo(n,ADM_GImJo) = suf(i-1,j  )
-       ADM_IooJoo(n,ADM_GImJm) = suf(i-1,j-1)
-       ADM_IooJoo(n,ADM_GIoJm) = suf(i  ,j-1)
-       n = n + 1
-    enddo
-    enddo
-
-    ! ADM_IooJmo
-    n = 1
-    do j = ADM_gmin-1, ADM_gmax
-    do i = ADM_gmin,   ADM_gmax
-       ADM_IooJmo(n,ADM_GIoJo) = suf(i  ,j  )
-       ADM_IooJmo(n,ADM_GIpJo) = suf(i+1,j  )
-       ADM_IooJmo(n,ADM_GIpJp) = suf(i+1,j+1)
-       ADM_IooJmo(n,ADM_GIoJp) = suf(i  ,j+1)
-       ADM_IooJmo(n,ADM_GImJo) = suf(i-1,j  )
-       ADM_IooJmo(n,ADM_GImJm) = suf(i-1,j-1)
-       ADM_IooJmo(n,ADM_GIoJm) = suf(i  ,j-1)
-       n = n + 1
-    enddo
-    enddo
-
-    ! ADM_IooJop
-    n = 1
-    do j = ADM_gmin, ADM_gmax+1
-    do i = ADM_gmin, ADM_gmax
-       ADM_IooJop(n,ADM_GIoJo) = suf(i  ,j  )
-       ADM_IooJop(n,ADM_GIpJo) = suf(i+1,j  )
-       ADM_IooJop(n,ADM_GIpJp) = suf(i+1,j+1)
-       ADM_IooJop(n,ADM_GIoJp) = suf(i  ,j+1)
-       ADM_IooJop(n,ADM_GImJo) = suf(i-1,j  )
-       ADM_IooJop(n,ADM_GImJm) = suf(i-1,j-1)
-       ADM_IooJop(n,ADM_GIoJm) = suf(i  ,j-1)
-       n = n + 1
-    enddo
-    enddo
-
-    ! ADM_IooJmp
-    n = 1
-    do j = ADM_gmin-1, ADM_gmax+1
-    do i = ADM_gmin,   ADM_gmax
-       ADM_IooJmp(n,ADM_GIoJo) = suf(i  ,j  )
-       ADM_IooJmp(n,ADM_GIpJo) = suf(i+1,j  )
-       ADM_IooJmp(n,ADM_GIpJp) = suf(i+1,j+1)
-       ADM_IooJmp(n,ADM_GIoJp) = suf(i  ,j+1)
-       ADM_IooJmp(n,ADM_GImJo) = suf(i-1,j  )
-       ADM_IooJmp(n,ADM_GImJm) = suf(i-1,j-1)
-       ADM_IooJmp(n,ADM_GIoJm) = suf(i  ,j-1)
-       n = n + 1
-    enddo
-    enddo
-
-    ! ADM_ImoJoo
-    n = 1
-    do j = ADM_gmin,   ADM_gmax
-    do i = ADM_gmin-1, ADM_gmax
-       ADM_ImoJoo(n,ADM_GIoJo) = suf(i  ,j  )
-       ADM_ImoJoo(n,ADM_GIpJo) = suf(i+1,j  )
-       ADM_ImoJoo(n,ADM_GIpJp) = suf(i+1,j+1)
-       ADM_ImoJoo(n,ADM_GIoJp) = suf(i  ,j+1)
-       ADM_ImoJoo(n,ADM_GImJo) = suf(i-1,j  )
-       ADM_ImoJoo(n,ADM_GImJm) = suf(i-1,j-1)
-       ADM_ImoJoo(n,ADM_GIoJm) = suf(i  ,j-1)
-       n = n + 1
-    enddo
-    enddo
-
-    ! ADM_ImoJmo
-    n = 1
-    do j = ADM_gmin-1, ADM_gmax
-    do i = ADM_gmin-1, ADM_gmax
-       ADM_ImoJmo(n,ADM_GIoJo) = suf(i  ,j  )
-       ADM_ImoJmo(n,ADM_GIpJo) = suf(i+1,j  )
-       ADM_ImoJmo(n,ADM_GIpJp) = suf(i+1,j+1)
-       ADM_ImoJmo(n,ADM_GIoJp) = suf(i  ,j+1)
-       ADM_ImoJmo(n,ADM_GImJo) = suf(i-1,j  )
-       ADM_ImoJmo(n,ADM_GImJm) = suf(i-1,j-1)
-       ADM_ImoJmo(n,ADM_GIoJm) = suf(i  ,j-1)
-       n = n + 1
-    enddo
-    enddo
-
-    ! ADM_ImoJop
-    n = 1
-    do j = ADM_gmin,   ADM_gmax+1
-    do i = ADM_gmin-1, ADM_gmax
-       ADM_ImoJop(n,ADM_GIoJo) = suf(i  ,j  )
-       ADM_ImoJop(n,ADM_GIpJo) = suf(i+1,j  )
-       ADM_ImoJop(n,ADM_GIpJp) = suf(i+1,j+1)
-       ADM_ImoJop(n,ADM_GIoJp) = suf(i  ,j+1)
-       ADM_ImoJop(n,ADM_GImJo) = suf(i-1,j  )
-       ADM_ImoJop(n,ADM_GImJm) = suf(i-1,j-1)
-       ADM_ImoJop(n,ADM_GIoJm) = suf(i  ,j-1)
-       n = n + 1
-    enddo
-    enddo
-
-    ! ADM_ImoJmp
-    n = 1
-    do j = ADM_gmin-1, ADM_gmax+1
-    do i = ADM_gmin-1, ADM_gmax
-       ADM_ImoJmp(n,ADM_GIoJo) = suf(i  ,j  )
-       ADM_ImoJmp(n,ADM_GIpJo) = suf(i+1,j  )
-       ADM_ImoJmp(n,ADM_GIpJp) = suf(i+1,j+1)
-       ADM_ImoJmp(n,ADM_GIoJp) = suf(i  ,j+1)
-       ADM_ImoJmp(n,ADM_GImJo) = suf(i-1,j  )
-       ADM_ImoJmp(n,ADM_GImJm) = suf(i-1,j-1)
-       ADM_ImoJmp(n,ADM_GIoJm) = suf(i  ,j-1)
-       n = n + 1
-    enddo
-    enddo
-
-    ! ADM_IopJoo
-    n = 1
-    do j = ADM_gmin, ADM_gmax
-    do i = ADM_gmin, ADM_gmax+1
-       ADM_IopJoo(n,ADM_GIoJo) = suf(i  ,j  )
-       ADM_IopJoo(n,ADM_GIpJo) = suf(i+1,j  )
-       ADM_IopJoo(n,ADM_GIpJp) = suf(i+1,j+1)
-       ADM_IopJoo(n,ADM_GIoJp) = suf(i  ,j+1)
-       ADM_IopJoo(n,ADM_GImJo) = suf(i-1,j  )
-       ADM_IopJoo(n,ADM_GImJm) = suf(i-1,j-1)
-       ADM_IopJoo(n,ADM_GIoJm) = suf(i  ,j-1)
-       n = n + 1
-    enddo
-    enddo
-
-    ! ADM_IopJmo
-    n = 1
-    do j = ADM_gmin-1, ADM_gmax
-    do i = ADM_gmin,   ADM_gmax+1
-       ADM_IopJmo(n,ADM_GIoJo) = suf(i  ,j  )
-       ADM_IopJmo(n,ADM_GIpJo) = suf(i+1,j  )
-       ADM_IopJmo(n,ADM_GIpJp) = suf(i+1,j+1)
-       ADM_IopJmo(n,ADM_GIoJp) = suf(i  ,j+1)
-       ADM_IopJmo(n,ADM_GImJo) = suf(i-1,j  )
-       ADM_IopJmo(n,ADM_GImJm) = suf(i-1,j-1)
-       ADM_IopJmo(n,ADM_GIoJm) = suf(i  ,j-1)
-       n = n + 1
-    enddo
-    enddo
-
-    ! ADM_IopJop
-    n = 1
-    do j = ADM_gmin, ADM_gmax+1
-    do i = ADM_gmin, ADM_gmax+1
-       ADM_IopJop(n,ADM_GIoJo) = suf(i  ,j  )
-       ADM_IopJop(n,ADM_GIpJo) = suf(i+1,j  )
-       ADM_IopJop(n,ADM_GIpJp) = suf(i+1,j+1)
-       ADM_IopJop(n,ADM_GIoJp) = suf(i  ,j+1)
-       ADM_IopJop(n,ADM_GImJo) = suf(i-1,j  )
-       ADM_IopJop(n,ADM_GImJm) = suf(i-1,j-1)
-       ADM_IopJop(n,ADM_GIoJm) = suf(i  ,j-1)
-       n = n + 1
-    enddo
-    enddo
-
-    ! ADM_IopJmp
-    n = 1
-    do j = ADM_gmin-1, ADM_gmax+1
-    do i = ADM_gmin, ADM_gmax+1
-       ADM_IopJmp(n,ADM_GIoJo) = suf(i  ,j  )
-       ADM_IopJmp(n,ADM_GIpJo) = suf(i+1,j  )
-       ADM_IopJmp(n,ADM_GIpJp) = suf(i+1,j+1)
-       ADM_IopJmp(n,ADM_GIoJp) = suf(i  ,j+1)
-       ADM_IopJmp(n,ADM_GImJo) = suf(i-1,j  )
-       ADM_IopJmp(n,ADM_GImJm) = suf(i-1,j-1)
-       ADM_IopJmp(n,ADM_GIoJm) = suf(i  ,j-1)
-       n = n + 1
-    enddo
-    enddo
-
-    ! ADM_ImpJoo
-    n = 1
-    do j = ADM_gmin,   ADM_gmax
-    do i = ADM_gmin-1, ADM_gmax+1
-       ADM_ImpJoo(n,ADM_GIoJo) = suf(i  ,j  )
-       ADM_ImpJoo(n,ADM_GIpJo) = suf(i+1,j  )
-       ADM_ImpJoo(n,ADM_GIpJp) = suf(i+1,j+1)
-       ADM_ImpJoo(n,ADM_GIoJp) = suf(i  ,j+1)
-       ADM_ImpJoo(n,ADM_GImJo) = suf(i-1,j  )
-       ADM_ImpJoo(n,ADM_GImJm) = suf(i-1,j-1)
-       ADM_ImpJoo(n,ADM_GIoJm) = suf(i  ,j-1)
-       n = n + 1
-    enddo
-    enddo
-
-    ! ADM_ImpJmo
-    n = 1
-    do j = ADM_gmin-1, ADM_gmax
-    do i = ADM_gmin-1, ADM_gmax+1
-       ADM_ImpJmo(n,ADM_GIoJo) = suf(i  ,j  )
-       ADM_ImpJmo(n,ADM_GIpJo) = suf(i+1,j  )
-       ADM_ImpJmo(n,ADM_GIpJp) = suf(i+1,j+1)
-       ADM_ImpJmo(n,ADM_GIoJp) = suf(i  ,j+1)
-       ADM_ImpJmo(n,ADM_GImJo) = suf(i-1,j  )
-       ADM_ImpJmo(n,ADM_GImJm) = suf(i-1,j-1)
-       ADM_ImpJmo(n,ADM_GIoJm) = suf(i  ,j-1)
-       n = n + 1
-    enddo
-    enddo
-
-    ! ADM_ImpJop
-    n = 1
-    do j = ADM_gmin,   ADM_gmax+1
-    do i = ADM_gmin-1, ADM_gmax+1
-       ADM_ImpJop(n,ADM_GIoJo) = suf(i  ,j  )
-       ADM_ImpJop(n,ADM_GIpJo) = suf(i+1,j  )
-       ADM_ImpJop(n,ADM_GIpJp) = suf(i+1,j+1)
-       ADM_ImpJop(n,ADM_GIoJp) = suf(i  ,j+1)
-       ADM_ImpJop(n,ADM_GImJo) = suf(i-1,j  )
-       ADM_ImpJop(n,ADM_GImJm) = suf(i-1,j-1)
-       ADM_ImpJop(n,ADM_GIoJm) = suf(i  ,j-1)
-       n = n + 1
-    enddo
-    enddo
-
-    ! ADM_ImpJmp
-    n = 1
-    do j = ADM_gmin-1, ADM_gmax+1
-    do i = ADM_gmin-1, ADM_gmax+1
-       ADM_ImpJmp(n,ADM_GIoJo) = suf(i  ,j  )
-       ADM_ImpJmp(n,ADM_GIpJo) = suf(i+1,j  )
-       ADM_ImpJmp(n,ADM_GIpJp) = suf(i+1,j+1)
-       ADM_ImpJmp(n,ADM_GIoJp) = suf(i  ,j+1)
-       ADM_ImpJmp(n,ADM_GImJo) = suf(i-1,j  )
-       ADM_ImpJmp(n,ADM_GImJm) = suf(i-1,j-1)
-       ADM_ImpJmp(n,ADM_GIoJm) = suf(i  ,j-1)
-       n = n + 1
-    enddo
-    enddo
-
-    return
-  end subroutine ADM_mk_suffix
-
-  !-----------------------------------------------------------------------
-  !>
-  !> Description of the subroutine output_info
-  !>
   subroutine output_info
     use mod_process, only: &
        PRC_nprocs

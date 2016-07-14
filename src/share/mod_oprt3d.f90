@@ -339,7 +339,7 @@ contains
              rhogw_vm_pl(ij,ADM_kmax+1) = 0.0_RP
           enddo
 
-          n = ADM_GSLF_PL
+          n = ADM_gslf_pl
 
           do k = ADM_kmin, ADM_kmax
              do v = 1, ADM_gall_pl

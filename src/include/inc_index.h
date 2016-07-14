@@ -47,22 +47,4 @@
   integer, public, parameter :: ADM_kmin        = 2
   integer, public, parameter :: ADM_kmax        = 95
 
-  ! List vectors
-  integer, public, parameter :: ADM_IooJoo_nmax = 16384
-  integer, public, parameter :: ADM_IooJmo_nmax = 16512
-  integer, public, parameter :: ADM_IooJop_nmax = 16512
-  integer, public, parameter :: ADM_IooJmp_nmax = 16640
-  integer, public, parameter :: ADM_ImoJoo_nmax = 16512
-  integer, public, parameter :: ADM_ImoJmo_nmax = 16641
-  integer, public, parameter :: ADM_ImoJop_nmax = 16641
-  integer, public, parameter :: ADM_ImoJmp_nmax = 16770
-  integer, public, parameter :: ADM_IopJoo_nmax = 16512
-  integer, public, parameter :: ADM_IopJmo_nmax = 16641
-  integer, public, parameter :: ADM_IopJop_nmax = 16641
-  integer, public, parameter :: ADM_IopJmp_nmax = 16770
-  integer, public, parameter :: ADM_ImpJoo_nmax = 16640
-  integer, public, parameter :: ADM_ImpJmo_nmax = 16770
-  integer, public, parameter :: ADM_ImpJop_nmax = 16770
-  integer, public, parameter :: ADM_ImpJmp_nmax = 16900
-
 !-------------------------------------------------------------------------------

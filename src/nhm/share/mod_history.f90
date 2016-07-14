@@ -521,15 +521,14 @@ contains
        UNDEF => CONST_UNDEF
     use mod_calendar, only: &
        CALENDAR_ss2yh
-    use mod_adm, only : &
-       ADM_l_me,        &
-       ADM_lall,        &
-       ADM_gall,        &
-       ADM_gall_in,     &
-       ADM_kmin,        &
-       ADM_IopJop_nmax, &
-       ADM_IopJop,      &
-       ADM_GIoJo
+    use mod_adm, only: &
+       ADM_l_me,    &
+       ADM_lall,    &
+       ADM_gall,    &
+       ADM_gall_in, &
+       ADM_gmin,    &
+       ADM_gmax,    &
+       ADM_kmin
     use mod_time, only: &
        TIME_CSTEP, &
        TIME_DTL
@@ -545,7 +544,7 @@ contains
 
     logical :: save_var
     integer :: kmax
-    integer :: g, g2, k, k2, l, n
+    integer :: i, j, g, g2, k, k2, l, n
     !---------------------------------------------------------------------------
 
     hitem = trim(item)
@@ -618,14 +617,19 @@ contains
 
              if ( ktype_save(n) == '3D' ) then ! trim HALO
 
-                if (ijdim_input == ADM_gall_in) then
+                if ( ijdim_input == ADM_gall_in ) then
                    do k = 1, kmax
-                   do g = 1, ADM_IopJop_nmax
-                      k2 = ksumstr(n)-1 + k
-                      g2 = ADM_IopJop(g,ADM_GIoJo)
+                      g = 1
+                      do j = ADM_gmin, ADM_gmax+1
+                      do i = ADM_gmin, ADM_gmax+1
+                         g2 = suf(i,j)
+                         k2 = ksumstr(n)-1 + k
 
-                      v_save(g2,k2,l,1) = v_save(g2,k2,l,1) + gd(g,k+ADM_kmin-1) * TIME_DTL
-                   enddo
+                         v_save(g2,k2,l,1) = v_save(g2,k2,l,1) + gd(g,k+ADM_kmin-1) * TIME_DTL
+
+                         g = g + 1
+                      enddo
+                      enddo
                    enddo
                 else ! ijdim_input == ADM_gall
                    do k = 1, kmax
@@ -641,12 +645,17 @@ contains
 
                 if (ijdim_input == ADM_gall_in) then
                    do k = 1, kmax
-                   do g = 1, ADM_IopJop_nmax
-                      k2 = ksumstr(n)-1 + k
-                      g2 = ADM_IopJop(g,ADM_GIoJo)
+                      g = 1
+                      do j = ADM_gmin, ADM_gmax+1
+                      do i = ADM_gmin, ADM_gmax+1
+                         g2 = suf(i,j)
+                         k2 = ksumstr(n)-1 + k
 
-                      v_save(g2,k2,l,1) = v_save(g2,k2,l,1) + gd(g,k) * TIME_DTL
-                   enddo
+                         v_save(g2,k2,l,1) = v_save(g2,k2,l,1) + gd(g,k) * TIME_DTL
+
+                         g = g + 1
+                      enddo
+                      enddo
                    enddo
                 else ! ijdim_input == ADM_gall
                    do k = 1, kmax
@@ -664,17 +673,22 @@ contains
 
              if (ijdim_input == ADM_gall_in) then
                 do k2 = 1, npreslev
-                do g  = 1, ADM_IopJop_nmax
-                   k  = cnvpre_klev(g2,k,l)
-                   g2 = ADM_IopJop(g,ADM_GIoJo)
+                   g = 1
+                   do j = ADM_gmin, ADM_gmax+1
+                   do i = ADM_gmin, ADM_gmax+1
+                      g2 = suf(i,j)
+                      k  = cnvpre_klev(g2,k,l)
 
-                   if ( k > ADM_kmin ) then
-                      v_save(g2,k2,l,1) = ( cnvpre_fac1(g2,k2,l) * gd(g,k-1) &
-                                          + cnvpre_fac2(g2,k2,l) * gd(g,k  ) ) * TIME_DTL
-                   else
-                      v_save(g2,k2,l,1) = UNDEF
-                   endif
-                enddo
+                      if ( k > ADM_kmin ) then
+                         v_save(g2,k2,l,1) = ( cnvpre_fac1(g2,k2,l) * gd(g,k-1) &
+                                             + cnvpre_fac2(g2,k2,l) * gd(g,k  ) ) * TIME_DTL
+                      else
+                         v_save(g2,k2,l,1) = UNDEF
+                      endif
+
+                      g = g + 1
+                   enddo
+                   enddo
                 enddo
              else ! ijdim_input == ADM_gall
                 do k = 1, kmax
@@ -1148,6 +1162,19 @@ contains
 
     return
   end subroutine diag_pre_sfc
+
+  !-----------------------------------------------------------------------------
+  integer function suf(i,j)
+    use mod_adm, only: &
+       ADM_gall_1d
+    implicit none
+
+    integer :: i, j
+    !---------------------------------------------------------------------------
+
+    suf = ADM_gall_1d * (j-1) + i
+
+  end function suf
 
 end module mod_history
 !-------------------------------------------------------------------------------

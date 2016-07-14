@@ -61,18 +61,17 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_global_sum( var, var_pl ) result( sum_g )
     use mod_adm, only: &
-       ADM_have_pl,     &
-       ADM_gall,        &
-       ADM_gall_pl,     &
-       ADM_lall,        &
-       ADM_lall_pl,     &
-       ADM_kall,        &
-       ADM_kmin,        &
-       ADM_kmax,        &
-       ADM_IooJoo_nmax, &
-       ADM_IooJoo,      &
-       ADM_GIoJo,       &
-       ADM_GSLF_PL
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_gmin,    &
+       ADM_gmax,    &
+       ADM_gslf_pl, &
+       ADM_kmin,    &
+       ADM_kmax
     use mod_comm, only: &
        COMM_Stat_sum
     use mod_vmtr, only: &
@@ -85,14 +84,16 @@ contains
     real(RP)             :: sum_g
 
     real(RP) :: sum
-    integer :: n, k, l
+    integer  :: i, j, k, l
     !---------------------------------------------------------------------------
 
     sum = 0.0_RP
     do l = 1,        ADM_lall
     do k = ADM_kmin, ADM_kmax
-    do n = 1,        ADM_IooJoo_nmax
-       sum = sum + var(ADM_IooJoo(n,ADM_GIoJo),k,l) * VMTR_VOLUME(ADM_IooJoo(n,ADM_GIoJo),k,l)
+    do j = ADM_gmin, ADM_gmax
+    do i = ADM_gmin, ADM_gmax
+       sum = sum + var(suf(i,j),k,l) * VMTR_VOLUME(suf(i,j),k,l)
+    enddo
     enddo
     enddo
     enddo
@@ -100,7 +101,7 @@ contains
     if ( ADM_have_pl ) then
        do l = 1,        ADM_lall_pl
        do k = ADM_kmin, ADM_kmax
-          sum = sum + var_pl(ADM_GSLF_PL,k,l) * VMTR_VOLUME_pl(ADM_GSLF_PL,k,l)
+          sum = sum + var_pl(ADM_gslf_pl,k,l) * VMTR_VOLUME_pl(ADM_gslf_pl,k,l)
        enddo
        enddo
     endif
@@ -113,16 +114,17 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_global_sum_srf( var, var_pl ) result( sum_g )
     use mod_adm, only: &
-       ADM_have_pl,     &
-       ADM_gall,        &
-       ADM_gall_pl,     &
-       ADM_lall,        &
-       ADM_lall_pl,     &
-       ADM_KNONE,       &
-       ADM_IooJoo_nmax, &
-       ADM_IooJoo,      &
-       ADM_GIoJo,       &
-       ADM_GSLF_PL
+       ADM_KNONE,   &
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_gmin,    &
+       ADM_gmax,    &
+       ADM_gslf_pl, &
+       ADM_kmin,    &
+       ADM_kmax
     use mod_comm, only: &
        COMM_Stat_sum
     use mod_gmtr, only: &
@@ -135,21 +137,21 @@ contains
     real(RP)             :: sum_g
 
     real(RP) :: sum
-    integer :: n, l
+    integer  :: i, j, l
     !---------------------------------------------------------------------------
 
     sum = 0.0_RP
     do l = 1, ADM_lall
-    do n = 1, ADM_IooJoo_nmax
-       sum = sum + var      (ADM_IooJoo(n,ADM_GIoJo),ADM_KNONE,l) &
-                 * GMTR_area(ADM_IooJoo(n,ADM_GIoJo),l)
+    do j = ADM_gmin, ADM_gmax
+    do i = ADM_gmin, ADM_gmax
+       sum = sum + var(suf(i,j),ADM_KNONE,l) * GMTR_area(suf(i,j),l)
+    enddo
     enddo
     enddo
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
-          sum = sum + var_pl      (ADM_GSLF_PL,ADM_KNONE,l) &
-                    * GMTR_area_pl(ADM_GSLF_PL,l)
+          sum = sum + var_pl(ADM_gslf_pl,ADM_KNONE,l) * GMTR_area_pl(ADM_gslf_pl,l)
        enddo
     endif
 
@@ -161,16 +163,17 @@ contains
   !-----------------------------------------------------------------------------
   subroutine GTL_global_sum_eachlayer( var, var_pl, sum_g )
     use mod_adm, only: &
-       ADM_have_pl,     &
-       ADM_gall,        &
-       ADM_gall_pl,     &
-       ADM_lall,        &
-       ADM_lall_pl,     &
-       ADM_kall,        &
-       ADM_IooJoo_nmax, &
-       ADM_IooJoo,      &
-       ADM_GIoJo,       &
-       ADM_GSLF_PL
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_gmin,    &
+       ADM_gmax,    &
+       ADM_gslf_pl, &
+       ADM_kmin,    &
+       ADM_kmax
     use mod_comm, only: &
        COMM_Stat_sum_eachlayer
     use mod_gmtr, only: &
@@ -186,16 +189,18 @@ contains
     real(RP), intent(out) :: sum_g (ADM_kall)
 
     real(RP) :: sum(ADM_kall)
-    integer :: n, k, l
+    integer  :: i, j, k, l
     !---------------------------------------------------------------------------
 
     sum(:) = 0.0_RP
     do l = 1, ADM_lall
     do k = 1, ADM_kall
-    do n = 1, ADM_IooJoo_nmax
-       sum(k) = sum(k) + var      (ADM_IooJoo(n,ADM_GIoJo),k,l)    &
-                       * GMTR_area(ADM_IooJoo(n,ADM_GIoJo),l)      &
-                       / VMTR_RGAM(ADM_IooJoo(n,ADM_GIoJo),k,l)**2
+    do j = ADM_gmin, ADM_gmax
+    do i = ADM_gmin, ADM_gmax
+       sum(k) = sum(k) + var      (suf(i,j),k,l)    &
+                       * GMTR_area(suf(i,j),l)      &
+                       / VMTR_RGAM(suf(i,j),k,l)**2
+    enddo
     enddo
     enddo
     enddo
@@ -203,9 +208,9 @@ contains
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
-          sum(k) = sum(k) + var_pl      (ADM_GSLF_PL,k,l)    &
-                          * GMTR_area_pl(ADM_GSLF_PL,l)      &
-                          / VMTR_RGAM_pl(ADM_GSLF_PL,k,l)**2
+          sum(k) = sum(k) + var_pl      (ADM_gslf_pl,k,l)    &
+                          * GMTR_area_pl(ADM_gslf_pl,l)      &
+                          / VMTR_RGAM_pl(ADM_gslf_pl,k,l)**2
        enddo
        enddo
     endif
@@ -218,10 +223,10 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_global_mean( var, var_pl ) result( sum_g )
     use mod_adm, only: &
-       ADM_gall,    &
        ADM_lall,    &
-       ADM_gall_pl, &
        ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
        ADM_kall
     implicit none
 
@@ -255,10 +260,10 @@ contains
   !-----------------------------------------------------------------------------
   subroutine GTL_global_mean_eachlayer( var, var_pl, sum_g )
     use mod_adm, only: &
-       ADM_gall,    &
        ADM_lall,    &
-       ADM_gall_pl, &
        ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
        ADM_kall
     implicit none
 
@@ -285,35 +290,36 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_max( var, var_pl, kdim, kstart, kend ) result( vmax_g )
     use mod_adm, only: &
-       ADM_have_pl,     &
-       ADM_gall,        &
-       ADM_gall_pl,     &
-       ADM_lall,        &
-       ADM_lall_pl,     &
-       ADM_IooJoo_nmax, &
-       ADM_IooJoo,      &
-       ADM_GIoJo,       &
-       ADM_GSLF_PL
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_gmin,    &
+       ADM_gmax,    &
+       ADM_gslf_pl
     use mod_comm, only: &
        COMM_Stat_max
     implicit none
 
-    integer, intent(in) :: kdim
-    integer, intent(in) :: kstart
-    integer, intent(in) :: kend
+    integer,  intent(in) :: kdim
+    integer,  intent(in) :: kstart
+    integer,  intent(in) :: kend
     real(RP), intent(in) :: var   (ADM_gall,   kdim,ADM_lall   )
     real(RP), intent(in) :: var_pl(ADM_gall_pl,kdim,ADM_lall_pl)
     real(RP)             :: vmax_g
 
     real(RP) :: vmax
-    integer :: n, k, l
+    integer  :: i, j, k, l
     !---------------------------------------------------------------------------
 
     vmax = -1.E+30_RP
     do l = 1,      ADM_lall
     do k = kstart, kend
-    do n = 1,      ADM_IooJoo_nmax
-       vmax = max( vmax, var(ADM_IooJoo(n,ADM_GIoJo),k,l) )
+    do j = ADM_gmin, ADM_gmax
+    do i = ADM_gmin, ADM_gmax
+       vmax = max( vmax, var(suf(i,j),k,l) )
+    enddo
     enddo
     enddo
     enddo
@@ -321,7 +327,7 @@ contains
     if ( ADM_have_pl ) then
        do l = 1,      ADM_lall_pl
        do k = kstart, kend
-          vmax = max( vmax, var_pl(ADM_GSLF_PL,k,l) )
+          vmax = max( vmax, var_pl(ADM_gslf_pl,k,l) )
        enddo
        enddo
     endif
@@ -334,39 +340,40 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_max_k( var, var_pl, k ) result( vmax_g )
     use mod_adm, only: &
-       ADM_have_pl,     &
-       ADM_gall,        &
-       ADM_gall_pl,     &
-       ADM_lall,        &
-       ADM_lall_pl,     &
-       ADM_kall,        &
-       ADM_IooJoo_nmax, &
-       ADM_IooJoo,      &
-       ADM_GIoJo,       &
-       ADM_GSLF_PL
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_gmin,    &
+       ADM_gmax,    &
+       ADM_gslf_pl
     use mod_comm, only: &
        COMM_Stat_max
     implicit none
 
     real(RP), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
     real(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    integer, intent(in) :: k
+    integer,  intent(in) :: k
     real(RP)             :: vmax_g
 
     real(RP) :: vmax
-    integer :: n, l
+    integer  :: i, j, l
     !---------------------------------------------------------------------------
 
     vmax = -1.E+30_RP
     do l = 1,        ADM_lall
-    do n = 1,        ADM_IooJoo_nmax
-       vmax = max( vmax, var(ADM_IooJoo(n,ADM_GIoJo),k,l) )
+    do j = ADM_gmin, ADM_gmax
+    do i = ADM_gmin, ADM_gmax
+       vmax = max( vmax, var(suf(i,j),k,l) )
+    enddo
     enddo
     enddo
 
     if ( ADM_have_pl ) then
        do l = 1,        ADM_lall_pl
-          vmax = max( vmax, var_pl(ADM_GSLF_PL,k,l) )
+          vmax = max( vmax, var_pl(ADM_gslf_pl,k,l) )
        enddo
     endif
 
@@ -378,29 +385,29 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_min( var, var_pl, kdim, kstart, kend, nonzero ) result( vmin_g )
     use mod_adm, only: &
-       ADM_have_pl,     &
-       ADM_gall,        &
-       ADM_gall_pl,     &
-       ADM_lall,        &
-       ADM_lall_pl,     &
-       ADM_IooJoo_nmax, &
-       ADM_IooJoo,      &
-       ADM_GIoJo,       &
-       ADM_GSLF_PL
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_gmin,    &
+       ADM_gmax,    &
+       ADM_gslf_pl
     use mod_comm, only: &
        COMM_Stat_min
     implicit none
 
-    integer, intent(in) :: kdim
-    integer, intent(in) :: kstart
-    integer, intent(in) :: kend
+    integer,  intent(in) :: kdim
+    integer,  intent(in) :: kstart
+    integer,  intent(in) :: kend
     real(RP), intent(in) :: var   (ADM_gall,   kdim,ADM_lall   )
     real(RP), intent(in) :: var_pl(ADM_gall_pl,kdim,ADM_lall_pl)
     real(RP)             :: vmin_g
-    logical, optional, intent(in) :: nonzero
+
+    logical,  intent(in), optional :: nonzero
 
     real(RP) :: vmin
-    integer :: n, k, l
+    integer  :: i, j, k, l
     !---------------------------------------------------------------------------
 
     if ( present(nonzero) ) then
@@ -409,13 +416,15 @@ contains
           vmin = 1.E+30_RP
           do l = 1,      ADM_lall
           do k = kstart, kend
-          do n = 1,      ADM_IooJoo_nmax
-             if (       var(ADM_IooJoo(n,ADM_GIoJo),k,l) > 0.0_RP &
-                  .AND. var(ADM_IooJoo(n,ADM_GIoJo),k,l) < vmin ) then
+          do j = ADM_gmin, ADM_gmax
+          do i = ADM_gmin, ADM_gmax
+             if (       var(suf(i,j),k,l) > 0.0_RP &
+                  .AND. var(suf(i,j),k,l) < vmin ) then
 
-                vmin = var(ADM_IooJoo(n,ADM_GIoJo),k,l)
+                vmin = var(suf(i,j),k,l)
 
              endif
+          enddo
           enddo
           enddo
           enddo
@@ -423,10 +432,10 @@ contains
        if ( ADM_have_pl ) then
           do l = 1,      ADM_lall_pl
           do k = kstart, kend
-             if (       var_pl(ADM_GSLF_PL,k,l) > 0.0_RP &
-                  .AND. var_pl(ADM_GSLF_PL,k,l) < vmin ) then
+             if (       var_pl(ADM_gslf_pl,k,l) > 0.0_RP &
+                  .AND. var_pl(ADM_gslf_pl,k,l) < vmin ) then
 
-                vmin = var_pl(ADM_GSLF_PL,k,l)
+                vmin = var_pl(ADM_gslf_pl,k,l)
 
              endif
           enddo
@@ -442,8 +451,10 @@ contains
     vmin = 1.E+30_RP
     do l = 1,      ADM_lall
     do k = kstart, kend
-    do n = 1,      ADM_IooJoo_nmax
-       vmin = min( vmin, var(ADM_IooJoo(n,ADM_GIoJo),k,l) )
+    do j = ADM_gmin, ADM_gmax
+    do i = ADM_gmin, ADM_gmax
+       vmin = min( vmin, var(suf(i,j),k,l) )
+    enddo
     enddo
     enddo
     enddo
@@ -451,7 +462,7 @@ contains
     if ( ADM_have_pl ) then
        do l = 1,      ADM_lall_pl
        do k = kstart, kend
-          vmin = min( vmin, var_pl(ADM_GSLF_PL,k,l) )
+          vmin = min( vmin, var_pl(ADM_gslf_pl,k,l) )
        enddo
        enddo
     endif
@@ -464,39 +475,40 @@ contains
   !-----------------------------------------------------------------------------
   function GTL_min_k( var, var_pl, k ) result( vmin_g )
     use mod_adm, only: &
-       ADM_have_pl,     &
-       ADM_gall,        &
-       ADM_gall_pl,     &
-       ADM_lall,        &
-       ADM_lall_pl,     &
-       ADM_kall,        &
-       ADM_IooJoo_nmax, &
-       ADM_IooJoo,      &
-       ADM_GIoJo,       &
-       ADM_GSLF_PL
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_gmin,    &
+       ADM_gmax,    &
+       ADM_gslf_pl
     use mod_comm, only: &
        COMM_Stat_min
     implicit none
 
     real(RP), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
     real(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    integer, intent(in) :: k
+    integer,  intent(in) :: k
     real(RP)             :: vmin_g
 
     real(RP) :: vmin
-    integer :: n, l
+    integer  :: i, j, l
     !---------------------------------------------------------------------------
 
     vmin = +1.E+30_RP
     do l = 1,        ADM_lall
-    do n = 1,        ADM_IooJoo_nmax
-       vmin = min( vmin, var(ADM_IooJoo(n,ADM_GIoJo),k,l) )
+    do j = ADM_gmin, ADM_gmax
+    do i = ADM_gmin, ADM_gmax
+       vmin = min( vmin, var(suf(i,j),k,l) )
+    enddo
     enddo
     enddo
 
     if ( ADM_have_pl ) then
        do l = 1,        ADM_lall_pl
-          vmin = min( vmin, var_pl(ADM_GSLF_PL,k,l) )
+          vmin = min( vmin, var_pl(ADM_gslf_pl,k,l) )
        enddo
     endif
 
@@ -513,13 +525,13 @@ contains
        vy,   vy_pl,   &
        vz,   vz_pl    )
     use mod_adm, only: &
+       ADM_KNONE,   &
        ADM_have_pl, &
-       ADM_gall,    &
-       ADM_gall_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
-       ADM_kall,    &
-       ADM_KNONE
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall
     use mod_grd, only: &
        GRD_LAT, &
        GRD_s,   &
@@ -548,27 +560,27 @@ contains
 
     real(RP) :: u, v, coslat, sw
 
-    integer :: n, k, l, k0
+    integer  :: g, k, l, k0
     !---------------------------------------------------------------------------
 
     k0 = ADM_KNONE
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
-    do n = 1, ADM_gall
-       coslat = cos(GRD_s(n,k0,l,GRD_LAT))
+    do g = 1, ADM_gall
+       coslat = cos(GRD_s(g,k0,l,GRD_LAT))
 
        sw = 0.5_RP + sign(0.5_RP,-abs(coslat)) ! if (coslat == 0), u=v=0
 
-       u = ucos(n,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
-       v = vcos(n,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
+       u = ucos(g,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
+       v = vcos(g,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
 
-       vx(n,k,l) = u * GMTR_p(n,k0,l,P_IX) &
-                 + v * GMTR_p(n,k0,l,P_JX)
-       vy(n,k,l) = u * GMTR_p(n,k0,l,P_IY) &
-                 + v * GMTR_p(n,k0,l,P_JY)
-       vz(n,k,l) = u * GMTR_p(n,k0,l,P_IZ) &
-                 + v * GMTR_p(n,k0,l,P_JZ)
+       vx(g,k,l) = u * GMTR_p(g,k0,l,P_IX) &
+                 + v * GMTR_p(g,k0,l,P_JX)
+       vy(g,k,l) = u * GMTR_p(g,k0,l,P_IY) &
+                 + v * GMTR_p(g,k0,l,P_JY)
+       vz(g,k,l) = u * GMTR_p(g,k0,l,P_IZ) &
+                 + v * GMTR_p(g,k0,l,P_JZ)
     enddo
     enddo
     enddo
@@ -576,20 +588,20 @@ contains
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
-       do n = 1, ADM_gall_pl
-          coslat = cos(GRD_s_pl(n,k0,l,GRD_LAT))
+       do g = 1, ADM_gall_pl
+          coslat = cos(GRD_s_pl(g,k0,l,GRD_LAT))
 
           sw = 0.5_RP + sign(0.5_RP,-abs(coslat)) ! if (coslat == 0), u=v=0
 
-          u = ucos_pl(n,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
-          v = vcos_pl(n,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
+          u = ucos_pl(g,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
+          v = vcos_pl(g,k,l) * ( 1.0_RP - sw ) / ( coslat - sw )
 
-          vx_pl(n,k,l) = u * GMTR_p_pl(n,k0,l,P_IX) &
-                       + v * GMTR_p_pl(n,k0,l,P_JX)
-          vy_pl(n,k,l) = u * GMTR_p_pl(n,k0,l,P_IY) &
-                       + v * GMTR_p_pl(n,k0,l,P_JY)
-          vz_pl(n,k,l) = u * GMTR_p_pl(n,k0,l,P_IZ) &
-                       + v * GMTR_p_pl(n,k0,l,P_JZ)
+          vx_pl(g,k,l) = u * GMTR_p_pl(g,k0,l,P_IX) &
+                       + v * GMTR_p_pl(g,k0,l,P_JX)
+          vy_pl(g,k,l) = u * GMTR_p_pl(g,k0,l,P_IY) &
+                       + v * GMTR_p_pl(g,k0,l,P_JY)
+          vz_pl(g,k,l) = u * GMTR_p_pl(g,k0,l,P_IZ) &
+                       + v * GMTR_p_pl(g,k0,l,P_JZ)
        enddo
        enddo
        enddo
@@ -609,10 +621,10 @@ contains
     use mod_adm, only: &
        ADM_KNONE,   &
        ADM_have_pl, &
-       ADM_gall,    &
-       ADM_gall_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
        ADM_kall
     use mod_grd, only: &
        GRD_LAT, &
@@ -645,7 +657,7 @@ contains
     real(RP) :: coslat   (ADM_gall   ,ADM_lall   )
     real(RP) :: coslat_pl(ADM_gall_pl,ADM_lall_pl)
 
-    integer :: n, k, l, k0
+    integer  :: n, k, l, k0
     !---------------------------------------------------------------------------
 
     k0 = ADM_KNONE
@@ -701,30 +713,27 @@ contains
        alpha,     &
        vmax       )
     use mod_adm, only: &
+       ADM_KNONE,       &
        ADM_have_pl,     &
-       ADM_gall,        &
-       ADM_gall_pl,     &
        ADM_lall,        &
        ADM_lall_pl,     &
+       ADM_gall,        &
+       ADM_gall_pl,     &
        ADM_kall,        &
-       ADM_KNONE,       &
-       ADM_IooJoo_nmax, &
-       ADM_IooJoo,      &
-       ADM_GIoJo,       &
-       ADM_GSLF_PL
+       ADM_gslf_pl
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
        GRD_s,   &
        GRD_s_pl
     use mod_gmtr, only: &
-       P_IX  => GMTR_p_IX,  &
-       P_IY  => GMTR_p_IY,  &
-       P_IZ  => GMTR_p_IZ,  &
-       P_JX  => GMTR_p_JX,  &
-       P_JY  => GMTR_p_JY,  &
-       P_JZ  => GMTR_p_JZ,  &
-       GMTR_p,          &
+       P_IX => GMTR_p_IX, &
+       P_IY => GMTR_p_IY, &
+       P_IZ => GMTR_p_IZ, &
+       P_JX => GMTR_p_JX, &
+       P_JY => GMTR_p_JY, &
+       P_JZ => GMTR_p_JZ, &
+       GMTR_p,            &
        GMTR_p_pl
     implicit none
 
@@ -738,48 +747,47 @@ contains
     real(RP), intent(in)    :: vmax
 
     real(RP) :: u, v
-    integer :: n, k, l, ij, k0
+
+    integer  :: g, k, l, k0
     !---------------------------------------------------------------------------
 
     k0 = ADM_KNONE
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
-    do n = 1, ADM_IooJoo_nmax
-       ij = ADM_IooJoo(n,ADM_GIoJo)
+    do g = 1, ADM_gall
+       u =  vmax * ( cos(GRD_s(g,k0,l,GRD_LAT)) * cos(alpha) &
+                   + sin(GRD_s(g,k0,l,GRD_LAT))              &
+                   * cos(GRD_s(g,k0,l,GRD_LON)) * sin(alpha) )
+       v = -vmax * ( sin(GRD_s(g,k0,l,GRD_LON)) * sin(alpha) )
 
-       u =  vmax * ( cos(GRD_s(ij,k0,l,GRD_LAT)) * cos(alpha) &
-                   + sin(GRD_s(ij,k0,l,GRD_LAT))              &
-                   * cos(GRD_s(ij,k0,l,GRD_LON)) * sin(alpha) )
-       v = -vmax * ( sin(GRD_s(ij,k0,l,GRD_LON)) * sin(alpha) )
-
-       vx(ij,k,l) = u * GMTR_p(ij,k0,l,P_IX) &
-                  + v * GMTR_p(ij,k0,l,P_JX)
-       vy(ij,k,l) = u * GMTR_p(ij,k0,l,P_IY) &
-                  + v * GMTR_p(ij,k0,l,P_JY)
-       vz(ij,k,l) = u * GMTR_p(ij,k0,l,P_IZ) &
-                  + v * GMTR_p(ij,k0,l,P_JZ)
+       vx(g,k,l) = u * GMTR_p(g,k0,l,P_IX) &
+                 + v * GMTR_p(g,k0,l,P_JX)
+       vy(g,k,l) = u * GMTR_p(g,k0,l,P_IY) &
+                 + v * GMTR_p(g,k0,l,P_JY)
+       vz(g,k,l) = u * GMTR_p(g,k0,l,P_IZ) &
+                 + v * GMTR_p(g,k0,l,P_JZ)
     enddo
     enddo
     enddo
 
     if ( ADM_have_pl ) then
-       ij = ADM_GSLF_PL
+       g = ADM_gslf_pl
 
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
 
-          u =  vmax * ( cos(GRD_s_pl(ij,k0,l,GRD_LAT)) * cos(alpha) &
-                      + sin(GRD_s_pl(ij,k0,l,GRD_LAT))              &
-                      * cos(GRD_s_pl(ij,k0,l,GRD_LON)) * sin(alpha) )
-          v = -vmax * ( sin(GRD_s_pl(ij,k0,l,GRD_LON)) * sin(alpha) )
+          u =  vmax * ( cos(GRD_s_pl(g,k0,l,GRD_LAT)) * cos(alpha) &
+                      + sin(GRD_s_pl(g,k0,l,GRD_LAT))              &
+                      * cos(GRD_s_pl(g,k0,l,GRD_LON)) * sin(alpha) )
+          v = -vmax * ( sin(GRD_s_pl(g,k0,l,GRD_LON)) * sin(alpha) )
 
-          vx_pl(ij,k,l) = u * GMTR_p_pl(ij,k0,l,P_IX) &
-                        + v * GMTR_p_pl(ij,k0,l,P_JX)
-          vy_pl(ij,k,l) = u * GMTR_p_pl(ij,k0,l,P_IY) &
-                        + v * GMTR_p_pl(ij,k0,l,P_JY)
-          vz_pl(ij,k,l) = u * GMTR_p_pl(ij,k0,l,P_IZ) &
-                        + v * GMTR_p_pl(ij,k0,l,P_JZ)
+          vx_pl(g,k,l) = u * GMTR_p_pl(g,k0,l,P_IX) &
+                       + v * GMTR_p_pl(g,k0,l,P_JX)
+          vy_pl(g,k,l) = u * GMTR_p_pl(g,k0,l,P_IY) &
+                       + v * GMTR_p_pl(g,k0,l,P_JY)
+          vz_pl(g,k,l) = u * GMTR_p_pl(g,k0,l,P_IZ) &
+                       + v * GMTR_p_pl(g,k0,l,P_JZ)
        enddo
        enddo
     endif
@@ -790,29 +798,32 @@ contains
   !-----------------------------------------------------------------------------
   subroutine GTL_clip_region( v, v_clip, kmin, kmax )
     use mod_adm, only: &
-       ADM_gall,        &
-       ADM_kall,        &
-       ADM_lall,        &
-       ADM_GIoJo,       &
-       ADM_IopJop_nmax, &
-       ADM_IopJop
+       ADM_lall,    &
+       ADM_gall,    &
+       ADM_gall_in, &
+       ADM_kall,    &
+       ADM_gmin,    &
+       ADM_gmax
     implicit none
 
-    integer, intent(in)  :: kmin
-    integer, intent(in)  :: kmax
-    real(RP), intent(in)  :: v     (ADM_gall,       ADM_kall,       ADM_lall)
-    real(RP), intent(out) :: v_clip(ADM_IopJop_nmax,1:(kmax-kmin+1),ADM_lall)
+    integer,  intent(in)  :: kmin
+    integer,  intent(in)  :: kmax
+    real(RP), intent(in)  :: v     (ADM_gall   ,ADM_kall       ,ADM_lall)
+    real(RP), intent(out) :: v_clip(ADM_gall_in,1:(kmax-kmin+1),ADM_lall)
 
-    integer :: n, k, l
+    integer :: i, j, k, l, n
     !---------------------------------------------------------------------------
 
     do l = 1,    ADM_lall
     do k = kmin, kmax
-    do n = 1,    ADM_IopJop_nmax
+       n = 1
+       do j = ADM_gmin, ADM_gmax+1
+       do i = ADM_gmin, ADM_gmax+1
+          v_clip(n,k-kmin+1,l) = v(suf(i,j),k,l)
 
-       v_clip(n,k-kmin+1,l) = v(ADM_IopJop(n,ADM_GIoJo),k,l)
-
-    enddo
+          n = n + 1
+       enddo
+       enddo
     enddo
     enddo
 
@@ -822,59 +833,77 @@ contains
   !-----------------------------------------------------------------------------
   subroutine GTL_clip_region_1layer( v, v_clip )
     use mod_adm, only: &
-       ADM_gall,        &
-       ADM_lall,        &
-       ADM_GIoJo,       &
-       ADM_IopJop_nmax, &
-       ADM_IopJop
+       ADM_lall,    &
+       ADM_gall,    &
+       ADM_gall_in, &
+       ADM_gmin,    &
+       ADM_gmax
     implicit none
 
-    real(RP), intent(in)  :: v     (ADM_gall,       ADM_lall)
-    real(RP), intent(out) :: v_clip(ADM_IopJop_nmax,ADM_lall)
+    real(RP), intent(in)  :: v     (ADM_gall   ,ADM_lall)
+    real(RP), intent(out) :: v_clip(ADM_gall_in,ADM_lall)
 
-    integer :: n, l
+    integer :: i, j, l, n
     !---------------------------------------------------------------------------
 
     do l = 1, ADM_lall
-    do n = 1, ADM_IopJop_nmax
+       n = 1
+       do j = ADM_gmin, ADM_gmax+1
+       do i = ADM_gmin, ADM_gmax+1
+          v_clip(n,l) = v(suf(i,j),l)
 
-       v_clip(n,l) = v(ADM_IopJop(n,ADM_GIoJo),l)
-
-    enddo
+          n = n + 1
+       enddo
+       enddo
     enddo
 
     return
   end subroutine GTL_clip_region_1layer
 
   !-----------------------------------------------------------------------------
-  ! 2011/03/02 NEC [Add]
   subroutine GTL_clip_region_1layer_k(v,v_clip,ksize,k)
     use mod_adm, only: &
-       ADM_gall,        &
-       ADM_lall,        &
-       ADM_GIoJo,       &
-       ADM_IopJop_nmax, &
-       ADM_IopJop
+       ADM_lall,    &
+       ADM_gall,    &
+       ADM_gall_in, &
+       ADM_gmin,    &
+       ADM_gmax
     implicit none
 
-    integer, intent(in)  :: ksize
-    real(RP), intent(in)  :: v     (ADM_gall,ksize, ADM_lall)
-    real(RP), intent(out) :: v_clip(ADM_IopJop_nmax,ADM_lall)
-    integer, intent(in)  :: k
+    integer,  intent(in)  :: ksize
+    real(RP), intent(in)  :: v     (ADM_gall   ,ksize, ADM_lall)
+    real(RP), intent(out) :: v_clip(ADM_gall_in,ADM_lall)
+    integer,  intent(in)  :: k
 
-    integer :: n, l
+    integer :: i, j, l, n
     !---------------------------------------------------------------------------
 
     do l = 1, ADM_lall
-    do n = 1, ADM_IopJop_nmax
+       n = 1
+       do j = ADM_gmin, ADM_gmax+1
+       do i = ADM_gmin, ADM_gmax+1
+          v_clip(n,l) = v(suf(i,j),k,l)
 
-       v_clip(n,l) = v(ADM_IopJop(n,ADM_GIoJo),k,l)
-
-    enddo
+          n = n + 1
+       enddo
+       enddo
     enddo
 
     return
   end subroutine GTL_clip_region_1layer_k
+
+  !-----------------------------------------------------------------------------
+  integer function suf(i,j)
+    use mod_adm, only: &
+       ADM_gall_1d
+    implicit none
+
+    integer :: i, j
+    !---------------------------------------------------------------------------
+
+    suf = ADM_gall_1d * (j-1) + i
+
+  end function suf
 
 end module mod_gtl
 !-------------------------------------------------------------------------------

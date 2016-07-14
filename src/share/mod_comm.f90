@@ -2737,7 +2737,7 @@ contains
        ADM_gall_1d,        &
        ADM_gmin,           &
        ADM_gmax,           &
-       ADM_GSLF_PL
+       ADM_gslf_pl
     implicit none
 
     integer, intent(in)  ::  knum
@@ -2862,7 +2862,7 @@ contains
 
           do n = 1, nnum
           do k = 1, knum
-             var_pl(ADM_GSLF_PL,k,ADM_NPL,n) = v_npl_recv(k,n)
+             var_pl(ADM_gslf_pl,k,ADM_NPL,n) = v_npl_recv(k,n)
           enddo
           enddo
        endif
@@ -2872,7 +2872,7 @@ contains
 
           do n = 1, nnum
           do k = 1, knum
-             var_pl(ADM_GSLF_PL,k,ADM_SPL,n) = v_spl_recv(k,n)
+             var_pl(ADM_gslf_pl,k,ADM_SPL,n) = v_spl_recv(k,n)
           enddo
           enddo
        endif

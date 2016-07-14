@@ -21,13 +21,17 @@ module mod_mkgrd
   use mod_stdio
   use mod_prof
   use mod_grd, only: &
-     GRD_XDIR, &
-     GRD_YDIR, &
-     GRD_ZDIR, &
-     GRD_x,    &
-     GRD_x_pl, &
-     GRD_xt,   &
-     GRD_xt_pl
+     GRD_XDIR,  &
+     GRD_YDIR,  &
+     GRD_ZDIR,  &
+     GRD_x,     &
+     GRD_x_pl,  &
+     GRD_xt,    &
+     GRD_xt_pl, &
+     GRD_s,     &
+     GRD_s_pl,  &
+     GRD_st,    &
+     GRD_st_pl
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -82,6 +86,8 @@ contains
   subroutine MKGRD_setup
     use mod_process, only: &
        PRC_MPIstop
+    use mod_const, only: &
+       UNDEF  => CONST_UNDEF
     use mod_adm, only: &
        ADM_nxyz,    &
        ADM_gall,    &
@@ -128,12 +134,25 @@ contains
     write(IO_FID_LOG,nml=PARAM_MKGRD)
 
 #ifndef _FIXEDINDEX_
-    allocate( GRD_x    (ADM_gall,   ADM_KNONE,ADM_lall,   ADM_nxyz) )
-    allocate( GRD_x_pl (ADM_gall_pl,ADM_KNONE,ADM_lall_pl,ADM_nxyz) )
-
-    allocate( GRD_xt   (ADM_gall,   ADM_KNONE,ADM_lall,   ADM_TI:ADM_TJ,ADM_nxyz) )
+    allocate( GRD_x    (ADM_gall   ,ADM_KNONE,ADM_lall   ,              ADM_nxyz) )
+    allocate( GRD_x_pl (ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              ADM_nxyz) )
+    allocate( GRD_xt   (ADM_gall   ,ADM_KNONE,ADM_lall   ,ADM_TI:ADM_TJ,ADM_nxyz) )
     allocate( GRD_xt_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              ADM_nxyz) )
+
+    allocate( GRD_s    (ADM_gall   ,ADM_KNONE,ADM_lall   ,              2) )
+    allocate( GRD_s_pl (ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              2) )
+    allocate( GRD_st   (ADM_gall   ,ADM_KNONE,ADM_lall   ,ADM_TI:ADM_TJ,2) )
+    allocate( GRD_st_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              2) )
 #endif
+    GRD_x    (:,:,:,:)   = UNDEF
+    GRD_x_pl (:,:,:,:)   = UNDEF
+    GRD_xt   (:,:,:,:,:) = UNDEF
+    GRD_xt_pl(:,:,:,:)   = UNDEF
+
+    GRD_s    (:,:,:,:)   = UNDEF
+    GRD_s_pl (:,:,:,:)   = UNDEF
+    GRD_st   (:,:,:,:,:) = UNDEF
+    GRD_st_pl(:,:,:,:)   = UNDEF
 
     return
   end subroutine MKGRD_setup
@@ -314,29 +333,24 @@ contains
   !-----------------------------------------------------------------------------
   !> Apply spring dynamics
   subroutine MKGRD_spring
-    use mod_adm, only: &
-       ADM_prc_tab,     &
-       ADM_prc_me,      &
-       ADM_rgn_vnum,    &
-       ADM_W,           &
-       ADM_glevel,      &
-       ADM_gall,        &
-       ADM_gall_pl,     &
-       ADM_KNONE,       &
-       ADM_lall,        &
-       ADM_lall_pl,     &
-       ADM_IooJoo_nmax, &
-       ADM_IooJoo,      &
-       ADM_GIoJo,       &
-       ADM_GIpJo,       &
-       ADM_GIpJp,       &
-       ADM_GIoJp,       &
-       ADM_GImJo,       &
-       ADM_GImJm,       &
-       ADM_GIoJm,       &
-       ADM_gmin
     use mod_const, only: &
        PI => CONST_PI
+    use mod_adm, only: &
+       ADM_nxyz,     &
+       ADM_KNONE,    &
+       ADM_have_sgp, &
+       ADM_glevel,   &
+       ADM_lall,     &
+       ADM_lall_pl,  &
+       ADM_gall,     &
+       ADM_gall_pl,  &
+       ADM_gmin,     &
+       ADM_gmax
+    use mod_vector, only: &
+       VECTR_cross, &
+       VECTR_dot,   &
+       VECTR_abs,   &
+       VECTR_angle
     use mod_comm, only: &
        COMM_data_transfer
     use mod_gtl, only: &
@@ -357,52 +371,35 @@ contains
     real(RP) :: var   ( ADM_gall,   ADM_KNONE,ADM_lall,   var_vindex)
     real(RP) :: var_pl( ADM_gall_pl,ADM_KNONE,ADM_lall_pl,var_vindex)
 
-    real(RP) :: lambda
-    real(RP) :: dbar
-
-    real(RP) :: Px(ADM_gall,0:6)
-    real(RP) :: Py(ADM_gall,0:6)
-    real(RP) :: Pz(ADM_gall,0:6)
-    real(RP) :: Fx(ADM_gall,0:6)
-    real(RP) :: Fy(ADM_gall,0:6)
-    real(RP) :: Fz(ADM_gall,0:6)
-
-    real(RP) :: fixed_point(3)
-
-    real(RP) :: Ax, Ay, Az
-    real(RP) :: Ex, Ey, Ez
-    real(RP) :: Fsumx, Fsumy, Fsumz
-    real(RP) :: Rx, Ry, Rz
-    real(RP) :: Wx, Wy, Wz
-    real(RP) :: len, d, E
-
-    integer, parameter :: itelim = 100000
-    integer            :: ite
-    real(RP) :: Fsum_max, Ek_max
-
     real(RP), parameter :: dump_coef = 1.0_RP   !> friction coefficent in spring dynamics
     real(RP), parameter :: dt        = 2.E-2_RP !> delta t for solution of spring dynamics
     real(RP), parameter :: criteria  = 1.E-4_RP !> criteria of convergence
+    real(RP)            :: lambda, dbar
 
-    integer :: rgnid
-    integer :: ij_singular
-    integer :: n, ij, k, l, m
+    real(RP)            :: P(ADM_nxyz,0:6,ADM_gall)
+    real(RP)            :: F(ADM_nxyz,1:6,ADM_gall)
+    real(RP), parameter :: o(3) = 0.0_RP
+    real(RP)            :: fixed_point(3)
+    real(RP)            :: P0Pm(3), P0PmP0(3), Fsum(3), R0(3), W0(3)
+    real(RP)            :: length, distance, E
+
+    integer, parameter :: itelim = 100000
+    integer            :: ite
+    real(RP)            :: Fsum_max, Ek_max
+
+    integer  :: ij
+    integer  :: ip1j, ijp1, ip1jp1
+    integer  :: im1j, ijm1, im1jm1
+
+    integer :: i, j, k0, l, m
     !---------------------------------------------------------------------------
 
     if( .NOT. MKGRD_DOSPRING ) return
 
-    k = ADM_KNONE
-    ij_singular = suf(ADM_gmin,ADM_gmin)
-
-    var   (:,:,:,:) = 0.0_RP
-    var_pl(:,:,:,:) = 0.0_RP
+    k0 = ADM_KNONE
 
     lambda = 2.0_RP*PI / ( 10.0_RP*2.0_RP**(ADM_glevel-1) )
-
-    dbar = MKGRD_spring_beta * lambda
-
-    var   (:,:,:,I_Rx:I_Rz) = GRD_x   (:,:,:,GRD_XDIR:GRD_ZDIR)
-    var_pl(:,:,:,I_Rx:I_Rz) = GRD_x_pl(:,:,:,GRD_XDIR:GRD_ZDIR)
+    dbar   = MKGRD_spring_beta * lambda
 
     write(IO_FID_LOG,*) '*** Apply grid modification with spring dynamics'
     write(IO_FID_LOG,*) '*** spring factor beta  = ', MKGRD_spring_beta
@@ -413,147 +410,119 @@ contains
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,'(3(A16))') 'itelation', 'max. Kinetic E', 'max. forcing'
 
+    var   (:,:,:,:) = 0.0_RP
+    var_pl(:,:,:,:) = 0.0_RP
+
+    var   (:,:,:,I_Rx:I_Rz) = GRD_x   (:,:,:,GRD_XDIR:GRD_ZDIR)
+    var_pl(:,:,:,I_Rx:I_Rz) = GRD_x_pl(:,:,:,GRD_XDIR:GRD_ZDIR)
+
     !--- Solving spring dynamics
     do ite = 1, itelim
 
        do l = 1, ADM_lall
-          rgnid = ADM_prc_tab(l,ADM_prc_me)
+          do j = ADM_gmin, ADM_gmax
+          do i = ADM_gmin, ADM_gmax
+             ij     = suf(i  ,j  )
+             ip1j   = suf(i+1,j  )
+             ip1jp1 = suf(i+1,j+1)
+             ijp1   = suf(i  ,j+1)
+             im1j   = suf(i-1,j  )
+             im1jm1 = suf(i-1,j-1)
+             ijm1   = suf(i  ,j-1)
 
-          do n = 1, ADM_IooJoo_nmax
-             ij = ADM_IooJoo(n,ADM_GIoJo)
+             P(GRD_XDIR,0,ij) = var(ij    ,k0,l,I_Rx)
+             P(GRD_XDIR,1,ij) = var(ip1j  ,k0,l,I_Rx)
+             P(GRD_XDIR,2,ij) = var(ip1jp1,k0,l,I_Rx)
+             P(GRD_XDIR,3,ij) = var(ijp1  ,k0,l,I_Rx)
+             P(GRD_XDIR,4,ij) = var(im1j  ,k0,l,I_Rx)
+             P(GRD_XDIR,5,ij) = var(im1jm1,k0,l,I_Rx)
+             P(GRD_XDIR,6,ij) = var(ijm1  ,k0,l,I_Rx)
 
-             Px(ij,0) = var(ADM_IooJoo(n,ADM_GIoJo),k,l,I_Rx)
-             Px(ij,1) = var(ADM_IooJoo(n,ADM_GIpJo),k,l,I_Rx)
-             Px(ij,2) = var(ADM_IooJoo(n,ADM_GIpJp),k,l,I_Rx)
-             Px(ij,3) = var(ADM_IooJoo(n,ADM_GIoJp),k,l,I_Rx)
-             Px(ij,4) = var(ADM_IooJoo(n,ADM_GImJo),k,l,I_Rx)
-             Px(ij,5) = var(ADM_IooJoo(n,ADM_GImJm),k,l,I_Rx)
-             Px(ij,6) = var(ADM_IooJoo(n,ADM_GIoJm),k,l,I_Rx)
+             P(GRD_YDIR,0,ij) = var(ij    ,k0,l,I_Ry)
+             P(GRD_YDIR,1,ij) = var(ip1j  ,k0,l,I_Ry)
+             P(GRD_YDIR,2,ij) = var(ip1jp1,k0,l,I_Ry)
+             P(GRD_YDIR,3,ij) = var(ijp1  ,k0,l,I_Ry)
+             P(GRD_YDIR,4,ij) = var(im1j  ,k0,l,I_Ry)
+             P(GRD_YDIR,5,ij) = var(im1jm1,k0,l,I_Ry)
+             P(GRD_YDIR,6,ij) = var(ijm1  ,k0,l,I_Ry)
 
-             Py(ij,0) = var(ADM_IooJoo(n,ADM_GIoJo),k,l,I_Ry)
-             Py(ij,1) = var(ADM_IooJoo(n,ADM_GIpJo),k,l,I_Ry)
-             Py(ij,2) = var(ADM_IooJoo(n,ADM_GIpJp),k,l,I_Ry)
-             Py(ij,3) = var(ADM_IooJoo(n,ADM_GIoJp),k,l,I_Ry)
-             Py(ij,4) = var(ADM_IooJoo(n,ADM_GImJo),k,l,I_Ry)
-             Py(ij,5) = var(ADM_IooJoo(n,ADM_GImJm),k,l,I_Ry)
-             Py(ij,6) = var(ADM_IooJoo(n,ADM_GIoJm),k,l,I_Ry)
-
-             Pz(ij,0) = var(ADM_IooJoo(n,ADM_GIoJo),k,l,I_Rz)
-             Pz(ij,1) = var(ADM_IooJoo(n,ADM_GIpJo),k,l,I_Rz)
-             Pz(ij,2) = var(ADM_IooJoo(n,ADM_GIpJp),k,l,I_Rz)
-             Pz(ij,3) = var(ADM_IooJoo(n,ADM_GIoJp),k,l,I_Rz)
-             Pz(ij,4) = var(ADM_IooJoo(n,ADM_GImJo),k,l,I_Rz)
-             Pz(ij,5) = var(ADM_IooJoo(n,ADM_GImJm),k,l,I_Rz)
-             Pz(ij,6) = var(ADM_IooJoo(n,ADM_GIoJm),k,l,I_Rz)
+             P(GRD_ZDIR,0,ij) = var(ij    ,k0,l,I_Rz)
+             P(GRD_ZDIR,1,ij) = var(ip1j  ,k0,l,I_Rz)
+             P(GRD_ZDIR,2,ij) = var(ip1jp1,k0,l,I_Rz)
+             P(GRD_ZDIR,3,ij) = var(ijp1  ,k0,l,I_Rz)
+             P(GRD_ZDIR,4,ij) = var(im1j  ,k0,l,I_Rz)
+             P(GRD_ZDIR,5,ij) = var(im1jm1,k0,l,I_Rz)
+             P(GRD_ZDIR,6,ij) = var(ijm1  ,k0,l,I_Rz)
+          enddo
           enddo
 
-          if ( ADM_rgn_vnum(ADM_W,rgnid) == 3 ) then ! pentagon
-             Px(ij_singular,6) = Px(ij_singular,1)
-             Py(ij_singular,6) = Py(ij_singular,1)
-             Pz(ij_singular,6) = Pz(ij_singular,1)
+          if ( ADM_have_sgp(l) ) then ! pentagon
+             P(:,suf(ADM_gmin,ADM_gmin),6) = P(:,suf(ADM_gmin,ADM_gmin),1)
           endif
 
-          do m = 1, 6
-             do n = 1, ADM_IooJoo_nmax
-                ij = ADM_IooJoo(n,ADM_GIoJo)
+          do j = ADM_gmin, ADM_gmax
+          do i = ADM_gmin, ADM_gmax
+             ij = suf(i,j)
 
-                ! A = P0 X Pm
-                Ax = Py(ij,0) * Pz(ij,m) - Pz(ij,0) * Py(ij,m)
-                Ay = Pz(ij,0) * Px(ij,m) - Px(ij,0) * Pz(ij,m)
-                Az = Px(ij,0) * Py(ij,m) - Py(ij,0) * Px(ij,m)
+             do m = 1, 6
+                call VECTR_cross( P0Pm  (:), o(:), P(:,0,ij), o(:), P(:,m,ij) ) ! P0 X Pm
+                call VECTR_cross( P0PmP0(:), o(:), P0Pm(:),   o(:), P(:,0,ij) ) ! ( P0 X Pm ) X P0
+                call VECTR_abs  ( length, P0PmP0(:) )
 
-                ! e0 = ( P0 X Pm ) X P0
-                Ex = Ay * Pz(ij,0) - Az * Py(ij,0)
-                Ey = Az * Px(ij,0) - Ax * Pz(ij,0)
-                Ez = Ax * Py(ij,0) - Ay * Px(ij,0)
+                call VECTR_angle( distance, P(:,0,ij), o(:), P(:,m,ij) )
 
-                ! normalize
-                len = sqrt( Ex*Ex + Ey*Ey + Ez*Ez )
-
-                ! d = P0 * Pm
-                d = acos( Px(ij,0) * Px(ij,m) &
-                        + Py(ij,0) * Py(ij,m) &
-                        + Pz(ij,0) * Pz(ij,m) )
-
-                Fx(ij,m) = (d-dbar) * Ex / len
-                Fy(ij,m) = (d-dbar) * Ey / len
-                Fz(ij,m) = (d-dbar) * Ez / len
+                F(:,m,ij) = ( distance - dbar ) * P0PmP0(:) / length
              enddo
           enddo
-
-          if ( ADM_rgn_vnum(ADM_W,rgnid) == 3 ) then ! pentagon
-             Fx(ij_singular,6) = 0.0_RP
-             Fy(ij_singular,6) = 0.0_RP
-             Fz(ij_singular,6) = 0.0_RP
-          endif
-
-          do n = 1, ADM_IooJoo_nmax
-             ij = ADM_IooJoo(n,ADM_GIoJo)
-
-             Fsumx = Fx(ij,1)+Fx(ij,2)+Fx(ij,3)+Fx(ij,4)+Fx(ij,5)+Fx(ij,6)
-             Fsumy = Fy(ij,1)+Fy(ij,2)+Fy(ij,3)+Fy(ij,4)+Fy(ij,5)+Fy(ij,6)
-             Fsumz = Fz(ij,1)+Fz(ij,2)+Fz(ij,3)+Fz(ij,4)+Fz(ij,5)+Fz(ij,6)
-
-             ! check dw0/dt
-             var(ij,k,l,I_Fsum) = sqrt( Fsumx*Fsumx + Fsumy*Fsumy + Fsumz*Fsumz ) / lambda
-
-             Fx(ij,0) = Fsumx - dump_coef * var(ij,k,l,I_Wx)
-             Fy(ij,0) = Fsumy - dump_coef * var(ij,k,l,I_Wy)
-             Fz(ij,0) = Fsumz - dump_coef * var(ij,k,l,I_Wz)
           enddo
 
-          ! save value of fixed point
-          if ( ADM_rgn_vnum(ADM_W,rgnid) == 3 ) then ! pentagon
-             fixed_point(I_Rx) = var(ij_singular,k,l,I_Rx)
-             fixed_point(I_Ry) = var(ij_singular,k,l,I_Ry)
-             fixed_point(I_Rz) = var(ij_singular,k,l,I_Rz)
+          if ( ADM_have_sgp(l) ) then ! pentagon
+             F(:,6,suf(ADM_gmin,ADM_gmin)) = 0.0_RP
+
+             ! save value of fixed point
+             fixed_point(:) = var(suf(ADM_gmin,ADM_gmin),k0,l,I_Rx:I_Rz)
           endif
 
-          ! update r0
-          do n = 1, ADM_IooJoo_nmax
-             ij = ADM_IooJoo(n,ADM_GIoJo)
+          do j = ADM_gmin, ADM_gmax
+          do i = ADM_gmin, ADM_gmax
+             ij = suf(i,j)
 
-             Rx = var(ij,k,l,I_Rx) + var(ij,k,l,I_Wx) * dt
-             Ry = var(ij,k,l,I_Ry) + var(ij,k,l,I_Wy) * dt
-             Rz = var(ij,k,l,I_Rz) + var(ij,k,l,I_Wz) * dt
+             R0(:) = var(ij,k0,l,I_Rx:I_Rz)
+             W0(:) = var(ij,k0,l,I_Wx:I_Wz)
+
+             Fsum(:) = F(:,1,ij) + F(:,2,ij) + F(:,3,ij) + F(:,4,ij) + F(:,5,ij) + F(:,6,ij)
+
+             ! update R0
+             R0(:) = R0(:) + W0(:) * dt
 
              ! normalize
-             len = sqrt( Rx*Rx + Ry*Ry + Rz*Rz )
+             call VECTR_abs( length, R0(:) )
+             R0(:) = R0(:) / length
 
-             var(ij,k,l,I_Rx) = Rx / len
-             var(ij,k,l,I_Ry) = Ry / len
-             var(ij,k,l,I_Rz) = Rz / len
-          enddo
-
-          ! update w0
-          do n = 1, ADM_IooJoo_nmax
-             ij = ADM_IooJoo(n,ADM_GIoJo)
-
-             Wx = var(ij,k,l,I_Wx) + Fx(ij,0) * dt
-             Wy = var(ij,k,l,I_Wy) + Fy(ij,0) * dt
-             Wz = var(ij,k,l,I_Wz) + Fz(ij,0) * dt
+             ! update W0
+             W0(:) = W0(:) + ( Fsum(:) - dump_coef * W0(:) ) * dt
 
              ! horizontalize
-             E = var(ij,k,l,I_Rx) * Wx &
-               + var(ij,k,l,I_Ry) * Wy &
-               + var(ij,k,l,I_Rz) * Wz
+             call VECTR_dot( E, o(:), R0(:), o(:), W0(:) )
+             W0(:) = W0(:) - E * R0(:)
 
-             var(ij,k,l,I_Wx) = Wx - E * var(ij,k,l,I_Rx)
-             var(ij,k,l,I_Wy) = Wy - E * var(ij,k,l,I_Ry)
-             var(ij,k,l,I_Wz) = Wz - E * var(ij,k,l,I_Rz)
+             var(ij,k0,l,I_Rx:I_Rz) = R0(:)
+             var(ij,k0,l,I_Wx:I_Wz) = W0(:)
+
+             ! check dw0/dt
+             call VECTR_abs( length, Fsum(:) )
+             var(ij,k0,l,I_Fsum) = length / lambda
 
              ! kinetic energy
-             var(ij,k,l,I_Ek) = 0.5_RP * ( var(ij,k,l,I_Wx)*var(ij,k,l,I_Wx) &
-                                         + var(ij,k,l,I_Wy)*var(ij,k,l,I_Wy) &
-                                         + var(ij,k,l,I_Wz)*var(ij,k,l,I_Wz) )
+             call VECTR_dot( E, o(:), W0(:), o(:), W0(:) )
+             var(ij,k0,l,I_Ek) = 0.5_RP * E
+          enddo
           enddo
 
           ! restore value of fixed point
-          if ( ADM_rgn_vnum(ADM_W,rgnid) == 3 ) then
-             var(ij_singular,k,l,:)    = 0.0_RP
-             var(ij_singular,k,l,I_Rx) = fixed_point(I_Rx)
-             var(ij_singular,k,l,I_Ry) = fixed_point(I_Ry)
-             var(ij_singular,k,l,I_Rz) = fixed_point(I_Rz)
+          if ( ADM_have_sgp(l) ) then ! pentagon
+             var(suf(ADM_gmin,ADM_gmin),k0,l,:)         = 0.0_RP
+             var(suf(ADM_gmin,ADM_gmin),k0,l,I_Rx:I_Rz) = fixed_point(:)
           endif
 
        enddo ! l loop
@@ -992,10 +961,10 @@ contains
     real(RP) :: angle_max,  length_max, length_avg
 
     real(RP) :: global_area
-    integer :: global_grid
+    integer  :: global_grid
 
-    integer :: rgnid
-    integer :: i, j, ij, k, l, m
+    integer  :: rgnid
+    integer  :: i, j, ij, k, l, m
     !---------------------------------------------------------------------------
 
     write(IO_FID_LOG,*) '*** Diagnose grid property'
@@ -1195,22 +1164,6 @@ contains
   end subroutine decomposition
 
   !-----------------------------------------------------------------------------
-  !> suffix calculation
-  !> @return suf
-  function suf(i,j) result(suffix)
-    use mod_adm, only: &
-       ADM_gall_1d
-    implicit none
-
-    integer :: suffix
-    integer :: i, j
-    !---------------------------------------------------------------------------
-
-    suffix = ADM_gall_1d * (j-1) + i
-
-  end function suf
-
-  !-----------------------------------------------------------------------------
   !> gnomonic projection
   subroutine MISC_latlon2gnom( &
       x,          &
@@ -1280,180 +1233,128 @@ contains
   !-----------------------------------------------------------------------------
   !> Make center grid -> vertex grid
   subroutine MKGRD_center2vertex
-    use mod_adm, only : &
-       ADM_nxyz,        &
-       ADM_W,           &
-       ADM_TI,          &
-       ADM_TJ,          &
-       ADM_KNONE,       &
-       ADM_prc_tab,     &
-       ADM_have_pl,     &
-       ADM_prc_me,      &
-       ADM_rgn_vnum,    &
-       ADM_lall,        &
-       ADM_gall,        &
-       ADM_gmax,        &
-       ADM_gmin,        &
-       ADM_lall_pl,     &
-       ADM_gall_pl,     &
-       ADM_GSLF_PL,     &
-       ADM_GMAX_PL,     &
-       ADM_GMIN_PL,     &
-       ADM_ImoJmo_nmax, &
-       ADM_ImoJmo,      &
-       ADM_GIoJo,       &
-       ADM_GIoJp,       &
-       ADM_GIpJp,       &
-       ADM_GIpJo
+    use mod_adm, only: &
+       ADM_nxyz,     &
+       ADM_TI,       &
+       ADM_TJ,       &
+       ADM_KNONE,    &
+       ADM_have_pl,  &
+       ADM_have_sgp, &
+       ADM_lall,     &
+       ADM_lall_pl,  &
+       ADM_gall,     &
+       ADM_gmin,     &
+       ADM_gmax,     &
+       ADM_gslf_pl,  &
+       ADM_gmin_pl,  &
+       ADM_gmax_pl
     use mod_vector, only: &
        VECTR_cross, &
        VECTR_dot,   &
        VECTR_abs
     implicit none
 
-    real(RP) :: v    (ADM_nxyz,ADM_gall   ,4,ADM_TI:ADM_TJ)
-    real(RP) :: v_pl (ADM_nxyz,ADM_gall_pl,4)
-    real(RP) :: w    (ADM_nxyz,ADM_gall   ,3)
-    real(RP) :: w_pl (ADM_nxyz,ADM_gall_pl,3)
-    real(RP) :: gc   (ADM_nxyz,ADM_gall   )
-    real(RP) :: gc_pl(ADM_nxyz,ADM_gall_pl)
+    real(RP) :: wk   (ADM_nxyz,4,ADM_gall,ADM_TI:ADM_TJ)
+    real(RP) :: wk_pl(ADM_nxyz,4)
 
     real(RP), parameter :: o(3) = 0.0_RP
+    real(RP) :: r(3), gc(3)
+    real(RP) :: r_lenS, r_lenC, gc_len
 
-    real(RP) :: w_lenS, w_lenC, gc_len
+    integer  :: ij
+    integer  :: ip1j, ip1jp1, ijp1
 
-    integer :: rgnid
-    integer :: oo, po, pp, op
-    integer :: k, l, m, n, t
+    integer  :: i, j, k0, l, d, v, n, t, m
     !---------------------------------------------------------------------------
 
-    k  = ADM_KNONE
+    k0 = ADM_KNONE
 
     do l = 1, ADM_lall
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
+       do j = ADM_gmin-1, ADM_gmax
+       do i = ADM_gmin-1, ADM_gmax
+          ij     = suf(i  ,j  )
+          ip1j   = suf(i+1,j  )
+          ip1jp1 = suf(i+1,j+1)
+          ijp1   = suf(i  ,j+1)
 
-       do n = 1, ADM_ImoJmo_nmax
-          oo = ADM_ImoJmo(n,ADM_GIoJo)
-          po = ADM_ImoJmo(n,ADM_GIpJo)
-          pp = ADM_ImoJmo(n,ADM_GIpJp)
-          op = ADM_ImoJmo(n,ADM_GIoJp)
+          do d = 1, ADM_nxyz
+             wk(d,1,ij,ADM_TI) = GRD_x(ij    ,k0,l,d)
+             wk(d,2,ij,ADM_TI) = GRD_x(ip1j  ,k0,l,d)
+             wk(d,3,ij,ADM_TI) = GRD_x(ip1jp1,k0,l,d)
+             wk(d,4,ij,ADM_TI) = GRD_x(ij    ,k0,l,d)
 
-          v(GRD_XDIR,oo,1,ADM_TI) = GRD_x(oo,k,l,GRD_XDIR)
-          v(GRD_XDIR,oo,2,ADM_TI) = GRD_x(po,k,l,GRD_XDIR)
-          v(GRD_XDIR,oo,3,ADM_TI) = GRD_x(pp,k,l,GRD_XDIR)
-          v(GRD_XDIR,oo,4,ADM_TI) = GRD_x(oo,k,l,GRD_XDIR)
-
-          v(GRD_YDIR,oo,1,ADM_TI) = GRD_x(oo,k,l,GRD_YDIR)
-          v(GRD_YDIR,oo,2,ADM_TI) = GRD_x(po,k,l,GRD_YDIR)
-          v(GRD_YDIR,oo,3,ADM_TI) = GRD_x(pp,k,l,GRD_YDIR)
-          v(GRD_YDIR,oo,4,ADM_TI) = GRD_x(oo,k,l,GRD_YDIR)
-
-          v(GRD_ZDIR,oo,1,ADM_TI) = GRD_x(oo,k,l,GRD_ZDIR)
-          v(GRD_ZDIR,oo,2,ADM_TI) = GRD_x(po,k,l,GRD_ZDIR)
-          v(GRD_ZDIR,oo,3,ADM_TI) = GRD_x(pp,k,l,GRD_ZDIR)
-          v(GRD_ZDIR,oo,4,ADM_TI) = GRD_x(oo,k,l,GRD_ZDIR)
-
-          v(GRD_XDIR,oo,1,ADM_TJ) = GRD_x(oo,k,l,GRD_XDIR)
-          v(GRD_XDIR,oo,2,ADM_TJ) = GRD_x(pp,k,l,GRD_XDIR)
-          v(GRD_XDIR,oo,3,ADM_TJ) = GRD_x(op,k,l,GRD_XDIR)
-          v(GRD_XDIR,oo,4,ADM_TJ) = GRD_x(oo,k,l,GRD_XDIR)
-
-          v(GRD_YDIR,oo,1,ADM_TJ) = GRD_x(oo,k,l,GRD_YDIR)
-          v(GRD_YDIR,oo,2,ADM_TJ) = GRD_x(pp,k,l,GRD_YDIR)
-          v(GRD_YDIR,oo,3,ADM_TJ) = GRD_x(op,k,l,GRD_YDIR)
-          v(GRD_YDIR,oo,4,ADM_TJ) = GRD_x(oo,k,l,GRD_YDIR)
-
-          v(GRD_ZDIR,oo,1,ADM_TJ) = GRD_x(oo,k,l,GRD_ZDIR)
-          v(GRD_ZDIR,oo,2,ADM_TJ) = GRD_x(pp,k,l,GRD_ZDIR)
-          v(GRD_ZDIR,oo,3,ADM_TJ) = GRD_x(op,k,l,GRD_ZDIR)
-          v(GRD_ZDIR,oo,4,ADM_TJ) = GRD_x(oo,k,l,GRD_ZDIR)
+             wk(d,1,ij,ADM_TJ) = GRD_x(ij    ,k0,l,d)
+             wk(d,2,ij,ADM_TJ) = GRD_x(ip1jp1,k0,l,d)
+             wk(d,3,ij,ADM_TJ) = GRD_x(ijp1  ,k0,l,d)
+             wk(d,4,ij,ADM_TJ) = GRD_x(ij    ,k0,l,d)
+          enddo
+       enddo
        enddo
 
-       !--- execetion for the north and south.
-       v(:,suf(ADM_gmax,ADM_gmin-1),1,ADM_TI) = v(:,suf(ADM_gmax,ADM_gmin-1),1,ADM_TJ)
-       v(:,suf(ADM_gmax,ADM_gmin-1),2,ADM_TI) = v(:,suf(ADM_gmax,ADM_gmin-1),2,ADM_TJ)
-       v(:,suf(ADM_gmax,ADM_gmin-1),3,ADM_TI) = v(:,suf(ADM_gmax,ADM_gmin-1),3,ADM_TJ)
-       v(:,suf(ADM_gmax,ADM_gmin-1),4,ADM_TI) = v(:,suf(ADM_gmax,ADM_gmin-1),4,ADM_TJ)
+       !--- treat unused triangle
+       wk(:,:,suf(ADM_gmax,ADM_gmin-1),ADM_TI) = wk(:,:,suf(ADM_gmax,ADM_gmin-1),ADM_TJ)
+       wk(:,:,suf(ADM_gmin-1,ADM_gmax),ADM_TJ) = wk(:,:,suf(ADM_gmin-1,ADM_gmax),ADM_TI)
 
-       v(:,suf(ADM_gmin-1,ADM_gmax),1,ADM_TJ) = v(:,suf(ADM_gmin-1,ADM_gmax),1,ADM_TI)
-       v(:,suf(ADM_gmin-1,ADM_gmax),2,ADM_TJ) = v(:,suf(ADM_gmin-1,ADM_gmax),2,ADM_TI)
-       v(:,suf(ADM_gmin-1,ADM_gmax),3,ADM_TJ) = v(:,suf(ADM_gmin-1,ADM_gmax),3,ADM_TI)
-       v(:,suf(ADM_gmin-1,ADM_gmax),4,ADM_TJ) = v(:,suf(ADM_gmin-1,ADM_gmax),4,ADM_TI)
-
-       !--- exception for the west
-       if ( ADM_rgn_vnum(ADM_W,rgnid) == 3 ) then
-          oo = suf(ADM_gmin-1,ADM_gmin-1)
-          po = suf(ADM_gmin  ,ADM_gmin-1)
-
-          v(:,oo,1,ADM_TI) = v(:,po,1,ADM_TJ)
-          v(:,oo,2,ADM_TI) = v(:,po,2,ADM_TJ)
-          v(:,oo,3,ADM_TI) = v(:,po,3,ADM_TJ)
-          v(:,oo,4,ADM_TI) = v(:,po,4,ADM_TJ)
+       if ( ADM_have_sgp(l) ) then ! pentagon
+          wk(:,:,suf(ADM_gmin-1,ADM_gmin-1),ADM_TI) = wk(:,:,suf(ADM_gmin,ADM_gmin-1),ADM_TJ)
        endif
 
        do t = ADM_TI, ADM_TJ
+       do j = ADM_gmin-1, ADM_gmax
+       do i = ADM_gmin-1, ADM_gmax
+          ij = suf(i,j)
+
+          gc(:) = 0.0_RP
           do m = 1, 3
-             do n = 1, ADM_ImoJmo_nmax
-                oo = ADM_ImoJmo(n,ADM_GIoJo)
+             call VECTR_dot  ( r_lenC, o(:), wk(:,m,ij,t), o(:), wk(:,m+1,ij,t) )
+             call VECTR_cross( r(:),   o(:), wk(:,m,ij,t), o(:), wk(:,m+1,ij,t) )
+             call VECTR_abs  ( r_lenS, r(:) )
 
-                call VECTR_dot  ( w_lenC,    o(:), v(:,oo,m,t), o(:), v(:,oo,m+1,t) )
-                call VECTR_cross( w(:,oo,m), o(:), v(:,oo,m,t), o(:), v(:,oo,m+1,t) )
-                call VECTR_abs  ( w_lenS, w(:,oo,m) )
+             r(:) = r(:) / r_lenS * atan2( r_lenS, r_lenC )
 
-                w(:,oo,m) = w(:,oo,m) / w_lenS * atan2( w_lenS, w_lenC )
-             enddo
+             gc(:) = gc(:) + r(:)
           enddo
 
-          do n = 1, ADM_ImoJmo_nmax
-             oo = ADM_ImoJmo(n,ADM_GIoJo)
+          call VECTR_abs( gc_len, gc(:) )
 
-             gc(:,oo) = w(:,oo,1) &
-                      + w(:,oo,2) &
-                      + w(:,oo,3)
-
-             call VECTR_abs( gc_len, gc(:,oo) )
-
-             GRD_xt(oo,k,l,t,GRD_XDIR) = gc(GRD_XDIR,oo) / gc_len
-             GRD_xt(oo,k,l,t,GRD_YDIR) = gc(GRD_YDIR,oo) / gc_len
-             GRD_xt(oo,k,l,t,GRD_ZDIR) = gc(GRD_ZDIR,oo) / gc_len
-          enddo
+          GRD_xt(ij,k0,l,t,:) = gc(:) / gc_len
+       enddo
+       enddo
        enddo
 
     enddo
 
     if ( ADM_have_pl ) then
-       do l = 1, ADM_lall_pl
+       n = ADM_gslf_pl
 
-          do oo = ADM_GMIN_PL, ADM_GMAX_PL-1
-             v_pl(:,oo,1) = GRD_x_pl(ADM_GSLF_PL,k,l,:)
-             v_pl(:,oo,2) = GRD_x_pl(oo+1,       k,l,:)
-             v_pl(:,oo,3) = GRD_x_pl(oo  ,       k,l,:)
-             v_pl(:,oo,4) = GRD_x_pl(ADM_GSLF_PL,k,l,:)
+       do l = 1,ADM_lall_pl
+       do v = ADM_gmin_pl, ADM_gmax_pl
+          ij   = v
+          ijp1 = v + 1
+          if( ijp1 == ADM_gmax_pl+1 ) ijp1 = ADM_gmin_pl
+
+          do d = 1, ADM_nxyz
+             wk_pl(:,1) = GRD_x_pl(n   ,k0,l,:)
+             wk_pl(:,2) = GRD_x_pl(ij  ,k0,l,:)
+             wk_pl(:,3) = GRD_x_pl(ijp1,k0,l,:)
+             wk_pl(:,4) = GRD_x_pl(n   ,k0,l,:)
           enddo
-           v_pl(:,ADM_GMAX_PL,1) = GRD_x_pl(ADM_GSLF_PL,k,l,:)
-           v_pl(:,ADM_GMAX_PL,2) = GRD_x_pl(ADM_GMIN_PL,k,l,:)
-           v_pl(:,ADM_GMAX_PL,3) = GRD_x_pl(ADM_GMAX_PL,k,l,:)
-           v_pl(:,ADM_GMAX_PL,4) = GRD_x_pl(ADM_GSLF_PL,k,l,:)
 
-          do n = ADM_GMIN_PL, ADM_GMAX_PL
-             do m = 1, 3
-                call VECTR_dot  ( w_lenC,      o(:), v_pl(:,n,m), o(:), v_pl(:,n,m+1) )
-                call VECTR_cross( w_pl(:,n,m), o(:), v_pl(:,n,m), o(:), v_pl(:,n,m+1) )
-                call VECTR_abs  ( w_lenS, w_pl(:,n,m) )
+          gc(:) = 0.0_RP
+          do m = 1, 3
+             call VECTR_dot  ( r_lenC, o(:), wk_pl(:,m), o(:), wk_pl(:,m+1) )
+             call VECTR_cross( r(:),   o(:), wk_pl(:,m), o(:), wk_pl(:,m+1) )
+             call VECTR_abs  ( r_lenS, r(:) )
 
-                w_pl(:,n,m) = w_pl(:,n,m) / w_lenS * atan2( w_lenS, w_lenC )
-             enddo
+             r(:) = r(:) / r_lenS * atan2( r_lenS, r_lenC )
 
-             gc_pl(:,n) = w_pl(:,n,1) &
-                        + w_pl(:,n,2) &
-                        + w_pl(:,n,3)
-
-             call VECTR_abs( gc_len, gc_pl(:,n) )
-
-             GRD_xt_pl(n,k,l,GRD_XDIR) = gc_pl(GRD_XDIR,n) / gc_len
-             GRD_xt_pl(n,k,l,GRD_YDIR) = gc_pl(GRD_YDIR,n) / gc_len
-             GRD_xt_pl(n,k,l,GRD_ZDIR) = gc_pl(GRD_ZDIR,n) / gc_len
+             gc(:) = gc(:) + r(:)
           enddo
+
+          call VECTR_abs( gc_len, gc(:) )
+
+          GRD_xt_pl(v,k0,l,:) = gc(:) / gc_len
+       enddo
        enddo
     endif
 
@@ -1463,159 +1364,138 @@ contains
   !-----------------------------------------------------------------------------
   !> Make vertex grid -> center grid
   subroutine MKGRD_vertex2center
+    use mod_const, only: &
+       EPS => CONST_EPS
     use mod_adm, only : &
-       ADM_nxyz,        &
-       ADM_W,           &
-       ADM_TI,          &
-       ADM_TJ,          &
-       ADM_KNONE,       &
-       ADM_prc_tab,     &
-       ADM_have_pl,     &
-       ADM_prc_me,      &
-       ADM_rgn_vnum,    &
-       ADM_lall,        &
-       ADM_gall,        &
-       ADM_gmin,        &
-       ADM_lall_pl,     &
-       ADM_gall_pl,     &
-       ADM_GSLF_PL,     &
-       ADM_GMAX_PL,     &
-       ADM_GMIN_PL,     &
-       ADM_IooJoo_nmax, &
-       ADM_IooJoo,      &
-       ADM_GIoJo,       &
-       ADM_GIoJm,       &
-       ADM_GImJm,       &
-       ADM_GImJo
+       ADM_nxyz,     &
+       ADM_TI,       &
+       ADM_TJ,       &
+       ADM_KNONE,    &
+       ADM_have_pl,  &
+       ADM_have_sgp, &
+       ADM_vlink,    &
+       ADM_lall,     &
+       ADM_lall_pl,  &
+       ADM_gall,     &
+       ADM_gmin,     &
+       ADM_gmax,     &
+       ADM_gslf_pl
     use mod_vector, only: &
        VECTR_cross, &
        VECTR_dot,   &
        VECTR_abs
     implicit none
 
-    real(RP) :: v    (ADM_nxyz,ADM_gall   ,7)
-    real(RP) :: v_pl (ADM_nxyz,ADM_gall_pl,6)
-    real(RP) :: w    (ADM_nxyz,ADM_gall   ,6)
-    real(RP) :: w_pl (ADM_nxyz,ADM_gall_pl,5)
-    real(RP) :: gc   (ADM_nxyz,ADM_gall   )
-    real(RP) :: gc_pl(ADM_nxyz,ADM_gall_pl)
+    real(RP) :: wk   (ADM_nxyz,7,ADM_gall)
+    real(RP) :: wk_pl(ADM_nxyz,ADM_vlink+1)
 
     real(RP), parameter :: o(3) = 0.0_RP
+    real(RP) :: r(3), gc(3)
+    real(RP) :: r_lenS, r_lenC, gc_len
+    real(RP) :: zerosw
 
-    real(RP) :: w_lenC, w_lenS, gc_len
+    integer  :: ij
+    integer  :: im1j, im1jm1, ijm1
 
-    integer :: rgnid
-    integer :: oo, mo, mm, om
-    integer :: k, l, m, n
+    integer  :: i, j, k0, l, d, v, n, m
     !---------------------------------------------------------------------------
 
-    k  = ADM_KNONE
+    k0 = ADM_KNONE
 
     do l = 1, ADM_lall
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
+       do j = ADM_gmin, ADM_gmax
+       do i = ADM_gmin, ADM_gmax
+          ij     = suf(i  ,j  )
+          im1j   = suf(i-1,j  )
+          im1jm1 = suf(i-1,j-1)
+          ijm1   = suf(i  ,j-1)
 
-       do n = 1, ADM_IooJoo_nmax
-          oo = ADM_IooJoo(n,ADM_GIoJo)
-          mo = ADM_IooJoo(n,ADM_GImJo)
-          mm = ADM_IooJoo(n,ADM_GImJm)
-          om = ADM_IooJoo(n,ADM_GIoJm)
-
-          v(GRD_XDIR,oo,1) = GRD_xt(om,k,l,ADM_TJ,GRD_XDIR)
-          v(GRD_XDIR,oo,2) = GRD_xt(oo,k,l,ADM_TI,GRD_XDIR)
-          v(GRD_XDIR,oo,3) = GRD_xt(oo,k,l,ADM_TJ,GRD_XDIR)
-          v(GRD_XDIR,oo,4) = GRD_xt(mo,k,l,ADM_TI,GRD_XDIR)
-          v(GRD_XDIR,oo,5) = GRD_xt(mm,k,l,ADM_TJ,GRD_XDIR)
-          v(GRD_XDIR,oo,6) = GRD_xt(mm,k,l,ADM_TI,GRD_XDIR)
-          v(GRD_XDIR,oo,7) = GRD_xt(om,k,l,ADM_TJ,GRD_XDIR)
-
-          v(GRD_YDIR,oo,1) = GRD_xt(om,k,l,ADM_TJ,GRD_YDIR)
-          v(GRD_YDIR,oo,2) = GRD_xt(oo,k,l,ADM_TI,GRD_YDIR)
-          v(GRD_YDIR,oo,3) = GRD_xt(oo,k,l,ADM_TJ,GRD_YDIR)
-          v(GRD_YDIR,oo,4) = GRD_xt(mo,k,l,ADM_TI,GRD_YDIR)
-          v(GRD_YDIR,oo,5) = GRD_xt(mm,k,l,ADM_TJ,GRD_YDIR)
-          v(GRD_YDIR,oo,6) = GRD_xt(mm,k,l,ADM_TI,GRD_YDIR)
-          v(GRD_YDIR,oo,7) = GRD_xt(om,k,l,ADM_TJ,GRD_YDIR)
-
-          v(GRD_ZDIR,oo,1) = GRD_xt(om,k,l,ADM_TJ,GRD_ZDIR)
-          v(GRD_ZDIR,oo,2) = GRD_xt(oo,k,l,ADM_TI,GRD_ZDIR)
-          v(GRD_ZDIR,oo,3) = GRD_xt(oo,k,l,ADM_TJ,GRD_ZDIR)
-          v(GRD_ZDIR,oo,4) = GRD_xt(mo,k,l,ADM_TI,GRD_ZDIR)
-          v(GRD_ZDIR,oo,5) = GRD_xt(mm,k,l,ADM_TJ,GRD_ZDIR)
-          v(GRD_ZDIR,oo,6) = GRD_xt(mm,k,l,ADM_TI,GRD_ZDIR)
-          v(GRD_ZDIR,oo,7) = GRD_xt(om,k,l,ADM_TJ,GRD_ZDIR)
-       enddo
-
-       if ( ADM_rgn_vnum(ADM_W,rgnid) == 3 ) then
-          oo = suf(ADM_gmin,ADM_gmin)
-          v(:,oo,6) = v(:,oo,1)
-          v(:,oo,7) = v(:,oo,2)
-       endif
-
-       do m = 1, 6
-          do n = 1, ADM_IooJoo_nmax
-             oo = ADM_IooJoo(n,ADM_GIoJo)
-
-             call VECTR_dot  ( w_lenC,    o(:), v(:,oo,m), o(:), v(:,oo,m+1) )
-             call VECTR_cross( w(:,oo,m), o(:), v(:,oo,m), o(:), v(:,oo,m+1) )
-             call VECTR_abs  ( w_lenS, w(:,oo,m) )
-
-             w(:,oo,m) = w(:,oo,m) / w_lenS * atan2( w_lenS, w_lenC )
+          do d = 1, ADM_nxyz
+             wk(d,1,ij) = GRD_xt(ijm1  ,k0,l,ADM_TJ,d)
+             wk(d,2,ij) = GRD_xt(ij    ,k0,l,ADM_TI,d)
+             wk(d,3,ij) = GRD_xt(ij    ,k0,l,ADM_TJ,d)
+             wk(d,4,ij) = GRD_xt(im1j  ,k0,l,ADM_TI,d)
+             wk(d,5,ij) = GRD_xt(im1jm1,k0,l,ADM_TJ,d)
+             wk(d,6,ij) = GRD_xt(im1jm1,k0,l,ADM_TI,d)
+             wk(d,7,ij) = GRD_xt(ijm1  ,k0,l,ADM_TJ,d)
           enddo
        enddo
+       enddo
 
-       if ( ADM_rgn_vnum(ADM_W,rgnid) == 3 ) then
-          w(:,suf(ADM_gmin,ADM_gmin),6) = 0.0_RP
+       if ( ADM_have_sgp(l) ) then ! pentagon
+          wk(:,6,suf(ADM_gmin,ADM_gmin)) = wk(:,1,suf(ADM_gmin,ADM_gmin))
+          wk(:,7,suf(ADM_gmin,ADM_gmin)) = wk(:,1,suf(ADM_gmin,ADM_gmin))
        endif
 
-       do n = 1, ADM_IooJoo_nmax
-          oo = ADM_IooJoo(n,ADM_GIoJo)
+       do j = ADM_gmin, ADM_gmax
+       do i = ADM_gmin, ADM_gmax
+          ij = suf(i,j)
 
-          gc(:,oo) = w(:,oo,1) &
-                   + w(:,oo,2) &
-                   + w(:,oo,3) &
-                   + w(:,oo,4) &
-                   + w(:,oo,5) &
-                   + w(:,oo,6)
+          gc(:) = 0.0_RP
+          do m = 1, 6
+             call VECTR_dot  ( r_lenC, o(:), wk(:,m,ij), o(:), wk(:,m+1,ij) )
+             call VECTR_cross( r(:),   o(:), wk(:,m,ij), o(:), wk(:,m+1,ij) )
+             call VECTR_abs  ( r_lenS, r(:) )
 
-          call VECTR_abs( gc_len, gc(:,oo) )
+             zerosw = 0.5_RP - sign(0.5_RP,abs(r_lenS)-EPS)
+             r(:) = r(:) * ( 1.0_RP - zerosw ) / ( r_lenS + zerosw ) * atan2( r_lenS, r_lenC )
 
-          GRD_x(oo,k,l,:) = gc(:,oo) / gc_len
+             gc(:) = gc(:) + r(:)
+          enddo
+
+          call VECTR_abs( gc_len, gc(:) )
+
+          GRD_x(ij,k0,l,:) = gc(:) / gc_len
+       enddo
        enddo
     enddo
 
     if ( ADM_have_pl ) then
+       n = ADM_gslf_pl
+
        do l = 1,ADM_lall_pl
-          oo = ADM_GSLF_PL
-
-          do n = ADM_GMIN_PL, ADM_GMAX_PL
-
-             v_pl(:,oo,n-ADM_GMIN_PL+1) = GRD_xt_pl(n,k,l,:)
-
-          enddo
-          v_pl(:,oo,6) = v_pl(:,oo,1)
-
-          do m = 1, 5
-             call VECTR_dot  ( w_lenC,       o(:), v_pl(:,oo,m), o(:), v_pl(:,oo,m+1) )
-             call VECTR_cross( w_pl(:,oo,m), o(:), v_pl(:,oo,m), o(:), v_pl(:,oo,m+1) )
-             call VECTR_abs  ( w_lenS, w_pl(:,oo,m) )
-
-             w_pl(:,oo,m) = w_pl(:,oo,m) / w_lenS * atan2( w_lenS, w_lenC )
+          do d = 1, ADM_nxyz
+             do v = 1, ADM_vlink ! (ICO=5)
+                wk_pl(d,v) = GRD_xt_pl(v+1,k0,l,d)
+             enddo
+             wk_pl(d,ADM_vlink+1) = wk_pl(d,1)
           enddo
 
-          gc_pl(:,oo) = w_pl(:,oo,1) &
-                      + w_pl(:,oo,2) &
-                      + w_pl(:,oo,3) &
-                      + w_pl(:,oo,4) &
-                      + w_pl(:,oo,5)
+          gc(:) = 0.0_RP
+          do v = 1, ADM_vlink ! (ICO=5)
+             call VECTR_dot  ( r_lenC, o(:), wk_pl(:,v), o(:), wk_pl(:,v+1) )
+             call VECTR_cross( r(:),   o(:), wk_pl(:,v), o(:), wk_pl(:,v+1) )
+             call VECTR_abs  ( r_lenS, r(:) )
 
-          call VECTR_abs( gc_len, gc_pl(:,oo) )
+             r(:) = r(:) / r_lenS * atan2( r_lenS, r_lenC )
 
-          GRD_x_pl(oo,k,l,:) = -gc_pl(:,oo) / gc_len
+             gc(:) = gc(:) + r(:)
+          enddo
+
+          call VECTR_abs( gc_len, gc(:) )
+
+          GRD_x_pl(n,k0,l,:) = -gc(:) / gc_len
        enddo
     endif
 
     return
   end subroutine MKGRD_vertex2center
+
+  !-----------------------------------------------------------------------------
+  !> suffix calculation
+  !> @return suf
+  function suf(i,j) result(suffix)
+    use mod_adm, only: &
+       ADM_gall_1d
+    implicit none
+
+    integer :: suffix
+    integer :: i, j
+    !---------------------------------------------------------------------------
+
+    suffix = ADM_gall_1d * (j-1) + i
+
+  end function suf
 
 end module mod_mkgrd
 !-------------------------------------------------------------------------------

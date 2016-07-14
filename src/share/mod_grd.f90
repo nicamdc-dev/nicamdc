@@ -64,6 +64,7 @@ module mod_grd
   public :: GRD_output_hgrid
   public :: GRD_input_vgrid
   public :: GRD_output_vgrid
+  public :: GRD_makelatlon
   public :: GRD_scaling
 
   !-----------------------------------------------------------------------------
@@ -206,7 +207,6 @@ module mod_grd
   !++ Private procedure
   !
   private :: GRD_gen_plgrid
-  private :: GRD_makelatlon
   private :: GRD_makearc
 
   !-----------------------------------------------------------------------------
@@ -456,7 +456,7 @@ contains
           enddo
 
           if ( ADM_have_pl ) then
-             n = ADM_GSLF_PL
+             n = ADM_gslf_pl
              do l = 1, ADM_lall_pl
                 do k = ADM_kmin-1, kflat
                    GRD_vz_pl(n,k,l,GRD_Z)  = GRD_zs_pl(n,k0,l,GRD_ZSFC) &
@@ -494,7 +494,7 @@ contains
           enddo
 
           if ( ADM_have_pl ) then
-             n = ADM_GSLF_PL
+             n = ADM_gslf_pl
              do l = 1, ADM_lall_pl
              do k = ADM_kmin-1, ADM_kmax+1
                 GRD_vz_pl(n,k,l,GRD_Z)  = GRD_gz(k)                               &
@@ -1042,7 +1042,7 @@ contains
 
     if (      ADM_prc_me == ADM_prc_npl &
          .OR. ADM_prc_me == ADM_prc_spl ) then
-       GRD_xt_pl(ADM_GSLF_PL,:,:,:) = GRD_x_pl(ADM_GSLF_PL,:,:,:)
+       GRD_xt_pl(ADM_gslf_pl,:,:,:) = GRD_x_pl(ADM_gslf_pl,:,:,:)
     endif
 
     return

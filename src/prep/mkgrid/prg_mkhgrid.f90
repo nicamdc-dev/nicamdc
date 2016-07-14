@@ -38,6 +38,7 @@ program mkhgrid
   use mod_grd, only: &
      GRD_input_hgrid,  &
      GRD_output_hgrid, &
+     GRD_makelatlon,   &
      GRD_scaling
   use mod_gmtr, only: &
      GMTR_setup
@@ -117,6 +118,9 @@ program mkhgrid
                          io_mode       = MKGRD_OUT_io_mode   ) ! [IN]
 
   !---< gmtr module setup >---
+
+  call GRD_makelatlon
+
   call GRD_scaling( RADIUS )
 
   call GMTR_setup

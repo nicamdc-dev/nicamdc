@@ -366,12 +366,12 @@ contains
     use mod_process, only: &
        PRC_MPIstop
     use mod_calendar, only: &
-      CALENDAR_yh2ss, &
-      CALENDAR_ss2yh
+       CALENDAR_yh2ss, &
+       CALENDAR_ss2yh
     use mod_adm, only: &
-      ADM_gall_in,     &
-      ADM_IopJop,      &
-      ADM_GIoJo
+       ADM_gall_in, &
+       ADM_gmin,    &
+       ADM_gmax
     implicit none
 
     real(RP),         intent(inout) :: gdata(:,:) ! data is inout to retain initilized value.
@@ -389,7 +389,7 @@ contains
     real(DP) :: data_time_prev
 
     integer  :: kall, gall
-    integer  :: im, n, k
+    integer  :: im, i, j, k, n
     !---------------------------------------------------------------------------
 
     eflag = .false.
@@ -487,10 +487,15 @@ contains
     endif
 
     do k = 1, kall
-    do n = 1, ADM_gall_in
-       gdata(n,k) = info(np)%v(ADM_IopJop(n,ADM_GIoJo),k,l_region,1) * (       wt) &
-                  + info(np)%v(ADM_IopJop(n,ADM_GIoJo),k,l_region,2) * (1.0_RP-wt)
-    enddo
+       n = 1
+       do j = ADM_gmin, ADM_gmax+1
+       do i = ADM_gmin, ADM_gmax+1
+          gdata(n,k) = info(np)%v(suf(i,j),k,l_region,1) * (       wt) &
+                     + info(np)%v(suf(i,j),k,l_region,2) * (1.0_RP-wt)
+
+          n = n + 1
+       enddo
+       enddo
     enddo
 
     return
@@ -547,7 +552,19 @@ contains
 
     return
   end subroutine data_read
+
   !-----------------------------------------------------------------------------
+  integer function suf(i,j)
+    use mod_adm, only: &
+       ADM_gall_1d
+    implicit none
+
+    integer :: i, j
+    !---------------------------------------------------------------------------
+
+    suf = ADM_gall_1d * (j-1) + i
+
+  end function suf
 
 end module mod_extdata
 !-------------------------------------------------------------------------------

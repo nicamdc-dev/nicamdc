@@ -109,16 +109,15 @@ contains
   !> setup lat/lon value of the ico-grid (without mod_gmtr)
   subroutine LATLON_ico_setup
     use mod_adm, only: &
-       ADM_have_pl,     &
-       ADM_lall,        &
-       ADM_lall_pl,     &
-       ADM_gall,        &
-       ADM_gall_pl,     &
-       ADM_KNONE,       &
-       ADM_GSLF_PL,     &
-       ADM_IooJoo_nmax, &
-       ADM_IooJoo,      &
-       ADM_GIoJo
+       ADM_KNONE,   &
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_gmin,    &
+       ADM_gmax,    &
+       ADM_gslf_pl
     use mod_vector, only: &
        VECTR_xyz2latlon
     use mod_comm, only: &
@@ -131,36 +130,39 @@ contains
        GRD_x_pl
     implicit none
 
-    integer :: ij, n, k, l
+    integer :: i, j, ij, k0, l, n
     !---------------------------------------------------------------------------
 
-    k = ADM_KNONE
+    k0 = ADM_KNONE
 
     !--- setup point data
-    allocate( GMTR_p_ll   (ADM_gall,   ADM_KNONE,ADM_lall,   GMTR_p_nmax_var) )
-    allocate( GMTR_p_ll_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,GMTR_p_nmax_var) )
+    allocate( GMTR_p_ll   (ADM_gall,   k0,ADM_lall,   GMTR_p_nmax_var) )
+    allocate( GMTR_p_ll_pl(ADM_gall_pl,k0,ADM_lall_pl,GMTR_p_nmax_var) )
     GMTR_p_ll   (:,:,:,:) = 0.0_RP
     GMTR_p_ll_pl(:,:,:,:) = 0.0_RP
 
     do l = 1, ADM_lall
-       do n = 1, ADM_IooJoo_nmax
-          ij = ADM_IooJoo(n,ADM_GIoJo)
-          call VECTR_xyz2latlon( GRD_x    (ij,k,l,GRD_XDIR),   & ! [IN]
-                                 GRD_x    (ij,k,l,GRD_YDIR),   & ! [IN]
-                                 GRD_x    (ij,k,l,GRD_ZDIR),   & ! [IN]
-                                 GMTR_p_ll(ij,k,l,GMTR_p_LAT), & ! [OUT]
-                                 GMTR_p_ll(ij,k,l,GMTR_p_LON)  ) ! [OUT]
-       enddo ! ij loop
+       do j = ADM_gmin, ADM_gmax
+       do i = ADM_gmin, ADM_gmax
+          ij = suf(i,j)
+
+          call VECTR_xyz2latlon( GRD_x    (ij,k0,l,GRD_XDIR),   & ! [IN]
+                                 GRD_x    (ij,k0,l,GRD_YDIR),   & ! [IN]
+                                 GRD_x    (ij,k0,l,GRD_ZDIR),   & ! [IN]
+                                 GMTR_p_ll(ij,k0,l,GMTR_p_LAT), & ! [OUT]
+                                 GMTR_p_ll(ij,k0,l,GMTR_p_LON)  ) ! [OUT]
+       enddo
+       enddo
     enddo ! l loop
 
     if ( ADM_have_pl ) then
-       n = ADM_GSLF_PL
+       n = ADM_gslf_pl
        do l = 1,ADM_lall_pl
-          call VECTR_xyz2latlon( GRD_x_pl    (n,k,l,GRD_XDIR),   & ! [IN]
-                                 GRD_x_pl    (n,k,l,GRD_YDIR),   & ! [IN]
-                                 GRD_x_pl    (n,k,l,GRD_ZDIR),   & ! [IN]
-                                 GMTR_p_ll_pl(n,k,l,GMTR_p_LAT), & ! [OUT]
-                                 GMTR_p_ll_pl(n,k,l,GMTR_p_LON)  ) ! [OUT]
+          call VECTR_xyz2latlon( GRD_x_pl    (n,k0,l,GRD_XDIR),   & ! [IN]
+                                 GRD_x_pl    (n,k0,l,GRD_YDIR),   & ! [IN]
+                                 GRD_x_pl    (n,k0,l,GRD_ZDIR),   & ! [IN]
+                                 GMTR_p_ll_pl(n,k0,l,GMTR_p_LAT), & ! [OUT]
+                                 GMTR_p_ll_pl(n,k0,l,GMTR_p_LON)  ) ! [OUT]
        enddo ! l loop
     endif
 
@@ -452,9 +454,6 @@ contains
   end subroutine LATLON_setup
 
   !-----------------------------------------------------------------------------
-  !>
-  !> Description of the subroutine mkrelmap_ico2ll
-  !>
   subroutine mkrelmap_ico2ll( what_is_done )
     use mod_process, only: &
        PRC_MPIstop
@@ -467,17 +466,10 @@ contains
        ADM_rgnid_spl_mng, &
        ADM_TI,            &
        ADM_TJ,            &
-       ADM_lall,          &
-       ADM_gall_1d,       &
-       ADM_gmax,          &
-       ADM_gmin,          &
        ADM_KNONE,         &
-       ADM_IooJoo_nmax,   &
-       ADM_IooJoo,        &
-       ADM_GIoJo,         &
-       ADM_GIpJo,         &
-       ADM_GIpJp,         &
-       ADM_GIoJp
+       ADM_lall,          &
+       ADM_gmax,          &
+       ADM_gmin
     use mod_vector, only: &
        VECTR_triangle, &
        VECTR_cross,    &
@@ -503,7 +495,7 @@ contains
     real(RP) :: lon1, lon2, lon3
     real(RP) :: latmin_l,latmax_l
     real(RP) :: lonmin_l,lonmax_l
-    logical :: near_pole
+    logical  :: near_pole
 
     real(RP) :: area_total, area1, area2, area3
 
@@ -511,8 +503,11 @@ contains
     real(RP) :: eps_latlon = 1.E-15_RP ! marginal square near grid points (in radian)
     real(RP) :: eps_vertex = 1.E-15_RP ! marginal value for vartex
 
+    integer :: ij
+    integer :: ip1j, ijp1, ip1jp1
+
     integer :: rgnid
-    integer :: n, k, l, t, i, j
+    integer :: ic, jc, k, l, t, i, j
     !---------------------------------------------------------------------------
 
     k = ADM_KNONE
@@ -530,216 +525,223 @@ contains
     nmax_llgrid_rgn(:) = 0
 
     do l = 1, ADM_lall
-    do n = 1, ADM_IooJoo_nmax
-    do t = ADM_TI, ADM_TJ
+       do jc = ADM_gmin, ADM_gmax
+       do ic = ADM_gmin, ADM_gmax
+          ij     = suf(ic  ,jc  )
+          ip1j   = suf(ic+1,jc  )
+          ip1jp1 = suf(ic+1,jc+1)
+          ijp1   = suf(ic  ,jc+1)
 
-       if ( t == ADM_TI ) then
-          r1(:) = GRD_x(ADM_IooJoo(n,ADM_GIoJo),k,l,:) / GRD_rscale
-          r2(:) = GRD_x(ADM_IooJoo(n,ADM_GIpJo),k,l,:) / GRD_rscale
-          r3(:) = GRD_x(ADM_IooJoo(n,ADM_GIpJp),k,l,:) / GRD_rscale
+          do t = ADM_TI, ADM_TJ
 
-          lat1 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIoJo),k,l,GMTR_p_LAT)
-          lon1 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIoJo),k,l,GMTR_p_LON)
-          lat2 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIpJo),k,l,GMTR_p_LAT)
-          lon2 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIpJo),k,l,GMTR_p_LON)
-          lat3 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIpJp),k,l,GMTR_p_LAT)
-          lon3 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIpJp),k,l,GMTR_p_LON)
-       else !--- ADM_TJ
-          r1(:) = GRD_x(ADM_IooJoo(n,ADM_GIoJo),k,l,:) / GRD_rscale
-          r2(:) = GRD_x(ADM_IooJoo(n,ADM_GIpJp),k,l,:) / GRD_rscale
-          r3(:) = GRD_x(ADM_IooJoo(n,ADM_GIoJp),k,l,:) / GRD_rscale
+             if ( t == ADM_TI ) then
+                r1(:) = GRD_x(ij    ,k,l,:) / GRD_rscale
+                r2(:) = GRD_x(ip1j  ,k,l,:) / GRD_rscale
+                r3(:) = GRD_x(ip1jp1,k,l,:) / GRD_rscale
 
-          lat1 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIoJo),k,l,GMTR_p_LAT)
-          lon1 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIoJo),k,l,GMTR_p_LON)
-          lat2 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIpJp),k,l,GMTR_p_LAT)
-          lon2 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIpJp),k,l,GMTR_p_LON)
-          lat3 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIoJp),k,l,GMTR_p_LAT)
-          lon3 = GMTR_p_ll(ADM_IooJoo(n,ADM_GIoJp),k,l,GMTR_p_LON)
-       endif
+                lat1 = GMTR_p_ll(ij    ,k,l,GMTR_p_LAT)
+                lon1 = GMTR_p_ll(ij    ,k,l,GMTR_p_LON)
+                lat2 = GMTR_p_ll(ip1j  ,k,l,GMTR_p_LAT)
+                lon2 = GMTR_p_ll(ip1j  ,k,l,GMTR_p_LON)
+                lat3 = GMTR_p_ll(ip1jp1,k,l,GMTR_p_LAT)
+                lon3 = GMTR_p_ll(ip1jp1,k,l,GMTR_p_LON)
+             else !--- ADM_TJ
+                r1(:) = GRD_x(ij    ,k,l,:) / GRD_rscale
+                r2(:) = GRD_x(ip1jp1,k,l,:) / GRD_rscale
+                r3(:) = GRD_x(ijp1  ,k,l,:) / GRD_rscale
 
-       latmax_l = max(lat1,lat2,lat3) + eps_latlon
-       latmin_l = min(lat1,lat2,lat3) - eps_latlon
-
-       if( latmin_l >  polar_limit ) latmax_l =  PI
-       if( latmax_l < -polar_limit ) latmin_l = -PI
-
-       lonmax_l = max(lon1,lon2,lon3)
-       lonmin_l = min(lon1,lon2,lon3)
-       if ( lonmax_l-lonmin_l > PI ) then
-          if( lon1 < 0 ) lon1 = lon1 + 2.0_RP * PI
-          if( lon2 < 0 ) lon2 = lon2 + 2.0_RP * PI
-          if( lon3 < 0 ) lon3 = lon3 + 2.0_RP * PI
-
-          lonmax_l = max(lon1,lon2,lon3)
-          lonmin_l = min(lon1,lon2,lon3)
-       endif
-       lonmax_l = lonmax_l + eps_latlon
-       lonmin_l = lonmin_l - eps_latlon
-
-       do j = 1, jmax
-
-          if( lat(j) > latmax_l ) cycle
-          if( lat(j) < latmin_l ) cycle
-
-          near_pole = .false.
-          if( lat(j) >  polar_limit ) near_pole = .true.
-          if( lat(j) < -polar_limit ) near_pole = .true.
-
-          do i = 1, imax
-
-             if ( .NOT. near_pole ) then
-                if ( .NOT. (      (       ( lon(i)             <= lonmax_l ) &
-                                    .AND. ( lon(i)             >= lonmin_l ) ) &
-                             .OR. (       ( lon(i) - 2.0_RP*PI <= lonmax_l ) &
-                                    .AND. ( lon(i) - 2.0_RP*PI >= lonmin_l ) ) &
-                             .OR. (       ( lon(i) + 2.0_RP*PI <= lonmax_l ) &
-                                    .AND. ( lon(i) + 2.0_RP*PI >= lonmin_l ) ) ) ) then
-                   cycle
-                endif
+                lat1 = GMTR_p_ll(ij    ,k,l,GMTR_p_LAT)
+                lon1 = GMTR_p_ll(ij    ,k,l,GMTR_p_LON)
+                lat2 = GMTR_p_ll(ip1jp1,k,l,GMTR_p_LAT)
+                lon2 = GMTR_p_ll(ip1jp1,k,l,GMTR_p_LON)
+                lat3 = GMTR_p_ll(ijp1  ,k,l,GMTR_p_LAT)
+                lon3 = GMTR_p_ll(ijp1  ,k,l,GMTR_p_LON)
              endif
 
-             !--- target latlon point on the sphere
-             r0(1) = coslat(j) * coslon(i)
-             r0(2) = coslat(j) * sinlon(i)
-             r0(3) = sinlat(j)
+             latmax_l = max(lat1,lat2,lat3) + eps_latlon
+             latmin_l = min(lat1,lat2,lat3) - eps_latlon
 
-             !--- remove the case inner product is negative
-             call VECTR_dot( ip, o(:), r1(:), o(:), r0(:) )
-             if( ip < 0.0_RP ) cycle
-             v01(:) = r1(:) - r0(:)
+             if( latmin_l >  polar_limit ) latmax_l =  PI
+             if( latmax_l < -polar_limit ) latmin_l = -PI
 
-             !--- normal vector
-             call VECTR_cross( nvec(:), r1(:), r2(:), r2(:), r3(:) )
-             call VECTR_abs( len, nvec(:) )
+             lonmax_l = max(lon1,lon2,lon3)
+             lonmin_l = min(lon1,lon2,lon3)
+             if ( lonmax_l-lonmin_l > PI ) then
+                if( lon1 < 0 ) lon1 = lon1 + 2.0_RP * PI
+                if( lon2 < 0 ) lon2 = lon2 + 2.0_RP * PI
+                if( lon3 < 0 ) lon3 = lon3 + 2.0_RP * PI
 
-             nvec(:) = nvec(:) / len
-
-             !------ distance from origin to a plane with r0.
-             call VECTR_dot( rf, o(:), nvec(:), o(:), r0(:) )
-             !------ distance from origin to a plane with r1 or (r2,r3).
-             call VECTR_dot( rn, o(:), nvec(:), o(:), r1(:) )
-
-             !------ mapping r0
-             r0(1) = r0(1) * (rn/rf)
-             r0(2) = r0(2) * (rn/rf)
-             r0(3) = r0(3) * (rn/rf)
-
-             !--- calculate vectors from triangler points
-             call VECTR_cross( v12xv10(:), r1(:), r2(:), r0(:), r1(:) )
-             call VECTR_cross( v23xv20(:), r2(:), r3(:), r0(:), r2(:) )
-             call VECTR_cross( v31xv30(:), r3(:), r1(:), r0(:), r3(:) )
-
-             call VECTR_dot( judge12, o(:), nvec(:), o(:), v12xv10(:) )
-             call VECTR_dot( judge23, o(:), nvec(:), o(:), v23xv20(:) )
-             call VECTR_dot( judge31, o(:), nvec(:), o(:), v31xv30(:) )
-
-             if (       judge12 < eps_judge &
-                  .AND. judge23 < eps_judge &
-                  .AND. judge31 < eps_judge ) then ! in the triangle
-
-                select case( trim(what_is_done) )
-                case( 'GET_NUM' )
-
-                   nmax_llgrid        = nmax_llgrid        + 1
-                   nmax_llgrid_rgn(l) = nmax_llgrid_rgn(l) + 1
-                   checkmap(i,j) = checkmap(i,j) + 1.0
-
-                case('SET_INDEX')
-
-                   nmax_llgrid        = nmax_llgrid        + 1
-                   nmax_llgrid_rgn(l) = nmax_llgrid_rgn(l) + 1
-
-                   lon_index(nmax_llgrid) = i
-                   lat_index(nmax_llgrid) = j
-                   l_index  (nmax_llgrid) = l
-                   t_index  (nmax_llgrid) = t
-                   if ( t == ADM_TI ) then
-                      n1_index(nmax_llgrid) = ADM_IooJoo(n,ADM_GIoJo)
-                      n2_index(nmax_llgrid) = ADM_IooJoo(n,ADM_GIpJo)
-                      n3_index(nmax_llgrid) = ADM_IooJoo(n,ADM_GIpJp)
-                   else !--- ADM_TJ
-                      n1_index(nmax_llgrid) = ADM_IooJoo(n,ADM_GIoJo)
-                      n2_index(nmax_llgrid) = ADM_IooJoo(n,ADM_GIpJp)
-                      n3_index(nmax_llgrid) = ADM_IooJoo(n,ADM_GIoJp)
-                   endif
-
-                   area1 = VECTR_triangle( r0(:), r2(:), r3(:),     &
-                                           polygon_type, GRD_rscale )
-                   area2 = VECTR_triangle( r0(:), r3(:), r1(:),     &
-                                           polygon_type, GRD_rscale )
-                   area3 = VECTR_triangle( r0(:), r1(:), r2(:),     &
-                                           polygon_type, GRD_rscale )
-
-                   if (      area1 * 0.0_RP /= 0.0_RP &
-                        .OR. area2 * 0.0_RP /= 0.0_RP &
-                        .OR. area3 * 0.0_RP /= 0.0_RP ) then ! Nan?
-                      write(*         ,*) 'Nan! (i,j,n,t,l)=', i,j,n,t,l
-                      write(*         ,*) '(area1,area2,area3)=', area1,area2,area3
-                      write(IO_FID_LOG,*) 'Nan! (i,j,n,t,l)=', i,j,n,t,l
-                      write(IO_FID_LOG,*) '(area1,area2,area3)=', area1,area2,area3
-                      call PRC_MPIstop
-                   endif
-
-                   area_total = area1 + area2 + area3
-
-                   w1(nmax_llgrid) = area1 / area_total
-                   w2(nmax_llgrid) = area2 / area_total
-                   w3(nmax_llgrid) = area3 / area_total
-                endselect
-
-                cycle
-
-             elseif(       t == ADM_TI              &
-                     .AND. abs(v01(1)) < eps_vertex &
-                     .AND. abs(v01(2)) < eps_vertex &
-                     .AND. abs(v01(3)) < eps_vertex ) then ! on the triangle vertex
-
-                select case( trim(what_is_done) )
-                case( 'GET_NUM' )
-
-                   nmax_llgrid        = nmax_llgrid        + 1
-                   nmax_llgrid_rgn(l) = nmax_llgrid_rgn(l) + 1
-                   checkmap(i,j) = checkmap(i,j) + 1.0
-
-                case('SET_INDEX')
-
-                   nmax_llgrid        = nmax_llgrid        + 1
-                   nmax_llgrid_rgn(l) = nmax_llgrid_rgn(l) + 1
-
-                   lon_index(nmax_llgrid) = i
-                   lat_index(nmax_llgrid) = j
-                   l_index  (nmax_llgrid) = l
-                   t_index  (nmax_llgrid) = t
-                   n1_index (nmax_llgrid) = ADM_IooJoo(n,ADM_GIoJo)
-                   n2_index (nmax_llgrid) = ADM_IooJoo(n,ADM_GIpJo)
-                   n3_index (nmax_llgrid) = ADM_IooJoo(n,ADM_GIpJp)
-                   w1       (nmax_llgrid) = 1.0_RP
-                   w2       (nmax_llgrid) = 0.0_RP
-                   w3       (nmax_llgrid) = 0.0_RP
-                endselect
-
+                lonmax_l = max(lon1,lon2,lon3)
+                lonmin_l = min(lon1,lon2,lon3)
              endif
+             lonmax_l = lonmax_l + eps_latlon
+             lonmin_l = lonmin_l - eps_latlon
 
-          enddo ! i LOOP
-       enddo ! j LOOP
+             do j = 1, jmax
+
+                if( lat(j) > latmax_l ) cycle
+                if( lat(j) < latmin_l ) cycle
+
+                near_pole = .false.
+                if( lat(j) >  polar_limit ) near_pole = .true.
+                if( lat(j) < -polar_limit ) near_pole = .true.
+
+                do i = 1, imax
+
+                   if ( .NOT. near_pole ) then
+                      if ( .NOT. (      (       ( lon(i)             <= lonmax_l ) &
+                                          .AND. ( lon(i)             >= lonmin_l ) ) &
+                                   .OR. (       ( lon(i) - 2.0_RP*PI <= lonmax_l ) &
+                                          .AND. ( lon(i) - 2.0_RP*PI >= lonmin_l ) ) &
+                                   .OR. (       ( lon(i) + 2.0_RP*PI <= lonmax_l ) &
+                                          .AND. ( lon(i) + 2.0_RP*PI >= lonmin_l ) ) ) ) then
+                         cycle
+                      endif
+                   endif
+
+                   !--- target latlon point on the sphere
+                   r0(1) = coslat(j) * coslon(i)
+                   r0(2) = coslat(j) * sinlon(i)
+                   r0(3) = sinlat(j)
+
+                   !--- remove the case inner product is negative
+                   call VECTR_dot( ip, o(:), r1(:), o(:), r0(:) )
+                   if( ip < 0.0_RP ) cycle
+                   v01(:) = r1(:) - r0(:)
+
+                   !--- normal vector
+                   call VECTR_cross( nvec(:), r1(:), r2(:), r2(:), r3(:) )
+                   call VECTR_abs( len, nvec(:) )
+
+                   nvec(:) = nvec(:) / len
+
+                   !------ distance from origin to a plane with r0.
+                   call VECTR_dot( rf, o(:), nvec(:), o(:), r0(:) )
+                   !------ distance from origin to a plane with r1 or (r2,r3).
+                   call VECTR_dot( rn, o(:), nvec(:), o(:), r1(:) )
+
+                   !------ mapping r0
+                   r0(1) = r0(1) * (rn/rf)
+                   r0(2) = r0(2) * (rn/rf)
+                   r0(3) = r0(3) * (rn/rf)
+
+                   !--- calculate vectors from triangler points
+                   call VECTR_cross( v12xv10(:), r1(:), r2(:), r0(:), r1(:) )
+                   call VECTR_cross( v23xv20(:), r2(:), r3(:), r0(:), r2(:) )
+                   call VECTR_cross( v31xv30(:), r3(:), r1(:), r0(:), r3(:) )
+
+                   call VECTR_dot( judge12, o(:), nvec(:), o(:), v12xv10(:) )
+                   call VECTR_dot( judge23, o(:), nvec(:), o(:), v23xv20(:) )
+                   call VECTR_dot( judge31, o(:), nvec(:), o(:), v31xv30(:) )
+
+                   if (       judge12 < eps_judge &
+                        .AND. judge23 < eps_judge &
+                        .AND. judge31 < eps_judge ) then ! in the triangle
+
+                      select case( trim(what_is_done) )
+                      case( 'GET_NUM' )
+
+                         nmax_llgrid        = nmax_llgrid        + 1
+                         nmax_llgrid_rgn(l) = nmax_llgrid_rgn(l) + 1
+                         checkmap(i,j) = checkmap(i,j) + 1.0
+
+                      case('SET_INDEX')
+
+                         nmax_llgrid        = nmax_llgrid        + 1
+                         nmax_llgrid_rgn(l) = nmax_llgrid_rgn(l) + 1
+
+                         lon_index(nmax_llgrid) = i
+                         lat_index(nmax_llgrid) = j
+                         l_index  (nmax_llgrid) = l
+                         t_index  (nmax_llgrid) = t
+                         if ( t == ADM_TI ) then
+                            n1_index(nmax_llgrid) = ij
+                            n2_index(nmax_llgrid) = ip1j
+                            n3_index(nmax_llgrid) = ip1jp1
+                         else !--- ADM_TJ
+                            n1_index(nmax_llgrid) = ij
+                            n2_index(nmax_llgrid) = ip1jp1
+                            n3_index(nmax_llgrid) = ijp1
+                         endif
+
+                         area1 = VECTR_triangle( r0(:), r2(:), r3(:),     &
+                                                 polygon_type, GRD_rscale )
+                         area2 = VECTR_triangle( r0(:), r3(:), r1(:),     &
+                                                 polygon_type, GRD_rscale )
+                         area3 = VECTR_triangle( r0(:), r1(:), r2(:),     &
+                                                 polygon_type, GRD_rscale )
+
+                         if (      area1 * 0.0_RP /= 0.0_RP &
+                              .OR. area2 * 0.0_RP /= 0.0_RP &
+                              .OR. area3 * 0.0_RP /= 0.0_RP ) then ! Nan?
+                            write(*         ,*) 'Nan! (i,j,ij,t,l)=', i,j,ij,t,l
+                            write(*         ,*) '(area1,area2,area3)=', area1,area2,area3
+                            write(IO_FID_LOG,*) 'Nan! (i,j,ij,t,l)=', i,j,ij,t,l
+                            write(IO_FID_LOG,*) '(area1,area2,area3)=', area1,area2,area3
+                            call PRC_MPIstop
+                         endif
+
+                         area_total = area1 + area2 + area3
+
+                         w1(nmax_llgrid) = area1 / area_total
+                         w2(nmax_llgrid) = area2 / area_total
+                         w3(nmax_llgrid) = area3 / area_total
+                      endselect
+
+                      cycle
+
+                   elseif(       t == ADM_TI              &
+                           .AND. abs(v01(1)) < eps_vertex &
+                           .AND. abs(v01(2)) < eps_vertex &
+                           .AND. abs(v01(3)) < eps_vertex ) then ! on the triangle vertex
+
+                      select case( trim(what_is_done) )
+                      case( 'GET_NUM' )
+
+                         nmax_llgrid        = nmax_llgrid        + 1
+                         nmax_llgrid_rgn(l) = nmax_llgrid_rgn(l) + 1
+                         checkmap(i,j) = checkmap(i,j) + 1.0
+
+                      case('SET_INDEX')
+
+                         nmax_llgrid        = nmax_llgrid        + 1
+                         nmax_llgrid_rgn(l) = nmax_llgrid_rgn(l) + 1
+
+                         lon_index(nmax_llgrid) = i
+                         lat_index(nmax_llgrid) = j
+                         l_index  (nmax_llgrid) = l
+                         t_index  (nmax_llgrid) = t
+                         n1_index (nmax_llgrid) = ij
+                         n2_index (nmax_llgrid) = ip1j
+                         n3_index (nmax_llgrid) = ip1jp1
+                         w1       (nmax_llgrid) = 1.0_RP
+                         w2       (nmax_llgrid) = 0.0_RP
+                         w3       (nmax_llgrid) = 0.0_RP
+                      endselect
+
+                   endif
+
+                enddo ! i LOOP
+             enddo ! j LOOP
 
 
-    enddo ! TI,TJ
-    enddo ! n LOOP
+          enddo ! TI,TJ
+       enddo ! ic LOOP
+       enddo ! jc LOOP
     enddo ! l LOOP
 
     do l = 1, ADM_lall
        rgnid = ADM_prc_tab(l,ADM_prc_me)
 
        if    ( rgnid == ADM_rgnid_npl_mng ) then
-          n = ADM_gall_1d * ADM_gmax + ADM_gmin
+          ij = suf(ADM_gmin  ,ADM_gmax+1)
        elseif( rgnid == ADM_rgnid_spl_mng ) then
-          n = ADM_gall_1d * (ADM_gmin-1) + ADM_gmax+1
+          ij = suf(ADM_gmax+1,ADM_gmin  )
        else
           cycle
        endif
 
-       r1(:) = GRD_x(n,k,l,:) / GRD_rscale
+       r1(:) = GRD_x(ij,k,l,:) / GRD_rscale
 
        do j = 1, jmax
        do i = 1, imax
@@ -773,9 +775,9 @@ contains
                 lat_index(nmax_llgrid) = j
                 l_index  (nmax_llgrid) = l
                 t_index  (nmax_llgrid) = 0
-                n1_index (nmax_llgrid) = n
-                n2_index (nmax_llgrid) = n
-                n3_index (nmax_llgrid) = n
+                n1_index (nmax_llgrid) = ij
+                n2_index (nmax_llgrid) = ij
+                n3_index (nmax_llgrid) = ij
                 w1       (nmax_llgrid) = 1.0_RP
                 w2       (nmax_llgrid) = 0.0_RP
                 w3       (nmax_llgrid) = 0.0_RP
@@ -787,12 +789,10 @@ contains
        enddo ! j LOOP
     enddo ! l LOOP
 
-
     return
   end subroutine mkrelmap_ico2ll
 
   !-----------------------------------------------------------------------------
-  !> Output sample output
   subroutine LL_outputsample
     use mod_process, only: &
        PRC_MPIstop
@@ -898,9 +898,6 @@ contains
   end subroutine LL_outputsample
 
   !-----------------------------------------------------------------------------
-  !>
-  !> Description of the subroutine setup_latlon
-  !>
   subroutine setup_latlon
     use mod_const, only: &
        PI => CONST_PI
@@ -924,9 +921,6 @@ contains
   end subroutine setup_latlon
 
   !-----------------------------------------------------------------------------
-  !>
-  !> Description of the subroutine set_equidist_grid
-  !>
   subroutine set_equidist_grid
     implicit none
 
@@ -956,9 +950,6 @@ contains
   end subroutine set_equidist_grid
 
   !-----------------------------------------------------------------------------
-  !>
-  !> Description of the subroutine set_gaussian_grid
-  !>
   subroutine set_gaussian_grid
     use mod_const, only: &
        PI => CONST_PI
@@ -1045,15 +1036,25 @@ contains
   end subroutine set_gaussian_grid
 
   !-----------------------------------------------------------------------------
-  !>
-  !> Description of the subroutine intrpl_2
-  !>
+  integer function suf(i,j)
+    use mod_adm, only: &
+       ADM_gall_1d
+    implicit none
+
+    integer :: i, j
+    !---------------------------------------------------------------------------
+
+    suf = ADM_gall_1d * (j-1) + i
+
+  end function suf
+
+  !-----------------------------------------------------------------------------
 !  subroutine intrpl_2( var_ll, var, var_pl, kmin, kmax )
 !    !
 !    use mod_adm, only :              &
 !         ADM_prc_me,               &
 !         ADM_prc_pl,               &
-!         ADM_GSLF_PL,             &
+!         ADM_gslf_pl,             &
 !         ADM_gall_pl,              &
 !         ADM_lall_pl,              &
 !         ADM_IooJoo_nmax,          &
@@ -1151,7 +1152,7 @@ contains
 !                  (var_pl(5,k,l)/=CONST_UNDEF) .and. &
 !                  (var_pl(6,k,l)/=CONST_UNDEF) ) then
 !             else
-!                grd_pl(adm_gslf_pl,k,l,ix:iz)=CONST_UNDEF
+!                grd_pl(ADM_gslf_pl,k,l,ix:iz)=CONST_UNDEF
 !             endif
 !          enddo
 !       enddo

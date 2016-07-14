@@ -50,6 +50,7 @@ contents = <<EOS
   integer, public, parameter :: ADM_gmin        = <%= 1 + 1          %>
   integer, public, parameter :: ADM_gmax        = <%= 1 + grid1D     %>
 
+  integer, public, parameter :: ADM_vlink       = 5
   integer, public, parameter :: ADM_gall_pl     = 6
   integer, public, parameter :: ADM_gslf_pl     = 1
   integer, public, parameter :: ADM_gmin_pl     = 2
@@ -59,24 +60,6 @@ contents = <<EOS
   integer, public, parameter :: ADM_kall        = <%= 1 + zlayer + 1 %>
   integer, public, parameter :: ADM_kmin        = <%= 1 + 1          %>
   integer, public, parameter :: ADM_kmax        = <%= 1 + zlayer     %>
-
-  ! List vectors
-  integer, public, parameter :: ADM_IooJoo_nmax = <%= ( grid1D   ) * ( grid1D   ) %>
-  integer, public, parameter :: ADM_IooJmo_nmax = <%= ( grid1D   ) * ( grid1D+1 ) %>
-  integer, public, parameter :: ADM_IooJop_nmax = <%= ( grid1D   ) * ( grid1D+1 ) %>
-  integer, public, parameter :: ADM_IooJmp_nmax = <%= ( grid1D   ) * ( grid1D+2 ) %>
-  integer, public, parameter :: ADM_ImoJoo_nmax = <%= ( grid1D+1 ) * ( grid1D   ) %>
-  integer, public, parameter :: ADM_ImoJmo_nmax = <%= ( grid1D+1 ) * ( grid1D+1 ) %>
-  integer, public, parameter :: ADM_ImoJop_nmax = <%= ( grid1D+1 ) * ( grid1D+1 ) %>
-  integer, public, parameter :: ADM_ImoJmp_nmax = <%= ( grid1D+1 ) * ( grid1D+2 ) %>
-  integer, public, parameter :: ADM_IopJoo_nmax = <%= ( grid1D+1 ) * ( grid1D   ) %>
-  integer, public, parameter :: ADM_IopJmo_nmax = <%= ( grid1D+1 ) * ( grid1D+1 ) %>
-  integer, public, parameter :: ADM_IopJop_nmax = <%= ( grid1D+1 ) * ( grid1D+1 ) %>
-  integer, public, parameter :: ADM_IopJmp_nmax = <%= ( grid1D+1 ) * ( grid1D+2 ) %>
-  integer, public, parameter :: ADM_ImpJoo_nmax = <%= ( grid1D+2 ) * ( grid1D   ) %>
-  integer, public, parameter :: ADM_ImpJmo_nmax = <%= ( grid1D+2 ) * ( grid1D+1 ) %>
-  integer, public, parameter :: ADM_ImpJop_nmax = <%= ( grid1D+2 ) * ( grid1D+1 ) %>
-  integer, public, parameter :: ADM_ImpJmp_nmax = <%= ( grid1D+2 ) * ( grid1D+2 ) %>
 
 !-------------------------------------------------------------------------------
 EOS

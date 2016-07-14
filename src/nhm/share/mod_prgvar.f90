@@ -99,11 +99,8 @@ module mod_prgvar
 
   !-----------------------------------------------------------------------------
 contains
-
   !-----------------------------------------------------------------------------
-  !>
-  !> Description of the subroutine prgvar_setup
-  !>
+  !> Setup
   subroutine prgvar_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -189,7 +186,6 @@ contains
   end subroutine prgvar_setup
 
   !-----------------------------------------------------------------------------
-  !>
   subroutine prgvar_get( &
        rhog,   rhog_pl,   &
        rhogvx, rhogvx_pl, &
@@ -347,7 +343,6 @@ contains
   end subroutine prgvar_get_noq
 
   !-----------------------------------------------------------------------------
-  !>
   subroutine prgvar_get_withdiag( &
        rhog,   rhog_pl,   &
        rhogvx, rhogvx_pl, &
@@ -493,7 +488,6 @@ contains
   end subroutine prgvar_get_withdiag
 
   !-----------------------------------------------------------------------------
-  !>
   subroutine prgvar_set( &
        rhog,   rhog_pl,   &
        rhogvx, rhogvx_pl, &
@@ -589,9 +583,6 @@ contains
   end subroutine prgvar_set
 
   !-----------------------------------------------------------------------------
-  !>
-  !> Description of the subroutine prgvar_get_in
-  !>
   subroutine prgvar_get_in( &
        rhog,   &
        rhogvx, &
@@ -601,49 +592,59 @@ contains
        rhoge,  &
        rhogq   )
     use mod_adm, only: &
-       ADM_kall,        &
-       ADM_lall,        &
-       ADM_IopJop_nmax, &
-       ADM_IopJop,      &
-       ADM_GIoJo
+       ADM_lall,    &
+       ADM_gall_in, &
+       ADM_kall,    &
+       ADM_gmin,    &
+       ADM_gmax
     use mod_runconf, only: &
        TRC_vmax
     implicit none
 
-    real(RP), intent(out) :: rhog  (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: rhogvx(ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: rhogvy(ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: rhogvz(ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: rhogw (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: rhoge (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: rhogq (ADM_IopJop_nmax,ADM_kall,ADM_lall,TRC_vmax)
+    real(RP), intent(out) :: rhog  (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogvx(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogvy(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogvz(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogw (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhoge (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogq (ADM_gall_in,ADM_kall,ADM_lall,TRC_vmax)
 
-    integer :: n, k, l, nq, ij
+    integer :: i, j, n, k, l, nq, ij
     !---------------------------------------------------------------------------
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
-    do n = 1, ADM_IopJop_nmax
-       ij = ADM_IopJop(n,ADM_GIoJo)
+       n = 1
+       do j = ADM_gmin, ADM_gmax+1
+       do i = ADM_gmin, ADM_gmax+1
+          ij = suf(i,j)
 
-       rhog  (n,k,l) = PRG_var(ij,k,l,I_RHOG  )
-       rhogvx(n,k,l) = PRG_var(ij,k,l,I_RHOGVX)
-       rhogvy(n,k,l) = PRG_var(ij,k,l,I_RHOGVY)
-       rhogvz(n,k,l) = PRG_var(ij,k,l,I_RHOGVZ)
-       rhogw (n,k,l) = PRG_var(ij,k,l,I_RHOGW )
-       rhoge (n,k,l) = PRG_var(ij,k,l,I_RHOGE )
-    enddo
+          rhog  (n,k,l) = PRG_var(ij,k,l,I_RHOG  )
+          rhogvx(n,k,l) = PRG_var(ij,k,l,I_RHOGVX)
+          rhogvy(n,k,l) = PRG_var(ij,k,l,I_RHOGVY)
+          rhogvz(n,k,l) = PRG_var(ij,k,l,I_RHOGVZ)
+          rhogw (n,k,l) = PRG_var(ij,k,l,I_RHOGW )
+          rhoge (n,k,l) = PRG_var(ij,k,l,I_RHOGE )
+
+          n = n + 1
+       enddo
+       enddo
     enddo
     enddo
 
     do nq = 1, TRC_vmax
     do l  = 1, ADM_lall
     do k  = 1, ADM_kall
-    do n  = 1, ADM_IopJop_nmax
-       ij = ADM_IopJop(n,ADM_GIoJo)
+       n = 1
+       do j = ADM_gmin, ADM_gmax+1
+       do i = ADM_gmin, ADM_gmax+1
+          ij = suf(i,j)
 
-       rhogq(n,k,l,nq) = PRG_var(ij,k,l,PRG_vmax0+nq)
-    enddo
+          rhogq(n,k,l,nq) = PRG_var(ij,k,l,PRG_vmax0+nq)
+
+          n = n + 1
+       enddo
+       enddo
     enddo
     enddo
     enddo
@@ -652,9 +653,6 @@ contains
   end subroutine prgvar_get_in
 
   !-----------------------------------------------------------------------------
-  !>
-  !> Description of the subroutine prgvar_get_in
-  !>
   subroutine prgvar_get_in_withdiag( &
        rhog,   &
        rhogvx, &
@@ -672,11 +670,11 @@ contains
        w,      &
        q       )
     use mod_adm, only: &
-       ADM_kall,        &
-       ADM_lall,        &
-       ADM_IopJop_nmax, &
-       ADM_IopJop,      &
-       ADM_GIoJo
+       ADM_lall,    &
+       ADM_gall_in, &
+       ADM_kall,    &
+       ADM_gmin,    &
+       ADM_gmax
     use mod_vmtr, only: &
        VMTR_RGSGAM2
     use mod_runconf, only: &
@@ -685,23 +683,23 @@ contains
        cnvvar_prg2diag
     implicit none
 
-    real(RP), intent(out) :: rhog  (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: rhogvx(ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: rhogvy(ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: rhogvz(ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: rhogw (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: rhoge (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: rhogq (ADM_IopJop_nmax,ADM_kall,ADM_lall,TRC_vmax)
-    real(RP), intent(out) :: rho   (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: pre   (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: tem   (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: vx    (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: vy    (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: vz    (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: w     (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(out) :: q     (ADM_IopJop_nmax,ADM_kall,ADM_lall,TRC_vmax)
+    real(RP), intent(out) :: rhog  (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogvx(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogvy(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogvz(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogw (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhoge (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: rhogq (ADM_gall_in,ADM_kall,ADM_lall,TRC_vmax)
+    real(RP), intent(out) :: rho   (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: pre   (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: tem   (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: vx    (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: vy    (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: vz    (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: w     (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(out) :: q     (ADM_gall_in,ADM_kall,ADM_lall,TRC_vmax)
 
-    integer :: n, k, l, nq, ij
+    integer :: i, j, n, k, l, nq, ij
     !---------------------------------------------------------------------------
 
     call cnvvar_prg2diag( PRG_var (:,:,:,:), PRG_var_pl (:,:,:,:), & ! [IN]
@@ -709,38 +707,48 @@ contains
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
-    do n = 1, ADM_IopJop_nmax
-       ij = ADM_IopJop(n,ADM_GIoJo)
+       n = 1
+       do j = ADM_gmin, ADM_gmax+1
+       do i = ADM_gmin, ADM_gmax+1
+          ij = suf(i,j)
 
-       rhog  (n,k,l) = PRG_var(ij,k,l,I_RHOG  )
-       rhogvx(n,k,l) = PRG_var(ij,k,l,I_RHOGVX)
-       rhogvy(n,k,l) = PRG_var(ij,k,l,I_RHOGVY)
-       rhogvz(n,k,l) = PRG_var(ij,k,l,I_RHOGVZ)
-       rhogw (n,k,l) = PRG_var(ij,k,l,I_RHOGW )
-       rhoge (n,k,l) = PRG_var(ij,k,l,I_RHOGE )
+          rhog  (n,k,l) = PRG_var(ij,k,l,I_RHOG  )
+          rhogvx(n,k,l) = PRG_var(ij,k,l,I_RHOGVX)
+          rhogvy(n,k,l) = PRG_var(ij,k,l,I_RHOGVY)
+          rhogvz(n,k,l) = PRG_var(ij,k,l,I_RHOGVZ)
+          rhogw (n,k,l) = PRG_var(ij,k,l,I_RHOGW )
+          rhoge (n,k,l) = PRG_var(ij,k,l,I_RHOGE )
 
-       rho   (n,k,l) = PRG_var(ij,k,l,I_RHOG) * VMTR_RGSGAM2(ij,k,l)
+          rho   (n,k,l) = PRG_var(ij,k,l,I_RHOG) * VMTR_RGSGAM2(ij,k,l)
 
-       pre   (n,k,l) = DIAG_var(ij,k,l,I_pre)
-       tem   (n,k,l) = DIAG_var(ij,k,l,I_tem)
-       vx    (n,k,l) = DIAG_var(ij,k,l,I_vx )
-       vy    (n,k,l) = DIAG_var(ij,k,l,I_vy )
-       vz    (n,k,l) = DIAG_var(ij,k,l,I_vz )
-       w     (n,k,l) = DIAG_var(ij,k,l,I_w  )
-    enddo
+          pre   (n,k,l) = DIAG_var(ij,k,l,I_pre)
+          tem   (n,k,l) = DIAG_var(ij,k,l,I_tem)
+          vx    (n,k,l) = DIAG_var(ij,k,l,I_vx )
+          vy    (n,k,l) = DIAG_var(ij,k,l,I_vy )
+          vz    (n,k,l) = DIAG_var(ij,k,l,I_vz )
+          w     (n,k,l) = DIAG_var(ij,k,l,I_w  )
+
+          n = n + 1
+       enddo
+       enddo
     enddo
     enddo
 
     do nq = 1, TRC_vmax
     do l  = 1, ADM_lall
     do k  = 1, ADM_kall
-    do n  = 1, ADM_IopJop_nmax
-       ij = ADM_IopJop(n,ADM_GIoJo)
+       n = 1
+       do j = ADM_gmin, ADM_gmax+1
+       do i = ADM_gmin, ADM_gmax+1
+          ij = suf(i,j)
 
-       rhogq(n,k,l,nq) = PRG_var(ij,k,l,PRG_vmax0+nq)
+          rhogq(n,k,l,nq) = PRG_var(ij,k,l,PRG_vmax0+nq)
 
-       q    (n,k,l,nq) = DIAG_var(ij,k,l,DIAG_vmax0+nq)
-    enddo
+          q    (n,k,l,nq) = DIAG_var(ij,k,l,DIAG_vmax0+nq)
+
+          n = n + 1
+       enddo
+       enddo
     enddo
     enddo
     enddo
@@ -749,7 +757,6 @@ contains
   end subroutine prgvar_get_in_withdiag
 
   !-----------------------------------------------------------------------------
-  !>
   subroutine prgvar_set_in( &
        rhog,   &
        rhogvx, &
@@ -759,11 +766,11 @@ contains
        rhoge,  &
        rhogq   )
     use mod_adm, only : &
-       ADM_kall,        &
-       ADM_lall,        &
-       ADM_IopJop_nmax, &
-       ADM_IopJop,      &
-       ADM_GIoJo
+       ADM_lall,    &
+       ADM_gall_in, &
+       ADM_kall,    &
+       ADM_gmin,    &
+       ADM_gmax
     use mod_comm, only: &
        COMM_var
     use mod_runconf, only: &
@@ -771,40 +778,50 @@ contains
        TRC_vmax
     implicit none
 
-    real(RP), intent(in) :: rhog  (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(in) :: rhogvx(ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(in) :: rhogvy(ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(in) :: rhogvz(ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(in) :: rhogw (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(in) :: rhoge (ADM_IopJop_nmax,ADM_kall,ADM_lall)
-    real(RP), intent(in) :: rhogq (ADM_IopJop_nmax,ADM_kall,ADM_lall,TRC_vmax)
+    real(RP), intent(in) :: rhog  (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(in) :: rhogvx(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(in) :: rhogvy(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(in) :: rhogvz(ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(in) :: rhogw (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(in) :: rhoge (ADM_gall_in,ADM_kall,ADM_lall)
+    real(RP), intent(in) :: rhogq (ADM_gall_in,ADM_kall,ADM_lall,TRC_vmax)
 
-    integer :: n, k, l, nq, ij
+    integer :: i, j, n, k, l, nq, ij
     !---------------------------------------------------------------------------
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
-    do n = 1, ADM_IopJop_nmax
-       ij = ADM_IopJop(n,ADM_GIoJo)
+       n = 1
+       do j = ADM_gmin, ADM_gmax+1
+       do i = ADM_gmin, ADM_gmax+1
+          ij = suf(i,j)
 
-       PRG_var(ij,k,l,I_RHOG  ) = rhog  (n,k,l)
-       PRG_var(ij,k,l,I_RHOGVX) = rhogvx(n,k,l)
-       PRG_var(ij,k,l,I_RHOGVY) = rhogvy(n,k,l)
-       PRG_var(ij,k,l,I_RHOGVZ) = rhogvz(n,k,l)
-       PRG_var(ij,k,l,I_RHOGW ) = rhogw (n,k,l)
-       PRG_var(ij,k,l,I_RHOGE ) = rhoge (n,k,l)
-    enddo
+          PRG_var(ij,k,l,I_RHOG  ) = rhog  (n,k,l)
+          PRG_var(ij,k,l,I_RHOGVX) = rhogvx(n,k,l)
+          PRG_var(ij,k,l,I_RHOGVY) = rhogvy(n,k,l)
+          PRG_var(ij,k,l,I_RHOGVZ) = rhogvz(n,k,l)
+          PRG_var(ij,k,l,I_RHOGW ) = rhogw (n,k,l)
+          PRG_var(ij,k,l,I_RHOGE ) = rhoge (n,k,l)
+
+          n = n + 1
+       enddo
+       enddo
     enddo
     enddo
 
     do nq = 1, TRC_vmax
     do l  = 1, ADM_lall
     do k  = 1, ADM_kall
-    do n = 1, ADM_IopJop_nmax
-       ij = ADM_IopJop(n,ADM_GIoJo)
+       n = 1
+       do j = ADM_gmin, ADM_gmax+1
+       do i = ADM_gmin, ADM_gmax+1
+          ij = suf(i,j)
 
-       PRG_var(ij,k,l,PRG_vmax0+nq) = rhogq(n,k,l,nq)
-    enddo
+          PRG_var(ij,k,l,PRG_vmax0+nq) = rhogq(n,k,l,nq)
+
+          n = n + 1
+       enddo
+       enddo
     enddo
     enddo
     enddo
@@ -1075,6 +1092,19 @@ contains
 
     return
   end subroutine restart_output
+
+  !-----------------------------------------------------------------------------
+  integer function suf(i,j)
+    use mod_adm, only: &
+       ADM_gall_1d
+    implicit none
+
+    integer :: i, j
+    !---------------------------------------------------------------------------
+
+    suf = ADM_gall_1d * (j-1) + i
+
+  end function suf
 
 end module mod_prgvar
 !-------------------------------------------------------------------------------
