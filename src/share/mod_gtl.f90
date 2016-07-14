@@ -718,27 +718,27 @@ contains
        vx, vx_pl, &
        vy, vy_pl, &
        vz, vz_pl, &
-       icos       )
+       withcos    )
     use mod_adm, only: &
+       ADM_KNONE,   &
        ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
-       ADM_kall,    &
-       ADM_KNONE
+       ADM_kall
     use mod_grd, only: &
        GRD_LAT, &
        GRD_s,   &
        GRD_s_pl
     use mod_gmtr, only: &
-       P_IX  => GMTR_p_IX,  &
-       P_IY  => GMTR_p_IY,  &
-       P_IZ  => GMTR_p_IZ,  &
-       P_JX  => GMTR_p_JX,  &
-       P_JY  => GMTR_p_JY,  &
-       P_JZ  => GMTR_p_JZ,  &
-       GMTR_p,          &
+       GMTR_p_IX, &
+       GMTR_p_IY, &
+       GMTR_p_IZ, &
+       GMTR_p_JX, &
+       GMTR_p_JY, &
+       GMTR_p_JZ, &
+       GMTR_p,    &
        GMTR_p_pl
     implicit none
 
@@ -753,74 +753,54 @@ contains
     real(RP), intent(in)  :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
     real(RP), intent(in)  :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    integer, optional, intent(in) :: icos
+    logical,  intent(in), optional :: withcos
+
+    real(RP) :: coslat   (ADM_gall   ,ADM_lall   )
+    real(RP) :: coslat_pl(ADM_gall_pl,ADM_lall_pl)
 
     integer :: n, k, l, k0
     !---------------------------------------------------------------------------
 
     k0 = ADM_KNONE
 
-    if (       present(icos) &
-         .AND. icos /= 0     ) then
+    coslat   (:,:) = 1.0_RP
+    coslat_pl(:,:) = 1.0_RP
 
-       do l = 1, ADM_lall
-       do k = 1, ADM_kall
-       do n = 1, ADM_gall
-          u(n,k,l) = ( vx(n,k,l) * GMTR_p(n,k0,l,P_IX) &
-                     + vy(n,k,l) * GMTR_p(n,k0,l,P_IY) &
-                     + vz(n,k,l) * GMTR_p(n,k0,l,P_IZ) ) * cos(GRD_s(n,k0,l,GRD_LAT))
-          v(n,k,l) = ( vx(n,k,l) * GMTR_p(n,k0,l,P_JX) &
-                     + vy(n,k,l) * GMTR_p(n,k0,l,P_JY) &
-                     + vz(n,k,l) * GMTR_p(n,k0,l,P_JZ) ) * cos(GRD_s(n,k0,l,GRD_LAT))
-       enddo
-       enddo
-       enddo
-
-       if ( ADM_have_pl ) then
-          do l = 1, ADM_lall_pl
-          do k = 1, ADM_kall
-          do n = 1, ADM_gall_pl
-             u_pl(n,k,l) = ( vx_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_IX) &
-                           + vy_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_IY) &
-                           + vz_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_IZ) ) * cos(GRD_s_pl(n,k0,l,GRD_LAT))
-             v_pl(n,k,l) = ( vx_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_JX) &
-                           + vy_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_JY) &
-                           + vz_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_JZ) ) * cos(GRD_s_pl(n,k0,l,GRD_LAT))
-          enddo
-          enddo
-          enddo
+    if ( present(withcos) ) then
+       if ( withcos ) then
+          coslat(:,:) = cos(GRD_s(:,k0,:,GRD_LAT))
+          if ( ADM_have_pl ) then
+             coslat_pl(:,:) = cos(GRD_s_pl(:,k0,:,GRD_LAT))
+          endif
        endif
+    endif
 
-    else
+    do l = 1, ADM_lall
+    do k = 1, ADM_kall
+    do n = 1, ADM_gall
+       u(n,k,l) = ( vx(n,k,l) * GMTR_p(n,k0,l,GMTR_p_IX) &
+                  + vy(n,k,l) * GMTR_p(n,k0,l,GMTR_p_IY) &
+                  + vz(n,k,l) * GMTR_p(n,k0,l,GMTR_p_IZ) ) * coslat(n,l)
+       v(n,k,l) = ( vx(n,k,l) * GMTR_p(n,k0,l,GMTR_p_JX) &
+                  + vy(n,k,l) * GMTR_p(n,k0,l,GMTR_p_JY) &
+                  + vz(n,k,l) * GMTR_p(n,k0,l,GMTR_p_JZ) ) * coslat(n,l)
+    enddo
+    enddo
+    enddo
 
-       do l = 1, ADM_lall
+    if ( ADM_have_pl ) then
+       do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
-       do n = 1, ADM_gall
-          u(n,k,l) = ( vx(n,k,l) * GMTR_p(n,k0,l,P_IX) &
-                     + vy(n,k,l) * GMTR_p(n,k0,l,P_IY) &
-                     + vz(n,k,l) * GMTR_p(n,k0,l,P_IZ) )
-          v(n,k,l) = ( vx(n,k,l) * GMTR_p(n,k0,l,P_JX) &
-                     + vy(n,k,l) * GMTR_p(n,k0,l,P_JY) &
-                     + vz(n,k,l) * GMTR_p(n,k0,l,P_JZ) )
+       do n = 1, ADM_gall_pl
+          u_pl(n,k,l) = ( vx_pl(n,k,l) * GMTR_p_pl(n,k0,l,GMTR_p_IX) &
+                        + vy_pl(n,k,l) * GMTR_p_pl(n,k0,l,GMTR_p_IY) &
+                        + vz_pl(n,k,l) * GMTR_p_pl(n,k0,l,GMTR_p_IZ) ) * coslat_pl(n,l)
+          v_pl(n,k,l) = ( vx_pl(n,k,l) * GMTR_p_pl(n,k0,l,GMTR_p_JX) &
+                        + vy_pl(n,k,l) * GMTR_p_pl(n,k0,l,GMTR_p_JY) &
+                        + vz_pl(n,k,l) * GMTR_p_pl(n,k0,l,GMTR_p_JZ) ) * coslat_pl(n,l)
        enddo
        enddo
        enddo
-
-       if ( ADM_have_pl ) then
-          do l = 1, ADM_lall_pl
-          do k = 1, ADM_kall
-          do n = 1, ADM_gall_pl
-             u_pl(n,k,l) = ( vx_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_IX) &
-                           + vy_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_IY) &
-                           + vz_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_IZ) )
-             v_pl(n,k,l) = ( vx_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_JX) &
-                           + vy_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_JY) &
-                           + vz_pl(n,k,l) * GMTR_p_pl(n,k0,l,P_JZ) )
-          enddo
-          enddo
-          enddo
-       endif
-
     endif
 
     return

@@ -820,9 +820,9 @@ contains
     enddo
     call BNDCND_thermo(     &
          ijdim,             &
-         DIAG_var(:,:,l,2), &
          rho0,              &
          DIAG_var(:,:,l,1), &
+         DIAG_var(:,:,l,2), &
          phi(:,:,l)         )
     enddo
 

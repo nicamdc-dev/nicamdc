@@ -295,9 +295,9 @@ contains
   !> Boundary condition setting for thermodynamical variables
   subroutine BNDCND_thermo( &
        ijdim, &
-       tem,   &
        rho,   &
        pre,   &
+       tem,   &
        phi    )
     use mod_adm, only: &
        kdim => ADM_kall, &
@@ -309,9 +309,9 @@ contains
     implicit none
 
     integer,  intent(in)    :: ijdim           ! number of horizontal grid
-    real(RP), intent(inout) :: tem(ijdim,kdim) ! temperature
     real(RP), intent(inout) :: rho(ijdim,kdim) ! density
     real(RP), intent(inout) :: pre(ijdim,kdim) ! pressure
+    real(RP), intent(inout) :: tem(ijdim,kdim) ! temperature
     real(RP), intent(in)    :: phi(ijdim,kdim) ! geopotential
 
     integer  :: ij

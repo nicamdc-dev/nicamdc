@@ -260,10 +260,10 @@ contains
 
     !--- boundary condition
     do l = 1, ADM_lall
-       call bndcnd_thermo( ADM_gall_in, & ! [IN]
-                           tem(:,:,l),  & ! [INOUT]
+       call BNDCND_thermo( ADM_gall_in, & ! [IN]
                            rho(:,:,l),  & ! [INOUT]
                            pre(:,:,l),  & ! [INOUT]
+                           tem(:,:,l),  & ! [INOUT]
                            phi(:,:,l)   ) ! [IN]
 
        vx(:,ADM_kmax+1,l) = vx(:,ADM_kmax,l)
