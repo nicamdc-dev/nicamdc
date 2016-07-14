@@ -363,7 +363,7 @@ contains
        ADM_se,          &
        ADM_rid,         &
        ADM_dir,         &
-       ADM_vlink_nmax,  &
+       ADM_vlink,       &
        ADM_rgn_nmax_pl, &
        ADM_npl,         &
        ADM_spl,         &
@@ -446,8 +446,8 @@ contains
        halomax=1
     endif
 
-    max_comm_r2p=ADM_vlink_nmax*2!S.Iga100607
-    max_comm_p2r=ADM_vlink_nmax*2!S.Iga100607
+    max_comm_r2p=ADM_vlink*2!S.Iga100607
+    max_comm_p2r=ADM_vlink*2!S.Iga100607
     max_comm=max_comm_r2r+max_comm_r2p+max_comm_p2r!S.Iga100607
 
     kmax=ADM_kall
@@ -581,7 +581,7 @@ contains
     nmin_nspl(halomax)=1
     nmax_nspl(halomax)=halomax+1
     pmin_nspl(halomax)=1
-    pmax_nspl(halomax)=ADM_vlink_nmax
+    pmax_nspl(halomax)=ADM_vlink
     lmin_nspl(halomax)=1
     lmax_nspl(halomax)=halomax
     gmin_nspl(halomax)=2
@@ -604,7 +604,7 @@ contains
        nmin_nspl(halo)=1
        nmax_nspl(halo)=halo+1
        pmin_nspl(halo)=1
-       pmax_nspl(halo)=ADM_vlink_nmax
+       pmax_nspl(halo)=ADM_vlink
        lmin_nspl(halo)=1
        lmax_nspl(halo)=halo
        gmin_nspl(halo)=2
@@ -638,9 +638,9 @@ contains
                  q=q+1
                  in=-nd+ld+nmin_nspl(halo)-lmin_nspl(halo)+imin(halo)
                  jn=-nd+nmin_nspl(halo)+(jmax(halo)-jmin(halo))+jmin(halo)
-                 rlist_r2p(q,mod(p,ADM_vlink_nmax)+1,ADM_npl,halo) &
+                 rlist_r2p(q,mod(p,ADM_vlink)+1,ADM_npl,halo) &
                       =pl_index(nd+1,p,ld,halo)
-                 qlist_r2p(q,mod(p,ADM_vlink_nmax)+1,ADM_npl,halo)=suf(in,jn,gall(halo))
+                 qlist_r2p(q,mod(p,ADM_vlink)+1,ADM_npl,halo)=suf(in,jn,gall(halo))
               enddo
            enddo
         enddo
@@ -677,7 +677,7 @@ contains
                  enddo
               endif
               sendtag_r2p(p,pl,halo)=pl+(ADM_spl-ADM_npl+1)*(p-1) &
-                   +ADM_rgn_nmax**2+ADM_vlink_nmax*2
+                   +ADM_rgn_nmax**2+ADM_vlink*2
               recvtag_r2p(p,pl,halo)=sendtag_r2p(p,pl,halo)
 
 !              write(*,*) 'sendtag_r2p',ADM_prc_me,p,pl,halo,sendtag_r2p(p,pl,halo)
@@ -1457,9 +1457,9 @@ contains
     allocate(recvtag_p2r(max_comm_p2r,ADM_npl:ADM_spl))
     allocate(sendtag_p2r(max_comm_p2r,ADM_npl:ADM_spl))
     do pl=ADM_npl,ADM_spl
-       do p=1,ADM_vlink_nmax
-          recvtag_p2r(p,pl)=ADM_rgn_nmax*ADM_rgn_nmax+p+ADM_vlink_nmax*(pl-1)
-          sendtag_p2r(p,pl)=ADM_rgn_nmax*ADM_rgn_nmax+p+ADM_vlink_nmax*(pl-1)
+       do p=1,ADM_vlink
+          recvtag_p2r(p,pl)=ADM_rgn_nmax*ADM_rgn_nmax+p+ADM_vlink*(pl-1)
+          sendtag_p2r(p,pl)=ADM_rgn_nmax*ADM_rgn_nmax+p+ADM_vlink*(pl-1)
 
 !          write(*,*) 'sendtag_p2r',ADM_prc_me,p,pl,halo,sendtag_p2r(p,pl)
 
@@ -1505,7 +1505,7 @@ contains
     maxl=ADM_lall+2
     !----
     maxn_pl=halomax*(halomax+1)/2
-    maxm_pl=ADM_vlink_nmax
+    maxm_pl=ADM_vlink
     maxl_pl=(ADM_spl-ADM_npl+1)
     !----
     maxn_r2r=(gmax(halomax)-gmin(halomax)+1)*halomax
@@ -1513,11 +1513,11 @@ contains
     maxl_r2r=ADM_lall
     !----
     maxn_r2p=halomax*(halomax+1)/2
-    maxm_r2p=ADM_vlink_nmax
+    maxm_r2p=ADM_vlink
     maxl_r2p=(ADM_spl-ADM_npl+1)
     !----
     maxn_p2r=1
-    maxm_p2r=ADM_vlink_nmax
+    maxm_p2r=ADM_vlink
     maxl_p2r=(ADM_spl-ADM_npl+1)
     !----
     maxn_sgp=halomax
@@ -1991,7 +1991,7 @@ contains
 !       dbg_sendbuf_init = -1d66  * (ADM_prc_me+1000)
        dbg_sendbuf_init = -888E+30_RP
        dbg_recvbuf_init = -777E+30_RP
-       allocate(dbg_areq_save(2*(ADM_lall*max_comm_r2r+ADM_vlink_nmax*4),4))
+       allocate(dbg_areq_save(2*(ADM_lall*max_comm_r2r+ADM_vlink*4),4))
        dbg_areq_save(:,:) = -999 ! [Add] 12/03/26 T.Seiki
     endif
     ! iga for dbg 090916 ==>
@@ -2039,7 +2039,7 @@ contains
                 endif
              enddo !loop p
              !
-             do p=1,ADM_vlink_nmax
+             do p=1,ADM_vlink
                 rgnid=ADM_rgn_vtab_pl(ADM_rid,pl,p)
                 drank=prc_tab_rev(ptr_prcid,rgnid)-1
                 if (drank/=rank_me) then
@@ -2069,7 +2069,7 @@ contains
              enddo !loop p
           endif
           !
-          do p=1,ADM_vlink_nmax
+          do p=1,ADM_vlink
              rgnid=ADM_rgn_vtab_pl(ADM_rid,pl,p)
              drank=prc_tab_rev(ptr_prcid,rgnid)-1
              if (rank_me==drank) then
@@ -2293,11 +2293,11 @@ contains
        PRC_LOCAL_COMM_WORLD, &
        PRC_MPIstop
     use mod_adm, only: &
-       ADM_vlink_nmax, &
-       ADM_gall_1d,    &
-       ADM_lall,       &
-       ADM_kall,       &
-       ADM_gmax,       &
+       ADM_vlink,   &
+       ADM_gall_1d, &
+       ADM_lall,    &
+       ADM_kall,    &
+       ADM_gmax,    &
        ADM_gmin
     implicit none
 
@@ -2308,8 +2308,8 @@ contains
     integer ::  cmax, kmax, varmax
 
     integer ::  acount
-    integer ::  areq(2*(ADM_lall*max_comm_r2r+ADM_vlink_nmax*4))
-    integer ::  stat(MPI_status_size,2*(ADM_lall*max_comm_r2r+ADM_vlink_nmax*4))
+    integer ::  areq(2*(ADM_lall*max_comm_r2r+ADM_vlink*4))
+    integer ::  stat(MPI_status_size,2*(ADM_lall*max_comm_r2r+ADM_vlink*4))
     integer ::  ierr
 
     integer ::  k, m, n

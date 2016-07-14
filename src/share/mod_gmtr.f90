@@ -22,6 +22,17 @@ module mod_gmtr
   !
   use mod_precision
   use mod_stdio
+  use mod_adm, only: &
+     ADM_TI,      &
+     ADM_TJ,      &
+     ADM_AI,      &
+     ADM_AIJ,     &
+     ADM_AJ,      &
+     ADM_KNONE,   &
+     ADM_lall,    &
+     ADM_lall_pl, &
+     ADM_gall,    &
+     ADM_gall_pl
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -128,16 +139,6 @@ contains
   subroutine GMTR_setup
     use mod_process, only: &
        PRC_MPIstop
-    use mod_adm, only: &
-       ADM_TI,      &
-       ADM_TJ,      &
-       ADM_AI,      &
-       ADM_AJ,      &
-       ADM_KNONE,   &
-       ADM_lall,    &
-       ADM_lall_pl, &
-       ADM_gall,    &
-       ADM_gall_pl
     use mod_comm, only: &
        COMM_data_transfer
     use mod_grd, only: &
@@ -230,19 +231,12 @@ contains
        GMTR_p, GMTR_p_pl, &
        GRD_rscale         )
     use mod_adm, only: &
-       ADM_nxyz,       &
-       ADM_TI,         &
-       ADM_TJ,         &
-       ADM_KNONE,      &
-       ADM_have_pl,    &
-       ADM_have_sgp,   &
-       ADM_vlink_nmax, &
-       ADM_lall,       &
-       ADM_lall_pl,    &
-       ADM_gall,       &
-       ADM_gall_pl,    &
-       ADM_gmin,       &
-       ADM_gmax,       &
+       ADM_nxyz,     &
+       ADM_have_pl,  &
+       ADM_have_sgp, &
+       ADM_vlink,    &
+       ADM_gmin,     &
+       ADM_gmax,     &
        ADM_gslf_pl
     use mod_grd, only: &
        GRD_XDIR,     &
@@ -266,7 +260,7 @@ contains
     real(RP), intent(in)  :: GRD_rscale
 
     real(RP) :: wk   (ADM_nxyz,0:7,ADM_gall)
-    real(RP) :: wk_pl(ADM_nxyz,0:ADM_vlink_nmax+1)
+    real(RP) :: wk_pl(ADM_nxyz,0:ADM_vlink+1)
 
     real(RP) :: area
     real(RP) :: cos_lambda, sin_lambda
@@ -384,17 +378,17 @@ contains
           !--- prepare 1 center and * vertices
           do d = 1, ADM_nxyz
              wk_pl(d,0) = GRD_x_pl(n,k0,l,d)
-             do v = 1, ADM_vlink_nmax ! (ICO=5)
+             do v = 1, ADM_vlink ! (ICO=5)
                 wk_pl(d,v) = GRD_xt_pl(v+1,k0,l,d)
              enddo
-             wk_pl(d,ADM_vlink_nmax+1) = wk_pl(d,1)
+             wk_pl(d,ADM_vlink+1) = wk_pl(d,1)
           enddo
 
           wk_pl(:,:) = wk_pl(:,:) / GRD_rscale
 
           !--- calc control area
           area = 0.0_RP
-          do v = 1, ADM_vlink_nmax ! (ICO=5)
+          do v = 1, ADM_vlink ! (ICO=5)
              area = area + VECTR_triangle( wk_pl(:,0), wk_pl(:,v), wk_pl(:,v+1), GMTR_polygon_type, GRD_rscale )
           enddo
 
@@ -426,20 +420,13 @@ contains
        GMTR_t, GMTR_t_pl, &
        GRD_rscale         )
     use mod_adm, only: &
-       ADM_nxyz,       &
-       ADM_TI,         &
-       ADM_TJ,         &
-       ADM_KNONE,      &
-       ADM_have_pl,    &
-       ADM_have_sgp,   &
-       ADM_lall,       &
-       ADM_lall_pl,    &
-       ADM_gall,       &
-       ADM_gall_pl,    &
-       ADM_gmin,       &
-       ADM_gmax,       &
-       ADM_gslf_pl,    &
-       ADM_gmin_pl,    &
+       ADM_nxyz,     &
+       ADM_have_pl,  &
+       ADM_have_sgp, &
+       ADM_gmin,     &
+       ADM_gmax,     &
+       ADM_gslf_pl,  &
+       ADM_gmin_pl,  &
        ADM_gmax_pl
     use mod_grd, only: &
        GRD_grid_type
@@ -599,23 +586,13 @@ contains
        GMTR_a, GMTR_a_pl, &
        GRD_rscale         )
     use mod_adm, only: &
-       ADM_nxyz,       &
-       ADM_TI,         &
-       ADM_TJ,         &
-       ADM_AI,         &
-       ADM_AIJ,        &
-       ADM_AJ,         &
-       ADM_KNONE,      &
-       ADM_have_pl,    &
-       ADM_have_sgp,   &
-       ADM_lall,       &
-       ADM_lall_pl,    &
-       ADM_gall,       &
-       ADM_gall_pl,    &
-       ADM_gmin,       &
-       ADM_gmax,       &
-       ADM_gslf_pl,    &
-       ADM_gmin_pl,    &
+       ADM_nxyz,     &
+       ADM_have_pl,  &
+       ADM_have_sgp, &
+       ADM_gmin,     &
+       ADM_gmax,     &
+       ADM_gslf_pl,  &
+       ADM_gmin_pl,  &
        ADM_gmax_pl
     use mod_grd, only: &
        GRD_grid_type
@@ -1012,29 +989,19 @@ contains
   !-----------------------------------------------------------------------------
   subroutine GMTR_output_metrics( &
        basename )
-    use mod_process, only: &
-       PRC_MPIstop
-    use mod_adm, only: &
-       ADM_TI,      &
-       ADM_TJ,      &
-       ADM_AI,      &
-       ADM_AIJ,     &
-       ADM_AJ,      &
-       ADM_KNONE,   &
-       ADM_prc_tab, &
-       ADM_prc_me,  &
-       ADM_have_pl, &
-       ADM_lall,    &
-       ADM_lall_pl, &
-       ADM_gall,    &
-       ADM_gall_pl
     use mod_io_param, only: &
        IO_REAL8, &
        IO_REAL4
-    use mod_fio, only: &
-       FIO_output
+    use mod_process, only: &
+       PRC_MPIstop
+    use mod_adm, only: &
+       ADM_prc_tab, &
+       ADM_prc_me,  &
+       ADM_have_pl
     use mod_comm, only: &
        COMM_data_transfer
+    use mod_fio, only: &
+       FIO_output
     implicit none
 
     character(len=*), intent(in) :: basename

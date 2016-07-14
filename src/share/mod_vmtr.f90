@@ -20,6 +20,13 @@ module mod_vmtr
   !
   use mod_precision
   use mod_stdio
+
+  use mod_adm, only: &
+     ADM_lall,    &
+     ADM_lall_pl, &
+     ADM_gall,    &
+     ADM_gall_pl, &
+     ADM_kall
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -131,11 +138,6 @@ contains
     use mod_adm, only: &
        ADM_KNONE,   &
        ADM_have_pl, &
-       ADM_lall,    &
-       ADM_lall_pl, &
-       ADM_gall,    &
-       ADM_gall_pl, &
-       ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
     use mod_const, only: &

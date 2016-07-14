@@ -36,6 +36,7 @@
   integer, public, parameter :: ADM_gmin        = 2
   integer, public, parameter :: ADM_gmax        = 129
 
+  integer, public, parameter :: ADM_vlink       = 5
   integer, public, parameter :: ADM_gall_pl     = 6
   integer, public, parameter :: ADM_gslf_pl     = 1
   integer, public, parameter :: ADM_gmin_pl     = 2

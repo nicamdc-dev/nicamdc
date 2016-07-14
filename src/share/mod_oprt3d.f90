@@ -60,7 +60,7 @@ contains
        ADM_nxyz,       &
        ADM_have_pl,    &
        ADM_have_sgp,   &
-       ADM_vlink_nmax, &
+       ADM_vlink,      &
        ADM_lall,       &
        ADM_lall_pl,    &
        ADM_gall,       &
@@ -105,8 +105,8 @@ contains
     real(RP), intent(in)  :: rhogw_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in)  :: coef_intp   (ADM_nxyz,ADM_gall   ,1:3,TI:TJ,ADM_lall   )
     real(RP), intent(in)  :: coef_intp_pl(ADM_nxyz,ADM_gall_pl,1:3,      ADM_lall_pl)
-    real(RP), intent(in)  :: coef_diff   (ADM_nxyz,ADM_gall,1:6             ,ADM_lall   )
-    real(RP), intent(in)  :: coef_diff_pl(ADM_nxyz,         1:ADM_vlink_nmax,ADM_lall_pl)
+    real(RP), intent(in)  :: coef_diff   (ADM_nxyz,ADM_gall,1:6        ,ADM_lall   )
+    real(RP), intent(in)  :: coef_diff_pl(ADM_nxyz,         1:ADM_vlink,ADM_lall_pl)
 
     real(RP) :: sclt   (ADM_gall   ,TI:TJ) ! scalar on the hexagon vertex
     real(RP) :: sclt_pl(ADM_gall_pl)

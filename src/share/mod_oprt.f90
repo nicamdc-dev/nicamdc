@@ -36,52 +36,19 @@ module mod_oprt
   use mod_stdio
   use mod_prof
   use mod_adm, only: &
-     TI  => ADM_TI,    &
-     TJ  => ADM_TJ,    &
-     AI  => ADM_AI,    &
-     AIJ => ADM_AIJ,   &
-     AJ  => ADM_AJ,    &
-     K0  => ADM_KNONE, &
-     ADM_nxyz,         &
-     ADM_lall,         &
-     ADM_lall_pl,      &
-     ADM_gall,         &
-     ADM_gall_pl,      &
-     ADM_kall,         &
-     ADM_gmin,         &
-     ADM_gmax,         &
-     ADM_gslf_pl,      &
-     ADM_gmin_pl,      &
-     ADM_gmax_pl,      &
-     ADM_have_pl,      &
-     ADM_have_sgp,     &
-     vlink => ADM_vlink_nmax
-  use mod_grd, only: &
-     XDIR => GRD_XDIR, &
-     YDIR => GRD_YDIR, &
-     ZDIR => GRD_ZDIR
-  use mod_gmtr, only: &
-     P_RAREA => GMTR_p_RAREA, &
-     T_RAREA => GMTR_t_RAREA, &
-     W1      => GMTR_t_W1,    &
-     W2      => GMTR_t_W2,    &
-     W3      => GMTR_t_W3,    &
-     HNX     => GMTR_a_HNX,   &
-     HNY     => GMTR_a_HNY,   &
-     HNZ     => GMTR_a_HNZ,   &
-     HTX     => GMTR_a_HTX,   &
-     HTY     => GMTR_a_HTY,   &
-     HTZ     => GMTR_a_HTZ,   &
-     TNX     => GMTR_a_TNX,   &
-     TNY     => GMTR_a_TNY,   &
-     TNZ     => GMTR_a_TNZ,   &
-     TN2X    => GMTR_a_TN2X,  &
-     TN2Y    => GMTR_a_TN2Y,  &
-     TN2Z    => GMTR_a_TN2Z,  &
-     GMTR_p_nmax,             &
-     GMTR_t_nmax,             &
-     GMTR_a_nmax,             &
-     GMTR_a_nmax_pl
+     ADM_nxyz,           &
+     TI    => ADM_TI,    &
+     TJ    => ADM_TJ,    &
+     AI    => ADM_AI,    &
+     AIJ   => ADM_AIJ,   &
+     AJ    => ADM_AJ,    &
+     K0    => ADM_KNONE, &
+     vlink => ADM_vlink, &
+     ADM_lall,           &
+     ADM_lall_pl,        &
+     ADM_gall,           &
+     ADM_gall_pl,        &
+     ADM_kall
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -237,6 +204,24 @@ contains
        GMTR_t,   GMTR_t_pl,  &
        GMTR_a,   GMTR_a_pl,  &
        coef_div, coef_div_pl )
+    use mod_adm, only: &
+       ADM_have_pl,  &
+       ADM_have_sgp, &
+       ADM_gmin,     &
+       ADM_gmax,     &
+       ADM_gslf_pl,  &
+       ADM_gmin_pl,  &
+       ADM_gmax_pl
+    use mod_gmtr, only: &
+       P_RAREA => GMTR_p_RAREA, &
+       W1      => GMTR_t_W1,    &
+       W2      => GMTR_t_W2,    &
+       W3      => GMTR_t_W3,    &
+       HNX     => GMTR_a_HNX,   &
+       GMTR_p_nmax,             &
+       GMTR_t_nmax,             &
+       GMTR_a_nmax,             &
+       GMTR_a_nmax_pl
     implicit none
 
     real(RP), intent(in)  :: GMTR_p     (ADM_gall   ,K0,ADM_lall   ,      GMTR_p_nmax   )
@@ -429,6 +414,24 @@ contains
        GMTR_t,   GMTR_t_pl,  &
        GMTR_a,   GMTR_a_pl,  &
        coef_rot, coef_rot_pl )
+    use mod_adm, only: &
+       ADM_have_pl,  &
+       ADM_have_sgp, &
+       ADM_gmin,     &
+       ADM_gmax,     &
+       ADM_gslf_pl,  &
+       ADM_gmin_pl,  &
+       ADM_gmax_pl
+    use mod_gmtr, only: &
+       P_RAREA => GMTR_p_RAREA, &
+       W1      => GMTR_t_W1,    &
+       W2      => GMTR_t_W2,    &
+       W3      => GMTR_t_W3,    &
+       HTX     => GMTR_a_HTX,   &
+       GMTR_p_nmax,             &
+       GMTR_t_nmax,             &
+       GMTR_a_nmax,             &
+       GMTR_a_nmax_pl
     implicit none
 
     real(RP), intent(in)  :: GMTR_p     (ADM_gall   ,K0,ADM_lall   ,      GMTR_p_nmax   )
@@ -621,6 +624,24 @@ contains
        GMTR_t,    GMTR_t_pl,   &
        GMTR_a,    GMTR_a_pl,   &
        coef_grad, coef_grad_pl )
+    use mod_adm, only: &
+       ADM_have_pl,  &
+       ADM_have_sgp, &
+       ADM_gmin,     &
+       ADM_gmax,     &
+       ADM_gslf_pl,  &
+       ADM_gmin_pl,  &
+       ADM_gmax_pl
+    use mod_gmtr, only: &
+       P_RAREA => GMTR_p_RAREA, &
+       W1      => GMTR_t_W1,    &
+       W2      => GMTR_t_W2,    &
+       W3      => GMTR_t_W3,    &
+       HNX     => GMTR_a_HNX,   &
+       GMTR_p_nmax,             &
+       GMTR_t_nmax,             &
+       GMTR_a_nmax,             &
+       GMTR_a_nmax_pl
     implicit none
 
     real(RP), intent(in)  :: GMTR_p      (ADM_gall   ,K0,ADM_lall   ,      GMTR_p_nmax   )
@@ -823,6 +844,24 @@ contains
        GMTR_t,   GMTR_t_pl,  &
        GMTR_a,   GMTR_a_pl,  &
        coef_lap, coef_lap_pl )
+    use mod_adm, only: &
+       ADM_have_pl,  &
+       ADM_have_sgp, &
+       ADM_gmin,     &
+       ADM_gmax,     &
+       ADM_gslf_pl,  &
+       ADM_gmin_pl,  &
+       ADM_gmax_pl
+    use mod_gmtr, only: &
+       P_RAREA => GMTR_p_RAREA, &
+       T_RAREA => GMTR_t_RAREA, &
+       HNX     => GMTR_a_HNX,   &
+       TNX     => GMTR_a_TNX,   &
+       TN2X    => GMTR_a_TN2X,  &
+       GMTR_p_nmax,             &
+       GMTR_t_nmax,             &
+       GMTR_a_nmax,             &
+       GMTR_a_nmax_pl
     implicit none
 
     real(RP), intent(in)  :: GMTR_p     (ADM_gall   ,K0,ADM_lall   ,      GMTR_p_nmax   )
@@ -1280,6 +1319,24 @@ contains
        GMTR_a,    GMTR_a_pl,    &
        coef_intp, coef_intp_pl, &
        coef_diff, coef_diff_pl  )
+    use mod_adm, only: &
+       ADM_have_pl,  &
+       ADM_have_sgp, &
+       ADM_gmin,     &
+       ADM_gmax,     &
+       ADM_gslf_pl,  &
+       ADM_gmin_pl,  &
+       ADM_gmax_pl
+    use mod_gmtr, only: &
+       P_RAREA => GMTR_p_RAREA, &
+       T_RAREA => GMTR_t_RAREA, &
+       HNX     => GMTR_a_HNX,   &
+       TNX     => GMTR_a_TNX,   &
+       TN2X    => GMTR_a_TN2X,  &
+       GMTR_p_nmax,             &
+       GMTR_t_nmax,             &
+       GMTR_a_nmax,             &
+       GMTR_a_nmax_pl
     implicit none
 
     real(RP), intent(in)  :: GMTR_p      (ADM_gall   ,K0,ADM_lall   ,      GMTR_p_nmax   )
@@ -1388,6 +1445,16 @@ contains
        vy,       vy_pl,      &
        vz,       vz_pl,      &
        coef_div, coef_div_pl )
+    use mod_adm, only: &
+       ADM_have_pl,      &
+       ADM_gmin,         &
+       ADM_gmax,         &
+       ADM_gslf_pl,      &
+       ADM_gmax_pl
+    use mod_grd, only: &
+       XDIR => GRD_XDIR, &
+       YDIR => GRD_YDIR, &
+       ZDIR => GRD_ZDIR
     implicit none
 
     real(RP), intent(out) :: scl        (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -1548,6 +1615,16 @@ contains
        vy,       vy_pl,      &
        vz,       vz_pl,      &
        coef_rot, coef_rot_pl )
+    use mod_adm, only: &
+       ADM_have_pl,      &
+       ADM_gmin,         &
+       ADM_gmax,         &
+       ADM_gslf_pl,      &
+       ADM_gmax_pl
+    use mod_grd, only: &
+       XDIR => GRD_XDIR, &
+       YDIR => GRD_YDIR, &
+       ZDIR => GRD_ZDIR
     implicit none
 
     real(RP), intent(out) :: scl        (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -1707,6 +1784,16 @@ contains
        grad,      grad_pl,     &
        scl,       scl_pl,      &
        coef_grad, coef_grad_pl )
+    use mod_adm, only: &
+       ADM_have_pl,      &
+       ADM_gmin,         &
+       ADM_gmax,         &
+       ADM_gslf_pl,      &
+       ADM_gmax_pl
+    use mod_grd, only: &
+       XDIR => GRD_XDIR, &
+       YDIR => GRD_YDIR, &
+       ZDIR => GRD_ZDIR
     implicit none
 
     real(RP), intent(out) :: grad        (ADM_gall   ,ADM_kall,ADM_lall   ,ADM_nxyz)
@@ -1865,6 +1952,12 @@ contains
        dscl,     dscl_pl,    &
        scl,      scl_pl,     &
        coef_lap, coef_lap_pl )
+    use mod_adm, only: &
+       ADM_have_pl,      &
+       ADM_gmin,         &
+       ADM_gmax,         &
+       ADM_gslf_pl,      &
+       ADM_gmax_pl
     implicit none
 
     real(RP), intent(out) :: dscl       (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -2005,6 +2098,18 @@ contains
        kh,        kh_pl,        &
        coef_intp, coef_intp_pl, &
        coef_diff, coef_diff_pl  )
+    use mod_adm, only: &
+       ADM_have_pl,  &
+       ADM_have_sgp, &
+       ADM_gmin,     &
+       ADM_gmax,     &
+       ADM_gslf_pl,  &
+       ADM_gmin_pl,  &
+       ADM_gmax_pl
+    use mod_grd, only: &
+       XDIR => GRD_XDIR, &
+       YDIR => GRD_YDIR, &
+       ZDIR => GRD_ZDIR
     implicit none
 
     real(RP), intent(out) :: dscl        (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -2255,6 +2360,18 @@ contains
        vz,        vz_pl,        &
        coef_intp, coef_intp_pl, &
        coef_diff, coef_diff_pl  )
+    use mod_adm, only: &
+       ADM_have_pl,  &
+       ADM_have_sgp, &
+       ADM_gmin,     &
+       ADM_gmax,     &
+       ADM_gslf_pl,  &
+       ADM_gmin_pl,  &
+       ADM_gmax_pl
+    use mod_grd, only: &
+       XDIR => GRD_XDIR, &
+       YDIR => GRD_YDIR, &
+       ZDIR => GRD_ZDIR
     implicit none
 
     real(RP), intent(out) :: ddivdx      (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -2485,6 +2602,9 @@ contains
     use mod_adm, only: &
        ADM_have_pl
     use mod_grd, only: &
+       GRD_XDIR,   &
+       GRD_YDIR,   &
+       GRD_ZDIR,   &
        GRD_rscale, &
        GRD_x,      &
        GRD_x_pl
@@ -2506,13 +2626,13 @@ contains
     do l = 1, ADM_lall
     do k = 1, ADM_kall
     do g = 1, ADM_gall
-       prd = vx(g,k,l) * GRD_x(g,k0,l,XDIR) / GRD_rscale &
-           + vy(g,k,l) * GRD_x(g,k0,l,YDIR) / GRD_rscale &
-           + vz(g,k,l) * GRD_x(g,k0,l,ZDIR) / GRD_rscale
+       prd = vx(g,k,l) * GRD_x(g,k0,l,GRD_XDIR) / GRD_rscale &
+           + vy(g,k,l) * GRD_x(g,k0,l,GRD_YDIR) / GRD_rscale &
+           + vz(g,k,l) * GRD_x(g,k0,l,GRD_ZDIR) / GRD_rscale
 
-       vx(g,k,l) = vx(g,k,l) - prd * GRD_x(g,k0,l,XDIR) / GRD_rscale
-       vy(g,k,l) = vy(g,k,l) - prd * GRD_x(g,k0,l,YDIR) / GRD_rscale
-       vz(g,k,l) = vz(g,k,l) - prd * GRD_x(g,k0,l,ZDIR) / GRD_rscale
+       vx(g,k,l) = vx(g,k,l) - prd * GRD_x(g,k0,l,GRD_XDIR) / GRD_rscale
+       vy(g,k,l) = vy(g,k,l) - prd * GRD_x(g,k0,l,GRD_YDIR) / GRD_rscale
+       vz(g,k,l) = vz(g,k,l) - prd * GRD_x(g,k0,l,GRD_ZDIR) / GRD_rscale
     enddo
     enddo
     enddo
@@ -2521,13 +2641,13 @@ contains
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
        do g = 1, ADM_gall_pl
-          prd = vx_pl(g,k,l) * GRD_x_pl(g,k0,l,XDIR) / GRD_rscale &
-              + vy_pl(g,k,l) * GRD_x_pl(g,k0,l,YDIR) / GRD_rscale &
-              + vz_pl(g,k,l) * GRD_x_pl(g,k0,l,ZDIR) / GRD_rscale
+          prd = vx_pl(g,k,l) * GRD_x_pl(g,k0,l,GRD_XDIR) / GRD_rscale &
+              + vy_pl(g,k,l) * GRD_x_pl(g,k0,l,GRD_YDIR) / GRD_rscale &
+              + vz_pl(g,k,l) * GRD_x_pl(g,k0,l,GRD_ZDIR) / GRD_rscale
 
-          vx_pl(g,k,l) = vx_pl(g,k,l) - prd * GRD_x_pl(g,k0,l,XDIR) / GRD_rscale
-          vy_pl(g,k,l) = vy_pl(g,k,l) - prd * GRD_x_pl(g,k0,l,YDIR) / GRD_rscale
-          vz_pl(g,k,l) = vz_pl(g,k,l) - prd * GRD_x_pl(g,k0,l,ZDIR) / GRD_rscale
+          vx_pl(g,k,l) = vx_pl(g,k,l) - prd * GRD_x_pl(g,k0,l,GRD_XDIR) / GRD_rscale
+          vy_pl(g,k,l) = vy_pl(g,k,l) - prd * GRD_x_pl(g,k0,l,GRD_YDIR) / GRD_rscale
+          vz_pl(g,k,l) = vz_pl(g,k,l) - prd * GRD_x_pl(g,k0,l,GRD_ZDIR) / GRD_rscale
        enddo
        enddo
        enddo

@@ -39,6 +39,19 @@ module mod_grd
   use mpi
   use mod_precision
   use mod_stdio
+  use mod_adm, only: &
+     ADM_nxyz,    &
+     ADM_TI,      &
+     ADM_TJ,      &
+     ADM_AI,      &
+     ADM_AIJ,     &
+     ADM_AJ,      &
+     ADM_KNONE,   &
+     ADM_lall,    &
+     ADM_lall_pl, &
+     ADM_gall,    &
+     ADM_gall_pl, &
+     ADM_kall
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -222,27 +235,16 @@ contains
     use mod_process, only: &
        PRC_IsMaster, &
        PRC_MPIstop
+    use mod_const, only: &
+       UNDEF  => CONST_UNDEF,  &
+       RADIUS => CONST_RADIUS
     use mod_adm, only: &
-       ADM_nxyz,    &
-       ADM_TI,      &
-       ADM_TJ,      &
-       ADM_AI,      &
-       ADM_AJ,      &
-       ADM_KNONE,   &
        ADM_have_pl, &
-       ADM_lall,    &
-       ADM_lall_pl, &
-       ADM_gall,    &
-       ADM_gall_pl, &
-       ADM_kall,    &
        ADM_gmin,    &
        ADM_gmax,    &
        ADM_gslf_pl, &
        ADM_kmin,    &
        ADM_kmax
-    use mod_const, only: &
-       UNDEF  => CONST_UNDEF,  &
-       RADIUS => CONST_RADIUS
     use mod_comm, only:  &
        COMM_data_transfer
     implicit none
@@ -565,9 +567,6 @@ contains
        io_mode       )
     use mod_process, only: &
        PRC_MPIstop
-    use mod_adm, only: &
-       ADM_TI, &
-       ADM_TJ
     use mod_fio, only: &
        FIO_input
     use mod_hio, only: &
@@ -623,13 +622,10 @@ contains
        basename,      &
        output_vertex, &
        io_mode        )
-    use mod_process, only: &
-       PRC_MPIstop
-    use mod_adm, only: &
-       ADM_TI, &
-       ADM_TJ
     use mod_io_param, only: &
        IO_REAL8
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_fio, only: &
        FIO_output
     use mod_hio, only: &
@@ -823,15 +819,12 @@ contains
   subroutine GRD_input_topograph( &
        basename )
     use mod_adm, only: &
-       ADM_KNONE,   &
        ADM_prc_tab, &
-       ADM_prc_me,  &
-       ADM_lall,    &
-       ADM_gall
-    use mod_fio, only: &
-       FIO_input
+       ADM_prc_me
     use mod_comm, only: &
        COMM_var
+    use mod_fio, only: &
+       FIO_input
     use mod_ideal_topo, only: &
        IDEAL_topo
     implicit none
@@ -894,25 +887,20 @@ contains
        PRC_LOCAL_COMM_WORLD, &
        PRC_MPIstop
     use mod_adm, only: &
-       ADM_nxyz,       &
        ADM_N,          &
        ADM_S,          &
        ADM_NPL,        &
        ADM_SPL,        &
        ADM_RID,        &
-       ADM_TI,         &
-       ADM_TJ,         &
-       ADM_KNONE,      &
        ADM_rgn_nmax,   &
        ADM_rgn_vnum,   &
        ADM_rgn_vtab,   &
        ADM_rgn2prc,    &
-       ADM_vlink_nmax, &
+       ADM_vlink,      &
        ADM_prc_tab,    &
        ADM_prc_me,     &
        ADM_prc_npl,    &
        ADM_prc_spl,    &
-       ADM_lall,       &
        ADM_gmax,       &
        ADM_gmin,       &
        ADM_gslf_pl
@@ -920,14 +908,14 @@ contains
        COMM_var
     implicit none
 
-    integer :: prctab   (ADM_vlink_nmax)
-    integer :: rgntab   (ADM_vlink_nmax)
-    integer :: sreq     (ADM_vlink_nmax)
-    integer :: rreq     (ADM_vlink_nmax)
-    logical :: send_flag(ADM_vlink_nmax)
+    integer :: prctab   (ADM_vlink)
+    integer :: rgntab   (ADM_vlink)
+    integer :: sreq     (ADM_vlink)
+    integer :: rreq     (ADM_vlink)
+    logical :: send_flag(ADM_vlink)
 
-    real(RP) :: vsend_pl (ADM_nxyz,ADM_vlink_nmax)
-    real(RP) :: vrecv_pl (ADM_nxyz,ADM_vlink_nmax)
+    real(RP) :: vsend_pl (ADM_nxyz,ADM_vlink)
+    real(RP) :: vrecv_pl (ADM_nxyz,ADM_vlink)
 
     integer :: datatype
 
@@ -948,8 +936,8 @@ contains
 
     ! find region which has the north pole
     do l = ADM_rgn_nmax, 1, -1
-       if ( ADM_rgn_vnum(ADM_N,l) == ADM_vlink_nmax ) then
-          do n = 1, ADM_vlink_nmax
+       if ( ADM_rgn_vnum(ADM_N,l) == ADM_vlink ) then
+          do n = 1, ADM_vlink
              rgntab(n) = ADM_rgn_vtab(ADM_RID,ADM_N,l,n)
              prctab(n) = ADM_rgn2prc(rgntab(n))
           enddo
@@ -960,7 +948,7 @@ contains
     send_flag(:) = .false.
 
     ! send grid position from regular region
-    do n = 1, ADM_vlink_nmax
+    do n = 1, ADM_vlink
        do l = 1, ADM_lall
           if ( ADM_prc_tab(l,ADM_prc_me) == rgntab(n) ) then
              vsend_pl(:,n) = GRD_xt(suf(ADM_gmin,ADM_gmax),ADM_KNONE,l,ADM_TJ,:) ! [mod] H.Yashiro 20120525
@@ -980,7 +968,7 @@ contains
     enddo
 
     if ( ADM_prc_me == ADM_prc_npl ) then
-       do n = 1, ADM_vlink_nmax
+       do n = 1, ADM_vlink
           call MPI_IRECV( vrecv_pl(:,n),        &
                           3,                    &
                           datatype,             &
@@ -993,14 +981,14 @@ contains
     endif
 
     ! wait and store
-    do n = 1, ADM_vlink_nmax
+    do n = 1, ADM_vlink
        if ( send_flag(n) ) then
           call MPI_WAIT(sreq(n),istat,ierr)
        endif
     enddo
 
     if ( ADM_prc_me == ADM_prc_npl ) then
-       do n = 1, ADM_vlink_nmax
+       do n = 1, ADM_vlink
           call MPI_WAIT(rreq(n),istat,ierr)
           GRD_xt_pl(n+1,ADM_KNONE,ADM_NPL,:) = vrecv_pl(:,n) ! [mod] H.Yashiro 20120525
        enddo
@@ -1010,8 +998,8 @@ contains
 
     ! find region which has the south pole
     do l = 1, ADM_rgn_nmax
-       if ( ADM_rgn_vnum(ADM_S,l) == ADM_vlink_nmax ) then
-          do n = 1, ADM_vlink_nmax
+       if ( ADM_rgn_vnum(ADM_S,l) == ADM_vlink ) then
+          do n = 1, ADM_vlink
              rgntab(n) = ADM_rgn_vtab(ADM_RID,ADM_S,l,n)
              prctab(n) = ADM_rgn2prc(rgntab(n))
           enddo
@@ -1023,7 +1011,7 @@ contains
 
     send_flag(:) = .false.
 
-    do n = 1, ADM_vlink_nmax
+    do n = 1, ADM_vlink
        do l =1, ADM_lall
           if (ADM_prc_tab(l,ADM_prc_me) == rgntab(n) ) then
              vsend_pl(:,n) = GRD_xt(suf(ADM_gmax,ADM_gmin),ADM_KNONE,l,ADM_TI,:) ! [mod] H.Yashiro 20120525
@@ -1043,7 +1031,7 @@ contains
     enddo
 
     if ( ADM_prc_me == ADM_prc_spl ) then
-       do n = 1, ADM_vlink_nmax
+       do n = 1, ADM_vlink
           call MPI_IRECV( vrecv_pl(:,n),        &
                           3,                    &
                           datatype,             &
@@ -1056,14 +1044,14 @@ contains
     endif
 
     ! wait and store
-    do n = 1, ADM_vlink_nmax
+    do n = 1, ADM_vlink
        if ( send_flag(n) ) then
           call MPI_WAIT(sreq(n),istat,ierr)
        endif
     enddo
 
     if ( ADM_prc_me == ADM_prc_spl ) then
-       do n = 1, ADM_vlink_nmax
+       do n = 1, ADM_vlink
           call MPI_WAIT(rreq(n),istat,ierr)
           GRD_xt_pl(n+1,ADM_KNONE,ADM_SPL,:) = vrecv_pl(:,n) ! [mod] H.Yashiro 20120525
        enddo
@@ -1112,14 +1100,7 @@ contains
   !> calculate longitude and latitude
   subroutine GRD_makelatlon
     use mod_adm, only: &
-       ADM_TI,      &
-       ADM_TJ,      &
-       ADM_KNONE,   &
-       ADM_have_pl, &
-       ADM_lall,    &
-       ADM_lall_pl, &
-       ADM_gall,    &
-       ADM_gall_pl
+       ADM_have_pl
     use mod_vector, only: &
        VECTR_xyz2latlon
     implicit none
@@ -1176,15 +1157,7 @@ contains
   !> calculate location of the mid-point of cell arc
   subroutine GRD_makearc
     use mod_adm, only: &
-       ADM_TI,      &
-       ADM_TJ,      &
-       ADM_AI,      &
-       ADM_AIJ,     &
-       ADM_AJ,      &
-       ADM_KNONE,   &
        ADM_have_pl, &
-       ADM_lall,    &
-       ADM_lall_pl, &
        ADM_gall_1d, &
        ADM_gmin,    &
        ADM_gmax,    &

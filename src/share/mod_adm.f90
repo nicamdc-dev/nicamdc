@@ -88,33 +88,34 @@ module mod_adm
   !#############################################################################
 
   ! main parameter
-  integer,  public            :: ADM_glevel          ! grid   division level
-  integer,  public            :: ADM_rlevel          ! region division level
-  integer,  public            :: ADM_vlayer          ! number of vertical layer
-  integer,  public            :: ADM_DMD             ! number of diamond
+  integer,  public            :: ADM_glevel           ! grid   division level
+  integer,  public            :: ADM_rlevel           ! region division level
+  integer,  public            :: ADM_vlayer           ! number of vertical layer
+  integer,  public            :: ADM_DMD              ! number of diamond
 
   ! region
-  integer,  public            :: ADM_rgn_nmax        ! number of regular region
-  integer,  public            :: ADM_lall            ! number of regular region per process
-  integer,  public, parameter :: ADM_rgn_nmax_pl = 2 ! number of pole    region
-  integer,  public, parameter :: ADM_lall_pl     = 2 ! number of pole    region per process
+  integer,  public            :: ADM_rgn_nmax         ! number of regular region
+  integer,  public            :: ADM_lall             ! number of regular region per process
+  integer,  public, parameter :: ADM_rgn_nmax_pl =  2 ! number of pole    region
+  integer,  public, parameter :: ADM_lall_pl     =  2 ! number of pole    region per process
 
   ! horizontal grid
-  integer,  public            :: ADM_gall            ! number of horizontal grid per regular region
-  integer,  public            :: ADM_gall_in         ! number of horizontal grid (inner part)
-  integer,  public            :: ADM_gall_1d         ! number of horizontal grid (1D)
-  integer,  public            :: ADM_gmin            ! start index of 1D horizontal grid
-  integer,  public            :: ADM_gmax            ! end   index of 1D horizontal grid
+  integer,  public            :: ADM_gall             ! number of horizontal grid per regular region
+  integer,  public            :: ADM_gall_in          ! number of horizontal grid (inner part)
+  integer,  public            :: ADM_gall_1d          ! number of horizontal grid (1D)
+  integer,  public            :: ADM_gmin             ! start index of 1D horizontal grid
+  integer,  public            :: ADM_gmax             ! end   index of 1D horizontal grid
 
-  integer,  public            :: ADM_gall_pl         ! number of horizontal grid for pole region
-  integer,  public, parameter :: ADM_gslf_pl     = 1 ! index for pole point
-  integer,  public, parameter :: ADM_gmin_pl     = 2 ! start index of grid around the pole point
-  integer,  public            :: ADM_gmax_pl         ! end   index of grid around the pole point
+  integer,  public            :: ADM_vlink       = -1 ! maximum number of vertex linkage, ICO:5, PSP:6, LCP, MLCP:k
+  integer,  public            :: ADM_gall_pl          ! number of horizontal grid for pole region
+  integer,  public, parameter :: ADM_gslf_pl     =  1 ! index for pole point
+  integer,  public, parameter :: ADM_gmin_pl     =  2 ! start index of grid around the pole point
+  integer,  public            :: ADM_gmax_pl          ! end   index of grid around the pole point
 
   ! vertical grid
-  integer,  public            :: ADM_kall            ! number of vertical grid
-  integer,  public            :: ADM_kmin            ! start index of vertical grid
-  integer,  public            :: ADM_kmax            ! end   index of vertical grid
+  integer,  public            :: ADM_kall             ! number of vertical grid
+  integer,  public            :: ADM_kmin             ! start index of vertical grid
+  integer,  public            :: ADM_kmax             ! end   index of vertical grid
 
   ! List vectors
   integer,  public            :: ADM_IooJoo_nmax
@@ -154,8 +155,6 @@ module mod_adm
   character(len=H_LONG), public :: ADM_rgnmngfname        ! file name for region management info
 
   integer,  public, parameter   :: PRC_RGN_NMAX   = 2560  ! maximum number of region per process.
-  integer,  public              :: ADM_vlink_nmax = -1    ! maximum number of vertex linkage
-                                                          ! [XTMS] ICO:5, PSP:6, LCP, MLCP:k
 
   integer,  public, allocatable :: ADM_prc_rnum(:)        ! number of regions managed by each process = ADM_lall
   integer,  public, allocatable :: ADM_prc_tab (:,:)      ! table  of regions managed by each process
@@ -170,11 +169,11 @@ module mod_adm
                                                           ! ADM_rgn_vtab   ( ADM_RID:ADM_DIR, &
                                                           !                  ADM_W:ADM_S,     &
                                                           !                  ADM_rgn_nmax,    &
-                                                          !                  ADM_vlink_nmax   )
+                                                          !                  ADM_vlink        )
   integer,  public, allocatable :: ADM_rgn_vtab_pl(:,:,:) ! Table of vertex link information for poles
                                                           ! ADM_rgn_vtab_pl( ADM_RID:ADM_DIR, &
                                                           !                  ADM_rgn_nmax_pl, &
-                                                          !                  ADM_vlink_nmax   )
+                                                          !                  ADM_vlink        )
 
   integer,  public              :: ADM_rgnid_npl_mng      ! Region ID of north pole management
   integer,  public              :: ADM_rgnid_spl_mng      ! Region ID of south pole management
@@ -270,19 +269,21 @@ contains
        PRC_nprocs
     implicit none
 
-    integer               :: glevel      = -1
-    integer               :: rlevel      = -1
-    integer               :: vlayer      =  1
-    character(LEN=H_LONG) :: rgnmngfname = ''
+    integer               :: glevel      = -1 !> grid division level
+    integer               :: rlevel      = -1 !> region division level
+    integer               :: vlayer      =  1 !> number of inner vertical layer
+    character(LEN=H_LONG) :: rgnmngfname = '' !> region management file name
 
     namelist / ADMPARAM / &
-        glevel,           & !--- grid division level
-        rlevel,           & !--- region division level
-        vlayer,           & !--- number of inner vertical layer
-        rgnmngfname,      & !--- region management file name
-        ADM_HGRID_SYSTEM, & !--- grid system (default: ico)  ! S.Iga100607
-        ADM_vlink_nmax,   & !--- num of lines at PL          ! S.Iga100607
-        ADM_XTMS_MLCP_S,  & !--- num of segment for MLCP     ! S.Iga100607
+        glevel,           &
+        rlevel,           &
+        vlayer,           &
+        rgnmngfname,      &
+        ADM_HGRID_SYSTEM, &
+#ifndef _FIXEDINDEX_
+        ADM_vlink,        &
+#endif
+        ADM_XTMS_MLCP_S,  &
         ADM_debug
 
     integer :: nmax, dmd
@@ -330,47 +331,55 @@ contains
 
     ADM_rgnmngfname = trim(rgnmngfname)
 
-    if ( ADM_HGRID_SYSTEM == 'ICO' ) then
-       ADM_vlink_nmax = 5
-       dmd            = 10
-    elseif( ADM_HGRID_SYSTEM == 'LCP' ) then
-       if( ADM_vlink_nmax == -1 ) ADM_vlink_nmax = 6
-       dmd            = 4 * ADM_vlink_nmax
-    elseif( ADM_HGRID_SYSTEM == 'MLCP-OLD' ) then
-       if( ADM_vlink_nmax == -1 ) ADM_vlink_nmax = 6
-       dmd            = 2 * ADM_vlink_nmax
-    elseif( ADM_HGRID_SYSTEM == 'MLCP' ) then
-       if( ADM_vlink_nmax == -1 ) ADM_vlink_nmax = 6
-       dmd            = (1+ADM_XTMS_MLCP_S)  * ADM_vlink_nmax
-    elseif( ADM_HGRID_SYSTEM == 'PERIODIC-1DMD' ) then ! T.Ohno 110721
-       ADM_vlink_nmax = 5
-       dmd            = 1
-       ADM_prc_pl     = -999
-    elseif( ADM_HGRID_SYSTEM == '1DMD-ON-SPHERE' ) then ! M.Hara 110721
-       ADM_vlink_nmax = 5
-       dmd            = 1
-       ADM_prc_pl     = -999
-    elseif( ADM_HGRID_SYSTEM == 'ICO-XTMS' ) then
-       ADM_vlink_nmax = 5
-       dmd            = 10
-    else
-       write(*         ,*) 'xxx Name of ADM_HGRID_SYSTEM is wrong. STOP.'
-       write(IO_FID_LOG,*) 'xxx Name of ADM_HGRID_SYSTEM is wrong. STOP.'
-       call PRC_MPIstop
-    endif
-
 #ifdef _FIXEDINDEX_
-    if ( ADM_vlink_nmax /= 5 ) then
-       write(*         ,*) 'xxx Sorry, fixed index is not implemented for XTMS. STOP.'
-       write(IO_FID_LOG,*) 'xxx Sorry, fixed index is not implemented for XTMS. STOP.'
+    if ( ADM_HGRID_SYSTEM == 'ICO' ) then
+       dmd        = 10
+    elseif( ADM_HGRID_SYSTEM == 'PERIODIC-1DMD' ) then ! T.Ohno 110721
+       dmd        = 1
+       ADM_prc_pl = -999
+    elseif( ADM_HGRID_SYSTEM == '1DMD-ON-SPHERE' ) then ! M.Hara 110721
+       dmd        = 1
+       ADM_prc_pl = -999
+    elseif( ADM_HGRID_SYSTEM == 'ICO-XTMS' ) then
+       dmd        = 10
+    else
+       write(*         ,*) 'xxx Not appropriate param for ADM_HGRID_SYSTEM. STOP.', trim(ADM_HGRID_SYSTEM)
+       write(IO_FID_LOG,*) 'xxx Not appropriate param for ADM_HGRID_SYSTEM. STOP.', trim(ADM_HGRID_SYSTEM)
        call PRC_MPIstop
     endif
 #else
-    ADM_gall_pl = ADM_vlink_nmax + 1
-    ADM_gmax_pl = ADM_vlink_nmax + 1
+    if ( ADM_HGRID_SYSTEM == 'ICO' ) then
+       ADM_vlink  = 5
+       dmd        = 10
+    elseif( ADM_HGRID_SYSTEM == 'LCP' ) then
+       if( ADM_vlink == -1 ) ADM_vlink = 6
+       dmd        = 4 * ADM_vlink
+    elseif( ADM_HGRID_SYSTEM == 'MLCP-OLD' ) then
+       if( ADM_vlink == -1 ) ADM_vlink = 6
+       dmd        = 2 * ADM_vlink
+    elseif( ADM_HGRID_SYSTEM == 'MLCP' ) then
+       if( ADM_vlink == -1 ) ADM_vlink = 6
+       dmd        = (1+ADM_XTMS_MLCP_S)  * ADM_vlink
+    elseif( ADM_HGRID_SYSTEM == 'PERIODIC-1DMD' ) then ! T.Ohno 110721
+       ADM_vlink  = 5
+       dmd        = 1
+       ADM_prc_pl = -999
+    elseif( ADM_HGRID_SYSTEM == '1DMD-ON-SPHERE' ) then ! M.Hara 110721
+       ADM_vlink  = 5
+       dmd        = 1
+       ADM_prc_pl = -999
+    elseif( ADM_HGRID_SYSTEM == 'ICO-XTMS' ) then
+       ADM_vlink  = 5
+       dmd        = 10
+    else
+       write(*         ,*) 'xxx Not appropriate param for ADM_HGRID_SYSTEM. STOP.', trim(ADM_HGRID_SYSTEM)
+       write(IO_FID_LOG,*) 'xxx Not appropriate param for ADM_HGRID_SYSTEM. STOP.', trim(ADM_HGRID_SYSTEM)
+       call PRC_MPIstop
+    endif
+
+    ADM_gall_pl = ADM_vlink + 1
+    ADM_gmax_pl = ADM_vlink + 1
 #endif
-
-
 
 #ifdef _FIXEDINDEX_
     if ( ADM_glevel /= glevel ) then
@@ -584,8 +593,8 @@ contains
   subroutine setup_vtab
     implicit none
 
-    integer :: nrid(ADM_vlink_nmax)
-    integer :: nvid(ADM_vlink_nmax)
+    integer :: nrid(ADM_vlink)
+    integer :: nvid(ADM_vlink)
     integer :: vnum
 
     integer :: l, k, ll, v
@@ -597,11 +606,11 @@ contains
     allocate( ADM_rgn_vtab( ADM_RID:ADM_DIR,&
                             ADM_W:ADM_S,    &
                             ADM_rgn_nmax,   &
-                            ADM_vlink_nmax  ) )
+                            ADM_vlink       ) )
 
     allocate( ADM_rgn_vtab_pl( ADM_RID:ADM_DIR, &
                                ADM_rgn_nmax_pl, &
-                               ADM_vlink_nmax   ) )
+                               ADM_vlink        ) )
 
     do l = 1, ADM_rgn_nmax
        do k = ADM_W, ADM_S
@@ -614,27 +623,27 @@ contains
     enddo
 
     do l = 1, ADM_rgn_nmax
-       if ( ADM_rgn_vnum(ADM_N,l) == ADM_vlink_nmax ) then
+       if ( ADM_rgn_vnum(ADM_N,l) == ADM_vlink ) then
           ll = l
           exit
        endif
     enddo
     ADM_rgnid_npl_mng = ll
 
-    do v = 1, ADM_vlink_nmax
+    do v = 1, ADM_vlink
        ADM_rgn_vtab_pl(ADM_RID,ADM_NPL,v) = ADM_rgn_vtab(ADM_RID,ADM_N,ll,v)
        ADM_rgn_vtab_pl(ADM_DIR,ADM_NPL,v) = ADM_rgn_vtab(ADM_DIR,ADM_N,ll,v)
     enddo
 
     do l = 1, ADM_rgn_nmax
-       if ( ADM_rgn_vnum(ADM_S,l) == ADM_vlink_nmax ) then
+       if ( ADM_rgn_vnum(ADM_S,l) == ADM_vlink ) then
           ll = l
           exit
        endif
     enddo
     ADM_rgnid_spl_mng = ll
 
-    do v = 1, ADM_vlink_nmax
+    do v = 1, ADM_vlink
        ADM_rgn_vtab_pl(ADM_RID,ADM_SPL,v) = ADM_rgn_vtab(ADM_RID,ADM_S,ll,v)
        ADM_rgn_vtab_pl(ADM_DIR,ADM_SPL,v) = ADM_rgn_vtab(ADM_DIR,ADM_S,ll,v)
     enddo
