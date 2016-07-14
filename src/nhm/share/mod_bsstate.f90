@@ -8,8 +8,7 @@
 !! @author H.Tomita
 !!
 !! @par History
-!! @li      2004-02-17 (H.Tomita) Imported from igdc-4.33
-!! @li      2011-08-13 (A.Noda)   Add twp-ice exp.
+!! @li      2004-02-17 (H.Tomita)  [NEW]
 !!
 !<
 module mod_bsstate
@@ -47,26 +46,18 @@ module mod_bsstate
   private :: bsstate_output_ref
   private :: bsstate_generate
   private :: set_basicstate
-  private :: output_info
 
   !-----------------------------------------------------------------------------
   !
   !++ Private parameters & variables
   !
-  character(len=H_SHORT), private :: ref_type = 'NOBASE' !--- Basic state type
-                                              ! 'NOBASE' : no basic state
-                                              ! 'INPUT'  : input
-                                              ! 'TEM'    : temperature is given.
-                                              ! 'TH'     : potential temperature is given.
+  character(len=H_SHORT), private :: ref_type  = 'NOBASE' !--- Basic state type
+                                               ! 'NOBASE' : no basic state
+                                               ! 'INPUT'  : input
+                                               ! 'TEM'    : temperature is given.
+                                               ! 'TH'     : potential temperature is given.
 
-  character(len=H_LONG), private :: ref_fname = 'ref.dat'
-
-  real(RP), private, allocatable :: phi_ref(:) ! reference phi
-  real(RP), private, allocatable :: rho_ref(:) ! reference density
-  real(RP), private, allocatable :: pre_ref(:) ! reference pressure
-  real(RP), private, allocatable :: tem_ref(:) ! reference temperature
-  real(RP), private, allocatable :: qv_ref (:) ! water vapor
-  real(RP), private, allocatable :: th_ref (:) ! reference potential temperature
+  character(len=H_LONG),  private :: ref_fname = 'ref.dat'
 
   !-----------------------------------------------------------------------------
 contains
@@ -74,19 +65,33 @@ contains
   subroutine bsstate_setup
     use mod_process, only: &
        PRC_MPIstop
+    use mod_const, only: &
+       Rdry  => CONST_Rdry,  &
+       Rvap  => CONST_Rvap,  &
+       CPdry => CONST_CPdry, &
+       PRE00 => CONST_PRE00
     use mod_adm, only: &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_kall,    &
        ADM_gall_pl, &
-       ADM_gall
+       ADM_gall,    &
+       ADM_kmax,    &
+       ADM_kmin
     implicit none
 
     namelist / BSSTATEPARAM / &
        ref_type,  &
        ref_fname
 
-    integer :: ierr
+    real(RP) :: pre_ref(ADM_kall) ! reference pressure
+    real(RP) :: tem_ref(ADM_kall) ! reference temperature
+    real(RP) :: qv_ref (ADM_kall) ! water vapor
+    real(RP) :: rho_ref(ADM_kall) ! density
+    real(RP) :: th_ref (ADM_kall) ! potentical temperature (dry)
+
+    integer  :: k
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -104,19 +109,6 @@ contains
     write(IO_FID_LOG,nml=BSSTATEPARAM)
 
     !--- allocation of reference variables
-    allocate( phi_ref(ADM_kall) )
-    allocate( rho_ref(ADM_kall) )
-    allocate( pre_ref(ADM_kall) )
-    allocate( tem_ref(ADM_kall) )
-    allocate( th_ref (ADM_kall) )
-    allocate( qv_ref (ADM_kall) )
-    phi_ref(:) = 0.0_RP
-    rho_ref(:) = 0.0_RP
-    pre_ref(:) = 0.0_RP
-    tem_ref(:) = 0.0_RP
-    th_ref (:) = 0.0_RP
-    qv_ref (:) = 0.0_RP
-
     allocate( rho_bs   (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( rho_bs_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) )
     rho_bs   (:,:,:) = 0.0_RP
@@ -133,111 +125,144 @@ contains
     tem_bs_pl(:,:,:) = 0.0_RP
 
     if    ( ref_type == 'INPUT' ) then
-       call bsstate_input_ref(ref_fname)
+
+       call bsstate_input_ref ( ref_fname,  & ! [IN]
+                                pre_ref(:), & ! [OUT]
+                                tem_ref(:), & ! [OUT]
+                                qv_ref (:)  ) ! [OUT]
+
     elseif( ref_type == 'INIT' ) then
-       call bsstate_generate
-       call bsstate_output_ref(ref_fname)
+
+       call bsstate_generate  ( pre_ref(:), & ! [OUT]
+                                tem_ref(:), & ! [OUT]
+                                qv_ref (:)  ) ! [OUT]
+
+       call bsstate_output_ref( ref_fname,  & ! [IN]
+                                pre_ref(:), & ! [IN]
+                                tem_ref(:), & ! [IN]
+                                qv_ref (:)  ) ! [IN]
+
     endif
 
-    !--- calculation of basic state
-    call set_basicstate
+    ! set 3-D basic state
+    call set_basicstate( pre_ref(:), & ! [IN]
+                         tem_ref(:), & ! [IN]
+                         qv_ref (:)  ) ! [IN]
 
-    !--- output the information
-    call output_info
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '*** Basic state information ***'
+    write(IO_FID_LOG,*) '--- Basic state type : ', trim(ref_type)
+    write(IO_FID_LOG,*) '-------------------------------------------------------'
+    write(IO_FID_LOG,*) 'Level   Density  Pressure     Temp. Pot. Tem.        qv'
+
+    do k = ADM_kall, 1, -1
+       th_ref (k) = tem_ref(k) * ( PRE00 / pre_ref(k) )**(Rdry/CPdry)
+       rho_ref(k) = pre_ref(k) / tem_ref(k) / ( ( 1.0_RP - qv_ref(k) ) * Rdry &
+                                              + (          qv_ref(k) ) * Rvap )
+
+       if( k == ADM_kmax ) write(IO_FID_LOG,*) '-------------------------------------------------------'
+       write(IO_FID_LOG,'(I4,F12.4,3F10.2,F10.7)') k,rho_ref(k),pre_ref(k),tem_ref(k),th_ref(k),qv_ref(k)
+       if( k == ADM_kmin ) write(IO_FID_LOG,*) '-------------------------------------------------------'
+    enddo
 
     return
   end subroutine bsstate_setup
 
   !-----------------------------------------------------------------------------
-  subroutine bsstate_input_ref( basename )
+  subroutine bsstate_input_ref( &
+       fname,   &
+       pre_ref, &
+       tem_ref, &
+       qv_ref   )
     use mod_adm, only: &
        ADM_kall
-    use mod_const, only: &
-       GRAV  => CONST_GRAV,  &
-       Rdry  => CONST_Rdry,  &
-       CPdry => CONST_CPdry, &
-       Rvap  => CONST_Rvap,  &
-       PRE00 => CONST_PRE00
-    use mod_grd, only: &
-       GRD_gz
     implicit none
 
-    Character(len=*), Intent(in) :: basename
+    character(len=*), intent(in)  :: fname
+    real(RP),         intent(out) :: pre_ref(ADM_kall) ! reference pressure
+    real(RP),         intent(out) :: tem_ref(ADM_kall) ! reference temperature
+    real(RP),         intent(out) :: qv_ref (ADM_kall) ! water vapor
 
     real(DP) :: pre_ref_DP(ADM_kall)
     real(DP) :: tem_ref_DP(ADM_kall)
     real(DP) :: qv_ref_DP (ADM_kall)
 
-    real(RP) :: kappa
     integer  :: fid
-    integer  :: k
     !---------------------------------------------------------------------------
 
-    kappa = Rdry / CPdry
-
     fid = IO_get_available_fid()
-    open( unit   = fid,            &
-          file   = trim(basename), &
-          status = 'old',          &
-          form   = 'unformatted'   )
+    open( unit   = fid,           &
+          file   = trim(fname),   &
+          form   = 'unformatted', &
+          access = 'sequential',  &
+          status = 'old'          )
+
        read(fid) pre_ref_DP(:)
        read(fid) tem_ref_DP(:)
        read(fid) qv_ref_DP (:)
+
     close(fid)
 
     pre_ref(:) = real(pre_ref_DP(:),kind=RP)
     tem_ref(:) = real(tem_ref_DP(:),kind=RP)
     qv_ref (:) = real(qv_ref_DP (:),kind=RP)
 
-    !--- additional reference state.
-    do k = 1, ADM_kall
-       th_ref (k) = tem_ref(k) * ( PRE00 / pre_ref(k) )**kappa
-       phi_ref(k) = GRAV * GRD_gz(k)
-       rho_ref(k) = pre_ref(k) / tem_ref(k) / ( ( 1.0_RP - qv_ref(k) ) * Rdry &
-                                              + (          qv_ref(k) ) * Rvap )
-    enddo
-
     return
   end subroutine bsstate_input_ref
 
   !-----------------------------------------------------------------------------
-  subroutine bsstate_output_ref( basename )
+  subroutine bsstate_output_ref( &
+       fname,   &
+       pre_ref, &
+       tem_ref, &
+       qv_ref   )
+    use mod_adm, only: &
+       ADM_kall
     implicit none
 
-    Character(len=*), Intent(in) :: basename
+    character(len=*), intent(in)  :: fname
+    real(RP),         intent(in)  :: pre_ref(ADM_kall) ! reference pressure
+    real(RP),         intent(in)  :: tem_ref(ADM_kall) ! reference temperature
+    real(RP),         intent(in)  :: qv_ref (ADM_kall) ! water vapor
+
+    real(DP) :: pre_ref_DP(ADM_kall)
+    real(DP) :: tem_ref_DP(ADM_kall)
+    real(DP) :: qv_ref_DP (ADM_kall)
 
     integer :: fid
     !---------------------------------------------------------------------------
 
+    pre_ref_DP(:) = real(pre_ref(:),kind=DP)
+    tem_ref_DP(:) = real(tem_ref(:),kind=DP)
+    qv_ref_DP (:) = real(qv_ref (:),kind=DP)
+
     fid = IO_get_available_fid()
-    open( unit   = fid,            &
-          file   = trim(basename), &
-          status = 'replace',      &
-          form   = 'unformatted'   )
-       write(fid) pre_ref(:)
-       write(fid) tem_ref(:)
-       write(fid) qv_ref (:)
+    open( unit   = fid,           &
+          file   = trim(fname),   &
+          form   = 'unformatted', &
+          access = 'sequential',  &
+          status = 'new'          )
+
+       write(fid) pre_ref_DP(:)
+       write(fid) tem_ref_DP(:)
+       write(fid) qv_ref_DP (:)
+
     close(fid)
 
     return
   end subroutine bsstate_output_ref
 
   !-----------------------------------------------------------------------------
-  subroutine bsstate_generate
+  subroutine bsstate_generate( &
+       pre_ref, &
+       tem_ref, &
+       qv_ref   )
     use mod_adm, only: &
+       ADM_lall,    &
+       ADM_lall_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
-       ADM_kall,    &
-       ADM_lall,    &
-       ADM_lall_pl
-    use mod_const, only: &
-       GRAV  => CONST_GRAV,  &
-       Rdry  => CONST_Rdry,  &
-       CPdry => CONST_CPdry, &
-       Rvap  => CONST_Rvap,  &
-       PRE00 => CONST_PRE00
-    use mod_grd, only: &
-       GRD_gz
+       ADM_kall
     use mod_gtl, only: &
        GTL_global_mean_eachlayer
     use mod_runconf, only: &
@@ -246,6 +271,10 @@ contains
     use mod_prgvar, only: &
        prgvar_get_withdiag
     implicit none
+
+    real(RP), intent(out) :: pre_ref(ADM_kall) ! reference pressure
+    real(RP), intent(out) :: tem_ref(ADM_kall) ! reference temperature
+    real(RP), intent(out) :: qv_ref (ADM_kall) ! water vapor
 
     real(RP) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
     real(RP) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -277,12 +306,7 @@ contains
     real(RP) :: w_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: q        (ADM_gall,   ADM_kall,ADM_lall,   TRC_vmax)
     real(RP) :: q_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
-    real(RP) :: kappa
-
-    integer :: k
     !---------------------------------------------------------------------------
-
-    kappa = Rdry / CPdry
 
     call prgvar_get_withdiag( rhog,   rhog_pl,   & ! [OUT]
                               rhogvx, rhogvx_pl, & ! [OUT]
@@ -304,66 +328,43 @@ contains
     call GTL_global_mean_eachlayer( tem(:,:,:),      tem_pl(:,:,:)     , tem_ref(:) )
     call GTL_global_mean_eachlayer( q  (:,:,:,I_QV), q_pl  (:,:,:,I_QV), qv_ref (:) )
 
-    !--- additional reference state.
-    do k = 1, ADM_kall
-       th_ref (k) = tem_ref(k) * ( PRE00 / pre_ref(k) )**kappa
-       phi_ref(k) = GRAV * GRD_gz(k)
-       rho_ref(k) = pre_ref(k) / tem_ref(k) / ( ( 1.0_RP - qv_ref(k) ) * Rdry &
-                                              + (          qv_ref(k) ) * Rvap )
-    enddo
-
     return
   end subroutine bsstate_generate
 
   !-----------------------------------------------------------------------------
   !> generation of basic state from reference state
-  subroutine set_basicstate
+  subroutine set_basicstate( &
+       pre_ref, &
+       tem_ref, &
+       qv_ref   )
     use mod_const, only: &
-       GRAV => CONST_GRAV
+       Rdry => CONST_Rdry, &
+       Rvap => CONST_Rvap
     use mod_adm, only: &
-       ADM_prc_pl,  &
-       ADM_prc_me,  &
+       ADM_have_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kall
-    use mod_grd, only: &
-       GRD_Z,     &
-       GRD_vz,    &
-       GRD_vz_pl
+    use mod_vmtr, only: &
+       VMTR_PHI,   &
+       VMTR_PHI_pl
     use mod_vintrpl, only: &
        VINTRPL_zstar_level
     use mod_bndcnd, only: &
-       bndcnd_thermo
-    use mod_thrmdyn, only: &
-       thrmdyn_th,  &
-       thrmdyn_rho, &
-       thrmdyn_qd
-    use mod_runconf, only: &
-       TRC_VMAX, &
-       I_QV
+       BNDCND_thermo
     implicit none
 
-    real(RP) :: phi     (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP) :: phi_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP) :: qd      (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP) :: qd_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP) :: q       (ADM_gall   ,ADM_kall,TRC_VMAX,ADM_lall   )
-    real(RP) :: q_pl    (ADM_gall_pl,ADM_kall,TRC_VMAX,ADM_lall_pl)
-    real(RP) :: th_bs   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP) :: th_bs_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP), intent(in) :: pre_ref(ADM_kall) ! reference pressure
+    real(RP), intent(in) :: tem_ref(ADM_kall) ! reference temperature
+    real(RP), intent(in) :: qv_ref (ADM_kall) ! water vapor
+
     real(RP) :: qv_bs   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: qv_bs_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     integer :: k, l
     !---------------------------------------------------------------------------
-
-    !--- calculation of geo-potential
-    phi(:,:,:) = GRAV * GRD_vz(:,:,:,GRD_Z)
-    if ( ADM_prc_me == ADM_prc_pl ) then
-       phi_pl(:,:,:) = GRAV * GRD_vz_pl(:,:,:,GRD_Z)
-    endif
 
     if ( ref_type == 'NOBASE' ) return
 
@@ -371,119 +372,53 @@ contains
     do k = 1, ADM_kall
        pre_bs(:,k,l) = pre_ref(k)
        tem_bs(:,k,l) = tem_ref(k)
-       th_bs (:,k,l) = th_ref (k)
        qv_bs (:,k,l) = qv_ref (k)
     enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
           pre_bs_pl(:,k,l) = pre_ref(k)
           tem_bs_pl(:,k,l) = tem_ref(k)
-          th_bs_pl (:,k,l) = th_ref (k)
           qv_bs_pl (:,k,l) = qv_ref (k)
        enddo
        enddo
     endif
 
     !-- from z-level to zstar-level
-    call VINTRPL_zstar_level( pre_bs, pre_bs_pl, .false. )
-    call VINTRPL_zstar_level( tem_bs, tem_bs_pl, .false. )
-    call VINTRPL_zstar_level( qv_bs,  qv_bs_pl,  .false. )
+    call VINTRPL_zstar_level( pre_bs(:,:,:), pre_bs_pl(:,:,:), .false. )
+    call VINTRPL_zstar_level( tem_bs(:,:,:), tem_bs_pl(:,:,:), .false. )
+    call VINTRPL_zstar_level( qv_bs (:,:,:), qv_bs_pl (:,:,:), .false. )
 
+    rho_bs(:,:,l) = pre_bs(:,:,l) / tem_bs(:,:,l) / ( ( 1.0_RP-qv_bs(:,:,l) ) * Rdry &
+                                                    + (        qv_bs(:,:,l) ) * Rvap )
+
+    if ( ADM_have_pl ) then
+       rho_bs_pl(:,:,l) = pre_bs_pl(:,:,l) / tem_bs_pl(:,:,l) / ( ( 1.0_RP-qv_bs_pl(:,:,l) ) * Rdry &
+                                                                + (        qv_bs_pl(:,:,l) ) * Rvap )
+    endif
+
+    !--- set boundary conditions of basic state
     do l = 1, ADM_lall
-       !--- Setting of mass concentration
-       !--- Note :: The basic state is "dry" and TKE=0
-       q(:,:,:,l)    = 0.0_RP
-       q(:,:,I_QV,l) = qv_bs(:,:,l)
-
-       call thrmdyn_qd( ADM_gall,    & ! [IN]
-                        ADM_kall,    & ! [IN]
-                        q (:,:,:,l), & ! [IN]
-                        qd(:,:,l)    ) ! [OUT]
-
-       !--- calculation of density
-       call thrmdyn_rho( ADM_gall,        & ! [IN]
-                         ADM_kall,        & ! [IN]
-                         pre_bs(:,:,l),   & ! [IN]
-                         tem_bs(:,:,l),   & ! [IN]
-                         qd    (:,:,l),   & ! [IN]
-                         q     (:,:,:,l), & ! [IN]
-                         rho_bs(:,:,l)    )! [OUT]
-
-       !--- set boundary conditions of basic state
-       call bndcnd_thermo( ADM_gall,      & ! [IN]
-                           tem_bs(:,:,l), & ! [INOUT]
-                           rho_bs(:,:,l), & ! [INOUT]
-                           pre_bs(:,:,l), & ! [INOUT]
-                           phi   (:,:,l)  ) ! [IN]
-
-       call thrmdyn_th( ADM_gall,      & ! [IN]
-                        ADM_kall,      & ! [IN]
-                        tem_bs(:,:,l), & ! [IN]
-                        pre_bs(:,:,l), & ! [IN]
-                        th_bs (:,:,l)  ) ! [OUT]
+       call BNDCND_thermo( ADM_gall,        & ! [IN]
+                           rho_bs  (:,:,l), & ! [INOUT]
+                           pre_bs  (:,:,l), & ! [INOUT]
+                           tem_bs  (:,:,l), & ! [INOUT]
+                           VMTR_PHI(:,:,l)  ) ! [IN]
     enddo
 
-    if ( ADM_prc_me == ADM_prc_pl ) then
+    if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
-          q_pl(:,:,:,l)    = 0.0_RP
-          q_pl(:,:,I_QV,l) = qv_bs_pl(:,:,l)
-
-          call thrmdyn_qd( ADM_gall_pl,    & ! [IN]
-                           ADM_kall,       & ! [IN]
-                           q_pl (:,:,:,l), & ! [IN]
-                           qd_pl(:,:,l)    ) ! [OUT]
-
-          call thrmdyn_rho( ADM_gall_pl,        & ! [IN]
-                            ADM_kall,           & ! [IN]
-                            tem_bs_pl(:,:,l),   & ! [IN]
-                            pre_bs_pl(:,:,l),   & ! [IN]
-                            qd_pl    (:,:,l),   & ! [IN]
-                            q_pl     (:,:,:,l), & ! [IN]
-                            rho_bs_pl(:,:,l)    ) ! [OUT]
-
-          call bndcnd_thermo( ADM_gall_pl,      & ! [IN]
-                              tem_bs_pl(:,:,l), & ! [INOUT]
-                              rho_bs_pl(:,:,l), & ! [INOUT]
-                              pre_bs_pl(:,:,l), & ! [INOUT]
-                              phi_pl   (:,:,l)  ) ! [IN]
-
-          call thrmdyn_th( ADM_gall_pl,      & ! [IN]
-                           ADM_kall,         & ! [IN]
-                           tem_bs_pl(:,:,l), & ! [IN]
-                           pre_bs_pl(:,:,l), & ! [IN]
-                           th_bs_pl (:,:,l)  ) ! [OUT]
+          call BNDCND_thermo( ADM_gall_pl,        & ! [IN]
+                              rho_bs_pl  (:,:,l), & ! [INOUT]
+                              pre_bs_pl  (:,:,l), & ! [INOUT]
+                              tem_bs_pl  (:,:,l), & ! [INOUT]
+                              VMTR_PHI_pl(:,:,l)  ) ! [IN]
        enddo
     endif
 
     return
   end subroutine set_basicstate
-
-  !-----------------------------------------------------------------------------
-  subroutine output_info
-    use mod_adm, only: &
-       ADM_kall,    &
-       ADM_kmin,    &
-       ADM_kmax
-    implicit none
-
-    integer :: k
-    !---------------------------------------------------------------------------
-
-    write(IO_FID_LOG,*) '*** Basic state information ***'
-    write(IO_FID_LOG,*) '--- Basic state type         : ', trim(ref_type)
-
-    write(IO_FID_LOG,*) '-------------------------------------------------------'
-    write(IO_FID_LOG,*) 'Level   Density  Pressure     Temp. Pot. Tem.        qv'
-    do k = 1, ADM_kall
-       write(IO_FID_LOG,'(I4,F12.4,F10.2,F10.2,F10.2,F10.7)') k, rho_ref(k), pre_ref(k), tem_ref(k),th_ref(k), qv_ref(k)
-       if (  k == ADM_kmin-1 ) write(IO_FID_LOG,*) '-------------------------------------------------------'
-       if (  k == ADM_kmax   ) write(IO_FID_LOG,*) '-------------------------------------------------------'
-    enddo
-
-    return
-  end subroutine output_info
 
 end module mod_bsstate

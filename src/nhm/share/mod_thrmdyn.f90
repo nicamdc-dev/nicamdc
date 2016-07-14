@@ -71,7 +71,6 @@ module mod_thrmdyn
   public :: THRMDYN_qd
   public :: THRMDYN_cv
   public :: THRMDYN_cp
-  public :: THRMDYN_rho
   public :: THRMDYN_pre
   public :: THRMDYN_ein
   public :: THRMDYN_tem
@@ -93,11 +92,6 @@ module mod_thrmdyn
   interface THRMDYN_cp
      module procedure THRMDYN_cp_ijk
   end interface THRMDYN_cp
-
-  interface THRMDYN_rho
-     module procedure THRMDYN_rho_ijk
-     module procedure THRMDYN_rho_ijkl
-  end interface THRMDYN_rho
 
   interface THRMDYN_pre
      module procedure THRMDYN_pre_ijk
@@ -294,78 +288,6 @@ contains
 
     return
   end subroutine THRMDYN_cp_ijk
-
-  !-----------------------------------------------------------------------------
-  !> calculate density
-  subroutine THRMDYN_rho_ijk( &
-       ijdim, &
-       kdim,  &
-       tem,   &
-       pre,   &
-       qd,    &
-       q,     &
-       rho    )
-    implicit none
-
-    integer, intent(in)  :: ijdim
-    integer, intent(in)  :: kdim
-    real(RP), intent(in)  :: tem(ijdim,kdim)       ! temperature [K]
-    real(RP), intent(in)  :: pre(ijdim,kdim)       ! pressure    [Pa]
-    real(RP), intent(in)  :: qd (ijdim,kdim)       ! dry air mass concentration [kg/kg]
-    real(RP), intent(in)  :: q  (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
-    real(RP), intent(out) :: rho(ijdim,kdim)       ! density     [kg/m3]
-
-    integer :: ij, k
-    !---------------------------------------------------------------------------
-
-    !$acc kernels pcopy(rho) pcopyin(pre,tem,qd,q) async(0)
-    do k  = 1, kdim
-    do ij = 1, ijdim
-       rho(ij,k) = pre(ij,k) / tem(ij,k) / ( qd(ij,k)*Rdry + q(ij,k,I_QV)*Rvap )
-    enddo
-    enddo
-    !$acc end kernels
-
-    return
-  end subroutine THRMDYN_rho_ijk
-
-  !-----------------------------------------------------------------------------
-  !> calculate density
-  subroutine THRMDYN_rho_ijkl( &
-       ijdim, &
-       kdim,  &
-       ldim,  &
-       tem,   &
-       pre,   &
-       qd,    &
-       q,     &
-       rho    )
-    implicit none
-
-    integer, intent(in)  :: ijdim
-    integer, intent(in)  :: kdim
-    integer, intent(in)  :: ldim
-    real(RP), intent(in)  :: tem(ijdim,kdim,ldim)       ! temperature [K]
-    real(RP), intent(in)  :: pre(ijdim,kdim,ldim)       ! pressure    [Pa]
-    real(RP), intent(in)  :: qd (ijdim,kdim,ldim)       ! dry air mass concentration [kg/kg]
-    real(RP), intent(in)  :: q  (ijdim,kdim,ldim,nqmax) ! tracer  mass concentration [kg/kg]
-    real(RP), intent(out) :: rho(ijdim,kdim,ldim)       ! density     [kg/m3]
-
-    integer :: ij, k, l
-    !---------------------------------------------------------------------------
-
-    !$acc kernels pcopy(rho) pcopyin(pre,tem,qd,q) async(0)
-    do l  = 1, ldim
-    do k  = 1, kdim
-    do ij = 1, ijdim
-       rho(ij,k,l) = pre(ij,k,l) / tem(ij,k,l) / ( qd(ij,k,l)*Rdry + q(ij,k,l,I_QV)*Rvap )
-    enddo
-    enddo
-    enddo
-    !$acc end kernels
-
-    return
-  end subroutine THRMDYN_rho_ijkl
 
   !-----------------------------------------------------------------------------
   !> calculate pressure
