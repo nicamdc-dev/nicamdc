@@ -592,7 +592,7 @@ contains
           call HIO_input( GRD_xt(:,:,:,ADM_TJ,GRD_ZDIR),basename,'grd_xt_jz','ZSSFC1',1,1,1 )
        endif
 
-     elseif ( io_mode == 'ADVANCED' ) then
+     elseif( io_mode == 'ADVANCED' ) then
 
        call FIO_input( GRD_x(:,:,:,GRD_XDIR),basename,'grd_x_x','ZSSFC1',1,1,1 )
        call FIO_input( GRD_x(:,:,:,GRD_YDIR),basename,'grd_x_y','ZSSFC1',1,1,1 )
@@ -641,86 +641,86 @@ contains
 
     if ( io_mode == 'POH5' ) then
 
-       call HIO_output( GRD_x(:,:,:,GRD_XDIR),                            &
-                        basename, desc, "",                               &
-                       "grd_x_x", "GRD_x (X_DIR)", "",                    &
-                       "NIL", IO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
-       call HIO_output( GRD_x(:,:,:,GRD_YDIR),                            &
-                        basename, desc, '',                               &
-                       'grd_x_y', 'GRD_x (Y_DIR)', '',                    &
-                       'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
-       call HIO_output( GRD_x(:,:,:,GRD_ZDIR),                            &
-                        basename, desc, '',                               &
-                       'grd_x_z', 'GRD_x (Z_DIR)', '',                    &
-                       'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
+       call HIO_output( GRD_x(:,:,:,GRD_XDIR),                            & ! [IN]
+                        basename, desc, "",                               & ! [IN]
+                       "grd_x_x", "GRD_x (X_DIR)", "",                    & ! [IN]
+                       "NIL", IO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
+       call HIO_output( GRD_x(:,:,:,GRD_YDIR),                            & ! [IN]
+                        basename, desc, '',                               & ! [IN]
+                       'grd_x_y', 'GRD_x (Y_DIR)', '',                    & ! [IN]
+                       'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
+       call HIO_output( GRD_x(:,:,:,GRD_ZDIR),                            & ! [IN]
+                        basename, desc, '',                               & ! [IN]
+                       'grd_x_z', 'GRD_x (Z_DIR)', '',                    & ! [IN]
+                       'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
 
        if ( output_vertex ) then
-          call HIO_output( GRD_xt(:,:,:,ADM_TI,GRD_XDIR),                    &
-                           basename, desc, '',                               &
-                          'grd_xt_ix', 'GRD_xt (TI,X_DIR)', '',              &
-                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
-          call HIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_XDIR),                    &
-                           basename, desc, '',                               &
-                          'grd_xt_jx', 'GRD_xt (TJ,X_DIR)', '',              &
-                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
-          call HIO_output( GRD_xt(:,:,:,ADM_TI,GRD_YDIR),                    &
-                           basename, desc, '',                               &
-                          'grd_xt_iy', 'GRD_xt (TI,Y_DIR)', '',              &
-                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
-          call HIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_YDIR),                    &
-                           basename, desc, '',                               &
-                          'grd_xt_jy', 'GRD_xt (TJ,Y_DIR)', '',              &
-                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
-          call HIO_output( GRD_xt(:,:,:,ADM_TI,GRD_ZDIR),                    &
-                           basename, desc, '',                               &
-                          'grd_xt_iz', 'GRD_xt (TI,Z_DIR)', '',              &
-                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
-          call HIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_ZDIR),                    &
-                           basename, desc, '',                               &
-                          'grd_xt_jz', 'GRD_xt (TJ,Z_DIR)', '',              &
-                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
+          call HIO_output( GRD_xt(:,:,:,ADM_TI,GRD_XDIR),                    & ! [IN]
+                           basename, desc, '',                               & ! [IN]
+                          'grd_xt_ix', 'GRD_xt (TI,X_DIR)', '',              & ! [IN]
+                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
+          call HIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_XDIR),                    & ! [IN]
+                           basename, desc, '',                               & ! [IN]
+                          'grd_xt_jx', 'GRD_xt (TJ,X_DIR)', '',              & ! [IN]
+                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
+          call HIO_output( GRD_xt(:,:,:,ADM_TI,GRD_YDIR),                    & ! [IN]
+                           basename, desc, '',                               & ! [IN]
+                          'grd_xt_iy', 'GRD_xt (TI,Y_DIR)', '',              & ! [IN]
+                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
+          call HIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_YDIR),                    & ! [IN]
+                           basename, desc, '',                               & ! [IN]
+                          'grd_xt_jy', 'GRD_xt (TJ,Y_DIR)', '',              & ! [IN]
+                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
+          call HIO_output( GRD_xt(:,:,:,ADM_TI,GRD_ZDIR),                    & ! [IN]
+                           basename, desc, '',                               & ! [IN]
+                          'grd_xt_iz', 'GRD_xt (TI,Z_DIR)', '',              & ! [IN]
+                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
+          call HIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_ZDIR),                    & ! [IN]
+                           basename, desc, '',                               & ! [IN]
+                          'grd_xt_jz', 'GRD_xt (TJ,Z_DIR)', '',              & ! [IN]
+                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
        endif
 
-    elseif ( io_mode == 'ADVANCED' ) then
+    elseif( io_mode == 'ADVANCED' ) then
 
-       call FIO_output( GRD_x(:,:,:,GRD_XDIR),                            &
-                        basename, desc, "",                               &
-                       "grd_x_x", "GRD_x (X_DIR)", "",                    &
-                       "NIL", IO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP )
-       call FIO_output( GRD_x(:,:,:,GRD_YDIR),                            &
-                        basename, desc, '',                               &
-                       'grd_x_y', 'GRD_x (Y_DIR)', '',                    &
-                       'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
-       call FIO_output( GRD_x(:,:,:,GRD_ZDIR),                            &
-                        basename, desc, '',                               &
-                       'grd_x_z', 'GRD_x (Z_DIR)', '',                    &
-                       'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
+       call FIO_output( GRD_x(:,:,:,GRD_XDIR),                            & ! [IN]
+                        basename, desc, "",                               & ! [IN]
+                       "grd_x_x", "GRD_x (X_DIR)", "",                    & ! [IN]
+                       "NIL", IO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
+       call FIO_output( GRD_x(:,:,:,GRD_YDIR),                            & ! [IN]
+                        basename, desc, '',                               & ! [IN]
+                       'grd_x_y', 'GRD_x (Y_DIR)', '',                    & ! [IN]
+                       'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
+       call FIO_output( GRD_x(:,:,:,GRD_ZDIR),                            & ! [IN]
+                        basename, desc, '',                               & ! [IN]
+                       'grd_x_z', 'GRD_x (Z_DIR)', '',                    & ! [IN]
+                       'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
 
        if ( output_vertex ) then
-          call FIO_output( GRD_xt(:,:,:,ADM_TI,GRD_XDIR),                    &
-                           basename, desc, '',                               &
-                          'grd_xt_ix', 'GRD_xt (TI,X_DIR)', '',              &
-                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
-          call FIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_XDIR),                    &
-                           basename, desc, '',                               &
-                          'grd_xt_jx', 'GRD_xt (TJ,X_DIR)', '',              &
-                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
-          call FIO_output( GRD_xt(:,:,:,ADM_TI,GRD_YDIR),                    &
-                           basename, desc, '',                               &
-                          'grd_xt_iy', 'GRD_xt (TI,Y_DIR)', '',              &
-                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
-          call FIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_YDIR),                    &
-                           basename, desc, '',                               &
-                          'grd_xt_jy', 'GRD_xt (TJ,Y_DIR)', '',              &
-                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
-          call FIO_output( GRD_xt(:,:,:,ADM_TI,GRD_ZDIR),                    &
-                           basename, desc, '',                               &
-                          'grd_xt_iz', 'GRD_xt (TI,Z_DIR)', '',              &
-                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
-          call FIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_ZDIR),                    &
-                           basename, desc, '',                               &
-                          'grd_xt_jz', 'GRD_xt (TJ,Z_DIR)', '',              &
-                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP )
+          call FIO_output( GRD_xt(:,:,:,ADM_TI,GRD_XDIR),                    & ! [IN]
+                           basename, desc, '',                               & ! [IN]
+                          'grd_xt_ix', 'GRD_xt (TI,X_DIR)', '',              & ! [IN]
+                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
+          call FIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_XDIR),                    & ! [IN]
+                           basename, desc, '',                               & ! [IN]
+                          'grd_xt_jx', 'GRD_xt (TJ,X_DIR)', '',              & ! [IN]
+                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
+          call FIO_output( GRD_xt(:,:,:,ADM_TI,GRD_YDIR),                    & ! [IN]
+                           basename, desc, '',                               & ! [IN]
+                          'grd_xt_iy', 'GRD_xt (TI,Y_DIR)', '',              & ! [IN]
+                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
+          call FIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_YDIR),                    & ! [IN]
+                           basename, desc, '',                               & ! [IN]
+                          'grd_xt_jy', 'GRD_xt (TJ,Y_DIR)', '',              & ! [IN]
+                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
+          call FIO_output( GRD_xt(:,:,:,ADM_TI,GRD_ZDIR),                    & ! [IN]
+                           basename, desc, '',                               & ! [IN]
+                          'grd_xt_iz', 'GRD_xt (TI,Z_DIR)', '',              & ! [IN]
+                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
+          call FIO_output( GRD_xt(:,:,:,ADM_TJ,GRD_ZDIR),                    & ! [IN]
+                           basename, desc, '',                               & ! [IN]
+                          'grd_xt_jz', 'GRD_xt (TJ,Z_DIR)', '',              & ! [IN]
+                          'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
        endif
 
     else
@@ -818,51 +818,31 @@ contains
   !> Input topography data
   subroutine GRD_input_topograph( &
        basename )
-    use mod_adm, only: &
-       ADM_prc_tab, &
-       ADM_prc_me
     use mod_comm, only: &
        COMM_var
     use mod_fio, only: &
        FIO_input
+    use mod_hio, only: &
+       HIO_input
     use mod_ideal_topo, only: &
        IDEAL_topo
     implicit none
 
     character(len=*), intent(in) :: basename
-
-    character(len=H_LONG) :: fname
-    integer               :: l, rgnid
-    integer               :: fid
     !---------------------------------------------------------------------------
 
     write(IO_FID_LOG,*) '*** topography data input'
 
-    if ( topo_io_mode == 'ADVANCED' ) then
+    if ( topo_io_mode == 'POH5' ) then
+
+       if ( basename /= 'NONE' ) then
+          call HIO_input(GRD_zs(:,:,:,GRD_ZSFC),basename,'topo','ZSSFC1',1,1,1)
+       endif
+
+    elseif( topo_io_mode == 'ADVANCED' ) then
 
        if ( basename /= 'NONE' ) then
           call FIO_input(GRD_zs(:,:,:,GRD_ZSFC),basename,'topo','ZSSFC1',1,1,1)
-       endif
-
-    elseif( topo_io_mode == 'LEGACY' ) then
-
-       if ( basename /= 'NONE' ) then
-          do l = 1, ADM_lall
-             rgnid = ADM_prc_tab(l,ADM_prc_me)
-             call IO_make_idstr(fname,trim(basename),'rgn',rgnid,isrgn=.true.)
-             fid = IO_get_available_fid()
-
-             open( fid,                    &
-                   file   = trim(fname),   &
-                   form   = 'unformatted', &
-                   access = 'direct',      &
-                   recl   = ADM_gall*8,    &
-                   status = 'old'          )
-
-                read(fid,rec=1) GRD_zs(:,ADM_KNONE,l,GRD_ZSFC)
-
-             close(fid)
-          enddo
        endif
 
     elseif( topo_io_mode == 'IDEAL' ) then

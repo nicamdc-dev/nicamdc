@@ -157,8 +157,8 @@ contains
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) '*** io_mode for restart, input : ', trim(input_io_mode)
-    if    ( input_io_mode == 'ADVANCED'     ) then
-    elseif( input_io_mode == 'LEGACY'       ) then
+    if    ( input_io_mode == 'POH5'         ) then
+    elseif( input_io_mode == 'ADVANCED'     ) then
     elseif( input_io_mode == 'IDEAL'        ) then
     elseif( input_io_mode == 'IDEAL_TRACER' ) then
     else
@@ -167,8 +167,8 @@ contains
     endif
 
     write(IO_FID_LOG,*) '*** io_mode for restart, output: ', trim(output_io_mode)
-    if    ( output_io_mode == 'ADVANCED' ) then
-    elseif( output_io_mode == 'LEGACY'   ) then
+    if    ( output_io_mode == 'POH5'        ) then
+    elseif( output_io_mode == 'ADVANCED'    ) then
     else
        write(IO_FID_LOG,*) 'xxx Invalid output_io_mode. STOP'
        call PRC_MPIstop
@@ -818,15 +818,13 @@ contains
   !-----------------------------------------------------------------------------
   subroutine restart_input( basename )
     use mod_adm, only: &
-       ADM_prc_tab, &
-       ADM_prc_me,  &
-       ADM_gall,    &
-       ADM_lall,    &
        ADM_kall,    &
        ADM_kmax,    &
        ADM_kmin
     use mod_fio, only: &
        FIO_input
+    use mod_hio, only: &
+       HIO_input
     use mod_comm, only: &
        COMM_var
     use mod_gtl, only: &
@@ -847,19 +845,29 @@ contains
 
     character(len=*), intent(in) :: basename
 
-    character(len=H_LONG) :: fname
-
     real(RP) :: val_max, val_min
     logical :: nonzero
 
-    integer :: fid
-    integer :: l, rgnid, nq
+    integer :: nq
     !---------------------------------------------------------------------------
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) '*** read restart/initial data'
 
-    if ( input_io_mode == 'ADVANCED' ) then
+    if ( input_io_mode == 'POH5' ) then
+
+       do nq = 1, DIAG_vmax0
+          call HIO_input( DIAG_var(:,:,:,nq),basename,DIAG_name(nq), &
+                          layername,1,ADM_kall,1                     )
+       enddo
+
+       do nq = 1, TRC_vmax_input
+          call HIO_input( DIAG_var(:,:,:,DIAG_vmax0+nq),basename,TRC_name(nq), &
+                          layername,1,ADM_kall,1,                              &
+                          allow_missingq=allow_missingq                        )
+       enddo
+
+    elseif( input_io_mode == 'ADVANCED' ) then
 
        do nq = 1, DIAG_vmax0
           call FIO_input( DIAG_var(:,:,:,nq),basename,DIAG_name(nq), &
@@ -870,26 +878,6 @@ contains
           call FIO_input( DIAG_var(:,:,:,DIAG_vmax0+nq),basename,TRC_name(nq), &
                           layername,1,ADM_kall,1,                              &
                           allow_missingq=allow_missingq                        )
-       enddo
-
-    elseif( input_io_mode == 'LEGACY' ) then
-
-       do l = 1, ADM_lall
-          rgnid = ADM_prc_tab(l,ADM_prc_me)
-          call IO_make_idstr(fname,trim(basename),'rgn',rgnid,isrgn=.true.)
-          fid = IO_get_available_fid()
-          open( unit   = fid,                 &
-                file   = trim(fname),         &
-                form   = 'unformatted',       &
-                access = 'direct',            &
-                recl   = ADM_gall*ADM_kall*8, &
-                status = 'old'                )
-
-          do nq = 1, DIAG_vmax0+TRC_vmax_input
-             read(fid,rec=nq) DIAG_var(:,:,l,nq)
-          enddo
-
-          close(fid)
        enddo
 
     elseif( input_io_mode == 'IDEAL' ) then
@@ -974,10 +962,6 @@ contains
   !-----------------------------------------------------------------------------
   subroutine restart_output( basename )
     use mod_adm, only: &
-       ADM_prc_tab, &
-       ADM_prc_me,  &
-       ADM_gall,    &
-       ADM_lall,    &
        ADM_kall,    &
        ADM_kmax,    &
        ADM_kmin
@@ -985,13 +969,14 @@ contains
        IO_REAL8
     use mod_fio, only: &
        FIO_output
+    use mod_hio, only: &
+       HIO_output
     use mod_time, only : &
        TIME_CTIME
     use mod_gtl, only: &
        GTL_max, &
        GTL_min
     use mod_runconf, only: &
-       DIAG_vmax, &
        DIAG_name, &
        TRC_vmax,  &
        TRC_name,  &
@@ -1022,13 +1007,10 @@ contains
 
     character(len=H_SHORT) :: WUNIT = 'kg/kg'
 
-    character(len=H_LONG) :: fname
-
     real(RP) :: val_max, val_min
     logical  :: nonzero
 
-    integer  :: fid
-    integer  :: l, rgnid, nq
+    integer  :: nq
     !---------------------------------------------------------------------------
 
     call cnvvar_prg2diag( PRG_var (:,:,:,:), PRG_var_pl (:,:,:,:), & ! [IN]
@@ -1065,36 +1047,28 @@ contains
        write(IO_FID_LOG,'(1x,A,A16,2(A,1PE24.17))') '--- ', TRC_name(nq),  ': max=', val_max, ', min=', val_min
     enddo
 
-    if ( output_io_mode == 'ADVANCED' ) then
+    if ( output_io_mode == 'POH5' ) then
 
        do nq = 1, DIAG_vmax0
-          call FIO_output( DIAG_var(:,:,:,nq), basename, desc, '', DIAG_name(nq), DLABEL(nq), '', DUNIT(nq), &
-                           IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                       )
+          call HIO_output( DIAG_var(:,:,:,nq), basename, desc, '', DIAG_name(nq), DLABEL(nq), '', DUNIT(nq), & ! [IN]
+                           IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                       ) ! [IN]
        enddo
 
        do nq = 1, TRC_vmax
-          call FIO_output( DIAG_var(:,:,:,DIAG_vmax0+nq), basename, desc, '', TRC_name(nq), WLABEL(nq), '', WUNIT, &
-                           IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                             )
+          call HIO_output( DIAG_var(:,:,:,DIAG_vmax0+nq), basename, desc, '', TRC_name(nq), WLABEL(nq), '', WUNIT, & ! [IN]
+                           IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                             ) ! [IN]
        enddo
 
-    elseif( output_io_mode == 'LEGACY' ) then
+    elseif( output_io_mode == 'ADVANCED' ) then
 
-       do l = 1, ADM_lall
-          rgnid = ADM_prc_tab(l,ADM_prc_me)
-          call IO_make_idstr(fname,trim(basename),'rgn',rgnid,isrgn=.true.)
-          fid = IO_get_available_fid()
-          open( unit   = fid,                 &
-                file   = trim(fname),         &
-                form   = 'unformatted',       &
-                access = 'direct',            &
-                recl   = ADM_gall*ADM_kall*8, &
-                status = 'unknown'            )
+       do nq = 1, DIAG_vmax0
+          call FIO_output( DIAG_var(:,:,:,nq), basename, desc, '', DIAG_name(nq), DLABEL(nq), '', DUNIT(nq), & ! [IN]
+                           IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                       ) ! [IN]
+       enddo
 
-          do nq = 1, DIAG_vmax
-             write(fid,rec=nq) DIAG_var(:,:,l,nq)
-          enddo
-
-          close(fid)
+       do nq = 1, TRC_vmax
+          call FIO_output( DIAG_var(:,:,:,DIAG_vmax0+nq), basename, desc, '', TRC_name(nq), WLABEL(nq), '', WUNIT, & ! [IN]
+                           IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                             ) ! [IN]
        enddo
 
     endif !--- io_mode

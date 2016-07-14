@@ -95,6 +95,8 @@ contains
        ADM_lall_pl
     use mod_fio, only: &
        FIO_seek
+    use mod_hio, only: &
+       HIO_seek
     use mod_time, only: &
        ctime => TIME_CTIME
     implicit none
@@ -135,7 +137,6 @@ contains
          opt_periodic_year, &
          defval
 
-    real(DP) :: csec
     integer  :: cdate(6)
 
     integer  :: ierr
@@ -171,7 +172,7 @@ contains
        !--- intialization
        fname             = ''
        dataname          = ''
-       input_io_mode     = 'LEGACY' ! [add] H.Yashiro 20110826
+       input_io_mode     = 'ADVANCED'
        input_size        = 8
        layer_type        = ''
        layername         = 'ZSSFC1'
@@ -200,43 +201,45 @@ contains
           call PRC_MPIstop
        endif
 
-       ! <- [add] H.Yashiro 20110826
-       if ( input_io_mode == 'ADVANCED' ) then
-          !--- Advanced I/O verifies;
-          !---  info(np)%layername
-          !---  info(np)%kall
-          !
-          !--- Advanced I/O overwrites;
-          !---  info(np)%input_size
-          !---  info(np)%num_of_data
-          !---  info(np)%data_date
-          !---  info(np)%data_rec(1)
+       ! IO_seek verifies;
+       !  info(np)%layername
+       !  info(np)%kall
+       !
+       ! IO_seek overwrites;
+       !  info(np)%input_size
+       !  info(np)%num_of_data
+       !  info(np)%data_date
+       !  info(np)%data_rec(1)
+       if ( input_io_mode == 'POH5' ) then
 
-          call FIO_seek( info(np)%data_rec(1), & ! [out]
-                         num_of_data,          & ! [overwrite]
-                         data_date,            & ! [overwrite]
-                         input_size,           & ! [overwrite]
-                         fname,                & ! [in]
-                         dataname,             & ! [in]
-                         layername,            & ! [in]
-                         1,                    & ! [in]
-                         info(np)%kall,        & ! [in]
-                         ctime,                & ! [in]
-                         cdate,                & ! [in]
-                         opt_periodic_year     ) ! [in]
+          call HIO_seek( info(np)%data_rec(1), & ! [OUT]
+                         num_of_data,          & ! [INOUT]
+                         data_date,            & ! [INOUT]
+                         input_size,           & ! [INOUT]
+                         fname,                & ! [IN]
+                         dataname,             & ! [IN]
+                         layername,            & ! [IN]
+                         1,                    & ! [IN]
+                         info(np)%kall,        & ! [IN]
+                         ctime,                & ! [IN]
+                         cdate,                & ! [IN]
+                         opt_periodic_year     ) ! [IN]
 
-       elseif( input_io_mode == 'LEGACY' ) then
-          ! [Add] 12/02/01 T.Seiki
-          if (opt_increment_date)then
-             do im=2, num_of_data
-                data_date(1:6,im) = data_date(1:6,im-1) + ddata_date(1:6)
-                call CALENDAR_yh2ss( csec, data_date(:,im))
-                call CALENDAR_ss2yh( data_date(:,im), csec )
-             enddo
-          endif
-          if (opt_periodic_year) then ! [add] C.Kodama 2010.07.26
-             data_date(1,1:num_of_data) = cdate(1)
-          endif
+       elseif( input_io_mode == 'ADVANCED' ) then
+
+          call FIO_seek( info(np)%data_rec(1), & ! [OUT]
+                         num_of_data,          & ! [INOUT]
+                         data_date,            & ! [INOUT]
+                         input_size,           & ! [INOUT]
+                         fname,                & ! [IN]
+                         dataname,             & ! [IN]
+                         layername,            & ! [IN]
+                         1,                    & ! [IN]
+                         info(np)%kall,        & ! [IN]
+                         ctime,                & ! [IN]
+                         cdate,                & ! [IN]
+                         opt_periodic_year     ) ! [IN]
+
        else
           write(IO_FID_LOG,*) 'xxx Invalid input_io_mode!', trim(input_io_mode)
           call PRC_MPIstop
@@ -292,17 +295,7 @@ contains
           info(np)%data_rec(1) = cdate(2)
           info(np)%data_rec(2) = cdate(2)
 
-       elseif(info(np)%opt_periodic_year) then ! [add] C.Kodama 2010.07.26
-
-          if( info(np)%input_io_mode == 'LEGACY' ) then
-             info(np)%data_rec(1) = 1
-             do im = 1, info(np)%num_of_data
-                if ( ctime < info(np)%data_time(im) ) then
-                   info(np)%data_rec(1) = im
-                   exit
-                endif
-             enddo
-          endif
+       elseif(info(np)%opt_periodic_year) then
 
           if( info(np)%data_rec(1) == 1 ) then
              info(np)%data_rec(2) = info(np)%num_of_data
@@ -312,20 +305,9 @@ contains
 
        else !--- default
 
-          if( info(np)%input_io_mode == 'LEGACY' ) then
-             info(np)%data_rec(1) = 1
-             do im = 1, info(np)%num_of_data
-                if ( ctime < info(np)%data_time(im) ) then
-                   info(np)%data_rec(1) = im
-                   exit
-                endif
-             enddo
-          endif
-
           if ( info(np)%data_rec(1) == 1 ) then
-             write(IO_FID_LOG,*) 'Msg : Sub[extdata_setup]/Mod[mod_extdata]'
-             write(IO_FID_LOG,*) '--- ERROR : data time is not consistent ', &
-                       'with the simulation time! : ', trim(info(np)%dataname )
+             write(IO_FID_LOG,*) 'xxx data time is not consistent with the simulation time! : ', &
+                                 trim(info(np)%dataname )
              call PRC_MPIstop
           else !--- default
              info(np)%data_rec(2) = info(np)%data_rec(1)-1
@@ -520,8 +502,8 @@ contains
        COMM_var
     use mod_fio, only: &
        FIO_input
-    use mod_gtl, only: &
-       GTL_input_var2_da
+    use mod_hio, only: &
+       HIO_input
     implicit none
 
     integer, intent(in) :: np
@@ -533,24 +515,23 @@ contains
     info(np)%v_pl(:,:,:,:) = info(np)%defval
 
     do n = 1, 2 !--- forward & backward
-       ! <- [add] H.Yashiro 20110826
-       if ( info(np)%input_io_mode == 'ADVANCED' ) then
+       if ( info(np)%input_io_mode == 'POH5' ) then
 
-          call FIO_input( info(np)%v(:,:,:,n), &
-                          info(np)%fname,      &
-                          info(np)%dataname,   &
-                          info(np)%layername,  &
-                          1,info(np)%kall,     &
-                          info(np)%data_rec(n) )
+          call HIO_input( info(np)%v(:,:,:,n), & ! [OUT]
+                          info(np)%fname,      & ! [IN]
+                          info(np)%dataname,   & ! [IN]
+                          info(np)%layername,  & ! [IN]
+                          1,info(np)%kall,     & ! [IN]
+                          info(np)%data_rec(n) ) ! [IN]
 
-       elseif( info(np)%input_io_mode == 'LEGACY' ) then
-       ! -> [add] H.Yashiro 20110826
+       elseif( info(np)%input_io_mode == 'ADVANCED' ) then
 
-          call GTL_input_var2_da( trim(info(np)%fname),            &
-                                  info(np)%v(:,:,:,n),             &
-                                  1, info(np)%kall,                &
-                                  recnum=info(np)%data_rec(n),     &
-                                  input_size = info(np)%input_size )
+          call FIO_input( info(np)%v(:,:,:,n), & ! [OUT]
+                          info(np)%fname,      & ! [IN]
+                          info(np)%dataname,   & ! [IN]
+                          info(np)%layername,  & ! [IN]
+                          1,info(np)%kall,     & ! [IN]
+                          info(np)%data_rec(n) ) ! [IN]
 
        endif
     enddo

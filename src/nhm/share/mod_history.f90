@@ -59,7 +59,6 @@ module mod_history
   !++ Private procedure
   !
   private :: history_outlist
-  private :: history_timeinfo
   private :: get_log_pres
 
   !-----------------------------------------------------------------------------
@@ -222,7 +221,7 @@ contains
     output_path       = ''
     histall_fname     = ''
     hist3D_layername  = ''
-    output_io_mode    = 'LEGACY'
+    output_io_mode    = 'ADVANCED'
     ktype_def         = 'unknown'
     kend_def          = ADM_vlayer
     kmax_def          = ADM_vlayer
@@ -265,8 +264,8 @@ contains
 
     HIST_output_step0 = doout_step0
 
-    if (      trim(output_io_mode) == 'ADVANCED' &
-         .OR. trim(output_io_mode) == 'LEGACY'   ) then
+    if (      trim(output_io_mode) == 'HIO'      &
+         .OR. trim(output_io_mode) == 'ADVANCED' ) then
        write(IO_FID_LOG,*) '*** History output type:', trim(output_io_mode)
     else
        write(IO_FID_LOG,*) 'xxx Invalid output_io_mode!', trim(output_io_mode)
@@ -721,13 +720,14 @@ contains
        COMM_var
     use mod_fio, only: &
        FIO_output
+    use mod_hio, only: &
+       HIO_output
     use mod_time, only: &
        TIME_CSTEP, &
        TIME_CTIME
     use mod_gtl, only: &
        GTL_max, &
-       GTL_min, &
-       GTL_output_var2_da
+       GTL_min
     use mod_vintrpl, only: &
        VINTRPL_z_level, &
        VINTRPL_z_level2
@@ -739,7 +739,6 @@ contains
 
     character(len=20)      :: HTIME
     character(len=H_SHORT) :: item
-    character(len=H_LONG)  :: basename
 
     logical, save :: first = .true.
 
@@ -853,35 +852,50 @@ contains
 
           write(IO_FID_LOG,'(A,A16,A,1PE24.17,A,E24.17)') ' [', item(1:16), '] max=', val_max, ', min=', val_min
 
-          if ( trim(output_io_mode) == 'ADVANCED' ) then
+          if ( trim(output_io_mode) == 'POH5' ) then
 
              if ( trim(output_type_save(n)) == 'SNAPSHOT' ) then
 
-                call FIO_output( v_save(:,:,:,1),                             &
-                                 HIST_io_fname,    HIST_io_desc    , '',      &
-                                 file_save(n),     desc_save(n), '',          &
-                                 unit_save(n),     HIST_dtype,                &
-                                 lname_save(n),    ksumstr(n),   ksumend(n),  &
-                                 tmax_save(n),     tend_save(n), tend_save(n) )
+                call HIO_output( v_save(:,:,:,1),                             & ! [IN]
+                                 HIST_io_fname,    HIST_io_desc    , '',      & ! [IN]
+                                 file_save(n),     desc_save(n), '',          & ! [IN]
+                                 unit_save(n),     HIST_dtype,                & ! [IN]
+                                 lname_save(n),    ksumstr(n),   ksumend(n),  & ! [IN]
+                                 tmax_save(n),     tend_save(n), tend_save(n) ) ! [IN]
 
              elseif(trim(output_type_save(n)) == 'AVERAGE') then
 
-                call FIO_output( v_save(:,:,:,1),                             &
-                                 HIST_io_fname,    HIST_io_desc    , '',      &
-                                 file_save(n),     desc_save(n), '',          &
-                                 unit_save(n),     HIST_dtype,                &
-                                 lname_save(n),    ksumstr(n),   ksumend(n),  &
-                                 tmax_save(n),     tstr_save(n), tend_save(n) )
+                call HIO_output( v_save(:,:,:,1),                             & ! [IN]
+                                 HIST_io_fname,    HIST_io_desc    , '',      & ! [IN]
+                                 file_save(n),     desc_save(n), '',          & ! [IN]
+                                 unit_save(n),     HIST_dtype,                & ! [IN]
+                                 lname_save(n),    ksumstr(n),   ksumend(n),  & ! [IN]
+                                 tmax_save(n),     tstr_save(n), tend_save(n) ) ! [IN]
 
              endif
 
-          elseif( trim(output_io_mode) == 'LEGACY' ) then
-             basename = trim(output_path)//file_save(n)
+          elseif( trim(output_io_mode) == 'ADVANCED' ) then
 
-             call GTL_output_var2_da( basename, v_save(:,:,:,1),                        &
-                                      ksumstr(n), ksumend(n), tmax_save(n), output_size )
+             if ( trim(output_type_save(n)) == 'SNAPSHOT' ) then
 
-             call history_timeinfo
+                call FIO_output( v_save(:,:,:,1),                             & ! [IN]
+                                 HIST_io_fname,    HIST_io_desc    , '',      & ! [IN]
+                                 file_save(n),     desc_save(n), '',          & ! [IN]
+                                 unit_save(n),     HIST_dtype,                & ! [IN]
+                                 lname_save(n),    ksumstr(n),   ksumend(n),  & ! [IN]
+                                 tmax_save(n),     tend_save(n), tend_save(n) ) ! [IN]
+
+             elseif(trim(output_type_save(n)) == 'AVERAGE') then
+
+                call FIO_output( v_save(:,:,:,1),                             & ! [IN]
+                                 HIST_io_fname,    HIST_io_desc    , '',      & ! [IN]
+                                 file_save(n),     desc_save(n), '',          & ! [IN]
+                                 unit_save(n),     HIST_dtype,                & ! [IN]
+                                 lname_save(n),    ksumstr(n),   ksumend(n),  & ! [IN]
+                                 tmax_save(n),     tstr_save(n), tend_save(n) ) ! [IN]
+
+             endif
+
           endif
 
           ! reset saved variable
@@ -952,41 +966,6 @@ contains
 
     return
   end subroutine history_outlist
-
-  !-----------------------------------------------------------------------------
-  subroutine history_timeinfo
-    use mod_process, only: &
-       PRC_IsMaster
-    use mod_time, only: &
-       TIME_DTL
-    implicit none
-
-    integer :: fid
-    integer :: n, k
-    !---------------------------------------------------------------------------
-
-    if ( PRC_IsMaster ) then
-       fid = IO_get_available_fid()
-       open( unit   = fid,                               &
-             file   = trim(output_path)//'history.info', &
-             form   = 'formatted',                       &
-             status = 'replace'                          )
-
-          do n = 1, HIST_req_nmax
-             write(fid,'(I8,F16.2)') tmax_save(n), step_save(n)*TIME_DTL
-             write(fid,'(I8)')       kmax_save(n)
-             do k = 1, kmax_save(n)
-                write(fid,'(F16.4)') zlev_save(ksumstr(n)+k-1)
-             enddo
-             write(fid,'(I8)')       1
-             write(fid,'(A32)')      trim(file_save(n))
-          enddo
-
-       close(fid)
-    endif
-
-    return
-  end subroutine history_timeinfo
 
   !-----------------------------------------------------------------------------
   subroutine get_log_pres

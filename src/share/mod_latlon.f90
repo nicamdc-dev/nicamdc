@@ -813,14 +813,13 @@ contains
        COMM_data_transfer
     use mod_fio, only: &
        FIO_output
+    use mod_hio, only: &
+       HIO_output
     implicit none
 
     real(RP) :: SAMPLE   ( ADM_gall,   ADM_KNONE,ADM_lall,   4)
     real(RP) :: SAMPLE_pl( ADM_gall_pl,ADM_KNONE,ADM_lall_pl,4)
 
-    character(len=H_LONG) :: fname
-
-    integer :: fid
     integer :: rgnid, prc
     integer :: i, j, ij, k, l
     !---------------------------------------------------------------------------
@@ -860,40 +859,36 @@ contains
 
     call COMM_data_transfer( SAMPLE, SAMPLE_pl )
 
-    if ( SAMPLE_io_mode == 'ADVANCED' ) then
+    if ( SAMPLE_io_mode == 'POH5' ) then
 
-       call FIO_output( SAMPLE(:,:,:,1), SAMPLE_OUT_BASENAME, "", "", &
-                       "sample1", "sample data(prc)", "", "NIL",      &
-                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    )
-       call FIO_output( SAMPLE(:,:,:,2), SAMPLE_OUT_BASENAME, "", "", &
-                       "sample2", "sample data(rgn)", "", "NIL",      &
-                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    )
-       call FIO_output( SAMPLE(:,:,:,3), SAMPLE_OUT_BASENAME, "", "", &
-                       "sample3", "sample data(i)", "", "NIL",        &
-                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    )
-       call FIO_output( SAMPLE(:,:,:,4), SAMPLE_OUT_BASENAME, "", "", &
-                       "sample4", "sample data(j)", "", "NIL",        &
-                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    )
+       call HIO_output( SAMPLE(:,:,:,1), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
+                       "sample1", "sample data(prc)", "", "NIL",      & ! [IN]
+                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+       call HIO_output( SAMPLE(:,:,:,2), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
+                       "sample2", "sample data(rgn)", "", "NIL",      & ! [IN]
+                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+       call HIO_output( SAMPLE(:,:,:,3), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
+                       "sample3", "sample data(i)", "", "NIL",        & ! [IN]
+                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+       call HIO_output( SAMPLE(:,:,:,4), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
+                       "sample4", "sample data(j)", "", "NIL",        & ! [IN]
+                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
 
-    elseif( sample_io_mode == 'LEGACY' ) then
+    elseif( sample_io_mode == 'ADVANCED' ) then
 
-       do l = 1, ADM_lall
-          rgnid = ADM_prc_tab(l,ADM_prc_me)
-          call IO_make_idstr(fname,trim(sample_io_mode),'rgn',rgnid,isrgn=.true.)
+       call FIO_output( SAMPLE(:,:,:,1), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
+                       "sample1", "sample data(prc)", "", "NIL",      & ! [IN]
+                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+       call FIO_output( SAMPLE(:,:,:,2), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
+                       "sample2", "sample data(rgn)", "", "NIL",      & ! [IN]
+                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+       call FIO_output( SAMPLE(:,:,:,3), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
+                       "sample3", "sample data(i)", "", "NIL",        & ! [IN]
+                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+       call FIO_output( SAMPLE(:,:,:,4), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
+                       "sample4", "sample data(j)", "", "NIL",        & ! [IN]
+                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
 
-          fid = IO_get_available_fid()
-          open( unit = fid, &
-               file=trim(fname),   &
-               form='unformatted', &
-               access='direct',    &
-               recl=ADM_gall*8     )
-
-             write(fid,rec=1) SAMPLE(:,k,l,1)
-             write(fid,rec=2) SAMPLE(:,k,l,2)
-             write(fid,rec=3) SAMPLE(:,k,l,3)
-             write(fid,rec=4) SAMPLE(:,k,l,4)
-          close(fid)
-       enddo
     else
        write(IO_FID_LOG,*) 'Invalid io_mode!'
        call PRC_MPIstop

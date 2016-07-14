@@ -40,9 +40,6 @@ module mod_gtl
   public :: GTL_min
   public :: GTL_min_k
 
-  public :: GTL_input_var2_da    ! direct access
-  public :: GTL_output_var2_da   ! direct access
-
   public :: GTL_generate_vxvyvz
   public :: GTL_generate_uv
   public :: GTL_mk_rigidrotation
@@ -507,115 +504,6 @@ contains
 
     return
   end function GTL_min_k
-
-  !-----------------------------------------------------------------------------
-  subroutine GTL_input_var2_da( basename, var, k_start, k_end, recnum, input_size )
-    use mod_adm, only: &
-       ADM_prc_tab, &
-       ADM_prc_me,  &
-       ADM_gall,    &
-       ADM_lall
-    implicit none
-
-    character(len=*), intent(in)  :: basename
-    integer,          intent(in)  :: k_start
-    integer,          intent(in)  :: k_end
-    real(RP),         intent(out) :: var(ADM_gall,k_start:k_end,ADM_lall)
-    integer,          intent(in)  :: recnum
-    integer,          intent(in)  :: input_size
-
-    real(SP) :: var4(ADM_gall,k_start:k_end)
-    real(DP) :: var8(ADM_gall,k_start:k_end)
-
-    character(len=H_LONG) :: fname
-
-    integer :: fid
-    integer :: l, rgnid
-    !---------------------------------------------------------------------------
-
-    do l = 1, ADM_lall
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
-
-       call IO_make_idstr(fname,trim(basename),'rgn',rgnid,isrgn=.true.)
-       fid = IO_get_available_fid()
-       open( unit   = fid,           &
-             file   = trim(fname),   &
-             form   = 'unformatted', &
-             access = 'direct',      &
-             recl   = ADM_gall*(k_end-k_start+1)*input_size, &
-             status = 'old'          )
-
-       if ( input_size == 4 ) then
-          read(fid,rec=recnum) var4(:,:)
-          var(:,k_start:k_end,l) = real(var4(:,k_start:k_end),kind=RP)
-       elseif( input_size == 8 ) then
-          read(fid,rec=recnum) var8(:,:)
-          var(:,k_start:k_end,l) = real(var8(:,k_start:k_end),kind=RP)
-       endif
-
-       close(fid)
-    enddo
-
-    return
-  end subroutine GTL_input_var2_da
-
-  !-----------------------------------------------------------------------------
-  subroutine GTL_output_var2_da( basename, var, k_start, k_end, recnum, output_size )
-    use mod_adm, only: &
-       ADM_prc_tab, &
-       ADM_prc_me,  &
-       ADM_gall,    &
-       ADM_lall
-    use mod_const, only: &
-       UNDEF4 => CONST_UNDEF4
-    implicit none
-
-    character(len=H_LONG), intent(in)  :: basename
-    integer,               intent(in)  :: k_start
-    integer,               intent(in)  :: k_end
-    real(RP),              intent(in)  :: var(:,:,:)
-    integer,               intent(in)  :: recnum
-    integer,               intent(in)  :: output_size
-
-    real(4) :: var4(ADM_gall,k_start:k_end)
-    real(RP) :: var8(ADM_gall,k_start:k_end)
-
-    character(len=H_LONG) :: fname
-
-    integer :: fid
-    integer :: l, rgnid
-    !---------------------------------------------------------------------------
-
-    do l = 1, ADM_lall
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
-
-       call IO_make_idstr(fname,trim(basename),'rgn',rgnid,isrgn=.true.)
-       fid = IO_get_available_fid()
-       open( unit   = fid,           &
-             file   = trim(fname),   &
-             form   = 'unformatted', &
-             access = 'direct',      &
-             recl   = ADM_gall*(k_end-k_start+1)*output_size, &
-             status = 'unknown'      )
-
-       if ( output_size == 4 ) then
-         var4(:,k_start:k_end) = real(var(:,k_start:k_end,l),kind=4)
-
-         where( var4(:,k_start:k_end) < UNDEF4+1.0_RP )
-            var4(:,k_start:k_end) = UNDEF4
-         end where
-
-         write(fid,rec=recnum) var4(:,:)
-       elseif( output_size == 8 ) then
-         var8(:,k_start:k_end) = var(:,k_start:k_end,l)
-         write(fid,rec=recnum) var8(:,:)
-       endif
-
-       close(fid)
-    enddo
-
-    return
-  end subroutine GTL_output_var2_da
 
   !-----------------------------------------------------------------------------
   subroutine GTL_generate_vxvyvz( &
