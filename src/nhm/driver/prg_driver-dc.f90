@@ -151,7 +151,6 @@ program prg_driver
      GMTR_t, &
      GMTR_a
   use mod_vmtr, only: &
-     VMTR_GAM2,      &
      VMTR_GAM2H,     &
      VMTR_GSGAM2,    &
      VMTR_GSGAM2H,   &
@@ -168,7 +167,6 @@ program prg_driver
      CVW
   use mod_prgvar, only: &
      PRG_var,  &
-     PRG_var1, &
      DIAG_var
   use mod_bsstate, only: &
      rho_bs, &
@@ -327,7 +325,7 @@ program prg_driver
   !$acc& pcopyin(divdamp_coef,Kh_coef,Kh_coef_lap1) &
   !$acc& pcopyin(Mc,Mu,Ml) &
   !$acc& pcopyin(ksumstr,cnvpre_klev,cnvpre_fac1,cnvpre_fac2) &
-  !$acc& pcopy  (PRG_var,PRG_var1,DIAG_var)
+  !$acc& pcopy  (PRG_var,DIAG_var)
 
   !--- history output at initial time
   if ( HIST_output_step0 ) then

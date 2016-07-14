@@ -34,14 +34,13 @@ module mod_vmtr
   !++ Public parameters & variables
   !
 
-  ! index for VMTR_C2Wfact, W2Cfact
-  integer, public, parameter :: I_a = 1
+  integer, public, parameter :: I_a = 1      ! index for W2Cfact
   integer, public, parameter :: I_b = 2
 
-  integer, public, parameter :: I_c = 1
+  integer, public, parameter :: I_c = 1      ! index for C2Wfact
   integer, public, parameter :: I_d = 2
 
-  integer, public, parameter :: I_a_GZXH = 1
+  integer, public, parameter :: I_a_GZXH = 1 ! index for C2WfactGz
   integer, public, parameter :: I_b_GZXH = 2
   integer, public, parameter :: I_a_GZYH = 3
   integer, public, parameter :: I_b_GZYH = 4
@@ -49,8 +48,6 @@ module mod_vmtr
   integer, public, parameter :: I_b_GZZH = 6
 
 #ifdef _FIXEDINDEX_
-  real(RP), public              :: VMTR_GAM2        (ADM_gall   ,ADM_kall,ADM_lall   )
-  real(RP), public              :: VMTR_GAM2_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
   real(RP), public              :: VMTR_GAM2H       (ADM_gall   ,ADM_kall,ADM_lall   )
   real(RP), public              :: VMTR_GAM2H_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
   real(RP), public              :: VMTR_GSGAM2      (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -82,8 +79,6 @@ module mod_vmtr
   real(RP), public              :: VMTR_PHI         (ADM_gall   ,ADM_kall,ADM_lall   )
   real(RP), public              :: VMTR_PHI_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 #else
-  real(RP), public, allocatable :: VMTR_GAM2        (:,:,:)   ! Gamma^2 at the full level
-  real(RP), public, allocatable :: VMTR_GAM2_pl     (:,:,:)
   real(RP), public, allocatable :: VMTR_GAM2H       (:,:,:)   ! Gamma^2 at the half level
   real(RP), public, allocatable :: VMTR_GAM2H_pl    (:,:,:)
   real(RP), public, allocatable :: VMTR_GSGAM2      (:,:,:)   ! G^1/2 X Gamma^2 at the full level
@@ -229,8 +224,6 @@ contains
     write(IO_FID_LOG,nml=VMTRPARAM)
 
 #ifndef _FIXEDINDEX_
-    allocate( VMTR_GAM2        (ADM_gall,   ADM_kall,ADM_lall   ) )
-    allocate( VMTR_GAM2_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
     allocate( VMTR_GAM2H       (ADM_gall,   ADM_kall,ADM_lall   ) )
     allocate( VMTR_GAM2H_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
     allocate( VMTR_GSGAM2      (ADM_gall,   ADM_kall,ADM_lall   ) )
@@ -348,7 +341,6 @@ contains
     do l = 1, ADM_lall
     do k = 1, ADM_kall
     do g = 1, ADM_gall
-       VMTR_GAM2    (g,k,l) = GAM (g,k,l) * GAM (g,k,l)
        VMTR_GAM2H   (g,k,l) = GAMH(g,k,l) * GAMH(g,k,l)
        VMTR_GSGAM2  (g,k,l) = GAM (g,k,l) * GAM (g,k,l) * GSQRT (g,k,l)
        VMTR_GSGAM2H (g,k,l) = GAMH(g,k,l) * GAMH(g,k,l) * GSQRTH(g,k,l)
@@ -487,7 +479,6 @@ contains
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
        do g = 1, ADM_gall_pl
-          VMTR_GAM2_pl    (g,k,l) = GAM_pl (g,k,l) * GAM_pl (g,k,l)
           VMTR_GAM2H_pl   (g,k,l) = GAMH_pl(g,k,l) * GAMH_pl(g,k,l)
           VMTR_GSGAM2_pl  (g,k,l) = GAM_pl (g,k,l) * GAM_pl (g,k,l) * GSQRT_pl (g,k,l)
           VMTR_GSGAM2H_pl (g,k,l) = GAMH_pl(g,k,l) * GAMH_pl(g,k,l) * GSQRTH_pl(g,k,l)
@@ -575,7 +566,6 @@ contains
        enddo
        enddo
     else
-       VMTR_GAM2_pl     (:,:,:)   = 0.0_RP
        VMTR_GAM2H_pl    (:,:,:)   = 0.0_RP
        VMTR_GSGAM2_pl   (:,:,:)   = 0.0_RP
        VMTR_GSGAM2H_pl  (:,:,:)   = 0.0_RP

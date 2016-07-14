@@ -1201,14 +1201,14 @@ contains
        GRD_cfac,  &
        GRD_dfac
     use mod_vmtr, only: &
-       VMTR_RGSGAM2,    &
-       VMTR_RGSGAM2_pl, &
        VMTR_GAM2H,      &
        VMTR_GAM2H_pl,   &
+       VMTR_RGSQRTH,    &
+       VMTR_RGSQRTH_pl, &
        VMTR_RGAMH,      &
        VMTR_RGAMH_pl,   &
-       VMTR_RGSQRTH,    &
-       VMTR_RGSQRTH_pl
+       VMTR_RGSGAM2,    &
+       VMTR_RGSGAM2_pl
     use mod_runconf, only: &
        NON_HYDRO_ALPHA
     implicit none
@@ -1355,16 +1355,16 @@ contains
        GRD_afac,  &
        GRD_bfac
     use mod_vmtr, only: &
+       VMTR_GSGAM2H,     &
+       VMTR_GSGAM2H_pl,  &
+       VMTR_RGAM,        &
+       VMTR_RGAM_pl,     &
+       VMTR_RGAMH,       &
+       VMTR_RGAMH_pl,    &
        VMTR_RGSGAM2,     &
        VMTR_RGSGAM2_pl,  &
        VMTR_RGSGAM2H,    &
-       VMTR_RGSGAM2H_pl, &
-       VMTR_RGAMH,       &
-       VMTR_RGAMH_pl,    &
-       VMTR_RGAM,        &
-       VMTR_RGAM_pl,     &
-       VMTR_GSGAM2H,     &
-       VMTR_GSGAM2H_pl
+       VMTR_RGSGAM2H_pl
     use mod_runconf, only: &
        NON_HYDRO_ALPHA
     implicit none

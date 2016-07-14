@@ -108,14 +108,14 @@ contains
        GRD_afac, &
        GRD_bfac
     use mod_vmtr, only: &
-       VMTR_C2WfactGz,    &
-       VMTR_C2WfactGz_pl, &
        VMTR_RGSQRTH,      &
        VMTR_RGSQRTH_pl,   &
        VMTR_RGAM,         &
        VMTR_RGAM_pl,      &
        VMTR_RGAMH,        &
-       VMTR_RGAMH_pl
+       VMTR_RGAMH_pl,     &
+       VMTR_C2WfactGz,    &
+       VMTR_C2WfactGz_pl
     implicit none
 
     integer,  intent(in)    :: vmax

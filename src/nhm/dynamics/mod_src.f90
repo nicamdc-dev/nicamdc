@@ -510,12 +510,12 @@ contains
     use mod_grd, only: &
        GRD_rdgz
     use mod_vmtr, only: &
+       VMTR_RGSQRTH,      &
+       VMTR_RGSQRTH_pl,   &
        VMTR_RGAM,         &
        VMTR_RGAM_pl,      &
        VMTR_RGAMH,        &
        VMTR_RGAMH_pl,     &
-       VMTR_RGSQRTH,      &
-       VMTR_RGSQRTH_pl,   &
        VMTR_C2WfactGz,    &
        VMTR_C2WfactGz_pl
     use mod_oprt, only: &
@@ -690,14 +690,14 @@ contains
        GRD_rdgz, &
        GRD_rdgzh
     use mod_vmtr, only: &
+       VMTR_GAM2H,        &
+       VMTR_GAM2H_pl,     &
        VMTR_RGAM,         &
        VMTR_RGAM_pl,      &
        VMTR_RGAMH,        &
        VMTR_RGAMH_pl,     &
        VMTR_RGSGAM2,      &
        VMTR_RGSGAM2_pl,   &
-       VMTR_GAM2H,        &
-       VMTR_GAM2H_pl,     &
        VMTR_C2WfactGz,    &
        VMTR_C2WfactGz_pl
     use mod_oprt, only: &

@@ -204,8 +204,8 @@ contains
        GRD_zs,   &
        GRD_vz
     use mod_vmtr, only: &
-       VMTR_PHI,    &
-       VMTR_GSGAM2
+       VMTR_GSGAM2, &
+       VMTR_PHI
     use mod_gtl, only: &
        GTL_generate_uv,          &
        GTL_global_sum_eachlayer, &

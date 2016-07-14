@@ -179,12 +179,12 @@ contains
     use mod_vmtr, only: &
        VMTR_GSGAM2,       &
        VMTR_GSGAM2_pl,    &
-       VMTR_PHI,          &
-       VMTR_PHI_pl,       &
+       VMTR_C2Wfact,      &
+       VMTR_C2Wfact_pl,   &
        VMTR_C2WfactGz,    &
        VMTR_C2WfactGz_pl, &
-       VMTR_C2Wfact,      &
-       VMTR_C2Wfact_pl
+       VMTR_PHI,          &
+       VMTR_PHI_pl
     use mod_time, only: &
        TIME_INTEG_TYPE, &
        TIME_DTL,        &
@@ -240,8 +240,7 @@ contains
        NDG_apply_uvtp
     !##### OpenACC (for data copy) #####
     use mod_prgvar, only: &
-       PRG_var,  &
-       PRG_var1
+       PRG_var
     !##### OpenACC #####
     implicit none
 
@@ -348,7 +347,7 @@ contains
     !$acc  data &
     !$acc& create(PROG,PROGq,g_TEND,g_TENDq,f_TEND,f_TENDq,PROG0,PROGq0,PROG_split,PROG_mean) &
     !$acc& create(rho,vx,vy,vz,w,ein,tem,pre,eth,th,rhogd,pregd,q,qd,cv) &
-    !$acc& pcopy(PRG_var,PRG_var1)
+    !$acc& pcopy(PRG_var)
 
     call PROF_rapstart('___Pre_Post',1)
 
@@ -361,8 +360,7 @@ contains
                      PROG(:,:,:,I_RHOGVZ), PROG_pl(:,:,:,I_RHOGVZ), & ! [OUT]
                      PROG(:,:,:,I_RHOGW),  PROG_pl(:,:,:,I_RHOGW),  & ! [OUT]
                      PROG(:,:,:,I_RHOGE),  PROG_pl(:,:,:,I_RHOGE),  & ! [OUT]
-                     PROGq(:,:,:,:),       PROGq_pl(:,:,:,:),       & ! [OUT]
-                     0                                              ) ! [IN]
+                     PROGq(:,:,:,:),       PROGq_pl(:,:,:,:)        ) ! [IN]
 
     call PROF_rapend  ('___Pre_Post',1)
 
@@ -990,8 +988,7 @@ contains
                      PROG(:,:,:,I_RHOGVZ), PROG_pl(:,:,:,I_RHOGVZ), & ! [IN]
                      PROG(:,:,:,I_RHOGW),  PROG_pl(:,:,:,I_RHOGW),  & ! [IN]
                      PROG(:,:,:,I_RHOGE),  PROG_pl(:,:,:,I_RHOGE),  & ! [IN]
-                     PROGq(:,:,:,:),       PROGq_pl(:,:,:,:),       & ! [IN]
-                     0                                              ) ! [IN]
+                     PROGq(:,:,:,:),       PROGq_pl(:,:,:,:)        ) ! [IN]
 
     call PROF_rapend  ('___Pre_Post',1)
 

@@ -1004,7 +1004,7 @@ contains
        GRD_vz,   &
        GRD_Z
     use mod_vmtr, only: &
-       VMTR_GSGAM2
+       VMTR_RGSGAM2
     use mod_runconf, only: &
        TRC_VMAX
     use mod_prgvar, only: &
@@ -1052,13 +1052,12 @@ contains
                      rhogvz, rhogvz_pl, &
                      rhogw,  rhogw_pl,  &
                      rhoge,  rhoge_pl,  &
-                     rhogq,  rhogq_pl,  &
-                     0                  )
+                     rhogq,  rhogq_pl   )
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
     do g = 1, ADM_gall
-       rho(g,k,l) = rhog (g,k,l) / VMTR_GSGAM2(g,k,l)
+       rho(g,k,l) = rhog (g,k,l) * VMTR_RGSGAM2(g,k,l)
        ein(g,k,l) = rhoge(g,k,l) / rhog(g,k,l)
     enddo
     enddo

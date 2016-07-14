@@ -74,7 +74,6 @@ module mod_prgvar
   !++ Public parameters & variables
   !
   real(RP), public, allocatable :: PRG_var (:,:,:,:)
-  real(RP), public, allocatable :: PRG_var1(:,:,:,:)
   real(RP), public, allocatable :: DIAG_var(:,:,:,:)
 
   character(len=H_LONG), public :: restart_input_basename  = ''
@@ -89,7 +88,6 @@ module mod_prgvar
   !++ Private parameters & variables
   !
   real(RP), private, allocatable :: PRG_var_pl (:,:,:,:)
-  real(RP), private, allocatable :: PRG_var1_pl(:,:,:,:)
   real(RP), private, allocatable :: DIAG_var_pl(:,:,:,:)
 
   integer, private :: TRC_vmax_input ! number of input tracer variables
@@ -184,9 +182,6 @@ contains
     allocate( PRG_var    (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax) )
     allocate( PRG_var_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,PRG_vmax) )
 
-    allocate( PRG_var1   (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax) )
-    allocate( PRG_var1_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,PRG_vmax) )
-
     allocate( DIAG_var   (ADM_gall,   ADM_kall,ADM_lall,   DIAG_vmax) )
     allocate( DIAG_var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,DIAG_vmax) )
 
@@ -195,8 +190,6 @@ contains
 
   !-----------------------------------------------------------------------------
   !>
-  !> get prognostic variables from prg[num].
-  !>
   subroutine prgvar_get( &
        rhog,   rhog_pl,   &
        rhogvx, rhogvx_pl, &
@@ -204,8 +197,7 @@ contains
        rhogvz, rhogvz_pl, &
        rhogw,  rhogw_pl,  &
        rhoge,  rhoge_pl,  &
-       rhogq,  rhogq_pl,  &
-       num                )
+       rhogq,  rhogq_pl   )
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_gall,    &
@@ -231,114 +223,57 @@ contains
     real(RP), intent(out) :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(out) :: rhogq    (ADM_gall,   ADM_kall,ADM_lall   ,TRC_vmax)
     real(RP), intent(out) :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
-    integer, intent(in)  :: num
 
     integer :: n, k, l, nq
     !---------------------------------------------------------------------------
 
-    if ( num == 0 ) then
+    do l = 1, ADM_lall
+    do k = 1, ADM_kall
+    do n = 1, ADM_gall
+       rhog  (n,k,l) = PRG_var(n,k,l,I_RHOG  )
+       rhogvx(n,k,l) = PRG_var(n,k,l,I_RHOGVX)
+       rhogvy(n,k,l) = PRG_var(n,k,l,I_RHOGVY)
+       rhogvz(n,k,l) = PRG_var(n,k,l,I_RHOGVZ)
+       rhogw (n,k,l) = PRG_var(n,k,l,I_RHOGW )
+       rhoge (n,k,l) = PRG_var(n,k,l,I_RHOGE )
+    enddo
+    enddo
+    enddo
 
-       do l = 1, ADM_lall
+    do nq = 1, TRC_vmax
+    do l  = 1, ADM_lall
+    do k  = 1, ADM_kall
+    do n  = 1, ADM_gall
+       rhogq(n,k,l,nq) = PRG_var(n,k,l,PRG_vmax0+nq)
+    enddo
+    enddo
+    enddo
+    enddo
+
+    if ( ADM_have_pl ) then
+
+       do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
-       do n = 1, ADM_gall
-          rhog  (n,k,l) = PRG_var(n,k,l,I_RHOG  )
-          rhogvx(n,k,l) = PRG_var(n,k,l,I_RHOGVX)
-          rhogvy(n,k,l) = PRG_var(n,k,l,I_RHOGVY)
-          rhogvz(n,k,l) = PRG_var(n,k,l,I_RHOGVZ)
-          rhogw (n,k,l) = PRG_var(n,k,l,I_RHOGW )
-          rhoge (n,k,l) = PRG_var(n,k,l,I_RHOGE )
+       do n = 1, ADM_gall_pl
+          rhog_pl  (n,k,l) = PRG_var_pl(n,k,l,I_RHOG  )
+          rhogvx_pl(n,k,l) = PRG_var_pl(n,k,l,I_RHOGVX)
+          rhogvy_pl(n,k,l) = PRG_var_pl(n,k,l,I_RHOGVY)
+          rhogvz_pl(n,k,l) = PRG_var_pl(n,k,l,I_RHOGVZ)
+          rhogw_pl (n,k,l) = PRG_var_pl(n,k,l,I_RHOGW )
+          rhoge_pl (n,k,l) = PRG_var_pl(n,k,l,I_RHOGE )
        enddo
        enddo
        enddo
 
        do nq = 1, TRC_vmax
-       do l  = 1, ADM_lall
+       do l  = 1, ADM_lall_pl
        do k  = 1, ADM_kall
-       do n  = 1, ADM_gall
-          rhogq(n,k,l,nq) = PRG_var(n,k,l,PRG_vmax0+nq)
+       do n  = 1, ADM_gall_pl
+          rhogq_pl(n,k,l,nq) = PRG_var_pl(n,k,l,PRG_vmax0+nq)
        enddo
        enddo
        enddo
        enddo
-
-       if ( ADM_have_pl ) then
-
-          do l = 1, ADM_lall_pl
-          do k = 1, ADM_kall
-          do n = 1, ADM_gall_pl
-             rhog_pl  (n,k,l) = PRG_var_pl(n,k,l,I_RHOG  )
-             rhogvx_pl(n,k,l) = PRG_var_pl(n,k,l,I_RHOGVX)
-             rhogvy_pl(n,k,l) = PRG_var_pl(n,k,l,I_RHOGVY)
-             rhogvz_pl(n,k,l) = PRG_var_pl(n,k,l,I_RHOGVZ)
-             rhogw_pl (n,k,l) = PRG_var_pl(n,k,l,I_RHOGW )
-             rhoge_pl (n,k,l) = PRG_var_pl(n,k,l,I_RHOGE )
-          enddo
-          enddo
-          enddo
-
-          do nq = 1, TRC_vmax
-          do l  = 1, ADM_lall_pl
-          do k  = 1, ADM_kall
-          do n  = 1, ADM_gall_pl
-             rhogq_pl(n,k,l,nq) = PRG_var_pl(n,k,l,PRG_vmax0+nq)
-          enddo
-          enddo
-          enddo
-          enddo
-
-       endif
-
-    elseif( num == 1 ) then
-
-       do l = 1, ADM_lall
-       do k = 1, ADM_kall
-       do n = 1, ADM_gall
-          rhog  (n,k,l) = PRG_var1(n,k,l,I_RHOG  )
-          rhogvx(n,k,l) = PRG_var1(n,k,l,I_RHOGVX)
-          rhogvy(n,k,l) = PRG_var1(n,k,l,I_RHOGVY)
-          rhogvz(n,k,l) = PRG_var1(n,k,l,I_RHOGVZ)
-          rhogw (n,k,l) = PRG_var1(n,k,l,I_RHOGW )
-          rhoge (n,k,l) = PRG_var1(n,k,l,I_RHOGE )
-       enddo
-       enddo
-       enddo
-
-       do nq = 1, TRC_vmax
-       do l  = 1, ADM_lall
-       do k  = 1, ADM_kall
-       do n  = 1, ADM_gall
-          rhogq(n,k,l,nq) = PRG_var1(n,k,l,PRG_vmax0+nq)
-       enddo
-       enddo
-       enddo
-       enddo
-
-       if ( ADM_have_pl ) then
-
-          do l = 1, ADM_lall_pl
-          do k = 1, ADM_kall
-          do n = 1, ADM_gall_pl
-             rhog_pl  (n,k,l) = PRG_var1_pl(n,k,l,I_RHOG  )
-             rhogvx_pl(n,k,l) = PRG_var1_pl(n,k,l,I_RHOGVX)
-             rhogvy_pl(n,k,l) = PRG_var1_pl(n,k,l,I_RHOGVY)
-             rhogvz_pl(n,k,l) = PRG_var1_pl(n,k,l,I_RHOGVZ)
-             rhogw_pl (n,k,l) = PRG_var1_pl(n,k,l,I_RHOGW )
-             rhoge_pl (n,k,l) = PRG_var1_pl(n,k,l,I_RHOGE )
-          enddo
-          enddo
-          enddo
-
-          do nq = 1, TRC_vmax
-          do l  = 1, ADM_lall_pl
-          do k  = 1, ADM_kall
-          do n  = 1, ADM_gall_pl
-             rhogq_pl(n,k,l,nq) = PRG_var1_pl(n,k,l,PRG_vmax0+nq)
-          enddo
-          enddo
-          enddo
-          enddo
-
-       endif
 
     endif
 
@@ -561,8 +496,6 @@ contains
 
   !-----------------------------------------------------------------------------
   !>
-  !> set prognostic variables to prg[num]- and COMMUNICATION.
-  !>
   subroutine prgvar_set( &
        rhog,   rhog_pl,   &
        rhogvx, rhogvx_pl, &
@@ -570,8 +503,7 @@ contains
        rhogvz, rhogvz_pl, &
        rhogw,  rhogw_pl,  &
        rhoge,  rhoge_pl,  &
-       rhogq,  rhogq_pl,  &
-       num                )
+       rhogq,  rhogq_pl   )
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_gall,    &
@@ -599,122 +531,61 @@ contains
     real(RP), intent(in)  :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in)  :: rhogq    (ADM_gall,   ADM_kall,ADM_lall   ,TRC_vmax)
     real(RP), intent(in)  :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
-    integer, intent(in)  :: num
 
     integer :: n, k, l, nq
     !---------------------------------------------------------------------------
 
-    if ( num == 0 ) then
+    do l = 1, ADM_lall
+    do k = 1, ADM_kall
+    do n = 1, ADM_gall
+       PRG_var(n,k,l,I_RHOG  ) = rhog  (n,k,l)
+       PRG_var(n,k,l,I_RHOGVX) = rhogvx(n,k,l)
+       PRG_var(n,k,l,I_RHOGVY) = rhogvy(n,k,l)
+       PRG_var(n,k,l,I_RHOGVZ) = rhogvz(n,k,l)
+       PRG_var(n,k,l,I_RHOGW ) = rhogw (n,k,l)
+       PRG_var(n,k,l,I_RHOGE ) = rhoge (n,k,l)
+    enddo
+    enddo
+    enddo
 
-       do l = 1, ADM_lall
+    do nq = 1, TRC_vmax
+    do l  = 1, ADM_lall
+    do k  = 1, ADM_kall
+    do n  = 1, ADM_gall
+       PRG_var(n,k,l,PRG_vmax0+nq) = rhogq(n,k,l,nq)
+    enddo
+    enddo
+    enddo
+    enddo
+
+    if ( ADM_have_pl ) then
+
+       do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
-       do n = 1, ADM_gall
-          PRG_var(n,k,l,I_RHOG  ) = rhog  (n,k,l)
-          PRG_var(n,k,l,I_RHOGVX) = rhogvx(n,k,l)
-          PRG_var(n,k,l,I_RHOGVY) = rhogvy(n,k,l)
-          PRG_var(n,k,l,I_RHOGVZ) = rhogvz(n,k,l)
-          PRG_var(n,k,l,I_RHOGW ) = rhogw (n,k,l)
-          PRG_var(n,k,l,I_RHOGE ) = rhoge (n,k,l)
+       do n = 1, ADM_gall_pl
+          PRG_var_pl(n,k,l,I_RHOG  ) = rhog_pl  (n,k,l)
+          PRG_var_pl(n,k,l,I_RHOGVX) = rhogvx_pl(n,k,l)
+          PRG_var_pl(n,k,l,I_RHOGVY) = rhogvy_pl(n,k,l)
+          PRG_var_pl(n,k,l,I_RHOGVZ) = rhogvz_pl(n,k,l)
+          PRG_var_pl(n,k,l,I_RHOGW ) = rhogw_pl (n,k,l)
+          PRG_var_pl(n,k,l,I_RHOGE ) = rhoge_pl (n,k,l)
        enddo
        enddo
        enddo
 
        do nq = 1, TRC_vmax
-       do l  = 1, ADM_lall
+       do l  = 1, ADM_lall_pl
        do k  = 1, ADM_kall
-       do n  = 1, ADM_gall
-          PRG_var(n,k,l,PRG_vmax0+nq) = rhogq(n,k,l,nq)
+       do n  = 1, ADM_gall_pl
+          PRG_var_pl(n,k,l,PRG_vmax0+nq) = rhogq_pl(n,k,l,nq)
        enddo
        enddo
        enddo
        enddo
-
-       if ( ADM_have_pl ) then
-
-          do l = 1, ADM_lall_pl
-          do k = 1, ADM_kall
-          do n = 1, ADM_gall_pl
-             PRG_var_pl(n,k,l,I_RHOG  ) = rhog_pl  (n,k,l)
-             PRG_var_pl(n,k,l,I_RHOGVX) = rhogvx_pl(n,k,l)
-             PRG_var_pl(n,k,l,I_RHOGVY) = rhogvy_pl(n,k,l)
-             PRG_var_pl(n,k,l,I_RHOGVZ) = rhogvz_pl(n,k,l)
-             PRG_var_pl(n,k,l,I_RHOGW ) = rhogw_pl (n,k,l)
-             PRG_var_pl(n,k,l,I_RHOGE ) = rhoge_pl (n,k,l)
-          enddo
-          enddo
-          enddo
-
-          do nq = 1, TRC_vmax
-          do l  = 1, ADM_lall_pl
-          do k  = 1, ADM_kall
-          do n  = 1, ADM_gall_pl
-             PRG_var_pl(n,k,l,PRG_vmax0+nq) = rhogq_pl(n,k,l,nq)
-          enddo
-          enddo
-          enddo
-          enddo
-
-       endif
-
-       ! communication
-       call COMM_data_transfer( PRG_var, PRG_var_pl )
-
-    elseif( num == 1 ) then
-
-       do l = 1, ADM_lall
-       do k = 1, ADM_kall
-       do n = 1, ADM_gall
-          PRG_var1(n,k,l,I_RHOG  ) = rhog  (n,k,l)
-          PRG_var1(n,k,l,I_RHOGVX) = rhogvx(n,k,l)
-          PRG_var1(n,k,l,I_RHOGVY) = rhogvy(n,k,l)
-          PRG_var1(n,k,l,I_RHOGVZ) = rhogvz(n,k,l)
-          PRG_var1(n,k,l,I_RHOGW ) = rhogw (n,k,l)
-          PRG_var1(n,k,l,I_RHOGE ) = rhoge (n,k,l)
-       enddo
-       enddo
-       enddo
-
-       do nq = 1, TRC_vmax
-       do l  = 1, ADM_lall
-       do k  = 1, ADM_kall
-       do n  = 1, ADM_gall
-          PRG_var1(n,k,l,PRG_vmax0+nq) = rhogq(n,k,l,nq)
-       enddo
-       enddo
-       enddo
-       enddo
-
-       if ( ADM_have_pl ) then
-
-          do l = 1, ADM_lall_pl
-          do k = 1, ADM_kall
-          do n = 1, ADM_gall_pl
-             PRG_var1_pl(n,k,l,I_RHOG  ) = rhog_pl  (n,k,l)
-             PRG_var1_pl(n,k,l,I_RHOGVX) = rhogvx_pl(n,k,l)
-             PRG_var1_pl(n,k,l,I_RHOGVY) = rhogvy_pl(n,k,l)
-             PRG_var1_pl(n,k,l,I_RHOGVZ) = rhogvz_pl(n,k,l)
-             PRG_var1_pl(n,k,l,I_RHOGW ) = rhogw_pl (n,k,l)
-             PRG_var1_pl(n,k,l,I_RHOGE ) = rhoge_pl (n,k,l)
-          enddo
-          enddo
-          enddo
-
-          do nq = 1, TRC_vmax
-          do l  = 1, ADM_lall_pl
-          do k  = 1, ADM_kall
-          do n  = 1, ADM_gall_pl
-             PRG_var1_pl(n,k,l,PRG_vmax0+nq) = rhogq_pl(n,k,l,nq)
-          enddo
-          enddo
-          enddo
-          enddo
-
-       endif
-
-       ! communication
-       call COMM_data_transfer( PRG_var1, PRG_var1_pl )
 
     endif
+
+    call COMM_data_transfer( PRG_var, PRG_var_pl )
 
     return
   end subroutine prgvar_set

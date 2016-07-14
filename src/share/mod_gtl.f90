@@ -181,8 +181,8 @@ contains
        GMTR_area,   &
        GMTR_area_pl
     use mod_vmtr, only: &
-       VMTR_GAM2,   &
-       VMTR_GAM2_pl
+       VMTR_RGAM,   &
+       VMTR_RGAM_pl
     implicit none
 
     real(RP), intent(in)  :: var   (ADM_gall,   ADM_kall,ADM_lall   )
@@ -197,9 +197,9 @@ contains
     do l = 1, ADM_lall
     do k = 1, ADM_kall
     do n = 1, ADM_IooJoo_nmax
-       sum(k) = sum(k) + var      (ADM_IooJoo(n,ADM_GIoJo),k,l) &
-                       * GMTR_area(ADM_IooJoo(n,ADM_GIoJo),l)   &
-                       * VMTR_GAM2(ADM_IooJoo(n,ADM_GIoJo),k,l)
+       sum(k) = sum(k) + var      (ADM_IooJoo(n,ADM_GIoJo),k,l)    &
+                       * GMTR_area(ADM_IooJoo(n,ADM_GIoJo),l)      &
+                       / VMTR_RGAM(ADM_IooJoo(n,ADM_GIoJo),k,l)**2
     enddo
     enddo
     enddo
@@ -207,9 +207,9 @@ contains
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
-          sum(k) = sum(k) + var_pl      (ADM_GSLF_PL,k,l) &
-                          * GMTR_area_pl(ADM_GSLF_PL,l)   &
-                          * VMTR_GAM2_pl(ADM_GSLF_PL,k,l)
+          sum(k) = sum(k) + var_pl      (ADM_GSLF_PL,k,l)    &
+                          * GMTR_area_pl(ADM_GSLF_PL,l)      &
+                          / VMTR_RGAM_pl(ADM_GSLF_PL,k,l)**2
        enddo
        enddo
     endif
