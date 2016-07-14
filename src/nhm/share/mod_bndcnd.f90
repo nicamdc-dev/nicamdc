@@ -8,8 +8,7 @@
 !! @author H.Tomita
 !!
 !! @par History
-!! @li      2004-02-17 (H.Tomita) Imported from igdc-4.33
-!! @li      2011-07-22 (T.Ohno)   Add subroutines for plane hgrid systems.
+!! @li      2004-02-17 (H.Tomita)  [NEW]
 !!
 !<
 module mod_bndcnd
@@ -27,7 +26,6 @@ module mod_bndcnd
   !++ Public procedure
   !
   public :: BNDCND_setup
-
   public :: BNDCND_all
   public :: BNDCND_thermo
   public :: BNDCND_rhovxvyvz
@@ -46,28 +44,28 @@ module mod_bndcnd
   !++ Private parameters & variables
   !
   !--- Vertical boundary condition for temperature at the top
-  character(len=H_SHORT), private :: BND_TYPE_T_TOP    != 'TEM' : tem(kmax+1) = tem(kmax)
+  character(len=H_SHORT), private :: BND_TYPE_T_TOP    != 'TEM' : tem(kmax+1) = tem(kmax) (default)
                                                        != 'EPL' : lagrange extrapolation
 
   !--- Vertical boundary condition for temperature at the ground
-  character(len=H_SHORT), private :: BND_TYPE_T_BOTTOM != 'TEM' : tem(kmin-1) = tem(kmin)
+  character(len=H_SHORT), private :: BND_TYPE_T_BOTTOM != 'TEM' : tem(kmin-1) = tem(kmin) (default)
                                                        != 'EPL' : lagrange extrapolation
 
   !--- Vertical boundary condition for momentum at the top
   character(len=H_SHORT), private :: BND_TYPE_M_TOP    != 'RIGID' : rigid surface
-                                                       != 'FREE'  : free surface
+                                                       != 'FREE'  : free surface (default)
 
   !--- Vertical boundary condition for momentum at the ground
-  character(len=H_SHORT), private :: BND_TYPE_M_BOTTOM != 'RIGID' : rigid surface
+  character(len=H_SHORT), private :: BND_TYPE_M_BOTTOM != 'RIGID' : rigid surface (default)
                                                        != 'FREE'  : free surface
 
-  logical, private :: is_top_tem   = .true.
+  logical, private :: is_top_tem   = .false.
   logical, private :: is_top_epl   = .false.
-  logical, private :: is_btm_tem   = .true.
+  logical, private :: is_btm_tem   = .false.
   logical, private :: is_btm_epl   = .false.
   logical, private :: is_top_rigid = .false.
-  logical, private :: is_top_free  = .true.
-  logical, private :: is_btm_rigid = .true.
+  logical, private :: is_top_free  = .false.
+  logical, private :: is_btm_rigid = .false.
   logical, private :: is_btm_free  = .false.
 
   !-----------------------------------------------------------------------------
@@ -108,11 +106,6 @@ contains
     endif
     write(IO_FID_LOG,nml=BNDCNDPARAM)
 
-    is_top_tem = .false.
-    is_top_epl = .false.
-    is_btm_tem = .false.
-    is_btm_epl = .false.
-
     if    ( BND_TYPE_T_TOP == 'TEM' ) then
        write(IO_FID_LOG,*) '*** Boundary setting type (temperature, top   ) : equal to uppermost atmosphere'
        is_top_tem = .true.
@@ -134,11 +127,6 @@ contains
        write(IO_FID_LOG,*) 'xxx Invalid BND_TYPE_T_BOTTOM. STOP.'
        call PRC_MPIstop
     endif
-
-    is_top_rigid = .false.
-    is_top_free  = .false.
-    is_btm_rigid = .false.
-    is_btm_free  = .false.
 
     if    ( BND_TYPE_M_TOP == 'RIGID' ) then
        write(IO_FID_LOG,*) '*** Boundary setting type (momentum,    top   ) : rigid'
@@ -195,23 +183,21 @@ contains
        CVdry => CONST_CVdry
     implicit none
 
-    integer,  intent(in)    :: ijdim           ! number of horizontal grid
-    real(RP), intent(inout) :: rho(ijdim,kdim) ! density
-    real(RP), intent(inout) :: vx (ijdim,kdim) ! horizontal wind (x)
-    real(RP), intent(inout) :: vy (ijdim,kdim) ! horizontal wind (y)
-    real(RP), intent(inout) :: vz (ijdim,kdim) ! horizontal wind (z)
-    real(RP), intent(inout) :: w  (ijdim,kdim) ! vertical   wind
-    real(RP), intent(inout) :: ein(ijdim,kdim) ! internal energy
-    real(RP), intent(inout) :: tem(ijdim,kdim) ! temperature
-    real(RP), intent(inout) :: pre(ijdim,kdim) ! pressure
-
-    real(RP), intent(inout) :: rhog  (ijdim,kdim)
-    real(RP), intent(inout) :: rhogvx(ijdim,kdim)
-    real(RP), intent(inout) :: rhogvy(ijdim,kdim)
-    real(RP), intent(inout) :: rhogvz(ijdim,kdim)
-    real(RP), intent(inout) :: rhogw (ijdim,kdim)
-    real(RP), intent(inout) :: rhoge (ijdim,kdim)
-
+    integer,  intent(in)    :: ijdim                  ! number of horizontal grid
+    real(RP), intent(inout) :: rho       (ijdim,kdim) ! density
+    real(RP), intent(inout) :: vx        (ijdim,kdim) ! horizontal wind (x)
+    real(RP), intent(inout) :: vy        (ijdim,kdim) ! horizontal wind (y)
+    real(RP), intent(inout) :: vz        (ijdim,kdim) ! horizontal wind (z)
+    real(RP), intent(inout) :: w         (ijdim,kdim) ! vertical   wind
+    real(RP), intent(inout) :: ein       (ijdim,kdim) ! internal energy
+    real(RP), intent(inout) :: tem       (ijdim,kdim) ! temperature
+    real(RP), intent(inout) :: pre       (ijdim,kdim) ! pressure
+    real(RP), intent(inout) :: rhog      (ijdim,kdim)
+    real(RP), intent(inout) :: rhogvx    (ijdim,kdim)
+    real(RP), intent(inout) :: rhogvy    (ijdim,kdim)
+    real(RP), intent(inout) :: rhogvz    (ijdim,kdim)
+    real(RP), intent(inout) :: rhogw     (ijdim,kdim)
+    real(RP), intent(inout) :: rhoge     (ijdim,kdim)
     real(RP), intent(in)    :: gsqrtgam2 (ijdim,kdim)
     real(RP), intent(in)    :: phi       (ijdim,kdim)   ! geopotential
     real(RP), intent(in)    :: c2wfact   (ijdim,kdim,2)
@@ -219,13 +205,13 @@ contains
 
     integer :: ij
     !---------------------------------------------------------------------------
-
     !$acc  data &
-    !$acc& pcopy(rho,ein,tem,pre,rhog,rhoge) &
-    !$acc& pcopy(vx,vy,vz,w,rhogvx,rhogvy,rhogvz,rhogw) &
+    !$acc& pcopy(rho,vx,vy,vz,w,ein,tem,pre) &
+    !$acc& pcopy(rhog,rhogvx,rhogvy,rhogvz,rhogw,rhoge) &
     !$acc& pcopyin(gsqrtgam2,phi,c2wfact,c2wfact_Gz)
 
     !--- Thermodynamical variables ( rho, ein, tem, pre, rhog, rhoge ), q = 0 at boundary
+
     call BNDCND_thermo( ijdim, & ! [IN]
                         tem,   & ! [INOUT]
                         rho,   & ! [INOUT]
@@ -246,6 +232,7 @@ contains
     !$acc end kernels
 
     !--- Momentum ( rhogvx, rhogvy, rhogvz, vx, vy, vz )
+
     call BNDCND_rhovxvyvz( ijdim,  & ! [IN]
                            rhog,   & ! [IN]
                            rhogvx, & ! [INOUT]
@@ -274,20 +261,15 @@ contains
 
     !$acc kernels pcopy(w) pcopyin(rhog,rhogw,c2wfact) async(0)
     do ij = 1, ijdim
-
        w(ij,kmax+1) = rhogw(ij,kmax+1) / ( c2wfact(ij,kmax+1,1) * rhog(ij,kmax+1) &
                                          + c2wfact(ij,kmax+1,2) * rhog(ij,kmax  ) )
-
        w(ij,kmin  ) = rhogw(ij,kmin  ) / ( c2wfact(ij,kmin  ,1) * rhog(ij,kmin  ) &
                                          + c2wfact(ij,kmin  ,2) * rhog(ij,kmin-1) )
-
        w(ij,kmin-1) = 0.0_RP
-
     enddo
     !$acc end kernels
 
     !$acc end data
-
     return
   end subroutine BNDCND_all
 
@@ -322,8 +304,9 @@ contains
                                    + ( (z-z1)*(z-z3))/((z2-z1)*(z2-z3) ) * p2 &
                                    + ( (z-z1)*(z-z2))/((z3-z1)*(z3-z2) ) * p3
     !---------------------------------------------------------------------------
-
-    !$acc data pcopy(tem,rho,pre) pcopyin(phi)
+    !$acc  data &
+    !$acc& pcopy(tem,rho,pre) &
+    !$acc& pcopyin(phi)
 
     !$acc kernels pcopy(tem) pcopyin(phi) async(0)
     do ij = 1, ijdim
@@ -378,7 +361,6 @@ contains
     !$acc end kernels
 
     !$acc end data
-
     return
   end subroutine BNDCND_thermo
 
@@ -396,7 +378,7 @@ contains
        kmax => ADM_kmax
     implicit none
 
-    integer, intent(in)    :: ijdim
+    integer,  intent(in)    :: ijdim
     real(RP), intent(in)    :: rhog  (ijdim,kdim)
     real(RP), intent(inout) :: rhogvx(ijdim,kdim)
     real(RP), intent(inout) :: rhogvy(ijdim,kdim)
@@ -404,6 +386,9 @@ contains
 
     integer :: ij
     !---------------------------------------------------------------------------
+    !$acc  data &
+    !$acc& pcopy(rhogvx,rhogvy,rhogvz) &
+    !$acc& pcopyin(rhog)
 
     !$acc kernels pcopy(rhogvx,rhogvy,rhogvz) pcopyin(rhog) async(0)
     do ij = 1, ijdim
@@ -431,6 +416,7 @@ contains
     enddo
     !$acc end kernels
 
+    !$acc end data
     return
   end subroutine BNDCND_rhovxvyvz
 
@@ -458,6 +444,9 @@ contains
 
     integer :: ij
     !---------------------------------------------------------------------------
+    !$acc  data &
+    !$acc& pcopy(rhogw) &
+    !$acc& pcopyin(rhogvx,rhogvy,rhogvz,c2wfact)
 
     !$acc kernels pcopy(rhogw) pcopyin(rhogvx,rhogvy,rhogvz,c2wfact) async(0)
     do ij = 1, ijdim
@@ -489,6 +478,7 @@ contains
     enddo
     !$acc end kernels
 
+    !$acc end data
     return
   end subroutine BNDCND_rhow
 

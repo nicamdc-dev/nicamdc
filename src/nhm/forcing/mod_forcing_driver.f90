@@ -111,17 +111,15 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine forcing_step
+    use mod_const, only: &
+       GRAV => CONST_GRAV
     use mod_adm, only: &
+       ADM_KNONE,   &
        ADM_gall_in, &
        ADM_kall,    &
        ADM_lall,    &
        ADM_kmin,    &
-       ADM_kmax,    &
-       ADM_KNONE
-    use mod_const, only: &
-       GRAV => CONST_GRAV
-    use mod_time, only: &
-       TIME_DTL
+       ADM_kmax
     use mod_grd, only: &
        GRD_LAT,  &
        GRD_LON,  &
@@ -143,6 +141,11 @@ contains
        VMTR_GSGAM2,  &
        VMTR_GSGAM2H, &
        VMTR_PHI
+    use mod_time, only: &
+       TIME_DTL
+    use mod_gtl, only: &
+       GTL_clip_region, &
+       GTL_clip_region_1layer
     use mod_runconf, only: &
        AF_TYPE,  &
        TRC_VMAX, &
@@ -151,17 +154,14 @@ contains
     use mod_prgvar, only: &
        prgvar_get_in_withdiag, &
        prgvar_set_in
-    use mod_gtl, only: &
-       GTL_clip_region, &
-       GTL_clip_region_1layer
     use mod_bndcnd, only: &
-       bndcnd_thermo
+       BNDCND_thermo
+    use mod_history, only: &
+       history_in
     use mod_af_heldsuarez, only: &
        AF_heldsuarez
     use mod_af_dcmip2016, only: &
        AF_dcmip2016
-    use mod_history, only: &
-       history_in
     implicit none
 
     real(RP) :: rhog  (ADM_gall_in,ADM_kall,ADM_lall)
@@ -421,8 +421,6 @@ contains
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_kall
-    use mod_time, only: &
-       TIME_DTL
     use mod_grd, only: &
        GRD_LAT,  &
        GRD_LON,  &
@@ -432,12 +430,14 @@ contains
        GRD_ZH,   &
        GRD_vz,   &
        GRD_vz_pl
-    use mod_ideal_init, only: &
-       DCTEST_type, &
-       DCTEST_case
+    use mod_time, only: &
+       TIME_DTL
     use mod_af_trcadv, only: & ![add] 20130612 R.Yoshida
        test11_velocity, &
        test12_velocity
+    use mod_ideal_init, only: &
+       DCTEST_type, &
+       DCTEST_case
     implicit none
 
     real(RP), intent(inout) :: PROG    (ADM_gall,   ADM_kall,ADM_lall,   nmax_PROG) ! prognostic variables

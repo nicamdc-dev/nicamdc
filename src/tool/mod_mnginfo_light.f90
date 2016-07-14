@@ -50,7 +50,7 @@ contains
     integer,          intent(in) :: rlevel
     character(len=*), intent(in) :: fname
 
-    integer, parameter :: PRC_RGN_NMAX = 2560
+    integer, parameter :: ADM_l_limit = 2560
 
     integer :: num_of_rgn
     namelist /rgn_info/ &
@@ -62,7 +62,7 @@ contains
 
     integer :: peid
     integer :: num_of_mng
-    integer :: mng_rgnid(PRC_RGN_NMAX)
+    integer :: mng_rgnid(ADM_l_limit)
     namelist /rgn_mng_info/ &
          peid,              & !--- process ID
          num_of_mng,        & !--- number of regions be managed

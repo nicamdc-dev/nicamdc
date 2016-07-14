@@ -145,22 +145,22 @@ contains
     do l = 1, ADM_lall
        do n = 1, ADM_IooJoo_nmax
           ij = ADM_IooJoo(n,ADM_GIoJo)
-          call VECTR_xyz2latlon( GRD_x    (ij,k,l,GRD_XDIR),   &
-                                 GRD_x    (ij,k,l,GRD_YDIR),   &
-                                 GRD_x    (ij,k,l,GRD_ZDIR),   &
-                                 GMTR_p_ll(ij,k,l,GMTR_p_LAT), &
-                                 GMTR_p_ll(ij,k,l,GMTR_p_LON)  )
+          call VECTR_xyz2latlon( GRD_x    (ij,k,l,GRD_XDIR),   & ! [IN]
+                                 GRD_x    (ij,k,l,GRD_YDIR),   & ! [IN]
+                                 GRD_x    (ij,k,l,GRD_ZDIR),   & ! [IN]
+                                 GMTR_p_ll(ij,k,l,GMTR_p_LAT), & ! [OUT]
+                                 GMTR_p_ll(ij,k,l,GMTR_p_LON)  ) ! [OUT]
        enddo ! ij loop
     enddo ! l loop
 
     if ( ADM_have_pl ) then
        n = ADM_GSLF_PL
        do l = 1,ADM_lall_pl
-          call VECTR_xyz2latlon( GRD_x_pl    (n,k,l,GRD_XDIR),   &
-                                 GRD_x_pl    (n,k,l,GRD_YDIR),   &
-                                 GRD_x_pl    (n,k,l,GRD_ZDIR),   &
-                                 GMTR_p_ll_pl(n,k,l,GMTR_p_LAT), &
-                                 GMTR_p_ll_pl(n,k,l,GMTR_p_LON)  )
+          call VECTR_xyz2latlon( GRD_x_pl    (n,k,l,GRD_XDIR),   & ! [IN]
+                                 GRD_x_pl    (n,k,l,GRD_YDIR),   & ! [IN]
+                                 GRD_x_pl    (n,k,l,GRD_ZDIR),   & ! [IN]
+                                 GMTR_p_ll_pl(n,k,l,GMTR_p_LAT), & ! [OUT]
+                                 GMTR_p_ll_pl(n,k,l,GMTR_p_LON)  ) ! [OUT]
        enddo ! l loop
     endif
 
@@ -178,12 +178,12 @@ contains
        PRC_nprocs,           &
        PRC_IsMaster,         &
        PRC_MPIstop
+    use mod_const, only: &
+       D2R => CONST_D2R
     use mod_adm, only: &
        ADM_prc_me,  &
        ADM_prc_tab, &
        ADM_lall
-    use mod_const, only: &
-       D2R => CONST_D2R
     implicit none
 
     character(len=*), intent(in) :: output_dirname
@@ -458,6 +458,8 @@ contains
   subroutine mkrelmap_ico2ll( what_is_done )
     use mod_process, only: &
        PRC_MPIstop
+    use mod_const, only: &
+       PI => CONST_PI
     use mod_adm, only: &
        ADM_prc_tab,       &
        ADM_prc_me,        &
@@ -476,8 +478,6 @@ contains
        ADM_GIpJo,         &
        ADM_GIpJp,         &
        ADM_GIoJp
-    use mod_const, only: &
-       PI => CONST_PI
     use mod_vector, only: &
        VECTR_triangle, &
        VECTR_cross,    &
@@ -510,7 +510,6 @@ contains
     real(RP) :: eps_judge  = 1.E-18_RP ! marginal value for inner products
     real(RP) :: eps_latlon = 1.E-15_RP ! marginal square near grid points (in radian)
     real(RP) :: eps_vertex = 1.E-15_RP ! marginal value for vartex
-    real(RP) :: eps_area   = 0.0_RP    ! marginal value for triangle area
 
     integer :: rgnid
     integer :: n, k, l, t, i, j
@@ -732,9 +731,9 @@ contains
     do l = 1, ADM_lall
        rgnid = ADM_prc_tab(l,ADM_prc_me)
 
-       if ( rgnid == ADM_rgnid_npl_mng ) then
+       if    ( rgnid == ADM_rgnid_npl_mng ) then
           n = ADM_gall_1d * ADM_gmax + ADM_gmin
-       elseif ( rgnid == ADM_rgnid_spl_mng ) then
+       elseif( rgnid == ADM_rgnid_spl_mng ) then
           n = ADM_gall_1d * (ADM_gmin-1) + ADM_gmax+1
        else
           cycle
@@ -797,6 +796,8 @@ contains
   subroutine LL_outputsample
     use mod_process, only: &
        PRC_MPIstop
+    use mod_io_param, only: &
+       IO_REAL8
     use mod_adm, only: &
        ADM_prc_tab,   &
        ADM_prc_me,    &
@@ -810,8 +811,6 @@ contains
        ADM_KNONE
     use mod_comm, only: &
        COMM_data_transfer
-    use mod_io_param, only: &
-       IO_REAL8
     use mod_fio, only: &
        FIO_output
     implicit none

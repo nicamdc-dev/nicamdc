@@ -80,7 +80,7 @@ contains
     use mod_runconf, only: &
        TRC_ADV_TYPE
     use mod_bndcnd, only: &
-       bndcnd_setup
+       BNDCND_setup
     use mod_bsstate, only: &
        bsstate_setup
     use mod_numfilter, only: &
@@ -139,7 +139,7 @@ contains
     endselect
 
     !---< boundary condition module setup >---
-    call bndcnd_setup
+    call BNDCND_setup
 
     !---< basic state module setup >---
     call bsstate_setup
@@ -161,6 +161,10 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine dynamics_step
+    use mod_const, only: &
+       Rdry  => CONST_Rdry, &
+       Rvap  => CONST_Rvap, &
+       CVdry => CONST_CVdry
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -170,10 +174,6 @@ contains
        ADM_gall_pl, &
        ADM_kmax,    &
        ADM_kmin
-    use mod_const, only: &
-       Rdry  => CONST_Rdry, &
-       Rvap  => CONST_Rvap, &
-       CVdry => CONST_CVdry
     use mod_comm, only: &
        COMM_data_transfer
     use mod_vmtr, only: &
@@ -202,13 +202,12 @@ contains
        NDIFF_LOCATION, &
        TRC_ADV_TYPE,   &
        FLAG_NUDGING,   &
-!       TB_TYPE,        &
        THUBURN_LIM
     use mod_prgvar, only: &
        prgvar_set, &
        prgvar_get
     use mod_bndcnd, only: &
-       bndcnd_all
+       BNDCND_all
     use mod_bsstate, only: &
        rho_bs,    &
        rho_bs_pl, &
@@ -425,7 +424,7 @@ contains
        call PROF_rapstart('___Pre_Post',1)
 
        !---< Generate diagnostic values and set the boudary conditions
-       !$acc  kernels pcopy(rho,vx,vy,vz,ein) pcopyin(PROG,VMTR_GSGAM2) async(0)
+       !$acc kernels pcopy(rho,vx,vy,vz,ein) pcopyin(PROG,VMTR_GSGAM2) async(0)
        do l = 1, ADM_lall
        do k = 1, ADM_kall
        do g = 1, ADM_gall
@@ -489,7 +488,7 @@ contains
 
        do l = 1, ADM_lall
           !--- boundary conditions
-          call bndcnd_all( ADM_gall,                & ! [IN]
+          call BNDCND_all( ADM_gall,                & ! [IN]
                            rho (:,:,l),             & ! [INOUT]
                            vx  (:,:,l),             & ! [INOUT]
                            vy  (:,:,l),             & ! [INOUT]
@@ -509,7 +508,6 @@ contains
                            VMTR_C2Wfact  (:,:,:,l), & ! [IN]
                            VMTR_C2WfactGz(:,:,:,l)  ) ! [IN]
        enddo
-
 
        call THRMDYN_th ( ADM_gall,   & ! [IN]
                          ADM_kall,   & ! [IN]
@@ -564,7 +562,7 @@ contains
              enddo
 
              !--- boundary conditions
-             call bndcnd_all( ADM_gall_pl,                & ! [IN]
+             call BNDCND_all( ADM_gall_pl,                & ! [IN]
                               rho_pl (:,:,l),             & ! [INOUT]
                               vx_pl  (:,:,l),             & ! [INOUT]
                               vy_pl  (:,:,l),             & ! [INOUT]
@@ -940,7 +938,7 @@ contains
 
        call PROF_rapstart('___Pre_Post',1)
 
-       !--- TKE fixer [comment] 2011/08/16 M.Satoh: this fixer is needed for every small time steps
+       ! TKE fixer
        if ( do_tke_correction ) then
           !$acc kernels pcopy(PROG,PROGq) pcopyin(VMTR_GSGAM2) async(0)
           do l = 1, ADM_lall

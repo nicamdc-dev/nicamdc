@@ -88,9 +88,9 @@ program mkrawgrid
 
   call MKGRD_spring
 
-  call GRD_output_hgrid( basename      = MKGRD_OUT_BASENAME, &
-                         output_vertex = .false.,            &
-                         io_mode       = MKGRD_OUT_io_mode   )
+  call GRD_output_hgrid( basename      = MKGRD_OUT_BASENAME, & ! [IN]
+                         output_vertex = .false.,            & ! [IN]
+                         io_mode       = MKGRD_OUT_io_mode   ) ! [IN]
 
   !########## Finalize ##########
 

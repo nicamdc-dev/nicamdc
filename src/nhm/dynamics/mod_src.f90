@@ -54,9 +54,9 @@ module mod_src
   !
   !++ Public parameters & variables
   !
-  integer, public, parameter :: I_SRC_horizontal = 1 ! [add] H.Yashiro 20120530
-  integer, public, parameter :: I_SRC_vertical   = 2 ! [add] H.Yashiro 20120530
-  integer, public, parameter :: I_SRC_default    = 3 ! [add] H.Yashiro 20120530
+  integer, public, parameter :: I_SRC_horizontal = 1
+  integer, public, parameter :: I_SRC_vertical   = 2
+  integer, public, parameter :: I_SRC_default    = 3
 
   !-----------------------------------------------------------------------------
   !
@@ -86,6 +86,8 @@ contains
        grhogvy, grhogvy_pl, &
        grhogvz, grhogvz_pl, &
        grhogw,  grhogw_pl   )
+    use mod_const, only: &
+       OHM => CONST_OHM
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -96,8 +98,6 @@ contains
        ADM_kmin,    &
        ADM_kmax,    &
        ADM_KNONE
-    use mod_const, only: &
-       OHM => CONST_OHM
     use mod_grd, only: &
        GRD_rscale, &
        GRD_XDIR,   &
@@ -509,6 +509,10 @@ contains
        ADM_kmax
     use mod_grd, only: &
        GRD_rdgz
+    use mod_oprt, only: &
+       OPRT_divergence, &
+       OPRT_coef_div,   &
+       OPRT_coef_div_pl
     use mod_vmtr, only: &
        VMTR_RGSQRTH,      &
        VMTR_RGSQRTH_pl,   &
@@ -518,10 +522,6 @@ contains
        VMTR_RGAMH_pl,     &
        VMTR_C2WfactGz,    &
        VMTR_C2WfactGz_pl
-    use mod_oprt, only: &
-       OPRT_divergence, &
-       OPRT_coef_div,   &
-       OPRT_coef_div_pl
     implicit none
 
     real(RP), intent(in)  :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vx ( G^1/2 x gam2 )
@@ -689,6 +689,11 @@ contains
        GRD_ZDIR, &
        GRD_rdgz, &
        GRD_rdgzh
+    use mod_oprt, only: &
+       OPRT_gradient,          &
+       OPRT_horizontalize_vec, &
+       OPRT_coef_grad,         &
+       OPRT_coef_grad_pl
     use mod_vmtr, only: &
        VMTR_GAM2H,        &
        VMTR_GAM2H_pl,     &
@@ -700,11 +705,6 @@ contains
        VMTR_RGSGAM2_pl,   &
        VMTR_C2WfactGz,    &
        VMTR_C2WfactGz_pl
-    use mod_oprt, only: &
-       OPRT_gradient,          &
-       OPRT_horizontalize_vec, &
-       OPRT_coef_grad,         &
-       OPRT_coef_grad_pl
     implicit none
 
     real(RP), intent(in)  :: P        (ADM_gall   ,ADM_kall,ADM_lall   )          ! phi * G^1/2 * gamma^2
@@ -894,6 +894,8 @@ contains
   subroutine src_buoyancy( &
        rhog,  rhog_pl, &
        buoiw, buoiw_pl )
+    use mod_const, only: &
+       GRAV => CONST_GRAV
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -903,8 +905,6 @@ contains
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_const, only: &
-       GRAV => CONST_GRAV
     use mod_vmtr, only: &
        VMTR_C2Wfact,    &
        VMTR_C2Wfact_pl

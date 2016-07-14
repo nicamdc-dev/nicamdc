@@ -56,9 +56,6 @@ module mod_history_vars
   !-----------------------------------------------------------------------------
   implicit none
   private
-  real(RP), save, allocatable :: u_old (:, :, :)
-  real(RP), save, allocatable :: v_old (:, :, :)
-  real(RP), save, allocatable :: wc_old(:, :, :)
   !-----------------------------------------------------------------------------
   !
   !++ Public procedure
@@ -85,28 +82,30 @@ module mod_history_vars
   logical, private :: out_850hPa   = .false.
   logical, private :: out_500hPa   = .false.
 
-  logical, private :: out_rh       = .false.
   logical, private :: out_pw       = .false.
   logical, private :: out_lwp      = .false.
   logical, private :: out_iwp      = .false.
   logical, private :: out_duvw      = .false.
 
+  real(RP), private, allocatable :: u_old (:,:,:)
+  real(RP), private, allocatable :: v_old (:,:,:)
+  real(RP), private, allocatable :: wc_old(:,:,:)
+
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
   subroutine history_vars_setup
-    use mod_history, only: &
-       HIST_req_nmax, &
-       item_save
     use mod_adm, only: &
-       ADM_gall, &
-       ADM_kall, &
-       ADM_lall, &
-       ADM_KNONE
+       ADM_KNONE, &
+       ADM_gall,  &
+       ADM_kall,  &
+       ADM_lall
     use mod_runconf, only: &
        TRC_VMAX,  &
        AF_TYPE
     use mod_history, only: &
+       HIST_req_nmax, &
+       item_save,     &
        history_in
     implicit none
 
@@ -133,22 +132,23 @@ contains
            .OR. item_save(n) == 'sl_w500'     &
            .OR. item_save(n) == 'sl_t500'     ) out_500hPa   = .true.
 
-       if(      item_save(n) == 'ml_rh'       ) out_rh       = .true.
        if(      item_save(n) == 'sl_pw'       ) out_pw       = .true.
        if(      item_save(n) == 'sl_lwp'      ) out_lwp      = .true.
        if(      item_save(n) == 'sl_iwp'      ) out_iwp      = .true.
 
        if(      item_save(n) == 'ml_du'      &
            .OR. item_save(n) == 'ml_dv'      &
-           .OR. item_save(n) == 'ml_dw'      ) then
-          out_duvw      = .true.
-       end if
+           .OR. item_save(n) == 'ml_dw'      ) out_duvw      = .true.
 
     enddo
+
     if ( out_duvw ) then
        allocate( u_old (ADM_gall,ADM_kall,ADM_lall) )
        allocate( v_old (ADM_gall,ADM_kall,ADM_lall) )
        allocate( wc_old(ADM_gall,ADM_kall,ADM_lall) )
+       u_old (:,:,:) = 0.0_RP
+       u_old (:,:,:) = 0.0_RP
+       wc_old(:,:,:) = 0.0_RP
     endif
 
     tmp2d(:,:) = 0.0_RP
@@ -164,7 +164,6 @@ contains
        enddo
     case('DCMIP2016')
        do l = 1, ADM_lall
-
           call history_in( 'ml_af_fvx', tmp3d(:,:) )
           call history_in( 'ml_af_fvy', tmp3d(:,:) )
           call history_in( 'ml_af_fvz', tmp3d(:,:) )
@@ -172,7 +171,6 @@ contains
 
           do nq = 1, TRC_VMAX
              write(varname,'(A,I2.2)') 'ml_af_fq', nq
-
              call history_in( varname, tmp3d(:,:) )
           enddo
 
@@ -185,18 +183,18 @@ contains
 
   !----------------------------------------------------------------------
   subroutine history_vars
+    use mod_const, only: &
+       GRAV => CONST_GRAV
     use mod_adm, only: &
+       ADM_KNONE,   &
        ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kall,    &
        ADM_lall,    &
        ADM_lall_pl, &
-       ADM_KNONE,   &
        ADM_kmin,    &
        ADM_kmax
-    use mod_const, only: &
-       GRAV => CONST_GRAV
     use mod_grd, only: &
        GRD_dgz,  &
        GRD_ZSFC, &
@@ -209,11 +207,9 @@ contains
     use mod_gtl, only: &
        GTL_generate_uv,          &
        GTL_global_sum_eachlayer, &
-       GTL_clip_region_1layer,   &  ! [add] 2010.08.20 C.Kodama
+       GTL_clip_region_1layer,   &
        GTL_max, &
        GTL_min
-    use mod_prgvar, only: &
-       prgvar_get_withdiag
     use mod_runconf, only: &
        TRC_VMAX,  &
        TRC_name,  &
@@ -228,10 +224,12 @@ contains
        AF_TYPE,   &
        NCHEM_STR, &
        NCHEM_END
+    use mod_prgvar, only: &
+       prgvar_get_withdiag
     use mod_thrmdyn, only: &
        THRMDYN_th
     use mod_bndcnd, only: &
-       bndcnd_thermo
+       BNDCND_thermo
     use mod_history, only: &
        history_in
     implicit none
@@ -277,11 +275,11 @@ contains
 
     real(RP) :: omg      (ADM_gall   ,ADM_kall,ADM_lall   )
 
-    real(RP) :: u_850    (ADM_gall   ,ADM_KNONE,ADM_lall   ) ! [add] 20130705 R.Yoshida
+    real(RP) :: u_850    (ADM_gall   ,ADM_KNONE,ADM_lall   )
     real(RP) :: v_850    (ADM_gall   ,ADM_KNONE,ADM_lall   )
     real(RP) :: w_850    (ADM_gall   ,ADM_KNONE,ADM_lall   )
     real(RP) :: t_850    (ADM_gall   ,ADM_KNONE,ADM_lall   )
-    real(RP) :: u_500    (ADM_gall   ,ADM_KNONE,ADM_lall   ) ! [add] 20130705 R.Yoshida
+    real(RP) :: u_500    (ADM_gall   ,ADM_KNONE,ADM_lall   )
     real(RP) :: v_500    (ADM_gall   ,ADM_KNONE,ADM_lall   )
     real(RP) :: w_500    (ADM_gall   ,ADM_KNONE,ADM_lall   )
     real(RP) :: t_500    (ADM_gall   ,ADM_KNONE,ADM_lall   )
@@ -352,8 +350,6 @@ contains
        wc(:,ADM_kmax+1,l) = 0.0_RP
     enddo
 
-
-
     do l = 1, ADM_lall
        call history_in( 'ml_rho',  rho(:,:,l) )
        call history_in( 'ml_tem',  tem(:,:,l) )
@@ -363,20 +359,24 @@ contains
        call history_in( 'ml_v',    v  (:,:,l) )
        call history_in( 'ml_w',    wc (:,:,l) )
 
-       call history_in( 'ml_hgt',  GRD_vz(:,:,l,GRD_Z) ) ! geopotential height: Hydrostatic assumption
+       call history_in( 'ml_hgt',  GRD_vz(:,:,l,GRD_Z) ) ! geopotential height : Hydrostatic assumption
     enddo
 
     if (out_duvw) then
-       do l = 1, ADM_lall
-          call history_in( 'ml_du',    u  (:,:,l) -u_old (:,:,l) )
-          call history_in( 'ml_dv',    v  (:,:,l) -v_old (:,:,l) )
-          call history_in( 'ml_dw',    wc (:,:,l) -wc_old(:,:,l) )
-       end do
+       u_old (:,:,:) = u_old (:,:,:) - u (:,:,:)
+       v_old (:,:,:) = v_old (:,:,:) - v (:,:,:)
+       wc_old(:,:,:) = wc_old(:,:,:) - wc(:,:,:)
 
-       u_old(:,:,:) = u(:,:,:)
-       v_old(:,:,:) = v(:,:,:)
+       do l = 1, ADM_lall
+          call history_in( 'ml_du', u_old (:,:,l) )
+          call history_in( 'ml_dv', v_old (:,:,l) )
+          call history_in( 'ml_dw', wc_old(:,:,l) )
+       enddo
+
+       u_old (:,:,:) = u (:,:,:)
+       v_old (:,:,:) = v (:,:,:)
        wc_old(:,:,:) = wc(:,:,:)
-    end if
+    endif
 
     ! zonal and meridonal wind with cos(phi)
     if (out_uv_cos) then
@@ -457,7 +457,7 @@ contains
                              v      (:,:,l),  & ! [IN]
                              w      (:,:,l),  & ! [IN]
                              tem    (:,:,l),  & ! [IN]
-                             85000.0_RP,      & ! [IN]
+                             850.E2_RP,       & ! [IN]
                              u_850  (:,K0,l), & ! [OUT]
                              v_850  (:,K0,l), & ! [OUT]
                              w_850  (:,K0,l), & ! [OUT]
@@ -478,7 +478,7 @@ contains
                              v      (:,:,l),  & ! [IN]
                              w      (:,:,l),  & ! [IN]
                              tem    (:,:,l),  & ! [IN]
-                             50000.0_RP,      & ! [IN]
+                             500.E2_RP,       & ! [IN]
                              u_500  (:,K0,l), & ! [OUT]
                              v_500  (:,K0,l), & ! [OUT]
                              w_500  (:,K0,l), & ! [OUT]
@@ -503,8 +503,6 @@ contains
        call history_in( 'sl_ps', pre_sfc(:,:,l) )
     enddo
 
-
-
     !### tracers ###
 
     ! tracers
@@ -513,16 +511,6 @@ contains
        call history_in( 'ml_'//TRC_name(nq), q(:,:,l,nq) )
     enddo
     enddo
-
-    ! relative humidity
-!    if (out_rh) then
-!       call moist_relative_humidity( rh(:,:,l),    & ! [OUT]
-!                                     rho(:,:,l),   & ! [IN]
-!                                     tem(:,:,l),   & ! [IN]
-!                                     q(:,:,l,I_QV) ) ! [IN]
-!
-!       call history_in( 'ml_rh', rh(:,:,l) )
-!    endif
 
     ! hydrometeors
     do l  = 1, ADM_lall
@@ -578,9 +566,9 @@ contains
        enddo
     endif
 
-    if ( AF_TYPE == 'DCMIP2016' ) then
-    if ( NCHEM_STR /= -1 .and. NCHEM_END /= -1 ) then ! substitution of [USE_ToyChemistry/mod_af_dcmip2016]
+    if ( AF_TYPE == 'DCMIP2016' .AND. NCHEM_STR > 0 .AND. NCHEM_END > 0 ) then
        do l  = 1, ADM_lall
+
           rhodz(:,k0,l) = 0.0_RP
           do k = ADM_kmin, ADM_kmax
              rhodz(:,k0,l) = rhodz(:,k0,l) + ( rho(:,k,l) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k) )
@@ -588,30 +576,27 @@ contains
 
           tmp2d(:,k0,l) = 0.0_RP
           do k = ADM_kmin, ADM_kmax
-             tmp2d(:,k0,l) = tmp2d(:,k0,l) &
-                           + rho(:,k,l) * q(:,k,l,NCHEM_STR) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
+             tmp2d(:,k0,l) = tmp2d(:,k0,l) + rho(:,k,l) * q(:,k,l,NCHEM_STR) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
           enddo
           tmp2d(:,k0,l) = tmp2d(:,k0,l) / rhodz(:,k0,l)
           call history_in( 'sl_cl', tmp2d(:,:,l) )
 
           tmp2d(:,k0,l) = 0.0_RP
           do k = ADM_kmin, ADM_kmax
-             tmp2d(:,k0,l) = tmp2d(:,k0,l) &
-                           + rho(:,k,l) * q(:,k,l,NCHEM_END) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
+             tmp2d(:,k0,l) = tmp2d(:,k0,l) + rho(:,k,l) * q(:,k,l,NCHEM_END) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
           enddo
           tmp2d(:,k0,l) = tmp2d(:,k0,l) / rhodz(:,k0,l)
           call history_in( 'sl_cl2', tmp2d(:,:,l) )
 
           tmp2d(:,k0,l) = 0.0_RP
           do k = ADM_kmin, ADM_kmax
-             tmp2d(:,k0,l) = tmp2d(:,k0,l) &
-                           + rho(:,k,l) * ( q(:,k,l,NCHEM_STR) + 2.0_RP * q(:,k,l,NCHEM_END) ) &
-                           * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
+             tmp2d(:,k0,l) = tmp2d(:,k0,l) + rho(:,k,l) * ( q(:,k,l,NCHEM_STR) + 2.0_RP * q(:,k,l,NCHEM_END) ) &
+                                                        * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
           enddo
           tmp2d(:,k0,l) = tmp2d(:,k0,l) / rhodz(:,k0,l)
           call history_in( 'sl_cly', tmp2d(:,:,l) )
+
        enddo
-    endif
     endif
 
     return
@@ -626,11 +611,11 @@ contains
        z_srf,   &
        rho_srf, &
        pre_srf  )
+    use mod_const, only: &
+       GRAV => CONST_GRAV
     use mod_adm, only: &
        kdim => ADM_kall, &
        kmin => ADM_kmin
-    use mod_const, only: &
-       GRAV => CONST_GRAV
     implicit none
 
     integer,  intent(in)  :: ijdim
@@ -679,7 +664,7 @@ contains
        kmin => ADM_kmin
     implicit none
 
-    integer, intent(in)  :: ijdim
+    integer,  intent(in)  :: ijdim
     real(RP), intent(in)  :: pre(ijdim,kdim)
     real(RP), intent(in)  :: u_z(ijdim,kdim)
     real(RP), intent(in)  :: v_z(ijdim,kdim)
@@ -691,9 +676,8 @@ contains
     real(RP), intent(out) :: w_p(ijdim)
     real(RP), intent(out) :: t_p(ijdim)
 
-    integer :: kl(ijdim)
-    integer :: ku(ijdim)
-
+    integer  :: kl(ijdim)
+    integer  :: ku(ijdim)
     real(RP) :: wght_l, wght_u
 
     integer :: ij, k

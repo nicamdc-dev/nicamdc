@@ -144,6 +144,12 @@ contains
   subroutine diagnose_energy_mass
     use mod_process, only: &
        PRC_IsMaster
+    use mod_const, only: &
+       RADIUS => CONST_RADIUS, &
+       PI     => CONST_PI,     &
+       CVdry  => CONST_CVdry,  &
+       LHV    => CONST_LHV,    &
+       LHF    => CONST_LHF
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -151,12 +157,6 @@ contains
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kall
-    use mod_const, only: &
-       RADIUS => CONST_RADIUS, &
-       PI     => CONST_PI,     &
-       CVdry  => CONST_CVdry,  &
-       LHV    => CONST_LHV,    &
-       LHF    => CONST_LHF
     use mod_vmtr, only: &
        VMTR_RGSGAM2,    &
        VMTR_RGSGAM2_pl, &
@@ -362,12 +362,12 @@ contains
     enddo
 
     !--- kinetic energy
-    call cnvvar_rhogkin( rhog,   rhog_pl,   & !--- [IN]
-                         rhogvx, rhogvx_pl, & !--- [IN]
-                         rhogvy, rhogvy_pl, & !--- [IN]
-                         rhogvz, rhogvz_pl, & !--- [IN]
-                         rhogw,  rhogw_pl,  & !--- [IN]
-                         tmp,    tmp_pl     ) !--- [OUT]
+    call cnvvar_rhogkin( rhog,   rhog_pl,   & ! [IN]
+                         rhogvx, rhogvx_pl, & ! [IN]
+                         rhogvy, rhogvy_pl, & ! [IN]
+                         rhogvz, rhogvz_pl, & ! [IN]
+                         rhogw,  rhogw_pl,  & ! [IN]
+                         tmp,    tmp_pl     ) ! [OUT]
 
     tmp(:,:,:) = tmp(:,:,:) * VMTR_RGSGAM2(:,:,:)
     if ( ADM_have_pl ) then

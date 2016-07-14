@@ -36,17 +36,17 @@ module mod_af_dcmip2016
   !
   !++ Private procedures
   !
-  logical, private :: USE_SimpleMicrophys = .false.
-  logical, private :: SM_Latdepend_SST    = .false.
-  logical, private :: SM_LargeScaleCond   = .false.
-  logical, private :: SM_PBL_Bryan        = .false.
-  logical, private :: USE_Kessler         = .false.
-  logical, private :: USE_ToyChemistry    = .false.
-
   !-----------------------------------------------------------------------------
   !
   !++ Private parameters & variables
   !
+  logical, private :: USE_Kessler         = .false.
+  logical, private :: USE_SimpleMicrophys = .false.
+  logical, private :: SM_Latdepend_SST    = .false. ! more option for SimpleMicrophysics
+  logical, private :: SM_LargeScaleCond   = .false. ! more option for SimpleMicrophysics
+  logical, private :: SM_PBL_Bryan        = .false. ! more option for SimpleMicrophysics
+  logical, private :: USE_ToyChemistry    = .false.
+
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
@@ -58,12 +58,12 @@ contains
        NCHEM_MAX
     implicit none
 
-    logical :: SET_RJ2012       = .false.
-    logical :: SET_DCMIP2016_11 = .false.
-    logical :: SET_DCMIP2016_12 = .false.
-    logical :: SET_DCMIP2016_13 = .false.
-    logical :: SET_DCMIP2016_DRY = .false.
-    logical :: SET_DCMIP2016_LSC = .false. !large scale condensation
+    logical :: SET_RJ2012          = .false.
+    logical :: SET_DCMIP2016_11    = .false.
+    logical :: SET_DCMIP2016_12    = .false.
+    logical :: SET_DCMIP2016_13    = .false.
+    logical :: SET_DCMIP2016_DRY   = .false.
+    logical :: SET_DCMIP2016_LSC   = .false. ! large scale condensation
     logical :: SET_DCMIP2016_NOSST = .false.
 
     namelist /FORCING_DCMIP_PARAM/ &
@@ -74,11 +74,11 @@ contains
        SET_DCMIP2016_DRY,   &
        SET_DCMIP2016_LSC,   &
        SET_DCMIP2016_NOSST, &
+       USE_Kessler,         &
        USE_SimpleMicrophys, &
        SM_Latdepend_SST,    &
        SM_LargeScaleCond,   &
        SM_PBL_Bryan,        &
-       USE_Kessler,         &
        USE_ToyChemistry
 
     integer :: ierr
@@ -100,88 +100,97 @@ contains
 
     ! overwrite setting
     if ( SET_RJ2012 ) then
+
        write(IO_FID_LOG,*) '*** Force setting of Reed and Jablonowski (2012)'
+       USE_Kessler         = .false.
        USE_SimpleMicrophys = .true.
        SM_Latdepend_SST    = .true.
        SM_LargeScaleCond   = .true.
-       !SM_PBL_Bryan        = .false.
-       USE_Kessler         = .false.
        USE_ToyChemistry    = .false.
+
     elseif( SET_DCMIP2016_11 ) then
+
        write(IO_FID_LOG,*) '*** Force setting of DCMIP2016 Case 1-1 (Moist baroclinic wave with terminator chemistry)'
        USE_Kessler         = .true.
+       USE_SimpleMicrophys = .true.
+       SM_Latdepend_SST    = .true.
        SM_LargeScaleCond   = .false.
-       !SM_PBL_Bryan        = .false.
        USE_ToyChemistry    = .true.
+
+       if ( SET_DCMIP2016_DRY ) then
+          write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: DRY condition'
+          USE_Kessler         = .false.
+       endif
+
+       if ( SET_DCMIP2016_LSC ) then
+          write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
+          USE_Kessler         = .false.
+          SM_LargeScaleCond   = .true.
+       endif
+
        if ( SET_DCMIP2016_NOSST ) then
           write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: Only Precipitation'
           USE_SimpleMicrophys = .false.
           SM_Latdepend_SST    = .false.
-       else
-          USE_SimpleMicrophys = .true.
-          SM_Latdepend_SST    = .true.
        endif
-       if ( SET_DCMIP2016_LSC ) then
-          write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
-          USE_Kessler      = .false.
-          SM_LargeScaleCond = .true.
-       endif
-       if ( SET_DCMIP2016_DRY ) then
-          write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: DRY condition'
-          USE_Kessler      = .false.
-          SM_LargeScaleCond= .false.
-       endif
+
     elseif( SET_DCMIP2016_12 ) then
+
        write(IO_FID_LOG,*) '*** Force setting of DCMIP2016 Case 1-2 (Idealized tropical cyclone)'
        USE_Kessler         = .true.
+       USE_SimpleMicrophys = .true.
+       SM_Latdepend_SST    = .true.
        SM_LargeScaleCond   = .false.
-       !SM_PBL_Bryan        = .false.
+       USE_ToyChemistry    = .false.
+
+       if ( SET_DCMIP2016_DRY ) then
+          write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: DRY condition'
+          USE_Kessler         = .false.
+       endif
+
+       if ( SET_DCMIP2016_LSC ) then
+          write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
+          USE_Kessler         = .false.
+          SM_LargeScaleCond   = .true.
+       endif
+
        if ( SET_DCMIP2016_NOSST ) then
           write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: Only Precipitation'
           USE_SimpleMicrophys = .false.
           SM_Latdepend_SST    = .false.
-       else
-          USE_SimpleMicrophys = .true.
-          SM_Latdepend_SST    = .true.
        endif
-       if ( SET_DCMIP2016_LSC ) then
-          write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
-          USE_Kessler      = .false.
-          SM_LargeScaleCond = .true.
-       endif
-       if ( SET_DCMIP2016_DRY ) then
-          write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: DRY condition'
-          USE_Kessler      = .false.
-          SM_LargeScaleCond= .false.
-       endif
-       USE_ToyChemistry    = .false.
+
     elseif( SET_DCMIP2016_13 ) then
+
        write(IO_FID_LOG,*) '*** Force setting of DCMIP2016 Case 1-3 (Mesoscale storm)'
        USE_Kessler         = .true.
        USE_SimpleMicrophys = .false.
        SM_Latdepend_SST    = .false.
        SM_LargeScaleCond   = .false.
        SM_PBL_Bryan        = .false.
-       if ( SET_DCMIP2016_LSC ) then
-          write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
-          USE_Kessler      = .false.
-          SM_LargeScaleCond = .true.
-       endif
+       USE_ToyChemistry    = .false.
+
        if ( SET_DCMIP2016_DRY ) then
           write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: DRY condition'
-          USE_Kessler      = .false.
-          SM_LargeScaleCond= .false.
+          USE_Kessler         = .false.
        endif
-       USE_ToyChemistry    = .false.
+
+       if ( SET_DCMIP2016_LSC ) then
+          write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
+          USE_Kessler         = .false.
+          USE_SimpleMicrophys = .true.
+          SM_LargeScaleCond   = .true.
+       endif
+
     endif
 
     write(IO_FID_LOG,*) '*** Final Settings of FORCING_DCMIP_PARAM'
-    write(IO_FID_LOG,*) '    USE_Kessler        : ', USE_Kessler
-    write(IO_FID_LOG,*) '    USE_SimpleMicrophys: ', USE_SimpleMicrophys
-    write(IO_FID_LOG,*) '    SM_LargeScaleCond  : ', SM_LargeScaleCond
-    write(IO_FID_LOG,*) '    SM_Latdepend_SST   : ', SM_Latdepend_SST
-    write(IO_FID_LOG,*) '    SM_PBL_Bryan       : ', SM_PBL_Bryan
-    write(IO_FID_LOG,*) '    USE_ToyChemistry   : ', USE_ToyChemistry
+    write(IO_FID_LOG,*) '+ USE_Kessler         : ', USE_Kessler
+    write(IO_FID_LOG,*) '+ USE_SimpleMicrophys : ', USE_SimpleMicrophys
+    write(IO_FID_LOG,*) '+ SM_LargeScaleCond   : ', SM_LargeScaleCond
+    write(IO_FID_LOG,*) '+ SM_Latdepend_SST    : ', SM_Latdepend_SST
+    write(IO_FID_LOG,*) '+ SM_PBL_Bryan        : ', SM_PBL_Bryan
+    write(IO_FID_LOG,*) '+ USE_ToyChemistry    : ', USE_ToyChemistry
 
     ! initial value of the tracer is set in mod_prgvar - mod_ideal_init
     if ( USE_ToyChemistry ) then
@@ -312,7 +321,7 @@ contains
     real(DP) :: cl_f, cl2_f
     real(DP) :: qvd
 
-    integer :: ij, k, kk
+    integer  :: ij, k, kk
     !---------------------------------------------------------------------------
 
     fvx(:,:)   = 0.0_RP
@@ -365,7 +374,7 @@ contains
           fq(ij,kmin:kmax,I_QV) = fq(ij,kmin:kmax,I_QV) + ( qv(:) - q(ij,kmin:kmax,I_QV) ) / dt
           fq(ij,kmin:kmax,I_QC) = fq(ij,kmin:kmax,I_QC) + ( qc(:) - q(ij,kmin:kmax,I_QC) ) / dt
           fq(ij,kmin:kmax,I_QR) = fq(ij,kmin:kmax,I_QR) + ( qr(:) - q(ij,kmin:kmax,I_QR) ) / dt
-          fe(ij,kmin:kmax)      = fe(ij,kmin:kmax)      + ( cv(:) * theta(:) * pk(:) - ein(ij,kmin:kmax) ) / dt
+          fe(ij,kmin:kmax)      = fe(ij,kmin:kmax)      + ( cv(:)*theta(:)*pk(:) - ein(ij,kmin:kmax) ) / dt
        enddo
     endif
 
@@ -392,12 +401,9 @@ contains
 
        pint(:,1) = 0.0_RP
        do k = 2, vlayer
-!          pint(:,k) = 0.5_RP * ( pmid(:,k-1) + pmid(:,k) )
           kk = kmax - k + 1 ! reverse order
-          pint(:,k) = pre(:,kk)*exp(                          &
-            log(pre(:,kk+1)/pre(:,kk))                        &
-            *(alth(:,kk+1)-alt(:,kk))/(alt(:,kk+1)-alt(:,kk)) &
-            )
+          pint(:,k) = pre(:,kk) * exp( log( pre(:,kk+1) / pre(:,kk) )                     &
+                                     * (alth(:,kk+1)-alt(:,kk)) / (alt(:,kk+1)-alt(:,kk)) )
        enddo
        pint(:,vlayer+1) = pre_sfc(:)
 
@@ -474,14 +480,19 @@ contains
     if ( USE_ToyChemistry ) then
        do k  = kmin, kmax
        do ij = 1,    ijdim
-          lat_deg = real( lat(ij) / d2r, kind=DP )
-          lon_deg = real( lon(ij) / d2r, kind=DP )
-          qvd     = real( 1.0_RP - q(ij,k,I_QV), kind=DP )
+          lat_deg = real( lat(ij) / d2r          , kind=DP )
+          lon_deg = real( lon(ij) / d2r          , kind=DP )
+          qvd     = real( 1.0_RP - q(ij,k,I_QV)  , kind=DP )
+          cl      = real( q(ij,k,NCHEM_STR) / qvd, kind=DP )
+          cl2     = real( q(ij,k,NCHEM_END) / qvd, kind=DP )
 
-          cl  = real( q(ij,k,NCHEM_STR) / qvd, kind=DP )
-          cl2 = real( q(ij,k,NCHEM_END) / qvd, kind=DP )
-
-          call tendency_Terminator( lat_deg, lon_deg, cl, cl2, dt, cl_f, cl2_f )
+          call tendency_Terminator( lat_deg, & ! [IN]
+                                    lon_deg, & ! [IN]
+                                    cl,      & ! [IN]
+                                    cl2,     & ! [IN]
+                                    dt,      & ! [IN]
+                                    cl_f,    & ! [OUT]
+                                    cl2_f    ) ! [OUT]
 
           fq(ij,k,NCHEM_STR) = fq(ij,k,NCHEM_STR) + real( cl_f  * qvd, kind=RP )
           fq(ij,k,NCHEM_END) = fq(ij,k,NCHEM_END) + real( cl2_f * qvd, kind=RP )

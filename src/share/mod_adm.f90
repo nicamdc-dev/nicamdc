@@ -10,7 +10,7 @@
 !!
 !! @par History
 !! @li      2004-02-17 (H.Tomita)  Imported from igdc-4.33
-!! @li      2007-10-22 (T.Mitsui)  change value of PRC_RGN_NMAX
+!! @li      2007-10-22 (T.Mitsui)  change value of ADM_l_limit
 !! @li      2008-01-30 (S.Iga)     private procedure mk_suffix is changed to public procedure
 !! @li      2009-08-18 (T.Mitsui)  modify adm_proc_stop to keep out extra process from main routines.
 !! @li      2010-04-26 (M.Satoh)   add ADM_l_me
@@ -26,7 +26,6 @@ module mod_adm
   !
   !++ used modules
   !
-  use mpi
   use mod_precision
   use mod_stdio
   !-----------------------------------------------------------------------------
@@ -154,7 +153,7 @@ module mod_adm
   !
   character(len=H_LONG), public :: ADM_rgnmngfname        ! file name for region management info
 
-  integer,  public, parameter   :: PRC_RGN_NMAX   = 2560  ! maximum number of region per process.
+  integer,  public, parameter   :: ADM_l_limit = 2560     ! maximum number of region per process.
 
   integer,  public, allocatable :: ADM_prc_rnum(:)        ! number of regions managed by each process = ADM_lall
   integer,  public, allocatable :: ADM_prc_tab (:,:)      ! table  of regions managed by each process
@@ -310,7 +309,7 @@ contains
        write(*         ,*) 'xxx Not found namelist! STOP.'
        write(IO_FID_LOG,*) 'xxx Not found namelist! STOP.'
        call PRC_MPIstop
-    elseif ( ierr > 0 ) then
+    elseif( ierr > 0 ) then
        write(*         ,*) 'xxx Not appropriate names in namelist ADMPARAM. STOP.'
        write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist ADMPARAM. STOP.'
        call PRC_MPIstop
@@ -457,7 +456,7 @@ contains
 
     ADM_l_me = 0
 
-    !--- make suffix for list-vector loop.
+    ! make suffix for list-vector loop.
     call ADM_mk_suffix
 
     call output_info
@@ -477,16 +476,16 @@ contains
 
     character(len=*), intent(in) :: fname
 
-    integer :: num_of_rgn !--- number of region
+    integer :: num_of_rgn ! number of region
 
     namelist / rgn_info / &
          num_of_rgn
 
-    integer :: rgnid                    !--- region ID
-    integer :: sw(ADM_RID:ADM_DIR) = -1 !--- south-west region info
-    integer :: nw(ADM_RID:ADM_DIR) = -1 !--- nouth-west region info
-    integer :: ne(ADM_RID:ADM_DIR) = -1 !--- nouth-east region info
-    integer :: se(ADM_RID:ADM_DIR) = -1 !--- south-east region info
+    integer :: rgnid                    ! region ID
+    integer :: sw(ADM_RID:ADM_DIR) = -1 ! south-west region info
+    integer :: nw(ADM_RID:ADM_DIR) = -1 ! nouth-west region info
+    integer :: ne(ADM_RID:ADM_DIR) = -1 ! nouth-east region info
+    integer :: se(ADM_RID:ADM_DIR) = -1 ! south-east region info
 
     namelist / rgn_link_info / &
          rgnid, &
@@ -495,14 +494,14 @@ contains
          ne,    &
          se
 
-    integer :: num_of_proc !--- number of run-processes
+    integer :: num_of_proc ! number of run-processes
 
     namelist /proc_info/ &
          num_of_proc
 
-    integer :: peid                         !--- process ID
-    integer :: num_of_mng                   !--- number of regions be managed
-    integer :: mng_rgnid(PRC_RGN_NMAX) = -1 !--- managed region ID
+    integer :: peid                         ! process ID
+    integer :: num_of_mng                   ! number of regions be managed
+    integer :: mng_rgnid(ADM_l_limit) = -1 ! managed region ID
 
     namelist /rgn_mng_info/ &
          peid,       &
@@ -565,9 +564,9 @@ contains
     endif
 
     allocate( ADM_prc_rnum(PRC_nprocs)              )
-    allocate( ADM_prc_tab (PRC_RGN_NMAX,PRC_nprocs) )
+    allocate( ADM_prc_tab (ADM_l_limit,PRC_nprocs) )
     allocate( ADM_rgn2prc (ADM_rgn_nmax)            )
-    ADM_prc_tab = -1 ! [Fix] 11/06/30  T.Seiki, fill undefined value
+    ADM_prc_tab = -1
 
     do m = 1, PRC_nprocs
        read(fid,nml=rgn_mng_info)
@@ -753,7 +752,7 @@ contains
     allocate( ADM_ImpJmp(ADM_ImpJmp_nmax,ADM_GIJ_nmax) )
 #endif
 
-    !--- ADM_IooJoo
+    ! ADM_IooJoo
     n = 1
     do j = ADM_gmin, ADM_gmax
     do i = ADM_gmin, ADM_gmax
@@ -768,7 +767,7 @@ contains
     enddo
     enddo
 
-    !--- ADM_IooJmo
+    ! ADM_IooJmo
     n = 1
     do j = ADM_gmin-1, ADM_gmax
     do i = ADM_gmin,   ADM_gmax
@@ -783,7 +782,7 @@ contains
     enddo
     enddo
 
-    !--- ADM_IooJop
+    ! ADM_IooJop
     n = 1
     do j = ADM_gmin, ADM_gmax+1
     do i = ADM_gmin, ADM_gmax
@@ -798,7 +797,7 @@ contains
     enddo
     enddo
 
-    !--- ADM_IooJmp
+    ! ADM_IooJmp
     n = 1
     do j = ADM_gmin-1, ADM_gmax+1
     do i = ADM_gmin,   ADM_gmax
@@ -813,7 +812,7 @@ contains
     enddo
     enddo
 
-    !--- ADM_ImoJoo
+    ! ADM_ImoJoo
     n = 1
     do j = ADM_gmin,   ADM_gmax
     do i = ADM_gmin-1, ADM_gmax
@@ -828,7 +827,7 @@ contains
     enddo
     enddo
 
-    !--- ADM_ImoJmo
+    ! ADM_ImoJmo
     n = 1
     do j = ADM_gmin-1, ADM_gmax
     do i = ADM_gmin-1, ADM_gmax
@@ -843,7 +842,7 @@ contains
     enddo
     enddo
 
-    !--- ADM_ImoJop
+    ! ADM_ImoJop
     n = 1
     do j = ADM_gmin,   ADM_gmax+1
     do i = ADM_gmin-1, ADM_gmax
@@ -858,7 +857,7 @@ contains
     enddo
     enddo
 
-    !--- ADM_ImoJmp
+    ! ADM_ImoJmp
     n = 1
     do j = ADM_gmin-1, ADM_gmax+1
     do i = ADM_gmin-1, ADM_gmax
@@ -873,7 +872,7 @@ contains
     enddo
     enddo
 
-    !--- ADM_IopJoo
+    ! ADM_IopJoo
     n = 1
     do j = ADM_gmin, ADM_gmax
     do i = ADM_gmin, ADM_gmax+1
@@ -888,7 +887,7 @@ contains
     enddo
     enddo
 
-    !--- ADM_IopJmo
+    ! ADM_IopJmo
     n = 1
     do j = ADM_gmin-1, ADM_gmax
     do i = ADM_gmin,   ADM_gmax+1
@@ -903,7 +902,7 @@ contains
     enddo
     enddo
 
-    !--- ADM_IopJop
+    ! ADM_IopJop
     n = 1
     do j = ADM_gmin, ADM_gmax+1
     do i = ADM_gmin, ADM_gmax+1
@@ -918,7 +917,7 @@ contains
     enddo
     enddo
 
-    !--- ADM_IopJmp
+    ! ADM_IopJmp
     n = 1
     do j = ADM_gmin-1, ADM_gmax+1
     do i = ADM_gmin, ADM_gmax+1
@@ -933,7 +932,7 @@ contains
     enddo
     enddo
 
-    !--- ADM_ImpJoo
+    ! ADM_ImpJoo
     n = 1
     do j = ADM_gmin,   ADM_gmax
     do i = ADM_gmin-1, ADM_gmax+1
@@ -948,7 +947,7 @@ contains
     enddo
     enddo
 
-    !--- ADM_ImpJmo
+    ! ADM_ImpJmo
     n = 1
     do j = ADM_gmin-1, ADM_gmax
     do i = ADM_gmin-1, ADM_gmax+1
@@ -963,7 +962,7 @@ contains
     enddo
     enddo
 
-    !--- ADM_ImpJop
+    ! ADM_ImpJop
     n = 1
     do j = ADM_gmin,   ADM_gmax+1
     do i = ADM_gmin-1, ADM_gmax+1
@@ -978,7 +977,7 @@ contains
     enddo
     enddo
 
-    !--- ADM_ImpJmp
+    ! ADM_ImpJmp
     n = 1
     do j = ADM_gmin-1, ADM_gmax+1
     do i = ADM_gmin-1, ADM_gmax+1

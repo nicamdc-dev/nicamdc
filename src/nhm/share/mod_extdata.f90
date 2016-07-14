@@ -57,10 +57,10 @@ module mod_extdata
   type, private :: extdatainfo
      character(len=H_LONG)  :: fname             !--- data file name
      character(len=H_LONG)  :: dataname          !--- data name
-     character(len=H_SHORT) :: input_io_mode     !--- io mode                  ! [add] H.Yashiro 20110826
+     character(len=H_SHORT) :: input_io_mode     !--- io mode
      integer                :: input_size        !--- double/single precision
      character(len=H_SHORT) :: layer_type        !--- type of layer : 'ATM' or 'SFC'
-     character(len=H_SHORT) :: layername         !--- name of layer            ! [add] H.Yashiro 20110826
+     character(len=H_SHORT) :: layername         !--- name of layer
      integer                :: kall              !--- number of layer
      integer                :: num_of_data       !--- number of data
      integer,  pointer      :: data_date(:,:)    !--- date of each data piece
@@ -83,6 +83,9 @@ contains
   subroutine extdata_setup
     use mod_process, only: &
        PRC_MPIstop
+    use mod_calendar, only: &
+       CALENDAR_yh2ss, &
+       CALENDAR_ss2yh
     use mod_adm, only: &
        ADM_KNONE,    &
        ADM_kall,     &
@@ -92,20 +95,17 @@ contains
        ADM_lall_pl
     use mod_fio, only: &
        FIO_seek
-    use mod_calendar, only: &
-       CALENDAR_yh2ss, &
-       CALENDAR_ss2yh
     use mod_time, only: &
        ctime => TIME_CTIME
     implicit none
 
     character(len=H_LONG)  :: fname
     character(len=H_LONG)  :: dataname
-    character(len=H_SHORT) :: input_io_mode ! [add] H.Yashiro 20110826
+    character(len=H_SHORT) :: input_io_mode
     integer                :: input_size
     character(len=H_SHORT) :: layer_type
-    character(len=H_SHORT) :: layername ! [add] H.Yashiro 20110826
-    integer                :: nlayer    ! [add] H.Yashiro 20131030
+    character(len=H_SHORT) :: layername
+    integer                :: nlayer
     integer                :: num_of_data
     integer                :: data_date(6,max_num_of_data)
     integer                :: fix_rec
@@ -113,29 +113,29 @@ contains
     logical                :: opt_monthly_cnst
     logical                :: opt_periodic_year
     real(RP)               :: defval
-    ! [Add] 12/02/01 T.Seiki
+
     integer :: ddata_date(6)
     logical :: opt_increment_date
 
     namelist /nm_extdata/   &
          fname,             &
          dataname,          &
-         input_io_mode,     & ! [add] H.Yashiro 20110826
+         input_io_mode,     &
          input_size,        &
          layer_type,        &
-         layername,         & ! [add] H.Yashiro 20110826
-         nlayer,            & ! [add] H.Yashiro 20131030
+         layername,         &
+         nlayer,            &
          num_of_data,       &
          data_date,         &
-         ddata_date,        & ! [Add] 12/02/01 T.Seiki
-         opt_increment_date,& ! [Add] 12/02/01 T.Seiki
+         ddata_date,        &
+         opt_increment_date,&
          fix_rec,           &
          opt_fix_rec,       &
          opt_monthly_cnst,  &
          opt_periodic_year, &
          defval
 
-    real(DP) :: csec !!! [Add] T.Seiki, xxxxxx
+    real(DP) :: csec
     integer  :: cdate(6)
 
     integer  :: ierr
@@ -164,7 +164,6 @@ contains
     !--- allocation of data information array
     allocate( info(max_extdata) )
 
-    ! -> [add&mod] H.Yashiro 20110826
     !--- read namelist, again.
     rewind(IO_FID_CONF)
     do np=1, max_extdata
@@ -175,7 +174,7 @@ contains
        input_io_mode     = 'LEGACY' ! [add] H.Yashiro 20110826
        input_size        = 8
        layer_type        = ''
-       layername         = 'ZSSFC1' ! [add] H.Yashiro 20110826
+       layername         = 'ZSSFC1'
        num_of_data       = 1
        data_date(:,:)    = 1
        fix_rec           = 1
@@ -183,7 +182,6 @@ contains
        opt_monthly_cnst  = .false.
        opt_periodic_year = .false.
        defval            = 0.0_RP
-       ! [Add] 12/02/01 T.Seiki
        ddata_date(:)     = 0
        opt_increment_date= .false.
        !
@@ -214,18 +212,18 @@ contains
           !---  info(np)%data_date
           !---  info(np)%data_rec(1)
 
-          call FIO_seek( info(np)%data_rec(1), & !--- [out]
-                         num_of_data,          & !--- [overwrite]
-                         data_date,            & !--- [overwrite]
-                         input_size,           & !--- [overwrite]
-                         fname,                & !--- [in]
-                         dataname,             & !--- [in]
-                         layername,            & !--- [in]
-                         1,                    & !--- [in]
-                         info(np)%kall,        & !--- [in]
-                         ctime,                & !--- [in]
-                         cdate,                & !--- [in]
-                         opt_periodic_year     ) !--- [in]
+          call FIO_seek( info(np)%data_rec(1), & ! [out]
+                         num_of_data,          & ! [overwrite]
+                         data_date,            & ! [overwrite]
+                         input_size,           & ! [overwrite]
+                         fname,                & ! [in]
+                         dataname,             & ! [in]
+                         layername,            & ! [in]
+                         1,                    & ! [in]
+                         info(np)%kall,        & ! [in]
+                         ctime,                & ! [in]
+                         cdate,                & ! [in]
+                         opt_periodic_year     ) ! [in]
 
        elseif( input_io_mode == 'LEGACY' ) then
           ! [Add] 12/02/01 T.Seiki
@@ -243,7 +241,6 @@ contains
           write(IO_FID_LOG,*) 'xxx Invalid input_io_mode!', trim(input_io_mode)
           call PRC_MPIstop
        endif
-       ! -> [add] H.Yashiro 20110826
 
        allocate( info(np)%data_date(6,num_of_data) )
        allocate( info(np)%data_time(  num_of_data) )
@@ -253,7 +250,7 @@ contains
        !--- store information
        info(np)%fname             = trim(fname)
        info(np)%dataname          = trim(dataname)
-       info(np)%input_io_mode     = trim(input_io_mode) ! [add] H.Yashiro 20110826
+       info(np)%input_io_mode     = trim(input_io_mode)
        info(np)%input_size        = input_size
        info(np)%layer_type        = trim(layer_type)
        info(np)%layername         = trim(layername)
@@ -340,7 +337,6 @@ contains
        call data_read( np )
 
     enddo
-    ! <- [add&mod] H.Yashiro 20110826
 
     !--- output information
     write(IO_FID_LOG,*)
@@ -357,10 +353,10 @@ contains
        write(IO_FID_LOG,'(1x,A,I4,A)') '============ External file NO. : ',np,' ============='
        write(IO_FID_LOG,*) '--- fname             : ', trim(info(np)%fname)
        write(IO_FID_LOG,*) '--- dataname          : ', trim(info(np)%dataname)
-       write(IO_FID_LOG,*) '--- input_io_mode     : ', trim(info(np)%input_io_mode) ! [add] H.Yashiro 20110826
+       write(IO_FID_LOG,*) '--- input_io_mode     : ', trim(info(np)%input_io_mode)
        write(IO_FID_LOG,*) '--- input_size        : ', info(np)%input_size
        write(IO_FID_LOG,*) '--- layer_type        : ', info(np)%layer_type
-       write(IO_FID_LOG,*) '--- layername         : ', info(np)%layername ! [add] H.Yashiro 20110826
+       write(IO_FID_LOG,*) '--- layername         : ', info(np)%layername
        write(IO_FID_LOG,*) '--- num_of_data       : ', info(np)%num_of_data
        do im = 1, info(np)%num_of_data
           write(IO_FID_LOG,'(1x,A,6(I4,1x))') '--- data_date         : ', info(np)%data_date(:,im)
@@ -387,13 +383,13 @@ contains
        eflag     )
     use mod_process, only: &
        PRC_MPIstop
+    use mod_calendar, only: &
+      CALENDAR_yh2ss, &
+      CALENDAR_ss2yh
     use mod_adm, only: &
       ADM_gall_in,     &
       ADM_IopJop,      &
       ADM_GIoJo
-    use mod_calendar, only: &
-      CALENDAR_yh2ss, &
-      CALENDAR_ss2yh
     implicit none
 
     real(RP),         intent(inout) :: gdata(:,:) ! data is inout to retain initilized value.
@@ -520,12 +516,12 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine data_read( np )
+    use mod_comm, only: &
+       COMM_var
     use mod_fio, only: &
        FIO_input
     use mod_gtl, only: &
        GTL_input_var2_da
-    use mod_comm, only: &
-       COMM_var
     implicit none
 
     integer, intent(in) :: np

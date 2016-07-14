@@ -85,14 +85,14 @@ contains
        ls = len_trim(argstr)
 
        if ( argstr(1:1) == '-' ) then
-          if ( argstr(2:2) == '-' ) then                               !! '--option' format
+          if ( argstr(2:2) == '-' ) then                              ! '--option' format
              write(OPT_fid,'(A)') ' '//argstr(3:ls)//'=F'
-          elseif ( argstr(2:3) == 'no' .OR. argstr(2:3) == 'NO' ) then !! '-nooption'/'-NOOPTION' format
+          elseif( argstr(2:3) == 'no' .OR. argstr(2:3) == 'NO' ) then ! '-nooption'/'-NOOPTION' format
              write(OPT_fid,'(A)') ' '//argstr(4:ls)//'=F'
-          else                                                         !! '-option' format
+          else                                                        ! '-option' format
              write(OPT_fid,'(A)') ' '//argstr(2:ls)//'=T'
           endif
-       elseif( index(argstr,'=') == 0 ) then                           !! no '=' is filename
+       elseif( index(argstr,'=') == 0 ) then                          ! no '=' is filename
           ninfile = ninfile + 1
           write(snf,'(I2.2)') ninfile
           write(OPT_fid,'(A)') ' infile('//snf//')="'//trim(adjustl(argstr))//'"'

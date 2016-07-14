@@ -273,12 +273,12 @@ contains
 
     else
 
-       call PRC_MPItimestat( avgvar      (1:PROF_rapnmax), &
-                             maxvar      (1:PROF_rapnmax), &
-                             minvar      (1:PROF_rapnmax), &
-                             maxidx      (1:PROF_rapnmax), &
-                             minidx      (1:PROF_rapnmax), &
-                             PROF_rapttot(1:PROF_rapnmax)  )
+       call PRC_MPItimestat( avgvar      (1:PROF_rapnmax), & ! [OUT]
+                             maxvar      (1:PROF_rapnmax), & ! [OUT]
+                             minvar      (1:PROF_rapnmax), & ! [OUT]
+                             maxidx      (1:PROF_rapnmax), & ! [OUT]
+                             minidx      (1:PROF_rapnmax), & ! [OUT]
+                             PROF_rapttot(1:PROF_rapnmax)  ) ! [IN]
 
        fid = -1
        if ( IO_LOG_SUPPRESS ) then ! report to STDOUT
@@ -369,12 +369,12 @@ contains
        statistics(2) = real(PROF_PAPI_proc_time,kind=8)
        statistics(3) = PROF_PAPI_gflop
 
-       call PRC_MPItimestat( avgvar    (1:3), &
-                             maxvar    (1:3), &
-                             minvar    (1:3), &
-                             maxidx    (1:3), &
-                             minidx    (1:3), &
-                             statistics(1:3)  )
+       call PRC_MPItimestat( avgvar    (1:3), & ! [OUT]
+                             maxvar    (1:3), & ! [OUT]
+                             minvar    (1:3), & ! [OUT]
+                             maxidx    (1:3), & ! [OUT]
+                             minidx    (1:3), & ! [OUT]
+                             statistics(1:3)  ) ! [IN]
 
        if( IO_L ) write(IO_FID_LOG,*)
        if( IO_L ) write(IO_FID_LOG,*) '*** PAPI Report'

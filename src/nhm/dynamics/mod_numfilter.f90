@@ -137,12 +137,12 @@ contains
   subroutine numfilter_setup
     use mod_process, only: &
        PRC_MPIstop
-    use mod_adm, only: &
-       ADM_GLEVEL,    &
-       ADM_kall
     use mod_const, only: &
        PI     => CONST_PI,    &
        RADIUS => CONST_RADIUS
+    use mod_adm, only: &
+       ADM_glevel, &
+       ADM_kall
     use mod_grd, only: &
        GRD_gz,   &
        GRD_gzh
@@ -294,12 +294,12 @@ contains
   subroutine numfilter_rayleigh_damping_setup( &
        alpha, &
        zlimit )
+    use mod_const, only: &
+       EPS => CONST_EPS
     use mod_adm, only: &
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_const, only: &
-       EPS => CONST_EPS
     use mod_grd, only: &
        GRD_htop, &
        GRD_gz,   &
@@ -362,6 +362,9 @@ contains
        gamma_lap1,      &
        tau_lap1,        &
        zlimit_lap1      )
+    use mod_const, only: &
+       PI  => CONST_PI, &
+       EPS => CONST_EPS
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -371,9 +374,6 @@ contains
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_const, only: &
-       PI  => CONST_PI, &
-       EPS => CONST_EPS
     use mod_grd, only: &
        GRD_htop, &
        GRD_gz
@@ -653,13 +653,13 @@ contains
   !> setup coefficient for vertical numerical diffusion
   subroutine numfilter_vdiffusion_setup( &
        gamma )
+    use mod_const, only: &
+       PI  => CONST_PI, &
+       EPS => CONST_EPS
     use mod_adm, only: &
        ADM_kall, &
        ADM_kmin, &
        ADM_kmax
-    use mod_const, only: &
-       PI  => CONST_PI, &
-       EPS => CONST_EPS
     use mod_grd, only: &
        GRD_gz,   &
        GRD_gzh,  &
@@ -720,6 +720,10 @@ contains
        alpha,        &
        tau,          &
        alpha_v       )
+    use mod_const, only: &
+       PI    => CONST_PI,   &
+       EPS   => CONST_EPS,  &
+       SOUND => CONST_SOUND
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -729,10 +733,6 @@ contains
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_const, only: &
-       PI    => CONST_PI,   &
-       EPS   => CONST_EPS,  &
-       SOUND => CONST_SOUND
     use mod_grd, only: &
        GRD_gz
     use mod_gmtr, only: &
@@ -884,6 +884,10 @@ contains
        alpha,        &
        tau,          &
        zlimit        )
+    use mod_const, only: &
+       PI    => CONST_PI,   &
+       EPS   => CONST_EPS,  &
+       SOUND => CONST_SOUND
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -893,10 +897,6 @@ contains
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_const, only: &
-       PI    => CONST_PI,   &
-       EPS   => CONST_EPS,  &
-       SOUND => CONST_SOUND
     use mod_grd, only: &
        GRD_htop, &
        GRD_gz
@@ -1165,6 +1165,8 @@ contains
        q,          q_pl,         &
        tendency,   tendency_pl,  &
        tendency_q, tendency_q_pl )
+    use mod_const, only: &
+       CVdry => CONST_CVdry
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -1174,8 +1176,6 @@ contains
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_const, only: &
-       CVdry => CONST_CVdry
     use mod_comm, only: &
        COMM_data_transfer
     use mod_grd, only: &
@@ -1513,9 +1513,9 @@ contains
        tendency_pl(:,:,:,:) = 0.0_RP
     endif
 
-    call OPRT_horizontalize_vec( tendency(:,:,:,I_RHOGVX), tendency_pl(:,:,:,I_RHOGVX), & !--- [INOUT]
-                                 tendency(:,:,:,I_RHOGVY), tendency_pl(:,:,:,I_RHOGVY), & !--- [INOUT]
-                                 tendency(:,:,:,I_RHOGVZ), tendency_pl(:,:,:,I_RHOGVZ)  ) !--- [INOUT]
+    call OPRT_horizontalize_vec( tendency(:,:,:,I_RHOGVX), tendency_pl(:,:,:,I_RHOGVX), & ! [INOUT]
+                                 tendency(:,:,:,I_RHOGVY), tendency_pl(:,:,:,I_RHOGVY), & ! [INOUT]
+                                 tendency(:,:,:,I_RHOGVZ), tendency_pl(:,:,:,I_RHOGVZ)  ) ! [INOUT]
 
     !---------------------------------------------------------------------------
     ! For tracer
@@ -1628,6 +1628,8 @@ contains
        q,          q_pl,         &
        tendency,   tendency_pl,  &
        tendency_q, tendency_q_pl )
+    use mod_const, only: &
+       CVdry => CONST_CVdry
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -1637,8 +1639,6 @@ contains
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_const, only: &
-       CVdry => CONST_CVdry
     use mod_grd, only: &
        GRD_rdgz,  &
        GRD_rdgzh
@@ -2096,9 +2096,9 @@ contains
        enddo
     endif
 
-    call OPRT_horizontalize_vec( tendency(:,:,:,I_RHOGVX), tendency_pl(:,:,:,I_RHOGVX), & !--- [INOUT]
-                                 tendency(:,:,:,I_RHOGVY), tendency_pl(:,:,:,I_RHOGVY), & !--- [INOUT]
-                                 tendency(:,:,:,I_RHOGVZ), tendency_pl(:,:,:,I_RHOGVZ)  ) !--- [INOUT]
+    call OPRT_horizontalize_vec( tendency(:,:,:,I_RHOGVX), tendency_pl(:,:,:,I_RHOGVX), & ! [INOUT]
+                                 tendency(:,:,:,I_RHOGVY), tendency_pl(:,:,:,I_RHOGVY), & ! [INOUT]
+                                 tendency(:,:,:,I_RHOGVZ), tendency_pl(:,:,:,I_RHOGVZ)  ) ! [INOUT]
 
     call PROF_rapend('____numfilter_vdiffusion',2)
 
@@ -2229,9 +2229,9 @@ contains
        gdz_pl(:,:,:) = divdamp_coef_pl(:,:,:) * vtmp2_pl(:,:,:,3)
     endif
 
-    call OPRT_horizontalize_vec( gdx(:,:,:), gdx_pl(:,:,:), & !--- [INOUT]
-                                 gdy(:,:,:), gdy_pl(:,:,:), & !--- [INOUT]
-                                 gdz(:,:,:), gdz_pl(:,:,:)  ) !--- [INOUT]
+    call OPRT_horizontalize_vec( gdx(:,:,:), gdx_pl(:,:,:), & ! [INOUT]
+                                 gdy(:,:,:), gdy_pl(:,:,:), & ! [INOUT]
+                                 gdz(:,:,:), gdz_pl(:,:,:)  ) ! [INOUT]
 
     if ( NUMFILTER_DOdivdamp_v ) then
 
@@ -2377,9 +2377,9 @@ contains
        gdz_pl(:,:,:) = divdamp_2d_coef_pl(:,:,:) * vtmp2_pl(:,:,:,3)
     endif
 
-    call OPRT_horizontalize_vec( gdx(:,:,:), gdx_pl(:,:,:), & !--- [INOUT]
-                                 gdy(:,:,:), gdy_pl(:,:,:), & !--- [INOUT]
-                                 gdz(:,:,:), gdz_pl(:,:,:)  ) !--- [INOUT]
+    call OPRT_horizontalize_vec( gdx(:,:,:), gdx_pl(:,:,:), & ! [INOUT]
+                                 gdy(:,:,:), gdy_pl(:,:,:), & ! [INOUT]
+                                 gdz(:,:,:), gdz_pl(:,:,:)  ) ! [INOUT]
 
     call PROF_rapend('____numfilter_divdamp_2d',2)
 

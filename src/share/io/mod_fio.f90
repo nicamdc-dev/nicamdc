@@ -127,13 +127,13 @@ contains
     prc_tab(1:ADM_lall) = ADM_prc_tab(1:ADM_lall,ADM_prc_me)-1
 
     call fio_syscheck()
-    call fio_put_commoninfo( IO_SPLIT_FILE,  &
-                             IO_BIG_ENDIAN,  &
-                             IO_ICOSAHEDRON, &
-                             ADM_glevel,     &
-                             ADM_rlevel,     &
-                             ADM_lall,       &
-                             prc_tab         )
+    call fio_put_commoninfo( IO_SPLIT_FILE,  & ! [IN]
+                             IO_BIG_ENDIAN,  & ! [IN]
+                             IO_ICOSAHEDRON, & ! [IN]
+                             ADM_glevel,     & ! [IN]
+                             ADM_rlevel,     & ! [IN]
+                             ADM_lall,       & ! [IN]
+                             prc_tab         ) ! [IN]
 
     deallocate(prc_tab)
 
@@ -438,7 +438,7 @@ contains
     integer,          intent(in)    :: cdate(6)       ! cdate(1) is only used only when opt_periodic_year is T.
     logical,          intent(in)    :: opt_periodic_year
 
-    real(DP) :: midtime !--- [sec]
+    real(DP) :: midtime ! [sec]
     logical  :: startflag
     integer  :: did, fid
     integer  :: i

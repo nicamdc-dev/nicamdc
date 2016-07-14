@@ -120,13 +120,13 @@ contains
     prc_tab(1:ADM_lall) = ADM_prc_tab(1:ADM_lall,ADM_prc_me)-1
 
     call hio_syscheck()
-    call hio_put_commoninfo( HIO_SPLIT_FILE,  &
-                             HIO_BIG_ENDIAN,  &
-                             HIO_ICOSAHEDRON, &
-                             ADM_glevel,      &
-                             ADM_rlevel,      &
-                             ADM_lall,        &
-                             prc_tab          )
+    call hio_put_commoninfo( HIO_SPLIT_FILE,  & ! [IN]
+                             HIO_BIG_ENDIAN,  & ! [IN]
+                             HIO_ICOSAHEDRON, & ! [IN]
+                             ADM_glevel,      & ! [IN]
+                             ADM_rlevel,      & ! [IN]
+                             ADM_lall,        & ! [IN]
+                             prc_tab          ) ! [IN]
 
     deallocate(prc_tab)
 
@@ -441,7 +441,7 @@ contains
     integer(DP), allocatable :: te(:)
     integer                  :: num_of_var
 
-    real(DP) :: midtime !--- [sec]
+    real(DP) :: midtime ! [sec]
     logical  :: startflag
     integer  :: did, fid
     integer  :: i

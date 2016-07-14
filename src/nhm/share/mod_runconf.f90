@@ -144,7 +144,7 @@ module mod_runconf
 
   integer, public            :: TRC_vmax   =  0 ! total number of tracers
 
-  character(len=H_SHORT), public, allocatable :: TRC_name(:) ! short name  of tracer [add] H.Yashiro 20110819
+  character(len=H_SHORT), public, allocatable :: TRC_name(:) ! short name  of tracer
   character(len=H_MID),   public, allocatable :: WLABEL  (:) ! description of tracer
 
   integer, public            :: NQW_MAX    =  0 ! subtotal number of water mass tracers

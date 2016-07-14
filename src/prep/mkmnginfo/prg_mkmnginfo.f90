@@ -52,21 +52,21 @@ Program prg_mkmnginfo
   Integer :: rlevel
   Integer :: prc_num
   character(len=256) :: output_fname
-  character(len=16)  :: HGRID_SYSTEM = 'ICO' ! S.Iga100607
-                                  !'LCP' ! S.Iga100607
-                                  !'MLCP' ! S.Iga100607
-                                  !'MLCP-OLD' ! S.Iga100607
+  character(len=16)  :: HGRID_SYSTEM = 'ICO' !
+                                  !'LCP' !
+                                  !'MLCP' !
+                                  !'MLCP-OLD' !
                                   !'PERIODIC-1DMD' ! T.Ohno 110721
                                   !'1DMD-ON-SPHERE' ! M.Hara 110721
   character(len=16)  :: MAPPING_TYPE = '' ! [add] C.Kodama 2011/12/14
                                       ! ''        : standard
                                       ! 'K-TERAI' : TERAI Mapping for K-Computer
-  integer ::  XTMS_K= 6 ! S.Iga100607 (it is not used for icosahedral)
-  integer ::  XTMS_MLCP_S= 1 ! only for MLCP  S.Iga100607
+  integer ::  XTMS_K= 6 !  (it is not used for icosahedral)
+  integer ::  XTMS_MLCP_S= 1 ! only for MLCP
   namelist / mkmnginfo_cnf / &
-       XTMS_K,   & !--- S.Iga100607
-       XTMS_MLCP_S,   & !--- S.Iga100607
-       hgrid_system,         & !--- grid system( default ico) S.Iga100607
+       XTMS_K,   & !---
+       XTMS_MLCP_S,   & !---
+       hgrid_system,         & !--- grid system( default ico)
        rlevel,               & !--- region division level
        prc_num,              & !--- process number
        output_fname,         & !--- output region-management filename
@@ -80,20 +80,31 @@ Program prg_mkmnginfo
   Open(fid,file='mkmnginfo.cnf',form='formatted')
   Read(fid,nml=mkmnginfo_cnf)
 
-  !
-  if (trim(HGRID_SYSTEM).eq.'LCP') then!S.Iga100607
-     call generate_mngtab_lcp(rlevel,prc_num,output_fname) !S.Iga100607
-  elseif (trim(HGRID_SYSTEM).eq.'MLCP') then !S.Iga100607
-     call generate_mngtab_mlcp(rlevel,prc_num,output_fname) !S.Iga100607
-  elseif (trim(HGRID_SYSTEM).eq.'MLCP-OLD') then !S.Iga100607
-     call generate_mngtab_mlcp_old(rlevel,prc_num,output_fname) !S.Iga100607
-  elseif (trim(HGRID_SYSTEM).eq.'PERIODIC-1DMD') then ! T.Ohno 110721
+  if    ( HGRID_SYSTEM == 'LCP') then!
+
+     call generate_mngtab_lcp(rlevel,prc_num,output_fname) !
+
+  elseif( HGRID_SYSTEM == 'MLCP') then !
+
+     call generate_mngtab_mlcp(rlevel,prc_num,output_fname) !
+
+  elseif( HGRID_SYSTEM == 'MLCP-OLD') then !
+
+     call generate_mngtab_mlcp_old(rlevel,prc_num,output_fname) !
+
+  elseif( HGRID_SYSTEM == 'PERIODIC-1DMD') then ! T.Ohno 110721
+
      call generate_mngtab_periodic_1dmd(rlevel,prc_num,output_fname) ! T.Ohno 110721
-  elseif (trim(HGRID_SYSTEM).eq.'1DMD-ON-SPHERE') then ! M.Hara 110721
+
+  elseif( HGRID_SYSTEM == '1DMD-ON-SPHERE') then ! M.Hara 110721
+
      call generate_mngtab_1dmd_on_sphere(rlevel,prc_num,output_fname) ! M.Hara 110721
-  else !S.Iga100607
-     Call generate_mngtab(rlevel,prc_num,output_fname)  !icosahedral
-  endif!S.Iga100607
+
+  else
+
+     call generate_mngtab(rlevel,prc_num,output_fname)  !icosahedral
+
+  endif
 
   call MPI_Finalize(ierr)
 
@@ -102,25 +113,22 @@ Program prg_mkmnginfo
 Contains
   !-----------------------------------------------------------------------------
   Subroutine generate_mngtab( rl, nmax_prc, fname )
-!!$ [Add] 07.10.22 T.Mitsui
     use mod_adm, only: &
-         nmax_mng => PRC_RGN_NMAX
+         nmax_mng => ADM_l_limit
     Implicit None
     !
-    Integer, Intent(in) :: rl
+    Integer, intent(in) :: rl
     Integer, intent(in) :: nmax_prc
-    Character(len=*), Intent(in) :: fname
+    character(len=*), intent(in) :: fname
     !
     Integer :: i,j,d
     Integer :: i_nb,j_nb,d_nb,edgid_nb
     Integer :: l,l_nb
     Integer :: k,m,p
     Integer :: rgnlen
-    integer :: tmp, tmp_4r, tmp_m  ! ! [add] C.Kodama 2011/12/14
+    integer :: tmp, tmp_4r, tmp_m
     Integer, Parameter :: nmax_dmd=10
-    ![Mod] 07.10.22 T.Mitsui
-!!$    Integer, Parameter :: nmax_mng=2048
-    !
+
     Integer :: all_rgn
     !
     Integer, Allocatable :: rgn_tab(:,:,:)
@@ -335,23 +343,20 @@ Contains
 !---------------- for LCP
   Subroutine generate_mngtab_lcp( rl, nmax_prc, fname )
     use mod_adm, only: &
-         nmax_mng => PRC_RGN_NMAX
+         nmax_mng => ADM_l_limit
 !         ADM_XTMS_K
     Implicit None
     !
-    Integer, Intent(in) :: rl
+    Integer, intent(in) :: rl
     Integer, intent(in) :: nmax_prc
-    Character(len=*), Intent(in) :: fname
+    character(len=*), intent(in) :: fname
     !
     Integer :: i,j,d
     Integer :: i_nb,j_nb,d_nb,edgid_nb
     Integer :: l,l_nb
     Integer :: k,m,p
     Integer :: rgnlen
-!    Integer, Parameter :: nmax_dmd=24!10
     Integer :: nmax_dmd=-1
-    ![Mod] 07.10.22 T.Mitsui
-!!$    Integer, Parameter :: nmax_mng=2048
     !
     Integer :: all_rgn
     !
@@ -469,17 +474,17 @@ Contains
                          j_nb=rgnlen
                          d_nb=dmd_data(ADM_SW,d)
                          edgid_nb=ADM_NE
-                      Elseif (d<=XTMS_K*2) then
+                      elseif(d<=XTMS_K*2) then
                          i_nb=i
                          j_nb=rgnlen
                          d_nb=dmd_data(ADM_SW,d)
                          edgid_nb=ADM_NE
-                      elseif (d<=XTMS_K*3) then
+                      elseif(d<=XTMS_K*3) then
                          i_nb=rgnlen
                          j_nb=rgnlen+1-i
                          d_nb=dmd_data(ADM_SW,d)
                          edgid_nb=ADM_SE
-                      elseif (d<=XTMS_K*4) then
+                      elseif(d<=XTMS_K*4) then
                          i_nb=rgnlen
                          j_nb=rgnlen+1-i
                          d_nb=dmd_data(ADM_SW,d)
@@ -498,17 +503,17 @@ Contains
                          j_nb=rgnlen
                          d_nb=dmd_data(ADM_NW,d)
                          edgid_nb=ADM_NE
-                      elseif (d<=XTMS_K*2) then
+                      elseif(d<=XTMS_K*2) then
                          i_nb=rgnlen+1-j
                          j_nb=rgnlen
                          d_nb=dmd_data(ADM_NW,d)
                          edgid_nb=ADM_NE
-                      elseif (d<=XTMS_K*3) then
+                      elseif(d<=XTMS_K*3) then
                          i_nb=rgnlen
                          j_nb=j
                          d_nb=dmd_data(ADM_NW,d)
                          edgid_nb=ADM_SE
-                      elseif (d<=XTMS_K*4) then
+                      elseif(d<=XTMS_K*4) then
                          i_nb=rgnlen
                          j_nb=j
                          d_nb=dmd_data(ADM_NW,d)
@@ -527,17 +532,17 @@ Contains
                          j_nb=rgnlen+1-i
                          d_nb=dmd_data(ADM_NE,d)
                          edgid_nb=ADM_NW
-                      elseif (d<=XTMS_K*2) then
+                      elseif(d<=XTMS_K*2) then
                          i_nb=i
                          j_nb=1
                          d_nb=dmd_data(ADM_NE,d)
                          edgid_nb=ADM_SW
-                      elseif (d<=XTMS_K*3) then
+                      elseif(d<=XTMS_K*3) then
                         i_nb=1
                          j_nb=rgnlen+1-i
                          d_nb=dmd_data(ADM_NE,d)
                          edgid_nb=ADM_NW
-                      elseif (d<=XTMS_K*4) then
+                      elseif(d<=XTMS_K*4) then
                          i_nb=i
                          j_nb=1
                          d_nb=dmd_data(ADM_NE,d)
@@ -556,17 +561,17 @@ Contains
                          j_nb=j
                          d_nb=dmd_data(ADM_SE,d)
                          edgid_nb=ADM_NW
-                      elseif (d<=XTMS_K*2) then
+                      elseif(d<=XTMS_K*2) then
                          i_nb=rgnlen+1-j
                          j_nb=1
                          d_nb=dmd_data(ADM_SE,d)
                          edgid_nb=ADM_SW
-                      elseif (d<=XTMS_K*3) then
+                      elseif(d<=XTMS_K*3) then
                          i_nb=1
                          j_nb=j
                          d_nb=dmd_data(ADM_SE,d)
                          edgid_nb=ADM_NW
-                      elseif (d<=XTMS_K*4) then
+                      elseif(d<=XTMS_K*4) then
                          i_nb=rgnlen+1-j
                          j_nb=1
                          d_nb=dmd_data(ADM_SE,d)
@@ -635,23 +640,21 @@ Contains
   !---------------- for MLCP
   Subroutine generate_mngtab_mlcp( rl, nmax_prc, fname )
     use mod_adm, only: &
-         nmax_mng => PRC_RGN_NMAX
+         nmax_mng => ADM_l_limit
 !         ADM_XTMS_K
     Implicit None
     !
-    Integer, Intent(in) :: rl
+    Integer, intent(in) :: rl
     Integer, intent(in) :: nmax_prc
-    Character(len=*), Intent(in) :: fname
+    character(len=*), intent(in) :: fname
     !
     Integer :: i,j,d
     Integer :: i_nb,j_nb,d_nb,edgid_nb
     Integer :: l,l_nb
     Integer :: k,m,p
     Integer :: rgnlen
-!    Integer, Parameter :: nmax_dmd=24!10
+
     Integer,save :: nmax_dmd=-1
-    ![Mod] 07.10.22 T.Mitsui
-!!$    Integer, Parameter :: nmax_mng=2048
     !
     Integer :: all_rgn
     !
@@ -722,7 +725,7 @@ Contains
        do d=1,nmax_dmd
           if (dmd_data(i,d)<1) then
              dmd_data(i,d)=dmd_data(i,d)+nmax_dmd
-          elseif (dmd_data(i,d)>nmax_dmd) then
+          elseif(dmd_data(i,d)>nmax_dmd) then
              dmd_data(i,d)=dmd_data(i,d)-nmax_dmd
           endif
        enddo
@@ -888,23 +891,21 @@ Contains
   !---------------- for MLCP
   Subroutine generate_mngtab_mlcp_old( rl, nmax_prc, fname )
     use mod_adm, only: &
-         nmax_mng => PRC_RGN_NMAX
+         nmax_mng => ADM_l_limit
 !         ADM_XTMS_K
     Implicit None
     !
-    Integer, Intent(in) :: rl
+    Integer, intent(in) :: rl
     Integer, intent(in) :: nmax_prc
-    Character(len=*), Intent(in) :: fname
+    character(len=*), intent(in) :: fname
     !
     Integer :: i,j,d
     Integer :: i_nb,j_nb,d_nb,edgid_nb
     Integer :: l,l_nb
     Integer :: k,m,p
     Integer :: rgnlen
-!    Integer, Parameter :: nmax_dmd=24!10
+
     Integer,save :: nmax_dmd=-1
-    ![Mod] 07.10.22 T.Mitsui
-!!$    Integer, Parameter :: nmax_mng=2048
     !
     Integer :: all_rgn
     !
@@ -1116,12 +1117,12 @@ Contains
   subroutine generate_mngtab_periodic_1dmd( rl, nmax_prc, fname )
 !!$ [Add] 11.07,21 T.Ohno
     use mod_adm, only: &
-         nmax_mng => PRC_RGN_NMAX
+         nmax_mng => ADM_l_limit
     Implicit None
     !
-    Integer, Intent(in)          :: rl
+    Integer, intent(in)          :: rl
     Integer, intent(in)          :: nmax_prc
-    Character(len=*), Intent(in) :: fname
+    character(len=*), intent(in) :: fname
     !
     Integer :: i,j,d
     Integer :: i_nb,j_nb,d_nb,edgid_nb
@@ -1276,12 +1277,12 @@ Contains
   Subroutine generate_mngtab_1dmd_on_sphere( rl, nmax_prc, fname )
 !!$ [Add] 11.07,01 M.Hara
     use mod_adm, only: &
-         nmax_mng => PRC_RGN_NMAX
+         nmax_mng => ADM_l_limit
     Implicit None
     !
-    Integer, Intent(in) :: rl
+    Integer, intent(in) :: rl
     Integer, intent(in) :: nmax_prc
-    Character(len=*), Intent(in) :: fname
+    character(len=*), intent(in) :: fname
     !
     Integer :: i,j,d
     Integer :: i_nb,j_nb,d_nb,edgid_nb

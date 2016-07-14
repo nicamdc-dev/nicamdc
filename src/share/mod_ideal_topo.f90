@@ -59,8 +59,8 @@ contains
        PRC_MPIstop
     use mod_adm, only: &
        ADM_KNONE, &
-       ADM_gall,  &
-       ADM_lall
+       ADM_lall,  &
+       ADM_gall
     implicit none
 
     real(RP), intent(in)  :: lat (ADM_gall,ADM_KNONE,ADM_lall)
@@ -91,20 +91,20 @@ contains
 
     if    ( topo_type == 'Schar_Moderate' ) then
 
-       call IDEAL_topo_Schar_Moderate( lat (:,:,:), & !--- [IN]
-                                       lon (:,:,:), & !--- [IN]
-                                       Zsfc(:,:,:)  ) !--- [OUT]
+       call IDEAL_topo_Schar_Moderate( lat (:,:,:), & ! [IN]
+                                       lon (:,:,:), & ! [IN]
+                                       Zsfc(:,:,:)  ) ! [OUT]
 
     elseif( topo_type == 'Schar_Steep' ) then
 
-       call IDEAL_topo_Schar_Steep( lat (:,:,:), & !--- [IN]
-                                    lon (:,:,:), & !--- [IN]
-                                    Zsfc(:,:,:)  ) !--- [OUT]
+       call IDEAL_topo_Schar_Steep( lat (:,:,:), & ! [IN]
+                                    lon (:,:,:), & ! [IN]
+                                    Zsfc(:,:,:)  ) ! [OUT]
 
     elseif( topo_type == 'JW' ) then
 
-       call IDEAL_topo_JW( lat (:,:,:), & !--- [IN]
-                           Zsfc(:,:,:)  ) !--- [OUT]
+       call IDEAL_topo_JW( lat (:,:,:), & ! [IN]
+                           Zsfc(:,:,:)  ) ! [OUT]
 
     else
        write(*         ,*) 'xxx Not appropriate topo_type. STOP.'
@@ -123,13 +123,13 @@ contains
        Zsfc )
     use mod_process, only: &
        PRC_MPIstop
+    use mod_const, only: &
+       PI  => CONST_PI, &
+       D2R => CONST_D2R
     use mod_adm, only: &
        ADM_KNONE, &
        ADM_lall,  &
        ADM_gall
-    use mod_const, only: &
-       PI  => CONST_PI, &
-       D2R => CONST_D2R
     implicit none
 
     real(RP), intent(in)  :: lat (ADM_gall,ADM_KNONE,ADM_lall)
@@ -209,14 +209,14 @@ contains
        Zsfc )
     use mod_process, only: &
        PRC_MPIstop
-    use mod_adm, only: &
-       ADM_KNONE, &
-       ADM_lall,  &
-       ADM_gall
     use mod_const, only: &
        PI     => CONST_PI,     &
        D2R    => CONST_D2R,    &
        RADIUS => CONST_RADIUS
+    use mod_adm, only: &
+       ADM_KNONE, &
+       ADM_lall,  &
+       ADM_gall
     implicit none
 
     real(RP), intent(in)  :: lat (ADM_gall,ADM_KNONE,ADM_lall)
@@ -288,15 +288,15 @@ contains
   subroutine IDEAL_topo_JW( &
        lat, &
        Zsfc )
-    use mod_adm, only: &
-       ADM_KNONE, &
-       ADM_lall,  &
-       ADM_gall
     use mod_const, only: &
        PI     => CONST_PI,     &
        GRAV   => CONST_GRAV,   &
        RADIUS => CONST_RADIUS, &
        OHM    => CONST_OHM
+    use mod_adm, only: &
+       ADM_KNONE, &
+       ADM_lall,  &
+       ADM_gall
     implicit none
 
     real(RP), intent(in)  :: lat (ADM_gall,ADM_KNONE,ADM_lall)

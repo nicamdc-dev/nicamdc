@@ -8,9 +8,8 @@
 !! @author H.Tomita
 !!
 !! @par History
-!! @li      2004-02-17 (H.Tomita)   Imported from igdc-4.34
+!! @li      2004-02-17 (H.Tomita)  [NEW]
 !! @li      2009-07-10 (H.Tomita)   Change the cnvvar_rhokin, cnvvar_kin for the energy conservation.
-!! @li      2011-07-22 (T.Ohno)     add subroutines for plane hgrid systems
 !!
 !<
 module mod_cnvvar

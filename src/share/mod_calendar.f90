@@ -3,15 +3,12 @@
 !! Calendar module
 !!
 !! @par Description
-!!         This module contains subroutines w.r.t. the calender.
-!!         Orginal code is from CCSR/NIES/AGCM5.4.01, Modified by M.Satoh
+!!         This module provides the subroutines for calendar.
 !!
 !! @author H.Tomita
 !!
 !! @par History
-!! @li      2004-02-18 (H.Tomita) Imported from the NICAM-subset model
-!! @li      2004-05-31 (      )   Sub[calenar_ss2yh] belongs to "public".
-!! @li      2007-03-23 (Y.Niwa)   CALENDAR_daymo, private --> public
+!! @li      2004-02-17 (H.Tomita)  [NEW]
 !!
 !<
 module mod_calendar
@@ -31,19 +28,7 @@ module mod_calendar
   public :: CALENDAR_setup
   public :: CALENDAR_ss2yh
   public :: CALENDAR_yh2ss
-!   public :: CALENDAR_ointvl
   public :: CALENDAR_ss2cc
-!   public :: CALENDAR_ssaft
-!   public :: CALENDAR_secdy
-!   public :: CALENDAR_ss2ds
-!   public :: CALENDAR_ss2yd
-!   public :: CALENDAR_ym2dd
-!   public :: CALENDAR_ds2ss
-!   public :: CALENDAR_dayyr
-!   public :: CALENDAR_xx2ss
-!   public :: CALENDAR_PERPR
-!   public :: CALENDAR_dd2ym
-!   public :: CALENDAR_daymo
 
   !-----------------------------------------------------------------------------
   !

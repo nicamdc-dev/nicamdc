@@ -1273,15 +1273,12 @@ contains
           form   = 'formatted', &
           status = 'replace'    )
 
-       ! S.Iga051226=>
        if ( devide_template ) then
-          ! W. Yanase 081008   use %h2 instead of %f2 for GrADS template
           write(fid,'(A)') 'DSET ^'//trim(outfile)//'.%y4-%m2-%d2-%h2h%n2m'//'.grd'
           write(fid,'(A)') 'OPTIONS TEMPLATE '
        else
           write(fid,'(A)') 'DSET ^'//trim(outfile)//'.grd'
        endif
-       ! S.Iga051226<=
 
        write(fid,'(A)')      'TITLE NICAM data output'
        write(fid,'(A)')      'OPTIONS BIG_ENDIAN '
@@ -1306,8 +1303,8 @@ contains
           write(fid,'(10(1x,F9.2))') (alt(k),k=1,kmax)
        endif
 
-       s1 = trim( sec2initplate(time_str) ) ! S.Iga060508
-       s2 = trim( timeincrement(int(dt)) )  ! S.Iga060508
+       s1 = trim( sec2initplate(time_str) )
+       s2 = trim( timeincrement(int(dt)) )
        write(fid,'(A,I5,2A,1x,A)') 'TDEF ',nstep, ' LINEAR ', trim(s1), trim(s2)
 
        write(fid,'(a,i5)') 'VARS ', 1
@@ -1542,15 +1539,12 @@ contains
 
   end subroutine makegtoolheader
 
-  !S.Iga051226 =>
   !-----------------------------------------------------------------------------
   function sec2initplate(datesec) result(template)
     !-- output grads-like template part  like 01JAN0000
     implicit none
 
     integer(8)        :: datesec
-    ! [mod] 10/08/03 T.Mitsui, can be compiled by gfortran
-!!$  character(*):: template
     character(len=20) :: template
 
     integer :: d(6)
@@ -1576,8 +1570,6 @@ contains
     implicit none
 
     integer(8)        :: datesec
-    ! [mod] 10/08/03 T.Mitsui, can be compiled by gfortran
-!!$  character(*):: template
     character(len=20) :: template
 
     integer :: d(6)
@@ -1609,7 +1601,6 @@ contains
     template = trim(tmp)//'mn'
 
   end function timeincrement
-  !S.Iga051226 <=
 
   !-----------------------------------------------------------------------------
   function CALENDAR_ss2cc_gtool(datesec) result(template)

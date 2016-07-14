@@ -86,6 +86,8 @@ contains
        frhog,       frhog_pl,       & !--- IN    : hyperviscosity tendency for rhog
        dt,                          & !--- IN    : delta t
        thubern_lim                  ) !--- IN    : switch of thubern limiter
+    use mod_const, only: &
+       EPS => CONST_EPS
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -93,16 +95,13 @@ contains
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kall,    &
-       ADM_kmin,    &
-       ADM_kmax,    &
-       ADM_gall_1d, &
        ADM_gmin,    &
        ADM_gmax,    &
        ADM_gslf_pl, &
        ADM_gmin_pl, &
-       ADM_gmax_pl
-    use mod_const, only: &
-       EPS => CONST_EPS
+       ADM_gmax_pl, &
+       ADM_kmin,    &
+       ADM_kmax
     use mod_grd, only: &
        GRD_rdgz, &
        GRD_afac, &
@@ -618,6 +617,8 @@ contains
        rhovy,  rhovy_pl,  &
        rhovz,  rhovz_pl,  &
        dt                 )
+    use mod_const, only: &
+       EPS => CONST_EPS
     use mod_adm, only: &
        ADM_have_pl,    &
        ADM_have_sgp,   &
@@ -632,8 +633,6 @@ contains
        ADM_gslf_pl,    &
        ADM_gmin_pl,    &
        ADM_gmax_pl
-    use mod_const, only: &
-       EPS => CONST_EPS
     use mod_grd, only: &
        GRD_xr,   &
        GRD_xr_pl
@@ -1205,6 +1204,9 @@ contains
        q,   q_pl,   &
        d,   d_pl,   &
        ck,  ck_pl   )
+    use mod_const, only: &
+       BIG => CONST_HUGE, &
+       EPS => CONST_EPS
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_gall,    &
@@ -1214,9 +1216,6 @@ contains
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_const, only: &
-       BIG => CONST_HUGE, &
-       EPS => CONST_EPS
     implicit none
 
     real(RP), intent(inout) :: q_h   (ADM_gall,   ADM_kall,ADM_lall   )
@@ -1355,6 +1354,9 @@ contains
        d,      d_pl,    &
        ch,     ch_pl,   &
        cmask,  cmask_pl )
+    use mod_const, only: &
+       BIG => CONST_HUGE, &
+       EPS => CONST_EPS
     use mod_adm, only: &
        ADM_have_pl,    &
        ADM_have_sgp,   &
@@ -1369,9 +1371,6 @@ contains
        ADM_gslf_pl,    &
        ADM_gmin_pl,    &
        ADM_gmax_pl
-    use mod_const, only: &
-       BIG => CONST_HUGE, &
-       EPS => CONST_EPS
     use mod_comm, only: &
        COMM_data_transfer
     implicit none

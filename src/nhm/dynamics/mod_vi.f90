@@ -40,8 +40,7 @@ module mod_vi
      ADM_lall_pl, &
      ADM_gall,    &
      ADM_gall_pl, &
-     ADM_kall,    &
-     ADM_gslf_pl
+     ADM_kall
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -133,14 +132,14 @@ contains
        PROG_mean,     PROG_mean_pl,   &
        num_of_itr,                    &
        dt                             )
-    use mod_adm, only: &
-       ADM_have_pl, &
-       ADM_kmax,    &
-       ADM_kmin
     use mod_const, only: &
        GRAV  => CONST_GRAV, &
        Rdry  => CONST_Rdry, &
        CVdry => CONST_CVdry
+    use mod_adm, only: &
+       ADM_have_pl, &
+       ADM_kmax,    &
+       ADM_kmin
     use mod_comm, only: &
        COMM_data_transfer
     use mod_grd, only: &
@@ -746,7 +745,7 @@ contains
 
        call PROF_rapend  ('____vi_path2',2)
 
-    enddo  ! small step end
+    enddo ! small step end
 
     !---------------------------------------------------------------------------
     !

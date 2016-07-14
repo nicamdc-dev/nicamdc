@@ -21,7 +21,6 @@ module mod_gtl
   !
   !++ Used modules
   !
-  use mpi
   use mod_precision
   use mod_stdio
   !-----------------------------------------------------------------------------

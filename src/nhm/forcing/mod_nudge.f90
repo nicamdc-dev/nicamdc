@@ -57,14 +57,14 @@ module mod_nudge
   real(RP), private, allocatable :: NDG_ref   (:,:,:,:)
   real(RP), private, allocatable :: NDG_ref_pl(:,:,:,:)
 
-  integer, private :: NDG_VMAX = -1
-  integer, private :: I_vx  = -1
-  integer, private :: I_vy  = -1
-  integer, private :: I_vz  = -1
-  integer, private :: I_w   = -1
-  integer, private :: I_tem = -1
-  integer, private :: I_pre = -1
-  integer, private :: I_qv  = -1
+  integer,  private :: NDG_VMAX = -1
+  integer,  private :: I_vx  = -1
+  integer,  private :: I_vy  = -1
+  integer,  private :: I_vz  = -1
+  integer,  private :: I_w   = -1
+  integer,  private :: I_tem = -1
+  integer,  private :: I_pre = -1
+  integer,  private :: I_qv  = -1
 
   real(RP), private :: NDG_tau_vxvyvz = -999.0_RP
   real(RP), private :: NDG_tau_w      = -999.0_RP
@@ -79,6 +79,11 @@ contains
   subroutine NDG_setup
     use mod_process, only: &
        PRC_MPIstop
+    use mod_const, only: &
+       PI    => CONST_PI,    &
+       UNDEF => CONST_UNDEF, &
+       Rdry  => CONST_Rdry,  &
+       CVdry => CONST_CVdry
     use mod_adm, only: &
        ADM_have_pl,   &
        ADM_KNONE,     &
@@ -89,11 +94,6 @@ contains
        ADM_kall,      &
        ADM_kmin,      &
        ADM_vlayer
-    use mod_const, only: &
-       PI    => CONST_PI,    &
-       UNDEF => CONST_UNDEF, &
-       Rdry  => CONST_Rdry,  &
-       CVdry => CONST_CVdry
     use mod_grd, only: &
        GRD_gz
     use mod_vmtr, only: &
@@ -480,6 +480,9 @@ contains
        frhoge,    frhoge_pl,    &
        frhogetot, frhogetot_pl, &
        out_tendency             )
+    use mod_const, only: &
+       GRAV  => CONST_GRAV, &
+       CVdry => CONST_CVdry
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -489,9 +492,6 @@ contains
        ADM_kall,    &
        ADM_kmin,    &
        ADM_kmax
-    use mod_const, only: &
-       GRAV  => CONST_GRAV, &
-       CVdry => CONST_CVdry
     use mod_oprt, only: &
        OPRT_horizontalize_vec
     use mod_vmtr, only: &
@@ -570,9 +570,9 @@ contains
                       + NDG_fact_pl(:,:,:,I_pre) * ( NDG_ref_pl(:,:,:,I_pre) - pre_pl(:,:,:) )
     endif
 
-    call OPRT_horizontalize_vec( dvx, dvx_pl, &
-                                 dvy, dvy_pl, &
-                                 dvz, dvz_pl  )
+    call OPRT_horizontalize_vec( dvx, dvx_pl, & ! [INOUT]
+                                 dvy, dvy_pl, & ! [INOUT]
+                                 dvz, dvz_pl  ) ! [INOUT]
 
     frhogvx  (:,:,:) = frhogvx  (:,:,:) + dvx (:,:,:) * rhog(:,:,:)
     frhogvy  (:,:,:) = frhogvy  (:,:,:) + dvy (:,:,:) * rhog(:,:,:)
@@ -710,6 +710,10 @@ contains
        halo2_coef, &
        weight,     &
        weight_pl   )
+    use mod_const, only: &
+       D2R    => CONST_D2R,   &
+       UNDEF  => CONST_UNDEF, &
+       RADIUS => CONST_RADIUS
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -717,10 +721,6 @@ contains
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_KNONE
-    use mod_const, only: &
-       D2R    => CONST_D2R,   &
-       UNDEF  => CONST_UNDEF, &
-       RADIUS => CONST_RADIUS
     use mod_vector, only: &
        VECTR_distance
     use mod_comm, only: &

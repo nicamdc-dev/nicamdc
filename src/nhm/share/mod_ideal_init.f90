@@ -27,11 +27,7 @@ module mod_ideal_init
   !
   use mod_precision
   use mod_stdio
-  use mod_adm, only: &
-     ADM_KNONE, &
-     ADM_gall,  &
-     ADM_kall,  &
-     ADM_lall
+
   use mod_const, only: &
      pi    => CONST_PI,     &
      g     => CONST_GRAV,   &
@@ -41,6 +37,15 @@ module mod_ideal_init
      Rv    => CONST_Rvap,   &
      Cp    => CONST_CPdry,  &
      PRE00 => CONST_PRE00
+  use mod_adm, only: &
+     ADM_KNONE, &
+     ADM_lall,  &
+     ADM_gall,  &
+     ADM_kall,  &
+     ADM_kmin,  &
+     ADM_kmax
+  use mod_runconf, only: &
+     TRC_vmax
   use dcmip_initial_conditions_test_1_2_3, only: &
      test2_steady_state_mountain, &
      test2_schaer_mountain,       &
@@ -130,12 +135,6 @@ contains
        DIAG_var )
     use mod_process, only: &
        PRC_MPIstop
-    use mod_adm, only: &
-       ADM_gall,      &
-       ADM_kall,      &
-       ADM_lall
-    use mod_runconf, only: &
-       TRC_vmax
     implicit none
 
     real(RP), intent(out) :: DIAG_var(ADM_gall,ADM_kall,ADM_lall,6+TRC_VMAX)
@@ -247,21 +246,14 @@ contains
   !-----------------------------------------------------------------------------
   subroutine tracer_input( &
        TRC_var )
-    use mod_adm, only: &
-       ADM_gall,  &
-       ADM_kall,  &
-       ADM_KNONE, &
-       ADM_lall
-    use mod_random, only: &
-       RANDOM_get
     use mod_const, only: &
        D2R => CONST_D2R
+    use mod_random, only: &
+       RANDOM_get
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
        GRD_s
-    use mod_runconf, only: &
-       TRC_vmax
     implicit none
 
     real(RP), intent(out) :: TRC_var(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
@@ -331,17 +323,12 @@ contains
        kdim,    &
        lall,    &
        DIAG_var )
-    use mod_adm, only: &
-       ADM_kmin,  &
-       ADM_kmax
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
        GRD_s,   &
        GRD_Z,   &
        GRD_vz
-    use mod_runconf, only: &
-       TRC_vmax
     implicit none
 
     integer,  intent(in)    :: ijdim
@@ -468,9 +455,6 @@ contains
        DIAG_var      )
     use mod_process, only: &
        PRC_MPIstop
-    use mod_adm, only: &
-       ADM_kmin,      &
-       ADM_kmax
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
@@ -478,8 +462,6 @@ contains
        GRD_Z,   &
        GRD_ZH,  &
        GRD_vz
-    use mod_runconf, only: &
-       TRC_vmax
     implicit none
 
     integer,          intent(in)  :: ijdim
@@ -621,9 +603,6 @@ contains
        DIAG_var     )
     use mod_process, only: &
        PRC_MPIstop
-    use mod_adm, only: &
-       ADM_kmin,      &
-       ADM_kmax
     use mod_grd, only: &
        GRD_LAT,  &
        GRD_LON,  &
@@ -633,17 +612,16 @@ contains
        GRD_Z,    &
        GRD_ZH,   &
        GRD_vz
+    use mod_vmtr, only : &
+      phi => VMTR_PHI
     use mod_runconf, only: &
        I_QV,      &
        NQW_MAX,   &
-       TRC_vmax,  &
        NCHEM_MAX, &
        NCHEM_STR, &
        NCHEM_END
     use mod_bndcnd, only : &
       BNDCND_thermo
-    use mod_vmtr, only : &
-      phi => VMTR_PHI
     implicit none
 
     integer,          intent(in)  :: ijdim
@@ -847,8 +825,7 @@ contains
        GRD_vz
     use mod_runconf, only: &
        I_QV,    &
-       NQW_MAX, &
-       TRC_vmax
+       NQW_MAX
     implicit none
 
     integer,          intent(in)  :: ijdim
@@ -999,9 +976,8 @@ contains
        GRD_Z,   &
        GRD_vz
     use mod_runconf, only: &
-       I_QV,      &
-       NQW_MAX,   &
-       TRC_vmax
+       I_QV,    &
+       NQW_MAX
     implicit none
 
     integer,  intent(in)  :: ijdim
@@ -1125,9 +1101,6 @@ contains
        DIAG_var    )
     use mod_process, only: &
        PRC_MPIstop
-    use mod_adm, only: &
-       ADM_kmin, &
-       ADM_kmax
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
@@ -1137,7 +1110,6 @@ contains
        GRD_ZH,  &
        GRD_vz
     use mod_runconf, only: &
-       TRC_vmax, &
        NCHEM_STR
     use mod_chemvar, only: &
        chemvar_getid
@@ -1445,9 +1417,6 @@ contains
        DIAG_var   )
     use mod_process, only: &
        PRC_MPIstop
-    use mod_adm, only: &
-       ADM_kmax, &
-       ADM_kmin
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
@@ -1456,7 +1425,6 @@ contains
        GRD_Z,   &
        GRD_ZH
     use mod_runconf, only: &
-       TRC_vmax, &
        NCHEM_STR
     use mod_chemvar, only: &
        chemvar_getid
@@ -1719,9 +1687,6 @@ contains
      kdim,    &
      lall,    &
      DIAG_var )
-    use mod_adm, only: &
-       ADM_kmin, &
-       ADM_kmax
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
@@ -1729,8 +1694,6 @@ contains
        GRD_Z,   &
        GRD_ZH,  &
        GRD_vz
-    use mod_runconf, only: &
-       TRC_vmax
     implicit none
 
     integer, intent(in)    :: ijdim
@@ -1840,8 +1803,6 @@ contains
        kdim,       &
        lall,       &
        DIAG_var    )
-    use mod_adm, only: &
-       ADM_KNONE
     use mod_vector, only: &
        VECTR_xyz2latlon
     use mod_grd, only: &
@@ -1852,8 +1813,6 @@ contains
        GRD_vz,         &
        GRD_Z,          &
        GRD_ZH
-    use mod_runconf, only: &
-       TRC_vmax
     implicit none
 
     integer, intent(in)  :: ijdim

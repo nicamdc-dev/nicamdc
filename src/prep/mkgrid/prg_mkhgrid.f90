@@ -95,9 +95,9 @@ program mkhgrid
 
   !########## main ##########
 
-  call GRD_input_hgrid( basename     = MKGRD_IN_BASENAME, &
-                        input_vertex = .false.,           &
-                        io_mode      = MKGRD_IN_io_mode   )
+  call GRD_input_hgrid( basename     = MKGRD_IN_BASENAME, & ! [IN]
+                        input_vertex = .false.,           & ! [IN]
+                        io_mode      = MKGRD_IN_io_mode   ) ! [IN]
 
   call MKGRD_prerotate
 
@@ -109,9 +109,9 @@ program mkhgrid
 
   call MKGRD_gravcenter
 
-  call GRD_output_hgrid( basename      = MKGRD_OUT_BASENAME, &
-                         output_vertex = .true.,             &
-                         io_mode       = MKGRD_OUT_io_mode   )
+  call GRD_output_hgrid( basename      = MKGRD_OUT_BASENAME, & ! [IN]
+                         output_vertex = .true.,             & ! [IN]
+                         io_mode       = MKGRD_OUT_io_mode   ) ! [IN]
 
   !---< gmtr module setup >---
   call GRD_scaling( RADIUS )

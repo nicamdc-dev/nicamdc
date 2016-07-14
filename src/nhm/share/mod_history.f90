@@ -74,7 +74,7 @@ module mod_history
   integer,                private :: HIST_dtype     = -1
   character(len=H_LONG),  private :: output_path    = ''
   character(len=H_LONG),  private :: histall_fname  = ''
-  character(len=H_SHORT), private :: output_io_mode != 'LEGACY'
+  character(len=H_SHORT), private :: output_io_mode
   integer,                private :: output_size    = 4
   integer,                private :: npreslev       = 1
   real(RP),               private :: pres_levs(60)  != CONST_PRE00
@@ -123,14 +123,6 @@ contains
   subroutine history_setup
     use mod_process, only: &
        PRC_MPIstop
-    use mod_adm, only: &
-       ADM_gall,      &
-       ADM_gall_pl,   &
-       ADM_lall,      &
-       ADM_lall_pl,   &
-       ADM_kmin,      &
-       ADM_kmax,      &
-       ADM_vlayer
     use mod_io_param, only: &
        IO_REAL4, &
        IO_REAL8
@@ -138,6 +130,14 @@ contains
        PRE00 => CONST_PRE00
     use mod_calendar, only: &
        CALENDAR_ss2yh
+    use mod_adm, only: &
+       ADM_lall,      &
+       ADM_lall_pl,   &
+       ADM_gall,      &
+       ADM_gall_pl,   &
+       ADM_kmin,      &
+       ADM_kmax,      &
+       ADM_vlayer
     use mod_grd, only: &
        GRD_gz
     use mod_time, only: &
@@ -275,9 +275,9 @@ contains
     HIST_io_fname = trim(output_path)//trim(histall_fname)
     HIST_io_desc  = trim(RUNNAME)
 
-    if ( output_size == 4 ) then
+    if    ( output_size == 4 ) then
        HIST_dtype = IO_REAL4
-    elseif ( output_size == 8 ) then
+    elseif( output_size == 8 ) then
        HIST_dtype = IO_REAL8
     else
        write(*,*) 'output_size is not appropriate:',output_size
@@ -518,22 +518,22 @@ contains
   subroutine  history_in( item, gd, l_region )
     use mod_process, only : &
        PRC_MPIstop
+    use mod_const, only: &
+       UNDEF => CONST_UNDEF
+    use mod_calendar, only: &
+       CALENDAR_ss2yh
     use mod_adm, only : &
        ADM_l_me,        &
+       ADM_lall,        &
        ADM_gall,        &
        ADM_gall_in,     &
-       ADM_lall,        &
        ADM_kmin,        &
        ADM_IopJop_nmax, &
        ADM_IopJop,      &
        ADM_GIoJo
-    use mod_const, only: &
-       UNDEF => CONST_UNDEF
     use mod_time, only: &
        TIME_CSTEP, &
        TIME_DTL
-    use mod_calendar, only: &
-       CALENDAR_ss2yh
     implicit none
 
     character(len=*), intent(in) :: item
@@ -706,6 +706,9 @@ contains
   subroutine history_out
     use mod_process, only : &
        PRC_MPIstop
+    use mod_calendar, only : &
+       CALENDAR_ss2yh, &
+       CALENDAR_ss2cc
     use mod_adm, only: &
        ADM_gall,      &
        ADM_gall_pl,   &
@@ -714,16 +717,13 @@ contains
        ADM_kall,      &
        ADM_kmax,      &
        ADM_kmin
-    use mod_time, only: &
-       TIME_CSTEP, &
-       TIME_CTIME
-    use mod_calendar, only : &
-       CALENDAR_ss2yh, &
-       Calendar_SS2CC
     use mod_comm, only : &
        COMM_var
     use mod_fio, only: &
        FIO_output
+    use mod_time, only: &
+       TIME_CSTEP, &
+       TIME_CTIME
     use mod_gtl, only: &
        GTL_max, &
        GTL_min, &
@@ -731,6 +731,7 @@ contains
     use mod_vintrpl, only: &
        VINTRPL_z_level, &
        VINTRPL_z_level2
+    implicit none
 
     real(RP) :: tmp   (ADM_gall,   ADM_kall,ADM_lall   )
     real(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -780,7 +781,7 @@ contains
     ! At least one variable will output, do communication
     if ( num_output > 0 ) then
        write(IO_FID_LOG,*) '### HISTORY num_output = ', num_output
-       call Calendar_SS2CC ( HTIME, TIME_CTIME )
+       call CALENDAR_ss2cc( HTIME, TIME_CTIME )
        write(IO_FID_LOG,*) '###         date-time  = ', HTIME
 
        call COMM_var( v_save, v_save_pl, KSUM, 1 )
@@ -990,12 +991,12 @@ contains
   !-----------------------------------------------------------------------------
   subroutine get_log_pres
     use mod_adm, only: &
+       ADM_KNONE,   &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kall,    &
-       ADM_KNONE,   &
        ADM_kmax,    &
        ADM_kmin
     use mod_grd, only: &
@@ -1007,10 +1008,10 @@ contains
        VMTR_RGSGAM2
     use mod_runconf, only: &
        TRC_VMAX
-    use mod_prgvar, only: &
-       prgvar_get
     use mod_thrmdyn, only: &
        THRMDYN_tempre
+    use mod_prgvar, only: &
+       prgvar_get
     implicit none
 
     real(RP) :: rhog     (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -1046,13 +1047,13 @@ contains
     cnvpre_fac2(:,:,:) = 0.0_RP
     cnvpre_klev(:,:,:) = -1
 
-    call prgvar_get( rhog,   rhog_pl,   &
-                     rhogvx, rhogvx_pl, &
-                     rhogvy, rhogvy_pl, &
-                     rhogvz, rhogvz_pl, &
-                     rhogw,  rhogw_pl,  &
-                     rhoge,  rhoge_pl,  &
-                     rhogq,  rhogq_pl   )
+    call prgvar_get( rhog,   rhog_pl,   & ! [OUT]
+                     rhogvx, rhogvx_pl, & ! [OUT]
+                     rhogvy, rhogvy_pl, & ! [OUT]
+                     rhogvz, rhogvz_pl, & ! [OUT]
+                     rhogw,  rhogw_pl,  & ! [OUT]
+                     rhoge,  rhoge_pl,  & ! [OUT]
+                     rhogq,  rhogq_pl   ) ! [OUT]
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
@@ -1129,11 +1130,11 @@ contains
        pre,    &
        z_sfc,  &
        pre_sfc )
+    use mod_const, only: &
+       GRAV => CONST_GRAV
     use mod_adm, only: &
        knone => ADM_KNONE, &
        kmin  => ADM_kmin
-    use mod_const, only: &
-       GRAV => CONST_GRAV
     implicit none
 
     integer,  intent(in)  :: ijdim

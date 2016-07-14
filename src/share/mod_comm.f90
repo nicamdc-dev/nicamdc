@@ -410,9 +410,9 @@ contains
     ! Iga(061008) ==>
     namelist / COMMPARAM /   &
          max_varmax,         & ! max number of communication variables
-         opt_check_varmax,   & ! check option of varmax [Add] T.Mitsui 07/11/07
-         opt_comm_dbg,       & ! debug option of comm_data_transfer [Add] S.Iga 0909XX
-         opt_comm_barrier      ! debug option of comm_data_transfer [Add] S.Iga 0909XX
+         opt_check_varmax,   & ! check option of varmax
+         opt_comm_dbg,       & ! debug option of comm_data_transfer
+         opt_comm_barrier      ! debug option of comm_data_transfer
 
     integer ::  ierr
     !---------------------------------------------------------------------------
@@ -446,9 +446,9 @@ contains
        halomax=1
     endif
 
-    max_comm_r2p=ADM_vlink*2!S.Iga100607
-    max_comm_p2r=ADM_vlink*2!S.Iga100607
-    max_comm=max_comm_r2r+max_comm_r2p+max_comm_p2r!S.Iga100607
+    max_comm_r2p=ADM_vlink*2
+    max_comm_p2r=ADM_vlink*2
+    max_comm=max_comm_r2r+max_comm_r2p+max_comm_p2r
 
     kmax=ADM_kall
 
@@ -753,7 +753,7 @@ contains
                    enddo
                 enddo
              endif
-          elseif (ADM_rgn_etab(ADM_dir,ADM_nw,rgnid)==ADM_se) then
+          elseif(ADM_rgn_etab(ADM_dir,ADM_nw,rgnid)==ADM_se) then
              if (halo>=1) then
                 m=m+1
                 rsize_r2r(m,halo,rgnid)=(gmax(halo)-gmin(halo)+1)*halo
@@ -833,7 +833,7 @@ contains
                    enddo
                 enddo
              endif
-          elseif (ADM_rgn_etab(ADM_dir,ADM_ne,rgnid)==ADM_sw) then
+          elseif(ADM_rgn_etab(ADM_dir,ADM_ne,rgnid)==ADM_sw) then
              if (halo>=1) then
                 m=m+1
                 rsize_r2r(m,halo,rgnid)=(gmax(halo)-gmin(halo)+1)*halo
@@ -964,7 +964,7 @@ contains
                       enddo
                    enddo
                 endif
-             elseif (ADM_rgn_vtab(ADM_dir,ADM_w,rgnid,2)==ADM_e) then
+             elseif(ADM_rgn_vtab(ADM_dir,ADM_w,rgnid,2)==ADM_e) then
                 if (halo>=1) then
                    m=m+1
                    rsize_r2r(m,halo,rgnid)=halo*halo
@@ -981,7 +981,7 @@ contains
                       enddo
                    enddo
                 endif
-             elseif (ADM_rgn_vtab(ADM_dir,ADM_w,rgnid,2)==ADM_s) then
+             elseif(ADM_rgn_vtab(ADM_dir,ADM_w,rgnid,2)==ADM_s) then
                 if (halo>=1) then
                    m=m+1
                    rsize_r2r(m,halo,rgnid)=halo*(halo+1)/2
@@ -1044,7 +1044,7 @@ contains
                       enddo
                    enddo
                 endif
-             elseif (ADM_rgn_vtab(ADM_dir,ADM_n,rgnid,2)==ADM_s) then
+             elseif(ADM_rgn_vtab(ADM_dir,ADM_n,rgnid,2)==ADM_s) then
                 if (halo>=2) then
                    m=m+1
                    rsize_r2r(m,halo,rgnid)=(halo-1)*halo/2
@@ -1061,7 +1061,7 @@ contains
                       enddo
                    enddo
                 endif
-             elseif (ADM_rgn_vtab(ADM_dir,ADM_n,rgnid,2)==ADM_w) then
+             elseif(ADM_rgn_vtab(ADM_dir,ADM_n,rgnid,2)==ADM_w) then
                 if (halo>=1) then
                    m=m+1
                    rsize_r2r(m,halo,rgnid)=halo*halo
@@ -1104,7 +1104,7 @@ contains
                       enddo
                    enddo
                 endif
-             elseif (ADM_rgn_vtab(ADM_dir,ADM_e,rgnid,2)==ADM_w) then
+             elseif(ADM_rgn_vtab(ADM_dir,ADM_e,rgnid,2)==ADM_w) then
                 if (halo>=1) then
                    m=m+1
                    rsize_r2r(m,halo,rgnid)=halo*halo
@@ -1121,7 +1121,7 @@ contains
                       enddo
                    enddo
                 endif
-             elseif (ADM_rgn_vtab(ADM_dir,ADM_e,rgnid,2)==ADM_s) then
+             elseif(ADM_rgn_vtab(ADM_dir,ADM_e,rgnid,2)==ADM_s) then
                 if (halo>=2) then
                    m=m+1
                    rsize_r2r(m,halo,rgnid)=(halo-1)*halo/2
@@ -1181,7 +1181,7 @@ contains
                       enddo
                    enddo
                 endif
-             elseif (ADM_rgn_vtab(ADM_dir,ADM_s,rgnid,2)==ADM_e) then
+             elseif(ADM_rgn_vtab(ADM_dir,ADM_s,rgnid,2)==ADM_e) then
                 if (halo>=2) then
                    m=m+1
                    rsize_r2r(m,halo,rgnid)=halo*(halo-1)
@@ -1199,7 +1199,7 @@ contains
                       enddo
                    enddo
                 endif
-             elseif (ADM_rgn_vtab(ADM_dir,ADM_s,rgnid,2)==ADM_w) then
+             elseif(ADM_rgn_vtab(ADM_dir,ADM_s,rgnid,2)==ADM_w) then
                 if (halo>=1) then
                    m=m+1
                    rsize_r2r(m,halo,rgnid)=halo*halo
@@ -1226,7 +1226,7 @@ contains
           if ((ADM_rgn_vnum(ADM_w,rgnid)==3)) then
              if ((ADM_rgn_etab(ADM_dir,ADM_nw,rgnid)==ADM_ne)) then
                 n_hemisphere_copy(ADM_w,halo,rgnid)=1
-             elseif ((ADM_rgn_etab(ADM_dir,ADM_nw,rgnid)==ADM_se)) then
+             elseif((ADM_rgn_etab(ADM_dir,ADM_nw,rgnid)==ADM_se)) then
                 s_hemisphere_copy(ADM_w,halo,rgnid)=1
              endif
           endif
@@ -1239,7 +1239,7 @@ contains
           if ((ADM_rgn_vnum(ADM_e,rgnid)==3)) then
              if ((ADM_rgn_etab(ADM_dir,ADM_ne,rgnid)==ADM_nw)) then
                 n_hemisphere_copy(ADM_e,halo,rgnid)=1
-             elseif ((ADM_rgn_etab(ADM_dir,ADM_ne,rgnid)==ADM_sw)) then
+             elseif((ADM_rgn_etab(ADM_dir,ADM_ne,rgnid)==ADM_sw)) then
                 s_hemisphere_copy(ADM_e,halo,rgnid)=1
              endif
           endif
@@ -1988,13 +1988,12 @@ contains
     !
     ! <== iga for dbg 090917
     if (opt_comm_dbg) then
-!       dbg_sendbuf_init = -1d66  * (ADM_prc_me+1000)
        dbg_sendbuf_init = -888E+30_RP
        dbg_recvbuf_init = -777E+30_RP
        allocate(dbg_areq_save(2*(ADM_lall*max_comm_r2r+ADM_vlink*4),4))
-       dbg_areq_save(:,:) = -999 ! [Add] 12/03/26 T.Seiki
+       dbg_areq_save(:,:) = -999
     endif
-    ! iga for dbg 090916 ==>
+
     contains
     !
     subroutine re_setup_pl_comm_info

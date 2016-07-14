@@ -348,8 +348,6 @@ contains
 
   !-----------------------------------------------------------------------------
   !>
-  !> get prognostic variables from prg[num].
-  !>
   subroutine prgvar_get_withdiag( &
        rhog,   rhog_pl,   &
        rhogvx, rhogvx_pl, &
@@ -416,8 +414,8 @@ contains
     integer :: n, k, l, nq
     !---------------------------------------------------------------------------
 
-    call cnvvar_prg2diag( PRG_var (:,:,:,:), PRG_var_pl (:,:,:,:), & !--- [IN]
-                          DIAG_var(:,:,:,:), DIAG_var_pl(:,:,:,:)  ) !--- [OUT]
+    call cnvvar_prg2diag( PRG_var (:,:,:,:), PRG_var_pl (:,:,:,:), & ! [IN]
+                          DIAG_var(:,:,:,:), DIAG_var_pl(:,:,:,:)  ) ! [OUT]
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
@@ -706,8 +704,8 @@ contains
     integer :: n, k, l, nq, ij
     !---------------------------------------------------------------------------
 
-    call cnvvar_prg2diag( PRG_var (:,:,:,:), PRG_var_pl (:,:,:,:), & !--- [IN]
-                          DIAG_var(:,:,:,:), DIAG_var_pl(:,:,:,:)  ) !--- [OUT]
+    call cnvvar_prg2diag( PRG_var (:,:,:,:), PRG_var_pl (:,:,:,:), & ! [IN]
+                          DIAG_var(:,:,:,:), DIAG_var_pl(:,:,:,:)  ) ! [OUT]
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
@@ -751,8 +749,6 @@ contains
   end subroutine prgvar_get_in_withdiag
 
   !-----------------------------------------------------------------------------
-  !>
-  !> set prognostic variables to prg[num] and COMMUNICATION.
   !>
   subroutine prgvar_set_in( &
        rhog,   &
@@ -900,7 +896,7 @@ contains
 
        write(IO_FID_LOG,*) '*** make ideal initials'
 
-       call dycore_input( DIAG_var(:,:,:,:) ) !--- [OUT]
+       call dycore_input( DIAG_var(:,:,:,:) ) ! [OUT]
 
     elseif( input_io_mode == 'IDEAL_TRACER' ) then
 
@@ -911,7 +907,7 @@ contains
 
        write(IO_FID_LOG,*) '*** make ideal initials for tracer'
 
-       call tracer_input( DIAG_var(:,:,:,DIAG_vmax0+1:DIAG_vmax0+TRC_vmax) ) !--- [OUT]
+       call tracer_input( DIAG_var(:,:,:,DIAG_vmax0+1:DIAG_vmax0+TRC_vmax) ) ! [OUT]
 
     endif !--- io_mode
 
@@ -943,8 +939,8 @@ contains
        write(IO_FID_LOG,'(1x,A,A16,2(A,1PE24.17))') '--- ', TRC_name(nq),  ': max=', val_max, ', min=', val_min
     enddo
 
-    call cnvvar_diag2prg( PRG_var (:,:,:,:), PRG_var_pl (:,:,:,:), & !--- [OUT]
-                          DIAG_var(:,:,:,:), DIAG_var_pl(:,:,:,:)  ) !--- [IN]
+    call cnvvar_diag2prg( PRG_var (:,:,:,:), PRG_var_pl (:,:,:,:), & ! [OUT]
+                          DIAG_var(:,:,:,:), DIAG_var_pl(:,:,:,:)  ) ! [IN]
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) '====== data range check : prognostic variables ======'
@@ -1006,7 +1002,7 @@ contains
 
     character(len=*), intent(in) :: basename
 
-    character(len=H_MID)   :: desc = 'INITIAL/RESTART_data_of_prognostic_variables' ! [add] H.Yashiro 20110819
+    character(len=H_MID)   :: desc = 'INITIAL/RESTART_data_of_prognostic_variables'
 
     character(len=H_SHORT) :: DLABEL(DIAG_vmax0)
     data DLABEL / 'Pressure ',        &
@@ -1035,8 +1031,8 @@ contains
     integer  :: l, rgnid, nq
     !---------------------------------------------------------------------------
 
-    call cnvvar_prg2diag( PRG_var (:,:,:,:), PRG_var_pl (:,:,:,:), & !--- [IN]
-                          DIAG_var(:,:,:,:), DIAG_var_pl(:,:,:,:)  ) !--- [OUT]
+    call cnvvar_prg2diag( PRG_var (:,:,:,:), PRG_var_pl (:,:,:,:), & ! [IN]
+                          DIAG_var(:,:,:,:), DIAG_var_pl(:,:,:,:)  ) ! [OUT]
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) '====== data range check : prognostic variables ======'
@@ -1101,7 +1097,7 @@ contains
           close(fid)
        enddo
 
-    endif  !--- io_mode
+    endif !--- io_mode
 
     return
   end subroutine restart_output

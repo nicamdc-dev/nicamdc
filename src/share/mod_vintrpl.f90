@@ -58,6 +58,7 @@ module mod_vintrpl
   public :: VINTRPL_sigma_level
   public :: VINTRPL_mk_sigma
   public :: VINTRPL_half2full
+
   !-----------------------------------------------------------------------------
   !
   !++ Private parameters, variables, and subroutines

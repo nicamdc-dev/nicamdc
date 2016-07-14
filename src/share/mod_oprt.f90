@@ -2667,15 +2667,15 @@ contains
        basename )
     use mod_process, only: &
        PRC_MPIstop
-    use mod_adm, only: &
-       ADM_have_pl
     use mod_io_param, only: &
        IO_REAL8, &
        IO_REAL4
-    use mod_fio, only: &
-       FIO_output
+    use mod_adm, only: &
+       ADM_have_pl
     use mod_comm, only: &
        COMM_data_transfer
+    use mod_fio, only: &
+       FIO_output
     implicit none
 
     character(len=*), intent(in) :: basename

@@ -258,6 +258,8 @@ contains
     allocate( VMTR_PHI_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
 #endif
 
+    write(IO_FID_LOG,*) '*** setup metrics for 3-D control volume'
+
     !--- if 1 layer model( shallow water model ),
     if ( ADM_kall == ADM_KNONE ) then
 
@@ -277,18 +279,18 @@ contains
                         GRD_vz        (:,:,:,GRD_ZH),  GRD_vz_pl        (:,:,:,GRD_ZH),  & ! [IN]
                         OPRT_coef_grad(:,:,:,:),       OPRT_coef_grad_pl(:,:,:)          ) ! [IN]
 
-    call OPRT_horizontalize_vec( var(:,:,:,JXH), var_pl(:,:,:,JXH), & !--- [INOUT]
-                                 var(:,:,:,JYH), var_pl(:,:,:,JYH), & !--- [INOUT]
-                                 var(:,:,:,JZH), var_pl(:,:,:,JZH)  ) !--- [INOUT]
+    call OPRT_horizontalize_vec( var(:,:,:,JXH), var_pl(:,:,:,JXH), & ! [INOUT]
+                                 var(:,:,:,JYH), var_pl(:,:,:,JYH), & ! [INOUT]
+                                 var(:,:,:,JZH), var_pl(:,:,:,JZH)  ) ! [INOUT]
 
     !--- calculation of Jx, Jy, and Jz
     call OPRT_gradient( var           (:,:,:,JX:JZ), var_pl           (:,:,:,JX:JZ), & ! [OUT]
                         GRD_vz        (:,:,:,GRD_Z), GRD_vz_pl        (:,:,:,GRD_Z), & ! [IN]
                         OPRT_coef_grad(:,:,:,:),     OPRT_coef_grad_pl(:,:,:)        ) ! [IN]
 
-    call OPRT_horizontalize_vec( var(:,:,:,JX), var_pl(:,:,:,JX), & !--- [INOUT]
-                                 var(:,:,:,JY), var_pl(:,:,:,JY), & !--- [INOUT]
-                                 var(:,:,:,JZ), var_pl(:,:,:,JZ)  ) !--- [INOUT]
+    call OPRT_horizontalize_vec( var(:,:,:,JX), var_pl(:,:,:,JX), & ! [INOUT]
+                                 var(:,:,:,JY), var_pl(:,:,:,JY), & ! [INOUT]
+                                 var(:,:,:,JZ), var_pl(:,:,:,JZ)  ) ! [INOUT]
 
     !--- fill HALO
     call COMM_data_transfer( var, var_pl )

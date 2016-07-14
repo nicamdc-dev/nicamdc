@@ -272,6 +272,8 @@ contains
     integer  :: i, j, k0, l, d, v, n
     !---------------------------------------------------------------------------
 
+    write(IO_FID_LOG,*) '*** setup metrics for hexagonal/pentagonal mesh'
+
     k0 = ADM_KNONE
 
     GMTR_p   (:,:,:,:)   = 0.0_RP
@@ -454,6 +456,8 @@ contains
     integer  :: i, j, k0, l, d, v, n, t
     !---------------------------------------------------------------------------
 
+    write(IO_FID_LOG,*) '*** setup metrics for triangle mesh'
+
     k0 = ADM_KNONE
 
     GMTR_t   (:,:,:,:,:) = 0.0_RP
@@ -617,6 +621,8 @@ contains
 
     integer  :: i, j, k0, l, d, v, n
     !---------------------------------------------------------------------------
+
+    write(IO_FID_LOG,*) '*** setup metrics for cell arcs'
 
     k0 = ADM_KNONE
 

@@ -26,10 +26,6 @@ module mod_thrmdyn
   !++ Used modules
   !
   use mod_precision
-  use mod_adm, only: &
-     kdim => ADM_kall, &
-     kmin => ADM_kmin, &
-     kmax => ADM_kmax
   use mod_const, only: &
      Rdry   => CONST_Rdry,  &
      CPdry  => CONST_CPdry, &
@@ -41,6 +37,10 @@ module mod_thrmdyn
      TEM00  => CONST_TEM00, &
      PSAT0  => CONST_PSAT0, &
      EPSvap => CONST_EPSvap
+  use mod_adm, only: &
+     kdim => ADM_kall, &
+     kmin => ADM_kmin, &
+     kmax => ADM_kmax
   use mod_runconf, only: &
      nqmax => TRC_VMAX, &
      NQW_STR,           &
