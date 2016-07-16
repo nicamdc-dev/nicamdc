@@ -205,7 +205,6 @@ contains
        VMTR_GSGAM2, &
        VMTR_PHI
     use mod_gtl, only: &
-       GTL_generate_uv,          &
        GTL_global_sum_eachlayer, &
        GTL_clip_region_1layer,   &
        GTL_max, &
@@ -230,6 +229,8 @@ contains
        THRMDYN_th
     use mod_bndcnd, only: &
        BNDCND_thermo
+    use mod_cnvvar, only: &
+       cnvvar_vh2uv
     use mod_history, only: &
        history_in
     implicit none
@@ -334,12 +335,12 @@ contains
     enddo
 
     ! zonal and meridonal wind
-    call GTL_generate_uv( u,  u_pl,       & ! [OUT]
-                          v,  v_pl,       & ! [OUT]
-                          vx, vx_pl,      & ! [IN]
-                          vy, vy_pl,      & ! [IN]
-                          vz, vz_pl,      & ! [IN]
-                          withcos=.false. ) ! [IN]
+    call cnvvar_vh2uv( u,  u_pl,       & ! [OUT]
+                       v,  v_pl,       & ! [OUT]
+                       vx, vx_pl,      & ! [IN]
+                       vy, vy_pl,      & ! [IN]
+                       vz, vz_pl,      & ! [IN]
+                       withcos=.false. ) ! [IN]
 
     ! vertical wind at cell center
     do l = 1, ADM_lall
@@ -380,12 +381,12 @@ contains
 
     ! zonal and meridonal wind with cos(phi)
     if (out_uv_cos) then
-       call GTL_generate_uv( ucos, u_pl,    & ! [OUT]
-                             vcos, v_pl,    & ! [OUT]
-                             vx,   vx_pl,   & ! [IN]
-                             vy,   vy_pl,   & ! [IN]
-                             vz,   vz_pl,   & ! [IN]
-                             withcos=.true. ) ! [IN]
+       call cnvvar_vh2uv( ucos, u_pl,    & ! [OUT]
+                          vcos, v_pl,    & ! [OUT]
+                          vx,   vx_pl,   & ! [IN]
+                          vy,   vy_pl,   & ! [IN]
+                          vz,   vz_pl,   & ! [IN]
+                          withcos=.true. ) ! [IN]
 
        do l = 1, ADM_lall
           call history_in( 'ml_ucos', ucos(:,:,l) )

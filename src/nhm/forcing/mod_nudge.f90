@@ -527,8 +527,8 @@ contains
        VMTR_GSGAM2H_pl, &
        VMTR_C2Wfact,    &
        VMTR_C2Wfact_pl
-    use mod_gtl, only: &
-       GTL_generate_uv
+    use mod_cnvvar, only: &
+       cnvvar_vh2uv
     use mod_history, only: &
        history_in
     implicit none
@@ -652,11 +652,11 @@ contains
 
     !--- output tendency
     if ( out_tendency ) then
-       call GTL_generate_uv( du,  du_pl,  & ! [OUT]
-                             dv,  dv_pl,  & ! [OUT]
-                             dvx, dvx_pl, & ! [IN]
-                             dvy, dvy_pl, & ! [IN]
-                             dvz, dvz_pl  ) ! [IN]
+       call cnvvar_vh2uv( du,  du_pl,  & ! [OUT]
+                          dv,  dv_pl,  & ! [OUT]
+                          dvx, dvx_pl, & ! [IN]
+                          dvy, dvy_pl, & ! [IN]
+                          dvz, dvz_pl  ) ! [IN]
 
        dtem(:,:,:) = dein(:,:,:) / CVdry
 
