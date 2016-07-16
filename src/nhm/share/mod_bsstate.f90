@@ -351,7 +351,7 @@ contains
        VMTR_PHI,   &
        VMTR_PHI_pl
     use mod_vintrpl, only: &
-       VINTRPL_zstar_level
+       VINTRPL_Z2Xi
     use mod_bndcnd, only: &
        BNDCND_thermo
     implicit none
@@ -387,9 +387,9 @@ contains
     endif
 
     !-- from z-level to zstar-level
-    call VINTRPL_zstar_level( pre_bs(:,:,:), pre_bs_pl(:,:,:), .false. )
-    call VINTRPL_zstar_level( tem_bs(:,:,:), tem_bs_pl(:,:,:), .false. )
-    call VINTRPL_zstar_level( qv_bs (:,:,:), qv_bs_pl (:,:,:), .false. )
+    call VINTRPL_Z2Xi( pre_bs(:,:,:), pre_bs_pl(:,:,:) )
+    call VINTRPL_Z2Xi( tem_bs(:,:,:), tem_bs_pl(:,:,:) )
+    call VINTRPL_Z2Xi( qv_bs (:,:,:), qv_bs_pl (:,:,:) )
 
     rho_bs(:,:,l) = pre_bs(:,:,l) / tem_bs(:,:,l) / ( ( 1.0_RP-qv_bs(:,:,l) ) * Rdry &
                                                     + (        qv_bs(:,:,l) ) * Rvap )

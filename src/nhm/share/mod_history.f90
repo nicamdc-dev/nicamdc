@@ -743,8 +743,7 @@ contains
        GTL_max, &
        GTL_min
     use mod_vintrpl, only: &
-       VINTRPL_z_level, &
-       VINTRPL_z_level2
+       VINTRPL_Xi2Z
     implicit none
 
     real(RP) :: tmp   (ADM_gall,   ADM_kall,ADM_lall   )
@@ -847,16 +846,12 @@ contains
                 tmp_pl(:,k,:) = v_save_pl(:,ksumstr(n)+k-2,:,1)
              enddo
 
-             tmp   (:,ADM_kmin-1,:) = tmp   (:,ADM_kmin,:)
-             tmp   (:,ADM_kmax+1,:) = tmp   (:,ADM_kmax,:)
-             tmp_pl(:,ADM_kmin-1,:) = tmp_pl(:,ADM_kmin,:)
-             tmp_pl(:,ADM_kmax+1,:) = tmp_pl(:,ADM_kmax,:)
-
-             if ( opt_lagintrpl_save(n) ) then
-                call VINTRPL_z_level ( tmp, tmp_pl, opt_wgrid_save(n) )
-             else
-                call VINTRPL_z_level2( tmp, tmp_pl, opt_wgrid_save(n) )
+             if ( opt_wgrid_save(n) ) then
+                write(IO_FID_LOG,*) 'xxx opt_wgrid is disabled! stop.', file_save(n)
+                call PRC_MPIstop
              endif
+
+             call VINTRPL_Xi2Z( tmp, tmp_pl, use_quad=opt_lagintrpl_save(n) )
 
              do k = ADM_kmin, ADM_kmax
                 v_save   (:,ksumstr(n)+k-2,:,1) = tmp   (:,k,:)
