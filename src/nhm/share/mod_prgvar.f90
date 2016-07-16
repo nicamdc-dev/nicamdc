@@ -116,9 +116,9 @@ contains
        TRC_vmax
     implicit none
 
-    character(len=H_LONG) :: input_basename    = ''
-    character(len=H_LONG) :: output_basename   = 'restart'
-    character(len=H_LONG) :: restart_layername = ''
+    character(len=H_LONG)  :: input_basename    = ''
+    character(len=H_LONG)  :: output_basename   = 'restart'
+    character(len=H_SHORT) :: restart_layername = ''
 
     namelist / RESTARTPARAM / &
        TRC_vmax_input,    &
@@ -863,9 +863,9 @@ contains
     character(len=*), intent(in) :: basename
 
     real(RP) :: val_max, val_min
-    logical :: nonzero
+    logical  :: nonzero
 
-    integer :: nq
+    integer  :: nq
     !---------------------------------------------------------------------------
 
     write(IO_FID_LOG,*)

@@ -514,11 +514,11 @@ contains
        append     )
     use mod_process, only: &
        PRC_MPIstop
+    use mod_const, only: &
+       UNDEF4 => CONST_UNDEF4
     use mod_adm, only: &
        ADM_gall, &
        ADM_lall
-    use mod_const, only: &
-       UNDEF4 => CONST_UNDEF4
     implicit none
 
     real(SP),         intent(in) :: var(:,:,:)
@@ -607,11 +607,11 @@ contains
        append     )
     use mod_process, only: &
        PRC_MPIstop
+    use mod_const, only: &
+       UNDEF4 => CONST_UNDEF4
     use mod_adm, only: &
        ADM_gall, &
        ADM_lall
-    use mod_const, only: &
-       UNDEF4 => CONST_UNDEF4
     implicit none
 
     real(DP),         intent(in) :: var(:,:,:)

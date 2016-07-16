@@ -30,6 +30,8 @@ program prg_mkllmap
      PRC_LOCAL_setup, &
      PRC_MPIstop,     &
      PRC_MPIfinish
+  use mod_const, only: &
+     CONST_setup
   use mod_adm, only: &
      ADM_setup
   use mod_fio, only: &
@@ -38,8 +40,6 @@ program prg_mkllmap
      HIO_setup
   use mod_comm, only: &
      COMM_setup
-  use mod_const, only: &
-     CONST_setup
   use mod_grd, only: &
      GRD_setup
   use mod_latlon, only: &
@@ -78,18 +78,19 @@ program prg_mkllmap
   call IO_LOG_setup( myrank,  & ! [IN]
                      ismaster ) ! [IN]
 
+  !--- < cnst module setup > ---
+  call CONST_setup
+
   !--- < admin module setup > ---
   call ADM_setup
-  !
+
+  !---< I/O module setup >---
   call FIO_setup
   call HIO_setup
 
   !--- < comm module setup > ---
   call COMM_setup
-  !
-  !--- < cnst module setup > ---
-  call CONST_setup
-  !
+
   !--- < grid module setup > ---
   call GRD_setup
 

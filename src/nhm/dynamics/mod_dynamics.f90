@@ -342,7 +342,6 @@ contains
     !$acc wait
 
     call PROF_rapstart('__Dynamics',1)
-
     !$acc  data &
     !$acc& create(PROG,PROGq,g_TEND,g_TENDq,f_TEND,f_TENDq,PROG0,PROGq0,PROG_split,PROG_mean) &
     !$acc& create(rho,vx,vy,vz,w,ein,tem,pre,eth,th,rhogd,pregd,q,qd,cv) &
@@ -378,7 +377,7 @@ contains
 
     if ( TRC_ADV_TYPE == 'DEFAULT' ) then
        !$acc kernels pcopy(PROGq0) pcopyin(PROGq) async(0)
-       PROGq0   (:,:,:,:) = PROGq   (:,:,:,:)
+       PROGq0(:,:,:,:) = PROGq(:,:,:,:)
        !$acc end kernels
 
        if ( ADM_have_pl ) then

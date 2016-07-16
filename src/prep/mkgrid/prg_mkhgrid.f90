@@ -8,8 +8,8 @@
 !! @author  H.Tomita
 !!
 !! @par History
-!! @li      2004-02-17 (H.Tomita)  Imported from igdc-4.33
-!! @li      2013-05-1  (H.Yashiro) NICAM-DC
+!! @li      2004-02-17 (H.Tomita)  [NEW]
+!! @li      2013-05-01 (H.Yashiro) NICAM-DC
 !!
 !<
 program mkhgrid
@@ -24,6 +24,9 @@ program mkhgrid
      PRC_MPIstart,    &
      PRC_LOCAL_setup, &
      PRC_MPIfinish
+  use mod_const, only: &
+     RADIUS => CONST_RADIUS, &
+     CONST_setup
   use mod_adm, only: &
      ADM_setup
   use mod_fio, only: &
@@ -32,9 +35,6 @@ program mkhgrid
      HIO_setup
   use mod_comm, only: &
      COMM_setup
-  use mod_const, only: &
-     RADIUS => CONST_RADIUS, &
-     CONST_setup
   use mod_grd, only: &
      GRD_input_hgrid,  &
      GRD_output_hgrid, &
@@ -81,6 +81,9 @@ program mkhgrid
   call IO_LOG_setup( myrank,  & ! [IN]
                      ismaster ) ! [IN]
 
+  !---< cnst module setup >---
+  call CONST_setup
+
   !---< admin module setup >---
   call ADM_setup
 
@@ -90,9 +93,6 @@ program mkhgrid
 
   !---< comm module setup >---
   call COMM_setup
-
-  !---< cnst module setup >---
-  call CONST_setup
 
   !---< mkgrid module setup >---
   call MKGRD_setup
@@ -117,12 +117,10 @@ program mkhgrid
                          output_vertex = .true.,             & ! [IN]
                          io_mode       = MKGRD_OUT_io_mode   ) ! [IN]
 
+
   !---< gmtr module setup >---
-
   call GRD_makelatlon
-
   call GRD_scaling( RADIUS )
-
   call GMTR_setup
 
   call MKGRD_diagnosis

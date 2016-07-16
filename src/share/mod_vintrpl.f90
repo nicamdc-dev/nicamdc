@@ -47,8 +47,7 @@ contains
        var,   &
        var_pl )
     use mod_const, only: &
-       UNDEF => CONST_UNDEF, &
-       EPS   => CONST_EPS
+       UNDEF => CONST_UNDEF
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &

@@ -8,8 +8,8 @@
 !! @author  H.Tomita
 !!
 !! @par History
-!! @li      2004-02-17 (H.Tomita)  Imported from igdc-4.33
-!! @li      2013-05-1  (H.Yashiro) NICAM-DC
+!! @li      2004-02-17 (H.Tomita)  [NEW]
+!! @li      2013-05-01 (H.Yashiro) NICAM-DC
 !!
 !<
 program mkrawgrid
@@ -24,6 +24,8 @@ program mkrawgrid
      PRC_MPIstart,    &
      PRC_LOCAL_setup, &
      PRC_MPIfinish
+  use mod_const, only: &
+     CONST_setup
   use mod_adm, only: &
      ADM_setup
   use mod_fio, only: &
@@ -32,8 +34,6 @@ program mkrawgrid
      HIO_setup
   use mod_comm, only: &
      COMM_setup
-  use mod_const, only: &
-     CONST_setup
   use mod_grd, only: &
      GRD_output_hgrid
   use mod_mkgrd, only: &
@@ -69,6 +69,9 @@ program mkrawgrid
   call IO_LOG_setup( myrank,  & ! [IN]
                      ismaster ) ! [IN]
 
+  !---< cnst module setup >---
+  call CONST_setup
+
   !---< admin module setup >---
   call ADM_setup
 
@@ -78,9 +81,6 @@ program mkrawgrid
 
   !---< comm module setup >---
   call COMM_setup
-
-  !---< cnst module setup >---
-  call CONST_setup
 
   !---< mkgrid module setup >---
   call MKGRD_setup

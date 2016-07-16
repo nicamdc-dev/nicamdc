@@ -64,14 +64,14 @@ program prg_driver
      PRC_MPIstart,    &
      PRC_LOCAL_setup, &
      PRC_MPIfinish
-  use mod_adm, only: &
-     ADM_setup
-  use mod_random, only: &
-     RANDOM_setup
   use mod_const, only: &
      CONST_setup
   use mod_calendar, only: &
      CALENDAR_setup
+  use mod_random, only: &
+     RANDOM_setup
+  use mod_adm, only: &
+     ADM_setup
   use mod_fio, only: &
      FIO_setup
   use mod_hio, only: &
@@ -227,17 +227,17 @@ program prg_driver
   write(IO_FID_LOG,*)           '##### start  setup     #####'
   if( PRC_IsMaster ) write(*,*) '##### start  setup     #####'
 
-  !---< admin module setup >---
-  call ADM_setup
-
-  !---< radom module setup >---
-  call RANDOM_setup
-
   !---< cnst module setup >---
   call CONST_setup
 
   !---< calendar module setup >---
   call CALENDAR_setup
+
+  !---< radom module setup >---
+  call RANDOM_setup
+
+  !---< admin module setup >---
+  call ADM_setup
 
   !---< I/O module setup >---
   call FIO_setup

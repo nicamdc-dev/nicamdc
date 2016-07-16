@@ -559,7 +559,7 @@ contains
     real(RP), intent(inout) :: frhoge_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(inout) :: frhogetot   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(inout) :: frhogetot_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    logical, intent(in)    :: out_tendency
+    logical,  intent(in)    :: out_tendency
 
     real(RP) :: dvx    (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: dvx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -581,7 +581,7 @@ contains
     real(RP) :: rhog_h
     real(RP) :: NDG_ref_w
 
-    integer :: g, k, l
+    integer  :: g, k, l
     !---------------------------------------------------------------------------
 
     dvx (:,:,:) = NDG_fact(:,:,:,I_vx ) * ( NDG_ref(:,:,:,I_vx ) - vx (:,:,:) )

@@ -129,7 +129,7 @@ module mod_numfilter
   real(RP), private, allocatable :: Kh_lap1_deep_factor_h(:)
   real(RP), private, allocatable :: divdamp_deep_factor  (:)
 
-  logical, private              :: debug = .false.
+  logical,  private              :: debug = .false.
 
   !-----------------------------------------------------------------------------
 contains

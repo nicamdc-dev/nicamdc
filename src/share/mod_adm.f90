@@ -169,11 +169,11 @@ module mod_adm
   !====== Information for grids ======
   !
   character(len=H_SHORT), public :: ADM_HGRID_SYSTEM = 'ICO' ! [XTMS] Horizontal Grid type
-                                                    ! 'ICO'      icosahedral
-                                                    ! 'ICO-XTMS' icosahedral but XTMS is used in oprt
-                                                    ! 'LCP'      Lambert-cornial (including PSP)
-                                                    ! 'MLCP'     Mercator+Lambert-cornial
-                                                    ! 'MLCP-OLD' OLD vergion (only for s=1)
+                                                     ! 'ICO'      icosahedral
+                                                     ! 'ICO-XTMS' icosahedral but XTMS is used in oprt
+                                                     ! 'LCP'      Lambert-cornial (including PSP)
+                                                     ! 'MLCP'     Mercator+Lambert-cornial
+                                                     ! 'MLCP-OLD' OLD vergion (only for s=1)
 
   integer,               public :: ADM_XTMS_MLCP_S  = 1 ! [XTMS] Number of segment for MLCP
 
@@ -648,7 +648,7 @@ contains
                                              ' (', 2**ADM_rlevel, ' x', 2**ADM_rlevel, ' x', ADM_DMD, ' )'
     write(IO_FID_LOG,'(1x,A,I7)') '--- #  of region per process          : ', ADM_lall
     write(IO_FID_LOG,'(1x,A)'   ) '--- ID of region in my process        : '
-    write(IO_FID_LOG,*) ADM_prc_tab(1:ADM_lall, ADM_prc_me)
+    write(IO_FID_LOG,*)           ADM_prc_tab(1:ADM_lall, ADM_prc_me)
 
     write(IO_FID_LOG,'(1x,A,I7)') '--- Region ID, contains north pole    : ', ADM_rgnid_npl_mng
     write(IO_FID_LOG,'(1x,A,I7)') '--- Region ID, contains south pole    : ', ADM_rgnid_spl_mng
@@ -656,11 +656,11 @@ contains
     write(IO_FID_LOG,'(1x,A,I7)') '--- Process rank, managing south pole : ', ADM_prc_spl
     write(IO_FID_LOG,'(1x,A)'   ) '====== Grid management info. ======'
     write(IO_FID_LOG,'(1x,A,I7)') '--- Grid level (GL)                   : ', ADM_glevel
-    write(IO_FID_LOG,'(1x,A,I7,2(A,I4),A,I7,A)') '--- Total number of grid (horizontal) : ',  &
-                                                  4**(ADM_glevel-ADM_rlevel)*ADM_rgn_nmax, &
-                                                  ' (', 2**(ADM_glevel-ADM_rlevel),         &
-                                                  ' x', 2**(ADM_glevel-ADM_rlevel),         &
-                                                  ' x', ADM_rgn_nmax, ' )'
+    write(IO_FID_LOG,'(1x,A,I7,2(A,I4),A,I7,A)') '--- Total number of grid (horizontal) : ', &
+                                                 4**(ADM_glevel-ADM_rlevel)*ADM_rgn_nmax,    &
+                                                 ' (', 2**(ADM_glevel-ADM_rlevel),           &
+                                                 ' x', 2**(ADM_glevel-ADM_rlevel),           &
+                                                 ' x', ADM_rgn_nmax, ' )'
     write(IO_FID_LOG,'(1x,A,I7)') '--- Number of vertical layer          : ', ADM_kmax-ADM_kmin+1
 
     if ( ADM_debug ) then
@@ -671,8 +671,8 @@ contains
           write(IO_FID_LOG,*) '     < edge link >   --- ( rgnid , edgid )'
           do k = ADM_SW, ADM_SE
              write(IO_FID_LOG,*) '     (',rgnid,',',k,') -> ',         &
-                                  '(', ADM_rgn_etab(ADM_RID,k,rgnid),   &
-                                  ',', ADM_rgn_etab(ADM_DIR,k,rgnid), ')'
+                                 '(', ADM_rgn_etab(ADM_RID,k,rgnid),   &
+                                 ',', ADM_rgn_etab(ADM_DIR,k,rgnid), ')'
           enddo
 
           write(IO_FID_LOG,*) '     < vertex link > --- ( rgnid , edgid )'
@@ -680,8 +680,8 @@ contains
              write(IO_FID_LOG,*) '     (',rgnid,',',k,') : ', ADM_rgn_vnum(k,rgnid), 'point link'
              do m = 1, ADM_rgn_vnum(k,rgnid)
                 write(IO_FID_LOG,*) '                -> ',                  &
-                                     '(', ADM_rgn_vtab(ADM_RID,k,rgnid,m),   &
-                                     ',', ADM_rgn_vtab(ADM_DIR,k,rgnid,m), ')'
+                                    '(', ADM_rgn_vtab(ADM_RID,k,rgnid,m),   &
+                                    ',', ADM_rgn_vtab(ADM_DIR,k,rgnid,m), ')'
              enddo
           enddo
 

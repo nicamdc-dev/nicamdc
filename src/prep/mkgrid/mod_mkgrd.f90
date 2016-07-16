@@ -8,8 +8,8 @@
 !! @author  H.Tomita
 !!
 !! @par History
-!! @li      2004-02-17 (H.Tomita)  Imported from igdc-4.33
-!! @li      2013-05-1  (H.Yashiro) NICAM-DC
+!! @li      2004-02-17 (H.Tomita)  [NEW]
+!! @li      2013-05-01 (H.Yashiro) NICAM-DC
 !!
 !<
 module mod_mkgrd
@@ -185,14 +185,14 @@ contains
 
     real(RP) :: alpha2, phi
 
-    integer :: rgnid, dmd
+    integer  :: rgnid, dmd
     real(RP) :: rdmd
 
-    integer :: rgn_all_1d, rgn_all
-    integer :: rgnid_dmd, ir, jr
+    integer  :: rgn_all_1d, rgn_all
+    integer  :: rgnid_dmd, ir, jr
 
-    integer :: nmax, nmax_prev, rl, gl
-    integer :: i, j, ij, k, l
+    integer  :: nmax, nmax_prev, rl, gl
+    integer  :: i, j, ij, k, l
     !---------------------------------------------------------------------------
 
     write(IO_FID_LOG,*) '*** Make standard grid system'
@@ -335,6 +335,11 @@ contains
   subroutine MKGRD_spring
     use mod_const, only: &
        PI => CONST_PI
+    use mod_vector, only: &
+       VECTR_cross, &
+       VECTR_dot,   &
+       VECTR_abs,   &
+       VECTR_angle
     use mod_adm, only: &
        ADM_nxyz,     &
        ADM_KNONE,    &
@@ -346,11 +351,6 @@ contains
        ADM_gall_pl,  &
        ADM_gmin,     &
        ADM_gmax
-    use mod_vector, only: &
-       VECTR_cross, &
-       VECTR_dot,   &
-       VECTR_abs,   &
-       VECTR_angle
     use mod_comm, only: &
        COMM_data_transfer
     use mod_gtl, only: &
@@ -358,15 +358,15 @@ contains
        GTL_min
     implicit none
 
-    integer, parameter :: var_vindex = 8
-    integer, parameter :: I_Rx   = 1
-    integer, parameter :: I_Ry   = 2
-    integer, parameter :: I_Rz   = 3
-    integer, parameter :: I_Wx   = 4
-    integer, parameter :: I_Wy   = 5
-    integer, parameter :: I_Wz   = 6
-    integer, parameter :: I_Fsum = 7
-    integer, parameter :: I_Ek   = 8
+    integer,  parameter :: var_vindex = 8
+    integer,  parameter :: I_Rx   = 1
+    integer,  parameter :: I_Ry   = 2
+    integer,  parameter :: I_Rz   = 3
+    integer,  parameter :: I_Wx   = 4
+    integer,  parameter :: I_Wy   = 5
+    integer,  parameter :: I_Wz   = 6
+    integer,  parameter :: I_Fsum = 7
+    integer,  parameter :: I_Ek   = 8
 
     real(RP) :: var   ( ADM_gall,   ADM_KNONE,ADM_lall,   var_vindex)
     real(RP) :: var_pl( ADM_gall_pl,ADM_KNONE,ADM_lall_pl,var_vindex)
@@ -391,7 +391,7 @@ contains
     integer  :: ip1j, ijp1, ip1jp1
     integer  :: im1j, ijm1, im1jm1
 
-    integer :: i, j, k0, l, m
+    integer  :: i, j, k0, l, m
     !---------------------------------------------------------------------------
 
     if( .NOT. MKGRD_DOSPRING ) return
@@ -549,19 +549,19 @@ contains
   !-----------------------------------------------------------------------------
   !> Apply rotation before stretching, for 1-diamond grid system
   subroutine MKGRD_prerotate
-    use mod_adm, only: &
-       ADM_have_pl, &
-       ADM_gall,    &
-       ADM_gall_pl, &
-       ADM_KNONE,   &
-       ADM_lall,    &
-       ADM_lall_pl
     use mod_const, only: &
        PI => CONST_PI
     use mod_vector, only: &
        VECTR_rotation, &
        I_Yaxis,        &
        I_Zaxis
+    use mod_adm, only: &
+       ADM_KNONE,   &
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl
     use mod_comm, only: &
        COMM_data_transfer
     implicit none
@@ -571,7 +571,7 @@ contains
     real(RP) :: alpha2
 
     real(RP) :: d2r
-    integer :: ij, k, l
+    integer  :: ij, k, l
     !---------------------------------------------------------------------------
 
     if( .NOT. MKGRD_DOPREROTATE ) return
@@ -642,18 +642,18 @@ contains
   !-----------------------------------------------------------------------------
   !> Apply stretching to grid system
   subroutine MKGRD_stretch
-    use mod_adm, only: &
-       ADM_have_pl, &
-       ADM_gall,    &
-       ADM_gall_pl, &
-       ADM_KNONE,   &
-       ADM_lall,    &
-       ADM_lall_pl
     use mod_const, only: &
        PI => CONST_PI
     use mod_vector, only: &
        VECTR_xyz2latlon, &
        VECTR_latlon2xyz
+    use mod_adm, only: &
+       ADM_KNONE,   &
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl
     use mod_comm, only: &
        COMM_data_transfer
     implicit none
@@ -662,7 +662,7 @@ contains
 
     real(RP), parameter :: criteria = 1.E-10_RP
 
-    integer :: ij, k, l
+    integer  :: ij, k, l
     !---------------------------------------------------------------------------
 
     if( .NOT. MKGRD_DOSTRETCH ) return
@@ -733,19 +733,19 @@ contains
   !> Apply shrinkng to grid system
   subroutine MKGRD_shrink
     use mod_adm, only: &
-       ADM_have_pl, &
-       ADM_gall,    &
-       ADM_gall_pl, &
        ADM_KNONE,   &
+       ADM_have_pl, &
        ADM_lall,    &
-       ADM_lall_pl
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl
     use mod_comm, only: &
        COMM_data_transfer
     implicit none
 
     real(RP) :: o(3), g(3), len
 
-    integer :: ij, k, l, ite
+    integer  :: ij, k, l, ite
     !---------------------------------------------------------------------------
 
     if( .NOT. MKGRD_DOSHRINK ) return
@@ -808,19 +808,19 @@ contains
   !-----------------------------------------------------------------------------
   !> Apply rotation to grid system
   subroutine MKGRD_rotate
-    use mod_adm, only: &
-       ADM_have_pl, &
-       ADM_gall,    &
-       ADM_gall_pl, &
-       ADM_KNONE,   &
-       ADM_lall,    &
-       ADM_lall_pl
     use mod_const, only: &
        PI => CONST_PI
     use mod_vector, only: &
        VECTR_rotation, &
        I_Yaxis,        &
        I_Zaxis
+    use mod_adm, only: &
+       ADM_KNONE,   &
+       ADM_have_pl, &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl
     use mod_comm, only: &
        COMM_data_transfer
     implicit none
@@ -829,7 +829,7 @@ contains
     real(RP) :: angle_y, angle_z
 
     real(RP) :: d2r
-    integer :: ij, k, l
+    integer  :: ij, k, l
     !---------------------------------------------------------------------------
 
     if( .NOT. MKGRD_DOROTATE ) return
@@ -909,22 +909,6 @@ contains
   !-----------------------------------------------------------------------------
   !> Diagnose grid property
   subroutine MKGRD_diagnosis
-    use mod_adm, only: &
-       ADM_nxyz,     &
-       ADM_prc_tab,  &
-       ADM_prc_me,   &
-       ADM_rgn_vnum, &
-       ADM_W,        &
-       ADM_glevel,   &
-       ADM_gall,     &
-       ADM_gall_pl,  &
-       ADM_KNONE,    &
-       ADM_lall,     &
-       ADM_lall_pl,  &
-       ADM_TI,       &
-       ADM_TJ,       &
-       ADM_gmax,     &
-       ADM_gmin
     use mod_const, only: &
        PI     => CONST_PI,     &
        RADIUS => CONST_RADIUS
@@ -932,9 +916,22 @@ contains
        VECTR_cross, &
        VECTR_dot,   &
        VECTR_abs
+    use mod_adm, only: &
+       ADM_nxyz,     &
+       ADM_TI,       &
+       ADM_TJ,       &
+       ADM_KNONE,    &
+       ADM_glevel,   &
+       ADM_have_sgp, &
+       ADM_lall,     &
+       ADM_lall_pl,  &
+       ADM_gall,     &
+       ADM_gall_pl,  &
+       ADM_gmax,     &
+       ADM_gmin
     use mod_gmtr, only: &
        GMTR_p_AREA, &
-       GMTR_p,  &
+       GMTR_p,      &
        GMTR_p_pl
     use mod_gtl, only: &
        GTL_global_sum_srf, &
@@ -963,7 +960,6 @@ contains
     real(RP) :: global_area
     integer  :: global_grid
 
-    integer  :: rgnid
     integer  :: i, j, ij, k, l, m
     !---------------------------------------------------------------------------
 
@@ -980,103 +976,100 @@ contains
     len_tot = 0.0_RP
 
     do l = 1, ADM_lall
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
+    do j = ADM_gmin, ADM_gmax
+    do i = ADM_gmin, ADM_gmax
+       ij = suf(i,j)
 
-       do j = ADM_gmin, ADM_gmax
-       do i = ADM_gmin, ADM_gmax
-          ij = suf(i,j)
+       if (       ADM_have_sgp(l) &
+            .AND. i == ADM_gmin   &
+            .AND. j == ADM_gmin   ) then ! Pentagon
 
-          if (       ADM_rgn_vnum(ADM_W,rgnid) == 3 &
-               .AND. i == ADM_gmin                  &
-               .AND. j == ADM_gmin                  ) then ! Pentagon
+          p(:,0) = GRD_xt(suf(i,  j-1),k,l,ADM_TJ,:)
+          p(:,1) = GRD_xt(suf(i,  j  ),k,l,ADM_TI,:)
+          p(:,2) = GRD_xt(suf(i,  j  ),k,l,ADM_TJ,:)
+          p(:,3) = GRD_xt(suf(i-1,j  ),k,l,ADM_TI,:)
+          p(:,4) = GRD_xt(suf(i-1,j-1),k,l,ADM_TJ,:)
+          p(:,5) = GRD_xt(suf(i,  j-1),k,l,ADM_TJ,:)
+          p(:,6) = GRD_xt(suf(i,  j  ),k,l,ADM_TI,:)
 
-             p(:,0) = GRD_xt(suf(i,  j-1),k,l,ADM_TJ,:)
-             p(:,1) = GRD_xt(suf(i,  j  ),k,l,ADM_TI,:)
-             p(:,2) = GRD_xt(suf(i,  j  ),k,l,ADM_TJ,:)
-             p(:,3) = GRD_xt(suf(i-1,j  ),k,l,ADM_TI,:)
-             p(:,4) = GRD_xt(suf(i-1,j-1),k,l,ADM_TJ,:)
-             p(:,5) = GRD_xt(suf(i,  j-1),k,l,ADM_TJ,:)
-             p(:,6) = GRD_xt(suf(i,  j  ),k,l,ADM_TI,:)
+          len(:) = 0.0_RP
+          ang(:) = 0.0_RP
+          do m = 1, 5
+             ! vector length of Pm->Pm-1, Pm->Pm+1
+             call VECTR_dot( len(m), p(:,m), p(:,m-1), p(:,m), p(:,m-1) )
+             len(m) = sqrt( len(m) )
 
-             len(:) = 0.0_RP
-             ang(:) = 0.0_RP
-             do m = 1, 5
-                ! vector length of Pm->Pm-1, Pm->Pm+1
-                call VECTR_dot( len(m), p(:,m), p(:,m-1), p(:,m), p(:,m-1) )
-                len(m) = sqrt( len(m) )
+             ! angle of Pm-1->Pm->Pm+1
+             call VECTR_dot( nvlenC, p(:,m), p(:,m-1), p(:,m), p(:,m+1) )
+             call VECTR_cross( nv(:), p(:,m), p(:,m-1), p(:,m), p(:,m+1) )
+             call VECTR_abs( nvlenS, nv(:) )
 
-                ! angle of Pm-1->Pm->Pm+1
-                call VECTR_dot( nvlenC, p(:,m), p(:,m-1), p(:,m), p(:,m+1) )
-                call VECTR_cross( nv(:), p(:,m), p(:,m-1), p(:,m), p(:,m+1) )
-                call VECTR_abs( nvlenS, nv(:) )
+             ang(m) = atan2( nvlenS, nvlenC )
+          enddo
 
-                ang(m) = atan2( nvlenS, nvlenC )
-             enddo
+          ! maximum/minimum ratio of angle between the cell vertexes
+          angle(ij,k,l) = maxval( ang(1:5) ) / minval( ang(1:5) ) - 1.0_RP
 
-             ! maximum/minimum ratio of angle between the cell vertexes
-             angle(ij,k,l) = maxval( ang(1:5) ) / minval( ang(1:5) ) - 1.0_RP
+          ! l_mean: side length of regular pentagon =sqrt(area/1.7204774005)
+          area   = GMTR_p(ij,k,l,GMTR_p_AREA)
+          l_mean = sqrt( 4.0_RP / sqrt( 25.0_RP + 10.0_RP*sqrt(5.0_RP)) * area )
 
-             ! l_mean: side length of regular pentagon =sqrt(area/1.7204774005)
-             area   = GMTR_p(ij,k,l,GMTR_p_AREA)
-             l_mean = sqrt( 4.0_RP / sqrt( 25.0_RP + 10.0_RP*sqrt(5.0_RP)) * area )
+          temp = 0.0_RP
+          do m = 1, 5
+             nlen    = nlen + 1.0_RP
+             len_tot = len_tot + len(m)
 
-             temp = 0.0_RP
-             do m = 1, 5
-                nlen    = nlen + 1.0_RP
-                len_tot = len_tot + len(m)
+             temp = temp + (len(m)-l_mean) * (len(m)-l_mean)
+          enddo
+          ! distortion of side length from l_mean
+          length(ij,k,l) = sqrt( temp/5.0_RP ) / l_mean
 
-                temp = temp + (len(m)-l_mean) * (len(m)-l_mean)
-             enddo
-             ! distortion of side length from l_mean
-             length(ij,k,l) = sqrt( temp/5.0_RP ) / l_mean
+       else ! Hexagon
 
-          else ! Hexagon
+          p(:,0) = GRD_xt(suf(i,  j-1),k,l,ADM_TJ,:)
+          p(:,1) = GRD_xt(suf(i,  j  ),k,l,ADM_TI,:)
+          p(:,2) = GRD_xt(suf(i,  j  ),k,l,ADM_TJ,:)
+          p(:,3) = GRD_xt(suf(i-1,j  ),k,l,ADM_TI,:)
+          p(:,4) = GRD_xt(suf(i-1,j-1),k,l,ADM_TJ,:)
+          p(:,5) = GRD_xt(suf(i-1,j-1),k,l,ADM_TI,:)
+          p(:,6) = GRD_xt(suf(i,  j-1),k,l,ADM_TJ,:)
+          p(:,7) = GRD_xt(suf(i,  j  ),k,l,ADM_TI,:)
 
-             p(:,0) = GRD_xt(suf(i,  j-1),k,l,ADM_TJ,:)
-             p(:,1) = GRD_xt(suf(i,  j  ),k,l,ADM_TI,:)
-             p(:,2) = GRD_xt(suf(i,  j  ),k,l,ADM_TJ,:)
-             p(:,3) = GRD_xt(suf(i-1,j  ),k,l,ADM_TI,:)
-             p(:,4) = GRD_xt(suf(i-1,j-1),k,l,ADM_TJ,:)
-             p(:,5) = GRD_xt(suf(i-1,j-1),k,l,ADM_TI,:)
-             p(:,6) = GRD_xt(suf(i,  j-1),k,l,ADM_TJ,:)
-             p(:,7) = GRD_xt(suf(i,  j  ),k,l,ADM_TI,:)
+          len(:) = 0.0_RP
+          ang(:) = 0.0_RP
+          do m = 1, 6
+             ! vector length of Pm->Pm-1, Pm->Pm+1
+             call VECTR_dot( len(m), p(:,m), p(:,m-1), p(:,m), p(:,m-1) )
+             len(m) = sqrt( len(m) )
 
-             len(:) = 0.0_RP
-             ang(:) = 0.0_RP
-             do m = 1, 6
-                ! vector length of Pm->Pm-1, Pm->Pm+1
-                call VECTR_dot( len(m), p(:,m), p(:,m-1), p(:,m), p(:,m-1) )
-                len(m) = sqrt( len(m) )
+             ! angle of Pm-1->Pm->Pm+1
+             call VECTR_dot( nvlenC, p(:,m), p(:,m-1), p(:,m), p(:,m+1) )
+             call VECTR_cross( nv(:), p(:,m), p(:,m-1), p(:,m), p(:,m+1) )
+             call VECTR_abs( nvlenS, nv(:) )
 
-                ! angle of Pm-1->Pm->Pm+1
-                call VECTR_dot( nvlenC, p(:,m), p(:,m-1), p(:,m), p(:,m+1) )
-                call VECTR_cross( nv(:), p(:,m), p(:,m-1), p(:,m), p(:,m+1) )
-                call VECTR_abs( nvlenS, nv(:) )
+             ang(m) = atan2( nvlenS, nvlenC )
+          enddo
 
-                ang(m) = atan2( nvlenS, nvlenC )
-             enddo
+          ! maximum/minimum ratio of angle between the cell vertexes
+          angle(ij,k,l) = maxval( ang(:) ) / minval( ang(:) ) - 1.0_RP
 
-             ! maximum/minimum ratio of angle between the cell vertexes
-             angle(ij,k,l) = maxval( ang(:) ) / minval( ang(:) ) - 1.0_RP
+          ! l_mean: side length of equilateral triangle
+          area   = GMTR_p(ij,k,l,GMTR_p_AREA)
+          l_mean = sqrt( 4.0_RP / sqrt(3.0_RP) / 6.0_RP * area )
 
-             ! l_mean: side length of equilateral triangle
-             area   = GMTR_p(ij,k,l,GMTR_p_AREA)
-             l_mean = sqrt( 4.0_RP / sqrt(3.0_RP) / 6.0_RP * area )
+          temp = 0.0_RP
+          do m = 1, 6
+             nlen = nlen + 1.0_RP
+             len_tot = len_tot + len(m)
 
-             temp = 0.0_RP
-             do m = 1, 6
-                nlen = nlen + 1.0_RP
-                len_tot = len_tot + len(m)
+             temp = temp + (len(m)-l_mean)*(len(m)-l_mean)
+          enddo
+          ! distortion of side length from l_mean
+          length(ij,k,l) = sqrt( temp/6.0_RP ) / l_mean
 
-                temp = temp + (len(m)-l_mean)*(len(m)-l_mean)
-             enddo
-             ! distortion of side length from l_mean
-             length(ij,k,l) = sqrt( temp/6.0_RP ) / l_mean
-
-          endif
-       enddo
-       enddo
-
+       endif
+    enddo
+    enddo
     enddo
 
     dummy    (:,:,:) = 1.0_RP
@@ -1120,13 +1113,13 @@ contains
       g1  )
     implicit none
 
-    integer, intent(in)  :: n0
+    integer,  intent(in)  :: n0
     real(RP), intent(in)  :: g0(n0,n0,3)
-    integer, intent(in)  :: n1
+    integer,  intent(in)  :: n1
     real(RP), intent(out) :: g1(n1,n1,3)
 
     real(RP) :: r
-    integer :: i, j, inew, jnew
+    integer  :: i, j, inew, jnew
     !---------------------------------------------------------------------------
 
     do i = 1, n0
