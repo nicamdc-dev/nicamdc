@@ -584,6 +584,11 @@ contains
                                                  ) * GRD_rdgz(k)
           enddo
           enddo
+
+          do g = 1, ADM_gall
+             rhogq(g,ADM_kmin-1,l,iq) = 0.0_RP
+             rhogq(g,ADM_kmax+1,l,iq) = 0.0_RP
+          enddo
        enddo
 
        if ( ADM_have_pl ) then
@@ -597,6 +602,11 @@ contains
                                                           - flx_v_pl(g,k,  l)*q_h_pl(g,k,  l) &
                                                           ) * GRD_rdgz(k)
              enddo
+             enddo
+
+             do g = 1, ADM_gall_pl
+                rhogq_pl(g,ADM_kmin-1,l,iq) = 0.0_RP
+                rhogq_pl(g,ADM_kmax+1,l,iq) = 0.0_RP
              enddo
           enddo
        endif

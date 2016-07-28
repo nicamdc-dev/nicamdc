@@ -882,16 +882,8 @@ contains
              PROGq(:,:,:,:) = PROGq(:,:,:,:) + large_step_dt * f_TENDq(:,:,:,:) ! update rhogq by viscosity
              !$acc end kernels
 
-             !$acc kernels pcopy(PROGq) async(0)
-             PROGq(:,ADM_kmin-1,:,:) = 0.0_RP
-             PROGq(:,ADM_kmax+1,:,:) = 0.0_RP
-             !$acc end kernels
-
              if ( ADM_have_pl ) then
                 PROGq_pl(:,:,:,:) = PROGq_pl(:,:,:,:) + large_step_dt * f_TENDq_pl(:,:,:,:)
-
-                PROGq_pl(:,ADM_kmin-1,:,:) = 0.0_RP
-                PROGq_pl(:,ADM_kmax+1,:,:) = 0.0_RP
              endif
 
              ! [comment] H.Tomita: I don't recommend adding the hyperviscosity term because of numerical instability in this case.
