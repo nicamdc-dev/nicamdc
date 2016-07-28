@@ -245,28 +245,28 @@ contains
 
     real(RP) :: PROG         (ADM_gall,   ADM_kall,ADM_lall,   6)         ! prognostic variables
     real(RP) :: PROG_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
-    real(RP) :: PROGq        (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! tracer variables
+    real(RP) :: PROGq        (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX) ! tracer variables
     real(RP) :: PROGq_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
     real(RP) :: g_TEND       (ADM_gall,   ADM_kall,ADM_lall,   7)         ! tendency of prognostic variables
     real(RP) :: g_TEND_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,7)
-    real(RP) :: g_TENDq      (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! tendency of tracer variables
+    real(RP) :: g_TENDq      (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX) ! tendency of tracer variables
     real(RP) :: g_TENDq_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
     real(RP) :: f_TEND       (ADM_gall,   ADM_kall,ADM_lall,   7)         ! forcing tendency of prognostic variables
     real(RP) :: f_TEND_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,7)
-    real(RP) :: f_TENDq      (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! forcing tendency of tracer variables
+    real(RP) :: f_TENDq      (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX) ! forcing tendency of tracer variables
     real(RP) :: f_TENDq_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    real(RP) :: PROG0        (ADM_gall,   ADM_kall,ADM_lall,   6)         ! prognostic variables (save)
+    real(RP) :: PROG0        (ADM_gall   ,ADM_kall,ADM_lall   ,6)        ! prognostic variables (save)
     real(RP) :: PROG0_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
-    real(RP) :: PROGq0       (ADM_gall,   ADM_kall,ADM_lall,   TRC_VMAX)  ! tracer variables (save)
+    real(RP) :: PROGq0       (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX) ! tracer variables (save)
     real(RP) :: PROGq0_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    real(RP) :: PROG_split   (ADM_gall,   ADM_kall,ADM_lall,   6)         ! prognostic variables (split)
+    real(RP) :: PROG_split   (ADM_gall   ,ADM_kall,ADM_lall   ,6)        ! prognostic variables (split)
     real(RP) :: PROG_split_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
 
-    real(RP) :: PROG_mean    (ADM_gall,   ADM_kall,ADM_lall   ,5)
+    real(RP) :: PROG_mean    (ADM_gall   ,ADM_kall,ADM_lall   ,5)
     real(RP) :: PROG_mean_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,5)
 
     !--- density ( physical )
@@ -290,7 +290,7 @@ contains
     real(RP) :: w_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- internal energy  ( physical )
-    real(RP) :: ein   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: ein   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: ein_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- mass concentration of water substance ( physical )
@@ -298,7 +298,7 @@ contains
     real(RP) :: q_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
     !--- enthalpy ( physical )
-    real(RP) :: eth   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: eth   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: eth_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     !--- pressure ( physical )
@@ -352,13 +352,13 @@ contains
     large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=DP)
 
     !--- get from prg0
-    call prgvar_get( PROG(:,:,:,I_RHOG),   PROG_pl(:,:,:,I_RHOG),   & ! [OUT]
-                     PROG(:,:,:,I_RHOGVX), PROG_pl(:,:,:,I_RHOGVX), & ! [OUT]
-                     PROG(:,:,:,I_RHOGVY), PROG_pl(:,:,:,I_RHOGVY), & ! [OUT]
-                     PROG(:,:,:,I_RHOGVZ), PROG_pl(:,:,:,I_RHOGVZ), & ! [OUT]
-                     PROG(:,:,:,I_RHOGW),  PROG_pl(:,:,:,I_RHOGW),  & ! [OUT]
-                     PROG(:,:,:,I_RHOGE),  PROG_pl(:,:,:,I_RHOGE),  & ! [OUT]
-                     PROGq(:,:,:,:),       PROGq_pl(:,:,:,:)        ) ! [IN]
+    call prgvar_get( PROG (:,:,:,I_RHOG),   PROG_pl (:,:,:,I_RHOG),   & ! [OUT]
+                     PROG (:,:,:,I_RHOGVX), PROG_pl (:,:,:,I_RHOGVX), & ! [OUT]
+                     PROG (:,:,:,I_RHOGVY), PROG_pl (:,:,:,I_RHOGVY), & ! [OUT]
+                     PROG (:,:,:,I_RHOGVZ), PROG_pl (:,:,:,I_RHOGVZ), & ! [OUT]
+                     PROG (:,:,:,I_RHOGW),  PROG_pl (:,:,:,I_RHOGW),  & ! [OUT]
+                     PROG (:,:,:,I_RHOGE),  PROG_pl (:,:,:,I_RHOGE),  & ! [OUT]
+                     PROGq(:,:,:,:),        PROGq_pl(:,:,:,:)         ) ! [OUT]
 
     call PROF_rapend  ('___Pre_Post',1)
 
@@ -368,7 +368,7 @@ contains
 
     !--- save
     !$acc kernels pcopy(PROG0) pcopyin(PROG) async(0)
-    PROG0   (:,:,:,:) = PROG   (:,:,:,:)
+    PROG0(:,:,:,:) = PROG(:,:,:,:)
     !$acc end kernels
 
     if ( ADM_have_pl ) then
@@ -399,11 +399,11 @@ contains
        call src_tracer_advection( TRC_VMAX,                                          & ! [IN]
                                   PROGq (:,:,:,:),        PROGq_pl (:,:,:,:),        & ! [INOUT]
                                   PROG0 (:,:,:,I_RHOG),   PROG0_pl (:,:,:,I_RHOG),   & ! [IN]
-                                  PROG  (:,:,:,I_RHOG  ), PROG_pl  (:,:,:,I_RHOG  ), & ! [IN]
+                                  PROG  (:,:,:,I_RHOG),   PROG_pl  (:,:,:,I_RHOG),   & ! [IN]
                                   PROG  (:,:,:,I_RHOGVX), PROG_pl  (:,:,:,I_RHOGVX), & ! [IN]
                                   PROG  (:,:,:,I_RHOGVY), PROG_pl  (:,:,:,I_RHOGVY), & ! [IN]
                                   PROG  (:,:,:,I_RHOGVZ), PROG_pl  (:,:,:,I_RHOGVZ), & ! [IN]
-                                  PROG  (:,:,:,I_RHOGW ), PROG_pl  (:,:,:,I_RHOGW ), & ! [IN]
+                                  PROG  (:,:,:,I_RHOGW),  PROG_pl  (:,:,:,I_RHOGW),  & ! [IN]
                                   f_TEND(:,:,:,I_RHOG),   f_TEND_pl(:,:,:,I_RHOG),   & ! [IN]
                                   large_step_dt,                                     & ! [IN]
                                   THUBURN_LIM                                        ) ! [IN]
@@ -634,15 +634,15 @@ contains
                                                 vy,                     vy_pl,                     & ! [IN]
                                                 vz,                     vz_pl,                     & ! [IN]
                                                 w,                      w_pl,                      & ! [IN]
-                                                PROG  (:,:,:,I_RHOG  ), PROG_pl  (:,:,:,I_RHOG  ), & ! [IN]
+                                                PROG  (:,:,:,I_RHOG),   PROG_pl  (:,:,:,I_RHOG),   & ! [IN]
                                                 PROG  (:,:,:,I_RHOGVX), PROG_pl  (:,:,:,I_RHOGVX), & ! [IN]
                                                 PROG  (:,:,:,I_RHOGVY), PROG_pl  (:,:,:,I_RHOGVY), & ! [IN]
                                                 PROG  (:,:,:,I_RHOGVZ), PROG_pl  (:,:,:,I_RHOGVZ), & ! [IN]
-                                                PROG  (:,:,:,I_RHOGW ), PROG_pl  (:,:,:,I_RHOGW ), & ! [IN]
+                                                PROG  (:,:,:,I_RHOGW),  PROG_pl  (:,:,:,I_RHOGW),  & ! [IN]
                                                 g_TEND(:,:,:,I_RHOGVX), g_TEND_pl(:,:,:,I_RHOGVX), & ! [OUT]
                                                 g_TEND(:,:,:,I_RHOGVY), g_TEND_pl(:,:,:,I_RHOGVY), & ! [OUT]
                                                 g_TEND(:,:,:,I_RHOGVZ), g_TEND_pl(:,:,:,I_RHOGVZ), & ! [OUT]
-                                                g_TEND(:,:,:,I_RHOGW ), g_TEND_pl(:,:,:,I_RHOGW )  ) ! [OUT]
+                                                g_TEND(:,:,:,I_RHOGW),  g_TEND_pl(:,:,:,I_RHOGW)   ) ! [OUT]
 
        !$acc kernels pcopy(g_TEND) async(0)
        g_TEND   (:,:,:,I_RHOG)     = 0.0_RP
@@ -691,7 +691,7 @@ contains
                                                  f_TEND(:,:,:,I_RHOGVX), f_TEND_pl(:,:,:,I_RHOGVX), & ! [INOUT]
                                                  f_TEND(:,:,:,I_RHOGVY), f_TEND_pl(:,:,:,I_RHOGVY), & ! [INOUT]
                                                  f_TEND(:,:,:,I_RHOGVZ), f_TEND_pl(:,:,:,I_RHOGVZ), & ! [INOUT]
-                                                 f_TEND(:,:,:,I_RHOGW ), f_TEND_pl(:,:,:,I_RHOGW )  ) ! [INOUT]
+                                                 f_TEND(:,:,:,I_RHOGW),  f_TEND_pl(:,:,:,I_RHOGW)   ) ! [INOUT]
              endif
           endif
 
@@ -731,7 +731,7 @@ contains
                                               f_TEND(:,:,:,I_RHOGVX), f_TEND_pl(:,:,:,I_RHOGVX), & ! [INOUT]
                                               f_TEND(:,:,:,I_RHOGVY), f_TEND_pl(:,:,:,I_RHOGVY), & ! [INOUT]
                                               f_TEND(:,:,:,I_RHOGVZ), f_TEND_pl(:,:,:,I_RHOGVZ), & ! [INOUT]
-                                              f_TEND(:,:,:,I_RHOGW ), f_TEND_pl(:,:,:,I_RHOGW )  ) ! [INOUT]
+                                              f_TEND(:,:,:,I_RHOGW),  f_TEND_pl(:,:,:,I_RHOGW)   ) ! [INOUT]
           endif
 
        endif
@@ -868,13 +868,13 @@ contains
 
              call src_tracer_advection( TRC_VMAX,                                                & ! [IN]
                                         PROGq    (:,:,:,:),        PROGq_pl    (:,:,:,:),        & ! [INOUT]
-                                        PROG0    (:,:,:,I_RHOG  ), PROG0_pl    (:,:,:,I_RHOG  ), & ! [IN]
-                                        PROG_mean(:,:,:,I_RHOG  ), PROG_mean_pl(:,:,:,I_RHOG  ), & ! [IN]
+                                        PROG0    (:,:,:,I_RHOG),   PROG0_pl    (:,:,:,I_RHOG),   & ! [IN]
+                                        PROG_mean(:,:,:,I_RHOG),   PROG_mean_pl(:,:,:,I_RHOG),   & ! [IN]
                                         PROG_mean(:,:,:,I_RHOGVX), PROG_mean_pl(:,:,:,I_RHOGVX), & ! [IN]
                                         PROG_mean(:,:,:,I_RHOGVY), PROG_mean_pl(:,:,:,I_RHOGVY), & ! [IN]
                                         PROG_mean(:,:,:,I_RHOGVZ), PROG_mean_pl(:,:,:,I_RHOGVZ), & ! [IN]
-                                        PROG_mean(:,:,:,I_RHOGW ), PROG_mean_pl(:,:,:,I_RHOGW ), & ! [IN]
-                                        f_TEND   (:,:,:,I_RHOG  ), f_TEND_pl   (:,:,:,I_RHOG  ), & ! [IN]
+                                        PROG_mean(:,:,:,I_RHOGW),  PROG_mean_pl(:,:,:,I_RHOGW),  & ! [IN]
+                                        f_TEND   (:,:,:,I_RHOG),   f_TEND_pl   (:,:,:,I_RHOG),   & ! [IN]
                                         large_step_dt,                                           & ! [IN]
                                         THUBURN_LIM                                              ) ! [IN]
 
@@ -906,7 +906,7 @@ contains
              call src_advection_convergence( PROG_mean(:,:,:,I_RHOGVX), PROG_mean_pl(:,:,:,I_RHOGVX), & ! [IN]
                                              PROG_mean(:,:,:,I_RHOGVY), PROG_mean_pl(:,:,:,I_RHOGVY), & ! [IN]
                                              PROG_mean(:,:,:,I_RHOGVZ), PROG_mean_pl(:,:,:,I_RHOGVZ), & ! [IN]
-                                             PROG_mean(:,:,:,I_RHOGW ), PROG_mean_pl(:,:,:,I_RHOGW ), & ! [IN]
+                                             PROG_mean(:,:,:,I_RHOGW),  PROG_mean_pl(:,:,:,I_RHOGW),  & ! [IN]
                                              q        (:,:,:,nq),       q_pl        (:,:,:,nq),       & ! [IN]
                                              g_TENDq  (:,:,:,nq),       g_TENDq_pl  (:,:,:,nq),       & ! [OUT]
                                              I_SRC_default                                            ) ! [IN]

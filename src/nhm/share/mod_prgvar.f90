@@ -59,7 +59,6 @@ module mod_prgvar
   !
   public :: prgvar_setup
   public :: prgvar_get
-  public :: prgvar_get_noq
   public :: prgvar_get_withdiag
   public :: prgvar_set
   public :: prgvar_get_in
@@ -275,72 +274,6 @@ contains
 
     return
   end subroutine prgvar_get
-
-  !----------------------------------------------------------------------------
-  subroutine prgvar_get_noq( &
-       rhog,   rhog_pl,   &
-       rhogvx, rhogvx_pl, &
-       rhogvy, rhogvy_pl, &
-       rhogvz, rhogvz_pl, &
-       rhogw,  rhogw_pl,  &
-       rhoge,  rhoge_pl   )
-    use mod_adm, only: &
-       ADM_have_pl, &
-       ADM_gall,    &
-       ADM_gall_pl, &
-       ADM_kall,    &
-       ADM_lall,    &
-       ADM_lall_pl
-    implicit none
-
-    real(RP), intent(out) :: rhog     (ADM_gall,   ADM_kall,ADM_lall   )
-    real(RP), intent(out) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(out) :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(RP), intent(out) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(out) :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(RP), intent(out) :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(out) :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
-    real(RP), intent(out) :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(out) :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   )
-    real(RP), intent(out) :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(out) :: rhoge    (ADM_gall,   ADM_kall,ADM_lall   )
-    real(RP), intent(out) :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-
-    integer :: n, k, l
-    !---------------------------------------------------------------------------
-
-    do l = 1, ADM_lall
-    do k = 1, ADM_kall
-    do n = 1, ADM_gall
-       rhog  (n,k,l) = PRG_var(n,k,l,I_RHOG  )
-       rhogvx(n,k,l) = PRG_var(n,k,l,I_RHOGVX)
-       rhogvy(n,k,l) = PRG_var(n,k,l,I_RHOGVY)
-       rhogvz(n,k,l) = PRG_var(n,k,l,I_RHOGVZ)
-       rhogw (n,k,l) = PRG_var(n,k,l,I_RHOGW )
-       rhoge (n,k,l) = PRG_var(n,k,l,I_RHOGE )
-    enddo
-    enddo
-    enddo
-
-    if ( ADM_have_pl ) then
-
-       do l = 1, ADM_lall_pl
-       do k = 1, ADM_kall
-       do n = 1, ADM_gall_pl
-          rhog_pl  (n,k,l) = PRG_var_pl(n,k,l,I_RHOG  )
-          rhogvx_pl(n,k,l) = PRG_var_pl(n,k,l,I_RHOGVX)
-          rhogvy_pl(n,k,l) = PRG_var_pl(n,k,l,I_RHOGVY)
-          rhogvz_pl(n,k,l) = PRG_var_pl(n,k,l,I_RHOGVZ)
-          rhogw_pl (n,k,l) = PRG_var_pl(n,k,l,I_RHOGW )
-          rhoge_pl (n,k,l) = PRG_var_pl(n,k,l,I_RHOGE )
-       enddo
-       enddo
-       enddo
-
-    endif
-
-    return
-  end subroutine prgvar_get_noq
 
   !-----------------------------------------------------------------------------
   subroutine prgvar_get_withdiag( &

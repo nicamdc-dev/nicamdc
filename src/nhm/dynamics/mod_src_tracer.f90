@@ -173,8 +173,8 @@ contains
     real(RP), parameter :: b2 = 1.0_RP
     real(RP), parameter :: b3 = 1.0_RP - (b1+b2)
 
-    integer :: nstart, nend
-    integer :: g, k, l, v, iq
+    integer  :: nstart, nend
+    integer  :: g, k, l, v, iq
     !---------------------------------------------------------------------------
 
     !---------------------------------------------------------------------------

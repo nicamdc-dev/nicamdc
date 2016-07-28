@@ -208,8 +208,8 @@ contains
 
     real(RP) :: global_area, global_grid
 
-    integer :: k
-    integer :: ierr
+    integer  :: k
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -311,7 +311,7 @@ contains
 
     real(RP) :: fact(ADM_kall)
 
-    integer :: k
+    integer  :: k
     !---------------------------------------------------------------------------
 
     if ( alpha > 0.0_RP ) NUMFILTER_DOrayleigh = .true.
@@ -409,7 +409,7 @@ contains
 
     real(RP) :: large_step_dt
 
-    integer :: k, l
+    integer  :: k, l
     !---------------------------------------------------------------------------
 
     allocate( Kh_coef   (ADM_gall,   ADM_kall,ADM_lall   ) )
@@ -675,7 +675,7 @@ contains
 
     real(RP) :: large_step_dt
 
-    integer :: k
+    integer  :: k
     !---------------------------------------------------------------------------
 
     if ( gamma > 0.0_RP ) NUMFILTER_DOverticaldiff = .true.
@@ -751,9 +751,9 @@ contains
     logical,          intent(in) :: dep_hgrid    ! depend on each horizontal grid?
     logical,          intent(in) :: smooth_1var  ! apply smoothing to coef?
     integer,          intent(in) :: lap_order    ! laplacian order
-    real(RP),          intent(in) :: alpha        ! coefficient    for divergence damping
-    real(RP),          intent(in) :: tau          ! e-folding time for divergence damping
-    real(RP),          intent(in) :: alpha_v      ! coefficient    for divergence damping
+    real(RP),         intent(in) :: alpha        ! coefficient    for divergence damping
+    real(RP),         intent(in) :: tau          ! e-folding time for divergence damping
+    real(RP),         intent(in) :: alpha_v      ! coefficient    for divergence damping
 
     real(RP) :: e_fold_time   (ADM_gall,   ADM_kall,ADM_lall   )
     real(RP) :: e_fold_time_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -764,7 +764,7 @@ contains
 
     real(RP) :: small_step_dt
 
-    integer :: k, l
+    integer  :: k, l
     !---------------------------------------------------------------------------
 
     allocate( divdamp_coef   (ADM_gall,   ADM_kall,ADM_lall   ) )
@@ -915,9 +915,9 @@ contains
     character(len=*), intent(in) :: divdamp_type ! type of divergence damping
     logical,          intent(in) :: dep_hgrid    ! depend on each horizontal grid?
     integer,          intent(in) :: lap_order    ! laplacian order
-    real(RP),          intent(in) :: alpha        ! coefficient    for divergence damping
-    real(RP),          intent(in) :: tau          ! e-folding time for divergence damping
-    real(RP),          intent(in) :: zlimit       ! lower limit of divergence damping [m]
+    real(RP),         intent(in) :: alpha        ! coefficient    for divergence damping
+    real(RP),         intent(in) :: tau          ! e-folding time for divergence damping
+    real(RP),         intent(in) :: zlimit       ! lower limit of divergence damping [m]
 
     real(RP) :: fact(ADM_kall)
 
@@ -930,7 +930,7 @@ contains
 
     real(RP) :: small_step_dt
 
-    integer :: k, l
+    integer  :: k, l
     !---------------------------------------------------------------------------
 
     allocate( divdamp_2d_coef   (ADM_gall,   ADM_kall,ADM_lall   ) )
@@ -1090,7 +1090,7 @@ contains
     real(RP), intent(inout) :: frhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     real(RP) :: coef
-    integer :: g, k, l
+    integer  :: g, k, l
     !---------------------------------------------------------------------------
 
     if( .NOT. NUMFILTER_DOrayleigh ) return
@@ -1262,7 +1262,7 @@ contains
 
     real(RP) :: large_step_dt
 
-    integer :: g, k, l, nq, p
+    integer  :: g, k, l, nq, p
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____numfilter_hdiffusion',2)
@@ -1697,7 +1697,7 @@ contains
     real(RP) :: vtmp1   (ADM_gall   ,ADM_kall,ADM_lall   ,vmax+TRC_VMAX)
     real(RP) :: vtmp1_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,vmax+TRC_VMAX)
 
-    integer :: g, k, l, nq, p
+    integer  :: g, k, l, nq, p
     !---------------------------------------------------------------------------
 
     if( .NOT. NUMFILTER_DOverticaldiff ) return
@@ -1865,14 +1865,6 @@ contains
        enddo
        enddo
 
-       do nq = 1, TRC_VMAX
-       do k = ADM_kmin, ADM_kmax+1
-       do g = 1, ADM_gall
-          flux(g,k,l,vmax+nq) = Kv_coef_h(k) * ( vtmp0(g,k,l,vmax+nq) - vtmp0(g,k-1,l,vmax+nq) ) * GRD_rdgzh(k)
-       enddo
-       enddo
-       enddo
-
        !--- update tendency
        do k = ADM_kmin, ADM_kmax
        do g = 1, ADM_gall
@@ -1891,13 +1883,23 @@ contains
        enddo
        enddo
 
-       do nq = 1, TRC_VMAX
-       do k = ADM_kmin, ADM_kmax
-       do g = 1, ADM_gall
-          tendency_q(g,k,l,nq) = tendency_q(g,k,l,nq) + ( flux(g,k+1,l,vmax+nq) - flux(g,k,l,vmax+nq) ) * GRD_rdgz(k)
-       enddo
-       enddo
-       enddo
+       if ( TRC_ADV_TYPE /= 'MIURA2004' ) then
+          do nq = 1, TRC_VMAX
+          do k = ADM_kmin, ADM_kmax+1
+          do g = 1, ADM_gall
+             flux(g,k,l,vmax+nq) = Kv_coef_h(k) * ( vtmp0(g,k,l,vmax+nq) - vtmp0(g,k-1,l,vmax+nq) ) * GRD_rdgzh(k)
+          enddo
+          enddo
+          enddo
+
+          do nq = 1, TRC_VMAX
+          do k = ADM_kmin, ADM_kmax
+          do g = 1, ADM_gall
+             tendency_q(g,k,l,nq) = tendency_q(g,k,l,nq) + ( flux(g,k+1,l,vmax+nq) - flux(g,k,l,vmax+nq) ) * GRD_rdgz(k)
+          enddo
+          enddo
+          enddo
+       endif
     enddo
 
     if ( ADM_have_pl ) then
@@ -2050,15 +2052,6 @@ contains
           enddo
           enddo
 
-          do nq = 1, TRC_VMAX
-          do k = ADM_kmin, ADM_kmax+1
-          do g = 1, ADM_gall
-             flux_pl(g,k,l,vmax+nq) = Kv_coef_h(k) * ( vtmp0_pl(g,k,l,vmax+nq)-vtmp0_pl(g,k-1,l,vmax+nq) ) &
-                                    * GRD_rdgzh(k) * rhog_h_pl(g,k,l)
-          enddo
-          enddo
-          enddo
-
           !--- update tendency
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall
@@ -2084,14 +2077,25 @@ contains
           enddo
           enddo
 
-          do nq = 1, TRC_VMAX
-          do k = ADM_kmin, ADM_kmax
-          do g = 1, ADM_gall
-             tendency_q_pl(g,k,l,nq) = tendency_q_pl(g,k,l,nq) &
-                                     + ( flux_pl(g,k+1,l,vmax+nq) - flux_pl(g,k,l,vmax+nq) ) * GRD_rdgz(k)
-          enddo
-          enddo
-          enddo
+          if ( TRC_ADV_TYPE /= 'MIURA2004' ) then
+             do nq = 1, TRC_VMAX
+             do k = ADM_kmin, ADM_kmax+1
+             do g = 1, ADM_gall
+                flux_pl(g,k,l,vmax+nq) = Kv_coef_h(k) * ( vtmp0_pl(g,k,l,vmax+nq)-vtmp0_pl(g,k-1,l,vmax+nq) ) &
+                                       * GRD_rdgzh(k) * rhog_h_pl(g,k,l)
+             enddo
+             enddo
+             enddo
+
+             do nq = 1, TRC_VMAX
+             do k = ADM_kmin, ADM_kmax
+             do g = 1, ADM_gall
+                tendency_q_pl(g,k,l,nq) = tendency_q_pl(g,k,l,nq) &
+                                        + ( flux_pl(g,k+1,l,vmax+nq) - flux_pl(g,k,l,vmax+nq) ) * GRD_rdgz(k)
+             enddo
+             enddo
+             enddo
+          endif
 
        enddo
     endif
@@ -2168,7 +2172,7 @@ contains
     real(RP) :: cnv     (ADM_gall,   ADM_kall,ADM_lall   )
     real(RP) :: cnv_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    integer :: k, l, p
+    integer  :: k, l, p
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____numfilter_divdamp',2)
@@ -2318,7 +2322,7 @@ contains
     real(RP) :: vtmp2   (ADM_gall,   ADM_kall,ADM_lall   ,3)
     real(RP) :: vtmp2_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
 
-    integer :: p
+    integer  :: p
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____numfilter_divdamp_2d',2)
@@ -2417,10 +2421,10 @@ contains
     real(RP) :: vtmp2_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,1)
 
     real(RP), parameter :: ggamma_h = 1.0_RP / 16.0_RP / 10.0_RP
-    integer, parameter :: itelim = 80
+    integer,  parameter :: itelim = 80
 
-    integer :: p, ite
-    integer :: k, l
+    integer  :: p, ite
+    integer  :: k, l
     !---------------------------------------------------------------------------
 
     do ite = 1, itelim
@@ -2495,7 +2499,7 @@ contains
 
     real(RP) :: sw
 
-    integer :: k
+    integer  :: k
     !---------------------------------------------------------------------------
 
     do k = 1, kdim
