@@ -37,6 +37,13 @@ module mod_numfilter
   use mod_precision
   use mod_stdio
   use mod_prof
+  use mod_runconf, only: &
+     I_RHOG,   &
+     I_RHOGVX, &
+     I_RHOGVY, &
+     I_RHOGVZ, &
+     I_RHOGW,  &
+     I_RHOGE
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -79,14 +86,6 @@ module mod_numfilter
   !
   !++ Private parameters & variables
   !
-  integer, private, parameter :: I_RHOG     = 1 ! Density x G^1/2 x gamma^2
-  integer, private, parameter :: I_RHOGVX   = 2 ! Density x G^1/2 x gamma^2 x Horizontal velocity (X-direction)
-  integer, private, parameter :: I_RHOGVY   = 3 ! Density x G^1/2 x gamma^2 x Horizontal velocity (Y-direction)
-  integer, private, parameter :: I_RHOGVZ   = 4 ! Density x G^1/2 x gamma^2 x Horizontal velocity (Z-direction)
-  integer, private, parameter :: I_RHOGW    = 5 ! Density x G^1/2 x gamma^2 x Vertical   velocity
-  integer, private, parameter :: I_RHOGE    = 6 ! Density x G^1/2 x gamma^2 x Internal Energy
-  integer, private, parameter :: I_RHOGETOT = 7 ! Density x G^1/2 x gamma^2 x Total Energy
-
   real(RP), public,  allocatable :: rayleigh_coef  (:)             ! Rayleigh damping coefficient at cell center
   real(RP), private, allocatable :: rayleigh_coef_h(:)             ! Rayleigh damping coefficient at cell wall
   logical,  private              :: rayleigh_damp_only_w = .false. ! damp only w?
@@ -1223,8 +1222,8 @@ contains
     real(RP), intent(in)  :: tem_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in)  :: q            (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
     real(RP), intent(in)  :: q_pl         (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
-    real(RP), intent(out) :: tendency     (ADM_gall,   ADM_kall,ADM_lall   ,7)
-    real(RP), intent(out) :: tendency_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,7)
+    real(RP), intent(out) :: tendency     (ADM_gall,   ADM_kall,ADM_lall   ,6)
+    real(RP), intent(out) :: tendency_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
     real(RP), intent(out) :: tendency_q   (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
     real(RP), intent(out) :: tendency_q_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
@@ -1482,7 +1481,6 @@ contains
 
        do g = 1, ADM_gall
           tendency(g,k,l,I_RHOGE   ) = - ( vtmp(g,k,l,5) + vtmp_lap1(g,k,l,5) )
-          tendency(g,k,l,I_RHOGETOT) = - ( vtmp(g,k,l,5) + vtmp_lap1(g,k,l,5) )
           tendency(g,k,l,I_RHOG    ) = - ( vtmp(g,k,l,6) + vtmp_lap1(g,k,l,6) )
        enddo
     enddo
@@ -1504,7 +1502,6 @@ contains
 
           do g = 1, ADM_gall_pl
              tendency_pl(g,k,l,I_RHOGE   ) = - ( vtmp_pl(g,k,l,5) + vtmp_lap1_pl(g,k,l,5) )
-             tendency_pl(g,k,l,I_RHOGETOT) = - ( vtmp_pl(g,k,l,5) + vtmp_lap1_pl(g,k,l,5) )
              tendency_pl(g,k,l,I_RHOG    ) = - ( vtmp_pl(g,k,l,6) + vtmp_lap1_pl(g,k,l,6) )
           enddo
        enddo
@@ -1650,7 +1647,8 @@ contains
        VMTR_C2Wfact,    &
        VMTR_C2Wfact_pl
     use mod_runconf, only: &
-       TRC_VMAX
+       TRC_VMAX,     &
+       TRC_ADV_TYPE
     use mod_bsstate, only: &
        rho_bs,    &
        rho_bs_pl, &
@@ -1674,8 +1672,8 @@ contains
     real(RP), intent(in)    :: tem_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in)    :: q            (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
     real(RP), intent(in)    :: q_pl         (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
-    real(RP), intent(inout) :: tendency     (ADM_gall,   ADM_kall,ADM_lall   ,7)
-    real(RP), intent(inout) :: tendency_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,7)
+    real(RP), intent(inout) :: tendency     (ADM_gall,   ADM_kall,ADM_lall   ,6)
+    real(RP), intent(inout) :: tendency_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
     real(RP), intent(inout) :: tendency_q   (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
     real(RP), intent(inout) :: tendency_q_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
@@ -1873,7 +1871,6 @@ contains
           tendency(g,k,l,I_RHOGVY  ) = tendency(g,k,l,I_RHOGVY  ) + ( flux(g,k+1,l,I_VY ) - flux(g,k,l,I_VY ) ) * GRD_rdgz(k)
           tendency(g,k,l,I_RHOGVZ  ) = tendency(g,k,l,I_RHOGVZ  ) + ( flux(g,k+1,l,I_VZ ) - flux(g,k,l,I_VZ ) ) * GRD_rdgz(k)
           tendency(g,k,l,I_RHOGE   ) = tendency(g,k,l,I_RHOGE   ) + ( flux(g,k+1,l,I_TEM) - flux(g,k,l,I_TEM) ) * GRD_rdgz(k)
-          tendency(g,k,l,I_RHOGETOT) = tendency(g,k,l,I_RHOGETOT) + ( flux(g,k+1,l,I_TEM) - flux(g,k,l,I_TEM) ) * GRD_rdgz(k)
        enddo
        enddo
 
@@ -2064,8 +2061,6 @@ contains
              tendency_pl(g,k,l,I_RHOGVZ  ) = tendency_pl(g,k,l,I_RHOGVZ  ) &
                                            + ( flux_pl(g,k+1,l,I_VZ ) - flux_pl(g,k,l,I_VZ ) ) * GRD_rdgz(k)
              tendency_pl(g,k,l,I_RHOGE   ) = tendency_pl(g,k,l,I_RHOGE   ) &
-                                           + ( flux_pl(g,k+1,l,I_TEM) - flux_pl(g,k,l,I_TEM) ) * GRD_rdgz(k)
-             tendency_pl(g,k,l,I_RHOGETOT) = tendency_pl(g,k,l,I_RHOGETOT) &
                                            + ( flux_pl(g,k+1,l,I_TEM) - flux_pl(g,k,l,I_TEM) ) * GRD_rdgz(k)
           enddo
           enddo

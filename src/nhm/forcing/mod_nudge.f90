@@ -506,7 +506,6 @@ contains
        frhogvz,   frhogvz_pl,   &
        frhogw,    frhogw_pl,    &
        frhoge,    frhoge_pl,    &
-       frhogetot, frhogetot_pl, &
        out_tendency             )
     use mod_const, only: &
        GRAV  => CONST_GRAV, &
@@ -557,8 +556,6 @@ contains
     real(RP), intent(inout) :: frhogw_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(inout) :: frhoge      (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(inout) :: frhoge_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(inout) :: frhogetot   (ADM_gall   ,ADM_kall,ADM_lall   )
-    real(RP), intent(inout) :: frhogetot_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     logical,  intent(in)    :: out_tendency
 
     real(RP) :: dvx    (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -606,14 +603,12 @@ contains
     frhogvy  (:,:,:) = frhogvy  (:,:,:) + dvy (:,:,:) * rhog(:,:,:)
     frhogvz  (:,:,:) = frhogvz  (:,:,:) + dvz (:,:,:) * rhog(:,:,:)
     frhoge   (:,:,:) = frhoge   (:,:,:) + dein(:,:,:) * rhog(:,:,:)
-    frhogetot(:,:,:) = frhogetot(:,:,:) + dein(:,:,:) * rhog(:,:,:)
 
     if ( ADM_have_pl ) then
        frhogvx_pl  (:,:,:) = frhogvx_pl  (:,:,:) + dvx_pl (:,:,:) * rhog_pl(:,:,:)
        frhogvy_pl  (:,:,:) = frhogvy_pl  (:,:,:) + dvy_pl (:,:,:) * rhog_pl(:,:,:)
        frhogvz_pl  (:,:,:) = frhogvz_pl  (:,:,:) + dvz_pl (:,:,:) * rhog_pl(:,:,:)
        frhoge_pl   (:,:,:) = frhoge_pl   (:,:,:) + dein_pl(:,:,:) * rhog_pl(:,:,:)
-       frhogetot_pl(:,:,:) = frhogetot_pl(:,:,:) + dein_pl(:,:,:) * rhog_pl(:,:,:)
     endif
 
     if ( NDG_tau_w > 0.0_RP ) then

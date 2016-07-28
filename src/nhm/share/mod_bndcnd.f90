@@ -157,6 +157,8 @@ contains
   !> Boundary condition setting for all prognostic variables.
   subroutine BNDCND_all( &
        ijdim,      &
+       kdim,       &
+       ldim,       &
        rho,        &
        vx,         &
        vy,         &
@@ -176,34 +178,35 @@ contains
        c2wfact,    &
        c2wfact_Gz  )
     use mod_adm, only: &
-       kdim => ADM_kall, &
        kmin => ADM_kmin, &
        kmax => ADM_kmax
     use mod_const, only: &
        CVdry => CONST_CVdry
     implicit none
 
-    integer,  intent(in)    :: ijdim                  ! number of horizontal grid
-    real(RP), intent(inout) :: rho       (ijdim,kdim) ! density
-    real(RP), intent(inout) :: vx        (ijdim,kdim) ! horizontal wind (x)
-    real(RP), intent(inout) :: vy        (ijdim,kdim) ! horizontal wind (y)
-    real(RP), intent(inout) :: vz        (ijdim,kdim) ! horizontal wind (z)
-    real(RP), intent(inout) :: w         (ijdim,kdim) ! vertical   wind
-    real(RP), intent(inout) :: ein       (ijdim,kdim) ! internal energy
-    real(RP), intent(inout) :: tem       (ijdim,kdim) ! temperature
-    real(RP), intent(inout) :: pre       (ijdim,kdim) ! pressure
-    real(RP), intent(inout) :: rhog      (ijdim,kdim)
-    real(RP), intent(inout) :: rhogvx    (ijdim,kdim)
-    real(RP), intent(inout) :: rhogvy    (ijdim,kdim)
-    real(RP), intent(inout) :: rhogvz    (ijdim,kdim)
-    real(RP), intent(inout) :: rhogw     (ijdim,kdim)
-    real(RP), intent(inout) :: rhoge     (ijdim,kdim)
-    real(RP), intent(in)    :: gsqrtgam2 (ijdim,kdim)
-    real(RP), intent(in)    :: phi       (ijdim,kdim)   ! geopotential
-    real(RP), intent(in)    :: c2wfact   (ijdim,kdim,2)
-    real(RP), intent(in)    :: c2wfact_Gz(ijdim,kdim,6)
+    integer,  intent(in)    :: ijdim
+    integer,  intent(in)    :: kdim
+    integer,  intent(in)    :: ldim
+    real(RP), intent(inout) :: rho       (ijdim,kdim,ldim) ! density
+    real(RP), intent(inout) :: vx        (ijdim,kdim,ldim) ! horizontal wind (x)
+    real(RP), intent(inout) :: vy        (ijdim,kdim,ldim) ! horizontal wind (y)
+    real(RP), intent(inout) :: vz        (ijdim,kdim,ldim) ! horizontal wind (z)
+    real(RP), intent(inout) :: w         (ijdim,kdim,ldim) ! vertical   wind
+    real(RP), intent(inout) :: ein       (ijdim,kdim,ldim) ! internal energy
+    real(RP), intent(inout) :: tem       (ijdim,kdim,ldim) ! temperature
+    real(RP), intent(inout) :: pre       (ijdim,kdim,ldim) ! pressure
+    real(RP), intent(inout) :: rhog      (ijdim,kdim,ldim)
+    real(RP), intent(inout) :: rhogvx    (ijdim,kdim,ldim)
+    real(RP), intent(inout) :: rhogvy    (ijdim,kdim,ldim)
+    real(RP), intent(inout) :: rhogvz    (ijdim,kdim,ldim)
+    real(RP), intent(inout) :: rhogw     (ijdim,kdim,ldim)
+    real(RP), intent(inout) :: rhoge     (ijdim,kdim,ldim)
+    real(RP), intent(in)    :: gsqrtgam2 (ijdim,kdim,ldim)
+    real(RP), intent(in)    :: phi       (ijdim,kdim,ldim)   ! geopotential
+    real(RP), intent(in)    :: c2wfact   (ijdim,kdim,2,ldim)
+    real(RP), intent(in)    :: c2wfact_Gz(ijdim,kdim,6,ldim)
 
-    integer :: ij
+    integer :: ij, l
     !---------------------------------------------------------------------------
     !$acc  data &
     !$acc& pcopy(rho,vx,vy,vz,w,ein,tem,pre) &
@@ -212,60 +215,72 @@ contains
 
     !--- Thermodynamical variables ( rho, ein, tem, pre, rhog, rhoge ), q = 0 at boundary
 
-    call BNDCND_thermo( ijdim, & ! [IN]
-                        tem,   & ! [INOUT]
-                        rho,   & ! [INOUT]
-                        pre,   & ! [INOUT]
-                        phi    ) ! [IN]
+    do l = 1, ldim
+       call BNDCND_thermo( ijdim,      & ! [IN]
+                           tem(:,:,l), & ! [INOUT]
+                           rho(:,:,l), & ! [INOUT]
+                           pre(:,:,l), & ! [INOUT]
+                           phi(:,:,l)  ) ! [IN]
+    enddo
 
     !$acc kernels pcopy(rhog,ein,rhoge) pcopyin(rho,tem,gsqrtgam2) async(0)
+    do l  = 1, ldim
     do ij = 1, ijdim
-       rhog (ij,kmax+1) = rho(ij,kmax+1) * gsqrtgam2(ij,kmax+1)
-       rhog (ij,kmin-1) = rho(ij,kmin-1) * gsqrtgam2(ij,kmin-1)
+       rhog (ij,kmax+1,l) = rho(ij,kmax+1,l) * gsqrtgam2(ij,kmax+1,l)
+       rhog (ij,kmin-1,l) = rho(ij,kmin-1,l) * gsqrtgam2(ij,kmin-1,l)
 
-       ein  (ij,kmax+1) = CVdry * tem(ij,kmax+1)
-       ein  (ij,kmin-1) = CVdry * tem(ij,kmin-1)
+       ein  (ij,kmax+1,l) = CVdry * tem(ij,kmax+1,l)
+       ein  (ij,kmin-1,l) = CVdry * tem(ij,kmin-1,l)
 
-       rhoge(ij,kmax+1) = rhog(ij,kmax+1) * ein(ij,kmax+1)
-       rhoge(ij,kmin-1) = rhog(ij,kmin-1) * ein(ij,kmin-1)
+       rhoge(ij,kmax+1,l) = rhog(ij,kmax+1,l) * ein(ij,kmax+1,l)
+       rhoge(ij,kmin-1,l) = rhog(ij,kmin-1,l) * ein(ij,kmin-1,l)
+    enddo
     enddo
     !$acc end kernels
 
     !--- Momentum ( rhogvx, rhogvy, rhogvz, vx, vy, vz )
 
-    call BNDCND_rhovxvyvz( ijdim,  & ! [IN]
-                           rhog,   & ! [IN]
-                           rhogvx, & ! [INOUT]
-                           rhogvy, & ! [INOUT]
-                           rhogvz  ) ! [INOUT]
+    call BNDCND_rhovxvyvz( ijdim,         & ! [IN]
+                           kdim,          & ! [IN]
+                           ldim,          & ! [IN]
+                           rhog  (:,:,:), & ! [IN]
+                           rhogvx(:,:,:), & ! [INOUT]
+                           rhogvy(:,:,:), & ! [INOUT]
+                           rhogvz(:,:,:)  ) ! [INOUT]
 
     !$acc kernels pcopy(vx,vy,vz) pcopyin(rhogvx,rhogvy,rhogvz,rhog) async(0)
+    do l  = 1, ldim
     do ij = 1, ijdim
-       vx(ij,kmax+1) = rhogvx(ij,kmax+1) / rhog(ij,kmax+1)
-       vy(ij,kmax+1) = rhogvy(ij,kmax+1) / rhog(ij,kmax+1)
-       vz(ij,kmax+1) = rhogvz(ij,kmax+1) / rhog(ij,kmax+1)
+       vx(ij,kmax+1,l) = rhogvx(ij,kmax+1,l) / rhog(ij,kmax+1,l)
+       vy(ij,kmax+1,l) = rhogvy(ij,kmax+1,l) / rhog(ij,kmax+1,l)
+       vz(ij,kmax+1,l) = rhogvz(ij,kmax+1,l) / rhog(ij,kmax+1,l)
 
-       vx(ij,kmin-1) = rhogvx(ij,kmin-1) / rhog(ij,kmin-1)
-       vy(ij,kmin-1) = rhogvy(ij,kmin-1) / rhog(ij,kmin-1)
-       vz(ij,kmin-1) = rhogvz(ij,kmin-1) / rhog(ij,kmin-1)
+       vx(ij,kmin-1,l) = rhogvx(ij,kmin-1,l) / rhog(ij,kmin-1,l)
+       vy(ij,kmin-1,l) = rhogvy(ij,kmin-1,l) / rhog(ij,kmin-1,l)
+       vz(ij,kmin-1,l) = rhogvz(ij,kmin-1,l) / rhog(ij,kmin-1,l)
+    enddo
     enddo
     !$acc end kernels
 
     !--- Momentum ( rhogw, w )
-    call BNDCND_rhow( ijdim,     & ! [IN]
-                      rhogvx,    & ! [IN]
-                      rhogvy,    & ! [IN]
-                      rhogvz,    & ! [IN]
-                      rhogw,     & ! [INOUT]
-                      c2wfact_Gz ) ! [IN]
+    do l = 1, ldim
+       call BNDCND_rhow( ijdim,               & ! [IN]
+                         rhogvx    (:,:,l),   & ! [IN]
+                         rhogvy    (:,:,l),   & ! [IN]
+                         rhogvz    (:,:,l),   & ! [IN]
+                         rhogw     (:,:,l),   & ! [INOUT]
+                         c2wfact_Gz(:,:,:,l)  ) ! [IN]
+    enddo
 
     !$acc kernels pcopy(w) pcopyin(rhog,rhogw,c2wfact) async(0)
+    do l  = 1, ldim
     do ij = 1, ijdim
-       w(ij,kmax+1) = rhogw(ij,kmax+1) / ( c2wfact(ij,kmax+1,1) * rhog(ij,kmax+1) &
-                                         + c2wfact(ij,kmax+1,2) * rhog(ij,kmax  ) )
-       w(ij,kmin  ) = rhogw(ij,kmin  ) / ( c2wfact(ij,kmin  ,1) * rhog(ij,kmin  ) &
-                                         + c2wfact(ij,kmin  ,2) * rhog(ij,kmin-1) )
-       w(ij,kmin-1) = 0.0_RP
+       w(ij,kmax+1,l) = rhogw(ij,kmax+1,l) / ( c2wfact(ij,kmax+1,1,l) * rhog(ij,kmax+1,l) &
+                                             + c2wfact(ij,kmax+1,2,l) * rhog(ij,kmax  ,l) )
+       w(ij,kmin  ,l) = rhogw(ij,kmin  ,l) / ( c2wfact(ij,kmin  ,1,l) * rhog(ij,kmin  ,l) &
+                                             + c2wfact(ij,kmin  ,2,l) * rhog(ij,kmin-1,l) )
+       w(ij,kmin-1,l) = 0.0_RP
+    enddo
     enddo
     !$acc end kernels
 
@@ -368,51 +383,56 @@ contains
   !> Boundary condition setting for horizontal momentum
   subroutine BNDCND_rhovxvyvz( &
        ijdim,  &
+       kdim,   &
+       ldim,   &
        rhog,   &
        rhogvx, &
        rhogvy, &
        rhogvz  )
     use mod_adm, only: &
-       kdim => ADM_kall, &
        kmin => ADM_kmin, &
        kmax => ADM_kmax
     implicit none
 
     integer,  intent(in)    :: ijdim
-    real(RP), intent(in)    :: rhog  (ijdim,kdim)
-    real(RP), intent(inout) :: rhogvx(ijdim,kdim)
-    real(RP), intent(inout) :: rhogvy(ijdim,kdim)
-    real(RP), intent(inout) :: rhogvz(ijdim,kdim)
+    integer,  intent(in)    :: kdim
+    integer,  intent(in)    :: ldim
+    real(RP), intent(in)    :: rhog  (ijdim,kdim,ldim)
+    real(RP), intent(inout) :: rhogvx(ijdim,kdim,ldim)
+    real(RP), intent(inout) :: rhogvy(ijdim,kdim,ldim)
+    real(RP), intent(inout) :: rhogvz(ijdim,kdim,ldim)
 
-    integer :: ij
+    integer :: ij, l
     !---------------------------------------------------------------------------
     !$acc  data &
     !$acc& pcopy(rhogvx,rhogvy,rhogvz) &
     !$acc& pcopyin(rhog)
 
     !$acc kernels pcopy(rhogvx,rhogvy,rhogvz) pcopyin(rhog) async(0)
+    do l  = 1, ldim
     do ij = 1, ijdim
 
        if    ( is_top_rigid ) then
-          rhogvx(ij,kmax+1) = -rhogvx(ij,kmax) / rhog(ij,kmax) * rhog(ij,kmax+1)
-          rhogvy(ij,kmax+1) = -rhogvy(ij,kmax) / rhog(ij,kmax) * rhog(ij,kmax+1)
-          rhogvz(ij,kmax+1) = -rhogvz(ij,kmax) / rhog(ij,kmax) * rhog(ij,kmax+1)
+          rhogvx(ij,kmax+1,l) = -rhogvx(ij,kmax,l) / rhog(ij,kmax,l) * rhog(ij,kmax+1,l)
+          rhogvy(ij,kmax+1,l) = -rhogvy(ij,kmax,l) / rhog(ij,kmax,l) * rhog(ij,kmax+1,l)
+          rhogvz(ij,kmax+1,l) = -rhogvz(ij,kmax,l) / rhog(ij,kmax,l) * rhog(ij,kmax+1,l)
        elseif( is_top_free  ) then
-          rhogvx(ij,kmax+1) =  rhogvx(ij,kmax) / rhog(ij,kmax) * rhog(ij,kmax+1)
-          rhogvy(ij,kmax+1) =  rhogvy(ij,kmax) / rhog(ij,kmax) * rhog(ij,kmax+1)
-          rhogvz(ij,kmax+1) =  rhogvz(ij,kmax) / rhog(ij,kmax) * rhog(ij,kmax+1)
+          rhogvx(ij,kmax+1,l) =  rhogvx(ij,kmax,l) / rhog(ij,kmax,l) * rhog(ij,kmax+1,l)
+          rhogvy(ij,kmax+1,l) =  rhogvy(ij,kmax,l) / rhog(ij,kmax,l) * rhog(ij,kmax+1,l)
+          rhogvz(ij,kmax+1,l) =  rhogvz(ij,kmax,l) / rhog(ij,kmax,l) * rhog(ij,kmax+1,l)
        endif
 
        if    ( is_btm_rigid ) then
-          rhogvx(ij,kmin-1) = -rhogvx(ij,kmin) / rhog(ij,kmin) * rhog(ij,kmin-1)
-          rhogvy(ij,kmin-1) = -rhogvy(ij,kmin) / rhog(ij,kmin) * rhog(ij,kmin-1)
-          rhogvz(ij,kmin-1) = -rhogvz(ij,kmin) / rhog(ij,kmin) * rhog(ij,kmin-1)
+          rhogvx(ij,kmin-1,l) = -rhogvx(ij,kmin,l) / rhog(ij,kmin,l) * rhog(ij,kmin-1,l)
+          rhogvy(ij,kmin-1,l) = -rhogvy(ij,kmin,l) / rhog(ij,kmin,l) * rhog(ij,kmin-1,l)
+          rhogvz(ij,kmin-1,l) = -rhogvz(ij,kmin,l) / rhog(ij,kmin,l) * rhog(ij,kmin-1,l)
        elseif( is_btm_free  ) then
-          rhogvx(ij,kmin-1) =  rhogvx(ij,kmin) / rhog(ij,kmin) * rhog(ij,kmin-1)
-          rhogvy(ij,kmin-1) =  rhogvy(ij,kmin) / rhog(ij,kmin) * rhog(ij,kmin-1)
-          rhogvz(ij,kmin-1) =  rhogvz(ij,kmin) / rhog(ij,kmin) * rhog(ij,kmin-1)
+          rhogvx(ij,kmin-1,l) =  rhogvx(ij,kmin,l) / rhog(ij,kmin,l) * rhog(ij,kmin-1,l)
+          rhogvy(ij,kmin-1,l) =  rhogvy(ij,kmin,l) / rhog(ij,kmin,l) * rhog(ij,kmin-1,l)
+          rhogvz(ij,kmin-1,l) =  rhogvz(ij,kmin,l) / rhog(ij,kmin,l) * rhog(ij,kmin-1,l)
        endif
 
+    enddo
     enddo
     !$acc end kernels
 
