@@ -103,25 +103,81 @@ contains
   !-----------------------------------------------------------------------------
   subroutine history_vars_setup
     use mod_adm, only: &
-       ADM_KNONE, &
-       ADM_gall,  &
-       ADM_kall,  &
-       ADM_lall
+       ADM_KNONE,   &
+       ADM_have_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_kall,    &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_kmin,    &
+       ADM_kmax
+    use mod_vmtr, only: &
+       VMTR_GSGAM2,    &
+       VMTR_W2Cfact,   &
+       VMTR_C2Wfact,   &
+       VMTR_C2WfactGz, &
+       VMTR_PHI
     use mod_runconf, only: &
-       TRC_VMAX,  &
+       TRC_VMAX, &
+       I_QV,     &
        AF_TYPE
+    use mod_prgvar, only: &
+       prgvar_get_withdiag
+    use mod_bndcnd, only: &
+       BNDCND_all
+    use mod_cnvvar, only: &
+       cnvvar_vh2uv
     use mod_history, only: &
        HIST_req_nmax, &
        item_save,     &
        history_in
     implicit none
 
+    real(RP) :: rhog     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhogvx   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhogvy   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhogvz   (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhogw    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhoge    (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: rhoge_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: rhogq    (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_vmax)
+    real(RP) :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
+    real(RP) :: rho      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: pre      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: pre_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: tem      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: tem_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: vx       (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: vx_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: vy       (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: vy_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: vz       (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: vz_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: w        (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: w_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: q        (ADM_gall,   ADM_kall,ADM_lall,   TRC_vmax)
+    real(RP) :: q_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
+
+    real(RP) :: u        (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: u_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: v        (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: v_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+    real(RP) :: wc       (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: ein      (ADM_gall   ,ADM_kall,ADM_lall   )
+
     real(RP) :: tmp3d(ADM_gall,ADM_kall)
     real(RP) :: tmp2d(ADM_gall,ADM_KNONE)
 
     character(len=H_SHORT) :: varname
 
-    integer :: n, l, nq
+    integer  :: n, k, l, nq
     !---------------------------------------------------------------------------
 
     do n = 1, HIST_req_nmax
@@ -154,23 +210,86 @@ contains
 
     enddo
 
-    if ( out_duvw ) then
+    !--- get variables
+    call prgvar_get_withdiag( rhog,   rhog_pl,   & ! [OUT]
+                              rhogvx, rhogvx_pl, & ! [OUT]
+                              rhogvy, rhogvy_pl, & ! [OUT]
+                              rhogvz, rhogvz_pl, & ! [OUT]
+                              rhogw,  rhogw_pl,  & ! [OUT]
+                              rhoge,  rhoge_pl,  & ! [OUT]
+                              rhogq,  rhogq_pl,  & ! [OUT]
+                              rho,    rho_pl,    & ! [OUT]
+                              pre,    pre_pl,    & ! [OUT]
+                              tem,    tem_pl,    & ! [OUT]
+                              vx,     vx_pl,     & ! [OUT]
+                              vy,     vy_pl,     & ! [OUT]
+                              vz,     vz_pl,     & ! [OUT]
+                              w,      w_pl,      & ! [OUT]
+                              q,      q_pl       ) ! [OUT]
+
+    ein(:,:,:) = rhoge(:,:,:) / rhog(:,:,:)
+
+    ! boundary condition
+    call BNDCND_all( ADM_gall,                & ! [IN]
+                     ADM_kall,                & ! [IN]
+                     ADM_lall,                & ! [IN]
+                     rho           (:,:,:),   & ! [INOUT]
+                     vx            (:,:,:),   & ! [INOUT]
+                     vy            (:,:,:),   & ! [INOUT]
+                     vz            (:,:,:),   & ! [INOUT]
+                     w             (:,:,:),   & ! [INOUT]
+                     ein           (:,:,:),   & ! [INOUT]
+                     tem           (:,:,:),   & ! [INOUT]
+                     pre           (:,:,:),   & ! [INOUT]
+                     rhog          (:,:,:),   & ! [INOUT]
+                     rhogvx        (:,:,:),   & ! [INOUT]
+                     rhogvy        (:,:,:),   & ! [INOUT]
+                     rhogvz        (:,:,:),   & ! [INOUT]
+                     rhogw         (:,:,:),   & ! [INOUT]
+                     rhoge         (:,:,:),   & ! [INOUT]
+                     VMTR_GSGAM2   (:,:,:),   & ! [IN]
+                     VMTR_PHI      (:,:,:),   & ! [IN]
+                     VMTR_C2Wfact  (:,:,:,:), & ! [IN]
+                     VMTR_C2WfactGz(:,:,:,:)  ) ! [IN]
+
+    ! zonal and meridonal wind
+    call cnvvar_vh2uv( u (:,:,:), u_pl (:,:,:), & ! [OUT]
+                       v (:,:,:), v_pl (:,:,:), & ! [OUT]
+                       vx(:,:,:), vx_pl(:,:,:), & ! [IN]
+                       vy(:,:,:), vy_pl(:,:,:), & ! [IN]
+                       vz(:,:,:), vz_pl(:,:,:), & ! [IN]
+                       withcos = .false.        ) ! [IN]
+
+    ! vertical wind at cell center
+    do l = 1, ADM_lall
+       do k = ADM_kmin, ADM_kmax
+          wc(:,k,l) = ( VMTR_W2Cfact(:,k,1,l) * w(:,k+1,l) &
+                      + VMTR_W2Cfact(:,k,2,l) * w(:,k  ,l) )
+       enddo
+       wc(:,ADM_kmin-1,l) = w(:,ADM_kmin  ,l)
+       wc(:,ADM_kmax+1,l) = w(:,ADM_kmax+1,l)
+    enddo
+
+    if (out_duvw) then
        allocate( u_old (ADM_gall,ADM_kall,ADM_lall) )
        allocate( v_old (ADM_gall,ADM_kall,ADM_lall) )
        allocate( wc_old(ADM_gall,ADM_kall,ADM_lall) )
-       u_old (:,:,:) = 0.0_RP
-       u_old (:,:,:) = 0.0_RP
-       wc_old(:,:,:) = 0.0_RP
+
+       u_old (:,:,:) = u (:,:,:)
+       v_old (:,:,:) = v (:,:,:)
+       wc_old(:,:,:) = wc(:,:,:)
     endif
 
-    if ( out_dtem ) then
+    if (out_dtem) then
        allocate( tem_old(ADM_gall,ADM_kall,ADM_lall) )
-       tem_old(:,:,:) = 0.0_RP
+
+       tem_old(:,:,:) = tem(:,:,:)
     endif
 
-    if ( out_dq ) then
+    if (out_dq) then
        allocate( qv_old(ADM_gall,ADM_kall,ADM_lall) )
-       qv_old(:,:,:) = 0.0_RP
+
+       qv_old(:,:,:) = q(:,:,:,I_QV)
     endif
 
     tmp2d(:,:) = 0.0_RP
@@ -206,9 +325,8 @@ contains
   !----------------------------------------------------------------------
   subroutine history_vars
     use mod_const, only: &
-       UNDEF => CONST_UNDEF, &
-       GRAV  => CONST_GRAV,  &
-       Rvap  => CONST_Rvap
+       GRAV => CONST_GRAV, &
+       Rvap => CONST_Rvap
     use mod_adm, only: &
        ADM_KNONE,   &
        ADM_have_pl, &
@@ -232,10 +350,9 @@ contains
        VMTR_C2WfactGz, &
        VMTR_PHI
     use mod_gtl, only: &
-       GTL_global_sum_eachlayer, &
-       GTL_clip_region_1layer,   &
-       GTL_max, &
-       GTL_min
+       GTL_global_sum_eachlayer
+    use mod_time, only: &
+       TIME_DTL
     use mod_runconf, only: &
        TRC_VMAX,  &
        TRC_name,  &
@@ -415,9 +532,9 @@ contains
     enddo
 
     if (out_duvw) then
-       u_old (:,:,:) = u_old (:,:,:) - u (:,:,:)
-       v_old (:,:,:) = v_old (:,:,:) - v (:,:,:)
-       wc_old(:,:,:) = wc_old(:,:,:) - wc(:,:,:)
+       u_old (:,:,:) = ( u_old (:,:,:) - u (:,:,:) ) / TIME_DTL * 86400.0_RP ! [m/s/day]
+       v_old (:,:,:) = ( v_old (:,:,:) - v (:,:,:) ) / TIME_DTL * 86400.0_RP ! [m/s/day]
+       wc_old(:,:,:) = ( wc_old(:,:,:) - wc(:,:,:) ) / TIME_DTL * 86400.0_RP ! [m/s/day]
 
        do l = 1, ADM_lall
           call history_in( 'ml_du', u_old (:,:,l) )
@@ -431,7 +548,7 @@ contains
     endif
 
     if (out_dtem) then
-       tem_old(:,:,:) = tem_old(:,:,:) - tem(:,:,:)
+       tem_old(:,:,:) = ( tem_old(:,:,:) - tem(:,:,:) ) / TIME_DTL * 86400.0_RP ! [K/day]
 
        do l = 1, ADM_lall
           call history_in( 'ml_dtem', tem_old(:,:,l) )
@@ -441,7 +558,7 @@ contains
     endif
 
     if (out_dq) then
-       qv_old(:,:,:) = qv_old(:,:,:) - q(:,:,:,I_QV)
+       qv_old(:,:,:) = ( qv_old(:,:,:) - q(:,:,:,I_QV) ) * 1.E3_RP / TIME_DTL * 86400.0_RP ! [g/kg/day]
 
        do l = 1, ADM_lall
           call history_in( 'ml_dq', qv_old(:,:,l) )
