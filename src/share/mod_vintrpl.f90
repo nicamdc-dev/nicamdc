@@ -171,12 +171,12 @@ contains
           tmp(ADM_kmax+1) = var   (g,ADM_kmax,l)
 
           do k = ADM_kmin, ADM_kmax
-             if    ( Xi(k) < Z(ADM_kmin) ) then
+             if    ( Xi(k) < Z(ADM_kmin-1) ) then
                 var(g,k,l) = UNDEF
-             elseif( Xi(k) > Z(ADM_kmax) ) then
+             elseif( Xi(k) > Z(ADM_kmax+1) ) then
                 var(g,k,l) = UNDEF
              else
-                do kk = ADM_kmin, ADM_kmax-1
+                do kk = ADM_kmin, ADM_kmax
                    if( Xi(k) <= Z(kk) ) exit
                 enddo
 
@@ -184,12 +184,17 @@ contains
                    var(g,k,l) = tmp(kk-1)
                 elseif( tmp(kk-1) <= UNDEF+EPS ) then
                    var(g,k,l) = tmp(kk)
-                elseif( kk == ADM_kmin .OR. tmp(kk-2) <= UNDEF+EPS ) then
+                elseif( kk == ADM_kmin ) then
                    var(g,k,l) = lagrange2( Z(k), Xi (kk), Xi (kk-1), &
                                                  tmp(kk), tmp(kk-1)  )
                 else
-                   var(g,k,l) = lagrange3( Z(k), Xi (kk), Xi (kk-1), Xi (kk-2), &
-                                                 tmp(kk), tmp(kk-1), tmp(kk-2)  )
+                   if ( tmp(kk-2) <= UNDEF+EPS ) then
+                      var(g,k,l) = lagrange2( Z(k), Xi (kk), Xi (kk-1), &
+                                                    tmp(kk), tmp(kk-1)  )
+                   else
+                      var(g,k,l) = lagrange3( Z(k), Xi (kk), Xi (kk-1), Xi (kk-2), &
+                                                    tmp(kk), tmp(kk-1), tmp(kk-2)  )
+                   endif
                 endif
              endif
           enddo
@@ -208,12 +213,12 @@ contains
              tmp(ADM_kmax+1) = var_pl   (g,ADM_kmax,l)
 
              do k = ADM_kmin, ADM_kmax
-                if    ( Xi(k) < Z(ADM_kmin) ) then
+                if    ( Xi(k) < Z(ADM_kmin-1) ) then
                    var_pl(g,k,l) = UNDEF
-                elseif( Xi(k) > Z(ADM_kmax) ) then
+                elseif( Xi(k) > Z(ADM_kmax+1) ) then
                    var_pl(g,k,l) = UNDEF
                 else
-                   do kk = ADM_kmin, ADM_kmax-1
+                   do kk = ADM_kmin, ADM_kmax
                       if( Xi(k) <= Z(kk) ) exit
                    enddo
 
@@ -221,12 +226,17 @@ contains
                       var_pl(g,k,l) = tmp(kk-1)
                    elseif( tmp(kk-1) <= UNDEF+EPS ) then
                       var_pl(g,k,l) = tmp(kk)
-                   elseif( kk == ADM_kmin .OR. tmp(kk-2) <= UNDEF+EPS ) then
+                   elseif( kk == ADM_kmin ) then
                       var_pl(g,k,l) = lagrange2( Z(k), Xi (kk), Xi (kk-1), &
                                                        tmp(kk), tmp(kk-1)  )
                    else
-                      var_pl(g,k,l) = lagrange2( Z(k), Xi (kk), Xi (kk-1), &
-                                                       tmp(kk), tmp(kk-1)  )
+                      if ( tmp(kk-2) <= UNDEF+EPS ) then
+                         var_pl(g,k,l) = lagrange2( Z(k), Xi (kk), Xi (kk-1), &
+                                                          tmp(kk), tmp(kk-1)  )
+                      else
+                         var_pl(g,k,l) = lagrange3( Z(k), Xi (kk), Xi (kk-1), Xi (kk-2), &
+                                                          tmp(kk), tmp(kk-1), tmp(kk-2)  )
+                      endif
                    endif
                 endif
              enddo
@@ -250,12 +260,12 @@ contains
           tmp(ADM_kmax+1) = var   (g,ADM_kmax,l)
 
           do k = ADM_kmin, ADM_kmax
-             if    ( Xi(k) < Z(ADM_kmin) ) then
+             if    ( Xi(k) < Z(ADM_kmin-1) ) then
                 var(g,k,l) = UNDEF
-             elseif( Xi(k) > Z(ADM_kmax) ) then
+             elseif( Xi(k) > Z(ADM_kmax+1) ) then
                 var(g,k,l) = UNDEF
              else
-                do kk = ADM_kmin, ADM_kmax-1
+                do kk = ADM_kmin, ADM_kmax
                    if( Xi(k) <= Z(kk) ) exit
                 enddo
 
@@ -284,12 +294,12 @@ contains
              tmp(ADM_kmax+1) = var_pl   (g,ADM_kmax,l)
 
              do k = ADM_kmin, ADM_kmax
-                if    ( Xi(k) < Z(ADM_kmin) ) then
+                if    ( Xi(k) < Z(ADM_kmin-1) ) then
                    var_pl(g,k,l) = UNDEF
-                elseif( Xi(k) > Z(ADM_kmax) ) then
+                elseif( Xi(k) > Z(ADM_kmax+1) ) then
                    var_pl(g,k,l) = UNDEF
                 else
-                   do kk = ADM_kmin, ADM_kmax-1
+                   do kk = ADM_kmin, ADM_kmax
                       if( Xi(k) <= Z(kk) ) exit
                    enddo
 

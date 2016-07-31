@@ -217,9 +217,9 @@ contains
 
     do l = 1, ldim
        call BNDCND_thermo( ijdim,      & ! [IN]
-                           tem(:,:,l), & ! [INOUT]
                            rho(:,:,l), & ! [INOUT]
                            pre(:,:,l), & ! [INOUT]
+                           tem(:,:,l), & ! [INOUT]
                            phi(:,:,l)  ) ! [IN]
     enddo
 

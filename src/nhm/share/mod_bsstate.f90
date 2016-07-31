@@ -124,6 +124,10 @@ contains
     tem_bs   (:,:,:) = 0.0_RP
     tem_bs_pl(:,:,:) = 0.0_RP
 
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '*** Basic state information ***'
+    write(IO_FID_LOG,*) '--- Basic state type : ', trim(ref_type)
+
     if    ( ref_type == 'INPUT' ) then
 
        call bsstate_input_ref ( ref_fname,  & ! [IN]
@@ -144,26 +148,25 @@ contains
 
     endif
 
-    ! set 3-D basic state
-    call set_basicstate( pre_ref(:), & ! [IN]
-                         tem_ref(:), & ! [IN]
-                         qv_ref (:)  ) ! [IN]
+    if ( ref_type == 'INPUT' .OR. ref_type == 'INIT' ) then
+       ! set 3-D basic state
+       call set_basicstate( pre_ref(:), & ! [IN]
+                            tem_ref(:), & ! [IN]
+                            qv_ref (:)  ) ! [IN]
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '*** Basic state information ***'
-    write(IO_FID_LOG,*) '--- Basic state type : ', trim(ref_type)
-    write(IO_FID_LOG,*) '-------------------------------------------------------'
-    write(IO_FID_LOG,*) 'Level   Density  Pressure     Temp. Pot. Tem.        qv'
+       write(IO_FID_LOG,*) '-------------------------------------------------------'
+       write(IO_FID_LOG,*) 'Level   Density  Pressure     Temp. Pot. Tem.        qv'
 
-    do k = ADM_kall, 1, -1
-       th_ref (k) = tem_ref(k) * ( PRE00 / pre_ref(k) )**(Rdry/CPdry)
-       rho_ref(k) = pre_ref(k) / tem_ref(k) / ( ( 1.0_RP - qv_ref(k) ) * Rdry &
+       do k = ADM_kall, 1, -1
+          th_ref (k) = tem_ref(k) * ( PRE00 / pre_ref(k) )**(Rdry/CPdry)
+          rho_ref(k) = pre_ref(k) / tem_ref(k) / ( ( 1.0_RP - qv_ref(k) ) * Rdry &
                                               + (          qv_ref(k) ) * Rvap )
 
-       if( k == ADM_kmax ) write(IO_FID_LOG,*) '-------------------------------------------------------'
-       write(IO_FID_LOG,'(I4,F12.4,3F10.2,F10.7)') k,rho_ref(k),pre_ref(k),tem_ref(k),th_ref(k),qv_ref(k)
-       if( k == ADM_kmin ) write(IO_FID_LOG,*) '-------------------------------------------------------'
-    enddo
+          if( k == ADM_kmax ) write(IO_FID_LOG,*) '-------------------------------------------------------'
+          write(IO_FID_LOG,'(I4,F12.4,3F10.2,F10.7)') k,rho_ref(k),pre_ref(k),tem_ref(k),th_ref(k),qv_ref(k)
+          if( k == ADM_kmin ) write(IO_FID_LOG,*) '-------------------------------------------------------'
+       enddo
+    endif
 
     return
   end subroutine bsstate_setup

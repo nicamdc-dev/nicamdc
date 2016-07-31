@@ -146,6 +146,7 @@ contains
     implicit none
 
     character(len=H_SHORT) :: hist3D_layername  != ''
+    character(len=H_SHORT) :: histPL_layername  != ''
     integer                :: step_def          = 1
     character(len=H_SHORT) :: ktype_def         != ''
     integer                :: kstr_def          = 1
@@ -177,6 +178,7 @@ contains
          output_path,       &
          histall_fname,     &
          hist3D_layername,  &
+         histPL_layername,  &
          output_io_mode,    &
          output_size,       &
          step,              &
@@ -221,6 +223,7 @@ contains
     output_path       = ''
     histall_fname     = ''
     hist3D_layername  = ''
+    histPL_layername  = ''
     output_io_mode    = 'ADVANCED'
     ktype_def         = 'unknown'
     kend_def          = ADM_vlayer
@@ -397,13 +400,14 @@ contains
        select case( trim(ktype) )
        case('3D')
           if ( out_prelev ) then
-             kstr = 1
-             kend = npreslev
+             kstr  = 1
+             kend  = npreslev
+             lname = histPL_layername
           else
-             kstr = ADM_kmin
-             kend = ADM_kmax
+             kstr  = ADM_kmin
+             kend  = ADM_kmax
+             lname = hist3D_layername
           endif
-          lname = hist3D_layername
        case('2D')
           kstr = 1
           kend = 1
@@ -526,6 +530,7 @@ contains
        ADM_lall,    &
        ADM_gall,    &
        ADM_gall_in, &
+       ADM_kall,    &
        ADM_gmin,    &
        ADM_gmax,    &
        ADM_kmin
@@ -575,12 +580,21 @@ contains
 
           flag_save(n) = .true.
 
-          if ( ktype_save(n) == '3D' ) then ! trim HALO
-             if ( kdim_input-2 /= kmax_save(n) ) then
-                write(IO_FID_LOG,*) '+++ Module[history]/Category[nhm share]'
-                write(IO_FID_LOG,*) '*** Size unmatch, item=', hitem, &
-                                    ', kdim_input=', kdim_input, &
-                                    ', kmax_save=',  kmax_save(n)
+          if ( ktype_save(n) == '3D' ) then
+             if ( .NOT. out_prelev_save(n) ) then ! normal, trim HALO
+                if ( kdim_input-2 /= kmax_save(n) ) then
+                   write(IO_FID_LOG,*) '+++ Module[history]/Category[nhm share]'
+                   write(IO_FID_LOG,*) '*** Size unmatch, item=', hitem, &
+                                       ', kdim_input=', kdim_input, &
+                                       ', kmax_save=',  kmax_save(n)
+                endif
+             else
+                if ( kdim_input /= ADM_kall ) then
+                   write(IO_FID_LOG,*) '+++ Module[history]/Category[nhm share]'
+                   write(IO_FID_LOG,*) '*** Size unmatch, item=', hitem, &
+                                       ', kdim_input=', kdim_input, &
+                                       ', kmax for convert from z to p=', ADM_kall
+                endif
              endif
           else
              if ( kdim_input /= kmax_save(n) ) then
@@ -677,7 +691,7 @@ contains
                    do j = ADM_gmin, ADM_gmax+1
                    do i = ADM_gmin, ADM_gmax+1
                       g2 = suf(i,j)
-                      k  = cnvpre_klev(g2,k,l)
+                      k  = cnvpre_klev(g2,k2,l)
 
                       if ( k > ADM_kmin ) then
                          v_save(g2,k2,l,1) = ( cnvpre_fac1(g2,k2,l) * gd(g,k-1) &
@@ -691,17 +705,17 @@ contains
                    enddo
                 enddo
              else ! ijdim_input == ADM_gall
-                do k = 1, kmax
-                do g = 1, ADM_gall
-                   k2 = ksumstr(n)-1 + k
+                do k2 = 1, npreslev
+                   do g = 1, ADM_gall
+                      k = cnvpre_klev(g,k2,l)
 
-                   if ( k > ADM_kmin ) then
-                      v_save(g,k2,l,1) = ( cnvpre_fac1(g,k2,l) * gd(g,k-1) &
-                                         + cnvpre_fac2(g,k2,l) * gd(g,k  ) ) * TIME_DTL
-                   else
-                      v_save(g,k2,l,1) = UNDEF
-                   endif
-                enddo
+                      if ( k > ADM_kmin ) then
+                         v_save(g,k2,l,1) = ( cnvpre_fac1(g,k2,l) * gd(g,k-1) &
+                                            + cnvpre_fac2(g,k2,l) * gd(g,k  ) ) * TIME_DTL
+                      else
+                         v_save(g,k2,l,1) = UNDEF
+                      endif
+                   enddo
                 enddo
              endif
 
