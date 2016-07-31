@@ -330,7 +330,7 @@ contains
                                  + VMTR_C2WfactGz_pl(ij,k,4,l) * rhogvy_pl(ij,k-1,l) &
                                  + VMTR_C2WfactGz_pl(ij,k,5,l) * rhogvz_pl(ij,k  ,l) &
                                  + VMTR_C2WfactGz_pl(ij,k,6,l) * rhogvz_pl(ij,k-1,l) &
-                                 ) * VMTR_RGAMH_pl(ij,k,l)                          & ! horizontal contribution
+                                 ) * VMTR_RGAMH_pl(ij,k,l)                           & ! horizontal contribution
                                + rhogw_pl(ij,k,l) * VMTR_RGSQRTH_pl(ij,k,l)            ! vertical   contribution
           enddo
           enddo

@@ -539,8 +539,8 @@ contains
     integer,          intent(in), optional :: l_region
 
     character(len=H_SHORT) :: hitem
-    integer                 :: ijdim_input
-    integer                 :: kdim_input
+    integer                :: ijdim_input
+    integer                :: kdim_input
 
     logical :: save_var
     integer :: kmax

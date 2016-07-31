@@ -85,11 +85,11 @@ module mod_history_vars
   logical, private :: out_pw       = .false.
   logical, private :: out_lwp      = .false.
   logical, private :: out_iwp      = .false.
-  logical, private :: out_duvw      = .false.
+  logical, private :: out_duvw     = .false.
 
-  real(RP), private, allocatable :: u_old (:,:,:)
-  real(RP), private, allocatable :: v_old (:,:,:)
-  real(RP), private, allocatable :: wc_old(:,:,:)
+  real(RP), private, allocatable :: u_old  (:,:,:)
+  real(RP), private, allocatable :: v_old  (:,:,:)
+  real(RP), private, allocatable :: wc_old (:,:,:)
 
   !-----------------------------------------------------------------------------
 contains
@@ -276,16 +276,16 @@ contains
 
     real(RP) :: omg      (ADM_gall   ,ADM_kall,ADM_lall   )
 
-    real(RP) :: u_850    (ADM_gall   ,ADM_KNONE,ADM_lall   )
-    real(RP) :: v_850    (ADM_gall   ,ADM_KNONE,ADM_lall   )
-    real(RP) :: w_850    (ADM_gall   ,ADM_KNONE,ADM_lall   )
-    real(RP) :: t_850    (ADM_gall   ,ADM_KNONE,ADM_lall   )
-    real(RP) :: u_500    (ADM_gall   ,ADM_KNONE,ADM_lall   )
-    real(RP) :: v_500    (ADM_gall   ,ADM_KNONE,ADM_lall   )
-    real(RP) :: w_500    (ADM_gall   ,ADM_KNONE,ADM_lall   )
-    real(RP) :: t_500    (ADM_gall   ,ADM_KNONE,ADM_lall   )
-    real(RP) :: rho_sfc  (ADM_gall   ,ADM_KNONE,ADM_lall   )
-    real(RP) :: pre_sfc  (ADM_gall   ,ADM_KNONE,ADM_lall   )
+    real(RP) :: u_850    (ADM_gall   ,ADM_KNONE,ADM_lall  )
+    real(RP) :: v_850    (ADM_gall   ,ADM_KNONE,ADM_lall  )
+    real(RP) :: w_850    (ADM_gall   ,ADM_KNONE,ADM_lall  )
+    real(RP) :: t_850    (ADM_gall   ,ADM_KNONE,ADM_lall  )
+    real(RP) :: u_500    (ADM_gall   ,ADM_KNONE,ADM_lall  )
+    real(RP) :: v_500    (ADM_gall   ,ADM_KNONE,ADM_lall  )
+    real(RP) :: w_500    (ADM_gall   ,ADM_KNONE,ADM_lall  )
+    real(RP) :: t_500    (ADM_gall   ,ADM_KNONE,ADM_lall  )
+    real(RP) :: rho_sfc  (ADM_gall   ,ADM_KNONE,ADM_lall  )
+    real(RP) :: pre_sfc  (ADM_gall   ,ADM_KNONE,ADM_lall  )
 
     real(RP) :: th_prime (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: one      (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -300,8 +300,8 @@ contains
     real(RP) :: q_cli    (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: qtot     (ADM_gall   ,ADM_kall,ADM_lall   )
 
-    real(RP) :: tmp2d    (ADM_gall   ,ADM_KNONE,ADM_lall   )
-    real(RP) :: rhodz    (ADM_gall   ,ADM_KNONE,ADM_lall   )
+    real(RP) :: tmp2d    (ADM_gall   ,ADM_KNONE,ADM_lall  )
+    real(RP) :: rhodz    (ADM_gall   ,ADM_KNONE,ADM_lall  )
 
     integer  :: k, l, nq, K0
     !---------------------------------------------------------------------------

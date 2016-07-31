@@ -278,7 +278,7 @@ contains
 
        !--- surface pressure ( hydrostatic balance )
        pre_srf(:,l) = pre(:,ADM_kmin,l) &
-                    + rho(:,ADM_kmin,l)  * GRAV * ( z(:,ADM_kmin,l)-z_srf(:,l) )
+                    + rho(:,ADM_kmin,l) * GRAV * ( z(:,ADM_kmin,l)-z_srf(:,l) )
     enddo
 
     ! tentative negative fixer
@@ -310,8 +310,8 @@ contains
           call history_in( 'ml_af_fvz', fvz(:,:,l) )
           call history_in( 'ml_af_fe',  fe (:,:,l) )
        enddo
-       fw (:,:,:)   = 0.0_RP
-       fq (:,:,:,:) = 0.0_RP
+       fw(:,:,:)   = 0.0_RP
+       fq(:,:,:,:) = 0.0_RP
 
     case('DCMIP2016')
 

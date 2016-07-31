@@ -3,7 +3,7 @@
 !! Module Held-Suarez forcing
 !!
 !! @par Description
-!!         This module contains subroutines for forcing term of GCSS CASE1.
+!!         This module contains subroutines for forcing term of Held-Suarez test case
 !!
 !! @author H.Tomita
 !!
