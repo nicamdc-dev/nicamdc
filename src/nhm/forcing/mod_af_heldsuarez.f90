@@ -40,24 +40,40 @@ module mod_af_heldsuarez
   !
   !++ Private parameters & variables
   !
-  real(RP), private, parameter :: T_eq2 = 200.0_RP
-  real(RP), private, parameter :: DT_y  =  60.0_RP ! [K]
-  real(RP), private, parameter :: Dth_z =  10.0_RP ! [K]
-
   real(RP), private, parameter :: sigma_b = 0.7_RP
-  real(RP), private, parameter :: k_f     = 1.0_RP / ( 1.0_RP * 86400.0_RP )
-  real(RP), private, parameter :: k_a     = 1.0_RP / (40.0_RP * 86400.0_RP )
-  real(RP), private, parameter :: k_s     = 1.0_RP / ( 4.0_RP * 86400.0_RP )
+  real(RP), private, parameter :: Kf      = 1.0_RP / ( 1.0_RP * 86400.0_RP )
+
+  real(RP), private            :: T_eq0   = 315.0_RP ! equatorial maximum temperature [K]
+  real(RP), private            :: DT_y    =  60.0_RP ! meridional Equator–pole temperature difference [K]
+  real(RP), private, parameter :: Dth_z   =  10.0_RP ! [K]
+  real(RP), private, parameter :: Ka      = 1.0_RP / (40.0_RP * 86400.0_RP )
+  real(RP), private, parameter :: Ks      = 1.0_RP / ( 4.0_RP * 86400.0_RP )
 
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  subroutine af_heldsuarez_init
+  subroutine af_heldsuarez_init( moist_case )
     implicit none
+
+    logical, intent(in) :: moist_case
     !---------------------------------------------------------------------------
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) '+++ Module[af_heldsuarez]/Category[nhm forcing]'
+
+    if ( moist_case ) then
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,*) '*** Moist H-S testcase by Thatcher and Jablonowski (2016)'
+
+       T_eq0 = 294.0_RP
+       DT_y  =  65.0_RP
+    else ! original HS parameter
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,*) '*** Held and Suarez (1994) testcase'
+
+       T_eq0 = 315.0_RP
+       DT_y  =  60.0_RP
+    endif
 
     return
   end subroutine af_heldsuarez_init
@@ -98,37 +114,45 @@ contains
     real(RP), intent(out) :: fvz(ijdim,kdim)
     real(RP), intent(out) :: fe (ijdim,kdim)
 
-    real(RP) :: T_eq, coslat, sinlat, ap0
     real(RP) :: sigma, factor
+    real(RP) :: T_eq, coslat, sinlat, ap0, Kt
 
     integer  :: ij, k
     !---------------------------------------------------------------------------
 
-    fvx(:,:) = 0.0_RP
-    fvy(:,:) = 0.0_RP
-    fvz(:,:) = 0.0_RP
-    fe (:,:) = 0.0_RP
-
     do k  = kmin, kmax
     do ij = 1,    ijdim
+       ! Rayleigh damping of low-level winds as the boundary-layer scheme for the horizontal velocity
        sigma  = pre(ij,k) / ( 0.5_RP * ( pre(ij,kmin) + pre(ij,kmin-1) ) )
        factor = max( (sigma-sigma_b) / (1.0_RP-sigma_b), 0.0_RP )
 
-       fvx(ij,k) = -k_f * factor * vx(ij,k)
-       fvy(ij,k) = -k_f * factor * vy(ij,k)
-       fvz(ij,k) = -k_f * factor * vz(ij,k)
+       fvx(ij,k) = -Kf * factor * vx(ij,k)
+       fvy(ij,k) = -Kf * factor * vy(ij,k)
+       fvz(ij,k) = -Kf * factor * vz(ij,k)
 
-       sinlat   = abs( sin(lat(ij)) )
-       coslat   = abs( cos(lat(ij)) )
-       ap0      = abs( pre(ij,k) / PRE00 )
+       ! Newtonian temperature relaxation as the idealized radiation
+       sinlat = abs( sin(lat(ij)) )
+       coslat = abs( cos(lat(ij)) )
+       ap0    = abs( pre(ij,k) / PRE00 )
 
-       T_eq     = ( 315.0_RP - DT_y*sinlat*sinlat - Dth_z*log(ap0)*coslat*coslat ) * ap0**(Rdry/CPdry)
-       T_eq     = max( T_eq, T_eq2 )
+       Kt     = Ka + ( Ks - Ka ) * factor * coslat**4
 
-       fe(ij,k) = -( k_a + (k_s-k_a) * factor * coslat**4 ) * (tem(ij,k)-T_eq) * CVdry
+       T_eq   = max( 200.0_RP , ( T_eq0 - DT_y*sinlat*sinlat - Dth_z*log(ap0)*coslat*coslat ) * ap0**(Rdry/CPdry) )
+
+       fe(ij,k) = -Kt * ( tem(ij,k) - T_eq ) * CVdry
     enddo
     enddo
 
+    fvx(:,kmin-1) = 0.0_RP
+    fvy(:,kmin-1) = 0.0_RP
+    fvz(:,kmin-1) = 0.0_RP
+    fe (:,kmin-1) = 0.0_RP
+    fvx(:,kmax+1) = 0.0_RP
+    fvy(:,kmax+1) = 0.0_RP
+    fvz(:,kmax+1) = 0.0_RP
+    fe (:,kmax+1) = 0.0_RP
+
+    return
   end subroutine af_heldsuarez
 
 end module mod_af_heldsuarez

@@ -68,8 +68,8 @@ contains
        AF_TYPE
     use mod_af_heldsuarez, only: &
        AF_heldsuarez_init
-    use mod_af_dcmip2016, only: &
-       AF_dcmip2016_init
+    use mod_af_dcmip, only: &
+       AF_dcmip_init
     implicit none
 
     namelist /FORCING_PARAM/ &
@@ -98,9 +98,9 @@ contains
     case('NONE')
        !--- do nothing
     case('HELD-SUAREZ')
-       call AF_heldsuarez_init
-    case('DCMIP2016')
-       call AF_dcmip2016_init
+       call AF_heldsuarez_init( moist_case = .false. )
+    case('DCMIP')
+       call AF_dcmip_init
     case default
        write(IO_FID_LOG,*) 'xxx unsupported forcing type! STOP.'
        call PRC_MPIstop
@@ -160,8 +160,8 @@ contains
        history_in
     use mod_af_heldsuarez, only: &
        AF_heldsuarez
-    use mod_af_dcmip2016, only: &
-       AF_dcmip2016
+    use mod_af_dcmip, only: &
+       AF_dcmip
     implicit none
 
     real(RP) :: rhog  (ADM_gall_in,ADM_kall,ADM_lall)
@@ -293,7 +293,7 @@ contains
     case('HELD-SUAREZ')
 
        do l = 1, ADM_lall
-          call af_HeldSuarez( ADM_gall_in,  & ! [IN]
+          call AF_heldsuarez( ADM_gall_in,  & ! [IN]
                               lat(:,l),     & ! [IN]
                               pre(:,:,l),   & ! [IN]
                               tem(:,:,l),   & ! [IN]
@@ -313,36 +313,36 @@ contains
        fw(:,:,:)   = 0.0_RP
        fq(:,:,:,:) = 0.0_RP
 
-    case('DCMIP2016')
+    case('DCMIP')
 
        do l = 1, ADM_lall
-          call af_dcmip2016 ( ADM_gall_in,      & ! [IN]
-                              lat    (:,l),     & ! [IN]
-                              lon    (:,l),     & ! [IN]
-                              z      (:,:,l),   & ! [IN]
-                              zh     (:,:,l),   & ! [IN]
-                              rho    (:,:,l),   & ! [IN]
-                              pre    (:,:,l),   & ! [IN]
-                              tem    (:,:,l),   & ! [IN]
-                              vx     (:,:,l),   & ! [IN]
-                              vy     (:,:,l),   & ! [IN]
-                              vz     (:,:,l),   & ! [IN]
-                              q      (:,:,l,:), & ! [IN]
-                              ein    (:,:,l),   & ! [IN]
-                              pre_srf(:,l),     & ! [IN]
-                              fvx    (:,:,l),   & ! [OUT]
-                              fvy    (:,:,l),   & ! [OUT]
-                              fvz    (:,:,l),   & ! [OUT]
-                              fe     (:,:,l),   & ! [OUT]
-                              fq     (:,:,l,:), & ! [OUT]
-                              precip (:,k0,l),  & ! [OUT]
-                              ix     (:,l),     & ! [IN]
-                              iy     (:,l),     & ! [IN]
-                              iz     (:,l),     & ! [IN]
-                              jx     (:,l),     & ! [IN]
-                              jy     (:,l),     & ! [IN]
-                              jz     (:,l),     & ! [IN]
-                              TIME_DTL          ) ! [IN]
+          call AF_dcmip( ADM_gall_in,      & ! [IN]
+                         lat    (:,l),     & ! [IN]
+                         lon    (:,l),     & ! [IN]
+                         z      (:,:,l),   & ! [IN]
+                         zh     (:,:,l),   & ! [IN]
+                         rho    (:,:,l),   & ! [IN]
+                         pre    (:,:,l),   & ! [IN]
+                         tem    (:,:,l),   & ! [IN]
+                         vx     (:,:,l),   & ! [IN]
+                         vy     (:,:,l),   & ! [IN]
+                         vz     (:,:,l),   & ! [IN]
+                         q      (:,:,l,:), & ! [IN]
+                         ein    (:,:,l),   & ! [IN]
+                         pre_srf(:,l),     & ! [IN]
+                         fvx    (:,:,l),   & ! [OUT]
+                         fvy    (:,:,l),   & ! [OUT]
+                         fvz    (:,:,l),   & ! [OUT]
+                         fe     (:,:,l),   & ! [OUT]
+                         fq     (:,:,l,:), & ! [OUT]
+                         precip (:,k0,l),  & ! [OUT]
+                         ix     (:,l),     & ! [IN]
+                         iy     (:,l),     & ! [IN]
+                         iz     (:,l),     & ! [IN]
+                         jx     (:,l),     & ! [IN]
+                         jy     (:,l),     & ! [IN]
+                         jz     (:,l),     & ! [IN]
+                         TIME_DTL          ) ! [IN]
 
           call history_in( 'ml_af_fvx', fvx(:,:,l) )
           call history_in( 'ml_af_fvy', fvy(:,:,l) )

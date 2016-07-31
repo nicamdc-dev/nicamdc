@@ -11,7 +11,7 @@
 !! @li      2016-04-28 (R.Yoshida)  [NEW]
 !!
 !<
-module mod_af_dcmip2016
+module mod_af_dcmip
   !-----------------------------------------------------------------------------
   !
   !++ Used modules
@@ -25,8 +25,8 @@ module mod_af_dcmip2016
   !
   !++ Public procedure
   !
-  public :: af_dcmip2016_init
-  public :: af_dcmip2016
+  public :: af_dcmip_init
+  public :: af_dcmip
 
   !-----------------------------------------------------------------------------
   !
@@ -46,16 +46,19 @@ module mod_af_dcmip2016
   logical, private :: SM_LargeScaleCond   = .false. ! more option for SimpleMicrophysics
   logical, private :: SM_PBL_Bryan        = .false. ! more option for SimpleMicrophysics
   logical, private :: USE_ToyChemistry    = .false.
+  logical, private :: USE_HeldSuarez      = .false.
 
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  subroutine af_dcmip2016_init
+  subroutine af_dcmip_init
     use mod_process, only: &
        PRC_MPIstop
     use mod_runconf, only: &
        CHEM_TYPE, &
        NCHEM_MAX
+    use mod_af_heldsuarez, only: &
+       AF_heldsuarez_init
     implicit none
 
     logical :: SET_RJ2012          = .false.
@@ -65,6 +68,7 @@ contains
     logical :: SET_DCMIP2016_DRY   = .false.
     logical :: SET_DCMIP2016_LSC   = .false. ! large scale condensation
     logical :: SET_DCMIP2016_NOSST = .false.
+    logical :: SET_DCMIP2016_21    = .false.
 
     namelist /FORCING_DCMIP_PARAM/ &
        SET_RJ2012,          &
@@ -74,19 +78,21 @@ contains
        SET_DCMIP2016_DRY,   &
        SET_DCMIP2016_LSC,   &
        SET_DCMIP2016_NOSST, &
+       SET_DCMIP2016_21,    &
        USE_Kessler,         &
        USE_SimpleMicrophys, &
        SM_Latdepend_SST,    &
        SM_LargeScaleCond,   &
        SM_PBL_Bryan,        &
-       USE_ToyChemistry
+       USE_ToyChemistry,    &
+       USE_HeldSuarez
 
     integer :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
     write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[af_dcmip2016]/Category[nhm forcing]'
+    write(IO_FID_LOG,*) '+++ Module[af_dcmip]/Category[nhm forcing]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=FORCING_DCMIP_PARAM,iostat=ierr)
     if ( ierr < 0 ) then
@@ -182,6 +188,19 @@ contains
           SM_LargeScaleCond   = .true.
        endif
 
+    elseif( SET_DCMIP2016_21 ) then
+
+       write(IO_FID_LOG,*) '*** Force setting of DCMIP2016 Case 2-1 (Moist Held-Suarez test)'
+       USE_Kessler         = .false.
+       USE_SimpleMicrophys = .true.
+       SM_Latdepend_SST    = .true.
+       SM_LargeScaleCond   = .true.
+       SM_PBL_Bryan        = .false.
+       USE_ToyChemistry    = .false.
+       USE_HeldSuarez      = .true.
+
+       call AF_heldsuarez_init( moist_case = .true. )
+
     endif
 
     write(IO_FID_LOG,*) '*** Final Settings of FORCING_DCMIP_PARAM'
@@ -191,6 +210,7 @@ contains
     write(IO_FID_LOG,*) '+ SM_Latdepend_SST    : ', SM_Latdepend_SST
     write(IO_FID_LOG,*) '+ SM_PBL_Bryan        : ', SM_PBL_Bryan
     write(IO_FID_LOG,*) '+ USE_ToyChemistry    : ', USE_ToyChemistry
+    write(IO_FID_LOG,*) '+ USE_HeldSuarez      : ', USE_HeldSuarez
 
     ! initial value of the tracer is set in mod_prgvar - mod_ideal_init
     if ( USE_ToyChemistry ) then
@@ -208,10 +228,10 @@ contains
     endif
 
     return
-  end subroutine af_dcmip2016_init
+  end subroutine af_dcmip_init
 
   !-----------------------------------------------------------------------------
-  subroutine af_dcmip2016( &
+  subroutine af_dcmip( &
        ijdim,   &
        lat,     &
        lon,     &
@@ -259,6 +279,8 @@ contains
        NCHEM_STR, &
        NCHEM_END, &
        CVW
+    use mod_af_heldsuarez, only: &
+       AF_heldsuarez
     use Terminator, only: &
        tendency_Terminator
     implicit none
@@ -320,6 +342,12 @@ contains
     real(DP) :: cl, cl2
     real(DP) :: cl_f, cl2_f
     real(DP) :: qvd
+
+    ! for Held-Suarez
+    real(RP) :: gvx(ijdim,kdim)
+    real(RP) :: gvy(ijdim,kdim)
+    real(RP) :: gvz(ijdim,kdim)
+    real(RP) :: ge (ijdim,kdim)
 
     integer  :: ij, k, kk
     !---------------------------------------------------------------------------
@@ -500,7 +528,29 @@ contains
        enddo
     endif
 
-  end subroutine af_dcmip2016
+    if ( USE_HeldSuarez ) then
+       call AF_heldsuarez( ijdim,    & ! [IN]
+                           lat(:),   & ! [IN]
+                           pre(:,:), & ! [IN]
+                           tem(:,:), & ! [IN]
+                           vx (:,:), & ! [IN]
+                           vy (:,:), & ! [IN]
+                           vz (:,:), & ! [IN]
+                           gvx(:,:), & ! [OUT]
+                           gvy(:,:), & ! [OUT]
+                           gvz(:,:), & ! [OUT]
+                           ge (:,:)  ) ! [OUT]
 
-end module mod_af_dcmip2016
+       ! overwrite tendency from simple_physics
+       fvx(:,:) = gvx(:,:)
+       fvy(:,:) = gvy(:,:)
+       fvz(:,:) = gvz(:,:)
+
+       fe (:,:) = fe (:,:) + ge (:,:)
+    endif
+
+    return
+  end subroutine af_dcmip
+
+end module mod_af_dcmip
 !-------------------------------------------------------------------------------

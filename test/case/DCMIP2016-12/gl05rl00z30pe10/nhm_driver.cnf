@@ -32,7 +32,7 @@
     THUBURN_LIM    = .true.,
     EIN_TYPE       = 'SIMPLE',
     RAIN_TYPE      = "WARM",
-    AF_TYPE        = 'DCMIP2016',
+    AF_TYPE        = 'DCMIP',
 /
 
 &BSSTATEPARAM

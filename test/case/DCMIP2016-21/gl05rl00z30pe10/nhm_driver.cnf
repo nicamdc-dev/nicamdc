@@ -5,29 +5,29 @@
 ################################################################################
 
 &ADMPARAM
-    glevel      = 6,
-    rlevel      = 1,
+    glevel      = 5,
+    rlevel      = 0,
     vlayer      = 30,
-    rgnmngfname = "rl01-prc40.info",
+    rgnmngfname = "rl00-prc10.info",
 /
 
 &GRDPARAM
     hgrid_io_mode = "ADVANCED",
-    hgrid_fname   = "boundary_GL06RL01",
+    hgrid_fname   = "boundary_GL05RL00",
     VGRID_fname   = "vgrid30_stretch_30km_dcmip2016v2.dat",
     vgrid_scheme  = "LINEAR",
     topo_fname    = "NONE",
 /
 
 &TIMEPARAM
-    DTL         = 300.D0,
+    DTL         = 600.D0,
     INTEG_TYPE  = "RK3",
-    LSTEP_MAX   = 2880,
+    LSTEP_MAX   = 25920,
     start_date  = 0000,1,1,0,0,0
 /
 
 &RUNCONFPARAM
-    RUNNAME        = 'DCMIP2016-12',
+    RUNNAME        = 'DCMIP2016-21',
     NDIFF_LOCATION = 'IN_LARGE_STEP2',
     THUBURN_LIM    = .true.,
     EIN_TYPE       = 'SIMPLE',
@@ -42,14 +42,17 @@
 &RESTARTPARAM
     input_io_mode     = 'IDEAL',
     output_io_mode    = 'ADVANCED',
-    output_basename   = 'restart_all_GL06RL01z30',
+    output_basename   = 'restart_all_GL05RL00z30',
     restart_layername = 'ZSALL32_DMP16v2',
 /
 
-##### DCMIP2016-12: Tropical Cyclone
-## no test case option
+##### DCMIP2016-21: Moist Held-Suarez
+##case 5: no perturbation / with moisture
 &DYCORETESTPARAM
-    init_type  = 'Tropical-Cyclone',
+    init_type   = 'Jablonowski-Moist',
+    test_case   = '5',
+    chemtracer  = .false.,
+    prs_rebuild = .false.,
 /
 
 &FORCING_PARAM
@@ -58,7 +61,7 @@
 /
 
 &FORCING_DCMIP_PARAM
-    SET_DCMIP2016_12 = .true.,
+    SET_DCMIP2016_21 = .true.,
 /
 
 &CNSTPARAM
@@ -73,17 +76,17 @@
 &NUMFILTERPARAM
     lap_order_hdiff   = 2,
     hdiff_type        = 'NONLINEAR1',
-    Kh_coef_maxlim    = 1.50E+16,
-    Kh_coef_minlim    = 1.50E+15,
+    Kh_coef_maxlim    = 1.200E+17,
+    Kh_coef_minlim    = 1.200E+16,
     ZD_hdiff_nl       = 20000.E0,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
-    alpha_d           = 1.50E+15,
+    alpha_d           = 1.20E16,
 /
 
 &EMBUDGETPARAM
     MNT_ON   = .true.,
-    MNT_INTV = 72    ,
+    MNT_INTV = 1440  ,
 /
 
 &NMHISD
@@ -92,7 +95,7 @@
     hist3D_layername = 'ZSDEF30_DMP16v2',
     NO_VINTRPL       = .false.    ,
     output_type      = 'SNAPSHOT' ,
-    step             = 72         ,
+    step             = 144        ,
     doout_step0      = .true.     ,
 /
 
@@ -121,6 +124,6 @@
 &NMHIST item='ml_qc',      file='qc',   ktype='3D' /
 &NMHIST item='ml_qr',      file='qr',   ktype='3D' /
 
-&NMHIST item='sl_af_prcp', file='prcp', ktype='2D', output_type='AVERAGE' /
+&NMHIST item='sl_af_prcp', file='prcp', ktype='2D', output_type='AVERAGE', step=36 /
 
 ################################################################################

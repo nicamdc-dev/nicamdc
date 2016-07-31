@@ -33,7 +33,7 @@
     EIN_TYPE       = 'SIMPLE',
     RAIN_TYPE      = "WARM",
     CHEM_TYPE      = 'PASSIVE',
-    AF_TYPE        = 'DCMIP2016',
+    AF_TYPE        = 'DCMIP',
 /
 
 &CHEMVARPARAM

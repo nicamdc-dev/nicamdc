@@ -184,7 +184,7 @@ contains
           call history_in( 'ml_af_fvz', tmp3d(:,:) )
           call history_in( 'ml_af_fe',  tmp3d(:,:) )
        enddo
-    case('DCMIP2016')
+    case('DCMIP')
        do l = 1, ADM_lall
           call history_in( 'ml_af_fvx', tmp3d(:,:) )
           call history_in( 'ml_af_fvy', tmp3d(:,:) )
@@ -667,7 +667,7 @@ contains
        enddo
     endif
 
-    if ( AF_TYPE == 'DCMIP2016' .AND. NCHEM_STR > 0 .AND. NCHEM_END > 0 ) then
+    if ( AF_TYPE == 'DCMIP' .AND. NCHEM_STR > 0 .AND. NCHEM_END > 0 ) then
        do l  = 1, ADM_lall
 
           rhodz(:,k0,l) = 0.0_RP
