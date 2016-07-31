@@ -77,6 +77,9 @@ module mod_history_vars
   !
   logical, private :: out_uv_cos   = .false.
   logical, private :: out_omg      = .false.
+  logical, private :: out_rha      = .false.
+  logical, private :: out_rh       = .false.
+  logical, private :: out_rhi      = .false.
   logical, private :: out_th       = .false.
   logical, private :: out_th_prime = .false.
   logical, private :: out_850hPa   = .false.
@@ -86,10 +89,14 @@ module mod_history_vars
   logical, private :: out_lwp      = .false.
   logical, private :: out_iwp      = .false.
   logical, private :: out_duvw     = .false.
+  logical, private :: out_dtem     = .false.
+  logical, private :: out_dq       = .false.
 
   real(RP), private, allocatable :: u_old  (:,:,:)
   real(RP), private, allocatable :: v_old  (:,:,:)
   real(RP), private, allocatable :: wc_old (:,:,:)
+  real(RP), private, allocatable :: tem_old(:,:,:)
+  real(RP), private, allocatable :: qv_old (:,:,:)
 
   !-----------------------------------------------------------------------------
 contains
@@ -121,6 +128,9 @@ contains
        if(      item_save(n) == 'ml_ucos'     &
            .OR. item_save(n) == 'ml_vcos'     ) out_uv_cos   = .true.
        if(      item_save(n) == 'ml_omg'      ) out_omg      = .true.
+       if(      item_save(n) == 'ml_rha'      ) out_rha      = .true.
+       if(      item_save(n) == 'ml_rh'       ) out_rh       = .true.
+       if(      item_save(n) == 'ml_rhi'      ) out_rhi      = .true.
        if(      item_save(n) == 'ml_th'       ) out_th       = .true.
        if(      item_save(n) == 'ml_th_prime' ) out_th_prime = .true.
        if(      item_save(n) == 'sl_u850'     &
@@ -136,9 +146,11 @@ contains
        if(      item_save(n) == 'sl_lwp'      ) out_lwp      = .true.
        if(      item_save(n) == 'sl_iwp'      ) out_iwp      = .true.
 
-       if(      item_save(n) == 'ml_du'      &
-           .OR. item_save(n) == 'ml_dv'      &
-           .OR. item_save(n) == 'ml_dw'      ) out_duvw      = .true.
+       if(      item_save(n) == 'ml_du'       &
+           .OR. item_save(n) == 'ml_dv'       &
+           .OR. item_save(n) == 'ml_dw'       ) out_duvw     = .true.
+       if(      item_save(n) == 'ml_dtem'     ) out_dtem     = .true.
+       if(      item_save(n) == 'ml_dq'       ) out_dq       = .true.
 
     enddo
 
@@ -149,6 +161,16 @@ contains
        u_old (:,:,:) = 0.0_RP
        u_old (:,:,:) = 0.0_RP
        wc_old(:,:,:) = 0.0_RP
+    endif
+
+    if ( out_dtem ) then
+       allocate( tem_old(ADM_gall,ADM_kall,ADM_lall) )
+       tem_old(:,:,:) = 0.0_RP
+    endif
+
+    if ( out_dq ) then
+       allocate( qv_old(ADM_gall,ADM_kall,ADM_lall) )
+       qv_old(:,:,:) = 0.0_RP
     endif
 
     tmp2d(:,:) = 0.0_RP
@@ -184,7 +206,9 @@ contains
   !----------------------------------------------------------------------
   subroutine history_vars
     use mod_const, only: &
-       GRAV => CONST_GRAV
+       UNDEF => CONST_UNDEF, &
+       GRAV  => CONST_GRAV,  &
+       Rvap  => CONST_Rvap
     use mod_adm, only: &
        ADM_KNONE,   &
        ADM_have_pl, &
@@ -227,6 +251,10 @@ contains
        prgvar_get_withdiag
     use mod_thrmdyn, only: &
        THRMDYN_th
+    use mod_saturation, only: &
+       SATURATION_psat_all, &
+       SATURATION_psat_liq, &
+       SATURATION_psat_ice
     use mod_bndcnd, only: &
        BNDCND_thermo
     use mod_cnvvar, only: &
@@ -275,6 +303,8 @@ contains
     real(RP) :: wc       (ADM_gall   ,ADM_kall,ADM_lall   )
 
     real(RP) :: omg      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: psat     (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: rh       (ADM_gall   ,ADM_kall,ADM_lall   )
 
     real(RP) :: u_850    (ADM_gall   ,ADM_KNONE,ADM_lall  )
     real(RP) :: v_850    (ADM_gall   ,ADM_KNONE,ADM_lall  )
@@ -379,6 +409,26 @@ contains
        wc_old(:,:,:) = wc(:,:,:)
     endif
 
+    if (out_dtem) then
+       tem_old(:,:,:) = tem_old(:,:,:) - tem(:,:,:)
+
+       do l = 1, ADM_lall
+          call history_in( 'ml_dtem', tem_old(:,:,l) )
+       enddo
+
+       tem_old(:,:,:) = tem(:,:,:)
+    endif
+
+    if (out_dq) then
+       qv_old(:,:,:) = qv_old(:,:,:) - q(:,:,:,I_QV)
+
+       do l = 1, ADM_lall
+          call history_in( 'ml_dq', qv_old(:,:,l) )
+       enddo
+
+       qv_old(:,:,:) = q(:,:,:,I_QV)
+    endif
+
     ! zonal and meridonal wind with cos(phi)
     if (out_uv_cos) then
        call cnvvar_vh2uv( ucos, u_pl,    & ! [OUT]
@@ -400,6 +450,56 @@ contains
           omg(:,:,l) = -GRAV * rho(:,:,l) * wc(:,:,l)
 
           call history_in( 'ml_omg', omg(:,:,l) )
+       enddo
+    endif
+
+    ! relative humidity (liq+ice, liq, ice)
+
+    if ( out_rha ) then
+       call SATURATION_psat_all( ADM_gall,    & ! [IN]
+                                 ADM_kall,    & ! [IN]
+                                 ADM_lall,    & ! [IN]
+                                 tem (:,:,:), & ! [IN]
+                                 psat(:,:,:)  ) ! [OUT]
+
+       do l = 1, ADM_lall
+          rh(:,:,l) = rho(:,:,l) * q(:,:,l,I_QV) &
+                    / psat(:,:,l) * Rvap * tem(:,:,l) &
+                    * 100.0_RP
+
+          call history_in( 'ml_rha', rh(:,:,l) )
+       enddo
+    endif
+
+    if ( out_rh ) then
+       call SATURATION_psat_liq( ADM_gall,    & ! [IN]
+                                 ADM_kall,    & ! [IN]
+                                 ADM_lall,    & ! [IN]
+                                 tem (:,:,:), & ! [IN]
+                                 psat(:,:,:)  ) ! [OUT]
+
+       do l = 1, ADM_lall
+          rh(:,:,l) = rho(:,:,l) * q(:,:,l,I_QV) &
+                    / psat(:,:,l) * Rvap * tem(:,:,l) &
+                    * 100.0_RP
+
+          call history_in( 'ml_rh', rh(:,:,l) )
+       enddo
+    endif
+
+    if ( out_rhi ) then
+       call SATURATION_psat_ice( ADM_gall,    & ! [IN]
+                                 ADM_kall,    & ! [IN]
+                                 ADM_lall,    & ! [IN]
+                                 tem (:,:,:), & ! [IN]
+                                 psat(:,:,:)  ) ! [OUT]
+
+       do l = 1, ADM_lall
+          rh(:,:,l) = rho(:,:,l) * q(:,:,l,I_QV) &
+                    / psat(:,:,l) * Rvap * tem(:,:,l) &
+                    * 100.0_RP
+
+          call history_in( 'ml_rhi', rh(:,:,l) )
        enddo
     endif
 

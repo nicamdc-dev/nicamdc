@@ -10,6 +10,7 @@ MODS_NHM =	\
 	mod_runconf.o	\
 	mod_cnvvar.o	\
 	mod_thrmdyn.o	\
+	mod_saturation.o	\
 	mod_bndcnd.o	\
 	mod_bsstate.o	\
 	mod_history.o	\
@@ -43,23 +44,24 @@ MODS_NHM =	\
 
 #mod_sgs.o	\
 
-mod_runconf.o	: mod_runconf.f90  mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_chemvar.o
-mod_cnvvar.o	: mod_cnvvar.f90   mod_precision.o mod_adm.o mod_prof.o mod_grd.o mod_thrmdyn.o mod_runconf.o mod_bndcnd.o mod_vmtr.o
-mod_thrmdyn.o	: mod_thrmdyn.f90  mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_runconf.o
-mod_bndcnd.o	: mod_bndcnd.f90   mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_runconf.o
-mod_bsstate.o	: mod_bsstate.f90  mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_stdio.o mod_runconf.o mod_vintrpl.o mod_bndcnd.o mod_thrmdyn.o mod_gtl.o mod_prgvar.o
-mod_history.o	: mod_history.f90  mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_time.o mod_runconf.o mod_grd.o mod_calendar.o mod_fio.o mod_comm.o mod_gtl.o mod_vintrpl.o mod_stdio.o mod_cnvvar.o mod_thrmdyn.o mod_vmtr.o mod_prgvar.o
-mod_prgvar.o	: mod_prgvar.f90   mod_precision.o mod_adm.o mod_prof.o mod_runconf.o mod_comm.o mod_ideal_init.o
-mod_chemvar.o	: mod_chemvar.f90  mod_precision.o mod_adm.o mod_prof.o
-mod_extdata.o	: mod_extdata.f90  mod_precision.o mod_adm.o mod_prof.o mod_fio.o mod_calendar.o mod_gtl.o mod_comm.o
-mod_embudget.o	: mod_embudget.f90 mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_stdio.o mod_time.o mod_grd.o mod_vmtr.o mod_gtl.o mod_runconf.o mod_cnvvar.o mod_bsstate.o mod_thrmdyn.o mod_prgvar.o
+mod_runconf.o        : mod_runconf.f90        mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_chemvar.o
+mod_cnvvar.o         : mod_cnvvar.f90         mod_precision.o mod_adm.o mod_prof.o mod_grd.o mod_thrmdyn.o mod_runconf.o mod_bndcnd.o mod_vmtr.o
+mod_thrmdyn.o        : mod_thrmdyn.f90        mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_runconf.o
+mod_saturation.o     : mod_saturation.f90     mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_runconf.o
+mod_bndcnd.o         : mod_bndcnd.f90         mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_runconf.o
+mod_bsstate.o        : mod_bsstate.f90        mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_stdio.o mod_runconf.o mod_vintrpl.o mod_bndcnd.o mod_thrmdyn.o mod_gtl.o mod_prgvar.o
+mod_history.o        : mod_history.f90        mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_time.o mod_runconf.o mod_grd.o mod_calendar.o mod_fio.o mod_comm.o mod_gtl.o mod_vintrpl.o mod_stdio.o mod_cnvvar.o mod_thrmdyn.o mod_vmtr.o mod_prgvar.o
+mod_prgvar.o         : mod_prgvar.f90         mod_precision.o mod_adm.o mod_prof.o mod_runconf.o mod_comm.o mod_ideal_init.o
+mod_chemvar.o        : mod_chemvar.f90        mod_precision.o mod_adm.o mod_prof.o
+mod_extdata.o        : mod_extdata.f90        mod_precision.o mod_adm.o mod_prof.o mod_fio.o mod_calendar.o mod_gtl.o mod_comm.o
+mod_embudget.o       : mod_embudget.f90       mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_stdio.o mod_time.o mod_grd.o mod_vmtr.o mod_gtl.o mod_runconf.o mod_cnvvar.o mod_bsstate.o mod_thrmdyn.o mod_prgvar.o
 
-#mod_sgs.o			: mod_sgs.f90        mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_vmtr.o mod_gmtr.o mod_history.o mod_runconf.o mod_oprt.o mod_comm.o mod_bsstate.o mod_time.o
-mod_numfilter.o	: mod_numfilter.f90  mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_time.o mod_gmtr.o mod_gtl.o mod_oprt.o mod_oprt3d.o mod_comm.o mod_src.o mod_vmtr.o mod_runconf.o mod_bsstate.o
-mod_src_tracer.o	: mod_src_tracer.f90 mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_comm.o mod_gmtr.o mod_vmtr.o
-mod_src.o			: mod_src.f90        mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_vmtr.o mod_oprt.o mod_const.o mod_runconf.o mod_gtl.o
-mod_vi.o				: mod_vi.f90         mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_comm.o mod_time.o mod_oprt.o mod_vmtr.o mod_runconf.o mod_bndcnd.o mod_numfilter.o mod_src.o mod_cnvvar.o mod_bsstate.o
-mod_dynamics.o		: mod_dynamics.f90   mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_time.o mod_vmtr.o mod_runconf.o mod_bsstate.o mod_bndcnd.o mod_prgvar.o mod_thrmdyn.o mod_numfilter.o mod_vi.o mod_src.o mod_src_tracer.o mod_nudge.o mod_oprt.o mod_prof.o #mod_sgs.o
+#mod_sgs.o           : mod_sgs.f90            mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_vmtr.o mod_gmtr.o mod_history.o mod_runconf.o mod_oprt.o mod_comm.o mod_bsstate.o mod_time.o
+mod_numfilter.o      : mod_numfilter.f90      mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_time.o mod_gmtr.o mod_gtl.o mod_oprt.o mod_oprt3d.o mod_comm.o mod_src.o mod_vmtr.o mod_runconf.o mod_bsstate.o
+mod_src_tracer.o     : mod_src_tracer.f90     mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_comm.o mod_gmtr.o mod_vmtr.o
+mod_src.o            : mod_src.f90            mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_vmtr.o mod_oprt.o mod_const.o mod_runconf.o mod_gtl.o
+mod_vi.o             : mod_vi.f90             mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_comm.o mod_time.o mod_oprt.o mod_vmtr.o mod_runconf.o mod_bndcnd.o mod_numfilter.o mod_src.o mod_cnvvar.o mod_bsstate.o
+mod_dynamics.o       : mod_dynamics.f90       mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_time.o mod_vmtr.o mod_runconf.o mod_bsstate.o mod_bndcnd.o mod_prgvar.o mod_thrmdyn.o mod_numfilter.o mod_vi.o mod_src.o mod_src_tracer.o mod_nudge.o mod_oprt.o mod_prof.o #mod_sgs.o
 
 mod_forcing_driver.o	: mod_forcing_driver.f90 mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_gmtr.o mod_vmtr.o mod_time.o mod_runconf.o mod_cnvvar.o mod_prgvar.o mod_thrmdyn.o mod_gtl.o mod_bsstate.o mod_bndcnd.o mod_stdio.o mod_af_heldsuarez.o mod_af_trcadv.o mod_af_dcmip2016.o mod_history.o
 mod_af_heldsuarez.o	: mod_af_heldsuarez.f90  mod_precision.o mod_adm.o mod_prof.o mod_const.o
@@ -78,8 +80,8 @@ simple_physics_v6.o                      : simple_physics_v6.f90
 kessler.o                                : kessler.f90
 Terminator.o                             : Terminator.f90
 
-mod_history_vars.o	: mod_history_vars.f90 mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_history.o mod_runconf.o mod_gmtr.o mod_gtl.o mod_vmtr.o mod_prgvar.o mod_bsstate.o mod_cnvvar.o mod_thrmdyn.o mod_bndcnd.o mod_grd.o
-prg_driver-dc.o		: prg_driver-dc.f90    mod_precision.o mod_adm.o mod_prof.o mod_random.o mod_const.o mod_fio.o $(mod_hio).o mod_comm.o mod_grd.o mod_gmtr.o $(mod_oprt).o mod_vmtr.o mod_time.o mod_calendar.o mod_history.o mod_history_vars.o mod_embudget.o mod_runconf.o mod_prgvar.o mod_extdata.o mod_forcing_driver.o $(mod_dynamics).o
+mod_history_vars.o	: mod_history_vars.f90 mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_history.o mod_runconf.o mod_gmtr.o mod_gtl.o mod_vmtr.o mod_prgvar.o mod_bsstate.o mod_cnvvar.o mod_thrmdyn.o mod_saturation.o mod_bndcnd.o mod_grd.o
+prg_driver-dc.o		: prg_driver-dc.f90    mod_precision.o mod_adm.o mod_prof.o mod_random.o mod_const.o mod_fio.o $(mod_hio).o mod_comm.o mod_grd.o mod_gmtr.o $(mod_oprt).o mod_vmtr.o mod_time.o mod_calendar.o mod_history.o mod_history_vars.o mod_embudget.o mod_runconf.o mod_saturation.o mod_prgvar.o mod_extdata.o mod_forcing_driver.o $(mod_dynamics).o
 
 $(NICAM_BINDIR)/$(PRJ_NHM01): $(BUILDDIR)/$(PRJ_NHM01)
 	$(INSTALL) $< $@

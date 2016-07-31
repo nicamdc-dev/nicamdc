@@ -98,6 +98,8 @@ program prg_driver
      extdata_setup
   use mod_runconf, only: &
      runconf_setup
+  use mod_saturation, only: &
+     saturation_setup
   use mod_prgvar, only: &
      prgvar_setup,            &
      restart_input_basename,  &
@@ -267,6 +269,9 @@ program prg_driver
 
   !---< nhm_runconf module setup >---
   call runconf_setup
+
+  !---< saturation module setup >---
+  call saturation_setup
 
   !---< prognostic variable module setup >---
   call prgvar_setup
