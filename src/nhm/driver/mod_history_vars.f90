@@ -226,7 +226,10 @@ contains
        GRD_zs,   &
        GRD_vz
     use mod_vmtr, only: &
-       VMTR_GSGAM2, &
+       VMTR_GSGAM2,    &
+       VMTR_W2Cfact,   &
+       VMTR_C2Wfact,   &
+       VMTR_C2WfactGz, &
        VMTR_PHI
     use mod_gtl, only: &
        GTL_global_sum_eachlayer, &
@@ -256,7 +259,7 @@ contains
        SATURATION_psat_liq, &
        SATURATION_psat_ice
     use mod_bndcnd, only: &
-       BNDCND_thermo
+       BNDCND_all
     use mod_cnvvar, only: &
        cnvvar_vh2uv
     use mod_history, only: &
@@ -301,6 +304,7 @@ contains
     real(RP) :: ucos     (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: vcos     (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: wc       (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: ein      (ADM_gall   ,ADM_kall,ADM_lall   )
 
     real(RP) :: omg      (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: psat     (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -355,30 +359,47 @@ contains
                               w,      w_pl,      & ! [OUT]
                               q,      q_pl       ) ! [OUT]
 
+    ein(:,:,:) = rhoge(:,:,:) / rhog(:,:,:)
+
     ! boundary condition
-    do l = 1, ADM_lall
-       call BNDCND_thermo( ADM_gall,        & ! [IN]
-                           rho     (:,:,l), & ! [INOUT]
-                           pre     (:,:,l), & ! [INOUT]
-                           tem     (:,:,l), & ! [INOUT]
-                           VMTR_PHI(:,:,l)  ) ! [IN]
-    enddo
+    call BNDCND_all( ADM_gall,                & ! [IN]
+                     ADM_kall,                & ! [IN]
+                     ADM_lall,                & ! [IN]
+                     rho           (:,:,:),   & ! [INOUT]
+                     vx            (:,:,:),   & ! [INOUT]
+                     vy            (:,:,:),   & ! [INOUT]
+                     vz            (:,:,:),   & ! [INOUT]
+                     w             (:,:,:),   & ! [INOUT]
+                     ein           (:,:,:),   & ! [INOUT]
+                     tem           (:,:,:),   & ! [INOUT]
+                     pre           (:,:,:),   & ! [INOUT]
+                     rhog          (:,:,:),   & ! [INOUT]
+                     rhogvx        (:,:,:),   & ! [INOUT]
+                     rhogvy        (:,:,:),   & ! [INOUT]
+                     rhogvz        (:,:,:),   & ! [INOUT]
+                     rhogw         (:,:,:),   & ! [INOUT]
+                     rhoge         (:,:,:),   & ! [INOUT]
+                     VMTR_GSGAM2   (:,:,:),   & ! [IN]
+                     VMTR_PHI      (:,:,:),   & ! [IN]
+                     VMTR_C2Wfact  (:,:,:,:), & ! [IN]
+                     VMTR_C2WfactGz(:,:,:,:)  ) ! [IN]
 
     ! zonal and meridonal wind
-    call cnvvar_vh2uv( u,  u_pl,       & ! [OUT]
-                       v,  v_pl,       & ! [OUT]
-                       vx, vx_pl,      & ! [IN]
-                       vy, vy_pl,      & ! [IN]
-                       vz, vz_pl,      & ! [IN]
-                       withcos=.false. ) ! [IN]
+    call cnvvar_vh2uv( u (:,:,:), u_pl (:,:,:), & ! [OUT]
+                       v (:,:,:), v_pl (:,:,:), & ! [OUT]
+                       vx(:,:,:), vx_pl(:,:,:), & ! [IN]
+                       vy(:,:,:), vy_pl(:,:,:), & ! [IN]
+                       vz(:,:,:), vz_pl(:,:,:), & ! [IN]
+                       withcos = .false.        ) ! [IN]
 
     ! vertical wind at cell center
     do l = 1, ADM_lall
        do k = ADM_kmin, ADM_kmax
-          wc(:,k,l) = 0.5_RP * ( w(:,k,l) + w(:,k+1,l) )
+          wc(:,k,l) = ( VMTR_W2Cfact(:,k,1,l) * w(:,k+1,l) &
+                      + VMTR_W2Cfact(:,k,2,l) * w(:,k  ,l) )
        enddo
-       wc(:,ADM_kmin-1,l) = 0.0_RP
-       wc(:,ADM_kmax+1,l) = 0.0_RP
+       wc(:,ADM_kmin-1,l) = w(:,ADM_kmin  ,l)
+       wc(:,ADM_kmax+1,l) = w(:,ADM_kmax+1,l)
     enddo
 
     do l = 1, ADM_lall
@@ -431,12 +452,12 @@ contains
 
     ! zonal and meridonal wind with cos(phi)
     if (out_uv_cos) then
-       call cnvvar_vh2uv( ucos, u_pl,    & ! [OUT]
-                          vcos, v_pl,    & ! [OUT]
-                          vx,   vx_pl,   & ! [IN]
-                          vy,   vy_pl,   & ! [IN]
-                          vz,   vz_pl,   & ! [IN]
-                          withcos=.true. ) ! [IN]
+       call cnvvar_vh2uv( ucos(:,:,:), u_pl (:,:,:), & ! [OUT]
+                          vcos(:,:,:), v_pl (:,:,:), & ! [OUT]
+                          vx  (:,:,:), vx_pl(:,:,:), & ! [IN]
+                          vy  (:,:,:), vy_pl(:,:,:), & ! [IN]
+                          vz  (:,:,:), vz_pl(:,:,:), & ! [IN]
+                          withcos = .true.           ) ! [IN]
 
        do l = 1, ADM_lall
           call history_in( 'ml_ucos', ucos(:,:,l) )

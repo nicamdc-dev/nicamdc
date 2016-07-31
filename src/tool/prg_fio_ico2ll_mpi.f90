@@ -1528,6 +1528,11 @@ contains
        write(axhead(41),'(E16.7)') real(maxval(alt),kind=4)
        write(axhead(42),'(E16.7)')  1000.E0
        write(axhead(43),'(E16.7)') 10000.E0
+       if ( layername(1:5) == "STDPL" ) then
+          write(axhead(44),'(I16)'  ) -2
+       else
+          write(axhead(44),'(I16)'  ) 1
+       endif
        write(axhead(64),'(I16)'  ) kmax
 
        write(fid) axhead
@@ -1536,7 +1541,7 @@ contains
        close(fid)
     endif
 
-
+    return
   end subroutine makegtoolheader
 
   !-----------------------------------------------------------------------------

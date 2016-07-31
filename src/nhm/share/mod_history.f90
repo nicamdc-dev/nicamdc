@@ -507,12 +507,16 @@ contains
        endselect
     enddo
 
-    allocate( pres_levs_ln(npreslev) )
-    pres_levs_ln(1:npreslev) = log( pres_levs(1:npreslev) * 100 )
+    if ( calc_pressure ) then
+       write(IO_FID_LOG,*) '*** use z2p : YES'
 
-    allocate( cnvpre_klev(ADM_gall,npreslev,ADM_lall) )
-    allocate( cnvpre_fac1(ADM_gall,npreslev,ADM_lall) )
-    allocate( cnvpre_fac2(ADM_gall,npreslev,ADM_lall) )
+       allocate( pres_levs_ln(npreslev) )
+       pres_levs_ln(1:npreslev) = log( pres_levs(1:npreslev) * 100 )
+
+       allocate( cnvpre_klev(ADM_gall,npreslev,ADM_lall) )
+       allocate( cnvpre_fac1(ADM_gall,npreslev,ADM_lall) )
+       allocate( cnvpre_fac2(ADM_gall,npreslev,ADM_lall) )
+    endif
 
     return
   end subroutine history_setup
@@ -549,7 +553,7 @@ contains
 
     logical :: save_var
     integer :: kmax
-    integer :: i, j, g, g2, k, k2, l, n
+    integer :: i, j, g, g2, k, k1, k2, l, n
     !---------------------------------------------------------------------------
 
     hitem = trim(item)
@@ -686,16 +690,17 @@ contains
           else ! convert to pressure level
 
              if (ijdim_input == ADM_gall_in) then
-                do k2 = 1, npreslev
+                do k = 1, npreslev
                    g = 1
                    do j = ADM_gmin, ADM_gmax+1
                    do i = ADM_gmin, ADM_gmax+1
                       g2 = suf(i,j)
-                      k  = cnvpre_klev(g2,k2,l)
+                      k1 = cnvpre_klev(g2,k,l)
+                      k2 = ksumstr(n)-1 + k
 
-                      if ( k > ADM_kmin ) then
-                         v_save(g2,k2,l,1) = ( cnvpre_fac1(g2,k2,l) * gd(g,k-1) &
-                                             + cnvpre_fac2(g2,k2,l) * gd(g,k  ) ) * TIME_DTL
+                      if ( k1 > ADM_kmin ) then
+                         v_save(g2,k2,l,1) = ( cnvpre_fac1(g2,k,l) * gd(g,k1-1) &
+                                             + cnvpre_fac2(g2,k,l) * gd(g,k1  ) ) * TIME_DTL
                       else
                          v_save(g2,k2,l,1) = UNDEF
                       endif
@@ -705,13 +710,14 @@ contains
                    enddo
                 enddo
              else ! ijdim_input == ADM_gall
-                do k2 = 1, npreslev
+                do k = 1, npreslev
                    do g = 1, ADM_gall
-                      k = cnvpre_klev(g,k2,l)
+                      k1 = cnvpre_klev(g,k,l)
+                      k2 = ksumstr(n)-1 + k
 
-                      if ( k > ADM_kmin ) then
-                         v_save(g,k2,l,1) = ( cnvpre_fac1(g,k2,l) * gd(g,k-1) &
-                                            + cnvpre_fac2(g,k2,l) * gd(g,k  ) ) * TIME_DTL
+                      if ( k1 > ADM_kmin ) then
+                         v_save(g,k2,l,1) = ( cnvpre_fac1(g,k,l) * gd(g,k1-1) &
+                                            + cnvpre_fac2(g,k,l) * gd(g,k1  ) ) * TIME_DTL
                       else
                          v_save(g,k2,l,1) = UNDEF
                       endif
