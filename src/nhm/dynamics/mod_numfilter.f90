@@ -401,7 +401,7 @@ contains
 
     real(RP) :: fact(ADM_kall)
 
-    real(RP) :: e_fold_time   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: e_fold_time   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: e_fold_time_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: coef_max, coef_min
     real(RP) :: eft_max,  eft_min
@@ -411,7 +411,7 @@ contains
     integer  :: k, l
     !---------------------------------------------------------------------------
 
-    allocate( Kh_coef   (ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( Kh_coef   (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( Kh_coef_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) )
     Kh_coef   (:,:,:) = 0.0_RP
     Kh_coef_pl(:,:,:) = 0.0_RP
@@ -530,7 +530,7 @@ contains
 
 
 
-    allocate( Kh_coef_lap1   (ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( Kh_coef_lap1   (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( Kh_coef_lap1_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) )
     Kh_coef_lap1    = 0.0_RP
     Kh_coef_lap1_pl = 0.0_RP
@@ -754,7 +754,7 @@ contains
     real(RP),         intent(in) :: tau          ! e-folding time for divergence damping
     real(RP),         intent(in) :: alpha_v      ! coefficient    for divergence damping
 
-    real(RP) :: e_fold_time   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: e_fold_time   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: e_fold_time_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     real(RP) :: coef
@@ -766,7 +766,7 @@ contains
     integer  :: k, l
     !---------------------------------------------------------------------------
 
-    allocate( divdamp_coef   (ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( divdamp_coef   (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( divdamp_coef_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) )
     divdamp_coef    = 0.0_RP
     divdamp_coef_pl = 0.0_RP
@@ -920,7 +920,7 @@ contains
 
     real(RP) :: fact(ADM_kall)
 
-    real(RP) :: e_fold_time   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: e_fold_time   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: e_fold_time_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     real(RP) :: coef
@@ -932,7 +932,7 @@ contains
     integer  :: k, l
     !---------------------------------------------------------------------------
 
-    allocate( divdamp_2d_coef   (ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( divdamp_2d_coef   (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( divdamp_2d_coef_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) )
     divdamp_2d_coef    = 0.0_RP
     divdamp_2d_coef_pl = 0.0_RP
@@ -1069,23 +1069,23 @@ contains
        VMTR_C2Wfact_pl
     implicit none
 
-    real(RP), intent(in)    :: rhog      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: rhog      (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)    :: rhog_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)    :: vx        (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: vx        (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)    :: vx_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)    :: vy        (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: vy        (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)    :: vy_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)    :: vz        (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: vz        (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)    :: vz_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)    :: w         (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: w         (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)    :: w_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(inout) :: frhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: frhogvx   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(inout) :: frhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(inout) :: frhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: frhogvy   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(inout) :: frhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(inout) :: frhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: frhogvz   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(inout) :: frhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(inout) :: frhogw    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: frhogw    (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(inout) :: frhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     real(RP) :: coef
@@ -1206,50 +1206,50 @@ contains
        tem_bs_pl
     implicit none
 
-    real(RP), intent(in)  :: rhog         (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: rhog         (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)  :: rhog_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: rho          (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: rho          (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)  :: rho_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: vx           (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vx           (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)  :: vx_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: vy           (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vy           (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)  :: vy_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: vz           (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vz           (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)  :: vz_pl        (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: w            (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: w            (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)  :: w_pl         (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: tem          (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: tem          (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)  :: tem_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: q            (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
+    real(RP), intent(in)  :: q            (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
     real(RP), intent(in)  :: q_pl         (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
-    real(RP), intent(out) :: tendency     (ADM_gall,   ADM_kall,ADM_lall   ,6)
+    real(RP), intent(out) :: tendency     (ADM_gall   ,ADM_kall,ADM_lall   ,6)
     real(RP), intent(out) :: tendency_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
-    real(RP), intent(out) :: tendency_q   (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
+    real(RP), intent(out) :: tendency_q   (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
     real(RP), intent(out) :: tendency_q_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    real(RP) :: KH_coef_h        (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: KH_coef_h        (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: KH_coef_h_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP) :: KH_coef_lap1_h   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: KH_coef_lap1_h   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: KH_coef_lap1_h_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(RP) :: vtmp        (ADM_gall,   ADM_kall,ADM_lall   ,6)
+    real(RP) :: vtmp        (ADM_gall   ,ADM_kall,ADM_lall   ,6)
     real(RP) :: vtmp_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
-    real(RP) :: vtmp2       (ADM_gall,   ADM_kall,ADM_lall   ,6)
+    real(RP) :: vtmp2       (ADM_gall   ,ADM_kall,ADM_lall   ,6)
     real(RP) :: vtmp2_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
 
-    real(RP) :: qtmp        (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
+    real(RP) :: qtmp        (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
     real(RP) :: qtmp_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
-    real(RP) :: qtmp2       (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
+    real(RP) :: qtmp2       (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
     real(RP) :: qtmp2_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    real(RP) :: vtmp_lap1   (ADM_gall,   ADM_kall,ADM_lall   ,6)
+    real(RP) :: vtmp_lap1   (ADM_gall   ,ADM_kall,ADM_lall   ,6)
     real(RP) :: vtmp_lap1_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
-    real(RP) :: qtmp_lap1   (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
+    real(RP) :: qtmp_lap1   (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
     real(RP) :: qtmp_lap1_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
-    real(RP) :: wk       (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: wk       (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: wk_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP) :: rhog_h   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: rhog_h   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: rhog_h_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     real(RP), parameter :: cfact = 2.0_RP
@@ -1656,7 +1656,7 @@ contains
        tem_bs_pl
     implicit none
 
-    real(RP), intent(in)    :: rhog         (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)    :: rhog         (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)    :: rhog_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in)    :: rho          (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)    :: rho_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -1672,9 +1672,9 @@ contains
     real(RP), intent(in)    :: tem_pl       (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in)    :: q            (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
     real(RP), intent(in)    :: q_pl         (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
-    real(RP), intent(inout) :: tendency     (ADM_gall,   ADM_kall,ADM_lall   ,6)
+    real(RP), intent(inout) :: tendency     (ADM_gall   ,ADM_kall,ADM_lall   ,6)
     real(RP), intent(inout) :: tendency_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,6)
-    real(RP), intent(inout) :: tendency_q   (ADM_gall,   ADM_kall,ADM_lall   ,TRC_VMAX)
+    real(RP), intent(inout) :: tendency_q   (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_VMAX)
     real(RP), intent(inout) :: tendency_q_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 
     integer, parameter :: vmax  = 6
@@ -2142,29 +2142,29 @@ contains
        I_SRC_default
     implicit none
 
-    real(RP), intent(in)  :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vx ( G^1/2 x gam2 )
+    real(RP), intent(in)  :: rhogvx   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*Vx ( G^1/2 x gam2 )
     real(RP), intent(in)  :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vy ( G^1/2 x gam2 )
+    real(RP), intent(in)  :: rhogvy   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*Vy ( G^1/2 x gam2 )
     real(RP), intent(in)  :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*Vy ( G^1/2 x gam2 )
+    real(RP), intent(in)  :: rhogvz   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*Vy ( G^1/2 x gam2 )
     real(RP), intent(in)  :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: rhogw    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*w  ( G^1/2 x gam2 )
+    real(RP), intent(in)  :: rhogw    (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*w  ( G^1/2 x gam2 )
     real(RP), intent(in)  :: rhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(out) :: gdx      (ADM_gall,   ADM_kall,ADM_lall   ) ! (grad div)_x ( G^1/2 x gam2 )
+    real(RP), intent(out) :: gdx      (ADM_gall   ,ADM_kall,ADM_lall   ) ! (grad div)_x ( G^1/2 x gam2 )
     real(RP), intent(out) :: gdx_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(out) :: gdy      (ADM_gall,   ADM_kall,ADM_lall   ) ! (grad div)_x ( G^1/2 x gam2 )
+    real(RP), intent(out) :: gdy      (ADM_gall   ,ADM_kall,ADM_lall   ) ! (grad div)_x ( G^1/2 x gam2 )
     real(RP), intent(out) :: gdy_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(out) :: gdz      (ADM_gall,   ADM_kall,ADM_lall   ) ! (grad div)_x ( G^1/2 x gam2 )
+    real(RP), intent(out) :: gdz      (ADM_gall   ,ADM_kall,ADM_lall   ) ! (grad div)_x ( G^1/2 x gam2 )
     real(RP), intent(out) :: gdz_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(out) :: gdvz     (ADM_gall,   ADM_kall,ADM_lall   ) ! (grad div)_x ( G^1/2 x gam2 )
+    real(RP), intent(out) :: gdvz     (ADM_gall   ,ADM_kall,ADM_lall   ) ! (grad div)_x ( G^1/2 x gam2 )
     real(RP), intent(out) :: gdvz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(RP) :: vtmp    (ADM_gall,   ADM_kall,ADM_lall   ,3)
+    real(RP) :: vtmp    (ADM_gall   ,ADM_kall,ADM_lall   ,3)
     real(RP) :: vtmp_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
-    real(RP) :: vtmp2   (ADM_gall,   ADM_kall,ADM_lall   ,3)
+    real(RP) :: vtmp2   (ADM_gall   ,ADM_kall,ADM_lall   ,3)
     real(RP) :: vtmp2_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
 
-    real(RP) :: cnv     (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: cnv     (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: cnv_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     integer  :: k, l, p
@@ -2298,23 +2298,23 @@ contains
        OPRT_coef_diff_pl
     implicit none
 
-    real(RP), intent(in)  :: rhogvx   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: rhogvx   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)  :: rhogvx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: rhogvy   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: rhogvy   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)  :: rhogvy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: rhogvz   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: rhogvz   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)  :: rhogvz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(RP), intent(out) :: gdx      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: gdx      (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(out) :: gdx_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(out) :: gdy      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: gdy      (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(out) :: gdy_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(out) :: gdz      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: gdz      (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(out) :: gdz_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(RP) :: vtmp    (ADM_gall,   ADM_kall,ADM_lall   ,3)
+    real(RP) :: vtmp    (ADM_gall   ,ADM_kall,ADM_lall   ,3)
     real(RP) :: vtmp_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
-    real(RP) :: vtmp2   (ADM_gall,   ADM_kall,ADM_lall   ,3)
+    real(RP) :: vtmp2   (ADM_gall   ,ADM_kall,ADM_lall   ,3)
     real(RP) :: vtmp2_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
 
     integer  :: p

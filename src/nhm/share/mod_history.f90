@@ -766,7 +766,7 @@ contains
        VINTRPL_Xi2Z
     implicit none
 
-    real(RP) :: tmp   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: tmp   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: val_max, val_min
 

@@ -440,16 +440,16 @@ contains
        DCTEST_case
     implicit none
 
-    real(RP), intent(inout) :: PROG    (ADM_gall,   ADM_kall,ADM_lall,   nmax_PROG) ! prognostic variables
+    real(RP), intent(inout) :: PROG    (ADM_gall   ,ADM_kall,ADM_lall   ,nmax_PROG) ! prognostic variables
     real(RP), intent(inout) :: PROG_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_PROG)
 
-    real(RP) :: vx     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_x
+    real(RP) :: vx     (ADM_gall   ,ADM_kall,ADM_lall   ) ! horizontal velocity_x
     real(RP) :: vx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP) :: vy     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_y
+    real(RP) :: vy     (ADM_gall   ,ADM_kall,ADM_lall   ) ! horizontal velocity_y
     real(RP) :: vy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP) :: vz     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_z
+    real(RP) :: vz     (ADM_gall   ,ADM_kall,ADM_lall   ) ! horizontal velocity_z
     real(RP) :: vz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP) :: w      (ADM_gall,   ADM_kall,ADM_lall   ) ! vertical velocity
+    real(RP) :: w      (ADM_gall   ,ADM_kall,ADM_lall   ) ! vertical velocity
     real(RP) :: w_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     real(RP), save :: time = 0.0_RP ! for tracer advection test [add; original by H.Miura] 20130612 R.Yoshida

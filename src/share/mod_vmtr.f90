@@ -73,11 +73,11 @@ module mod_vmtr
   real(RP), public              :: VMTR_RGSGAM2H    (ADM_gall   ,ADM_kall,ADM_lall   )
   real(RP), public              :: VMTR_RGSGAM2H_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-  real(RP), public              :: VMTR_W2Cfact     (ADM_gall,   ADM_kall,2,ADM_lall   )
+  real(RP), public              :: VMTR_W2Cfact     (ADM_gall   ,ADM_kall,2,ADM_lall   )
   real(RP), public              :: VMTR_W2Cfact_pl  (ADM_gall_pl,ADM_kall,2,ADM_lall_pl)
-  real(RP), public              :: VMTR_C2Wfact     (ADM_gall,   ADM_kall,2,ADM_lall   )
+  real(RP), public              :: VMTR_C2Wfact     (ADM_gall   ,ADM_kall,2,ADM_lall   )
   real(RP), public              :: VMTR_C2Wfact_pl  (ADM_gall_pl,ADM_kall,2,ADM_lall_pl)
-  real(RP), public              :: VMTR_C2WfactGz   (ADM_gall,   ADM_kall,6,ADM_lall   )
+  real(RP), public              :: VMTR_C2WfactGz   (ADM_gall   ,ADM_kall,6,ADM_lall   )
   real(RP), public              :: VMTR_C2WfactGz_pl(ADM_gall_pl,ADM_kall,6,ADM_lall_pl)
 
   real(RP), public              :: VMTR_VOLUME      (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -176,7 +176,7 @@ contains
     integer, parameter :: JY      = 5
     integer, parameter :: JZ      = 6
 
-    real(RP) :: var   (ADM_gall,   ADM_kall,ADM_lall,   var_max)
+    real(RP) :: var   (ADM_gall   ,ADM_kall,ADM_lall   ,var_max)
     real(RP) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,var_max)
 
     !--- G^1/2
@@ -226,35 +226,35 @@ contains
     write(IO_FID_LOG,nml=VMTRPARAM)
 
 #ifndef _FIXEDINDEX_
-    allocate( VMTR_GAM2H       (ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( VMTR_GAM2H       (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( VMTR_GAM2H_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    allocate( VMTR_GSGAM2      (ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( VMTR_GSGAM2      (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( VMTR_GSGAM2_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    allocate( VMTR_GSGAM2H     (ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( VMTR_GSGAM2H     (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( VMTR_GSGAM2H_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
 
-    allocate( VMTR_RGSQRTH     (ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( VMTR_RGSQRTH     (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( VMTR_RGSQRTH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    allocate( VMTR_RGAM        (ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( VMTR_RGAM        (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( VMTR_RGAM_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    allocate( VMTR_RGAMH       (ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( VMTR_RGAMH       (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( VMTR_RGAMH_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    allocate( VMTR_RGSGAM2     (ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( VMTR_RGSGAM2     (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( VMTR_RGSGAM2_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
-    allocate( VMTR_RGSGAM2H    (ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( VMTR_RGSGAM2H    (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( VMTR_RGSGAM2H_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
 
-    allocate( VMTR_W2Cfact     (ADM_gall,   ADM_kall,2,ADM_lall   ) )
+    allocate( VMTR_W2Cfact     (ADM_gall   ,ADM_kall,2,ADM_lall   ) )
     allocate( VMTR_W2Cfact_pl  (ADM_gall_pl,ADM_kall,2,ADM_lall_pl) )
-    allocate( VMTR_C2Wfact     (ADM_gall,   ADM_kall,2,ADM_lall   ) )
+    allocate( VMTR_C2Wfact     (ADM_gall   ,ADM_kall,2,ADM_lall   ) )
     allocate( VMTR_C2Wfact_pl  (ADM_gall_pl,ADM_kall,2,ADM_lall_pl) )
-    allocate( VMTR_C2WfactGz   (ADM_gall,   ADM_kall,6,ADM_lall   ) )
+    allocate( VMTR_C2WfactGz   (ADM_gall   ,ADM_kall,6,ADM_lall   ) )
     allocate( VMTR_C2WfactGz_pl(ADM_gall_pl,ADM_kall,6,ADM_lall_pl) )
 
-    allocate( VMTR_VOLUME      (ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( VMTR_VOLUME      (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( VMTR_VOLUME_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
 
-    allocate( VMTR_PHI         (ADM_gall,   ADM_kall,ADM_lall   ) )
+    allocate( VMTR_PHI         (ADM_gall   ,ADM_kall,ADM_lall   ) )
     allocate( VMTR_PHI_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
 #endif
 

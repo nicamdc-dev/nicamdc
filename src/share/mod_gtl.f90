@@ -77,7 +77,7 @@ contains
        VMTR_VOLUME_pl
     implicit none
 
-    real(RP), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in) :: var   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP)             :: sum_g
 
@@ -182,7 +182,7 @@ contains
        VMTR_RGAM_pl
     implicit none
 
-    real(RP), intent(in)  :: var   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: var   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)  :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(out) :: sum_g (ADM_kall)
 
@@ -228,11 +228,11 @@ contains
        ADM_kall
     implicit none
 
-    real(RP), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in) :: var   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP)             :: sum_g
 
-    real(RP)       :: one   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP)       :: one   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP)       :: one_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     logical,  save :: first = .true.
     real(RP), save :: volume_g
@@ -265,11 +265,11 @@ contains
        ADM_kall
     implicit none
 
-    real(RP), intent(in)  :: var   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: var   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)  :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(out) :: sum_g (ADM_kall)
 
-    real(RP)       :: one   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP)       :: one   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP)       :: one_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP)       :: area_g(ADM_kall)
     !---------------------------------------------------------------------------
@@ -351,7 +351,7 @@ contains
        COMM_Stat_max
     implicit none
 
-    real(RP), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in) :: var   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer,  intent(in) :: k
     real(RP)             :: vmax_g
@@ -486,7 +486,7 @@ contains
        COMM_Stat_min
     implicit none
 
-    real(RP), intent(in) :: var   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in) :: var   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     integer,  intent(in) :: k
     real(RP)             :: vmin_g
@@ -547,11 +547,11 @@ contains
        GMTR_p_pl
     implicit none
 
-    real(RP), intent(inout) :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: vx   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(inout) :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(inout) :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: vy   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(inout) :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(inout) :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(inout) :: vz   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(inout) :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in)    :: alpha
     real(RP), intent(in)    :: vmax

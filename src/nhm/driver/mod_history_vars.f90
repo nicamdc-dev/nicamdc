@@ -162,7 +162,7 @@ contains
     real(RP) :: vz_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: w        (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: w_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP) :: q        (ADM_gall,   ADM_kall,ADM_lall,   TRC_vmax)
+    real(RP) :: q        (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_vmax)
     real(RP) :: q_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
 
     real(RP) :: u        (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -411,7 +411,7 @@ contains
     real(RP) :: vz_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: w        (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: w_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP) :: q        (ADM_gall,   ADM_kall,ADM_lall,   TRC_vmax)
+    real(RP) :: q        (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_vmax)
     real(RP) :: q_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
 
     real(RP) :: u        (ADM_gall   ,ADM_kall,ADM_lall   )

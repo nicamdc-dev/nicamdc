@@ -89,14 +89,14 @@ contains
        THRMDYN_tempre
     implicit none
 
-    real(RP), intent(in)  :: prg    (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax )
+    real(RP), intent(in)  :: prg    (ADM_gall   ,ADM_kall,ADM_lall   ,PRG_vmax )
     real(RP), intent(in)  :: prg_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,PRG_vmax )
-    real(RP), intent(out) :: diag   (ADM_gall,   ADM_kall,ADM_lall,   DIAG_vmax)
+    real(RP), intent(out) :: diag   (ADM_gall   ,ADM_kall,ADM_lall   ,DIAG_vmax)
     real(RP), intent(out) :: diag_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,DIAG_vmax)
 
-    real(RP) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: rho      (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP) :: ein      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: ein      (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: ein_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: rhog_h   (ADM_gall,   ADM_kall)
     real(RP) :: rhog_h_pl(ADM_gall_pl,ADM_kall)
@@ -235,14 +235,14 @@ contains
        THRMDYN_rhoein
     implicit none
 
-    real(RP), intent(out) :: prg    (ADM_gall,   ADM_kall,ADM_lall,   PRG_vmax )
+    real(RP), intent(out) :: prg    (ADM_gall   ,ADM_kall,ADM_lall   ,PRG_vmax )
     real(RP), intent(out) :: prg_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,PRG_vmax )
-    real(RP), intent(in)  :: diag   (ADM_gall,   ADM_kall,ADM_lall,   DIAG_vmax)
+    real(RP), intent(in)  :: diag   (ADM_gall   ,ADM_kall,ADM_lall   ,DIAG_vmax)
     real(RP), intent(in)  :: diag_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,DIAG_vmax)
 
-    real(RP) :: rho      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: rho      (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: rho_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP) :: ein      (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP) :: ein      (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: ein_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: rhog_h   (ADM_gall,   ADM_kall)
     real(RP) :: rhog_h_pl(ADM_gall_pl,ADM_kall)
@@ -381,17 +381,17 @@ contains
        VMTR_W2Cfact_pl
     implicit none
 
-    real(RP), intent(in)  :: rhog      (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 )
+    real(RP), intent(in)  :: rhog      (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 )
     real(RP), intent(in)  :: rhog_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: rhogvx    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vx
+    real(RP), intent(in)  :: rhogvx    (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vx
     real(RP), intent(in)  :: rhogvx_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: rhogvy    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vy
+    real(RP), intent(in)  :: rhogvy    (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vy
     real(RP), intent(in)  :: rhogvy_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: rhogvz    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vz
+    real(RP), intent(in)  :: rhogvz    (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X vz
     real(RP), intent(in)  :: rhogvz_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: rhogw     (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X w
+    real(RP), intent(in)  :: rhogw     (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X w
     real(RP), intent(in)  :: rhogw_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(out) :: rhogkin   (ADM_gall,   ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X kin
+    real(RP), intent(out) :: rhogkin   (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho X ( G^1/2 X gamma2 ) X kin
     real(RP), intent(out) :: rhogkin_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     real(RP) :: rhogkin_h   (ADM_gall,   ADM_kall) ! rho X ( G^1/2 X gamma2 ) X kin (horizontal)
@@ -507,15 +507,15 @@ contains
        GMTR_p_pl
     implicit none
 
-    real(RP), intent(in)  :: ucos   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: ucos   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)  :: ucos_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: vcos   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vcos   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)  :: vcos_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(out) :: vx     (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: vx     (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(out) :: vx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(out) :: vy     (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: vy     (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(out) :: vy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(out) :: vz     (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: vz     (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(out) :: vz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     real(RP) :: u, v, coslat, sw
@@ -601,15 +601,15 @@ contains
        GMTR_p_pl
     implicit none
 
-    real(RP), intent(out) :: u    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: u    (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(out) :: u_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(out) :: v    (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(out) :: v    (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(out) :: v_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: vx   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vx   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)  :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: vy   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vy   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)  :: vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
+    real(RP), intent(in)  :: vz   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in)  :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     logical,  intent(in), optional :: withcos
