@@ -699,8 +699,8 @@ contains
                       k2 = ksumstr(n)-1 + k
 
                       if ( k1 > ADM_kmin ) then
-                         v_save(g2,k2,l,1) = ( cnvpre_fac1(g2,k,l) * gd(g,k1-1) &
-                                             + cnvpre_fac2(g2,k,l) * gd(g,k1  ) ) * TIME_DTL
+                         v_save(g2,k2,l,1) = v_save(g2,k2,l,1) + ( cnvpre_fac1(g2,k,l) * gd(g,k1-1) &
+                                                                 + cnvpre_fac2(g2,k,l) * gd(g,k1  ) ) * TIME_DTL
                       else
                          v_save(g2,k2,l,1) = UNDEF
                       endif
@@ -716,8 +716,8 @@ contains
                       k2 = ksumstr(n)-1 + k
 
                       if ( k1 > ADM_kmin ) then
-                         v_save(g,k2,l,1) = ( cnvpre_fac1(g,k,l) * gd(g,k1-1) &
-                                            + cnvpre_fac2(g,k,l) * gd(g,k1  ) ) * TIME_DTL
+                         v_save(g,k2,l,1) = v_save(g,k2,l,1) + ( cnvpre_fac1(g,k,l) * gd(g,k1-1) &
+                                                               + cnvpre_fac2(g,k,l) * gd(g,k1  ) ) * TIME_DTL
                       else
                          v_save(g,k2,l,1) = UNDEF
                       endif
@@ -739,6 +739,8 @@ contains
   subroutine history_out
     use mod_process, only : &
        PRC_MPIstop
+    use mod_const, only: &
+       UNDEF => CONST_UNDEF
     use mod_calendar, only : &
        CALENDAR_ss2yh, &
        CALENDAR_ss2cc
@@ -831,8 +833,10 @@ contains
           do l = 1, ADM_lall
           do k = ksumstr(n), ksumend(n)
           do g = 1, ADM_gall
-             if ( abs(v_save(g,k,l,1)) < EPS_ZERO ) then ! tentaive: to avode floating invalid
+             if    ( abs(v_save(g,k,l,1)) < EPS_ZERO ) then ! tentaive: to avode floating invalid
                 v_save(g,k,l,1) = EPS_ZERO
+             elseif( abs(v_save(g,k,l,1)-UNDEF) < EPS_ZERO ) then ! tentaive: to avode floating invalid
+                v_save(g,k,l,1) = UNDEF
              else
                 v_save(g,k,l,1) = v_save(g,k,l,1) / tsum_save(n,l)
              endif
@@ -843,8 +847,10 @@ contains
           do l = 1, ADM_lall_pl
           do k = ksumstr(n), ksumend(n)
           do g = 1, ADM_gall_pl
-             if ( abs(v_save_pl(g,k,l,1)) < EPS_ZERO ) then ! tentaive: to avode floating invalid
+             if    ( abs(v_save_pl(g,k,l,1)) < EPS_ZERO ) then ! tentaive: to avode floating invalid
                 v_save_pl(g,k,l,1) = EPS_ZERO
+             elseif( abs(v_save_pl(g,k,l,1)-UNDEF) < EPS_ZERO ) then ! tentaive: to avode floating invalid
+                v_save_pl(g,k,l,1) = UNDEF
              else
                 v_save_pl(g,k,l,1) = v_save_pl(g,k,l,1) / tsum_save(n,1)
              endif
