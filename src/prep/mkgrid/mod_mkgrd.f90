@@ -457,7 +457,7 @@ contains
           enddo
 
           if ( ADM_have_sgp(l) ) then ! pentagon
-             P(:,suf(ADM_gmin,ADM_gmin),6) = P(:,suf(ADM_gmin,ADM_gmin),1)
+             P(:,6,suf(ADM_gmin,ADM_gmin)) = P(:,1,suf(ADM_gmin,ADM_gmin))
           endif
 
           do j = ADM_gmin, ADM_gmax
@@ -1346,7 +1346,7 @@ contains
 
           call VECTR_abs( gc_len, gc(:) )
 
-          GRD_xt_pl(v,k0,l,:) = gc(:) / gc_len
+          GRD_xt_pl(v,k0,l,:) = -gc(:) / gc_len
        enddo
        enddo
     endif

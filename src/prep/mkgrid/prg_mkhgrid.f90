@@ -81,6 +81,13 @@ program mkhgrid
   call IO_LOG_setup( myrank,  & ! [IN]
                      ismaster ) ! [IN]
 
+  !---< profiler module setup >---
+  call PROF_setup
+
+  !#############################################################################
+  call PROF_setprefx('INIT')
+  call PROF_rapstart('Initialize',0)
+
   !---< cnst module setup >---
   call CONST_setup
 
@@ -97,21 +104,34 @@ program mkhgrid
   !---< mkgrid module setup >---
   call MKGRD_setup
 
-  !########## main ##########
+  call PROF_rapend('Initialize',0)
+  !#############################################################################
+  call PROF_setprefx('MAIN')
+  call PROF_rapstart('Main_MKGRD',0)
 
   call GRD_input_hgrid( basename     = MKGRD_IN_BASENAME, & ! [IN]
                         input_vertex = .false.,           & ! [IN]
                         io_mode      = MKGRD_IN_io_mode   ) ! [IN]
 
+  call PROF_rapstart('MKGRD_prerotate',0)
   call MKGRD_prerotate
+  call PROF_rapend  ('MKGRD_prerotate',0)
 
+  call PROF_rapstart('MKGRD_stretch',0)
   call MKGRD_stretch
+  call PROF_rapend  ('MKGRD_stretch',0)
 
+  call PROF_rapstart('MKGRD_shrink',0)
   call MKGRD_shrink
+  call PROF_rapend  ('MKGRD_shrink',0)
 
+  call PROF_rapstart('MKGRD_rotate',0)
   call MKGRD_rotate
+  call PROF_rapend  ('MKGRD_rotate',0)
 
+  call PROF_rapstart('MKGRD_gravcenter',0)
   call MKGRD_gravcenter
+  call PROF_rapend  ('MKGRD_gravcenter',0)
 
   call GRD_output_hgrid( basename      = MKGRD_OUT_BASENAME, & ! [IN]
                          output_vertex = .true.,             & ! [IN]
@@ -119,15 +139,22 @@ program mkhgrid
 
 
   !---< gmtr module setup >---
+  call PROF_rapstart('GMTR_setup',0)
   call GRD_makelatlon
   call GRD_scaling( RADIUS )
   call GMTR_setup
+  call PROF_rapend  ('GMTR_setup',0)
 
+  call PROF_rapstart('MKGRD_diagnosis',0)
   call MKGRD_diagnosis
+  call PROF_rapend  ('MKGRD_diagnosis',0)
 
-  !########## Finalize ##########
+  call PROF_rapend('Main_MKGRD',0)
+  !#############################################################################
 
-  !--- all processes stop
+  call PROF_rapreport
+
+  !--- finalize all process
   call PRC_MPIfinish
 
   stop

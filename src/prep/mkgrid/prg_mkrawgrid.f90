@@ -69,6 +69,13 @@ program mkrawgrid
   call IO_LOG_setup( myrank,  & ! [IN]
                      ismaster ) ! [IN]
 
+  !---< profiler module setup >---
+  call PROF_setup
+
+  !#############################################################################
+  call PROF_setprefx('INIT')
+  call PROF_rapstart('Initialize',0)
+
   !---< cnst module setup >---
   call CONST_setup
 
@@ -85,19 +92,29 @@ program mkrawgrid
   !---< mkgrid module setup >---
   call MKGRD_setup
 
-  !########## main ##########
+  call PROF_rapend('Initialize',0)
+  !#############################################################################
+  call PROF_setprefx('MAIN')
+  call PROF_rapstart('Main_MKGRD',0)
 
+  call PROF_rapstart('MKGRD_standard',0)
   call MKGRD_standard
+  call PROF_rapend  ('MKGRD_standard',0)
 
+  call PROF_rapstart('MKGRD_spring',0)
   call MKGRD_spring
+  call PROF_rapend  ('MKGRD_spring',0)
 
   call GRD_output_hgrid( basename      = MKGRD_OUT_BASENAME, & ! [IN]
                          output_vertex = .false.,            & ! [IN]
                          io_mode       = MKGRD_OUT_io_mode   ) ! [IN]
 
-  !########## Finalize ##########
+  call PROF_rapend('Main_MKGRD',0)
+  !#############################################################################
 
-  !--- all processes stop
+  call PROF_rapreport
+
+  !--- finalize all process
   call PRC_MPIfinish
 
   stop
