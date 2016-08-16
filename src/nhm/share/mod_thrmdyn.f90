@@ -423,17 +423,17 @@ contains
     real(RP), intent(in)  :: pre(ijdim,kdim) ! pressure    [Pa]
     real(RP), intent(out) :: th (ijdim,kdim) ! potential temperature [K]
 
-    real(RP) :: pre0_kappa
+    real(RP) :: RovCP
 
-    integer :: ij, k
+    integer  :: ij, k
     !---------------------------------------------------------------------------
 
-    pre0_kappa = PRE00**(Rdry/CPdry)
+    RovCP = Rdry / CPdry
 
     !$acc kernels pcopy(th) pcopyin(tem,pre) async(0)
     do k  = 1, kdim
     do ij = 1, ijdim
-       th(ij,k) = tem(ij,k) + pre(ij,k)**(Rdry/CPdry) * pre0_kappa
+       th(ij,k) = tem(ij,k) * ( PRE00 / pre(ij,k) )**RovCP
     enddo
     enddo
     !$acc end kernels
@@ -459,18 +459,18 @@ contains
     real(RP), intent(in)  :: pre(ijdim,kdim,ldim) ! pressure    [Pa]
     real(RP), intent(out) :: th (ijdim,kdim,ldim) ! potential temperature [K]
 
-    real(RP) :: pre0_kappa
+    real(RP) :: RovCP
 
-    integer :: ij, k, l
+    integer  :: ij, k, l
     !---------------------------------------------------------------------------
 
-    pre0_kappa = PRE00**(Rdry/CPdry)
+    RovCP = Rdry / CPdry
 
     !$acc kernels pcopy(th) pcopyin(tem,pre) async(0)
     do l  = 1, ldim
     do k  = 1, kdim
     do ij = 1, ijdim
-       th(ij,k,l) = tem(ij,k,l) + pre(ij,k,l)**(Rdry/CPdry) * pre0_kappa
+       th(ij,k,l) = tem(ij,k,l) * ( PRE00 / pre(ij,k,l) )**RovCP
     enddo
     enddo
     enddo
