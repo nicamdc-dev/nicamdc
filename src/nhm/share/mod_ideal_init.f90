@@ -73,8 +73,8 @@ module mod_ideal_init
   !
   !++ Public parameters & variables
   !
-  character(len=H_SHORT), public :: DCTEST_type = '' !
-  character(len=H_SHORT), public :: DCTEST_case = '' !
+  character(len=H_MID),   public :: DCTEST_type = ''
+  character(len=H_SHORT), public :: DCTEST_case = ''
 
   !-----------------------------------------------------------------------------
   !

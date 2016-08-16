@@ -191,10 +191,10 @@ contains
     elseif( SET_DCMIP2016_21 ) then
 
        write(IO_FID_LOG,*) '*** Force setting of DCMIP2016 Case 2-1 (Moist Held-Suarez test)'
-       USE_Kessler         = .false.
+       USE_Kessler         = .true.
        USE_SimpleMicrophys = .true.
-       SM_Latdepend_SST    = .true.
-       SM_LargeScaleCond   = .true.
+       SM_Latdepend_SST    = .false.
+       SM_LargeScaleCond   = .false.
        SM_PBL_Bryan        = .false.
        USE_ToyChemistry    = .false.
        USE_HeldSuarez      = .true.
@@ -458,7 +458,8 @@ contains
                             precip2(:),        & ! [OUT]
                             test,              & ! [IN]
                             SM_LargeScaleCond, & ! [IN]
-                            SM_PBL_Bryan       ) ! [IN]
+                            SM_PBL_Bryan,      & ! [IN]
+                            USE_HeldSuarez     ) ! [IN]
 
        do k = 1, vlayer
           kk = kmax - k + 1 ! reverse order
