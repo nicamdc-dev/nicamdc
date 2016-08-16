@@ -30,7 +30,6 @@
     RUNNAME        = 'DCMIP2016-11',
     NDIFF_LOCATION = 'IN_LARGE_STEP2',
     THUBURN_LIM    = .true.,
-    EIN_TYPE       = 'SIMPLE',
     RAIN_TYPE      = "WARM",
     CHEM_TYPE      = 'PASSIVE',
     AF_TYPE        = 'DCMIP',

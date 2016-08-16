@@ -106,7 +106,6 @@ module mod_runconf
   character(len=H_SHORT), public :: CHEM_TYPE          = 'NONE'
   character(len=H_SHORT), public :: GWD_TYPE           = 'NONE'
   character(len=H_SHORT), public :: AF_TYPE            = 'NONE'
-  character(len=H_SHORT), public :: EIN_TYPE           = 'EXACT'
 
   character(len=H_SHORT), public :: OUT_FILE_TYPE      = 'DEFAULT'
 
@@ -237,7 +236,6 @@ contains
        GWD_TYPE,           &
        AF_TYPE,            &
        AF_TYPE,            &
-       EIN_TYPE,           &
        OUT_FILE_TYPE
 
     integer :: ierr
@@ -453,6 +451,7 @@ contains
   !> thermodynamic setup
   subroutine RUNCONF_thermodyn_setup
     use mod_const, only: &
+       CONST_THERMODYN_TYPE, &
        CPdry => CONST_CPdry, &
        CPvap => CONST_CPvap, &
        CVdry => CONST_CVdry, &
@@ -475,7 +474,7 @@ contains
     allocate( CVW(NQW_STR:NQW_END) )
     allocate( CPW(NQW_STR:NQW_END) )
 
-    if ( EIN_TYPE == 'SIMPLE' ) then
+    if ( CONST_THERMODYN_TYPE == 'SIMPLE' ) then
        do v = NQW_STR, NQW_END
           if    ( v == I_QV ) then ! vapor
              CVW(v) = CVdry
@@ -497,7 +496,7 @@ contains
              CPW(v) = CVdry
           endif
        enddo
-    elseif( EIN_TYPE == 'SIMPLE2' ) then
+    elseif( CONST_THERMODYN_TYPE == 'SIMPLE2' ) then
        do v = NQW_STR, NQW_END
           if    ( v == I_QV ) then ! vapor
              CVW(v) = CVvap
@@ -519,7 +518,7 @@ contains
              CPW(v) = CPvap
           endif
        enddo
-    elseif( EIN_TYPE == 'EXACT' ) then
+    elseif( CONST_THERMODYN_TYPE == 'EXACT' ) then
        do v = NQW_STR, NQW_END
           if    ( v == I_QV ) then ! vapor
              CVW(v) = CVvap

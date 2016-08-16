@@ -86,6 +86,7 @@ contains
     use mod_process, only: &
        PRC_MPIstop
     use mod_const, only: &
+       CONST_THERMODYN_TYPE, &
        Rvap  => CONST_Rvap,  &
        CPvap => CONST_CPvap, &
        CVvap => CONST_CVvap, &
@@ -94,8 +95,6 @@ contains
        LHV   => CONST_LHV,   &
        LHS   => CONST_LHS,   &
        TEM00 => CONST_TEM00
-    use mod_runconf, only: &
-       EIN_TYPE
     implicit none
 
     NAMELIST / SATURATIONPARAM / &
@@ -121,12 +120,13 @@ contains
 
     RTEM00 = 1.0_RP / TEM00
 
-    if ( EIN_TYPE == 'EXACT' ) then
+    if ( CONST_THERMODYN_TYPE == 'EXACT' ) then
        CPovR_liq = ( CPvap - CL ) / Rvap
        CPovR_ice = ( CPvap - CI ) / Rvap
        CVovR_liq = ( CVvap - CL ) / Rvap
        CVovR_ice = ( CVvap - CI ) / Rvap
-    elseif( EIN_TYPE == 'SIMPLE' ) then
+    elseif(      CONST_THERMODYN_TYPE == 'SIMPLE'  &
+            .OR. CONST_THERMODYN_TYPE == 'SIMPLE2' ) then
        CPovR_liq = 0.0_RP
        CPovR_ice = 0.0_RP
        CVovR_liq = 0.0_RP
@@ -368,7 +368,7 @@ contains
     do k  = 1, kdim
     do ij = 1, ijdim
        psat(ij,k,l) = PSAT0 * ( temp(ij,k,l) * RTEM00 )**CPovR_ice     &
-                   * exp( LovR_ice * ( RTEM00 - 1.0_RP/temp(ij,k,l) ) )
+                    * exp( LovR_ice * ( RTEM00 - 1.0_RP/temp(ij,k,l) ) )
     enddo
     enddo
     enddo

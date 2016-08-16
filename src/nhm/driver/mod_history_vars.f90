@@ -601,8 +601,8 @@ contains
                                  psat(:,:,:)  ) ! [OUT]
 
        do l = 1, ADM_lall
-          rh(:,:,l) = rho(:,:,l) * q(:,:,l,I_QV) &
-                    / psat(:,:,l) * Rvap * tem(:,:,l) &
+          rh(:,:,l) = q(:,:,l,I_QV) * rho(:,:,l) * Rvap * tem(:,:,l) &
+                    / psat(:,:,l) &
                     * 100.0_RP
 
           call history_in( 'ml_rha', rh(:,:,l) )
@@ -617,8 +617,8 @@ contains
                                  psat(:,:,:)  ) ! [OUT]
 
        do l = 1, ADM_lall
-          rh(:,:,l) = rho(:,:,l) * q(:,:,l,I_QV) &
-                    / psat(:,:,l) * Rvap * tem(:,:,l) &
+          rh(:,:,l) = q(:,:,l,I_QV) * rho(:,:,l) * Rvap * tem(:,:,l) &
+                    / psat(:,:,l) &
                     * 100.0_RP
 
           call history_in( 'ml_rh', rh(:,:,l) )
@@ -633,8 +633,8 @@ contains
                                  psat(:,:,:)  ) ! [OUT]
 
        do l = 1, ADM_lall
-          rh(:,:,l) = rho(:,:,l) * q(:,:,l,I_QV) &
-                    / psat(:,:,l) * Rvap * tem(:,:,l) &
+          rh(:,:,l) = q(:,:,l,I_QV) * rho(:,:,l) * Rvap * tem(:,:,l) &
+                    / psat(:,:,l) &
                     * 100.0_RP
 
           call history_in( 'ml_rhi', rh(:,:,l) )

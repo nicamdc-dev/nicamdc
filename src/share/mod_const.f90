@@ -95,7 +95,7 @@ module mod_const
   real(RP), public, parameter :: CONST_TEM00   = 273.15_RP           !< temperature reference (0C) [K]
   real(RP), public, parameter :: CONST_PPM     = 1.E-6_RP            !< parts par million
 
-  character(len=H_SHORT), public :: CONST_THERMODYN_TYPE = 'EXACT' !< internal energy type
+  character(len=H_SHORT), public :: CONST_THERMODYN_TYPE = 'SIMPLE'  !< internal energy type
 
   !-----------------------------------------------------------------------------
   !
@@ -124,6 +124,7 @@ contains
     real(RP) :: specific_heat_pre_vap        ! Specific heat of water vapour ( const pre )
     real(RP) :: latent_heat_vap              ! latent heat of vaporization LH0 ( 0 deg )
     real(RP) :: latent_heat_sub              ! latent heat of sublimation LHS0 ( 0 deg )
+    character(len=H_SHORT) :: thermodyn_type ! internal energy type
 
     namelist / CNSTPARAM / &
        earth_radius,          &
@@ -135,7 +136,8 @@ contains
        specific_heat_pre,     &
        specific_heat_pre_vap, &
        latent_heat_vap,       &
-       latent_heat_sub
+       latent_heat_sub,       &
+       thermodyn_type
 
     integer :: ierr
     !---------------------------------------------------------------------------
@@ -150,6 +152,7 @@ contains
     specific_heat_pre_vap = CONST_CPvap
     latent_heat_vap       = CONST_LHV0
     latent_heat_sub       = CONST_LHS0
+    thermodyn_type        = CONST_THERMODYN_TYPE
 
     !--- read parameters
     write(IO_FID_LOG,*)
@@ -165,15 +168,16 @@ contains
     endif
     write(IO_FID_LOG,nml=CNSTPARAM)
 
-    CONST_GRAV   = earth_gravity
-    CONST_RADIUS = earth_radius / small_planet_factor
-    CONST_OHM    = earth_angvel * small_planet_factor
-    CONST_Rdry   = gas_cnst
-    CONST_Rvap   = gas_cnst_vap
-    CONST_CPdry  = specific_heat_pre
-    CONST_CPvap  = specific_heat_pre_vap
-    CONST_LHV0   = latent_heat_vap
-    CONST_LHS0   = latent_heat_sub
+    CONST_GRAV           = earth_gravity
+    CONST_RADIUS         = earth_radius / small_planet_factor
+    CONST_OHM            = earth_angvel * small_planet_factor
+    CONST_Rdry           = gas_cnst
+    CONST_Rvap           = gas_cnst_vap
+    CONST_CPdry          = specific_heat_pre
+    CONST_CPvap          = specific_heat_pre_vap
+    CONST_LHV0           = latent_heat_vap
+    CONST_LHS0           = latent_heat_sub
+    CONST_THERMODYN_TYPE = thermodyn_type
 
     if    ( RP == SP ) then
        CONST_UNDEF = real(CONST_UNDEF4,kind=RP)
@@ -207,7 +211,8 @@ contains
        CONST_LHV = CONST_LHV00
        CONST_LHS = CONST_LHS00
        CONST_LHF = CONST_LHF00
-    elseif( CONST_THERMODYN_TYPE == 'SIMPLE' ) then
+    elseif(      CONST_THERMODYN_TYPE == 'SIMPLE'  &
+            .OR. CONST_THERMODYN_TYPE == 'SIMPLE2' ) then
        CONST_LHV = CONST_LHV0
        CONST_LHS = CONST_LHS0
        CONST_LHF = CONST_LHF0
