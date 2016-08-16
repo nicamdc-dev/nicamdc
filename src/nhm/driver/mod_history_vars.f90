@@ -324,6 +324,8 @@ contains
 
   !----------------------------------------------------------------------
   subroutine history_vars
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_const, only: &
        GRAV => CONST_GRAV, &
        Rvap => CONST_Rvap
@@ -454,7 +456,9 @@ contains
     real(RP) :: tmp2d    (ADM_gall   ,ADM_KNONE,ADM_lall  )
     real(RP) :: rhodz    (ADM_gall   ,ADM_KNONE,ADM_lall  )
 
-    integer  :: k, l, nq, K0
+    real(RP) :: mxval, mnval
+
+    integer  :: g, k, l, nq, K0
     !---------------------------------------------------------------------------
 
     K0 = ADM_KNONE
@@ -500,6 +504,27 @@ contains
                      VMTR_PHI      (:,:,:),   & ! [IN]
                      VMTR_C2Wfact  (:,:,:,:), & ! [IN]
                      VMTR_C2WfactGz(:,:,:,:)  ) ! [IN]
+
+    ! value check
+    mxval = maxval( pre(:,:,:) )
+    mnval = minval( pre(:,:,:) )
+
+    if (      mxval >= 2000.E+2_RP .OR. mxval <= 0.0_RP &
+         .OR. mnval >= 2000.E+2_RP .OR. mnval <= 0.0_RP ) then ! > 2000hPa or negative?
+
+       write(IO_FID_LOG,*) 'xxx Numerical instability occurs! STOP.', mxval, mnval
+       write(*,*)          'xxx Numerical instability occurs! STOP.', mxval, mnval
+       do l = 1, ADM_lall
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
+          if ( pre(g,k,l) > 2000.E+2_RP .OR. pre(g,k,l) < 0.0_RP ) then
+             write(IO_FID_LOG,*) 'xxx Invalid pressure value=', pre(g,k,l), ' at ', g, k, l
+          endif
+       enddo
+       enddo
+       enddo
+       call PRC_MPIstop
+    endif
 
     ! zonal and meridonal wind
     call cnvvar_vh2uv( u (:,:,:), u_pl (:,:,:), & ! [OUT]
