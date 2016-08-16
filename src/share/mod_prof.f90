@@ -64,36 +64,36 @@ module mod_prof
   !
   !++ Private parameters & variables
   !
-  integer,                private, parameter :: PROF_rapnlimit = 300
-  character(len=H_SHORT), private            :: PROF_prefix    = ''
-  integer,                private            :: PROF_rapnmax   = 0
-  character(len=H_SHORT), private            :: PROF_rapname(PROF_rapnlimit)
-  integer,                private            :: PROF_grpnmax   = 0
-  character(len=H_SHORT), private            :: PROF_grpname(PROF_rapnlimit)
-  integer,                private            :: PROF_grpid  (PROF_rapnlimit)
-  real(DP),               private            :: PROF_raptstr(PROF_rapnlimit)
-  real(DP),               private            :: PROF_rapttot(PROF_rapnlimit)
-  integer,                private            :: PROF_rapnstr(PROF_rapnlimit)
-  integer,                private            :: PROF_rapnend(PROF_rapnlimit)
-  integer,                private            :: PROF_raplevel(PROF_rapnlimit)
+  integer,                  private, parameter :: PROF_rapnlimit = 300
+  character(len=H_SHORT),   private            :: PROF_prefix    = ''
+  integer,                  private            :: PROF_rapnmax   = 0
+  character(len=H_SHORT*2), private            :: PROF_rapname(PROF_rapnlimit)
+  integer,                  private            :: PROF_grpnmax   = 0
+  character(len=H_SHORT),   private            :: PROF_grpname(PROF_rapnlimit)
+  integer,                  private            :: PROF_grpid  (PROF_rapnlimit)
+  real(DP),                 private            :: PROF_raptstr(PROF_rapnlimit)
+  real(DP),                 private            :: PROF_rapttot(PROF_rapnlimit)
+  integer,                  private            :: PROF_rapnstr(PROF_rapnlimit)
+  integer,                  private            :: PROF_rapnend(PROF_rapnlimit)
+  integer,                  private            :: PROF_raplevel(PROF_rapnlimit)
 
-  integer,                private, parameter :: PROF_default_rap_level = 2
-  integer,                private            :: PROF_rap_level         = 2
-  logical,                private            :: PROF_mpi_barrier       = .false.
+  integer,                  private, parameter :: PROF_default_rap_level = 2
+  integer,                  private            :: PROF_rap_level         = 2
+  logical,                  private            :: PROF_mpi_barrier       = .false.
 
 #ifdef _PAPI_
-  integer(DP),            private            :: PROF_PAPI_flops     = 0   !> total floating point operations since the first call
-  real(SP),               private            :: PROF_PAPI_real_time = 0.0 !> total realtime since the first PROF_PAPI_flops() call
-  real(SP),               private            :: PROF_PAPI_proc_time = 0.0 !> total process time since the first PROF_PAPI_flops() call
-  real(SP),               private            :: PROF_PAPI_mflops    = 0.0 !> Mflop/s achieved since the previous call
-  integer,                private            :: PROF_PAPI_check
+  integer(DP),              private            :: PROF_PAPI_flops     = 0   !> total floating point operations since the first call
+  real(SP),                 private            :: PROF_PAPI_real_time = 0.0 !> total realtime since the first PROF_PAPI_flops() call
+  real(SP),                 private            :: PROF_PAPI_proc_time = 0.0 !> total process time since the first PROF_PAPI_flops() call
+  real(SP),                 private            :: PROF_PAPI_mflops    = 0.0 !> Mflop/s achieved since the previous call
+  integer,                  private            :: PROF_PAPI_check
 #endif
 
-  character(len=7),       private            :: PROF_header
-  character(len=16),      private            :: PROF_item
-  real(DP),               private            :: PROF_max
-  real(DP),               private            :: PROF_min
-  real(DP),               private            :: PROF_sum
+  character(len=7),         private            :: PROF_header
+  character(len=16),        private            :: PROF_item
+  real(DP),                 private            :: PROF_max
+  real(DP),                 private            :: PROF_min
+  real(DP),                 private            :: PROF_sum
 
   !-----------------------------------------------------------------------------
 contains
@@ -162,7 +162,7 @@ contains
     character(len=*), intent(in)           :: rapname_base !< name  of item
     integer,          intent(in), optional :: level        !< level of item
 
-    character(len=H_SHORT) :: rapname !< name of item with prefix
+    character(len=H_SHORT*2) :: rapname !< name of item with prefix
 
     integer :: id
     integer :: level_
@@ -193,7 +193,7 @@ contains
     call FAPP_START( trim(PROF_grpname(get_grpid(rapname))), id, level_ )
 #endif
 #ifdef _FINEPA_
-    call START_COLLECTION( rapname )
+    call START_COLLECTION( trim(rapname) )
 #endif
 
     return
@@ -232,7 +232,7 @@ contains
     PROF_rapnend(id) = PROF_rapnend(id) + 1
 
 #ifdef _FINEPA_
-    call STOP_COLLECTION( rapname )
+    call STOP_COLLECTION( trim(rapname) )
 #endif
 #ifdef _FAPP_
     call FAPP_STOP( trim(PROF_grpname(PROF_grpid(id))), id, level_ )

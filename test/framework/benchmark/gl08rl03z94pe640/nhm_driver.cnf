@@ -8,7 +8,7 @@
     glevel      = 8,
     rlevel      = 3,
     vlayer      = 94,
-    rgnmngfname = 'rl03-prc320.info',
+    rgnmngfname = 'rl03-prc640.info',
 /
 
 &COMMPARAM
