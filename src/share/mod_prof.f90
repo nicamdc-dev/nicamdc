@@ -40,10 +40,14 @@ module mod_prof
      module procedure PROF_valcheck_SP_2D
      module procedure PROF_valcheck_SP_3D
      module procedure PROF_valcheck_SP_4D
+     module procedure PROF_valcheck_SP_5D
+     module procedure PROF_valcheck_SP_6D
      module procedure PROF_valcheck_DP_1D
      module procedure PROF_valcheck_DP_2D
      module procedure PROF_valcheck_DP_3D
      module procedure PROF_valcheck_DP_4D
+     module procedure PROF_valcheck_DP_5D
+     module procedure PROF_valcheck_DP_6D
   end interface PROF_valcheck
 
   !-----------------------------------------------------------------------------
@@ -564,6 +568,42 @@ contains
   end subroutine PROF_valcheck_SP_4D
 
   !-----------------------------------------------------------------------------
+  subroutine PROF_valcheck_SP_5D( varname, var )
+    implicit none
+
+    character(len=*), intent(in) :: varname
+    real(SP),         intent(in) :: var(:,:,:,:,:)
+    !---------------------------------------------------------------------------
+
+    PROF_item = trim(varname)
+    PROF_max  = real(maxval(var),kind=DP)
+    PROF_min  = real(minval(var),kind=DP)
+    PROF_sum  = real(sum   (var),kind=DP)
+    write(IO_FID_LOG,'(1x,A,A16,3(A,ES24.16))') &
+    '+check[',PROF_item,'] max=',PROF_max,',min=',PROF_min,',sum=',PROF_sum
+
+    return
+  end subroutine PROF_valcheck_SP_5D
+
+  !-----------------------------------------------------------------------------
+  subroutine PROF_valcheck_SP_6D( varname, var )
+    implicit none
+
+    character(len=*), intent(in) :: varname
+    real(SP),         intent(in) :: var(:,:,:,:,:,:)
+    !---------------------------------------------------------------------------
+
+    PROF_item = trim(varname)
+    PROF_max  = real(maxval(var),kind=DP)
+    PROF_min  = real(minval(var),kind=DP)
+    PROF_sum  = real(sum   (var),kind=DP)
+    write(IO_FID_LOG,'(1x,A,A16,3(A,ES24.16))') &
+    '+check[',PROF_item,'] max=',PROF_max,',min=',PROF_min,',sum=',PROF_sum
+
+    return
+  end subroutine PROF_valcheck_SP_6D
+
+  !-----------------------------------------------------------------------------
   subroutine PROF_valcheck_DP_1D( varname, var )
     implicit none
 
@@ -634,5 +674,41 @@ contains
 
     return
   end subroutine PROF_valcheck_DP_4D
+
+  !-----------------------------------------------------------------------------
+  subroutine PROF_valcheck_DP_5D( varname, var )
+    implicit none
+
+    character(len=*), intent(in) :: varname
+    real(DP),         intent(in) :: var(:,:,:,:,:)
+    !---------------------------------------------------------------------------
+
+    PROF_item = trim(varname)
+    PROF_max  = real(maxval(var),kind=DP)
+    PROF_min  = real(minval(var),kind=DP)
+    PROF_sum  = real(sum   (var),kind=DP)
+    write(IO_FID_LOG,'(1x,A,A16,3(A,ES24.16))') &
+    '+check[',PROF_item,'] max=',PROF_max,',min=',PROF_min,',sum=',PROF_sum
+
+    return
+  end subroutine PROF_valcheck_DP_5D
+
+  !-----------------------------------------------------------------------------
+  subroutine PROF_valcheck_DP_6D( varname, var )
+    implicit none
+
+    character(len=*), intent(in) :: varname
+    real(DP),         intent(in) :: var(:,:,:,:,:,:)
+    !---------------------------------------------------------------------------
+
+    PROF_item = trim(varname)
+    PROF_max  = real(maxval(var),kind=DP)
+    PROF_min  = real(minval(var),kind=DP)
+    PROF_sum  = real(sum   (var),kind=DP)
+    write(IO_FID_LOG,'(1x,A,A16,3(A,ES24.16))') &
+    '+check[',PROF_item,'] max=',PROF_max,',min=',PROF_min,',sum=',PROF_sum
+
+    return
+  end subroutine PROF_valcheck_DP_6D
 
 end module mod_prof

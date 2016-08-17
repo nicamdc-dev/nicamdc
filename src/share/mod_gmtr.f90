@@ -207,13 +207,13 @@ contains
     call GMTR_t_setup( GRD_x (:,:,:,:),   GRD_x_pl (:,:,:,:), & ! [IN]
                        GRD_xt(:,:,:,:,:), GRD_xt_pl(:,:,:,:), & ! [IN]
                        GMTR_t(:,:,:,:,:), GMTR_t_pl(:,:,:,:), & ! [OUT]
-                       GRD_rscale                             ) ! [OUT]
+                       GRD_rscale                             ) ! [IN]
 
     !--- calc geometrical information for cell arc
     call GMTR_a_setup( GRD_x (:,:,:,:),   GRD_x_pl (:,:,:,:), & ! [IN]
                        GRD_xt(:,:,:,:,:), GRD_xt_pl(:,:,:,:), & ! [IN]
                        GMTR_a(:,:,:,:,:), GMTR_a_pl(:,:,:,:), & ! [OUT]
-                       GRD_rscale                             ) ! [OUT]
+                       GRD_rscale                             ) ! [IN]
 
     if ( GMTR_fname /= "" ) then
        call GMTR_output_metrics( GMTR_fname )
