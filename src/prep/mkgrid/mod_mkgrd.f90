@@ -1,17 +1,12 @@
 !-------------------------------------------------------------------------------
-!>
-!! Module mkgrd
+!> Module mkgrd
 !!
 !! @par Description
-!!          Making grid systems based on the icosahedral grid configuration
+!!          Making horizontal grid systems based on the icosahedral grid configuration
 !!
-!! @author  H.Tomita
-!!
-!! @par History
-!! @li      2004-02-17 (H.Tomita)  [NEW]
-!! @li      2013-05-01 (H.Yashiro) NICAM-DC
-!!
+!! @author NICAM developers, Team SCALE
 !<
+!-------------------------------------------------------------------------------
 module mod_mkgrd
   !-----------------------------------------------------------------------------
   !
@@ -66,11 +61,11 @@ module mod_mkgrd
   !
   !++ Private parameters & variables
   !
-  logical, private :: MKGRD_DOSPRING    = .true.
-  logical, private :: MKGRD_DOPREROTATE = .false.
-  logical, private :: MKGRD_DOSTRETCH   = .false.
-  logical, private :: MKGRD_DOSHRINK    = .false.
-  logical, private :: MKGRD_DOROTATE    = .false.
+  logical,  private :: MKGRD_DOSPRING         = .true.
+  logical,  private :: MKGRD_DOPREROTATE      = .false.
+  logical,  private :: MKGRD_DOSTRETCH        = .false.
+  logical,  private :: MKGRD_DOSHRINK         = .false.
+  logical,  private :: MKGRD_DOROTATE         = .false.
 
   real(RP), private :: MKGRD_spring_beta      = 1.15_RP ! parameter beta for spring dynamics
   real(RP), private :: MKGRD_prerotation_tilt =  0.0_RP ! [deg]
@@ -383,8 +378,8 @@ contains
     real(RP)            :: P0Pm(3), P0PmP0(3), Fsum(3), R0(3), W0(3)
     real(RP)            :: length, distance, E
 
-    integer, parameter :: itelim = 100000
-    integer            :: ite
+    integer,  parameter :: itelim = 10000000
+    integer             :: ite
     real(RP)            :: Fsum_max, Ek_max
 
     integer  :: ij
@@ -1491,4 +1486,3 @@ contains
   end function suf
 
 end module mod_mkgrd
-!-------------------------------------------------------------------------------

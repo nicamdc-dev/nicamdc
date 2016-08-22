@@ -1,17 +1,12 @@
 !-------------------------------------------------------------------------------
-!>
-!! Program mkhgrid
+!> Program mkhgrid
 !!
 !! @par Description
-!!          Making grid systems based on the icosahedral grid configuration
+!!          Making horizontal grid systems based on the icosahedral grid configuration
 !!
-!! @author  H.Tomita
-!!
-!! @par History
-!! @li      2004-02-17 (H.Tomita)  [NEW]
-!! @li      2013-05-01 (H.Yashiro) NICAM-DC
-!!
+!! @author NICAM developers, Team SCALE
 !<
+!-------------------------------------------------------------------------------
 program mkhgrid
   !-----------------------------------------------------------------------------
   !
@@ -54,6 +49,7 @@ program mkhgrid
      MKGRD_IN_io_mode,   &
      MKGRD_OUT_BASENAME, &
      MKGRD_OUT_io_mode
+  !-----------------------------------------------------------------------------
   implicit none
   !-----------------------------------------------------------------------------
   !
@@ -159,4 +155,3 @@ program mkhgrid
 
   stop
 end program mkhgrid
-!-------------------------------------------------------------------------------

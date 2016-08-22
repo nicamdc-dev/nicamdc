@@ -50,7 +50,6 @@ program mkrawgrid
   integer :: comm_world
   integer :: myrank
   logical :: ismaster
-
   !=============================================================================
 
   !---< MPI start >---
