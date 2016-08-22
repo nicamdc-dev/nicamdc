@@ -1,22 +1,14 @@
 !-------------------------------------------------------------------------------
-!
-!+  Program FIO dump
-!
+!> Program FIO dump
+!!
+!! @par Description
+!!          header/data veiwer for new format data
+!!          ( packaged NICAM data format : PaNDa )
+!!
+!! @author Team SCALE
+!<
 !-------------------------------------------------------------------------------
 program prg_fio_dump
-  !-----------------------------------------------------------------------------
-  !
-  !++ Description:
-  !      header/data veiwer for new format data
-  !      ( packaged NICAM data format : PaNDa )
-  !
-  !++ Current Corresponding Author: H. Yashiro
-  !
-  !++ History:
-  !      Version   Date       Comment
-  !      -----------------------------------------------------------------------
-  !      0.90      11-09-01  H.Yashiro : [NEW]
-  !
   !-----------------------------------------------------------------------------
   !
   !++ Used modules
@@ -107,4 +99,3 @@ program prg_fio_dump
   call MPI_Finalize(ierr)
 
 end program prg_fio_dump
-!-------------------------------------------------------------------------------

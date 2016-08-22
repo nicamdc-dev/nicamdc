@@ -1,44 +1,35 @@
 !-------------------------------------------------------------------------------
-!
-!+  NetCDF module
-!
+!> Module NetCDF wrapper
+!!
+!! @par Description
+!!          This module reads/writes NetCDF3 or NetCDF4/HDF5 file for NICAM output.
+!!
+!! +++ Usage for reading:
+!!     1. netcdf_open_for_read
+!!        ( a. netcdf_set_count (if necessary) )
+!!        ( b. netcdf_create_grads_ctl (if necessary) )
+!!     2. netcdf_read (necessary times)
+!!     3. netcdf_close
+!!
+!! +++ Usage for writting:
+!!     1. netcdf_open_for_write
+!!     2. netcdf_write (necessary times)
+!!     3. netcdf_close
+!!
+!! @author NICAM developers, Team SCALE
+!<
 !-------------------------------------------------------------------------------
 module mod_netcdf
   !-----------------------------------------------------------------------------
   !
-  !++ Description:
-  !      This module reads/writes NetCDF3 or NetCDF4/HDF5 file for NICAM output.
-  !
-  !++ Current Corresponding Author : C.Kodama, H. Yashiro
-  !
-  !++ History:
-  !      Version   Date       Comment
-  !      -----------------------------------------------------------------------
-  !      0.90      13-04-18   C.Kodama  : [NEW]
-  !                14-05-09   C.Kodama  : [add] read_var_comp_table_file, netcdf_set_tabfid
-  !
-  !      -----------------------------------------------------------------------
-  !
-  !++ Usage for reading:
-  ! 1. netcdf_open_for_read
-  !  ( a. netcdf_set_count (if necessary) )
-  !  ( b. netcdf_create_grads_ctl (if necessary) )
-  ! 2. netcdf_read (necessary times)
-  ! 3. netcdf_close
-  !
-  !++ Usage for writting:
-  ! 1. netcdf_open_for_write
-  ! 2. netcdf_write (necessary times)
-  ! 3. netcdf_close
-  !
-  !-----------------------------------------------------------------------------
-  !
   !++ Used modules
+  !
   use netcdf  ! need NetCDF4/HDF5
   use mod_precision
   !-----------------------------------------------------------------------------
   implicit none
   private
+  !-----------------------------------------------------------------------------
   !
   !++ Private parameters & variables
   !
@@ -49,6 +40,7 @@ module mod_netcdf
 
   integer,save      :: log_fid        = 6
   integer,save      :: tab_fid        = 50
+  !-----------------------------------------------------------------------------
   !
   !++ Public procedures
   !
@@ -853,7 +845,7 @@ contains
 
   end subroutine netcdf_open_for_read
 
-
+  !-----------------------------------------------------------------------------
   subroutine netcdf_set_count( nc, count )
     type(netcdf_handler),intent(inout) :: nc
     integer,             intent(in)    :: count(4)
@@ -868,7 +860,7 @@ contains
     nc%count(:) = count(:)
   end subroutine netcdf_set_count
 
-
+  !-----------------------------------------------------------------------------
   subroutine netcdf_write_0d( nc, var, i, j, k, t )
     type(netcdf_handler),intent(inout) :: nc
     real(4),             intent(   in) :: var
@@ -882,6 +874,7 @@ contains
     !call netcdf_write_main( nc, spread(spread(spread(spread(var,1,1),2,1),3,1),4,1), i=1, j=1, k=k, t=t )
   end subroutine netcdf_write_0d
 
+  !-----------------------------------------------------------------------------
   subroutine netcdf_write_1d( nc, var, j, k, t )
     type(netcdf_handler),intent(inout) :: nc
     real(4),             intent(   in) :: var(:)
@@ -897,6 +890,7 @@ contains
     !call netcdf_write_main( nc, spread(spread(spread(var,2,1),3,1),4,1), j=1, k=k, t=t )
   end subroutine netcdf_write_1d
 
+  !-----------------------------------------------------------------------------
   subroutine netcdf_write_2d( nc, var, k, t )
     type(netcdf_handler),intent(inout) :: nc
     real(4),             intent(   in) :: var(:,:)
@@ -913,6 +907,7 @@ contains
     !call netcdf_write_main( nc, spread(spread(var,3,1),4,1), k=k, t=t )
   end subroutine netcdf_write_2d
 
+  !-----------------------------------------------------------------------------
   subroutine netcdf_write_3d( nc, var, t )
     type(netcdf_handler),intent(inout) :: nc
     real(4),             intent(   in) :: var(:,:,:)
@@ -930,6 +925,7 @@ contains
     !call netcdf_write_main( nc, spread(var,4,1), t=t )
   end subroutine netcdf_write_3d
 
+  !-----------------------------------------------------------------------------
   subroutine netcdf_write_4d( nc, var )
     type(netcdf_handler),intent(inout) :: nc
     real(4),             intent(   in) :: var(:,:,:,:)
@@ -946,6 +942,7 @@ contains
     !call netcdf_write_main( nc, var )
   end subroutine netcdf_write_4d
 
+  !-----------------------------------------------------------------------------
   subroutine netcdf_write_main( nc, wrk_var_real4, i, j, k, t )
     type(netcdf_handler),intent(inout)          :: nc
     real(4),             intent(inout)          :: wrk_var_real4(:,:,:,:)
@@ -1053,22 +1050,22 @@ contains
 
        write(*,'(A)',advance='no') ' valid range  : ['
        if( nc%var_valid_min /= nc%var_missing ) then
-          write(*,'(E15.7)',advance='no') nc%var_valid_min
+          write(*,'(ES15.7)',advance='no') nc%var_valid_min
        else
           write(*,'(A15)',advance='no') ' '
        endif
        write(*,'(A)',advance='no') ':'
        if( nc%var_valid_max /= nc%var_missing ) then
-          write(*,'(E15.7)',advance='no') nc%var_valid_max
+          write(*,'(ES15.7)',advance='no') nc%var_valid_max
        else
           write(*,'(A15)',advance='no') ' '
        endif
        write(*,'(A)') ' ]'
 
        write(*,'(A)',advance='no') ' actual range : ['
-       write(*,'(E15.7)',advance='no') minval( wrk_var_real4(:,:,:,:), mask=(wrk_var_real4(:,:,:,:)/=nc%var_missing) )
+       write(*,'(ES15.7)',advance='no') minval( wrk_var_real4(:,:,:,:), mask=(wrk_var_real4(:,:,:,:)/=nc%var_missing) )
        write(*,'(A)',advance='no') ':'
-          write(*,'(E15.7)',advance='no') maxval( wrk_var_real4(:,:,:,:), mask=(wrk_var_real4(:,:,:,:)/=nc%var_missing) )
+          write(*,'(ES15.7)',advance='no') maxval( wrk_var_real4(:,:,:,:), mask=(wrk_var_real4(:,:,:,:)/=nc%var_missing) )
        write(*,'(A)') ' ]'
 
        write(*,'(A,4I8)') '(i,j,k,t)   :', start(:)
@@ -1115,7 +1112,7 @@ contains
 
   end subroutine netcdf_write_main
 
-
+  !-----------------------------------------------------------------------------
   subroutine netcdf_read_0d( nc, var, i, j, k, t )
     type(netcdf_handler),intent(in)  :: nc
     real(4),             intent(out) :: var
@@ -1128,6 +1125,7 @@ contains
     deallocate( wrk_var_real4 )
   end subroutine netcdf_read_0d
 
+  !-----------------------------------------------------------------------------
   subroutine netcdf_read_1d( nc, var, j, k, t )
     type(netcdf_handler),intent(in)  :: nc
     real(4),             intent(out) :: var(:)
@@ -1142,6 +1140,7 @@ contains
     deallocate( wrk_var_real4 )
   end subroutine netcdf_read_1d
 
+  !-----------------------------------------------------------------------------
   subroutine netcdf_read_2d( nc, var, k, t )
     type(netcdf_handler),intent(in)  :: nc
     real(4),             intent(out) :: var(:,:)
@@ -1157,6 +1156,7 @@ contains
     deallocate( wrk_var_real4 )
   end subroutine netcdf_read_2d
 
+  !-----------------------------------------------------------------------------
   subroutine netcdf_read_3d( nc, var, t )
     type(netcdf_handler),intent(in)  :: nc
     real(4),             intent(out) :: var(:,:,:)
@@ -1173,12 +1173,14 @@ contains
     deallocate( wrk_var_real4 )
   end subroutine netcdf_read_3d
 
+  !-----------------------------------------------------------------------------
   subroutine netcdf_read_4d( nc, var )
     type(netcdf_handler),intent(in)  :: nc
     real(4),             intent(out) :: var(:,:,:,:)
     call netcdf_read_main( nc, var )
   end subroutine netcdf_read_4d
 
+  !-----------------------------------------------------------------------------
   subroutine netcdf_read_main( nc, wrk_var_real4, i, j, k, t )
     type(netcdf_handler),intent(in)           :: nc
     real(4),             intent(out)          :: wrk_var_real4(:,:,:,:)
@@ -1254,7 +1256,7 @@ contains
 
   end subroutine netcdf_read_main
 
-
+  !-----------------------------------------------------------------------------
   subroutine netcdf_read_dim( &
        nc,         &
        lon,        &
@@ -1288,7 +1290,7 @@ contains
     endif
   end subroutine netcdf_read_dim
 
-
+  !-----------------------------------------------------------------------------
   subroutine netcdf_close( nc )
     type(netcdf_handler),intent(inout) :: nc
 
@@ -1307,7 +1309,7 @@ contains
     nc%status = NOT_OPENED
   end subroutine netcdf_close
 
-
+  !-----------------------------------------------------------------------------
   ! based on mod_grads.f90 and prg_ico2ll.f90 in NICAM
   subroutine netcdf_create_grads_ctl( nc, fid_ctl, endian )
     type(netcdf_handler), intent(in)           :: nc
@@ -1421,11 +1423,11 @@ contains
     write(fid_ctl,fmt='(2a)')        'DSET ','^'//trim(nc%var_name)//'.grd'
     write(fid_ctl,fmt='(2a)')        'TITLE ',trim(nc%title)
     write(fid_ctl,fmt='(2a)')        'OPTIONS ' // trim(wrk_endian)
-    write(fid_ctl,fmt='(a,e12.5)')   'UNDEF ',real(nc%var_missing,4)
+    write(fid_ctl,fmt='(a,ES12.5)')  'UNDEF ',real(nc%var_missing,4)
 
     if( lon_start == nc%var_missing .or. lon_int == nc%var_missing ) then
        write(fid_ctl,fmt='(a,i5,a)')    'XDEF ',nc%imax, ' LEVELS'
-       !write(fid_ctl,fmt='(5x,5f10.3)')    (lon(i)*180.0D0/pi,i=1,imax)
+       !write(fid_ctl,fmt='(5x,5f10.3)')    (lon(i)*180.0_RP/pi,i=1,imax)
        !write(fid_ctl,fmt='(5x,5f10.3)') (nc%lon(i),i=1,nc%imax)
        write(fid_ctl,fmt='(5x,5f10.4)') (nc%lon(i),i=1,nc%imax)  ! [mod] C.Kodama: follow prg_ico2ll.f90.
     else
@@ -1436,7 +1438,7 @@ contains
 
     if( lat_start == nc%var_missing .or. lat_int == nc%var_missing ) then
        write(fid_ctl,fmt='(a,i5,a)')    'YDEF ',nc%jmax, ' LEVELS'
-       !write(fid_ctl,fmt='(5x,5f10.3)')(lat(j)*180.0D0/pi,j=1,jmax)
+       !write(fid_ctl,fmt='(5x,5f10.3)')(lat(j)*180.0_RP/pi,j=1,jmax)
        !write(fid_ctl,fmt='(5x,5f10.3)') (nc%lat(j),j=1,nc%jmax)
        write(fid_ctl,fmt='(5x,5f10.4)') (nc%lat(j),j=1,nc%jmax)
     else
@@ -1472,10 +1474,9 @@ contains
 
   end subroutine netcdf_create_grads_ctl
 
-
+  !-----------------------------------------------------------------------------
   subroutine check( status )
     implicit none
-
     integer, intent(in) :: status
 
     if( status == NF90_NOERR ) return
@@ -1485,7 +1486,7 @@ contains
     stop 1
   end subroutine check
 
-
+  !-----------------------------------------------------------------------------
   ! [add] C.Kodama 2014.05.09
   ! do not specify min/max if you want to set it missing value.
   subroutine read_var_comp_table_file( nc, var_name, var_comp_table_file )
@@ -1549,7 +1550,7 @@ contains
     close( tab_fid )
   end subroutine read_var_comp_table_file
 
-
+  !-----------------------------------------------------------------------------
   subroutine var_comp_def_table( nc, var_name )
     type(netcdf_handler),intent(inout) :: nc
     character(*),        intent(   in) :: var_name

@@ -1,22 +1,14 @@
 !-------------------------------------------------------------------------------
-!
-!+  Program FIO cat
-!
+!> Program FIO cat
+!!
+!! @par Description
+!!          combine pe0000x format data
+!!          ( packaged NICAM data format : PaNDa )
+!!
+!! @author Team SCALE
+!<
 !-------------------------------------------------------------------------------
 program fio_cat
-  !-----------------------------------------------------------------------------
-  !
-  !++ Description:
-  !      combine pe0000x format data
-  !      ( packaged NICAM data format : PaNDa )
-  !
-  !++ Current Corresponding Author: H. Yashiro
-  !
-  !++ History:
-  !      Version   Date       Comment
-  !      -----------------------------------------------------------------------
-  !      1.00      13-09-30  H.Yashiro : [NEW]
-  !
   !-----------------------------------------------------------------------------
   !
   !++ Used modules
@@ -82,8 +74,8 @@ program fio_cat
   integer                :: GALL
   integer                :: KALL
   integer                :: LALL
-  real(4), allocatable   :: data4_1D(:)
-  real(8), allocatable   :: data8_1D(:)
+  real(SP), allocatable  :: data4_1D(:)
+  real(DP), allocatable  :: data8_1D(:)
 
   ! for MPI
   integer                :: pe_all
@@ -287,10 +279,10 @@ program fio_cat
 
   close(fid_log)
 
+  !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
   !> read option
-  !-----------------------------------------------------------------------------
   subroutine readoption
     use mod_tool_option, only: &
       OPT_convert, &
@@ -319,7 +311,6 @@ contains
 
   !-----------------------------------------------------------------------------
   !> display help for option and abort
-  !-----------------------------------------------------------------------------
   subroutine helpoption
     implicit none
     !---------------------------------------------------------------------------
@@ -330,4 +321,3 @@ contains
   end subroutine helpoption
 
 end program fio_cat
-!-------------------------------------------------------------------------------

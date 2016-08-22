@@ -1,22 +1,14 @@
 !-------------------------------------------------------------------------------
-!
-!+  Program FIO cat
-!
+!> Program FIO sub
+!!
+!! @par Description
+!!          substitute pe0000x format data
+!!          ( packaged NICAM data format : PaNDa )
+!!
+!! @author Team SCALE
+!<
 !-------------------------------------------------------------------------------
-program fio_cat
-  !-----------------------------------------------------------------------------
-  !
-  !++ Description:
-  !      combine pe0000x format data
-  !      ( packaged NICAM data format : PaNDa )
-  !
-  !++ Current Corresponding Author: H. Yashiro
-  !
-  !++ History:
-  !      Version   Date       Comment
-  !      -----------------------------------------------------------------------
-  !      1.00      13-09-30  H.Yashiro : [NEW]
-  !
+program fio_sub
   !-----------------------------------------------------------------------------
   !
   !++ Used modules
@@ -84,10 +76,10 @@ program fio_cat
   integer                :: GALL
   integer                :: KALL
   integer                :: LALL
-  real(4), allocatable   :: data4_1D1(:)
-  real(8), allocatable   :: data8_1D1(:)
-  real(4), allocatable   :: data4_1D2(:)
-  real(8), allocatable   :: data8_1D2(:)
+  real(SP), allocatable  :: data4_1D1(:)
+  real(DP), allocatable  :: data8_1D1(:)
+  real(SP), allocatable  :: data4_1D2(:)
+  real(DP), allocatable  :: data8_1D2(:)
 
   ! for MPI
   integer                :: pe_all
@@ -286,10 +278,10 @@ program fio_cat
 
   close(fid_log)
 
+  !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
   !> read option
-  !-----------------------------------------------------------------------------
   subroutine readoption
     use mod_tool_option, only: &
       OPT_convert, &
@@ -318,7 +310,6 @@ contains
 
   !-----------------------------------------------------------------------------
   !> display help for option and abort
-  !-----------------------------------------------------------------------------
   subroutine helpoption
     implicit none
     !---------------------------------------------------------------------------
@@ -328,5 +319,4 @@ contains
     stop
   end subroutine helpoption
 
-end program fio_cat
-!-------------------------------------------------------------------------------
+end program fio_sub

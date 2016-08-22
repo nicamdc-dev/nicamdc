@@ -1,35 +1,15 @@
 !-------------------------------------------------------------------------------
-!
-!+  program ico2ll (NEW I/O)
-!
+!> Program FIO ico2ll
+!!
+!! @par Description
+!!          This program converts from data on dataicosahedral grid (new I/O format)
+!!          to that on latitude-longitude grid.
+!!          ( packaged NICAM data format : PaNDa )
+!!
+!! @author NICAM developers, Team SCALE
+!<
 !-------------------------------------------------------------------------------
-program fio_ico2ll_mpi
-  !-----------------------------------------------------------------------------
-  !
-  !++ Description:
-  !       This program converts from data on dataicosahedral grid (new I/O format)
-  !       to that on latitude-longitude grid.
-  !       (some part of source code is imported from ico2ll.f90)
-  !
-  !++ Current Corresponding Author : H.Yashiro
-  !
-  !++ Contributer of ico2ll.f90 : M.Satoh, S.Iga, Y.Niwa, H.Tomita, T.Mitsui,
-  !                               W.Yanase,  H.Taniguchi, Y.Yamada, C.Kodama
-  !
-  !++ History:
-  !      Version   Date      Comment
-  !      -----------------------------------------------------------------------
-  !      0.90      11-09-07  H.Yashiro : [NEW] partially imported from ico2ll.f90
-  !      0.95      12-04-19  H.Yashiro : [mod] deal large record length
-  !      0.95      12-06-28  H.Yashiro : [mod] parallelization
-  !      0.96      13-04-18  C.Kodama  : [mod] support NetCDF output
-  !                                            and reduce number of opened file at once
-  !                                            (thanks to Yamada-san)
-  !      1.00      13-06-17  H.Yashiro : [mod] reduce file open frequency
-  !      1.10      14-02-03  H.Yashiro : [mod] integrate NetCDF support by C.Kodama
-  !      1.20      14-02-05  H.Yashiro : [mod] integrate Xi2Z conversion & NN method by T.Seiki
-  !      -----------------------------------------------------------------------
-  !
+program fio_ico2ll
   !-----------------------------------------------------------------------------
   !
   !++ Used modules
@@ -1180,10 +1160,10 @@ program fio_ico2ll_mpi
 
   close(IO_FID_LOG)
 
+  !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
   !> read option
-  !-----------------------------------------------------------------------------
   subroutine readoption
     use mod_tool_option, only: &
       OPT_convert, &
@@ -1212,7 +1192,6 @@ contains
 
   !-----------------------------------------------------------------------------
   !> display help for option and abort
-  !-----------------------------------------------------------------------------
   subroutine helpoption
     implicit none
     !---------------------------------------------------------------------------
@@ -1240,7 +1219,7 @@ contains
       devide_template )
     implicit none
 
-    character(len=128), intent(in) :: outfile_dir
+    character(len=H_LONG), intent(in) :: outfile_dir
     character(len=16),  intent(in) :: outfile_prefix
     character(len=16),  intent(in) :: varname
     integer,            intent(in) :: imax
@@ -1282,7 +1261,7 @@ contains
 
        write(fid,'(A)')      'TITLE NICAM data output'
        write(fid,'(A)')      'OPTIONS BIG_ENDIAN '
-       write(fid,'(A,E12.5)') 'UNDEF ', CONST_UNDEF4
+       write(fid,'(A,ES12.5)') 'UNDEF ', CONST_UNDEF4
 
        write(fid,'(A,I5,A)') 'XDEF ', imax, ' LEVELS'
        if (lon_swap) then
@@ -1307,17 +1286,17 @@ contains
        s2 = trim( timeincrement(int(dt)) )
        write(fid,'(A,I5,2A,1x,A)') 'TDEF ',nstep, ' LINEAR ', trim(s1), trim(s2)
 
-       write(fid,'(a,i5)') 'VARS ', 1
+       write(fid,'(A,I5)') 'VARS ', 1
        if ( kmax == 1 ) then
-          write(fid,'(a,2i5,1x,a)') trim(varname), 0, 99, 'NONE'
+          write(fid,'(A,2I5,1x,A)') trim(varname), 0,    99, 'NONE'
        else
-          write(fid,'(a,2i5,1x,a)') trim(varname), kmax, 99, 'NONE'
+          write(fid,'(A,2I5,1x,A)') trim(varname), kmax, 99, 'NONE'
        endif
-       write(fid,'(a)') 'ENDVARS '
+       write(fid,'(A)') 'ENDVARS '
     close(fid)
 
     write(IO_FID_LOG,'(A,A)') 'Generate ',trim(outfile)//'.ctl'
-    write(*          ,'(A,A)') 'Generate ',trim(outfile)//'.ctl'
+    write(*         ,'(A,A)') 'Generate ',trim(outfile)//'.ctl'
 
   end subroutine makegradsctl
 
@@ -1408,14 +1387,14 @@ contains
     write(gthead(36),'(I16)'  ) 1
     write(gthead(37),'(I16)'  ) kmax
     write(gthead(38),'(A16)'  ) '             UR4'
-    write(gthead(39),'(E16.7)') CONST_UNDEF4
-    write(gthead(40),'(E16.7)') CONST_UNDEF4
-    write(gthead(41),'(E16.7)') CONST_UNDEF4
-    write(gthead(42),'(E16.7)') CONST_UNDEF4
-    write(gthead(43),'(E16.7)') CONST_UNDEF4
+    write(gthead(39),'(ES16.7)') CONST_UNDEF4
+    write(gthead(40),'(ES16.7)') CONST_UNDEF4
+    write(gthead(41),'(ES16.7)') CONST_UNDEF4
+    write(gthead(42),'(ES16.7)') CONST_UNDEF4
+    write(gthead(43),'(ES16.7)') CONST_UNDEF4
     write(gthead(44),'(I16)'  ) 1
     write(gthead(46),'(I16)'  ) 0
-    write(gthead(47),'(E16.7)') 0.
+    write(gthead(47),'(ES16.7)') 0.
     write(gthead(48),'(I16)'  ) 0
     write(gthead(60),'(A16)'  ) kdate
     write(gthead(62),'(A16)'  ) kdate
@@ -1439,10 +1418,10 @@ contains
     write(axhead(36),'(I16)'  ) 1
     write(axhead(37),'(I16)'  ) 1
     write(axhead(38),'(A16)'  ) '             UR4'
-    write(axhead(39),'(E16.7)') -999.0
+    write(axhead(39),'(ES16.7)') -999.0
     write(axhead(44),'(I16)'  ) 1
     write(axhead(46),'(I16)'  ) 0
-    write(axhead(47),'(E16.7)') 0.
+    write(axhead(47),'(ES16.7)') 0.
     write(axhead(48),'(I16)'  ) 0
     write(axhead(60),'(A16)'  ) kdate
     write(axhead(62),'(A16)'  ) kdate
@@ -1478,10 +1457,10 @@ contains
        write(axhead( 3),'(A16)'  ) trim(gt_axisx)
        write(axhead(29),'(A16)'  ) trim(gt_axisx)
        write(axhead(31),'(I16)'  ) imax+1
-       write(axhead(40),'(E16.7)')   0.E0
-       write(axhead(41),'(E16.7)') 360.E0
-       write(axhead(42),'(E16.7)')  10.E0
-       write(axhead(43),'(E16.7)')  30.E0
+       write(axhead(40),'(ES16.7)')   0.E0
+       write(axhead(41),'(ES16.7)') 360.E0
+       write(axhead(42),'(ES16.7)')  10.E0
+       write(axhead(43),'(ES16.7)')  30.E0
        write(axhead(64),'(I16)'  ) imax+1
 
        write(fid) axhead
@@ -1501,10 +1480,10 @@ contains
        write(axhead( 3),'(A16)'  ) trim(gt_axisy)
        write(axhead(29),'(A16)'  ) trim(gt_axisy)
        write(axhead(31),'(I16)'  ) jmax
-       write(axhead(40),'(E16.7)') -90.E0
-       write(axhead(41),'(E16.7)')  90.E0
-       write(axhead(42),'(E16.7)')  10.E0
-       write(axhead(43),'(E16.7)')  30.E0
+       write(axhead(40),'(ES16.7)') -90.E0
+       write(axhead(41),'(ES16.7)')  90.E0
+       write(axhead(42),'(ES16.7)')  10.E0
+       write(axhead(43),'(ES16.7)')  30.E0
        write(axhead(64),'(I16)'  ) jmax
 
        write(fid) axhead
@@ -1524,10 +1503,10 @@ contains
        write(axhead( 3),'(A16)'  ) trim(layername)
        write(axhead(29),'(A16)'  ) trim(layername)
        write(axhead(31),'(I16)'  ) kmax
-       write(axhead(40),'(E16.7)')     0.E0
-       write(axhead(41),'(E16.7)') real(maxval(alt),kind=4)
-       write(axhead(42),'(E16.7)')  1000.E0
-       write(axhead(43),'(E16.7)') 10000.E0
+       write(axhead(40),'(ES16.7)')     0.E0
+       write(axhead(41),'(ES16.7)') real(maxval(alt),kind=4)
+       write(axhead(42),'(ES16.7)')  1000.E0
+       write(axhead(43),'(ES16.7)') 10000.E0
        if ( layername(1:5) == "STDPL" ) then
           write(axhead(44),'(I16)'  ) -2
        else
@@ -1545,8 +1524,8 @@ contains
   end subroutine makegtoolheader
 
   !-----------------------------------------------------------------------------
+  !> output grads-like template part  like 01JAN0000
   function sec2initplate(datesec) result(template)
-    !-- output grads-like template part  like 01JAN0000
     implicit none
 
     integer(8)        :: datesec
@@ -1570,8 +1549,8 @@ contains
   end function sec2initplate
 
   !-----------------------------------------------------------------------------
+  !> output grads-like template part  like 2005-12-01-23h50m
   function sec2template(datesec) result(template)
-    !-- output grads-like template part  like 2005-12-01-23h50m
     implicit none
 
     integer(8)        :: datesec
@@ -1608,8 +1587,8 @@ contains
   end function timeincrement
 
   !-----------------------------------------------------------------------------
+  !> calendar, sec. -> character (YYYYMMDD HHMMSS)
   function CALENDAR_ss2cc_gtool(datesec) result(template)
-    !--- calendar, sec. -> character (YYYYMMDD HHMMSS)
     implicit none
 
     integer(8)        :: datesec
@@ -1895,6 +1874,4 @@ contains
 
   end subroutine cf_desc_unit
 
-end program fio_ico2ll_mpi
-!-------------------------------------------------------------------------------
-
+end program fio_ico2ll

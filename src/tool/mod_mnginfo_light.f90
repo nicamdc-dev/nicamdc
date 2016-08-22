@@ -1,21 +1,13 @@
 !-------------------------------------------------------------------------------
-!
-!+  Module manageinfo light
-!
+!> Module mnginfo light
+!!
+!! @par Description
+!!          mnginfo reader (extraced from mod_adm)
+!!
+!! @author NICAM developers, Team SCALE
+!<
 !-------------------------------------------------------------------------------
 module mod_mnginfo_light
-  !-----------------------------------------------------------------------------
-  !
-  !++ Description:
-  !      mnginfo reader (extraced from mod_adm)
-  !
-  !++ Current Corresponding Author: H.Yashiro
-  !
-  !++ History:
-  !      Version   Date      Comment
-  !      -----------------------------------------------------------------------
-  !      0.90      11-09-01  H.Yashiro : [NEW]
-  !
   !-----------------------------------------------------------------------------
   !
   !++ Used modules
@@ -30,6 +22,7 @@ module mod_mnginfo_light
   !
   public :: MNG_mnginfo_input
   public :: MNG_mnginfo_noinput
+
   !-----------------------------------------------------------------------------
   !
   !++ public param & variable
@@ -43,7 +36,6 @@ module mod_mnginfo_light
 contains
   !-----------------------------------------------------------------------------
   !> read mnginfo (light ver.)
-  !-----------------------------------------------------------------------------
   subroutine MNG_mnginfo_input( rlevel,fname )
     implicit none
 
@@ -118,7 +110,6 @@ contains
 
   !-----------------------------------------------------------------------------
   !> read mnginfo (light ver.)
-  !-----------------------------------------------------------------------------
   subroutine MNG_mnginfo_noinput(rlevel)
     implicit none
 
@@ -148,5 +139,3 @@ contains
   end subroutine MNG_mnginfo_noinput
 
 end module mod_mnginfo_light
-!-----------------------------------------------------------------------------
-
