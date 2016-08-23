@@ -284,4 +284,3 @@ contains
   end function IO_CNF_open
 
 end module mod_stdio
-!-------------------------------------------------------------------------------

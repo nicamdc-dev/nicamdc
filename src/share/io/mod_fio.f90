@@ -1,20 +1,12 @@
 !-------------------------------------------------------------------------------
-!>
-!! File I/O module
+!> Module file I/O
 !!
 !! @par Description
-!!         This module is continer for file I/O (PaNDa format)
+!!         This module is container for file I/O (PaNDa format)
 !!
-!! @author H.Tomita, H.Yashiro
-!!
-!! @par History
-!! @li      2011-07-27 (H.Tomita)  [NEW]
-!! @li      2011-08-19 (H.Yashiro) Incorporate into NICAM
-!! @li      2011-09-03 (H.Yashiro) Complete format specification
-!! @li      2011-12-14 (T.Seiki)   allocatable => pointer in type structure
-!! @li      2012-02-01 (T.Seiki)   fix array size over in array assignment
-!!
+!! @author NICAM developers, Team SCALE
 !<
+!-------------------------------------------------------------------------------
 module mod_fio
   !-----------------------------------------------------------------------------
   !
@@ -104,10 +96,7 @@ module mod_fio
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> Setup this module.
-  !!
-  !! Must be called first.
-  !!
+  !> Setup
   subroutine FIO_setup
     use mod_adm, only: &
        ADM_prc_tab, &
@@ -144,9 +133,6 @@ contains
 
   !-----------------------------------------------------------------------------
   !> Get file ID of given basename.
-  !!
-  !! Open it if not opened yet.
-  !!
   subroutine FIO_getfid( &
        fid,      &
        basename, &
@@ -396,16 +382,6 @@ contains
 
   !-----------------------------------------------------------------------------
   !> Read in all steps of given `varname`, returns total data
-  !! size(`num_of_step`) and mid of (time_start+time_end) of each
-  !! step(`data_date`).
-  !!
-  !! `start_step` is maximum step where `ctime < 0.5*(ts(step)+te(step))` is true.
-  !!
-  !! `prec` is presicion, 4 or 8.
-  !!
-  !! If `opt_periodic_year` is T, data_date(:,1) is set as cdate(1) on
-  !! return, else cdate(:) is neglected.
-  !!
   subroutine FIO_seek( &
        start_step,       &
        num_of_step,      &

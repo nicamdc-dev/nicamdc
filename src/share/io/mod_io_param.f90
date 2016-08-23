@@ -1,16 +1,12 @@
 !-------------------------------------------------------------------------------
-!>
-!! File I/O parameter module
+!> Module file I/O parameter
 !!
 !! @par Description
-!!         This module is continer for common file I/O paramters
+!!         This module is parameter list for file I/O (common)
 !!
-!! @author H.Yashiro
-!!
-!! @par History
-!! @li      2016-07-01 (H.Yashiro)  Extract from mod_fio
-!!
+!! @author NICAM developers, Team SCALE
 !<
+!-------------------------------------------------------------------------------
 module mod_io_param
   !-----------------------------------------------------------------------------
   !

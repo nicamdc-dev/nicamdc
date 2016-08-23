@@ -1,16 +1,12 @@
 !-------------------------------------------------------------------------------
-!>
-!! File I/O module
+!> Module file I/O
 !!
 !! @par Description
-!!         This module is continer for file I/O (PaNDa on HDF5, POH5 format)
+!!         This module is container for file I/O (HDF5 format)
 !!
-!! @author T.Inoue
-!!
-!! @par History
-!! @li      2016-02-19 (T.Inoue)   [NEW]
-!!
+!! @author NICAM developers, Team SCALE
 !<
+!-------------------------------------------------------------------------------
 module mod_hio
   !
   !++ Used modules

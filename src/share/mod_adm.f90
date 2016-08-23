@@ -1,28 +1,14 @@
-!-------------------------------------------------------------------------
-!>
-!! Administration module
+!-------------------------------------------------------------------------------
+!> Module administration
 !!
 !! @par Description
-!!         This module is for the management of process and region on
-!!         the icosahedral grid configuration.
+!!         This module is for the management of process and region
 !!
-!! @author  H.Tomita
-!!
-!! @par History
-!! @li      2004-02-17 (H.Tomita)  Imported from igdc-4.33
-!! @li      2007-10-22 (T.Mitsui)  change value of ADM_l_limit
-!! @li      2008-01-30 (S.Iga)     private procedure mk_suffix is changed to public procedure
-!! @li      2009-08-18 (T.Mitsui)  modify adm_proc_stop to keep out extra process from main routines.
-!! @li      2010-04-26 (M.Satoh)   add ADM_l_me
-!! @li      2010-06-07 (S.Iga)     new grid (Iga 2010) is implemented. (see string XTMS)
-!! @li      2011-06-30 (T.Seiki)   fix undefined value (after, 07-10-22)
-!! @li      2011-07-21 (T.Ohno)    2 new grid systems (1DMD-ON-SPHERE are added by Hara-san@JAMSTEC)
-!! @li      2012-01-12 (H.Yashiro) add filename specification for logfile(optional)
-!! @li      2012-06-11 (H.Yashiro) Milestone-project, code cleanup
-!!
+!! @author NICAM developers, Team SCALE
 !<
+!-------------------------------------------------------------------------------
 module mod_adm
-  !-----------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
   !
   !++ used modules
   !
@@ -31,13 +17,13 @@ module mod_adm
   !-----------------------------------------------------------------------------
   implicit none
   private
-  !-----------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
   !
   !++ Public procedure
   !
   public :: ADM_setup
 
-  !-----------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
   !
   !++ Public parameters & variables
   !
@@ -177,7 +163,7 @@ module mod_adm
 
   integer,               public :: ADM_XTMS_MLCP_S  = 1 ! [XTMS] Number of segment for MLCP
 
-  !-----------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
   !
   !++ Private procedure
   !
@@ -185,15 +171,15 @@ module mod_adm
   private :: output_info
   private :: setup_vtab
 
-  !-----------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
   !
   !++ Private parameters & variables
   !
   logical, private :: ADM_debug = .false.
 
-  !-----------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
 contains
-  !-----------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
   !> Setup
   subroutine ADM_setup
     use mod_process, only: &
@@ -222,7 +208,7 @@ contains
     integer :: nmax, dmd
     integer :: l, rgnid
     integer :: ierr
-    !---------------------------------------------------------------------
+    !---------------------------------------------------------------------------
 
     ADM_prc_me = PRC_myrank + 1
     ADM_prc_pl = 1
@@ -709,4 +695,3 @@ contains
   end function suf
 
 end module mod_adm
-!-------------------------------------------------------------------------------

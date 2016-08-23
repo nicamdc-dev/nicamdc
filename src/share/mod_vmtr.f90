@@ -1,18 +1,12 @@
 !-------------------------------------------------------------------------------
-!>
-!! Vertical metrics module
+!> Module vertical metrics
 !!
 !! @par Description
-!!         In this module, the vertical metrics is calculated for the
-!!         non-hydrostatic icoshaedral model.
+!!          In this module, the vertical metrics is calculated for the icoshaedral model
 !!
-!! @author  H.Tomita
-!!
-!! @par History
-!! @li      2004-02-17 (H.Tomita)  Imported from igdc-4.33
-!! @li      2006-08-11 (        )  Trivial bug fix for VMTR_VOLUME in using shallow water model
-!!
+!! @author NICAM developers, Team SCALE
 !<
+!-------------------------------------------------------------------------------
 module mod_vmtr
   !-----------------------------------------------------------------------------
   !
@@ -589,4 +583,3 @@ contains
   end subroutine VMTR_setup
 
 end module mod_vmtr
-!-------------------------------------------------------------------------------

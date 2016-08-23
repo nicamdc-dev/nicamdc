@@ -1,32 +1,12 @@
 !-------------------------------------------------------------------------------
-!>
-!! Operator module
+!> Module operator
 !!
 !! @par Description
-!!         This module contains the subroutines for differential oeprators.
+!!          This module contains the subroutines for differential operators
 !!
-!! @author  H.Tomita
-!!
-!! @par History
-!! @li      2004-02-17 (H.Tomita)    Imported from igdc-4.33
-!! @li      2006-04-17 (H.Tomita)    Add sub[OPRT_divergence]
-!! @li      2006-08-11 (H.Tomita)    Implementatio of miura scheme(2004) with Thurbuen(1996)'s limiter.
-!!                                   Add sub[OPRT_divergence2]
-!!                                       sub[OPRT_divergence2_prep]
-!!                                       sub[OPRT_divergence2_all].
-!! @li      2006-08-22 (Y.Niwa)      divide the rows for the calc. of clap and clap_pl due to the rule of XLF.
-!! @li      2007-01-26 (H.Tomita)    Optimization of sub[oprt_diffusion].
-!! @li      2007-11-28 (T.Mitsui)    bugfix in oprt_divergence2, _all
-!! @li      2008-01-24 (Y.Niwa)      add OPRT_divergence2{_prep,,_all}_rev
-!! @li      2008-04-28 (T.Mitsui)    bug fix in OPRT_divergence2{_all}_rev
-!! @li      2009-09-04 (H.Taniguchi) bug fix in OPRT_divergence2{_all}_rev Zero clear of wrk[_pl] is needed.
-!! @li      2010-06-08 (S.Iga)       new grid is implemented (see, string XTMS)
-!! @li      2011-09-27 (T.Seiki)     merge optimization by RIST and M.Terai
-!! @li      2012-01-17 (M.Terai)     update optimization(case6) in div2rev
-!! @li      2012-05-01 (T.Yamaura)   bug fix in div2rev
-!! @li      2012-06-28 (M.Terai)     Removed wrapper subroutine to invoked the operators directly macro var.
-!!
+!! @author NICAM developers, Team SCALE
 !<
+!-------------------------------------------------------------------------------
 module mod_oprt
   !-----------------------------------------------------------------------------
   !
@@ -35,6 +15,7 @@ module mod_oprt
   use mod_precision
   use mod_stdio
   use mod_prof
+
   use mod_adm, only: &
      ADM_nxyz,           &
      TI    => ADM_TI,    &
@@ -2957,4 +2938,3 @@ contains
   end function suf
 
 end module mod_oprt
-!-------------------------------------------------------------------------------

@@ -496,4 +496,3 @@ contains
   end function checkleap
 
 end module mod_calendar
-!-------------------------------------------------------------------------------

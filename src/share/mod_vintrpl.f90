@@ -1,16 +1,12 @@
 !-------------------------------------------------------------------------------
-!>
-!! Vertical interpolation module
+!> Module vertical interpolation
 !!
 !! @par Description
-!!         This module provides the subroutines for vertical interpolation.
+!!          This module contains vertical interpolation subroutines
 !!
-!! @author H.Tomita
-!!
-!! @par History
-!! @li      2004-02-17 (H.Tomita)  [NEW]
-!!
+!! @author NICAM developers, Team SCALE
 !<
+!-------------------------------------------------------------------------------
 module mod_vintrpl
   !-----------------------------------------------------------------------------
   !
