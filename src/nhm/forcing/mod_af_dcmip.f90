@@ -1,16 +1,12 @@
 !-------------------------------------------------------------------------------
-!>
-!! Module DCMIP2016 Physics forcing
+!> Module DCMIP2016 Physics forcing
 !!
 !! @par Description
-!!         This module contains subroutines for physics for DCMIP2016.
+!!          This module contains subroutines for forcing term of DCMIP2016 physics
 !!
-!! @author R.Yoshida
-!!
-!! @par History
-!! @li      2016-04-28 (R.Yoshida)  [NEW]
-!!
+!! @author NICAM developers, Team SCALE
 !<
+!-------------------------------------------------------------------------------
 module mod_af_dcmip
   !-----------------------------------------------------------------------------
   !
@@ -554,4 +550,3 @@ contains
   end subroutine af_dcmip
 
 end module mod_af_dcmip
-!-------------------------------------------------------------------------------

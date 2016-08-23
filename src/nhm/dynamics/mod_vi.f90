@@ -1,33 +1,13 @@
 !-------------------------------------------------------------------------------
-!
-!+  Vertical Implicit module
-!
+!> Module vertical implicit
+!!
+!! @par Description
+!!          This module is for the caluculation of vertical implicit scheme
+!!
+!! @author NICAM developers, Team SCALE
+!<
 !-------------------------------------------------------------------------------
 module mod_vi
-  !-----------------------------------------------------------------------------
-  !
-  !++ Description:
-  !       This module is for the vertical implicit scheme of non-hydorostatic
-  !       model.
-  !
-  !
-  !++ Current Corresponding Author : H.Tomita
-  !
-  !++ History:
-  !      Version   Date       Comment
-  !      -----------------------------------------------------------------------
-  !      0.00      04-02-17   Imported from igdc-4.34
-  !                06-08-11   Add averaged rhog for tracer advection.
-  !                11-05-07   Y.Yamada: Implementation of ES tuning cord by NEC.
-  !                             Modified line: (20110405 NEC)
-  !                                                or (!ftr< vi_small_step.r???)
-  !                11-11-28   Y.Yamada: Merge Terai-san timer code
-  !                                                    into the original code.
-  !                11-12-29   Y.Yamada: Delete ES tuning and merge fjtimer
-  !                12-3-9    S.Iga: tuned (phase4-1)
-  !
-  !      -----------------------------------------------------------------------
-  !
   !-----------------------------------------------------------------------------
   !
   !++ Used modules
@@ -35,6 +15,7 @@ module mod_vi
   use mod_precision
   use mod_stdio
   use mod_prof
+
   use mod_adm, only: &
      ADM_lall,    &
      ADM_lall_pl, &
@@ -1471,5 +1452,3 @@ contains
   end subroutine vi_rhow_solver
 
 end module mod_vi
-!-------------------------------------------------------------------------------
-

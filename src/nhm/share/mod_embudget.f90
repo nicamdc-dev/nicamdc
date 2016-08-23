@@ -1,16 +1,10 @@
 !-------------------------------------------------------------------------------
-!>
-!! Energy/mass budget monitoring module
+!> Module budget monitoring
 !!
 !! @par Description
-!!         This module is for monitoring the energy/mass budget
+!!          This module is for monitoring the energy/mass budget
 !!
-!! @author H.Tomita
-!!
-!! @par History
-!! @li      2009-07-10 (H.Tomita)   [NEW]
-!! @li      2009-07-28 (H.Tomita)   Bug fix
-!!
+!! @author NICAM developers, Team SCALE
 !<
 !-------------------------------------------------------------------------------
 module mod_embudget
@@ -99,8 +93,8 @@ contains
 
     if(.not.MNT_ON) return
 
-    Mass_budget_factor   = 1.0_RP / ( TIME_DTL * real(MNT_INTV,kind=RP) * 4.D0 * PI * RADIUS * RADIUS ) ! [kg/step] -> [kg/m2/s]
-    Energy_budget_factor = 1.0_RP / ( TIME_DTL * real(MNT_INTV,kind=RP) * 4.D0 * PI * RADIUS * RADIUS ) ! [J /step] -> [W/m2]
+    Mass_budget_factor   = 1.0_RP / ( TIME_DTL * real(MNT_INTV,kind=RP) * 4.0_RP * PI * RADIUS * RADIUS ) ! [kg/step] -> [kg/m2/s]
+    Energy_budget_factor = 1.0_RP / ( TIME_DTL * real(MNT_INTV,kind=RP) * 4.0_RP * PI * RADIUS * RADIUS ) ! [J /step] -> [W/m2]
     write(IO_FID_LOG,*) "Mass_budget_factor   = ", Mass_budget_factor
     write(IO_FID_LOG,*) "Energy_budget_factor = ", Energy_budget_factor
 
@@ -384,16 +378,16 @@ contains
 
     if ( first ) then
        ! [kg/m2], absolute value
-       rhoqd_sum_diff   = rhoqd_sum   / ( 4.D0 * PI * RADIUS * RADIUS )
-       rhoqv_sum_diff   = rhoqv_sum   / ( 4.D0 * PI * RADIUS * RADIUS )
-       rhoql_sum_diff   = rhoql_sum   / ( 4.D0 * PI * RADIUS * RADIUS )
-       rhoqi_sum_diff   = rhoqi_sum   / ( 4.D0 * PI * RADIUS * RADIUS )
-       rhoqt_sum_diff   = rhoqt_sum   / ( 4.D0 * PI * RADIUS * RADIUS )
+       rhoqd_sum_diff   = rhoqd_sum   / ( 4.0_RP * PI * RADIUS * RADIUS )
+       rhoqv_sum_diff   = rhoqv_sum   / ( 4.0_RP * PI * RADIUS * RADIUS )
+       rhoql_sum_diff   = rhoql_sum   / ( 4.0_RP * PI * RADIUS * RADIUS )
+       rhoqi_sum_diff   = rhoqi_sum   / ( 4.0_RP * PI * RADIUS * RADIUS )
+       rhoqt_sum_diff   = rhoqt_sum   / ( 4.0_RP * PI * RADIUS * RADIUS )
        ! [J/m2], absolute value
-       rhophi_sum_diff  = rhophi_sum  / ( 4.D0 * PI * RADIUS * RADIUS )
-       rhoein_sum_diff  = rhoein_sum  / ( 4.D0 * PI * RADIUS * RADIUS )
-       rhokin_sum_diff  = rhokin_sum  / ( 4.D0 * PI * RADIUS * RADIUS )
-       rhoetot_sum_diff = rhoetot_sum / ( 4.D0 * PI * RADIUS * RADIUS )
+       rhophi_sum_diff  = rhophi_sum  / ( 4.0_RP * PI * RADIUS * RADIUS )
+       rhoein_sum_diff  = rhoein_sum  / ( 4.0_RP * PI * RADIUS * RADIUS )
+       rhokin_sum_diff  = rhokin_sum  / ( 4.0_RP * PI * RADIUS * RADIUS )
+       rhoetot_sum_diff = rhoetot_sum / ( 4.0_RP * PI * RADIUS * RADIUS )
     else
        ! [kg/m2/s], difference from previous step
        rhoqd_sum_diff   = ( rhoqd_sum   - rhoqd_sum_old   ) * Mass_budget_factor
@@ -430,7 +424,7 @@ contains
 
        ! mass budget
        write(MNT_m_fid,'(I6)'    ,advance='no') TIME_CSTEP
-       write(MNT_m_fid,'(ES16.8)',advance='no') TIME_CSTEP * TIME_DTL / 86400.D0
+       write(MNT_m_fid,'(ES16.8)',advance='no') TIME_CSTEP * TIME_DTL / 86400.0_RP
        write(MNT_m_fid,'(ES16.8)',advance='no') rhoqd_sum_diff
        write(MNT_m_fid,'(ES16.8)',advance='no') rhoqv_sum_diff
        write(MNT_m_fid,'(ES16.8)',advance='no') rhoql_sum_diff
@@ -440,7 +434,7 @@ contains
 
        ! energy budget
        write(MNT_e_fid,'(I6)'    ,advance='no') TIME_CSTEP
-       write(MNT_e_fid,'(ES16.8)',advance='no') TIME_CSTEP * TIME_DTL / 86400.D0
+       write(MNT_e_fid,'(ES16.8)',advance='no') TIME_CSTEP * TIME_DTL / 86400.0_RP
        write(MNT_e_fid,'(ES16.8)',advance='no') rhophi_sum_diff
        write(MNT_e_fid,'(ES16.8)',advance='no') rhoein_sum_diff
        write(MNT_e_fid,'(ES16.8)',advance='no') rhokin_sum_diff

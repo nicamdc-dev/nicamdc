@@ -1535,7 +1535,4 @@ contains
 !    endif
   end subroutine dbgmx
 
-
-
 end module mod_sgs
-!-------------------------------------------------------------------------------

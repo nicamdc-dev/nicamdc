@@ -1,17 +1,12 @@
 !-------------------------------------------------------------------------------
-!>
-!! Module forcing driver
+!> Module forcing driver
 !!
 !! @par Description
-!!         This module is for the artificial forcing
+!!          This module is for the artificial forcing
 !!
-!! @author R.Yoshida
-!!
-!! @par History
-!! @li      2012-10-11 (R.Yoshida) [NEW] extract from phystep
-!! @li      2013-03-07 (H.Yashiro) marge, refactoring
-!!
+!! @author NICAM developers, Team SCALE
 !<
+!-------------------------------------------------------------------------------
 module mod_forcing_driver
   !-----------------------------------------------------------------------------
   !

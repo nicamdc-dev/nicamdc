@@ -1,16 +1,12 @@
 !-------------------------------------------------------------------------------
-!>
-!! Module Held-Suarez forcing
+!> Module Held-Suarez forcing
 !!
 !! @par Description
-!!         This module contains subroutines for forcing term of Held-Suarez test case
+!!          This module contains subroutines for forcing term of Held-Suarez test
 !!
-!! @author H.Tomita
-!!
-!! @par History
-!! @li      2004-02-17 (H.Tomita)  [NEW]
-!!
+!! @author NICAM developers, Team SCALE
 !<
+!-------------------------------------------------------------------------------
 module mod_af_heldsuarez
   !-----------------------------------------------------------------------------
   !
@@ -156,4 +152,3 @@ contains
   end subroutine af_heldsuarez
 
 end module mod_af_heldsuarez
-!-------------------------------------------------------------------------------

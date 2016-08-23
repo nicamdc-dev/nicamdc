@@ -1,24 +1,21 @@
 !-------------------------------------------------------------------------------
-!>
-!! Tracer advection module
+!> Module tracer advection
 !!
 !! @par Description
 !!         This module contains subroutines for tracer advection
 !!
-!! @author  H.Tomita, Y.Niwa
-!!
-!! @par History
-!! @li      2008-01-24 (Y.Niwa   ) Imported from mod_src and mod_oprt
-!! @li      2013-11-08 (H.Yashiro) Re-Arrange
-!!
+!! @author NICAM developers, Team SCALE
 !<
+!-------------------------------------------------------------------------------
 module mod_src_tracer
   !-----------------------------------------------------------------------------
   !
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_prof
+
   use mod_adm, only: &
      TI  => ADM_TI,  &
      TJ  => ADM_TJ,  &
@@ -1772,4 +1769,3 @@ contains
   end function suf
 
 end module mod_src_tracer
-!-------------------------------------------------------------------------------------

@@ -1,16 +1,12 @@
 !-------------------------------------------------------------------------------
-!>
-!! Module Tracer advection forcing
+!> Module tracer advection forcing
 !!
 !! @par Description
-!!         This module contains subroutines for forcing term of tracer advection test
+!!          This module contains subroutines for forcing term of Tracer Advection Test
 !!
-!! @author R.Yoshida
-!!
-!! @par History
-!! @li      2012-10-19 (R.Yoshida) [NEW]
-!!
+!! @author Team SCALE
 !<
+!-------------------------------------------------------------------------------
 module mod_af_trcadv
   !-----------------------------------------------------------------------------
   !

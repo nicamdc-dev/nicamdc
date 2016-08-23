@@ -1,16 +1,12 @@
 !-------------------------------------------------------------------------------
-!>
-!! Basic state module
+!> Module basic state
 !!
 !! @par Description
-!!         This module provides the subroutines for basic state.
+!!          This module is for the set of basic state for non-hydrostatic model
 !!
-!! @author H.Tomita
-!!
-!! @par History
-!! @li      2004-02-17 (H.Tomita)  [NEW]
-!!
+!! @author NICAM developers, Team SCALE
 !<
+!-------------------------------------------------------------------------------
 module mod_bsstate
   !-----------------------------------------------------------------------------
   !

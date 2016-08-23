@@ -1,33 +1,12 @@
 !-------------------------------------------------------------------------------
-!>
-!! History module
+!> Module history
 !!
 !! @par Description
-!!         This module is for managing the output variables
+!!          This module is for managing the output variables
 !!
-!! @author M.Satoh
-!!
-!! @par History
-!! @li      2005-11-29 (M.Satoh)    [new]
-!! @li      2005-12-14 (S.Iga)      ADM_gall
-!! @li      2006-02-16 (M.Satoh)    T. Mitsui: correct timing
-!! @li      2006-08-07 (W.Yanase)   v_save=0 in history_setup, NO_VINTRPL
-!! @li      2007-01-19 (K.Suzuki)   higher vectorized rate and allowing undefined value in average
-!! @li      2007-06-27 (Y.Niwa)     add MONTHLY_AVERAGE option add ktype 'GL' 'GO' options
-!! @li      2007-07-02 (Y.Niwa)     bug fix
-!! @li      2007-11-30 (Y.Niwa)     add option for output at pressure levels
-!! @li      2007-12-05 (T.Mitsui)   bug fix
-!! @li      2008-05-30 (T.Mitsui)   distinguish w-grid, and option of v_interpolation
-!! @li      2009-07-13 (S.Iga)      check_count is added. (nmhist miswriting checker)
-!! @li      2010-05-11 (M.Satoh)    add l_region in history_in
-!! @li      2011-04-26 (C.Kodama)   support >10000 time steps
-!! @li      2011-09-03 (H.Yashiro)  New I/O
-!! @li      2012-01-26 (Y.Yamada)   trivial bug fix
-!! @li      2012-03-28 (T.Seiki)    fix undefined reference
-!! @li      2012-06-07 (T.Seiki)    add output_path for multi-job run
-!! @li      2012-11-05 (H.Yashiro)  NICAM milestone project (Phase I:cleanup of shared module)
-!!
+!! @author NICAM developers, Team SCALE
 !<
+!-------------------------------------------------------------------------------
 module mod_history
   !-----------------------------------------------------------------------------
   !
@@ -65,52 +44,52 @@ module mod_history
   !
   !++ Private parameters & variables
   !
-  integer, private, parameter :: HIST_req_limit = 1000
-  real(RP),private, parameter :: EPS_ZERO = 1.E-16_RP
+  integer,                private, parameter   :: HIST_req_limit = 1000
+  real(RP),               private, parameter   :: EPS_ZERO       = 1.E-16_RP
 
-  character(len=H_LONG),  private :: HIST_io_fname  = ''
-  character(len=H_MID),   private :: HIST_io_desc   = ''
-  integer,                private :: HIST_dtype     = -1
-  character(len=H_LONG),  private :: output_path    = ''
-  character(len=H_LONG),  private :: histall_fname  = ''
-  character(len=H_SHORT), private :: output_io_mode
-  integer,                private :: output_size    = 4
-  integer,                private :: npreslev       = 1
-  real(RP),               private :: pres_levs(60)  != CONST_PRE00
-  logical,                private :: check_flag     = .true.
+  character(len=H_LONG),  private              :: HIST_io_fname  = ''
+  character(len=H_MID),   private              :: HIST_io_desc   = ''
+  integer,                private              :: HIST_dtype     = -1
+  character(len=H_LONG),  private              :: output_path    = ''
+  character(len=H_LONG),  private              :: histall_fname  = ''
+  character(len=H_SHORT), private              :: output_io_mode
+  integer,                private              :: output_size    = 4
+  integer,                private              :: npreslev       = 1
+  real(RP),               private              :: pres_levs(60)  != CONST_PRE00
+  logical,                private              :: check_flag     = .true.
 
-  integer,                private :: ksum
-  logical,                private :: calc_pressure = .false.
+  integer,                private              :: ksum
+  logical,                private              :: calc_pressure  = .false.
 
-  character(len=H_LONG),  private, allocatable :: file_save (:)
-  character(len=H_MID),   private, allocatable :: desc_save (:)
-  character(len=H_SHORT), private, allocatable :: unit_save (:)
-  integer,                private, allocatable :: step_save (:)
-  character(len=H_SHORT), private, allocatable :: ktype_save(:)
-  integer,                private, allocatable :: kstr_save (:)
-  integer,                private, allocatable :: kend_save (:)
-  integer,                private, allocatable :: kmax_save (:)
+  character(len=H_LONG),  private, allocatable :: file_save         (:)
+  character(len=H_MID),   private, allocatable :: desc_save         (:)
+  character(len=H_SHORT), private, allocatable :: unit_save         (:)
+  integer,                private, allocatable :: step_save         (:)
+  character(len=H_SHORT), private, allocatable :: ktype_save        (:)
+  integer,                private, allocatable :: kstr_save         (:)
+  integer,                private, allocatable :: kend_save         (:)
+  integer,                private, allocatable :: kmax_save         (:)
   character(len=H_SHORT), private, allocatable :: output_type_save  (:)
   logical,                private, allocatable :: out_prelev_save   (:)
   logical,                private, allocatable :: out_vintrpl_save  (:)
   logical,                private, allocatable :: opt_wgrid_save    (:)
   logical,                private, allocatable :: opt_lagintrpl_save(:)
 
-  character(len=H_SHORT), private, allocatable :: lname_save   (:)
-  integer,                private, allocatable :: tmax_save    (:)
-  real(DP),               private, allocatable :: tstr_save    (:)
-  real(DP),               private, allocatable :: tend_save    (:)
-  integer,                private, allocatable :: month_old    (:)
-  integer,                private, allocatable :: l_region_save(:)
+  character(len=H_SHORT), private, allocatable :: lname_save        (:)
+  integer,                private, allocatable :: tmax_save         (:)
+  real(DP),               private, allocatable :: tstr_save         (:)
+  real(DP),               private, allocatable :: tend_save         (:)
+  integer,                private, allocatable :: month_old         (:)
+  integer,                private, allocatable :: l_region_save     (:)
 
-  integer,                public,  allocatable :: ksumstr  (:)
-  integer,                private, allocatable :: ksumend  (:)
-  real(RP),               private, allocatable :: tsum_save(:,:)
-  logical,                private, allocatable :: flag_save(:)
+  integer,                public,  allocatable :: ksumstr           (:)
+  integer,                private, allocatable :: ksumend           (:)
+  real(RP),               private, allocatable :: tsum_save         (:,:)
+  logical,                private, allocatable :: flag_save         (:)
 
-  real(RP),               public,  allocatable :: v_save   (:,:,:,:)
-  real(RP),               private, allocatable :: v_save_pl(:,:,:,:)
-  real(RP),               private, allocatable :: zlev_save(:)
+  real(RP),               public,  allocatable :: v_save            (:,:,:,:)
+  real(RP),               private, allocatable :: v_save_pl         (:,:,:,:)
+  real(RP),               private, allocatable :: zlev_save         (:)
 
   real(RP),               private, allocatable :: pres_levs_ln(:)
   integer,                public,  allocatable :: cnvpre_klev(:,:,:)
@@ -267,8 +246,8 @@ contains
 
     HIST_output_step0 = doout_step0
 
-    if (      trim(output_io_mode) == 'HIO'      &
-         .OR. trim(output_io_mode) == 'ADVANCED' ) then
+    if (      output_io_mode == 'HIO'      &
+         .OR. output_io_mode == 'ADVANCED' ) then
        write(IO_FID_LOG,*) '*** History output type:', trim(output_io_mode)
     else
        write(IO_FID_LOG,*) 'xxx Invalid output_io_mode!', trim(output_io_mode)
@@ -397,7 +376,7 @@ contains
           lname = "LAYERNM"
        endif
 
-       select case( trim(ktype) )
+       select case(ktype)
        case('3D')
           if ( out_prelev ) then
              kstr  = 1
@@ -484,7 +463,7 @@ contains
     allocate( zlev_save(ksum) )
 
     do n = 1, HIST_req_nmax
-       select case( trim(ktype_save(n)) )
+       select case(ktype_save(n))
        case('3D')
           if ( out_prelev_save(n) ) then
              zlev_save( ksumstr(n):ksumend(n) ) = pres_levs(1:kmax_save(n))
@@ -610,7 +589,7 @@ contains
           endif
 
           ! add data or not?
-          if ( trim(output_type_save(n)) == 'SNAPSHOT' ) then
+          if ( output_type_save(n) == 'SNAPSHOT' ) then
              if( mod(TIME_CSTEP+1,step_save(n)) == 0 ) save_var = .true.
           else
              save_var = .true.
@@ -795,7 +774,7 @@ contains
     num_output = 0
     do n = 1, HIST_req_nmax
        if ( flag_save(n) ) then
-          if ( trim(output_type_save(n)) == 'MONTHLY_AVERAGE' ) then
+          if ( output_type_save(n) == 'MONTHLY_AVERAGE' ) then
              if ( idate(2) /= month_old(n) ) then
                 out_var(n)   = .true.
                 month_old(n) = idate(2)
@@ -887,9 +866,9 @@ contains
 
           write(IO_FID_LOG,'(A,A16,A,1PE24.17,A,E24.17)') ' [', item(1:16), '] max=', val_max, ', min=', val_min
 
-          if ( trim(output_io_mode) == 'POH5' ) then
+          if ( output_io_mode == 'POH5' ) then
 
-             if ( trim(output_type_save(n)) == 'SNAPSHOT' ) then
+             if ( output_type_save(n) == 'SNAPSHOT' ) then
 
                 call HIO_output( v_save(:,:,:,1),                             & ! [IN]
                                  HIST_io_fname,    HIST_io_desc    , '',      & ! [IN]
@@ -898,7 +877,7 @@ contains
                                  lname_save(n),    ksumstr(n),   ksumend(n),  & ! [IN]
                                  tmax_save(n),     tend_save(n), tend_save(n) ) ! [IN]
 
-             elseif(trim(output_type_save(n)) == 'AVERAGE') then
+             elseif( output_type_save(n) == 'AVERAGE' ) then
 
                 call HIO_output( v_save(:,:,:,1),                             & ! [IN]
                                  HIST_io_fname,    HIST_io_desc    , '',      & ! [IN]
@@ -909,9 +888,9 @@ contains
 
              endif
 
-          elseif( trim(output_io_mode) == 'ADVANCED' ) then
+          elseif( output_io_mode == 'ADVANCED' ) then
 
-             if ( trim(output_type_save(n)) == 'SNAPSHOT' ) then
+             if ( output_type_save(n) == 'SNAPSHOT' ) then
 
                 call FIO_output( v_save(:,:,:,1),                             & ! [IN]
                                  HIST_io_fname,    HIST_io_desc    , '',      & ! [IN]
@@ -920,7 +899,7 @@ contains
                                  lname_save(n),    ksumstr(n),   ksumend(n),  & ! [IN]
                                  tmax_save(n),     tend_save(n), tend_save(n) ) ! [IN]
 
-             elseif(trim(output_type_save(n)) == 'AVERAGE') then
+             elseif( output_type_save(n) == 'AVERAGE' ) then
 
                 call FIO_output( v_save(:,:,:,1),                             & ! [IN]
                                  HIST_io_fname,    HIST_io_desc    , '',      & ! [IN]
@@ -1198,4 +1177,3 @@ contains
   end function suf
 
 end module mod_history
-!-------------------------------------------------------------------------------

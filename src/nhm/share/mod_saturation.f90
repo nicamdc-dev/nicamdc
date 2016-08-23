@@ -1,16 +1,12 @@
 !-------------------------------------------------------------------------------
-!>
-!! Saturation process module
+!> Module saturation process
 !!
 !! @par Description
 !!         This module is for saturation processes
 !!
-!! @author H.Tomita
-!!
-!! @par History
-!! @li      2004-02-17 (H.Tomita)   [NEW]
-!!
+!! @author NICAM developers, Team SCALE
 !<
+!-------------------------------------------------------------------------------
 module mod_saturation
   !-----------------------------------------------------------------------------
   !
@@ -377,4 +373,3 @@ contains
   end subroutine SATURATION_psat_ice_3D
 
 end module mod_saturation
-!-------------------------------------------------------------------------------

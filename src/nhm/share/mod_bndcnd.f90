@@ -1,16 +1,12 @@
 !-------------------------------------------------------------------------------
-!>
-!! Boundary conditions module
+!> Module boundary conditions
 !!
 !! @par Description
-!!         This module provides the subroutines for boundary conditions.
+!!          This module provides the subroutines for boundary conditions
 !!
-!! @author H.Tomita
-!!
-!! @par History
-!! @li      2004-02-17 (H.Tomita)  [NEW]
-!!
+!! @author NICAM developers, Team SCALE
 !<
+!-------------------------------------------------------------------------------
 module mod_bndcnd
   !-----------------------------------------------------------------------------
   !
@@ -503,4 +499,3 @@ contains
   end subroutine BNDCND_rhow
 
 end module mod_bndcnd
-!-------------------------------------------------------------------------------

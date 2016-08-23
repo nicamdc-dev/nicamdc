@@ -1,27 +1,13 @@
 !-------------------------------------------------------------------------------
-!
-!+  external data module
-!
+!> Module external data
+!!
+!! @par Description
+!!          General module for reading external-data
+!!
+!! @author NICAM developers, Team SCALE
+!<
 !-------------------------------------------------------------------------------
 module mod_extdata
-  !-----------------------------------------------------------------------------
-  !
-  !++ Description: General module of reading external-data.
-  !                This modules was remade, based on the old modules[mod_extdata],
-  !                [mod_o3var], and [mod_ocean_mixedlayer_exdata.f90]
-  !                for integration of input routine of external files.
-  !                Contributer : M.Satoh, T.Mitsui, Y.Niwa, W. Yanase, H. Tomita
-  !
-  !++ Current Corresponding Author : H.Tomita
-  !
-  !++ History:
-  !      Version   Date       Comment
-  !      -----------------------------------------------------------------------
-  !      0.01      09-01-22   H.Tomita  : Add this module.
-  !                11-09-03   H.Yashiro : New I/O
-  !                12-02-01   T.Seiki   : add option "increment date"
-  !      -----------------------------------------------------------------------
-  !
   !-----------------------------------------------------------------------------
   !
   !++ Used modules
@@ -37,6 +23,7 @@ module mod_extdata
   !
   public :: extdata_setup
   public :: extdata_update
+
   !-----------------------------------------------------------------------------
   !
   !++ Public parameters & variables
@@ -46,6 +33,7 @@ module mod_extdata
   !++ Private procedures
   !
   private :: data_read
+
   !-----------------------------------------------------------------------------
   !
   !++ Private parameters & variables
@@ -567,4 +555,3 @@ contains
   end function suf
 
 end module mod_extdata
-!-------------------------------------------------------------------------------
