@@ -43,8 +43,11 @@ module mod_history_vars
   logical, private :: out_rhi      = .false.
   logical, private :: out_th       = .false.
   logical, private :: out_th_prime = .false.
+  logical, private :: out_mse      = .false.
   logical, private :: out_850hPa   = .false.
   logical, private :: out_500hPa   = .false.
+  logical, private :: out_250hPa   = .false.
+  logical, private :: out_100hPa   = .false.
 
   logical, private :: out_pw       = .false.
   logical, private :: out_lwp      = .false.
@@ -148,8 +151,10 @@ contains
        if(      item_save(n) == 'ml_rha'      ) out_rha      = .true.
        if(      item_save(n) == 'ml_rh'       ) out_rh       = .true.
        if(      item_save(n) == 'ml_rhi'      ) out_rhi      = .true.
-       if(      item_save(n) == 'ml_th'       ) out_th       = .true.
+       if(      item_save(n) == 'ml_th'       &
+           .OR. item_save(n) == 'ml_thv'      ) out_th       = .true.
        if(      item_save(n) == 'ml_th_prime' ) out_th_prime = .true.
+       if(      item_save(n) == 'ml_mse'      ) out_mse      = .true.
        if(      item_save(n) == 'sl_u850'     &
            .OR. item_save(n) == 'sl_v850'     &
            .OR. item_save(n) == 'sl_w850'     &
@@ -158,6 +163,14 @@ contains
            .OR. item_save(n) == 'sl_v500'     &
            .OR. item_save(n) == 'sl_w500'     &
            .OR. item_save(n) == 'sl_t500'     ) out_500hPa   = .true.
+       if(      item_save(n) == 'sl_u250'     &
+           .OR. item_save(n) == 'sl_v250'     &
+           .OR. item_save(n) == 'sl_w250'     &
+           .OR. item_save(n) == 'sl_t250'     ) out_250hPa   = .true.
+       if(      item_save(n) == 'sl_u100'     &
+           .OR. item_save(n) == 'sl_v100'     &
+           .OR. item_save(n) == 'sl_w100'     &
+           .OR. item_save(n) == 'sl_t100'     ) out_100hPa   = .true.
 
        if(      item_save(n) == 'sl_pw'       ) out_pw       = .true.
        if(      item_save(n) == 'sl_lwp'      ) out_lwp      = .true.
@@ -288,8 +301,10 @@ contains
     use mod_process, only: &
        PRC_MPIstop
     use mod_const, only: &
-       GRAV => CONST_GRAV, &
-       Rvap => CONST_Rvap
+       GRAV  => CONST_GRAV,  &
+       Rvap  => CONST_Rvap,  &
+       CPdry => CONST_CPdry, &
+       LHV   => CONST_LHV
     use mod_adm, only: &
        ADM_KNONE,   &
        ADM_have_pl, &
@@ -390,14 +405,10 @@ contains
     real(RP) :: psat     (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: rh       (ADM_gall   ,ADM_kall,ADM_lall   )
 
-    real(RP) :: u_850    (ADM_gall   ,ADM_KNONE,ADM_lall  )
-    real(RP) :: v_850    (ADM_gall   ,ADM_KNONE,ADM_lall  )
-    real(RP) :: w_850    (ADM_gall   ,ADM_KNONE,ADM_lall  )
-    real(RP) :: t_850    (ADM_gall   ,ADM_KNONE,ADM_lall  )
-    real(RP) :: u_500    (ADM_gall   ,ADM_KNONE,ADM_lall  )
-    real(RP) :: v_500    (ADM_gall   ,ADM_KNONE,ADM_lall  )
-    real(RP) :: w_500    (ADM_gall   ,ADM_KNONE,ADM_lall  )
-    real(RP) :: t_500    (ADM_gall   ,ADM_KNONE,ADM_lall  )
+    real(RP) :: u_slice  (ADM_gall   ,ADM_KNONE,ADM_lall  )
+    real(RP) :: v_slice  (ADM_gall   ,ADM_KNONE,ADM_lall  )
+    real(RP) :: w_slice  (ADM_gall   ,ADM_KNONE,ADM_lall  )
+    real(RP) :: t_slice  (ADM_gall   ,ADM_KNONE,ADM_lall  )
     real(RP) :: rho_sfc  (ADM_gall   ,ADM_KNONE,ADM_lall  )
     real(RP) :: pre_sfc  (ADM_gall   ,ADM_KNONE,ADM_lall  )
 
@@ -408,8 +419,9 @@ contains
     real(RP) :: th       (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: th_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: th_prof  (ADM_kall)
+    real(RP) :: thv      (ADM_gall   ,ADM_kall,ADM_lall   )
+    real(RP) :: mse      (ADM_gall   ,ADM_kall,ADM_lall   )
 
-!    real(RP) :: rh      (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: q_clw    (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: q_cli    (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: qtot     (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -636,8 +648,24 @@ contains
                         pre(:,:,:), & ! [IN]
                         th (:,:,:)  ) ! [OUT]
 
+       thv(:,:,:) = th(:,:,:) * ( 1.D0 + 0.61D0 * q(:,:,:,I_QV) )
+
        do l = 1, ADM_lall
-          call history_in( 'ml_th', th(:,:,l) )
+          call history_in( 'ml_th',  th (:,:,l) )
+          call history_in( 'ml_thv', thv(:,:,l) )
+       enddo
+    endif
+
+    ! moist static energy
+    if ( out_mse ) then
+       do l = 1, ADM_lall
+          do k = 1, ADM_kall
+             mse(:,k,l) = CPdry * tem(:,k,l)      &
+                        + GRAV  * ( GRD_vz(:,k,l,GRD_Z) - GRD_zs (:,K0,l,GRD_ZSFC) ) &
+                        + LHV   * q(:,k,l,I_QV)
+          enddo
+
+          call history_in( 'ml_mse',  mse(:,:,l) )
        enddo
     endif
 
@@ -683,15 +711,15 @@ contains
                              w      (:,:,l),  & ! [IN]
                              tem    (:,:,l),  & ! [IN]
                              850.E2_RP,       & ! [IN]
-                             u_850  (:,K0,l), & ! [OUT]
-                             v_850  (:,K0,l), & ! [OUT]
-                             w_850  (:,K0,l), & ! [OUT]
-                             t_850  (:,K0,l)  ) ! [OUT]
+                             u_slice(:,K0,l), & ! [OUT]
+                             v_slice(:,K0,l), & ! [OUT]
+                             w_slice(:,K0,l), & ! [OUT]
+                             t_slice(:,K0,l)  ) ! [OUT]
 
-          call history_in( 'sl_u850', u_850(:,:,l) )
-          call history_in( 'sl_v850', v_850(:,:,l) )
-          call history_in( 'sl_w850', w_850(:,:,l) )
-          call history_in( 'sl_t850', t_850(:,:,l) )
+          call history_in( 'sl_u850', u_slice(:,:,l) )
+          call history_in( 'sl_v850', v_slice(:,:,l) )
+          call history_in( 'sl_w850', w_slice(:,:,l) )
+          call history_in( 'sl_t850', t_slice(:,:,l) )
        enddo
     endif
 
@@ -704,15 +732,57 @@ contains
                              w      (:,:,l),  & ! [IN]
                              tem    (:,:,l),  & ! [IN]
                              500.E2_RP,       & ! [IN]
-                             u_500  (:,K0,l), & ! [OUT]
-                             v_500  (:,K0,l), & ! [OUT]
-                             w_500  (:,K0,l), & ! [OUT]
-                             t_500  (:,K0,l)  ) ! [OUT]
+                             u_slice(:,K0,l), & ! [OUT]
+                             v_slice(:,K0,l), & ! [OUT]
+                             w_slice(:,K0,l), & ! [OUT]
+                             t_slice(:,K0,l)  ) ! [OUT]
 
-          call history_in( 'sl_u500', u_500(:,:,l) )
-          call history_in( 'sl_v500', v_500(:,:,l) )
-          call history_in( 'sl_w500', w_500(:,:,l) )
-          call history_in( 'sl_t500', t_500(:,:,l) )
+          call history_in( 'sl_u500', u_slice(:,:,l) )
+          call history_in( 'sl_v500', v_slice(:,:,l) )
+          call history_in( 'sl_w500', w_slice(:,:,l) )
+          call history_in( 'sl_t500', t_slice(:,:,l) )
+       enddo
+    endif
+
+    if (out_250hPa) then
+       do l = 1, ADM_lall
+          call sv_plev_uvwt( ADM_gall,        & ! [IN]
+                             pre    (:,:,l),  & ! [IN]
+                             u      (:,:,l),  & ! [IN]
+                             v      (:,:,l),  & ! [IN]
+                             w      (:,:,l),  & ! [IN]
+                             tem    (:,:,l),  & ! [IN]
+                             250.E2_RP,       & ! [IN]
+                             u_slice(:,K0,l), & ! [OUT]
+                             v_slice(:,K0,l), & ! [OUT]
+                             w_slice(:,K0,l), & ! [OUT]
+                             t_slice(:,K0,l)  ) ! [OUT]
+
+          call history_in( 'sl_u250', u_slice(:,:,l) )
+          call history_in( 'sl_v250', v_slice(:,:,l) )
+          call history_in( 'sl_w250', w_slice(:,:,l) )
+          call history_in( 'sl_t250', t_slice(:,:,l) )
+       enddo
+    endif
+
+    if (out_100hPa) then
+       do l = 1, ADM_lall
+          call sv_plev_uvwt( ADM_gall,        & ! [IN]
+                             pre    (:,:,l),  & ! [IN]
+                             u      (:,:,l),  & ! [IN]
+                             v      (:,:,l),  & ! [IN]
+                             w      (:,:,l),  & ! [IN]
+                             tem    (:,:,l),  & ! [IN]
+                             100.E2_RP,       & ! [IN]
+                             u_slice(:,K0,l), & ! [OUT]
+                             v_slice(:,K0,l), & ! [OUT]
+                             w_slice(:,K0,l), & ! [OUT]
+                             t_slice(:,K0,l)  ) ! [OUT]
+
+          call history_in( 'sl_u100', u_slice(:,:,l) )
+          call history_in( 'sl_v100', v_slice(:,:,l) )
+          call history_in( 'sl_w100', w_slice(:,:,l) )
+          call history_in( 'sl_t100', t_slice(:,:,l) )
        enddo
     endif
 
