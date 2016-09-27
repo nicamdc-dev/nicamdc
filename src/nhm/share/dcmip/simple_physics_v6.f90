@@ -95,7 +95,7 @@ contains
 !            J. Adv. Model. Earth Syst., Vol. 4, M04001, doi:10.1029/2011MS000099
 !-----------------------------------------------------------------------
 
-SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel, rpdel, ps, precl, test, RJ2012_precip, TC_PBL_mod, use_HS)
+SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel, rpdel, ps, precl, test, RJ2012_precip, TC_PBL_mod, use_HS, MITC_TYPE)
 
   ! use physics_types     , only: physics_dme_adjust   ! This is for CESM/CAM
   ! use cam_diagnostics,    only: diag_phys_writeout   ! This is for CESM/CAM
@@ -115,6 +115,7 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
    logical, intent(in)  :: RJ2012_precip
    logical, intent(in)  :: TC_PBL_mod
    logical, intent(in)  :: use_HS       ! use setting for moist H-S?
+   integer, intent(in)  :: MITC_TYPE    ! 1:default(TJ2016), 2,3:modified
 
 !
 ! Input/Output arguments
@@ -163,7 +164,7 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
    real(r8) Tsurf(pcols)                ! Sea Surface Temperature (constant for tropical cyclone)
 !++++++++                                 Tsurf needs to be dependent on latitude for the
                                         ! moist baroclinic wave test, adjust
-   real(r8) dphi2
+   real(r8) dphi2, dphi0
 
    real(r8) SST_TC                      ! Sea Surface Temperature for tropical cyclone test
    real(r8) T0                          ! Control temp for calculation of qsat
@@ -293,10 +294,27 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
 ! Tsurf needs to be constant for tropical cyclone test
 !
      if ( use_HS ) then ! Moist H-S Test
-        dphi2 = ( 26.D0 / 180.D0 * pi )**2
-        do i = 1, pcols
-           Tsurf(i) = 29.D0 * exp( -0.5D0 * lat(i) * lat(i) / dphi2 ) + 271.D0
-        enddo
+        if ( MITC_TYPE == 1 ) then
+           dphi2 = ( 26.D0 / 180.D0 * pi )**2
+           do i = 1, pcols
+              Tsurf(i) = 29.D0 * exp( -0.5D0 * lat(i) * lat(i) / dphi2 ) + 271.D0
+           enddo
+        elseif( MITC_TYPE == 2 ) then
+           dphi2 = ( 20.D0 / 180.D0 * pi )**2
+           dphi0 = ( 17.D0 / 180.D0 * pi )
+           do i = 1, pcols
+              Tsurf(i) = 29.D0 * exp( -0.5D0 * (max(abs(lat(i))-dphi0,0))**2 / dphi2 ) + 271.D0
+           enddo
+        elseif( MITC_TYPE == 3 ) then
+           dphi2 = ( 23.D0 / 180.D0 * pi )**2
+           dphi0 = ( 12.D0 / 180.D0 * pi )
+           do i = 1, pcols
+              Tsurf(i) = 32.D0 * exp( -0.5D0 * (max(abs(lat(i))-dphi0,0))**2 / dphi2 ) + 271.D0
+           enddo
+        else
+           write(*,*) 'xxx MITC_TYPE is out of range! STOP.', MITC_TYPE
+           stop
+        endif
      else
 
      if (test .eq. 1) then ! Moist Baroclinic Wave Test

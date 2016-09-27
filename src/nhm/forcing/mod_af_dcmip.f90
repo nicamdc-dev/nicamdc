@@ -43,6 +43,7 @@ module mod_af_dcmip
   logical, private :: SM_PBL_Bryan        = .false. ! more option for SimpleMicrophysics
   logical, private :: USE_ToyChemistry    = .false.
   logical, private :: USE_HeldSuarez      = .false.
+  integer, private :: SM_MITC_SST_TYPE    = 1       ! 1:default(TJ2016), 2,3:modified
 
   !-----------------------------------------------------------------------------
 contains
@@ -82,7 +83,8 @@ contains
        SM_LargeScaleCond,   &
        SM_PBL_Bryan,        &
        USE_ToyChemistry,    &
-       USE_HeldSuarez
+       USE_HeldSuarez,      &
+       SM_MITC_SST_TYPE
 
     integer  :: ierr
     !---------------------------------------------------------------------------
@@ -191,7 +193,6 @@ contains
        USE_SimpleMicrophys = .true.
        SM_Latdepend_SST    = .false.
        SM_LargeScaleCond   = .false.
-       SM_PBL_Bryan        = .false.
        USE_ToyChemistry    = .false.
        USE_HeldSuarez      = .true.
 
@@ -213,6 +214,7 @@ contains
     if( IO_L ) write(IO_FID_LOG,*) '+ SM_PBL_Bryan        : ', SM_PBL_Bryan
     if( IO_L ) write(IO_FID_LOG,*) '+ USE_ToyChemistry    : ', USE_ToyChemistry
     if( IO_L ) write(IO_FID_LOG,*) '+ USE_HeldSuarez      : ', USE_HeldSuarez
+    if( IO_L ) write(IO_FID_LOG,*) '+ SM_MITC_SST_TYPE    : ', SM_MITC_SST_TYPE
 
     ! initial value of the tracer is set in mod_prgvar - mod_ideal_init
     if ( USE_ToyChemistry ) then
@@ -464,7 +466,8 @@ contains
                             test,              & ! [IN]
                             SM_LargeScaleCond, & ! [IN]
                             SM_PBL_Bryan,      & ! [IN]
-                            USE_HeldSuarez     ) ! [IN]
+                            USE_HeldSuarez,    & ! [IN]
+                            SM_MITC_SST_TYPE   ) ! [IN]
 
        do k = 1, vlayer
           kk = kmax - k + 1 ! reverse order
