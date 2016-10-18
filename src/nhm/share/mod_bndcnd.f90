@@ -174,10 +174,10 @@ contains
        c2wfact,    &
        c2wfact_Gz  )
     use mod_adm, only: &
-       kmin => ADM_kmin, &
-       kmax => ADM_kmax
+       ADM_kmin, &
+       ADM_kmax
     use mod_const, only: &
-       CVdry => CONST_CVdry
+       CONST_CVdry
     implicit none
 
     integer,  intent(in)    :: ijdim
@@ -202,12 +202,20 @@ contains
     real(RP), intent(in)    :: c2wfact   (ijdim,kdim,2,ldim)
     real(RP), intent(in)    :: c2wfact_Gz(ijdim,kdim,6,ldim)
 
-    integer :: ij, l
+    integer  :: kmin, kmax
+    real(RP) :: CVdry
+
+    integer  :: ij, l
     !---------------------------------------------------------------------------
     !$acc  data &
     !$acc& pcopy(rho,vx,vy,vz,w,ein,tem,pre) &
     !$acc& pcopy(rhog,rhogvx,rhogvy,rhogvz,rhogw,rhoge) &
     !$acc& pcopyin(gsqrtgam2,phi,c2wfact,c2wfact_Gz)
+
+    kmin = ADM_kmin
+    kmax = ADM_kmax
+
+    CVdry = CONST_CVdry
 
     !--- Thermodynamical variables ( rho, ein, tem, pre, rhog, rhoge ), q = 0 at boundary
 
@@ -219,20 +227,25 @@ contains
                            phi(:,:,l)  ) ! [IN]
     enddo
 
+    !$omp parallel default(none),private(ij,l), &
+    !$omp shared(ijdim,ldim,kmax,kmin,rhog,rhoge,ein,rho,tem,gsqrtgam2,CVdry)
     !$acc kernels pcopy(rhog,ein,rhoge) pcopyin(rho,tem,gsqrtgam2) async(0)
     do l  = 1, ldim
-    do ij = 1, ijdim
-       rhog (ij,kmax+1,l) = rho(ij,kmax+1,l) * gsqrtgam2(ij,kmax+1,l)
-       rhog (ij,kmin-1,l) = rho(ij,kmin-1,l) * gsqrtgam2(ij,kmin-1,l)
+       !$omp do
+       do ij = 1, ijdim
+          rhog (ij,kmax+1,l) = rho(ij,kmax+1,l) * gsqrtgam2(ij,kmax+1,l)
+          rhog (ij,kmin-1,l) = rho(ij,kmin-1,l) * gsqrtgam2(ij,kmin-1,l)
 
-       ein  (ij,kmax+1,l) = CVdry * tem(ij,kmax+1,l)
-       ein  (ij,kmin-1,l) = CVdry * tem(ij,kmin-1,l)
+          ein  (ij,kmax+1,l) = CVdry * tem(ij,kmax+1,l)
+          ein  (ij,kmin-1,l) = CVdry * tem(ij,kmin-1,l)
 
-       rhoge(ij,kmax+1,l) = rhog(ij,kmax+1,l) * ein(ij,kmax+1,l)
-       rhoge(ij,kmin-1,l) = rhog(ij,kmin-1,l) * ein(ij,kmin-1,l)
-    enddo
+          rhoge(ij,kmax+1,l) = rhog(ij,kmax+1,l) * ein(ij,kmax+1,l)
+          rhoge(ij,kmin-1,l) = rhog(ij,kmin-1,l) * ein(ij,kmin-1,l)
+       enddo
+       !$omp end do
     enddo
     !$acc end kernels
+    !$omp end parallel
 
     !--- Momentum ( rhogvx, rhogvy, rhogvz, vx, vy, vz )
 
@@ -244,19 +257,24 @@ contains
                            rhogvy(:,:,:), & ! [INOUT]
                            rhogvz(:,:,:)  ) ! [INOUT]
 
+    !$omp parallel default(none),private(ij,l), &
+    !$omp shared(ijdim,ldim,kmax,kmin,vx,vy,vz,rhog,rhogvx,rhogvy,rhogvz)
     !$acc kernels pcopy(vx,vy,vz) pcopyin(rhogvx,rhogvy,rhogvz,rhog) async(0)
     do l  = 1, ldim
-    do ij = 1, ijdim
-       vx(ij,kmax+1,l) = rhogvx(ij,kmax+1,l) / rhog(ij,kmax+1,l)
-       vy(ij,kmax+1,l) = rhogvy(ij,kmax+1,l) / rhog(ij,kmax+1,l)
-       vz(ij,kmax+1,l) = rhogvz(ij,kmax+1,l) / rhog(ij,kmax+1,l)
+       !$omp do
+       do ij = 1, ijdim
+          vx(ij,kmax+1,l) = rhogvx(ij,kmax+1,l) / rhog(ij,kmax+1,l)
+          vy(ij,kmax+1,l) = rhogvy(ij,kmax+1,l) / rhog(ij,kmax+1,l)
+          vz(ij,kmax+1,l) = rhogvz(ij,kmax+1,l) / rhog(ij,kmax+1,l)
 
-       vx(ij,kmin-1,l) = rhogvx(ij,kmin-1,l) / rhog(ij,kmin-1,l)
-       vy(ij,kmin-1,l) = rhogvy(ij,kmin-1,l) / rhog(ij,kmin-1,l)
-       vz(ij,kmin-1,l) = rhogvz(ij,kmin-1,l) / rhog(ij,kmin-1,l)
-    enddo
+          vx(ij,kmin-1,l) = rhogvx(ij,kmin-1,l) / rhog(ij,kmin-1,l)
+          vy(ij,kmin-1,l) = rhogvy(ij,kmin-1,l) / rhog(ij,kmin-1,l)
+          vz(ij,kmin-1,l) = rhogvz(ij,kmin-1,l) / rhog(ij,kmin-1,l)
+       enddo
+       !$omp end do
     enddo
     !$acc end kernels
+    !$omp end parallel
 
     !--- Momentum ( rhogw, w )
     do l = 1, ldim
@@ -268,17 +286,22 @@ contains
                          c2wfact_Gz(:,:,:,l)  ) ! [IN]
     enddo
 
+    !$omp parallel default(none),private(ij,l), &
+    !$omp shared(ijdim,ldim,kmax,kmin,w,rhogw,rhog,c2wfact)
     !$acc kernels pcopy(w) pcopyin(rhog,rhogw,c2wfact) async(0)
     do l  = 1, ldim
-    do ij = 1, ijdim
-       w(ij,kmax+1,l) = rhogw(ij,kmax+1,l) / ( c2wfact(ij,kmax+1,1,l) * rhog(ij,kmax+1,l) &
-                                             + c2wfact(ij,kmax+1,2,l) * rhog(ij,kmax  ,l) )
-       w(ij,kmin  ,l) = rhogw(ij,kmin  ,l) / ( c2wfact(ij,kmin  ,1,l) * rhog(ij,kmin  ,l) &
-                                             + c2wfact(ij,kmin  ,2,l) * rhog(ij,kmin-1,l) )
-       w(ij,kmin-1,l) = 0.0_RP
-    enddo
+       !$omp do
+       do ij = 1, ijdim
+          w(ij,kmax+1,l) = rhogw(ij,kmax+1,l) / ( c2wfact(ij,kmax+1,1,l) * rhog(ij,kmax+1,l) &
+                                                + c2wfact(ij,kmax+1,2,l) * rhog(ij,kmax  ,l) )
+          w(ij,kmin  ,l) = rhogw(ij,kmin  ,l) / ( c2wfact(ij,kmin  ,1,l) * rhog(ij,kmin  ,l) &
+                                                + c2wfact(ij,kmin  ,2,l) * rhog(ij,kmin-1,l) )
+          w(ij,kmin-1,l) = 0.0_RP
+       enddo
+       !$omp end do
     enddo
     !$acc end kernels
+    !$omp end parallel
 
     !$acc end data
     return
@@ -294,11 +317,11 @@ contains
        phi    )
     use mod_adm, only: &
        kdim => ADM_kall, &
-       kmin => ADM_kmin, &
-       kmax => ADM_kmax
+       ADM_kmin,         &
+       ADM_kmax
     use mod_const, only: &
-       GRAV => CONST_GRAV, &
-       Rdry => CONST_Rdry
+       CONST_GRAV, &
+       CONST_Rdry
     implicit none
 
     integer,  intent(in)    :: ijdim           ! number of horizontal grid
@@ -306,6 +329,9 @@ contains
     real(RP), intent(inout) :: pre(ijdim,kdim) ! pressure
     real(RP), intent(inout) :: tem(ijdim,kdim) ! temperature
     real(RP), intent(in)    :: phi(ijdim,kdim) ! geopotential
+
+    integer  :: kmin, kmax
+    real(RP) :: GRAV, Rdry
 
     integer  :: ij
 
@@ -319,6 +345,15 @@ contains
     !$acc& pcopy(tem,rho,pre) &
     !$acc& pcopyin(phi)
 
+    kmin = ADM_kmin
+    kmax = ADM_kmax
+
+    GRAV = CONST_GRAV
+    Rdry = CONST_Rdry
+
+    !$omp parallel do default(none),private(ij,z,z1,z2,z3), &
+    !$omp shared(ijdim,kmax,kmin,is_top_tem,is_top_epl,is_btm_tem,is_btm_epl, &
+    !$omp        tem,phi,GRAV)
     !$acc kernels pcopy(tem) pcopyin(phi) async(0)
     do ij = 1, ijdim
 
@@ -356,7 +391,10 @@ contains
 
     enddo
     !$acc end kernels
+    !$omp end parallel do
 
+    !$omp parallel do default(none),private(ij), &
+    !$omp shared(ijdim,kmax,kmin,rho,pre,tem,phi,Rdry)
     !$acc kernels pcopy(pre,rho) pcopyin(phi,tem) async(0)
     do ij = 1, ijdim
 
@@ -370,6 +408,7 @@ contains
 
     enddo
     !$acc end kernels
+    !$omp end parallel do
 
     !$acc end data
     return
@@ -386,8 +425,8 @@ contains
        rhogvy, &
        rhogvz  )
     use mod_adm, only: &
-       kmin => ADM_kmin, &
-       kmax => ADM_kmax
+       ADM_kmin, &
+       ADM_kmax
     implicit none
 
     integer,  intent(in)    :: ijdim
@@ -398,39 +437,50 @@ contains
     real(RP), intent(inout) :: rhogvy(ijdim,kdim,ldim)
     real(RP), intent(inout) :: rhogvz(ijdim,kdim,ldim)
 
-    integer :: ij, l
+    integer  :: kmin, kmax
+
+    integer  :: ij, l
     !---------------------------------------------------------------------------
     !$acc  data &
     !$acc& pcopy(rhogvx,rhogvy,rhogvz) &
     !$acc& pcopyin(rhog)
 
+    kmin = ADM_kmin
+    kmax = ADM_kmax
+
+    !$omp parallel default(none),private(ij,l), &
+    !$omp shared(ijdim,ldim,kmax,kmin,is_top_rigid,is_top_free,is_btm_rigid,is_btm_free, &
+    !$omp        rhog,rhogvx,rhogvy,rhogvz)
     !$acc kernels pcopy(rhogvx,rhogvy,rhogvz) pcopyin(rhog) async(0)
     do l  = 1, ldim
-    do ij = 1, ijdim
+       !$omp do
+       do ij = 1, ijdim
 
-       if    ( is_top_rigid ) then
-          rhogvx(ij,kmax+1,l) = -rhogvx(ij,kmax,l) / rhog(ij,kmax,l) * rhog(ij,kmax+1,l)
-          rhogvy(ij,kmax+1,l) = -rhogvy(ij,kmax,l) / rhog(ij,kmax,l) * rhog(ij,kmax+1,l)
-          rhogvz(ij,kmax+1,l) = -rhogvz(ij,kmax,l) / rhog(ij,kmax,l) * rhog(ij,kmax+1,l)
-       elseif( is_top_free  ) then
-          rhogvx(ij,kmax+1,l) =  rhogvx(ij,kmax,l) / rhog(ij,kmax,l) * rhog(ij,kmax+1,l)
-          rhogvy(ij,kmax+1,l) =  rhogvy(ij,kmax,l) / rhog(ij,kmax,l) * rhog(ij,kmax+1,l)
-          rhogvz(ij,kmax+1,l) =  rhogvz(ij,kmax,l) / rhog(ij,kmax,l) * rhog(ij,kmax+1,l)
-       endif
+          if    ( is_top_rigid ) then
+             rhogvx(ij,kmax+1,l) = -rhogvx(ij,kmax,l) / rhog(ij,kmax,l) * rhog(ij,kmax+1,l)
+             rhogvy(ij,kmax+1,l) = -rhogvy(ij,kmax,l) / rhog(ij,kmax,l) * rhog(ij,kmax+1,l)
+             rhogvz(ij,kmax+1,l) = -rhogvz(ij,kmax,l) / rhog(ij,kmax,l) * rhog(ij,kmax+1,l)
+          elseif( is_top_free  ) then
+             rhogvx(ij,kmax+1,l) =  rhogvx(ij,kmax,l) / rhog(ij,kmax,l) * rhog(ij,kmax+1,l)
+             rhogvy(ij,kmax+1,l) =  rhogvy(ij,kmax,l) / rhog(ij,kmax,l) * rhog(ij,kmax+1,l)
+             rhogvz(ij,kmax+1,l) =  rhogvz(ij,kmax,l) / rhog(ij,kmax,l) * rhog(ij,kmax+1,l)
+          endif
 
-       if    ( is_btm_rigid ) then
-          rhogvx(ij,kmin-1,l) = -rhogvx(ij,kmin,l) / rhog(ij,kmin,l) * rhog(ij,kmin-1,l)
-          rhogvy(ij,kmin-1,l) = -rhogvy(ij,kmin,l) / rhog(ij,kmin,l) * rhog(ij,kmin-1,l)
-          rhogvz(ij,kmin-1,l) = -rhogvz(ij,kmin,l) / rhog(ij,kmin,l) * rhog(ij,kmin-1,l)
-       elseif( is_btm_free  ) then
-          rhogvx(ij,kmin-1,l) =  rhogvx(ij,kmin,l) / rhog(ij,kmin,l) * rhog(ij,kmin-1,l)
-          rhogvy(ij,kmin-1,l) =  rhogvy(ij,kmin,l) / rhog(ij,kmin,l) * rhog(ij,kmin-1,l)
-          rhogvz(ij,kmin-1,l) =  rhogvz(ij,kmin,l) / rhog(ij,kmin,l) * rhog(ij,kmin-1,l)
-       endif
+          if    ( is_btm_rigid ) then
+             rhogvx(ij,kmin-1,l) = -rhogvx(ij,kmin,l) / rhog(ij,kmin,l) * rhog(ij,kmin-1,l)
+             rhogvy(ij,kmin-1,l) = -rhogvy(ij,kmin,l) / rhog(ij,kmin,l) * rhog(ij,kmin-1,l)
+             rhogvz(ij,kmin-1,l) = -rhogvz(ij,kmin,l) / rhog(ij,kmin,l) * rhog(ij,kmin-1,l)
+          elseif( is_btm_free  ) then
+             rhogvx(ij,kmin-1,l) =  rhogvx(ij,kmin,l) / rhog(ij,kmin,l) * rhog(ij,kmin-1,l)
+             rhogvy(ij,kmin-1,l) =  rhogvy(ij,kmin,l) / rhog(ij,kmin,l) * rhog(ij,kmin-1,l)
+             rhogvz(ij,kmin-1,l) =  rhogvz(ij,kmin,l) / rhog(ij,kmin,l) * rhog(ij,kmin-1,l)
+          endif
 
-    enddo
+       enddo
+       !$omp end do
     enddo
     !$acc end kernels
+    !$omp end parallel
 
     !$acc end data
     return
@@ -447,23 +497,31 @@ contains
        c2wfact )
     use mod_adm, only: &
        kdim => ADM_kall, &
-       kmin => ADM_kmin, &
-       kmax => ADM_kmax
+       ADM_kmin,         &
+       ADM_kmax
     implicit none
 
-    integer, intent(in)    :: ijdim
+    integer,  intent(in)    :: ijdim
     real(RP), intent(in)    :: rhogvx (ijdim,kdim)
     real(RP), intent(in)    :: rhogvy (ijdim,kdim)
     real(RP), intent(in)    :: rhogvz (ijdim,kdim)
     real(RP), intent(inout) :: rhogw  (ijdim,kdim)
     real(RP), intent(in)    :: c2wfact(ijdim,kdim,6)
 
-    integer :: ij
+    integer  :: kmin, kmax
+
+    integer  :: ij
     !---------------------------------------------------------------------------
     !$acc  data &
     !$acc& pcopy(rhogw) &
     !$acc& pcopyin(rhogvx,rhogvy,rhogvz,c2wfact)
 
+    kmin = ADM_kmin
+    kmax = ADM_kmax
+
+    !$omp parallel do default(none),private(ij), &
+    !$omp shared(ijdim,kmax,kmin,is_top_rigid,is_top_free,is_btm_rigid,is_btm_free, &
+    !$omp        rhogw,c2wfact,rhogvx,rhogvy,rhogvz)
     !$acc kernels pcopy(rhogw) pcopyin(rhogvx,rhogvy,rhogvz,c2wfact) async(0)
     do ij = 1, ijdim
 
@@ -493,6 +551,7 @@ contains
 
     enddo
     !$acc end kernels
+    !$omp end parallel do
 
     !$acc end data
     return

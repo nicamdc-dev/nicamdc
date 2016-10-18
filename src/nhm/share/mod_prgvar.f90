@@ -254,6 +254,16 @@ contains
        enddo
        enddo
 
+    else
+
+       rhog_pl  (:,:,:)   = 0
+       rhogvx_pl(:,:,:)   = 0
+       rhogvy_pl(:,:,:)   = 0
+       rhogvz_pl(:,:,:)   = 0
+       rhogw_pl (:,:,:)   = 0
+       rhoge_pl (:,:,:)   = 0
+       rhogq_pl (:,:,:,:) = 0.0_RP
+
     endif
 
     return

@@ -188,6 +188,7 @@ contains
     use mod_adm, only: &
        ADM_have_pl,  &
        ADM_have_sgp, &
+       ADM_gall_1d,  &
        ADM_gmin,     &
        ADM_gmax,     &
        ADM_gslf_pl,  &
@@ -224,19 +225,22 @@ contains
 
     write(IO_FID_LOG,*) '*** setup coefficient of divergence operator'
 
+    coef_div   (:,:,:,:) = 0.0_RP
+    coef_div_pl(:,  :,:) = 0.0_RP
+
     do l = 1, ADM_lall
     do d = 1, ADM_nxyz
        hn = d + HNX - 1
 
        do j = ADM_gmin, ADM_gmax
        do i = ADM_gmin, ADM_gmax
-          ij     = suf(i  ,j  )
-          ip1j   = suf(i+1,j  )
-          ip1jp1 = suf(i+1,j+1)
-          ijp1   = suf(i  ,j+1)
-          im1j   = suf(i-1,j  )
-          im1jm1 = suf(i-1,j-1)
-          ijm1   = suf(i  ,j-1)
+          ij     = (j-1)*ADM_gall_1d + i
+          ip1j   = ij + 1
+          ip1jp1 = ij + ADM_gall_1d + 1
+          ijp1   = ij + ADM_gall_1d
+          im1j   = ij - 1
+          im1jm1 = ij - ADM_gall_1d - 1
+          ijm1   = ij - ADM_gall_1d
 
           ! ij
           coef_div(d,ij,0,l) = ( + GMTR_t(ij    ,k0,l,TI,W1) * GMTR_a(ij    ,k0,l,AI ,hn) & ! Q1 * b6
@@ -295,13 +299,13 @@ contains
           j = ADM_gmin
           i = ADM_gmin
 
-          ij     = suf(i  ,j  )
-          ip1j   = suf(i+1,j  )
-          ip1jp1 = suf(i+1,j+1)
-          ijp1   = suf(i  ,j+1)
-          im1j   = suf(i-1,j  )
-          im1jm1 = suf(i-1,j-1)
-          ijm1   = suf(i  ,j-1)
+          ij     = (j-1)*ADM_gall_1d + i
+          ip1j   = ij + 1
+          ip1jp1 = ij + ADM_gall_1d + 1
+          ijp1   = ij + ADM_gall_1d
+          im1j   = ij - 1
+          im1jm1 = ij - ADM_gall_1d - 1
+          ijm1   = ij - ADM_gall_1d
 
           ! ij
           coef_div(d,ij,0,l) = ( + GMTR_t(ij    ,k0,l,TI,W1) * GMTR_a(ij    ,k0,l,AI ,hn) & ! Q1 * b6
@@ -398,6 +402,7 @@ contains
     use mod_adm, only: &
        ADM_have_pl,  &
        ADM_have_sgp, &
+       ADM_gall_1d,  &
        ADM_gmin,     &
        ADM_gmax,     &
        ADM_gslf_pl,  &
@@ -434,19 +439,22 @@ contains
 
     write(IO_FID_LOG,*) '*** setup coefficient of rotation operator'
 
+    coef_rot   (:,:,:,:) = 0.0_RP
+    coef_rot_pl(:,  :,:) = 0.0_RP
+
     do l = 1, ADM_lall
     do d = 1, ADM_nxyz
        ht = d + HTX - 1
 
        do j = ADM_gmin, ADM_gmax
        do i = ADM_gmin, ADM_gmax
-          ij     = suf(i  ,j  )
-          ip1j   = suf(i+1,j  )
-          ip1jp1 = suf(i+1,j+1)
-          ijp1   = suf(i  ,j+1)
-          im1j   = suf(i-1,j  )
-          im1jm1 = suf(i-1,j-1)
-          ijm1   = suf(i  ,j-1)
+          ij     = (j-1)*ADM_gall_1d + i
+          ip1j   = ij + 1
+          ip1jp1 = ij + ADM_gall_1d + 1
+          ijp1   = ij + ADM_gall_1d
+          im1j   = ij - 1
+          im1jm1 = ij - ADM_gall_1d - 1
+          ijm1   = ij - ADM_gall_1d
 
           ! ij
           coef_rot(d,ij,0,l) = ( + GMTR_t(ij    ,k0,l,TI,W1) * GMTR_a(ij    ,k0,l,AI ,ht) & ! Q1 * b6
@@ -505,13 +513,13 @@ contains
           j = ADM_gmin
           i = ADM_gmin
 
-          ij     = suf(i  ,j  )
-          ip1j   = suf(i+1,j  )
-          ip1jp1 = suf(i+1,j+1)
-          ijp1   = suf(i  ,j+1)
-          im1j   = suf(i-1,j  )
-          im1jm1 = suf(i-1,j-1)
-          ijm1   = suf(i  ,j-1)
+          ij     = (j-1)*ADM_gall_1d + i
+          ip1j   = ij + 1
+          ip1jp1 = ij + ADM_gall_1d + 1
+          ijp1   = ij + ADM_gall_1d
+          im1j   = ij - 1
+          im1jm1 = ij - ADM_gall_1d - 1
+          ijm1   = ij - ADM_gall_1d
 
           ! ij
           coef_rot(d,ij,0,l) = ( + GMTR_t(ij    ,k0,l,TI,W1) * GMTR_a(ij    ,k0,l,AI ,ht) & ! Q1 * b6
@@ -608,6 +616,7 @@ contains
     use mod_adm, only: &
        ADM_have_pl,  &
        ADM_have_sgp, &
+       ADM_gall_1d,  &
        ADM_gmin,     &
        ADM_gmax,     &
        ADM_gslf_pl,  &
@@ -644,19 +653,22 @@ contains
 
     write(IO_FID_LOG,*) '*** setup coefficient of gradient operator'
 
+    coef_grad   (:,:,:,:) = 0.0_RP
+    coef_grad_pl(:,  :,:) = 0.0_RP
+
     do l = 1, ADM_lall
     do d = 1, ADM_nxyz
        hn = d + HNX - 1
 
        do j = ADM_gmin, ADM_gmax
        do i = ADM_gmin, ADM_gmax
-          ij     = suf(i  ,j  )
-          ip1j   = suf(i+1,j  )
-          ip1jp1 = suf(i+1,j+1)
-          ijp1   = suf(i  ,j+1)
-          im1j   = suf(i-1,j  )
-          im1jm1 = suf(i-1,j-1)
-          ijm1   = suf(i  ,j-1)
+          ij     = (j-1)*ADM_gall_1d + i
+          ip1j   = ij + 1
+          ip1jp1 = ij + ADM_gall_1d + 1
+          ijp1   = ij + ADM_gall_1d
+          im1j   = ij - 1
+          im1jm1 = ij - ADM_gall_1d - 1
+          ijm1   = ij - ADM_gall_1d
 
           ! ij
           coef_grad(d,ij,0,l) = ( + GMTR_t(ij    ,k0,l,TI,W1) * GMTR_a(ij    ,k0,l,AI ,hn) & ! Q1 * b6
@@ -721,13 +733,13 @@ contains
           j = ADM_gmin
           i = ADM_gmin
 
-          ij     = suf(i  ,j  )
-          ip1j   = suf(i+1,j  )
-          ip1jp1 = suf(i+1,j+1)
-          ijp1   = suf(i  ,j+1)
-          im1j   = suf(i-1,j  )
-          im1jm1 = suf(i-1,j-1)
-          ijm1   = suf(i  ,j-1)
+          ij     = (j-1)*ADM_gall_1d + i
+          ip1j   = ij + 1
+          ip1jp1 = ij + ADM_gall_1d + 1
+          ijp1   = ij + ADM_gall_1d
+          im1j   = ij - 1
+          im1jm1 = ij - ADM_gall_1d - 1
+          ijm1   = ij - ADM_gall_1d
 
           ! ij
           coef_grad(d,ij,0,l) = ( + GMTR_t(ij    ,k0,l,TI,W1) * GMTR_a(ij    ,k0,l,AI ,hn) & ! Q1 * b6
@@ -828,6 +840,7 @@ contains
     use mod_adm, only: &
        ADM_have_pl,  &
        ADM_have_sgp, &
+       ADM_gall_1d,  &
        ADM_gmin,     &
        ADM_gmax,     &
        ADM_gslf_pl,  &
@@ -851,7 +864,7 @@ contains
     real(RP), intent(in)  :: GMTR_t_pl  (ADM_gall_pl,K0,ADM_lall_pl,      GMTR_t_nmax   )
     real(RP), intent(in)  :: GMTR_a     (ADM_gall   ,K0,ADM_lall   ,AI:AJ,GMTR_a_nmax   )
     real(RP), intent(in)  :: GMTR_a_pl  (ADM_gall_pl,K0,ADM_lall_pl,      GMTR_a_nmax_pl)
-    real(RP), intent(out) :: coef_lap   (ADM_gall,0:6        ,ADM_lall   )
+    real(RP), intent(out) :: coef_lap   (ADM_gall,0:6    ,ADM_lall   )
     real(RP), intent(out) :: coef_lap_pl(         0:vlink,ADM_lall_pl)
 
     integer :: ij
@@ -863,19 +876,20 @@ contains
 
     write(IO_FID_LOG,*) '*** setup coefficient of laplacian operator'
 
+    coef_lap   (:,:,:) = 0.0_RP
+    coef_lap_pl(  :,:) = 0.0_RP
+
     do l = 1, ADM_lall
 
        do j = ADM_gmin, ADM_gmax
        do i = ADM_gmin, ADM_gmax
-          ij     = suf(i  ,j  )
-          ip1j   = suf(i+1,j  )
-          ip1jp1 = suf(i+1,j+1)
-          ijp1   = suf(i  ,j+1)
-          im1j   = suf(i-1,j  )
-          im1jm1 = suf(i-1,j-1)
-          ijm1   = suf(i  ,j-1)
-
-          coef_lap(ij,:,l) = 0.0_RP
+          ij     = (j-1)*ADM_gall_1d + i
+          ip1j   = ij + 1
+          ip1jp1 = ij + ADM_gall_1d + 1
+          ijp1   = ij + ADM_gall_1d
+          im1j   = ij - 1
+          im1jm1 = ij - ADM_gall_1d - 1
+          ijm1   = ij - ADM_gall_1d
 
           do d = 1, ADM_nxyz
              hn = d + HNX - 1
@@ -1057,13 +1071,13 @@ contains
           j = ADM_gmin
           i = ADM_gmin
 
-          ij     = suf(i  ,j  )
-          ip1j   = suf(i+1,j  )
-          ip1jp1 = suf(i+1,j+1)
-          ijp1   = suf(i  ,j+1)
-          im1j   = suf(i-1,j  )
-          im1jm1 = suf(i-1,j-1)
-          ijm1   = suf(i  ,j-1)
+          ij     = (j-1)*ADM_gall_1d + i
+          ip1j   = ij + 1
+          ip1jp1 = ij + ADM_gall_1d + 1
+          ijp1   = ij + ADM_gall_1d
+          im1j   = ij - 1
+          im1jm1 = ij - ADM_gall_1d - 1
+          ijm1   = ij - ADM_gall_1d
 
           coef_lap(ij,:,l) = 0.0_RP
 
@@ -1229,8 +1243,6 @@ contains
 
        do l = 1,ADM_lall_pl
 
-          coef_lap_pl(:,l) = 0.0_RP
-
           do d = 1, ADM_nxyz
              hn  = d + HNX  - 1
              tn  = d + TNX  - 1
@@ -1303,6 +1315,7 @@ contains
     use mod_adm, only: &
        ADM_have_pl,  &
        ADM_have_sgp, &
+       ADM_gall_1d,  &
        ADM_gmin,     &
        ADM_gmax,     &
        ADM_gslf_pl,  &
@@ -1340,6 +1353,11 @@ contains
 
     write(IO_FID_LOG,*) '*** setup coefficient of diffusion operator'
 
+    coef_intp   (:,:,:,:,:) = 0.0_RP
+    coef_intp_pl(:,:,:,  :) = 0.0_RP
+    coef_diff   (:,:,:,:)   = 0.0_RP
+    coef_diff_pl(:,  :,:)   = 0.0_RP
+
     do l = 1, ADM_lall
        do d = 1, ADM_nxyz
           hn = d + HNX - 1
@@ -1347,9 +1365,9 @@ contains
 
           do j = ADM_gmin-1, ADM_gmax
           do i = ADM_gmin-1, ADM_gmax
-             ij   = suf(i  ,j  )
-             ip1j = suf(i+1,j  )
-             ijp1 = suf(i  ,j+1)
+             ij     = (j-1)*ADM_gall_1d + i
+             ip1j   = ij + 1
+             ijp1   = ij + ADM_gall_1d
 
              coef_intp(d,ij,1,TI,l) = + GMTR_a(ij  ,k0,l,AIJ,tn) - GMTR_a(ij  ,k0,l,AI ,tn)
              coef_intp(d,ij,2,TI,l) = - GMTR_a(ij  ,k0,l,AI ,tn) - GMTR_a(ip1j,k0,l,AJ ,tn)
@@ -1366,10 +1384,10 @@ contains
 
           do j = ADM_gmin, ADM_gmax
           do i = ADM_gmin, ADM_gmax
-             ij     = suf(i  ,j  )
-             im1j   = suf(i-1,j  )
-             im1jm1 = suf(i-1,j-1)
-             ijm1   = suf(i  ,j-1)
+             ij     = (j-1)*ADM_gall_1d + i
+             im1j   = ij - 1
+             im1jm1 = ij - ADM_gall_1d - 1
+             ijm1   = ij - ADM_gall_1d
 
              coef_diff(d,ij,1,l) = + GMTR_a(ij    ,k0,l,AIJ,hn) * 0.5_RP * GMTR_p(ij,k0,l,P_RAREA)
              coef_diff(d,ij,2,l) = + GMTR_a(ij    ,k0,l,AJ ,hn) * 0.5_RP * GMTR_p(ij,k0,l,P_RAREA)
@@ -1382,7 +1400,12 @@ contains
        enddo
 
        if ( ADM_have_sgp(l) ) then ! pentagon
-          coef_diff(:,suf(ADM_gmin,ADM_gmin),5,l) = 0.0_RP
+          j = ADM_gmin
+          i = ADM_gmin
+
+          ij = (j-1)*ADM_gall_1d + i
+
+          coef_diff(:,ij,5,l) = 0.0_RP
        endif
 
     enddo ! l loop
@@ -1391,8 +1414,6 @@ contains
        n  = ADM_gslf_pl
 
        do l = 1, ADM_lall_pl
-
-          coef_intp_pl(:,:,:,l) = 0.0_RP
 
           do d = 1, ADM_nxyz
              hn  = d + HNX  - 1
@@ -1413,6 +1434,7 @@ contains
                 coef_diff_pl(d,v-1,l) = GMTR_a_pl(v,k0,l,hn) * 0.5_RP * GMTR_p_pl(n,k0,l,P_RAREA)
              enddo
           enddo
+
        enddo ! l loop
     endif
 
@@ -1427,10 +1449,11 @@ contains
        vz,       vz_pl,      &
        coef_div, coef_div_pl )
     use mod_adm, only: &
-       ADM_have_pl,      &
-       ADM_gmin,         &
-       ADM_gmax,         &
-       ADM_gslf_pl,      &
+       ADM_have_pl, &
+       ADM_gall_1d, &
+       ADM_gmin,    &
+       ADM_gmax,    &
+       ADM_gslf_pl, &
        ADM_gmax_pl
     use mod_grd, only: &
        XDIR => GRD_XDIR, &
@@ -1449,7 +1472,7 @@ contains
     real(RP), intent(in)  :: coef_div   (ADM_nxyz,ADM_gall,0:6    ,ADM_lall   )
     real(RP), intent(in)  :: coef_div_pl(ADM_nxyz,         0:vlink,ADM_lall_pl)
 
-    integer  :: gmin, gmax, kall
+    integer  :: gmin, gmax, kall, iall
 
     integer  :: ij
     integer  :: ip1j, ijp1, ip1jp1
@@ -1463,108 +1486,73 @@ contains
     gmin = ADM_gmin
     gmax = ADM_gmax
     kall = ADM_kall
+    iall = ADM_gall_1d
+
+    !$omp parallel workshare
+    scl(:,:,:) = 0.0_RP
+    !$omp end parallel workshare
 
     do l = 1, ADM_lall
-       !$omp parallel default(none),private(i,j,k,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1), &
-       !$omp shared(l,gmin,gmax,kall,scl,vx,vy,vz,coef_div)
+       !$omp parallel do default(none),private(i,j,k,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1), &
+       !$omp shared(l,gmin,gmax,kall,iall,scl,vx,vy,vz,coef_div)
        do k = 1, kall
-
-          !$omp workshare
-          scl(:,k,l) = 0.0_RP
-          !$omp end workshare
-
-          !$omp do collapse(2)
           do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
+             do i = gmin, gmax
+                ij     = (j-1)*iall + i
+                ip1j   = ij + 1
+                ip1jp1 = ij + iall + 1
+                ijp1   = ij + iall
+                im1j   = ij - 1
+                im1jm1 = ij - iall -1
+                ijm1   = ij - iall
 
-             scl(ij,k,l) = scl(ij,k,l) + ( coef_div(XDIR,ij,0,l) * vx(ij    ,k,l) &
-                                         + coef_div(YDIR,ij,0,l) * vy(ij    ,k,l) &
-                                         + coef_div(ZDIR,ij,0,l) * vz(ij    ,k,l) )
-          enddo
-          enddo
-          !$omp end do
+                scl(ij,k,l) = scl(ij,k,l) + ( coef_div(XDIR,ij,0,l) * vx(ij    ,k,l) &
+                                            + coef_div(XDIR,ij,1,l) * vx(ip1j  ,k,l) &
+                                            + coef_div(XDIR,ij,2,l) * vx(ip1jp1,k,l) &
+                                            + coef_div(XDIR,ij,3,l) * vx(ijp1  ,k,l) &
+                                            + coef_div(XDIR,ij,4,l) * vx(im1j  ,k,l) &
+                                            + coef_div(XDIR,ij,5,l) * vx(im1jm1,k,l) &
+                                            + coef_div(XDIR,ij,6,l) * vx(ijm1  ,k,l) )
+             enddo
 
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             ip1j   = suf(i+1,j  )
+             do i = gmin, gmax
+                ij     = (j-1)*iall + i
+                ip1j   = ij + 1
+                ip1jp1 = ij + iall + 1
+                ijp1   = ij + iall
+                im1j   = ij - 1
+                im1jm1 = ij - iall -1
+                ijm1   = ij - iall
 
-             scl(ij,k,l) = scl(ij,k,l) + ( coef_div(XDIR,ij,1,l) * vx(ip1j  ,k,l) &
-                                         + coef_div(YDIR,ij,1,l) * vy(ip1j  ,k,l) &
-                                         + coef_div(ZDIR,ij,1,l) * vz(ip1j  ,k,l) )
-          enddo
-          enddo
-          !$omp end do
+                scl(ij,k,l) = scl(ij,k,l) + ( coef_div(YDIR,ij,0,l) * vy(ij    ,k,l) &
+                                            + coef_div(YDIR,ij,1,l) * vy(ip1j  ,k,l) &
+                                            + coef_div(YDIR,ij,2,l) * vy(ip1jp1,k,l) &
+                                            + coef_div(YDIR,ij,3,l) * vy(ijp1  ,k,l) &
+                                            + coef_div(YDIR,ij,4,l) * vy(im1j  ,k,l) &
+                                            + coef_div(YDIR,ij,5,l) * vy(im1jm1,k,l) &
+                                            + coef_div(YDIR,ij,6,l) * vy(ijm1  ,k,l) )
+             enddo
 
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             ip1jp1 = suf(i+1,j+1)
+             do i = gmin, gmax
+                ij     = (j-1)*iall + i
+                ip1j   = ij + 1
+                ip1jp1 = ij + iall + 1
+                ijp1   = ij + iall
+                im1j   = ij - 1
+                im1jm1 = ij - iall -1
+                ijm1   = ij - iall
 
-             scl(ij,k,l) = scl(ij,k,l) + ( coef_div(XDIR,ij,2,l) * vx(ip1jp1,k,l) &
-                                         + coef_div(YDIR,ij,2,l) * vy(ip1jp1,k,l) &
-                                         + coef_div(ZDIR,ij,2,l) * vz(ip1jp1,k,l) )
+                scl(ij,k,l) = scl(ij,k,l) + ( coef_div(ZDIR,ij,0,l) * vz(ij    ,k,l) &
+                                            + coef_div(ZDIR,ij,1,l) * vz(ip1j  ,k,l) &
+                                            + coef_div(ZDIR,ij,2,l) * vz(ip1jp1,k,l) &
+                                            + coef_div(ZDIR,ij,3,l) * vz(ijp1  ,k,l) &
+                                            + coef_div(ZDIR,ij,4,l) * vz(im1j  ,k,l) &
+                                            + coef_div(ZDIR,ij,5,l) * vz(im1jm1,k,l) &
+                                            + coef_div(ZDIR,ij,6,l) * vz(ijm1  ,k,l) )
+             enddo
           enddo
-          enddo
-          !$omp end do
-
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             ijp1   = suf(i  ,j+1)
-
-             scl(ij,k,l) = scl(ij,k,l) + ( coef_div(XDIR,ij,3,l) * vx(ijp1  ,k,l) &
-                                         + coef_div(YDIR,ij,3,l) * vy(ijp1  ,k,l) &
-                                         + coef_div(ZDIR,ij,3,l) * vz(ijp1  ,k,l) )
-          enddo
-          enddo
-          !$omp end do
-
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             im1j   = suf(i-1,j  )
-
-             scl(ij,k,l) = scl(ij,k,l) + ( coef_div(XDIR,ij,4,l) * vx(im1j  ,k,l) &
-                                         + coef_div(YDIR,ij,4,l) * vy(im1j  ,k,l) &
-                                         + coef_div(ZDIR,ij,4,l) * vz(im1j  ,k,l) )
-          enddo
-          enddo
-          !$omp end do
-
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             im1jm1 = suf(i-1,j-1)
-
-             scl(ij,k,l) = scl(ij,k,l) + ( coef_div(XDIR,ij,5,l) * vx(im1jm1,k,l) &
-                                         + coef_div(YDIR,ij,5,l) * vy(im1jm1,k,l) &
-                                         + coef_div(ZDIR,ij,5,l) * vz(im1jm1,k,l) )
-          enddo
-          enddo
-          !$omp end do
-
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             ijm1   = suf(i  ,j-1)
-
-             scl(ij,k,l) = scl(ij,k,l) + ( coef_div(XDIR,ij,6,l) * vx(ijm1  ,k,l) &
-                                         + coef_div(YDIR,ij,6,l) * vy(ijm1  ,k,l) &
-                                         + coef_div(ZDIR,ij,6,l) * vz(ijm1  ,k,l) )
-          enddo
-          enddo
-          !$omp end do
-
        enddo
-       !$omp end parallel
+       !$omp end parallel do
     enddo
 
     if ( ADM_have_pl ) then
@@ -1597,10 +1585,11 @@ contains
        vz,       vz_pl,      &
        coef_rot, coef_rot_pl )
     use mod_adm, only: &
-       ADM_have_pl,      &
-       ADM_gmin,         &
-       ADM_gmax,         &
-       ADM_gslf_pl,      &
+       ADM_have_pl, &
+       ADM_gall_1d, &
+       ADM_gmin,    &
+       ADM_gmax,    &
+       ADM_gslf_pl, &
        ADM_gmax_pl
     use mod_grd, only: &
        XDIR => GRD_XDIR, &
@@ -1619,7 +1608,7 @@ contains
     real(RP), intent(in)  :: coef_rot   (ADM_nxyz,ADM_gall,0:6    ,ADM_lall   )
     real(RP), intent(in)  :: coef_rot_pl(ADM_nxyz,         0:vlink,ADM_lall_pl)
 
-    integer  :: gmin, gmax, kall
+    integer  :: gmin, gmax, kall, iall
 
     integer  :: ij
     integer  :: ip1j, ijp1, ip1jp1
@@ -1633,103 +1622,104 @@ contains
     gmin = ADM_gmin
     gmax = ADM_gmax
     kall = ADM_kall
+    iall = ADM_gall_1d
 
     do l = 1, ADM_lall
        !$omp parallel default(none),private(i,j,k,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1), &
-       !$omp shared(l,gmin,gmax,kall,scl,vx,vy,vz,coef_rot)
+       !$omp shared(l,gmin,gmax,kall,iall,scl,vx,vy,vz,coef_rot)
        do k = 1, kall
 
           !$omp workshare
           scl(:,k,l) = 0.0_RP
           !$omp end workshare
 
-          !$omp do collapse(2)
+          !$omp do
           do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
+             do i = gmin, gmax
+                ij     = (j-1)*iall + i
 
-             scl(ij,k,l) = scl(ij,k,l) + ( coef_rot(XDIR,ij,0,l) * vx(ij    ,k,l) &
-                                         + coef_rot(YDIR,ij,0,l) * vy(ij    ,k,l) &
-                                         + coef_rot(ZDIR,ij,0,l) * vz(ij    ,k,l) )
-          enddo
+                scl(ij,k,l) = scl(ij,k,l) + ( coef_rot(XDIR,ij,0,l) * vx(ij    ,k,l) &
+                                            + coef_rot(YDIR,ij,0,l) * vy(ij    ,k,l) &
+                                            + coef_rot(ZDIR,ij,0,l) * vz(ij    ,k,l) )
+             enddo
           enddo
           !$omp end do
 
-          !$omp do collapse(2)
+          !$omp do
           do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             ip1j   = suf(i+1,j  )
+             do i = gmin, gmax
+                ij     = (j-1)*iall + i
+                ip1j   = ij + 1
 
-             scl(ij,k,l) = scl(ij,k,l) + ( coef_rot(XDIR,ij,1,l) * vx(ip1j  ,k,l) &
-                                         + coef_rot(YDIR,ij,1,l) * vy(ip1j  ,k,l) &
-                                         + coef_rot(ZDIR,ij,1,l) * vz(ip1j  ,k,l) )
-          enddo
+                scl(ij,k,l) = scl(ij,k,l) + ( coef_rot(XDIR,ij,1,l) * vx(ip1j  ,k,l) &
+                                            + coef_rot(YDIR,ij,1,l) * vy(ip1j  ,k,l) &
+                                            + coef_rot(ZDIR,ij,1,l) * vz(ip1j  ,k,l) )
+             enddo
           enddo
           !$omp end do
 
-          !$omp do collapse(2)
+          !$omp do
           do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             ip1jp1 = suf(i+1,j+1)
+             do i = gmin, gmax
+                ij     = (j-1)*iall + i
+                ip1jp1 = ij + iall + 1
 
-             scl(ij,k,l) = scl(ij,k,l) + ( coef_rot(XDIR,ij,2,l) * vx(ip1jp1,k,l) &
-                                         + coef_rot(YDIR,ij,2,l) * vy(ip1jp1,k,l) &
-                                         + coef_rot(ZDIR,ij,2,l) * vz(ip1jp1,k,l) )
-          enddo
+                scl(ij,k,l) = scl(ij,k,l) + ( coef_rot(XDIR,ij,2,l) * vx(ip1jp1,k,l) &
+                                            + coef_rot(YDIR,ij,2,l) * vy(ip1jp1,k,l) &
+                                            + coef_rot(ZDIR,ij,2,l) * vz(ip1jp1,k,l) )
+             enddo
           enddo
           !$omp end do
 
-          !$omp do collapse(2)
+          !$omp do
           do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             ijp1   = suf(i  ,j+1)
+             do i = gmin, gmax
+                ij     = (j-1)*iall + i
+                ijp1   = ij + iall
 
-             scl(ij,k,l) = scl(ij,k,l) + ( coef_rot(XDIR,ij,3,l) * vx(ijp1  ,k,l) &
-                                         + coef_rot(YDIR,ij,3,l) * vy(ijp1  ,k,l) &
-                                         + coef_rot(ZDIR,ij,3,l) * vz(ijp1  ,k,l) )
-          enddo
+                scl(ij,k,l) = scl(ij,k,l) + ( coef_rot(XDIR,ij,3,l) * vx(ijp1  ,k,l) &
+                                            + coef_rot(YDIR,ij,3,l) * vy(ijp1  ,k,l) &
+                                            + coef_rot(ZDIR,ij,3,l) * vz(ijp1  ,k,l) )
+             enddo
           enddo
           !$omp end do
 
-          !$omp do collapse(2)
+          !$omp do
           do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             im1j   = suf(i-1,j  )
+             do i = gmin, gmax
+                ij     = (j-1)*iall + i
+                im1j   = ij - 1
 
-             scl(ij,k,l) = scl(ij,k,l) + ( coef_rot(XDIR,ij,4,l) * vx(im1j  ,k,l) &
-                                         + coef_rot(YDIR,ij,4,l) * vy(im1j  ,k,l) &
-                                         + coef_rot(ZDIR,ij,4,l) * vz(im1j  ,k,l) )
-          enddo
+                scl(ij,k,l) = scl(ij,k,l) + ( coef_rot(XDIR,ij,4,l) * vx(im1j  ,k,l) &
+                                            + coef_rot(YDIR,ij,4,l) * vy(im1j  ,k,l) &
+                                            + coef_rot(ZDIR,ij,4,l) * vz(im1j  ,k,l) )
+             enddo
           enddo
           !$omp end do
 
-          !$omp do collapse(2)
+          !$omp do
           do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             im1jm1 = suf(i-1,j-1)
+             do i = gmin, gmax
+                ij     = (j-1)*iall + i
+                im1jm1 = ij - iall -1
 
-             scl(ij,k,l) = scl(ij,k,l) + ( coef_rot(XDIR,ij,5,l) * vx(im1jm1,k,l) &
-                                         + coef_rot(YDIR,ij,5,l) * vy(im1jm1,k,l) &
-                                         + coef_rot(ZDIR,ij,5,l) * vz(im1jm1,k,l) )
-          enddo
+                scl(ij,k,l) = scl(ij,k,l) + ( coef_rot(XDIR,ij,5,l) * vx(im1jm1,k,l) &
+                                            + coef_rot(YDIR,ij,5,l) * vy(im1jm1,k,l) &
+                                            + coef_rot(ZDIR,ij,5,l) * vz(im1jm1,k,l) )
+             enddo
           enddo
           !$omp end do
 
-          !$omp do collapse(2)
+          !$omp do
           do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             ijm1   = suf(i  ,j-1)
+             do i = gmin, gmax
+                ij     = (j-1)*iall + i
+                ijm1   = ij - iall
 
-             scl(ij,k,l) = scl(ij,k,l) + ( coef_rot(XDIR,ij,6,l) * vx(ijm1  ,k,l) &
-                                         + coef_rot(YDIR,ij,6,l) * vy(ijm1  ,k,l) &
-                                         + coef_rot(ZDIR,ij,6,l) * vz(ijm1  ,k,l) )
-          enddo
+                scl(ij,k,l) = scl(ij,k,l) + ( coef_rot(XDIR,ij,6,l) * vx(ijm1  ,k,l) &
+                                            + coef_rot(YDIR,ij,6,l) * vy(ijm1  ,k,l) &
+                                            + coef_rot(ZDIR,ij,6,l) * vz(ijm1  ,k,l) )
+             enddo
           enddo
           !$omp end do
 
@@ -1766,10 +1756,11 @@ contains
        scl,       scl_pl,      &
        coef_grad, coef_grad_pl )
     use mod_adm, only: &
-       ADM_have_pl,      &
-       ADM_gmin,         &
-       ADM_gmax,         &
-       ADM_gslf_pl,      &
+       ADM_have_pl, &
+       ADM_gall_1d, &
+       ADM_gmin,    &
+       ADM_gmax,    &
+       ADM_gslf_pl, &
        ADM_gmax_pl
     use mod_grd, only: &
        XDIR => GRD_XDIR, &
@@ -1784,7 +1775,7 @@ contains
     real(RP), intent(in)  :: coef_grad   (ADM_nxyz,ADM_gall,0:6    ,ADM_lall   )
     real(RP), intent(in)  :: coef_grad_pl(ADM_nxyz,         0:vlink,ADM_lall_pl)
 
-    integer  :: gmin, gmax, kall
+    integer  :: gmin, gmax, kall, iall
 
     integer  :: ij
     integer  :: ip1j, ijp1, ip1jp1
@@ -1798,110 +1789,73 @@ contains
     gmin = ADM_gmin
     gmax = ADM_gmax
     kall = ADM_kall
+    iall = ADM_gall_1d
+
+    !$omp parallel workshare
+    grad(:,:,:,:) = 0.0_RP
+    !$omp end parallel workshare
 
     do l = 1, ADM_lall
-       !$omp parallel default(none),private(i,j,k,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1), &
-       !$omp shared(l,gmin,gmax,kall,grad,scl,coef_grad)
+       !$omp parallel do default(none),private(i,j,k,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1), &
+       !$omp shared(l,gmin,gmax,kall,iall,grad,scl,coef_grad)
        do k = 1, kall
-
-          !$omp workshare
-          grad(:,k,l,XDIR) = 0.0_RP
-          grad(:,k,l,YDIR) = 0.0_RP
-          grad(:,k,l,ZDIR) = 0.0_RP
-          !$omp end workshare
-
-          !$omp do collapse(2)
           do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
+             do i = gmin, gmax
+                ij     = (j-1)*iall + i
+                ip1j   = ij + 1
+                ip1jp1 = ij + iall + 1
+                ijp1   = ij + iall
+                im1j   = ij - 1
+                im1jm1 = ij - iall -1
+                ijm1   = ij - iall
 
-             grad(ij,k,l,XDIR) = grad(ij,k,l,XDIR) + coef_grad(XDIR,ij,0,l) * scl(ij    ,k,l)
-             grad(ij,k,l,YDIR) = grad(ij,k,l,YDIR) + coef_grad(YDIR,ij,0,l) * scl(ij    ,k,l)
-             grad(ij,k,l,ZDIR) = grad(ij,k,l,ZDIR) + coef_grad(ZDIR,ij,0,l) * scl(ij    ,k,l)
-          enddo
-          enddo
-          !$omp end do
+                grad(ij,k,l,XDIR) = ( coef_grad(XDIR,ij,0,l) * scl(ij    ,k,l) &
+                                    + coef_grad(XDIR,ij,1,l) * scl(ip1j  ,k,l) &
+                                    + coef_grad(XDIR,ij,2,l) * scl(ip1jp1,k,l) &
+                                    + coef_grad(XDIR,ij,3,l) * scl(ijp1  ,k,l) &
+                                    + coef_grad(XDIR,ij,4,l) * scl(im1j  ,k,l) &
+                                    + coef_grad(XDIR,ij,5,l) * scl(im1jm1,k,l) &
+                                    + coef_grad(XDIR,ij,6,l) * scl(ijm1  ,k,l) )
+             enddo
 
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             ip1j   = suf(i+1,j  )
+             do i = gmin, gmax
+                ij     = (j-1)*iall + i
+                ip1j   = ij + 1
+                ip1jp1 = ij + iall + 1
+                ijp1   = ij + iall
+                im1j   = ij - 1
+                im1jm1 = ij - iall -1
+                ijm1   = ij - iall
 
-             grad(ij,k,l,XDIR) = grad(ij,k,l,XDIR) + coef_grad(XDIR,ij,1,l) * scl(ip1j  ,k,l)
-             grad(ij,k,l,YDIR) = grad(ij,k,l,YDIR) + coef_grad(YDIR,ij,1,l) * scl(ip1j  ,k,l)
-             grad(ij,k,l,ZDIR) = grad(ij,k,l,ZDIR) + coef_grad(ZDIR,ij,1,l) * scl(ip1j  ,k,l)
-          enddo
-          enddo
-          !$omp end do
+                grad(ij,k,l,YDIR) = ( coef_grad(YDIR,ij,0,l) * scl(ij    ,k,l) &
+                                    + coef_grad(YDIR,ij,1,l) * scl(ip1j  ,k,l) &
+                                    + coef_grad(YDIR,ij,2,l) * scl(ip1jp1,k,l) &
+                                    + coef_grad(YDIR,ij,3,l) * scl(ijp1  ,k,l) &
+                                    + coef_grad(YDIR,ij,4,l) * scl(im1j  ,k,l) &
+                                    + coef_grad(YDIR,ij,5,l) * scl(im1jm1,k,l) &
+                                    + coef_grad(YDIR,ij,6,l) * scl(ijm1  ,k,l) )
+             enddo
 
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             ip1jp1 = suf(i+1,j+1)
+             do i = gmin, gmax
+                ij     = (j-1)*iall + i
+                ip1j   = ij + 1
+                ip1jp1 = ij + iall + 1
+                ijp1   = ij + iall
+                im1j   = ij - 1
+                im1jm1 = ij - iall -1
+                ijm1   = ij - iall
 
-             grad(ij,k,l,XDIR) = grad(ij,k,l,XDIR) + coef_grad(XDIR,ij,2,l) * scl(ip1jp1,k,l)
-             grad(ij,k,l,YDIR) = grad(ij,k,l,YDIR) + coef_grad(YDIR,ij,2,l) * scl(ip1jp1,k,l)
-             grad(ij,k,l,ZDIR) = grad(ij,k,l,ZDIR) + coef_grad(ZDIR,ij,2,l) * scl(ip1jp1,k,l)
+                grad(ij,k,l,ZDIR) = ( coef_grad(ZDIR,ij,0,l) * scl(ij    ,k,l) &
+                                    + coef_grad(ZDIR,ij,1,l) * scl(ip1j  ,k,l) &
+                                    + coef_grad(ZDIR,ij,2,l) * scl(ip1jp1,k,l) &
+                                    + coef_grad(ZDIR,ij,3,l) * scl(ijp1  ,k,l) &
+                                    + coef_grad(ZDIR,ij,4,l) * scl(im1j  ,k,l) &
+                                    + coef_grad(ZDIR,ij,5,l) * scl(im1jm1,k,l) &
+                                    + coef_grad(ZDIR,ij,6,l) * scl(ijm1  ,k,l) )
+             enddo
           enddo
-          enddo
-          !$omp end do
-
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             ijp1   = suf(i  ,j+1)
-
-             grad(ij,k,l,XDIR) = grad(ij,k,l,XDIR) + coef_grad(XDIR,ij,3,l) * scl(ijp1  ,k,l)
-             grad(ij,k,l,YDIR) = grad(ij,k,l,YDIR) + coef_grad(YDIR,ij,3,l) * scl(ijp1  ,k,l)
-             grad(ij,k,l,ZDIR) = grad(ij,k,l,ZDIR) + coef_grad(ZDIR,ij,3,l) * scl(ijp1  ,k,l)
-          enddo
-          enddo
-          !$omp end do
-
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             im1j   = suf(i-1,j  )
-
-             grad(ij,k,l,XDIR) = grad(ij,k,l,XDIR) + coef_grad(XDIR,ij,4,l) * scl(im1j  ,k,l)
-             grad(ij,k,l,YDIR) = grad(ij,k,l,YDIR) + coef_grad(YDIR,ij,4,l) * scl(im1j  ,k,l)
-             grad(ij,k,l,ZDIR) = grad(ij,k,l,ZDIR) + coef_grad(ZDIR,ij,4,l) * scl(im1j  ,k,l)
-          enddo
-          enddo
-          !$omp end do
-
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             im1jm1 = suf(i-1,j-1)
-
-             grad(ij,k,l,XDIR) = grad(ij,k,l,XDIR) + coef_grad(XDIR,ij,5,l) * scl(im1jm1,k,l)
-             grad(ij,k,l,YDIR) = grad(ij,k,l,YDIR) + coef_grad(YDIR,ij,5,l) * scl(im1jm1,k,l)
-             grad(ij,k,l,ZDIR) = grad(ij,k,l,ZDIR) + coef_grad(ZDIR,ij,5,l) * scl(im1jm1,k,l)
-          enddo
-          enddo
-          !$omp end do
-
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             ijm1   = suf(i  ,j-1)
-
-             grad(ij,k,l,XDIR) = grad(ij,k,l,XDIR) + coef_grad(XDIR,ij,6,l) * scl(ijm1  ,k,l)
-             grad(ij,k,l,YDIR) = grad(ij,k,l,YDIR) + coef_grad(YDIR,ij,6,l) * scl(ijm1  ,k,l)
-             grad(ij,k,l,ZDIR) = grad(ij,k,l,ZDIR) + coef_grad(ZDIR,ij,6,l) * scl(ijm1  ,k,l)
-          enddo
-          enddo
-          !$omp end do
-
        enddo
-       !$omp end parallel
+       !$omp end parallel do
     enddo ! l loop
 
     if ( ADM_have_pl ) then
@@ -1934,10 +1888,11 @@ contains
        scl,      scl_pl,     &
        coef_lap, coef_lap_pl )
     use mod_adm, only: &
-       ADM_have_pl,      &
-       ADM_gmin,         &
-       ADM_gmax,         &
-       ADM_gslf_pl,      &
+       ADM_have_pl, &
+       ADM_gall_1d, &
+       ADM_gmin,    &
+       ADM_gmax,    &
+       ADM_gslf_pl, &
        ADM_gmax_pl
     implicit none
 
@@ -1948,7 +1903,7 @@ contains
     real(RP), intent(in)  :: coef_lap   (ADM_gall   ,0:6    ,ADM_lall   )
     real(RP), intent(in)  :: coef_lap_pl(            0:vlink,ADM_lall_pl)
 
-    integer  :: gmin, gmax, kall
+    integer  :: gmin, gmax, kall, iall
 
     integer  :: ij
     integer  :: ip1j, ijp1, ip1jp1
@@ -1962,94 +1917,37 @@ contains
     gmin = ADM_gmin
     gmax = ADM_gmax
     kall = ADM_kall
+    iall = ADM_gall_1d
+
+    !$omp parallel workshare
+    dscl(:,:,:) = 0.0_RP
+    !$omp end parallel workshare
 
     do l = 1, ADM_lall
-       !$omp parallel default(none),private(i,j,k,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1), &
-       !$omp shared(l,gmin,gmax,kall,dscl,scl,coef_lap)
+       !$omp parallel do default(none),private(i,j,k,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1), &
+       !$omp shared(l,gmin,gmax,kall,iall,dscl,scl,coef_lap)
        do k = 1, kall
-
-          !$omp workshare
-          dscl(:,k,l) = 0.0_RP
-          !$omp end workshare
-
-          !$omp do collapse(2)
           do j = gmin, gmax
           do i = gmin, gmax
-             ij     = suf(i  ,j  )
+             ij     = (j-1)*iall + i
+             ip1j   = ij + 1
+             ip1jp1 = ij + iall + 1
+             ijp1   = ij + iall
+             im1j   = ij - 1
+             im1jm1 = ij - iall -1
+             ijm1   = ij - iall
 
-             dscl(ij,k,l) = dscl(ij,k,l) + coef_lap(ij,0,l) * scl(ij    ,k,l)
+             dscl(ij,k,l) = ( coef_lap(ij,0,l) * scl(ij    ,k,l) &
+                            + coef_lap(ij,1,l) * scl(ip1j  ,k,l) &
+                            + coef_lap(ij,2,l) * scl(ip1jp1,k,l) &
+                            + coef_lap(ij,3,l) * scl(ijp1  ,k,l) &
+                            + coef_lap(ij,4,l) * scl(im1j  ,k,l) &
+                            + coef_lap(ij,5,l) * scl(im1jm1,k,l) &
+                            + coef_lap(ij,6,l) * scl(ijm1  ,k,l) )
           enddo
           enddo
-          !$omp end do
-
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             ip1j   = suf(i+1,j  )
-
-             dscl(ij,k,l) = dscl(ij,k,l) + coef_lap(ij,1,l) * scl(ip1j  ,k,l)
-          enddo
-          enddo
-          !$omp end do
-
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             ip1jp1 = suf(i+1,j+1)
-
-             dscl(ij,k,l) = dscl(ij,k,l) + coef_lap(ij,2,l) * scl(ip1jp1,k,l)
-          enddo
-          enddo
-          !$omp end do
-
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             ijp1   = suf(i  ,j+1)
-
-             dscl(ij,k,l) = dscl(ij,k,l) + coef_lap(ij,3,l) * scl(ijp1  ,k,l)
-          enddo
-          enddo
-          !$omp end do
-
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             im1j   = suf(i-1,j  )
-
-             dscl(ij,k,l) = dscl(ij,k,l) + coef_lap(ij,4,l) * scl(im1j  ,k,l)
-          enddo
-          enddo
-          !$omp end do
-
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             im1jm1 = suf(i-1,j-1)
-
-             dscl(ij,k,l) = dscl(ij,k,l) + coef_lap(ij,5,l) * scl(im1jm1,k,l)
-          enddo
-          enddo
-          !$omp end do
-
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             ijm1   = suf(i  ,j-1)
-
-             dscl(ij,k,l) = dscl(ij,k,l) + coef_lap(ij,6,l) * scl(ijm1  ,k,l)
-          enddo
-          enddo
-          !$omp end do
-
        enddo
-       !$omp end parallel
+       !$omp end parallel do
     enddo ! l loop
 
     if ( ADM_have_pl ) then
@@ -2082,6 +1980,7 @@ contains
     use mod_adm, only: &
        ADM_have_pl,  &
        ADM_have_sgp, &
+       ADM_gall_1d,  &
        ADM_gmin,     &
        ADM_gmax,     &
        ADM_gslf_pl,  &
@@ -2107,7 +2006,7 @@ contains
     real(RP) :: vt   (ADM_nxyz,ADM_gall   ,TI:TJ)
     real(RP) :: vt_pl(ADM_nxyz,ADM_gall_pl)
 
-    integer  :: gmin, gmax, kall
+    integer  :: gmin, gmax, kall, iall
 
     integer  :: ij
     integer  :: ip1j, ijp1, ip1jp1
@@ -2121,159 +2020,162 @@ contains
     gmin = ADM_gmin
     gmax = ADM_gmax
     kall = ADM_kall
+    iall = ADM_gall_1d
+
+    !$omp parallel workshare
+    dscl(:,:,:) = 0.0_RP
+    !$omp end parallel workshare
 
     do l = 1, ADM_lall
        !$omp parallel default(none),private(i,j,k,d,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1), &
-       !$omp shared(l,ADM_have_sgp,gmin,gmax,kall,dscl,scl,kh,vt,coef_intp,coef_diff)
+       !$omp shared(l,ADM_have_sgp,gmin,gmax,kall,iall,dscl,scl,kh,vt,coef_intp,coef_diff)
        do k = 1, kall
 
-          !$omp do collapse(2)
+          !$omp do
           do j = gmin-1, gmax
-          do i = gmin-1, gmax
-             ij     = suf(i  ,j  )
-             ip1j   = suf(i+1,j  )
-             ip1jp1 = suf(i+1,j+1)
+             do i = gmin-1, gmax
+                ij     = (j-1)*iall + i
+                ip1j   = ij + 1
+                ip1jp1 = ij + iall + 1
 
-             do d = 1, 3
-                vt(d,ij,TI) = ( ( + 2.0_RP * coef_intp(d,ij,1,TI,l) &
-                                  - 1.0_RP * coef_intp(d,ij,2,TI,l) &
-                                  - 1.0_RP * coef_intp(d,ij,3,TI,l) ) * scl(ij    ,k,l) &
-                              + ( - 1.0_RP * coef_intp(d,ij,1,TI,l) &
-                                  + 2.0_RP * coef_intp(d,ij,2,TI,l) &
-                                  - 1.0_RP * coef_intp(d,ij,3,TI,l) ) * scl(ip1j  ,k,l) &
-                              + ( - 1.0_RP * coef_intp(d,ij,1,TI,l) &
-                                  - 1.0_RP * coef_intp(d,ij,2,TI,l) &
-                                  + 2.0_RP * coef_intp(d,ij,3,TI,l) ) * scl(ip1jp1,k,l) &
-                              ) / 3.0_RP
+                do d = 1, 3
+                   vt(d,ij,TI) = ( ( + 2.0_RP * coef_intp(d,ij,1,TI,l) &
+                                     - 1.0_RP * coef_intp(d,ij,2,TI,l) &
+                                     - 1.0_RP * coef_intp(d,ij,3,TI,l) ) * scl(ij    ,k,l) &
+                                 + ( - 1.0_RP * coef_intp(d,ij,1,TI,l) &
+                                     + 2.0_RP * coef_intp(d,ij,2,TI,l) &
+                                     - 1.0_RP * coef_intp(d,ij,3,TI,l) ) * scl(ip1j  ,k,l) &
+                                 + ( - 1.0_RP * coef_intp(d,ij,1,TI,l) &
+                                     - 1.0_RP * coef_intp(d,ij,2,TI,l) &
+                                     + 2.0_RP * coef_intp(d,ij,3,TI,l) ) * scl(ip1jp1,k,l) &
+                                 ) / 3.0_RP
+                enddo
              enddo
-          enddo
-          enddo
-          !$omp end do nowait
 
-          !$omp do collapse(2)
-          do j = gmin-1, gmax
-          do i = gmin-1, gmax
-             ij     = suf(i  ,j  )
-             ip1jp1 = suf(i+1,j+1)
-             ijp1   = suf(i  ,j+1)
+             do i = gmin-1, gmax
+                ij     = (j-1)*iall + i
+                ip1jp1 = ij + iall + 1
+                ijp1   = ij + iall
 
-             do d = 1, 3
-                vt(d,ij,TJ) = ( ( + 2.0_RP * coef_intp(d,ij,1,TJ,l) &
-                                  - 1.0_RP * coef_intp(d,ij,2,TJ,l) &
-                                  - 1.0_RP * coef_intp(d,ij,3,TJ,l) ) * scl(ij    ,k,l) &
-                              + ( - 1.0_RP * coef_intp(d,ij,1,TJ,l) &
-                                  + 2.0_RP * coef_intp(d,ij,2,TJ,l) &
-                                  - 1.0_RP * coef_intp(d,ij,3,TJ,l) ) * scl(ip1jp1,k,l) &
-                              + ( - 1.0_RP * coef_intp(d,ij,1,TJ,l) &
-                                  - 1.0_RP * coef_intp(d,ij,2,TJ,l) &
-                                  + 2.0_RP * coef_intp(d,ij,3,TJ,l) ) * scl(ijp1  ,k,l) &
-                              ) / 3.0_RP
+                do d = 1, 3
+                   vt(d,ij,TJ) = ( ( + 2.0_RP * coef_intp(d,ij,1,TJ,l) &
+                                     - 1.0_RP * coef_intp(d,ij,2,TJ,l) &
+                                     - 1.0_RP * coef_intp(d,ij,3,TJ,l) ) * scl(ij    ,k,l) &
+                                 + ( - 1.0_RP * coef_intp(d,ij,1,TJ,l) &
+                                     + 2.0_RP * coef_intp(d,ij,2,TJ,l) &
+                                     - 1.0_RP * coef_intp(d,ij,3,TJ,l) ) * scl(ip1jp1,k,l) &
+                                 + ( - 1.0_RP * coef_intp(d,ij,1,TJ,l) &
+                                     - 1.0_RP * coef_intp(d,ij,2,TJ,l) &
+                                     + 2.0_RP * coef_intp(d,ij,3,TJ,l) ) * scl(ijp1  ,k,l) &
+                                 ) / 3.0_RP
+                enddo
              enddo
-          enddo
           enddo
           !$omp end do
 
           if ( ADM_have_sgp(l) ) then ! pentagon
              !$omp master
-             vt(:,suf(gmin-1,gmin-1),TI) = vt(:,suf(gmin,gmin-1),TJ)
+             j = gmin-1
+             i = gmin-1
+
+             ij   = (j-1)*iall + i
+             ip1j = ij + 1
+
+             vt(:,ij,TI) = vt(:,ip1j,TJ)
              !$omp end master
           endif
 
-          !$omp workshare
-          dscl(:,k,l) = 0.0_RP
-          !$omp end workshare
-
-          !$omp do collapse(2)
+          !$omp do
           do j = gmin  , gmax
-          do i = gmin  , gmax
-             ij     = suf(i  ,j  )
-             ip1jp1 = suf(i+1,j+1)
+             do i = gmin  , gmax
+                ij     = (j-1)*iall + i
+                ip1jp1 = ij + iall + 1
 
-             dscl(ij,k,l) = dscl(ij,k,l) &
-                          + ( coef_diff(XDIR,ij,1,l) * ( vt(XDIR,ij    ,TI) + vt(XDIR,ij    ,TJ) ) &
-                            + coef_diff(YDIR,ij,1,l) * ( vt(YDIR,ij    ,TI) + vt(YDIR,ij    ,TJ) ) &
-                            + coef_diff(ZDIR,ij,1,l) * ( vt(ZDIR,ij    ,TI) + vt(ZDIR,ij    ,TJ) ) &
-                            ) * 0.5_RP * ( kh(ij    ,k,l) + kh(ip1jp1,k,l) )
-          enddo
+                dscl(ij,k,l) = dscl(ij,k,l) &
+                             + ( coef_diff(XDIR,ij,1,l) * ( vt(XDIR,ij    ,TI) + vt(XDIR,ij    ,TJ) ) &
+                               + coef_diff(YDIR,ij,1,l) * ( vt(YDIR,ij    ,TI) + vt(YDIR,ij    ,TJ) ) &
+                               + coef_diff(ZDIR,ij,1,l) * ( vt(ZDIR,ij    ,TI) + vt(ZDIR,ij    ,TJ) ) &
+                               ) * 0.5_RP * ( kh(ij    ,k,l) + kh(ip1jp1,k,l) )
+             enddo
           enddo
           !$omp end do
 
-          !$omp do collapse(2)
+          !$omp do
           do j = gmin  , gmax
-          do i = gmin  , gmax
-             ij     = suf(i  ,j  )
-             ijp1   = suf(i  ,j+1)
-             im1j   = suf(i-1,j  )
+             do i = gmin  , gmax
+                ij     = (j-1)*iall + i
+                ijp1   = ij + iall
+                im1j   = ij - 1
 
-             dscl(ij,k,l) = dscl(ij,k,l) &
-                          + ( coef_diff(XDIR,ij,2,l) * ( vt(XDIR,ij    ,TJ) + vt(XDIR,im1j  ,TI) ) &
-                            + coef_diff(YDIR,ij,2,l) * ( vt(YDIR,ij    ,TJ) + vt(YDIR,im1j  ,TI) ) &
-                            + coef_diff(ZDIR,ij,2,l) * ( vt(ZDIR,ij    ,TJ) + vt(ZDIR,im1j  ,TI) ) &
-                            ) * 0.5_RP * ( kh(ij    ,k,l) + kh(ijp1  ,k,l) )
-          enddo
+                dscl(ij,k,l) = dscl(ij,k,l) &
+                             + ( coef_diff(XDIR,ij,2,l) * ( vt(XDIR,ij    ,TJ) + vt(XDIR,im1j  ,TI) ) &
+                               + coef_diff(YDIR,ij,2,l) * ( vt(YDIR,ij    ,TJ) + vt(YDIR,im1j  ,TI) ) &
+                               + coef_diff(ZDIR,ij,2,l) * ( vt(ZDIR,ij    ,TJ) + vt(ZDIR,im1j  ,TI) ) &
+                               ) * 0.5_RP * ( kh(ij    ,k,l) + kh(ijp1  ,k,l) )
+             enddo
           enddo
           !$omp end do
 
-          !$omp do collapse(2)
+          !$omp do
           do j = gmin  , gmax
-          do i = gmin  , gmax
-             ij     = suf(i  ,j  )
-             im1j   = suf(i-1,j  )
-             im1jm1 = suf(i-1,j-1)
+             do i = gmin  , gmax
+                ij     = (j-1)*iall + i
+                im1j   = ij - 1
+                im1jm1 = ij - iall -1
 
-             dscl(ij,k,l) = dscl(ij,k,l) &
-                          + ( coef_diff(XDIR,ij,3,l) * ( vt(XDIR,im1j  ,TI) + vt(XDIR,im1jm1,TJ) ) &
-                            + coef_diff(YDIR,ij,3,l) * ( vt(YDIR,im1j  ,TI) + vt(YDIR,im1jm1,TJ) ) &
-                            + coef_diff(ZDIR,ij,3,l) * ( vt(ZDIR,im1j  ,TI) + vt(ZDIR,im1jm1,TJ) ) &
-                            ) * 0.5_RP * ( kh(im1j  ,k,l) + kh(ij    ,k,l) )
-          enddo
+                dscl(ij,k,l) = dscl(ij,k,l) &
+                             + ( coef_diff(XDIR,ij,3,l) * ( vt(XDIR,im1j  ,TI) + vt(XDIR,im1jm1,TJ) ) &
+                               + coef_diff(YDIR,ij,3,l) * ( vt(YDIR,im1j  ,TI) + vt(YDIR,im1jm1,TJ) ) &
+                               + coef_diff(ZDIR,ij,3,l) * ( vt(ZDIR,im1j  ,TI) + vt(ZDIR,im1jm1,TJ) ) &
+                               ) * 0.5_RP * ( kh(im1j  ,k,l) + kh(ij    ,k,l) )
+             enddo
           enddo
           !$omp end do
 
-          !$omp do collapse(2)
+          !$omp do
           do j = gmin  , gmax
-          do i = gmin  , gmax
-             ij     = suf(i  ,j  )
-             im1jm1 = suf(i-1,j-1)
+             do i = gmin  , gmax
+                ij     = (j-1)*iall + i
+                im1jm1 = ij - iall -1
 
-             dscl(ij,k,l) = dscl(ij,k,l) &
-                          + ( coef_diff(XDIR,ij,4,l) * ( vt(XDIR,im1jm1,TJ) + vt(XDIR,im1jm1,TI) ) &
-                            + coef_diff(YDIR,ij,4,l) * ( vt(YDIR,im1jm1,TJ) + vt(YDIR,im1jm1,TI) ) &
-                            + coef_diff(ZDIR,ij,4,l) * ( vt(ZDIR,im1jm1,TJ) + vt(ZDIR,im1jm1,TI) ) &
-                            ) * 0.5_RP * ( kh(im1jm1,k,l) + kh(ij    ,k,l) )
-          enddo
+                dscl(ij,k,l) = dscl(ij,k,l) &
+                             + ( coef_diff(XDIR,ij,4,l) * ( vt(XDIR,im1jm1,TJ) + vt(XDIR,im1jm1,TI) ) &
+                               + coef_diff(YDIR,ij,4,l) * ( vt(YDIR,im1jm1,TJ) + vt(YDIR,im1jm1,TI) ) &
+                               + coef_diff(ZDIR,ij,4,l) * ( vt(ZDIR,im1jm1,TJ) + vt(ZDIR,im1jm1,TI) ) &
+                               ) * 0.5_RP * ( kh(im1jm1,k,l) + kh(ij    ,k,l) )
+             enddo
           enddo
           !$omp end do
 
-          !$omp do collapse(2)
+          !$omp do
           do j = gmin  , gmax
-          do i = gmin  , gmax
-             ij     = suf(i  ,j  )
-             im1jm1 = suf(i-1,j-1)
-             ijm1   = suf(i  ,j-1)
+             do i = gmin  , gmax
+                ij     = (j-1)*iall + i
+                im1jm1 = ij - iall -1
+                ijm1   = ij - iall
 
-             dscl(ij,k,l) = dscl(ij,k,l) &
-                          + ( coef_diff(XDIR,ij,5,l) * ( vt(XDIR,im1jm1,TI) + vt(XDIR,ijm1  ,TJ) ) &
-                            + coef_diff(YDIR,ij,5,l) * ( vt(YDIR,im1jm1,TI) + vt(YDIR,ijm1  ,TJ) ) &
-                            + coef_diff(ZDIR,ij,5,l) * ( vt(ZDIR,im1jm1,TI) + vt(ZDIR,ijm1  ,TJ) ) &
-                            ) * 0.5_RP * ( kh(ijm1  ,k,l) + kh(ij    ,k,l) )
-          enddo
+                dscl(ij,k,l) = dscl(ij,k,l) &
+                             + ( coef_diff(XDIR,ij,5,l) * ( vt(XDIR,im1jm1,TI) + vt(XDIR,ijm1  ,TJ) ) &
+                               + coef_diff(YDIR,ij,5,l) * ( vt(YDIR,im1jm1,TI) + vt(YDIR,ijm1  ,TJ) ) &
+                               + coef_diff(ZDIR,ij,5,l) * ( vt(ZDIR,im1jm1,TI) + vt(ZDIR,ijm1  ,TJ) ) &
+                               ) * 0.5_RP * ( kh(ijm1  ,k,l) + kh(ij    ,k,l) )
+             enddo
           enddo
           !$omp end do
 
-          !$omp do collapse(2)
+          !$omp do
           do j = gmin  , gmax
-          do i = gmin  , gmax
-             ij     = suf(i  ,j  )
-             ip1j   = suf(i+1,j  )
-             ijm1   = suf(i  ,j-1)
+             do i = gmin  , gmax
+                ij     = (j-1)*iall + i
+                ip1j   = ij + 1
+                ijm1   = ij - iall
 
-             dscl(ij,k,l) = dscl(ij,k,l)  &
-                          + ( coef_diff(XDIR,ij,6,l) * ( vt(XDIR,ijm1  ,TJ) + vt(XDIR,ij    ,TI) ) &
-                            + coef_diff(YDIR,ij,6,l) * ( vt(YDIR,ijm1  ,TJ) + vt(YDIR,ij    ,TI) ) &
-                            + coef_diff(ZDIR,ij,6,l) * ( vt(ZDIR,ijm1  ,TJ) + vt(ZDIR,ij    ,TI) ) &
-                            ) * 0.5_RP * ( kh(ij    ,k,l) + kh(ip1j  ,k,l) )
-          enddo
+                dscl(ij,k,l) = dscl(ij,k,l)  &
+                             + ( coef_diff(XDIR,ij,6,l) * ( vt(XDIR,ijm1  ,TJ) + vt(XDIR,ij    ,TI) ) &
+                               + coef_diff(YDIR,ij,6,l) * ( vt(YDIR,ijm1  ,TJ) + vt(YDIR,ij    ,TI) ) &
+                               + coef_diff(ZDIR,ij,6,l) * ( vt(ZDIR,ijm1  ,TJ) + vt(ZDIR,ij    ,TI) ) &
+                               ) * 0.5_RP * ( kh(ij    ,k,l) + kh(ip1j  ,k,l) )
+             enddo
           enddo
           !$omp end do
 
@@ -2344,6 +2246,7 @@ contains
     use mod_adm, only: &
        ADM_have_pl,  &
        ADM_have_sgp, &
+       ADM_gall_1d,  &
        ADM_gmin,     &
        ADM_gmax,     &
        ADM_gslf_pl,  &
@@ -2375,7 +2278,7 @@ contains
     real(RP) :: sclt   (ADM_gall   ,TI:TJ)
     real(RP) :: sclt_pl(ADM_gall_pl)
 
-    integer  :: gmin, gmax, kall
+    integer  :: gmin, gmax, kall, iall
 
     integer  :: ij
     integer  :: ip1j, ijp1, ip1jp1
@@ -2389,137 +2292,112 @@ contains
     gmin = ADM_gmin
     gmax = ADM_gmax
     kall = ADM_kall
+    iall = ADM_gall_1d
+
+    !$omp parallel workshare
+    ddivdx(:,:,:) = 0.0_RP
+    ddivdy(:,:,:) = 0.0_RP
+    ddivdz(:,:,:) = 0.0_RP
+    !$omp end parallel workshare
 
     do l = 1, ADM_lall
        !$omp parallel default(none),private(i,j,k,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1), &
-       !$omp shared(l,ADM_have_sgp,gmax,gmin,kall,ddivdx,ddivdy,ddivdz,vx,vy,vz, &
-       !$omp sclt,coef_intp,coef_diff)
+       !$omp shared(l,ADM_have_sgp,gmin,gmax,kall,iall,ddivdx,ddivdy,ddivdz,vx,vy,vz,sclt,coef_intp,coef_diff)
        do k = 1, kall
 
-          !$omp do collapse(2)
+          !$omp do
           do j = gmin-1, gmax
-          do i = gmin-1, gmax
-             ij     = suf(i  ,j  )
-             ip1j   = suf(i+1,j  )
-             ip1jp1 = suf(i+1,j+1)
-             ijp1   = suf(i  ,j+1)
+             do i = gmin-1, gmax
+                ij     = (j-1)*iall + i
+                ip1j   = ij + 1
+                ip1jp1 = ij + iall + 1
+                ijp1   = ij + iall
 
-             sclt(ij,TI) = coef_intp(XDIR,ij,1,TI,l) * vx(ij    ,k,l) &
-                         + coef_intp(XDIR,ij,2,TI,l) * vx(ip1j  ,k,l) &
-                         + coef_intp(XDIR,ij,3,TI,l) * vx(ip1jp1,k,l) &
-                         + coef_intp(YDIR,ij,1,TI,l) * vy(ij    ,k,l) &
-                         + coef_intp(YDIR,ij,2,TI,l) * vy(ip1j  ,k,l) &
-                         + coef_intp(YDIR,ij,3,TI,l) * vy(ip1jp1,k,l) &
-                         + coef_intp(ZDIR,ij,1,TI,l) * vz(ij    ,k,l) &
-                         + coef_intp(ZDIR,ij,2,TI,l) * vz(ip1j  ,k,l) &
-                         + coef_intp(ZDIR,ij,3,TI,l) * vz(ip1jp1,k,l)
+                sclt(ij,TI) = coef_intp(XDIR,ij,1,TI,l) * vx(ij    ,k,l) &
+                            + coef_intp(XDIR,ij,2,TI,l) * vx(ip1j  ,k,l) &
+                            + coef_intp(XDIR,ij,3,TI,l) * vx(ip1jp1,k,l) &
+                            + coef_intp(YDIR,ij,1,TI,l) * vy(ij    ,k,l) &
+                            + coef_intp(YDIR,ij,2,TI,l) * vy(ip1j  ,k,l) &
+                            + coef_intp(YDIR,ij,3,TI,l) * vy(ip1jp1,k,l) &
+                            + coef_intp(ZDIR,ij,1,TI,l) * vz(ij    ,k,l) &
+                            + coef_intp(ZDIR,ij,2,TI,l) * vz(ip1j  ,k,l) &
+                            + coef_intp(ZDIR,ij,3,TI,l) * vz(ip1jp1,k,l)
+             enddo
 
-             sclt(ij,TJ) = coef_intp(XDIR,ij,1,TJ,l) * vx(ij    ,k,l) &
-                         + coef_intp(XDIR,ij,2,TJ,l) * vx(ip1jp1,k,l) &
-                         + coef_intp(XDIR,ij,3,TJ,l) * vx(ijp1  ,k,l) &
-                         + coef_intp(YDIR,ij,1,TJ,l) * vy(ij    ,k,l) &
-                         + coef_intp(YDIR,ij,2,TJ,l) * vy(ip1jp1,k,l) &
-                         + coef_intp(YDIR,ij,3,TJ,l) * vy(ijp1  ,k,l) &
-                         + coef_intp(ZDIR,ij,1,TJ,l) * vz(ij    ,k,l) &
-                         + coef_intp(ZDIR,ij,2,TJ,l) * vz(ip1jp1,k,l) &
-                         + coef_intp(ZDIR,ij,3,TJ,l) * vz(ijp1  ,k,l)
-          enddo
+             do i = gmin-1, gmax
+                ij     = (j-1)*iall + i
+                ip1j   = ij + 1
+                ip1jp1 = ij + iall + 1
+                ijp1   = ij + iall
+
+                sclt(ij,TJ) = coef_intp(XDIR,ij,1,TJ,l) * vx(ij    ,k,l) &
+                            + coef_intp(XDIR,ij,2,TJ,l) * vx(ip1jp1,k,l) &
+                            + coef_intp(XDIR,ij,3,TJ,l) * vx(ijp1  ,k,l) &
+                            + coef_intp(YDIR,ij,1,TJ,l) * vy(ij    ,k,l) &
+                            + coef_intp(YDIR,ij,2,TJ,l) * vy(ip1jp1,k,l) &
+                            + coef_intp(YDIR,ij,3,TJ,l) * vy(ijp1  ,k,l) &
+                            + coef_intp(ZDIR,ij,1,TJ,l) * vz(ij    ,k,l) &
+                            + coef_intp(ZDIR,ij,2,TJ,l) * vz(ip1jp1,k,l) &
+                            + coef_intp(ZDIR,ij,3,TJ,l) * vz(ijp1  ,k,l)
+             enddo
           enddo
           !$omp end do
 
           if ( ADM_have_sgp(l) ) then ! pentagon
              !$omp master
-             sclt(suf(gmin-1,gmin-1),TI) = sclt(suf(gmin,gmin-1),TJ)
+             j = gmin-1
+             i = gmin-1
+
+             ij     = (j-1)*iall + i
+             ip1j   = ij + 1
+
+             sclt(ij,TI) = sclt(ip1j,TJ)
              !$omp end master
           endif
 
-          !$omp workshare
-          ddivdx(:,k,l) = 0.0_RP
-          ddivdy(:,k,l) = 0.0_RP
-          ddivdz(:,k,l) = 0.0_RP
-          !$omp end workshare
-
-          !$omp do collapse(2)
+          !$omp do
           do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
+             do i = gmin, gmax
+                ij     = (j-1)*iall + i
+                im1j   = ij - 1
+                im1jm1 = ij - iall -1
+                ijm1   = ij - iall
 
-             ddivdx(ij,k,l) = ddivdx(ij,k,l) + coef_diff(XDIR,ij,1,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) )
-             ddivdy(ij,k,l) = ddivdy(ij,k,l) + coef_diff(YDIR,ij,1,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) )
-             ddivdz(ij,k,l) = ddivdz(ij,k,l) + coef_diff(ZDIR,ij,1,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) )
-          enddo
-          enddo
-          !$omp end do
+                ddivdx(ij,k,l) = ( coef_diff(XDIR,ij,1,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) ) &
+                                 + coef_diff(XDIR,ij,2,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) ) &
+                                 + coef_diff(XDIR,ij,3,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) ) &
+                                 + coef_diff(XDIR,ij,4,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) ) &
+                                 + coef_diff(XDIR,ij,5,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) ) &
+                                 + coef_diff(XDIR,ij,6,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) ) )
+             enddo
 
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             im1j   = suf(i-1,j  )
+             do i = gmin, gmax
+                ij     = (j-1)*iall + i
+                im1j   = ij - 1
+                im1jm1 = ij - iall -1
+                ijm1   = ij - iall
 
-             ddivdx(ij,k,l) = ddivdx(ij,k,l) + coef_diff(XDIR,ij,2,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) )
-             ddivdy(ij,k,l) = ddivdy(ij,k,l) + coef_diff(YDIR,ij,2,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) )
-             ddivdz(ij,k,l) = ddivdz(ij,k,l) + coef_diff(ZDIR,ij,2,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) )
-          enddo
-          enddo
-          !$omp end do
+                ddivdy(ij,k,l) = ( coef_diff(YDIR,ij,1,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) ) &
+                                 + coef_diff(YDIR,ij,2,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) ) &
+                                 + coef_diff(YDIR,ij,3,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) ) &
+                                 + coef_diff(YDIR,ij,4,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) ) &
+                                 + coef_diff(YDIR,ij,5,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) ) &
+                                 + coef_diff(YDIR,ij,6,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) ) )
+             enddo
 
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             im1j   = suf(i-1,j  )
-             im1jm1 = suf(i-1,j-1)
+             do i = gmin, gmax
+                ij     = (j-1)*iall + i
+                im1j   = ij - 1
+                im1jm1 = ij - iall -1
+                ijm1   = ij - iall
 
-             ddivdx(ij,k,l) = ddivdx(ij,k,l) + coef_diff(XDIR,ij,3,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) )
-             ddivdy(ij,k,l) = ddivdy(ij,k,l) + coef_diff(YDIR,ij,3,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) )
-             ddivdz(ij,k,l) = ddivdz(ij,k,l) + coef_diff(ZDIR,ij,3,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) )
-          enddo
-          enddo
-          !$omp end do
-
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             im1j   = suf(i-1,j  )
-             im1jm1 = suf(i-1,j-1)
-             ijm1   = suf(i  ,j-1)
-
-             ddivdx(ij,k,l) = ddivdx(ij,k,l) + coef_diff(XDIR,ij,4,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) )
-             ddivdy(ij,k,l) = ddivdy(ij,k,l) + coef_diff(YDIR,ij,4,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) )
-             ddivdz(ij,k,l) = ddivdz(ij,k,l) + coef_diff(ZDIR,ij,4,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) )
-          enddo
-          enddo
-          !$omp end do
-
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             im1j   = suf(i-1,j  )
-             im1jm1 = suf(i-1,j-1)
-             ijm1   = suf(i  ,j-1)
-
-             ddivdx(ij,k,l) = ddivdx(ij,k,l) + coef_diff(XDIR,ij,5,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) )
-             ddivdy(ij,k,l) = ddivdy(ij,k,l) + coef_diff(YDIR,ij,5,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) )
-             ddivdz(ij,k,l) = ddivdz(ij,k,l) + coef_diff(ZDIR,ij,5,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) )
-          enddo
-          enddo
-          !$omp end do
-
-          !$omp do collapse(2)
-          do j = gmin, gmax
-          do i = gmin, gmax
-             ij     = suf(i  ,j  )
-             im1j   = suf(i-1,j  )
-             im1jm1 = suf(i-1,j-1)
-             ijm1   = suf(i  ,j-1)
-
-             ddivdx(ij,k,l) = ddivdx(ij,k,l) + coef_diff(XDIR,ij,6,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) )
-             ddivdy(ij,k,l) = ddivdy(ij,k,l) + coef_diff(YDIR,ij,6,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) )
-             ddivdz(ij,k,l) = ddivdz(ij,k,l) + coef_diff(ZDIR,ij,6,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) )
-          enddo
+                ddivdz(ij,k,l) = ( coef_diff(ZDIR,ij,1,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) ) &
+                                 + coef_diff(ZDIR,ij,2,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) ) &
+                                 + coef_diff(ZDIR,ij,3,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) ) &
+                                 + coef_diff(ZDIR,ij,4,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) ) &
+                                 + coef_diff(ZDIR,ij,5,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) ) &
+                                 + coef_diff(ZDIR,ij,6,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) ) )
+             enddo
           enddo
           !$omp end do
 
@@ -2531,38 +2409,38 @@ contains
        n = ADM_gslf_pl
 
        do l = 1, ADM_lall_pl
-       do k = 1, ADM_kall
+          do k = 1, ADM_kall
 
-          do v = ADM_gmin_pl, ADM_gmax_pl
-             ij   = v
-             ijp1 = v + 1
-             if( ijp1 == ADM_gmax_pl+1 ) ijp1 = ADM_gmin_pl
+             do v = ADM_gmin_pl, ADM_gmax_pl
+                ij   = v
+                ijp1 = v + 1
+                if( ijp1 == ADM_gmax_pl+1 ) ijp1 = ADM_gmin_pl
 
-             sclt_pl(ij) = coef_intp_pl(XDIR,v,1,l) * vx_pl(n   ,k,l) &
-                         + coef_intp_pl(XDIR,v,2,l) * vx_pl(ij  ,k,l) &
-                         + coef_intp_pl(XDIR,v,3,l) * vx_pl(ijp1,k,l) &
-                         + coef_intp_pl(YDIR,v,1,l) * vy_pl(n   ,k,l) &
-                         + coef_intp_pl(YDIR,v,2,l) * vy_pl(ij  ,k,l) &
-                         + coef_intp_pl(YDIR,v,3,l) * vy_pl(ijp1,k,l) &
-                         + coef_intp_pl(ZDIR,v,1,l) * vz_pl(n   ,k,l) &
-                         + coef_intp_pl(ZDIR,v,2,l) * vz_pl(ij  ,k,l) &
-                         + coef_intp_pl(ZDIR,v,3,l) * vz_pl(ijp1,k,l)
+                sclt_pl(ij) = coef_intp_pl(XDIR,v,1,l) * vx_pl(n   ,k,l) &
+                            + coef_intp_pl(XDIR,v,2,l) * vx_pl(ij  ,k,l) &
+                            + coef_intp_pl(XDIR,v,3,l) * vx_pl(ijp1,k,l) &
+                            + coef_intp_pl(YDIR,v,1,l) * vy_pl(n   ,k,l) &
+                            + coef_intp_pl(YDIR,v,2,l) * vy_pl(ij  ,k,l) &
+                            + coef_intp_pl(YDIR,v,3,l) * vy_pl(ijp1,k,l) &
+                            + coef_intp_pl(ZDIR,v,1,l) * vz_pl(n   ,k,l) &
+                            + coef_intp_pl(ZDIR,v,2,l) * vz_pl(ij  ,k,l) &
+                            + coef_intp_pl(ZDIR,v,3,l) * vz_pl(ijp1,k,l)
+             enddo
+
+             ddivdx_pl(:,k,l) = 0.0_RP
+             ddivdy_pl(:,k,l) = 0.0_RP
+             ddivdz_pl(:,k,l) = 0.0_RP
+
+             do v = ADM_gmin_pl, ADM_gmax_pl
+                ij   = v
+                ijm1 = v - 1
+                if( ijm1 == ADM_gmin_pl-1 ) ijm1 = ADM_gmax_pl ! cyclic condition
+
+                ddivdx_pl(n,k,l) = ddivdx_pl(n,k,l) + coef_diff_pl(XDIR,v-1,l) * ( sclt_pl(ijm1) + sclt_pl(ij) )
+                ddivdy_pl(n,k,l) = ddivdy_pl(n,k,l) + coef_diff_pl(YDIR,v-1,l) * ( sclt_pl(ijm1) + sclt_pl(ij) )
+                ddivdz_pl(n,k,l) = ddivdz_pl(n,k,l) + coef_diff_pl(ZDIR,v-1,l) * ( sclt_pl(ijm1) + sclt_pl(ij) )
+             enddo
           enddo
-
-          ddivdx_pl(:,k,l) = 0.0_RP
-          ddivdy_pl(:,k,l) = 0.0_RP
-          ddivdz_pl(:,k,l) = 0.0_RP
-
-          do v = ADM_gmin_pl, ADM_gmax_pl
-             ij   = v
-             ijm1 = v - 1
-             if( ijm1 == ADM_gmin_pl-1 ) ijm1 = ADM_gmax_pl ! cyclic condition
-
-             ddivdx_pl(n,k,l) = ddivdx_pl(n,k,l) + coef_diff_pl(XDIR,v-1,l) * ( sclt_pl(ijm1) + sclt_pl(ij) )
-             ddivdy_pl(n,k,l) = ddivdy_pl(n,k,l) + coef_diff_pl(YDIR,v-1,l) * ( sclt_pl(ijm1) + sclt_pl(ij) )
-             ddivdz_pl(n,k,l) = ddivdz_pl(n,k,l) + coef_diff_pl(ZDIR,v-1,l) * ( sclt_pl(ijm1) + sclt_pl(ij) )
-          enddo
-       enddo
        enddo
     else
        ddivdx_pl(:,:,:) = 0.0_RP
@@ -2583,11 +2461,11 @@ contains
     use mod_adm, only: &
        ADM_have_pl
     use mod_grd, only: &
-       GRD_XDIR,   &
-       GRD_YDIR,   &
-       GRD_ZDIR,   &
-       GRD_rscale, &
-       GRD_x,      &
+       XDIR => GRD_XDIR, &
+       YDIR => GRD_YDIR, &
+       ZDIR => GRD_ZDIR, &
+       GRD_rscale,       &
+       GRD_x,            &
        GRD_x_pl
     implicit none
 
@@ -2598,39 +2476,49 @@ contains
     real(RP), intent(inout) :: vz   (ADM_gall,   ADM_kall,ADM_lall   )
     real(RP), intent(inout) :: vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
+    integer  :: gall, kall
+
+    real(RP) :: rscale
     real(RP) :: prd
-    integer :: g, k, l
+    integer  :: g, k, l
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('OPRT_horizontalize_vec',2)
 
-    do l = 1, ADM_lall
-    do k = 1, ADM_kall
-    do g = 1, ADM_gall
-       prd = vx(g,k,l) * GRD_x(g,k0,l,GRD_XDIR) / GRD_rscale &
-           + vy(g,k,l) * GRD_x(g,k0,l,GRD_YDIR) / GRD_rscale &
-           + vz(g,k,l) * GRD_x(g,k0,l,GRD_ZDIR) / GRD_rscale
+    rscale = GRD_rscale
+    kall   = ADM_kall
+    gall   = ADM_gall
 
-       vx(g,k,l) = vx(g,k,l) - prd * GRD_x(g,k0,l,GRD_XDIR) / GRD_rscale
-       vy(g,k,l) = vy(g,k,l) - prd * GRD_x(g,k0,l,GRD_YDIR) / GRD_rscale
-       vz(g,k,l) = vz(g,k,l) - prd * GRD_x(g,k0,l,GRD_ZDIR) / GRD_rscale
-    enddo
-    enddo
+    do l = 1, ADM_lall
+       !$omp parallel do default(none), private(g,k,prd), &
+       !$omp shared(l,gall,kall,vx,vy,vz,GRD_x,rscale)
+       do k = 1, kall
+       do g = 1, gall
+          prd = vx(g,k,l) * GRD_x(g,1,l,XDIR) / rscale &
+              + vy(g,k,l) * GRD_x(g,1,l,YDIR) / rscale &
+              + vz(g,k,l) * GRD_x(g,1,l,ZDIR) / rscale
+
+          vx(g,k,l) = vx(g,k,l) - prd * GRD_x(g,1,l,XDIR) / rscale
+          vy(g,k,l) = vy(g,k,l) - prd * GRD_x(g,1,l,YDIR) / rscale
+          vz(g,k,l) = vz(g,k,l) - prd * GRD_x(g,1,l,ZDIR) / rscale
+       enddo
+       enddo
+       !$omp end parallel do
     enddo
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
-       do k = 1, ADM_kall
-       do g = 1, ADM_gall_pl
-          prd = vx_pl(g,k,l) * GRD_x_pl(g,k0,l,GRD_XDIR) / GRD_rscale &
-              + vy_pl(g,k,l) * GRD_x_pl(g,k0,l,GRD_YDIR) / GRD_rscale &
-              + vz_pl(g,k,l) * GRD_x_pl(g,k0,l,GRD_ZDIR) / GRD_rscale
+          do k = 1, ADM_kall
+          do g = 1, ADM_gall_pl
+             prd = vx_pl(g,k,l) * GRD_x_pl(g,1,l,XDIR) / rscale &
+                 + vy_pl(g,k,l) * GRD_x_pl(g,1,l,YDIR) / rscale &
+                 + vz_pl(g,k,l) * GRD_x_pl(g,1,l,ZDIR) / rscale
 
-          vx_pl(g,k,l) = vx_pl(g,k,l) - prd * GRD_x_pl(g,k0,l,GRD_XDIR) / GRD_rscale
-          vy_pl(g,k,l) = vy_pl(g,k,l) - prd * GRD_x_pl(g,k0,l,GRD_YDIR) / GRD_rscale
-          vz_pl(g,k,l) = vz_pl(g,k,l) - prd * GRD_x_pl(g,k0,l,GRD_ZDIR) / GRD_rscale
-       enddo
-       enddo
+             vx_pl(g,k,l) = vx_pl(g,k,l) - prd * GRD_x_pl(g,1,l,XDIR) / rscale
+             vy_pl(g,k,l) = vy_pl(g,k,l) - prd * GRD_x_pl(g,1,l,YDIR) / rscale
+             vz_pl(g,k,l) = vz_pl(g,k,l) - prd * GRD_x_pl(g,1,l,ZDIR) / rscale
+          enddo
+          enddo
        enddo
     else
        vx_pl(:,:,:) = 0.0_RP
@@ -2923,18 +2811,5 @@ contains
 
     return
   end subroutine OPRT_output_coef
-
-  !-----------------------------------------------------------------------------
-  integer function suf(i,j)
-    use mod_adm, only: &
-       ADM_gall_1d
-    implicit none
-
-    integer :: i, j
-    !---------------------------------------------------------------------------
-
-    suf = ADM_gall_1d * (j-1) + i
-
-  end function suf
 
 end module mod_oprt

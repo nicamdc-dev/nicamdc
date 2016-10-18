@@ -2422,23 +2422,28 @@ contains
        !-----------------------------------------
        !$acc loop independent gang
        do m = 1, varmax
-       !$acc loop independent gang vector(8)
-       do k = 1, kmax
-       !$acc loop independent gang
-       do ns = 1, cur_nsmax
-       !$acc loop independent vector(32)
-       do n = 1, max_ss
-          if ( ns <= nsmax(so,1) ) then
-             ss = sendinfo(SIZE_COMM  ,ns,so,1)
-             sl = sendinfo(LRGNID_COMM,ns,so,1)
-             sb = sendinfo(BASE_COMM  ,ns,so,1) * cmax
-             if ( n <= ss ) then
-                sendbuf(n+(k-1)*ss+(m-1)*ss*kmax+sb,so) = var(sendlist(n,ns,so,1),k,sl,m)
-             endif
-          endif
-       enddo
-       enddo
-       enddo
+          !$omp parallel default(none),private(n,ns,k,ss,sl,sb), &
+          !$omp shared(so,m,kmax,cur_nsmax,max_ss,nsmax,cmax,sendinfo,sendlist,sendbuf,var)
+          !$acc loop independent gang vector(8)
+          do k = 1, kmax
+          !$acc loop independent gang
+          do ns = 1, cur_nsmax
+             !$omp do
+             !$acc loop independent vector(32)
+             do n = 1, max_ss
+                if ( ns <= nsmax(so,1) ) then
+                   ss = sendinfo(SIZE_COMM  ,ns,so,1)
+                   sl = sendinfo(LRGNID_COMM,ns,so,1)
+                   sb = sendinfo(BASE_COMM  ,ns,so,1) * cmax
+                  if ( n <= ss ) then
+                      sendbuf(n+(k-1)*ss+(m-1)*ss*kmax+sb,so) = var(sendlist(n,ns,so,1),k,sl,m)
+                   endif
+                endif
+             enddo
+             !$omp end do
+          enddo
+          enddo
+          !$omp end parallel
        enddo
 
        !-----------------------------------------
@@ -2496,18 +2501,23 @@ contains
     do m = 1, varmax
     !$acc loop independent gang
     do nc = 1, cur_ncmax_r2r
-    !$acc loop independent gang vector(8)
-    do k = 1, kmax
-    !$acc loop independent vector(32)
-    do n = 1, max_cs_r2r
-       cs  = copyinfo_r2r(SIZE_COPY      ,nc,1)
-       cl  = copyinfo_r2r(LRGNID_COPY    ,nc,1)
-       scl = copyinfo_r2r(SRC_LRGNID_COPY,nc,1)
-       if ( n <= cs ) then
-          var(recvlist_r2r(n,nc,1),k,cl ,m) = var(sendlist_r2r(n,nc,1),k,scl,m)
-       endif
-    enddo
-    enddo
+       !$omp parallel default(none),private(n,k,cs,cl,scl), &
+       !$omp shared(m,nc,kmax,max_cs_r2r,copyinfo_r2r,recvlist_r2r,sendlist_r2r,var)
+       !$acc loop independent gang vector(8)
+       do k = 1, kmax
+          !$omp do
+          !$acc loop independent vector(32)
+          do n = 1, max_cs_r2r
+             cs  = copyinfo_r2r(SIZE_COPY      ,nc,1)
+             cl  = copyinfo_r2r(LRGNID_COPY    ,nc,1)
+             scl = copyinfo_r2r(SRC_LRGNID_COPY,nc,1)
+             if ( n <= cs ) then
+                var(recvlist_r2r(n,nc,1),k,cl ,m) = var(sendlist_r2r(n,nc,1),k,scl,m)
+             endif
+          enddo
+          !$omp end do
+       enddo
+       !$omp end parallel
     enddo
     enddo
     !$acc end kernels
@@ -2587,24 +2597,30 @@ contains
        !  recvbuf -> var ( recieve in region )
        !-----------------------------------------
        !$acc loop independent gang
+
        do m = 1, varmax
-       !$acc loop independent gang vector(8)
-       do k = 1, kmax
-       !$acc loop independent gang
-       do nr = 1, cur_nrmax
-       !$acc loop independent vector(32)
-       do n = 1, max_rs
-          if ( nr <= nrmax(ro,1) ) then
-             rs = recvinfo(SIZE_COMM  ,nr,ro,1)
-             rl = recvinfo(LRGNID_COMM,nr,ro,1)
-             rb = recvinfo(BASE_COMM  ,nr,ro,1) * cmax
-             if ( n <= rs ) then
-                var(recvlist(n,nr,ro,1),k,rl,m) = recvbuf(n+(k-1)*rs+(m-1)*rs*kmax+rb,ro)
-             endif
-          endif
-       enddo
-       enddo
-       enddo
+          !$omp parallel default(none),private(n,nr,k,rs,rl,rb), &
+          !$omp shared(ro,m,kmax,cur_nrmax,max_rs,cmax,nrmax,recvinfo,recvlist,recvbuf,var)
+          !$acc loop independent gang vector(8)
+          do k = 1, kmax
+          !$acc loop independent gang
+          do nr = 1, cur_nrmax
+             !$omp do
+             !$acc loop independent vector(32)
+             do n = 1, max_rs
+                if ( nr <= nrmax(ro,1) ) then
+                   rs = recvinfo(SIZE_COMM  ,nr,ro,1)
+                   rl = recvinfo(LRGNID_COMM,nr,ro,1)
+                   rb = recvinfo(BASE_COMM  ,nr,ro,1) * cmax
+                   if ( n <= rs ) then
+                      var(recvlist(n,nr,ro,1),k,rl,m) = recvbuf(n+(k-1)*rs+(m-1)*rs*kmax+rb,ro)
+                   endif
+                endif
+             enddo
+             !$omp end do
+          enddo
+          enddo
+          !$omp end parallel
        enddo
 
        !-----------------------------------------

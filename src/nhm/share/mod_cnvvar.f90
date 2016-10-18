@@ -394,42 +394,66 @@ contains
     real(RP) :: rhogkin_v   (ADM_gall,   ADM_kall) ! rho X ( G^1/2 X gamma2 ) X kin (vertical)
     real(RP) :: rhogkin_v_pl(ADM_gall_pl,ADM_kall)
 
+    integer  :: gall, kmin, kmax
+
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('CNV_rhogkin',2)
 
+    gall = ADM_gall
+    kmin = ADM_kmin
+    kmax = ADM_kmax
+
     do l = 1, ADM_lall
+       !$omp parallel default(none),private(g,k),                             &
+       !$omp shared(l,gall,kmin,kmax,rhog,rhogvx,rhogvy,rhogvz,rhogw,rhogkin, &
+       !$omp        rhogkin_h,rhogkin_v,VMTR_C2Wfact,VMTR_W2Cfact)
+
        !--- horizontal kinetic energy
-       do k = ADM_kmin, ADM_kmax
-       do g = 1, ADM_gall
+       !$omp do
+       do k = kmin, kmax
+       do g = 1, gall
           rhogkin_h(g,k) = 0.5_RP * ( rhogvx(g,k,l) * rhogvx(g,k,l) &
                                     + rhogvy(g,k,l) * rhogvy(g,k,l) &
                                     + rhogvz(g,k,l) * rhogvz(g,k,l) ) / rhog(g,k,l)
        enddo
        enddo
+       !$omp end do
 
        !--- vertical kinetic energy
-       do k = ADM_kmin+1, ADM_kmax
-       do g = 1, ADM_gall
+       !$omp do
+       do k = kmin+1, kmax
+       do g = 1, gall
           rhogkin_v(g,k) = 0.5_RP * ( rhogw(g,k,l) * rhogw(g,k,l) ) &
                          / ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k  ,l) &
                            + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
        enddo
        enddo
-       rhogkin_v(:,ADM_kmin  ) = 0.0_RP
-       rhogkin_v(:,ADM_kmax+1) = 0.0_RP
+       !$omp end do
+
+       !$omp workshare
+       rhogkin_v(:,kmin  ) = 0.0_RP
+       rhogkin_v(:,kmax+1) = 0.0_RP
+       !$omp end workshare
 
        !--- total kinetic energy
-       do k = ADM_kmin, ADM_kmax
-       do g = 1, ADM_gall
+       !$omp do
+       do k = kmin, kmax
+       do g = 1, gall
           rhogkin(g,k,l) = rhogkin_h(g,k)                             & ! horizontal
                          + ( VMTR_W2Cfact(g,k,1,l) * rhogkin_v(g,k+1) & ! vertical
                            + VMTR_W2Cfact(g,k,2,l) * rhogkin_v(g,k  ) )
        enddo
        enddo
-       rhogkin(:,ADM_kmin-1,l) = 0.0_RP
-       rhogkin(:,ADM_kmax+1,l) = 0.0_RP
+       !$omp end do
+
+       !$omp workshare
+       rhogkin(:,kmin-1,l) = 0.0_RP
+       rhogkin(:,kmax+1,l) = 0.0_RP
+       !$omp end workshare
+
+       !$omp end parallel
     enddo
 
     if ( ADM_have_pl ) then

@@ -255,6 +255,7 @@ contains
     if ( deep_effect ) then
        write(IO_FID_LOG,*) 'xxx this feature is tentatively suspended. stop.'
        call PRC_MPIstop
+
        do k = 1, ADM_kall
           Kh_deep_factor       (k) = ( (GRD_gz (k)+RADIUS) / RADIUS )**(2*lap_order_hdiff)
           Kh_deep_factor_h     (k) = ( (GRD_gzh(k)+RADIUS) / RADIUS )**(2*lap_order_hdiff)
@@ -1067,7 +1068,9 @@ contains
     real(RP), intent(inout) :: frhogw    (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(inout) :: frhogw_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
+    integer  :: gall, kall, kmin, kmax
     real(RP) :: coef
+
     integer  :: g, k, l
     !---------------------------------------------------------------------------
 
@@ -1075,17 +1078,25 @@ contains
 
     call PROF_rapstart('____numfilter_rayleighd',2)
 
+    gall = ADM_gall
+    kall = ADM_kall
+    kmin = ADM_kmin
+    kmax = ADM_kmax
+
     if ( .NOT. rayleigh_damp_only_w ) then
        do l = 1, ADM_lall
-       do k = 1, ADM_kall
-       do g = 1, ADM_gall
-          coef = rayleigh_coef(k) * rhog(g,k,l)
+          !$omp parallel do default(none),private(g,k,coef),              &
+          !$omp shared(l,gall,kall,frhogvx,frhogvy,frhogvz,rhog,vx,vy,vz,rayleigh_coef)
+          do k = 1, kall
+          do g = 1, gall
+             coef = rayleigh_coef(k) * rhog(g,k,l)
 
-          frhogvx(g,k,l) = frhogvx(g,k,l) - coef * vx(g,k,l)
-          frhogvy(g,k,l) = frhogvy(g,k,l) - coef * vy(g,k,l)
-          frhogvz(g,k,l) = frhogvz(g,k,l) - coef * vz(g,k,l)
-       enddo
-       enddo
+             frhogvx(g,k,l) = frhogvx(g,k,l) - coef * vx(g,k,l)
+             frhogvy(g,k,l) = frhogvy(g,k,l) - coef * vy(g,k,l)
+             frhogvz(g,k,l) = frhogvz(g,k,l) - coef * vz(g,k,l)
+          enddo
+          enddo
+          !$omp end parallel do
        enddo
 
        if ( ADM_have_pl ) then
@@ -1104,13 +1115,16 @@ contains
     endif
 
     do l = 1, ADM_lall
-    do k = ADM_kmin, ADM_kmax+1
-    do g = 1, ADM_gall
-       frhogw(g,k,l) = frhogw(g,k,l) &
-                     - rayleigh_coef_h(k) * w(g,k,l) * ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k  ,l) &
-                                                       + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
-    enddo
-    enddo
+       !$omp parallel do default(none),private(g,k),                   &
+       !$omp shared(l,gall,kmin,kmax,frhogw,rhog,w,VMTR_C2Wfact,rayleigh_coef_h)
+       do k = kmin, kmax+1
+       do g = 1, gall
+          frhogw(g,k,l) = frhogw(g,k,l) &
+                        - rayleigh_coef_h(k) * w(g,k,l) * ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k  ,l) &
+                                                          + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
+       enddo
+       enddo
+       !$omp end parallel do
     enddo
 
     if ( ADM_have_pl ) then
@@ -1240,10 +1254,17 @@ contains
 
     real(RP) :: large_step_dt
 
+    integer  :: gall, kall, kmin, kmax
+
     integer  :: g, k, l, nq, p
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____numfilter_hdiffusion',2)
+
+    gall = ADM_gall
+    kall = ADM_kall
+    kmin = ADM_kmin
+    kmax = ADM_kmax
 
     if ( hdiff_nonlinear ) then
        call height_factor( ADM_kall, GRD_gz(:), GRD_htop, ZD_hdiff_nl, fact(:) )
@@ -1252,32 +1273,49 @@ contains
                  + (          fact(:) ) * Kh_coef_minlim
     endif
 
-    rhog_h(:,ADM_kmin-1,:) = 0.0_RP
     do l = 1, ADM_lall
-    do k = ADM_kmin, ADM_kmax+1
-    do g = 1, ADM_gall
-       rhog_h(g,k,l) = ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k  ,l) &
-                       + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
-    enddo
-    enddo
+       !$omp parallel default(none),private(g,k), &
+       !$omp shared(l,gall,kmin,kmax,rhog_h,rhog,VMTR_C2Wfact)
+
+       !$omp do
+       do k = kmin, kmax+1
+       do g = 1, gall
+          rhog_h(g,k,l) = ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k  ,l) &
+                          + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
+       enddo
+       enddo
+       !$omp end do
+
+       !$omp do
+       do g = 1, gall
+          rhog_h(g,kmin-1,l) = 0.0_RP
+       enddo
+       !$omp end do
+
+       !$omp end parallel
     enddo
 
-    rhog_h_pl(:,ADM_kmin-1,:) = 0.0_RP
     do l = 1, ADM_lall_pl
-    do k = ADM_kmin, ADM_kmax+1
-    do g = 1, ADM_gall_pl
-       rhog_h_pl(g,k,l) = ( VMTR_C2Wfact_pl(g,k,1,l) * rhog_pl(g,k  ,l) &
-                          + VMTR_C2Wfact_pl(g,k,2,l) * rhog_pl(g,k-1,l) )
-    enddo
-    enddo
+       do k = ADM_kmin, ADM_kmax+1
+       do g = 1, ADM_gall_pl
+          rhog_h_pl(g,k,l) = ( VMTR_C2Wfact_pl(g,k,1,l) * rhog_pl(g,k  ,l) &
+                             + VMTR_C2Wfact_pl(g,k,2,l) * rhog_pl(g,k-1,l) )
+       enddo
+       enddo
+
+       do g = 1, ADM_gall_pl
+          rhog_h_pl(g,ADM_kmin-1,l) = 0.0_RP
+       enddo
     enddo
 
+    !$omp parallel workshare
     vtmp   (:,:,:,1) = vx    (:,:,:)
     vtmp   (:,:,:,2) = vy    (:,:,:)
     vtmp   (:,:,:,3) = vz    (:,:,:)
     vtmp   (:,:,:,4) = w     (:,:,:)
     vtmp   (:,:,:,5) = tem   (:,:,:) - tem_bs   (:,:,:)
     vtmp   (:,:,:,6) = rho   (:,:,:) - rho_bs   (:,:,:)
+    !$omp end parallel workshare
 
     vtmp_pl(:,:,:,1) = vx_pl (:,:,:)
     vtmp_pl(:,:,:,2) = vy_pl (:,:,:)
@@ -1288,7 +1326,9 @@ contains
 
     ! copy beforehand
     if ( NUMFILTER_DOhorizontaldiff_lap1 ) then
+       !$omp parallel workshare
        vtmp_lap1   (:,:,:,:) = vtmp   (:,:,:,:)
+       !$omp end parallel workshare
        vtmp_lap1_pl(:,:,:,:) = vtmp_pl(:,:,:,:)
     endif
 
@@ -1318,14 +1358,17 @@ contains
              large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=DP)
 
              do l = 1, ADM_lall
-             do k = 1, ADM_kall
-             do g = 1, ADM_gall
-                d2T_dx2 = abs(vtmp(g,k,l,5)) / T0 * AREA_ave
-                coef    = cfact * ( AREA_ave * AREA_ave ) / large_step_dt * d2T_dx2
+                !$omp parallel do default(none),private(g,k,d2T_dx2,coef),                          &
+                !$omp shared(l,gall,kall,KH_coef,vtmp,AREA_ave,large_step_dt,Kh_max,Kh_coef_minlim)
+                do k = 1, kall
+                do g = 1, gall
+                   d2T_dx2 = abs(vtmp(g,k,l,5)) / T0 * AREA_ave
+                   coef    = cfact * ( AREA_ave * AREA_ave ) / large_step_dt * d2T_dx2
 
-                KH_coef(g,k,l) = max( min( coef, Kh_max(k) ), Kh_coef_minlim )
-             enddo
-             enddo
+                   KH_coef(g,k,l) = max( min( coef, Kh_max(k) ), Kh_coef_minlim )
+                enddo
+                enddo
+                !$omp end parallel do
              enddo
 
              do l = 1, ADM_lall_pl
@@ -1340,10 +1383,24 @@ contains
              enddo
 
              do l = 1, ADM_lall
-                do k = ADM_kmin+1, ADM_kmax
-                   KH_coef_h(:,k,l) = 0.5_RP * ( KH_coef(:,k,l) + KH_coef(:,k-1,l) )
+                !$omp parallel default(none),private(g,k),     &
+                !$omp shared(l,gall,kmin,kmax,KH_coef_h,KH_coef)
+
+                !$omp do
+                do k = kmin+1, kmax
+                do g = 1, gall
+                   KH_coef_h(g,k,l) = 0.5_RP * ( KH_coef(g,k,l) + KH_coef(g,k-1,l) )
                 enddo
-                KH_coef_h(:,ADM_kmin,l) = 0.0_RP
+                enddo
+                !$omp end do
+
+                !$omp do
+                do g = 1, gall
+                   KH_coef_h(g,kmin,l) = 0.0_RP
+                enddo
+                !$omp end do
+
+                !$omp end parallel
              enddo
 
              do l = 1, ADM_lall_pl
@@ -1353,11 +1410,15 @@ contains
                 KH_coef_h_pl(:,ADM_kmin,l) = 0.0_RP
              enddo
           else
+             !$omp parallel workshare
              KH_coef_h   (:,:,:) = KH_coef   (:,:,:)
+             !$omp end parallel workshare
              KH_coef_h_pl(:,:,:) = KH_coef_pl(:,:,:)
           endif ! nonlinear1
 
+          !$omp parallel workshare
           wk   (:,:,:) = rhog   (:,:,:) * CVdry * KH_coef   (:,:,:)
+          !$omp end parallel workshare
           wk_pl(:,:,:) = rhog_pl(:,:,:) * CVdry * KH_coef_pl(:,:,:)
 
           call OPRT_diffusion( vtmp2         (:,:,:,5),   vtmp2_pl         (:,:,:,5), & ! [OUT]
@@ -1366,7 +1427,9 @@ contains
                                OPRT_coef_intp(:,:,:,:,:), OPRT_coef_intp_pl(:,:,:,:), & ! [IN]
                                OPRT_coef_diff(:,:,:,:),   OPRT_coef_diff_pl(:,:,:)    ) ! [IN]
 
+          !$omp parallel workshare
           wk   (:,:,:) = rhog   (:,:,:) * hdiff_fact_rho * KH_coef   (:,:,:)
+          !$omp end parallel workshare
           wk_pl(:,:,:) = rhog_pl(:,:,:) * hdiff_fact_rho * KH_coef_pl(:,:,:)
 
           call OPRT_diffusion( vtmp2         (:,:,:,6),   vtmp2_pl         (:,:,:,6), & ! [OUT]
@@ -1385,7 +1448,9 @@ contains
 
        endif
 
+       !$omp parallel workshare
        vtmp   (:,:,:,:) = -vtmp2   (:,:,:,:)
+       !$omp end parallel workshare
        vtmp_pl(:,:,:,:) = -vtmp2_pl(:,:,:,:)
 
        call COMM_data_transfer( vtmp, vtmp_pl )
@@ -1395,7 +1460,9 @@ contains
     !--- 1st order laplacian filter
     if ( NUMFILTER_DOhorizontaldiff_lap1 ) then
 
+       !$omp parallel workshare
        KH_coef_lap1_h   (:,:,:) = KH_coef_lap1   (:,:,:)
+       !$omp end parallel workshare
        KH_coef_lap1_h_pl(:,:,:) = KH_coef_lap1_pl(:,:,:)
 
        call OPRT_laplacian( vtmp2        (:,:,:,1), vtmp2_pl        (:,:,:,1), & ! [OUT]
@@ -1414,7 +1481,9 @@ contains
                             vtmp_lap1    (:,:,:,4), vtmp_lap1_pl    (:,:,:,4), & ! [IN]
                             OPRT_coef_lap(:,:,:),   OPRT_coef_lap_pl(:,:)      ) ! [IN]
 
+       !$omp parallel workshare
        wk   (:,:,:) = rhog   (:,:,:) * CVdry * KH_coef_lap1   (:,:,:)
+       !$omp end parallel workshare
        wk_pl(:,:,:) = rhog_pl(:,:,:) * CVdry * KH_coef_lap1_pl(:,:,:)
 
        call OPRT_diffusion( vtmp2         (:,:,:,5),   vtmp2_pl         (:,:,:,5), & ! [OUT]
@@ -1423,7 +1492,9 @@ contains
                             OPRT_coef_intp(:,:,:,:,:), OPRT_coef_intp_pl(:,:,:,:), & ! [IN]
                             OPRT_coef_diff(:,:,:,:),   OPRT_coef_diff_pl(:,:,:)    ) ! [IN]
 
+       !$omp parallel workshare
        wk   (:,:,:) = rhog   (:,:,:) * hdiff_fact_rho * KH_coef_lap1   (:,:,:)
+       !$omp end parallel workshare
        wk_pl(:,:,:) = rhog_pl(:,:,:) * hdiff_fact_rho * KH_coef_lap1_pl(:,:,:)
 
        call OPRT_diffusion( vtmp2         (:,:,:,6),   vtmp2_pl         (:,:,:,6), & ! [OUT]
@@ -1432,37 +1503,44 @@ contains
                             OPRT_coef_intp(:,:,:,:,:), OPRT_coef_intp_pl(:,:,:,:), & ! [IN]
                             OPRT_coef_diff(:,:,:,:),   OPRT_coef_diff_pl(:,:,:)    ) ! [IN]
 
+       !$omp parallel workshare
        vtmp_lap1   (:,:,:,:) = -vtmp2   (:,:,:,:)
+       !$omp end parallel workshare
        vtmp_lap1_pl(:,:,:,:) = -vtmp2_pl(:,:,:,:)
 
        call COMM_data_transfer( vtmp_lap1, vtmp_lap1_pl )
     else
-       KH_coef_lap1_h   (:,:,:) = 0.0_RP
-       KH_coef_lap1_h_pl(:,:,:) = 0.0_RP
-
-       vtmp_lap1   (:,:,:,:) = 0.0_RP
-       vtmp_lap1_pl(:,:,:,:) = 0.0_RP
+       !$omp parallel workshare
+       KH_coef_lap1_h   (:,:,:)   = 0.0_RP
+       vtmp_lap1        (:,:,:,:) = 0.0_RP
+       !$omp end parallel workshare
+       KH_coef_lap1_h_pl(:,:,:)   = 0.0_RP
+       vtmp_lap1_pl     (:,:,:,:) = 0.0_RP
     endif
 
     !--- Update tendency
     do l = 1, ADM_lall
-    do k = 1, ADM_kall
-       do g = 1, ADM_gall
-          tendency(g,k,l,I_RHOGVX) = - ( vtmp     (g,k,l,1) * KH_coef     (g,k,l) &
-                                       + vtmp_lap1(g,k,l,1) * KH_coef_lap1(g,k,l) ) * rhog(g,k,l)
-          tendency(g,k,l,I_RHOGVY) = - ( vtmp     (g,k,l,2) * KH_coef     (g,k,l) &
-                                       + vtmp_lap1(g,k,l,2) * KH_coef_lap1(g,k,l) ) * rhog(g,k,l)
-          tendency(g,k,l,I_RHOGVZ) = - ( vtmp     (g,k,l,3) * KH_coef     (g,k,l) &
-                                       + vtmp_lap1(g,k,l,3) * KH_coef_lap1(g,k,l) ) * rhog(g,k,l)
-          tendency(g,k,l,I_RHOGW ) = - ( vtmp     (g,k,l,4) * KH_coef_h     (g,k,l) &
-                                       + vtmp_lap1(g,k,l,4) * KH_coef_lap1_h(g,k,l) ) * rhog_h(g,k,l)
-       enddo
+       !$omp parallel do default(none),private(g,k),                    &
+       !$omp shared(l,gall,kall,tendency,vtmp,vtmp_lap1,rhog,rhog_h, &
+       !$omp        KH_coef,KH_coef_h,KH_coef_lap1,KH_coef_lap1_h)
+       do k = 1, kall
+          do g = 1, gall
+             tendency(g,k,l,I_RHOGVX) = - ( vtmp     (g,k,l,1) * KH_coef     (g,k,l) &
+                                          + vtmp_lap1(g,k,l,1) * KH_coef_lap1(g,k,l) ) * rhog(g,k,l)
+             tendency(g,k,l,I_RHOGVY) = - ( vtmp     (g,k,l,2) * KH_coef     (g,k,l) &
+                                          + vtmp_lap1(g,k,l,2) * KH_coef_lap1(g,k,l) ) * rhog(g,k,l)
+             tendency(g,k,l,I_RHOGVZ) = - ( vtmp     (g,k,l,3) * KH_coef     (g,k,l) &
+                                          + vtmp_lap1(g,k,l,3) * KH_coef_lap1(g,k,l) ) * rhog(g,k,l)
+             tendency(g,k,l,I_RHOGW ) = - ( vtmp     (g,k,l,4) * KH_coef_h     (g,k,l) &
+                                          + vtmp_lap1(g,k,l,4) * KH_coef_lap1_h(g,k,l) ) * rhog_h(g,k,l)
+          enddo
 
-       do g = 1, ADM_gall
-          tendency(g,k,l,I_RHOGE   ) = - ( vtmp(g,k,l,5) + vtmp_lap1(g,k,l,5) )
-          tendency(g,k,l,I_RHOG    ) = - ( vtmp(g,k,l,6) + vtmp_lap1(g,k,l,6) )
+          do g = 1, gall
+             tendency(g,k,l,I_RHOGE ) = - ( vtmp(g,k,l,5) + vtmp_lap1(g,k,l,5) )
+             tendency(g,k,l,I_RHOG  ) = - ( vtmp(g,k,l,6) + vtmp_lap1(g,k,l,6) )
+          enddo
        enddo
-    enddo
+       !$omp end parallel do
     enddo
 
     if ( ADM_have_pl ) then
@@ -1480,8 +1558,8 @@ contains
           enddo
 
           do g = 1, ADM_gall_pl
-             tendency_pl(g,k,l,I_RHOGE   ) = - ( vtmp_pl(g,k,l,5) + vtmp_lap1_pl(g,k,l,5) )
-             tendency_pl(g,k,l,I_RHOG    ) = - ( vtmp_pl(g,k,l,6) + vtmp_lap1_pl(g,k,l,6) )
+             tendency_pl(g,k,l,I_RHOGE ) = - ( vtmp_pl(g,k,l,5) + vtmp_lap1_pl(g,k,l,5) )
+             tendency_pl(g,k,l,I_RHOG  ) = - ( vtmp_pl(g,k,l,6) + vtmp_lap1_pl(g,k,l,6) )
           enddo
        enddo
        enddo
@@ -1500,12 +1578,16 @@ contains
     !                          because that is upwind-type advection(already diffusive)
     if ( TRC_ADV_TYPE /= 'MIURA2004' ) then
 
+       !$omp parallel workshare
        qtmp   (:,:,:,:) = q   (:,:,:,:)
        qtmp_pl(:,:,:,:) = q_pl(:,:,:,:)
+       !$omp end parallel workshare
 
        ! copy beforehand
        if ( NUMFILTER_DOhorizontaldiff_lap1 ) then
+          !$omp parallel workshare
           qtmp_lap1   (:,:,:,:) = qtmp   (:,:,:,:)
+          !$omp end parallel workshare
           qtmp_lap1_pl(:,:,:,:) = qtmp_pl(:,:,:,:)
        endif
 
@@ -1514,7 +1596,9 @@ contains
 
           if ( p == lap_order_hdiff ) then
 
+             !$omp parallel workshare
              wk   (:,:,:) = rhog   (:,:,:) * hdiff_fact_q * KH_coef   (:,:,:)
+             !$omp end parallel workshare
              wk_pl(:,:,:) = rhog_pl(:,:,:) * hdiff_fact_q * KH_coef_pl(:,:,:)
 
              do nq = 1, TRC_VMAX
@@ -1532,7 +1616,9 @@ contains
              enddo
           endif
 
+          !$omp parallel workshare
           qtmp   (:,:,:,:) = -qtmp2   (:,:,:,:)
+          !$omp end parallel workshare
           qtmp_pl(:,:,:,:) = -qtmp2_pl(:,:,:,:)
 
           call COMM_data_transfer( qtmp, qtmp_pl )
@@ -1542,7 +1628,9 @@ contains
        !--- 1st order laplacian filter
        if ( NUMFILTER_DOhorizontaldiff_lap1 ) then
 
+          !$omp parallel workshare
           wk   (:,:,:) = rhog   (:,:,:) * hdiff_fact_q * KH_coef_lap1   (:,:,:)
+          !$omp end parallel workshare
           wk_pl(:,:,:) = rhog_pl(:,:,:) * hdiff_fact_q * KH_coef_lap1_pl(:,:,:)
 
           do nq = 1, TRC_VMAX
@@ -1553,20 +1641,29 @@ contains
                                   OPRT_coef_diff(:,:,:,:),   OPRT_coef_diff_pl(:,:,:)     ) ! [IN]
           enddo
 
+          !$omp parallel workshare
           qtmp_lap1   (:,:,:,:) = -qtmp2   (:,:,:,:)
+          !$omp end parallel workshare
           qtmp_lap1_pl(:,:,:,:) = -qtmp2_pl(:,:,:,:)
 
           call COMM_data_transfer( qtmp_lap1(:,:,:,:), qtmp_lap1_pl(:,:,:,:) )
        else
+          !$omp parallel workshare
           qtmp_lap1   (:,:,:,:) = 0.0_RP
+          !$omp end parallel workshare
           qtmp_lap1_pl(:,:,:,:) = 0.0_RP
        endif
 
        do nq = 1, TRC_VMAX
        do l  = 1, ADM_lall
-       do k  = ADM_kmin, ADM_kmax
-          tendency_q(:,k,l,nq) = - ( qtmp(:,k,l,nq) + qtmp_lap1(:,k,l,nq) )
-       enddo
+          !$omp parallel do default(none),private(g,k), &
+          !$omp shared(l,nq,gall,kmin,kmax,tendency_q,qtmp,qtmp_lap1)
+          do k  = kmin, kmax
+          do g = 1, gall
+             tendency_q(g,k,l,nq) = - ( qtmp(g,k,l,nq) + qtmp_lap1(g,k,l,nq) )
+          enddo
+          enddo
+          !$omp end parallel do
        enddo
        enddo
 
@@ -1582,7 +1679,9 @@ contains
           tendency_q_pl(:,:,:,:) = 0.0_RP
        endif
     else
+       !$omp parallel workshare
        tendency_q   (:,:,:,:) = 0.0_RP
+       !$omp end parallel workshare
        tendency_q_pl(:,:,:,:) = 0.0_RP
     endif ! apply filter to tracer?
 
@@ -1605,7 +1704,7 @@ contains
        tendency,   tendency_pl,  &
        tendency_q, tendency_q_pl )
     use mod_const, only: &
-       CVdry => CONST_CVdry
+       CONST_CVdry
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -1674,6 +1773,9 @@ contains
     real(RP) :: vtmp1   (ADM_gall   ,ADM_kall,ADM_lall   ,vmax+TRC_VMAX)
     real(RP) :: vtmp1_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,vmax+TRC_VMAX)
 
+    integer  :: gall, kmin, kmax, nall
+    real(RP) :: CVdry
+
     integer  :: g, k, l, nq, p
     !---------------------------------------------------------------------------
 
@@ -1681,14 +1783,33 @@ contains
 
     call PROF_rapstart('____numfilter_vdiffusion',2)
 
+    gall = ADM_gall
+    kmin = ADM_kmin
+    kmax = ADM_kmax
+    nall = TRC_VMAX
+
+    CVdry = CONST_CVdry
+
     do l = 1, ADM_lall
-       do k = ADM_kmin, ADM_kmax+1
-       do g = 1, ADM_gall
+       !$omp parallel default(none),private(g,k), &
+       !$omp shared(l,gall,kmin,kmax,rhog_h,rhog,VMTR_C2Wfact)
+
+       !$omp do
+       do k = kmin, kmax+1
+       do g = 1, gall
           rhog_h(g,k,l) = ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k  ,l) &
                           + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
        enddo
        enddo
-       rhog_h(:,ADM_kmin-1,l) = rhog_h(:,ADM_kmin,l)
+       !$omp end do
+
+       !$omp do
+       do g = 1, gall
+          rhog_h(g,kmin-1,l) = rhog_h(g,kmin,l)
+       enddo
+       !$omp end do
+
+       !$omp end parallel
     enddo
 
     if ( ADM_have_pl ) then
@@ -1703,131 +1824,190 @@ contains
        enddo
     endif
 
+    !$omp parallel workshare
     vtmp0(:,:,:,I_VX ) = vx (:,:,:)
     vtmp0(:,:,:,I_VY ) = vy (:,:,:)
     vtmp0(:,:,:,I_VZ ) = vz (:,:,:)
     vtmp0(:,:,:,I_W  ) = w  (:,:,:)
     vtmp0(:,:,:,I_TEM) = tem(:,:,:) - tem_bs(:,:,:)
     vtmp0(:,:,:,I_RHO) = rho(:,:,:) - rho_bs(:,:,:)
-    do nq = 1, TRC_VMAX
+    !$omp end parallel workshare
+
+    do nq = 1, nall
+       !$omp parallel workshare
        vtmp0(:,:,:,vmax+nq) = rho(:,:,:) * q(:,:,:,nq)
-    enddo
-
-    !--- bottom boundary
-    vtmp0(:,ADM_kmin-1,:,I_VX ) = vtmp0(:,ADM_kmin,:,I_VX)
-    vtmp0(:,ADM_kmin-1,:,I_VY ) = vtmp0(:,ADM_kmin,:,I_VY)
-    vtmp0(:,ADM_kmin-1,:,I_VZ ) = vtmp0(:,ADM_kmin,:,I_VZ)
-    vtmp0(:,ADM_kmin  ,:,I_W  ) = 0.0_RP
-    vtmp0(:,ADM_kmin-1,:,I_TEM) = 3.0_RP * vtmp0(:,ADM_kmin  ,:,I_TEM) &
-                                - 3.0_RP * vtmp0(:,ADM_kmin+1,:,I_TEM) &
-                                + 1.0_RP * vtmp0(:,ADM_kmin+2,:,I_TEM)
-    vtmp0(:,ADM_kmin-1,:,I_RHO) = 3.0_RP * vtmp0(:,ADM_kmin  ,:,I_RHO) &
-                                - 3.0_RP * vtmp0(:,ADM_kmin+1,:,I_RHO) &
-                                + 1.0_RP * vtmp0(:,ADM_kmin+2,:,I_RHO)
-
-    !--- top boundary
-    vtmp0(:,ADM_kmax+1,:,I_VX ) = vtmp0(:,ADM_kmax,:,I_VX)
-    vtmp0(:,ADM_kmax+1,:,I_VY ) = vtmp0(:,ADM_kmax,:,I_VY)
-    vtmp0(:,ADM_kmax+1,:,I_VZ ) = vtmp0(:,ADM_kmax,:,I_VZ)
-    vtmp0(:,ADM_kmax+1,:,I_W  ) = 0.0_RP
-    vtmp0(:,ADM_kmax+1,:,I_TEM) = 3.0_RP * vtmp0(:,ADM_kmax  ,:,I_TEM) &
-                                - 3.0_RP * vtmp0(:,ADM_kmax-1,:,I_TEM) &
-                                + 1.0_RP * vtmp0(:,ADM_kmax-2,:,I_TEM)
-    vtmp0(:,ADM_kmax+1,:,I_RHO) = 3.0_RP * vtmp0(:,ADM_kmax  ,:,I_RHO) &
-                                - 3.0_RP * vtmp0(:,ADM_kmax-1,:,I_RHO) &
-                                + 1.0_RP * vtmp0(:,ADM_kmax-2,:,I_RHO)
-
-    do nq = 1, TRC_VMAX
-       vtmp0(:,ADM_kmin-1,:,vmax+nq) = 3.0_RP * vtmp0(:,ADM_kmin  ,:,vmax+nq) &
-                                     - 3.0_RP * vtmp0(:,ADM_kmin+1,:,vmax+nq) &
-                                     + 1.0_RP * vtmp0(:,ADM_kmin+2,:,vmax+nq)
-       vtmp0(:,ADM_kmax+1,:,vmax+nq) = 3.0_RP * vtmp0(:,ADM_kmax  ,:,vmax+nq) &
-                                     - 3.0_RP * vtmp0(:,ADM_kmax-1,:,vmax+nq) &
-                                     + 1.0_RP * vtmp0(:,ADM_kmax-2,:,vmax+nq)
+       !$omp end parallel workshare
     enddo
 
     do l = 1, ADM_lall
+       !$omp parallel do default(none),private(g,nq), &
+       !$omp shared(l,gall,kmin,kmax,nall,vtmp0)
+       do g = 1, gall
+          !--- bottom boundary
+          vtmp0(g,kmin-1,l,I_VX ) = vtmp0(g,kmin,l,I_VX)
+          vtmp0(g,kmin-1,l,I_VY ) = vtmp0(g,kmin,l,I_VY)
+          vtmp0(g,kmin-1,l,I_VZ ) = vtmp0(g,kmin,l,I_VZ)
+          vtmp0(g,kmin  ,l,I_W  ) = 0.0_RP
+          vtmp0(g,kmin-1,l,I_TEM) = 3.0_RP * vtmp0(g,kmin  ,l,I_TEM) &
+                                  - 3.0_RP * vtmp0(g,kmin+1,l,I_TEM) &
+                                  + 1.0_RP * vtmp0(g,kmin+2,l,I_TEM)
+          vtmp0(g,kmin-1,l,I_RHO) = 3.0_RP * vtmp0(g,kmin  ,l,I_RHO) &
+                                  - 3.0_RP * vtmp0(g,kmin+1,l,I_RHO) &
+                                  + 1.0_RP * vtmp0(g,kmin+2,l,I_RHO)
+
+          !--- top boundary
+          vtmp0(g,kmax+1,l,I_VX ) = vtmp0(g,kmax,l,I_VX)
+          vtmp0(g,kmax+1,l,I_VY ) = vtmp0(g,kmax,l,I_VY)
+          vtmp0(g,kmax+1,l,I_VZ ) = vtmp0(g,kmax,l,I_VZ)
+          vtmp0(g,kmax+1,l,I_W  ) = 0.0_RP
+          vtmp0(g,kmax+1,l,I_TEM) = 3.0_RP * vtmp0(g,kmax  ,l,I_TEM) &
+                                  - 3.0_RP * vtmp0(g,kmax-1,l,I_TEM) &
+                                  + 1.0_RP * vtmp0(g,kmax-2,l,I_TEM)
+          vtmp0(g,kmax+1,l,I_RHO) = 3.0_RP * vtmp0(g,kmax  ,l,I_RHO) &
+                                  - 3.0_RP * vtmp0(g,kmax-1,l,I_RHO) &
+                                  + 1.0_RP * vtmp0(g,kmax-2,l,I_RHO)
+
+          do nq = 1, nall
+             vtmp0(g,kmin-1,l,vmax+nq) = 3.0_RP * vtmp0(g,kmin  ,l,vmax+nq) &
+                                       - 3.0_RP * vtmp0(g,kmin+1,l,vmax+nq) &
+                                       + 1.0_RP * vtmp0(g,kmin+2,l,vmax+nq)
+             vtmp0(g,kmax+1,l,vmax+nq) = 3.0_RP * vtmp0(g,kmax  ,l,vmax+nq) &
+                                       - 3.0_RP * vtmp0(g,kmax-1,l,vmax+nq) &
+                                       + 1.0_RP * vtmp0(g,kmax-2,l,vmax+nq)
+          enddo
+       enddo
+       !$omp end parallel do
+    enddo
+
+    do l = 1, ADM_lall
+       !$omp parallel default(none),private(g,k,nq,p), &
+       !$omp shared(l,gall,kmin,kmax,nall,vtmp1,vtmp0,GRD_rdgz,GRD_rdgzh)
+
        do p = 1, 2
-          do k = ADM_kmin, ADM_kmax
-             vtmp1(:,k,l,I_VX ) = ( ( vtmp0(:,k+1,l,I_VX ) - vtmp0(:,k  ,l,I_VX ) ) * GRD_rdgzh(k+1) &
-                                  - ( vtmp0(:,k  ,l,I_VX ) - vtmp0(:,k-1,l,I_VX ) ) * GRD_rdgzh(k)   &
+          !$omp do
+          do k = kmin, kmax
+          do g = 1, gall
+             vtmp1(g,k,l,I_VX ) = ( ( vtmp0(g,k+1,l,I_VX ) - vtmp0(g,k  ,l,I_VX ) ) * GRD_rdgzh(k+1) &
+                                  - ( vtmp0(g,k  ,l,I_VX ) - vtmp0(g,k-1,l,I_VX ) ) * GRD_rdgzh(k)   &
                                   ) * GRD_rdgz(k)
-             vtmp1(:,k,l,I_VY ) = ( ( vtmp0(:,k+1,l,I_VY ) - vtmp0(:,k  ,l,I_VY ) ) * GRD_rdgzh(k+1) &
-                                  - ( vtmp0(:,k  ,l,I_VY ) - vtmp0(:,k-1,l,I_VY ) ) * GRD_rdgzh(k)   &
+             vtmp1(g,k,l,I_VY ) = ( ( vtmp0(g,k+1,l,I_VY ) - vtmp0(g,k  ,l,I_VY ) ) * GRD_rdgzh(k+1) &
+                                  - ( vtmp0(g,k  ,l,I_VY ) - vtmp0(g,k-1,l,I_VY ) ) * GRD_rdgzh(k)   &
                                   ) * GRD_rdgz(k)
-             vtmp1(:,k,l,I_VZ ) = ( ( vtmp0(:,k+1,l,I_VZ ) - vtmp0(:,k  ,l,I_VZ ) ) * GRD_rdgzh(k+1) &
-                                  - ( vtmp0(:,k  ,l,I_VZ ) - vtmp0(:,k-1,l,I_VZ ) ) * GRD_rdgzh(k)   &
+             vtmp1(g,k,l,I_VZ ) = ( ( vtmp0(g,k+1,l,I_VZ ) - vtmp0(g,k  ,l,I_VZ ) ) * GRD_rdgzh(k+1) &
+                                  - ( vtmp0(g,k  ,l,I_VZ ) - vtmp0(g,k-1,l,I_VZ ) ) * GRD_rdgzh(k)   &
                                   ) * GRD_rdgz(k)
-             vtmp1(:,k,l,I_TEM) = ( ( vtmp0(:,k+1,l,I_TEM) - vtmp0(:,k  ,l,I_TEM) ) * GRD_rdgzh(k+1) &
-                                  - ( vtmp0(:,k  ,l,I_TEM) - vtmp0(:,k-1,l,I_TEM) ) * GRD_rdgzh(k)   &
+             vtmp1(g,k,l,I_TEM) = ( ( vtmp0(g,k+1,l,I_TEM) - vtmp0(g,k  ,l,I_TEM) ) * GRD_rdgzh(k+1) &
+                                  - ( vtmp0(g,k  ,l,I_TEM) - vtmp0(g,k-1,l,I_TEM) ) * GRD_rdgzh(k)   &
                                   ) * GRD_rdgz(k)
-             vtmp1(:,k,l,I_RHO) = ( ( vtmp0(:,k+1,l,I_RHO) - vtmp0(:,k  ,l,I_RHO) ) * GRD_rdgzh(k+1) &
-                                  - ( vtmp0(:,k  ,l,I_RHO) - vtmp0(:,k-1,l,I_RHO) ) * GRD_rdgzh(k)   &
+             vtmp1(g,k,l,I_RHO) = ( ( vtmp0(g,k+1,l,I_RHO) - vtmp0(g,k  ,l,I_RHO) ) * GRD_rdgzh(k+1) &
+                                  - ( vtmp0(g,k  ,l,I_RHO) - vtmp0(g,k-1,l,I_RHO) ) * GRD_rdgzh(k)   &
                                   ) * GRD_rdgz(k)
-             do nq = 1, TRC_VMAX
-                vtmp1(:,k,l,vmax+nq) = ( ( vtmp0(:,k+1,l,vmax+nq) - vtmp0(:,k  ,l,vmax+nq) ) * GRD_rdgzh(k+1) &
-                                       - ( vtmp0(:,k  ,l,vmax+nq) - vtmp0(:,k-1,l,vmax+nq) ) * GRD_rdgzh(k)   &
+          enddo
+          enddo
+          !$omp end do
+
+          do nq = 1, nall
+             !$omp do
+             do k = kmin, kmax
+             do g = 1, gall
+                vtmp1(g,k,l,vmax+nq) = ( ( vtmp0(g,k+1,l,vmax+nq) - vtmp0(g,k  ,l,vmax+nq) ) * GRD_rdgzh(k+1) &
+                                       - ( vtmp0(g,k  ,l,vmax+nq) - vtmp0(g,k-1,l,vmax+nq) ) * GRD_rdgzh(k)   &
                                        )  * GRD_rdgz(k)
              enddo
+             enddo
+             !$omp end do
           enddo
 
-          do k = ADM_kmin+1, ADM_kmax
-             vtmp1(:,k,l,I_W) = ( ( vtmp0(:,k+1,l,I_W) - vtmp0(:,k  ,l,I_W) ) * GRD_rdgz(k)   &
-                                - ( vtmp0(:,k  ,l,I_W) - vtmp0(:,k-1,l,I_W) ) * GRD_rdgz(k-1) &
+          !$omp do
+          do k = kmin+1, kmax
+          do g = 1, gall
+             vtmp1(g,k,l,I_W) = ( ( vtmp0(g,k+1,l,I_W) - vtmp0(g,k  ,l,I_W) ) * GRD_rdgz(k)   &
+                                - ( vtmp0(g,k  ,l,I_W) - vtmp0(g,k-1,l,I_W) ) * GRD_rdgz(k-1) &
                                 ) * GRD_rdgzh(k)
           enddo
+          enddo
+          !$omp end do
 
           if ( p == 1 ) then
-             !--- bottom boundary
-             vtmp1(:,ADM_kmin-1,l,I_VX ) = vtmp1(:,ADM_kmin  ,l,I_VX )
-             vtmp1(:,ADM_kmin-1,l,I_VY ) = vtmp1(:,ADM_kmin  ,l,I_VY )
-             vtmp1(:,ADM_kmin-1,l,I_VZ ) = vtmp1(:,ADM_kmin  ,l,I_VZ )
-             vtmp1(:,ADM_kmin  ,l,I_W  ) = vtmp1(:,ADM_kmin+1,l,I_W  )
-             vtmp1(:,ADM_kmin-1,l,I_TEM) = vtmp1(:,ADM_kmin  ,l,I_TEM) * 2.0_RP - vtmp1(:,ADM_kmin+1,l,I_TEM)
-             vtmp1(:,ADM_kmin-1,l,I_RHO) = vtmp1(:,ADM_kmin  ,l,I_RHO) * 2.0_RP - vtmp1(:,ADM_kmin+1,l,I_RHO)
+             !$omp do
+             do g = 1, gall
+                !--- bottom boundary
+                vtmp1(g,kmin-1,l,I_VX ) = vtmp1(g,kmin  ,l,I_VX )
+                vtmp1(g,kmin-1,l,I_VY ) = vtmp1(g,kmin  ,l,I_VY )
+                vtmp1(g,kmin-1,l,I_VZ ) = vtmp1(g,kmin  ,l,I_VZ )
+                vtmp1(g,kmin  ,l,I_W  ) = vtmp1(g,kmin+1,l,I_W  )
+                vtmp1(g,kmin-1,l,I_TEM) = vtmp1(g,kmin  ,l,I_TEM) * 2.0_RP - vtmp1(g,kmin+1,l,I_TEM)
+                vtmp1(g,kmin-1,l,I_RHO) = vtmp1(g,kmin  ,l,I_RHO) * 2.0_RP - vtmp1(g,kmin+1,l,I_RHO)
 
-             !--- top boundary
-             vtmp1(:,ADM_kmax+1,l,I_VX ) = vtmp1(:,ADM_kmax,l,I_VX )
-             vtmp1(:,ADM_kmax+1,l,I_VY ) = vtmp1(:,ADM_kmax,l,I_VY )
-             vtmp1(:,ADM_kmax+1,l,I_VZ ) = vtmp1(:,ADM_kmax,l,I_VZ )
-             vtmp1(:,ADM_kmax+1,l,I_W  ) = vtmp1(:,ADM_kmax,l,I_W  )
-             vtmp1(:,ADM_kmax+1,l,I_TEM) = vtmp1(:,ADM_kmax,l,I_TEM) * 2.0_RP - vtmp1(:,ADM_kmax-1,l,I_TEM)
-             vtmp1(:,ADM_kmax+1,l,I_RHO) = vtmp1(:,ADM_kmax,l,I_RHO) * 2.0_RP - vtmp1(:,ADM_kmax-1,l,I_RHO)
-
-             do nq = 1, TRC_VMAX
-                vtmp1(:,ADM_kmin-1,l,vmax+nq) = 2.0_RP * vtmp1(:,ADM_kmin,l,vmax+nq) - vtmp1(:,ADM_kmin+1,l,vmax+nq)
-                vtmp1(:,ADM_kmax+1,l,vmax+nq) = 2.0_RP * vtmp1(:,ADM_kmax,l,vmax+nq) - vtmp1(:,ADM_kmax-1,l,vmax+nq)
+                !--- top boundary
+                vtmp1(g,kmax+1,l,I_VX ) = vtmp1(g,kmax,l,I_VX )
+                vtmp1(g,kmax+1,l,I_VY ) = vtmp1(g,kmax,l,I_VY )
+                vtmp1(g,kmax+1,l,I_VZ ) = vtmp1(g,kmax,l,I_VZ )
+                vtmp1(g,kmax+1,l,I_W  ) = vtmp1(g,kmax,l,I_W  )
+                vtmp1(g,kmax+1,l,I_TEM) = vtmp1(g,kmax,l,I_TEM) * 2.0_RP - vtmp1(g,kmax-1,l,I_TEM)
+                vtmp1(g,kmax+1,l,I_RHO) = vtmp1(g,kmax,l,I_RHO) * 2.0_RP - vtmp1(g,kmax-1,l,I_RHO)
              enddo
+             !$omp end do
 
+             !$omp do
+             do nq = 1, nall
+             do g  = 1, gall
+                vtmp1(g,kmin-1,l,vmax+nq) = 2.0_RP * vtmp1(g,kmin,l,vmax+nq) - vtmp1(g,kmin+1,l,vmax+nq)
+                vtmp1(g,kmax+1,l,vmax+nq) = 2.0_RP * vtmp1(g,kmax,l,vmax+nq) - vtmp1(g,kmax-1,l,vmax+nq)
+             enddo
+             enddo
+             !$omp end do
+
+             !$omp workshare
              vtmp0(:,:,l,:) = vtmp1(:,:,l,:)
+             !$omp end workshare
           elseif( p == 2 ) then
-             !--- bottom boundary
-             vtmp1(:,ADM_kmin-1,l,I_VX ) = vtmp1(:,ADM_kmin  ,l,I_VX )
-             vtmp1(:,ADM_kmin-1,l,I_VY ) = vtmp1(:,ADM_kmin  ,l,I_VY )
-             vtmp1(:,ADM_kmin-1,l,I_VZ ) = vtmp1(:,ADM_kmin  ,l,I_VZ )
-             vtmp1(:,ADM_kmin  ,l,I_W  ) = vtmp1(:,ADM_kmin+1,l,I_W  )
-             vtmp1(:,ADM_kmin-1,l,I_TEM) = vtmp1(:,ADM_kmin  ,l,I_TEM)
-             vtmp1(:,ADM_kmin-1,l,I_RHO) = vtmp1(:,ADM_kmin  ,l,I_RHO)
+             !$omp do
+             do g = 1, gall
+                !--- bottom boundary
+                vtmp1(g,kmin-1,l,I_VX ) = vtmp1(g,kmin  ,l,I_VX )
+                vtmp1(g,kmin-1,l,I_VY ) = vtmp1(g,kmin  ,l,I_VY )
+                vtmp1(g,kmin-1,l,I_VZ ) = vtmp1(g,kmin  ,l,I_VZ )
+                vtmp1(g,kmin  ,l,I_W  ) = vtmp1(g,kmin+1,l,I_W  )
+                vtmp1(g,kmin-1,l,I_TEM) = vtmp1(g,kmin  ,l,I_TEM)
+                vtmp1(g,kmin-1,l,I_RHO) = vtmp1(g,kmin  ,l,I_RHO)
 
-             !--- top boundary
-             vtmp1(:,ADM_kmax+1,l,I_VX ) = vtmp1(:,ADM_kmax,l,I_VX )
-             vtmp1(:,ADM_kmax+1,l,I_VY ) = vtmp1(:,ADM_kmax,l,I_VY )
-             vtmp1(:,ADM_kmax+1,l,I_VZ ) = vtmp1(:,ADM_kmax,l,I_VZ )
-             vtmp1(:,ADM_kmax+1,l,I_W  ) = vtmp1(:,ADM_kmax,l,I_W  )
-             vtmp1(:,ADM_kmax+1,l,I_TEM) = vtmp1(:,ADM_kmax,l,I_TEM)
-             vtmp1(:,ADM_kmax+1,l,I_RHO) = vtmp1(:,ADM_kmax,l,I_RHO)
-
-             do nq = 1, TRC_VMAX
-                vtmp1(:,ADM_kmin-1,l,vmax+nq) = vtmp1(:,ADM_kmin,l,vmax+nq)
-                vtmp1(:,ADM_kmax+1,l,vmax+nq) = vtmp1(:,ADM_kmax,l,vmax+nq)
+                !--- top boundary
+                vtmp1(g,kmax+1,l,I_VX ) = vtmp1(g,kmax,l,I_VX )
+                vtmp1(g,kmax+1,l,I_VY ) = vtmp1(g,kmax,l,I_VY )
+                vtmp1(g,kmax+1,l,I_VZ ) = vtmp1(g,kmax,l,I_VZ )
+                vtmp1(g,kmax+1,l,I_W  ) = vtmp1(g,kmax,l,I_W  )
+                vtmp1(g,kmax+1,l,I_TEM) = vtmp1(g,kmax,l,I_TEM)
+                vtmp1(g,kmax+1,l,I_RHO) = vtmp1(g,kmax,l,I_RHO)
              enddo
+             !$omp end do
 
+             !$omp do
+             do nq = 1, nall
+             do g  = 1, gall
+                vtmp1(g,kmin-1,l,vmax+nq) = vtmp1(g,kmin,l,vmax+nq)
+                vtmp1(g,kmax+1,l,vmax+nq) = vtmp1(g,kmax,l,vmax+nq)
+             enddo
+             enddo
+             !$omp end do
+
+             !$omp workshare
              vtmp0(:,:,l,:) = vtmp1(:,:,l,:)
+             !$omp end workshare
           endif
        enddo
 
-       do k = ADM_kmin, ADM_kmax+1
-       do g = 1, ADM_gall
+       !$omp end parallel
+    enddo
+
+    do l = 1, ADM_lall
+       !$omp parallel default(none),private(g,k), &
+       !$omp shared(l,gall,kmin,kmax,tendency,flux,vtmp0,rhog,rhog_h,Kv_coef,Kv_coef_h, &
+       !$omp        GRD_rdgz,GRD_rdgzh,VMTR_GSGAM2H,CVdry)
+
+       !$omp do
+       do k = kmin, kmax+1
+       do g = 1, gall
           flux(g,k,l,I_VX ) = Kv_coef_h(k) * ( vtmp0(g,k,l,I_VX )-vtmp0(g,k-1,l,I_VX ) ) * GRD_rdgzh(k) * rhog_h(g,k,l)
           flux(g,k,l,I_VY ) = Kv_coef_h(k) * ( vtmp0(g,k,l,I_VY )-vtmp0(g,k-1,l,I_VY ) ) * GRD_rdgzh(k) * rhog_h(g,k,l)
           flux(g,k,l,I_VZ ) = Kv_coef_h(k) * ( vtmp0(g,k,l,I_VZ )-vtmp0(g,k-1,l,I_VZ ) ) * GRD_rdgzh(k) * rhog_h(g,k,l)
@@ -1835,48 +2015,66 @@ contains
           flux(g,k,l,I_RHO) = Kv_coef_h(k) * ( vtmp0(g,k,l,I_RHO)-vtmp0(g,k-1,l,I_RHO) ) * GRD_rdgzh(k) * VMTR_GSGAM2H(g,k,l)
        enddo
        enddo
+       !$omp end do nowait
 
-       do k = ADM_kmin, ADM_kmax
-       do g = 1, ADM_gall
+       !$omp do
+       do k = kmin, kmax
+       do g = 1, gall
           flux(g,k,l,I_W) = Kv_coef(k) * ( vtmp0(g,k+1,l,I_W)-vtmp0(g,k,l,I_W) ) * GRD_rdgz(k) * rhog(g,k,l)
        enddo
        enddo
+       !$omp end do
 
        !--- update tendency
-       do k = ADM_kmin, ADM_kmax
-       do g = 1, ADM_gall
-          tendency(g,k,l,I_RHOG    ) = tendency(g,k,l,I_RHOG    ) + ( flux(g,k+1,l,I_RHO) - flux(g,k,l,I_RHO) ) * GRD_rdgz(k)
-          tendency(g,k,l,I_RHOGVX  ) = tendency(g,k,l,I_RHOGVX  ) + ( flux(g,k+1,l,I_VX ) - flux(g,k,l,I_VX ) ) * GRD_rdgz(k)
-          tendency(g,k,l,I_RHOGVY  ) = tendency(g,k,l,I_RHOGVY  ) + ( flux(g,k+1,l,I_VY ) - flux(g,k,l,I_VY ) ) * GRD_rdgz(k)
-          tendency(g,k,l,I_RHOGVZ  ) = tendency(g,k,l,I_RHOGVZ  ) + ( flux(g,k+1,l,I_VZ ) - flux(g,k,l,I_VZ ) ) * GRD_rdgz(k)
-          tendency(g,k,l,I_RHOGE   ) = tendency(g,k,l,I_RHOGE   ) + ( flux(g,k+1,l,I_TEM) - flux(g,k,l,I_TEM) ) * GRD_rdgz(k)
+       !$omp do
+       do k = kmin, kmax
+       do g = 1, gall
+          tendency(g,k,l,I_RHOG  ) = tendency(g,k,l,I_RHOG  ) + ( flux(g,k+1,l,I_RHO) - flux(g,k,l,I_RHO) ) * GRD_rdgz(k)
+          tendency(g,k,l,I_RHOGVX) = tendency(g,k,l,I_RHOGVX) + ( flux(g,k+1,l,I_VX ) - flux(g,k,l,I_VX ) ) * GRD_rdgz(k)
+          tendency(g,k,l,I_RHOGVY) = tendency(g,k,l,I_RHOGVY) + ( flux(g,k+1,l,I_VY ) - flux(g,k,l,I_VY ) ) * GRD_rdgz(k)
+          tendency(g,k,l,I_RHOGVZ) = tendency(g,k,l,I_RHOGVZ) + ( flux(g,k+1,l,I_VZ ) - flux(g,k,l,I_VZ ) ) * GRD_rdgz(k)
+          tendency(g,k,l,I_RHOGE ) = tendency(g,k,l,I_RHOGE ) + ( flux(g,k+1,l,I_TEM) - flux(g,k,l,I_TEM) ) * GRD_rdgz(k)
        enddo
        enddo
+       !$omp end do nowait
 
-       do k = ADM_kmin+1, ADM_kmax
-       do g = 1, ADM_gall
+       !$omp do
+       do k = kmin+1, kmax
+       do g = 1, gall
           tendency(g,k,l,I_RHOGW) = tendency(g,k,l,I_RHOGW) + ( flux(g,k,l,I_W) - flux(g,k-1,l,I_W) ) * GRD_rdgzh(k)
        enddo
        enddo
+       !$omp end do
 
-       if ( TRC_ADV_TYPE /= 'MIURA2004' ) then
-          do nq = 1, TRC_VMAX
-          do k = ADM_kmin, ADM_kmax+1
-          do g = 1, ADM_gall
-             flux(g,k,l,vmax+nq) = Kv_coef_h(k) * ( vtmp0(g,k,l,vmax+nq) - vtmp0(g,k-1,l,vmax+nq) ) * GRD_rdgzh(k)
-          enddo
-          enddo
-          enddo
-
-          do nq = 1, TRC_VMAX
-          do k = ADM_kmin, ADM_kmax
-          do g = 1, ADM_gall
-             tendency_q(g,k,l,nq) = tendency_q(g,k,l,nq) + ( flux(g,k+1,l,vmax+nq) - flux(g,k,l,vmax+nq) ) * GRD_rdgz(k)
-          enddo
-          enddo
-          enddo
-       endif
+       !$omp end parallel
     enddo
+
+    if ( TRC_ADV_TYPE /= 'MIURA2004' ) then
+       do l = 1, ADM_lall
+          !$omp parallel default(none),private(g,k,nq), &
+          !$omp shared(l,gall,kmin,kmax,nall,tendency_q,flux,vtmp0,Kv_coef_h,GRD_rdgz,GRD_rdgzh)
+
+          do nq = 1, nall
+             !$omp do
+             do k = kmin, kmax+1
+             do g = 1, gall
+                flux(g,k,l,vmax+nq) = Kv_coef_h(k) * ( vtmp0(g,k,l,vmax+nq) - vtmp0(g,k-1,l,vmax+nq) ) * GRD_rdgzh(k)
+             enddo
+             enddo
+             !$omp end do
+
+             !$omp do
+             do k = kmin, kmax
+             do g = 1, gall
+                tendency_q(g,k,l,nq) = tendency_q(g,k,l,nq) + ( flux(g,k+1,l,vmax+nq) - flux(g,k,l,vmax+nq) ) * GRD_rdgz(k)
+             enddo
+             enddo
+             !$omp end do
+          enddo
+
+          !$omp end parallel
+       enddo
+    endif
 
     if ( ADM_have_pl ) then
 
@@ -1924,7 +2122,7 @@ contains
                                            + 1.0_RP * vtmp0_pl(:,ADM_kmax-2,:,vmax+nq)
        enddo
 
-       do l = 1, ADM_lall
+       do l = 1, ADM_lall_pl
           do p = 1, 2
              do k = ADM_kmin, ADM_kmax
                 vtmp1_pl(:,k,l,I_VX ) = ( ( vtmp0_pl(:,k+1,l,I_VX )-vtmp0_pl(:,k  ,l,I_VX ) ) * GRD_rdgzh(k+1) &
@@ -2007,7 +2205,7 @@ contains
           vtmp0_pl(:,:,:,:) = vtmp1_pl(:,:,:,:)
 
           do k = ADM_kmin, ADM_kmax+1
-          do g = 1, ADM_gall
+          do g = 1, ADM_gall_pl
              flux_pl(g,k,l,I_VX ) = Kv_coef_h(k) * ( vtmp0_pl(g,k,l,I_VX )-vtmp0_pl(g,k-1,l,I_VX ) ) &
                                   * GRD_rdgzh(k) * rhog_h_pl(g,k,l)
              flux_pl(g,k,l,I_VY ) = Kv_coef_h(k) * ( vtmp0_pl(g,k,l,I_VY )-vtmp0_pl(g,k-1,l,I_VY ) ) &
@@ -2022,7 +2220,7 @@ contains
           enddo
 
           do k = ADM_kmin, ADM_kmax
-          do g = 1, ADM_gall
+          do g = 1, ADM_gall_pl
              flux_pl(g,k,l,I_W) = Kv_coef(k) * ( vtmp0_pl(g,k+1,l,I_W)-vtmp0_pl(g,k,l,I_W) ) &
                                 * GRD_rdgz(k) * rhog_pl(g,k,l)
           enddo
@@ -2030,22 +2228,22 @@ contains
 
           !--- update tendency
           do k = ADM_kmin, ADM_kmax
-          do g = 1, ADM_gall
-             tendency_pl(g,k,l,I_RHOG    ) = tendency_pl(g,k,l,I_RHOG    ) &
-                                           + ( flux_pl(g,k+1,l,I_RHO) - flux_pl(g,k,l,I_RHO) ) * GRD_rdgz(k)
-             tendency_pl(g,k,l,I_RHOGVX  ) = tendency_pl(g,k,l,I_RHOGVX  ) &
-                                           + ( flux_pl(g,k+1,l,I_VX ) - flux_pl(g,k,l,I_VX ) ) * GRD_rdgz(k)
-             tendency_pl(g,k,l,I_RHOGVY  ) = tendency_pl(g,k,l,I_RHOGVY  ) &
-                                           + ( flux_pl(g,k+1,l,I_VY ) - flux_pl(g,k,l,I_VY ) ) * GRD_rdgz(k)
-             tendency_pl(g,k,l,I_RHOGVZ  ) = tendency_pl(g,k,l,I_RHOGVZ  ) &
-                                           + ( flux_pl(g,k+1,l,I_VZ ) - flux_pl(g,k,l,I_VZ ) ) * GRD_rdgz(k)
-             tendency_pl(g,k,l,I_RHOGE   ) = tendency_pl(g,k,l,I_RHOGE   ) &
-                                           + ( flux_pl(g,k+1,l,I_TEM) - flux_pl(g,k,l,I_TEM) ) * GRD_rdgz(k)
+          do g = 1, ADM_gall_pl
+             tendency_pl(g,k,l,I_RHOG  ) = tendency_pl(g,k,l,I_RHOG  ) &
+                                         + ( flux_pl(g,k+1,l,I_RHO) - flux_pl(g,k,l,I_RHO) ) * GRD_rdgz(k)
+             tendency_pl(g,k,l,I_RHOGVX) = tendency_pl(g,k,l,I_RHOGVX) &
+                                         + ( flux_pl(g,k+1,l,I_VX ) - flux_pl(g,k,l,I_VX ) ) * GRD_rdgz(k)
+             tendency_pl(g,k,l,I_RHOGVY) = tendency_pl(g,k,l,I_RHOGVY) &
+                                         + ( flux_pl(g,k+1,l,I_VY ) - flux_pl(g,k,l,I_VY ) ) * GRD_rdgz(k)
+             tendency_pl(g,k,l,I_RHOGVZ) = tendency_pl(g,k,l,I_RHOGVZ) &
+                                         + ( flux_pl(g,k+1,l,I_VZ ) - flux_pl(g,k,l,I_VZ ) ) * GRD_rdgz(k)
+             tendency_pl(g,k,l,I_RHOGE ) = tendency_pl(g,k,l,I_RHOGE ) &
+                                         + ( flux_pl(g,k+1,l,I_TEM) - flux_pl(g,k,l,I_TEM) ) * GRD_rdgz(k)
           enddo
           enddo
 
           do k = ADM_kmin+1, ADM_kmax
-          do g = 1, ADM_gall
+          do g = 1, ADM_gall_pl
              tendency_pl(g,k,l,I_RHOGW) = tendency_pl(g,k,l,I_RHOGW) &
                                         + ( flux_pl(g,k,l,I_W) - flux_pl(g,k-1,l,I_W) ) * GRD_rdgzh(k)
           enddo
@@ -2054,7 +2252,7 @@ contains
           if ( TRC_ADV_TYPE /= 'MIURA2004' ) then
              do nq = 1, TRC_VMAX
              do k = ADM_kmin, ADM_kmax+1
-             do g = 1, ADM_gall
+             do g = 1, ADM_gall_pl
                 flux_pl(g,k,l,vmax+nq) = Kv_coef_h(k) * ( vtmp0_pl(g,k,l,vmax+nq)-vtmp0_pl(g,k-1,l,vmax+nq) ) &
                                        * GRD_rdgzh(k) * rhog_h_pl(g,k,l)
              enddo
@@ -2063,7 +2261,7 @@ contains
 
              do nq = 1, TRC_VMAX
              do k = ADM_kmin, ADM_kmax
-             do g = 1, ADM_gall
+             do g = 1, ADM_gall_pl
                 tendency_q_pl(g,k,l,nq) = tendency_q_pl(g,k,l,nq) &
                                         + ( flux_pl(g,k+1,l,vmax+nq) - flux_pl(g,k,l,vmax+nq) ) * GRD_rdgz(k)
              enddo
@@ -2146,19 +2344,28 @@ contains
     real(RP) :: cnv     (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: cnv_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    integer  :: k, l, p
+    integer  :: gall, kall, kmin, kmax
+
+    integer  :: g, k, l, p
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____numfilter_divdamp',2)
 
+    gall = ADM_gall
+    kall = ADM_kall
+    kmin = ADM_kmin
+    kmax = ADM_kmax
+
     if ( .NOT. NUMFILTER_DOdivdamp ) then
+       !$omp parallel workshare
        gdx    (:,:,:) = 0.0_RP
-       gdx_pl (:,:,:) = 0.0_RP
        gdy    (:,:,:) = 0.0_RP
-       gdy_pl (:,:,:) = 0.0_RP
        gdz    (:,:,:) = 0.0_RP
-       gdz_pl (:,:,:) = 0.0_RP
        gdvz   (:,:,:) = 0.0_RP
+       !$omp end parallel workshare
+       gdx_pl (:,:,:) = 0.0_RP
+       gdy_pl (:,:,:) = 0.0_RP
+       gdz_pl (:,:,:) = 0.0_RP
        gdvz_pl(:,:,:) = 0.0_RP
        call PROF_rapend('____numfilter_divdamp',2)
        return
@@ -2181,8 +2388,10 @@ contains
           call COMM_data_transfer( vtmp2, vtmp2_pl )
 
           !--- note : sign changes
+          !$omp parallel workshare
           vtmp   (:,:,:,:) = -vtmp2   (:,:,:,:)
           vtmp_pl(:,:,:,:) = -vtmp2_pl(:,:,:,:)
+          !$omp end parallel workshare
 
           !--- 2D dinvergence divdamp
           call OPRT_divdamp( vtmp2         (:,:,:,1),   vtmp2_pl         (:,:,:,1), & ! [OUT]
@@ -2197,9 +2406,18 @@ contains
     endif
 
     !--- X coeffcient
-    gdx(:,:,:) = divdamp_coef(:,:,:) * vtmp2(:,:,:,1)
-    gdy(:,:,:) = divdamp_coef(:,:,:) * vtmp2(:,:,:,2)
-    gdz(:,:,:) = divdamp_coef(:,:,:) * vtmp2(:,:,:,3)
+    do l = 1, ADM_lall
+       !$omp parallel do default(none),private(g,k), &
+       !$omp shared(l,gall,kall,gdx,gdy,gdz,divdamp_coef,vtmp2)
+       do k = 1, kall
+       do g = 1, gall
+          gdx(g,k,l) = divdamp_coef(g,k,l) * vtmp2(g,k,l,1)
+          gdy(g,k,l) = divdamp_coef(g,k,l) * vtmp2(g,k,l,2)
+          gdz(g,k,l) = divdamp_coef(g,k,l) * vtmp2(g,k,l,3)
+       enddo
+       enddo
+       !$omp end parallel do
+    enddo
 
     if ( ADM_have_pl ) then
        gdx_pl(:,:,:) = divdamp_coef_pl(:,:,:) * vtmp2_pl(:,:,:,1)
@@ -2221,12 +2439,26 @@ contains
                                   I_SRC_default                    ) ! [IN]
 
        do l = 1, ADM_lall
-          do k = ADM_kmin+1, ADM_kmax
-             gdvz(:,k,l) = divdamp_coef_v * ( cnv(:,k,l) - cnv(:,k-1,l) ) * GRD_rdgzh(k)
+          !$omp parallel default(none),private(g,k), &
+          !$omp shared(l,gall,kmin,kmax,gdvz,cnv,GRD_rdgzh,divdamp_coef_v)
+
+          !$omp do
+          do k = kmin+1, kmax
+          do g = 1, gall
+             gdvz(g,k,l) = divdamp_coef_v * ( cnv(g,k,l) - cnv(g,k-1,l) ) * GRD_rdgzh(k)
           enddo
-          gdvz(:,ADM_kmin-1,l) = 0.0_RP
-          gdvz(:,ADM_kmin  ,l) = 0.0_RP
-          gdvz(:,ADM_kmax+1,l) = 0.0_RP
+          enddo
+          !$omp end do nowait
+
+          !$omp do
+          do g = 1, gall
+             gdvz(g,kmin-1,l) = 0.0_RP
+             gdvz(g,kmin  ,l) = 0.0_RP
+             gdvz(g,kmax+1,l) = 0.0_RP
+          enddo
+          !$omp end do
+
+          !$omp end parallel
        enddo
 
        if ( ADM_have_pl ) then
@@ -2241,7 +2473,9 @@ contains
        endif
 
     else
+       !$omp parallel workshare
        gdvz   (:,:,:) = 0.0_RP
+       !$omp end parallel workshare
        gdvz_pl(:,:,:) = 0.0_RP
     endif
 
@@ -2296,17 +2530,24 @@ contains
     real(RP) :: vtmp2   (ADM_gall   ,ADM_kall,ADM_lall   ,3)
     real(RP) :: vtmp2_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3)
 
-    integer  :: p
+    integer  :: gall, kall
+
+    integer  :: g, k, l, p
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____numfilter_divdamp_2d',2)
 
+    gall = ADM_gall
+    kall = ADM_kall
+
     if ( .NOT. NUMFILTER_DOdivdamp_2d ) then
+       !$omp parallel workshare
        gdx   (:,:,:) = 0.0_RP
-       gdx_pl(:,:,:) = 0.0_RP
        gdy   (:,:,:) = 0.0_RP
-       gdy_pl(:,:,:) = 0.0_RP
        gdz   (:,:,:) = 0.0_RP
+       !$omp end parallel workshare
+       gdx_pl(:,:,:) = 0.0_RP
+       gdy_pl(:,:,:) = 0.0_RP
        gdz_pl(:,:,:) = 0.0_RP
        call PROF_rapend('____numfilter_divdamp_2d',2)
        return
@@ -2328,7 +2569,9 @@ contains
           call COMM_data_transfer(vtmp2,vtmp2_pl)
 
           !--- note : sign changes
+          !$omp parallel workshare
           vtmp   (:,:,:,:) = -vtmp2   (:,:,:,:)
+          !$omp end parallel workshare
           vtmp_pl(:,:,:,:) = -vtmp2_pl(:,:,:,:)
 
           !--- 2D dinvergence divdamp
@@ -2345,9 +2588,18 @@ contains
     endif
 
     !--- X coeffcient
-    gdx(:,:,:) = divdamp_2d_coef(:,:,:) * vtmp2(:,:,:,1)
-    gdy(:,:,:) = divdamp_2d_coef(:,:,:) * vtmp2(:,:,:,2)
-    gdz(:,:,:) = divdamp_2d_coef(:,:,:) * vtmp2(:,:,:,3)
+    do l = 1, ADM_lall
+       !$omp parallel do default(none),private(g,k), &
+       !$omp shared(l,gall,kall,gdx,gdy,gdz,divdamp_2d_coef,vtmp2)
+       do k = 1, kall
+       do g = 1, gall
+          gdx(g,k,l) = divdamp_2d_coef(g,k,l) * vtmp2(g,k,l,1)
+          gdy(g,k,l) = divdamp_2d_coef(g,k,l) * vtmp2(g,k,l,2)
+          gdz(g,k,l) = divdamp_2d_coef(g,k,l) * vtmp2(g,k,l,3)
+       enddo
+       enddo
+       !$omp end parallel do
+    enddo
 
     if ( ADM_have_pl ) then
        gdx_pl(:,:,:) = divdamp_2d_coef_pl(:,:,:) * vtmp2_pl(:,:,:,1)
@@ -2397,15 +2649,20 @@ contains
     real(RP), parameter :: ggamma_h = 1.0_RP / 16.0_RP / 10.0_RP
     integer,  parameter :: itelim = 80
 
+    integer  :: gall, kall
+
     integer  :: p, ite
-    integer  :: k, l
+    integer  :: g, k, l
     !---------------------------------------------------------------------------
+
+    gall = ADM_gall
+    kall = ADM_kall
 
     do ite = 1, itelim
 
+       !$omp parallel workshare
        vtmp(:,:,:,1) = s(:,:,:)
-
-       vtmp_pl(:,:,:,:) = 0.0_RP
+       !$omp end parallel workshare
 
        if ( ADM_have_pl ) then
           vtmp_pl(:,:,:,1) = s_pl(:,:,:)
@@ -2414,40 +2671,55 @@ contains
        call COMM_data_transfer( vtmp, vtmp_pl )
 
        do p = 1, 2
+          !$omp parallel workshare
           vtmp2   (:,:,:,:) = 0.0_RP
+          !$omp end parallel workshare
           vtmp2_pl(:,:,:,:) = 0.0_RP
 
           call OPRT_laplacian( vtmp2        (:,:,:,1), vtmp2_pl        (:,:,:,1), & ! [OUT]
                                vtmp         (:,:,:,1), vtmp_pl         (:,:,:,1), & ! [IN]
                                OPRT_coef_lap(:,:,:),   OPRT_coef_lap_pl(:,:)      ) ! [IN]
 
+          !$omp parallel workshare
           vtmp   (:,:,:,:) = -vtmp2   (:,:,:,:)
+          !$omp end parallel workshare
           vtmp_pl(:,:,:,:) = -vtmp2_pl(:,:,:,:)
 
           call COMM_data_transfer( vtmp, vtmp_pl )
        enddo
 
        do l = 1, ADM_lall
-       do k = 1, ADM_kall
-          s(:,k,l) = s(:,k,l) - ggamma_h * GMTR_area(:,l)**2 * vtmp(:,k,l,1)
-       enddo
+          !$omp parallel do default(none),private(g,k), &
+          !$omp shared(l,gall,kall,s,vtmp,GMTR_area)
+          do k = 1, kall
+          do g = 1, gall
+             s(g,k,l) = s(g,k,l) - ggamma_h * GMTR_area(g,l)**2 * vtmp(g,k,l,1)
+          enddo
+          enddo
+          !$omp end parallel do
        enddo
 
        if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
-             s_pl(:,k,l) = s_pl(:,k,l) - ggamma_h * GMTR_area_pl(:,l)**2 * vtmp_pl(:,k,l,1)
+          do g = 1, ADM_gall_pl
+             s_pl(g,k,l) = s_pl(g,k,l) - ggamma_h * GMTR_area_pl(g,l)**2 * vtmp_pl(g,k,l,1)
+          enddo
           enddo
           enddo
        endif
     enddo
 
+    !$omp parallel workshare
     vtmp   (:,:,:,1) = s   (:,:,:)
+    !$omp end parallel workshare
     vtmp_pl(:,:,:,1) = s_pl(:,:,:)
 
     call COMM_data_transfer( vtmp, vtmp_pl )
 
+    !$omp parallel workshare
     s   (:,:,:) = vtmp   (:,:,:,1)
+    !$omp end parallel workshare
     s_pl(:,:,:) = vtmp_pl(:,:,:,1)
 
     return

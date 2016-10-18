@@ -65,7 +65,7 @@ contains
        grhogvz, grhogvz_pl, &
        grhogw,  grhogw_pl   )
     use mod_const, only: &
-       OHM => CONST_OHM
+       CONST_OHM
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -74,16 +74,15 @@ contains
        ADM_gall_pl, &
        ADM_kall,    &
        ADM_kmin,    &
-       ADM_kmax,    &
-       ADM_KNONE
+       ADM_kmax
     use mod_grd, only: &
-       GRD_rscale, &
-       GRD_XDIR,   &
-       GRD_YDIR,   &
-       GRD_ZDIR,   &
-       GRD_x,      &
-       GRD_x_pl,   &
-       GRD_cfac,   &
+       XDIR => GRD_XDIR, &
+       YDIR => GRD_YDIR, &
+       ZDIR => GRD_ZDIR, &
+       GRD_rscale,       &
+       GRD_x,            &
+       GRD_x_pl,         &
+       GRD_cfac,         &
        GRD_dfac
     use mod_vmtr, only: &
        VMTR_C2Wfact,    &
@@ -136,35 +135,54 @@ contains
     real(RP) :: grhogwc   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: grhogwc_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
+    integer  :: gall, kmin, kmax
     real(RP) :: prd, wc
+    real(RP) :: ohm, rscale, alpha
 
-    integer :: g, k, l
+    integer  :: g, k, l
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____src_advection_conv_m',2)
 
+    gall = ADM_gall
+    kmin = ADM_kmin
+    kmax = ADM_kmax
+
+    ohm    = CONST_OHM
+    rscale = GRD_rscale
+    alpha  = real(NON_HYDRO_ALPHA,kind=RP)
+
     !---< merge horizontal velocity & vertical velocity >
 
     do l = 1, ADM_lall
-       do k = ADM_kmin,ADM_kmax
-       do g = 1, ADM_gall
+       !$omp parallel default(none),private(g,k,wc), &
+       !$omp shared(l,gall,kmin,kmax,vvx,vvy,vvz,vx,vy,vz,w,GRD_cfac,GRD_dfac,GRD_x,rscale)
+
+       !$omp do
+       do k = kmin,kmax
+       do g = 1, gall
           wc = GRD_cfac(k) * w(g,k+1,l) &
              + GRD_dfac(k) * w(g,k  ,l)
 
-          vvx(g,k,l) = vx(g,k,l) + wc * GRD_x(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
-          vvy(g,k,l) = vy(g,k,l) + wc * GRD_x(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
-          vvz(g,k,l) = vz(g,k,l) + wc * GRD_x(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
+          vvx(g,k,l) = vx(g,k,l) + wc * GRD_x(g,1,l,XDIR) / rscale
+          vvy(g,k,l) = vy(g,k,l) + wc * GRD_x(g,1,l,YDIR) / rscale
+          vvz(g,k,l) = vz(g,k,l) + wc * GRD_x(g,1,l,ZDIR) / rscale
        enddo
        enddo
+       !$omp end do nowait
 
-       do g = 1, ADM_gall
-          vvx(g,ADM_kmin-1,l) = 0.0_RP
-          vvx(g,ADM_kmax+1,l) = 0.0_RP
-          vvy(g,ADM_kmin-1,l) = 0.0_RP
-          vvy(g,ADM_kmax+1,l) = 0.0_RP
-          vvz(g,ADM_kmin-1,l) = 0.0_RP
-          vvz(g,ADM_kmax+1,l) = 0.0_RP
+       !$omp do
+       do g = 1, gall
+          vvx(g,kmin-1,l) = 0.0_RP
+          vvx(g,kmax+1,l) = 0.0_RP
+          vvy(g,kmin-1,l) = 0.0_RP
+          vvy(g,kmax+1,l) = 0.0_RP
+          vvz(g,kmin-1,l) = 0.0_RP
+          vvz(g,kmax+1,l) = 0.0_RP
        enddo
+       !$omp end do
+
+       !$omp end parallel
     enddo
 
     if ( ADM_have_pl ) then
@@ -174,9 +192,9 @@ contains
              wc = GRD_cfac(k) * w_pl(g,k+1,l) &
                 + GRD_dfac(k) * w_pl(g,k  ,l)
 
-             vvx_pl(g,k,l) = vx_pl(g,k,l) + wc * GRD_x_pl(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
-             vvy_pl(g,k,l) = vy_pl(g,k,l) + wc * GRD_x_pl(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
-             vvz_pl(g,k,l) = vz_pl(g,k,l) + wc * GRD_x_pl(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
+             vvx_pl(g,k,l) = vx_pl(g,k,l) + wc * GRD_x_pl(g,1,l,XDIR) / rscale
+             vvy_pl(g,k,l) = vy_pl(g,k,l) + wc * GRD_x_pl(g,1,l,YDIR) / rscale
+             vvz_pl(g,k,l) = vz_pl(g,k,l) + wc * GRD_x_pl(g,1,l,ZDIR) / rscale
           enddo
           enddo
 
@@ -219,47 +237,61 @@ contains
 
 
     do l = 1, ADM_lall
+       !$omp parallel default(none),private(g,k,prd), &
+       !$omp shared(l,gall,kmin,kmax,grhogvx,grhogvy,grhogvz,grhogw,grhogwc,       &
+       !$omp        dvvx,dvvy,dvvz,vvx,vvy,rhog,GRD_x,VMTR_C2Wfact,ohm,rscale,alpha)
+
        !---< coriolis force >
-       do k = ADM_kmin, ADM_kmax
-       do g = 1, ADM_gall
-          dvvx(g,k,l) = dvvx(g,k,l) - 2.0_RP * rhog(g,k,l) * ( -OHM * vvy(g,k,l) )
-          dvvy(g,k,l) = dvvy(g,k,l) - 2.0_RP * rhog(g,k,l) * (  OHM * vvx(g,k,l) )
+       !$omp do
+       do k = kmin, kmax
+       do g = 1, gall
+          dvvx(g,k,l) = dvvx(g,k,l) - 2.0_RP * rhog(g,k,l) * ( -ohm * vvy(g,k,l) )
+          dvvy(g,k,l) = dvvy(g,k,l) - 2.0_RP * rhog(g,k,l) * (  ohm * vvx(g,k,l) )
        enddo
        enddo
+       !$omp end do
 
        !---< horizontalize & separate vertical velocity >
-       do k = ADM_kmin, ADM_kmax
-       do g = 1, ADM_gall
-          prd = dvvx(g,k,l) * GRD_x(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale &
-              + dvvy(g,k,l) * GRD_x(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale &
-              + dvvz(g,k,l) * GRD_x(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
+       !$omp do
+       do k = kmin, kmax
+       do g = 1, gall
+          prd = dvvx(g,k,l) * GRD_x(g,1,l,XDIR) / rscale &
+              + dvvy(g,k,l) * GRD_x(g,1,l,YDIR) / rscale &
+              + dvvz(g,k,l) * GRD_x(g,1,l,ZDIR) / rscale
 
-          grhogvx(g,k,l) = dvvx(g,k,l) - prd * GRD_x(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
-          grhogvy(g,k,l) = dvvy(g,k,l) - prd * GRD_x(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
-          grhogvz(g,k,l) = dvvz(g,k,l) - prd * GRD_x(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
+          grhogvx(g,k,l) = dvvx(g,k,l) - prd * GRD_x(g,1,l,XDIR) / rscale
+          grhogvy(g,k,l) = dvvy(g,k,l) - prd * GRD_x(g,1,l,YDIR) / rscale
+          grhogvz(g,k,l) = dvvz(g,k,l) - prd * GRD_x(g,1,l,ZDIR) / rscale
 
-          grhogwc(g,k,l) = prd * real(NON_HYDRO_ALPHA,kind=RP)
+          grhogwc(g,k,l) = prd * alpha
        enddo
        enddo
+       !$omp end do
 
-       do k = ADM_kmin+1, ADM_kmax
-       do g = 1, ADM_gall
+       !$omp do
+       do k = kmin+1, kmax
+       do g = 1, gall
           grhogw(g,k,l) = ( VMTR_C2Wfact(g,k,1,l) * grhogwc(g,k  ,l) &
                           + VMTR_C2Wfact(g,k,2,l) * grhogwc(g,k-1,l) )
        enddo
        enddo
+       !$omp end do nowait
 
-       do g = 1, ADM_gall
-          grhogvx(g,ADM_kmin-1,l) = 0.0_RP
-          grhogvx(g,ADM_kmax+1,l) = 0.0_RP
-          grhogvy(g,ADM_kmin-1,l) = 0.0_RP
-          grhogvy(g,ADM_kmax+1,l) = 0.0_RP
-          grhogvz(g,ADM_kmin-1,l) = 0.0_RP
-          grhogvz(g,ADM_kmax+1,l) = 0.0_RP
-          grhogw (g,ADM_kmin-1,l) = 0.0_RP
-          grhogw (g,ADM_kmin  ,l) = 0.0_RP
-          grhogw (g,ADM_kmax+1,l) = 0.0_RP
+       !$omp do
+       do g = 1, gall
+          grhogvx(g,kmin-1,l) = 0.0_RP
+          grhogvx(g,kmax+1,l) = 0.0_RP
+          grhogvy(g,kmin-1,l) = 0.0_RP
+          grhogvy(g,kmax+1,l) = 0.0_RP
+          grhogvz(g,kmin-1,l) = 0.0_RP
+          grhogvz(g,kmax+1,l) = 0.0_RP
+          grhogw (g,kmin-1,l) = 0.0_RP
+          grhogw (g,kmin  ,l) = 0.0_RP
+          grhogw (g,kmax+1,l) = 0.0_RP
        enddo
+       !$omp end do
+
+       !$omp end parallel
     enddo
 
     if ( ADM_have_pl ) then
@@ -267,21 +299,21 @@ contains
           !---< coriolis force >
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
-             dvvx_pl(g,k,l) = dvvx_pl(g,k,l) - 2.0_RP * rhog_pl(g,k,l) * ( -OHM * vvy_pl(g,k,l) )
-             dvvy_pl(g,k,l) = dvvy_pl(g,k,l) - 2.0_RP * rhog_pl(g,k,l) * (  OHM * vvx_pl(g,k,l) )
+             dvvx_pl(g,k,l) = dvvx_pl(g,k,l) - 2.0_RP * rhog_pl(g,k,l) * ( -ohm * vvy_pl(g,k,l) )
+             dvvy_pl(g,k,l) = dvvy_pl(g,k,l) - 2.0_RP * rhog_pl(g,k,l) * (  ohm * vvx_pl(g,k,l) )
           enddo
           enddo
 
           !---< horizontalize & separate vertical velocity >
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
-             prd = dvvx_pl(g,k,l) * GRD_x_pl(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale &
-                 + dvvy_pl(g,k,l) * GRD_x_pl(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale &
-                 + dvvz_pl(g,k,l) * GRD_x_pl(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
+             prd = dvvx_pl(g,k,l) * GRD_x_pl(g,1,l,XDIR) / rscale &
+                 + dvvy_pl(g,k,l) * GRD_x_pl(g,1,l,YDIR) / rscale &
+                 + dvvz_pl(g,k,l) * GRD_x_pl(g,1,l,ZDIR) / rscale
 
-             grhogvx_pl(g,k,l) = dvvx_pl(g,k,l) - prd * GRD_x_pl(g,ADM_KNONE,l,GRD_XDIR) / GRD_rscale
-             grhogvy_pl(g,k,l) = dvvy_pl(g,k,l) - prd * GRD_x_pl(g,ADM_KNONE,l,GRD_YDIR) / GRD_rscale
-             grhogvz_pl(g,k,l) = dvvz_pl(g,k,l) - prd * GRD_x_pl(g,ADM_KNONE,l,GRD_ZDIR) / GRD_rscale
+             grhogvx_pl(g,k,l) = dvvx_pl(g,k,l) - prd * GRD_x_pl(g,1,l,XDIR) / rscale
+             grhogvy_pl(g,k,l) = dvvy_pl(g,k,l) - prd * GRD_x_pl(g,1,l,YDIR) / rscale
+             grhogvz_pl(g,k,l) = dvvz_pl(g,k,l) - prd * GRD_x_pl(g,1,l,ZDIR) / rscale
 
              grhogwc_pl(g,k,l) = prd * real(NON_HYDRO_ALPHA,kind=RP)
           enddo
@@ -367,49 +399,61 @@ contains
     real(RP) :: rhogwscl    (ADM_gall   ,ADM_kall,ADM_lall   ) ! scalar * rho*w  ( G^1/2 x gam2 )
     real(RP) :: rhogwscl_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    integer :: g, k, l
+    integer  :: gall, kall, kmin, kmax
+
+    integer  :: g, k, l
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____src_advection_conv',2)
 
+    gall = ADM_gall
+    kall = ADM_kall
+    kmin = ADM_kmin
+    kmax = ADM_kmax
+
     ! rhogvh * scl
-!OCL SERIAL
     do l = 1, ADM_lall
-!OCL PARALLEL
-    do k = 1, ADM_kall
-    do g = 1, ADM_gall
-       rhogvxscl(g,k,l) = rhogvx(g,k,l) * scl(g,k,l)
-       rhogvyscl(g,k,l) = rhogvy(g,k,l) * scl(g,k,l)
-       rhogvzscl(g,k,l) = rhogvz(g,k,l) * scl(g,k,l)
-    enddo
-    enddo
+       !$omp parallel do default(none),private(g,k), &
+       !$omp shared(l,gall,kall,rhogvxscl,rhogvyscl,rhogvzscl,rhogvx,rhogvy,rhogvz,scl)
+       do k = 1, kall
+       do g = 1, gall
+          rhogvxscl(g,k,l) = rhogvx(g,k,l) * scl(g,k,l)
+          rhogvyscl(g,k,l) = rhogvy(g,k,l) * scl(g,k,l)
+          rhogvzscl(g,k,l) = rhogvz(g,k,l) * scl(g,k,l)
+       enddo
+       enddo
+       !$omp end parallel do
     enddo
 
     if ( ADM_have_pl ) then
-       do l = 1, ADM_lall_pl
-       do k = 1, ADM_kall
-       do g = 1, ADM_gall_pl
-          rhogvxscl_pl(g,k,l) = rhogvx_pl(g,k,l) * scl_pl(g,k,l)
-          rhogvyscl_pl(g,k,l) = rhogvy_pl(g,k,l) * scl_pl(g,k,l)
-          rhogvzscl_pl(g,k,l) = rhogvz_pl(g,k,l) * scl_pl(g,k,l)
-       enddo
-       enddo
-       enddo
+       rhogvxscl_pl(:,:,:) = rhogvx_pl(:,:,:) * scl_pl(:,:,:)
+       rhogvyscl_pl(:,:,:) = rhogvy_pl(:,:,:) * scl_pl(:,:,:)
+       rhogvzscl_pl(:,:,:) = rhogvz_pl(:,:,:) * scl_pl(:,:,:)
     endif
 
     ! rhogw * scl at half level
     if ( fluxtype == I_SRC_default ) then
 
        do l = 1, ADM_lall
-          do k = ADM_kmin, ADM_kmax+1
-          do g = 1, ADM_gall
+          !$omp parallel default(none),private(g,k), &
+          !$omp shared(l,gall,kmin,kmax,rhogwscl,rhogw,GRD_afac,GRD_bfac,scl)
+
+          !$omp do
+          do k = kmin, kmax+1
+          do g = 1, gall
              rhogwscl(g,k,l) = rhogw(g,k,l) * ( GRD_afac(k) * scl(g,k,  l) &
                                               + GRD_bfac(k) * scl(g,k-1,l) )
           enddo
           enddo
-          do g = 1, ADM_gall
-             rhogwscl(g,ADM_kmin-1,l) = 0.0_RP
+          !$omp end do nowait
+
+          !$omp do
+          do g = 1, gall
+             rhogwscl(g,kmin-1,l) = 0.0_RP
           enddo
+          !$omp end do
+
+          !$omp end parallel
        enddo
 
        if ( ADM_have_pl ) then
@@ -428,24 +472,12 @@ contains
 
     elseif( fluxtype == I_SRC_horizontal ) then
 
-!OCL SERIAL
-       do l = 1, ADM_lall
-!OCL PARALLEL
-       do k = 1, ADM_kall
-       do g = 1, ADM_gall
-          rhogwscl(g,k,l) = 0.0_RP
-       enddo
-       enddo
-       enddo
+       !$omp parallel workshare
+       rhogwscl(:,:,:) = 0.0_RP
+       !$omp end parallel workshare
 
        if ( ADM_have_pl ) then
-          do l = 1, ADM_lall_pl
-          do k = 1, ADM_kall
-          do g = 1, ADM_gall_pl
-             rhogwscl_pl(g,k,l) = 0.0_RP
-          enddo
-          enddo
-          enddo
+          rhogwscl_pl(:,:,:) = 0.0_RP
        endif
 
     endif
@@ -530,10 +562,17 @@ contains
 
     real(RP) :: vertical_flag
 
-    integer :: g, k, l
+    integer  :: gall, kall, kmin, kmax
+
+    integer  :: g, k, l
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____src_flux_convergence',2)
+
+    gall = ADM_gall
+    kall = ADM_kall
+    kmin = ADM_kmin
+    kmax = ADM_kmax
 
     if ( fluxtype == I_SRC_default ) then ! Default
        vertical_flag = 1.0_RP
@@ -542,18 +581,25 @@ contains
     endif
 
     do l = 1, ADM_lall
+       !$omp parallel default(none),private(g,k), &
+       !$omp shared(l,gall,kall,kmin,kmax,rhogvx_vm,rhogvy_vm,rhogvz_vm,rhogw_vmh,vertical_flag, &
+       !$omp        rhogvx,rhogvy,rhogvz,rhogw,VMTR_RGSQRTH,VMTR_RGAM,VMTR_RGAMH,VMTR_C2WfactGz)
+
        !--- Horizontal flux
-       do k = 1, ADM_kall
-       do g = 1, ADM_gall
+       !$omp do
+       do k = 1, kall
+       do g = 1, gall
           rhogvx_vm(g,k,l) = rhogvx(g,k,l) * VMTR_RGAM(g,k,l)
           rhogvy_vm(g,k,l) = rhogvy(g,k,l) * VMTR_RGAM(g,k,l)
           rhogvz_vm(g,k,l) = rhogvz(g,k,l) * VMTR_RGAM(g,k,l)
        enddo
        enddo
+       !$omp end do nowait
 
        !--- Vertical flux
-       do k = ADM_kmin+1, ADM_kmax
-       do g = 1, ADM_gall
+       !$omp do
+       do k = kmin+1, kmax
+       do g = 1, gall
           rhogw_vmh(g,k,l) = ( VMTR_C2WfactGz(g,k,1,l) * rhogvx(g,k  ,l) &
                              + VMTR_C2WfactGz(g,k,2,l) * rhogvx(g,k-1,l) &
                              + VMTR_C2WfactGz(g,k,3,l) * rhogvy(g,k  ,l) &
@@ -564,10 +610,16 @@ contains
                            + vertical_flag * rhogw(g,k,l) * VMTR_RGSQRTH(g,k,l) ! vertical   contribution
        enddo
        enddo
-       do g = 1, ADM_gall
-          rhogw_vmh(g,ADM_kmin  ,l) = 0.0_RP
-          rhogw_vmh(g,ADM_kmax+1,l) = 0.0_RP
+       !$omp end do nowait
+
+       !$omp do
+       do g = 1, gall
+          rhogw_vmh(g,kmin  ,l) = 0.0_RP
+          rhogw_vmh(g,kmax+1,l) = 0.0_RP
        enddo
+       !$omp end do
+
+       !$omp end parallel
     enddo
 
     if ( ADM_have_pl ) then
@@ -610,17 +662,26 @@ contains
 
     !--- Total flux convergence
     do l = 1, ADM_lall
-       do k = ADM_kmin, ADM_kmax
-       do g = 1, ADM_gall
+       !$omp parallel default(none),private(g,k), &
+       !$omp shared(l,gall,kmin,kmax,grhog,div_rhogvh,rhogw_vmh,GRD_rdgz)
+
+       !$omp do
+       do k = kmin, kmax
+       do g = 1, gall
           grhog(g,k,l) = - div_rhogvh(g,k,l) &
                          - ( rhogw_vmh(g,k+1,l)-rhogw_vmh(g,k,l) ) * GRD_rdgz(k)
        enddo
        enddo
+       !$omp end do nowait
 
-       do g = 1, ADM_gall
-          grhog(g,ADM_kmin-1,l) = 0.0_RP
-          grhog(g,ADM_kmax+1,l) = 0.0_RP
+       !$omp do
+       do g = 1, gall
+          grhog(g,kmin-1,l) = 0.0_RP
+          grhog(g,kmax+1,l) = 0.0_RP
        enddo
+       !$omp end do
+
+       !$omp end parallel
     enddo
 
     if ( ADM_have_pl ) then
@@ -662,10 +723,10 @@ contains
        ADM_kmax,    &
        ADM_nxyz
     use mod_grd, only: &
-       GRD_XDIR, &
-       GRD_YDIR, &
-       GRD_ZDIR, &
-       GRD_rdgz, &
+       XDIR => GRD_XDIR, &
+       YDIR => GRD_YDIR, &
+       ZDIR => GRD_ZDIR, &
+       GRD_rdgz,         &
        GRD_rdgzh
     use mod_oprt, only: &
        OPRT_gradient,          &
@@ -700,31 +761,26 @@ contains
     real(RP) :: P_vmh   (ADM_gall   ,ADM_kall,ADM_lall   ,ADM_nxyz)
     real(RP) :: P_vmh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,ADM_nxyz)
 
-    integer :: g, k, l, d
+    integer  :: gall, kmin, kmax, nxyz
+
+    integer  :: g, k, l, d
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____src_pres_gradient',2)
 
+    gall = ADM_gall
+    kmin = ADM_kmin
+    kmax = ADM_kmax
+    nxyz = ADM_nxyz
+
     !---< horizontal gradient, horizontal contribution >---
 
-!OCL SERIAL
-    do l = 1, ADM_lall
-!OCL PARALLEL
-    do k = 1, ADM_kall
-    do g = 1, ADM_gall
-       P_vm(g,k,l) = P(g,k,l) * VMTR_RGAM(g,k,l)
-    enddo
-    enddo
-    enddo
+    !$omp parallel workshare
+    P_vm(:,:,:) = P(:,:,:) * VMTR_RGAM(:,:,:)
+    !$omp end parallel workshare
 
     if ( ADM_have_pl) then
-       do l = 1, ADM_lall_pl
-       do k = 1, ADM_kall
-       do g = 1, ADM_gall_pl
-          P_vm_pl(g,k,l) = P_pl(g,k,l) * VMTR_RGAM_pl(g,k,l)
-       enddo
-       enddo
-       enddo
+       P_vm_pl(:,:,:) = P_pl(:,:,:) * VMTR_RGAM_pl(:,:,:)
     endif
 
     call OPRT_gradient( Pgrad         (:,:,:,:), Pgrad_pl         (:,:,:,:), & ! [OUT]
@@ -733,54 +789,61 @@ contains
 
     !---< horizontal gradient, vertical contribution >---
 
-!OCL SERIAL
     do l = 1, ADM_lall
-!OCL PARALLEL
-    do k = ADM_kmin, ADM_kmax+1
-    do g = 1, ADM_gall
-       P_vmh(g,k,l,GRD_XDIR) = ( VMTR_C2WfactGz(g,k,1,l) * P(g,k  ,l) &
-                               + VMTR_C2WfactGz(g,k,2,l) * P(g,k-1,l) ) * VMTR_RGAMH(g,k,l)
-       P_vmh(g,k,l,GRD_YDIR) = ( VMTR_C2WfactGz(g,k,3,l) * P(g,k  ,l) &
-                               + VMTR_C2WfactGz(g,k,4,l) * P(g,k-1,l) ) * VMTR_RGAMH(g,k,l)
-       P_vmh(g,k,l,GRD_ZDIR) = ( VMTR_C2WfactGz(g,k,5,l) * P(g,k  ,l) &
-                               + VMTR_C2WfactGz(g,k,6,l) * P(g,k-1,l) ) * VMTR_RGAMH(g,k,l)
-    enddo
-    enddo
-    enddo
+       !$omp parallel default(none),private(g,k,d), &
+       !$omp shared(l,gall,kmin,kmax,nxyz,Pgrad,P_vmh,P,GRD_rdgz,VMTR_C2WfactGz,VMTR_RGAMH)
 
-!OCL SERIAL
-    do d = 1, ADM_nxyz
-    do l = 1, ADM_lall
-!OCL PARALLEL
-       do k = ADM_kmin, ADM_kmax
-       do g = 1, ADM_gall
-          Pgrad(g,k,l,d) = Pgrad(g,k,l,d) + ( P_vmh(g,k+1,l,d) - P_vmh(g,k,l,d) ) * GRD_rdgz(k)
+       !$omp do
+       do k = kmin, kmax+1
+       do g = 1, gall
+          P_vmh(g,k,l,XDIR) = ( VMTR_C2WfactGz(g,k,1,l) * P(g,k  ,l) &
+                              + VMTR_C2WfactGz(g,k,2,l) * P(g,k-1,l) ) * VMTR_RGAMH(g,k,l)
+          P_vmh(g,k,l,YDIR) = ( VMTR_C2WfactGz(g,k,3,l) * P(g,k  ,l) &
+                              + VMTR_C2WfactGz(g,k,4,l) * P(g,k-1,l) ) * VMTR_RGAMH(g,k,l)
+          P_vmh(g,k,l,ZDIR) = ( VMTR_C2WfactGz(g,k,5,l) * P(g,k  ,l) &
+                              + VMTR_C2WfactGz(g,k,6,l) * P(g,k-1,l) ) * VMTR_RGAMH(g,k,l)
        enddo
        enddo
+       !$omp end do
 
-       if ( first_layer_remedy ) then !--- At the lowest layer, do not use the extrapolation value
-          do g = 1, ADM_gall
-             Pgrad(g,ADM_kmin,l,d) = Pgrad(g,ADM_kmin+1,l,d)
+       do d = 1, nxyz
+          !$omp do
+          do k = kmin, kmax
+          do g = 1, gall
+             Pgrad(g,k,l,d) = Pgrad(g,k,l,d) + ( P_vmh(g,k+1,l,d) - P_vmh(g,k,l,d) ) * GRD_rdgz(k)
           enddo
-       endif
+          enddo
+          !$omp end do nowait
 
-       do g = 1, ADM_gall
-          Pgrad(g,ADM_kmin-1,l,d) = 0.0_RP
-          Pgrad(g,ADM_kmax+1,l,d) = 0.0_RP
+          !$omp do
+          do g = 1, gall
+             Pgrad(g,kmin-1,l,d) = 0.0_RP
+             Pgrad(g,kmax+1,l,d) = 0.0_RP
+          enddo
+          !$omp end do
+
+          if ( first_layer_remedy ) then !--- At the lowest layer, do not use the extrapolation value
+             !$omp do
+             do g = 1, gall
+                Pgrad(g,kmin,l,d) = Pgrad(g,kmin+1,l,d)
+             enddo
+             !$omp end do
+          endif
        enddo
-    enddo
+
+       !$omp end parallel
     enddo
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
        do k = ADM_kmin, ADM_kmax+1
        do g = 1, ADM_gall_pl
-          P_vmh_pl(g,k,l,GRD_XDIR) = ( VMTR_C2WfactGz_pl(g,k,1,l) * P_pl(g,k  ,l) &
-                                     + VMTR_C2WfactGz_pl(g,k,2,l) * P_pl(g,k-1,l) ) * VMTR_RGAMH_pl(g,k,l)
-          P_vmh_pl(g,k,l,GRD_YDIR) = ( VMTR_C2WfactGz_pl(g,k,3,l) * P_pl(g,k  ,l) &
-                                     + VMTR_C2WfactGz_pl(g,k,4,l) * P_pl(g,k-1,l) ) * VMTR_RGAMH_pl(g,k,l)
-          P_vmh_pl(g,k,l,GRD_ZDIR) = ( VMTR_C2WfactGz_pl(g,k,5,l) * P_pl(g,k  ,l) &
-                                     + VMTR_C2WfactGz_pl(g,k,6,l) * P_pl(g,k-1,l) ) * VMTR_RGAMH_pl(g,k,l)
+          P_vmh_pl(g,k,l,XDIR) = ( VMTR_C2WfactGz_pl(g,k,1,l) * P_pl(g,k  ,l) &
+                                 + VMTR_C2WfactGz_pl(g,k,2,l) * P_pl(g,k-1,l) ) * VMTR_RGAMH_pl(g,k,l)
+          P_vmh_pl(g,k,l,YDIR) = ( VMTR_C2WfactGz_pl(g,k,3,l) * P_pl(g,k  ,l) &
+                                 + VMTR_C2WfactGz_pl(g,k,4,l) * P_pl(g,k-1,l) ) * VMTR_RGAMH_pl(g,k,l)
+          P_vmh_pl(g,k,l,ZDIR) = ( VMTR_C2WfactGz_pl(g,k,5,l) * P_pl(g,k  ,l) &
+                                 + VMTR_C2WfactGz_pl(g,k,6,l) * P_pl(g,k-1,l) ) * VMTR_RGAMH_pl(g,k,l)
        enddo
        enddo
        enddo
@@ -808,30 +871,37 @@ contains
     endif
 
     !--- horizontalize
-    call OPRT_horizontalize_vec( Pgrad(:,:,:,GRD_XDIR), Pgrad_pl(:,:,:,GRD_XDIR), & ! [INOUT]
-                                 Pgrad(:,:,:,GRD_YDIR), Pgrad_pl(:,:,:,GRD_YDIR), & ! [INOUT]
-                                 Pgrad(:,:,:,GRD_ZDIR), Pgrad_pl(:,:,:,GRD_ZDIR)  ) ! [INOUT]
-
-
+    call OPRT_horizontalize_vec( Pgrad(:,:,:,XDIR), Pgrad_pl(:,:,:,XDIR), & ! [INOUT]
+                                 Pgrad(:,:,:,YDIR), Pgrad_pl(:,:,:,YDIR), & ! [INOUT]
+                                 Pgrad(:,:,:,ZDIR), Pgrad_pl(:,:,:,ZDIR)  ) ! [INOUT]
 
     !---< vertical gradient (half level) >---
 
     if ( gradtype == I_SRC_default ) then
 
        do l = 1, ADM_lall
-          do k = ADM_kmin+1, ADM_kmax
-          do g = 1, ADM_gall
+          !$omp parallel default(none),private(g,k), &
+          !$omp shared(l,gall,kmin,kmax,Pgradw,P,GRD_rdgzh,VMTR_GAM2H,VMTR_RGSGAM2)
+
+          !$omp do
+          do k = kmin+1, kmax
+          do g = 1, gall
              Pgradw(g,k,l) = VMTR_GAM2H(g,k,l) * ( P(g,k  ,l) * VMTR_RGSGAM2(g,k  ,l) &
                                                  - P(g,k-1,l) * VMTR_RGSGAM2(g,k-1,l) &
                                                  ) * GRD_rdgzh(k)
           enddo
           enddo
+          !$omp end do nowait
 
-          do g = 1, ADM_gall
-             Pgradw(g,ADM_kmin-1,l) = 0.0_RP
-             Pgradw(g,ADM_kmin  ,l) = 0.0_RP
-             Pgradw(g,ADM_kmax+1,l) = 0.0_RP
+          !$omp do
+          do g = 1, gall
+             Pgradw(g,kmin-1,l) = 0.0_RP
+             Pgradw(g,kmin  ,l) = 0.0_RP
+             Pgradw(g,kmax+1,l) = 0.0_RP
           enddo
+          !$omp end do
+
+          !$omp end parallel
        enddo
 
        if ( ADM_have_pl ) then
@@ -854,7 +924,9 @@ contains
 
     elseif( gradtype == I_SRC_horizontal ) then
 
+       !$omp parallel workshare
        Pgradw(:,:,:) = 0.0_RP
+       !$omp end parallel workshare
        if ( ADM_have_pl ) then
           Pgradw_pl(:,:,:) = 0.0_RP
        endif
@@ -873,7 +945,7 @@ contains
        rhog,  rhog_pl, &
        buoiw, buoiw_pl )
     use mod_const, only: &
-       GRAV => CONST_GRAV
+       CONST_GRAV
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -893,31 +965,49 @@ contains
     real(RP), intent(out) :: buoiw   (ADM_gall   ,ADM_kall,ADM_lall   ) ! buoyancy force  at half level
     real(RP), intent(out) :: buoiw_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    integer :: g, k, l
+    integer  :: gall, kmin, kmax
+    real(RP) :: grav
+
+    integer  :: g, k, l
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____src_buoyancy',2)
 
+    gall = ADM_gall
+    kmin = ADM_kmin
+    kmax = ADM_kmax
+
+    grav = CONST_GRAV
+
     do l = 1, ADM_lall
-       do k = ADM_kmin+1, ADM_kmax
-       do g = 1, ADM_gall
-          buoiw(g,k,l) = -GRAV * ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k  ,l) &
+       !$omp parallel default(none),private(g,k), &
+       !$omp shared(l,gall,kmin,kmax,buoiw,rhog,VMTR_C2Wfact,grav)
+
+       !$omp do
+       do k = kmin+1, kmax
+       do g = 1, gall
+          buoiw(g,k,l) = -grav * ( VMTR_C2Wfact(g,k,1,l) * rhog(g,k  ,l) &
                                  + VMTR_C2Wfact(g,k,2,l) * rhog(g,k-1,l) )
        enddo
        enddo
+       !$omp end do nowait
 
-       do g = 1, ADM_gall
-          buoiw(g,ADM_kmin-1,l) = 0.0_RP
-          buoiw(g,ADM_kmin  ,l) = 0.0_RP
-          buoiw(g,ADM_kmax+1,l) = 0.0_RP
+       !$omp do
+       do g = 1, gall
+          buoiw(g,kmin-1,l) = 0.0_RP
+          buoiw(g,kmin  ,l) = 0.0_RP
+          buoiw(g,kmax+1,l) = 0.0_RP
        enddo
+       !$omp end do
+
+       !$omp end parallel
     enddo
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
           do k = ADM_kmin+1, ADM_kmax
           do g = 1, ADM_gall_pl
-             buoiw_pl(g,k,l) = -GRAV * ( VMTR_C2Wfact_pl(g,k,1,l) * rhog_pl(g,k  ,l) &
+             buoiw_pl(g,k,l) = -grav * ( VMTR_C2Wfact_pl(g,k,1,l) * rhog_pl(g,k  ,l) &
                                        + VMTR_C2Wfact_pl(g,k,2,l) * rhog_pl(g,k-1,l) )
           enddo
           enddo

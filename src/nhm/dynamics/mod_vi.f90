@@ -98,9 +98,9 @@ contains
        num_of_itr,                &
        dt                         )
     use mod_const, only: &
-       GRAV  => CONST_GRAV, &
-       Rdry  => CONST_Rdry, &
-       CVdry => CONST_CVdry
+       CONST_GRAV, &
+       CONST_Rdry, &
+       CONST_CVdry
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_kmax,    &
@@ -108,10 +108,10 @@ contains
     use mod_comm, only: &
        COMM_data_transfer
     use mod_grd, only: &
-       GRD_XDIR, &
-       GRD_YDIR, &
-       GRD_ZDIR, &
-       GRD_afac, &
+       XDIR => GRD_XDIR, &
+       YDIR => GRD_YDIR, &
+       ZDIR => GRD_ZDIR, &
+       GRD_afac,         &
        GRD_bfac
     use mod_oprt, only: &
        OPRT_horizontalize_vec
@@ -214,8 +214,8 @@ contains
     real(RP) :: ddivdvz_2d   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: ddivdvz_2d_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     ! pressure gradient force
-    real(RP) :: dpgrad       (ADM_gall   ,ADM_kall,ADM_lall   ,GRD_XDIR:GRD_ZDIR)
-    real(RP) :: dpgrad_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,GRD_XDIR:GRD_ZDIR)
+    real(RP) :: dpgrad       (ADM_gall   ,ADM_kall,ADM_lall   ,XDIR:ZDIR)
+    real(RP) :: dpgrad_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl,XDIR:ZDIR)
     real(RP) :: dpgradw      (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: dpgradw_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     ! buoyancy force
@@ -239,28 +239,53 @@ contains
 
     real(RP) :: rweight_itr
 
+    integer  :: gall, kall, kmin, kmax
+    real(RP) :: grav, RovCV, alpha
+
     integer  :: g, k, l, ns
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____vi_path0',2)
 
+    gall = ADM_gall
+    kall = ADM_kall
+    kmin = ADM_kmin
+    kmax = ADM_kmax
+
+    grav  = CONST_GRAV
+    RovCV = CONST_Rdry / CONST_CVdry
+    alpha = real(NON_HYDRO_ALPHA,kind=RP)
+
+    !$omp parallel workshare
     grhogetot0   (:,:,:) = g_TEND0   (:,:,:,I_RHOGE)
+    !$omp end parallel workshare
     grhogetot0_pl(:,:,:) = g_TEND0_pl(:,:,:,I_RHOGE)
 
     ! full level -> half level
     do l = 1, ADM_lall
-       do k = ADM_kmin, ADM_kmax+1
-       do g = 1, ADM_gall
+       !$omp parallel default(none),private(g,k), &
+       !$omp shared(l,gall,kall,kmin,kmax,rhog_h,eth_h,    &
+       !$omp        PROG,eth,GRD_afac,GRD_bfac,VMTR_C2Wfact)
+
+       !$omp do
+       do k = kmin, kmax+1
+       do g = 1, gall
           rhog_h(g,k,l) = ( VMTR_C2Wfact(g,k,1,l) * PROG(g,k,  l,I_RHOG) &
                           + VMTR_C2Wfact(g,k,2,l) * PROG(g,k-1,l,I_RHOG) )
           eth_h (g,k,l) = GRD_afac(k) * eth(g,k,  l) &
                         + GRD_bfac(k) * eth(g,k-1,l)
        enddo
        enddo
-       do g = 1, ADM_gall
-          rhog_h(g,ADM_kmin-1,l) = rhog_h(g,ADM_kmin,l)
-          eth_h (g,ADM_kmin-1,l) = eth_h (g,ADM_kmin,l)
+       !$omp end do
+
+       !$omp do
+       do g = 1, gall
+          rhog_h(g,kmin-1,l) = rhog_h(g,kmin,l)
+          eth_h (g,kmin-1,l) = eth_h (g,kmin,l)
        enddo
+       !$omp end do
+
+       !$omp end parallel
     enddo
 
     if ( ADM_have_pl ) then
@@ -331,26 +356,39 @@ contains
 
     ! pressure work
     do l = 1, ADM_lall
-       do k = 1, ADM_kall
-       do g = 1, ADM_gall
-          gz_tilde  (g,k,l) = GRAV - ( dpgradw(g,k,l)-dbuoiw(g,k,l) ) / rhog_h(g,k,l)
+       !$omp parallel default(none),private(g,k), &
+       !$omp shared(l,gall,kall,kmin,kmax,drhoge_pw,drhoge_pwh,gz_tilde,        &
+       !$omp        PROG,vx,vy,vz,dpgrad,dpgradw,dbuoiw,rhog_h,VMTR_W2Cfact,grav)
+
+       !$omp do
+       do k = 1, kall
+       do g = 1, gall
+          gz_tilde  (g,k,l) = grav - ( dpgradw(g,k,l)-dbuoiw(g,k,l) ) / rhog_h(g,k,l)
           drhoge_pwh(g,k,l) = -gz_tilde(g,k,l) * PROG(g,k,l,I_RHOGW)
        enddo
        enddo
+       !$omp end do
 
-       do k = ADM_kmin, ADM_kmax
-       do g = 1, ADM_gall
-          drhoge_pw(g,k,l) = ( vx(g,k,l) * dpgrad(g,k,l,GRD_XDIR)          &
-                             + vy(g,k,l) * dpgrad(g,k,l,GRD_YDIR)          &
-                             + vz(g,k,l) * dpgrad(g,k,l,GRD_ZDIR)          ) &
+       !$omp do
+       do k = kmin, kmax
+       do g = 1, gall
+          drhoge_pw(g,k,l) = ( vx(g,k,l) * dpgrad(g,k,l,XDIR)              &
+                             + vy(g,k,l) * dpgrad(g,k,l,YDIR)              &
+                             + vz(g,k,l) * dpgrad(g,k,l,ZDIR)              ) &
                            + ( VMTR_W2Cfact(g,k,1,l) * drhoge_pwh(g,k+1,l) &
                              + VMTR_W2Cfact(g,k,2,l) * drhoge_pwh(g,k,  l) )
        enddo
        enddo
-       do g = 1, ADM_gall
-          drhoge_pw(g,ADM_kmin-1,l) = 0.0_RP
-          drhoge_pw(g,ADM_kmax+1,l) = 0.0_RP
+       !$omp end do nowait
+
+       !$omp do
+       do g = 1, gall
+          drhoge_pw(g,kmin-1,l) = 0.0_RP
+          drhoge_pw(g,kmax+1,l) = 0.0_RP
        enddo
+       !$omp end do
+
+       !$omp end parallel
     enddo
 
     if ( ADM_have_pl ) then
@@ -364,9 +402,9 @@ contains
 
           do k  = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
-             drhoge_pw_pl(g,k,l) = ( vx_pl(g,k,l) * dpgrad_pl(g,k,l,GRD_XDIR)          &
-                                   + vy_pl(g,k,l) * dpgrad_pl(g,k,l,GRD_YDIR)          &
-                                   + vz_pl(g,k,l) * dpgrad_pl(g,k,l,GRD_ZDIR)          ) &
+             drhoge_pw_pl(g,k,l) = ( vx_pl(g,k,l) * dpgrad_pl(g,k,l,XDIR)              &
+                                   + vy_pl(g,k,l) * dpgrad_pl(g,k,l,YDIR)              &
+                                   + vz_pl(g,k,l) * dpgrad_pl(g,k,l,ZDIR)              ) &
                                  + ( VMTR_W2Cfact_pl(g,k,1,l) * drhoge_pwh_pl(g,k+1,l) &
                                    + VMTR_W2Cfact_pl(g,k,2,l) * drhoge_pwh_pl(g,k,  l) )
           enddo
@@ -381,17 +419,21 @@ contains
     !---< sum of tendencies ( large step + pres-grad + div-damp + div-damp_2d + buoyancy ) >
 
     do l = 1, ADM_lall
-    do k = 1, ADM_kall
-    do g = 1, ADM_gall
-       g_TEND(g,k,l,I_RHOG)   = g_TEND0(g,k,l,I_RHOG)   + drhog  (g,k,l)
-       g_TEND(g,k,l,I_RHOGVX) = g_TEND0(g,k,l,I_RHOGVX) - dpgrad (g,k,l,GRD_XDIR) + ddivdvx(g,k,l) + ddivdvx_2d(g,k,l)
-       g_TEND(g,k,l,I_RHOGVY) = g_TEND0(g,k,l,I_RHOGVY) - dpgrad (g,k,l,GRD_YDIR) + ddivdvy(g,k,l) + ddivdvy_2d(g,k,l)
-       g_TEND(g,k,l,I_RHOGVZ) = g_TEND0(g,k,l,I_RHOGVZ) - dpgrad (g,k,l,GRD_ZDIR) + ddivdvz(g,k,l) + ddivdvz_2d(g,k,l)
-       g_TEND(g,k,l,I_RHOGW)  = g_TEND0(g,k,l,I_RHOGW)                            + ddivdw (g,k,l) * NON_HYDRO_ALPHA &
-                                                        - dpgradw(g,k,l) + dbuoiw(g,k,l)
-       g_TEND(g,k,l,I_RHOGE)  = g_TEND0(g,k,l,I_RHOGE)  + drhoge (g,k,l) + drhoge_pw(g,k,l)
-    enddo
-    enddo
+       !$omp parallel do default(none),private(g,k), &
+       !$omp shared(l,gall,kall,g_TEND,g_TEND0,drhog,dpgradw,dbuoiw,drhoge,drhoge_pw,           &
+       !$omp        dpgrad,ddivdvx,ddivdvy,ddivdvz,ddivdw,ddivdvx_2d,ddivdvy_2d,ddivdvz_2d,alpha)
+       do k = 1, kall
+       do g = 1, gall
+          g_TEND(g,k,l,I_RHOG)   = g_TEND0(g,k,l,I_RHOG)   + drhog  (g,k,l)
+          g_TEND(g,k,l,I_RHOGVX) = g_TEND0(g,k,l,I_RHOGVX) - dpgrad (g,k,l,XDIR) + ddivdvx(g,k,l) + ddivdvx_2d(g,k,l)
+          g_TEND(g,k,l,I_RHOGVY) = g_TEND0(g,k,l,I_RHOGVY) - dpgrad (g,k,l,YDIR) + ddivdvy(g,k,l) + ddivdvy_2d(g,k,l)
+          g_TEND(g,k,l,I_RHOGVZ) = g_TEND0(g,k,l,I_RHOGVZ) - dpgrad (g,k,l,ZDIR) + ddivdvz(g,k,l) + ddivdvz_2d(g,k,l)
+          g_TEND(g,k,l,I_RHOGW)  = g_TEND0(g,k,l,I_RHOGW)                        + ddivdw (g,k,l) * alpha &
+                                                           - dpgradw(g,k,l)      + dbuoiw(g,k,l)
+          g_TEND(g,k,l,I_RHOGE)  = g_TEND0(g,k,l,I_RHOGE)  + drhoge (g,k,l)      + drhoge_pw(g,k,l)
+       enddo
+       enddo
+       !$omp end parallel do
     enddo
 
     if ( ADM_have_pl ) then
@@ -399,12 +441,12 @@ contains
        do k = 1, ADM_kall
        do g = 1, ADM_gall_pl
           g_TEND_pl(g,k,l,I_RHOG)   = g_TEND0_pl(g,k,l,I_RHOG)   + drhog_pl  (g,k,l)
-          g_TEND_pl(g,k,l,I_RHOGVX) = g_TEND0_pl(g,k,l,I_RHOGVX) - dpgrad_pl (g,k,l,GRD_XDIR) + ddivdvx_pl(g,k,l) + ddivdvx_2d_pl(g,k,l)
-          g_TEND_pl(g,k,l,I_RHOGVY) = g_TEND0_pl(g,k,l,I_RHOGVY) - dpgrad_pl (g,k,l,GRD_YDIR) + ddivdvy_pl(g,k,l) + ddivdvy_2d_pl(g,k,l)
-          g_TEND_pl(g,k,l,I_RHOGVZ) = g_TEND0_pl(g,k,l,I_RHOGVZ) - dpgrad_pl (g,k,l,GRD_ZDIR) + ddivdvz_pl(g,k,l) + ddivdvz_2d_pl(g,k,l)
-          g_TEND_pl(g,k,l,I_RHOGW)  = g_TEND0_pl(g,k,l,I_RHOGW)                               + ddivdw_pl (g,k,l) * NON_HYDRO_ALPHA &
-                                                                 - dpgradw_pl(g,k,l) + dbuoiw_pl(g,k,l)
-          g_TEND_pl(g,k,l,I_RHOGE)  = g_TEND0_pl(g,k,l,I_RHOGE)  + drhoge_pl (g,k,l) + drhoge_pw_pl(g,k,l)
+          g_TEND_pl(g,k,l,I_RHOGVX) = g_TEND0_pl(g,k,l,I_RHOGVX) - dpgrad_pl (g,k,l,XDIR) + ddivdvx_pl(g,k,l) + ddivdvx_2d_pl(g,k,l)
+          g_TEND_pl(g,k,l,I_RHOGVY) = g_TEND0_pl(g,k,l,I_RHOGVY) - dpgrad_pl (g,k,l,YDIR) + ddivdvy_pl(g,k,l) + ddivdvy_2d_pl(g,k,l)
+          g_TEND_pl(g,k,l,I_RHOGVZ) = g_TEND0_pl(g,k,l,I_RHOGVZ) - dpgrad_pl (g,k,l,ZDIR) + ddivdvz_pl(g,k,l) + ddivdvz_2d_pl(g,k,l)
+          g_TEND_pl(g,k,l,I_RHOGW)  = g_TEND0_pl(g,k,l,I_RHOGW)                           + ddivdw_pl (g,k,l) * alpha &
+                                                                 - dpgradw_pl(g,k,l)      + dbuoiw_pl(g,k,l)
+          g_TEND_pl(g,k,l,I_RHOGE)  = g_TEND0_pl(g,k,l,I_RHOGE)  + drhoge_pl (g,k,l)      + drhoge_pw_pl(g,k,l)
        enddo
        enddo
        enddo
@@ -413,11 +455,13 @@ contains
     ! initialization of mean mass flux
     rweight_itr = 1.0_RP / real(num_of_itr,kind=RP)
 
+    !$omp parallel workshare
     PROG_mean   (:,:,:,I_RHOG)   = PROG   (:,:,:,I_RHOG)
     PROG_mean   (:,:,:,I_RHOGVX) = PROG   (:,:,:,I_RHOGVX)
     PROG_mean   (:,:,:,I_RHOGVY) = PROG   (:,:,:,I_RHOGVY)
     PROG_mean   (:,:,:,I_RHOGVZ) = PROG   (:,:,:,I_RHOGVZ)
     PROG_mean   (:,:,:,I_RHOGW)  = PROG   (:,:,:,I_RHOGW)
+    !$omp end parallel workshare
 
     PROG_mean_pl(:,:,:,I_RHOG)   = PROG_pl(:,:,:,I_RHOG)
     PROG_mean_pl(:,:,:,I_RHOGVX) = PROG_pl(:,:,:,I_RHOGVX)
@@ -444,27 +488,39 @@ contains
        !---< calculation of preg_prim(*) from rhog(*) & rhoge(*) >
 
        do l = 1, ADM_lall
-          do k = 1, ADM_kall
-          do g = 1, ADM_gall
-             preg_prim_split(g,k,l) = PROG_split(g,k,l,I_RHOGE) * Rdry / CVdry
-          enddo
-          enddo
-          do g = 1, ADM_gall
-             preg_prim_split(g,ADM_kmin-1,l) = preg_prim_split(g,ADM_kmin,l)
-             preg_prim_split(g,ADM_kmax+1,l) = preg_prim_split(g,ADM_kmax,l)
-          enddo
+          !$omp parallel default(none),private(g,k), &
+          !$omp shared(l,gall,kall,kmin,kmax,preg_prim_split,PROG_split,RovCV)
 
-          do g = 1, ADM_gall
-             PROG_split(g,ADM_kmin-1,l,I_RHOGE) = PROG_split(g,ADM_kmin,l,I_RHOGE)
-             PROG_split(g,ADM_kmax+1,l,I_RHOGE) = PROG_split(g,ADM_kmax,l,I_RHOGE)
+          !$omp do
+          do k = 1, kall
+          do g = 1, gall
+             preg_prim_split(g,k,l) = PROG_split(g,k,l,I_RHOGE) * RovCV
           enddo
+          enddo
+          !$omp end do
+
+          !$omp do
+          do g = 1, gall
+             preg_prim_split(g,kmin-1,l) = preg_prim_split(g,kmin,l)
+             preg_prim_split(g,kmax+1,l) = preg_prim_split(g,kmax,l)
+          enddo
+          !$omp end do nowait
+
+          !$omp do
+          do g = 1, gall
+             PROG_split(g,kmin-1,l,I_RHOGE) = PROG_split(g,kmin,l,I_RHOGE)
+             PROG_split(g,kmax+1,l,I_RHOGE) = PROG_split(g,kmax,l,I_RHOGE)
+          enddo
+          !$omp end do
+
+          !$omp end parallel
        enddo
 
        if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
              do k = 1, ADM_kall
              do g = 1, ADM_gall_pl
-                preg_prim_split_pl(g,k,l) = PROG_split_pl(g,k,l,I_RHOGE) * Rdry / CVdry
+                preg_prim_split_pl(g,k,l) = PROG_split_pl(g,k,l,I_RHOGE) * RovCV
              enddo
              enddo
              do g = 1, ADM_gall_pl
@@ -513,28 +569,32 @@ contains
 
           !---< sum of tendencies ( large step + split{ pres-grad + div-damp + div-damp_2d } ) >
           do l = 1, ADM_lall
-          do k = 1, ADM_kall
-          do g = 1, ADM_gall
-             drhogvx       = g_TEND(g,k,l,I_RHOGVX) - dpgrad(g,k,l,GRD_XDIR) + ddivdvx(g,k,l) + ddivdvx_2d(g,k,l)
-             drhogvy       = g_TEND(g,k,l,I_RHOGVY) - dpgrad(g,k,l,GRD_YDIR) + ddivdvy(g,k,l) + ddivdvy_2d(g,k,l)
-             drhogvz       = g_TEND(g,k,l,I_RHOGVZ) - dpgrad(g,k,l,GRD_ZDIR) + ddivdvz(g,k,l) + ddivdvz_2d(g,k,l)
-             drhogw(g,k,l) = g_TEND(g,k,l,I_RHOGW)                           + ddivdw (g,k,l) * NON_HYDRO_ALPHA
+             !$omp parallel do default(none),private(g,k,drhogvx,drhogvy,drhogvz),                    &
+             !$omp shared(l,gall,kall,drhogw,diff_vh,PROG_split,dt,g_TEND,                            &
+             !$omp        dpgrad,ddivdvx,ddivdvy,ddivdvz,ddivdw,ddivdvx_2d,ddivdvy_2d,ddivdvz_2d,alpha)
+             do k = 1, kall
+             do g = 1, gall
+                drhogvx       = g_TEND(g,k,l,I_RHOGVX) - dpgrad(g,k,l,XDIR) + ddivdvx(g,k,l) + ddivdvx_2d(g,k,l)
+                drhogvy       = g_TEND(g,k,l,I_RHOGVY) - dpgrad(g,k,l,YDIR) + ddivdvy(g,k,l) + ddivdvy_2d(g,k,l)
+                drhogvz       = g_TEND(g,k,l,I_RHOGVZ) - dpgrad(g,k,l,ZDIR) + ddivdvz(g,k,l) + ddivdvz_2d(g,k,l)
+                drhogw(g,k,l) = g_TEND(g,k,l,I_RHOGW)                       + ddivdw (g,k,l) * alpha
 
-             diff_vh(g,k,l,1) = PROG_split(g,k,l,I_RHOGVX) + drhogvx * dt
-             diff_vh(g,k,l,2) = PROG_split(g,k,l,I_RHOGVY) + drhogvy * dt
-             diff_vh(g,k,l,3) = PROG_split(g,k,l,I_RHOGVZ) + drhogvz * dt
-          enddo
-          enddo
+                diff_vh(g,k,l,1) = PROG_split(g,k,l,I_RHOGVX) + drhogvx * dt
+                diff_vh(g,k,l,2) = PROG_split(g,k,l,I_RHOGVY) + drhogvy * dt
+                diff_vh(g,k,l,3) = PROG_split(g,k,l,I_RHOGVZ) + drhogvz * dt
+             enddo
+             enddo
+             !$omp end parallel do
           enddo
 
           if ( ADM_have_pl ) then
              do l = 1, ADM_lall_pl
              do k = 1, ADM_kall
              do g = 1, ADM_gall_pl
-                drhogvx          = g_TEND_pl(g,k,l,I_RHOGVX) - dpgrad_pl(g,k,l,GRD_XDIR) + ddivdvx_pl(g,k,l) + ddivdvx_2d_pl(g,k,l)
-                drhogvy          = g_TEND_pl(g,k,l,I_RHOGVY) - dpgrad_pl(g,k,l,GRD_YDIR) + ddivdvy_pl(g,k,l) + ddivdvy_2d_pl(g,k,l)
-                drhogvz          = g_TEND_pl(g,k,l,I_RHOGVZ) - dpgrad_pl(g,k,l,GRD_ZDIR) + ddivdvz_pl(g,k,l) + ddivdvz_2d_pl(g,k,l)
-                drhogw_pl(g,k,l) = g_TEND_pl(g,k,l,I_RHOGW)                              + ddivdw_pl (g,k,l) * NON_HYDRO_ALPHA
+                drhogvx          = g_TEND_pl(g,k,l,I_RHOGVX) - dpgrad_pl(g,k,l,XDIR) + ddivdvx_pl(g,k,l) + ddivdvx_2d_pl(g,k,l)
+                drhogvy          = g_TEND_pl(g,k,l,I_RHOGVY) - dpgrad_pl(g,k,l,YDIR) + ddivdvy_pl(g,k,l) + ddivdvy_2d_pl(g,k,l)
+                drhogvz          = g_TEND_pl(g,k,l,I_RHOGVZ) - dpgrad_pl(g,k,l,ZDIR) + ddivdvz_pl(g,k,l) + ddivdvz_2d_pl(g,k,l)
+                drhogw_pl(g,k,l) = g_TEND_pl(g,k,l,I_RHOGW)                          + ddivdw_pl (g,k,l) * alpha
 
                 diff_vh_pl(g,k,l,1) = PROG_split_pl(g,k,l,I_RHOGVX) + drhogvx * dt
                 diff_vh_pl(g,k,l,2) = PROG_split_pl(g,k,l,I_RHOGVY) + drhogvy * dt
@@ -548,18 +608,21 @@ contains
 
           !---< sum of tendencies ( large step ) >
           do l = 1, ADM_lall
-          do k = 1, ADM_kall
-          do g = 1, ADM_gall
-             drhogvx       = g_TEND(g,k,l,I_RHOGVX)
-             drhogvy       = g_TEND(g,k,l,I_RHOGVY)
-             drhogvz       = g_TEND(g,k,l,I_RHOGVZ)
-             drhogw(g,k,l) = g_TEND(g,k,l,I_RHOGW)
+             !$omp parallel do default(none),private(g,k,drhogvx,drhogvy,drhogvz), &
+             !$omp shared(l,gall,kall,drhogw,diff_vh,PROG_split,dt,g_TEND)
+             do k = 1, kall
+             do g = 1, gall
+                drhogvx       = g_TEND(g,k,l,I_RHOGVX)
+                drhogvy       = g_TEND(g,k,l,I_RHOGVY)
+                drhogvz       = g_TEND(g,k,l,I_RHOGVZ)
+                drhogw(g,k,l) = g_TEND(g,k,l,I_RHOGW)
 
-             diff_vh(g,k,l,1) = PROG_split(g,k,l,I_RHOGVX) + drhogvx * dt
-             diff_vh(g,k,l,2) = PROG_split(g,k,l,I_RHOGVY) + drhogvy * dt
-             diff_vh(g,k,l,3) = PROG_split(g,k,l,I_RHOGVZ) + drhogvz * dt
-          enddo
-          enddo
+                diff_vh(g,k,l,1) = PROG_split(g,k,l,I_RHOGVX) + drhogvx * dt
+                diff_vh(g,k,l,2) = PROG_split(g,k,l,I_RHOGVY) + drhogvy * dt
+                diff_vh(g,k,l,3) = PROG_split(g,k,l,I_RHOGVZ) + drhogvz * dt
+             enddo
+             enddo
+             !$omp end parallel do
           enddo
 
           if ( ADM_have_pl ) then
@@ -636,44 +699,37 @@ contains
        call COMM_data_transfer( diff_we, diff_we_pl )
 
        ! update split value and mean mass flux
-       do l = 1, ADM_lall
-       do k = 1, ADM_kall
-       do g = 1, ADM_gall
-          PROG_split(g,k,l,I_RHOGVX) = diff_vh(g,k,l,1)
-          PROG_split(g,k,l,I_RHOGVY) = diff_vh(g,k,l,2)
-          PROG_split(g,k,l,I_RHOGVZ) = diff_vh(g,k,l,3)
-          PROG_split(g,k,l,I_RHOG)   = diff_we(g,k,l,1)
-          PROG_split(g,k,l,I_RHOGW)  = diff_we(g,k,l,2)
-          PROG_split(g,k,l,I_RHOGE)  = diff_we(g,k,l,3)
 
-          PROG_mean(g,k,l,1) = PROG_mean(g,k,l,1) + PROG_split(g,k,l,I_RHOG)   * rweight_itr
-          PROG_mean(g,k,l,2) = PROG_mean(g,k,l,2) + PROG_split(g,k,l,I_RHOGVX) * rweight_itr
-          PROG_mean(g,k,l,3) = PROG_mean(g,k,l,3) + PROG_split(g,k,l,I_RHOGVY) * rweight_itr
-          PROG_mean(g,k,l,4) = PROG_mean(g,k,l,4) + PROG_split(g,k,l,I_RHOGVZ) * rweight_itr
-          PROG_mean(g,k,l,5) = PROG_mean(g,k,l,5) + PROG_split(g,k,l,I_RHOGW)  * rweight_itr
-       enddo
-       enddo
-       enddo
+       !$omp parallel workshare
+       PROG_split(:,:,:,I_RHOGVX) = diff_vh(:,:,:,1)
+       PROG_split(:,:,:,I_RHOGVY) = diff_vh(:,:,:,2)
+       PROG_split(:,:,:,I_RHOGVZ) = diff_vh(:,:,:,3)
+       PROG_split(:,:,:,I_RHOG)   = diff_we(:,:,:,1)
+       PROG_split(:,:,:,I_RHOGW)  = diff_we(:,:,:,2)
+       PROG_split(:,:,:,I_RHOGE)  = diff_we(:,:,:,3)
+       !$omp end parallel workshare
+
+       !$omp parallel workshare
+       PROG_mean(:,:,:,1) = PROG_mean(:,:,:,1) + PROG_split(:,:,:,I_RHOG)   * rweight_itr
+       PROG_mean(:,:,:,2) = PROG_mean(:,:,:,2) + PROG_split(:,:,:,I_RHOGVX) * rweight_itr
+       PROG_mean(:,:,:,3) = PROG_mean(:,:,:,3) + PROG_split(:,:,:,I_RHOGVY) * rweight_itr
+       PROG_mean(:,:,:,4) = PROG_mean(:,:,:,4) + PROG_split(:,:,:,I_RHOGVZ) * rweight_itr
+       PROG_mean(:,:,:,5) = PROG_mean(:,:,:,5) + PROG_split(:,:,:,I_RHOGW)  * rweight_itr
+       !$omp end parallel workshare
 
        if ( ADM_have_pl ) then
-          do l = 1, ADM_lall_pl
-          do k = 1, ADM_kall
-          do g = 1, ADM_gall_pl
-             PROG_split_pl(g,k,l,I_RHOGVX) = diff_vh_pl(g,k,l,1)
-             PROG_split_pl(g,k,l,I_RHOGVY) = diff_vh_pl(g,k,l,2)
-             PROG_split_pl(g,k,l,I_RHOGVZ) = diff_vh_pl(g,k,l,3)
-             PROG_split_pl(g,k,l,I_RHOG)   = diff_we_pl(g,k,l,1)
-             PROG_split_pl(g,k,l,I_RHOGW)  = diff_we_pl(g,k,l,2)
-             PROG_split_pl(g,k,l,I_RHOGE)  = diff_we_pl(g,k,l,3)
+          PROG_split_pl(:,:,:,I_RHOGVX) = diff_vh_pl(:,:,:,1)
+          PROG_split_pl(:,:,:,I_RHOGVY) = diff_vh_pl(:,:,:,2)
+          PROG_split_pl(:,:,:,I_RHOGVZ) = diff_vh_pl(:,:,:,3)
+          PROG_split_pl(:,:,:,I_RHOG)   = diff_we_pl(:,:,:,1)
+          PROG_split_pl(:,:,:,I_RHOGW)  = diff_we_pl(:,:,:,2)
+          PROG_split_pl(:,:,:,I_RHOGE)  = diff_we_pl(:,:,:,3)
 
-             PROG_mean_pl(g,k,l,1) = PROG_mean_pl(g,k,l,1) + PROG_split_pl(g,k,l,I_RHOG)   * rweight_itr
-             PROG_mean_pl(g,k,l,2) = PROG_mean_pl(g,k,l,2) + PROG_split_pl(g,k,l,I_RHOGVX) * rweight_itr
-             PROG_mean_pl(g,k,l,3) = PROG_mean_pl(g,k,l,3) + PROG_split_pl(g,k,l,I_RHOGVY) * rweight_itr
-             PROG_mean_pl(g,k,l,4) = PROG_mean_pl(g,k,l,4) + PROG_split_pl(g,k,l,I_RHOGVZ) * rweight_itr
-             PROG_mean_pl(g,k,l,5) = PROG_mean_pl(g,k,l,5) + PROG_split_pl(g,k,l,I_RHOGW)  * rweight_itr
-          enddo
-          enddo
-          enddo
+          PROG_mean_pl(:,:,:,1) = PROG_mean_pl(:,:,:,1) + PROG_split_pl(:,:,:,I_RHOG)   * rweight_itr
+          PROG_mean_pl(:,:,:,2) = PROG_mean_pl(:,:,:,2) + PROG_split_pl(:,:,:,I_RHOGVX) * rweight_itr
+          PROG_mean_pl(:,:,:,3) = PROG_mean_pl(:,:,:,3) + PROG_split_pl(:,:,:,I_RHOGVY) * rweight_itr
+          PROG_mean_pl(:,:,:,4) = PROG_mean_pl(:,:,:,4) + PROG_split_pl(:,:,:,I_RHOGVZ) * rweight_itr
+          PROG_mean_pl(:,:,:,5) = PROG_mean_pl(:,:,:,5) + PROG_split_pl(:,:,:,I_RHOGW)  * rweight_itr
        endif
 
        call PROF_rapend  ('____vi_path2',2)
@@ -687,34 +743,13 @@ contains
     !---------------------------------------------------------------------------
 
     ! update prognostic variables
-!OCL SERIAL
-    do l = 1, ADM_lall
-!OCL PARALLEL
-    do k = 1, ADM_kall
-    do g = 1, ADM_gall
-       PROG(g,k,l,I_RHOG)   = PROG(g,k,l,I_RHOG)   + PROG_split(g,k,l,I_RHOG)
-       PROG(g,k,l,I_RHOGVX) = PROG(g,k,l,I_RHOGVX) + PROG_split(g,k,l,I_RHOGVX)
-       PROG(g,k,l,I_RHOGVY) = PROG(g,k,l,I_RHOGVY) + PROG_split(g,k,l,I_RHOGVY)
-       PROG(g,k,l,I_RHOGVZ) = PROG(g,k,l,I_RHOGVZ) + PROG_split(g,k,l,I_RHOGVZ)
-       PROG(g,k,l,I_RHOGW)  = PROG(g,k,l,I_RHOGW)  + PROG_split(g,k,l,I_RHOGW)
-       PROG(g,k,l,I_RHOGE)  = PROG(g,k,l,I_RHOGE)  + PROG_split(g,k,l,I_RHOGE)
-    enddo
-    enddo
-    enddo
+
+    !$omp parallel workshare
+    PROG(:,:,:,:) = PROG(:,:,:,:) + PROG_split(:,:,:,:)
+    !$omp end parallel workshare
 
     if ( ADM_have_pl ) then
-       do l = 1, ADM_lall_pl
-       do k = 1, ADM_kall
-       do g = 1, ADM_gall_pl
-          PROG_pl(g,k,l,I_RHOG)   = PROG_pl(g,k,l,I_RHOG)   + PROG_split_pl(g,k,l,I_RHOG)
-          PROG_pl(g,k,l,I_RHOGVX) = PROG_pl(g,k,l,I_RHOGVX) + PROG_split_pl(g,k,l,I_RHOGVX)
-          PROG_pl(g,k,l,I_RHOGVY) = PROG_pl(g,k,l,I_RHOGVY) + PROG_split_pl(g,k,l,I_RHOGVY)
-          PROG_pl(g,k,l,I_RHOGVZ) = PROG_pl(g,k,l,I_RHOGVZ) + PROG_split_pl(g,k,l,I_RHOGVZ)
-          PROG_pl(g,k,l,I_RHOGW)  = PROG_pl(g,k,l,I_RHOGW)  + PROG_split_pl(g,k,l,I_RHOGW)
-          PROG_pl(g,k,l,I_RHOGE)  = PROG_pl(g,k,l,I_RHOGE)  + PROG_split_pl(g,k,l,I_RHOGE)
-       enddo
-       enddo
-       enddo
+       PROG_pl(:,:,:,:) = PROG_pl(:,:,:,:) + PROG_split_pl(:,:,:,:)
     endif
 
     call OPRT_horizontalize_vec( PROG(:,:,:,I_RHOGVX), PROG_pl(:,:,:,I_RHOGVX), & ! [INOUT]
@@ -867,7 +902,7 @@ contains
     real(RP) :: ethtot0     (ADM_gall   ,ADM_kall,ADM_lall   ) ! total enthalpy ( h + v^{2}/2 + phi, previous )
     real(RP) :: ethtot0_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    integer :: g, k, l
+    integer :: l
     !---------------------------------------------------------------------------
 
     !---< update grhog & grhoge >
@@ -890,35 +925,25 @@ contains
                                        drhoge,        drhoge_pl,        & ! [OUT]
                                        I_SRC_horizontal                 ) ! [IN]
     else
+       !$omp parallel workshare
        drhog    (:,:,:) = 0.0_RP
-       drhog_pl (:,:,:) = 0.0_RP
        drhoge   (:,:,:) = 0.0_RP
+       !$omp end parallel workshare
+       drhog_pl (:,:,:) = 0.0_RP
        drhoge_pl(:,:,:) = 0.0_RP
     endif
 
     ! update grhog, grhoge and calc source term of pressure
-!OCL SERIAL
-    do l = 1, ADM_lall
-!OCL PARALLEL
-    do k = 1, ADM_kall
-    do g = 1, ADM_gall
-       grhog1 (g,k,l) = grhog  (g,k,l) + drhog (g,k,l)
-       grhoge1(g,k,l) = grhoge (g,k,l) + drhoge(g,k,l)
-       gpre   (g,k,l) = grhoge1(g,k,l) * Rdry / CVdry
-    enddo
-    enddo
-    enddo
+    !$omp parallel workshare
+    grhog1 (:,:,:) = grhog  (:,:,:) + drhog (:,:,:)
+    grhoge1(:,:,:) = grhoge (:,:,:) + drhoge(:,:,:)
+    gpre   (:,:,:) = grhoge1(:,:,:) * Rdry / CVdry
+    !$omp end parallel workshare
 
     if ( ADM_have_pl ) then
-       do l = 1, ADM_lall_pl
-       do k = 1, ADM_kall
-       do g = 1, ADM_gall_pl
-          grhog1_pl (g,k,l) = grhog_pl  (g,k,l) + drhog_pl (g,k,l)
-          grhoge1_pl(g,k,l) = grhoge_pl (g,k,l) + drhoge_pl(g,k,l)
-          gpre_pl   (g,k,l) = grhoge1_pl(g,k,l) * Rdry / CVdry
-       enddo
-       enddo
-       enddo
+       grhog1_pl (:,:,:) = grhog_pl  (:,:,:) + drhog_pl (:,:,:)
+       grhoge1_pl(:,:,:) = grhoge_pl (:,:,:) + drhoge_pl(:,:,:)
+       gpre_pl   (:,:,:) = grhoge1_pl(:,:,:) * Rdry / CVdry
     endif
 
     !---------------------------------------------------------------------------
@@ -926,13 +951,11 @@ contains
     !---------------------------------------------------------------------------
 
     ! boundary condition for rhogw_split1
-    do l = 1, ADM_lall
-       do k = 1, ADM_kall
-       do g = 1, ADM_gall
-          rhogw_split1(g,k,l) = 0.0_RP
-       enddo
-       enddo
+    !$omp parallel workshare
+    rhogw_split1(:,:,:) = 0.0_RP
+    !$omp end parallel workshare
 
+    do l = 1, ADM_lall
        call BNDCND_rhow( ADM_gall,               & ! [IN]
                          rhogvx_split1 (:,:,l),  & ! [IN]
                          rhogvy_split1 (:,:,l),  & ! [IN]
@@ -942,13 +965,9 @@ contains
     enddo
 
     if ( ADM_have_pl ) then
-       do l = 1, ADM_lall_pl
-          do k = 1, ADM_kall
-          do g = 1, ADM_gall_pl
-             rhogw_split1_pl(g,k,l) = 0.0_RP
-          enddo
-          enddo
+       rhogw_split1_pl(:,:,:) = 0.0_RP
 
+       do l = 1, ADM_lall_pl
           call BNDCND_rhow( ADM_gall_pl,               & ! [IN]
                             rhogvx_split1_pl (:,:,l),  & ! [IN]
                             rhogvy_split1_pl (:,:,l),  & ! [IN]
@@ -976,7 +995,9 @@ contains
                                drhog,         drhog_pl,         & ! [OUT]
                                I_SRC_default                    ) ! [IN]
 
+    !$omp parallel workshare
     rhog_split1(:,:,:) = rhog_split0(:,:,:) + ( grhog(:,:,:) + drhog(:,:,:) ) * dt
+    !$omp end parallel workshare
 
     if ( ADM_have_pl ) then
        rhog_split1_pl(:,:,:) = rhog_split0_pl(:,:,:) + ( grhog_pl(:,:,:) + drhog_pl(:,:,:) ) * dt
@@ -995,32 +1016,20 @@ contains
                          rhogkin0, rhogkin0_pl ) ! [OUT]
 
     ! prognostic variables ( previous + split (t=n) )
-!OCL SERIAL
-    do l = 1, ADM_lall
-!OCL PARALLEL
-    do k = 1, ADM_kall
-    do g = 1, ADM_gall
-       rhog1  (g,k,l) = rhog0  (g,k,l) + rhog_split0  (g,k,l)
-       rhogvx1(g,k,l) = rhogvx0(g,k,l) + rhogvx_split0(g,k,l)
-       rhogvy1(g,k,l) = rhogvy0(g,k,l) + rhogvy_split0(g,k,l)
-       rhogvz1(g,k,l) = rhogvz0(g,k,l) + rhogvz_split0(g,k,l)
-       rhogw1 (g,k,l) = rhogw0 (g,k,l) + rhogw_split0 (g,k,l)
-    enddo
-    enddo
-    enddo
+    !$omp parallel workshare
+    rhog1  (:,:,:) = rhog0  (:,:,:) + rhog_split0  (:,:,:)
+    rhogvx1(:,:,:) = rhogvx0(:,:,:) + rhogvx_split0(:,:,:)
+    rhogvy1(:,:,:) = rhogvy0(:,:,:) + rhogvy_split0(:,:,:)
+    rhogvz1(:,:,:) = rhogvz0(:,:,:) + rhogvz_split0(:,:,:)
+    rhogw1 (:,:,:) = rhogw0 (:,:,:) + rhogw_split0 (:,:,:)
+    !$omp end parallel workshare
 
     if ( ADM_have_pl ) then
-       do l = 1, ADM_lall_pl
-       do k = 1, ADM_kall
-       do g = 1, ADM_gall_pl
-          rhog1_pl  (g,k,l) = rhog0_pl  (g,k,l) + rhog_split0_pl  (g,k,l)
-          rhogvx1_pl(g,k,l) = rhogvx0_pl(g,k,l) + rhogvx_split0_pl(g,k,l)
-          rhogvy1_pl(g,k,l) = rhogvy0_pl(g,k,l) + rhogvy_split0_pl(g,k,l)
-          rhogvz1_pl(g,k,l) = rhogvz0_pl(g,k,l) + rhogvz_split0_pl(g,k,l)
-          rhogw1_pl (g,k,l) = rhogw0_pl (g,k,l) + rhogw_split0_pl (g,k,l)
-       enddo
-       enddo
-       enddo
+       rhog1_pl  (:,:,:) = rhog0_pl  (:,:,:) + rhog_split0_pl  (:,:,:)
+       rhogvx1_pl(:,:,:) = rhogvx0_pl(:,:,:) + rhogvx_split0_pl(:,:,:)
+       rhogvy1_pl(:,:,:) = rhogvy0_pl(:,:,:) + rhogvy_split0_pl(:,:,:)
+       rhogvz1_pl(:,:,:) = rhogvz0_pl(:,:,:) + rhogvz_split0_pl(:,:,:)
+       rhogw1_pl (:,:,:) = rhogw0_pl (:,:,:) + rhogw_split0_pl (:,:,:)
     endif
 
     ! calc rhogkin ( previous + split(t=n) )
@@ -1032,32 +1041,20 @@ contains
                          rhogkin10, rhogkin10_pl ) ! [OUT]
 
     ! prognostic variables ( previous + split (t=n+1) )
-!OCL SERIAL
-    do l = 1, ADM_lall
-!OCL PARALLEL
-    do k = 1, ADM_kall
-    do g = 1, ADM_gall
-       rhog1  (g,k,l) = rhog0  (g,k,l) + rhog_split1  (g,k,l)
-       rhogvx1(g,k,l) = rhogvx0(g,k,l) + rhogvx_split1(g,k,l)
-       rhogvy1(g,k,l) = rhogvy0(g,k,l) + rhogvy_split1(g,k,l)
-       rhogvz1(g,k,l) = rhogvz0(g,k,l) + rhogvz_split1(g,k,l)
-       rhogw1 (g,k,l) = rhogw0 (g,k,l) + rhogw_split1 (g,k,l)
-    enddo
-    enddo
-    enddo
+    !$omp parallel workshare
+    rhog1  (:,:,:) = rhog0  (:,:,:) + rhog_split1  (:,:,:)
+    rhogvx1(:,:,:) = rhogvx0(:,:,:) + rhogvx_split1(:,:,:)
+    rhogvy1(:,:,:) = rhogvy0(:,:,:) + rhogvy_split1(:,:,:)
+    rhogvz1(:,:,:) = rhogvz0(:,:,:) + rhogvz_split1(:,:,:)
+    rhogw1 (:,:,:) = rhogw0 (:,:,:) + rhogw_split1 (:,:,:)
+    !$omp end parallel workshare
 
     if ( ADM_have_pl ) then
-       do l = 1, ADM_lall_pl
-       do k = 1, ADM_kall
-       do g = 1, ADM_gall_pl
-          rhog1_pl  (g,k,l) = rhog0_pl  (g,k,l) + rhog_split1_pl  (g,k,l)
-          rhogvx1_pl(g,k,l) = rhogvx0_pl(g,k,l) + rhogvx_split1_pl(g,k,l)
-          rhogvy1_pl(g,k,l) = rhogvy0_pl(g,k,l) + rhogvy_split1_pl(g,k,l)
-          rhogvz1_pl(g,k,l) = rhogvz0_pl(g,k,l) + rhogvz_split1_pl(g,k,l)
-          rhogw1_pl (g,k,l) = rhogw0_pl (g,k,l) + rhogw_split1_pl (g,k,l)
-       enddo
-       enddo
-       enddo
+       rhog1_pl  (:,:,:) = rhog0_pl  (:,:,:) + rhog_split1_pl  (:,:,:)
+       rhogvx1_pl(:,:,:) = rhogvx0_pl(:,:,:) + rhogvx_split1_pl(:,:,:)
+       rhogvy1_pl(:,:,:) = rhogvy0_pl(:,:,:) + rhogvy_split1_pl(:,:,:)
+       rhogvz1_pl(:,:,:) = rhogvz0_pl(:,:,:) + rhogvz_split1_pl(:,:,:)
+       rhogw1_pl (:,:,:) = rhogw0_pl (:,:,:) + rhogw_split1_pl (:,:,:)
     endif
 
     ! calc rhogkin ( previous + split(t=n+1) )
@@ -1069,9 +1066,11 @@ contains
                          rhogkin11, rhogkin11_pl ) ! [OUT]
 
     ! calculate total enthalpy ( h + v^{2}/2 + phi, previous )
+    !$omp parallel workshare
     ethtot0(:,:,:) = eth0(:,:,:)                    &
                    + rhogkin0(:,:,:) / rhog0(:,:,:) &
                    + VMTR_PHI(:,:,:)
+    !$omp end parallel workshare
 
     if ( ADM_have_pl ) then
        ethtot0_pl(:,:,:) = eth0_pl(:,:,:)                       &
@@ -1088,6 +1087,7 @@ contains
                                     drhogetot, drhogetot_pl, & ! [OUT]
                                     I_SRC_default            ) ! [IN]
 
+    !$omp parallel workshare
     rhoge_split1(:,:,:) = rhoge_split0 (:,:,:)                     & ! t=n
                         + ( grhogetot  (:,:,:)                     & ! tendency of total energy (num.diff+smg+nudge)
                           + drhogetot  (:,:,:) ) * dt              & ! tendency of total energy (adv.conv.)
@@ -1095,6 +1095,7 @@ contains
                           - rhogkin11  (:,:,:) )                   & ! kinetic   energy (t=n+1)
                         + ( rhog_split0(:,:,:)                     & ! potential energy (diff,t=n)
                           - rhog_split1(:,:,:) ) * VMTR_PHI(:,:,:)   ! potential energy (diff,t=n+1)
+    !$omp end parallel workshare
 
     if ( ADM_have_pl ) then
        rhoge_split1_pl(:,:,:) = rhoge_split0_pl (:,:,:)                        &
@@ -1151,10 +1152,11 @@ contains
     real(RP), intent(in) :: g_tilde_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in) :: dt
 
+    integer  :: gall, kmin, kmax
     real(RP) :: GCVovR   ! g * Cv / R
-    real(RP) :: ACVovRt2 ! alfa * Cv / R / dt**2
+    real(RP) :: ACVovRt2 ! alpha * Cv / R / dt**2
 
-    integer :: g, k, l
+    integer  :: g, k, l
     !---------------------------------------------------------------------------
     ! Original concept
     !
@@ -1183,12 +1185,21 @@ contains
 
     call PROF_rapstart('____vi_rhow_update_matrix',2)
 
+    gall = ADM_gall
+    kmin = ADM_kmin
+    kmax = ADM_kmax
+
     GCVovR   = GRAV * CVdry / Rdry
     ACVovRt2 = real(NON_HYDRO_ALPHA,kind=RP) * CVdry / Rdry / ( dt*dt )
 
     do l = 1, ADM_lall
-       do k = ADM_kmin+1, ADM_kmax
-       do g = 1, ADM_gall
+       !$omp parallel default(none),private(g,k),                                                       &
+       !$omp shared(l,gall,kmin,kmax,eth,g_tilde,dt,GCVovR,ACVovRt2,Mu,Mc,Ml,                           &
+       !$omp        GRD_cfac,GRD_dfac,GRD_rdgzh,GRD_rdgz,VMTR_GAM2H,VMTR_RGSQRTH,VMTR_RGAMH,VMTR_RGSGAM2)
+
+       !$omp do
+       do k = kmin+1, kmax
+       do g = 1, gall
           Mc(g,k,l) = ACVovRt2 / VMTR_RGSQRTH(g,k,l)                             &
                     + GRD_rdgzh(k) * ( ( VMTR_RGSGAM2(g,k  ,l) * GRD_rdgz(k  )   &
                                        + VMTR_RGSGAM2(g,k-1,l) * GRD_rdgz(k-1) ) &
@@ -1197,9 +1208,11 @@ contains
                                      * ( g_tilde(g,k,l) + GCVovR )               )
        enddo
        enddo
+       !$omp end do nowait
 
-       do k = ADM_kmin+1, ADM_kmax
-       do g = 1, ADM_gall
+       !$omp do
+       do k = kmin+1, kmax
+       do g = 1, gall
           Mu(g,k,l) = -GRD_rdgzh(k) * ( VMTR_RGSGAM2(g,k  ,l) * GRD_rdgz(k)                     &
                                       * VMTR_GAM2H  (g,k+1,l) * eth(g,k+1,l)                    &
                                       + GRD_cfac(k)                                             &
@@ -1207,9 +1220,11 @@ contains
                                         + VMTR_GAM2H(g,k+1,l)* VMTR_RGAMH(g,k,l)**2 * GCVovR  ) )
        enddo
        enddo
+       !$omp end do nowait
 
-       do k = ADM_kmin+1, ADM_kmax
-       do g = 1, ADM_gall
+       !$omp do
+       do k = kmin+1, kmax
+       do g = 1, gall
           Ml(g,k,l) = -GRD_rdgzh(k) * ( VMTR_RGSGAM2(g,k  ,l) * GRD_rdgz(k)                     &
                                       * VMTR_GAM2H  (g,k-1,l) * eth(g,k-1,l)                    &
                                       - GRD_dfac(k-1)                                           &
@@ -1217,6 +1232,9 @@ contains
                                         + VMTR_GAM2H(g,k-1,l) * VMTR_RGAMH(g,k,l)**2 * GCVovR ) )
        enddo
        enddo
+       !$omp end do
+
+       !$omp end parallel
     enddo
 
     if ( ADM_have_pl ) then
@@ -1279,9 +1297,9 @@ contains
        ADM_kmin,    &
        ADM_kmax
     use mod_const, only: &
-       GRAV  => CONST_GRAV, &
-       Rdry  => CONST_Rdry, &
-       CVdry => CONST_CVdry
+       CONST_GRAV, &
+       CONST_Rdry, &
+       CONST_CVdry
     use mod_grd, only: &
        GRD_rdgzh, &
        GRD_afac,  &
@@ -1325,85 +1343,110 @@ contains
     real(RP) :: gamma   (ADM_gall,   ADM_kall)
     real(RP) :: gamma_pl(ADM_gall_pl,ADM_kall)
 
-    real(RP) :: alfa
+    integer  :: gall, kmin, kmax
+    real(RP) :: grav
     real(RP) :: CVovRt2 ! Cv / R / dt**2
+    real(RP) :: alpha
 
-    integer :: g, k, l
+    integer  :: g, k, l
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____vi_rhow_solver',2)
 
-    alfa = real(NON_HYDRO_ALPHA,kind=RP)
-    CVovRt2 = CVdry / Rdry / (dt*dt)
+    gall = ADM_gall
+    kmin = ADM_kmin
+    kmax = ADM_kmax
+
+    grav    = CONST_GRAV
+    CVovRt2 = CONST_CVdry / CONST_Rdry / (dt*dt)
+    alpha   = real(NON_HYDRO_ALPHA,kind=RP)
 
     do l = 1, ADM_lall
+       !$omp parallel default(none),private(g,k),                                                                          &
+       !$omp shared(l,gall,kmin,kmax,rhogw,rhogw0,preg0,rhog0,Srho,Sw,Spre,dt,Sall,beta,gamma,grav,alpha,CVovRt2,Mu,Mc,Ml, &
+       !$omp        GRD_afac,GRD_bfac,GRD_rdgzh,VMTR_GSGAM2H,VMTR_RGAM,VMTR_RGAMH,VMTR_RGSGAM2,VMTR_RGSGAM2H)
+
        ! calc Sall
-       do k = ADM_kmin+1, ADM_kmax
-       do g = 1, ADM_gall
-          Sall(g,k) = (   ( rhogw0(g,k,  l)*alfa + dt * Sw  (g,k,  l) ) * VMTR_RGAMH  (g,k,  l)**2            &
-                      - ( ( preg0 (g,k,  l)      + dt * Spre(g,k,  l) ) * VMTR_RGSGAM2(g,k,  l)               &
-                        - ( preg0 (g,k-1,l)      + dt * Spre(g,k-1,l) ) * VMTR_RGSGAM2(g,k-1,l)               &
-                        ) * dt * GRD_rdgzh(k)                                                                 &
-                      - ( ( rhog0 (g,k,  l)      + dt * Srho(g,k,  l) ) * VMTR_RGAM(g,k,  l)**2 * GRD_afac(k) &
-                        + ( rhog0 (g,k-1,l)      + dt * Srho(g,k-1,l) ) * VMTR_RGAM(g,k-1,l)**2 * GRD_bfac(k) &
-                        ) * dt * GRAV                                                                         &
+       !$omp do
+       do k = kmin+1, kmax
+       do g = 1, gall
+          Sall(g,k) = (   ( rhogw0(g,k,  l)*alpha + dt * Sw  (g,k,  l) ) * VMTR_RGAMH  (g,k,  l)**2            &
+                      - ( ( preg0 (g,k,  l)       + dt * Spre(g,k,  l) ) * VMTR_RGSGAM2(g,k,  l)               &
+                        - ( preg0 (g,k-1,l)       + dt * Spre(g,k-1,l) ) * VMTR_RGSGAM2(g,k-1,l)               &
+                        ) * dt * GRD_rdgzh(k)                                                                  &
+                      - ( ( rhog0 (g,k,  l)       + dt * Srho(g,k,  l) ) * VMTR_RGAM(g,k,  l)**2 * GRD_afac(k) &
+                        + ( rhog0 (g,k-1,l)       + dt * Srho(g,k-1,l) ) * VMTR_RGAM(g,k-1,l)**2 * GRD_bfac(k) &
+                        ) * dt * grav                                                                          &
                       ) * CVovRt2
        enddo
        enddo
+       !$omp end do
 
        ! boundary conditions
-       do g = 1, ADM_gall
-          rhogw(g,ADM_kmin,  l) = rhogw(g,ADM_kmin,  l) * VMTR_RGSGAM2H(g,ADM_kmin,  l)
-          rhogw(g,ADM_kmax+1,l) = rhogw(g,ADM_kmax+1,l) * VMTR_RGSGAM2H(g,ADM_kmax+1,l)
-          Sall (g,ADM_kmin+1)   = Sall (g,ADM_kmin+1) - Ml(g,ADM_kmin+1,l) * rhogw(g,ADM_kmin,  l)
-          Sall (g,ADM_kmax  )   = Sall (g,ADM_kmax  ) - Mu(g,ADM_kmax,  l) * rhogw(g,ADM_kmax+1,l)
+       !$omp do
+       do g = 1, gall
+          rhogw(g,kmin,  l) = rhogw(g,kmin,  l) * VMTR_RGSGAM2H(g,kmin,  l)
+          rhogw(g,kmax+1,l) = rhogw(g,kmax+1,l) * VMTR_RGSGAM2H(g,kmax+1,l)
+          Sall (g,kmin+1)   = Sall (g,kmin+1) - Ml(g,kmin+1,l) * rhogw(g,kmin,  l)
+          Sall (g,kmax  )   = Sall (g,kmax  ) - Mu(g,kmax,  l) * rhogw(g,kmax+1,l)
        enddo
+       !$omp end do
 
        !---< solve tri-daigonal matrix >
 
-       ! condition at ADM_kmin+1
-       k = ADM_kmin+1
-       do g = 1, ADM_gall
+       ! condition at kmin+1
+       k = kmin+1
+       !$omp do
+       do g = 1, gall
           beta (g)     = Mc(g,k,l)
           rhogw(g,k,l) = Sall(g,k) / beta(g)
        enddo
+       !$omp end do
 
        ! forward
-       do k = ADM_kmin+2, ADM_kmax
-       do g = 1, ADM_gall
+       do k = kmin+2, kmax
+       !$omp do
+       do g = 1, gall
           gamma(g,k)   = Mu(g,k-1,l) / beta(g)
           beta (g)     = Mc(g,k,l) - Ml(g,k,l) * gamma(g,k) ! update beta
           rhogw(g,k,l) = ( Sall(g,k) - Ml(g,k,l) * rhogw(g,k-1,l) ) / beta(g)
        enddo
+       !$omp end do
        enddo
 
        ! backward
-       do k = ADM_kmax-1, ADM_kmin+1, -1
-       do g = 1, ADM_gall
+       do k = kmax-1, kmin+1, -1
+       !$omp do
+       do g = 1, gall
           rhogw(g,k  ,l) = rhogw(g,k  ,l) - gamma(g,k+1) * rhogw(g,k+1,l)
           rhogw(g,k+1,l) = rhogw(g,k+1,l) * VMTR_GSGAM2H(g,k+1,l) ! return value ( G^1/2 x gam2 )
        enddo
+       !$omp end do
        enddo
 
        ! boundary treatment
-       do g = 1, ADM_gall
-          rhogw(g,ADM_kmin  ,l) = rhogw(g,ADM_kmin  ,l) * VMTR_GSGAM2H(g,ADM_kmin  ,l)
-          rhogw(g,ADM_kmin+1,l) = rhogw(g,ADM_kmin+1,l) * VMTR_GSGAM2H(g,ADM_kmin+1,l)
-          rhogw(g,ADM_kmax+1,l) = rhogw(g,ADM_kmax+1,l) * VMTR_GSGAM2H(g,ADM_kmax+1,l)
+       !$omp do
+       do g = 1, gall
+          rhogw(g,kmin  ,l) = rhogw(g,kmin  ,l) * VMTR_GSGAM2H(g,kmin  ,l)
+          rhogw(g,kmin+1,l) = rhogw(g,kmin+1,l) * VMTR_GSGAM2H(g,kmin+1,l)
+          rhogw(g,kmax+1,l) = rhogw(g,kmax+1,l) * VMTR_GSGAM2H(g,kmax+1,l)
        enddo
+       !$omp end do
+
+       !$omp end parallel
     enddo
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
           do k  = ADM_kmin+1, ADM_kmax
           do g = 1, ADM_gall_pl
-             Sall_pl(g,k) = (   ( rhogw0_pl(g,k,  l)*alfa + dt * Sw_pl  (g,k,  l) ) * VMTR_RGAMH_pl  (g,k,  l)**2            &
-                            - ( ( preg0_pl (g,k,  l)      + dt * Spre_pl(g,k,  l) ) * VMTR_RGSGAM2_pl(g,k,  l)               &
-                              - ( preg0_pl (g,k-1,l)      + dt * Spre_pl(g,k-1,l) ) * VMTR_RGSGAM2_pl(g,k-1,l)               &
-                              ) * dt * GRD_rdgzh(k)                                                                          &
-                            - ( ( rhog0_pl (g,k,  l)      + dt * Srho_pl(g,k,  l) ) * VMTR_RGAM_pl(g,k,  l)**2 * GRD_afac(k) &
-                              + ( rhog0_pl (g,k-1,l)      + dt * Srho_pl(g,k-1,l) ) * VMTR_RGAM_pl(g,k-1,l)**2 * GRD_bfac(k) &
-                              ) * dt * GRAV                                                                                  &
+             Sall_pl(g,k) = (   ( rhogw0_pl(g,k,  l)*alpha + dt * Sw_pl  (g,k,  l) ) * VMTR_RGAMH_pl  (g,k,  l)**2            &
+                            - ( ( preg0_pl (g,k,  l)       + dt * Spre_pl(g,k,  l) ) * VMTR_RGSGAM2_pl(g,k,  l)               &
+                              - ( preg0_pl (g,k-1,l)       + dt * Spre_pl(g,k-1,l) ) * VMTR_RGSGAM2_pl(g,k-1,l)               &
+                              ) * dt * GRD_rdgzh(k)                                                                           &
+                            - ( ( rhog0_pl (g,k,  l)       + dt * Srho_pl(g,k,  l) ) * VMTR_RGAM_pl(g,k,  l)**2 * GRD_afac(k) &
+                              + ( rhog0_pl (g,k-1,l)       + dt * Srho_pl(g,k-1,l) ) * VMTR_RGAM_pl(g,k-1,l)**2 * GRD_bfac(k) &
+                              ) * dt * grav                                                                                   &
                             ) * CVovRt2
           enddo
           enddo

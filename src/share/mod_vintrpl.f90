@@ -161,10 +161,10 @@ contains
 
        do l = 1, ADM_lall
        do g = 1, ADM_gall
-          Z  (:)          = GRD_vz(g,:,l,GRD_Z)
-          tmp(:)          = var   (g,:,l)
-          tmp(ADM_kmin-1) = var   (g,ADM_kmin,l)
-          tmp(ADM_kmax+1) = var   (g,ADM_kmax,l)
+          Z  (:)                 = GRD_vz(g,:,l,GRD_Z)
+          tmp(ADM_kmin:ADM_kmax) = var   (g,ADM_kmin:ADM_kmax,l)
+          tmp(ADM_kmin-1)        = var   (g,ADM_kmin,l)
+          tmp(ADM_kmax+1)        = var   (g,ADM_kmax,l)
 
           do k = ADM_kmin, ADM_kmax
              if    ( Xi(k) < Z(ADM_kmin-1) ) then
@@ -203,10 +203,10 @@ contains
        if ( ADM_have_pl ) Then
           do l = 1, ADM_lall_pl
           do g = 1, ADM_gall_pl
-             Z  (:)          = GRD_vz_pl(g,:,l,GRD_Z)
-             tmp(:)          = var_pl   (g,:,l)
-             tmp(ADM_kmin-1) = var_pl   (g,ADM_kmin,l)
-             tmp(ADM_kmax+1) = var_pl   (g,ADM_kmax,l)
+             Z  (:)                 = GRD_vz_pl(g,:,l,GRD_Z)
+             tmp(ADM_kmin:ADM_kmax) = var_pl   (g,ADM_kmin:ADM_kmax,l)
+             tmp(ADM_kmin-1)        = var_pl   (g,ADM_kmin,l)
+             tmp(ADM_kmax+1)        = var_pl   (g,ADM_kmax,l)
 
              do k = ADM_kmin, ADM_kmax
                 if    ( Xi(k) < Z(ADM_kmin-1) ) then
