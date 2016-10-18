@@ -41,15 +41,10 @@ PERF_MONIT = -Ntl_trt -D_FIPP_ -U_FAPP_ -U_FINEPA_
 FFLAGS += $(PERF_MONIT)
 CFLAGS += $(PERF_MONIT)
 
-ifeq ($(ENABLE_OPENMP),T)
-	FFLAGS += -Kopenmp
-endif
-
 ifeq ($(ENABLE_NETCDF),T)
-	NETCDF_INCLUDE ?= -I/data/share005/cross-K/include
-	NETCDF_LIBS    ?= -L/data/share005/cross-K/lib -lnetcdf -lhdf5_hl -lhdf5 -lsz -lz
-	FFLAGS         += $(NETCDF_INCLUDE)
-	CFLAGS         += $(NETCDF_INCLUDE)
+	FFLAGS      += -I/usr/local/SPARC/NetCDF-Fortran/4.2/include
+	CFLAGS      += -I/usr/local/SPARC/NetCDF-C/4.3.2/include -I/usr/local/SPARC/HDF5/1.8.17/include
+	NETCDF_LIBS ?= -L/usr/local/SPARC/NetCDF-Fortran/4.2/lib -lnetcdff -L/usr/local/SPARC/HDF5/1.8.17/lib -L/usr/local/SPARC/NetCDF-C/4.3.2/lib -lnetcdf -lhdf5_hl -lhdf5 -lnetcdf -lz
 endif
 
 LAPACK_LIBS ?= -SSL2BLAMP -SCALAPACK

@@ -30,7 +30,6 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-# for RICC-FX100
 NNODE=`expr $NMPI / 2`
 
 PROF1="fipp -C -Srange -Ihwm,nocall -d prof"
@@ -43,19 +42,23 @@ cat << EOF1 > run.sh
 # for FX100
 #
 ################################################################################
-#PJM -L rscunit=gwmpc
-#PJM -L rscgrp=batch
+#PJM -L "rscgrp=all"
 #PJM -L node=${NNODE}
 #PJM --mpi proc=${NMPI}
-#PJM -L elapse=00:30:00
+#PJM -L elapse=01:00:00
 #PJM -j
 #PJM -s
 #
-. /work/system/Env_base
+. /fefs/home/system/Env_base
 #
-export PARALLEL=16
-export OMP_NUM_THREADS=16
+export PARALLEL=12
+export OMP_NUM_THREADS=12
 export XOS_MMM_L_ARENA_FREE=2
+
+module load TCSuite
+module load HDF5
+module load NetCDF-C
+module load NetCDF-Fortran
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
@@ -88,18 +91,23 @@ cat << EOFICO2LL1 > ico2ll.sh
 # for FX100
 #
 ################################################################################
-#PJM -L rscunit=gwmpc
-#PJM -L rscgrp=batch
+#PJM -L "rscgrp=all"
 #PJM -L node=${NNODE}
 #PJM --mpi proc=${NMPI}
-#PJM -L elapse=00:30:00
+#PJM -L elapse=01:00:00
 #PJM -j
 #PJM -s
 #
-. /work/system/Env_base
+. /fefs/home/system/Env_base
 #
-export PARALLEL=16
-export OMP_NUM_THREADS=16
+export PARALLEL=12
+export OMP_NUM_THREADS=12
+export XOS_MMM_L_ARENA_FREE=2
+
+module load TCSuite
+module load HDF5
+module load NetCDF-C
+module load NetCDF-Fortran
 
 ln -sv ${TOPDIR}/bin/fio_ico2ll_mpi .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .

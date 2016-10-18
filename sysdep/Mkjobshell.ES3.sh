@@ -30,7 +30,6 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-# for RICC-FX100
 NNODE=`expr $NMPI / 2`
 RUNDIR=`pwd`
 
