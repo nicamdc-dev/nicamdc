@@ -184,10 +184,10 @@ contains
     !if( IO_L ) write(IO_FID_LOG,*) rapname, PROF_rapnstr(id)
 
 #ifdef _FAPP_
-    call FAPP_START( trim(PROF_grpname(get_grpid(rapname))), id, level_ )
+    call FAPP_START( trim(rapname), id, level_ )
 #endif
 #ifdef _FINEPA_
-    call START_COLLECTION( rapname )
+    call START_COLLECTION( trim(rapname) )
 #endif
 
     return
@@ -225,10 +225,10 @@ contains
     PROF_rapnend(id) = PROF_rapnend(id) + 1
 
 #ifdef _FINEPA_
-    call STOP_COLLECTION( rapname )
+    call STOP_COLLECTION( trim(rapname) )
 #endif
 #ifdef _FAPP_
-    call FAPP_STOP( trim(PROF_grpname(PROF_grpid(id))), id, level_ )
+    call FAPP_STOP( trim(rapname), id, level_ )
 #endif
 
     return

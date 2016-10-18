@@ -141,7 +141,7 @@ contains
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
-    call PROF_rapstart('____src_advection_convergence_m',2)
+    call PROF_rapstart('____src_advection_conv_m',2)
 
     !---< merge horizontal velocity & vertical velocity >
 
@@ -313,7 +313,7 @@ contains
        grhogw_pl (:,:,:) = 0.0_RP
     endif
 
-    call PROF_rapend('____src_advection_convergence_m',2)
+    call PROF_rapend('____src_advection_conv_m',2)
 
     return
   end subroutine src_advection_convergence_momentum
@@ -370,7 +370,7 @@ contains
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
-    call PROF_rapstart('____src_advection_convergence',2)
+    call PROF_rapstart('____src_advection_conv',2)
 
     ! rhogvh * scl
 !OCL SERIAL
@@ -458,7 +458,7 @@ contains
                                grhogscl,  grhogscl_pl,  & ! [OUT]
                                fluxtype                 ) ! [IN]
 
-    call PROF_rapend('____src_advection_convergence',2)
+    call PROF_rapend('____src_advection_conv',2)
 
     return
   end subroutine src_advection_convergence

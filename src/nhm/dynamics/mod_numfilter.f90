@@ -1073,7 +1073,7 @@ contains
 
     if( .NOT. NUMFILTER_DOrayleigh ) return
 
-    call PROF_rapstart('____numfilter_rayleigh_damping',2)
+    call PROF_rapstart('____numfilter_rayleighd',2)
 
     if ( .NOT. rayleigh_damp_only_w ) then
        do l = 1, ADM_lall
@@ -1125,7 +1125,7 @@ contains
        enddo
     endif
 
-    call PROF_rapend('____numfilter_rayleigh_damping',2)
+    call PROF_rapend('____numfilter_rayleighd',2)
 
     return
   end subroutine numfilter_rayleigh_damping

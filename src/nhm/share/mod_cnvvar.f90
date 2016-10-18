@@ -397,7 +397,7 @@ contains
     integer :: g, k, l
     !---------------------------------------------------------------------------
 
-    call PROF_rapstart('cnvvar_rhogkin',2)
+    call PROF_rapstart('CNV_rhogkin',2)
 
     do l = 1, ADM_lall
        !--- horizontal kinetic energy
@@ -467,7 +467,7 @@ contains
        enddo
     endif
 
-    call PROF_rapend('cnvvar_rhogkin',2)
+    call PROF_rapend('CNV_rhogkin',2)
 
     return
   end subroutine cnvvar_rhogkin
