@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpiexec -np ${NMPI}"
+MPIEXEC="mpirun -np ${NMPI} inspxe-cl -collect ti2 -result-dir ./result -search-dir src:r=../../../../src"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -34,12 +34,12 @@ cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ FOR MacOSX & gfortran4.6 & OpenMPI1.6 -----
+# ------ FOR Linux64 & intel C&fortran & intel mpi -----
 #
 ################################################################################
 export FORT_FMT_RECL=400
-export GFORTRAN_UNBUFFERED_ALL=Y
-export OMP_NUM_THREADS=2
+export OMP_NUM_THREADS=3
+
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
@@ -53,6 +53,8 @@ done
 
 cat << EOF2 >> run.sh
 
+rm -rf ./result.*
+
 # run
 ${MPIEXEC} ./${BINNAME} || exit
 
@@ -64,12 +66,11 @@ cat << EOFICO2LL1 > ico2ll.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ FOR MacOSX & gfortran4.6 & OpenMPI1.6 -----
+# ------ FOR Linux64 & intel C&fortran & intel mpi -----
 #
 ################################################################################
 export FORT_FMT_RECL=400
-export GFORTRAN_UNBUFFERED_ALL=Y
-export OMP_NUM_THREADS=1
+
 
 ln -sv ${TOPDIR}/bin/fio_ico2ll_mpi .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
@@ -93,16 +94,6 @@ layerfile_dir="./zaxis" \
 llmap_base="./llmap" \
 -lon_swap \
 -comm_smallchunk
-
-${MPIEXEC} ./fio_ico2ll_mpi \
-history \
-glevel=${GLEV} \
-rlevel=${RLEV} \
-mnginfo="./${MNGINFO}" \
-layerfile_dir="./zaxis" \
-llmap_base="./llmap" \
--lon_swap \
--comm_smallchunk -output_gtool
 
 ################################################################################
 EOFICO2LL2

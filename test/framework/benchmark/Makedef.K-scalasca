@@ -2,7 +2,7 @@
 # ------ FOR K computer -----
 #
 FFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,noalias=s,mfunc=2 \
-               -Qi -Qt -X03 -Ncompdisp -Koptmsg=1 -Cpp                   \
+               -Qm -Qt -X03 -Ncompdisp -Koptmsg=1 -Cpp                   \
                -x-                                                       \
                -Kdynamic_iteration -Ksimd,openmp                         \
                -Kauto,threadsafe
@@ -11,7 +11,7 @@ FFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,noalias=s,mfunc=2 \
 # If you find the segmentation fault error, please check.
 
 FFLAGS_DEBUG = -O0                                                       \
-               -Qi -Qt -X03 -v03s -v03d -v03o -Ncompdisp -Koptmsg=1 -Cpp \
+               -Qm -Qt -X03 -v03s -v03d -v03o -Ncompdisp -Koptmsg=2 -Cpp \
                -Ec -Eg -Ha -He -Hf -Ho -Hs -Hu -Hx -Ncheck_global        \
                -DDEBUG
 
@@ -40,10 +40,6 @@ PERF_MONIT = -Ntl_notrt -U_FIPP_ -U_FAPP_ -U_FINEPA_
 
 FFLAGS += $(PERF_MONIT)
 CFLAGS += $(PERF_MONIT)
-
-ifeq ($(ENABLE_OPENMP),T)
-	FFLAGS += -Kopenmp
-endif
 
 ifeq ($(ENABLE_NETCDF),T)
 	NETCDF_INCLUDE ?= -I/opt/aics/netcdf/k-serial-noszip/include
