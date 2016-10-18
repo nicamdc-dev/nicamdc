@@ -683,15 +683,4 @@ contains
     return
   end subroutine output_info
 
-  !-----------------------------------------------------------------------------
-  integer function suf(i,j)
-    implicit none
-
-    integer :: i, j
-    !---------------------------------------------------------------------------
-
-    suf = ADM_gall_1d * (j-1) + i
-
-  end function suf
-
 end module mod_adm

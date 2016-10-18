@@ -512,6 +512,7 @@ contains
        ADM_l_me,    &
        ADM_lall,    &
        ADM_gall,    &
+       ADM_gall_1d, &
        ADM_gall_in, &
        ADM_kall,    &
        ADM_gmin,    &
@@ -619,7 +620,7 @@ contains
                       g = 1
                       do j = ADM_gmin, ADM_gmax+1
                       do i = ADM_gmin, ADM_gmax+1
-                         g2 = suf(i,j)
+                         g2 = (j-1)*ADM_gall_1d + i
                          k2 = ksumstr(n)-1 + k
 
                          v_save(g2,k2,l,1) = v_save(g2,k2,l,1) + gd(g,k+ADM_kmin-1) * TIME_DTL
@@ -645,7 +646,7 @@ contains
                       g = 1
                       do j = ADM_gmin, ADM_gmax+1
                       do i = ADM_gmin, ADM_gmax+1
-                         g2 = suf(i,j)
+                         g2 = (j-1)*ADM_gall_1d + i
                          k2 = ksumstr(n)-1 + k
 
                          v_save(g2,k2,l,1) = v_save(g2,k2,l,1) + gd(g,k) * TIME_DTL
@@ -673,7 +674,7 @@ contains
                    g = 1
                    do j = ADM_gmin, ADM_gmax+1
                    do i = ADM_gmin, ADM_gmax+1
-                      g2 = suf(i,j)
+                      g2 = (j-1)*ADM_gall_1d + i
                       k1 = cnvpre_klev(g2,k,l)
                       k2 = ksumstr(n)-1 + k
 
@@ -1162,18 +1163,5 @@ contains
 
     return
   end subroutine diag_pre_sfc
-
-  !-----------------------------------------------------------------------------
-  integer function suf(i,j)
-    use mod_adm, only: &
-       ADM_gall_1d
-    implicit none
-
-    integer :: i, j
-    !---------------------------------------------------------------------------
-
-    suf = ADM_gall_1d * (j-1) + i
-
-  end function suf
 
 end module mod_history

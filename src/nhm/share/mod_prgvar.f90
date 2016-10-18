@@ -510,6 +510,7 @@ contains
        rhogq   )
     use mod_adm, only: &
        ADM_lall,    &
+       ADM_gall_1d, &
        ADM_gall_in, &
        ADM_kall,    &
        ADM_gmin,    &
@@ -534,7 +535,7 @@ contains
        n = 1
        do j = ADM_gmin, ADM_gmax+1
        do i = ADM_gmin, ADM_gmax+1
-          ij = suf(i,j)
+          ij = (j-1)*ADM_gall_1d + i
 
           rhog  (n,k,l) = PRG_var(ij,k,l,I_RHOG  )
           rhogvx(n,k,l) = PRG_var(ij,k,l,I_RHOGVX)
@@ -555,7 +556,7 @@ contains
        n = 1
        do j = ADM_gmin, ADM_gmax+1
        do i = ADM_gmin, ADM_gmax+1
-          ij = suf(i,j)
+          ij = (j-1)*ADM_gall_1d + i
 
           rhogq(n,k,l,nq) = PRG_var(ij,k,l,PRG_vmax0+nq)
 
@@ -588,6 +589,7 @@ contains
        q       )
     use mod_adm, only: &
        ADM_lall,    &
+       ADM_gall_1d, &
        ADM_gall_in, &
        ADM_kall,    &
        ADM_gmin,    &
@@ -627,7 +629,7 @@ contains
        n = 1
        do j = ADM_gmin, ADM_gmax+1
        do i = ADM_gmin, ADM_gmax+1
-          ij = suf(i,j)
+          ij = (j-1)*ADM_gall_1d + i
 
           rhog  (n,k,l) = PRG_var(ij,k,l,I_RHOG  )
           rhogvx(n,k,l) = PRG_var(ij,k,l,I_RHOGVX)
@@ -657,7 +659,7 @@ contains
        n = 1
        do j = ADM_gmin, ADM_gmax+1
        do i = ADM_gmin, ADM_gmax+1
-          ij = suf(i,j)
+          ij = (j-1)*ADM_gall_1d + i
 
           rhogq(n,k,l,nq) = PRG_var(ij,k,l,PRG_vmax0+nq)
 
@@ -684,6 +686,7 @@ contains
        rhogq   )
     use mod_adm, only : &
        ADM_lall,    &
+       ADM_gall_1d, &
        ADM_gall_in, &
        ADM_kall,    &
        ADM_gmin,    &
@@ -711,7 +714,7 @@ contains
        n = 1
        do j = ADM_gmin, ADM_gmax+1
        do i = ADM_gmin, ADM_gmax+1
-          ij = suf(i,j)
+          ij = (j-1)*ADM_gall_1d + i
 
           PRG_var(ij,k,l,I_RHOG  ) = rhog  (n,k,l)
           PRG_var(ij,k,l,I_RHOGVX) = rhogvx(n,k,l)
@@ -732,7 +735,7 @@ contains
        n = 1
        do j = ADM_gmin, ADM_gmax+1
        do i = ADM_gmin, ADM_gmax+1
-          ij = suf(i,j)
+          ij = (j-1)*ADM_gall_1d + i
 
           PRG_var(ij,k,l,PRG_vmax0+nq) = rhogq(n,k,l,nq)
 
@@ -1009,18 +1012,5 @@ contains
 
     return
   end subroutine restart_output
-
-  !-----------------------------------------------------------------------------
-  integer function suf(i,j)
-    use mod_adm, only: &
-       ADM_gall_1d
-    implicit none
-
-    integer :: i, j
-    !---------------------------------------------------------------------------
-
-    suf = ADM_gall_1d * (j-1) + i
-
-  end function suf
 
 end module mod_prgvar

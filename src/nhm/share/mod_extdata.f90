@@ -357,6 +357,7 @@ contains
        CALENDAR_yh2ss, &
        CALENDAR_ss2yh
     use mod_adm, only: &
+       ADM_gall_1d, &
        ADM_gall_in, &
        ADM_gmin,    &
        ADM_gmax
@@ -377,7 +378,7 @@ contains
     real(DP) :: data_time_prev
 
     integer  :: kall, gall
-    integer  :: im, i, j, k, n
+    integer  :: im, i, j, k, n, ij
     !---------------------------------------------------------------------------
 
     eflag = .false.
@@ -478,8 +479,10 @@ contains
        n = 1
        do j = ADM_gmin, ADM_gmax+1
        do i = ADM_gmin, ADM_gmax+1
-          gdata(n,k) = info(np)%v(suf(i,j),k,l_region,1) * (       wt) &
-                     + info(np)%v(suf(i,j),k,l_region,2) * (1.0_RP-wt)
+          ij = (j-1)*ADM_gall_1d + i
+
+          gdata(n,k) = info(np)%v(ij,k,l_region,1) * (       wt) &
+                     + info(np)%v(ij,k,l_region,2) * (1.0_RP-wt)
 
           n = n + 1
        enddo
@@ -540,18 +543,5 @@ contains
 
     return
   end subroutine data_read
-
-  !-----------------------------------------------------------------------------
-  integer function suf(i,j)
-    use mod_adm, only: &
-       ADM_gall_1d
-    implicit none
-
-    integer :: i, j
-    !---------------------------------------------------------------------------
-
-    suf = ADM_gall_1d * (j-1) + i
-
-  end function suf
 
 end module mod_extdata
