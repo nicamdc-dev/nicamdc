@@ -17,9 +17,7 @@ MODS_SHARE =	\
 	fio.o	\
 	fiof.o	\
 	$(mod_hio).o	\
-	hio.o	\
-	hiof.o	\
-	poh5.o	\
+	$(hio)	\
 	mod_comm.o	\
 	mod_grd.o	\
 	mod_ideal_topo.o	\

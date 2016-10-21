@@ -27,9 +27,11 @@ endif
 
 ifeq ($(ENABLE_POH5),T)
 	mod_hio := mod_hio
+	hio     := hiof.o hio.o poh5.o
 else
 	VPATH += share/extra:
 	mod_hio := mod_nohio
+	hio     :=
 endif
 
 ifeq ($(ENABLE_FIXEDINDEX),T)
