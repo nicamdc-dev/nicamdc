@@ -1,8 +1,7 @@
 #
 # ------ FOR JAMSTEC SC system -----
 #
-
-FFLAGS_FAST  = -fpp3 -O3 -m64 -axAVX -ip -traceback           \
+FFLAGS_FAST  = -fpp3 -O3 -m64 -axAVX -ip -traceback \
                -assume byterecl -convert big_endian \
                -ftz -fp-model precise -pc 80        \
                -mcmodel=medium -shared-intel        \
@@ -38,6 +37,8 @@ ifeq ($(ENABLE_NETCDF),T)
 	CFLAGS         += $(NETCDF_INCLUDE)
 endif
 
+LAPACK_LIBS ?= -mkl
+
 ###########################
 
 MODDIROPT ?= -module $(BUILDDIR)
@@ -51,3 +52,4 @@ INSTALL = cp -u
 AR      = ar
 ARFLAGS = r
 RANLIB  = ranlib
+JOBSUB  = qsub

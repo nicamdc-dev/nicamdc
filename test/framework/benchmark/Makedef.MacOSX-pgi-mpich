@@ -1,23 +1,26 @@
 #
-# ------ FOR MacOSX & pgi fortran&C & mpich -----
+# ------ FOR Linux 64bit & pgi fortran&C & OpenMPI1.4 -----
 #
-FFLAGS_FAST = -Mpreprocess -fastsse -Mipa=fast,inline -m64 \
-              -Minfo                                       \
-              -Mbyteswapio                                 \
-              -Mflushz -pc 64
-
-FFLAGS_DEBUG = -Mpreprocess -O0 -m64             \
-               -Minfo                            \
+FFLAGS_FAST  = -Mpreprocess -fastsse -Mipa=fast,inline -m64 \
                -Mbyteswapio                      \
-               -Ktrap=fp -pc 64                  \
+               -Mflushz -pc 64                   \
+               -Msmartalloc=huge
+
+FFLAGS_DEBUG = -Mpreprocess -O0 -m64 -Minfo      \
+               -Mbyteswapio                      \
+               -Ktrap=fp -pc 64 -Kieee           \
                -Mbounds -Mstandard -g -traceback
 
 FC     = mpif90
-#FFLAGS = $(FFLAGS_FAST) $(PGI_INCLUDE)
-FFLAGS = $(FFLAGS_DEBUG) $(PGI_INCLUDE)
+FFLAGS = $(FFLAGS_FAST)
+#FFLAGS = $(FFLAGS_DEBUG)
+
+CFLAGS_FAST  = -fastsse -m64
+CFLAGS_DEBUG = -O0
 
 CC     = mpicc
-CFLAGS = -fastsse
+CFLAGS = $(CFLAGS_FAST)
+#CFLAGS = $(CFLAGS_DEBUG)
 
 ##### Special Options #####
 
@@ -25,12 +28,17 @@ ifeq ($(ENABLE_OPENMP),T)
 	FFLAGS += -openmp -openmp-report
 endif
 
-ifeq ($(ENABLE_NETCDF),T)
-	NETCDF_INCLUDE ?= -I/opt/local/include
-	NETCDF_LIBS    ?= -L/opt/local/lib -lnetcdff -lnetcdf
-	FFLAGS         += $(NETCDF_INCLUDE)
-	CFLAGS         += $(NETCDF_INCLUDE)
+ifeq ($(ENABLE_OPENACC),T)
+	FFLAGS += -Minfo=accel -acc -ta=nvidia
 endif
+
+ifeq ($(ENABLE_NETCDF),T)
+	FFLAGS      += $(shell nf-config --fflags)
+	CFLAGS      += $(shell nc-config --cflags)
+	NETCDF_LIBS ?= $(shell nf-config --flibs) $(shell nc-config --libs)
+endif
+
+LAPACK_LIBS ?=
 
 ###########################
 
@@ -40,6 +48,7 @@ OBJDIR    ?= $(BUILDDIR)
 LD     = $(FC)
 LFLAGS = $(FFLAGS) $(PGI_LIBS)
 
+MAKE    = make
 INSTALL = install
 AR      = ar
 ARFLAGS = r

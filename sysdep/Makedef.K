@@ -19,10 +19,10 @@ FC     = mpifrtpx
 FFLAGS = $(FFLAGS_FAST)
 #FFLAGS = $(FFLAGS_DEBUG)
 
-CC     = mpifccpx
 CFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,region_extension,restp=all -Ksimd
 CFLAGS_DEBUG = -O0
 
+CC     = mpifccpx
 CFLAGS = $(CFLAGS_FAST)
 #CFLAGS = $(CFLAGS_DEBUG)
 
@@ -30,9 +30,9 @@ CFLAGS = $(CFLAGS_FAST)
 
 # Performance monitor
 # disable
-#PERF_MONIT = -Ntl_notrt -U_FIPP_ -U_FAPP_ -U_FINEPA_
+PERF_MONIT = -Ntl_notrt -U_FIPP_ -U_FAPP_ -U_FINEPA_
 # fipp
-PERF_MONIT = -Ntl_trt -D_FIPP_ -U_FAPP_ -U_FINEPA_
+#PERF_MONIT = -Ntl_trt -D_FIPP_ -U_FAPP_ -U_FINEPA_
 # fapp
 #PERF_MONIT = -Ntl_trt -U_FIPP_ -D_FAPP_ -U_FINEPA_
 # fine PA
@@ -58,6 +58,7 @@ OBJDIR    ?= $(BUILDDIR)
 LD     = $(FC)
 LFLAGS = $(FFLAGS)
 
+MAKE    = make
 INSTALL = install
 AR      = ar
 ARFLAGS = r

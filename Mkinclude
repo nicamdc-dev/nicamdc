@@ -25,6 +25,11 @@ else
 	mod_netcdf := mod_nonetcdf
 endif
 
+ifeq ($(USE_NETCDF3),T)
+	FFLAGS += -DNETCDF3
+	CFLAGS += -DNETCDF3
+endif
+
 ifeq ($(ENABLE_POH5),T)
 	mod_hio := mod_hio
 	hio     := hiof.o hio.o poh5.o

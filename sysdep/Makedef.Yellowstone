@@ -31,12 +31,12 @@ ifeq ($(ENABLE_OPENMP),T)
 endif
 
 ifeq ($(ENABLE_NETCDF),T)
-        FFLAGS      += $(shell nf-config --fflags)
-        CFLAGS      += $(shell nc-config --cflags)
-        NETCDF_LIBS ?= $(shell nf-config --flibs) $(shell nc-config --libs)
+	FFLAGS      += $(shell nf-config --fflags)
+	CFLAGS      += $(shell nc-config --cflags)
+	NETCDF_LIBS ?= $(shell nf-config --flibs) $(shell nc-config --libs)
 endif
 
-LAPACK_LIBS    ?= -mkl
+LAPACK_LIBS ?= -mkl
 
 ###########################
 
@@ -46,6 +46,7 @@ OBJDIR    ?= $(BUILDDIR)
 LD     = $(FC)
 LFLAGS = $(FFLAGS)
 
+MAKE    = make
 INSTALL = install
 AR      = ar
 ARFLAGS = r

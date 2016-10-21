@@ -1,51 +1,54 @@
 #
 # ------ FOR Linux 64bit & pgi fortran&C & OpenMPI1.4 -----
 #
+FFLAGS_FAST  = -Mpreprocess -fastsse -Mipa=fast,inline -m64 \
+               -Mbyteswapio -mcmodel=medium      \
+               -Mflushz -pc 64                   \
+               -Msmartalloc=huge
 
-##### for computation
-
-FFLAGS_FAST = -Mpreprocess -fastsse -Mipa=fast,inline -m64 \
-              -Mbyteswapio                       \
-              -Mflushz -pc 80                    \
-              -mcmodel=medium                    \
-              -Msmartalloc=huge -Minfo
-
-FFLAGS_DEBUG = -Mpreprocess -O0 -m64             \
-               -Mbyteswapio                      \
-               -Ktrap=fp -pc 80                  \
-               -Mbounds -Mstandard -g -traceback \
-               -mcmodel=medium -Minfo
+FFLAGS_DEBUG = -Mpreprocess -O0 -m64 -Minfo      \
+               -Mbyteswapio -mcmodel=medium      \
+               -Ktrap=fp -pc 64 -Kieee           \
+               -Mbounds -Mstandard -g -traceback
 
 FC     = mpif90
 FFLAGS = $(FFLAGS_FAST)
 #FFLAGS = $(FFLAGS_DEBUG)
 
-ifneq ($(ENABLE_OPENMP),)
-      FFLAGS += -openmp -openmp-report
-endif
-ifneq ($(ENABLE_PAPI),)
-      FFLAGS += -D_PAPI_
-      PAPI_INCLUDE = -I$(PAPI)/include
-      PAPI_LIBS    = -L$(PAPI)/lib -lpapi
-endif
-
-MODDIROPT ?= -module
+CFLAGS_FAST  = -fastsse -m64 -mcmodel=medium
+CFLAGS_DEBUG = -O0 -mcmodel=medium
 
 CC     = mpicc
-CFLAGS = -fastsse -mcmodel=medium
+CFLAGS = $(CFLAGS_FAST)
+#CFLAGS = $(CFLAGS_DEBUG)
 
-ifneq ($(USE_NETCDF3),)
-      CFLAGS += -DNETCDF3
+##### Special Options #####
+
+ifeq ($(ENABLE_OPENMP),T)
+	FFLAGS += -openmp -openmp-report
 endif
 
+ifeq ($(ENABLE_OPENACC),T)
+	FFLAGS += -Minfo=accel -acc -ta=nvidia
+endif
+
+ifeq ($(ENABLE_NETCDF),T)
+	FFLAGS      += $(shell nf-config --fflags)
+	CFLAGS      += $(shell nc-config --cflags)
+	NETCDF_LIBS ?= $(shell nf-config --flibs) $(shell nc-config --libs)
+endif
+
+LAPACK_LIBS ?=
+
+###########################
+
+MODDIROPT ?= -module $(BUILDDIR)
+OBJDIR    ?= $(BUILDDIR)
+
 LD     = $(FC)
-LDFLAGS = $(FFLAGS)
+LFLAGS = $(FFLAGS)
 
-###### NetCDF library
-NETCDF_INCLUDE ?= -I$(NETCDF3)/include
-NETCDF_LIBS    ?= -L$(NETCDF3)/lib -lnetcdff -lnetcdf
-
-##### for frontend
+MAKE    = make
 INSTALL = install
 AR      = ar
 ARFLAGS = r

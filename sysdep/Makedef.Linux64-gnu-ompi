@@ -18,17 +18,17 @@ FC     = mpifort
 FFLAGS = $(FFLAGS_FAST)
 #FFLAGS = $(FFLAGS_DEBUG)
 
-CC     = mpicc
 CFLAGS_FAST  = -O3 -m64 -std=c99 -mcmodel=medium
 CFLAGS_DEBUG = -O0 -m64 -std=c99 -mcmodel=medium -g -fbacktrace
 
+CC     = mpicc
 CFLAGS = $(CFLAGS_FAST)
 #CFLAGS = $(CFLAGS_DEBUG)
 
 ##### Special Options #####
 
 ifeq ($(ENABLE_OPENMP),T)
-	FFLAGS += -openmp -openmp-report
+	FFLAGS += -fopenmp
 endif
 
 ifeq ($(ENABLE_NETCDF),T)
@@ -37,7 +37,7 @@ ifeq ($(ENABLE_NETCDF),T)
 	NETCDF_LIBS ?= $(shell nf-config --flibs) $(shell nc-config --libs)
 endif
 
-LAPACK_LIBS    ?= -L/ap/lapack/3.6.0/lib -llapack
+LAPACK_LIBS ?=
 
 ###########################
 
@@ -47,6 +47,7 @@ OBJDIR    ?= $(BUILDDIR)
 LD     = $(FC)
 LFLAGS = $(FFLAGS)
 
+MAKE    = make
 INSTALL = install
 AR      = ar
 ARFLAGS = r

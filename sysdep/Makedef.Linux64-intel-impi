@@ -16,10 +16,10 @@ FC     = mpiifort
 FFLAGS = $(FFLAGS_FAST)
 #FFLAGS = $(FFLAGS_DEBUG)
 
-CC     = mpiicc
 CFLAGS_FAST  = -O3 -xHost -ip -mcmodel=medium
 CFLAGS_DEBUG = -O0 -mcmodel=medium
 
+CC     = mpiicc
 CFLAGS = $(CFLAGS_FAST)
 #CFLAGS = $(CFLAGS_DEBUG)
 
@@ -35,7 +35,7 @@ ifeq ($(ENABLE_NETCDF),T)
 	NETCDF_LIBS ?= $(shell nf-config --flibs) $(shell nc-config --libs)
 endif
 
-LAPACK_LIBS    ?= -mkl
+LAPACK_LIBS ?=
 
 ###########################
 
@@ -45,6 +45,7 @@ OBJDIR    ?= $(BUILDDIR)
 LD     = $(FC)
 LFLAGS = $(FFLAGS)
 
+MAKE    = make
 INSTALL = install
 AR      = ar
 ARFLAGS = r

@@ -14,15 +14,15 @@ FFLAGS_DEBUG = -Mpreprocess -O0 -m64                          \
                -Mbounds -Mstandard -g -traceback
 
 FC     = mpif90
-#FFLAGS = $(FFLAGS_FAST) -D_ACCCUDA
-FFLAGS = $(FFLAGS_DEBUG) -D_ACCCUDA
+FFLAGS = $(FFLAGS_FAST) -D_ACCCUDA
+#FFLAGS = $(FFLAGS_DEBUG) -D_ACCCUDA
 
 CFLAGS_FAST  = -fastsse -mcmodel=medium
 CFLAGS_DEBUG = -O0 -g -traceback
 
 CC     = mpicc
-#CFLAGS = $(CFLAGS_FAST)
-CFLAGS = $(CFLAGS_DEBUG)
+CFLAGS = $(CFLAGS_FAST)
+#CFLAGS = $(CFLAGS_DEBUG)
 
 ##### Special Options #####
 
@@ -46,4 +46,3 @@ AR      = ar
 ARFLAGS = r
 RANLIB  = ranlib
 JOBSUB  = sh
-

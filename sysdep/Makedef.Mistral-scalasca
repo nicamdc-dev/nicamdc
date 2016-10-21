@@ -50,6 +50,7 @@ OBJDIR    ?= $(BUILDDIR)
 LD     = $(FC)
 LFLAGS = $(FFLAGS)
 
+MAKE    = make
 INSTALL = install
 AR      = ar
 ARFLAGS = r
