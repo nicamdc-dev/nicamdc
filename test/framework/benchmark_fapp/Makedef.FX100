@@ -1,8 +1,8 @@
 #
 # ------ FOR FX100 -----
 #
-FFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,noalias=s,mfunc=2 \
-               -Qm -Qt -X03 -Ncompdisp -Koptmsg=2 -Cpp                   \
+FFLAGS_FAST  = -Kfast,ocl,preex,array_private,noalias=s,mfunc=2          \
+               -Qi -Qt -X03 -Ncompdisp -Koptmsg=1 -Cpp                   \
                -x-                                                       \
                -Kdynamic_iteration -Ksimd,openmp                         \
                -Kauto,threadsafe
@@ -10,9 +10,13 @@ FFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,noalias=s,mfunc=2 \
 # note: Kauto,threadsafe,autoobjstack,temparraystack depends on the stacksize.
 # If you find the segmentation fault error, please check.
 
-FFLAGS_DEBUG = -O0                                                       \
-               -Qm -Qt -X03 -v03s -v03d -v03o -Ncompdisp -Koptmsg=2 -Cpp \
-               -Ec -Eg -Ha -He -Hf -Ho -Hs -Hu -Hx -Ncheck_global        \
+#               -Qm -Nquickdbg -NRtrap
+
+FFLAGS_DEBUG = -O0 -Kopenmp                                          \
+               -Qi -Qt -X03 -Ncompdisp -Koptmsg=2 -Cpp               \
+               -x-                                                   \
+               -Ec -Eg -Ha -He -Hf -Ho -Hs -Hu -Hx -v03s -v03d -v03o \
+               -Ncheck_cache_arraysize -Ncheck_global                \
                -DDEBUG
 
 FC     = mpifrtpx
@@ -20,7 +24,7 @@ FFLAGS = $(FFLAGS_FAST)
 #FFLAGS = $(FFLAGS_DEBUG)
 
 CC     = mpifccpx
-CFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,region_extension,restp=all -Ksimd
+CFLAGS_FAST  = -Kfast,ocl,preex,array_private,region_extension,restp=all -Ksimd
 CFLAGS_DEBUG = -O0
 
 CFLAGS = $(CFLAGS_FAST)
