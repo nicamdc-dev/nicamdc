@@ -47,4 +47,4 @@ INSTALL = install
 AR      = ar
 ARFLAGS = r
 RANLIB  = ranlib
-JOBSUB  = pjsub
+JOBSUB  = sbatch

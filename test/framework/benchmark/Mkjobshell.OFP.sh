@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpiexec.hydra -n \${PJM_MPI_PROC}"
+MPIEXEC="mpiexec.hydra -n \${PJM_MPI_PROC} numactl --membind 1"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -51,7 +51,6 @@ cat << EOF1 > run.sh
 #PJM -s
 #
 export FORT_FMT_RECL=400
-export PARALLEL=16
 export OMP_NUM_THREADS=16
 
 

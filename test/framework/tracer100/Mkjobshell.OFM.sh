@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpiexec.hydra -n \${PJM_MPI_PROC} numactl --membind 1"
+MPIEXEC="mpirun -n ${NMPI} numactl --membind 1"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -30,29 +30,23 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-NNODE=`expr \( $NMPI - 1 \) / 4 + 1`
+NNODE=`expr \( $NMPI - 1 \) / 4      + 1`
 
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ FOR Oakforest-PACS -----
+# ------ FOR OFP-mini -----
 #
 ################################################################################
-#PJM -g gc26
-#PJM -L rscgrp=FLAT-QUADRANT
-#PJM -L node=${NNODE}
-#PJM --mpi proc=${NMPI}
-#PJM --omp thread=16
-#PJM -L elapse=01:00:00
-#PJM -N NICAMDC
-#PJM -X
-#PJM -j
-#PJM -s
+#SBATCH --job-name=NICAMDC
+#SBATCH --nodes=${NNODE}
+#SBATCH --time=00:30:00
 #
 export FORT_FMT_RECL=400
 export OMP_NUM_THREADS=16
 
+. /opt/intel/parallel_studio_xe_2017.1.043/psxevars.sh
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .

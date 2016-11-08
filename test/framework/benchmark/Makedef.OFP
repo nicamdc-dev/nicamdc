@@ -25,10 +25,6 @@ CFLAGS = $(CFLAGS_FAST)
 
 ##### Special Options #####
 
-ifeq ($(ENABLE_OPENMP),T)
-	FFLAGS += -openmp -openmp-report
-endif
-
 ifeq ($(ENABLE_NETCDF),T)
 	NETCDF_INCLUDE ?= -I/mppxb/c26053/share/include
 	NETCDF_LIBS    ?= -L/mppxb/c26053/share/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm
