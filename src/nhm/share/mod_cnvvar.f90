@@ -96,26 +96,26 @@ contains
     real(RP) :: rhog_h   (ADM_gall,   ADM_kall)
     real(RP) :: rhog_h_pl(ADM_gall_pl,ADM_kall)
 
-    integer :: n, k, l, iv
+    integer :: g, k, l, iq
     !---------------------------------------------------------------------------
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
-    do n = 1, ADM_gall
-       rho (n,k,l)      = prg(n,k,l,I_RHOG  ) * VMTR_RGSGAM2(n,k,l)
-       diag(n,k,l,I_vx) = prg(n,k,l,I_RHOGVX) / prg(n,k,l,I_RHOG)
-       diag(n,k,l,I_vy) = prg(n,k,l,I_RHOGVY) / prg(n,k,l,I_RHOG)
-       diag(n,k,l,I_vz) = prg(n,k,l,I_RHOGVZ) / prg(n,k,l,I_RHOG)
-       ein (n,k,l)      = prg(n,k,l,I_RHOGE ) / prg(n,k,l,I_RHOG)
+    do g = 1, ADM_gall
+       rho (g,k,l)      = prg(g,k,l,I_RHOG  ) * VMTR_RGSGAM2(g,k,l)
+       diag(g,k,l,I_vx) = prg(g,k,l,I_RHOGVX) / prg(g,k,l,I_RHOG)
+       diag(g,k,l,I_vy) = prg(g,k,l,I_RHOGVY) / prg(g,k,l,I_RHOG)
+       diag(g,k,l,I_vz) = prg(g,k,l,I_RHOGVZ) / prg(g,k,l,I_RHOG)
+       ein (g,k,l)      = prg(g,k,l,I_RHOGE ) / prg(g,k,l,I_RHOG)
     enddo
     enddo
     enddo
 
-    do iv = 1, TRC_vmax
+    do iq = 1, TRC_vmax
     do l  = 1, ADM_lall
     do k  = 1, ADM_kall
-    do n  = 1, ADM_gall
-       diag(n,k,l,DIAG_vmax0+iv) = prg(n,k,l,PRG_vmax0+iv) / prg(n,k,l,I_RHOG)
+    do g  = 1, ADM_gall
+       diag(g,k,l,DIAG_vmax0+iq) = prg(g,k,l,PRG_vmax0+iq) / prg(g,k,l,I_RHOG)
     enddo
     enddo
     enddo
@@ -133,18 +133,18 @@ contains
     do l = 1, ADM_lall
        !------ interpolation of rhog_h
        do k = 2, ADM_kall
-       do n = 1, ADM_gall
-          rhog_h(n,k) = ( VMTR_C2Wfact(n,k,1,l) * prg(n,k  ,l,I_RHOG) &
-                        + VMTR_C2Wfact(n,k,2,l) * prg(n,k-1,l,I_RHOG) )
+       do g = 1, ADM_gall
+          rhog_h(g,k) = ( VMTR_C2Wfact(g,k,1,l) * prg(g,k  ,l,I_RHOG) &
+                        + VMTR_C2Wfact(g,k,2,l) * prg(g,k-1,l,I_RHOG) )
        enddo
        enddo
-       do n = 1, ADM_gall
-          rhog_h(n,1) = rhog_h(n,2)
+       do g = 1, ADM_gall
+          rhog_h(g,1) = rhog_h(g,2)
        enddo
 
        do k = 1, ADM_kall
-       do n = 1, ADM_gall
-          diag(n,k,l,I_w) = prg(n,k,l,I_RHOGW) / rhog_h(n,k)
+       do g = 1, ADM_gall
+          diag(g,k,l,I_w) = prg(g,k,l,I_RHOGW) / rhog_h(g,k)
        enddo
        enddo
     enddo
@@ -153,21 +153,21 @@ contains
 
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
-       do n = 1, ADM_gall_pl
-          rho_pl (n,k,l)      = prg_pl(n,k,l,I_RHOG  ) * VMTR_RGSGAM2_pl(n,k,l)
-          diag_pl(n,k,l,I_vx) = prg_pl(n,k,l,I_RHOGVX) / prg_pl(n,k,l,I_RHOG)
-          diag_pl(n,k,l,I_vy) = prg_pl(n,k,l,I_RHOGVY) / prg_pl(n,k,l,I_RHOG)
-          diag_pl(n,k,l,I_vz) = prg_pl(n,k,l,I_RHOGVZ) / prg_pl(n,k,l,I_RHOG)
-          ein_pl (n,k,l)      = prg_pl(n,k,l,I_RHOGE ) / prg_pl(n,k,l,I_RHOG)
+       do g = 1, ADM_gall_pl
+          rho_pl (g,k,l)      = prg_pl(g,k,l,I_RHOG  ) * VMTR_RGSGAM2_pl(g,k,l)
+          diag_pl(g,k,l,I_vx) = prg_pl(g,k,l,I_RHOGVX) / prg_pl(g,k,l,I_RHOG)
+          diag_pl(g,k,l,I_vy) = prg_pl(g,k,l,I_RHOGVY) / prg_pl(g,k,l,I_RHOG)
+          diag_pl(g,k,l,I_vz) = prg_pl(g,k,l,I_RHOGVZ) / prg_pl(g,k,l,I_RHOG)
+          ein_pl (g,k,l)      = prg_pl(g,k,l,I_RHOGE ) / prg_pl(g,k,l,I_RHOG)
        enddo
        enddo
        enddo
 
-       do iv = 1, TRC_vmax
+       do iq = 1, TRC_vmax
        do l  = 1, ADM_lall_pl
        do k  = 1, ADM_kall
-       do n  = 1, ADM_gall_pl
-          diag_pl(n,k,l,DIAG_vmax0+iv) = prg_pl(n,k,l,PRG_vmax0+iv) / prg_pl(n,k,l,I_RHOG)
+       do g  = 1, ADM_gall_pl
+          diag_pl(g,k,l,DIAG_vmax0+iq) = prg_pl(g,k,l,PRG_vmax0+iq) / prg_pl(g,k,l,I_RHOG)
        enddo
        enddo
        enddo
@@ -185,18 +185,18 @@ contains
        do l = 1, ADM_lall_pl
           !------ interpolation of rhog_h
           do k = 2, ADM_kall
-          do n = 1, ADM_gall_pl
-             rhog_h_pl(n,k) = ( VMTR_C2Wfact_pl(n,k,1,l) * prg_pl(n,k  ,l,I_RHOG) &
-                              + VMTR_C2Wfact_pl(n,k,2,l) * prg_pl(n,k-1,l,I_RHOG) )
+          do g = 1, ADM_gall_pl
+             rhog_h_pl(g,k) = ( VMTR_C2Wfact_pl(g,k,1,l) * prg_pl(g,k  ,l,I_RHOG) &
+                              + VMTR_C2Wfact_pl(g,k,2,l) * prg_pl(g,k-1,l,I_RHOG) )
           enddo
           enddo
-          do n = 1, ADM_gall_pl
-             rhog_h_pl(n,1) = rhog_h_pl(n,2)
+          do g = 1, ADM_gall_pl
+             rhog_h_pl(g,1) = rhog_h_pl(g,2)
           enddo
 
           do k = 1, ADM_kall
-          do n = 1, ADM_gall_pl
-             diag_pl(n,k,l,I_w) = prg_pl(n,k,l,I_RHOGW) / rhog_h_pl(n,k)
+          do g = 1, ADM_gall_pl
+             diag_pl(g,k,l,I_w) = prg_pl(g,k,l,I_RHOGW) / rhog_h_pl(g,k)
           enddo
           enddo
        enddo
@@ -242,7 +242,7 @@ contains
     real(RP) :: rhog_h   (ADM_gall,   ADM_kall)
     real(RP) :: rhog_h_pl(ADM_gall_pl,ADM_kall)
 
-    integer :: n, k, l, iv
+    integer :: g, k, l, iq
     !---------------------------------------------------------------------------
 
     call THRMDYN_rhoein( ADM_gall,                  & ! [IN]
@@ -256,21 +256,21 @@ contains
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
-    do n = 1, ADM_gall
-       prg(n,k,l,I_RHOG  ) = rho(n,k,l) * VMTR_GSGAM2(n,k,l)
-       prg(n,k,l,I_RHOGVX) = prg(n,k,l,I_RHOG) * diag(n,k,l,I_vx)
-       prg(n,k,l,I_RHOGVY) = prg(n,k,l,I_RHOG) * diag(n,k,l,I_vy)
-       prg(n,k,l,I_RHOGVZ) = prg(n,k,l,I_RHOG) * diag(n,k,l,I_vz)
-       prg(n,k,l,I_RHOGE ) = prg(n,k,l,I_RHOG) * ein (n,k,l)
+    do g = 1, ADM_gall
+       prg(g,k,l,I_RHOG  ) = rho(g,k,l) * VMTR_GSGAM2(g,k,l)
+       prg(g,k,l,I_RHOGVX) = prg(g,k,l,I_RHOG) * diag(g,k,l,I_vx)
+       prg(g,k,l,I_RHOGVY) = prg(g,k,l,I_RHOG) * diag(g,k,l,I_vy)
+       prg(g,k,l,I_RHOGVZ) = prg(g,k,l,I_RHOG) * diag(g,k,l,I_vz)
+       prg(g,k,l,I_RHOGE ) = prg(g,k,l,I_RHOG) * ein (g,k,l)
     enddo
     enddo
     enddo
 
-    do iv = 1, TRC_vmax
+    do iq = 1, TRC_vmax
     do l  = 1, ADM_lall
     do k  = 1, ADM_kall
-    do n  = 1, ADM_gall
-       prg(n,k,l,PRG_vmax0+iv) = prg(n,k,l,I_RHOG) * diag(n,k,l,DIAG_vmax0+iv)
+    do g  = 1, ADM_gall
+       prg(g,k,l,PRG_vmax0+iq) = prg(g,k,l,I_RHOG) * diag(g,k,l,DIAG_vmax0+iq)
     enddo
     enddo
     enddo
@@ -279,18 +279,18 @@ contains
     do l = 1, ADM_lall
        !------ interpolation of rhog_h
        do k = 2, ADM_kall
-       do n = 1, ADM_gall
-          rhog_h(n,k) = ( VMTR_C2Wfact(n,k,1,l) * prg(n,k  ,l,I_RHOG) &
-                        + VMTR_C2Wfact(n,k,2,l) * prg(n,k-1,l,I_RHOG) )
+       do g = 1, ADM_gall
+          rhog_h(g,k) = ( VMTR_C2Wfact(g,k,1,l) * prg(g,k  ,l,I_RHOG) &
+                        + VMTR_C2Wfact(g,k,2,l) * prg(g,k-1,l,I_RHOG) )
        enddo
        enddo
-       do n = 1, ADM_gall
-          rhog_h(n,1) = rhog_h(n,2)
+       do g = 1, ADM_gall
+          rhog_h(g,1) = rhog_h(g,2)
        enddo
 
        do k = 1, ADM_kall
-       do n = 1, ADM_gall
-          prg(n,k,l,I_RHOGW) = rhog_h(n,k) * diag(n,k,l,I_w)
+       do g = 1, ADM_gall
+          prg(g,k,l,I_RHOGW) = rhog_h(g,k) * diag(g,k,l,I_w)
        enddo
        enddo
     enddo
@@ -308,21 +308,21 @@ contains
 
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
-       do n = 1, ADM_gall_pl
-          prg_pl(n,k,l,I_RHOG  ) = rho_pl(n,k,l) * VMTR_GSGAM2_pl(n,k,l)
-          prg_pl(n,k,l,I_RHOGVX) = prg_pl(n,k,l,I_RHOG) * diag_pl(n,k,l,I_vx)
-          prg_pl(n,k,l,I_RHOGVY) = prg_pl(n,k,l,I_RHOG) * diag_pl(n,k,l,I_vy)
-          prg_pl(n,k,l,I_RHOGVZ) = prg_pl(n,k,l,I_RHOG) * diag_pl(n,k,l,I_vz)
-          prg_pl(n,k,l,I_RHOGE ) = prg_pl(n,k,l,I_RHOG) * ein_pl (n,k,l)
+       do g = 1, ADM_gall_pl
+          prg_pl(g,k,l,I_RHOG  ) = rho_pl(g,k,l) * VMTR_GSGAM2_pl(g,k,l)
+          prg_pl(g,k,l,I_RHOGVX) = prg_pl(g,k,l,I_RHOG) * diag_pl(g,k,l,I_vx)
+          prg_pl(g,k,l,I_RHOGVY) = prg_pl(g,k,l,I_RHOG) * diag_pl(g,k,l,I_vy)
+          prg_pl(g,k,l,I_RHOGVZ) = prg_pl(g,k,l,I_RHOG) * diag_pl(g,k,l,I_vz)
+          prg_pl(g,k,l,I_RHOGE ) = prg_pl(g,k,l,I_RHOG) * ein_pl (g,k,l)
        enddo
        enddo
        enddo
 
-       do iv = 1, TRC_vmax
+       do iq = 1, TRC_vmax
        do l  = 1, ADM_lall_pl
        do k  = 1, ADM_kall
-       do n  = 1, ADM_gall_pl
-          prg_pl(n,k,l,PRG_vmax0+iv) = prg_pl(n,k,l,I_RHOG) * diag_pl(n,k,l,DIAG_vmax0+iv)
+       do g  = 1, ADM_gall_pl
+          prg_pl(g,k,l,PRG_vmax0+iq) = prg_pl(g,k,l,I_RHOG) * diag_pl(g,k,l,DIAG_vmax0+iq)
        enddo
        enddo
        enddo
@@ -331,18 +331,18 @@ contains
        do l = 1, ADM_lall_pl
           !------ interpolation of rhog_h
           do k = 2, ADM_kall
-          do n = 1, ADM_gall_pl
-             rhog_h_pl(n,k) = ( VMTR_C2Wfact_pl(n,k,1,l) * prg_pl(n,k  ,l,I_RHOG) &
-                              + VMTR_C2Wfact_pl(n,k,2,l) * prg_pl(n,k-1,l,I_RHOG) )
+          do g = 1, ADM_gall_pl
+             rhog_h_pl(g,k) = ( VMTR_C2Wfact_pl(g,k,1,l) * prg_pl(g,k  ,l,I_RHOG) &
+                              + VMTR_C2Wfact_pl(g,k,2,l) * prg_pl(g,k-1,l,I_RHOG) )
           enddo
           enddo
-          do n = 1, ADM_gall_pl
-             rhog_h_pl(n,1) = rhog_h_pl(n,2)
+          do g = 1, ADM_gall_pl
+             rhog_h_pl(g,1) = rhog_h_pl(g,2)
           enddo
 
           do k = 1, ADM_kall
-          do n = 1, ADM_gall_pl
-             prg_pl(n,k,l,I_RHOGW) = rhog_h_pl(n,k) * diag_pl(n,k,l,I_w)
+          do g = 1, ADM_gall_pl
+             prg_pl(g,k,l,I_RHOGW) = rhog_h_pl(g,k) * diag_pl(g,k,l,I_w)
           enddo
           enddo
        enddo
@@ -636,7 +636,7 @@ contains
     real(RP) :: coslat   (ADM_gall   ,ADM_lall   )
     real(RP) :: coslat_pl(ADM_gall_pl,ADM_lall_pl)
 
-    integer  :: n, k, l, k0
+    integer  :: g, k, l, k0
     !---------------------------------------------------------------------------
 
     k0 = ADM_KNONE
@@ -655,13 +655,13 @@ contains
 
     do l = 1, ADM_lall
     do k = 1, ADM_kall
-    do n = 1, ADM_gall
-       u(n,k,l) = ( vx(n,k,l) * GMTR_p(n,k0,l,GMTR_p_IX) &
-                  + vy(n,k,l) * GMTR_p(n,k0,l,GMTR_p_IY) &
-                  + vz(n,k,l) * GMTR_p(n,k0,l,GMTR_p_IZ) ) * coslat(n,l)
-       v(n,k,l) = ( vx(n,k,l) * GMTR_p(n,k0,l,GMTR_p_JX) &
-                  + vy(n,k,l) * GMTR_p(n,k0,l,GMTR_p_JY) &
-                  + vz(n,k,l) * GMTR_p(n,k0,l,GMTR_p_JZ) ) * coslat(n,l)
+    do g = 1, ADM_gall
+       u(g,k,l) = ( vx(g,k,l) * GMTR_p(g,k0,l,GMTR_p_IX) &
+                  + vy(g,k,l) * GMTR_p(g,k0,l,GMTR_p_IY) &
+                  + vz(g,k,l) * GMTR_p(g,k0,l,GMTR_p_IZ) ) * coslat(g,l)
+       v(g,k,l) = ( vx(g,k,l) * GMTR_p(g,k0,l,GMTR_p_JX) &
+                  + vy(g,k,l) * GMTR_p(g,k0,l,GMTR_p_JY) &
+                  + vz(g,k,l) * GMTR_p(g,k0,l,GMTR_p_JZ) ) * coslat(g,l)
     enddo
     enddo
     enddo
@@ -669,13 +669,13 @@ contains
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
        do k = 1, ADM_kall
-       do n = 1, ADM_gall_pl
-          u_pl(n,k,l) = ( vx_pl(n,k,l) * GMTR_p_pl(n,k0,l,GMTR_p_IX) &
-                        + vy_pl(n,k,l) * GMTR_p_pl(n,k0,l,GMTR_p_IY) &
-                        + vz_pl(n,k,l) * GMTR_p_pl(n,k0,l,GMTR_p_IZ) ) * coslat_pl(n,l)
-          v_pl(n,k,l) = ( vx_pl(n,k,l) * GMTR_p_pl(n,k0,l,GMTR_p_JX) &
-                        + vy_pl(n,k,l) * GMTR_p_pl(n,k0,l,GMTR_p_JY) &
-                        + vz_pl(n,k,l) * GMTR_p_pl(n,k0,l,GMTR_p_JZ) ) * coslat_pl(n,l)
+       do g = 1, ADM_gall_pl
+          u_pl(g,k,l) = ( vx_pl(g,k,l) * GMTR_p_pl(g,k0,l,GMTR_p_IX) &
+                        + vy_pl(g,k,l) * GMTR_p_pl(g,k0,l,GMTR_p_IY) &
+                        + vz_pl(g,k,l) * GMTR_p_pl(g,k0,l,GMTR_p_IZ) ) * coslat_pl(g,l)
+          v_pl(g,k,l) = ( vx_pl(g,k,l) * GMTR_p_pl(g,k0,l,GMTR_p_JX) &
+                        + vy_pl(g,k,l) * GMTR_p_pl(g,k0,l,GMTR_p_JY) &
+                        + vz_pl(g,k,l) * GMTR_p_pl(g,k0,l,GMTR_p_JZ) ) * coslat_pl(g,l)
        enddo
        enddo
        enddo

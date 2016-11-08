@@ -111,6 +111,7 @@ module mod_thrmdyn
   end interface THRMDYN_rhoein
 
   interface THRMDYN_tempre
+     module procedure THRMDYN_tempre_ijk
      module procedure THRMDYN_tempre_ijkl
   end interface THRMDYN_tempre
 
@@ -657,6 +658,56 @@ contains
 
     return
   end subroutine THRMDYN_rhoein_ijkl
+
+  !-----------------------------------------------------------------------------
+  !> calculate temperature & pressure
+  subroutine THRMDYN_tempre_ijk( &
+       ijdim, &
+       kdim,  &
+       ein,   &
+       rho,   &
+       q,     &
+       tem,   &
+       pre    )
+    implicit none
+
+    integer,  intent(in)  :: ijdim
+    integer,  intent(in)  :: kdim
+    real(RP), intent(in)  :: ein(ijdim,kdim)       ! internal energy [J]
+    real(RP), intent(in)  :: rho(ijdim,kdim)       ! density     [kg/m3]
+    real(RP), intent(in)  :: q  (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
+    real(RP), intent(out) :: tem(ijdim,kdim)       ! temperature [K]
+    real(RP), intent(out) :: pre(ijdim,kdim)       ! pressure    [Pa]
+
+    real(RP) :: cv(ijdim,kdim)
+    real(RP) :: qd(ijdim,kdim)
+
+    integer  :: ij, k, nq
+    !---------------------------------------------------------------------------
+
+    !$acc kernels pcopy(tem,pre,cv,qd) pcopyin(ein,rho,q,CVW) async(0)
+    do k  = 1, kdim
+    do ij = 1, ijdim
+       cv(ij,k) = 0.0_RP
+       qd(ij,k) = 1.0_RP
+
+       !$acc loop seq
+       do nq = NQW_STR, NQW_END
+          cv(ij,k) = cv(ij,k) + q(ij,k,nq) * CVW(nq)
+          qd(ij,k) = qd(ij,k) - q(ij,k,nq)
+       enddo
+       !$acc end loop
+
+       cv(ij,k) = cv(ij,k) + qd(ij,k) * CVdry
+
+       tem(ij,k) = ein(ij,k) / cv(ij,k)
+       pre(ij,k) = rho(ij,k) * tem(ij,k) * ( qd(ij,k)*Rdry + q(ij,k,I_QV)*Rvap )
+    enddo
+    enddo
+    !$acc end kernels
+
+    return
+  end subroutine THRMDYN_tempre_ijk
 
   !-----------------------------------------------------------------------------
   !> calculate temperature & pressure
