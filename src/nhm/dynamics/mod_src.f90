@@ -13,6 +13,7 @@ module mod_src
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
   use mod_prof
   !-----------------------------------------------------------------------------
   implicit none
@@ -87,7 +88,7 @@ contains
     use mod_vmtr, only: &
        VMTR_C2Wfact,    &
        VMTR_C2Wfact_pl
-    use mod_runconf, only : &
+    use mod_runconf, only: &
        NON_HYDRO_ALPHA
     implicit none
 

@@ -35,6 +35,9 @@ module mod_sgs
   !++ Used modules
   !
   use mod_precision
+  use mod_stdio
+  use mod_prof
+
   use mod_adm, only: &
      ADM_prc_me,  &
      ADM_have_pl, &

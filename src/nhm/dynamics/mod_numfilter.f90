@@ -2303,7 +2303,7 @@ contains
        ADM_kmax
     use mod_comm, only: &
        COMM_data_transfer
-    use mod_grd, only:  &
+    use mod_grd, only: &
        GRD_rdgzh
     use mod_oprt, only: &
        OPRT_divdamp,           &
