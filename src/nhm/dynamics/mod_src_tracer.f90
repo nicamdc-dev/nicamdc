@@ -82,7 +82,7 @@ contains
        rhogw_mean,  rhogw_mean_pl,  &
        frhog,       frhog_pl,       &
        dt,                          &
-       thubern_lim                  )
+       thuburn_lim                  )
     use mod_const, only: &
        CONST_EPS
     use mod_adm, only: &
@@ -132,7 +132,7 @@ contains
     real(RP), intent(in)    :: frhog         (ADM_gall   ,ADM_kall,ADM_lall   )      ! hyperviscosity tendency for rhog
     real(RP), intent(in)    :: frhog_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in)    :: dt                                                    ! delta t
-    logical,  intent(in)    :: thubern_lim                                           ! switch of thubern limiter [add] 20130613 R.Yoshida
+    logical,  intent(in)    :: thuburn_lim                                           ! switch of thuburn limiter [add] 20130613 R.Yoshida
 
     real(RP) :: rhog     (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -324,7 +324,7 @@ contains
           enddo
        endif
 
-       if ( thubern_lim ) then
+       if ( thuburn_lim ) then
           call vertical_limiter_thuburn( q_h(:,:,:),   q_h_pl(:,:,:),  & ! [INOUT]
                                          q  (:,:,:),   q_pl  (:,:,:),  & ! [IN]
                                          d  (:,:,:),   d_pl  (:,:,:),  & ! [IN]
@@ -513,7 +513,7 @@ contains
                               GRD_xc(:,:,:,:,:), GRD_xc_pl(:,:,:,:)  ) ! [IN]
 
        ! apply flux limiter
-       if ( thubern_lim ) then
+       if ( thuburn_lim ) then
           call horizontal_limiter_thuburn( q_a  (:,:,:,:),   q_a_pl  (:,:,:), & ! [INOUT]
                                            q    (:,:,:),     q_pl    (:,:,:), & ! [IN]
                                            d    (:,:,:),     d_pl    (:,:,:), & ! [IN]
@@ -687,7 +687,7 @@ contains
           enddo
        endif
 
-       if ( thubern_lim ) then
+       if ( thuburn_lim ) then
           call vertical_limiter_thuburn( q_h(:,:,:),   q_h_pl(:,:,:),  & ! [INOUT]
                                          q  (:,:,:),   q_pl  (:,:,:),  & ! [IN]
                                          d  (:,:,:),   d_pl  (:,:,:),  & ! [IN]

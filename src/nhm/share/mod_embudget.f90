@@ -328,7 +328,7 @@ contains
     rhoein_qd_sum = GTL_global_sum( tmp, tmp_pl )
 
     !--- internal energy (each water category)
-    do nq = NQW_STR,NQW_END
+    do nq = NQW_STR, NQW_END
 
        tmp(:,:,:) = rho(:,:,:) * q(:,:,:,nq) * CVW(nq) * tem(:,:,:)
        if    ( nq == I_QV ) then
@@ -351,7 +351,7 @@ contains
 
     !--- internal energy (total)
     rhoein_sum = rhoein_qd_sum
-    do nq = NQW_STR,NQW_END
+    do nq = NQW_STR, NQW_END
        rhoein_sum = rhoein_sum + rhoein_q_sum(nq)
     enddo
 

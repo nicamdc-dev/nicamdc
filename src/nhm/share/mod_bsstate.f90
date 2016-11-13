@@ -390,16 +390,11 @@ contains
     call VINTRPL_Z2Xi( tem_bs(:,:,:), tem_bs_pl(:,:,:) )
     call VINTRPL_Z2Xi( qv_bs (:,:,:), qv_bs_pl (:,:,:) )
 
-    rho_bs(:,:,l) = pre_bs(:,:,l) / tem_bs(:,:,l) / ( ( 1.0_RP-qv_bs(:,:,l) ) * Rdry &
-                                                    + (        qv_bs(:,:,l) ) * Rvap )
-
-    if ( ADM_have_pl ) then
-       rho_bs_pl(:,:,l) = pre_bs_pl(:,:,l) / tem_bs_pl(:,:,l) / ( ( 1.0_RP-qv_bs_pl(:,:,l) ) * Rdry &
-                                                                + (        qv_bs_pl(:,:,l) ) * Rvap )
-    endif
-
     !--- set boundary conditions of basic state
     do l = 1, ADM_lall
+       rho_bs(:,:,l) = pre_bs(:,:,l) / tem_bs(:,:,l) / ( ( 1.0_RP-qv_bs(:,:,l) ) * Rdry &
+                                                       + (        qv_bs(:,:,l) ) * Rvap )
+
        call BNDCND_thermo( ADM_gall,        & ! [IN]
                            rho_bs  (:,:,l), & ! [INOUT]
                            pre_bs  (:,:,l), & ! [INOUT]
@@ -409,6 +404,9 @@ contains
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
+          rho_bs_pl(:,:,l) = pre_bs_pl(:,:,l) / tem_bs_pl(:,:,l) / ( ( 1.0_RP-qv_bs_pl(:,:,l) ) * Rdry &
+                                                                   + (        qv_bs_pl(:,:,l) ) * Rvap )
+
           call BNDCND_thermo( ADM_gall_pl,        & ! [IN]
                               rho_bs_pl  (:,:,l), & ! [INOUT]
                               pre_bs_pl  (:,:,l), & ! [INOUT]
