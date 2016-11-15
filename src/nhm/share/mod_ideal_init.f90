@@ -591,13 +591,13 @@ contains
     use mod_process, only: &
        PRC_MPIstop
     use mod_grd, only: &
-       GRD_LAT,  &
-       GRD_LON,  &
-       GRD_s,    &
-       GRD_afac, &
-       GRD_bfac, &
-       GRD_Z,    &
-       GRD_ZH,   &
+       GRD_LAT,   &
+       GRD_LON,   &
+       GRD_s,     &
+       GRD_afact, &
+       GRD_bfact, &
+       GRD_Z,     &
+       GRD_ZH,    &
        GRD_vz
     use mod_vmtr, only : &
       phi => VMTR_PHI
@@ -745,8 +745,8 @@ contains
        k      = ADM_kmin
        prs(k) = ps - rho(k) * g * ( GRD_vz(n,k,l,GRD_Z) - GRD_vz(n,k,l,GRD_ZH) )
        do k = ADM_kmin+1, ADM_kmax
-          dpdz   = -g * ( rho(k)   * GRD_afac(k) &
-                        + rho(k-1) * GRD_bfac(k) )
+          dpdz   = -g * ( rho(k)   * GRD_afact(k) &
+                        + rho(k-1) * GRD_bfact(k) )
           prs(k) = prs(k-1) + dpdz * ( z(k)- z(k-1) )
        enddo
 

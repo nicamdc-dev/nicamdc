@@ -83,8 +83,8 @@ contains
        GRD_rscale,       &
        GRD_x,            &
        GRD_x_pl,         &
-       GRD_cfac,         &
-       GRD_dfac
+       GRD_cfact,        &
+       GRD_dfact
     use mod_vmtr, only: &
        VMTR_C2Wfact,    &
        VMTR_C2Wfact_pl
@@ -157,13 +157,13 @@ contains
 
     do l = 1, ADM_lall
        !$omp parallel default(none),private(g,k,wc), &
-       !$omp shared(l,gall,kmin,kmax,vvx,vvy,vvz,vx,vy,vz,w,GRD_cfac,GRD_dfac,GRD_x,rscale)
+       !$omp shared(l,gall,kmin,kmax,vvx,vvy,vvz,vx,vy,vz,w,GRD_cfact,GRD_dfact,GRD_x,rscale)
 
        !$omp do
        do k = kmin,kmax
        do g = 1, gall
-          wc = GRD_cfac(k) * w(g,k+1,l) &
-             + GRD_dfac(k) * w(g,k  ,l)
+          wc = GRD_cfact(k) * w(g,k+1,l) &
+             + GRD_dfact(k) * w(g,k  ,l)
 
           vvx(g,k,l) = vx(g,k,l) + wc * GRD_x(g,1,l,XDIR) / rscale
           vvy(g,k,l) = vy(g,k,l) + wc * GRD_x(g,1,l,YDIR) / rscale
@@ -190,8 +190,8 @@ contains
        do l = 1, ADM_lall_pl
           do k = ADM_kmin, ADM_kmax
           do g = 1, ADM_gall_pl
-             wc = GRD_cfac(k) * w_pl(g,k+1,l) &
-                + GRD_dfac(k) * w_pl(g,k  ,l)
+             wc = GRD_cfact(k) * w_pl(g,k+1,l) &
+                + GRD_dfact(k) * w_pl(g,k  ,l)
 
              vvx_pl(g,k,l) = vx_pl(g,k,l) + wc * GRD_x_pl(g,1,l,XDIR) / rscale
              vvy_pl(g,k,l) = vy_pl(g,k,l) + wc * GRD_x_pl(g,1,l,YDIR) / rscale
@@ -371,8 +371,8 @@ contains
        ADM_kmin,    &
        ADM_kmax
     use mod_grd, only: &
-       GRD_afac, &
-       GRD_bfac
+       GRD_afact, &
+       GRD_bfact
     implicit none
 
     real(RP), intent(in)  :: rhogvx     (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*Vx ( G^1/2 x gam2 )
@@ -437,13 +437,13 @@ contains
 
        do l = 1, ADM_lall
           !$omp parallel default(none),private(g,k), &
-          !$omp shared(l,gall,kmin,kmax,rhogwscl,rhogw,GRD_afac,GRD_bfac,scl)
+          !$omp shared(l,gall,kmin,kmax,rhogwscl,rhogw,GRD_afact,GRD_bfact,scl)
 
           !$omp do
           do k = kmin, kmax+1
           do g = 1, gall
-             rhogwscl(g,k,l) = rhogw(g,k,l) * ( GRD_afac(k) * scl(g,k,  l) &
-                                              + GRD_bfac(k) * scl(g,k-1,l) )
+             rhogwscl(g,k,l) = rhogw(g,k,l) * ( GRD_afact(k) * scl(g,k,  l) &
+                                              + GRD_bfact(k) * scl(g,k-1,l) )
           enddo
           enddo
           !$omp end do nowait
@@ -461,8 +461,8 @@ contains
           do l = 1, ADM_lall_pl
              do k = ADM_kmin, ADM_kmax+1
              do g = 1, ADM_gall_pl
-                rhogwscl_pl(g,k,l) = rhogw_pl(g,k,l) * ( GRD_afac(k) * scl_pl(g,k  ,l) &
-                                                       + GRD_bfac(k) * scl_pl(g,k-1,l) )
+                rhogwscl_pl(g,k,l) = rhogw_pl(g,k,l) * ( GRD_afact(k) * scl_pl(g,k  ,l) &
+                                                       + GRD_bfact(k) * scl_pl(g,k-1,l) )
              enddo
              enddo
              do g = 1, ADM_gall_pl

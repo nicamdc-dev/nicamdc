@@ -113,10 +113,11 @@ module mod_grd
 
   !====== Topography ======
   integer,  public, parameter   :: GRD_ZSFC = 1
+  integer,  public, parameter   :: GRD_ZSD  = 2
 
 #ifdef _FIXEDINDEX_
-  real(RP), public              :: GRD_zs   (ADM_gall   ,ADM_KNONE,ADM_lall   ,GRD_ZSFC)
-  real(RP), public              :: GRD_zs_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,GRD_ZSFC)
+  real(RP), public              :: GRD_zs   (ADM_gall   ,ADM_KNONE,ADM_lall   ,GRD_ZSFC:GRD_ZSD)
+  real(RP), public              :: GRD_zs_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,GRD_ZSFC:GRD_ZSD)
 #else
   real(RP), public, allocatable :: GRD_zs   (:,:,:,:)
   real(RP), public, allocatable :: GRD_zs_pl(:,:,:,:)
@@ -152,10 +153,10 @@ module mod_grd
   real(RP), public              :: GRD_rdgz (ADM_kall)
   real(RP), public              :: GRD_rdgzh(ADM_kall)
 
-  real(RP), public              :: GRD_afac(ADM_kall)
-  real(RP), public              :: GRD_bfac(ADM_kall)
-  real(RP), public              :: GRD_cfac(ADM_kall)
-  real(RP), public              :: GRD_dfac(ADM_kall)
+  real(RP), public              :: GRD_afact(ADM_kall)
+  real(RP), public              :: GRD_bfact(ADM_kall)
+  real(RP), public              :: GRD_cfact(ADM_kall)
+  real(RP), public              :: GRD_dfact(ADM_kall)
 
   real(RP), public              :: GRD_vz   (ADM_gall   ,ADM_kall,ADM_lall   ,GRD_Z:GRD_ZH)
   real(RP), public              :: GRD_vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,GRD_Z:GRD_ZH)
@@ -167,10 +168,10 @@ module mod_grd
   real(RP), public, allocatable :: GRD_rdgz (:)
   real(RP), public, allocatable :: GRD_rdgzh(:)
 
-  real(RP), public, allocatable :: GRD_afac (:) ! From the cell center value to the cell wall value
-  real(RP), public, allocatable :: GRD_bfac (:) !    A(k-1/2) = ( afac(k) A(k) + bfac(k) * A(k-1) ) / 2
-  real(RP), public, allocatable :: GRD_cfac (:) ! From the cell wall value to the cell center value
-  real(RP), public, allocatable :: GRD_dfac (:) !    A(k) = ( cfac(k) A(k+1/2) + dfac(k) * A(k-1/2) ) / 2
+  real(RP), public, allocatable :: GRD_afact(:) ! From the cell center value to the cell wall value
+  real(RP), public, allocatable :: GRD_bfact(:) !    A(k-1/2) = ( afac(k) A(k) + bfac(k) * A(k-1) ) / 2
+  real(RP), public, allocatable :: GRD_cfact(:) ! From the cell wall value to the cell center value
+  real(RP), public, allocatable :: GRD_dfact(:) !    A(k) = ( cfac(k) A(k+1/2) + dfac(k) * A(k-1/2) ) / 2
 
   real(RP), public, allocatable :: GRD_vz   (:,:,:,:)
   real(RP), public, allocatable :: GRD_vz_pl(:,:,:,:)
@@ -316,8 +317,8 @@ contains
 
     !---< surface height >---
 #ifndef _FIXEDINDEX_
-    allocate( GRD_zs   (ADM_gall,   k0,ADM_lall,   GRD_ZSFC) )
-    allocate( GRD_zs_pl(ADM_gall_pl,k0,ADM_lall_pl,GRD_ZSFC) )
+    allocate( GRD_zs   (ADM_gall,   k0,ADM_lall,   GRD_ZSFC:GRD_ZSD) )
+    allocate( GRD_zs_pl(ADM_gall_pl,k0,ADM_lall_pl,GRD_ZSFC:GRD_ZSD) )
 #endif
     GRD_zs   (:,:,:,:) = 0.0_RP
     GRD_zs_pl(:,:,:,:) = 0.0_RP
@@ -336,10 +337,10 @@ contains
        allocate( GRD_rdgz (ADM_kall) )
        allocate( GRD_rdgzh(ADM_kall) )
 
-       allocate( GRD_afac (ADM_kall) )
-       allocate( GRD_bfac (ADM_kall) )
-       allocate( GRD_cfac (ADM_kall) )
-       allocate( GRD_dfac (ADM_kall) )
+       allocate( GRD_afact(ADM_kall) )
+       allocate( GRD_bfact(ADM_kall) )
+       allocate( GRD_cfact(ADM_kall) )
+       allocate( GRD_dfact(ADM_kall) )
 
        allocate( GRD_vz   (ADM_gall   ,ADM_kall,ADM_lall   ,GRD_Z:GRD_ZH) )
        allocate( GRD_vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,GRD_Z:GRD_ZH) )
@@ -369,21 +370,21 @@ contains
 
        ! vertical interpolation factor
        do k = ADM_kmin, ADM_kmax+1
-          GRD_afac(k) = ( GRD_gzh(k) - GRD_gz(k-1) ) &
-                      / ( GRD_gz (k) - GRD_gz(k-1) )
+          GRD_afact(k) = ( GRD_gzh(k) - GRD_gz(k-1) ) &
+                       / ( GRD_gz (k) - GRD_gz(k-1) )
        enddo
-       GRD_afac(ADM_kmin-1) = 1.0_RP
+       GRD_afact(ADM_kmin-1) = 1.0_RP
 
-       GRD_bfac(:) = 1.0_RP - GRD_afac(:)
+       GRD_bfact(:) = 1.0_RP - GRD_afact(:)
 
        do k = ADM_kmin, ADM_kmax
-          GRD_cfac(k) = ( GRD_gz (k  ) - GRD_gzh(k) ) &
-                      / ( GRD_gzh(k+1) - GRD_gzh(k) )
+          GRD_cfact(k) = ( GRD_gz (k  ) - GRD_gzh(k) ) &
+                       / ( GRD_gzh(k+1) - GRD_gzh(k) )
        enddo
-       GRD_cfac(ADM_kmin-1) = 1.0_RP
-       GRD_cfac(ADM_kmax+1) = 0.0_RP
+       GRD_cfact(ADM_kmin-1) = 1.0_RP
+       GRD_cfact(ADM_kmax+1) = 0.0_RP
 
-       GRD_dfac(:) = 1.0_RP - GRD_cfac(:)
+       GRD_dfact(:) = 1.0_RP - GRD_cfact(:)
 
        ! setup z-coordinate
        nstart = suf(ADM_gmin,ADM_gmin)
@@ -459,11 +460,11 @@ contains
           do k = ADM_kmin-1, ADM_kmax+1
           do n = nstart, nend
              GRD_vz(n,k,l,GRD_Z)  = GRD_gz(k)                               &
-                                  + GRD_zs(n,k0,l,1)                        &
+                                  + GRD_zs(n,k0,l,GRD_ZSFC)                 &
                                   * sinh( (GRD_htop-GRD_gz (k)) / h_efold ) &
                                   / sinh(  GRD_htop             / h_efold )
              GRD_vz(n,k,l,GRD_ZH) = GRD_gzh(k)                              &
-                                  + GRD_zs(n,k0,l,1)                        &
+                                  + GRD_zs(n,k0,l,GRD_ZSFC)                 &
                                   * sinh( (GRD_htop-GRD_gzh(k)) / h_efold ) &
                                   / sinh(  GRD_htop             / h_efold )
           enddo
@@ -475,11 +476,11 @@ contains
              do l = 1, ADM_lall_pl
              do k = ADM_kmin-1, ADM_kmax+1
                 GRD_vz_pl(n,k,l,GRD_Z)  = GRD_gz(k)                               &
-                                        + GRD_zs_pl(n,k0,l,1)                     &
+                                        + GRD_zs_pl(n,k0,l,GRD_ZSFC)              &
                                         * sinh( (GRD_htop-GRD_gz (k)) / h_efold ) &
                                         / sinh(  GRD_htop             / h_efold )
                 GRD_vz_pl(n,k,l,GRD_ZH) = GRD_gzh(k)                              &
-                                        + GRD_zs_pl(n,k0,l,1)                     &
+                                        + GRD_zs_pl(n,k0,l,GRD_ZSFC)              &
                                         * sinh( (GRD_htop-GRD_gzh(k)) / h_efold ) &
                                         / sinh(  GRD_htop             / h_efold )
              enddo
@@ -832,7 +833,7 @@ contains
 
     endif ! io_mode
 
-    call COMM_var( GRD_zs, GRD_zs_pl, ADM_KNONE, 1 )
+    call COMM_var( GRD_zs, GRD_zs_pl, ADM_KNONE, 2 )
 
     return
   end subroutine GRD_input_topograph

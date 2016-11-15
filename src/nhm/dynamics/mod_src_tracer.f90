@@ -100,9 +100,9 @@ contains
        ADM_kmin,    &
        ADM_kmax
     use mod_grd, only: &
-       GRD_rdgz, &
-       GRD_afac, &
-       GRD_bfac
+       GRD_rdgz,  &
+       GRD_afact, &
+       GRD_bfact
     use mod_vmtr, only: &
        VMTR_RGSQRTH,      &
        VMTR_RGSQRTH_pl,   &
@@ -284,7 +284,7 @@ contains
 
        do l = 1, ADM_lall
           !$omp parallel default(none),private(g,k), &
-          !$omp shared(l,iq,gall,kall,kmin,kmax,q_h,q,rhogq,rhog_in,GRD_afac,GRD_bfac)
+          !$omp shared(l,iq,gall,kall,kmin,kmax,q_h,q,rhogq,rhog_in,GRD_afact,GRD_bfact)
 
           !$omp do
           do k = 1, kall
@@ -297,8 +297,8 @@ contains
           !$omp do
           do k = kmin, kmax+1
           do g = 1, gall
-             q_h(g,k,l) = GRD_afac(k) * q(g,k,  l) &
-                        + GRD_bfac(k) * q(g,k-1,l)
+             q_h(g,k,l) = GRD_afact(k) * q(g,k,  l) &
+                        + GRD_bfact(k) * q(g,k-1,l)
           enddo
           enddo
           !$omp end do nowait
@@ -317,8 +317,8 @@ contains
              q_pl(:,:,l) = rhogq_pl(:,:,l,iq) / rhog_in_pl(:,:,l)
 
              do k = ADM_kmin, ADM_kmax+1
-                q_h_pl(:,k,l) = GRD_afac(k) * q_pl(:,k,  l) &
-                              + GRD_bfac(k) * q_pl(:,k-1,l)
+                q_h_pl(:,k,l) = GRD_afact(k) * q_pl(:,k,  l) &
+                              + GRD_bfact(k) * q_pl(:,k-1,l)
              enddo
              q_h_pl(:,ADM_kmin-1,l) = 0.0_RP
           enddo
@@ -647,7 +647,7 @@ contains
 
        do l = 1, ADM_lall
           !$omp parallel default(none),private(g,k), &
-          !$omp shared(l,iq,gall,kall,kmin,kmax,q_h,q,rhogq,rhog,GRD_afac,GRD_bfac)
+          !$omp shared(l,iq,gall,kall,kmin,kmax,q_h,q,rhogq,rhog,GRD_afact,GRD_bfact)
 
           !$omp do
           do k = 1, kall
@@ -660,8 +660,8 @@ contains
           !$omp do
           do k = kmin, kmax+1
           do g = 1, gall
-             q_h(g,k,l) = GRD_afac(k) * q(g,k,  l) &
-                        + GRD_bfac(k) * q(g,k-1,l)
+             q_h(g,k,l) = GRD_afact(k) * q(g,k,  l) &
+                        + GRD_bfact(k) * q(g,k-1,l)
           enddo
           enddo
           !$omp end do nowait
@@ -680,8 +680,8 @@ contains
              q_pl(:,:,l) = rhogq_pl(:,:,l,iq) / rhog_pl(:,:,l)
 
              do k = ADM_kmin, ADM_kmax+1
-                q_h_pl(:,k,l) = GRD_afac(k) * q_pl(:,k,  l) &
-                              + GRD_bfac(k) * q_pl(:,k-1,l)
+                q_h_pl(:,k,l) = GRD_afact(k) * q_pl(:,k,  l) &
+                              + GRD_bfact(k) * q_pl(:,k-1,l)
              enddo
              q_h_pl(:,ADM_kmin-1,l) = 0.0_RP
           enddo
