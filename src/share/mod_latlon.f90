@@ -157,7 +157,6 @@ contains
   end subroutine LATLON_ico_setup
 
   !-----------------------------------------------------------------------------
-  !> Setup
   subroutine LATLON_setup( output_dirname )
     use mod_process, only: &
        PRC_LOCAL_COMM_WORLD, &
@@ -1035,7 +1034,7 @@ contains
   !-----------------------------------------------------------------------------
 !  subroutine intrpl_2( var_ll, var, var_pl, kmin, kmax )
 !
-!    use mod_adm, only :              &
+!    use mod_adm, only: &
 !         ADM_prc_me,               &
 !         ADM_prc_pl,               &
 !         ADM_gslf_pl,             &
@@ -1054,16 +1053,16 @@ contains
 !         ADM_kall,                 &
 !         ADM_gall,                 &
 !         ADM_lall
-!    use mod_grd, only :               &
+!    use mod_grd, only: &
 !         GRD_x,GRD_x_pl,           &
 !         GRD_XDIR,                 &
 !         GRD_YDIR,                 &
 !         GRD_ZDIR
-!    use mod_const, only :               &
+!    use mod_const, only: &
 !         CONST_UNDEF
-!    use mod_oprt, only :           &
+!    use mod_oprt, only: &
 !         OPRT_gradient
-!    use mod_comm, only :               &
+!    use mod_comm, only: &
 !         COMM_data_transfer
 !
 !    implicit none

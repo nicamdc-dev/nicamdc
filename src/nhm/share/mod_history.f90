@@ -98,6 +98,7 @@ module mod_history
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
+  !> setup
   subroutine history_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -502,7 +503,7 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine  history_in( item, gd, l_region )
-    use mod_process, only : &
+    use mod_process, only: &
        PRC_MPIstop
     use mod_const, only: &
        UNDEF => CONST_UNDEF
@@ -717,11 +718,11 @@ contains
 
   !----------------------------------------------------------------------------
   subroutine history_out
-    use mod_process, only : &
+    use mod_process, only: &
        PRC_MPIstop
     use mod_const, only: &
        UNDEF => CONST_UNDEF
-    use mod_calendar, only : &
+    use mod_calendar, only: &
        CALENDAR_ss2yh, &
        CALENDAR_ss2cc
     use mod_adm, only: &
@@ -732,7 +733,7 @@ contains
        ADM_kall,      &
        ADM_kmax,      &
        ADM_kmin
-    use mod_comm, only : &
+    use mod_comm, only: &
        COMM_var
     use mod_fio, only: &
        FIO_output
@@ -926,7 +927,7 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine history_outlist
-    use mod_process, only : &
+    use mod_process, only: &
        PRC_MPIstop
     implicit none
 

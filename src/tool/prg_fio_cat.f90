@@ -20,7 +20,7 @@ program fio_cat
   use mod_fio, only: &
      headerinfo, &
      datainfo
-  use mod_mnginfo_light, only : &
+  use mod_mnginfo_light, only: &
      MNG_mnginfo_input,   &
      MNG_PALL,            &
      MNG_prc_rnum

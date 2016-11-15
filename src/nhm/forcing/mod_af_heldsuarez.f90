@@ -48,6 +48,7 @@ module mod_af_heldsuarez
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
+  !> setup
   subroutine af_heldsuarez_init( moist_case )
     implicit none
 

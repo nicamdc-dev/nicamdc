@@ -112,6 +112,7 @@ module mod_numfilter
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
+  !> setup
   subroutine numfilter_setup
     use mod_process, only: &
        PRC_MPIstop

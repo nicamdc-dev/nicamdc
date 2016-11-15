@@ -83,7 +83,7 @@ module mod_prgvar
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> Setup
+  !> setup
   subroutine prgvar_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -694,7 +694,7 @@ contains
        rhogw,  &
        rhoge,  &
        rhogq   )
-    use mod_adm, only : &
+    use mod_adm, only: &
        ADM_lall,    &
        ADM_gall_1d, &
        ADM_gall_in, &
@@ -785,7 +785,7 @@ contains
        TRC_name
     use mod_cnvvar, only: &
        cnvvar_diag2prg
-    use mod_ideal_init, only :  & ! [add] R.Yoshida 20121019
+    use mod_ideal_init, only: & ! [add] R.Yoshida 20121019
        dycore_input, &
        tracer_input
     implicit none
@@ -918,7 +918,7 @@ contains
        FIO_output
     use mod_hio, only: &
        HIO_output
-    use mod_time, only : &
+    use mod_time, only: &
        TIME_CTIME
     use mod_gtl, only: &
        GTL_max, &

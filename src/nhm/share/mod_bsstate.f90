@@ -58,6 +58,7 @@ module mod_bsstate
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
+  !> setup
   subroutine bsstate_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -124,14 +125,18 @@ contains
     write(IO_FID_LOG,*) '*** Basic state information ***'
     write(IO_FID_LOG,*) '--- Basic state type : ', trim(ref_type)
 
-    if    ( ref_type == 'INPUT' ) then
+    if    ( ref_type == 'NOBASE' ) then
+
+       ! do nothing
+
+    elseif( ref_type == 'INPUT' ) then
 
        call bsstate_input_ref ( ref_fname,  & ! [IN]
                                 pre_ref(:), & ! [OUT]
                                 tem_ref(:), & ! [OUT]
                                 qv_ref (:)  ) ! [OUT]
 
-    elseif( ref_type == 'INIT' ) then
+    else
 
        call bsstate_generate  ( pre_ref(:), & ! [OUT]
                                 tem_ref(:), & ! [OUT]
@@ -144,7 +149,7 @@ contains
 
     endif
 
-    if ( ref_type == 'INPUT' .OR. ref_type == 'INIT' ) then
+    if ( ref_type /= 'NOBASE' ) then
        ! set 3-D basic state
        call set_basicstate( pre_ref(:), & ! [IN]
                             tem_ref(:), & ! [IN]
@@ -156,7 +161,7 @@ contains
        do k = ADM_kall, 1, -1
           th_ref (k) = tem_ref(k) * ( PRE00 / pre_ref(k) )**(Rdry/CPdry)
           rho_ref(k) = pre_ref(k) / tem_ref(k) / ( ( 1.0_RP - qv_ref(k) ) * Rdry &
-                                              + (          qv_ref(k) ) * Rvap )
+                                                 + (          qv_ref(k) ) * Rvap )
 
           if( k == ADM_kmax ) write(IO_FID_LOG,*) '-------------------------------------------------------'
           write(IO_FID_LOG,'(I4,F12.4,3F10.2,F10.7)') k,rho_ref(k),pre_ref(k),tem_ref(k),th_ref(k),qv_ref(k)
@@ -262,6 +267,8 @@ contains
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kall
+    use mod_const, only: &
+       UNDEF => CONST_UNDEF
     use mod_gtl, only: &
        GTL_global_mean_eachlayer
     use mod_runconf, only: &
@@ -307,25 +314,29 @@ contains
     real(RP) :: q_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
     !---------------------------------------------------------------------------
 
-    call prgvar_get_withdiag( rhog,   rhog_pl,   & ! [OUT]
-                              rhogvx, rhogvx_pl, & ! [OUT]
-                              rhogvy, rhogvy_pl, & ! [OUT]
-                              rhogvz, rhogvz_pl, & ! [OUT]
-                              rhogw,  rhogw_pl,  & ! [OUT]
-                              rhoge,  rhoge_pl,  & ! [OUT]
-                              rhogq,  rhogq_pl,  & ! [OUT]
-                              rho,    rho_pl,    & ! [OUT]
-                              pre,    pre_pl,    & ! [OUT]
-                              tem,    tem_pl,    & ! [OUT]
-                              vx,     vx_pl,     & ! [OUT]
-                              vy,     vy_pl,     & ! [OUT]
-                              vz,     vz_pl,     & ! [OUT]
-                              w,      w_pl,      & ! [OUT]
-                              q,      q_pl       ) ! [OUT]
+    if ( ref_type == 'INIT' ) then
 
-    call GTL_global_mean_eachlayer( pre(:,:,:),      pre_pl(:,:,:)     , pre_ref(:) )
-    call GTL_global_mean_eachlayer( tem(:,:,:),      tem_pl(:,:,:)     , tem_ref(:) )
-    call GTL_global_mean_eachlayer( q  (:,:,:,I_QV), q_pl  (:,:,:,I_QV), qv_ref (:) )
+       call prgvar_get_withdiag( rhog,   rhog_pl,   & ! [OUT]
+                                 rhogvx, rhogvx_pl, & ! [OUT]
+                                 rhogvy, rhogvy_pl, & ! [OUT]
+                                 rhogvz, rhogvz_pl, & ! [OUT]
+                                 rhogw,  rhogw_pl,  & ! [OUT]
+                                 rhoge,  rhoge_pl,  & ! [OUT]
+                                 rhogq,  rhogq_pl,  & ! [OUT]
+                                 rho,    rho_pl,    & ! [OUT]
+                                 pre,    pre_pl,    & ! [OUT]
+                                 tem,    tem_pl,    & ! [OUT]
+                                 vx,     vx_pl,     & ! [OUT]
+                                 vy,     vy_pl,     & ! [OUT]
+                                 vz,     vz_pl,     & ! [OUT]
+                                 w,      w_pl,      & ! [OUT]
+                                 q,      q_pl       ) ! [OUT]
+
+       call GTL_global_mean_eachlayer( pre(:,:,:),      pre_pl(:,:,:)     , pre_ref(:) )
+       call GTL_global_mean_eachlayer( tem(:,:,:),      tem_pl(:,:,:)     , tem_ref(:) )
+       call GTL_global_mean_eachlayer( q  (:,:,:,I_QV), q_pl  (:,:,:,I_QV), qv_ref (:) )
+
+    endif
 
     return
   end subroutine bsstate_generate

@@ -65,6 +65,7 @@ module mod_history_vars
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
+  !> setup
   subroutine history_vars_setup
     use mod_adm, only: &
        ADM_KNONE,   &

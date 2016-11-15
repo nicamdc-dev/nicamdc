@@ -74,7 +74,7 @@ module mod_calendar
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> Setup
+  !> setup
   subroutine CALENDAR_setup
     use mod_process, only: &
        PRC_MPIstop

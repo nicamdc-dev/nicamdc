@@ -179,7 +179,7 @@ program prg_driver
      Kh_coef,      &
      Kh_coef_lap1, &
      divdamp_coef
-  use mod_vi, only : &
+  use mod_vi, only: &
      Mc, &
      Ml, &
      Mu

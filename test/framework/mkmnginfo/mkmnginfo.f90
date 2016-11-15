@@ -27,7 +27,7 @@ Program prg_mkmnginfo
   !
   !++ Used modules
   !
-  Use mod_adm, Only :  &
+  Use mod_adm, only: &
        !--- Public parameters
        ADM_RID,        &
        ADM_DIR,        &
@@ -91,9 +91,9 @@ Program prg_mkmnginfo
   Stop
   !
   !=============================================================================
-Contains
+contains
   !-----------------------------------------------------------------------------
-  Subroutine generate_mngtab( rl, nmax_prc, fname )
+  subroutine generate_mngtab( rl, nmax_prc, fname )
 !!$ [Add] 07.10.22 T.Mitsui
     use mod_adm, only: &
          nmax_mng => PRC_RGN_NMAX

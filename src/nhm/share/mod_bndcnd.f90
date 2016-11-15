@@ -67,7 +67,7 @@ module mod_bndcnd
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> Setup
+  !> setup
   subroutine BNDCND_setup
     use mod_process, only: &
        PRC_MPIstop

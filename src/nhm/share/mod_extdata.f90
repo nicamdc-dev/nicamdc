@@ -68,6 +68,7 @@ module mod_extdata
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
+  !> setup
   subroutine extdata_setup
     use mod_process, only: &
        PRC_MPIstop

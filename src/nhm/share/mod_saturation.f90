@@ -77,7 +77,7 @@ module mod_saturation
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> Setup
+  !> setup
   subroutine SATURATION_setup
     use mod_process, only: &
        PRC_MPIstop

@@ -77,7 +77,7 @@ module mod_mkgrd
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> Setup
+  !> setup
   subroutine MKGRD_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -1354,7 +1354,7 @@ contains
   subroutine MKGRD_vertex2center
     use mod_const, only: &
        EPS => CONST_EPS
-    use mod_adm, only : &
+    use mod_adm, only: &
        ADM_nxyz,     &
        ADM_TI,       &
        ADM_TJ,       &

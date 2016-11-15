@@ -44,7 +44,7 @@ module mod_chemvar
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> Setup
+  !> setup
   subroutine CHEMVAR_setup
     use mod_process, only: &
        PRC_MPIstop

@@ -185,6 +185,7 @@ module mod_sgs
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
+  !> setup
   subroutine sgs_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -248,10 +249,10 @@ contains
     !------                    : (:,:,:)
     !------
 
-    use mod_gmtr, only :  &
+    use mod_gmtr, only: &
          GMTR_area,&
          GMTR_area_pl
-    use mod_grd, only :  &
+    use mod_grd, only: &
          GRD_rscale,&
          GRD_xdir,&
          GRD_ydir,&
@@ -265,21 +266,21 @@ contains
          GRD_vz_pl,    &
          GRD_gz,         &
          GRD_gzh
-    use mod_const, only : &
+    use mod_const, only: &
          CPdry => CONST_CPdry
-    use mod_runconf, only : &
+    use mod_runconf, only: &
          I_QV
-    use mod_oprt, only :        &
+    use mod_oprt, only: &
          OPRT_horizontalize_vec,&
          OPRT_laplacian,        &
          OPRT_diffusion
-    use mod_comm, only :        &
+    use mod_comm, only: &
          COMM_data_transfer
-    use mod_runconf, only :         &
+    use mod_runconf, only: &
          TRC_VMAX
-    use mod_bsstate, only :         &
+    use mod_bsstate, only: &
          rho_bs,rho_bs_pl
-    use mod_time, only : &
+    use mod_time, only: &
          TIME_DTL
 
     implicit none
@@ -999,7 +1000,7 @@ contains
          GRD_x,        &
          GRD_x_pl,     &
          GRD_rscale!=cnst_eradisu
-    use mod_runconf, only :         &
+    use mod_runconf, only: &
          TRC_VMAX
     implicit none
 

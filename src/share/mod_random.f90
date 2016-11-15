@@ -46,7 +46,7 @@ module mod_random
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> Setup
+  !> setup
   subroutine RANDOM_setup
     use mod_process, only: &
        PRC_MPIstop

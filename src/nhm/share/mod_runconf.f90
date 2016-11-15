@@ -49,7 +49,7 @@ module mod_runconf
   character(len=H_SHORT), public :: SF_TYPE            = 'DEFAULT'
   character(len=H_SHORT), public :: ROUGHNESS_SEA_TYPE = 'DEFAULT'
   character(len=H_SHORT), public :: OCEAN_TYPE         = 'NONE'
-  character(len=H_SHORT), public :: RIV_TYPE           = 'NONE'
+  character(len=H_SHORT), public :: RIVER_TYPE         = 'NONE'
   character(len=H_SHORT), public :: LAND_TYPE          = 'NONE'
   character(len=H_SHORT), public :: TB_TYPE            = 'NONE'
   character(len=H_SHORT), public :: AE_TYPE            = 'NONE'
@@ -158,7 +158,7 @@ module mod_runconf
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> Setup
+  !> setup
   subroutine RUNCONF_setup
     use mod_process, only: &
        PRC_MPIstop
