@@ -147,8 +147,8 @@ contains
     endif
 
     write(IO_FID_LOG,*) '*** io_mode for restart, output: ', trim(output_io_mode)
-    if    ( input_io_mode == 'ADVANCED'     ) then
-    elseif( input_io_mode == 'POH5'         ) then
+    if    ( output_io_mode == 'ADVANCED'     ) then
+    elseif( output_io_mode == 'POH5'         ) then
     else
        write(IO_FID_LOG,*) 'xxx Invalid output_io_mode. STOP'
        call PRC_MPIstop
@@ -256,12 +256,12 @@ contains
 
     else
 
-       rhog_pl  (:,:,:)   = 0
-       rhogvx_pl(:,:,:)   = 0
-       rhogvy_pl(:,:,:)   = 0
-       rhogvz_pl(:,:,:)   = 0
-       rhogw_pl (:,:,:)   = 0
-       rhoge_pl (:,:,:)   = 0
+       rhog_pl  (:,:,:)   = 0.0_RP
+       rhogvx_pl(:,:,:)   = 0.0_RP
+       rhogvy_pl(:,:,:)   = 0.0_RP
+       rhogvz_pl(:,:,:)   = 0.0_RP
+       rhogw_pl (:,:,:)   = 0.0_RP
+       rhoge_pl (:,:,:)   = 0.0_RP
        rhogq_pl (:,:,:,:) = 0.0_RP
 
     endif
