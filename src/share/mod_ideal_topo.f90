@@ -2,9 +2,9 @@
 !> Module ideal topo
 !!
 !! @par Description
-!!         This module prepares ideal topography for Dynamical Core Test
+!!          This module prepares ideal topography for Dynamical Core Test
 !!
-!! @author Team SCALE
+!! @author NICAM developers, Team SCALE
 !<
 !-------------------------------------------------------------------------------
 module mod_ideal_topo
@@ -19,7 +19,7 @@ module mod_ideal_topo
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: IDEAL_topo
 

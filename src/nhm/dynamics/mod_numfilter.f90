@@ -28,7 +28,7 @@ module mod_numfilter
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: numfilter_setup
   public :: numfilter_rayleigh_damping
@@ -396,14 +396,14 @@ contains
     Kh_coef   (:,:,:) = 0.0_RP
     Kh_coef_pl(:,:,:) = 0.0_RP
 
-    if ( hdiff_type == "DIRECT" ) then
+    if ( hdiff_type == 'DIRECT' ) then
        if( gamma > 0.0_RP ) NUMFILTER_DOhorizontaldiff = .true.
 
        ! gamma is an absolute value.
        Kh_coef   (:,:,:) = gamma
        Kh_coef_pl(:,:,:) = gamma
 
-    elseif( hdiff_type == "NONDIM_COEF" ) then
+    elseif( hdiff_type == 'NONDIM_COEF' ) then
        if( gamma > 0.0_RP ) NUMFILTER_DOhorizontaldiff = .true.
 
        large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=DP)
@@ -428,7 +428,7 @@ contains
           Kh_coef_pl(:,:,:) = gamma / large_step_dt * AREA_ave**lap_order
        endif
 
-    elseif( hdiff_type == "E_FOLD_TIME" ) then
+    elseif( hdiff_type == 'E_FOLD_TIME' ) then
        if( tau > 0.0_RP ) NUMFILTER_DOhorizontaldiff = .true.
 
        ! tau is e-folding time for 2*dx waves.
@@ -451,7 +451,7 @@ contains
           Kh_coef_pl(:,:,:) = ( sqrt(AREA_ave)/PI )**(2*lap_order) / ( tau+EPS )
        endif
 
-    elseif( hdiff_type  == "NONLINEAR1" ) then
+    elseif( hdiff_type  == 'NONLINEAR1' ) then
        NUMFILTER_DOhorizontaldiff = .true.
        hdiff_nonlinear            = .true.
 
@@ -459,8 +459,8 @@ contains
        Kh_coef_pl(:,:,:) = -999.0_RP
     endif
 
-    if (       hdiff_type /= "DIRECT"     &
-         .AND. hdiff_type /= "NONLINEAR1" ) then
+    if (       hdiff_type /= 'DIRECT'     &
+         .AND. hdiff_type /= 'NONLINEAR1' ) then
 
        if ( smooth_1var ) then ! iga 20120721 (add if)
           call numfilter_smooth_1var( Kh_coef(:,:,:), Kh_coef_pl(:,:,:) )
@@ -515,14 +515,14 @@ contains
     Kh_coef_lap1    = 0.0_RP
     Kh_coef_lap1_pl = 0.0_RP
 
-    if ( hdiff_type_lap1 == "DIRECT" ) then
+    if ( hdiff_type_lap1 == 'DIRECT' ) then
        if( gamma_lap1 > 0.0_RP ) NUMFILTER_DOhorizontaldiff_lap1 = .true.
 
        ! gamma is an absolute value.
        Kh_coef_lap1   (:,:,:) = gamma_lap1
        Kh_coef_lap1_pl(:,:,:) = gamma_lap1
 
-    elseif( hdiff_type_lap1 == "NONDIM_COEF" ) then
+    elseif( hdiff_type_lap1 == 'NONDIM_COEF' ) then
        if( gamma_lap1 > 0.0_RP ) NUMFILTER_DOhorizontaldiff_lap1 = .true.
 
        large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=DP)
@@ -549,7 +549,7 @@ contains
           Kh_coef_lap1_pl(:,:,:) = gamma_lap1 / large_step_dt * AREA_ave
        endif
 
-    elseif( hdiff_type_lap1 == "E_FOLD_TIME" ) then
+    elseif( hdiff_type_lap1 == 'E_FOLD_TIME' ) then
        if( tau_lap1 > 0.0_RP ) NUMFILTER_DOhorizontaldiff_lap1 = .true.
 
        ! tau is e-folding time for 2*dx waves.
@@ -751,7 +751,7 @@ contains
     divdamp_coef    = 0.0_RP
     divdamp_coef_pl = 0.0_RP
 
-    if ( divdamp_type == "DIRECT") then
+    if ( divdamp_type == 'DIRECT') then
        if( alpha > 0.0_RP ) NUMFILTER_DOdivdamp = .true.
 
        ! alpha_d is an absolute value.
@@ -760,7 +760,7 @@ contains
        divdamp_coef   (:,:,:) = coef
        divdamp_coef_pl(:,:,:) = coef
 
-    elseif( divdamp_type == "NONDIM_COEF" ) then
+    elseif( divdamp_type == 'NONDIM_COEF' ) then
        if( alpha > 0.0_RP ) NUMFILTER_DOdivdamp = .true.
 
        small_step_dt = TIME_DTS / real(DYN_DIV_NUM,kind=DP)
@@ -772,7 +772,7 @@ contains
        divdamp_coef   (:,:,:) = coef
        divdamp_coef_pl(:,:,:) = coef
 
-    elseif( divdamp_type == "E_FOLD_TIME" ) then
+    elseif( divdamp_type == 'E_FOLD_TIME' ) then
        if( tau > 0.0_RP ) NUMFILTER_DOdivdamp = .true.
 
        ! tau_d is e-folding time for 2*dx.
@@ -801,7 +801,7 @@ contains
        endif
     endif
 
-    if ( divdamp_type /= "DIRECT" ) then
+    if ( divdamp_type /= 'DIRECT' ) then
        if ( smooth_1var ) then ! iga 20120721 (add if)
           call numfilter_smooth_1var( divdamp_coef(:,:,:), divdamp_coef_pl(:,:,:) )
        endif
@@ -917,7 +917,7 @@ contains
     divdamp_2d_coef    = 0.0_RP
     divdamp_2d_coef_pl = 0.0_RP
 
-    if ( divdamp_type == "DIRECT" ) then
+    if ( divdamp_type == 'DIRECT' ) then
        if( alpha > 0.0_RP ) NUMFILTER_DOdivdamp_2d = .true.
 
        ! alpha is the absolute value.
@@ -926,7 +926,7 @@ contains
        divdamp_2d_coef   (:,:,:) = coef
        divdamp_2d_coef_pl(:,:,:) = coef
 
-    elseif( divdamp_type == "NONDIM_COEF" ) then
+    elseif( divdamp_type == 'NONDIM_COEF' ) then
        if( alpha > 0.0_RP ) NUMFILTER_DOdivdamp_2d = .true.
 
        small_step_dt = TIME_DTS / real(DYN_DIV_NUM,kind=DP)
@@ -938,7 +938,7 @@ contains
        divdamp_2d_coef   (:,:,:) = coef
        divdamp_2d_coef_pl(:,:,:) = coef
 
-    elseif( divdamp_type == "E_FOLD_TIME" ) then
+    elseif( divdamp_type == 'E_FOLD_TIME' ) then
        if( tau > 0.0_RP ) NUMFILTER_DOdivdamp_2d = .true.
 
        ! tau is e-folding time for 2*dx.

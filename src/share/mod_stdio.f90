@@ -3,16 +3,15 @@
 !!
 !! @par Description
 !!          Standard, common I/O module
+!!          Imported from SCALE library
 !!
 !! @author Team SCALE
 !!
-!! @par History
-!! @li      2011-11-11 (H.Yashiro)  [new]
 !<
 module mod_stdio
   !-----------------------------------------------------------------------------
   !
-  !++ used modules
+  !++ Used modules
   !
   use mod_io_param
   !-----------------------------------------------------------------------------
@@ -20,11 +19,7 @@ module mod_stdio
   private
   !-----------------------------------------------------------------------------
   !
-  !++ included parameters
-  !
-  !-----------------------------------------------------------------------------
-  !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: IO_setup
   public :: IO_LOG_setup
@@ -37,19 +32,19 @@ module mod_stdio
   !
   !++ Public parameters & variables
   !
-  integer,               public, parameter :: H_SHORT     = IO_HSHORT    !< Character length (short=16)
-  integer,               public, parameter :: H_MID       = IO_HMID      !< Character length (short=64)
-  integer,               public, parameter :: H_LONG      = IO_HLONG     !< Character length (short=256)
+  integer,               public, parameter :: H_SHORT     = IO_HSHORT       !< Character length (16)
+  integer,               public, parameter :: H_MID       = IO_HMID         !< Character length (64)
+  integer,               public, parameter :: H_LONG      = IO_HLONG        !< Character length (256)
 
-  character(len=H_MID),  public            :: H_MODELNAME                !< name and version of the model
-  character(len=H_MID),  public            :: H_LIBNAME                  !< name and version of the library
-  character(len=H_MID),  public            :: H_SOURCE                   !< for file header
-  character(len=H_MID),  public            :: H_INSTITUTE = 'NICAM team' !< for file header
+  character(len=H_MID),  public            :: H_MODELNAME                   !< name and version of the model
+  character(len=H_MID),  public            :: H_LIBNAME                     !< name and version of the library
+  character(len=H_MID),  public            :: H_SOURCE                      !< for file header
+  character(len=H_MID),  public            :: H_INSTITUTE = 'NICAM team'    !< for file header
 
-  character(len=6),      public, parameter :: IO_STDOUT     = "STDOUT"
-  integer,               public, parameter :: IO_FID_STDOUT = 6
-  integer,               public            :: IO_FID_CONF   = 7             !< Config file ID
-  integer,               public            :: IO_FID_LOG    = 8             !< Log file ID
+  character(len=6),      public, parameter :: IO_STDOUT           = 'STDOUT'
+  integer,               public, parameter :: IO_FID_STDOUT       = 6
+  integer,               public            :: IO_FID_CONF         = 7       !< Config file ID
+  integer,               public            :: IO_FID_LOG          = 8       !< Log file ID
 
   character(len=H_LONG), public            :: IO_LOG_BASENAME     = 'msg'   !< basename of logfile
   logical,               public            :: IO_L                = .false. !< output log or not? (this process)
@@ -60,14 +55,14 @@ module mod_stdio
 
   !-----------------------------------------------------------------------------
   !
-  !++ Private procedure
+  !++ Private procedures
   !
   !-----------------------------------------------------------------------------
   !
   !++ Private parameters & variables
   !
-  integer, private, parameter :: IO_MINFID    = 10 !< minimum available fid
-  integer, private, parameter :: IO_MAXFID    = 99 !< maximum available fid
+  integer, private, parameter :: IO_MINFID = 10 !< minimum available fid
+  integer, private, parameter :: IO_MAXFID = 99 !< maximum available fid
 
   !-----------------------------------------------------------------------------
 contains

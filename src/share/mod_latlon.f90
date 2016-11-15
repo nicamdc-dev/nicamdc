@@ -20,7 +20,7 @@ module mod_latlon
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: LATLON_ico_setup
   public :: LATLON_setup
@@ -41,7 +41,7 @@ module mod_latlon
 
   !-----------------------------------------------------------------------------
   !
-  !++ Private procedure
+  !++ Private procedures
   !
   private :: setup_latlon
   private :: set_equidist_grid
@@ -845,33 +845,33 @@ contains
 
     if ( SAMPLE_io_mode == 'ADVANCED' ) then
 
-       call FIO_output( SAMPLE(:,:,:,1), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
-                       "sample1", "sample data(prc)", "", "NIL",      & ! [IN]
-                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
-       call FIO_output( SAMPLE(:,:,:,2), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
-                       "sample2", "sample data(rgn)", "", "NIL",      & ! [IN]
-                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
-       call FIO_output( SAMPLE(:,:,:,3), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
-                       "sample3", "sample data(i)", "", "NIL",        & ! [IN]
-                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
-       call FIO_output( SAMPLE(:,:,:,4), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
-                       "sample4", "sample data(j)", "", "NIL",        & ! [IN]
-                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+       call FIO_output( SAMPLE(:,:,:,1), SAMPLE_OUT_BASENAME, '', '', & ! [IN]
+                       'sample1', 'sample data(prc)', '', 'NIL',      & ! [IN]
+                       IO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+       call FIO_output( SAMPLE(:,:,:,2), SAMPLE_OUT_BASENAME, '', '', & ! [IN]
+                       'sample2', 'sample data(rgn)', '', 'NIL',      & ! [IN]
+                       IO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+       call FIO_output( SAMPLE(:,:,:,3), SAMPLE_OUT_BASENAME, '', '', & ! [IN]
+                       'sample3', 'sample data(i)', '', 'NIL',        & ! [IN]
+                       IO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+       call FIO_output( SAMPLE(:,:,:,4), SAMPLE_OUT_BASENAME, '', '', & ! [IN]
+                       'sample4', 'sample data(j)', '', 'NIL',        & ! [IN]
+                       IO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
 
     elseif( SAMPLE_io_mode == 'POH5' ) then
 
-       call HIO_output( SAMPLE(:,:,:,1), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
-                       "sample1", "sample data(prc)", "", "NIL",      & ! [IN]
-                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
-       call HIO_output( SAMPLE(:,:,:,2), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
-                       "sample2", "sample data(rgn)", "", "NIL",      & ! [IN]
-                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
-       call HIO_output( SAMPLE(:,:,:,3), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
-                       "sample3", "sample data(i)", "", "NIL",        & ! [IN]
-                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
-       call HIO_output( SAMPLE(:,:,:,4), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
-                       "sample4", "sample data(j)", "", "NIL",        & ! [IN]
-                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+       call HIO_output( SAMPLE(:,:,:,1), SAMPLE_OUT_BASENAME, '', '', & ! [IN]
+                       'sample1', 'sample data(prc)', '', 'NIL',      & ! [IN]
+                       IO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+       call HIO_output( SAMPLE(:,:,:,2), SAMPLE_OUT_BASENAME, '', '', & ! [IN]
+                       'sample2', 'sample data(rgn)', '', 'NIL',      & ! [IN]
+                       IO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+       call HIO_output( SAMPLE(:,:,:,3), SAMPLE_OUT_BASENAME, '', '', & ! [IN]
+                       'sample3', 'sample data(i)', '', 'NIL',        & ! [IN]
+                       IO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+       call HIO_output( SAMPLE(:,:,:,4), SAMPLE_OUT_BASENAME, '', '', & ! [IN]
+                       'sample4', 'sample data(j)', '', 'NIL',        & ! [IN]
+                       IO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
 
     else
        write(IO_FID_LOG,*) 'Invalid io_mode!'
@@ -1034,7 +1034,7 @@ contains
 
   !-----------------------------------------------------------------------------
 !  subroutine intrpl_2( var_ll, var, var_pl, kmin, kmax )
-!    !
+!
 !    use mod_adm, only :              &
 !         ADM_prc_me,               &
 !         ADM_prc_pl,               &
@@ -1065,9 +1065,9 @@ contains
 !         OPRT_gradient
 !    use mod_comm, only :               &
 !         COMM_data_transfer
-!    !
+!
 !    implicit none
-!    !
+!
 !    integer, intent(in) :: kmin,kmax
 !    real(RP), intent(out) :: var_ll(nmax_llgrid,kmin:kmax)
 !    !    real(RP), intent(in)  :: var(ADM_gall,kmin:kmax,ADM_lall)
@@ -1076,21 +1076,21 @@ contains
 !    !    real(RP), intent(in)  :: var_pl(:,:,:)
 !    real(RP), intent(in) :: var(ADM_gall,ADM_kall,ADM_lall)
 !    real(RP), intent(in) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-!    !
+!
 !    integer, parameter :: ix = 1
 !    integer, parameter :: iy = 2
 !    integer, parameter :: iz = 3
-!    !
+!
 !    real(RP) ::  grd(ADM_gall,ADM_kall,ADM_lall,ix:iz)
 !    real(RP) ::  grd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,ix:iz)
 !    logical ::  def_grd(ADM_gall,kmin:kmax,ADM_lall)
-!    !
+!
 !    integer :: n0,n1,n2,n3,n4,n5,n6
 !    real(RP) :: vec12(ix:iz),vec23(ix:iz),vec31(ix:iz)
 !    real(RP) :: v1,v2,v3,v12,v23,v31
-!    !
+!
 !    integer :: k,m,l,n
-!    !
+!
 !    grd(:,:,:,:)=CONST_UNDEF
 !    grd_pl(:,:,:,:)=CONST_UNDEF
 !    call OPRT_gradient(&
@@ -1098,9 +1098,9 @@ contains
 !         grd(:,:,:,iy), grd_pl(:,:,:,iy),&
 !         grd(:,:,:,iz), grd_pl(:,:,:,iz),&
 !         var,  var_pl)
-!    !
+!
 !    def_grd(:,:,:) = .false.
-!    !
+!
 !    ! cheange by kgoto
 !    ! check gradient operator by checking variable value
 !    do l=1,ADM_lall
@@ -1141,9 +1141,9 @@ contains
 !          enddo
 !       enddo
 !    endif
-!    !
+!
 !    call COMM_data_transfer(grd,grd_pl)
-!    !
+!
 !    do k=kmin,kmax
 !       do m=1,nmax_llgrid
 !          n1 = n1_index(m)
@@ -1174,7 +1174,7 @@ contains
 !          n2 = n2_index(m)
 !          n3 = n3_index(m)
 !          l = l_index(m)
-!          !
+!
 !          !--- vector n1 to n2
 !          vec12(ix) &
 !               = GRD_x(n2,ADM_KNONE,l,GRD_XDIR)&
@@ -1185,7 +1185,7 @@ contains
 !          vec12(iz) &
 !               = GRD_x(n2,ADM_KNONE,l,GRD_ZDIR)&
 !               - GRD_x(n1,ADM_KNONE,l,GRD_ZDIR)
-!          !
+!
 !          !--- vector n2 to n3
 !          vec23(ix) &
 !               = GRD_x(n3,ADM_KNONE,l,GRD_XDIR)&
@@ -1196,7 +1196,7 @@ contains
 !          vec23(iz) &
 !               = GRD_x(n3,ADM_KNONE,l,GRD_ZDIR)&
 !               - GRD_x(n2,ADM_KNONE,l,GRD_ZDIR)
-!          !
+!
 !          !--- vector n3 to n1
 !          vec31(ix) &
 !               = GRD_x(n1,ADM_KNONE,l,GRD_XDIR)&
@@ -1207,12 +1207,12 @@ contains
 !          vec31(iz) &
 !               = GRD_x(n1,ADM_KNONE,l,GRD_ZDIR)&
 !               - GRD_x(n3,ADM_KNONE,l,GRD_ZDIR)
-!          !
+!
 !          !--- calculate values at the nodes
 !          v1=var(n1,k,l)
 !          v2=var(n2,k,l)
 !          v3=var(n3,k,l)
-!          !
+!
 !          !--- midpoint value between n1 and n2
 !          !--- based on Hermitian interpolation.
 !          v12 = (v1+v2)*0.5_RP                                   &
@@ -1220,7 +1220,7 @@ contains
 !               * (( grd(n1,k,l,ix) - grd(n2,k,l,ix) )*vec12(ix) &
 !                 +( grd(n1,k,l,iy) - grd(n2,k,l,iy) )*vec12(iy) &
 !                 +( grd(n1,k,l,iz) - grd(n2,k,l,iz) )*vec12(iz))
-!          !
+!
 !          !--- midpoint value between n2 and n3
 !          !--- based on Hermitian interpolation.
 !          v23 = (v2+v3)*0.5_RP                                   &
@@ -1228,7 +1228,7 @@ contains
 !               * (( grd(n2,k,l,ix) - grd(n3,k,l,ix) )*vec23(ix) &
 !                 +( grd(n2,k,l,iy) - grd(n3,k,l,iy) )*vec23(iy) &
 !                 +( grd(n2,k,l,iz) - grd(n3,k,l,iz) )*vec23(iz))
-!          !
+!
 !          !--- midpoint value between n3 and n1
 !          !--- based on Hermitian interpolation.
 !          v31 = (v3+v1)*0.5_RP                                   &
@@ -1251,9 +1251,9 @@ contains
 !          endif
 !       enddo
 !    enddo
-!    !
+!
 !    return
-!    !
+!
 !  end subroutine intrpl_2
 
 end module mod_latlon

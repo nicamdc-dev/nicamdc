@@ -169,9 +169,8 @@ contains
     do d=1,nmax_dmd
        do i=1,rgnlen
           do j=1,rgnlen
-             !
              l=(rgnlen*rgnlen)*(d-1)+rgnlen*(j-1)+i
-             !
+
              do k=ADM_SW,ADM_SE
                 select case(k)
                 case(ADM_SW)
@@ -251,11 +250,11 @@ contains
                       edgid_nb=ADM_NW
                    endif
                 end select
-                !
+
                 l_nb=(rgnlen*rgnlen)*(d_nb-1)+rgnlen*(j_nb-1)+i_nb
                 rgn_tab(ADM_RID,k,l)=l_nb
                 rgn_tab(ADM_DIR,k,l)=edgid_nb
-                !
+
              enddo
           enddo
        enddo
@@ -283,7 +282,7 @@ contains
              ! m: peid (-> rank)
              ! p: 1 or 2 if one or two regions per one process
              ! prc_tab(p,m): region number
-             !
+
              ! mapping between m of Nreg-1prc and m of 1reg-1prc (N=1,2)
 
              if( p >= 3 ) then ! = m (1reg-1prc),  = 2m-1 or 2m (2reg-1prc)
@@ -353,25 +352,25 @@ contains
     integer, intent(in) :: rl
     integer, intent(in) :: nmax_prc
     character(len=*), intent(in) :: fname
-    !
+
     integer :: i,j,d
     integer :: i_nb,j_nb,d_nb,edgid_nb
     integer :: l,l_nb
     integer :: k,m,p
     integer :: rgnlen
     integer :: nmax_dmd=-1
-    !
+
     integer :: all_rgn
-    !
+
     integer, allocatable :: rgn_tab(:,:,:)
     integer, allocatable :: mngrgn(:)
     integer, allocatable :: prc_tab(:,:)
-    !
+
     integer, parameter :: fid=20
-    !
+
     integer :: num_of_rgn
     namelist / rgn_info / num_of_rgn
-    !
+
     integer :: rgnid
     integer :: &
          sw(ADM_RID:ADM_DIR),&
@@ -379,10 +378,10 @@ contains
          ne(ADM_RID:ADM_DIR),&
          se(ADM_RID:ADM_DIR)
     namelist / rgn_link_info / rgnid, sw, nw, ne, se
-    !
+
     integer :: num_of_proc
     namelist /proc_info/ num_of_proc
-    !
+
     integer :: peid
     integer :: num_of_mng
     integer :: mng_rgnid(nmax_mng)
@@ -426,15 +425,15 @@ contains
 
     rgnlen=2**rl
     all_rgn=nmax_dmd*rgnlen*rgnlen
-    !
+
     allocate(rgn_tab(ADM_RID:ADM_DIR,ADM_SW:ADM_SE,all_rgn))
-    !
+
     do d=1,nmax_dmd
        do i=1,rgnlen
           do j=1,rgnlen
-             !
+
              l=(rgnlen*rgnlen)*(d-1)+rgnlen*(j-1)+i
-             !
+
              do k=ADM_SW,ADM_SE
                 select case(k)
                 case(ADM_SW)
@@ -554,18 +553,18 @@ contains
                       edgid_nb=ADM_NW
                    endif
                 end select
-                !
+
                 l_nb=(rgnlen*rgnlen)*(d_nb-1)+rgnlen*(j_nb-1)+i_nb
                 rgn_tab(ADM_RID,k,l)=l_nb
                 rgn_tab(ADM_DIR,k,l)=edgid_nb
-                !
+
              enddo
           enddo
        enddo
     enddo
-    !
+
 !    nmax_prc=all_rgn
-    !
+
     allocate(mngrgn(nmax_prc))
     allocate(prc_tab(nmax_mng,nmax_prc))
     do m=1,nmax_prc
@@ -580,12 +579,12 @@ contains
           prc_tab(p,m)=(m-1)*(all_rgn/nmax_prc)+p
        enddo
     enddo
-    !
+
     open(fid,file=trim(fname),form='formatted')
-    !
+
     num_of_rgn=all_rgn
     write(fid,nml=rgn_info)
-    !
+
     do l=1,all_rgn
        rgnid=l
        sw=rgn_tab(:,ADM_SW,l)
@@ -602,9 +601,9 @@ contains
        mng_rgnid=prc_tab(:,m)
        write(fid,nml=rgn_mng_info)
     enddo
-    !
+
     close(fid)
-    !
+
   end subroutine generate_mngtab_lcp
   !-----------------------------------------------------------------------------!
   !---------------- for MLCP
@@ -616,7 +615,7 @@ contains
     integer, intent(in) :: rl
     integer, intent(in) :: nmax_prc
     character(len=*), intent(in) :: fname
-    !
+
     integer :: i,j,d
     integer :: i_nb,j_nb,d_nb,edgid_nb
     integer :: l,l_nb
@@ -624,18 +623,18 @@ contains
     integer :: rgnlen
 
     integer,save :: nmax_dmd=-1
-    !
+
     integer :: all_rgn
-    !
+
     integer, allocatable :: rgn_tab(:,:,:)
     integer, allocatable :: mngrgn(:)
     integer, allocatable :: prc_tab(:,:)
-    !
+
     integer,parameter :: fid=20
-    !
+
     integer :: num_of_rgn
     namelist / rgn_info / num_of_rgn
-    !
+
     integer :: rgnid
     integer :: &
          sw(ADM_RID:ADM_DIR),&
@@ -643,10 +642,10 @@ contains
          ne(ADM_RID:ADM_DIR),&
          se(ADM_RID:ADM_DIR)
     namelist / rgn_link_info / rgnid, sw, nw, ne, se
-    !
+
     integer :: num_of_proc
     namelist /proc_info/ num_of_proc
-    !
+
     integer :: peid
     integer :: num_of_mng
     integer :: mng_rgnid(nmax_mng)
@@ -660,8 +659,8 @@ contains
     nmax_dmd = XTMS_K * (1+XTMS_MLCP_S)
     write(*,*) nmax_dmd, XTMS_K
     allocate(dmd_data(ADM_SW:ADM_SE,nmax_dmd))
-    !
-    !
+
+
 
     do k=1,XTMS_K
        do s=1,1
@@ -702,15 +701,15 @@ contains
 
     rgnlen=2**rl
     all_rgn=nmax_dmd*rgnlen*rgnlen
-    !
+
     allocate(rgn_tab(ADM_RID:ADM_DIR,ADM_SW:ADM_SE,all_rgn))
-    !
+
     do d=1,nmax_dmd
        do i=1,rgnlen
           do j=1,rgnlen
-             !
+
              l=(rgnlen*rgnlen)*(d-1)+rgnlen*(j-1)+i
-             !
+
              do k=ADM_SW,ADM_SE
                 select case(k)
                 case(ADM_SW)
@@ -792,18 +791,18 @@ contains
                       edgid_nb=ADM_NW
                    endif
                 end select
-                !
+
                 l_nb=(rgnlen*rgnlen)*(d_nb-1)+rgnlen*(j_nb-1)+i_nb
                 rgn_tab(ADM_RID,k,l)=l_nb
                 rgn_tab(ADM_DIR,k,l)=edgid_nb
-                !
+
              enddo
           enddo
        enddo
     enddo
-    !
+
 !    nmax_prc=all_rgn
-    !
+
     allocate(mngrgn(nmax_prc))
     allocate(prc_tab(nmax_mng,nmax_prc))
     do m=1,nmax_prc
@@ -818,12 +817,12 @@ contains
           prc_tab(p,m)=(m-1)*(all_rgn/nmax_prc)+p
        enddo
     enddo
-    !
+
     open(fid,file=trim(fname),form='formatted')
-    !
+
     num_of_rgn=all_rgn
     write(fid,nml=rgn_info)
-    !
+
     do l=1,all_rgn
        rgnid=l
        sw=rgn_tab(:,ADM_SW,l)
@@ -840,9 +839,9 @@ contains
        mng_rgnid=prc_tab(:,m)
        write(fid,nml=rgn_mng_info)
     enddo
-    !
+
     close(fid)
-    !
+
   end subroutine generate_mngtab_mlcp
   !-----------------------------------------------------------------------------
   !---------------- for MLCP
@@ -854,7 +853,7 @@ contains
     integer, intent(in) :: rl
     integer, intent(in) :: nmax_prc
     character(len=*), intent(in) :: fname
-    !
+
     integer :: i,j,d
     integer :: i_nb,j_nb,d_nb,edgid_nb
     integer :: l,l_nb
@@ -862,18 +861,18 @@ contains
     integer :: rgnlen
 
     integer,save :: nmax_dmd=-1
-    !
+
     integer :: all_rgn
-    !
+
     integer, allocatable :: rgn_tab(:,:,:)
     integer, allocatable :: mngrgn(:)
     integer, allocatable :: prc_tab(:,:)
-    !
+
     integer,parameter :: fid=20
-    !
+
     integer :: num_of_rgn
     namelist / rgn_info / num_of_rgn
-    !
+
     integer :: rgnid
     integer :: &
          sw(ADM_RID:ADM_DIR),&
@@ -881,10 +880,10 @@ contains
          ne(ADM_RID:ADM_DIR),&
          se(ADM_RID:ADM_DIR)
     namelist / rgn_link_info / rgnid, sw, nw, ne, se
-    !
+
     integer :: num_of_proc
     namelist /proc_info/ num_of_proc
-    !
+
     integer :: peid
     integer :: num_of_mng
     integer :: mng_rgnid(nmax_mng)
@@ -897,8 +896,8 @@ contains
     nmax_dmd = XTMS_K * 2
     write(*,*) nmax_dmd, XTMS_K
     allocate(dmd_data(ADM_SW:ADM_SE,nmax_dmd))
-    !
-    !
+
+
 
     do d=1,XTMS_K
        dmd_data(ADM_SW:ADM_SE, d)=(/ &
@@ -917,15 +916,15 @@ contains
 
     rgnlen=2**rl
     all_rgn=nmax_dmd*rgnlen*rgnlen
-    !
+
     allocate(rgn_tab(ADM_RID:ADM_DIR,ADM_SW:ADM_SE,all_rgn))
-    !
+
     do d=1,nmax_dmd
        do i=1,rgnlen
           do j=1,rgnlen
-             !
+
              l=(rgnlen*rgnlen)*(d-1)+rgnlen*(j-1)+i
-             !
+
              do k=ADM_SW,ADM_SE
                 select case(k)
                 case(ADM_SW)
@@ -1005,18 +1004,18 @@ contains
                       edgid_nb=ADM_NW
                    endif
                 end select
-                !
+
                 l_nb=(rgnlen*rgnlen)*(d_nb-1)+rgnlen*(j_nb-1)+i_nb
                 rgn_tab(ADM_RID,k,l)=l_nb
                 rgn_tab(ADM_DIR,k,l)=edgid_nb
-                !
+
              enddo
           enddo
        enddo
     enddo
-    !
+
 !    nmax_prc=all_rgn
-    !
+
     allocate(mngrgn(nmax_prc))
     allocate(prc_tab(nmax_mng,nmax_prc))
     do m=1,nmax_prc
@@ -1031,12 +1030,12 @@ contains
           prc_tab(p,m)=(m-1)*(all_rgn/nmax_prc)+p
        enddo
     enddo
-    !
+
     open(fid,file=trim(fname),form='formatted')
-    !
+
     num_of_rgn=all_rgn
     write(fid,nml=rgn_info)
-    !
+
     do l=1,all_rgn
        rgnid=l
        sw=rgn_tab(:,ADM_SW,l)
@@ -1053,9 +1052,9 @@ contains
        mng_rgnid=prc_tab(:,m)
        write(fid,nml=rgn_mng_info)
     enddo
-    !
+
     close(fid)
-    !
+
   end subroutine generate_mngtab_mlcp_old
 
   !-----------------------------------------------------------------------------
@@ -1067,7 +1066,7 @@ contains
     integer, intent(in)          :: rl
     integer, intent(in)          :: nmax_prc
     character(len=*), intent(in) :: fname
-    !
+
     integer :: i,j,d
     integer :: i_nb,j_nb,d_nb,edgid_nb
     integer :: l,l_nb
@@ -1075,16 +1074,16 @@ contains
     integer :: rgnlen
     integer, parameter :: nmax_dmd=1
     integer :: all_rgn
-    !
+
     integer, allocatable :: rgn_tab(:,:,:)
     integer, allocatable :: mngrgn(:)
     integer, allocatable :: prc_tab(:,:)
-    !
+
     integer,parameter :: fid=20
-    !
+
     integer :: num_of_rgn
     namelist / rgn_info / num_of_rgn
-    !
+
     integer :: rgnid
     integer :: &
          sw(ADM_RID:ADM_DIR),&
@@ -1092,10 +1091,10 @@ contains
          ne(ADM_RID:ADM_DIR),&
          se(ADM_RID:ADM_DIR)
     namelist / rgn_link_info / rgnid, sw, nw, ne, se
-    !
+
     integer :: num_of_proc
     namelist /proc_info/ num_of_proc
-    !
+
     integer :: peid
     integer :: num_of_mng
     integer :: mng_rgnid(nmax_mng)
@@ -1105,18 +1104,18 @@ contains
     !---------------------------------------------------------------------------
 
     dmd_data(ADM_SW:ADM_SE, 1)=(/1,1,1,1/)
-    !
+
     rgnlen  = 2**rl
     all_rgn = nmax_dmd*rgnlen**2
-    !
+
     allocate(rgn_tab(ADM_RID:ADM_DIR,ADM_SW:ADM_SE,all_rgn))
-    !
+
     do d=1,nmax_dmd
        do i=1,rgnlen
           do j=1,rgnlen
-             !
+
              l=(rgnlen*rgnlen)*(d-1)+rgnlen*(j-1)+i
-             !
+
              do k=ADM_SW,ADM_SE
                 select case(k)
                 case(ADM_SW)
@@ -1168,16 +1167,16 @@ contains
                       edgid_nb=ADM_NW
                    endif
                 end select
-                !
+
                 l_nb=(rgnlen*rgnlen)*(d_nb-1)+rgnlen*(j_nb-1)+i_nb
                 rgn_tab(ADM_RID,k,l)=l_nb
                 rgn_tab(ADM_DIR,k,l)=edgid_nb
-                !
+
              enddo
           enddo
        enddo
     enddo
-    !
+
     allocate(mngrgn(nmax_prc))
     allocate(prc_tab(nmax_mng,nmax_prc))
     do m=1,nmax_prc
@@ -1192,12 +1191,12 @@ contains
           prc_tab(p,m)=(m-1)*(all_rgn/nmax_prc)+p
        enddo
     enddo
-    !
+
     open(fid,file=trim(fname),form='formatted')
-    !
+
     num_of_rgn=all_rgn
     write(fid,nml=rgn_info)
-    !
+
     do l=1,all_rgn
        rgnid = l
        sw    = rgn_tab(:,ADM_SW,l)
@@ -1214,9 +1213,9 @@ contains
        mng_rgnid=prc_tab(:,m)
        write(fid,nml=rgn_mng_info)
     enddo
-    !
+
     close(fid)
-    !
+
   end subroutine generate_mngtab_periodic_1dmd
 
   !-----------------------------------------------------------------------------
@@ -1228,25 +1227,25 @@ contains
     integer, intent(in) :: rl
     integer, intent(in) :: nmax_prc
     character(len=*), intent(in) :: fname
-    !
+
     integer :: i,j,d
     integer :: i_nb,j_nb,d_nb,edgid_nb
     integer :: l,l_nb
     integer :: k,m,p
     integer :: rgnlen
     integer, parameter :: nmax_dmd=10
-    !
+
     integer :: all_rgn
-    !
+
     integer, allocatable :: rgn_tab(:,:,:)
     integer, allocatable :: mngrgn(:)
     integer, allocatable :: prc_tab(:,:)
-    !
+
     integer, parameter :: fid=20
-    !
+
     integer :: num_of_rgn
     namelist / rgn_info / num_of_rgn
-    !
+
     integer :: rgnid
     integer :: &
          sw(ADM_RID:ADM_DIR),&
@@ -1254,10 +1253,10 @@ contains
          ne(ADM_RID:ADM_DIR),&
          se(ADM_RID:ADM_DIR)
     namelist / rgn_link_info / rgnid, sw, nw, ne, se
-    !
+
     integer :: num_of_proc
     namelist /proc_info/ num_of_proc
-    !
+
     integer :: peid
     integer :: num_of_mng
     integer :: mng_rgnid(nmax_mng)
@@ -1270,15 +1269,15 @@ contains
 
     rgnlen=2**rl
     all_rgn=nmax_dmd*rgnlen*rgnlen
-    !
+
     allocate(rgn_tab(ADM_RID:ADM_DIR,ADM_SW:ADM_SE,all_rgn))
-    !
+
     do d=1,nmax_dmd
        do i=1,rgnlen
           do j=1,rgnlen
-             !
+
              l=(rgnlen*rgnlen)*(d-1)+rgnlen*(j-1)+i
-             !
+
              do k=ADM_SW,ADM_SE
                 select case(k)
                 case(ADM_SW)
@@ -1358,18 +1357,18 @@ contains
                       edgid_nb=ADM_NW
                    endif
                 end select
-                !
+
                 l_nb=(rgnlen*rgnlen)*(d_nb-1)+rgnlen*(j_nb-1)+i_nb
                 rgn_tab(ADM_RID,k,l)=l_nb
                 rgn_tab(ADM_DIR,k,l)=edgid_nb
-                !
+
              enddo
           enddo
        enddo
     enddo
-    !
+
 !    nmax_prc=all_rgn
-    !
+
     allocate(mngrgn(nmax_prc))
     allocate(prc_tab(nmax_mng,nmax_prc))
     do m=1,nmax_prc
@@ -1385,7 +1384,7 @@ contains
           prc_tab(p,m)=(m-1)*(all_rgn/nmax_prc)+p
        enddo
     enddo
-    !
+
     open(fid,file=trim(fname),form='formatted')
 
     num_of_rgn=all_rgn

@@ -18,7 +18,7 @@ module mod_af_trcadv
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: test11_velocity
   public :: test12_velocity

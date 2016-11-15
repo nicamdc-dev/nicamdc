@@ -19,7 +19,7 @@ module mod_af_heldsuarez
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: af_heldsuarez_init
   public :: af_heldsuarez

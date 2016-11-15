@@ -20,7 +20,7 @@ module mod_forcing_driver
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: forcing_setup
   public :: forcing_step

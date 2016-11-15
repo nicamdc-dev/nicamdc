@@ -39,7 +39,7 @@ module mod_prgvar
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: prgvar_setup
   public :: prgvar_get

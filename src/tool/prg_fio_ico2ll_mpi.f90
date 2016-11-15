@@ -114,9 +114,9 @@ program fio_ico2ll
                     help
 
   !-----------------------------------------------------------------------------
-  character(len=H_LONG) :: infname   = ""
-  character(len=H_LONG) :: outbase   = ""
-  character(len=H_LONG) :: layerfile = ""
+  character(len=H_LONG) :: infname   = ''
+  character(len=H_LONG) :: outbase   = ''
+  character(len=H_LONG) :: layerfile = ''
   integer               :: fmode
   integer               :: gtopology
   logical               :: allvar = .true.
@@ -211,25 +211,25 @@ program fio_ico2ll
   call readoption !! set fmax, infile
 
   if ( glevel==-1 .or. rlevel==-1 ) then
-     write(*,*) "xxx Set glevel, rlevel. STOP"
+     write(*,*) 'xxx Set glevel, rlevel. STOP'
      stop
   endif
   if ( step_str < 1 .or. step_end < 1 ) then
-     write(*,*) "xxx step must be >= 1. STOP"
+     write(*,*) 'xxx step must be >= 1. STOP'
      stop
   elseif( step_str > step_end ) then
-     write(*,*) "xxx step_str must be < step_end. STOP"
+     write(*,*) 'xxx step_str must be < step_end. STOP'
      stop
   endif
 
-  if ( grid_topology=="ICOSAHEDRON" ) then
+  if ( grid_topology=='ICOSAHEDRON' ) then
      gtopology = IO_ICOSAHEDRON
-  elseif( grid_topology=="LCP" ) then
+  elseif( grid_topology=='LCP' ) then
      gtopology = IO_IGA_LCP
-  elseif( grid_topology=="MLCP" ) then
+  elseif( grid_topology=='MLCP' ) then
      gtopology = IO_IGA_MLCP
   else
-     write(*,*) "Unknown type of Grid toporogy:",grid_topology
+     write(*,*) 'Unknown type of Grid toporogy:',grid_topology
      stop
   endif
 
@@ -287,14 +287,14 @@ program fio_ico2ll
 
   write(rankstr,'(I6.6)') prc_myrank
   open(IO_FID_LOG, file='msg_ico2ll.pe'//trim(rankstr) )
-  write(IO_FID_LOG,*) "+++ Parallel Execution, Use MPI"
+  write(IO_FID_LOG,*) '+++ Parallel Execution, Use MPI'
 
   PALL_global = MNG_PALL
   LALL_global = 10 * (4**rlevel)
   LALL_local  = LALL_global / PALL_global
 
   if ( mod( PALL_global, prc_nall) /= 0 ) then
-     write(IO_FID_LOG,*) "*** Invalid processor number, STOP:", PALL_global, prc_nall
+     write(IO_FID_LOG,*) '*** Invalid processor number, STOP:', PALL_global, prc_nall
      call MPI_Barrier(MPI_COMM_WORLD,ierr)
      call MPI_FINALIZE(ierr)
      stop
@@ -303,11 +303,11 @@ program fio_ico2ll
   prc_nlocal = PALL_global / prc_nall
   pstr       = prc_myrank*prc_nlocal + 1
   pend       = prc_myrank*prc_nlocal + prc_nlocal
-  write(IO_FID_LOG,*) "*** Number of Total .pexxxxxx files: ", PALL_global
-  write(IO_FID_LOG,*) "*** Number of PE to packing precess: ", prc_nall
-  write(IO_FID_LOG,*) "*** The rank of this process       : ", prc_myrank
-  write(IO_FID_LOG,*) "*** Number of files for this rank  : ", prc_nlocal
-  write(IO_FID_LOG,*) "*** file ID to pack                : ", pstr-1, " - ", pend-1
+  write(IO_FID_LOG,*) '*** Number of Total .pexxxxxx files: ', PALL_global
+  write(IO_FID_LOG,*) '*** Number of PE to packing precess: ', prc_nall
+  write(IO_FID_LOG,*) '*** The rank of this process       : ', prc_myrank
+  write(IO_FID_LOG,*) '*** Number of files for this rank  : ', prc_nlocal
+  write(IO_FID_LOG,*) '*** file ID to pack                : ', pstr-1, ' - ', pend-1
 
   !--- setup
   call fio_syscheck()
@@ -690,7 +690,7 @@ program fio_ico2ll
         enddo
 
         if ( .NOT. exist_topo ) then
-           write(IO_FID_LOG,*) '*** topography data topo is not found in ', trim(infname), " ! STOP."
+           write(IO_FID_LOG,*) '*** topography data topo is not found in ', trim(infname), ' ! STOP.'
            stop
         endif
 
@@ -911,7 +911,7 @@ program fio_ico2ll
            call fio_seek_datainfo(did,ifid(pp),var_name(v),step)
            !--- verify
            if ( did == -1 ) then
-              write(*,*) 'xxx data not found! varname:',trim(var_name(v)),", step : ",step
+              write(*,*) 'xxx data not found! varname:',trim(var_name(v)),', step : ',step
               stop
            endif
 
@@ -1507,7 +1507,7 @@ contains
        write(axhead(41),'(ES16.7)') real(maxval(alt),kind=4)
        write(axhead(42),'(ES16.7)')  1000.E0
        write(axhead(43),'(ES16.7)') 10000.E0
-       if ( layername(1:5) == "STDPL" ) then
+       if ( layername(1:5) == 'STDPL' ) then
           write(axhead(44),'(I16)'  ) -2
        else
           write(axhead(44),'(I16)'  ) 1
@@ -1739,137 +1739,137 @@ contains
 
     select case( trim(var_name) )
     case ( 'U', 'u' )
-       var_name_nc = "U"
-       var_desc_nc = "Zonal wind"
-       var_unit_nc = "m/s"
+       var_name_nc = 'U'
+       var_desc_nc = 'Zonal wind'
+       var_unit_nc = 'm/s'
     case ( 'V', 'v' )
-       var_name_nc = "V"
-       var_desc_nc = "Meridional wind"
-       var_unit_nc = "m/s"
+       var_name_nc = 'V'
+       var_desc_nc = 'Meridional wind'
+       var_unit_nc = 'm/s'
     case ( 'W', 'w' )
-       var_name_nc = "W"
-       var_desc_nc = "Vertical velocity"
-       var_unit_nc = "m/s"
+       var_name_nc = 'W'
+       var_desc_nc = 'Vertical velocity'
+       var_unit_nc = 'm/s'
     case ( 'PRS', 'prs' )
-       var_name_nc = "P"
-       var_desc_nc = "Pressure"
-       var_unit_nc = "Pa"
+       var_name_nc = 'P'
+       var_desc_nc = 'Pressure'
+       var_unit_nc = 'Pa'
     case ( 'T', 't' )
-       var_name_nc = "T"
-       var_desc_nc = "Temperature"
-       var_unit_nc = "K"
+       var_name_nc = 'T'
+       var_desc_nc = 'Temperature'
+       var_unit_nc = 'K'
     case ( 'PS', 'ps' )
-       var_name_nc = "PS"
-       var_desc_nc = "Surface pressure"
-       var_unit_nc = "Pa"
+       var_name_nc = 'PS'
+       var_desc_nc = 'Surface pressure'
+       var_unit_nc = 'Pa'
     case ( 'U500', 'u500' )
-       var_name_nc = "U500"
-       var_desc_nc = "Zonal wind at 500 hPa"
-       var_unit_nc = "m/s"
+       var_name_nc = 'U500'
+       var_desc_nc = 'Zonal wind at 500 hPa'
+       var_unit_nc = 'm/s'
     case ( 'U850', 'u850' )
-       var_name_nc = "U850"
-       var_desc_nc = "Zonal wind at 850 hPa"
-       var_unit_nc = "m/s"
+       var_name_nc = 'U850'
+       var_desc_nc = 'Zonal wind at 850 hPa'
+       var_unit_nc = 'm/s'
     case ( 'V500', 'v500' )
-       var_name_nc = "V500"
-       var_desc_nc = "Meridional wind at 500 hPa"
-       var_unit_nc = "m/s"
+       var_name_nc = 'V500'
+       var_desc_nc = 'Meridional wind at 500 hPa'
+       var_unit_nc = 'm/s'
     case ( 'V850', 'v850' )
-       var_name_nc = "V850"
-       var_desc_nc = "Meridional wind at 850 hPa"
-       var_unit_nc = "m/s"
+       var_name_nc = 'V850'
+       var_desc_nc = 'Meridional wind at 850 hPa'
+       var_unit_nc = 'm/s'
     case ( 'W500', 'w500' )
-       var_name_nc = "W500"
-       var_desc_nc = "Vertical velocity at 500 hPa"
-       var_unit_nc = "m/s"
+       var_name_nc = 'W500'
+       var_desc_nc = 'Vertical velocity at 500 hPa'
+       var_unit_nc = 'm/s'
     case ( 'W850', 'w850' )
-       var_name_nc = "W850"
-       var_desc_nc = "Vertical velocity at 850 hPa"
-       var_unit_nc = "m/s"
+       var_name_nc = 'W850'
+       var_desc_nc = 'Vertical velocity at 850 hPa'
+       var_unit_nc = 'm/s'
     case ( 'T500', 't500' )
-       var_name_nc = "T500"
-       var_desc_nc = "Temperature at 500 hPa"
-       var_unit_nc = "K"
+       var_name_nc = 'T500'
+       var_desc_nc = 'Temperature at 500 hPa'
+       var_unit_nc = 'K'
     case ( 'T850', 't850' )
-       var_name_nc = "T850"
-       var_desc_nc = "Temperature at 850 hPa"
-       var_unit_nc = "K"
+       var_name_nc = 'T850'
+       var_desc_nc = 'Temperature at 850 hPa'
+       var_unit_nc = 'K'
     case ( 'QV', 'qv' )
-       var_name_nc = "Q"
-       var_desc_nc = "Specific humidity"
-       var_unit_nc = "kg/kg"
+       var_name_nc = 'Q'
+       var_desc_nc = 'Specific humidity'
+       var_unit_nc = 'kg/kg'
     case ( 'QC', 'qc' )
-       var_name_nc = "Qc"
-       var_desc_nc = "Cloud water mixing ratio"
-       var_unit_nc = "kg/kg"
+       var_name_nc = 'Qc'
+       var_desc_nc = 'Cloud water mixing ratio'
+       var_unit_nc = 'kg/kg'
     case ( 'QR', 'qr' )
-       var_name_nc = "Qr"
-       var_desc_nc = "Rain water mixing ratio"
-       var_unit_nc = "kg/kg"
+       var_name_nc = 'Qr'
+       var_desc_nc = 'Rain water mixing ratio'
+       var_unit_nc = 'kg/kg'
     case ( 'PASV1', 'pasv1' )
-       var_name_nc = "Q1"
-       var_desc_nc = "Singlet chlorine mixing ratio"
-       var_unit_nc = "kg/kg"
+       var_name_nc = 'Q1'
+       var_desc_nc = 'Singlet chlorine mixing ratio'
+       var_unit_nc = 'kg/kg'
     case ( 'PASV2', 'pasv2' )
-       var_name_nc = "Q2"
-       var_desc_nc = "Chlorine gas mixing ratio"
-       var_unit_nc = "kg/kg"
+       var_name_nc = 'Q2'
+       var_desc_nc = 'Chlorine gas mixing ratio'
+       var_unit_nc = 'kg/kg'
     case ( 'PRCP', 'prcp' )
-       var_name_nc = "PRECL"
-       var_desc_nc = "Large-scale precipitation rate"
-       var_unit_nc = "m/s"
+       var_name_nc = 'PRECL'
+       var_desc_nc = 'Large-scale precipitation rate'
+       var_unit_nc = 'm/s'
     case ( 'CL_COLUMN', 'cl_column' )
-       var_name_nc = "Q1c"
-       var_desc_nc = "Singlet chlorine mixing ratio (column)"
-       var_unit_nc = "kg/kg"
+       var_name_nc = 'Q1c'
+       var_desc_nc = 'Singlet chlorine mixing ratio (column)'
+       var_unit_nc = 'kg/kg'
     case ( 'CL2_COLUMN', 'cl2_column' )
-       var_name_nc = "Q2c"
-       var_desc_nc = "Chlorine gas mixing ratio (column)"
-       var_unit_nc = "kg/kg"
+       var_name_nc = 'Q2c'
+       var_desc_nc = 'Chlorine gas mixing ratio (column)'
+       var_unit_nc = 'kg/kg'
     case ( 'CLY_COLUMN', 'cly_column' )
-       var_name_nc = "Cly"
-       var_desc_nc = "Cl and Cl2 the weighted sum (column)"
-       var_unit_nc = "kg/kg"
+       var_name_nc = 'Cly'
+       var_desc_nc = 'Cl and Cl2 the weighted sum (column)'
+       var_unit_nc = 'kg/kg'
     case ( 'FORCING_VX', 'forcing_vx' )
-       var_name_nc = "Fvx"
-       var_desc_nc = "Forcing term of horizontal velocity: vx"
-       var_unit_nc = "m/s-2"
+       var_name_nc = 'Fvx'
+       var_desc_nc = 'Forcing term of horizontal velocity: vx'
+       var_unit_nc = 'm/s-2'
     case ( 'FORCING_VY', 'forcing_vy' )
-       var_name_nc = "Fvy"
-       var_desc_nc = "Forcing term of horizontal velocity: vx"
-       var_unit_nc = "m/s-2"
+       var_name_nc = 'Fvy'
+       var_desc_nc = 'Forcing term of horizontal velocity: vx'
+       var_unit_nc = 'm/s-2'
     case ( 'FORCING_VZ', 'forcing_vz' )
-       var_name_nc = "Fvz"
-       var_desc_nc = "Forcing term of horizontal velocity: vx"
-       var_unit_nc = "m/s-2"
+       var_name_nc = 'Fvz'
+       var_desc_nc = 'Forcing term of horizontal velocity: vx'
+       var_unit_nc = 'm/s-2'
     case ( 'FORCING_E', 'forcing_e' )
-       var_name_nc = "Fe"
-       var_desc_nc = "Forcing term of moist internal energy"
-       var_unit_nc = "J/kg/s"
+       var_name_nc = 'Fe'
+       var_desc_nc = 'Forcing term of moist internal energy'
+       var_unit_nc = 'J/kg/s'
     case ( 'FORCING_QV', 'forcing_qv' )
-       var_name_nc = "Fqv"
-       var_desc_nc = "Forcing term of specific humidity"
-       var_unit_nc = "kg/kg/s"
+       var_name_nc = 'Fqv'
+       var_desc_nc = 'Forcing term of specific humidity'
+       var_unit_nc = 'kg/kg/s'
     case ( 'FORCING_QC', 'forcing_qc' )
-       var_name_nc = "Fqc"
-       var_desc_nc = "Forcing term of cloud water mixing ratio"
-       var_unit_nc = "mkg/kg/s"
+       var_name_nc = 'Fqc'
+       var_desc_nc = 'Forcing term of cloud water mixing ratio'
+       var_unit_nc = 'mkg/kg/s'
     case ( 'FORCING_QR', 'forcing_qr' )
-       var_name_nc = "Fqr"
-       var_desc_nc = "Forcing term of cloud water mixing ratio"
-       var_unit_nc = "kg/kg/s"
+       var_name_nc = 'Fqr'
+       var_desc_nc = 'Forcing term of cloud water mixing ratio'
+       var_unit_nc = 'kg/kg/s'
     case ( 'FORCING_CL', 'forcing_cl' )
-       var_name_nc = "Fcl"
-       var_desc_nc = "Forcing term of Singlet chlorine mixing ratio"
-       var_unit_nc = "kg/kg/s"
+       var_name_nc = 'Fcl'
+       var_desc_nc = 'Forcing term of Singlet chlorine mixing ratio'
+       var_unit_nc = 'kg/kg/s'
     case ( 'FORCING_CL2', 'forcing_cl2' )
-       var_name_nc = "Fcl2"
-       var_desc_nc = "Forcing term of Chlorine gas mixing ratio"
-       var_unit_nc = "kg/kg/s"
+       var_name_nc = 'Fcl2'
+       var_desc_nc = 'Forcing term of Chlorine gas mixing ratio'
+       var_unit_nc = 'kg/kg/s'
     case default
        var_name_nc = trim(var_name)
-       var_desc_nc = "NIL"
-       var_unit_nc = "NIL"
+       var_desc_nc = 'NIL'
+       var_unit_nc = 'NIL'
     end select
 
   end subroutine cf_desc_unit

@@ -19,7 +19,7 @@ module mod_vector
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: VECTR_xyz2latlon
   public :: VECTR_latlon2xyz
@@ -44,7 +44,7 @@ module mod_vector
 
   !-----------------------------------------------------------------------------
   !
-  !++ Private procedure
+  !++ Private procedures
   !
   !-----------------------------------------------------------------------------
   !
@@ -236,19 +236,19 @@ contains
     call VECTR_dot  ( ip, o, cdab, o, a )
 
     p(:) = cdab(:) / sign(length,ip)
-!    write(IO_FID_LOG,*), "p:", p(:)
+!    write(IO_FID_LOG,*), 'p:', p(:)
 
     call VECTR_angle( angle_aop, a, o, p )
     call VECTR_angle( angle_pob, p, o, b )
     call VECTR_angle( angle_aob, a, o, b )
-!    write(IO_FID_LOG,*), "angle a-p-b:", angle_aop, angle_pob, angle_aob
+!    write(IO_FID_LOG,*), 'angle a-p-b:', angle_aop, angle_pob, angle_aob
 
     call VECTR_angle( angle_cop, c, o, p )
     call VECTR_angle( angle_pod, p, o, d )
     call VECTR_angle( angle_cod, c, o, d )
-!    write(IO_FID_LOG,*), "angle c-p-d:", angle_cop, angle_pod, angle_cod
+!    write(IO_FID_LOG,*), 'angle c-p-d:', angle_cop, angle_pod, angle_cod
 
-!    write(IO_FID_LOG,*), "judge:", angle_aob-(angle_aop+angle_pob), angle_cod-(angle_cop+angle_pod)
+!    write(IO_FID_LOG,*), 'judge:', angle_aob-(angle_aop+angle_pob), angle_cod-(angle_cop+angle_pod)
 
     ! --- judge intersection
     if (       abs(angle_aob-(angle_aop+angle_pob)) < EPS &
@@ -383,7 +383,7 @@ contains
 
        prd = 0.5_RP * prd !! triangle area
        if ( r < EPS ) then
-          print *, "zero length?", a(:)
+          print *, 'zero length?', a(:)
        else
           r = 1.0_RP / r   !! 1 / length
        endif
@@ -399,7 +399,7 @@ contains
        call VECTR_abs( acac, oaoc(:) )
 
        if ( abab < EPS .OR. acac < EPS ) then
-          !write(*,'(A,3(ES20.10))') "zero length abab or acac:", abab, acac
+          !write(*,'(A,3(ES20.10))') 'zero length abab or acac:', abab, acac
           return
        endif
 
@@ -412,7 +412,7 @@ contains
        baba = abab
 
        if ( bcbc < EPS .OR. baba < EPS ) then
-          !write(*,'(A,3(ES20.10))') "zero length bcbc or baba:", bcbc, baba
+          !write(*,'(A,3(ES20.10))') 'zero length bcbc or baba:', bcbc, baba
           return
        endif
 
@@ -425,7 +425,7 @@ contains
        cbcb = bcbc
 
        if ( caca < EPS .OR. cbcb < EPS ) then
-          !write(*,'(A,3(ES20.10))') "zero length caca or cbcb:", caca, cbcb
+          !write(*,'(A,3(ES20.10))') 'zero length caca or cbcb:', caca, cbcb
           return
        endif
 
@@ -449,7 +449,7 @@ contains
 
     real(RP), intent(in) :: a(3), b(3), c(3)
     real(RP)             :: area
-    !
+
     real(RP) :: len_ab, len_ac, prd
     !---------------------------------------------------------------------------
 

@@ -21,7 +21,7 @@ program prg_fio_dump
   !-----------------------------------------------------------------------------
   !
   !++ parameters & variables
-  character(len=H_LONG) :: fname     = ""
+  character(len=H_LONG) :: fname     = ''
   integer               :: mode      = IO_DUMP_HEADER
   integer               :: endian    = IO_BIG_ENDIAN
   logical               :: filelok   = .false.

@@ -19,7 +19,7 @@ module mod_bsstate
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: bsstate_setup
 

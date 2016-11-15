@@ -19,7 +19,7 @@ module mod_saturation
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: SATURATION_setup
 

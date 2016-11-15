@@ -35,7 +35,7 @@ module mod_oprt
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: OPRT_setup
   public :: OPRT_divergence
@@ -80,7 +80,7 @@ module mod_oprt
 
   !-----------------------------------------------------------------------------
   !
-  !++ Private procedure
+  !++ Private procedures
   !
   !-----------------------------------------------------------------------------
   !
@@ -172,7 +172,7 @@ contains
                                 OPRT_coef_intp(:,:,:,:,:), OPRT_coef_intp_pl(:,:,:,:), & ! [OUT]
                                 OPRT_coef_diff(:,:,:,:),   OPRT_coef_diff_pl(:,:,:)    ) ! [OUT]
 
-    if ( OPRT_fname /= "" ) then
+    if ( OPRT_fname /= '' ) then
        call OPRT_output_coef( OPRT_fname )
     endif
 
@@ -2794,15 +2794,15 @@ contains
 
     if ( OPRT_io_mode == 'ADVANCED' ) then
 
-       call FIO_output( tmp(:,:,:,1), basename, desc, "",               & ! [IN]
-                        "oprtcoef", "oprt coef", "",                    & ! [IN]
-                        "", dtype, "LAYERNM", 1, 106, 1, 0.0_DP, 0.0_DP ) ! [IN]
+       call FIO_output( tmp(:,:,:,1), basename, desc, '',               & ! [IN]
+                        'oprtcoef', 'oprt coef', '',                    & ! [IN]
+                        '', dtype, 'LAYERNM', 1, 106, 1, 0.0_DP, 0.0_DP ) ! [IN]
 
     elseif( OPRT_io_mode == 'POH5' ) then
 
-       call HIO_output( tmp(:,:,:,1), basename, desc, "",               & ! [IN]
-                        "oprtcoef", "oprt coef", "",                    & ! [IN]
-                        "", dtype, "LAYERNM", 1, 106, 1, 0.0_DP, 0.0_DP ) ! [IN]
+       call HIO_output( tmp(:,:,:,1), basename, desc, '',               & ! [IN]
+                        'oprtcoef', 'oprt coef', '',                    & ! [IN]
+                        '', dtype, 'LAYERNM', 1, 106, 1, 0.0_DP, 0.0_DP ) ! [IN]
 
     else
        write(IO_FID_LOG,*) 'Invalid io_mode!'

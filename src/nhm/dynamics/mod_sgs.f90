@@ -99,7 +99,7 @@ module mod_sgs
   !
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: sgs_setup
   public :: sgs_smagorinsky
@@ -247,7 +247,7 @@ contains
     !------     1. Calculation region of frhogvx,...., frhoge
     !------                    : (:,:,:)
     !------
-    !
+
     use mod_gmtr, only :  &
          GMTR_area,&
          GMTR_area_pl
@@ -281,9 +281,9 @@ contains
          rho_bs,rho_bs_pl
     use mod_time, only : &
          TIME_DTL
-    !
+
     implicit none
-    !
+
     integer, intent(in) :: nl
     real(RP), intent(in) :: rho   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in) :: rho_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -291,7 +291,7 @@ contains
     real(RP), intent(in) :: rhog_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in) :: rhogq(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
     real(RP), intent(in) :: rhogq_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
-    !
+
     real(RP), intent(in) :: vx   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in) :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in) :: vy   (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -304,7 +304,7 @@ contains
     real(RP), intent(in) :: tem_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in) :: q(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
     real(RP), intent(in) :: q_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
-    !
+
     real(RP), intent(inout) :: frhog   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(inout) :: frhog_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(inout) :: frhogvx   (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -345,16 +345,16 @@ contains
     real(RP) :: grhogvyh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: grhogvzh   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: grhogvzh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    !
+
     real(RP), intent(in) :: potem   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in) :: potem_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: pi   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: pi_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    !
+
 !    integer :: p, id
     integer:: i,j,k,l,n,  idir,ivar
     integer :: nq
-    !
+
     real(RP) :: del_xyz2, SMG_CS2, LENGTH_maxlim2
     real(RP)::sij(ADM_gall,ADM_kall,ADM_lall,3,3)           ! full level
     real(RP)::sij_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3,3)  ! full level
@@ -364,20 +364,20 @@ contains
     real(RP)::sijsijh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! half level
     real(RP)::sijh(ADM_gall,ADM_kall,ADM_lall,3,3)
     real(RP)::sijh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3,3)  ! partial ui / partial xj
-    !
+
     !------ diffusion coefficient
     real(RP)::K_coef   (ADM_gall   ,ADM_kall,ADM_lall   )            ! full level
     real(RP)::K_coef_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)            ! full level
     real(RP)::K_coefh   (ADM_gall   ,ADM_kall,ADM_lall   )            ! half level
     real(RP)::K_coefh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)            ! half level
-    !
+
     real(RP)::abs_vxh   (ADM_gall   ,ADM_kall,ADM_lall   )            ! half level
     real(RP)::abs_vxh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)   ! half level
     real(RP)::abs_vyh   (ADM_gall   ,ADM_kall,ADM_lall   )            ! half level
     real(RP)::abs_vyh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)   ! half level
     real(RP)::abs_vzh   (ADM_gall   ,ADM_kall,ADM_lall   )            ! half level
     real(RP)::abs_vzh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)   ! half level
-    !
+
     real(RP)::abs_vx   (ADM_gall   ,ADM_kall,ADM_lall   )            ! full level
     real(RP)::abs_vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)   ! full level
     real(RP)::abs_vy   (ADM_gall   ,ADM_kall,ADM_lall   )            ! full level
@@ -397,14 +397,14 @@ contains
     real(RP) :: stratosh(ADM_GALL,ADM_kall,ADM_LALL)
     real(RP) :: stratosh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    !
+
 !    real(RP) :: fq   (ADM_gall   ,ADM_kall,ADM_lall   )
 !    real(RP) :: fq_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 !    real(RP) :: wrk(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
 !    real(RP) :: wrk_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 !    real(RP) :: wrkh(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
 !    real(RP) :: wrkh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
-    !
+
 !    real(RP) :: rhoh   (ADM_gall   ,ADM_kall,ADM_lall   )  ! rho at half level
 !    real(RP) :: rhoh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! rho at half level
     real(RP) :: pih   (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -462,7 +462,7 @@ contains
        abs_vzh_pl(:,k,:) = (vz_pl(:,k,:)+vz_pl(:,k-1,:))/2 + w_pl(:,k,:) * GRD_x_pl(:,ADM_knone,:,GRD_ZDIR)/GRD_rscale
       enddo
     endif
-    !
+
     ! full level
     !   w(k=ADM_kmax+1) is top  and I don't know about its treatment
     do k=ADM_kmin,ADM_kmax-1
@@ -598,19 +598,19 @@ contains
 
 !!$    ! stratos effect
 !!$    if (stratos_effect) then
-!!$       !
+!!$
 !!$       ql=0
 !!$       if (RAIN_TYPE.eq.'WARM')  ql(:,:,:)=q(:,:,:,IQC)+q(:,:,:,IQR)
 !!$       if (MP_TYPE.eq.'NSW5')  ql(:,:,:)=q(:,:,:,IQC)+q(:,:,:,IQR)+q(:,:,:,IQI)+q(:,:,:,IQS) ! ( ice effect is omitted)
 !!$       if (MP_TYPE.eq.'NSW6')  ql(:,:,:)=q(:,:,:,IQC)+q(:,:,:,IQR)+q(:,:,:,IQI)+q(:,:,:,IQS)+q(:,:,:,IQG)! ( ice effect is omitted)
 !!$       qtot(:,:,:)=ql(:,:,:)+qv(:,:,:)
-!!$       !
+!!$
 !!$       do k = ADM_kmin+1, ADM_kmax
 !!$          potemh(:,k,:)=(potem(:,k,:)+potem(:,k-1,:))/2
 !!$       enddo
 !!$       k=ADM_kmin
 !!$       potemh(:,k,:)=potem(:,k,:)
-!!$       !
+!!$
 !!$       beta_theta =
 !!$
 !!$
@@ -791,14 +791,14 @@ contains
                        input_sclh = .false.                             )
 
     !============================= (5) calculate inside the divergence and communicate ============================
-    !
+
 !    pi(:,ADM_kmin:ADM_kmax,:)=temd(:,ADM_kmin:ADM_kmax,:)/potem(:,ADM_kmin:ADM_kmax,:)
     pi(:,ADM_kmin:ADM_kmax,:)=tem(:,ADM_kmin:ADM_kmax,:)/potem(:,ADM_kmin:ADM_kmax,:)
     do k=ADM_kmin+1,ADM_kmax
        pih(:,k,:)    = (pi(:,k,:)+pi(:,k-1,:))*0.5
     enddo
     pih(:,ADM_kmin,:)=pi(:,ADM_kmin,:) ! im not sure
-    !
+
     if( ADM_have_pl ) then
 !      pi_pl(:,ADM_kmin:ADM_kmax,:)=temd_pl(:,ADM_kmin:ADM_kmax,:)/potem_pl(:,ADM_kmin:ADM_kmax,:)
        pi_pl(:,ADM_kmin:ADM_kmax,:)=tem_pl(:,ADM_kmin:ADM_kmax,:)/potem_pl(:,ADM_kmin:ADM_kmax,:)
@@ -983,7 +983,7 @@ contains
     enddo
 
     return
-    !
+
   end subroutine sgs_smagorinsky
   !-------------------------------------------------------------------------------
   subroutine tb_smg_oprt_init(  &
@@ -1144,7 +1144,7 @@ contains
     real(RP), intent(out) :: vh_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,ADM_nxyz)
     real(RP), intent(out) :: vhh    (ADM_gall   ,ADM_kall,ADM_lall   ,ADM_nxyz)
     real(RP), intent(out) :: vhh_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,ADM_nxyz)
-    !
+
     logical, intent(in), optional :: input_sclh
 
     logical :: input_sclh_in ! =.true.
@@ -1265,7 +1265,7 @@ contains
     real(RP),intent(out)::sclh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) ! half level
     real(RP),intent(out)::scl   (ADM_gall   ,ADM_kall,ADM_lall   )            ! full level
     real(RP),intent(out)::scl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)   ! full level
-    !
+
     ! horizontal gradient
     real(RP),intent(in)::vx   (ADM_gall   ,ADM_kall,ADM_lall   )           ! full level
     real(RP),intent(in)::vy   (ADM_gall   ,ADM_kall,ADM_lall   )           ! full level
@@ -1279,7 +1279,7 @@ contains
     real(RP),intent(in)::vxh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! half level
     real(RP),intent(in)::vyh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! half level
     real(RP),intent(in)::vzh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! half level
-    !
+
     logical,intent(in),optional::output_sclh
     logical ::output_sclh_in=.true.
 
@@ -1295,7 +1295,7 @@ contains
     real(RP)::tmp_vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP)::tmp_vz   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP)::tmp_vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    !
+
     real(RP)::tmp_vxh   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP)::tmp_vxh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP)::tmp_vyh   (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -1339,7 +1339,7 @@ contains
        tmp_vy_pl(:,ADM_kmin:ADM_kmax,:)= vy_pl(:,ADM_kmin:ADM_kmax,:)* smg_oprt_gsqrt_pl(:,ADM_kmin:ADM_kmax,:)
        tmp_vz_pl(:,ADM_kmin:ADM_kmax,:)= vz_pl(:,ADM_kmin:ADM_kmax,:)* smg_oprt_gsqrt_pl(:,ADM_kmin:ADM_kmax,:)
     endif
-    !
+
     call OPRT_divergence(&
          tmp,tmp_pl,&
          tmp_vx, tmp_vx_pl,   &
@@ -1451,7 +1451,7 @@ contains
        tmp_vyh_pl(:,ADM_kmin:ADM_kmax,:)= vyh_pl(:,ADM_kmin:ADM_kmax,:)*smg_oprt_gsqrtH_pl(:,ADM_kmin:ADM_kmax,:)
        tmp_vzh_pl(:,ADM_kmin:ADM_kmax,:)= vzh_pl(:,ADM_kmin:ADM_kmax,:)*smg_oprt_gsqrtH_pl(:,ADM_kmin:ADM_kmax,:)
     endif
-    !
+
     call OPRT_divergence(& ! half level !!
          tmph,tmph_pl,&
          tmp_vxh, tmp_vxh_pl,   &

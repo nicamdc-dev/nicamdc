@@ -23,14 +23,14 @@ module mod_comm
   !
   !++ public procedure
   !
-  public ::  COMM_setup
-  public ::  COMM_data_transfer
-  public ::  COMM_var
-  public ::  COMM_Stat_sum
-  public ::  COMM_Stat_sum_eachlayer
-  public ::  COMM_Stat_avg
-  public ::  COMM_Stat_max
-  public ::  COMM_Stat_min
+  public :: COMM_setup
+  public :: COMM_data_transfer
+  public :: COMM_var
+  public :: COMM_Stat_sum
+  public :: COMM_Stat_sum_eachlayer
+  public :: COMM_Stat_avg
+  public :: COMM_Stat_max
+  public :: COMM_Stat_min
 
   !-----------------------------------------------------------------------------
   !
@@ -251,10 +251,10 @@ contains
     use mod_adm, only : ADM_rgn_nmax
     implicit none
     integer :: i
-    !
+
     allocate(tempsb(ADM_rgn_nmax+2))
     tempsb(:)%num=0
-    !
+
     do i=1, ADM_rgn_nmax+2
       allocate(tempsb(i)%col(max_size))
       allocate(tempsb(i)%val(max_size))
@@ -268,7 +268,7 @@ contains
     use mod_adm, only : ADM_rgn_nmax
     implicit none
     integer :: i
-    !
+
     do i=1, ADM_rgn_nmax+2
       deallocate(tempsb(i)%col)
       deallocate(tempsb(i)%val)
@@ -280,14 +280,14 @@ contains
   subroutine add_tempsb(icol, irow, ival)
     implicit none
     integer,intent(in) :: icol,irow,ival
-    !
+
     if(ival > 0) then
       if(tempsb(irow)%num < max_size) then
         tempsb(irow)%num = tempsb(irow)%num + 1
         tempsb(irow)%col(tempsb(irow)%num)=icol
         tempsb(irow)%val(tempsb(irow)%num)=ival
       else
-        write(*,*)"range of list is over."
+        write(*,*)'range of list is over.'
         stop
       endif
     endif
@@ -299,7 +299,7 @@ contains
     integer,intent(in) :: icol,irow
     integer,intent(out) :: ret
     integer :: i
-    !
+
     ret = 0
     do i=1, max_size
       if(tempsb(irow)%col(i) == icol) then
@@ -366,12 +366,12 @@ contains
     integer :: ck
     integer :: srank,drank
     integer :: ro,so
-    !
+
     integer :: suf,g_1d
     suf(i,j,g_1d)=(g_1d)*((j)-1)+(i)
-    !
+
     integer :: rgnid1,rgnid2,ret !(20101207) added by teraim
-    !
+
     ! Iga(061008) ==>
     namelist / COMMPARAM /   &
          max_varmax,         & ! max number of communication variables
@@ -428,7 +428,7 @@ contains
 
     if(ADM_prc_nspl(ADM_npl) < 0 .and. ADM_prc_nspl(ADM_spl) <0 ) comm_pl = .false. ! T.Ohno 110721
 
-    !
+
     allocate(imin(halomax))
     allocate(imax(halomax))
     allocate(jmin(halomax))
@@ -436,7 +436,7 @@ contains
     allocate(gmin(halomax))
     allocate(gmax(halomax))
     allocate(gall(halomax))
-    !
+
     !(20101207) changed by teraim
     allocate(rsize_r2r(max_comm_r2r,halomax,ADM_rgn_nmax))
     allocate(ssize_r2r(max_comm_r2r,halomax,ADM_rgn_nmax))
@@ -451,7 +451,7 @@ contains
     allocate(maxcommsend_r2r(halomax,ADM_rgn_nmax))
     !allocate(recvtag_r2r(ADM_rgn_nmax,halomax,ADM_rgn_nmax))
     !allocate(sendtag_r2r(ADM_rgn_nmax,halomax,ADM_rgn_nmax))
-    !
+
     imin(halomax)=(ADM_gmin-1)+halomax
     imax(halomax)=(ADM_gmax-1)+halomax
     jmin(halomax)=(ADM_gmin-1)+halomax
@@ -459,12 +459,12 @@ contains
     gmin(halomax)=(ADM_gmin-1)+halomax
     gmax(halomax)=(ADM_gmax-1)+halomax
     gall(halomax)=(ADM_gall_1d-2)+2*halomax
-    !
+
     max_datasize_r2r=(gmax(halomax)-gmin(halomax)+1)*halomax
     allocate(rlist_r2r(max_datasize_r2r,max_comm_r2r,halomax,ADM_rgn_nmax))
     allocate(qlist_r2r(max_datasize_r2r,max_comm_r2r,halomax,ADM_rgn_nmax))
     allocate(slist_r2r(max_datasize_r2r,max_comm_r2r,halomax,ADM_rgn_nmax))
-    !
+
     allocate(recvbuf_r2r(max_datasize_r2r*kmax*max_varmax  &
          ,ADM_prc_rnum(ADM_prc_me),max_comm_r2r))
     allocate(sendbuf_r2r(max_datasize_r2r*kmax*max_varmax  &
@@ -478,7 +478,7 @@ contains
     allocate(tempbuf4D(max_datasize_r2r,max_comm_r2r,halomax,ADM_prc_rnum(ADM_prc_me)))
     allocate(tempbuf3D2(ADM_w:ADM_s,halomax,ADM_prc_rnum(ADM_prc_me)))
 
-    !
+
     rsize_r2r(:,:,:)=0
     ssize_r2r(:,:,:)=0
     sourceid_r2r(:,:,:)=-1
@@ -490,14 +490,14 @@ contains
     !(20101207) removed by teraim
     !recvtag_r2r(:,:,:)=-1
     !sendtag_r2r(:,:,:)=-1
-    !
+
     rlist_r2r(:,:,:,:)=-1
     qlist_r2r(:,:,:,:)=-1
     slist_r2r(:,:,:,:)=-1
-    !
+
     n_hemisphere_copy(:,:,:)=0
     s_hemisphere_copy(:,:,:)=0
-    !
+
     allocate(rsize_r2p(max_comm_r2p,ADM_npl:ADM_spl,halomax))
     allocate(ssize_r2p(max_comm_r2p,ADM_npl:ADM_spl,halomax))
     allocate(source_prc_r2p(max_comm_r2p,ADM_npl:ADM_spl,halomax))
@@ -507,18 +507,18 @@ contains
     allocate(maxcommsend_r2p(ADM_npl:ADM_spl,halomax))
     allocate(recvtag_r2p(max_comm_r2p,ADM_npl:ADM_spl,halomax))
     allocate(sendtag_r2p(max_comm_r2p,ADM_npl:ADM_spl,halomax))
-    !
+
     max_datasize_r2p=halomax*(halomax+1)/2
-    !
+
     allocate(rlist_r2p(max_datasize_r2p,max_comm_r2p,ADM_npl:ADM_spl,halomax))
     allocate(qlist_r2p(max_datasize_r2p,max_comm_r2p,ADM_npl:ADM_spl,halomax))
     allocate(slist_r2p(max_datasize_r2p,max_comm_r2p,ADM_npl:ADM_spl,halomax))
-    !
+
     allocate(recvbuf_r2p(max_datasize_r2p*kmax*max_varmax &
          ,max_comm_r2p,ADM_npl:ADM_spl))
     allocate(sendbuf_r2p(max_datasize_r2p*kmax*max_varmax &
          ,max_comm_r2p,ADM_npl:ADM_spl))
-    !
+
     rsize_r2p(:,:,:)=0
     ssize_r2p(:,:,:)=0
     source_prc_r2p(:,:,:)=-1
@@ -528,11 +528,11 @@ contains
     maxcommsend_r2p(:,:)=max_comm_r2p
     recvtag_r2p(:,:,:)=-1
     sendtag_r2p(:,:,:)=-1
-    !
+
     rlist_r2p(:,:,:,:)=-1
     qlist_r2p(:,:,:,:)=-1
     slist_r2p(:,:,:,:)=-1
-    !
+
 !!!!!!!!!!!!!!!
     allocate(nmin_nspl(1:halomax))
     allocate(nmax_nspl(1:halomax))
@@ -555,9 +555,9 @@ contains
     allocate(pl_index(nmin_nspl(halomax):nmax_nspl(halomax) &
          ,pmin_nspl(halomax):pmax_nspl(halomax) &
          ,lmin_nspl(halomax):lmax_nspl(halomax),halomax))
-    !
+
     do halo=1,halomax
-       !
+
        imin(halo)=(ADM_gmin-1)+halo
        imax(halo)=(ADM_gmax-1)+halo
        jmin(halo)=(ADM_gmin-1)+halo
@@ -565,7 +565,7 @@ contains
        gmin(halo)=(ADM_gmin-1)+halo
        gmax(halo)=(ADM_gmax-1)+halo
        gall(halo)=(ADM_gall_1d-2)+2*halo
-       !
+
        nmin_nspl(halo)=1
        nmax_nspl(halo)=halo+1
        pmin_nspl(halo)=1
@@ -586,7 +586,7 @@ contains
                +(pmin_nspl(halo)-1)*l &
                +(1+5*(l-1)*l/2)
        enddo
-       !
+
        ! --- r2p ----
        if(comm_pl)then
         do p=pmin_nspl(halo),pmax_nspl(halo)
@@ -631,7 +631,7 @@ contains
         enddo
         maxcommrecv_r2p(ADM_npl,halo)=(pmax_nspl(halo)-pmin_nspl(halo)+1)
         maxcommrecv_r2p(ADM_spl,halo)=(pmax_nspl(halo)-pmin_nspl(halo)+1)
-        !
+
         do pl=ADM_npl,ADM_spl
            do p=1,maxcommrecv_r2p(pl,halo)
               if (ADM_prc_me==source_prc_r2p(p,pl,halo)) then
@@ -650,7 +650,7 @@ contains
            maxcommsend_r2p(pl,halo)=(pmax_nspl(halo)-pmin_nspl(halo)+1)
         enddo
        endif
-       !
+
        ! --- r2r ----
        do l=1,ADM_prc_rnum(ADM_prc_me)
           rgnid=ADM_prc_tab(l,ADM_prc_me)
@@ -700,7 +700,7 @@ contains
                 endif
              endif
           endif
-          !
+
           if (ADM_rgn_etab(ADM_dir,ADM_nw,rgnid)==ADM_ne) then
              if (halo>=1) then
                 m=m+1
@@ -736,10 +736,10 @@ contains
                 enddo
              endif
           endif
-          !
+
 !!!!!
           if ((ADM_rgn_vnum(ADM_n,rgnid)==5)) then
-             !
+
              if (ADM_rgn_vtab(ADM_dir,ADM_n,rgnid,2)==ADM_n) then
                 if (halo>=2) then
                    m=m+1
@@ -777,10 +777,10 @@ contains
                    enddo
                 endif
              endif
-             !
+
           endif
 !!!!!
-          !
+
           if (ADM_rgn_etab(ADM_dir,ADM_ne,rgnid)==ADM_nw) then
              if (halo>=1) then
                 m=m+1
@@ -816,7 +816,7 @@ contains
                 enddo
              endif
           endif
-          !
+
           if (ADM_rgn_etab(ADM_dir,ADM_se,rgnid)==ADM_nw) then
              if (halo>=1) then
                 m=m+1
@@ -862,10 +862,10 @@ contains
                 endif
              endif
           endif
-          !
+
 !!!!!
           if ((ADM_rgn_vnum(ADM_s,rgnid)==5)) then
-             !
+
              if (ADM_rgn_vtab(ADM_dir,ADM_s,rgnid,2)==ADM_s) then
                 if (halo>=2) then
                    m=m+1
@@ -884,8 +884,8 @@ contains
                    enddo
                 endif
              endif
-             !
-             !
+
+
              if (ADM_rgn_vtab(ADM_dir,ADM_s,rgnid,3)==ADM_s) then
                 if (halo>=2) then
                    m=m+1
@@ -905,13 +905,13 @@ contains
                    enddo
                 endif
              endif
-             !
+
           endif
           !!
-          !
+
           !!
           if ((ADM_rgn_vnum(ADM_w,rgnid)==4)) then
-             !
+
              if (ADM_rgn_vtab(ADM_dir,ADM_w,rgnid,2)==ADM_n) then
                 if (halo>=1) then
                    m=m+1
@@ -984,13 +984,13 @@ contains
                    enddo
                 endif
              endif
-             !
+
           endif
           !!
-          !
+
           !!
           if ((ADM_rgn_vnum(ADM_n,rgnid)==4)) then
-             !
+
              if (ADM_rgn_vtab(ADM_dir,ADM_n,rgnid,2)==ADM_e) then
                 if (halo>=2) then
                    m=m+1
@@ -1045,13 +1045,13 @@ contains
                    enddo
                 endif
              endif
-             !
+
           endif
           !!
-          !
+
           !!
           if ((ADM_rgn_vnum(ADM_e,rgnid)==4)) then
-             !
+
              if (ADM_rgn_vtab(ADM_dir,ADM_e,rgnid,2)==ADM_n) then
                 if (halo>=2) then
                    m=m+1
@@ -1121,14 +1121,14 @@ contains
                       enddo
                    enddo
                 endif
-                !
+
              endif
           endif
           !!
-          !
+
           !!
           if (ADM_rgn_vnum(ADM_s,rgnid)==4) then
-             !
+
              if (ADM_rgn_vtab(ADM_dir,ADM_s,rgnid,2)==ADM_n) then
                 if (halo>=2) then
                    m=m+1
@@ -1183,11 +1183,11 @@ contains
                    enddo
                 endif
              endif
-             !
+
           endif
-          !
+
           maxcommrecv_r2r(halo,rgnid)=m
-          !
+
           if ((ADM_rgn_vnum(ADM_w,rgnid)==3)) then
              if ((ADM_rgn_etab(ADM_dir,ADM_nw,rgnid)==ADM_ne)) then
                 n_hemisphere_copy(ADM_w,halo,rgnid)=1
@@ -1214,9 +1214,9 @@ contains
           if ((ADM_rgn_vnum(ADM_n,rgnid)==3)) then
              s_hemisphere_copy(ADM_n,halo,rgnid)=1
           endif
-          !
+
        enddo !loop l
-       !
+
        !(20101207) removed by teraim
        !do rrgnid=1,ADM_rgn_nmax
        !   do srgnid=1,ADM_rgn_nmax
@@ -1225,7 +1225,7 @@ contains
 !      !       write(*,*) 'sendtag_r2r',ADM_prc_me,rrgnid,srgnid,sendtag_r2r(rrgnid,halo,srgnid)
        !   enddo
        !enddo
-       !
+
     enddo !loop halo
 
 
@@ -1346,15 +1346,15 @@ contains
              do mr=1,maxcommrecv_r2r(halo,rrgnid)
                 if (srgnid==sourceid_r2r(mr,halo,rrgnid)) then
                    ms=ms+1
-                   !
+
                    !(20101207)added by teraim
                    if(ADM_rgn2prc(srgnid)==ADM_prc_me) then
                      msend_r2r(rrgnid,halo,srgnid)=ms
                    else
-                     write(*,*)"This process is abort because irregular access in msend_r2r."
+                     write(*,*)'This process is abort because irregular access in msend_r2r.'
                      exit
                    endif
-                   !
+
                    destid_r2r(ms,halo,srgnid)=rrgnid
                    ssize_r2r(ms,halo,srgnid)=rsize_r2r(mr,halo,rrgnid)
                    do n=1,rsize_r2r(mr,halo,rrgnid)
@@ -1366,7 +1366,7 @@ contains
           maxcommsend_r2r(halo,srgnid)=ms
        enddo
     enddo !loop halo
-    !
+
     call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
     do l=1,ADM_rgn_nmax
        call MPI_bcast(                  &
@@ -1414,7 +1414,7 @@ contains
             PRC_LOCAL_COMM_WORLD,       &
             ierr)
     enddo
-    !
+
     allocate(sendbuf_p2r(kmax*max_varmax*2, &
          ADM_rgn_nmax_pl))
     allocate(recvbuf_p2r(kmax*max_varmax*2, &
@@ -1430,26 +1430,26 @@ contains
 
        enddo
     enddo
-    !
+
     allocate(clist(max_varmax))
-    !
+
     call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
-    !
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!  re-setup comm_table !!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     rank_me=ADM_prc_me-1
     max_comm_prc=min(PRC_nprocs,max_comm_r2r*ADM_lall+2*max_comm_r2p)
-    !
+
     allocate(n_nspl(ADM_npl:ADM_spl,halomax))
     do halo=1,halomax
        n_nspl(ADM_npl,halo)=suf(imin(halo)+0,jmax(halo)+1,gall(halo))
        n_nspl(ADM_spl,halo)=suf(imax(halo)+1,jmin(halo)+0,gall(halo))
     enddo
-    !
+
     allocate(temp_sendorder(0:PRC_nprocs-1,halomax))
     allocate(temp_recvorder(0:PRC_nprocs-1,halomax))
-    !
+
     !--------------------------------------------------
     allocate(romax(halomax))
     allocate(somax(halomax))
@@ -1464,7 +1464,7 @@ contains
     rsize(:,:)=0
     ssize(:,:)=0
     !--------------------------------------------------
-    !
+
     maxn=((gmax(halomax)-gmin(halomax)+1)+2)*halomax
     maxm=max_comm_r2r+1
     maxl=ADM_lall+2
@@ -1488,7 +1488,7 @@ contains
     maxn_sgp=halomax
     maxm_sgp=4
     maxl_sgp=12
-    !
+
     !--------------------------------------------------
     !  for send
     !--------------------------------------------------
@@ -1505,7 +1505,7 @@ contains
     sendinfo_pl(:,:,:,:)=0
     sendlist_pl(:,:,:,:)=0
     !--------------------------------------------------
-    !
+
     !--------------------------------------------------
     !  for copy
     !--------------------------------------------------
@@ -1536,7 +1536,7 @@ contains
     recvlist_p2r(:,:,:)=0
     sendlist_p2r(:,:,:)=0
     !--------------------------------------------------
-    !
+
     !--------------------------------------------------
     !  for recv
     !--------------------------------------------------
@@ -1562,7 +1562,7 @@ contains
     temp_src_rgn(:,:,:)=0
     temp_src_rgn_pl(:,:,:)=0
     !--------------------------------------------------
-    !
+
     do halo=1,halomax
        do l=1,ADM_lall
           rgnid=ADM_prc_tab(l,ADM_prc_me)
@@ -1602,15 +1602,15 @@ contains
                 srgnid=sourceid_r2r(m,halo,rgnid)
                 do n=1,cs
                    recvlist_r2r(n,nc,halo)=rlist_r2r(n,m,halo,rgnid)
-                   !
+
                    !(20101207)added by teraim
                    if(ADM_rgn2prc(srgnid)==ADM_prc_me) then
                      sendlist_r2r(n,nc,halo)=slist_r2r(n,msend_r2r(rgnid,halo,srgnid),halo,srgnid)
                    else
-                     write(*,*)"This process is abort because irregular access is msend_r2r."
+                     write(*,*)'This process is abort because irregular access is msend_r2r.'
                      exit
                    endif
-                   !
+
                 enddo
              endif
           enddo !loop m
@@ -1652,7 +1652,7 @@ contains
     enddo !loop halo
     deallocate(temp_sendorder)
     deallocate(temp_recvorder)
-    !
+
     !allocate(temp_sb(ADM_rgn_nmax+2,halomax,ADM_rgn_nmax+2)) !(20101207) removed by teraim
     allocate(tsb(somax(halomax)))
     !temp_sb(:,:,:)=0 !(20101207) removed by teraim
@@ -1684,7 +1684,7 @@ contains
        enddo
     enddo
     deallocate(tsb)
-    !
+
     !(20101207)removed by teraim
     !call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
     !do l=1,ADM_rgn_nmax
@@ -1706,7 +1706,7 @@ contains
     !        ierr)
     !enddo
     !call MPI_barrier(PRC_LOCAL_COMM_WORLD,ierr)
-    !
+
     !(20101207)added by teraim
     call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
     do l=1,ADM_rgn_nmax
@@ -1744,9 +1744,9 @@ contains
       enddo
     endif ! T.Ohno 110721
     call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
-    !
+
     !call show_tempsb !(20101209) added by teraim
-    !
+
     do halo=1,halomax
        do ro=1,romax(halo)
           do nr=1,nrmax(ro,halo)
@@ -1774,7 +1774,7 @@ contains
     deallocate(temp_src_rgn_pl)
     !deallocate(temp_sb) !(20101207)removed by teraim
     call finalize_tempsb !(20101207)added by teraim
-    !
+
     allocate(recvtag(romax(halomax),halomax))
     allocate(sendtag(somax(halomax),halomax))
     recvtag(:,:)=-1
@@ -1807,7 +1807,7 @@ contains
 !!    comm_dbg_recvbuf=CNST_UNDEF !iga
 !!    comm_dbg_sendbuf=CNST_UNDEF !iga
 
-    !
+
     allocate(ncmax_sgp(halomax))
     allocate(copyinfo_sgp(elemsize_copy,maxm_sgp*maxl_sgp,halomax))
     allocate(recvlist_sgp(maxn_sgp,maxm_sgp*maxl_sgp,halomax))
@@ -1918,7 +1918,7 @@ contains
           endif
        enddo !loop l
     enddo !loop halo
-    !
+
     !-- for output_info  ---
     allocate( src_rank_all(max_comm_prc,halomax,PRC_nprocs))
     allocate(dest_rank_all(max_comm_prc,halomax,PRC_nprocs))
@@ -1943,14 +1943,14 @@ contains
             PRC_LOCAL_COMM_WORLD,       &
             ierr)
     enddo
-    !
+
     call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
-    !
+
     !--- output for debug
     if(present(debug)) then
        if(debug) call output_info
     endif
-    !
+
     ! <== iga for dbg 090917
     if (opt_comm_dbg) then
        dbg_sendbuf_init = -888E+30_RP
@@ -1960,7 +1960,7 @@ contains
     endif
 
     contains
-    !
+
     subroutine re_setup_pl_comm_info
        do pl=ADM_npl,ADM_spl
           if (ADM_prc_me==ADM_prc_nspl(pl)) then
@@ -2002,7 +2002,7 @@ contains
                    enddo
                 endif
              enddo !loop p
-             !
+
              do p=1,ADM_vlink
                 rgnid=ADM_rgn_vtab_pl(ADM_rid,pl,p)
                 drank=prc_tab_rev(ptr_prcid,rgnid)-1
@@ -2032,7 +2032,7 @@ contains
                 endif
              enddo !loop p
           endif
-          !
+
           do p=1,ADM_vlink
              rgnid=ADM_rgn_vtab_pl(ADM_rid,pl,p)
              drank=prc_tab_rev(ptr_prcid,rgnid)-1
@@ -2075,7 +2075,7 @@ contains
                 endif
              endif
           enddo !loop p
-          !
+
           do p=1,maxcommsend_r2p(pl,halo)
              srank=source_prc_r2p(p,pl,halo)-1
              if (rank_me==srank) then
@@ -2118,17 +2118,17 @@ contains
     implicit none
 
     integer :: halo
-    !
+
     integer ::  varmax
     integer ::  cmax
-    !
+
     !integer ::  srgnid,rrgnid
-    !
+
     integer ::  ns,nr
     integer ::  so,sl,sb,ss
     integer ::  ro,rl,rb,rs
     integer ::  l,n
-    !
+
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) &
          'msg : sub[output_info]/mod[comm]'
@@ -2138,7 +2138,7 @@ contains
          '---------------------------------------&
          &       commnication table  start       &
          &---------------------------------------'
-    !
+
     varmax=1
     cmax=kmax*varmax
     do halo=1,halomax
@@ -2240,7 +2240,7 @@ contains
           enddo
        enddo !loop ro
     enddo !loop halo
-    !
+
     write(IO_FID_LOG,*) &
          '---------------------------------------&
          &       commnication table  end         &

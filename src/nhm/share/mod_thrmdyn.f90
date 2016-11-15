@@ -53,7 +53,7 @@ module mod_thrmdyn
   !
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: THRMDYN_qd
   public :: THRMDYN_cv

@@ -3,8 +3,9 @@
 !!
 !! @par Description
 !!          random number generation module
+!!          Imported from SCALE library
 !!
-!! @author NICAM developers
+!! @author Team SCALE
 !!
 !<
 module mod_random
@@ -19,7 +20,7 @@ module mod_random
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: RANDOM_setup
   public :: RANDOM_get
@@ -30,7 +31,7 @@ module mod_random
   !
   !-----------------------------------------------------------------------------
   !
-  !++ Private procedure
+  !++ Private procedures
   !
   private :: RANDOM_reset
 

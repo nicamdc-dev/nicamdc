@@ -20,7 +20,7 @@ module mod_dynamics
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: dynamics_setup
   public :: dynamics_step

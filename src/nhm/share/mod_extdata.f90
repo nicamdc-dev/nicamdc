@@ -173,7 +173,7 @@ contains
        defval            = 0.0_RP
        ddata_date(:)     = 0
        opt_increment_date= .false.
-       !
+
        !--- read namelist
        read(IO_FID_CONF, nml=nm_extdata, iostat=ierr)
 
@@ -368,7 +368,7 @@ contains
     integer,          intent(in)    :: l_region
     real(DP),         intent(in)    :: ctime      ! current time
     logical,          intent(out)   :: eflag
-    !
+
     real(RP) :: dt !-- delta t between two timestep data
     real(RP) :: wt !-- t weight of two timestep data
 

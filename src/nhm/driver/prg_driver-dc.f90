@@ -198,8 +198,6 @@ program prg_driver
   integer :: myrank
   logical :: ismaster
 
-  character(len=14) :: cdate
-
   integer :: n
   !=============================================================================
 
@@ -360,8 +358,7 @@ program prg_driver
      call embudget_monitor
      call history_out
 
-     if (n == TIME_LSTEP_MAX) then
-        cdate = ""
+     if ( n == TIME_LSTEP_MAX ) then
         call restart_output( restart_output_basename )
      endif
      call PROF_rapend  ('_History',1)

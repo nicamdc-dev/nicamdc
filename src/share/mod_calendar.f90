@@ -5,12 +5,9 @@
 !! @par Description
 !!         This module provides the subroutines for calendar.
 !!
-!! @author H.Tomita
-!!
-!! @par History
-!! @li      2004-02-17 (H.Tomita)  [NEW]
-!!
+!! @author NICAM developers, Team SCALE
 !<
+!-------------------------------------------------------------------------------
 module mod_calendar
   !-----------------------------------------------------------------------------
   !
@@ -23,7 +20,7 @@ module mod_calendar
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: CALENDAR_setup
   public :: CALENDAR_ss2yh
@@ -36,7 +33,7 @@ module mod_calendar
   !
   !-----------------------------------------------------------------------------
   !
-  !++ Private procedure
+  !++ Private procedures
   !
   public :: CALENDAR_ss2ds
   public :: CALENDAR_ds2ss

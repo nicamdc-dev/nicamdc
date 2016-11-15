@@ -34,7 +34,7 @@ module mod_grd
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: GRD_setup
   public :: GRD_input_hgrid
@@ -182,7 +182,7 @@ module mod_grd
 
   !-----------------------------------------------------------------------------
   !
-  !++ Private procedure
+  !++ Private procedures
   !
   private :: GRD_gen_plgrid
   private :: GRD_makearc
@@ -223,7 +223,7 @@ contains
        ADM_gslf_pl, &
        ADM_kmin,    &
        ADM_kmax
-    use mod_comm, only:  &
+    use mod_comm, only: &
        COMM_data_transfer
     implicit none
 
@@ -620,9 +620,9 @@ contains
     if ( io_mode == 'ADVANCED' ) then
 
        call FIO_output( GRD_x(:,:,:,GRD_XDIR),                            & ! [IN]
-                        basename, desc, "",                               & ! [IN]
-                       "grd_x_x", "GRD_x (X_DIR)", "",                    & ! [IN]
-                       "NIL", IO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
+                        basename, desc, '',                               & ! [IN]
+                       'grd_x_x', 'GRD_x (X_DIR)', '',                    & ! [IN]
+                       'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
        call FIO_output( GRD_x(:,:,:,GRD_YDIR),                            & ! [IN]
                         basename, desc, '',                               & ! [IN]
                        'grd_x_y', 'GRD_x (Y_DIR)', '',                    & ! [IN]
@@ -662,9 +662,9 @@ contains
     elseif( io_mode == 'POH5' ) then
 
        call HIO_output( GRD_x(:,:,:,GRD_XDIR),                            & ! [IN]
-                        basename, desc, "",                               & ! [IN]
-                       "grd_x_x", "GRD_x (X_DIR)", "",                    & ! [IN]
-                       "NIL", IO_REAL8, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
+                        basename, desc, '',                               & ! [IN]
+                       'grd_x_x', 'GRD_x (X_DIR)', '',                    & ! [IN]
+                       'NIL', IO_REAL8, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
        call HIO_output( GRD_x(:,:,:,GRD_YDIR),                            & ! [IN]
                         basename, desc, '',                               & ! [IN]
                        'grd_x_y', 'GRD_x (Y_DIR)', '',                    & ! [IN]
@@ -718,7 +718,7 @@ contains
        ADM_vlayer
     implicit none
 
-    character(len=H_LONG), intent(in) :: fname ! vertical grid file name
+    character(len=*), intent(in) :: fname ! vertical grid file name
 
     integer               :: num_of_layer
     real(DP), allocatable :: gz (:)
@@ -737,7 +737,7 @@ contains
           iostat = ierr           )
 
        if ( ierr /= 0 ) then
-          write(IO_FID_LOG,*) 'xxx No vertical grid file.'
+          write(IO_FID_LOG,*) 'xxx [grd/GRD_input_vgrid] No vertical grid file.'
           call PRC_MPIstop
        endif
 
@@ -750,7 +750,7 @@ contains
        read(fid) gzh(:)
 
        if ( num_of_layer /= ADM_vlayer ) then
-          write(IO_FID_LOG,*) 'xxx inconsistency in number of vertical layers.'
+          write(IO_FID_LOG,*) 'xxx [grd/GRD_input_vgrid] inconsistency in number of vertical layers.'
           call PRC_MPIstop
        endif
 
@@ -866,19 +866,19 @@ contains
        COMM_var
     implicit none
 
-    integer :: prctab   (ADM_vlink)
-    integer :: rgntab   (ADM_vlink)
-    integer :: sreq     (ADM_vlink)
-    integer :: rreq     (ADM_vlink)
-    logical :: send_flag(ADM_vlink)
+    integer  :: prctab   (ADM_vlink)
+    integer  :: rgntab   (ADM_vlink)
+    integer  :: sreq     (ADM_vlink)
+    integer  :: rreq     (ADM_vlink)
+    logical  :: send_flag(ADM_vlink)
 
     real(RP) :: vsend_pl (ADM_nxyz,ADM_vlink)
     real(RP) :: vrecv_pl (ADM_nxyz,ADM_vlink)
 
-    integer :: datatype
+    integer  :: datatype
 
-    integer :: istat(MPI_STATUS_SIZE)
-    integer :: n, l, ierr
+    integer  :: istat(MPI_STATUS_SIZE)
+    integer  :: n, l, ierr
     !---------------------------------------------------------------------------
 
     if ( RP == DP ) then
@@ -886,7 +886,7 @@ contains
     elseif( RP == SP ) then
        datatype = MPI_REAL
     else
-       write(*,*) 'xxx precision is not supportd'
+       write(*,*) 'xxx [grd/GRD_gen_plgrid] unsupportd precision! RP=', RP
        call PRC_MPIstop
     endif
 

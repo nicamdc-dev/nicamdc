@@ -19,7 +19,7 @@ module mod_history
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: history_setup
   public :: history_in
@@ -35,7 +35,7 @@ module mod_history
 
   !-----------------------------------------------------------------------------
   !
-  !++ Private procedure
+  !++ Private procedures
   !
   private :: history_outlist
   private :: get_log_pres
@@ -303,16 +303,16 @@ contains
     allocate( out_vintrpl_save  (HIST_req_nmax) )
     allocate( opt_wgrid_save    (HIST_req_nmax) )
     allocate( opt_lagintrpl_save(HIST_req_nmax) )
-    item_save         (:) = ""
-    file_save         (:) = ""
-    desc_save         (:) = ""
-    unit_save         (:) = ""
+    item_save         (:) = ''
+    file_save         (:) = ''
+    desc_save         (:) = ''
+    unit_save         (:) = ''
     step_save         (:) = 0
-    ktype_save        (:) = ""
+    ktype_save        (:) = ''
     kstr_save         (:) = -1
     kend_save         (:) = -1
     kmax_save         (:) = 0
-    output_type_save  (:) = ""
+    output_type_save  (:) = ''
     out_prelev_save   (:) = .false.
     out_vintrpl_save  (:) = .false.
     opt_wgrid_save    (:) = .false.
@@ -325,7 +325,7 @@ contains
     allocate( month_old         (HIST_req_nmax) )
     allocate( l_region_save     (HIST_req_nmax) )
     allocate( flag_save         (HIST_req_nmax) )
-    lname_save        (:) = ""
+    lname_save        (:) = ''
     tmax_save         (:) = 0
     tstr_save         (:) = 0.0_DP
     tend_save         (:) = 0.0_DP
@@ -371,9 +371,9 @@ contains
 
        ! set default layername
        if ( kmax == 1 ) then
-          lname = "ZSSFC1"
+          lname = 'ZSSFC1'
        else
-          lname = "LAYERNM"
+          lname = 'LAYERNM'
        endif
 
        select case(ktype)
@@ -390,7 +390,7 @@ contains
        case('2D')
           kstr = 1
           kend = 1
-          lname = "ZSSFC1"
+          lname = 'ZSSFC1'
        endselect
 
        ! check consistensy between kend and kmax
@@ -955,17 +955,17 @@ contains
        otype = output_type_save(n)
 
        write(IO_FID_LOG,'(1x,A16,A,A16,A,A16,A,A16,A,I8)')      item (1:16), &
-                                                           ":", file (1:16), &
-                                                           ":", unit (1:16), &
-                                                           ":", otype(1:16), &
-                                                           ":", step_save(n)
+                                                           ':', file (1:16), &
+                                                           ':', unit (1:16), &
+                                                           ':', otype(1:16), &
+                                                           ':', step_save(n)
 
-       write(IO_FID_LOG,'(17x,A,A16,A,I016,A,L04,A,L04,A,L04,A,L04)') ":", ktype(1:16),           &
-                                                                      ":", kmax_save(n),          &
-                                                                      ":", out_prelev_save   (n), &
-                                                                      ":", out_vintrpl_save  (n), &
-                                                                      ":", opt_wgrid_save    (n), &
-                                                                      ":", opt_lagintrpl_save(n)
+       write(IO_FID_LOG,'(17x,A,A16,A,I016,A,L04,A,L04,A,L04,A,L04)') ':', ktype(1:16),           &
+                                                                      ':', kmax_save(n),          &
+                                                                      ':', out_prelev_save   (n), &
+                                                                      ':', out_vintrpl_save  (n), &
+                                                                      ':', opt_wgrid_save    (n), &
+                                                                      ':', opt_lagintrpl_save(n)
 
        if ( .NOT. flag_save(n) ) then ! not stored yet or never
           write(IO_FID_LOG,*) '+++ this variable is requested but not stored yet. check!'

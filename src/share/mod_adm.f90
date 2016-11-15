@@ -19,7 +19,7 @@ module mod_adm
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: ADM_setup
 
@@ -161,11 +161,11 @@ module mod_adm
                                                      ! 'MLCP'     Mercator+Lambert-cornial
                                                      ! 'MLCP-OLD' OLD vergion (only for s=1)
 
-  integer,               public :: ADM_XTMS_MLCP_S  = 1 ! [XTMS] Number of segment for MLCP
+  integer,                public :: ADM_XTMS_MLCP_S  = 1 ! [XTMS] Number of segment for MLCP
 
   !-----------------------------------------------------------------------------
   !
-  !++ Private procedure
+  !++ Private procedures
   !
   private :: input_mnginfo
   private :: output_info

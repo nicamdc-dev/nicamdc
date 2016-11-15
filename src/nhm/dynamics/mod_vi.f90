@@ -27,7 +27,7 @@ module mod_vi
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: vi_setup
   public :: vi_small_step

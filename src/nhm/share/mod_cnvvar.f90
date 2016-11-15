@@ -38,7 +38,7 @@ module mod_cnvvar
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: cnvvar_prg2diag
   public :: cnvvar_diag2prg

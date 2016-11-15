@@ -19,7 +19,7 @@ module mod_af_dcmip
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: af_dcmip_init
   public :: af_dcmip

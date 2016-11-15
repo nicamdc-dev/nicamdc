@@ -19,7 +19,7 @@ module mod_gtl
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: GTL_global_sum
   public :: GTL_global_sum_srf
@@ -111,9 +111,7 @@ contains
        ADM_gall_pl, &
        ADM_gmin,    &
        ADM_gmax,    &
-       ADM_gslf_pl, &
-       ADM_kmin,    &
-       ADM_kmax
+       ADM_gslf_pl
     use mod_comm, only: &
        COMM_Stat_sum
     use mod_gmtr, only: &
@@ -160,9 +158,7 @@ contains
        ADM_kall,    &
        ADM_gmin,    &
        ADM_gmax,    &
-       ADM_gslf_pl, &
-       ADM_kmin,    &
-       ADM_kmax
+       ADM_gslf_pl
     use mod_comm, only: &
        COMM_Stat_sum_eachlayer
     use mod_gmtr, only: &

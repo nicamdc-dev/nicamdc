@@ -19,7 +19,7 @@ module mod_embudget
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: embudget_setup
   public :: embudget_monitor
@@ -95,8 +95,8 @@ contains
 
     Mass_budget_factor   = 1.0_RP / ( TIME_DTL * real(MNT_INTV,kind=RP) * 4.0_RP * PI * RADIUS * RADIUS ) ! [kg/step] -> [kg/m2/s]
     Energy_budget_factor = 1.0_RP / ( TIME_DTL * real(MNT_INTV,kind=RP) * 4.0_RP * PI * RADIUS * RADIUS ) ! [J /step] -> [W/m2]
-    write(IO_FID_LOG,*) "Mass_budget_factor   = ", Mass_budget_factor
-    write(IO_FID_LOG,*) "Energy_budget_factor = ", Energy_budget_factor
+    write(IO_FID_LOG,*) 'Mass_budget_factor   = ', Mass_budget_factor
+    write(IO_FID_LOG,*) 'Energy_budget_factor = ', Energy_budget_factor
 
     ! open budget.info file
     if ( PRC_IsMaster ) then

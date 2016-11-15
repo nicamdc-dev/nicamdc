@@ -25,7 +25,7 @@ module mod_oprt3d
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: OPRT3D_divdamp
 

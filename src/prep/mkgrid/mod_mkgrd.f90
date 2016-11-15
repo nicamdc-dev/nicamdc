@@ -32,7 +32,7 @@ module mod_mkgrd
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: MKGRD_setup
   public :: MKGRD_standard
@@ -55,7 +55,7 @@ module mod_mkgrd
 
   !-----------------------------------------------------------------------------
   !
-  !++ Private procedure
+  !++ Private procedures
   !
   !-----------------------------------------------------------------------------
   !

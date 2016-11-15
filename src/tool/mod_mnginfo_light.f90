@@ -72,15 +72,15 @@ contains
     fid = IO_get_available_fid()
     open(fid,file=trim(fname),status='old',form='formatted',iostat=ierr)
        if (ierr /= 0) then
-          write(*,*) "cannot read mnginfo file :",trim(fname)
+          write(*,*) 'cannot read mnginfo file :',trim(fname)
           stop
        endif
 
        read(fid,nml=rgn_info)
        if ( num_of_rgn /= lall ) then ! [add] H.Yashiro 20120621
-          write(*,*) "Inconsintent between rlevel and mnginfo."
-          write(*,*) "rlevel,  num_of_mng=", rlevel, lall
-          write(*,*) "mnginfo, num_of_rgn=", trim(fname), num_of_rgn
+          write(*,*) 'Inconsintent between rlevel and mnginfo.'
+          write(*,*) 'rlevel,  num_of_mng=', rlevel, lall
+          write(*,*) 'mnginfo, num_of_rgn=', trim(fname), num_of_rgn
           stop
        endif
 

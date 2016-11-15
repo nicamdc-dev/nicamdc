@@ -51,7 +51,7 @@ module mod_ideal_init
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: dycore_input
   public :: tracer_input
@@ -600,7 +600,7 @@ contains
        GRD_ZH,    &
        GRD_vz
     use mod_vmtr, only : &
-      phi => VMTR_PHI
+       phi => VMTR_PHI
     use mod_runconf, only: &
        I_QV,      &
        NQW_MAX,   &
@@ -2010,8 +2010,8 @@ contains
       wiy,  &  !--- INOUT : meridional wind component
       tmp,  &  !--- INOUT : mean temperature
       geo   )  !--- INOUT : mean geopotential height
-    !
     implicit none
+
     integer :: k
     integer, intent(in) :: kdim
     real(RP), intent(in) :: lat
@@ -2022,14 +2022,14 @@ contains
     real(RP), intent(inout) :: geo(kdim)
     real(RP) :: eta_v
     real(RP) :: work1, work2
-    !
+
     ! ---------- horizontal mean
     work1 = pi/2.0_RP
     work2 = Rd*ganma/g
     do k = 1, kdim
        eta_v = (eta(k,1) - eta0)*(work1)
        wix(k) = u0 * (cos(eta_v))**1.5_RP * (sin(2.0_RP*lat))**2.0_RP
-       !
+
        !if( etaS >= eta(k,1) .and. eta(k,1) >= etaT ) then  ! not allow over 1.0 for eta
        if( eta(k,1) >= etaT ) then
           tmp(k) = t0 * eta(k,1)**work2
@@ -2050,7 +2050,6 @@ contains
        !   write (IO_FID_LOG,'(A)') "|-- OVER 1.0 for eta: [steady state calc.]"
        !   stop
        !endif
-       !
     enddo
 
     ! ---------- meridional distribution for temeperature and geopotential
@@ -2090,8 +2089,8 @@ contains
       eps_geo2prs,  &  !--- IN : eps
       nicamcore,    &  !--- IN : nicamcore switch
       logout        )  !--- IN : switch of log output
-    !
     implicit none
+
     integer, intent(in) :: kdim
     real(RP), intent(in) :: ps
     real(RP), intent(in) :: lat
@@ -2312,7 +2311,7 @@ contains
        enddo
     enddo
     enddo
-    !
+
     return
   end subroutine perturbation
 
@@ -2326,8 +2325,8 @@ contains
       vx1d, &  !--- INOUT : horizontal-x component on absolute system for horizontal wind
       vy1d, &  !--- INOUT : horizontal-y component on absolute system for horizontal wind
       vz1d  )  !--- INOUT : vertical component on absolute system for horizontal wind
-    !
     implicit none
+
     integer, intent(in) :: kdim
     real(RP), intent(in)    :: lat
     real(RP), intent(in)    :: lon
@@ -2336,21 +2335,21 @@ contains
     real(RP), intent(inout) :: vx1d(kdim)
     real(RP), intent(inout) :: vy1d(kdim)
     real(RP), intent(inout) :: vz1d(kdim)
-    !
+
     integer :: k
     real(RP) :: unit_east(3), unit_north(3)
-    !
+
     ! imported from NICAM/nhm/mkinit/prg_mkinit_ncep.f90 (original written by H.Miura)
     ! *** compute vx, vy, vz as 1-dimensional variables
     do k = 1, kdim
        unit_east  = Sp_Unit_East( lon )
        unit_north = Sp_Unit_North( lon, lat )
-       !
+
        vx1d(k) = unit_east(1) * wix(k) + unit_north(1) * wiy(k)
        vy1d(k) = unit_east(2) * wix(k) + unit_north(2) * wiy(k)
        vz1d(k) = unit_east(3) * wix(k) + unit_north(3) * wiy(k)
     enddo
-    !
+
     return
   end subroutine conv_vxvyvz
 
@@ -2365,8 +2364,8 @@ contains
       prs,         &  !--- OUT: pressure
       prs_rebuild, &  !--- IN : rebuild switch
       prs_dry      )  !--- IN : dry condition switch
-    !
     implicit none
+
     integer,  intent(in)  :: kdim
     real(RP), intent(in)  :: z(:)
     real(RP), intent(in)  :: rho(:)
@@ -2376,7 +2375,7 @@ contains
     real(RP), intent(out) :: prs(:)
     logical,  intent(in)  :: prs_rebuild
     logical,  intent(in)  :: prs_dry
-    !
+
     real(RP) :: dz, R0, R1
     integer  :: k
     !-----
@@ -2428,15 +2427,15 @@ contains
       downward,    &  !--- IN : downward switch
       nicamcore )  &  !--- IN : nicamcore switch
       result (pout)
-    !
     implicit none
+
     real(RP), intent(in) :: pin1, pin2, pin3
     real(RP), intent(in) :: t1, t2, t3
     real(RP), intent(in) :: u1, u2, u3
     real(RP), intent(in) :: geo1, geo3, lat
     logical, intent(in) :: downward
     logical, intent(in) :: nicamcore
-    !
+
     real(RP) :: dz, pout
     real(RP) :: f_cf(3), rho(3)
     !---------------------------------------------------------------------------

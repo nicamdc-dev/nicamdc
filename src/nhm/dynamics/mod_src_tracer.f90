@@ -47,7 +47,7 @@ module mod_src_tracer
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: src_tracer_advection
 

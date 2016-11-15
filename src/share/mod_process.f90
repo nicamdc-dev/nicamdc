@@ -3,12 +3,9 @@
 !!
 !! @par Description
 !!          MPI/non-MPI management module
+!!          Imported from SCALE library
 !!
 !! @author Team SCALE
-!!
-!! @par History
-!! @li      2011-10-11 (R.Yoshida)  [new]
-!! @li      2011-11-11 (H.Yashiro)  [mod] Integrate to SCALE-LES ver.3
 !!
 !<
 module mod_process
@@ -24,7 +21,7 @@ module mod_process
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: PRC_MPIstart
   public :: PRC_LOCAL_setup
@@ -58,7 +55,7 @@ module mod_process
 
   !-----------------------------------------------------------------------------
   !
-  !++ Private procedure
+  !++ Private procedures
   !
   !-----------------------------------------------------------------------------
   !
@@ -164,7 +161,7 @@ contains
        call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
 
        call MPI_Finalize(ierr)
-       if( IO_L ) write(IO_FID_LOG,*) '*** MPI is peacefully finalized'
+       write(IO_FID_LOG,*) '*** MPI is peacefully finalized'
     endif
 
     ! Close logfile, configfile

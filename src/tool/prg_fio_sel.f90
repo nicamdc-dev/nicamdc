@@ -39,11 +39,11 @@ program fio_sel
   !--- NAMELIST
   integer                :: glevel              = -1
   integer                :: rlevel              = -1
-  character(len=H_LONG)  :: mnginfo             = ""
-  character(len=H_LONG)  :: infile(flim)        = ""
+  character(len=H_LONG)  :: mnginfo             = ''
+  character(len=H_LONG)  :: infile(flim)        = ''
   integer                :: step_str            = 1
   integer                :: step_end            = max_nstep
-  character(len=H_LONG)  :: outfile             = ""
+  character(len=H_LONG)  :: outfile             = ''
   logical                :: use_mpi             = .true.
   integer                :: pe_str              =  0
   integer                :: pe_end              = -1
@@ -64,8 +64,8 @@ program fio_sel
                     help
 
   !-----------------------------------------------------------------------------
-  character(len=H_LONG)  :: infname  = ""
-  character(len=H_LONG)  :: outfname = ""
+  character(len=H_LONG)  :: infname  = ''
+  character(len=H_LONG)  :: outfname = ''
   logical                :: allvar = .true.
 
   type(headerinfo)       :: hinfo
@@ -120,31 +120,31 @@ program fio_sel
 
      write(rankstr,'(I6.6)') prc_myrank
      open(fid_log, file='msg_sel.pe'//trim(rankstr) )
-     write(fid_log,*) "+++ Parallel Execution, Use MPI"
+     write(fid_log,*) '+++ Parallel Execution, Use MPI'
 
      if( mod( MNG_PALL, prc_nall) /= 0)then
-        write(fid_log,*) "*** Invalid processor number, STOP:", MNG_PALL, prc_nall
+        write(fid_log,*) '*** Invalid processor number, STOP:', MNG_PALL, prc_nall
         call MPI_Barrier(MPI_COMM_WORLD,ierr)
         call MPI_FINALIZE(ierr)
         stop
      endif
   else
      open(fid_log, file='msg.serial' )
-     write(fid_log,*) "+++ Serial Execution"
+     write(fid_log,*) '+++ Serial Execution'
      prc_nall   = 1
      prc_myrank = 0
   endif
 
   if ( pe_end >= 0 ) then
      pe_all = pe_end - pe_str + 1
-     write(fid_log,*) "*** pe range is specified. "
-     write(fid_log,*) "*** pe(all,start,end)=",pe_all,pe_str,pe_end
+     write(fid_log,*) '*** pe range is specified. '
+     write(fid_log,*) '*** pe(all,start,end)=',pe_all,pe_str,pe_end
   else
      pe_all = MNG_PALL
   endif
 
   if ( mod( pe_all, prc_nall) /= 0 ) then
-     write(fid_log,*) "*** Invalid processor number, STOP:", pe_all, prc_nall
+     write(fid_log,*) '*** Invalid processor number, STOP:', pe_all, prc_nall
      call MPI_Barrier(MPI_COMM_WORLD,ierr)
      call MPI_FINALIZE(ierr)
      stop
@@ -153,11 +153,11 @@ program fio_sel
   prc_nlocal = pe_all / prc_nall
   pstr       = prc_myrank*prc_nlocal + pe_str + 1
   pend       = prc_myrank*prc_nlocal + pe_str + prc_nlocal
-  write(fid_log,*) "*** Number of Total .pexxxxxx files: ", MNG_PALL
-  write(fid_log,*) "*** Number of PE to packing precess: ", prc_nall
-  write(fid_log,*) "*** The rank of this process       : ", prc_myrank
-  write(fid_log,*) "*** Number of files for this rank  : ", prc_nlocal
-  write(fid_log,*) "*** file ID to pack                : ", pstr-1, " - ", pend-1
+  write(fid_log,*) '*** Number of Total .pexxxxxx files: ', MNG_PALL
+  write(fid_log,*) '*** Number of PE to packing precess: ', prc_nall
+  write(fid_log,*) '*** The rank of this process       : ', prc_myrank
+  write(fid_log,*) '*** Number of files for this rank  : ', prc_nlocal
+  write(fid_log,*) '*** file ID to pack                : ', pstr-1, ' - ', pend-1
 
   !--- setup
   call fio_syscheck()
@@ -183,7 +183,7 @@ program fio_sel
      pkg_desc  = hinfo%description
      pkg_note  = hinfo%note
      nmax_data = hinfo%num_of_data
-     write(fid_log,*) '++input', 1, ' : ', trim(infname), "(n=", nmax_data, ")"
+     write(fid_log,*) '++input', 1, ' : ', trim(infname), '(n=', nmax_data, ')'
 
      call fio_register_file(ofid,trim(outfname))
      call fio_fopen(ofid,IO_FWRITE)

@@ -666,7 +666,6 @@ contains
     nc%status = OPEN_FOR_READ
 
     !--- open
-    !
     call check( nf90_open( &
          path=trim(ncfile), mode=NF90_NOWRITE, ncid=nc%id_nc ) )
 

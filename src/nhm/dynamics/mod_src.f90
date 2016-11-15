@@ -20,7 +20,7 @@ module mod_src
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: src_advection_convergence_momentum
   public :: src_advection_convergence

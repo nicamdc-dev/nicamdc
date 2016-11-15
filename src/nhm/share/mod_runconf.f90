@@ -19,7 +19,7 @@ module mod_runconf
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: runconf_setup
 

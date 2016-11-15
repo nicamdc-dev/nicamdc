@@ -19,7 +19,7 @@ module mod_time
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: TIME_setup
   public :: TIME_report
@@ -51,19 +51,24 @@ module mod_time
   real(DP), public :: TIME_CTIME              ! Current time [sec]
   integer,  public :: TIME_CSTEP              ! Current time step
 
+  character(len=20), public :: TIME_HTIME     ! YYYY/MM/DD-HH:MM:SS
+
   !-----------------------------------------------------------------------------
   !
-  !++ Private procedure
+  !++ Private procedures
   !
   !-----------------------------------------------------------------------------
   !
   !++ Private parameters & variables
   !
+  logical, private :: TIME_backward_sw = .false.
+
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
   !> Setup the temporal scheme and time management
-  subroutine TIME_setup
+  subroutine TIME_setup( &
+       backward )
     use mod_process, only: &
        PRC_MPIstop
     use mod_calendar, only: &
@@ -71,19 +76,20 @@ contains
        CALENDAR_ss2cc
     implicit none
 
-    character(len=H_SHORT) :: integ_type !--- integration method
-    logical                :: split      !--- time spliting flag
-    real(RP)               :: dtl        !--- delta t in large step
-    integer                :: lstep_max  !--- maximum number of large steps
-    integer                :: sstep_max  !--- division number in large step
+    logical, intent(in), optional :: backward ! backward option (optional) [TM]
 
-    integer :: start_date(6) !< start date
-    integer :: start_year    !< start year
-    integer :: start_month   !< start month
-    integer :: start_day     !< start day
-    integer :: start_hour    !< start hour
-    integer :: start_min     !< start min
-    integer :: start_sec     !< start sec
+    character(len=H_SHORT) :: integ_type    !< integration method
+    logical                :: split         !< time spliting flag
+    real(RP)               :: dtl           !< delta t in large step
+    integer                :: lstep_max     !< maximum number of large steps
+    integer                :: sstep_max     !< division number in large step
+    integer                :: start_date(6) !< start date
+    integer                :: start_year    !< start year
+    integer                :: start_month   !< start month
+    integer                :: start_day     !< start day
+    integer                :: start_hour    !< start hour
+    integer                :: start_min     !< start min
+    integer                :: start_sec     !< start sec
 
     namelist / TIMEPARAM / &
          integ_type,  &
@@ -167,7 +173,33 @@ contains
     if ( start_date(6) == -999 ) start_date(6) = start_sec
     call CALENDAR_yh2ss( TIME_start, start_date )
 
-    TIME_END    = TIME_START  + TIME_LSTEP_MAX * TIME_DTL
+    if ( present(backward) ) then
+       TIME_backward_sw = backward ! [TM]
+    else
+       TIME_backward_sw = .false.
+    endif
+
+    !---< large step configuration >---
+
+    if ( TIME_lstep_max < 0 ) then
+       write(*,*) 'xxx TIME_lstep_max should be positive. STOP.'
+       call PRC_MPIstop
+    endif
+    if ( TIME_sstep_max < 0 ) then
+       write(*,*) 'xxx TIME_sstep_max should be positive. STOP.'
+       call PRC_MPIstop
+    endif
+    if ( TIME_dtl < 0 ) then
+       write(*,*) 'xxx TIME_dtl should be positive. STOP.'
+       call PRC_MPIstop
+    endif
+
+    if ( .NOT. TIME_backward_sw ) then
+       TIME_END = TIME_START + TIME_LSTEP_MAX * TIME_DTL
+    else
+       TIME_END = TIME_START - TIME_LSTEP_MAX * TIME_DTL ! [TM]
+    endif
+
     TIME_NSTART = 0
     TIME_NEND   = TIME_NSTART + TIME_LSTEP_MAX
 
@@ -177,10 +209,12 @@ contains
     !--- output the information for debug
     call CALENDAR_ss2cc( HTIME_start, TIME_START )
     call CALENDAR_ss2cc( HTIME_end,   TIME_END   )
+    call CALENDAR_ss2cc( TIME_HTIME,  TIME_CTIME )
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) '====== Time management ======'
     write(IO_FID_LOG,*) '--- Time integration scheme (large step): ', trim(TIME_integ_type)
+    write(IO_FID_LOG,*) '--- Backward integration?               : ', TIME_backward_sw
     write(IO_FID_LOG,*) '--- Time interval for large step        : ', TIME_DTL
     write(IO_FID_LOG,*) '--- Time interval for small step        : ', TIME_DTS
     write(IO_FID_LOG,*) '--- Max steps of large step             : ', TIME_LSTEP_MAX
@@ -203,15 +237,13 @@ contains
     use mod_calendar, only: &
        CALENDAR_ss2cc
     implicit none
-
-    character(len=20) :: HTIME
     !---------------------------------------------------------------------------
 
-    call CALENDAR_ss2cc( HTIME, TIME_CTIME )
+    call calendar_ss2cc( TIME_HTIME, TIME_CTIME )
 
-    write(IO_FID_LOG,*) '### TIME =', HTIME,'( step = ', TIME_CSTEP, ' )'
+    write(IO_FID_LOG,*) '### TIME =', TIME_HTIME,'( step = ', TIME_CSTEP, ' )'
     if( PRC_IsMaster ) then
-       write(*,*) '### TIME = ', HTIME,'( step = ', TIME_CSTEP, ' )'
+       write(*,*) '### TIME = ', TIME_HTIME,'( step = ', TIME_CSTEP, ' )'
     endif
 
     return
@@ -223,7 +255,11 @@ contains
     !---------------------------------------------------------------------------
 
     ! time advance
-    TIME_CTIME = TIME_CTIME + TIME_DTL
+    if ( .NOT. TIME_backward_sw ) then
+       TIME_CTIME = TIME_CTIME + TIME_DTL
+    else
+       TIME_CTIME = TIME_CTIME - TIME_DTL ! [TM]
+    endif
     TIME_CSTEP = TIME_CSTEP + 1
 
     call TIME_report

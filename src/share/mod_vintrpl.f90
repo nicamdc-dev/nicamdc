@@ -19,7 +19,7 @@ module mod_vintrpl
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: VINTRPL_Z2Xi
   public :: VINTRPL_Xi2Z

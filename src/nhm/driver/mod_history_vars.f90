@@ -19,7 +19,7 @@ module mod_history_vars
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: history_vars_setup
   public :: history_vars
@@ -30,7 +30,7 @@ module mod_history_vars
   !
   !-----------------------------------------------------------------------------
   !
-  !++ Private procedure
+  !++ Private procedures
   !
   !-----------------------------------------------------------------------------
   !

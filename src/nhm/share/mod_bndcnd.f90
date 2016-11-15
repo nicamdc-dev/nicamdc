@@ -19,7 +19,7 @@ module mod_bndcnd
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: BNDCND_setup
   public :: BNDCND_all

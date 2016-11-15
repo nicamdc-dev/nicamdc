@@ -19,7 +19,7 @@ module mod_chemvar
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: CHEMVAR_setup
   public :: chemvar_getid

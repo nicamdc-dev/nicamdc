@@ -3,8 +3,9 @@
 !!
 !! @par Description
 !!          precision module
+!!          Imported from SCALE library
 !!
-!! @author NICAM developers
+!! @author Team SCALE
 !!
 !<
 module mod_precision
@@ -17,7 +18,7 @@ module mod_precision
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   !-----------------------------------------------------------------------------
   !
@@ -40,7 +41,7 @@ module mod_precision
 
   !-----------------------------------------------------------------------------
   !
-  !++ Private procedure
+  !++ Private procedures
   !
   !-----------------------------------------------------------------------------
   !

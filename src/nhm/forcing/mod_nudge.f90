@@ -19,7 +19,7 @@ module mod_nudge
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: NDG_setup
   public :: NDG_update_reference
