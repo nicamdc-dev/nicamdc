@@ -198,9 +198,9 @@ contains
        !  info(np)%num_of_data
        !  info(np)%data_date
        !  info(np)%data_rec(1)
-       if ( input_io_mode == 'POH5' ) then
+       if ( input_io_mode == 'ADVANCED' ) then
 
-          call HIO_seek( info(np)%data_rec(1), & ! [OUT]
+          call FIO_seek( info(np)%data_rec(1), & ! [OUT]
                          num_of_data,          & ! [INOUT]
                          data_date,            & ! [INOUT]
                          input_size,           & ! [INOUT]
@@ -213,9 +213,9 @@ contains
                          cdate,                & ! [IN]
                          opt_periodic_year     ) ! [IN]
 
-       elseif( input_io_mode == 'ADVANCED' ) then
+       elseif( input_io_mode == 'POH5' ) then
 
-          call FIO_seek( info(np)%data_rec(1), & ! [OUT]
+          call HIO_seek( info(np)%data_rec(1), & ! [OUT]
                          num_of_data,          & ! [INOUT]
                          data_date,            & ! [INOUT]
                          input_size,           & ! [INOUT]
@@ -511,18 +511,18 @@ contains
     info(np)%v_pl(:,:,:,:) = info(np)%defval
 
     do n = 1, 2 !--- forward & backward
-       if ( info(np)%input_io_mode == 'POH5' ) then
+       if ( info(np)%input_io_mode == 'ADVANCED' ) then
 
-          call HIO_input( info(np)%v(:,:,:,n), & ! [OUT]
+          call FIO_input( info(np)%v(:,:,:,n), & ! [OUT]
                           info(np)%fname,      & ! [IN]
                           info(np)%dataname,   & ! [IN]
                           info(np)%layername,  & ! [IN]
                           1,info(np)%kall,     & ! [IN]
                           info(np)%data_rec(n) ) ! [IN]
 
-       elseif( info(np)%input_io_mode == 'ADVANCED' ) then
+       elseif( info(np)%input_io_mode == 'POH5' ) then
 
-          call FIO_input( info(np)%v(:,:,:,n), & ! [OUT]
+          call HIO_input( info(np)%v(:,:,:,n), & ! [OUT]
                           info(np)%fname,      & ! [IN]
                           info(np)%dataname,   & ! [IN]
                           info(np)%layername,  & ! [IN]

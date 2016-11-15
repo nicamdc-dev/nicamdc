@@ -137,8 +137,8 @@ contains
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) '*** io_mode for restart, input : ', trim(input_io_mode)
-    if    ( input_io_mode == 'POH5'         ) then
-    elseif( input_io_mode == 'ADVANCED'     ) then
+    if    ( input_io_mode == 'ADVANCED'     ) then
+    elseif( input_io_mode == 'POH5'         ) then
     elseif( input_io_mode == 'IDEAL'        ) then
     elseif( input_io_mode == 'IDEAL_TRACER' ) then
     else
@@ -147,8 +147,8 @@ contains
     endif
 
     write(IO_FID_LOG,*) '*** io_mode for restart, output: ', trim(output_io_mode)
-    if    ( output_io_mode == 'POH5'        ) then
-    elseif( output_io_mode == 'ADVANCED'    ) then
+    if    ( input_io_mode == 'ADVANCED'     ) then
+    elseif( input_io_mode == 'POH5'         ) then
     else
        write(IO_FID_LOG,*) 'xxx Invalid output_io_mode. STOP'
        call PRC_MPIstop
@@ -801,20 +801,7 @@ contains
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) '*** read restart/initial data'
 
-    if ( input_io_mode == 'POH5' ) then
-
-       do nq = 1, DIAG_vmax0
-          call HIO_input( DIAG_var(:,:,:,nq),basename,DIAG_name(nq), &
-                          layername,1,ADM_kall,1                     )
-       enddo
-
-       do nq = 1, TRC_vmax_input
-          call HIO_input( DIAG_var(:,:,:,DIAG_vmax0+nq),basename,TRC_name(nq), &
-                          layername,1,ADM_kall,1,                              &
-                          allow_missingq=allow_missingq                        )
-       enddo
-
-    elseif( input_io_mode == 'ADVANCED' ) then
+    if ( input_io_mode == 'ADVANCED' ) then
 
        do nq = 1, DIAG_vmax0
           call FIO_input( DIAG_var(:,:,:,nq),basename,DIAG_name(nq), &
@@ -823,6 +810,19 @@ contains
 
        do nq = 1, TRC_vmax_input
           call FIO_input( DIAG_var(:,:,:,DIAG_vmax0+nq),basename,TRC_name(nq), &
+                          layername,1,ADM_kall,1,                              &
+                          allow_missingq=allow_missingq                        )
+       enddo
+
+    elseif( input_io_mode == 'POH5' ) then
+
+       do nq = 1, DIAG_vmax0
+          call HIO_input( DIAG_var(:,:,:,nq),basename,DIAG_name(nq), &
+                          layername,1,ADM_kall,1                     )
+       enddo
+
+       do nq = 1, TRC_vmax_input
+          call HIO_input( DIAG_var(:,:,:,DIAG_vmax0+nq),basename,TRC_name(nq), &
                           layername,1,ADM_kall,1,                              &
                           allow_missingq=allow_missingq                        )
        enddo
@@ -994,19 +994,7 @@ contains
        write(IO_FID_LOG,'(1x,A,A16,2(A,1PE24.17))') '--- ', TRC_name(nq),  ': max=', val_max, ', min=', val_min
     enddo
 
-    if ( output_io_mode == 'POH5' ) then
-
-       do nq = 1, DIAG_vmax0
-          call HIO_output( DIAG_var(:,:,:,nq), basename, desc, '', DIAG_name(nq), DLABEL(nq), '', DUNIT(nq), & ! [IN]
-                           IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                       ) ! [IN]
-       enddo
-
-       do nq = 1, TRC_vmax
-          call HIO_output( DIAG_var(:,:,:,DIAG_vmax0+nq), basename, desc, '', TRC_name(nq), WLABEL(nq), '', WUNIT, & ! [IN]
-                           IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                             ) ! [IN]
-       enddo
-
-    elseif( output_io_mode == 'ADVANCED' ) then
+    if ( output_io_mode == 'ADVANCED' ) then
 
        do nq = 1, DIAG_vmax0
           call FIO_output( DIAG_var(:,:,:,nq), basename, desc, '', DIAG_name(nq), DLABEL(nq), '', DUNIT(nq), & ! [IN]
@@ -1015,6 +1003,18 @@ contains
 
        do nq = 1, TRC_vmax
           call FIO_output( DIAG_var(:,:,:,DIAG_vmax0+nq), basename, desc, '', TRC_name(nq), WLABEL(nq), '', WUNIT, & ! [IN]
+                           IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                             ) ! [IN]
+       enddo
+
+    elseif( output_io_mode == 'POH5' ) then
+
+       do nq = 1, DIAG_vmax0
+          call HIO_output( DIAG_var(:,:,:,nq), basename, desc, '', DIAG_name(nq), DLABEL(nq), '', DUNIT(nq), & ! [IN]
+                           IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                       ) ! [IN]
+       enddo
+
+       do nq = 1, TRC_vmax
+          call HIO_output( DIAG_var(:,:,:,DIAG_vmax0+nq), basename, desc, '', TRC_name(nq), WLABEL(nq), '', WUNIT, & ! [IN]
                            IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                             ) ! [IN]
        enddo
 

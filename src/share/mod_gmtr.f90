@@ -1076,17 +1076,7 @@ contains
 
     call COMM_data_transfer( tmp2, tmp2_pl )
 
-    if ( GMTR_io_mode == 'POH5' ) then
-       call HIO_output( tmp(:,:,:,I_rgn),  basename, desc, "",          & ! [IN]
-                        "rgn", "region number", "",                     & ! [IN]
-                        "NIL", dtype, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
-       call HIO_output( tmp(:,:,:,I_grid), basename, desc, "",          & ! [IN]
-                        "grid", "grid number", "",                      & ! [IN]
-                        "NIL", dtype, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
-       call HIO_output( tmp2(:,:,:,1),     basename, desc, "",          & ! [IN]
-                        "gmtrmetrics", "gmtr metrics", "",              & ! [IN]
-                        "", dtype, "LAYERNM", 1, 54, 1, 0.0_DP, 0.0_DP  ) ! [IN]
-    elseif( GMTR_io_mode == 'ADVANCED' ) then
+    if ( GMTR_io_mode == 'ADVANCED' ) then
        call FIO_output( tmp(:,:,:,I_rgn),  basename, desc, "",          & ! [IN]
                         "rgn", "region number", "",                     & ! [IN]
                         "NIL", dtype, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
@@ -1094,6 +1084,16 @@ contains
                         "grid", "grid number", "",                      & ! [IN]
                         "NIL", dtype, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
        call FIO_output( tmp2(:,:,:,1),     basename, desc, "",          & ! [IN]
+                        "gmtrmetrics", "gmtr metrics", "",              & ! [IN]
+                        "", dtype, "LAYERNM", 1, 54, 1, 0.0_DP, 0.0_DP  ) ! [IN]
+    elseif( GMTR_io_mode == 'POH5' ) then
+       call HIO_output( tmp(:,:,:,I_rgn),  basename, desc, "",          & ! [IN]
+                        "rgn", "region number", "",                     & ! [IN]
+                        "NIL", dtype, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
+       call HIO_output( tmp(:,:,:,I_grid), basename, desc, "",          & ! [IN]
+                        "grid", "grid number", "",                      & ! [IN]
+                        "NIL", dtype, "ZSSFC1", 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
+       call HIO_output( tmp2(:,:,:,1),     basename, desc, "",          & ! [IN]
                         "gmtrmetrics", "gmtr metrics", "",              & ! [IN]
                         "", dtype, "LAYERNM", 1, 54, 1, 0.0_DP, 0.0_DP  ) ! [IN]
     endif

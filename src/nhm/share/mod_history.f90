@@ -867,11 +867,11 @@ contains
 
           write(IO_FID_LOG,'(A,A16,A,1PE24.17,A,E24.17)') ' [', item(1:16), '] max=', val_max, ', min=', val_min
 
-          if ( output_io_mode == 'POH5' ) then
+          if ( output_io_mode == 'ADVANCED' ) then
 
              if ( output_type_save(n) == 'SNAPSHOT' ) then
 
-                call HIO_output( v_save(:,:,:,1),                             & ! [IN]
+                call FIO_output( v_save(:,:,:,1),                             & ! [IN]
                                  HIST_io_fname,    HIST_io_desc    , '',      & ! [IN]
                                  file_save(n),     desc_save(n), '',          & ! [IN]
                                  unit_save(n),     HIST_dtype,                & ! [IN]
@@ -880,7 +880,7 @@ contains
 
              elseif( output_type_save(n) == 'AVERAGE' ) then
 
-                call HIO_output( v_save(:,:,:,1),                             & ! [IN]
+                call FIO_output( v_save(:,:,:,1),                             & ! [IN]
                                  HIST_io_fname,    HIST_io_desc    , '',      & ! [IN]
                                  file_save(n),     desc_save(n), '',          & ! [IN]
                                  unit_save(n),     HIST_dtype,                & ! [IN]
@@ -889,11 +889,11 @@ contains
 
              endif
 
-          elseif( output_io_mode == 'ADVANCED' ) then
+          elseif( output_io_mode == 'POH5' ) then
 
              if ( output_type_save(n) == 'SNAPSHOT' ) then
 
-                call FIO_output( v_save(:,:,:,1),                             & ! [IN]
+                call HIO_output( v_save(:,:,:,1),                             & ! [IN]
                                  HIST_io_fname,    HIST_io_desc    , '',      & ! [IN]
                                  file_save(n),     desc_save(n), '',          & ! [IN]
                                  unit_save(n),     HIST_dtype,                & ! [IN]
@@ -902,7 +902,7 @@ contains
 
              elseif( output_type_save(n) == 'AVERAGE' ) then
 
-                call FIO_output( v_save(:,:,:,1),                             & ! [IN]
+                call HIO_output( v_save(:,:,:,1),                             & ! [IN]
                                  HIST_io_fname,    HIST_io_desc    , '',      & ! [IN]
                                  file_save(n),     desc_save(n), '',          & ! [IN]
                                  unit_save(n),     HIST_dtype,                & ! [IN]

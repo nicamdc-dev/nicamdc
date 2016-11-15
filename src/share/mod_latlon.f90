@@ -843,22 +843,7 @@ contains
 
     call COMM_data_transfer( SAMPLE, SAMPLE_pl )
 
-    if ( SAMPLE_io_mode == 'POH5' ) then
-
-       call HIO_output( SAMPLE(:,:,:,1), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
-                       "sample1", "sample data(prc)", "", "NIL",      & ! [IN]
-                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
-       call HIO_output( SAMPLE(:,:,:,2), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
-                       "sample2", "sample data(rgn)", "", "NIL",      & ! [IN]
-                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
-       call HIO_output( SAMPLE(:,:,:,3), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
-                       "sample3", "sample data(i)", "", "NIL",        & ! [IN]
-                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
-       call HIO_output( SAMPLE(:,:,:,4), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
-                       "sample4", "sample data(j)", "", "NIL",        & ! [IN]
-                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
-
-    elseif( sample_io_mode == 'ADVANCED' ) then
+    if ( SAMPLE_io_mode == 'ADVANCED' ) then
 
        call FIO_output( SAMPLE(:,:,:,1), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
                        "sample1", "sample data(prc)", "", "NIL",      & ! [IN]
@@ -870,6 +855,21 @@ contains
                        "sample3", "sample data(i)", "", "NIL",        & ! [IN]
                        IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
        call FIO_output( SAMPLE(:,:,:,4), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
+                       "sample4", "sample data(j)", "", "NIL",        & ! [IN]
+                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+
+    elseif( SAMPLE_io_mode == 'POH5' ) then
+
+       call HIO_output( SAMPLE(:,:,:,1), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
+                       "sample1", "sample data(prc)", "", "NIL",      & ! [IN]
+                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+       call HIO_output( SAMPLE(:,:,:,2), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
+                       "sample2", "sample data(rgn)", "", "NIL",      & ! [IN]
+                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+       call HIO_output( SAMPLE(:,:,:,3), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
+                       "sample3", "sample data(i)", "", "NIL",        & ! [IN]
+                       IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+       call HIO_output( SAMPLE(:,:,:,4), SAMPLE_OUT_BASENAME, "", "", & ! [IN]
                        "sample4", "sample data(j)", "", "NIL",        & ! [IN]
                        IO_REAL8, "ZSSFC1", k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
 

@@ -2792,15 +2792,15 @@ contains
 
     call COMM_data_transfer( tmp, tmp_pl )
 
-    if ( OPRT_io_mode == 'POH5' ) then
+    if ( OPRT_io_mode == 'ADVANCED' ) then
 
-       call HIO_output( tmp(:,:,:,1), basename, desc, "",               & ! [IN]
+       call FIO_output( tmp(:,:,:,1), basename, desc, "",               & ! [IN]
                         "oprtcoef", "oprt coef", "",                    & ! [IN]
                         "", dtype, "LAYERNM", 1, 106, 1, 0.0_DP, 0.0_DP ) ! [IN]
 
-    elseif( OPRT_io_mode == 'ADVANCED' ) then
+    elseif( OPRT_io_mode == 'POH5' ) then
 
-       call FIO_output( tmp(:,:,:,1), basename, desc, "",               & ! [IN]
+       call HIO_output( tmp(:,:,:,1), basename, desc, "",               & ! [IN]
                         "oprtcoef", "oprt coef", "",                    & ! [IN]
                         "", dtype, "LAYERNM", 1, 106, 1, 0.0_DP, 0.0_DP ) ! [IN]
 
