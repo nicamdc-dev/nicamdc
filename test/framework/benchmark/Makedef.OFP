@@ -1,14 +1,18 @@
 #
 # ------ FOR Linux 64bit & intel fortran&C & intel mpi -----
 #
-FFLAGS_FAST  = -fpp -m64 -O3 -axMIC-AVX512 -qopenmp \
-               -assume byterecl -convert big_endian \
-               -fp-model source -g                  \
+FFLAGS_FAST  = -fpp -m64 -O3 -axMIC-AVX512 -qopenmp  \
+               -assume byterecl -convert big_endian  \
+               -fp-model source                      \
+               -align array64byte                    \
+               -qopt-streaming-stores always         \
                -mcmodel=medium -heap-arrays
 
 FFLAGS_DEBUG = -fpp -m64 -O0 -axMIC-AVX512 -qopenmp  \
                -assume byterecl -convert big_endian  \
                -fpe0 -fp-model source                \
+               -align array64byte                    \
+               -qopt-streaming-stores always         \
                -check bounds -warn all -g -traceback \
                -mcmodel=medium -heap-arrays
 

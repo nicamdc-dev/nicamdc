@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpiexec.hydra -n \${PJM_MPI_PROC} numactl --membind 1"
+MPIEXEC="mpiexec.hydra -psm2 -n \${PJM_MPI_PROC} numactl -m 1"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -52,7 +52,8 @@ cat << EOF1 > run.sh
 #
 export FORT_FMT_RECL=400
 export OMP_NUM_THREADS=16
-
+export I_MPI_DEBUG=5
+export I_MPI_FABRICS_LIST=tmi
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
