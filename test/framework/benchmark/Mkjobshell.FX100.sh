@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpiexec"
+MPIEXEC="mpiexec -mca mpi_print_stats 2"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -71,8 +71,7 @@ do
 done
 
 cat << EOF2 >> run.sh
-rm -rf ./prof
-rm -rf ./prof_call
+rm -rf ./prof*
 mkdir -p ./prof
 mkdir -p ./prof_call
 
