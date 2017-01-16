@@ -1082,7 +1082,7 @@ contains
        enddo
        rgnid = RGNMNG_vert_tab_pl(I_RGNID,I_NPL,1)
        dstr  = RGNMNG_vertname(RGNMNG_vert_tab_pl(I_DIR,I_NPL,1))
-       write(IO_FID_LOG,'(5x,A,I6,A,A,A)',advance='no') ' -> (',rgnid,',',dstr,')'
+       write(IO_FID_LOG,'(A,I6,A,A,A)',advance='no') ' -> (',rgnid,',',dstr,')'
        write(IO_FID_LOG,*)
        write(IO_FID_LOG,*) '--- process, managing north pole : ', RGNMNG_r2p_pl(I_NPL)
 
@@ -1096,7 +1096,7 @@ contains
        enddo
        rgnid = RGNMNG_vert_tab_pl(I_RGNID,I_SPL,1)
        dstr  = RGNMNG_vertname(RGNMNG_vert_tab_pl(I_DIR,I_SPL,1))
-       write(IO_FID_LOG,'(5x,A,I6,A,A,A)',advance='no') ' -> (',rgnid,',',dstr,')'
+       write(IO_FID_LOG,'(A,I6,A,A,A)',advance='no') ' -> (',rgnid,',',dstr,')'
        write(IO_FID_LOG,*)
        write(IO_FID_LOG,*) '--- process, managing south pole : ', RGNMNG_r2p_pl(I_SPL)
     endif
