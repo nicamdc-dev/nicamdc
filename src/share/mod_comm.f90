@@ -26,6 +26,7 @@ module mod_comm
   public :: COMM_setup
   public :: COMM_data_transfer
   public :: COMM_var
+
   public :: COMM_Stat_sum
   public :: COMM_Stat_sum_eachlayer
   public :: COMM_Stat_avg
@@ -36,350 +37,135 @@ module mod_comm
   !
   !++ Public parameters & variables
   !
-  logical, public :: comm_pl = .true. ! T.Ohno 110721
+  logical,  public              :: COMM_pl = .true.
 
-  integer, public :: COMM_datatype
+  integer,  public              :: COMM_datatype
 
-  ! for send
-  integer, public, allocatable :: nsmax(:,:)
-  integer, public, allocatable :: sendinfo(:,:,:,:)
-  integer, public, allocatable :: sendlist(:,:,:,:)
-  integer, public, allocatable :: nsmax_pl(:,:)
-  integer, public, allocatable :: sendinfo_pl(:,:,:,:)
-  integer, public, allocatable :: sendlist_pl(:,:,:,:)
+  ! node-node communication/copy info
+  integer,  public, allocatable :: Copy_info_r2r(:)   !> node-to-node information (intra-node copy)
+  integer,  public, allocatable :: Recv_info_r2r(:,:) !> node-to-node information (receive)
+  integer,  public, allocatable :: Send_info_r2r(:,:) !> node-to-node information (send)
 
-  ! for recv
-  integer, public, allocatable :: nrmax(:,:)
-  integer, public, allocatable :: recvinfo(:,:,:,:)
-  integer, public, allocatable :: recvlist(:,:,:,:)
-  integer, public, allocatable :: nrmax_pl(:,:)
-  integer, public, allocatable :: recvinfo_pl(:,:,:,:)
-  integer, public, allocatable :: recvlist_pl(:,:,:,:)
+  integer,  public, allocatable :: Copy_info_p2r(:)   !> node-to-node information (intra-node copy)
+  integer,  public, allocatable :: Recv_info_p2r(:,:) !> node-to-node information (receive)
+  integer,  public, allocatable :: Send_info_p2r(:,:) !> node-to-node information (send)
 
-  ! for copy
-  integer, public, allocatable :: ncmax_r2r(:)
-  integer, public, allocatable :: copyinfo_r2r(:,:,:)
-  integer, public, allocatable :: recvlist_r2r(:,:,:)
-  integer, public, allocatable :: sendlist_r2r(:,:,:)
+  integer,  public, allocatable :: Copy_info_r2p(:)   !> node-to-node information (intra-node copy)
+  integer,  public, allocatable :: Recv_info_r2p(:,:) !> node-to-node information (receive)
+  integer,  public, allocatable :: Send_info_r2p(:,:) !> node-to-node information (send)
 
-  integer, public, allocatable :: ncmax_r2p(:)
-  integer, public, allocatable :: copyinfo_r2p(:,:,:)
-  integer, public, allocatable :: recvlist_r2p(:,:,:)
-  integer, public, allocatable :: sendlist_r2p(:,:,:)
+  integer,  public, allocatable :: Singular_info(:)   !> node-to-node information (singular point)
 
-  integer, public, allocatable :: ncmax_p2r(:)
-  integer, public, allocatable :: copyinfo_p2r(:,:,:)
-  integer, public, allocatable :: recvlist_p2r(:,:,:)
-  integer, public, allocatable :: sendlist_p2r(:,:,:)
+  ! node-node communication/copy list
+  integer,  public, allocatable :: Copy_list_r2r(:,:)   !> grid,local-region list (copy)
+  integer,  public, allocatable :: Recv_list_r2r(:,:,:) !> grid,local-region list (receive)
+  integer,  public, allocatable :: Send_list_r2r(:,:,:) !> grid,local-region list (send)
 
-  integer, public, allocatable :: ncmax_sgp(:)
-  integer, public, allocatable :: copyinfo_sgp(:,:,:)
-  integer, public, allocatable :: recvlist_sgp(:,:,:)
-  integer, public, allocatable :: sendlist_sgp(:,:,:)
+  integer,  public, allocatable :: Copy_list_p2r(:,:)   !> grid,local-region list (copy)
+  integer,  public, allocatable :: Recv_list_p2r(:,:,:) !> grid,local-region list (receive)
+  integer,  public, allocatable :: Send_list_p2r(:,:,:) !> grid,local-region list (send)
 
-#ifdef _ACCCUDA
-  real(RP), public, allocatable, pinned :: sendbuf(:,:)
-  real(RP), public, allocatable, pinned :: recvbuf(:,:)
-#else
-  real(RP), public, allocatable :: sendbuf(:,:)
-  real(RP), public, allocatable :: recvbuf(:,:)
-#endif
+  integer,  public, allocatable :: Copy_list_r2p(:,:)   !> grid,local-region list (copy)
+  integer,  public, allocatable :: Recv_list_r2p(:,:,:) !> grid,local-region list (receive)
+  integer,  public, allocatable :: Send_list_r2p(:,:,:) !> grid,local-region list (send)
+
+  integer,  public, allocatable :: Singular_list(:,:)   !> grid,local-region list (singular point)
+
+  ! working buffer
+  integer,  public, allocatable :: REQ_list(:)
+
+  real(RP), public, allocatable :: sendbuf_r2r(:,:)
+  real(RP), public, allocatable :: recvbuf_r2r(:,:)
+  real(RP), public, allocatable :: sendbuf_p2r(:,:)
+  real(RP), public, allocatable :: recvbuf_p2r(:,:)
+  real(RP), public, allocatable :: sendbuf_r2p(:,:)
+  real(RP), public, allocatable :: recvbuf_r2p(:,:)
 
   !-----------------------------------------------------------------------------
   !
   !++ Private procedures
   !
+  private :: COMM_list_generate
+  private :: COMM_sortdest
+  private :: COMM_sortdest_pl
+  private :: COMM_sortdest_singular
+
+  private :: COMM_debugtest
+
   !-----------------------------------------------------------------------------
   !
   !++ Private parameters & variables
   !
-  integer, private, parameter :: ptr_prcid       = 1
-  integer, private, parameter :: ptr_lrgnid      = 2
-  !
-  integer, private, parameter :: elemsize_comm   = 3
-  integer, private, parameter :: SIZE_COMM       = 1
-  integer, private, parameter :: LRGNID_COMM     = 2
-  integer, private, parameter :: BASE_COMM       = 3
-  !
-  integer, private, parameter :: elemsize_copy   = 3
-  integer, private, parameter :: SIZE_COPY       = 1
-  integer, private, parameter :: LRGNID_COPY     = 2
-  integer, private, parameter :: SRC_LRGNID_COPY = 3
+  logical,  private :: COMM_apply_barrier = .false. !< barrier option
+  integer,  private :: COMM_varmax        = 50      !< maximum number of 3D variable for the communication buffer
+  logical,  private :: debug              = .false. !< debug option
+  logical,  private :: testonly           = .false. !< test  option
 
-  integer, private, parameter :: max_comm_r2r    = 9
+  ! send/recv relationship
+  integer,  private, parameter   :: rellist_vindex = 6
+  integer,  private, parameter   :: I_recv_grid = 1
+  integer,  private, parameter   :: I_recv_rgn  = 2
+  integer,  private, parameter   :: I_recv_prc  = 3
+  integer,  private, parameter   :: I_send_grid = 4
+  integer,  private, parameter   :: I_send_rgn  = 5
+  integer,  private, parameter   :: I_send_prc  = 6
 
-  integer, private :: max_comm_r2p
-  integer, private :: max_comm_p2r
-  integer, private :: max_comm
-  integer, private :: max_varmax = 100
-  logical, private :: opt_check_varmax = .true.
-  logical, private :: opt_comm_dbg = .false.
-  logical, private :: opt_comm_barrier = .false.
-  real(RP), private :: dbg_sendbuf_init
-  real(RP), private :: dbg_recvbuf_init
-  integer,private,allocatable :: dbg_areq_save(:,:)
+  integer,  private, allocatable :: rellist(:,:) !> send/recv relationship list
+  integer,  private              :: rellist_nmax !> number of list
 
-  integer, private :: rank_me
-  integer, private :: max_comm_prc
-  integer, private :: maxdatasize_s
-  integer, private :: maxdatasize_r
+  ! node-node communication/copy info
+  integer,  private, parameter   :: Recv_nlim = 10 !> number limit of rank to receive data
+  integer,  private, parameter   :: Send_nlim = 10 !> number limit of rank to send    data
 
-  integer, private :: maxn
-  integer, private :: maxm
-  integer, private :: maxl
+  integer,  private              :: Copy_nmax_r2r = 0
+  integer,  private              :: Recv_nmax_r2r = 0
+  integer,  private              :: Send_nmax_r2r = 0
 
-  integer, private :: maxn_pl
-  integer, private :: maxm_pl
-  integer, private :: maxl_pl
+  integer,  private              :: Copy_nmax_p2r = 0
+  integer,  private              :: Recv_nmax_p2r = 0
+  integer,  private              :: Send_nmax_p2r = 0
 
-  integer, private :: maxn_r2r
-  integer, private :: maxm_r2r
-  integer, private :: maxl_r2r
+  integer,  private              :: Copy_nmax_r2p = 0
+  integer,  private              :: Recv_nmax_r2p = 0
+  integer,  private              :: Send_nmax_r2p = 0
 
-  integer, private :: maxn_r2p
-  integer, private :: maxm_r2p
-  integer, private :: maxl_r2p
+  integer,  private              :: Singular_nmax = 0
 
-  integer, private :: maxn_p2r
-  integer, private :: maxm_p2r
-  integer, private :: maxl_p2r
+  integer,  private, parameter   :: info_vindex = 3
+  integer,  private, parameter   :: I_size     = 1
+  integer,  private, parameter   :: I_prc_from = 2
+  integer,  private, parameter   :: I_prc_to   = 3
 
-  integer, private :: maxn_sgp
-  integer, private :: maxm_sgp
-  integer, private :: maxl_sgp
+  ! node-node communication/copy list
+  integer,  private, parameter   :: list_vindex = 4
+  integer,  private, parameter   :: I_grid_from = 1
+  integer,  private, parameter   :: I_l_from    = 2
+  integer,  private, parameter   :: I_grid_to   = 3
+  integer,  private, parameter   :: I_l_to      = 4
 
-  integer, private, allocatable :: prc_tab_rev(:,:)
-
-  integer, private, allocatable :: clist(:)
-
-  integer, private, allocatable :: temp_sendorder(:,:)
-  integer, private, allocatable :: temp_recvorder(:,:)
-  integer, private, allocatable :: temp_dest_rgn(:,:,:)
-  integer, private, allocatable :: temp_src_rgn(:,:,:)
-  integer, private, allocatable :: temp_dest_rgn_pl(:,:,:)
-  integer, private, allocatable :: temp_src_rgn_pl(:,:,:)
-  integer, private, allocatable :: tsb(:)
-
-  integer, private, allocatable :: ssize(:,:)
-  integer, private, allocatable :: sendtag(:,:)
-  integer, private, allocatable :: somax(:)
-  integer, private, allocatable :: destrank(:,:)
-  integer, private, allocatable :: rsize(:,:)
-  integer, private, allocatable :: recvtag(:,:)
-  integer, private, allocatable :: romax(:)
-  integer, private, allocatable :: sourcerank(:,:)
-
-  integer, private, allocatable :: n_nspl(:,:)
-
-  integer, private, allocatable :: n_hemisphere_copy(:,:,:)
-  integer, private, allocatable :: s_hemisphere_copy(:,:,:)
-
-  integer, private, allocatable :: tempbuf2D(:,:)
-  integer, private, allocatable :: tempbuf3D(:,:,:)
-  integer, private, allocatable :: tempbuf4D(:,:,:,:)
-  integer, private, allocatable :: tempbuf3D2(:,:,:)
-
-  integer, private, allocatable :: rsize_r2r(:,:,:)
-  integer, private, allocatable :: ssize_r2r(:,:,:)
-  integer, private, allocatable :: sourceid_r2r(:,:,:)
-  integer, private, allocatable :: destid_r2r(:,:,:)
-  integer, private, allocatable :: msend_r2r(:,:,:)
-  integer, private, allocatable :: maxcommrecv_r2r(:,:)
-  integer, private, allocatable :: maxcommsend_r2r(:,:)
-  integer, private, allocatable :: rlist_r2r(:,:,:,:)
-  integer, private, allocatable :: qlist_r2r(:,:,:,:)
-  integer, private, allocatable :: slist_r2r(:,:,:,:)
-
-  integer, private              :: max_datasize_r2r
-  real(RP), private, allocatable :: recvbuf_r2r(:,:,:)
-  real(RP), private, allocatable :: sendbuf_r2r(:,:,:)
-
-  integer, private, allocatable :: rsize_r2p(:,:,:)
-  integer, private, allocatable :: ssize_r2p(:,:,:)
-  integer, private, allocatable :: source_prc_r2p(:,:,:)
-  integer, private, allocatable :: source_rgn_r2p(:,:,:)
-  integer, private, allocatable :: dest_prc_r2p(:,:,:)
-  integer, private, allocatable :: maxcommrecv_r2p(:,:)
-  integer, private, allocatable :: maxcommsend_r2p(:,:)
-  integer, private, allocatable :: recvtag_r2p(:,:,:)
-  integer, private, allocatable :: sendtag_r2p(:,:,:)
-  integer, private, allocatable :: rlist_r2p(:,:,:,:)
-  integer, private, allocatable :: qlist_r2p(:,:,:,:)
-  integer, private, allocatable :: slist_r2p(:,:,:,:)
-
-  integer,private               ::  max_datasize_r2p
-  real(RP), private, allocatable :: recvbuf_r2p(:,:,:)
-  real(RP), private, allocatable :: sendbuf_r2p(:,:,:)
-
-  integer, private, allocatable :: recvtag_p2r(:,:)
-  integer, private, allocatable :: sendtag_p2r(:,:)
-  real(RP), private, allocatable :: sendbuf_p2r(:,:)
-  real(RP), private, allocatable :: recvbuf_p2r(:,:)
-
-  integer, private, allocatable :: dest_rank_all(:,:,:)
-  integer, private, allocatable :: src_rank_all(:,:,:)
-
-  integer, private, allocatable :: imin(:), imax(:)
-  integer, private, allocatable :: jmin(:), jmax(:)
-  integer, private, allocatable :: gmin(:), gmax(:),gall(:)
-
-  integer, private, allocatable :: nmin_nspl(:), nmax_nspl(:)
-  integer, private, allocatable :: pmin_nspl(:), pmax_nspl(:)
-  integer, private, allocatable :: lmin_nspl(:), lmax_nspl(:)
-  integer, private, allocatable :: gmin_nspl(:), gmax_nspl(:)
-  integer, private, allocatable :: gall_nspl(:)
-
-  integer, private, allocatable :: pl_index(:,:,:,:)
-
-  integer, private :: halomax
-  integer, private :: kmax
-
-  type type_tempsb
-    integer        ::  num
-    integer, pointer ::  col(:)
-    integer, pointer ::  val(:)
-  end type
-
-  type(type_tempsb),allocatable :: tempsb(:)
-
-  integer, parameter ::  max_size = 10 ! This is not optimal value.
+  ! working buffer
+  integer,  private              :: REQ_count
 
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  subroutine init_tempsb
-    use mod_adm, only : ADM_rgn_nmax
-    implicit none
-    integer :: i
-
-    allocate(tempsb(ADM_rgn_nmax+2))
-    tempsb(:)%num=0
-
-    do i=1, ADM_rgn_nmax+2
-      allocate(tempsb(i)%col(max_size))
-      allocate(tempsb(i)%val(max_size))
-      tempsb(i)%col(:)=-1
-      tempsb(i)%val(:)=-1
-    enddo
-  end subroutine
-
-  !-----------------------------------------------------------------------------
-  subroutine finalize_tempsb
-    use mod_adm, only : ADM_rgn_nmax
-    implicit none
-    integer :: i
-
-    do i=1, ADM_rgn_nmax+2
-      deallocate(tempsb(i)%col)
-      deallocate(tempsb(i)%val)
-    enddo
-    deallocate(tempsb)
-  end subroutine
-
-  !-----------------------------------------------------------------------------
-  subroutine add_tempsb(icol, irow, ival)
-    implicit none
-    integer,intent(in) :: icol,irow,ival
-
-    if(ival > 0) then
-      if(tempsb(irow)%num < max_size) then
-        tempsb(irow)%num = tempsb(irow)%num + 1
-        tempsb(irow)%col(tempsb(irow)%num)=icol
-        tempsb(irow)%val(tempsb(irow)%num)=ival
-      else
-        write(*,*)'range of list is over.'
-        stop
-      endif
-    endif
-  end subroutine
-
-  !-----------------------------------------------------------------------------
-  subroutine get_tempsb(icol, irow, ret)
-    implicit none
-    integer,intent(in) :: icol,irow
-    integer,intent(out) :: ret
-    integer :: i
-
-    ret = 0
-    do i=1, max_size
-      if(tempsb(irow)%col(i) == icol) then
-        ret = tempsb(irow)%val(i)
-        exit
-      endif
-    enddo
-  end subroutine
-
-  !-----------------------------------------------------------------------------
-  subroutine COMM_setup( &
-       max_hallo_num,    & !--- IN : number of hallo regions
-       debug             ) !--- IN : debug flag
+  !> Setup
+  subroutine COMM_setup
     use mod_process, only: &
-       PRC_LOCAL_COMM_WORLD, &
-       PRC_nprocs,           &
        PRC_MPIstop
     use mod_adm, only: &
-       ADM_w,           &
-       ADM_e,           &
-       ADM_n,           &
-       ADM_s,           &
-       ADM_sw,          &
-       ADM_nw,          &
-       ADM_ne,          &
-       ADM_se,          &
-       ADM_rid,         &
-       ADM_dir,         &
-       ADM_vlink,       &
-       ADM_rgn_nmax_pl, &
-       ADM_npl,         &
-       ADM_spl,         &
-       ADM_gslf_pl,     &
-       ADM_prc_rnum,    &
-       ADM_prc_tab,     &
-       ADM_prc_me,      &
-       ADM_rgn_nmax,    &
-       ADM_rgn_etab,    &
-       ADM_rgn_vnum,    &
-       ADM_rgn_vtab,    &
-       ADM_rgn_vtab_pl, &
-       ADM_gmin,        &
-       ADM_gmax,        &
-       ADM_gall_1d,     &
-       ADM_lall,        &
-       ADM_kall,        &
-       ADM_prc_nspl,    &
-       ADM_rgn2prc
+       RGNMNG_r2p_pl, &
+       I_NPL,         &
+       I_SPL
     implicit none
 
-    integer,intent(in),optional ::  max_hallo_num
-    logical,intent(in),optional ::  debug
+    namelist / COMMPARAM / &
+       COMM_apply_barrier, &
+       COMM_varmax,        &
+       debug,              &
+       testonly
 
-    integer ::  i,j,l,n,m,p,q
-    integer ::  rgnid
-
-    integer :: lr,mr
-    integer :: ls,ms
-    integer :: nr,nc,ns
-    integer :: rs,cs,ss
-    integer :: nd,ld,pl,halo
-    integer :: in,jn
-    integer :: srgnid,rrgnid
-    integer :: ck
-    integer :: srank,drank
-    integer :: ro,so
-
-    integer :: suf,g_1d
-    suf(i,j,g_1d)=(g_1d)*((j)-1)+(i)
-
-    integer :: rgnid1,rgnid2,ret !(20101207) added by teraim
-
-    ! Iga(061008) ==>
-    namelist / COMMPARAM /   &
-         max_varmax,         & ! max number of communication variables
-         opt_check_varmax,   & ! check option of varmax
-         opt_comm_dbg,       & ! debug option of comm_data_transfer
-         opt_comm_barrier      ! debug option of comm_data_transfer
-
-    integer ::  ierr
+    integer :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -405,1903 +191,1349 @@ contains
        call PRC_MPIstop
     endif
 
-    if (present(max_hallo_num)) then
-       halomax=max_hallo_num
-    else
-       halomax=1
+    if (       RGNMNG_r2p_pl(I_NPL) < 0 &
+         .AND. RGNMNG_r2p_pl(I_SPL) < 0 ) then
+       COMM_pl = .false.
     endif
-
-    max_comm_r2p=ADM_vlink*2
-    max_comm_p2r=ADM_vlink*2
-    max_comm=max_comm_r2r+max_comm_r2p+max_comm_p2r
-
-    kmax=ADM_kall
-
-    allocate(prc_tab_rev(ptr_prcid:ptr_lrgnid,ADM_rgn_nmax))
-
-    do p=1,PRC_nprocs
-       do n=1,ADM_prc_rnum(p)
-          prc_tab_rev(ptr_prcid,ADM_prc_tab(n,p))=p
-          prc_tab_rev(ptr_lrgnid,ADM_prc_tab(n,p))=n
-       enddo
-    enddo
-
-    if(ADM_prc_nspl(ADM_npl) < 0 .and. ADM_prc_nspl(ADM_spl) <0 ) comm_pl = .false. ! T.Ohno 110721
-
-
-    allocate(imin(halomax))
-    allocate(imax(halomax))
-    allocate(jmin(halomax))
-    allocate(jmax(halomax))
-    allocate(gmin(halomax))
-    allocate(gmax(halomax))
-    allocate(gall(halomax))
-
-    !(20101207) changed by teraim
-    allocate(rsize_r2r(max_comm_r2r,halomax,ADM_rgn_nmax))
-    allocate(ssize_r2r(max_comm_r2r,halomax,ADM_rgn_nmax))
-    allocate(sourceid_r2r(max_comm_r2r,halomax,ADM_rgn_nmax))
-    allocate(destid_r2r(max_comm_r2r,halomax,ADM_rgn_nmax))
-    !allocate(mrecv_r2r(ADM_rgn_nmax,halomax,ADM_rgn_nmax))
-    !allocate(msend_r2r(ADM_rgn_nmax,halomax,ADM_rgn_nmax))
-    rgnid1=ADM_prc_tab(1,ADM_prc_me)
-    rgnid2=ADM_prc_tab(ADM_prc_rnum(ADM_prc_me),ADM_prc_me)
-    allocate(msend_r2r(ADM_rgn_nmax,halomax,rgnid1:rgnid2))
-    allocate(maxcommrecv_r2r(halomax,ADM_rgn_nmax))
-    allocate(maxcommsend_r2r(halomax,ADM_rgn_nmax))
-    !allocate(recvtag_r2r(ADM_rgn_nmax,halomax,ADM_rgn_nmax))
-    !allocate(sendtag_r2r(ADM_rgn_nmax,halomax,ADM_rgn_nmax))
-
-    imin(halomax)=(ADM_gmin-1)+halomax
-    imax(halomax)=(ADM_gmax-1)+halomax
-    jmin(halomax)=(ADM_gmin-1)+halomax
-    jmax(halomax)=(ADM_gmax-1)+halomax
-    gmin(halomax)=(ADM_gmin-1)+halomax
-    gmax(halomax)=(ADM_gmax-1)+halomax
-    gall(halomax)=(ADM_gall_1d-2)+2*halomax
-
-    max_datasize_r2r=(gmax(halomax)-gmin(halomax)+1)*halomax
-    allocate(rlist_r2r(max_datasize_r2r,max_comm_r2r,halomax,ADM_rgn_nmax))
-    allocate(qlist_r2r(max_datasize_r2r,max_comm_r2r,halomax,ADM_rgn_nmax))
-    allocate(slist_r2r(max_datasize_r2r,max_comm_r2r,halomax,ADM_rgn_nmax))
-
-    allocate(recvbuf_r2r(max_datasize_r2r*kmax*max_varmax  &
-         ,ADM_prc_rnum(ADM_prc_me),max_comm_r2r))
-    allocate(sendbuf_r2r(max_datasize_r2r*kmax*max_varmax  &
-         ,ADM_prc_rnum(ADM_prc_me),max_comm_r2r))
-
-    allocate(n_hemisphere_copy(ADM_w:ADM_s,halomax,ADM_rgn_nmax))
-    allocate(s_hemisphere_copy(ADM_w:ADM_s,halomax,ADM_rgn_nmax))
-
-    allocate(tempbuf2D(halomax,ADM_prc_rnum(ADM_prc_me)))
-    allocate(tempbuf3D(max_comm_r2r,halomax,ADM_prc_rnum(ADM_prc_me)))
-    allocate(tempbuf4D(max_datasize_r2r,max_comm_r2r,halomax,ADM_prc_rnum(ADM_prc_me)))
-    allocate(tempbuf3D2(ADM_w:ADM_s,halomax,ADM_prc_rnum(ADM_prc_me)))
-
-
-    rsize_r2r(:,:,:)=0
-    ssize_r2r(:,:,:)=0
-    sourceid_r2r(:,:,:)=-1
-    destid_r2r(:,:,:)=-1
-    !mrecv_r2r(:,:,:)=-1
-    msend_r2r(:,:,:)=-1
-    maxcommrecv_r2r(:,:)=max_comm_r2r
-    maxcommsend_r2r(:,:)=max_comm_r2r
-    !(20101207) removed by teraim
-    !recvtag_r2r(:,:,:)=-1
-    !sendtag_r2r(:,:,:)=-1
-
-    rlist_r2r(:,:,:,:)=-1
-    qlist_r2r(:,:,:,:)=-1
-    slist_r2r(:,:,:,:)=-1
-
-    n_hemisphere_copy(:,:,:)=0
-    s_hemisphere_copy(:,:,:)=0
-
-    allocate(rsize_r2p(max_comm_r2p,ADM_npl:ADM_spl,halomax))
-    allocate(ssize_r2p(max_comm_r2p,ADM_npl:ADM_spl,halomax))
-    allocate(source_prc_r2p(max_comm_r2p,ADM_npl:ADM_spl,halomax))
-    allocate(source_rgn_r2p(max_comm_r2p,ADM_npl:ADM_spl,halomax))
-    allocate(dest_prc_r2p(max_comm_r2p,ADM_npl:ADM_spl,halomax))
-    allocate(maxcommrecv_r2p(ADM_npl:ADM_spl,halomax))
-    allocate(maxcommsend_r2p(ADM_npl:ADM_spl,halomax))
-    allocate(recvtag_r2p(max_comm_r2p,ADM_npl:ADM_spl,halomax))
-    allocate(sendtag_r2p(max_comm_r2p,ADM_npl:ADM_spl,halomax))
-
-    max_datasize_r2p=halomax*(halomax+1)/2
-
-    allocate(rlist_r2p(max_datasize_r2p,max_comm_r2p,ADM_npl:ADM_spl,halomax))
-    allocate(qlist_r2p(max_datasize_r2p,max_comm_r2p,ADM_npl:ADM_spl,halomax))
-    allocate(slist_r2p(max_datasize_r2p,max_comm_r2p,ADM_npl:ADM_spl,halomax))
-
-    allocate(recvbuf_r2p(max_datasize_r2p*kmax*max_varmax &
-         ,max_comm_r2p,ADM_npl:ADM_spl))
-    allocate(sendbuf_r2p(max_datasize_r2p*kmax*max_varmax &
-         ,max_comm_r2p,ADM_npl:ADM_spl))
-
-    rsize_r2p(:,:,:)=0
-    ssize_r2p(:,:,:)=0
-    source_prc_r2p(:,:,:)=-1
-    source_rgn_r2p(:,:,:)=-1
-    dest_prc_r2p(:,:,:)=-1
-    maxcommrecv_r2p(:,:)=max_comm_r2p
-    maxcommsend_r2p(:,:)=max_comm_r2p
-    recvtag_r2p(:,:,:)=-1
-    sendtag_r2p(:,:,:)=-1
-
-    rlist_r2p(:,:,:,:)=-1
-    qlist_r2p(:,:,:,:)=-1
-    slist_r2p(:,:,:,:)=-1
-
-!!!!!!!!!!!!!!!
-    allocate(nmin_nspl(1:halomax))
-    allocate(nmax_nspl(1:halomax))
-    allocate(pmin_nspl(1:halomax))
-    allocate(pmax_nspl(1:halomax))
-    allocate(lmin_nspl(1:halomax))
-    allocate(lmax_nspl(1:halomax))
-    allocate(gmin_nspl(1:halomax))
-    allocate(gmax_nspl(1:halomax))
-    allocate(gall_nspl(1:halomax))
-    nmin_nspl(halomax)=1
-    nmax_nspl(halomax)=halomax+1
-    pmin_nspl(halomax)=1
-    pmax_nspl(halomax)=ADM_vlink
-    lmin_nspl(halomax)=1
-    lmax_nspl(halomax)=halomax
-    gmin_nspl(halomax)=2
-    gmax_nspl(halomax)=1+5*halomax*(halomax+1)/2
-    gall_nspl(halomax)=1+5*halomax*(halomax+1)/2
-    allocate(pl_index(nmin_nspl(halomax):nmax_nspl(halomax) &
-         ,pmin_nspl(halomax):pmax_nspl(halomax) &
-         ,lmin_nspl(halomax):lmax_nspl(halomax),halomax))
-
-    do halo=1,halomax
-
-       imin(halo)=(ADM_gmin-1)+halo
-       imax(halo)=(ADM_gmax-1)+halo
-       jmin(halo)=(ADM_gmin-1)+halo
-       jmax(halo)=(ADM_gmax-1)+halo
-       gmin(halo)=(ADM_gmin-1)+halo
-       gmax(halo)=(ADM_gmax-1)+halo
-       gall(halo)=(ADM_gall_1d-2)+2*halo
-
-       nmin_nspl(halo)=1
-       nmax_nspl(halo)=halo+1
-       pmin_nspl(halo)=1
-       pmax_nspl(halo)=ADM_vlink
-       lmin_nspl(halo)=1
-       lmax_nspl(halo)=halo
-       gmin_nspl(halo)=2
-       gmax_nspl(halo)=1+5*halo*(halo+1)/2
-       gall_nspl(halo)=1+5*halo*(halo+1)/2
-       pl_index(:,:,:,halo)=-1
-       do l=lmin_nspl(halo),lmax_nspl(halo)
-          do p=pmin_nspl(halo),pmax_nspl(halo)
-             do n=nmin_nspl(halo),l+1
-                pl_index(n,p,l,halo)=n+(p-1)*l+(1+5*(l-1)*l/2)
-             enddo
-          enddo
-          pl_index(l+1,pmax_nspl(halo),l,halo)=nmin_nspl(halo) &
-               +(pmin_nspl(halo)-1)*l &
-               +(1+5*(l-1)*l/2)
-       enddo
-
-       ! --- r2p ----
-       if(comm_pl)then
-        do p=pmin_nspl(halo),pmax_nspl(halo)
-           rsize_r2p(p,ADM_npl,halo)=halo*(halo+1)/2
-           source_prc_r2p(p,ADM_npl,halo)=prc_tab_rev(ptr_prcid &
-                ,ADM_rgn_vtab_pl(ADM_rid,ADM_npl,p))
-           source_rgn_r2p(p,ADM_npl,halo)=prc_tab_rev(ptr_lrgnid &
-                ,ADM_rgn_vtab_pl(ADM_rid,ADM_npl,p))
-        enddo
-        do p=pmin_nspl(halo),pmax_nspl(halo)
-           q=0
-           do ld=lmin_nspl(halo),lmax_nspl(halo)
-              do nd=nmin_nspl(halo),ld
-                 q=q+1
-                 in=-nd+ld+nmin_nspl(halo)-lmin_nspl(halo)+imin(halo)
-                 jn=-nd+nmin_nspl(halo)+(jmax(halo)-jmin(halo))+jmin(halo)
-                 rlist_r2p(q,mod(p,ADM_vlink)+1,ADM_npl,halo) &
-                      =pl_index(nd+1,p,ld,halo)
-                 qlist_r2p(q,mod(p,ADM_vlink)+1,ADM_npl,halo)=suf(in,jn,gall(halo))
-              enddo
-           enddo
-        enddo
-        do p=pmin_nspl(halo),pmax_nspl(halo)
-           rsize_r2p(p,ADM_spl,halo)=halo*(halo+1)/2
-           source_prc_r2p(p,ADM_spl,halo)=prc_tab_rev(ptr_prcid &
-                ,ADM_rgn_vtab_pl(ADM_rid,ADM_spl,p))
-           source_rgn_r2p(p,ADM_spl,halo)=prc_tab_rev(ptr_lrgnid &
-                ,ADM_rgn_vtab_pl(ADM_rid,ADM_spl,p))
-        enddo
-        do p=pmin_nspl(halo),pmax_nspl(halo)
-           q=0
-           do ld=lmin_nspl(halo),lmax_nspl(halo)
-              do nd=nmin_nspl(halo),ld
-                 q=q+1
-                 in=nd-ld-nmin_nspl(halo) &
-                      +lmin_nspl(halo)+(imax(halo)-imin(halo))+imin(halo)
-                 jn=nd-nmin_nspl(halo)+jmin(halo)
-                 rlist_r2p(q,p,ADM_spl,halo)=pl_index(nd,p,ld,halo)
-                 qlist_r2p(q,p,ADM_spl,halo)=suf(in,jn,gall(halo))
-              enddo
-           enddo
-        enddo
-        maxcommrecv_r2p(ADM_npl,halo)=(pmax_nspl(halo)-pmin_nspl(halo)+1)
-        maxcommrecv_r2p(ADM_spl,halo)=(pmax_nspl(halo)-pmin_nspl(halo)+1)
-
-        do pl=ADM_npl,ADM_spl
-           do p=1,maxcommrecv_r2p(pl,halo)
-              if (ADM_prc_me==source_prc_r2p(p,pl,halo)) then
-                 dest_prc_r2p(p,pl,halo)=ADM_prc_nspl(pl)
-                 ssize_r2p(p,pl,halo)=rsize_r2p(p,pl,halo)
-                 do q=1,ssize_r2p(p,pl,halo)
-                    slist_r2p(q,p,pl,halo)=qlist_r2p(q,p,pl,halo)
-                 enddo
-              endif
-              sendtag_r2p(p,pl,halo)=pl+(ADM_spl-ADM_npl+1)*(p-1) &
-                   +ADM_rgn_nmax**2+ADM_vlink*2
-              recvtag_r2p(p,pl,halo)=sendtag_r2p(p,pl,halo)
-
-!              write(*,*) 'sendtag_r2p',ADM_prc_me,p,pl,halo,sendtag_r2p(p,pl,halo)
-           enddo
-           maxcommsend_r2p(pl,halo)=(pmax_nspl(halo)-pmin_nspl(halo)+1)
-        enddo
-       endif
-
-       ! --- r2r ----
-       do l=1,ADM_prc_rnum(ADM_prc_me)
-          rgnid=ADM_prc_tab(l,ADM_prc_me)
-          m=0
-          if (ADM_rgn_etab(ADM_dir,ADM_sw,rgnid)==ADM_ne) then
-             if (halo>=1) then
-                m=m+1
-                rsize_r2r(m,halo,rgnid)=(gmax(halo)-gmin(halo)+1)*halo
-                sourceid_r2r(m,halo,rgnid)=ADM_rgn_etab(ADM_rid,ADM_sw,rgnid)
-                ! mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                n=0
-                do j=jmin(halo)-halo,jmin(halo)-1
-                   do i=imin(halo),imax(halo)
-                      n=n+1
-                      in=i
-                      jn=j+jmax(halo)+1-jmin(halo)
-                      rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                      qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                   enddo
-                enddo
-             endif
-          endif
-          if ((ADM_rgn_vnum(ADM_w,rgnid)==3)) then
-             if (ADM_rgn_etab(ADM_dir,ADM_sw,rgnid)==ADM_se) then
-                if (halo>=1) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=(gmax(halo)-gmin(halo)+1)*halo
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_etab(ADM_rid,ADM_sw,rgnid)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207)removed by teraim
-                   n=0
-                   do j=jmin(halo)-halo,jmin(halo)-1
-                      do i=imin(halo)+1,imax(halo)+(j-(jmin(halo)-1))
-                         n=n+1
-                         in=j+jmax(halo)-2*jmin(halo)+imin(halo)+1
-                         jn=-i+j+imin(halo)+jmax(halo)-jmin(halo)+1
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                      do i=imin(halo)-halo,imin(halo)-1+(j-(jmin(halo)-1))
-                         n=n+1
-                         in=i+imax(halo)+1-imin(halo)
-                         jn=j+jmax(halo)+1-jmin(halo)
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             endif
-          endif
-
-          if (ADM_rgn_etab(ADM_dir,ADM_nw,rgnid)==ADM_ne) then
-             if (halo>=1) then
-                m=m+1
-                rsize_r2r(m,halo,rgnid)=(gmax(halo)-gmin(halo)+1)*halo
-                sourceid_r2r(m,halo,rgnid)=ADM_rgn_etab(ADM_rid,ADM_nw,rgnid)
-                !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                n=0
-                do i=imin(halo)-halo,imin(halo)-1
-                   do j=jmin(halo)+(i-(imin(halo)-1)),jmax(halo)+(i-(imin(halo)-1))
-                      n=n+1
-                      in=i-j+imax(halo)-imin(halo)+jmin(halo)+1
-                      jn=i+imax(halo)-2*imin(halo)+jmin(halo)+1
-                      rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                      qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                   enddo
-                enddo
-             endif
-          elseif(ADM_rgn_etab(ADM_dir,ADM_nw,rgnid)==ADM_se) then
-             if (halo>=1) then
-                m=m+1
-                rsize_r2r(m,halo,rgnid)=(gmax(halo)-gmin(halo)+1)*halo
-                sourceid_r2r(m,halo,rgnid)=ADM_rgn_etab(ADM_rid,ADM_nw,rgnid)
-                !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                n=0
-                do j=jmin(halo),jmax(halo)
-                   do i=imin(halo)-halo,imin(halo)-1
-                      n=n+1
-                      in=i+imax(halo)-imin(halo)+1
-                      jn=j
-                      rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                      qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                   enddo
-                enddo
-             endif
-          endif
-
-!!!!!
-          if ((ADM_rgn_vnum(ADM_n,rgnid)==5)) then
-
-             if (ADM_rgn_vtab(ADM_dir,ADM_n,rgnid,2)==ADM_n) then
-                if (halo>=2) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=halo*(halo+1)/2-1
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_vtab(ADM_rid,ADM_n,rgnid,2)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                   n=0
-                   do i=imin(halo)-halo,imin(halo)-1
-                      do j=jmax(halo)+1+(i-(imin(halo)-1)) &
-                           ,min(jmax(halo)+1,jmax(halo)+(halo-1)+(i-(imin(halo)-1)))
-                         n=n+1
-                         in=-j+jmax(halo)+imin(halo)+1
-                         jn=i-j+imax(halo)-2*imin(halo)+jmax(halo)+jmin(halo)+2
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             endif
-             if (ADM_rgn_vtab(ADM_dir,ADM_n,rgnid,3)==ADM_n) then
-                if (halo>=2) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=(halo-1)*halo/2
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_vtab(ADM_rid,ADM_n,rgnid,3)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                   n=0
-                   do j=jmax(halo)+2,jmax(halo)+halo
-                      do i=imin(halo)+1,imin(halo)+1+(j-(jmax(halo)+2))
-                         n=n+1
-                         in=-i+j-2*jmax(halo)+jmin(halo)+imax(halo)+imin(halo)-1
-                         jn=-i+imax(halo)+jmin(halo)+1
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             endif
-
-          endif
-!!!!!
-
-          if (ADM_rgn_etab(ADM_dir,ADM_ne,rgnid)==ADM_nw) then
-             if (halo>=1) then
-                m=m+1
-                rsize_r2r(m,halo,rgnid)=(gmax(halo)-gmin(halo)+1)*halo
-                sourceid_r2r(m,halo,rgnid)=ADM_rgn_etab(ADM_rid,ADM_ne,rgnid)
-                !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                n=0
-                do j=jmax(halo)+1,jmax(halo)+halo
-                   do i=imin(halo)+1+(j-(jmax(halo)+1)),imax(halo)+1+(j-(jmax(halo)+1))
-                      n=n+1
-                      in=j-jmax(halo)+imin(halo)-1
-                      jn=-i+j+imax(halo)-jmax(halo)+jmin(halo)
-                      rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                      qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                   enddo
-                enddo
-             endif
-          elseif(ADM_rgn_etab(ADM_dir,ADM_ne,rgnid)==ADM_sw) then
-             if (halo>=1) then
-                m=m+1
-                rsize_r2r(m,halo,rgnid)=(gmax(halo)-gmin(halo)+1)*halo
-                sourceid_r2r(m,halo,rgnid)=ADM_rgn_etab(ADM_rid,ADM_ne,rgnid)
-                !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207)removed by teraim
-                n=0
-                do j=jmax(halo)+1,jmax(halo)+halo
-                   do i=imin(halo),jmax(halo)
-                      n=n+1
-                      in=i
-                      jn=j-jmax(halo)-1+jmin(halo)
-                      rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                      qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                   enddo
-                enddo
-             endif
-          endif
-
-          if (ADM_rgn_etab(ADM_dir,ADM_se,rgnid)==ADM_nw) then
-             if (halo>=1) then
-                m=m+1
-                rsize_r2r(m,halo,rgnid)=(gmax(halo)-gmin(halo)+1)*halo
-                sourceid_r2r(m,halo,rgnid)=ADM_rgn_etab(ADM_rid,ADM_se,rgnid)
-                !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207)removed by teraim
-                n=0
-                do j=jmin(halo),jmax(halo)
-                   do i=imax(halo)+1,imax(halo)+halo
-                      n=n+1
-                      in=i-imax(halo)+imin(halo)-1
-                      jn=j
-                      rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                      qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                   enddo
-                enddo
-             endif
-          endif
-          if ((ADM_rgn_vnum(ADM_e,rgnid)==3)) then
-             if (ADM_rgn_etab(ADM_dir,ADM_se,rgnid)==ADM_sw) then
-                if (halo>=1) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=(gmax(halo)-gmin(halo)+1)*halo
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_etab(ADM_rid,ADM_se,rgnid)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                   n=0
-                   do i=imax(halo)+1,imax(halo)+halo
-                      do j=jmin(halo)+1+(i-(imax(halo)+1)),jmax(halo)
-                         n=n+1
-                         in=i-j-imax(halo)+jmax(halo)+imin(halo)
-                         jn=i-imax(halo)-1+jmin(halo)
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                      do j=jmax(halo)+1+(i-(imax(halo)+1)),jmax(halo)+halo
-                         n=n+1
-                         in=i-imax(halo)-1+imin(halo)
-                         jn=j-jmax(halo)-1+jmin(halo)
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             endif
-          endif
-
-!!!!!
-          if ((ADM_rgn_vnum(ADM_s,rgnid)==5)) then
-
-             if (ADM_rgn_vtab(ADM_dir,ADM_s,rgnid,2)==ADM_s) then
-                if (halo>=2) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=(halo-1)*halo/2
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_vtab(ADM_rid,ADM_s,rgnid,2)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                   n=0
-                   do i=imax(halo)+2,imax(halo)+halo
-                      do j=jmin(halo)+1,jmin(halo)+1+(i-(imax(halo)+2))
-                         n=n+1
-                         in=-j+jmax(halo)+imin(halo)+1
-                         jn=i-j-2*imax(halo)+imin(halo)+jmax(halo)+jmin(halo)-1
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             endif
-
-
-             if (ADM_rgn_vtab(ADM_dir,ADM_s,rgnid,3)==ADM_s) then
-                if (halo>=2) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=halo*(halo+1)/2-1
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_vtab(ADM_rid,ADM_s,rgnid,3)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                   n=0
-                   do j=jmin(halo)-halo,jmin(halo)-1
-                      do i=imax(halo)+1+(j-(jmin(halo)-1)) &
-                           ,min(imax(halo)+1,imax(halo)+(halo-1)+(j-(jmin(halo)-1)))
-                         n=n+1
-                         in=-i+j+imax(halo)+jmax(halo)+imin(halo)-2*jmin(halo)+2
-                         jn=-i+imax(halo)+jmin(halo)+1
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             endif
-
-          endif
-          !!
-
-          !!
-          if ((ADM_rgn_vnum(ADM_w,rgnid)==4)) then
-
-             if (ADM_rgn_vtab(ADM_dir,ADM_w,rgnid,2)==ADM_n) then
-                if (halo>=1) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=halo*(halo+1)/2
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_vtab(ADM_rid,ADM_w,rgnid,2)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                   n=0
-                   do j=jmin(halo)-halo,jmin(halo)-1
-                      do i=imin(halo)-1+(j-(jmin(halo)-1)),imin(halo)-1
-                         n=n+1
-                         in=i-j+imax(halo)-imin(halo)-jmax(halo)+2*jmin(halo)
-                         jn=i+imax(halo)-2*imin(halo)+jmin(halo)+1
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             elseif(ADM_rgn_vtab(ADM_dir,ADM_w,rgnid,2)==ADM_e) then
-                if (halo>=1) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=halo*halo
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_vtab(ADM_rid,ADM_w,rgnid,2)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                   n=0
-                   do j=jmin(halo)-halo,jmin(halo)-1
-                      do i=imin(halo)-halo,imin(halo)-1
-                         n=n+1
-                         in=i+imax(halo)-imin(halo)+1
-                         jn=j+jmax(halo)-jmin(halo)+1
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             elseif(ADM_rgn_vtab(ADM_dir,ADM_w,rgnid,2)==ADM_s) then
-                if (halo>=1) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=halo*(halo+1)/2
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_vtab(ADM_rid,ADM_w,rgnid,2)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                   n=0
-                   do j=jmin(halo)-halo,jmin(halo)-1
-                      do i=imin(halo)-halo,imin(halo)-halo+(j-(jmin(halo)-halo))
-                         !do i=imin(halo)-halo,imin(halo)-1
-                         !  do j=i+jmin(halo)-imin(halo),jmin(halo)-1
-                         n=n+1
-                         in=j+jmax(halo)+1-2*jmin(halo)+imin(halo)
-                         jn=-i+j-imax(halo)+2*imin(halo)+jmax(halo)-jmin(halo)
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             endif
-             if (ADM_rgn_etab(ADM_dir,ADM_sw,rgnid)==ADM_se) then
-                if (halo>=1) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=(gmax(halo)-gmin(halo)+1)*halo
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_etab(ADM_rid,ADM_sw,rgnid)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                   n=0
-                   do j=jmin(halo)-halo,jmin(halo)-1
-                      do i=imin(halo)+(j-(jmin(halo)-1)),imax(halo)+(j-(jmin(halo)-1))
-                         n=n+1
-                         in=j+jmax(halo)-2*jmin(halo)+imin(halo)+1
-                         jn=-i+j+imin(halo)+jmax(halo)-jmin(halo)+1
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             endif
-
-          endif
-          !!
-
-          !!
-          if ((ADM_rgn_vnum(ADM_n,rgnid)==4)) then
-
-             if (ADM_rgn_vtab(ADM_dir,ADM_n,rgnid,2)==ADM_e) then
-                if (halo>=2) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=halo*(halo-1)
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_vtab(ADM_rid,ADM_n,rgnid,2)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                   n=0
-                   do i=imin(halo)-halo,imin(halo)-1
-                      do j=jmax(halo)+1+(i-(imin(halo)-1)) &
-                           ,jmax(halo)+(halo-1)+(i-(imin(halo)-1))
-                         n=n+1
-                         in=i-j+imax(halo)-imin(halo)+jmax(halo)+2
-                         jn=i+imax(halo)-2*imin(halo)+jmin(halo)+1
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             elseif(ADM_rgn_vtab(ADM_dir,ADM_n,rgnid,2)==ADM_s) then
-                if (halo>=2) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=(halo-1)*halo/2
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_vtab(ADM_rid,ADM_n,rgnid,2)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                   n=0
-                   do i=imin(halo)-(halo-1),imin(halo)-1
-                      do j=jmax(halo)+1,jmax(halo)+1+(i-(imin(halo)-(halo-1)))
-                         n=n+1
-                         in=i+imax(halo)-imin(halo)+1
-                         jn=j-jmax(halo)+jmin(halo)-1
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             elseif(ADM_rgn_vtab(ADM_dir,ADM_n,rgnid,2)==ADM_w) then
-                if (halo>=1) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=halo*halo
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_vtab(ADM_rid,ADM_n,rgnid,2)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                   n=0
-                   do j=jmax(halo)+1,jmax(halo)+halo
-                      do i=imin(halo)-(halo-1)+(j-(jmax(halo)+1)) &
-                           ,imin(halo)+(j-(jmax(halo)+1))
-                         n=n+1
-                         in=j-jmax(halo)+imin(halo)-1
-                         jn=-i+j+imin(halo)-jmax(halo)+jmin(halo)-1
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             endif
-
-          endif
-          !!
-
-          !!
-          if ((ADM_rgn_vnum(ADM_e,rgnid)==4)) then
-
-             if (ADM_rgn_vtab(ADM_dir,ADM_e,rgnid,2)==ADM_n) then
-                if (halo>=2) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=(halo-1)*halo/2
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_vtab(ADM_rid,ADM_e,rgnid,2)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                   n=0
-                   do i=imax(halo)+2,imax(halo)+halo
-                      do j=jmax(halo)+1,jmax(halo)+1+(i-(imax(halo)+2))
-                         n=n+1
-                         in=j-jmax(halo)-1+imin(halo)
-                         jn=-i+j+2*imax(halo)-imin(halo)-jmax(halo)+jmin(halo)+1
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             elseif(ADM_rgn_vtab(ADM_dir,ADM_e,rgnid,2)==ADM_w) then
-                if (halo>=1) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=halo*halo
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_vtab(ADM_rid,ADM_e,rgnid,2)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                   n=0
-                   do j=jmax(halo)+1,jmax(halo)+halo
-                      do i=imax(halo)+1,imax(halo)+halo
-                         n=n+1
-                         in=i-imax(halo)+imin(halo)-1
-                         jn=j-jmax(halo)+jmin(halo)-1
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             elseif(ADM_rgn_vtab(ADM_dir,ADM_e,rgnid,2)==ADM_s) then
-                if (halo>=2) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=(halo-1)*halo/2
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_vtab(ADM_rid,ADM_e,rgnid,2)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                   n=0
-                   do j=jmax(halo)+2,jmax(halo)+halo
-                      do i=imax(halo)+1,imax(halo)+1+(j-(jmax(halo)+2))
-                         n=n+1
-                         in=i-j-imax(halo)+2*jmax(halo)+imin(halo)-jmin(halo)+1
-                         jn=i-imax(halo)+jmin(halo)-1
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             endif
-             if (ADM_rgn_etab(ADM_dir,ADM_se,rgnid)==ADM_sw) then
-                if (halo>=1) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=(gmax(halo)-gmin(halo)+1)*halo
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_etab(ADM_rid,ADM_se,rgnid)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                   n=0
-                   do i=imax(halo)+1,imax(halo)+halo
-                      do j=jmin(halo)+1+(i-(imax(halo)+1)),jmax(halo)+1+(i-(imax(halo)+1))
-                         n=n+1
-                         in=i-j-imax(halo)+jmax(halo)+imin(halo)
-                         jn=i-imax(halo)+jmin(halo)-1
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-
-             endif
-          endif
-          !!
-
-          !!
-          if (ADM_rgn_vnum(ADM_s,rgnid)==4) then
-
-             if (ADM_rgn_vtab(ADM_dir,ADM_s,rgnid,2)==ADM_n) then
-                if (halo>=2) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=(halo-1)*halo/2
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_vtab(ADM_rid,ADM_s,rgnid,2)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                   n=0
-                   do i=imax(halo)+1,imax(halo)+(halo-1)
-                      do j=jmin(halo)-(halo-1)+(i-(imax(halo)+1)),jmin(halo)-1
-                         n=n+1
-                         in=i-imax(halo)-1+imin(halo)
-                         jn=j+jmax(halo)+1-jmin(halo)
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             elseif(ADM_rgn_vtab(ADM_dir,ADM_s,rgnid,2)==ADM_e) then
-                if (halo>=2) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=halo*(halo-1)
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_vtab(ADM_rid,ADM_s,rgnid,2)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207) removed by teraim
-                   n=0
-                   do j=jmin(halo)-halo,jmin(halo)-1
-                      do i=imax(halo)+1+(j-(jmin(halo)-1)) &
-                           ,imax(halo)+(halo-1)+(j-(jmin(halo)-1))
-                         n=n+1
-                         in=j+jmax(halo)-2*jmin(halo)+imin(halo)+1
-                         jn=-i+j+imax(halo)+jmax(halo)-jmin(halo)+2
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             elseif(ADM_rgn_vtab(ADM_dir,ADM_s,rgnid,2)==ADM_w) then
-                if (halo>=1) then
-                   m=m+1
-                   rsize_r2r(m,halo,rgnid)=halo*halo
-                   sourceid_r2r(m,halo,rgnid)=ADM_rgn_vtab(ADM_rid,ADM_s,rgnid,2)
-                   !mrecv_r2r(sourceid_r2r(m,halo,rgnid),halo,rgnid)=m !(20101207)removed by teraim
-                   n=0
-                   do i=imax(halo)+1,imax(halo)+halo
-                      do j=jmin(halo)-(halo-1)+(i-(imax(halo)+1)) &
-                           ,jmin(halo)+(i-(imax(halo)+1))
-                         n=n+1
-                         in=i-j-imax(halo)+jmin(halo)+imin(halo)-1
-                         jn=i-imax(halo)+jmin(halo)-1
-                         rlist_r2r(n,m,halo,rgnid)=suf(i,j,gall(halo))
-                         qlist_r2r(n,m,halo,rgnid)=suf(in,jn,gall(halo))
-                      enddo
-                   enddo
-                endif
-             endif
-
-          endif
-
-          maxcommrecv_r2r(halo,rgnid)=m
-
-          if ((ADM_rgn_vnum(ADM_w,rgnid)==3)) then
-             if ((ADM_rgn_etab(ADM_dir,ADM_nw,rgnid)==ADM_ne)) then
-                n_hemisphere_copy(ADM_w,halo,rgnid)=1
-             elseif((ADM_rgn_etab(ADM_dir,ADM_nw,rgnid)==ADM_se)) then
-                s_hemisphere_copy(ADM_w,halo,rgnid)=1
-             endif
-          endif
-          if ((ADM_rgn_vnum(ADM_n,rgnid)==5)) then
-             n_hemisphere_copy(ADM_n,halo,rgnid)=1
-          endif
-          if ((ADM_rgn_vnum(ADM_s,rgnid)==3)) then
-             n_hemisphere_copy(ADM_s,halo,rgnid)=1
-          endif
-          if ((ADM_rgn_vnum(ADM_e,rgnid)==3)) then
-             if ((ADM_rgn_etab(ADM_dir,ADM_ne,rgnid)==ADM_nw)) then
-                n_hemisphere_copy(ADM_e,halo,rgnid)=1
-             elseif((ADM_rgn_etab(ADM_dir,ADM_ne,rgnid)==ADM_sw)) then
-                s_hemisphere_copy(ADM_e,halo,rgnid)=1
-             endif
-          endif
-          if ((ADM_rgn_vnum(ADM_s,rgnid)==5)) then
-             s_hemisphere_copy(ADM_s,halo,rgnid)=1
-          endif
-          if ((ADM_rgn_vnum(ADM_n,rgnid)==3)) then
-             s_hemisphere_copy(ADM_n,halo,rgnid)=1
-          endif
-
-       enddo !loop l
-
-       !(20101207) removed by teraim
-       !do rrgnid=1,ADM_rgn_nmax
-       !   do srgnid=1,ADM_rgn_nmax
-       !      sendtag_r2r(rrgnid,halo,srgnid)=rrgnid+ADM_rgn_nmax*(srgnid-1)
-       !      recvtag_r2r(srgnid,halo,rrgnid)=sendtag_r2r(rrgnid,halo,srgnid)
-!      !       write(*,*) 'sendtag_r2r',ADM_prc_me,rrgnid,srgnid,sendtag_r2r(rrgnid,halo,srgnid)
-       !   enddo
-       !enddo
-
-    enddo !loop halo
-
-
-
-    do l = 1, ADM_prc_rnum(ADM_prc_me)
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
-
-       tempbuf3D(:,:,l) = rsize_r2r(:,:,rgnid)
-    enddo
-
-    call MPI_Allgather( tempbuf3D,                                     &
-                        max_comm_r2r*halomax*ADM_prc_rnum(ADM_prc_me), &
-                        MPI_INTEGER,                                   &
-                        rsize_r2r,                                     &
-                        max_comm_r2r*halomax*ADM_prc_rnum(ADM_prc_me), &
-                        MPI_INTEGER,                                   &
-                        PRC_LOCAL_COMM_WORLD,                          &
-                        ierr                                           )
-
-    do l = 1, ADM_prc_rnum(ADM_prc_me)
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
-
-       tempbuf3D(:,:,l) = sourceid_r2r(:,:,rgnid)
-    enddo
-
-    call MPI_Allgather( tempbuf3D,                                     &
-                        max_comm_r2r*halomax*ADM_prc_rnum(ADM_prc_me), &
-                        MPI_INTEGER,                                   &
-                        sourceid_r2r,                                  &
-                        max_comm_r2r*halomax*ADM_prc_rnum(ADM_prc_me), &
-                        MPI_INTEGER,                                   &
-                        PRC_LOCAL_COMM_WORLD,                          &
-                        ierr                                           )
-
-    do l = 1, ADM_prc_rnum(ADM_prc_me)
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
-
-       tempbuf2D(:,l) = maxcommrecv_r2r(:,rgnid)
-    enddo
-
-    call MPI_Allgather( tempbuf2D,                        &
-                        halomax*ADM_prc_rnum(ADM_prc_me), &
-                        MPI_INTEGER,                      &
-                        maxcommrecv_r2r,                  &
-                        halomax*ADM_prc_rnum(ADM_prc_me), &
-                        MPI_INTEGER,                      &
-                        PRC_LOCAL_COMM_WORLD,             &
-                        ierr                              )
-
-    do l = 1, ADM_prc_rnum(ADM_prc_me)
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
-
-       tempbuf4D(:,:,:,l) = rlist_r2r(:,:,:,rgnid)
-    enddo
-
-    call MPI_Allgather( tempbuf4D,                                                      &
-                        max_comm_r2r*max_datasize_r2r*halomax*ADM_prc_rnum(ADM_prc_me), &
-                        MPI_INTEGER,                                                    &
-                        rlist_r2r,                                                      &
-                        max_comm_r2r*max_datasize_r2r*halomax*ADM_prc_rnum(ADM_prc_me), &
-                        MPI_INTEGER,                                                    &
-                        PRC_LOCAL_COMM_WORLD,                                           &
-                        ierr                                                            )
-
-    do l = 1, ADM_prc_rnum(ADM_prc_me)
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
-
-       tempbuf4D(:,:,:,l) = qlist_r2r(:,:,:,rgnid)
-    enddo
-
-    call MPI_Allgather( tempbuf4D,                                                      &
-                        max_comm_r2r*max_datasize_r2r*halomax*ADM_prc_rnum(ADM_prc_me), &
-                        MPI_INTEGER,                                                    &
-                        qlist_r2r,                                                      &
-                        max_comm_r2r*max_datasize_r2r*halomax*ADM_prc_rnum(ADM_prc_me), &
-                        MPI_INTEGER,                                                    &
-                        PRC_LOCAL_COMM_WORLD,                                           &
-                        ierr                                                            )
-
-    do l = 1, ADM_prc_rnum(ADM_prc_me)
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
-
-       tempbuf3D2(:,:,l) = n_hemisphere_copy(:,:,rgnid)
-    enddo
-
-    call MPI_Allgather( tempbuf3D2,                         &
-                        4*halomax*ADM_prc_rnum(ADM_prc_me), &
-                        MPI_INTEGER,                        &
-                        n_hemisphere_copy,                  &
-                        4*halomax*ADM_prc_rnum(ADM_prc_me), &
-                        MPI_INTEGER,                        &
-                        PRC_LOCAL_COMM_WORLD,               &
-                        ierr                                )
-
-    do l = 1, ADM_prc_rnum(ADM_prc_me)
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
-
-       tempbuf3D2(:,:,l) = s_hemisphere_copy(:,:,rgnid)
-    enddo
-
-    call MPI_Allgather( tempbuf3D2,                         &
-                        4*halomax*ADM_prc_rnum(ADM_prc_me), &
-                        MPI_INTEGER,                        &
-                        s_hemisphere_copy,                  &
-                        4*halomax*ADM_prc_rnum(ADM_prc_me), &
-                        MPI_INTEGER,                        &
-                        PRC_LOCAL_COMM_WORLD,               &
-                        ierr                                )
-
-    call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
-
-    do halo=1,halomax
-       do ls=1,ADM_prc_rnum(ADM_prc_me)
-          srgnid=ADM_prc_tab(ls,ADM_prc_me)
-          ms=0
-          do lr=1,ADM_rgn_nmax
-             rrgnid=lr
-             do mr=1,maxcommrecv_r2r(halo,rrgnid)
-                if (srgnid==sourceid_r2r(mr,halo,rrgnid)) then
-                   ms=ms+1
-
-                   !(20101207)added by teraim
-                   if(ADM_rgn2prc(srgnid)==ADM_prc_me) then
-                     msend_r2r(rrgnid,halo,srgnid)=ms
-                   else
-                     write(*,*)'This process is abort because irregular access in msend_r2r.'
-                     exit
-                   endif
-
-                   destid_r2r(ms,halo,srgnid)=rrgnid
-                   ssize_r2r(ms,halo,srgnid)=rsize_r2r(mr,halo,rrgnid)
-                   do n=1,rsize_r2r(mr,halo,rrgnid)
-                      slist_r2r(n,ms,halo,srgnid)=qlist_r2r(n,mr,halo,rrgnid)
-                   enddo
-                endif
-             enddo
-          enddo
-          maxcommsend_r2r(halo,srgnid)=ms
-       enddo
-    enddo !loop halo
-
-    call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
-    do l=1,ADM_rgn_nmax
-       call MPI_bcast(                  &
-            destid_r2r(1,1,l),          &
-            max_comm_r2r*halomax,       &
-            MPI_integer,                &
-            prc_tab_rev(ptr_prcid,l)-1, &
-            PRC_LOCAL_COMM_WORLD,       &
-            ierr)
-    enddo
-    do l=1,ADM_rgn_nmax
-       call MPI_bcast(                  &
-            ssize_r2r(1,1,l),           &
-            max_comm_r2r*halomax,       &
-            MPI_integer,                &
-            prc_tab_rev(ptr_prcid,l)-1, &
-            PRC_LOCAL_COMM_WORLD,       &
-            ierr)
-    enddo
-    !(20101207)removed by teraim
-    !do l=1,ADM_rgn_nmax
-    !   call MPI_bcast(                  &
-    !        msend_r2r(1,1,l),            &
-    !        ADM_rgn_nmax*halomax,  &
-    !        MPI_integer,                &
-    !        prc_tab_rev(ptr_prcid,l)-1, &
-    !        PRC_LOCAL_COMM_WORLD,       &
-    !        ierr)
-    !enddo
-    do l=1,ADM_rgn_nmax
-       call MPI_bcast(                             &
-            slist_r2r(1,1,1,l),                    &
-            max_comm_r2r*max_datasize_r2r*halomax, &
-            MPI_integer,                           &
-            prc_tab_rev(ptr_prcid,l)-1,            &
-            PRC_LOCAL_COMM_WORLD,                  &
-            ierr)
-    enddo
-    do l=1,ADM_rgn_nmax
-       call MPI_bcast(                  &
-            maxcommsend_r2r(1,l),       &
-            1*halomax,                  &
-            MPI_integer,                &
-            prc_tab_rev(ptr_prcid,l)-1, &
-            PRC_LOCAL_COMM_WORLD,       &
-            ierr)
-    enddo
-
-    allocate(sendbuf_p2r(kmax*max_varmax*2, &
-         ADM_rgn_nmax_pl))
-    allocate(recvbuf_p2r(kmax*max_varmax*2, &
-         ADM_rgn_nmax_pl))
-    allocate(recvtag_p2r(max_comm_p2r,ADM_npl:ADM_spl))
-    allocate(sendtag_p2r(max_comm_p2r,ADM_npl:ADM_spl))
-    do pl=ADM_npl,ADM_spl
-       do p=1,ADM_vlink
-          recvtag_p2r(p,pl)=ADM_rgn_nmax*ADM_rgn_nmax+p+ADM_vlink*(pl-1)
-          sendtag_p2r(p,pl)=ADM_rgn_nmax*ADM_rgn_nmax+p+ADM_vlink*(pl-1)
-
-!          write(*,*) 'sendtag_p2r',ADM_prc_me,p,pl,halo,sendtag_p2r(p,pl)
-
-       enddo
-    enddo
-
-    allocate(clist(max_varmax))
-
-    call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!  re-setup comm_table !!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    rank_me=ADM_prc_me-1
-    max_comm_prc=min(PRC_nprocs,max_comm_r2r*ADM_lall+2*max_comm_r2p)
-
-    allocate(n_nspl(ADM_npl:ADM_spl,halomax))
-    do halo=1,halomax
-       n_nspl(ADM_npl,halo)=suf(imin(halo)+0,jmax(halo)+1,gall(halo))
-       n_nspl(ADM_spl,halo)=suf(imax(halo)+1,jmin(halo)+0,gall(halo))
-    enddo
-
-    allocate(temp_sendorder(0:PRC_nprocs-1,halomax))
-    allocate(temp_recvorder(0:PRC_nprocs-1,halomax))
-
-    !--------------------------------------------------
-    allocate(romax(halomax))
-    allocate(somax(halomax))
-    allocate(sourcerank(max_comm_prc,halomax))
-    allocate(destrank(max_comm_prc,halomax))
-    allocate(rsize(max_comm_prc,halomax))
-    allocate(ssize(max_comm_prc,halomax))
-    romax(:)=0
-    somax(:)=0
-    sourcerank(:,:)=-1
-    destrank(:,:)=-1
-    rsize(:,:)=0
-    ssize(:,:)=0
-    !--------------------------------------------------
-
-    maxn=((gmax(halomax)-gmin(halomax)+1)+2)*halomax
-    maxm=max_comm_r2r+1
-    maxl=ADM_lall+2
-    !----
-    maxn_pl=halomax*(halomax+1)/2
-    maxm_pl=ADM_vlink
-    maxl_pl=(ADM_spl-ADM_npl+1)
-    !----
-    maxn_r2r=(gmax(halomax)-gmin(halomax)+1)*halomax
-    maxm_r2r=max_comm_r2r
-    maxl_r2r=ADM_lall
-    !----
-    maxn_r2p=halomax*(halomax+1)/2
-    maxm_r2p=ADM_vlink
-    maxl_r2p=(ADM_spl-ADM_npl+1)
-    !----
-    maxn_p2r=1
-    maxm_p2r=ADM_vlink
-    maxl_p2r=(ADM_spl-ADM_npl+1)
-    !----
-    maxn_sgp=halomax
-    maxm_sgp=4
-    maxl_sgp=12
-
-    !--------------------------------------------------
-    !  for send
-    !--------------------------------------------------
-    allocate(nsmax(max_comm_prc,halomax))
-    allocate(sendinfo(elemsize_comm,maxm*maxl,max_comm_prc,halomax))
-    allocate(sendlist(maxn,maxm*maxl,max_comm_prc,halomax))
-    nsmax(:,:)=0
-    sendinfo(:,:,:,:)=0
-    sendlist(:,:,:,:)=0
-    allocate(nsmax_pl(max_comm_prc,halomax))
-    allocate(sendinfo_pl(elemsize_comm,maxm_pl*maxl_pl,max_comm_prc,halomax))
-    allocate(sendlist_pl(maxn_pl,maxm_pl*maxl_pl,max_comm_prc,halomax))
-    nsmax_pl(:,:)=0
-    sendinfo_pl(:,:,:,:)=0
-    sendlist_pl(:,:,:,:)=0
-    !--------------------------------------------------
-
-    !--------------------------------------------------
-    !  for copy
-    !--------------------------------------------------
-    allocate(ncmax_r2r(halomax))
-    allocate(copyinfo_r2r(elemsize_copy,maxm_r2r*maxl_r2r,halomax))
-    allocate(recvlist_r2r(maxn_r2r,maxm_r2r*maxl_r2r,halomax))
-    allocate(sendlist_r2r(maxn_r2r,maxm_r2r*maxl_r2r,halomax))
-    ncmax_r2r(:)=0
-    copyinfo_r2r(:,:,:)=0
-    recvlist_r2r(:,:,:)=0
-    sendlist_r2r(:,:,:)=0
-    !--------------------------------------------------
-    allocate(ncmax_r2p(halomax))
-    allocate(copyinfo_r2p(elemsize_copy,maxm_r2p*maxl_r2p,halomax))
-    allocate(recvlist_r2p(maxn_r2p,maxm_r2p*maxl_r2p,halomax))
-    allocate(sendlist_r2p(maxn_r2p,maxm_r2p*maxl_r2p,halomax))
-    ncmax_r2p(:)=0
-    copyinfo_r2p(:,:,:)=0
-    recvlist_r2p(:,:,:)=0
-    sendlist_r2p(:,:,:)=0
-    !--------------------------------------------------
-    allocate(ncmax_p2r(halomax))
-    allocate(copyinfo_p2r(elemsize_copy,maxm_p2r*maxl_p2r,halomax))
-    allocate(recvlist_p2r(maxn_p2r,maxm_p2r*maxl_p2r,halomax))
-    allocate(sendlist_p2r(maxn_p2r,maxm_p2r*maxl_p2r,halomax))
-    ncmax_p2r(:)=0
-    copyinfo_p2r(:,:,:)=0
-    recvlist_p2r(:,:,:)=0
-    sendlist_p2r(:,:,:)=0
-    !--------------------------------------------------
-
-    !--------------------------------------------------
-    !  for recv
-    !--------------------------------------------------
-    allocate(nrmax(max_comm_prc,halomax))
-    allocate(recvinfo(elemsize_comm,maxm*maxl,max_comm_prc,halomax))
-    allocate(recvlist(maxn,maxm*maxl,max_comm_prc,halomax))
-    nrmax(:,:)=0
-    recvinfo(:,:,:,:)=0
-    recvlist(:,:,:,:)=0
-    allocate(nrmax_pl(max_comm_prc,halomax))
-    allocate(recvinfo_pl(elemsize_comm,maxm_pl*maxl_pl,max_comm_prc,halomax))
-    allocate(recvlist_pl(maxn_pl,maxm_pl*maxl_pl,max_comm_prc,halomax))
-    nrmax_pl(:,:)=0
-    recvinfo_pl(:,:,:,:)=0
-    recvlist_pl(:,:,:,:)=0
-    !--------------------------------------------------
-    allocate(temp_dest_rgn(maxm*maxl,max_comm_prc,halomax))
-    allocate(temp_src_rgn(maxm*maxl,max_comm_prc,halomax))
-    allocate(temp_dest_rgn_pl(maxm_pl*maxl_pl,max_comm_prc,halomax))
-    allocate(temp_src_rgn_pl(maxm_pl*maxl_pl,max_comm_prc,halomax))
-    temp_dest_rgn(:,:,:)=0
-    temp_dest_rgn_pl(:,:,:)=0
-    temp_src_rgn(:,:,:)=0
-    temp_src_rgn_pl(:,:,:)=0
-    !--------------------------------------------------
-
-    do halo=1,halomax
-       do l=1,ADM_lall
-          rgnid=ADM_prc_tab(l,ADM_prc_me)
-          do m=1,maxcommrecv_r2r(halo,rgnid)
-             srank=prc_tab_rev(ptr_prcid,sourceid_r2r(m,halo,rgnid))-1
-             if (srank/=rank_me) then
-                ck=0
-                loop_ro1:do ro=1,romax(halo)
-                   if (srank==sourcerank(ro,halo)) exit loop_ro1
-                   ck=ck+1
-                enddo loop_ro1
-                if (ck==romax(halo)) then
-                   romax(halo)=romax(halo)+1
-                   ro=romax(halo)
-                   sourcerank(ro,halo)=srank
-                   temp_recvorder(srank,halo)=ro
-                endif
-                ro=temp_recvorder(srank,halo)
-                nrmax(ro,halo)=nrmax(ro,halo)+1
-                nr=nrmax(ro,halo)
-                recvinfo(SIZE_COMM,nr,ro,halo)=rsize_r2r(m,halo,rgnid)
-                recvinfo(LRGNID_COMM,nr,ro,halo)=l
-                temp_src_rgn(nr,ro,halo)=sourceid_r2r(m,halo,rgnid)
-                rs=recvinfo(SIZE_COMM,nr,ro,halo)
-                rsize(ro,halo)=rsize(ro,halo)+rs
-                do n=1,rs
-                   recvlist(n,nr,ro,halo)=rlist_r2r(n,m,halo,rgnid)
-                enddo
-             else
-                ncmax_r2r(halo)=ncmax_r2r(halo)+1
-                nc=ncmax_r2r(halo)
-                copyinfo_r2r(SIZE_COPY,nc,halo)=rsize_r2r(m,halo,rgnid)
-                copyinfo_r2r(LRGNID_COPY,nc,halo)=l
-                copyinfo_r2r(SRC_LRGNID_COPY,nc,halo) &
-                     =prc_tab_rev(ptr_lrgnid,sourceid_r2r(m,halo,rgnid))
-                cs=copyinfo_r2r(SIZE_COPY,nc,halo)
-                srgnid=sourceid_r2r(m,halo,rgnid)
-                do n=1,cs
-                   recvlist_r2r(n,nc,halo)=rlist_r2r(n,m,halo,rgnid)
-
-                   !(20101207)added by teraim
-                   if(ADM_rgn2prc(srgnid)==ADM_prc_me) then
-                     sendlist_r2r(n,nc,halo)=slist_r2r(n,msend_r2r(rgnid,halo,srgnid),halo,srgnid)
-                   else
-                     write(*,*)'This process is abort because irregular access is msend_r2r.'
-                     exit
-                   endif
-
-                enddo
-             endif
-          enddo !loop m
-          !enddo !loop l
-          !!
-          !do l=1,ADM_lall
-          !  rgnid=ADM_prc_tab(l,ADM_prc_me)
-          do m=1,maxcommsend_r2r(halo,rgnid)
-             drank=prc_tab_rev(ptr_prcid,destid_r2r(m,halo,rgnid))-1
-             if (drank/=rank_me) then
-                ck=0
-                loop_so1:do so=1,somax(halo)
-                   if (drank==destrank(so,halo)) exit loop_so1
-                   ck=ck+1
-                enddo loop_so1
-                if (ck==somax(halo)) then
-                   somax(halo)=somax(halo)+1
-                   so=somax(halo)
-                   destrank(so,halo)=drank
-                   temp_sendorder(drank,halo)=so
-                endif
-                so=temp_sendorder(drank,halo)
-                nsmax(so,halo)=nsmax(so,halo)+1
-                ns=nsmax(so,halo)
-                sendinfo(SIZE_COMM,ns,so,halo)=ssize_r2r(m,halo,rgnid)
-                sendinfo(LRGNID_COMM,ns,so,halo)=l
-                temp_dest_rgn(ns,so,halo)=destid_r2r(m,halo,rgnid)
-                ss=sendinfo(SIZE_COMM,ns,so,halo)
-                ssize(so,halo)=ssize(so,halo)+ss
-                do n=1,ss
-                   sendlist(n,ns,so,halo)=slist_r2r(n,m,halo,rgnid)
-                enddo
-             endif
-          enddo !loop m
-       enddo !loop l
-       !enddo !loop halo
-       !do halo=1,halomax
-       if(comm_pl) call re_setup_pl_comm_info ! T.Ohno 110721
-    enddo !loop halo
-    deallocate(temp_sendorder)
-    deallocate(temp_recvorder)
-
-    !allocate(temp_sb(ADM_rgn_nmax+2,halomax,ADM_rgn_nmax+2)) !(20101207) removed by teraim
-    allocate(tsb(somax(halomax)))
-    !temp_sb(:,:,:)=0 !(20101207) removed by teraim
-
-    call init_tempsb !(20101207) added by teraim
-
-    do halo=1,halomax
-       tsb(:)=0
-       do so=1,somax(halo)
-          do ns=1,nsmax(so,halo)
-             ss=sendinfo(SIZE_COMM,ns,so,halo)
-             srgnid=ADM_prc_tab(sendinfo(LRGNID_COMM,ns,so,halo),ADM_prc_me)
-             rrgnid=temp_dest_rgn(ns,so,halo)
-             sendinfo(BASE_COMM,ns,so,halo)=tsb(so)
-             !temp_sb(rrgnid,halo,srgnid)=tsb(so) !(20101207)removed by teraim
-             call add_tempsb(rrgnid, srgnid, tsb(so)) !(20101207)added by teraim
-             tsb(so)=tsb(so)+ss
-          enddo
-          do ns=1,nsmax_pl(so,halo)
-             ss=sendinfo_pl(SIZE_COMM,ns,so,halo)
-             pl=sendinfo_pl(LRGNID_COMM,ns,so,halo)
-             srgnid=ADM_rgn_nmax+pl
-             rrgnid=temp_dest_rgn_pl(ns,so,halo)
-             sendinfo_pl(BASE_COMM,ns,so,halo)=tsb(so)
-             !temp_sb(rrgnid,halo,srgnid)=tsb(so) !(20101207)removed by teraim
-             call add_tempsb(rrgnid, srgnid, tsb(so)) !(20101207)added by teraim
-             tsb(so)=tsb(so)+ss
-          enddo
-       enddo
-    enddo
-    deallocate(tsb)
-
-    !(20101207)removed by teraim
-    !call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
-    !do l=1,ADM_rgn_nmax
-    !   call MPI_bcast(                  &
-    !        temp_sb(1,1,l),        &
-    !        (ADM_rgn_nmax+2)*halomax,      &
-    !        MPI_integer,                &
-    !        prc_tab_rev(ptr_prcid,l)-1, &
-    !        PRC_LOCAL_COMM_WORLD,       &
-    !        ierr)
-    !enddo
-    !do pl=ADM_npl,ADM_spl
-    !   call MPI_bcast(                  &
-    !        temp_sb(1,1,ADM_rgn_nmax+pl),       &
-    !        (ADM_rgn_nmax+2)*halomax,      &
-    !        MPI_integer,                &
-    !        ADM_prc_nspl(pl)-1,         &
-    !        PRC_LOCAL_COMM_WORLD,       &
-    !        ierr)
-    !enddo
-    !call MPI_barrier(PRC_LOCAL_COMM_WORLD,ierr)
-
-    !(20101207)added by teraim
-    call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
-    do l=1,ADM_rgn_nmax
-       call MPI_bcast(                  &
-            tempsb(l)%col,              &
-            max_size,                   &
-            MPI_integer,                &
-            prc_tab_rev(ptr_prcid,l)-1, &
-            PRC_LOCAL_COMM_WORLD,       &
-            ierr                        )
-       call MPI_bcast(                  &
-            tempsb(l)%val,              &
-            max_size,                   &
-            MPI_integer,                &
-            prc_tab_rev(ptr_prcid,l)-1, &
-            PRC_LOCAL_COMM_WORLD,       &
-            ierr                        )
-    enddo
-    if(comm_pl) then ! T.Ohno 110721
-      do pl=ADM_npl,ADM_spl
-         call MPI_bcast(                    &
-              tempsb(ADM_rgn_nmax+pl)%col,  &
-              max_size,                     &
-              MPI_integer,                  &
-              ADM_prc_nspl(pl)-1,           &
-              PRC_LOCAL_COMM_WORLD,         &
-              ierr                          )
-         call MPI_bcast(                    &
-              tempsb(ADM_rgn_nmax+pl)%val,  &
-              max_size,                     &
-              MPI_integer,                  &
-              ADM_prc_nspl(pl)-1,           &
-              PRC_LOCAL_COMM_WORLD,         &
-              ierr                          )
-      enddo
-    endif ! T.Ohno 110721
-    call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
-
-    !call show_tempsb !(20101209) added by teraim
-
-    do halo=1,halomax
-       do ro=1,romax(halo)
-          do nr=1,nrmax(ro,halo)
-             rrgnid=ADM_prc_tab(recvinfo(LRGNID_COMM,nr,ro,halo),ADM_prc_me)
-             srgnid=temp_src_rgn(nr,ro,halo)
-             !recvinfo(BASE_COMM,nr,ro,halo)=temp_sb(rrgnid,halo,srgnid) !(20101207)removed by teraim
-             !(20101207) added by teraim
-             call get_tempsb(rrgnid,srgnid,ret)
-             recvinfo(BASE_COMM,nr,ro,halo)=ret
-          enddo
-          do nr=1,nrmax_pl(ro,halo)
-             pl=recvinfo_pl(LRGNID_COMM,nr,ro,halo)
-             rrgnid=pl+ADM_rgn_nmax
-             srgnid=temp_src_rgn_pl(nr,ro,halo)
-             !recvinfo_pl(BASE_COMM,nr,ro,halo)=temp_sb(rrgnid,halo,srgnid) !(20101207)removed by teraim
-             !(20101207) added by teraim
-             call get_tempsb(rrgnid,srgnid,ret)
-             recvinfo_pl(BASE_COMM,nr,ro,halo)=ret
-          enddo
-       enddo !loop ro
-    enddo !loop halo
-    deallocate(temp_dest_rgn)
-    deallocate(temp_dest_rgn_pl)
-    deallocate(temp_src_rgn)
-    deallocate(temp_src_rgn_pl)
-    !deallocate(temp_sb) !(20101207)removed by teraim
-    call finalize_tempsb !(20101207)added by teraim
-
-    allocate(recvtag(romax(halomax),halomax))
-    allocate(sendtag(somax(halomax),halomax))
-    recvtag(:,:)=-1
-    sendtag(:,:)=-1
-    do halo=1,halomax
-       do ro=1,romax(halo)
-          recvtag(ro,halo)=rank_me
-       enddo
-       do so=1,somax(halo)
-          sendtag(so,halo)=destrank(so,halo)
-       enddo
-    enddo
-!    maxdatasize=(max_comm_r2r*(gmax(halomax)-gmin(halomax)+1)+2*max_comm_r2p*(halomax+1)/2)*halomax*kmax*max_varmax
-!    maxdatasize=(maxn_r2r*maxm_r2r*maxl_r2r+maxn_r2p*maxm_r2p*maxl_r2p+maxn_p2r*maxm_p2r*maxl_p2r)*kmax*max_varmax
-    maxdatasize_s=0
-    do so=1,somax(halomax)
-      maxdatasize_s=maxdatasize_s+ssize(so,halomax)*kmax*max_varmax
-    enddo
-    maxdatasize_r=0
-    do ro=1,romax(halomax)
-      maxdatasize_r=maxdatasize_r+rsize(ro,halomax)*kmax*max_varmax
-    enddo
-    allocate(recvbuf(maxdatasize_r,romax(halomax)))
-    allocate(sendbuf(maxdatasize_s,somax(halomax)))
-    recvbuf(:,:)=0.0_RP
-    sendbuf(:,:)=0.0_RP
-
-!!    allocate(comm_dbg_recvbuf(maxdatasize_r,romax(halomax),2)) !iga
-!!    allocate(comm_dbg_sendbuf(maxdatasize_s,somax(halomax),2)) !iga
-!!    comm_dbg_recvbuf=CNST_UNDEF !iga
-!!    comm_dbg_sendbuf=CNST_UNDEF !iga
-
-
-    allocate(ncmax_sgp(halomax))
-    allocate(copyinfo_sgp(elemsize_copy,maxm_sgp*maxl_sgp,halomax))
-    allocate(recvlist_sgp(maxn_sgp,maxm_sgp*maxl_sgp,halomax))
-    allocate(sendlist_sgp(maxn_sgp,maxm_sgp*maxl_sgp,halomax))
-    ncmax_sgp(:)=0
-    copyinfo_sgp(:,:,:)=0
-    recvlist_sgp(:,:,:)=0
-    sendlist_sgp(:,:,:)=0
-    do halo=1,halomax
-       ncmax_sgp(halo)=0
-       do l=1,ADM_lall
-          rgnid=ADM_prc_tab(l,ADM_prc_me)
-          if (n_hemisphere_copy(ADM_w,halo,rgnid)==1) then
-             ncmax_sgp(halo)=ncmax_sgp(halo)+1
-             nc=ncmax_sgp(halo)
-             copyinfo_sgp(SIZE_COPY,nc,halo)=halo
-             copyinfo_sgp(LRGNID_COPY,nc,halo)=l
-             copyinfo_sgp(SRC_LRGNID_COPY,nc,halo)=l
-             cs=copyinfo_sgp(SIZE_COPY,nc,halo)
-             do n=1,cs
-                recvlist_sgp(n,nc,halo)=suf(gmin(halo)-n,gmin(halo)-n,gall(halo))
-                sendlist_sgp(n,nc,halo)=suf(gmin(halo),gmin(halo)-n,gall(halo))
-             enddo
-          endif
-          if ((n_hemisphere_copy(ADM_n,halo,rgnid)==1)) then
-             ncmax_sgp(halo)=ncmax_sgp(halo)+1
-             nc=ncmax_sgp(halo)
-             copyinfo_sgp(SIZE_COPY,nc,halo)=halo-1
-             copyinfo_sgp(LRGNID_COPY,nc,halo)=l
-             copyinfo_sgp(SRC_LRGNID_COPY,nc,halo)=l
-             cs=copyinfo_sgp(SIZE_COPY,nc,halo)
-             do n=1,cs
-                recvlist_sgp(n,nc,halo)=suf(gmin(halo),gmax(halo)+n+1,gall(halo))
-                sendlist_sgp(n,nc,halo)=suf(gmin(halo)-n,gmax(halo)+1,gall(halo))
-             enddo
-          endif
-          if ((n_hemisphere_copy(ADM_e,halo,rgnid)==1)) then
-             ncmax_sgp(halo)=ncmax_sgp(halo)+1
-             nc=ncmax_sgp(halo)
-             copyinfo_sgp(SIZE_COPY,nc,halo)=halo-1
-             copyinfo_sgp(LRGNID_COPY,nc,halo)=l
-             copyinfo_sgp(SRC_LRGNID_COPY,nc,halo)=l
-             cs=copyinfo_sgp(SIZE_COPY,nc,halo)
-             do n=1,cs
-                recvlist_sgp(n,nc,halo)=suf(gmax(halo)+n+1,gmax(halo)+1,gall(halo))
-                sendlist_sgp(n,nc,halo)=suf(gmax(halo)+n+1,gmax(halo)+n+1,gall(halo))
-             enddo
-          endif
-          if ((n_hemisphere_copy(ADM_s,halo,rgnid)==1)) then
-             ncmax_sgp(halo)=ncmax_sgp(halo)+1
-             nc=ncmax_sgp(halo)
-             copyinfo_sgp(SIZE_COPY,nc,halo)=halo-1
-             copyinfo_sgp(LRGNID_COPY,nc,halo)=l
-             copyinfo_sgp(SRC_LRGNID_COPY,nc,halo)=l
-             cs=copyinfo_sgp(SIZE_COPY,nc,halo)
-             do n=1,cs
-                recvlist_sgp(n,nc,halo)=suf(gmax(halo)+1,gmin(halo)-n,gall(halo))
-                sendlist_sgp(n,nc,halo)=suf(gmax(halo)+n+1,gmin(halo),gall(halo))
-             enddo
-          endif
-          if (s_hemisphere_copy(ADM_w,halo,rgnid)==1) then
-             ncmax_sgp(halo)=ncmax_sgp(halo)+1
-             nc=ncmax_sgp(halo)
-             copyinfo_sgp(SIZE_COPY,nc,halo)=halo
-             copyinfo_sgp(LRGNID_COPY,nc,halo)=l
-             copyinfo_sgp(SRC_LRGNID_COPY,nc,halo)=l
-             cs=copyinfo_sgp(SIZE_COPY,nc,halo)
-             do n=1,cs
-                recvlist_sgp(n,nc,halo)=suf(gmin(halo),gmin(halo)-n,gall(halo))
-                sendlist_sgp(n,nc,halo)=suf(gmin(halo)-n,gmin(halo)-n,gall(halo))
-             enddo
-          endif
-          if ((s_hemisphere_copy(ADM_n,halo,rgnid)==1)) then
-             ncmax_sgp(halo)=ncmax_sgp(halo)+1
-             nc=ncmax_sgp(halo)
-             copyinfo_sgp(SIZE_COPY,nc,halo)=halo-1
-             copyinfo_sgp(LRGNID_COPY,nc,halo)=l
-             copyinfo_sgp(SRC_LRGNID_COPY,nc,halo)=l
-             cs=copyinfo_sgp(SIZE_COPY,nc,halo)
-             do n=1,cs
-                recvlist_sgp(n,nc,halo)=suf(gmin(halo)-n,gmax(halo)+1,gall(halo))
-                sendlist_sgp(n,nc,halo)=suf(gmin(halo),gmax(halo)+n+1,gall(halo))
-             enddo
-          endif
-          if ((s_hemisphere_copy(ADM_e,halo,rgnid)==1)) then
-             ncmax_sgp(halo)=ncmax_sgp(halo)+1
-             nc=ncmax_sgp(halo)
-             copyinfo_sgp(SIZE_COPY,nc,halo)=halo-1
-             copyinfo_sgp(LRGNID_COPY,nc,halo)=l
-             copyinfo_sgp(SRC_LRGNID_COPY,nc,halo)=l
-             cs=copyinfo_sgp(SIZE_COPY,nc,halo)
-             do n=1,cs
-                recvlist_sgp(n,nc,halo)=suf(gmax(halo)+n+1,gmax(halo)+1,gall(halo))
-                sendlist_sgp(n,nc,halo)=suf(gmax(halo)+n+1,gmax(halo)+n+1,gall(halo))
-             enddo
-          endif
-          if ((s_hemisphere_copy(ADM_s,halo,rgnid)==1)) then
-             ncmax_sgp(halo)=ncmax_sgp(halo)+1
-             nc=ncmax_sgp(halo)
-             copyinfo_sgp(SIZE_COPY,nc,halo)=halo-1
-             copyinfo_sgp(LRGNID_COPY,nc,halo)=l
-             copyinfo_sgp(SRC_LRGNID_COPY,nc,halo)=l
-             cs=copyinfo_sgp(SIZE_COPY,nc,halo)
-             do n=1,cs
-                recvlist_sgp(n,nc,halo)=suf(gmax(halo)+n+1,gmin(halo),gall(halo))
-                sendlist_sgp(n,nc,halo)=suf(gmax(halo)+1,gmin(halo)-n,gall(halo))
-             enddo
-          endif
-       enddo !loop l
-    enddo !loop halo
-
-    !-- for output_info  ---
-    allocate( src_rank_all(max_comm_prc,halomax,PRC_nprocs))
-    allocate(dest_rank_all(max_comm_prc,halomax,PRC_nprocs))
-    src_rank_all(:,:,:)=-1
-    dest_rank_all(:,:,:)=-1
-    src_rank_all(:,:,ADM_prc_me)=sourcerank(:,:)
-    dest_rank_all(:,:,ADM_prc_me)=destrank(:,:)
-    call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
-    do l=1,PRC_nprocs
-       call MPI_bcast(                  &
-            src_rank_all(1,1,l),        &
-            max_comm_prc*halomax,       &
-            MPI_integer,                &
-            l-1,                        &
-            PRC_LOCAL_COMM_WORLD,       &
-            ierr)
-       call MPI_bcast(                  &
-            dest_rank_all(1,1,l),       &
-            max_comm_prc*halomax,       &
-            MPI_integer,                &
-            l-1,                        &
-            PRC_LOCAL_COMM_WORLD,       &
-            ierr)
-    enddo
-
-    call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
-
-    !--- output for debug
-    if(present(debug)) then
-       if(debug) call output_info
-    endif
-
-    ! <== iga for dbg 090917
-    if (opt_comm_dbg) then
-       dbg_sendbuf_init = -888E+30_RP
-       dbg_recvbuf_init = -777E+30_RP
-       allocate(dbg_areq_save(2*(ADM_lall*max_comm_r2r+ADM_vlink*4),4))
-       dbg_areq_save(:,:) = -999
-    endif
-
-    contains
-
-    subroutine re_setup_pl_comm_info
-       do pl=ADM_npl,ADM_spl
-          if (ADM_prc_me==ADM_prc_nspl(pl)) then
-             do p=1,maxcommrecv_r2p(pl,halo)
-                srank=source_prc_r2p(p,pl,halo)-1
-                if (srank/=rank_me) then
-                   ck=0
-                   loop_ro2:do ro=1,romax(halo)
-                      if (srank==sourcerank(ro,halo)) exit loop_ro2
-                      ck=ck+1
-                   enddo loop_ro2
-                   if (ck==romax(halo)) then
-                      romax(halo)=romax(halo)+1
-                      ro=romax(halo)
-                      sourcerank(ro,halo)=srank
-                      temp_recvorder(srank,halo)=ro
-                   endif
-                   ro=temp_recvorder(srank,halo)
-                   nrmax_pl(ro,halo)=nrmax_pl(ro,halo)+1
-                   nr=nrmax_pl(ro,halo)
-                   recvinfo_pl(SIZE_COMM,nr,ro,halo)=rsize_r2p(p,pl,halo)
-                   recvinfo_pl(LRGNID_COMM,nr,ro,halo)=pl
-                   temp_src_rgn_pl(nr,ro,halo)=ADM_prc_tab(source_rgn_r2p(p,pl,halo),srank+1)
-                   rs=recvinfo_pl(SIZE_COMM,nr,ro,halo)
-                   rsize(ro,halo)=rsize(ro,halo)+rs
-                   do n=1,rs
-                      recvlist_pl(n,nr,ro,halo)=rlist_r2p(n,p,pl,halo)
-                   enddo
-                else
-                   ncmax_r2p(halo)=ncmax_r2p(halo)+1
-                   nc=ncmax_r2p(halo)
-                   copyinfo_r2p(SIZE_COPY,nc,halo)=rsize_r2p(p,pl,halo)
-                   copyinfo_r2p(LRGNID_COPY,nc,halo)=pl
-                   copyinfo_r2p(SRC_LRGNID_COPY,nc,halo)=source_rgn_r2p(p,pl,halo)
-                   cs=copyinfo_r2p(SIZE_COPY,nc,halo)
-                   do n=1,cs
-                      recvlist_r2p(n,nc,halo)=rlist_r2p(n,p,pl,halo)
-                      sendlist_r2p(n,nc,halo)=slist_r2p(n,p,pl,halo)
-                   enddo
-                endif
-             enddo !loop p
-
-             do p=1,ADM_vlink
-                rgnid=ADM_rgn_vtab_pl(ADM_rid,pl,p)
-                drank=prc_tab_rev(ptr_prcid,rgnid)-1
-                if (drank/=rank_me) then
-                   ck=0
-                   loop_so2:do so=1,somax(halo)
-                      if (drank==destrank(so,halo)) exit loop_so2
-                      ck=ck+1
-                   enddo loop_so2
-                   if (ck==somax(halo)) then
-                      somax(halo)=somax(halo)+1
-                      so=somax(halo)
-                      destrank(so,halo)=drank
-                      temp_sendorder(drank,halo)=so
-                   endif
-                   so=temp_sendorder(drank,halo)
-                   nsmax_pl(so,halo)=nsmax_pl(so,halo)+1
-                   ns=nsmax_pl(so,halo)
-                   sendinfo_pl(SIZE_COMM,ns,so,halo)=1
-                   sendinfo_pl(LRGNID_COMM,ns,so,halo)=pl
-                   temp_dest_rgn_pl(ns,so,halo)=rgnid
-                   ss=sendinfo_pl(SIZE_COMM,ns,so,halo)
-                   ssize(so,halo)=ssize(so,halo)+ss
-                   do n=1,ss
-                      sendlist_pl(n,ns,so,halo)=ADM_gslf_pl
-                   enddo
-                endif
-             enddo !loop p
-          endif
-
-          do p=1,ADM_vlink
-             rgnid=ADM_rgn_vtab_pl(ADM_rid,pl,p)
-             drank=prc_tab_rev(ptr_prcid,rgnid)-1
-             if (rank_me==drank) then
-                srank=ADM_prc_nspl(pl)-1
-                if (srank/=rank_me) then
-                   ck=0
-                   loop_ro3:do ro=1,romax(halo)
-                      if (srank==sourcerank(ro,halo)) exit loop_ro3
-                      ck=ck+1
-                   enddo loop_ro3
-                   if (ck==romax(halo)) then
-                      romax(halo)=romax(halo)+1
-                      ro=romax(halo)
-                      sourcerank(ro,halo)=srank
-                      temp_recvorder(srank,halo)=ro
-                   endif
-                   ro=temp_recvorder(srank,halo)
-                   nrmax(ro,halo)=nrmax(ro,halo)+1
-                   nr=nrmax(ro,halo)
-                   recvinfo(SIZE_COMM,nr,ro,halo)=1
-                   recvinfo(LRGNID_COMM,nr,ro,halo)=prc_tab_rev(ptr_lrgnid,rgnid)
-                   temp_src_rgn(nr,ro,halo)=ADM_rgn_nmax+pl
-                   rs=recvinfo(SIZE_COMM,nr,ro,halo)
-                   rsize(ro,halo)=rsize(ro,halo)+rs
-                   do n=1,rs
-                      recvlist(n,nr,ro,halo)=n_nspl(pl,halo)
-                   enddo
-                else
-                   ncmax_p2r(halo)=ncmax_p2r(halo)+1
-                   nc=ncmax_p2r(halo)
-                   copyinfo_p2r(SIZE_COPY,nc,halo)=1
-                   copyinfo_p2r(LRGNID_COPY,nc,halo)=prc_tab_rev(ptr_lrgnid,rgnid)
-                   copyinfo_p2r(SRC_LRGNID_COPY,nc,halo)=pl
-                   cs=copyinfo_p2r(SIZE_COPY,nc,halo)
-                   do n=1,cs
-                      recvlist_p2r(n,nc,halo)=n_nspl(pl,halo)
-                      sendlist_p2r(n,nc,halo)=ADM_gslf_pl
-                   enddo
-                endif
-             endif
-          enddo !loop p
-
-          do p=1,maxcommsend_r2p(pl,halo)
-             srank=source_prc_r2p(p,pl,halo)-1
-             if (rank_me==srank) then
-                rgnid=ADM_rgn_vtab_pl(ADM_rid,pl,p)
-                drank=ADM_prc_nspl(pl)-1
-                if (drank/=rank_me) then
-                   ck=0
-                   loop_so3:do so=1,somax(halo)
-                      if (drank==destrank(so,halo)) exit loop_so3
-                      ck=ck+1
-                   enddo loop_so3
-                   if (ck==somax(halo)) then
-                      somax(halo)=somax(halo)+1
-                      so=somax(halo)
-                      destrank(so,halo)=drank
-                      temp_sendorder(drank,halo)=so
-                   endif
-                   so=temp_sendorder(drank,halo)
-                   nsmax(so,halo)=nsmax(so,halo)+1
-                   ns=nsmax(so,halo)
-                   sendinfo(SIZE_COMM,ns,so,halo)=ssize_r2p(p,pl,halo)
-                   sendinfo(LRGNID_COMM,ns,so,halo)=prc_tab_rev(ptr_lrgnid,rgnid)
-                   temp_dest_rgn(ns,so,halo)=ADM_rgn_nmax+pl
-                   ss=sendinfo(SIZE_COMM,ns,so,halo)
-                   ssize(so,halo)=ssize(so,halo)+ss
-                   do n=1,ss
-                      sendlist(n,ns,so,halo)=slist_r2p(n,p,pl,halo)
-                   enddo
-                endif
-             endif
-          enddo !loop p
-       enddo !loop pl
-    end subroutine re_setup_pl_comm_info
-
-  end subroutine COMM_setup
-  !-----------------------------------------------------------------------------
-  subroutine output_info
-    use mod_process, only: &
-       PRC_nprocs
-    implicit none
-
-    integer :: halo
-
-    integer ::  varmax
-    integer ::  cmax
-
-    !integer ::  srgnid,rrgnid
-
-    integer ::  ns,nr
-    integer ::  so,sl,sb,ss
-    integer ::  ro,rl,rb,rs
-    integer ::  l,n
 
     write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) &
-         'msg : sub[output_info]/mod[comm]'
-    write(IO_FID_LOG,*) &
-         'version : comm.f90.test5.2.1_wtime'
-    write(IO_FID_LOG,*) &
-         '---------------------------------------&
-         &       commnication table  start       &
-         &---------------------------------------'
+    write(IO_FID_LOG,*) '====== communication information ======'
 
-    varmax=1
-    cmax=kmax*varmax
-    do halo=1,halomax
-       write(IO_FID_LOG,*) &
-            '---------------------------------------&
-            &       halo region =',halo,'           &
-            &---------------------------------------'
-       write(IO_FID_LOG,*) &
-            '---------------------------------------&
-            &                count                  &
-            &---------------------------------------'
-       write(IO_FID_LOG,*) &
-            'romax =',romax(halo) &
-            ,'somax =',somax(halo)
-       write(IO_FID_LOG,*) &
-            '---------------------------------------&
-            &                send                   &
-            &---------------------------------------'
-       do so=1,somax(halo)
-          write(IO_FID_LOG,*) &
-               'so =',so   &
-               ,'mrank =',rank_me   &
-               ,'drank =',destrank(so,halo)
-       enddo
-       write(IO_FID_LOG,*) &
-            '---------------------------------------&
-            &                recv                   &
-            &---------------------------------------'
-       do ro=1,romax(halo)
-          write(IO_FID_LOG,*) &
-               'ro =',ro   &
-               ,'mrank =',rank_me   &
-               ,'srank =',sourcerank(ro,halo)
-       enddo
-       write(IO_FID_LOG,*) &
-            '---------------------------------------&
-            &                table                   &
-            &---------------------------------------'
-       do l=1,PRC_nprocs
-          do n=1,max_comm_prc
-             if (dest_rank_all(n,halo,l)==-1) cycle
-             write(IO_FID_LOG,*) &
-                  'n =',n   &
-                  ,'rank =',l-1   &
-                  ,'dest_rank =',dest_rank_all(n,halo,l) &
-                  ,' src_rank =', src_rank_all(n,halo,l)
-          enddo
-       enddo
-       do so=1,somax(halo)
-          do ns=1,nsmax(so,halo)
-             ss=sendinfo(SIZE_COMM,ns,so,halo)
-             sl=sendinfo(LRGNID_COMM,ns,so,halo)
-             sb=sendinfo(BASE_COMM,ns,so,halo)*cmax
-             write(IO_FID_LOG,*) &
-                  'so =',so   &
-                  ,'rank =',rank_me   &
-                  ,' dest_rank =', destrank(so,halo) &
-                  ,' ss =', ss &
-                  ,' sl =', sl &
-                  ,' sb =', sb
-          enddo
-          do ns=1,nsmax_pl(so,halo)
-             ss=sendinfo_pl(SIZE_COMM,ns,so,halo)
-             sl=sendinfo_pl(LRGNID_COMM,ns,so,halo)
-             sb=sendinfo_pl(BASE_COMM,ns,so,halo)*cmax
-             write(IO_FID_LOG,*) &
-                  'so =',so   &
-                  ,'rank =',rank_me   &
-                  ,' dest_rank =', destrank(so,halo) &
-                  ,' ss =', ss &
-                  ,' sl =', sl &
-                  ,' sb =', sb
-          enddo
-       enddo !loop so
-       do ro=1,romax(halo)
-          do nr=1,nrmax(ro,halo)
-             rs=recvinfo(SIZE_COMM,nr,ro,halo)
-             rl=recvinfo(LRGNID_COMM,nr,ro,halo)
-             rb=recvinfo(BASE_COMM,nr,ro,halo)*cmax
-             write(IO_FID_LOG,*) &
-                  'ro =',ro   &
-                  ,'rank =',rank_me   &
-                  ,' src_rank =', sourcerank(ro,halo) &
-                  ,' rs =', rs &
-                  ,' rl =', rl &
-                  ,' rb =', rb
-          enddo
-          do nr=1,nrmax_pl(ro,halo)
-             rs=recvinfo_pl(SIZE_COMM,nr,ro,halo)
-             rl=recvinfo_pl(LRGNID_COMM,nr,ro,halo)
-             rb=recvinfo_pl(BASE_COMM,nr,ro,halo)*cmax
-             write(IO_FID_LOG,*) &
-                  'ro =',ro   &
-                  ,'rank =',rank_me   &
-                  ,' src_rank =', sourcerank(ro,halo) &
-                  ,' rs =', rs &
-                  ,' rl =', rl &
-                  ,' rb =', rb
-          enddo
-       enddo !loop ro
-    enddo !loop halo
+    call COMM_list_generate
 
-    write(IO_FID_LOG,*) &
-         '---------------------------------------&
-         &       commnication table  end         &
-         &---------------------------------------'
+    call COMM_sortdest
+    call COMM_sortdest_pl
+    call COMM_sortdest_singular
+
+    allocate( REQ_list( Recv_nmax_r2r + Send_nmax_r2r &
+                      + Recv_nmax_p2r + Send_nmax_p2r &
+                      + Recv_nmax_r2p + Send_nmax_r2p ) )
+
+    if( testonly ) call COMM_debugtest
 
     return
-  end subroutine output_info
+  end subroutine COMM_setup
 
   !-----------------------------------------------------------------------------
-  subroutine COMM_data_transfer(&
+  !> Generate inner grid -> halo communication list
+  subroutine COMM_list_generate
+    use mod_adm, only: &
+       ADM_prc_me,      &
+       ADM_lall,        &
+       ADM_gall,        &
+       ADM_gmax,        &
+       ADM_gmin,        &
+       RGNMNG_r2lp,     &
+       RGNMNG_l2r,      &
+       RGNMNG_edge_tab, &
+       RGNMNG_vert_num, &
+       RGNMNG_vert_tab, &
+       I_prc,           &
+       I_RGNID,         &
+       I_DIR,           &
+       I_SW,            &
+       I_NW,            &
+       I_NE,            &
+       I_SE,            &
+       I_W,             &
+       I_N,             &
+       I_E,             &
+       I_S
+    implicit none
+
+    integer :: ginnar
+
+    integer :: prc, prc_rmt
+    integer :: rgnid, rgnid_rmt
+    integer :: i, j, i_rmt, j_rmt
+
+    integer :: n, l, cnt
+    !---------------------------------------------------------------------------
+
+    ginnar = ADM_gmax - ADM_gmin + 1
+
+    allocate( rellist(rellist_vindex,ADM_gall*ADM_lall) )
+
+    cnt = 0
+    do l = 1, ADM_lall
+       rgnid = RGNMNG_l2r(l)
+       prc   = ADM_prc_me
+
+       !---< South West >---
+
+       ! NE -> SW halo
+       if ( RGNMNG_edge_tab(I_DIR,I_SW,rgnid) == I_NE ) then
+          rgnid_rmt = RGNMNG_edge_tab(I_RGNID,I_SW,rgnid)
+          prc_rmt   = RGNMNG_r2lp(I_prc,rgnid_rmt)
+
+          do n = 1, ginnar
+             cnt = cnt + 1
+
+             i     = ADM_gmin - 1 + n
+             j     = ADM_gmin - 1
+             i_rmt = ADM_gmin - 1 + n
+             j_rmt = ADM_gmax
+
+             rellist(I_recv_grid,cnt) = suf(i,j)
+             rellist(I_recv_rgn, cnt) = rgnid
+             rellist(I_recv_prc, cnt) = prc
+             rellist(I_send_grid,cnt) = suf(i_rmt,j_rmt)
+             rellist(I_send_rgn, cnt) = rgnid_rmt
+             rellist(I_send_prc, cnt) = prc_rmt
+          enddo
+       endif
+
+       ! SE -> SW halo (Southern Hemisphere, Edge of diamond)
+       if ( RGNMNG_edge_tab(I_DIR,I_SW,rgnid) == I_SE ) then
+          rgnid_rmt = RGNMNG_edge_tab(I_RGNID,I_SW,rgnid)
+          prc_rmt   = RGNMNG_r2lp(I_prc,rgnid_rmt)
+
+          do n = 1, ginnar
+             cnt = cnt + 1
+
+             i     = ADM_gmin - 1 + n
+             j     = ADM_gmin - 1
+             i_rmt = ADM_gmax
+             j_rmt = ADM_gmax + 1 - n ! reverse order
+
+             rellist(I_recv_grid,cnt) = suf(i,j)
+             rellist(I_recv_rgn, cnt) = rgnid
+             rellist(I_recv_prc, cnt) = prc
+             rellist(I_send_grid,cnt) = suf(i_rmt,j_rmt)
+             rellist(I_send_rgn, cnt) = rgnid_rmt
+             rellist(I_send_prc, cnt) = prc_rmt
+          enddo
+       endif
+
+       !---< North West >---
+
+       ! SE -> NW
+       if ( RGNMNG_edge_tab(I_DIR,I_NW,rgnid) == I_SE ) then
+          rgnid_rmt = RGNMNG_edge_tab(I_RGNID,I_NW,rgnid)
+          prc_rmt   = RGNMNG_r2lp(I_prc,rgnid_rmt)
+
+          do n = 1, ginnar
+             cnt = cnt + 1
+
+             i     = ADM_gmin - 1
+             j     = ADM_gmin - 1 + n
+             i_rmt = ADM_gmax
+             j_rmt = ADM_gmin - 1 + n
+
+             rellist(I_recv_grid,cnt) = suf(i,j)
+             rellist(I_recv_rgn, cnt) = rgnid
+             rellist(I_recv_prc, cnt) = prc
+             rellist(I_send_grid,cnt) = suf(i_rmt,j_rmt)
+             rellist(I_send_rgn, cnt) = rgnid_rmt
+             rellist(I_send_prc, cnt) = prc_rmt
+          enddo
+       endif
+
+       ! NE -> NW  (Northern Hemisphere, Edge of diamond)
+       if ( RGNMNG_edge_tab(I_DIR,I_NW,rgnid) == I_NE ) then
+          rgnid_rmt = RGNMNG_edge_tab(I_RGNID,I_NW,rgnid)
+          prc_rmt   = RGNMNG_r2lp(I_prc,rgnid_rmt)
+
+          do n = 1, ginnar
+             cnt = cnt + 1
+
+             i     = ADM_gmin - 1
+             j     = ADM_gmin - 1 + n
+             i_rmt = ADM_gmax + 1 - n ! reverse order
+             j_rmt = ADM_gmax
+
+             rellist(I_recv_grid,cnt) = suf(i,j)
+             rellist(I_recv_rgn, cnt) = rgnid
+             rellist(I_recv_prc, cnt) = prc
+             rellist(I_send_grid,cnt) = suf(i_rmt,j_rmt)
+             rellist(I_send_rgn, cnt) = rgnid_rmt
+             rellist(I_send_prc, cnt) = prc_rmt
+          enddo
+       endif
+
+       !---< North East >---
+
+       ! SW -> NE
+       if ( RGNMNG_edge_tab(I_DIR,I_NE,rgnid) == I_SW ) then
+          rgnid_rmt = RGNMNG_edge_tab(I_RGNID,I_NE,rgnid)
+          prc_rmt   = RGNMNG_r2lp(I_prc,rgnid_rmt)
+
+          do n = 1, ginnar
+             cnt = cnt + 1
+
+             i     = ADM_gmin - 1 + n
+             j     = ADM_gmax + 1
+             i_rmt = ADM_gmin - 1 + n
+             j_rmt = ADM_gmin
+
+             rellist(I_recv_grid,cnt) = suf(i,j)
+             rellist(I_recv_rgn, cnt) = rgnid
+             rellist(I_recv_prc, cnt) = prc
+             rellist(I_send_grid,cnt) = suf(i_rmt,j_rmt)
+             rellist(I_send_rgn, cnt) = rgnid_rmt
+             rellist(I_send_prc, cnt) = prc_rmt
+          enddo
+       endif
+
+       ! NW -> NE  (Northern Hemisphere, Edge of diamond)
+       if ( RGNMNG_edge_tab(I_DIR,I_NE,rgnid) == I_NW ) then
+          rgnid_rmt = RGNMNG_edge_tab(I_RGNID,I_NE,rgnid)
+          prc_rmt   = RGNMNG_r2lp(I_prc,rgnid_rmt)
+
+          do n = 1, ginnar
+             cnt = cnt + 1
+
+             i     = ADM_gmin     + n ! shift 1 grid
+             j     = ADM_gmax + 1
+             i_rmt = ADM_gmin
+             j_rmt = ADM_gmax + 1 - n ! reverse order
+
+             rellist(I_recv_grid,cnt) = suf(i,j)
+             rellist(I_recv_rgn, cnt) = rgnid
+             rellist(I_recv_prc, cnt) = prc
+             rellist(I_send_grid,cnt) = suf(i_rmt,j_rmt)
+             rellist(I_send_rgn, cnt) = rgnid_rmt
+             rellist(I_send_prc, cnt) = prc_rmt
+          enddo
+       endif
+
+       !---< South East >---
+
+       ! NW -> SE
+       if ( RGNMNG_edge_tab(I_DIR,I_SE,rgnid) == I_NW ) then
+          rgnid_rmt = RGNMNG_edge_tab(I_RGNID,I_SE,rgnid)
+          prc_rmt   = RGNMNG_r2lp(I_prc,rgnid_rmt)
+
+          do n = 1, ginnar
+             cnt = cnt + 1
+
+             i     = ADM_gmax + 1
+             j     = ADM_gmin - 1 + n
+             i_rmt = ADM_gmin
+             j_rmt = ADM_gmin - 1 + n
+
+             rellist(I_recv_grid,cnt) = suf(i,j)
+             rellist(I_recv_rgn, cnt) = rgnid
+             rellist(I_recv_prc, cnt) = prc
+             rellist(I_send_grid,cnt) = suf(i_rmt,j_rmt)
+             rellist(I_send_rgn, cnt) = rgnid_rmt
+             rellist(I_send_prc, cnt) = prc_rmt
+          enddo
+       endif
+
+       ! SW -> SE  (Southern Hemisphere, Edge of diamond)
+       if ( RGNMNG_edge_tab(I_DIR,I_SE,rgnid) == I_SW ) then
+          rgnid_rmt = RGNMNG_edge_tab(I_RGNID,I_SE,rgnid)
+          prc_rmt   = RGNMNG_r2lp(I_prc,rgnid_rmt)
+
+          do n = 1, ginnar
+             cnt = cnt + 1
+
+             i     = ADM_gmax + 1
+             j     = ADM_gmin     + n ! shift 1 grid
+             i_rmt = ADM_gmax + 1 - n ! reverse order
+             j_rmt = ADM_gmin
+
+             rellist(I_recv_grid,cnt) = suf(i,j)
+             rellist(I_recv_rgn, cnt) = rgnid
+             rellist(I_recv_prc, cnt) = prc
+             rellist(I_send_grid,cnt) = suf(i_rmt,j_rmt)
+             rellist(I_send_rgn, cnt) = rgnid_rmt
+             rellist(I_send_prc, cnt) = prc_rmt
+          enddo
+       endif
+
+       !---< Vertex : link to the next next region >---
+
+       ! West Vertex
+       if ( RGNMNG_vert_num(I_W,rgnid) == 4 ) then
+          rgnid_rmt = RGNMNG_vert_tab(I_RGNID,I_W,rgnid,3)
+          prc_rmt   = RGNMNG_r2lp(I_prc,rgnid_rmt)
+
+          cnt = cnt + 1
+
+          i = ADM_gmin - 1
+          j = ADM_gmin - 1
+
+          if ( RGNMNG_vert_tab(I_DIR,I_W,rgnid,3) == I_N ) then
+             i_rmt = ADM_gmin
+             j_rmt = ADM_gmax
+          elseif( RGNMNG_vert_tab(I_DIR,I_W,rgnid,3) == I_E ) then
+             i_rmt = ADM_gmax
+             j_rmt = ADM_gmax
+          elseif( RGNMNG_vert_tab(I_DIR,I_W,rgnid,3) == I_S ) then
+             i_rmt = ADM_gmax
+             j_rmt = ADM_gmin
+          endif
+
+          rellist(I_recv_grid,cnt) = suf(i,j)
+          rellist(I_recv_rgn, cnt) = rgnid
+          rellist(I_recv_prc, cnt) = prc
+          rellist(I_send_grid,cnt) = suf(i_rmt,j_rmt)
+          rellist(I_send_rgn, cnt) = rgnid_rmt
+          rellist(I_send_prc, cnt) = prc_rmt
+       endif
+
+       ! North Vertex
+       if ( RGNMNG_vert_num(I_N,rgnid) == 4 ) then
+          rgnid_rmt = RGNMNG_vert_tab(I_RGNID,I_N,rgnid,3)
+          prc_rmt   = RGNMNG_r2lp(I_prc,rgnid_rmt)
+
+          ! known as north pole point
+          if ( RGNMNG_vert_tab(I_DIR,I_N,rgnid,3) == I_W ) then
+             cnt = cnt + 1
+
+             i     = ADM_gmin
+             j     = ADM_gmax + 1
+             i_rmt = ADM_gmin
+             j_rmt = ADM_gmin
+
+             rellist(I_recv_grid,cnt) = suf(i,j)
+             rellist(I_recv_rgn, cnt) = rgnid
+             rellist(I_recv_prc, cnt) = prc
+             rellist(I_send_grid,cnt) = suf(i_rmt,j_rmt)
+             rellist(I_send_rgn, cnt) = rgnid_rmt
+             rellist(I_send_prc, cnt) = prc_rmt
+          endif
+
+          ! unused vertex point
+          cnt = cnt + 1
+
+          i = ADM_gmin - 1
+          j = ADM_gmax + 1
+
+          if ( RGNMNG_vert_tab(I_DIR,I_N,rgnid,3) == I_W ) then
+             i_rmt = ADM_gmin
+             j_rmt = ADM_gmin + 1
+          elseif( RGNMNG_vert_tab(I_DIR,I_N,rgnid,3) == I_N ) then
+             i_rmt = ADM_gmin
+             j_rmt = ADM_gmax
+          elseif( RGNMNG_vert_tab(I_DIR,I_N,rgnid,3) == I_E ) then
+             i_rmt = ADM_gmax
+             j_rmt = ADM_gmax
+          elseif( RGNMNG_vert_tab(I_DIR,I_N,rgnid,3) == I_S ) then
+             i_rmt = ADM_gmax
+             j_rmt = ADM_gmin
+          endif
+
+          rellist(I_recv_grid,cnt) = suf(i,j)
+          rellist(I_recv_rgn, cnt) = rgnid
+          rellist(I_recv_prc, cnt) = prc
+          rellist(I_send_grid,cnt) = suf(i_rmt,j_rmt)
+          rellist(I_send_rgn, cnt) = rgnid_rmt
+          rellist(I_send_prc, cnt) = prc_rmt
+       endif
+
+       ! East Vertex
+       if ( RGNMNG_vert_num(I_E,rgnid) == 4 ) then
+          if ( RGNMNG_vert_tab(I_DIR,I_E,rgnid,3) == I_W ) then
+             rgnid_rmt = RGNMNG_vert_tab(I_RGNID,I_E,rgnid,3)
+             prc_rmt   = RGNMNG_r2lp(I_prc,rgnid_rmt)
+
+             cnt = cnt + 1
+
+             i     = ADM_gmax + 1
+             j     = ADM_gmax + 1
+             i_rmt = ADM_gmin
+             j_rmt = ADM_gmin
+
+             rellist(I_recv_grid,cnt) = suf(i,j)
+             rellist(I_recv_rgn, cnt) = rgnid
+             rellist(I_recv_prc, cnt) = prc
+             rellist(I_send_grid,cnt) = suf(i_rmt,j_rmt)
+             rellist(I_send_rgn, cnt) = rgnid_rmt
+             rellist(I_send_prc, cnt) = prc_rmt
+          endif
+       endif
+
+       ! South Vertex
+       if ( RGNMNG_vert_num(I_S,rgnid) == 4 ) then
+          rgnid_rmt = RGNMNG_vert_tab(I_RGNID,I_S,rgnid,3)
+          prc_rmt   = RGNMNG_r2lp(I_prc,rgnid_rmt)
+
+          ! known as south pole point
+          if ( RGNMNG_vert_tab(I_DIR,I_S,rgnid,3) == I_W ) then
+             cnt = cnt + 1
+
+             i     = ADM_gmax + 1
+             j     = ADM_gmin
+             i_rmt = ADM_gmin
+             j_rmt = ADM_gmin
+
+             rellist(I_recv_grid,cnt) = suf(i,j)
+             rellist(I_recv_rgn, cnt) = rgnid
+             rellist(I_recv_prc, cnt) = prc
+             rellist(I_send_grid,cnt) = suf(i_rmt,j_rmt)
+             rellist(I_send_rgn, cnt) = rgnid_rmt
+             rellist(I_send_prc, cnt) = prc_rmt
+          endif
+
+          ! unused vertex point
+          cnt = cnt + 1
+
+          i = ADM_gmax + 1
+          j = ADM_gmin - 1
+
+          if ( RGNMNG_vert_tab(I_DIR,I_S,rgnid,3) == I_W ) then
+             i_rmt = ADM_gmin + 1
+             j_rmt = ADM_gmin
+          elseif( RGNMNG_vert_tab(I_DIR,I_S,rgnid,3) == I_N ) then
+             i_rmt = ADM_gmin
+             j_rmt = ADM_gmax
+          elseif( RGNMNG_vert_tab(I_DIR,I_S,rgnid,3) == I_E ) then
+             i_rmt = ADM_gmax
+             j_rmt = ADM_gmax
+          elseif( RGNMNG_vert_tab(I_DIR,I_S,rgnid,3) == I_S ) then
+             i_rmt = ADM_gmax
+             j_rmt = ADM_gmin
+          endif
+
+          rellist(I_recv_grid,cnt) = suf(i,j)
+          rellist(I_recv_rgn, cnt) = rgnid
+          rellist(I_recv_prc, cnt) = prc
+          rellist(I_send_grid,cnt) = suf(i_rmt,j_rmt)
+          rellist(I_send_rgn, cnt) = rgnid_rmt
+          rellist(I_send_prc, cnt) = prc_rmt
+       endif
+    enddo ! loop l
+
+    rellist_nmax = cnt
+
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) "*** rellist_nmax:", rellist_nmax
+
+    if ( debug ) then
+       write(IO_FID_LOG,*) "--- Relation Table"
+       write(IO_FID_LOG,'(7(A10))') 'Count', '|recv_grid', '| recv_rgn', '| recv_prc', &
+                                                       '|send_grid', '| send_rgn', '| send_prc'
+       do cnt = 1, rellist_nmax
+          write(IO_FID_LOG,'(7(I10))') cnt, rellist(:,cnt)
+       enddo
+    endif
+
+    return
+  end subroutine COMM_list_generate
+
+  !-----------------------------------------------------------------------------
+  !> Sort data destination for region <-> region
+  subroutine COMM_sortdest
+    use mod_process, only: &
+       PRC_LOCAL_COMM_WORLD, &
+       PRC_nprocs
+    use mod_adm, only: &
+       ADM_prc_me,     &
+       ADM_kall,       &
+       ADM_gall_1d,    &
+       RGNMNG_lp2r,    &
+       RGNMNG_r2lp,    &
+       I_l
+    implicit none
+
+    integer :: sendbuf1(1)
+    integer :: recvbuf1(1)
+
+    integer, allocatable :: sendbuf_info(:)
+    integer, allocatable :: recvbuf_info(:)
+    integer, allocatable :: sendbuf_list(:,:,:)
+    integer, allocatable :: recvbuf_list(:,:,:)
+    integer, allocatable :: REQ_list_r2r(:)
+
+    integer :: Recv_nglobal_r2r
+    integer :: Send_size_nglobal
+
+    integer :: cnt, irank, ipos
+    integer :: totalsize, rank, tag
+
+    integer :: i_from, j_from, r_from, g_from, l_from, p_from
+    integer :: i_to, j_to, r_to, g_to, l_to, p_to
+
+    integer :: ierr
+    integer :: n, p
+    !---------------------------------------------------------------------------
+
+    allocate( Copy_info_r2r(info_vindex) )
+    allocate( Recv_info_r2r(info_vindex,Recv_nlim) )
+    allocate( Send_info_r2r(info_vindex,Send_nlim) )
+    Copy_info_r2r(:)        = -1
+    Recv_info_r2r(:,:)      = -1
+    Send_info_r2r(:,:)      = -1
+    Copy_info_r2r(I_size)   = 0
+    Recv_info_r2r(I_size,:) = 0
+    Send_info_r2r(I_size,:) = 0
+
+    allocate( Copy_list_r2r(list_vindex,rellist_nmax) )
+    allocate( Recv_list_r2r(list_vindex,rellist_nmax,Recv_nlim) )
+    allocate( Send_list_r2r(list_vindex,rellist_nmax,Send_nlim) )
+    Copy_list_r2r(:,:)   = -1
+    Recv_list_r2r(:,:,:) = -1
+    Send_list_r2r(:,:,:) = -1
+
+    ! sorting list according to destination
+    do cnt = 1, rellist_nmax
+
+       if ( rellist(I_recv_prc,cnt) == rellist(I_send_prc,cnt) ) then ! no communication
+          Copy_info_r2r(I_size) = Copy_info_r2r(I_size) + 1
+          ipos                  = Copy_info_r2r(I_size)
+
+          Copy_list_r2r(I_grid_from,ipos) = rellist(I_send_grid,cnt)
+          Copy_list_r2r(I_l_from   ,ipos) = RGNMNG_r2lp(I_l,rellist(I_send_rgn,cnt))
+          Copy_list_r2r(I_grid_to  ,ipos) = rellist(I_recv_grid,cnt)
+          Copy_list_r2r(I_l_to     ,ipos) = RGNMNG_r2lp(I_l,rellist(I_recv_rgn,cnt))
+       else ! node-to-node communication
+          !--- search existing rank id (identify by prc_from)
+          irank = -1
+          do n = 1, Recv_nmax_r2r
+             if ( Recv_info_r2r(I_prc_from,n) == rellist(I_send_prc,cnt) ) then
+                irank = n
+                exit
+             endif
+          enddo
+
+          if ( irank < 0 ) then ! register new rank id
+             Recv_nmax_r2r = Recv_nmax_r2r + 1
+             irank         = Recv_nmax_r2r
+
+             Recv_info_r2r(I_prc_from,irank) = rellist(I_send_prc,cnt)
+             Recv_info_r2r(I_prc_to  ,irank) = rellist(I_recv_prc,cnt)
+          endif
+
+          Recv_info_r2r(I_size,irank) = Recv_info_r2r(I_size,irank) + 1
+          ipos                        = Recv_info_r2r(I_size,irank)
+
+          Recv_list_r2r(I_grid_from,ipos,irank) = rellist(I_send_grid,cnt)
+          Recv_list_r2r(I_l_from   ,ipos,irank) = RGNMNG_r2lp(I_l,rellist(I_send_rgn,cnt))
+          Recv_list_r2r(I_grid_to  ,ipos,irank) = rellist(I_recv_grid,cnt)
+          Recv_list_r2r(I_l_to     ,ipos,irank) = RGNMNG_r2lp(I_l,rellist(I_recv_rgn,cnt))
+       endif
+    enddo
+
+    if ( Copy_info_r2r(I_size) > 0 ) then
+       Copy_nmax_r2r = 1
+       Copy_info_r2r(I_prc_from) = ADM_prc_me
+       Copy_info_r2r(I_prc_to  ) = ADM_prc_me
+    endif
+
+
+
+    ! get maximum number of rank to communication
+    sendbuf1(1) = Recv_nmax_r2r
+
+    call MPI_Allreduce( sendbuf1(1),          & ! [IN]
+                        recvbuf1(1),          & ! [OUT]
+                        1,                    & ! [IN]
+                        MPI_INTEGER,          & ! [IN]
+                        MPI_MAX,              & ! [IN]
+                        PRC_LOCAL_COMM_WORLD, & ! [IN]
+                        ierr                  ) ! [OUT]
+
+    Recv_nglobal_r2r = recvbuf1(1)
+
+    ! Distribute receive request from each rank to all
+    allocate( sendbuf_info(info_vindex*Recv_nglobal_r2r) )
+    allocate( recvbuf_info(info_vindex*Recv_nglobal_r2r*PRC_nprocs) )
+    sendbuf_info(:) = -1
+
+    do irank = 1, Recv_nmax_r2r
+       n = (irank-1) * info_vindex
+
+       sendbuf_info(n+I_size    ) = Recv_info_r2r(I_size    ,irank)
+       sendbuf_info(n+I_prc_from) = Recv_info_r2r(I_prc_from,irank)
+       sendbuf_info(n+I_prc_to  ) = Recv_info_r2r(I_prc_to  ,irank)
+    enddo
+
+    totalsize = info_vindex * Recv_nglobal_r2r
+
+    call MPI_Allgather( sendbuf_info(1),      & ! [IN]
+                        totalsize,            & ! [IN]
+                        MPI_INTEGER,          & ! [IN]
+                        recvbuf_info(1),      & ! [OUT]
+                        totalsize,            & ! [IN]
+                        MPI_INTEGER,          & ! [IN]
+                        PRC_LOCAL_COMM_WORLD, & ! [IN]
+                        ierr                  ) ! [OUT]
+
+    Send_size_nglobal = 0
+
+    ! Accept receive request to my rank
+    do p  = 1, Recv_nglobal_r2r*PRC_nprocs
+       n = (p-1) * info_vindex
+
+       if ( recvbuf_info(n+I_prc_from) == ADM_prc_me ) then
+          Send_nmax_r2r = Send_nmax_r2r + 1
+          irank         = Send_nmax_r2r
+
+          Send_info_r2r(I_size    ,irank) = recvbuf_info(n+I_size    )
+          Send_info_r2r(I_prc_from,irank) = recvbuf_info(n+I_prc_from)
+          Send_info_r2r(I_prc_to  ,irank) = recvbuf_info(n+I_prc_to  )
+       endif
+
+       Send_size_nglobal = max( Send_size_nglobal, recvbuf_info(n+I_size) )
+    enddo
+
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '*** Recv_nmax_r2r(global) = ', Recv_nglobal_r2r
+    write(IO_FID_LOG,*) '*** Recv_nmax_r2r(local)  = ', Recv_nmax_r2r
+    write(IO_FID_LOG,*) '*** Send_nmax_r2r(local)  = ', Send_nmax_r2r
+    write(IO_FID_LOG,*) '*** Send_size_r2r(global) = ', Send_size_nglobal
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,'(A)')             "|---------------------------------------"
+    write(IO_FID_LOG,'(A)')             "|               size  prc_from    prc_to"
+    write(IO_FID_LOG,'(A10,3(I10))')    "| Copy_r2r", Copy_info_r2r(:)
+    do irank = 1, Recv_nmax_r2r
+       write(IO_FID_LOG,'(A10,3(I10))') "| Recv_r2r", Recv_info_r2r(:,irank)
+    enddo
+    do irank = 1, Send_nmax_r2r
+       write(IO_FID_LOG,'(A10,3(I10))') "| Send_r2r", Send_info_r2r(:,irank)
+    enddo
+
+    ! Communicate detailed information in each pair
+    allocate( REQ_list_r2r(Recv_nmax_r2r+Send_nmax_r2r)  )
+
+    allocate( sendbuf_list(list_vindex,Send_size_nglobal,Recv_nmax_r2r) )
+    allocate( recvbuf_list(list_vindex,Send_size_nglobal,Send_nmax_r2r) )
+    sendbuf_list(:,:,:) = -1
+
+    REQ_count = 0
+
+    do irank = 1, Send_nmax_r2r
+       REQ_count = REQ_count + 1
+       totalsize = Send_info_r2r(I_size,irank) * list_vindex
+       rank      = Send_info_r2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
+       tag       = Send_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
+
+       call MPI_IRECV( recvbuf_list(1,1,irank), & ! [OUT]
+                       totalsize,               & ! [IN]
+                       MPI_INTEGER,             & ! [IN]
+                       rank,                    & ! [IN]
+                       tag,                     & ! [IN]
+                       PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                       REQ_list_r2r(REQ_count), & ! [OUT]
+                       ierr                     ) ! [OUT]
+    enddo
+
+    do irank = 1, Recv_nmax_r2r
+       do ipos = 1, Recv_info_r2r(I_size,irank)
+          sendbuf_list(:,ipos,irank) = Recv_list_r2r(:,ipos,irank)
+       enddo
+
+       REQ_count = REQ_count + 1
+       totalsize = Recv_info_r2r(I_size,irank) * list_vindex
+       rank      = Recv_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
+       tag       = Recv_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
+
+       call MPI_ISEND( sendbuf_list(1,1,irank), & ! [IN]
+                       totalsize,               & ! [IN]
+                       MPI_INTEGER,             & ! [IN]
+                       rank,                    & ! [IN]
+                       tag,                     & ! [IN]
+                       PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                       REQ_list_r2r(REQ_count), & ! [OUT]
+                       ierr                     ) ! [OUT]
+    enddo
+
+    !--- wait packets
+    call MPI_WAITALL( Recv_nmax_r2r+Send_nmax_r2r, & ! [IN]
+                      REQ_list_r2r(:),             & ! [IN]
+                      MPI_STATUSES_IGNORE,         & ! [OUT]
+                      ierr                         ) ! [OUT]
+
+    do irank = 1, Send_nmax_r2r
+       do ipos = 1, Send_info_r2r(I_size,irank)
+          Send_list_r2r(:,ipos,irank) = recvbuf_list(:,ipos,irank)
+       enddo
+    enddo
+
+    if ( debug ) then
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,*) "--- Copy_list_r2r"
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,'(13(A6))') "number", &
+                                               "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
+                                               "|  ito","|  jto","|  rto","|  gto","|  lto","|  pto"
+       do ipos = 1, Copy_info_r2r(I_size)
+          g_from = Copy_list_r2r(I_grid_from,ipos)
+          l_from = Copy_list_r2r(I_l_from,ipos)
+          p_from = Copy_info_r2r(I_prc_from)
+          i_from = mod(g_from-1,ADM_gall_1d) + 1
+          j_from = (g_from-i_from) / ADM_gall_1d + 1
+          r_from = RGNMNG_lp2r(l_from,p_from)
+          g_to   = Copy_list_r2r(I_grid_to,ipos)
+          l_to   = Copy_list_r2r(I_l_to,ipos)
+          p_to   = Copy_info_r2r(I_prc_to)
+          i_to   = mod(g_to-1,ADM_gall_1d) + 1
+          j_to   = (g_to-i_to) / ADM_gall_1d + 1
+          r_to   = RGNMNG_lp2r(l_to,p_to)
+
+          write(IO_FID_LOG,'(13(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
+                                             i_to  , j_to  , r_to  , g_to  , l_to  , p_to
+       enddo
+
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,*) "--- Recv_list_r2r"
+       do irank = 1, Recv_nmax_r2r
+          write(IO_FID_LOG,'(13(A6))') "number", &
+                                                  "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
+                                                  "|  ito","|  jto","|  rto","|  gto","|  lto","|  pto"
+          do ipos = 1, Recv_info_r2r(I_size,irank)
+             g_from = Recv_list_r2r(I_grid_from,ipos,irank)
+             l_from = Recv_list_r2r(I_l_from,ipos,irank)
+             p_from = Recv_info_r2r(I_prc_from,irank)
+             i_from = mod(g_from-1,ADM_gall_1d) + 1
+             j_from = (g_from-i_from) / ADM_gall_1d + 1
+             r_from = RGNMNG_lp2r(l_from,p_from)
+             g_to   = Recv_list_r2r(I_grid_to,ipos,irank)
+             l_to   = Recv_list_r2r(I_l_to,ipos,irank)
+             p_to   = Recv_info_r2r(I_prc_to,irank)
+             i_to   = mod(g_to-1,ADM_gall_1d) + 1
+             j_to   = (g_to-i_to) / ADM_gall_1d + 1
+             r_to   = RGNMNG_lp2r(l_to,p_to)
+
+             write(IO_FID_LOG,'(13(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
+                                                i_to  , j_to  , r_to  , g_to  , l_to  , p_to
+          enddo
+       enddo
+
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,*) "--- Send_list_r2r"
+       do irank = 1, Send_nmax_r2r
+          write(IO_FID_LOG,'(13(A6))') "number", &
+                                                  "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
+                                                  "|  ito","|  jto","|  rto","|  gto","|  lto","|  pto"
+          do ipos = 1, Send_info_r2r(I_size,irank)
+             g_from = Send_list_r2r(I_grid_from,ipos,irank)
+             l_from = Send_list_r2r(I_l_from,ipos,irank)
+             p_from = Send_info_r2r(I_prc_from,irank)
+             i_from = mod(g_from-1,ADM_gall_1d) + 1
+             j_from = (g_from-i_from) / ADM_gall_1d + 1
+             r_from = RGNMNG_lp2r(l_from,p_from)
+             g_to   = Send_list_r2r(I_grid_to,ipos,irank)
+             l_to   = Send_list_r2r(I_l_to,ipos,irank)
+             p_to   = Send_info_r2r(I_prc_to,irank)
+             i_to   = mod(g_to-1,ADM_gall_1d) + 1
+             j_to   = (g_to-i_to) / ADM_gall_1d + 1
+             r_to   = RGNMNG_lp2r(l_to,p_to)
+
+             write(IO_FID_LOG,'(13(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
+                                                i_to  , j_to  , r_to  , g_to  , l_to  , p_to
+          enddo
+       enddo
+    endif
+
+    allocate( sendbuf_r2r(Send_size_nglobal*ADM_kall*COMM_varmax,Send_nmax_r2r) )
+    allocate( recvbuf_r2r(Send_size_nglobal*ADM_kall*COMM_varmax,Recv_nmax_r2r) )
+
+    return
+  end subroutine COMM_sortdest
+
+  !-----------------------------------------------------------------------------
+  !> Setup data communication for region <-> pole
+  subroutine COMM_sortdest_pl
+    use mod_adm, only: &
+       ADM_prc_me,         &
+       ADM_vlink,          &
+       ADM_have_pl,        &
+       ADM_lall,           &
+       ADM_kall,           &
+       ADM_gall_1d,        &
+       ADM_gmax,           &
+       ADM_gmin,           &
+       ADM_gslf_pl,        &
+       ADM_gmax_pl,        &
+       ADM_gmin_pl,        &
+       RGNMNG_vert_num,    &
+       RGNMNG_vert_tab_pl, &
+       RGNMNG_lp2r,        &
+       RGNMNG_r2lp,        &
+       RGNMNG_l2r,         &
+       RGNMNG_r2p_pl,      &
+       I_l,                &
+       I_prc,              &
+       I_RGNID,            &
+       I_N,                &
+       I_S,                &
+       I_NPL,              &
+       I_SPL
+    implicit none
+
+    integer :: prc, prc_rmt
+    integer :: rgnid, rgnid_rmt
+    integer :: check_vert_num
+    integer :: pl_to
+
+    integer :: irank, ipos
+
+    integer, parameter :: Send_size_nglobal_pl = 10
+
+    integer :: l, l_pl, n, v
+    integer :: i_from, j_from, r_from, g_from, l_from, p_from
+    integer :: i_to, j_to, r_to, g_to, l_to, p_to
+    !---------------------------------------------------------------------------
+
+    allocate( Copy_info_p2r(info_vindex) )
+    allocate( Recv_info_p2r(info_vindex,Recv_nlim) )
+    allocate( Send_info_p2r(info_vindex,Send_nlim) )
+    Copy_info_p2r(:)        = -1
+    Recv_info_p2r(:,:)      = -1
+    Send_info_p2r(:,:)      = -1
+    Copy_info_p2r(I_size)   = 0
+    Recv_info_p2r(I_size,:) = 0
+    Send_info_p2r(I_size,:) = 0
+
+    allocate( Copy_list_p2r(list_vindex,Send_size_nglobal_pl) )
+    allocate( Recv_list_p2r(list_vindex,Send_size_nglobal_pl,Recv_nlim) )
+    allocate( Send_list_p2r(list_vindex,Send_size_nglobal_pl,Send_nlim) )
+    Copy_list_p2r(:,:)   = -1
+    Recv_list_p2r(:,:,:) = -1
+    Send_list_p2r(:,:,:) = -1
+
+    allocate( Copy_info_r2p(info_vindex) )
+    allocate( Recv_info_r2p(info_vindex,Recv_nlim) )
+    allocate( Send_info_r2p(info_vindex,Send_nlim) )
+    Copy_info_r2p(:)        = -1
+    Recv_info_r2p(:,:)      = -1
+    Send_info_r2p(:,:)      = -1
+    Copy_info_r2p(I_size)   = 0
+    Recv_info_r2p(I_size,:) = 0
+    Send_info_r2p(I_size,:) = 0
+
+    allocate( Copy_list_r2p(list_vindex,Send_size_nglobal_pl) )
+    allocate( Recv_list_r2p(list_vindex,Send_size_nglobal_pl,Recv_nlim) )
+    allocate( Send_list_r2p(list_vindex,Send_size_nglobal_pl,Send_nlim) )
+    Copy_list_r2p(:,:)   = -1
+    Recv_list_r2p(:,:,:) = -1
+    Send_list_r2p(:,:,:) = -1
+
+    ! Search in regular region
+    do l = 1, ADM_lall
+       rgnid = RGNMNG_l2r(l)
+       prc   = ADM_prc_me
+
+       do l_pl = I_NPL, I_SPL
+          rgnid_rmt = l_pl
+          prc_rmt   = RGNMNG_r2p_pl(rgnid_rmt)
+
+          if ( rgnid_rmt == I_NPL ) then
+             check_vert_num = RGNMNG_vert_num(I_N,rgnid)
+             i_from = ADM_gmin
+             j_from = ADM_gmax
+             i_to   = ADM_gmin
+             j_to   = ADM_gmax + 1
+          elseif( rgnid_rmt == I_SPL ) then
+             check_vert_num = RGNMNG_vert_num(I_S,rgnid)
+             i_from = ADM_gmax
+             j_from = ADM_gmin
+             i_to   = ADM_gmax + 1
+             j_to   = ADM_gmin
+          endif
+
+          if ( check_vert_num == ADM_vlink ) then
+
+             ! search destination in the pole halo
+             do v = 1, ADM_vlink
+                if ( rgnid == RGNMNG_vert_tab_pl(I_RGNID,rgnid_rmt,v) ) then
+                   pl_to = v
+                   if( pl_to < ADM_gmin_pl ) pl_to = ADM_gmax_pl
+                   exit
+               endif
+             enddo
+
+             if ( prc == prc_rmt ) then ! no communication
+                ! copy region inner -> pole halo
+                Copy_info_r2p(I_size) = Copy_info_r2p(I_size) + 1
+                ipos                  = Copy_info_r2p(I_size)
+
+                Copy_list_r2p(I_grid_from,ipos) = suf(i_from,j_from)
+                Copy_list_r2p(I_l_from   ,ipos) = l
+                Copy_list_r2p(I_grid_to  ,ipos) = pl_to
+                Copy_list_r2p(I_l_to     ,ipos) = l_pl
+             else ! node-to-node communication
+                ! receive pole center -> region halo
+                irank = -1
+                do n = 1, Recv_nmax_p2r
+                   if ( Recv_info_p2r(I_prc_from,n) == prc_rmt ) then
+                      irank = n
+                      exit
+                   endif
+                enddo
+
+                if ( irank < 0 ) then ! register new rank id
+                   Recv_nmax_p2r = Recv_nmax_p2r + 1
+                   irank         = Recv_nmax_p2r
+
+                   Recv_info_p2r(I_prc_from,irank) = prc_rmt
+                   Recv_info_p2r(I_prc_to  ,irank) = prc
+                endif
+
+                Recv_info_p2r(I_size,irank) = Recv_info_p2r(I_size,irank) + 1
+                ipos                        = Recv_info_p2r(I_size,irank)
+
+                Recv_list_p2r(I_grid_from,ipos,irank) = ADM_gslf_pl
+                Recv_list_p2r(I_l_from   ,ipos,irank) = l_pl
+                Recv_list_p2r(I_grid_to  ,ipos,irank) = suf(i_to,j_to)
+                Recv_list_p2r(I_l_to     ,ipos,irank) = l
+
+                ! send region inner -> pole halo
+                irank = -1
+                do n = 1, Send_nmax_r2p
+                   if ( Send_info_r2p(I_prc_to,n) == prc_rmt ) then
+                      irank = n
+                      exit
+                   endif
+                enddo
+
+                if ( irank < 0 ) then ! register new rank id
+                   Send_nmax_r2p = Send_nmax_r2p + 1
+                   irank         = Send_nmax_r2p
+
+                   Send_info_r2p(I_prc_from,irank) = prc
+                   Send_info_r2p(I_prc_to  ,irank) = prc_rmt
+                endif
+
+                Send_info_r2p(I_size,irank) = Send_info_r2p(I_size,irank) + 1
+                ipos                        = Send_info_r2p(I_size,irank)
+
+                Send_list_r2p(I_grid_from,ipos,irank) = suf(i_from,j_from)
+                Send_list_r2p(I_l_from   ,ipos,irank) = l
+                Send_list_r2p(I_grid_to  ,ipos,irank) = pl_to
+                Send_list_r2p(I_l_to     ,ipos,irank) = l_pl
+             endif
+          endif
+
+       enddo ! loop l_pl
+    enddo ! loop l
+
+    ! Search in pole
+    if ( ADM_have_pl ) then
+
+    do l_pl = I_NPL, I_SPL
+       rgnid = l_pl
+       prc   = ADM_prc_me
+
+       do v = ADM_vlink, 1, -1
+          rgnid_rmt = RGNMNG_vert_tab_pl(I_RGNID,rgnid,v)
+          prc_rmt   = RGNMNG_r2lp(I_prc,rgnid_rmt)
+
+          if ( rgnid == I_NPL ) then
+             i_from = ADM_gmin
+             j_from = ADM_gmax
+             i_to   = ADM_gmin
+             j_to   = ADM_gmax + 1
+          elseif( rgnid == I_SPL ) then
+             i_from = ADM_gmax
+             j_from = ADM_gmin
+             i_to   = ADM_gmax + 1
+             j_to   = ADM_gmin
+          endif
+
+          pl_to = v
+          if( pl_to < ADM_gmin_pl ) pl_to = ADM_gmax_pl
+
+          if ( prc == prc_rmt ) then ! no communication
+             ! copy pole center -> region halo
+             Copy_info_p2r(I_size) = Copy_info_p2r(I_size) + 1
+             ipos                  = Copy_info_p2r(I_size)
+
+             Copy_list_p2r(I_grid_from,ipos) = ADM_gslf_pl
+             Copy_list_p2r(I_l_from   ,ipos) = l_pl
+             Copy_list_p2r(I_grid_to  ,ipos) = suf(i_to,j_to)
+             Copy_list_p2r(I_l_to     ,ipos) = RGNMNG_r2lp(I_l,rgnid_rmt)
+          else ! node-to-node communication
+             ! send region inner -> pole halo
+             irank = -1
+             do n = 1, Recv_nmax_r2p
+                if ( Recv_info_r2p(I_prc_from,n) == prc_rmt ) then
+                   irank = n
+                   exit
+                endif
+             enddo
+
+             if ( irank < 0 ) then ! register new rank id
+                Recv_nmax_r2p = Recv_nmax_r2p + 1
+                irank         = Recv_nmax_r2p
+
+                Recv_info_r2p(I_prc_from,irank) = prc_rmt
+                Recv_info_r2p(I_prc_to  ,irank) = prc
+             endif
+
+             Recv_info_r2p(I_size,irank) = Recv_info_r2p(I_size,irank) + 1
+             ipos                        = Recv_info_r2p(I_size,irank)
+
+             Recv_list_r2p(I_grid_from,ipos,irank) = suf(i_from,j_from)
+             Recv_list_r2p(I_l_from   ,ipos,irank) = RGNMNG_r2lp(I_l,rgnid_rmt)
+             Recv_list_r2p(I_grid_to  ,ipos,irank) = pl_to
+             Recv_list_r2p(I_l_to     ,ipos,irank) = l_pl
+
+             ! receive pole center -> region halo
+             irank = -1
+             do n = 1, Send_nmax_p2r
+                if ( Send_info_p2r(I_prc_to,n) == prc_rmt ) then
+                   irank = n
+                   exit
+                endif
+             enddo
+
+             if ( irank < 0 ) then ! register new rank id
+                Send_nmax_p2r = Send_nmax_p2r + 1
+                irank         = Send_nmax_p2r
+
+                Send_info_p2r(I_prc_from,irank) = prc
+                Send_info_p2r(I_prc_to  ,irank) = prc_rmt
+             endif
+
+             Send_info_p2r(I_size,irank) = Send_info_p2r(I_size,irank) + 1
+             ipos                        = Send_info_p2r(I_size,irank)
+
+             Send_list_p2r(I_grid_from,ipos,irank) = ADM_gslf_pl
+             Send_list_p2r(I_l_from   ,ipos,irank) = l_pl
+             Send_list_p2r(I_grid_to  ,ipos,irank) = suf(i_to,j_to)
+             Send_list_p2r(I_l_to     ,ipos,irank) = RGNMNG_r2lp(I_l,rgnid_rmt)
+          endif
+
+       enddo ! loop pole halo
+
+    enddo ! loop l_pl
+
+    if ( Copy_info_p2r(I_size) > 0 ) then
+       Copy_nmax_p2r = 1
+       Copy_info_p2r(I_prc_from) = ADM_prc_me
+       Copy_info_p2r(I_prc_to  ) = ADM_prc_me
+    endif
+
+    if ( Copy_info_r2p(I_size) > 0 ) then
+       Copy_nmax_r2p = 1
+       Copy_info_r2p(I_prc_from) = ADM_prc_me
+       Copy_info_r2p(I_prc_to  ) = ADM_prc_me
+    endif
+
+    endif
+
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '*** Recv_nmax_p2r(local)  = ', Recv_nmax_p2r
+    write(IO_FID_LOG,*) '*** Send_nmax_p2r(local)  = ', Send_nmax_p2r
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,'(A)')             "|---------------------------------------"
+    write(IO_FID_LOG,'(A)')             "|               size  prc_from    prc_to"
+    write(IO_FID_LOG,'(A10,3(I10))')    "| Copy_p2r", Copy_info_p2r(:)
+    do irank = 1, Recv_nmax_p2r
+       write(IO_FID_LOG,'(A10,3(I10))') "| Recv_p2r", Recv_info_p2r(:,irank)
+    enddo
+    do irank = 1, Send_nmax_p2r
+       write(IO_FID_LOG,'(A10,3(I10))') "| Send_p2r", Send_info_p2r(:,irank)
+    enddo
+
+    if ( debug ) then
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,*) "--- Copy_list_p2r"
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,'(11(A6))') "number", &
+                                                                 "|rfrom","|gfrom","|lfrom","|pfrom", &
+                                               "|  ito","|  jto","|  rto","|  gto","|  lto","|  pto"
+       do ipos = 1, Copy_info_p2r(I_size)
+          g_from = Copy_list_p2r(I_grid_from,ipos)
+          l_from = Copy_list_p2r(I_l_from,ipos)
+          p_from = Copy_info_p2r(I_prc_from)
+          r_from = l_from
+          g_to   = Copy_list_p2r(I_grid_to,ipos)
+          l_to   = Copy_list_p2r(I_l_to,ipos)
+          p_to   = Copy_info_p2r(I_prc_to)
+          i_to   = mod(g_to-1,ADM_gall_1d) + 1
+          j_to   = (g_to-i_to) / ADM_gall_1d + 1
+          r_to   = RGNMNG_lp2r(l_to,p_to)
+
+          write(IO_FID_LOG,'(11(I6))') ipos,                 r_from, g_from, l_from, p_from, &
+                                                        i_to  , j_to  , r_to  , g_to  , l_to  , p_to
+       enddo
+
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,*) "--- Recv_list_p2r"
+       do irank = 1, Recv_nmax_p2r
+          write(IO_FID_LOG,'(11(A6))') "number", &
+                                                                    "|rfrom","|gfrom","|lfrom","|pfrom", &
+                                                  "|  ito","|  jto","|  rto","|  gto","|  lto","|  pto"
+          do ipos = 1, Recv_info_p2r(I_size,irank)
+             g_from = Recv_list_p2r(I_grid_from,ipos,irank)
+             l_from = Recv_list_p2r(I_l_from,ipos,irank)
+             p_from = Recv_info_p2r(I_prc_from,irank)
+             r_from = l_from
+             g_to   = Recv_list_p2r(I_grid_to,ipos,irank)
+             l_to   = Recv_list_p2r(I_l_to,ipos,irank)
+             p_to   = Recv_info_p2r(I_prc_to,irank)
+             i_to   = mod(g_to-1,ADM_gall_1d) + 1
+             j_to   = (g_to-i_to) / ADM_gall_1d + 1
+             r_to   = RGNMNG_lp2r(l_to,p_to)
+
+             write(IO_FID_LOG,'(11(I6))') ipos,                 r_from, g_from, l_from, p_from, &
+                                                i_to  , j_to  , r_to  , g_to  , l_to  , p_to
+          enddo
+       enddo
+
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,*) "--- Send_list_p2r"
+       do irank = 1, Send_nmax_p2r
+          write(IO_FID_LOG,'(11(A6))') "number", &
+                                                                    "|rfrom","|gfrom","|lfrom","|pfrom", &
+                                                  "|  ito","|  jto","|  rto","|  gto","|  lto","|  pto"
+          do ipos = 1, Send_info_p2r(I_size,irank)
+             g_from = Send_list_p2r(I_grid_from,ipos,irank)
+             l_from = Send_list_p2r(I_l_from,ipos,irank)
+             p_from = Send_info_p2r(I_prc_from,irank)
+             r_from = l_from
+             g_to   = Send_list_p2r(I_grid_to,ipos,irank)
+             l_to   = Send_list_p2r(I_l_to,ipos,irank)
+             p_to   = Send_info_p2r(I_prc_to,irank)
+             i_to   = mod(g_to-1,ADM_gall_1d) + 1
+             j_to   = (g_to-i_to) / ADM_gall_1d + 1
+             r_to   = RGNMNG_lp2r(l_to,p_to)
+
+             write(IO_FID_LOG,'(11(I6))') ipos,                 r_from, g_from, l_from, p_from, &
+                                                i_to  , j_to  , r_to  , g_to  , l_to  , p_to
+          enddo
+       enddo
+    endif
+
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '*** Recv_nmax_r2p(local)  = ', Recv_nmax_r2p
+    write(IO_FID_LOG,*) '*** Send_nmax_r2p(local)  = ', Send_nmax_r2p
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,'(A)')             "|---------------------------------------"
+    write(IO_FID_LOG,'(A)')             "|               size  prc_from    prc_to"
+    write(IO_FID_LOG,'(A10,3(I10))')    "| Copy_r2p", Copy_info_r2p(:)
+    do irank = 1, Recv_nmax_r2p
+       write(IO_FID_LOG,'(A10,3(I10))') "| Recv_r2p", Recv_info_r2p(:,irank)
+    enddo
+    do irank = 1, Send_nmax_r2p
+       write(IO_FID_LOG,'(A10,3(I10))') "| Send_r2p", Send_info_r2p(:,irank)
+    enddo
+
+    if ( debug ) then
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,*) "--- Copy_list_r2p"
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,'(11(A6))') "number", &
+                                               "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
+                                                                 "|  rto","|  gto","|  lto","|  pto"
+       do ipos = 1, Copy_info_r2p(I_size)
+          g_from = Copy_list_r2p(I_grid_from,ipos)
+          l_from = Copy_list_r2p(I_l_from,ipos)
+          p_from = Copy_info_r2p(I_prc_from)
+          i_from = mod(g_from-1,ADM_gall_1d) + 1
+          j_from = (g_from-i_from) / ADM_gall_1d + 1
+          r_from = RGNMNG_lp2r(l_from,p_from)
+          g_to   = Copy_list_r2p(I_grid_to,ipos)
+          l_to   = Copy_list_r2p(I_l_to,ipos)
+          p_to   = Copy_info_r2p(I_prc_to)
+          r_to   = l_to
+
+          write(IO_FID_LOG,'(11(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
+                                                             r_to  , g_to  , l_to  , p_to
+       enddo
+
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,*) "--- Recv_list_r2p"
+       do irank = 1, Recv_nmax_r2p
+          write(IO_FID_LOG,'(11(A6))') "number", &
+                                                  "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
+                                                                    "|  rto","|  gto","|  lto","|  pto"
+          do ipos = 1, Recv_info_r2p(I_size,irank)
+             g_from = Recv_list_r2p(I_grid_from,ipos,irank)
+             l_from = Recv_list_r2p(I_l_from,ipos,irank)
+             p_from = Recv_info_r2p(I_prc_from,irank)
+             i_from = mod(g_from-1,ADM_gall_1d) + 1
+             j_from = (g_from-i_from) / ADM_gall_1d + 1
+             r_from = RGNMNG_lp2r(l_from,p_from)
+             g_to   = Recv_list_r2p(I_grid_to,ipos,irank)
+             l_to   = Recv_list_r2p(I_l_to,ipos,irank)
+             p_to   = Recv_info_r2p(I_prc_to,irank)
+             r_to   = l_to
+
+             write(IO_FID_LOG,'(11(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
+                                                                r_to  , g_to  , l_to  , p_to
+          enddo
+       enddo
+
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,*) "--- Send_list_r2p"
+       do irank = 1, Send_nmax_r2p
+          write(IO_FID_LOG,'(11(A6))') "number", &
+                                                  "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
+                                                                    "|  rto","|  gto","|  lto","|  pto"
+          do ipos = 1, Send_info_r2p(I_size,irank)
+             g_from = Send_list_r2p(I_grid_from,ipos,irank)
+             l_from = Send_list_r2p(I_l_from,ipos,irank)
+             p_from = Send_info_r2p(I_prc_from,irank)
+             i_from = mod(g_from-1,ADM_gall_1d) + 1
+             j_from = (g_from-i_from) / ADM_gall_1d + 1
+             r_from = RGNMNG_lp2r(l_from,p_from)
+             g_to   = Send_list_r2p(I_grid_to,ipos,irank)
+             l_to   = Send_list_r2p(I_l_to,ipos,irank)
+             p_to   = Send_info_r2p(I_prc_to,irank)
+             r_to   = l_to
+
+             write(IO_FID_LOG,'(11(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
+                                                                r_to  , g_to  , l_to  , p_to
+          enddo
+       enddo
+    endif
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '*** Send_size_p2r,r2p     = ', Send_size_nglobal_pl
+
+    allocate( sendbuf_r2p(Send_size_nglobal_pl*ADM_kall*COMM_varmax,Send_nmax_r2p) )
+    allocate( recvbuf_r2p(Send_size_nglobal_pl*ADM_kall*COMM_varmax,Recv_nmax_r2p) )
+    allocate( sendbuf_p2r(Send_size_nglobal_pl*ADM_kall*COMM_varmax,Send_nmax_p2r) )
+    allocate( recvbuf_p2r(Send_size_nglobal_pl*ADM_kall*COMM_varmax,Recv_nmax_p2r) )
+
+    return
+  end subroutine COMM_sortdest_pl
+
+  !-----------------------------------------------------------------------------
+  !> Setup data copy list of singular point
+  subroutine COMM_sortdest_singular
+    use mod_adm, only: &
+       ADM_prc_me,      &
+       ADM_lall,        &
+       ADM_gall_1d,     &
+       ADM_gmax,        &
+       ADM_gmin,        &
+       RGNMNG_vert_num, &
+       RGNMNG_lp2r,     &
+       RGNMNG_l2r,      &
+       I_W,             &
+       I_N,             &
+       I_S
+    implicit none
+
+    integer :: rgnid
+    integer :: i, j, i_rmt, j_rmt
+
+    integer :: l, ipos
+    integer :: i_from, j_from, r_from, g_from, l_from, p_from
+    integer :: i_to, j_to, r_to, g_to, l_to, p_to
+    !---------------------------------------------------------------------------
+
+    allocate( Singular_info(info_vindex) )
+    Singular_info(:) = -1
+    Singular_info(I_size) = 0
+
+    allocate( Singular_list(list_vindex,4*ADM_lall) )
+    Singular_list(:,:)   = -1
+
+    do l = 1, ADM_lall
+       rgnid = RGNMNG_l2r(l)
+
+       if ( RGNMNG_vert_num(I_W,rgnid) == 3 ) then
+          Singular_info(I_size) = Singular_info(I_size) + 1
+          ipos                  = Singular_info(I_size)
+
+          i     = ADM_gmin
+          j     = ADM_gmin - 1
+          i_rmt = ADM_gmin - 1
+          j_rmt = ADM_gmin - 1
+
+          Singular_list(I_grid_from,ipos) = suf(i,j)
+          Singular_list(I_l_from   ,ipos) = l
+          Singular_list(I_grid_to  ,ipos) = suf(i_rmt,j_rmt)
+          Singular_list(I_l_to     ,ipos) = l
+       endif
+
+       if ( RGNMNG_vert_num(I_N,rgnid) /= 4 ) then
+          Singular_info(I_size) = Singular_info(I_size) + 1
+          ipos                  = Singular_info(I_size)
+
+          i     = ADM_gmin - 1
+          j     = ADM_gmax
+          i_rmt = ADM_gmin - 1
+          j_rmt = ADM_gmax + 1
+
+          Singular_list(I_grid_from,ipos) = suf(i,j)
+          Singular_list(I_l_from   ,ipos) = l
+          Singular_list(I_grid_to  ,ipos) = suf(i_rmt,j_rmt)
+          Singular_list(I_l_to     ,ipos) = l
+       endif
+
+       if ( RGNMNG_vert_num(I_S,rgnid) /= 4 ) then
+          Singular_info(I_size) = Singular_info(I_size) + 1
+          ipos                  = Singular_info(I_size)
+
+          i     = ADM_gmax + 1
+          j     = ADM_gmin
+          i_rmt = ADM_gmax + 1
+          j_rmt = ADM_gmin - 1
+
+          Singular_list(I_grid_from,ipos) = suf(i,j)
+          Singular_list(I_l_from   ,ipos) = l
+          Singular_list(I_grid_to  ,ipos) = suf(i_rmt,j_rmt)
+          Singular_list(I_l_to     ,ipos) = l
+       endif
+
+    enddo ! loop l
+
+    if ( Singular_info(I_size) > 0 ) then
+       Singular_nmax = 1
+       Singular_info(I_prc_from) = ADM_prc_me
+       Singular_info(I_prc_to  ) = ADM_prc_me
+    endif
+
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,'(A)')             "|---------------------------------------"
+    write(IO_FID_LOG,'(A)')             "|               size  prc_from    prc_to"
+    write(IO_FID_LOG,'(A10,3(I10))')    "| Singular", Singular_info(:)
+
+    if ( debug ) then
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,*) "--- Singular_list"
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,'(13(A6))') "number", &
+                                               "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
+                                               "|  ito","|  jto","|  rto","|  gto","|  lto","|  pto"
+       do ipos = 1, Singular_info(I_size)
+          g_from = Singular_list(I_grid_from,ipos)
+          l_from = Singular_list(I_l_from,ipos)
+          p_from = Singular_info(I_prc_from)
+          i_from = mod(g_from-1,ADM_gall_1d) + 1
+          j_from = (g_from-i_from) / ADM_gall_1d + 1
+          r_from = RGNMNG_lp2r(l_from,p_from)
+          g_to   = Singular_list(I_grid_to,ipos)
+          l_to   = Singular_list(I_l_to,ipos)
+          p_to   = Singular_info(I_prc_to)
+          i_to   = mod(g_to-1,ADM_gall_1d) + 1
+          j_to   = (g_to-i_to) / ADM_gall_1d + 1
+          r_to   = RGNMNG_lp2r(l_to,p_to)
+
+          write(IO_FID_LOG,'(13(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
+                                             i_to  , j_to  , r_to  , g_to  , l_to  , p_to
+       enddo
+    endif
+
+    return
+  end subroutine COMM_sortdest_singular
+
+  !-----------------------------------------------------------------------------
+  !> Data transfer kernel
+  subroutine COMM_data_transfer( &
        var,   &
        var_pl )
     use mod_process, only: &
        PRC_LOCAL_COMM_WORLD, &
        PRC_MPIstop
     use mod_adm, only: &
-       ADM_vlink,   &
-       ADM_gall_1d, &
-       ADM_lall,    &
-       ADM_kall,    &
-       ADM_gmax,    &
-       ADM_gmin
+       ADM_kall
     implicit none
 
-    real(RP), intent(inout) ::  var   (:,:,:,:)
-    real(RP), intent(inout) ::  var_pl(:,:,:,:)
+    real(RP), intent(inout) :: var   (:,:,:,:)
+    real(RP), intent(inout) :: var_pl(:,:,:,:)
 
-    integer ::  shp(4)
-    integer ::  cmax, kmax, varmax
+    integer :: shp(4), kmax, vmax
+    integer :: totalsize, rank, tag
+    integer :: irank, ipos, imax
+    integer :: ij_from, l_from, ij_to, l_to
 
-    integer ::  acount
-    integer ::  areq(2*(ADM_lall*max_comm_r2r+ADM_vlink*4))
-    integer ::  stat(MPI_status_size,2*(ADM_lall*max_comm_r2r+ADM_vlink*4))
-    integer ::  ierr
-
-    integer ::  k, m, n
-    integer ::  nr, nc, ns
-    integer ::  sl, so, sb, ss
-    integer ::  rl, ro, rb, rs
-    integer ::  cl, scl, cs
-
-    integer ::  max_ssize
-    integer ::  max_rsize
-    integer ::  max_nsmax,max_nsmax_pl
-    integer ::  max_nrmax,max_nrmax_pl
-    integer ::  max_ss, max_ss_pl
-    integer ::  max_rs, max_rs_pl
-    integer ::  max_cs_r2r, max_cs_r2p, max_cs_p2r, max_cs_sgp
-    integer ::  cur_somax, cur_romax
-    integer ::  cur_ncmax_r2r, cur_ncmax_r2p, cur_ncmax_p2r, cur_ncmax_sgp
-    integer ::  cur_ssize, cur_rsize
-    integer ::  cur_nsmax, cur_nsmax_pl
-    integer ::  cur_nrmax, cur_nrmax_pl
-
-    integer ::  i,j,suf
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+    integer :: k, v, ikv
+    integer :: ierr
     !---------------------------------------------------------------------------
 
-    if ( opt_comm_barrier ) then
+    if ( COMM_apply_barrier ) then
        call PROF_rapstart('COMM_barrier',2)
-       call MPI_Barrier( PRC_LOCAL_COMM_WORLD, ierr )
+       call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
        call PROF_rapend  ('COMM_barrier',2)
     endif
 
@@ -2309,384 +1541,355 @@ contains
 
     call PROF_rapstart('COMM_data_transfer',2)
 
-    shp    = shape(var)
-    kmax   = shp(2)
-    varmax = shp(4)
+    shp  = shape(var)
+    kmax = shp(2)
+    vmax = shp(4)
 
-    cmax = varmax * kmax
-
-    if( opt_check_varmax ) then
-       if ( cmax > max_varmax * ADM_kall ) then
-          write(IO_FID_LOG,*)  'error: cmax >  max_varmax * ADM_kall, stop!'
-          write(IO_FID_LOG,*)  'cmax=', cmax, 'max_varmax*ADM_kall=', max_varmax*ADM_kall
-          call PRC_MPIstop
-       endif
+    if ( kmax * vmax > ADM_kall * COMM_varmax ) then
+       write(IO_FID_LOG,*) 'xxx [COMM_data_transfer] kmax * vmax exceeds ADM_kall * COMM_varmax, stop!'
+       write(IO_FID_LOG,*) 'xxx kmax * vmax            = ', kmax * vmax
+       write(IO_FID_LOG,*) 'xxx ADM_kall * COMM_varmax = ', ADM_kall * COMM_varmax
+       call PRC_MPIstop
     endif
 
-    max_rsize    = 1
-    max_nrmax    = 0
-    max_nrmax_pl = 0
-    max_rs       = 0
-    max_rs_pl    = 0
-    do ro = 1, romax(1)
-       max_rsize    = max( max_rsize,    rsize   (ro,1) )
-       max_nrmax    = max( max_nrmax,    nrmax   (ro,1) )
-       max_nrmax_pl = max( max_nrmax_pl, nrmax_pl(ro,1) )
+    !---< start communication >---
+    ! Theres no p2r & r2p communication without calling COMM_sortdest_pl.
+    ! receive pole   => region
+    ! receive region => pole
+    ! receive region => region
+    ! pack and send pole   => region
+    ! pack and send region => pole
+    ! pack and send region => region
+    ! copy pole   => region
+    ! copy region => pole
+    ! copy region => region
+    ! wait all
+    ! unpack pole   => region
+    ! unpack region => pole
+    ! unpack region => region
+    ! copy region halo => region halo (singular point)
 
-       do nr = 1, nrmax(ro,1)
-          max_rs = max( max_rs, recvinfo(SIZE_COMM,nr,ro,1) )
+    REQ_count = 0
+
+    !--- receive p2r
+    do irank = 1, Recv_nmax_p2r
+       REQ_count = REQ_count + 1
+       totalsize = Recv_info_p2r(I_size    ,irank) * kmax * vmax
+       rank      = Recv_info_p2r(I_prc_from,irank) - 1 ! rank = prc - 1
+       tag       = Recv_info_p2r(I_prc_from,irank) + 1000000
+
+       call MPI_IRECV( recvbuf_p2r(1,irank), & ! [OUT]
+                       totalsize,            & ! [IN]
+                       COMM_datatype,        & ! [IN]
+                       rank,                 & ! [IN]
+                       tag,                  & ! [IN]
+                       PRC_LOCAL_COMM_WORLD, & ! [IN]
+                       REQ_list(REQ_count),  & ! [OUT]
+                       ierr                  ) ! [OUT]
+    enddo
+
+    !--- receive r2p
+    do irank = 1, Recv_nmax_r2p
+       REQ_count = REQ_count + 1
+       totalsize = Recv_info_r2p(I_size    ,irank) * kmax * vmax
+       rank      = Recv_info_r2p(I_prc_from,irank) - 1 ! rank = prc - 1
+       tag       = Recv_info_r2p(I_prc_from,irank) + 2000000
+
+       call MPI_IRECV( recvbuf_r2p(1,irank), & ! [OUT]
+                       totalsize,            & ! [IN]
+                       COMM_datatype,        & ! [IN]
+                       rank,                 & ! [IN]
+                       tag,                  & ! [IN]
+                       PRC_LOCAL_COMM_WORLD, & ! [IN]
+                       REQ_list(REQ_count),  & ! [OUT]
+                       ierr                  ) ! [OUT]
+    enddo
+
+    !--- receive r2r
+    do irank = 1, Recv_nmax_r2r
+       REQ_count = REQ_count + 1
+       totalsize = Recv_info_r2r(I_size    ,irank) * kmax * vmax
+       rank      = Recv_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
+       tag       = Recv_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
+
+       call MPI_IRECV( recvbuf_r2r(1,irank), & ! [OUT]
+                       totalsize,            & ! [IN]
+                       COMM_datatype,        & ! [IN]
+                       rank,                 & ! [IN]
+                       tag,                  & ! [IN]
+                       PRC_LOCAL_COMM_WORLD, & ! [IN]
+                       REQ_list(REQ_count),  & ! [OUT]
+                       ierr                  ) ! [OUT]
+    enddo
+
+    !--- pack and send p2r
+    do irank = 1, Send_nmax_p2r
+       imax = Send_info_p2r(I_size,irank)
+
+       !$omp parallel do default(none),private(ipos,k,v,ikv,ij_from,l_from) &
+       !$omp shared(irank,imax,kmax,vmax,Send_list_p2r,sendbuf_p2r,var_pl)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Send_list_p2r(I_grid_from,ipos,irank)
+          l_from  = Send_list_p2r(I_l_from   ,ipos,irank)
+
+          ikv = (v-1) * imax * kmax &
+              + (k-1) * imax        &
+              + ipos
+
+          sendbuf_p2r(ikv,irank) = var_pl(ij_from,k,l_from,v)
        enddo
+       enddo
+       enddo
+       !$omp end parallel do
 
-       do nr = 1, nrmax_pl(ro,1)
-          max_rs_pl = max( max_rs_pl, recvinfo_pl(SIZE_COMM,nr,ro,1) )
+       REQ_count = REQ_count + 1
+       totalsize = imax * kmax * vmax
+       rank      = Send_info_p2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
+       tag       = Send_info_p2r(I_prc_from,irank) + 1000000
+
+       call MPI_ISEND( sendbuf_p2r(1,irank), & ! [IN]
+                       totalsize,            & ! [IN]
+                       COMM_datatype,        & ! [IN]
+                       rank,                 & ! [IN]
+                       tag,                  & ! [IN]
+                       PRC_LOCAL_COMM_WORLD, & ! [IN]
+                       REQ_list(REQ_count),  & ! [OUT]
+                       ierr                  ) ! [OUT]
+    enddo
+
+    !--- pack and send r2p
+    do irank = 1, Send_nmax_r2p
+       imax = Send_info_r2p(I_size,irank)
+
+       !$omp parallel do default(none),private(ipos,k,v,ikv,ij_from,l_from) &
+       !$omp shared(irank,imax,kmax,vmax,Send_list_r2p,sendbuf_r2p,var)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Send_list_r2p(I_grid_from,ipos,irank)
+          l_from  = Send_list_r2p(I_l_from   ,ipos,irank)
+
+          ikv = (v-1) * imax * kmax &
+              + (k-1) * imax        &
+              + ipos
+
+          sendbuf_r2p(ikv,irank) = var(ij_from,k,l_from,v)
+       enddo
+       enddo
+       enddo
+       !$omp end parallel do
+
+       REQ_count = REQ_count + 1
+       totalsize = imax * kmax * vmax
+       rank      = Send_info_r2p(I_prc_to  ,irank) - 1 ! rank = prc - 1
+       tag       = Send_info_r2p(I_prc_from,irank) + 2000000
+
+       call MPI_ISEND( sendbuf_r2p(1,irank), & ! [IN]
+                       totalsize,            & ! [IN]
+                       COMM_datatype,        & ! [IN]
+                       rank,                 & ! [IN]
+                       tag,                  & ! [IN]
+                       PRC_LOCAL_COMM_WORLD, & ! [IN]
+                       REQ_list(REQ_count),  & ! [OUT]
+                       ierr                  ) ! [OUT]
+    enddo
+
+    !--- pack and send r2r
+    do irank = 1, Send_nmax_r2r
+       imax = Send_info_r2r(I_size,irank)
+
+       !$omp parallel do default(none),private(ipos,k,v,ikv,ij_from,l_from) &
+       !$omp shared(irank,imax,kmax,vmax,Send_list_r2r,sendbuf_r2r,var)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Send_list_r2r(I_grid_from,ipos,irank)
+          l_from  = Send_list_r2r(I_l_from   ,ipos,irank)
+
+          ikv = (v-1) * imax * kmax &
+              + (k-1) * imax        &
+              + ipos
+
+          sendbuf_r2r(ikv,irank) = var(ij_from,k,l_from,v)
+       enddo
+       enddo
+       enddo
+       !$omp end parallel do
+
+       REQ_count = REQ_count + 1
+       totalsize = imax * kmax * vmax
+       rank      = Send_info_r2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
+       tag       = Send_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
+
+       call MPI_ISEND( sendbuf_r2r(1,irank), & ! [IN]
+                       totalsize,            & ! [IN]
+                       COMM_datatype,        & ! [IN]
+                       rank,                 & ! [IN]
+                       tag,                  & ! [IN]
+                       PRC_LOCAL_COMM_WORLD, & ! [IN]
+                       REQ_list(REQ_count),  & ! [OUT]
+                       ierr                  ) ! [OUT]
+    enddo
+
+    !--- copy p2r
+    !$omp parallel do default(none),private(ipos,k,v,imax,irank,ij_from,l_from,ij_to,l_to) &
+    !$omp shared(kmax,vmax,Copy_nmax_p2r,Copy_info_p2r,Copy_list_p2r,var,var_pl)
+    do irank = 1, Copy_nmax_p2r
+       imax = Copy_info_p2r(I_size)
+
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Copy_list_p2r(I_grid_from,ipos)
+          l_from  = Copy_list_p2r(I_l_from   ,ipos)
+          ij_to   = Copy_list_p2r(I_grid_to  ,ipos)
+          l_to    = Copy_list_p2r(I_l_to     ,ipos)
+
+          var(ij_to,k,l_to,v) = var_pl(ij_from,k,l_from,v)
+       enddo
+       enddo
        enddo
     enddo
-    max_rsize = max_rsize * cmax
+    !$omp end parallel do
 
-    max_ssize    = 1
-    max_nsmax    = 0
-    max_nsmax_pl = 0
-    max_ss       = 0
-    max_ss_pl    = 0
-    do so = 1, somax(1)
-       max_ssize    = max( max_ssize,    ssize   (so,1) )
-       max_nsmax    = max( max_nsmax,    nsmax   (so,1) )
-       max_nsmax_pl = max( max_nsmax_pl, nsmax_pl(so,1) )
+    !--- copy r2p
+    !$omp parallel do default(none),private(ipos,k,v,imax,irank,ij_from,l_from,ij_to,l_to) &
+    !$omp shared(kmax,vmax,Copy_nmax_r2p,Copy_info_r2p,Copy_list_r2p,var,var_pl)
+    do irank = 1, Copy_nmax_r2p
+       imax = Copy_info_r2p(I_size)
 
-       do ns = 1, nsmax(so,1)
-          max_ss = max( max_ss, sendinfo(SIZE_COMM,ns,so,1) )
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Copy_list_r2p(I_grid_from,ipos)
+          l_from  = Copy_list_r2p(I_l_from   ,ipos)
+          ij_to   = Copy_list_r2p(I_grid_to  ,ipos)
+          l_to    = Copy_list_r2p(I_l_to     ,ipos)
+
+          var_pl(ij_to,k,l_to,v) = var(ij_from,k,l_from,v)
        enddo
-
-       do ns = 1, nsmax_pl(so,1)
-          max_ss_pl = max( max_ss_pl, sendinfo_pl(SIZE_COMM,ns,so,1) )
+       enddo
        enddo
     enddo
-    max_ssize = max_ssize * cmax
+    !$omp end parallel do
 
-    max_cs_r2r = 0
-    max_cs_r2p = 0
-    max_cs_p2r = 0
-    max_cs_sgp = 0
-    do nc = 1, ncmax_r2r(1)
-       max_cs_r2r = max( max_cs_r2r, copyinfo_r2r(SIZE_COPY,nc,1) )
-    enddo
-    do nc = 1, ncmax_r2p(1)
-       max_cs_r2p = max( max_cs_r2p, copyinfo_r2p(SIZE_COPY,nc,1) )
-    enddo
-    do nc = 1, ncmax_p2r(1)
-       max_cs_p2r = max( max_cs_p2r, copyinfo_p2r(SIZE_COPY,nc,1) )
-    enddo
-    do nc = 1, ncmax_sgp(1)
-       max_cs_sgp = max( max_cs_sgp, copyinfo_sgp(SIZE_COPY,nc,1) )
-    enddo
+    !--- copy r2r
+    !$omp parallel do default(none),private(ipos,k,v,imax,irank,ij_from,l_from,ij_to,l_to) &
+    !$omp shared(kmax,vmax,Copy_nmax_r2r,Copy_info_r2r,Copy_list_r2r,var)
+    do irank = 1, Copy_nmax_r2r
+       imax = Copy_info_r2r(I_size)
 
-    cur_somax     = somax(1)
-    cur_romax     = romax(1)
-    cur_ncmax_r2r = ncmax_r2r(1)
-    cur_ncmax_r2p = ncmax_r2p(1)
-    cur_ncmax_p2r = ncmax_p2r(1)
-    cur_ncmax_sgp = ncmax_sgp(1)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Copy_list_r2r(I_grid_from,ipos)
+          l_from  = Copy_list_r2r(I_l_from   ,ipos)
+          ij_to   = Copy_list_r2r(I_grid_to  ,ipos)
+          l_to    = Copy_list_r2r(I_l_to     ,ipos)
 
-    !$acc data present(var) pcopy(var_pl) pcopyin(clist) async(0)
-
-    !-----------------------------------------
-    ! call MPI_IRECV
-    !-----------------------------------------
-    do ro = 1, romax(1)
-       call MPI_IRECV( recvbuf(1,ro),        &
-                       rsize(ro,1)*cmax,     &
-                       COMM_datatype,        &
-                       sourcerank(ro,1),     &
-                       recvtag(ro,1),        &
-                       PRC_LOCAL_COMM_WORLD, &
-                       areq(ro),             &
-                       ierr                  )
+          var(ij_to,k,l_to,v) = var(ij_from,k,l_from,v)
+       enddo
+       enddo
+       enddo
     enddo
+    !$omp end parallel do
 
-    !$acc data &
-    !$acc& pcopyin(sendlist,sendlist_pl) &
-    !$acc& pcopyin(sendinfo,sendinfo_pl) &
-    !$acc& pcopyin(nsmax,nsmax_pl) async(0)
+    !--- wait all
+    call MPI_WAITALL( REQ_count,           & ! [IN]
+                      REQ_list(:),         & ! [IN]
+                      MPI_STATUSES_IGNORE, & ! [OUT]
+                      ierr                 ) ! [OUT]
+
+    !--- unpack p2r
+    !$omp parallel do default(none),private(ipos,k,v,imax,irank,ij_to,l_to,ikv) &
+    !$omp shared(kmax,vmax,Recv_nmax_p2r,Recv_info_p2r,Recv_list_p2r,recvbuf_p2r,var)
+    do irank = 1, Recv_nmax_p2r
+       imax = Recv_info_p2r(I_size,irank)
+
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_to = Recv_list_p2r(I_grid_to,ipos,irank)
+          l_to  = Recv_list_p2r(I_l_to   ,ipos,irank)
+
+          ikv = (v-1) * imax * kmax &
+              + (k-1) * imax        &
+              + ipos
+
+          var(ij_to,k,l_to,v) = recvbuf_p2r(ikv,irank)
+       enddo
+       enddo
+       enddo
+    enddo
+    !$omp end parallel do
+
+    !--- unpack r2p
+    !$omp parallel do default(none),private(ipos,k,v,imax,irank,ij_to,l_to,ikv) &
+    !$omp shared(kmax,vmax,Recv_nmax_r2p,Recv_info_r2p,Recv_list_r2p,recvbuf_r2p,var_pl)
+    do irank = 1, Recv_nmax_r2p
+       imax = Recv_info_r2p(I_size,irank)
+
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_to = Recv_list_r2p(I_grid_to,ipos,irank)
+          l_to  = Recv_list_r2p(I_l_to   ,ipos,irank)
+
+          ikv = (v-1) * imax * kmax &
+              + (k-1) * imax        &
+              + ipos
+
+          var_pl(ij_to,k,l_to,v) = recvbuf_r2p(ikv,irank)
+       enddo
+       enddo
+       enddo
+    enddo
+    !$omp end parallel do
+
+    !--- unpack r2r
+    !$omp parallel do default(none),private(ipos,k,v,imax,irank,ij_to,l_to,ikv) &
+    !$omp shared(kmax,vmax,Recv_nmax_r2r,Recv_info_r2r,Recv_list_r2r,recvbuf_r2r,var)
+    do irank = 1, Recv_nmax_r2r
+       imax = Recv_info_r2r(I_size,irank)
+
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_to = Recv_list_r2r(I_grid_to,ipos,irank)
+          l_to  = Recv_list_r2r(I_l_to   ,ipos,irank)
+
+          ikv = (v-1) * imax * kmax &
+              + (k-1) * imax        &
+              + ipos
+
+          var(ij_to,k,l_to,v) = recvbuf_r2r(ikv,irank)
+       enddo
+       enddo
+       enddo
+    enddo
+    !$omp end parallel do
+
+    !--- singular point (halo to halo)
+    do irank = 1, Singular_nmax
+       imax = Singular_info(I_size)
+
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Singular_list(I_grid_from,ipos)
+          l_from  = Singular_list(I_l_from   ,ipos)
+          ij_to   = Singular_list(I_grid_to  ,ipos)
+          l_to    = Singular_list(I_l_to     ,ipos)
+
+          var(ij_to,k,l_to,v) = var(ij_from,k,l_from,v)
+       enddo
+       enddo
+       enddo
+    enddo
 
     !$acc wait
-
-    do so = 1, cur_somax
-       cur_ssize    = ssize   (so,1) * cmax
-       cur_nsmax    = nsmax   (so,1)
-       cur_nsmax_pl = nsmax_pl(so,1)
-
-       !$acc kernels copyout(sendbuf(1:cur_ssize,so)) async(so)
-
-       !-----------------------------------------
-       ! var -> sendbuf
-       !-----------------------------------------
-       !$acc loop independent gang
-       do m = 1, varmax
-          !$omp parallel default(none),private(n,ns,k,ss,sl,sb), &
-          !$omp shared(so,m,kmax,cur_nsmax,max_ss,nsmax,cmax,sendinfo,sendlist,sendbuf,var)
-          !$acc loop independent gang vector(8)
-          do k = 1, kmax
-          !$acc loop independent gang
-          do ns = 1, cur_nsmax
-             !$omp do
-             !$acc loop independent vector(32)
-             do n = 1, max_ss
-                if ( ns <= nsmax(so,1) ) then
-                   ss = sendinfo(SIZE_COMM  ,ns,so,1)
-                   sl = sendinfo(LRGNID_COMM,ns,so,1)
-                   sb = sendinfo(BASE_COMM  ,ns,so,1) * cmax
-                  if ( n <= ss ) then
-                      sendbuf(n+(k-1)*ss+(m-1)*ss*kmax+sb,so) = var(sendlist(n,ns,so,1),k,sl,m)
-                   endif
-                endif
-             enddo
-             !$omp end do
-          enddo
-          enddo
-          !$omp end parallel
-       enddo
-
-       !-----------------------------------------
-       !  var_pl -> sendbuf
-       !-----------------------------------------
-       !$acc loop independent gang
-       do m = 1, varmax
-       !$acc loop independent gang vector(8)
-       do k = 1, kmax
-       !$acc loop independent gang
-       do ns = 1, cur_nsmax_pl
-       !$acc loop independent vector(32)
-       do n = 1, max_ss_pl
-          if ( ns <= nsmax_pl(so,1) ) then
-             ss = sendinfo_pl(SIZE_COMM  ,ns,so,1)
-             sl = sendinfo_pl(LRGNID_COMM,ns,so,1)
-             sb = sendinfo_pl(BASE_COMM  ,ns,so,1) * cmax
-             if ( n <= ss ) then
-                sendbuf(n+(k-1)*ss+(m-1)*ss*kmax+sb,so) = var_pl(sendlist_pl(n,ns,so,1),k,sl,m)
-             endif
-          endif
-       enddo
-       enddo
-       enddo
-       enddo
-
-       !$acc end kernels
-    enddo
-
-    !$acc end data
-
-    !-----------------------------------------
-    ! call MPI_ISEND
-    !-----------------------------------------
-    do so = 1, somax(1)
-       !$acc wait(so)
-       call MPI_ISEND( sendbuf(1,so),        &
-                       ssize(so,1)*cmax,     &
-                       COMM_datatype,        &
-                       destrank(so,1),       &
-                       sendtag(so,1),        &
-                       PRC_LOCAL_COMM_WORLD, &
-                       areq(so+romax(1)),    &
-                       ierr                  )
-    enddo
-
-    !$acc wait
-
-    !---------------------------------------------------
-    !  var -> var (region to region copy in same rank)
-    !---------------------------------------------------
-    !$acc kernels present(var) &
-    !$acc& pcopyin(recvlist_r2r,sendlist_r2r,copyinfo_r2r) async(0)
-    !$acc loop independent gang
-    do m = 1, varmax
-    !$acc loop independent gang
-    do nc = 1, cur_ncmax_r2r
-       !$omp parallel default(none),private(n,k,cs,cl,scl), &
-       !$omp shared(m,nc,kmax,max_cs_r2r,copyinfo_r2r,recvlist_r2r,sendlist_r2r,var)
-       !$acc loop independent gang vector(8)
-       do k = 1, kmax
-          !$omp do
-          !$acc loop independent vector(32)
-          do n = 1, max_cs_r2r
-             cs  = copyinfo_r2r(SIZE_COPY      ,nc,1)
-             cl  = copyinfo_r2r(LRGNID_COPY    ,nc,1)
-             scl = copyinfo_r2r(SRC_LRGNID_COPY,nc,1)
-             if ( n <= cs ) then
-                var(recvlist_r2r(n,nc,1),k,cl ,m) = var(sendlist_r2r(n,nc,1),k,scl,m)
-             endif
-          enddo
-          !$omp end do
-       enddo
-       !$omp end parallel
-    enddo
-    enddo
-    !$acc end kernels
-
-    !------------------------------------------
-    !  var -> var_pl ( data copy in same rank)
-    !------------------------------------------
-    !$acc kernels present(var,var_pl) &
-    !$acc& pcopyin(recvlist_r2p,sendlist_r2p,copyinfo_r2p) async(0)
-    !$acc loop independent gang
-    do m = 1, varmax
-    !$acc loop independent gang
-    do nc = 1, cur_ncmax_r2p
-    !$acc loop independent gang vector(8)
-    do k = 1, kmax
-    !$acc loop independent vector(32)
-    do n = 1, max_cs_r2p
-       cs  = copyinfo_r2p(SIZE_COPY      ,nc,1)
-       cl  = copyinfo_r2p(LRGNID_COPY    ,nc,1)
-       scl = copyinfo_r2p(SRC_LRGNID_COPY,nc,1)
-       if ( n <= cs ) then
-          var_pl(recvlist_r2p(n,nc,1),k,cl,m) = var(sendlist_r2p(n,nc,1),k,scl,m)
-       endif
-    enddo
-    enddo
-    enddo
-    enddo
-    !$acc end kernels
-
-    !-----------------------------------------
-    !  var_pl -> var (data copy in same rank)
-    !-----------------------------------------
-    !$acc kernels present(var,var_pl) &
-    !$acc& pcopyin(recvlist_p2r,sendlist_p2r,copyinfo_p2r) async(0)
-    !$acc loop independent gang
-    do m = 1, varmax
-    !$acc loop independent gang
-    do nc = 1, cur_ncmax_p2r
-    !$acc loop independent gang vector(8)
-    do k = 1, kmax
-    !$acc loop independent vector(32)
-    do n = 1, max_cs_p2r
-       cs  = copyinfo_p2r(SIZE_COPY      ,nc,1)
-       cl  = copyinfo_p2r(LRGNID_COPY    ,nc,1)
-       scl = copyinfo_p2r(SRC_LRGNID_COPY,nc,1)
-       if ( n <= cs ) then
-          var(recvlist_p2r(n,nc,1),k,cl,m) = var_pl(sendlist_p2r(n,nc,1),k,scl,m)
-       endif
-    enddo
-    enddo
-    enddo
-    enddo
-    !$acc end kernels
-
-    acount = romax(1) + somax(1)
-
-    call MPI_WAITALL(acount,areq,stat,ierr)
-
-    if ( opt_comm_barrier ) then
-       call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
-    endif
-
-    !$acc data pcopyin(recvlist,recvlist_pl) &
-    !$acc& pcopyin(recvinfo,recvinfo_pl) &
-    !$acc& pcopyin(nrmax,nrmax_pl) async(0)
-
-    !$acc wait
-
-    do ro = 1, cur_romax
-       cur_rsize    = rsize(ro,1)*cmax
-       cur_nrmax    = nrmax(ro,1)
-       cur_nrmax_pl = nrmax_pl(ro,1)
-
-       !$acc kernels copyin(recvbuf(1:cur_rsize,ro)) async(ro)
-
-       !-----------------------------------------
-       !  recvbuf -> var ( recieve in region )
-       !-----------------------------------------
-       !$acc loop independent gang
-
-       do m = 1, varmax
-          !$omp parallel default(none),private(n,nr,k,rs,rl,rb), &
-          !$omp shared(ro,m,kmax,cur_nrmax,max_rs,cmax,nrmax,recvinfo,recvlist,recvbuf,var)
-          !$acc loop independent gang vector(8)
-          do k = 1, kmax
-          !$acc loop independent gang
-          do nr = 1, cur_nrmax
-             !$omp do
-             !$acc loop independent vector(32)
-             do n = 1, max_rs
-                if ( nr <= nrmax(ro,1) ) then
-                   rs = recvinfo(SIZE_COMM  ,nr,ro,1)
-                   rl = recvinfo(LRGNID_COMM,nr,ro,1)
-                   rb = recvinfo(BASE_COMM  ,nr,ro,1) * cmax
-                   if ( n <= rs ) then
-                      var(recvlist(n,nr,ro,1),k,rl,m) = recvbuf(n+(k-1)*rs+(m-1)*rs*kmax+rb,ro)
-                   endif
-                endif
-             enddo
-             !$omp end do
-          enddo
-          enddo
-          !$omp end parallel
-       enddo
-
-       !-----------------------------------------
-       !  recvbuf -> var_pl ( recieve in pole )
-       !-----------------------------------------
-       !$acc loop independent gang
-       do m = 1, varmax
-       !$acc loop independent gang vector(8)
-       do k = 1, kmax
-       !$acc loop independent gang
-       do nr = 1, cur_nrmax_pl
-       !$acc loop independent vector(32)
-       do n = 1, max_rs_pl
-          if ( nr <= nrmax_pl(ro,1) ) then
-             rs = recvinfo_pl(SIZE_COMM  ,nr,ro,1)
-             rl = recvinfo_pl(LRGNID_COMM,nr,ro,1)
-             rb = recvinfo_pl(BASE_COMM  ,nr,ro,1) * cmax
-             if ( n <= rs ) then
-                var_pl(recvlist_pl(n,nr,ro,1),k,rl,m) = recvbuf(n+(k-1)*rs+(m-1)*rs*kmax+rb,ro)
-             endif
-          endif
-       enddo
-       enddo
-       enddo
-       enddo
-
-       !$acc end kernels
-    enddo
-
-    !$acc wait
-    !$acc end data
-
-    !-----------------------------------------
-    !  copy data around singular point
-    !-----------------------------------------
-    !$acc kernels present(var) &
-    !$acc& pcopyin(recvlist_sgp,sendlist_sgp,copyinfo_sgp) async(0)
-    !$acc loop independent gang
-    do m = 1, varmax
-    !$acc loop independent gang
-    do nc = 1, cur_ncmax_sgp
-    !$acc loop independent gang vector(8)
-    do k = 1, kmax
-    !$acc loop independent vector(32)
-    do n = 1, max_cs_sgp
-       cs  = copyinfo_sgp(SIZE_COPY      ,nc,1)
-       cl  = copyinfo_sgp(LRGNID_COPY    ,nc,1)
-       scl = copyinfo_sgp(SRC_LRGNID_COPY,nc,1)
-       if ( n <= cs ) then
-          var(recvlist_sgp(n,nc,1),k,cl ,m) = var(sendlist_sgp(n,nc,1),k,scl,m)
-       endif
-    enddo
-    enddo
-    enddo
-    enddo
-    !$acc end kernels
-
-    !$acc kernels present(var) async(0)
-    var(suf(ADM_gmax+1,ADM_gmin-1),:,:,:) = var(suf(ADM_gmax+1,ADM_gmin),:,:,:)
-    var(suf(ADM_gmin-1,ADM_gmax+1),:,:,:) = var(suf(ADM_gmin,ADM_gmax+1),:,:,:)
-    !$acc end kernels
-
-    !$acc end data
-
-    !$acc wait
-
 
     call PROF_rapend('COMM_data_transfer',2)
 
@@ -2694,173 +1897,207 @@ contains
   end subroutine COMM_data_transfer
 
   !-----------------------------------------------------------------------------
+  !> Data transfer with region halo => pole center
   subroutine COMM_var( &
        var,    &
        var_pl, &
-       knum,   &
-       nnum    )
+       kmax,   &
+       vmax    )
     use mod_process, only: &
        PRC_LOCAL_COMM_WORLD
     use mod_adm, only: &
-       ADM_prc_tab,        &
-       ADM_rgn2prc,        &
-       ADM_prc_me,         &
-       ADM_NPL,            &
-       ADM_SPL,            &
-       ADM_prc_npl,        &
-       ADM_prc_spl,        &
-       ADM_rgnid_npl_mng,  &
-       ADM_rgnid_spl_mng,  &
-       ADM_gall,           &
-       ADM_gall_pl,        &
-       ADM_lall,           &
-       ADM_lall_pl,        &
-       ADM_gall_1d,        &
-       ADM_gmin,           &
-       ADM_gmax,           &
-       ADM_gslf_pl
+       ADM_rgn_nmax_pl, &
+       ADM_lall,        &
+       ADM_lall_pl,     &
+       ADM_gall,        &
+       ADM_gall_pl,     &
+       RGNMNG_rgn4pl,   &
+       RGNMNG_lp2r,     &
+       I_NPL,           &
+       I_SPL
     implicit none
 
-    integer, intent(in)  ::  knum
-    integer, intent(in)  ::  nnum
-    real(RP), intent(inout) ::  var   (ADM_gall,   knum,ADM_lall,   nnum)
-    real(RP), intent(inout) ::  var_pl(ADM_gall_pl,knum,ADM_lall_pl,nnum)
+    integer,  intent(in)    :: kmax
+    integer,  intent(in)    :: vmax
+    real(RP), intent(inout) :: var   (ADM_gall,   kmax,ADM_lall,   vmax)
+    real(RP), intent(inout) :: var_pl(ADM_gall_pl,kmax,ADM_lall_pl,vmax)
 
-    real(RP) ::  v_npl_send(knum,nnum)
-    real(RP) ::  v_spl_send(knum,nnum)
-    real(RP) ::  v_npl_recv(knum,nnum)
-    real(RP) ::  v_spl_recv(knum,nnum)
+    real(RP) :: sendbuf_h2p(kmax*vmax,ADM_rgn_nmax_pl)
+    real(RP) :: recvbuf_h2p(kmax*vmax,ADM_rgn_nmax_pl)
 
-    integer ::  ireq(4)
-    integer ::  istat(MPI_STATUS_SIZE)
+    integer :: totalsize, rank, tag
+    integer :: irank, ipos
+    integer :: ij_from, l_from, ij_to, l_to
+    integer :: r_from, r_to
 
-    integer ::  ierr
-    integer ::  k, l, n, rgnid
-
-    integer ::  i,j,suf
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+    integer :: k, v, kk
+    integer :: ierr
     !---------------------------------------------------------------------------
 
-    if ( opt_comm_barrier ) then
+    if ( COMM_apply_barrier ) then
        call PROF_rapstart('COMM_barrier',2)
-       call MPI_Barrier( PRC_LOCAL_COMM_WORLD, ierr )
+       call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
        call PROF_rapend  ('COMM_barrier',2)
     endif
 
     call PROF_rapstart('COMM_var',2)
 
-    !$acc data present(var)
+    if( comm_pl ) then
 
-    if( comm_pl ) then ! T.Ohno 110721
+    REQ_count = 0
 
-       !--- recv pole value
-       !--- north pole
-       if ( ADM_prc_me == ADM_prc_npl ) then
-          call MPI_IRECV( v_npl_recv,                       &
-                          knum * nnum,                      &
-                          COMM_datatype,                    &
-                          ADM_rgn2prc(ADM_rgnid_npl_mng)-1, &
-                          ADM_NPL,                          &
-                          PRC_LOCAL_COMM_WORLD,             &
-                          ireq(3),                          &
-                          ierr                              )
-       endif
+    !--- receive p2r-reverse
+    do irank = 1, Send_nmax_p2r
+       do ipos = 1, Send_info_p2r(I_size,irank)
+          l_from = Send_list_p2r(I_l_to   ,ipos,irank)
+          r_from = RGNMNG_lp2r(l_from,Send_info_p2r(I_prc_to,irank))
 
-       !--- south pole
-       if ( ADM_prc_me == ADM_prc_spl ) then
-          call MPI_IRECV( v_spl_recv,                       &
-                          knum * nnum,                      &
-                          COMM_datatype,                    &
-                          ADM_rgn2prc(ADM_rgnid_spl_mng)-1, &
-                          ADM_SPL,                          &
-                          PRC_LOCAL_COMM_WORLD,             &
-                          ireq(4),                          &
-                          ierr                              )
-       endif
+          if ( r_from == RGNMNG_rgn4pl(I_NPL) ) then
+             REQ_count = REQ_count + 1
+             totalsize = kmax * vmax
+             rank      = Send_info_p2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
+             tag       = Send_info_p2r(I_prc_from,irank) + 1000000
 
-       !--- send pole value
-       do l = 1, ADM_lall
-          rgnid = ADM_prc_tab(l,ADM_prc_me)
-
-          !--- north pole
-          if ( rgnid == ADM_rgnid_npl_mng ) then
-             !$acc kernels copyout(v_npl_send) pcopyin(var) async(0)
-             do n = 1, nnum
-             do k = 1, knum
-                v_npl_send(k,n) = var(suf(ADM_gmin,ADM_gmax+1),k,l,n)
-             enddo
-             enddo
-             !$acc end kernels
-
-             !$acc wait
-
-             call MPI_ISEND( v_npl_send,           &
-                             knum * nnum,          &
-                             COMM_datatype,        &
-                             ADM_prc_npl-1,        &
-                             ADM_NPL,              &
-                             PRC_LOCAL_COMM_WORLD, &
-                             ireq(1),              &
-                             ierr                  )
+             call MPI_IRECV( recvbuf_h2p(1,I_NPL), & ! [OUT]
+                             totalsize,            & ! [IN]
+                             COMM_datatype,        & ! [IN]
+                             rank,                 & ! [IN]
+                             tag,                  & ! [IN]
+                             PRC_LOCAL_COMM_WORLD, & ! [IN]
+                             REQ_list(REQ_count),  & ! [OUT]
+                             ierr                  ) ! [OUT]
           endif
 
-          !--- south pole
-          if ( rgnid == ADM_rgnid_spl_mng ) then
-             !$acc kernels copyout(v_spl_send) pcopyin(var) async(0)
-             do n = 1, nnum
-             do k = 1, knum
-                v_spl_send(k,n) = var(suf(ADM_gmax+1,ADM_gmin),k,l,n)
+          if ( r_from == RGNMNG_rgn4pl(I_SPL) ) then
+             REQ_count = REQ_count + 1
+             totalsize = kmax * vmax
+             rank      = Send_info_p2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
+             tag       = Send_info_p2r(I_prc_from,irank) + 2000000
+
+             call MPI_IRECV( recvbuf_h2p(1,I_SPL), & ! [OUT]
+                             totalsize,            & ! [IN]
+                             COMM_datatype,        & ! [IN]
+                             rank,                 & ! [IN]
+                             tag,                  & ! [IN]
+                             PRC_LOCAL_COMM_WORLD, & ! [IN]
+                             REQ_list(REQ_count),  & ! [OUT]
+                             ierr                  ) ! [OUT]
+          endif
+       enddo
+    enddo
+
+    !--- pack and send p2r-reverse
+    do irank = 1, Recv_nmax_p2r
+       do ipos = 1, Recv_info_p2r(I_size,irank)
+          ij_from = Recv_list_p2r(I_grid_to,ipos,irank)
+          l_from  = Recv_list_p2r(I_l_to   ,ipos,irank)
+          r_from  = RGNMNG_lp2r(l_from,Recv_info_p2r(I_prc_to,irank))
+
+          if ( r_from == RGNMNG_rgn4pl(I_NPL) ) then
+             do v = 1, vmax
+             do k = 1, kmax
+                kk = (v-1) * kmax + k
+                sendbuf_h2p(kk,I_NPL) = var(ij_from,k,l_from,v)
              enddo
              enddo
-             !$acc end kernels
 
-             !$acc wait
+             REQ_count = REQ_count + 1
+             totalsize = kmax * vmax
+             rank      = Recv_info_p2r(I_prc_from,irank) - 1 ! rank = prc - 1
+             tag       = Recv_info_p2r(I_prc_from,irank) + 1000000
 
-             call MPI_ISEND( v_spl_send,           &
-                             knum * nnum,          &
-                             COMM_datatype,        &
-                             ADM_prc_spl-1,        &
-                             ADM_SPL,              &
-                             PRC_LOCAL_COMM_WORLD, &
-                             ireq(2),              &
-                             ierr                  )
+             call MPI_ISEND( sendbuf_h2p(1,I_NPL), & ! [IN]
+                             totalsize,            & ! [IN]
+                             COMM_datatype,        & ! [IN]
+                             rank,                 & ! [IN]
+                             tag,                  & ! [IN]
+                             PRC_LOCAL_COMM_WORLD, & ! [IN]
+                             REQ_list(REQ_count),  & ! [OUT]
+                             ierr                  ) ! [OUT]
           endif
 
+          if ( r_from == RGNMNG_rgn4pl(I_SPL) ) then
+             do v = 1, vmax
+             do k = 1, kmax
+                kk = (v-1) * kmax + k
+                sendbuf_h2p(kk,I_SPL) = var(ij_from,k,l_from,v)
+             enddo
+             enddo
+
+             REQ_count = REQ_count + 1
+             totalsize = kmax * vmax
+             rank      = Recv_info_p2r(I_prc_from,irank) - 1 ! rank = prc - 1
+             tag       = Recv_info_p2r(I_prc_from,irank) + 2000000
+
+             call MPI_ISEND( sendbuf_h2p(1,I_SPL), & ! [IN]
+                             totalsize,            & ! [IN]
+                             COMM_datatype,        & ! [IN]
+                             rank,                 & ! [IN]
+                             tag,                  & ! [IN]
+                             PRC_LOCAL_COMM_WORLD, & ! [IN]
+                             REQ_list(REQ_count),  & ! [OUT]
+                             ierr                  ) ! [OUT]
+          endif
        enddo
+    enddo
 
-       do l = 1, ADM_lall
-          rgnid = ADM_prc_tab(l,ADM_prc_me)
+    !--- copy p2r-reverse
+    do irank = 1, Copy_nmax_p2r
+       do ipos = 1, Copy_info_p2r(I_size)
+          ij_from = Copy_list_p2r(I_grid_to  ,ipos)
+          l_from  = Copy_list_p2r(I_l_to     ,ipos)
+          r_from  = RGNMNG_lp2r(l_from,Copy_info_p2r(I_prc_to))
+          ij_to   = Copy_list_p2r(I_grid_from,ipos)
+          l_to    = Copy_list_p2r(I_l_from   ,ipos)
+          r_to    = RGNMNG_lp2r(l_to,Copy_info_p2r(I_prc_from))
 
-          !--- north pole
-          if( rgnid == ADM_rgnid_npl_mng ) call MPI_WAIT(ireq(1),istat,ierr)
-
-          !--- south pole
-          if( rgnid == ADM_rgnid_spl_mng ) call MPI_WAIT(ireq(2),istat,ierr)
+          if (      r_from == RGNMNG_rgn4pl(I_NPL) &
+               .OR. r_from == RGNMNG_rgn4pl(I_SPL) ) then
+             do v = 1, vmax
+             do k = 1, kmax
+                var_pl(ij_to,k,l_to,v) = var(ij_from,k,l_from,v)
+             enddo
+             enddo
+          endif
        enddo
+    enddo
 
-       if ( ADM_prc_me == ADM_prc_npl ) then
-          call MPI_WAIT(ireq(3),istat,ierr)
+    !--- wait all
+    call MPI_WAITALL( REQ_count,           & ! [IN]
+                      REQ_list(:),         & ! [IN]
+                      MPI_STATUSES_IGNORE, & ! [OUT]
+                      ierr                 ) ! [OUT]
 
-          do n = 1, nnum
-          do k = 1, knum
-             var_pl(ADM_gslf_pl,k,ADM_NPL,n) = v_npl_recv(k,n)
-          enddo
-          enddo
-       endif
+    !--- unpack p2r-reverse
+    do irank = 1, Send_nmax_p2r
+       do ipos = 1, Send_info_p2r(I_size,irank)
+          l_from = Send_list_p2r(I_l_to     ,ipos,irank)
+          r_from = RGNMNG_lp2r(l_from,Send_info_p2r(I_prc_to,irank))
 
-       if ( ADM_prc_me == ADM_prc_spl ) then
-          call MPI_WAIT(ireq(4),istat,ierr)
+          ij_to  = Send_list_p2r(I_grid_from,ipos,irank)
+          l_to   = Send_list_p2r(I_l_from   ,ipos,irank)
 
-          do n = 1, nnum
-          do k = 1, knum
-             var_pl(ADM_gslf_pl,k,ADM_SPL,n) = v_spl_recv(k,n)
-          enddo
-          enddo
-       endif
+          if ( r_from == RGNMNG_rgn4pl(I_NPL) ) then
+             do v = 1, vmax
+             do k = 1, kmax
+                kk = (v-1) * kmax + k
+                var_pl(ij_to,k,l_to,v) = recvbuf_h2p(kk,I_NPL)
+             enddo
+             enddo
+          endif
+
+          if ( r_from == RGNMNG_rgn4pl(I_SPL) ) then
+             do v = 1, vmax
+             do k = 1, kmax
+                kk = (v-1) * kmax + k
+                var_pl(ij_to,k,l_to,v) = recvbuf_h2p(kk,I_SPL)
+             enddo
+             enddo
+          endif
+       enddo
+    enddo
 
     endif
-
-    !$acc end data
 
     call COMM_data_transfer(var,var_pl)
 
@@ -2868,6 +2105,388 @@ contains
 
     return
   end subroutine COMM_var
+
+  !-----------------------------------------------------------------------------
+  !> suffix calculation
+  !> @return suf
+  function suf(i,j) result(suffix)
+    use mod_adm, only: &
+       ADM_gall_1d
+    implicit none
+
+    integer :: suffix
+    integer :: i, j
+    !---------------------------------------------------------------------------
+
+    suffix = ADM_gall_1d * (j-1) + i
+
+  end function suf
+
+  !-----------------------------------------------------------------------------
+  subroutine COMM_debugtest
+    use mod_process, only: &
+       PRC_MPIfinish
+    use mod_adm, only: &
+       ADM_prc_me,      &
+       ADM_gall,        &
+       ADM_gall_pl,     &
+       ADM_kall,        &
+       ADM_lall,        &
+       ADM_lall_pl,     &
+       ADM_lall_pl,     &
+       ADM_gall_1d,     &
+       ADM_gmin,        &
+       ADM_gmax,        &
+       ADM_kmin,        &
+       ADM_kmax,        &
+       ADM_vlink,       &
+       ADM_have_sgp,    &
+       RGNMNG_l2r,      &
+       RGNMNG_vert_num, &
+       I_N,             &
+       I_S
+    implicit none
+
+    real(RP) :: var   (ADM_gall   ,ADM_kall,ADM_lall   ,4)
+    real(RP) :: var_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,4)
+
+    integer  :: i, j, k, l, ij, rgnid, prc
+    !---------------------------------------------------------------------------
+
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ TEST start'
+
+    var   (:,:,:,:) = -999.D0
+    var_pl(:,:,:,:) = -999.D0
+
+    do l = 1, ADM_lall
+       rgnid = RGNMNG_l2r(l)
+       prc   = ADM_prc_me
+
+       do k = ADM_kmin, ADM_kmax
+          do j = ADM_gmin, ADM_gmax
+          do i = ADM_gmin, ADM_gmax
+             ij = ADM_gall_1d * (j-1) + i
+
+             var(ij,k,l,1) = real(prc,  kind=RP)
+             var(ij,k,l,2) = real(rgnid,kind=RP)
+             var(ij,k,l,3) = real(i,    kind=RP)
+             var(ij,k,l,4) = real(j,    kind=RP)
+          enddo
+          enddo
+       enddo
+
+       if ( ADM_have_sgp(l) ) then
+          do k = ADM_kmin, ADM_kmax
+             var(1,k,l,:) = -1.D0
+          enddo
+       endif
+    enddo
+
+    do l = 1, ADM_lall_pl
+       rgnid = l
+       prc   = ADM_prc_me
+
+       do k  = ADM_kmin, ADM_kmax
+       do ij = 1, ADM_gall_pl
+          var_pl(ij,k,l,1) = real(-prc,  kind=RP)
+          var_pl(ij,k,l,2) = real(-rgnid,kind=RP)
+          var_pl(ij,k,l,3) = real(-ij,   kind=RP)
+          var_pl(ij,k,l,4) = real(-ij,   kind=RP)
+       enddo
+       enddo
+    enddo
+
+    write(IO_FID_LOG,*) "##### (prc,rgnid) #####"
+    do l  = 1, ADM_lall
+    do k = ADM_kmin, ADM_kmin
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       do i = 1, ADM_gall_1d
+          write(IO_FID_LOG,'(I9)',advance='no') i
+       enddo
+       write(IO_FID_LOG,*)
+
+       do j = ADM_gall_1d, 1, -1
+          write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+          do i = 1, ADM_gall_1d
+             ij = ADM_gall_1d * (j-1) + i
+             write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+                        '(',int(var(ij,k,l,1)),',',int(var(ij,k,l,2)),')'
+          enddo
+          write(IO_FID_LOG,*)
+       enddo
+    enddo
+    enddo
+
+    do l  = 1, ADM_lall_pl
+    do k = ADM_kmin, ADM_kmin
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       do i = 1, ADM_gall_pl
+          write(IO_FID_LOG,'(I9)',advance='no') i
+       enddo
+       write(IO_FID_LOG,*)
+
+       write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+       do ij = 1, ADM_gall_pl
+          write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+                     '(',int(var_pl(ij,k,l,1)),',',int(var_pl(ij,k,l,2)),')'
+       enddo
+       write(IO_FID_LOG,*)
+    enddo
+    enddo
+
+    write(IO_FID_LOG,*) "##### (i,j) #####"
+    do l  = 1, ADM_lall
+    do k = ADM_kmin, ADM_kmin
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       do i = 1, ADM_gall_1d
+          write(IO_FID_LOG,'(I9)',advance='no') i
+       enddo
+       write(IO_FID_LOG,*)
+
+       do j = ADM_gall_1d, 1, -1
+          write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+          do i = 1, ADM_gall_1d
+             ij = ADM_gall_1d * (j-1) + i
+             write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+                        '(',int(var(ij,k,l,3)),',',int(var(ij,k,l,4)),')'
+          enddo
+          write(IO_FID_LOG,*)
+       enddo
+    enddo
+    enddo
+
+    do l  = 1, ADM_lall_pl
+    do k = ADM_kmin, ADM_kmin
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       do i = 1, ADM_gall_pl
+          write(IO_FID_LOG,'(I9)',advance='no') i
+       enddo
+       write(IO_FID_LOG,*)
+
+       write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+       do ij = 1, ADM_gall_pl
+          write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+                     '(',int(var_pl(ij,k,l,3)),',',int(var_pl(ij,k,l,4)),')'
+       enddo
+       write(IO_FID_LOG,*)
+    enddo
+    enddo
+
+
+
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Communication start'
+
+    call COMM_data_transfer( var(:,:,:,:), var_pl(:,:,:,:) )
+
+    write(IO_FID_LOG,*) "##### (prc,rgnid) #####"
+    do l  = 1, ADM_lall
+    do k = ADM_kmin, ADM_kmin
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       do i = 1, ADM_gall_1d
+          write(IO_FID_LOG,'(I9)',advance='no') i
+       enddo
+       write(IO_FID_LOG,*)
+
+       do j = ADM_gall_1d, 1, -1
+          write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+          do i = 1, ADM_gall_1d
+             ij = ADM_gall_1d * (j-1) + i
+             write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+                        '(',int(var(ij,k,l,1)),',',int(var(ij,k,l,2)),')'
+          enddo
+          write(IO_FID_LOG,*)
+       enddo
+    enddo
+    enddo
+
+    do l  = 1, ADM_lall_pl
+    do k = ADM_kmin, ADM_kmin
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       do i = 1, ADM_gall_pl
+          write(IO_FID_LOG,'(I9)',advance='no') i
+       enddo
+       write(IO_FID_LOG,*)
+
+       write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+       do ij = 1, ADM_gall_pl
+          write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+                     '(',int(var_pl(ij,k,l,1)),',',int(var_pl(ij,k,l,2)),')'
+       enddo
+       write(IO_FID_LOG,*)
+    enddo
+    enddo
+
+    write(IO_FID_LOG,*) "##### (i,j) #####"
+    do l  = 1, ADM_lall
+    do k = ADM_kmin, ADM_kmin
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       do i = 1, ADM_gall_1d
+          write(IO_FID_LOG,'(I9)',advance='no') i
+       enddo
+       write(IO_FID_LOG,*)
+
+       do j = ADM_gall_1d, 1, -1
+          write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+          do i = 1, ADM_gall_1d
+             ij = ADM_gall_1d * (j-1) + i
+             write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+                        '(',int(var(ij,k,l,3)),',',int(var(ij,k,l,4)),')'
+          enddo
+          write(IO_FID_LOG,*)
+       enddo
+    enddo
+    enddo
+
+    do l  = 1, ADM_lall_pl
+    do k = ADM_kmin, ADM_kmin
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       do i = 1, ADM_gall_pl
+          write(IO_FID_LOG,'(I9)',advance='no') i
+       enddo
+       write(IO_FID_LOG,*)
+
+       write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+       do ij = 1, ADM_gall_pl
+          write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+                     '(',int(var_pl(ij,k,l,3)),',',int(var_pl(ij,k,l,4)),')'
+       enddo
+       write(IO_FID_LOG,*)
+    enddo
+    enddo
+
+
+
+    do l = 1, ADM_lall
+       rgnid = RGNMNG_l2r(l)
+       prc   = ADM_prc_me
+
+       if ( RGNMNG_vert_num(I_N,rgnid) == ADM_vlink ) then
+          do k = ADM_kmin, ADM_kmax
+             j  = ADM_gmax+1
+             i  = ADM_gmin
+             ij = ADM_gall_1d * (j-1) + i
+
+             var(ij,k,l,1) = real(prc,  kind=RP)
+             var(ij,k,l,2) = real(rgnid,kind=RP)
+             var(ij,k,l,3) = real(i,    kind=RP)
+             var(ij,k,l,4) = real(j,    kind=RP)
+          enddo
+       endif
+
+       if ( RGNMNG_vert_num(I_S,rgnid) == ADM_vlink ) then
+          do k = ADM_kmin, ADM_kmax
+             j  = ADM_gmin
+             i  = ADM_gmax+1
+             ij = ADM_gall_1d * (j-1) + i
+
+             var(ij,k,l,1) = real(prc,  kind=RP)
+             var(ij,k,l,2) = real(rgnid,kind=RP)
+             var(ij,k,l,3) = real(i,    kind=RP)
+             var(ij,k,l,4) = real(j,    kind=RP)
+          enddo
+       endif
+
+    enddo
+
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ pole fill start'
+
+    call COMM_var( var(:,:,:,:), var_pl(:,:,:,:), ADM_kall, 4 )
+
+    write(IO_FID_LOG,*) "##### (prc,rgnid) #####"
+    do l  = 1, ADM_lall
+    do k = ADM_kmin, ADM_kmin
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       do i = 1, ADM_gall_1d
+          write(IO_FID_LOG,'(I9)',advance='no') i
+       enddo
+       write(IO_FID_LOG,*)
+
+       do j = ADM_gall_1d, 1, -1
+          write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+          do i = 1, ADM_gall_1d
+             ij = ADM_gall_1d * (j-1) + i
+             write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+                        '(',int(var(ij,k,l,1)),',',int(var(ij,k,l,2)),')'
+          enddo
+          write(IO_FID_LOG,*)
+       enddo
+    enddo
+    enddo
+
+    do l  = 1, ADM_lall_pl
+    do k = ADM_kmin, ADM_kmin
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       do i = 1, ADM_gall_pl
+          write(IO_FID_LOG,'(I9)',advance='no') i
+       enddo
+       write(IO_FID_LOG,*)
+
+       write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+       do ij = 1, ADM_gall_pl
+          write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+                     '(',int(var_pl(ij,k,l,1)),',',int(var_pl(ij,k,l,2)),')'
+       enddo
+       write(IO_FID_LOG,*)
+    enddo
+    enddo
+
+    write(IO_FID_LOG,*) "##### (i,j) #####"
+    do l  = 1, ADM_lall
+    do k = ADM_kmin, ADM_kmin
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       do i = 1, ADM_gall_1d
+          write(IO_FID_LOG,'(I9)',advance='no') i
+       enddo
+       write(IO_FID_LOG,*)
+
+       do j = ADM_gall_1d, 1, -1
+          write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+          do i = 1, ADM_gall_1d
+             ij = ADM_gall_1d * (j-1) + i
+             write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+                        '(',int(var(ij,k,l,3)),',',int(var(ij,k,l,4)),')'
+          enddo
+          write(IO_FID_LOG,*)
+       enddo
+    enddo
+    enddo
+
+    do l  = 1, ADM_lall_pl
+    do k = ADM_kmin, ADM_kmin
+       write(IO_FID_LOG,*)
+       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       do i = 1, ADM_gall_pl
+          write(IO_FID_LOG,'(I9)',advance='no') i
+       enddo
+       write(IO_FID_LOG,*)
+
+       write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+       do ij = 1, ADM_gall_pl
+          write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+                     '(',int(var_pl(ij,k,l,3)),',',int(var_pl(ij,k,l,4)),')'
+       enddo
+       write(IO_FID_LOG,*)
+    enddo
+    enddo
+
+    call PRC_MPIfinish
+
+    stop
+  end subroutine COMM_debugtest
 
   !-----------------------------------------------------------------------------
   subroutine COMM_Stat_sum( localsum, globalsum )

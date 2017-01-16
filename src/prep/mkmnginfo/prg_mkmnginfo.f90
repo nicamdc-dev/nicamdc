@@ -17,12 +17,12 @@ program prg_mkmnginfo
   use mod_stdio
   use mod_prof
   use mod_adm, only: &
-     ADM_RID, &
-     ADM_DIR, &
-     ADM_SW,  &
-     ADM_NW,  &
-     ADM_NE,  &
-     ADM_SE
+     I_RGNID, &
+     I_DIR,   &
+     I_SW,    &
+     I_NW,    &
+     I_NE,    &
+     I_SE
   !-----------------------------------------------------------------------------
   implicit none
   !-----------------------------------------------------------------------------
@@ -105,7 +105,7 @@ contains
   !-----------------------------------------------------------------------------
   subroutine generate_mngtab( rl, nmax_prc, fname )
     use mod_adm, only: &
-       nmax_mng => ADM_l_limit
+       nmax_mng => RGNMNG_llim
     implicit none
 
     integer,          intent(in) :: rl
@@ -133,10 +133,10 @@ contains
 
     integer :: rgnid
     integer :: &
-         sw(ADM_RID:ADM_DIR),&
-         nw(ADM_RID:ADM_DIR),&
-         ne(ADM_RID:ADM_DIR),&
-         se(ADM_RID:ADM_DIR)
+         sw(I_RGNID:I_DIR),&
+         nw(I_RGNID:I_DIR),&
+         ne(I_RGNID:I_DIR),&
+         se(I_RGNID:I_DIR)
     namelist / rgn_link_info / rgnid, sw, nw, ne, se
 
     integer :: num_of_proc
@@ -147,113 +147,113 @@ contains
     integer :: mng_rgnid(nmax_mng)
     namelist /rgn_mng_info/ peid, num_of_mng,mng_rgnid
 
-    integer :: dmd_data(ADM_SW:ADM_SE,nmax_dmd)
+    integer :: dmd_data(I_SW:I_SE,nmax_dmd)
     !---------------------------------------------------------------------------
 
-    dmd_data(ADM_SW:ADM_SE, 1)=(/ 6, 5, 2,10/)
-    dmd_data(ADM_SW:ADM_SE, 2)=(/10, 1, 3, 9/)
-    dmd_data(ADM_SW:ADM_SE, 3)=(/ 9, 2, 4, 8/)
-    dmd_data(ADM_SW:ADM_SE, 4)=(/ 8, 3, 5, 7/)
-    dmd_data(ADM_SW:ADM_SE, 5)=(/ 7, 4, 1, 6/)
-    dmd_data(ADM_SW:ADM_SE, 6)=(/ 7, 5, 1,10/)
-    dmd_data(ADM_SW:ADM_SE, 7)=(/ 8, 4, 5, 6/)
-    dmd_data(ADM_SW:ADM_SE, 8)=(/ 9, 3, 4, 7/)
-    dmd_data(ADM_SW:ADM_SE, 9)=(/10, 2, 3, 8/)
-    dmd_data(ADM_SW:ADM_SE,10)=(/ 6, 1, 2, 9/)
+    dmd_data(I_SW:I_SE, 1)=(/ 6, 5, 2,10/)
+    dmd_data(I_SW:I_SE, 2)=(/10, 1, 3, 9/)
+    dmd_data(I_SW:I_SE, 3)=(/ 9, 2, 4, 8/)
+    dmd_data(I_SW:I_SE, 4)=(/ 8, 3, 5, 7/)
+    dmd_data(I_SW:I_SE, 5)=(/ 7, 4, 1, 6/)
+    dmd_data(I_SW:I_SE, 6)=(/ 7, 5, 1,10/)
+    dmd_data(I_SW:I_SE, 7)=(/ 8, 4, 5, 6/)
+    dmd_data(I_SW:I_SE, 8)=(/ 9, 3, 4, 7/)
+    dmd_data(I_SW:I_SE, 9)=(/10, 2, 3, 8/)
+    dmd_data(I_SW:I_SE,10)=(/ 6, 1, 2, 9/)
 
     rgnlen = 2**rl
     all_rgn = nmax_dmd*rgnlen*rgnlen
 
-    allocate(rgn_tab(ADM_RID:ADM_DIR,ADM_SW:ADM_SE,all_rgn))
+    allocate(rgn_tab(I_RGNID:I_DIR,I_SW:I_SE,all_rgn))
 
     do d=1,nmax_dmd
        do i=1,rgnlen
           do j=1,rgnlen
              l=(rgnlen*rgnlen)*(d-1)+rgnlen*(j-1)+i
 
-             do k=ADM_SW,ADM_SE
+             do k=I_SW,I_SE
                 select case(k)
-                case(ADM_SW)
+                case(I_SW)
                    if(j==1) then
                       if(d<=5) then
                          i_nb=i
                          j_nb=rgnlen
-                         d_nb=dmd_data(ADM_SW,d)
-                         edgid_nb=ADM_NE
+                         d_nb=dmd_data(I_SW,d)
+                         edgid_nb=I_NE
                       else
                          i_nb=rgnlen
                          j_nb=rgnlen+1-i
-                         d_nb=dmd_data(ADM_SW,d)
-                         edgid_nb=ADM_SE
+                         d_nb=dmd_data(I_SW,d)
+                         edgid_nb=I_SE
                       endif
                    else
                       i_nb=i
                       j_nb=j-1
                       d_nb=d
-                      edgid_nb=ADM_NE
+                      edgid_nb=I_NE
                    endif
-                case(ADM_NW)
+                case(I_NW)
                    if(i==1) then
                       if(d<=5) then
                          i_nb=rgnlen+1-j
                          j_nb=rgnlen
-                         d_nb=dmd_data(ADM_NW,d)
-                         edgid_nb=ADM_NE
+                         d_nb=dmd_data(I_NW,d)
+                         edgid_nb=I_NE
                       else
                          i_nb=rgnlen
                          j_nb=j
-                         d_nb=dmd_data(ADM_NW,d)
-                         edgid_nb=ADM_SE
+                         d_nb=dmd_data(I_NW,d)
+                         edgid_nb=I_SE
                       endif
                    else
                       i_nb=i-1
                       j_nb=j
                       d_nb=d
-                      edgid_nb=ADM_SE
+                      edgid_nb=I_SE
                    endif
-                case(ADM_NE)
+                case(I_NE)
                    if(j==rgnlen) then
                       if(d<=5) then
                          i_nb=1
                          j_nb=rgnlen+1-i
-                         d_nb=dmd_data(ADM_NE,d)
-                         edgid_nb=ADM_NW
+                         d_nb=dmd_data(I_NE,d)
+                         edgid_nb=I_NW
                       else
                          i_nb=i
                          j_nb=1
-                         d_nb=dmd_data(ADM_NE,d)
-                         edgid_nb=ADM_SW
+                         d_nb=dmd_data(I_NE,d)
+                         edgid_nb=I_SW
                       endif
                    else
                       i_nb=i
                       j_nb=j+1
                       d_nb=d
-                      edgid_nb=ADM_SW
+                      edgid_nb=I_SW
                    endif
-                case(ADM_SE)
+                case(I_SE)
                    if(i==rgnlen) then
                       if(d<=5) then
                          i_nb=1
                          j_nb=j
-                         d_nb=dmd_data(ADM_SE,d)
-                         edgid_nb=ADM_NW
+                         d_nb=dmd_data(I_SE,d)
+                         edgid_nb=I_NW
                       else
                          i_nb=rgnlen+1-j
                          j_nb=1
-                         d_nb=dmd_data(ADM_SE,d)
-                         edgid_nb=ADM_SW
+                         d_nb=dmd_data(I_SE,d)
+                         edgid_nb=I_SW
                       endif
                    else
                       i_nb=i+1
                       j_nb=j
                       d_nb=d
-                      edgid_nb=ADM_NW
+                      edgid_nb=I_NW
                    endif
                 end select
 
                 l_nb=(rgnlen*rgnlen)*(d_nb-1)+rgnlen*(j_nb-1)+i_nb
-                rgn_tab(ADM_RID,k,l)=l_nb
-                rgn_tab(ADM_DIR,k,l)=edgid_nb
+                rgn_tab(I_RGNID,k,l)=l_nb
+                rgn_tab(I_DIR,k,l)=edgid_nb
 
              enddo
           enddo
@@ -319,10 +319,10 @@ contains
 
        do l = 1, all_rgn
           rgnid = l
-          sw    = rgn_tab(:,ADM_SW,l)
-          nw    = rgn_tab(:,ADM_NW,l)
-          ne    = rgn_tab(:,ADM_NE,l)
-          se    = rgn_tab(:,ADM_SE,l)
+          sw    = rgn_tab(:,I_SW,l)
+          nw    = rgn_tab(:,I_NW,l)
+          ne    = rgn_tab(:,I_NE,l)
+          se    = rgn_tab(:,I_SE,l)
 
           write(fid,nml=rgn_link_info)
        enddo
@@ -346,7 +346,7 @@ contains
 !---------------- for LCP
   subroutine generate_mngtab_lcp( rl, nmax_prc, fname )
     use mod_adm, only: &
-         nmax_mng => ADM_l_limit
+         nmax_mng => RGNMNG_llim
     implicit none
 
     integer, intent(in) :: rl
@@ -373,10 +373,10 @@ contains
 
     integer :: rgnid
     integer :: &
-         sw(ADM_RID:ADM_DIR),&
-         nw(ADM_RID:ADM_DIR),&
-         ne(ADM_RID:ADM_DIR),&
-         se(ADM_RID:ADM_DIR)
+         sw(I_RGNID:I_DIR),&
+         nw(I_RGNID:I_DIR),&
+         ne(I_RGNID:I_DIR),&
+         se(I_RGNID:I_DIR)
     namelist / rgn_link_info / rgnid, sw, nw, ne, se
 
     integer :: num_of_proc
@@ -392,31 +392,31 @@ contains
 
     nmax_dmd = XTMS_K * 4
     write(*,*) nmax_dmd, XTMS_K
-    allocate(dmd_data(ADM_SW:ADM_SE,nmax_dmd))
+    allocate(dmd_data(I_SW:I_SE,nmax_dmd))
 
     do d=1,XTMS_K
-       dmd_data(ADM_SW:ADM_SE, d)=(/ &
+       dmd_data(I_SW:I_SE, d)=(/ &
             d+XTMS_K, &
             mod(d-2+XTMS_K,XTMS_K)+1  , &
             mod(d,XTMS_K)+1  , &
             d+XTMS_K*2  /)
     enddo
     do d=XTMS_K+1,XTMS_K*2
-       dmd_data(ADM_SW:ADM_SE, d)=(/ &
+       dmd_data(I_SW:I_SE, d)=(/ &
             mod(d-2,XTMS_K)+XTMS_K*3+1   , &
             mod(d-2,XTMS_K)+XTMS_K*2+1  , &
             d-XTMS_K,&
             d+XTMS_K  /)
     enddo
     do d=XTMS_K*2+1,XTMS_K*3
-       dmd_data(ADM_SW:ADM_SE, d)=(/ &
+       dmd_data(I_SW:I_SE, d)=(/ &
             d-XTMS_K  , &
             d-XTMS_K*2  , &
             mod(d,XTMS_K)+XTMS_K*1+1   , &
             d+XTMS_K  /)
     enddo
     do d=XTMS_K*3+1,XTMS_K*4
-       dmd_data(ADM_SW:ADM_SE, d)=(/ &
+       dmd_data(I_SW:I_SE, d)=(/ &
             mod(d-2,XTMS_K)+XTMS_K*3+1, &
             d-XTMS_K, &
             mod(d,XTMS_K)+XTMS_K*1+1, &
@@ -426,7 +426,7 @@ contains
     rgnlen=2**rl
     all_rgn=nmax_dmd*rgnlen*rgnlen
 
-    allocate(rgn_tab(ADM_RID:ADM_DIR,ADM_SW:ADM_SE,all_rgn))
+    allocate(rgn_tab(I_RGNID:I_DIR,I_SW:I_SE,all_rgn))
 
     do d=1,nmax_dmd
        do i=1,rgnlen
@@ -434,129 +434,129 @@ contains
 
              l=(rgnlen*rgnlen)*(d-1)+rgnlen*(j-1)+i
 
-             do k=ADM_SW,ADM_SE
+             do k=I_SW,I_SE
                 select case(k)
-                case(ADM_SW)
+                case(I_SW)
                    if(j==1) then
                       if(d<=XTMS_K) then
                          i_nb=i
                          j_nb=rgnlen
-                         d_nb=dmd_data(ADM_SW,d)
-                         edgid_nb=ADM_NE
+                         d_nb=dmd_data(I_SW,d)
+                         edgid_nb=I_NE
                       elseif(d<=XTMS_K*2) then
                          i_nb=i
                          j_nb=rgnlen
-                         d_nb=dmd_data(ADM_SW,d)
-                         edgid_nb=ADM_NE
+                         d_nb=dmd_data(I_SW,d)
+                         edgid_nb=I_NE
                       elseif(d<=XTMS_K*3) then
                          i_nb=rgnlen
                          j_nb=rgnlen+1-i
-                         d_nb=dmd_data(ADM_SW,d)
-                         edgid_nb=ADM_SE
+                         d_nb=dmd_data(I_SW,d)
+                         edgid_nb=I_SE
                       elseif(d<=XTMS_K*4) then
                          i_nb=rgnlen
                          j_nb=rgnlen+1-i
-                         d_nb=dmd_data(ADM_SW,d)
-                         edgid_nb=ADM_SE
+                         d_nb=dmd_data(I_SW,d)
+                         edgid_nb=I_SE
                       endif
                    else
                       i_nb=i
                       j_nb=j-1
                       d_nb=d
-                      edgid_nb=ADM_NE
+                      edgid_nb=I_NE
                    endif
-                case(ADM_NW)
+                case(I_NW)
                    if(i==1) then
                       if(d<=XTMS_K) then
                          i_nb=rgnlen+1-j
                          j_nb=rgnlen
-                         d_nb=dmd_data(ADM_NW,d)
-                         edgid_nb=ADM_NE
+                         d_nb=dmd_data(I_NW,d)
+                         edgid_nb=I_NE
                       elseif(d<=XTMS_K*2) then
                          i_nb=rgnlen+1-j
                          j_nb=rgnlen
-                         d_nb=dmd_data(ADM_NW,d)
-                         edgid_nb=ADM_NE
+                         d_nb=dmd_data(I_NW,d)
+                         edgid_nb=I_NE
                       elseif(d<=XTMS_K*3) then
                          i_nb=rgnlen
                          j_nb=j
-                         d_nb=dmd_data(ADM_NW,d)
-                         edgid_nb=ADM_SE
+                         d_nb=dmd_data(I_NW,d)
+                         edgid_nb=I_SE
                       elseif(d<=XTMS_K*4) then
                          i_nb=rgnlen
                          j_nb=j
-                         d_nb=dmd_data(ADM_NW,d)
-                         edgid_nb=ADM_SE
+                         d_nb=dmd_data(I_NW,d)
+                         edgid_nb=I_SE
                       endif
                    else
                       i_nb=i-1
                       j_nb=j
                       d_nb=d
-                      edgid_nb=ADM_SE
+                      edgid_nb=I_SE
                    endif
-                case(ADM_NE)
+                case(I_NE)
                    if(j==rgnlen) then
                       if(d<=XTMS_K) then
                          i_nb=1
                          j_nb=rgnlen+1-i
-                         d_nb=dmd_data(ADM_NE,d)
-                         edgid_nb=ADM_NW
+                         d_nb=dmd_data(I_NE,d)
+                         edgid_nb=I_NW
                       elseif(d<=XTMS_K*2) then
                          i_nb=i
                          j_nb=1
-                         d_nb=dmd_data(ADM_NE,d)
-                         edgid_nb=ADM_SW
+                         d_nb=dmd_data(I_NE,d)
+                         edgid_nb=I_SW
                       elseif(d<=XTMS_K*3) then
                         i_nb=1
                          j_nb=rgnlen+1-i
-                         d_nb=dmd_data(ADM_NE,d)
-                         edgid_nb=ADM_NW
+                         d_nb=dmd_data(I_NE,d)
+                         edgid_nb=I_NW
                       elseif(d<=XTMS_K*4) then
                          i_nb=i
                          j_nb=1
-                         d_nb=dmd_data(ADM_NE,d)
-                         edgid_nb=ADM_SW
+                         d_nb=dmd_data(I_NE,d)
+                         edgid_nb=I_SW
                       endif
                    else
                       i_nb=i
                       j_nb=j+1
                       d_nb=d
-                      edgid_nb=ADM_SW
+                      edgid_nb=I_SW
                    endif
-                case(ADM_SE)
+                case(I_SE)
                    if(i==rgnlen) then
                       if(d<=XTMS_K) then
                          i_nb=1
                          j_nb=j
-                         d_nb=dmd_data(ADM_SE,d)
-                         edgid_nb=ADM_NW
+                         d_nb=dmd_data(I_SE,d)
+                         edgid_nb=I_NW
                       elseif(d<=XTMS_K*2) then
                          i_nb=rgnlen+1-j
                          j_nb=1
-                         d_nb=dmd_data(ADM_SE,d)
-                         edgid_nb=ADM_SW
+                         d_nb=dmd_data(I_SE,d)
+                         edgid_nb=I_SW
                       elseif(d<=XTMS_K*3) then
                          i_nb=1
                          j_nb=j
-                         d_nb=dmd_data(ADM_SE,d)
-                         edgid_nb=ADM_NW
+                         d_nb=dmd_data(I_SE,d)
+                         edgid_nb=I_NW
                       elseif(d<=XTMS_K*4) then
                          i_nb=rgnlen+1-j
                          j_nb=1
-                         d_nb=dmd_data(ADM_SE,d)
-                         edgid_nb=ADM_SW
+                         d_nb=dmd_data(I_SE,d)
+                         edgid_nb=I_SW
                       endif
                    else
                       i_nb=i+1
                       j_nb=j
                       d_nb=d
-                      edgid_nb=ADM_NW
+                      edgid_nb=I_NW
                    endif
                 end select
 
                 l_nb=(rgnlen*rgnlen)*(d_nb-1)+rgnlen*(j_nb-1)+i_nb
-                rgn_tab(ADM_RID,k,l)=l_nb
-                rgn_tab(ADM_DIR,k,l)=edgid_nb
+                rgn_tab(I_RGNID,k,l)=l_nb
+                rgn_tab(I_DIR,k,l)=edgid_nb
 
              enddo
           enddo
@@ -587,10 +587,10 @@ contains
 
     do l=1,all_rgn
        rgnid=l
-       sw=rgn_tab(:,ADM_SW,l)
-       nw=rgn_tab(:,ADM_NW,l)
-       ne=rgn_tab(:,ADM_NE,l)
-       se=rgn_tab(:,ADM_SE,l)
+       sw=rgn_tab(:,I_SW,l)
+       nw=rgn_tab(:,I_NW,l)
+       ne=rgn_tab(:,I_NE,l)
+       se=rgn_tab(:,I_SE,l)
        write(fid,nml=rgn_link_info)
     enddo
     num_of_proc=nmax_prc
@@ -609,7 +609,7 @@ contains
   !---------------- for MLCP
   subroutine generate_mngtab_mlcp( rl, nmax_prc, fname )
     use mod_adm, only: &
-         nmax_mng => ADM_l_limit
+         nmax_mng => RGNMNG_llim
     implicit none
 
     integer, intent(in) :: rl
@@ -637,10 +637,10 @@ contains
 
     integer :: rgnid
     integer :: &
-         sw(ADM_RID:ADM_DIR),&
-         nw(ADM_RID:ADM_DIR),&
-         ne(ADM_RID:ADM_DIR),&
-         se(ADM_RID:ADM_DIR)
+         sw(I_RGNID:I_DIR),&
+         nw(I_RGNID:I_DIR),&
+         ne(I_RGNID:I_DIR),&
+         se(I_RGNID:I_DIR)
     namelist / rgn_link_info / rgnid, sw, nw, ne, se
 
     integer :: num_of_proc
@@ -658,13 +658,13 @@ contains
 
     nmax_dmd = XTMS_K * (1+XTMS_MLCP_S)
     write(*,*) nmax_dmd, XTMS_K
-    allocate(dmd_data(ADM_SW:ADM_SE,nmax_dmd))
+    allocate(dmd_data(I_SW:I_SE,nmax_dmd))
 
 
 
     do k=1,XTMS_K
        do s=1,1
-          dmd_data(ADM_SW:ADM_SE,(k-1)*(XTMS_MLCP_S+1)+s)=(/ &
+          dmd_data(I_SW:I_SE,(k-1)*(XTMS_MLCP_S+1)+s)=(/ &
                (k-2) *(XTMS_MLCP_S+1)+s+1, &
                (k-2) *(XTMS_MLCP_S+1)+s, &
                (k) *(XTMS_MLCP_S+1)+s, &
@@ -672,7 +672,7 @@ contains
                /)
        enddo
        do s=2,XTMS_MLCP_S
-          dmd_data(ADM_SW:ADM_SE,(k-1)*(XTMS_MLCP_S+1)+s)=(/ &
+          dmd_data(I_SW:I_SE,(k-1)*(XTMS_MLCP_S+1)+s)=(/ &
                (k-2) *(XTMS_MLCP_S+1)+s+1, &
                (k-1) *(XTMS_MLCP_S+1)+s-1, &
                (k) *(XTMS_MLCP_S+1)+s-1, &
@@ -680,7 +680,7 @@ contains
                /)
        enddo
        do s=XTMS_MLCP_S+1,XTMS_MLCP_S+1
-          dmd_data(ADM_SW:ADM_SE,(k-1)*(XTMS_MLCP_S+1)+s)=(/ &
+          dmd_data(I_SW:I_SE,(k-1)*(XTMS_MLCP_S+1)+s)=(/ &
                (k-2) *(XTMS_MLCP_S+1)+s, &
                (k-1) *(XTMS_MLCP_S+1)+s-1, &
                (k) *(XTMS_MLCP_S+1)+s-1, &
@@ -689,7 +689,7 @@ contains
        enddo
     enddo
 
-    do i=ADM_SW,ADM_SE
+    do i=I_SW,I_SE
        do d=1,nmax_dmd
           if (dmd_data(i,d)<1) then
              dmd_data(i,d)=dmd_data(i,d)+nmax_dmd
@@ -702,7 +702,7 @@ contains
     rgnlen=2**rl
     all_rgn=nmax_dmd*rgnlen*rgnlen
 
-    allocate(rgn_tab(ADM_RID:ADM_DIR,ADM_SW:ADM_SE,all_rgn))
+    allocate(rgn_tab(I_RGNID:I_DIR,I_SW:I_SE,all_rgn))
 
     do d=1,nmax_dmd
        do i=1,rgnlen
@@ -710,91 +710,91 @@ contains
 
              l=(rgnlen*rgnlen)*(d-1)+rgnlen*(j-1)+i
 
-             do k=ADM_SW,ADM_SE
+             do k=I_SW,I_SE
                 select case(k)
-                case(ADM_SW)
+                case(I_SW)
                    if(j==1) then
                       if(mod(d,(XTMS_MLCP_S+1))==0) then
                          i_nb=rgnlen
                          j_nb=rgnlen+1-i
-                         d_nb=dmd_data(ADM_SW,d)
-                         edgid_nb=ADM_SE
+                         d_nb=dmd_data(I_SW,d)
+                         edgid_nb=I_SE
                       else
                          i_nb=i
                          j_nb=rgnlen
-                         d_nb=dmd_data(ADM_SW,d)
-                         edgid_nb=ADM_NE
+                         d_nb=dmd_data(I_SW,d)
+                         edgid_nb=I_NE
                       endif
                    else
                       i_nb=i
                       j_nb=j-1
                       d_nb=d
-                      edgid_nb=ADM_NE
+                      edgid_nb=I_NE
                    endif
-                case(ADM_NW)
+                case(I_NW)
                    if(i==1) then
                       if(mod(d,(XTMS_MLCP_S+1))==1) then
                          i_nb=rgnlen+1-j
                          j_nb=rgnlen
-                         d_nb=dmd_data(ADM_NW,d)
-                         edgid_nb=ADM_NE
+                         d_nb=dmd_data(I_NW,d)
+                         edgid_nb=I_NE
                       else
                          i_nb=rgnlen
                          j_nb=j
-                         d_nb=dmd_data(ADM_NW,d)
-                         edgid_nb=ADM_SE
+                         d_nb=dmd_data(I_NW,d)
+                         edgid_nb=I_SE
                       endif
                    else
                       i_nb=i-1
                       j_nb=j
                       d_nb=d
-                      edgid_nb=ADM_SE
+                      edgid_nb=I_SE
                    endif
-                case(ADM_NE)
+                case(I_NE)
                    if(j==rgnlen) then
                       if(mod(d,(XTMS_MLCP_S+1))==1) then
                          i_nb=1
                          j_nb=rgnlen+1-i
-                         d_nb=dmd_data(ADM_NE,d)
-                         edgid_nb=ADM_NW
+                         d_nb=dmd_data(I_NE,d)
+                         edgid_nb=I_NW
                       else
                          i_nb=i
                          j_nb=1
-                         d_nb=dmd_data(ADM_NE,d)
-                         edgid_nb=ADM_SW
+                         d_nb=dmd_data(I_NE,d)
+                         edgid_nb=I_SW
                       endif
                    else
                       i_nb=i
                       j_nb=j+1
                       d_nb=d
-                      edgid_nb=ADM_SW
+                      edgid_nb=I_SW
                    endif
 
 
-                case(ADM_SE)
+                case(I_SE)
                    if(i==rgnlen) then
                       if(mod(d,(XTMS_MLCP_S+1))==0) then
                          i_nb=rgnlen+1-j
                          j_nb=1
-                         d_nb=dmd_data(ADM_SE,d)
-                         edgid_nb=ADM_SW
+                         d_nb=dmd_data(I_SE,d)
+                         edgid_nb=I_SW
                       else
                          i_nb=1
                          j_nb=j
-                         d_nb=dmd_data(ADM_SE,d)
-                         edgid_nb=ADM_NW
+                         d_nb=dmd_data(I_SE,d)
+                         edgid_nb=I_NW
                       endif
                    else
                       i_nb=i+1
                       j_nb=j
                       d_nb=d
-                      edgid_nb=ADM_NW
+                      edgid_nb=I_NW
                    endif
                 end select
 
                 l_nb=(rgnlen*rgnlen)*(d_nb-1)+rgnlen*(j_nb-1)+i_nb
-                rgn_tab(ADM_RID,k,l)=l_nb
-                rgn_tab(ADM_DIR,k,l)=edgid_nb
+                rgn_tab(I_RGNID,k,l)=l_nb
+                rgn_tab(I_DIR,k,l)=edgid_nb
 
              enddo
           enddo
@@ -825,10 +825,10 @@ contains
 
     do l=1,all_rgn
        rgnid=l
-       sw=rgn_tab(:,ADM_SW,l)
-       nw=rgn_tab(:,ADM_NW,l)
-       ne=rgn_tab(:,ADM_NE,l)
-       se=rgn_tab(:,ADM_SE,l)
+       sw=rgn_tab(:,I_SW,l)
+       nw=rgn_tab(:,I_NW,l)
+       ne=rgn_tab(:,I_NE,l)
+       se=rgn_tab(:,I_SE,l)
        write(fid,nml=rgn_link_info)
     enddo
     num_of_proc=nmax_prc
@@ -847,7 +847,7 @@ contains
   !---------------- for MLCP
   subroutine generate_mngtab_mlcp_old( rl, nmax_prc, fname )
     use mod_adm, only: &
-         nmax_mng => ADM_l_limit
+         nmax_mng => RGNMNG_llim
     implicit none
 
     integer, intent(in) :: rl
@@ -875,10 +875,10 @@ contains
 
     integer :: rgnid
     integer :: &
-         sw(ADM_RID:ADM_DIR),&
-         nw(ADM_RID:ADM_DIR),&
-         ne(ADM_RID:ADM_DIR),&
-         se(ADM_RID:ADM_DIR)
+         sw(I_RGNID:I_DIR),&
+         nw(I_RGNID:I_DIR),&
+         ne(I_RGNID:I_DIR),&
+         se(I_RGNID:I_DIR)
     namelist / rgn_link_info / rgnid, sw, nw, ne, se
 
     integer :: num_of_proc
@@ -895,19 +895,19 @@ contains
 
     nmax_dmd = XTMS_K * 2
     write(*,*) nmax_dmd, XTMS_K
-    allocate(dmd_data(ADM_SW:ADM_SE,nmax_dmd))
+    allocate(dmd_data(I_SW:I_SE,nmax_dmd))
 
 
 
     do d=1,XTMS_K
-       dmd_data(ADM_SW:ADM_SE, d)=(/ &
+       dmd_data(I_SW:I_SE, d)=(/ &
             mod(XTMS_K-d+1,XTMS_K)+1+XTMS_K, &
             mod(d-2+XTMS_K,XTMS_K)+1  , &
             mod(d,XTMS_K)+1  , &
             XTMS_K*2+1-d  /)
     enddo
     do d=XTMS_K+1,XTMS_K*2
-       dmd_data(ADM_SW:ADM_SE, d)=(/ &
+       dmd_data(I_SW:I_SE, d)=(/ &
             mod(d,XTMS_K)+XTMS_K+1   , &
             mod(XTMS_K*2-d,XTMS_K)+1  , &
             mod(XTMS_K*2-d+1,XTMS_K)+1  , &
@@ -917,7 +917,7 @@ contains
     rgnlen=2**rl
     all_rgn=nmax_dmd*rgnlen*rgnlen
 
-    allocate(rgn_tab(ADM_RID:ADM_DIR,ADM_SW:ADM_SE,all_rgn))
+    allocate(rgn_tab(I_RGNID:I_DIR,I_SW:I_SE,all_rgn))
 
     do d=1,nmax_dmd
        do i=1,rgnlen
@@ -925,89 +925,89 @@ contains
 
              l=(rgnlen*rgnlen)*(d-1)+rgnlen*(j-1)+i
 
-             do k=ADM_SW,ADM_SE
+             do k=I_SW,I_SE
                 select case(k)
-                case(ADM_SW)
+                case(I_SW)
                    if(j==1) then
                       if(d<=XTMS_K) then
                          i_nb=i
                          j_nb=rgnlen
-                         d_nb=dmd_data(ADM_SW,d)
-                         edgid_nb=ADM_NE
+                         d_nb=dmd_data(I_SW,d)
+                         edgid_nb=I_NE
                       else
                          i_nb=rgnlen
                          j_nb=rgnlen+1-i
-                         d_nb=dmd_data(ADM_SW,d)
-                         edgid_nb=ADM_SE
+                         d_nb=dmd_data(I_SW,d)
+                         edgid_nb=I_SE
                       endif
                    else
                       i_nb=i
                       j_nb=j-1
                       d_nb=d
-                      edgid_nb=ADM_NE
+                      edgid_nb=I_NE
                    endif
-                case(ADM_NW)
+                case(I_NW)
                    if(i==1) then
                       if(d<=XTMS_K) then
                          i_nb=rgnlen+1-j
                          j_nb=rgnlen
-                         d_nb=dmd_data(ADM_NW,d)
-                         edgid_nb=ADM_NE
+                         d_nb=dmd_data(I_NW,d)
+                         edgid_nb=I_NE
                       else
                          i_nb=rgnlen
                          j_nb=j
-                         d_nb=dmd_data(ADM_NW,d)
-                         edgid_nb=ADM_SE
+                         d_nb=dmd_data(I_NW,d)
+                         edgid_nb=I_SE
                       endif
                    else
                       i_nb=i-1
                       j_nb=j
                       d_nb=d
-                      edgid_nb=ADM_SE
+                      edgid_nb=I_SE
                    endif
-                case(ADM_NE)
+                case(I_NE)
                    if(j==rgnlen) then
                       if(d<=XTMS_K) then
                          i_nb=1
                          j_nb=rgnlen+1-i
-                         d_nb=dmd_data(ADM_NE,d)
-                         edgid_nb=ADM_NW
+                         d_nb=dmd_data(I_NE,d)
+                         edgid_nb=I_NW
                       else
                          i_nb=i
                          j_nb=1
-                         d_nb=dmd_data(ADM_NE,d)
-                         edgid_nb=ADM_SW
+                         d_nb=dmd_data(I_NE,d)
+                         edgid_nb=I_SW
                       endif
                    else
                       i_nb=i
                       j_nb=j+1
                       d_nb=d
-                      edgid_nb=ADM_SW
+                      edgid_nb=I_SW
                    endif
-                case(ADM_SE)
+                case(I_SE)
                    if(i==rgnlen) then
                       if(d<=XTMS_K) then
                          i_nb=1
                          j_nb=j
-                         d_nb=dmd_data(ADM_SE,d)
-                         edgid_nb=ADM_NW
+                         d_nb=dmd_data(I_SE,d)
+                         edgid_nb=I_NW
                       else
                          i_nb=rgnlen+1-j
                          j_nb=1
-                         d_nb=dmd_data(ADM_SE,d)
-                         edgid_nb=ADM_SW
+                         d_nb=dmd_data(I_SE,d)
+                         edgid_nb=I_SW
                       endif
                    else
                       i_nb=i+1
                       j_nb=j
                       d_nb=d
-                      edgid_nb=ADM_NW
+                      edgid_nb=I_NW
                    endif
                 end select
 
                 l_nb=(rgnlen*rgnlen)*(d_nb-1)+rgnlen*(j_nb-1)+i_nb
-                rgn_tab(ADM_RID,k,l)=l_nb
-                rgn_tab(ADM_DIR,k,l)=edgid_nb
+                rgn_tab(I_RGNID,k,l)=l_nb
+                rgn_tab(I_DIR,k,l)=edgid_nb
 
              enddo
           enddo
@@ -1038,10 +1038,10 @@ contains
 
     do l=1,all_rgn
        rgnid=l
-       sw=rgn_tab(:,ADM_SW,l)
-       nw=rgn_tab(:,ADM_NW,l)
-       ne=rgn_tab(:,ADM_NE,l)
-       se=rgn_tab(:,ADM_SE,l)
+       sw=rgn_tab(:,I_SW,l)
+       nw=rgn_tab(:,I_NW,l)
+       ne=rgn_tab(:,I_NE,l)
+       se=rgn_tab(:,I_SE,l)
        write(fid,nml=rgn_link_info)
     enddo
     num_of_proc=nmax_prc
@@ -1060,7 +1060,7 @@ contains
   !-----------------------------------------------------------------------------
   subroutine generate_mngtab_periodic_1dmd( rl, nmax_prc, fname )
     use mod_adm, only: &
-         nmax_mng => ADM_l_limit
+         nmax_mng => RGNMNG_llim
     implicit none
 
     integer, intent(in)          :: rl
@@ -1086,10 +1086,10 @@ contains
 
     integer :: rgnid
     integer :: &
-         sw(ADM_RID:ADM_DIR),&
-         nw(ADM_RID:ADM_DIR),&
-         ne(ADM_RID:ADM_DIR),&
-         se(ADM_RID:ADM_DIR)
+         sw(I_RGNID:I_DIR),&
+         nw(I_RGNID:I_DIR),&
+         ne(I_RGNID:I_DIR),&
+         se(I_RGNID:I_DIR)
     namelist / rgn_link_info / rgnid, sw, nw, ne, se
 
     integer :: num_of_proc
@@ -1100,15 +1100,15 @@ contains
     integer :: mng_rgnid(nmax_mng)
     namelist /rgn_mng_info/ peid, num_of_mng, mng_rgnid
 
-    integer :: dmd_data(ADM_SW:ADM_SE,nmax_dmd)
+    integer :: dmd_data(I_SW:I_SE,nmax_dmd)
     !---------------------------------------------------------------------------
 
-    dmd_data(ADM_SW:ADM_SE, 1)=(/1,1,1,1/)
+    dmd_data(I_SW:I_SE, 1)=(/1,1,1,1/)
 
     rgnlen  = 2**rl
     all_rgn = nmax_dmd*rgnlen**2
 
-    allocate(rgn_tab(ADM_RID:ADM_DIR,ADM_SW:ADM_SE,all_rgn))
+    allocate(rgn_tab(I_RGNID:I_DIR,I_SW:I_SE,all_rgn))
 
     do d=1,nmax_dmd
        do i=1,rgnlen
@@ -1116,61 +1116,61 @@ contains
 
              l=(rgnlen*rgnlen)*(d-1)+rgnlen*(j-1)+i
 
-             do k=ADM_SW,ADM_SE
+             do k=I_SW,I_SE
                 select case(k)
-                case(ADM_SW)
+                case(I_SW)
                    if(j==1) then
                     i_nb=i
                     j_nb=rgnlen
-                    d_nb=dmd_data(ADM_SW,d)
-                    edgid_nb=ADM_NE
+                    d_nb=dmd_data(I_SW,d)
+                    edgid_nb=I_NE
                    else
                       i_nb=i
                       j_nb=j-1
                       d_nb=d
-                      edgid_nb=ADM_NE
+                      edgid_nb=I_NE
                    endif
-                case(ADM_NW)
+                case(I_NW)
                    if(i==1) then
                     i_nb=rgnlen
                     j_nb=j
-                    d_nb=dmd_data(ADM_NW,d)
-                    edgid_nb=ADM_SE
+                    d_nb=dmd_data(I_NW,d)
+                    edgid_nb=I_SE
                    else
                       i_nb=i-1
                       j_nb=j
                       d_nb=d
-                      edgid_nb=ADM_SE
+                      edgid_nb=I_SE
                    endif
-                case(ADM_NE)
+                case(I_NE)
                    if(j==rgnlen) then
                     i_nb=i
                     j_nb=1
-                    d_nb=dmd_data(ADM_NE,d)
-                    edgid_nb=ADM_SW
+                    d_nb=dmd_data(I_NE,d)
+                    edgid_nb=I_SW
                    else
                       i_nb=i
                       j_nb=j+1
                       d_nb=d
-                      edgid_nb=ADM_SW
+                      edgid_nb=I_SW
                    endif
-                case(ADM_SE)
+                case(I_SE)
                    if(i==rgnlen) then
                     i_nb=1
                     j_nb=j
-                    d_nb=dmd_data(ADM_SE,d)
-                    edgid_nb=ADM_NW
+                    d_nb=dmd_data(I_SE,d)
+                    edgid_nb=I_NW
                    else
                       i_nb=i+1
                       j_nb=j
                       d_nb=d
-                      edgid_nb=ADM_NW
+                      edgid_nb=I_NW
                    endif
                 end select
 
                 l_nb=(rgnlen*rgnlen)*(d_nb-1)+rgnlen*(j_nb-1)+i_nb
-                rgn_tab(ADM_RID,k,l)=l_nb
-                rgn_tab(ADM_DIR,k,l)=edgid_nb
+                rgn_tab(I_RGNID,k,l)=l_nb
+                rgn_tab(I_DIR,k,l)=edgid_nb
 
              enddo
           enddo
@@ -1199,10 +1199,10 @@ contains
 
     do l=1,all_rgn
        rgnid = l
-       sw    = rgn_tab(:,ADM_SW,l)
-       nw    = rgn_tab(:,ADM_NW,l)
-       ne    = rgn_tab(:,ADM_NE,l)
-       se    = rgn_tab(:,ADM_SE,l)
+       sw    = rgn_tab(:,I_SW,l)
+       nw    = rgn_tab(:,I_NW,l)
+       ne    = rgn_tab(:,I_NE,l)
+       se    = rgn_tab(:,I_SE,l)
        write(fid,nml=rgn_link_info)
     enddo
     num_of_proc=nmax_prc
@@ -1221,7 +1221,7 @@ contains
   !-----------------------------------------------------------------------------
   subroutine generate_mngtab_1dmd_on_sphere( rl, nmax_prc, fname )
     use mod_adm, only: &
-         nmax_mng => ADM_l_limit
+         nmax_mng => RGNMNG_llim
     implicit none
 
     integer, intent(in) :: rl
@@ -1248,10 +1248,10 @@ contains
 
     integer :: rgnid
     integer :: &
-         sw(ADM_RID:ADM_DIR),&
-         nw(ADM_RID:ADM_DIR),&
-         ne(ADM_RID:ADM_DIR),&
-         se(ADM_RID:ADM_DIR)
+         sw(I_RGNID:I_DIR),&
+         nw(I_RGNID:I_DIR),&
+         ne(I_RGNID:I_DIR),&
+         se(I_RGNID:I_DIR)
     namelist / rgn_link_info / rgnid, sw, nw, ne, se
 
     integer :: num_of_proc
@@ -1262,15 +1262,15 @@ contains
     integer :: mng_rgnid(nmax_mng)
     namelist /rgn_mng_info/ peid, num_of_mng,mng_rgnid
 
-    integer :: dmd_data(ADM_SW:ADM_SE,nmax_dmd)
+    integer :: dmd_data(I_SW:I_SE,nmax_dmd)
     !---------------------------------------------------------------------------
 
-    dmd_data(ADM_SW:ADM_SE, 1)=(/ 6, 5, 2,10/)
+    dmd_data(I_SW:I_SE, 1)=(/ 6, 5, 2,10/)
 
     rgnlen=2**rl
     all_rgn=nmax_dmd*rgnlen*rgnlen
 
-    allocate(rgn_tab(ADM_RID:ADM_DIR,ADM_SW:ADM_SE,all_rgn))
+    allocate(rgn_tab(I_RGNID:I_DIR,I_SW:I_SE,all_rgn))
 
     do d=1,nmax_dmd
        do i=1,rgnlen
@@ -1278,89 +1278,89 @@ contains
 
              l=(rgnlen*rgnlen)*(d-1)+rgnlen*(j-1)+i
 
-             do k=ADM_SW,ADM_SE
+             do k=I_SW,I_SE
                 select case(k)
-                case(ADM_SW)
+                case(I_SW)
                    if(j==1) then
                       if(d<=5) then
                          i_nb=i
                          j_nb=rgnlen
-                         d_nb=dmd_data(ADM_SW,d)
-                         edgid_nb=ADM_NE
+                         d_nb=dmd_data(I_SW,d)
+                         edgid_nb=I_NE
                       else
                          i_nb=rgnlen
                          j_nb=rgnlen+1-i
-                         d_nb=dmd_data(ADM_SW,d)
-                         edgid_nb=ADM_SE
+                         d_nb=dmd_data(I_SW,d)
+                         edgid_nb=I_SE
                       endif
                    else
                       i_nb=i
                       j_nb=j-1
                       d_nb=d
-                      edgid_nb=ADM_NE
+                      edgid_nb=I_NE
                    endif
-                case(ADM_NW)
+                case(I_NW)
                    if(i==1) then
                       if(d<=5) then
                          i_nb=rgnlen+1-j
                          j_nb=rgnlen
-                         d_nb=dmd_data(ADM_NW,d)
-                         edgid_nb=ADM_NE
+                         d_nb=dmd_data(I_NW,d)
+                         edgid_nb=I_NE
                       else
                          i_nb=rgnlen
                          j_nb=j
-                         d_nb=dmd_data(ADM_NW,d)
-                         edgid_nb=ADM_SE
+                         d_nb=dmd_data(I_NW,d)
+                         edgid_nb=I_SE
                       endif
                    else
                       i_nb=i-1
                       j_nb=j
                       d_nb=d
-                      edgid_nb=ADM_SE
+                      edgid_nb=I_SE
                    endif
-                case(ADM_NE)
+                case(I_NE)
                    if(j==rgnlen) then
                       if(d<=5) then
                          i_nb=1
                          j_nb=rgnlen+1-i
-                         d_nb=dmd_data(ADM_NE,d)
-                         edgid_nb=ADM_NW
+                         d_nb=dmd_data(I_NE,d)
+                         edgid_nb=I_NW
                       else
                          i_nb=i
                          j_nb=1
-                         d_nb=dmd_data(ADM_NE,d)
-                         edgid_nb=ADM_SW
+                         d_nb=dmd_data(I_NE,d)
+                         edgid_nb=I_SW
                       endif
                    else
                       i_nb=i
                       j_nb=j+1
                       d_nb=d
-                      edgid_nb=ADM_SW
+                      edgid_nb=I_SW
                    endif
-                case(ADM_SE)
+                case(I_SE)
                    if(i==rgnlen) then
                       if(d<=5) then
                          i_nb=1
                          j_nb=j
-                         d_nb=dmd_data(ADM_SE,d)
-                         edgid_nb=ADM_NW
+                         d_nb=dmd_data(I_SE,d)
+                         edgid_nb=I_NW
                       else
                          i_nb=rgnlen+1-j
                          j_nb=1
-                         d_nb=dmd_data(ADM_SE,d)
-                         edgid_nb=ADM_SW
+                         d_nb=dmd_data(I_SE,d)
+                         edgid_nb=I_SW
                       endif
                    else
                       i_nb=i+1
                       j_nb=j
                       d_nb=d
-                      edgid_nb=ADM_NW
+                      edgid_nb=I_NW
                    endif
                 end select
 
                 l_nb=(rgnlen*rgnlen)*(d_nb-1)+rgnlen*(j_nb-1)+i_nb
-                rgn_tab(ADM_RID,k,l)=l_nb
-                rgn_tab(ADM_DIR,k,l)=edgid_nb
+                rgn_tab(I_RGNID,k,l)=l_nb
+                rgn_tab(I_DIR,k,l)=edgid_nb
 
              enddo
           enddo
@@ -1391,10 +1391,10 @@ contains
 
     num_of_rgn = num_of_rgn/10
     do l=1,num_of_rgn
-       do k=ADM_SW,ADM_SE
-          if (rgn_tab(ADM_RID,k,l) > num_of_rgn) then
-             rgn_tab(ADM_RID,k,l) = l
-             rgn_tab(ADM_DIR,k,l) = k
+       do k=I_SW,I_SE
+          if (rgn_tab(I_RGNID,k,l) > num_of_rgn) then
+             rgn_tab(I_RGNID,k,l) = l
+             rgn_tab(I_DIR,k,l) = k
           endif
        enddo
     enddo
@@ -1403,10 +1403,10 @@ contains
 
     do l=1,num_of_rgn ! M.Hara110604
        rgnid=l
-       sw=rgn_tab(:,ADM_SW,l)
-       nw=rgn_tab(:,ADM_NW,l)
-       ne=rgn_tab(:,ADM_NE,l)
-       se=rgn_tab(:,ADM_SE,l)
+       sw=rgn_tab(:,I_SW,l)
+       nw=rgn_tab(:,I_NW,l)
+       ne=rgn_tab(:,I_NE,l)
+       se=rgn_tab(:,I_SE,l)
        write(fid,nml=rgn_link_info)
        write(6,nml=rgn_link_info)
     enddo

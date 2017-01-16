@@ -156,8 +156,7 @@ contains
   !> Make standard grid system
   subroutine MKGRD_standard
     use mod_adm, only: &
-       ADM_prc_tab, &
-       ADM_prc_me,  &
+       RGNMNG_l2r,  &
        ADM_rlevel,  &
        ADM_glevel,  &
        ADM_KNONE,   &
@@ -165,8 +164,8 @@ contains
        ADM_gmax,    &
        ADM_gmin,    &
        ADM_gslf_pl, &
-       ADM_NPL,     &
-       ADM_SPL
+       I_NPL,       &
+       I_SPL
     use mod_const, only: &
        PI => CONST_PI
     use mod_comm, only: &
@@ -201,7 +200,7 @@ contains
     rgn_all    = rgn_all_1d * rgn_all_1d
 
     do l = 1, ADM_lall
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
+       rgnid = RGNMNG_l2r(l)
 
        nmax = 2
        allocate( r0(nmax,nmax,3) )
@@ -312,13 +311,13 @@ contains
 
     ij = ADM_gslf_pl
 
-    GRD_x_pl(ij,k,ADM_NPL,GRD_XDIR) =  0.0_RP
-    GRD_x_pl(ij,k,ADM_NPL,GRD_YDIR) =  0.0_RP
-    GRD_x_pl(ij,k,ADM_NPL,GRD_ZDIR) =  1.0_RP
+    GRD_x_pl(ij,k,I_NPL,GRD_XDIR) =  0.0_RP
+    GRD_x_pl(ij,k,I_NPL,GRD_YDIR) =  0.0_RP
+    GRD_x_pl(ij,k,I_NPL,GRD_ZDIR) =  1.0_RP
 
-    GRD_x_pl(ij,k,ADM_SPL,GRD_XDIR) =  0.0_RP
-    GRD_x_pl(ij,k,ADM_SPL,GRD_YDIR) =  0.0_RP
-    GRD_x_pl(ij,k,ADM_SPL,GRD_ZDIR) = -1.0_RP
+    GRD_x_pl(ij,k,I_SPL,GRD_XDIR) =  0.0_RP
+    GRD_x_pl(ij,k,I_SPL,GRD_YDIR) =  0.0_RP
+    GRD_x_pl(ij,k,I_SPL,GRD_ZDIR) = -1.0_RP
 
     call COMM_data_transfer( GRD_x(:,:,:,:), GRD_x_pl(:,:,:,:) )
 

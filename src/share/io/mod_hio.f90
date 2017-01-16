@@ -98,22 +98,15 @@ contains
   !!
   subroutine HIO_setup
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_tab, &
-       ADM_glevel,  &
-       ADM_rlevel,  &
+       RGNMNG_l2r, &
+       ADM_glevel, &
+       ADM_rlevel, &
        ADM_lall
     implicit none
-
-    integer, allocatable :: prc_tab(:)
     !---------------------------------------------------------------------------
 
     write(IO_FID_LOG,*)
     write(IO_FID_LOG,*) '+++ Module[hio]/Category[common share]'
-
-    allocate( prc_tab(ADM_lall) )
-
-    prc_tab(1:ADM_lall) = ADM_prc_tab(1:ADM_lall,ADM_prc_me)-1
 
     call hio_syscheck()
     call hio_put_commoninfo( HIO_SPLIT_FILE,  & ! [IN]
@@ -122,9 +115,7 @@ contains
                              ADM_glevel,      & ! [IN]
                              ADM_rlevel,      & ! [IN]
                              ADM_lall,        & ! [IN]
-                             prc_tab          ) ! [IN]
-
-    deallocate(prc_tab)
+                             RGNMNG_l2r(:)-1  ) ! [IN]
 
     allocate( hinfo%rgnid(ADM_lall) )
 

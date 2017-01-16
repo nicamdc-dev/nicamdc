@@ -166,8 +166,7 @@ contains
     use mod_const, only: &
        D2R => CONST_D2R
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_tab, &
+       RGNMNG_l2r, &
        ADM_lall
     implicit none
 
@@ -285,7 +284,7 @@ contains
 
     write(IO_FID_LOG,*) '# of managing llgrid'
     do l = 1, ADM_lall
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
+       rgnid = RGNMNG_l2r(l)
 
        write(IO_FID_LOG,*) 'region=', rgnid, ', llgrid=', nmax_llgrid_rgn(l)
 
@@ -373,7 +372,7 @@ contains
 
     ! output relation map
     do l = 1, ADM_lall
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
+       rgnid = RGNMNG_l2r(l)
 
        call IO_make_idstr(fname,trim(output_dirname)//'/llmap','rgn',rgnid,isrgn=.true.)
 
@@ -406,7 +405,7 @@ contains
 
     ! ASCII output for debug
 !    do l = 1, ADM_lall
-!       rgnid = ADM_prc_tab(l,ADM_prc_me)
+!       rgnid = RGNMNG_l2r(l)
 !
 !       call IO_make_idstr(fname,trim(output_dirname)//'/llmap','rgntxt',rgnid,isrgn=.true.)
 !
@@ -443,16 +442,16 @@ contains
     use mod_const, only: &
        PI => CONST_PI
     use mod_adm, only: &
-       ADM_prc_tab,       &
-       ADM_prc_me,        &
-       ADM_rgnid_npl_mng, &
-       ADM_rgnid_spl_mng, &
        ADM_TI,            &
        ADM_TJ,            &
        ADM_KNONE,         &
        ADM_lall,          &
        ADM_gmax,          &
-       ADM_gmin
+       ADM_gmin,          &
+       RGNMNG_l2r,        &
+       RGNMNG_rgn4pl,     &
+       I_NPL,             &
+       I_SPL
     use mod_vector, only: &
        VECTR_triangle, &
        VECTR_cross,    &
@@ -714,11 +713,11 @@ contains
     enddo ! l LOOP
 
     do l = 1, ADM_lall
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
+       rgnid = RGNMNG_l2r(l)
 
-       if    ( rgnid == ADM_rgnid_npl_mng ) then
+       if    ( rgnid == RGNMNG_rgn4pl(I_NPL) ) then
           ij = suf(ADM_gmin  ,ADM_gmax+1)
-       elseif( rgnid == ADM_rgnid_spl_mng ) then
+       elseif( rgnid == RGNMNG_rgn4pl(I_SPL) ) then
           ij = suf(ADM_gmax+1,ADM_gmin  )
        else
           cycle
@@ -782,16 +781,16 @@ contains
     use mod_io_param, only: &
        IO_REAL8
     use mod_adm, only: &
-       ADM_prc_tab,   &
-       ADM_prc_me,    &
-       ADM_lall,      &
-       ADM_lall_pl,   &
-       ADM_gall,      &
-       ADM_gall_pl,   &
-       ADM_gall_1d,   &
-       ADM_gmax,      &
-       ADM_gmin,      &
-       ADM_KNONE
+       ADM_prc_me,  &
+       ADM_lall,    &
+       ADM_lall_pl, &
+       ADM_gall,    &
+       ADM_gall_pl, &
+       ADM_gall_1d, &
+       ADM_gmax,    &
+       ADM_gmin,    &
+       ADM_KNONE,   &
+       RGNMNG_l2r
     use mod_comm, only: &
        COMM_data_transfer
     use mod_fio, only: &
@@ -813,7 +812,7 @@ contains
     SAMPLE_pl(:,:,:,:) = -999.0_RP
 
     do l = 1, ADM_lall
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
+       rgnid = RGNMNG_l2r(l)
        prc   = ADM_prc_me
 
        do j = ADM_gmin, ADM_gmax

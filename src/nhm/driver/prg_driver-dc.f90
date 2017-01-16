@@ -125,23 +125,18 @@ program prg_driver
 
   !##### OpenACC (for data copy) #####
   use mod_adm, only: &
-     ADM_prc_tab,  &
-     ADM_rgn_vnum
+     RGNMNG_l2r,  &
+     RGNMNG_vert_num
   use mod_comm, only: &
-     sendlist,     sendlist_pl,  &
-     sendinfo,     sendinfo_pl,  &
-     recvlist,     recvlist_pl,  &
-     recvinfo,     recvinfo_pl,  &
-     recvlist_r2r, sendlist_r2r, &
-     recvlist_r2p, sendlist_r2p, &
-     recvlist_p2r, sendlist_p2r, &
-     recvlist_sgp, sendlist_sgp, &
-     copyinfo_r2r, copyinfo_sgp, &
-     copyinfo_r2p, copyinfo_p2r, &
-     nsmax,        nsmax_pl,     &
-     nrmax,        nrmax_pl,     &
-     ncmax_r2r,    ncmax_sgp,    &
-     ncmax_r2p,    ncmax_p2r
+     Send_info_r2r, Send_info_p2r, Send_info_r2p, &
+     Send_list_r2r, Send_list_p2r, Send_list_r2p, &
+     Recv_info_r2r, Recv_info_p2r, Recv_info_r2p, &
+     Recv_list_r2r, Recv_list_p2r, Recv_list_r2p, &
+     Copy_info_r2r, Copy_info_p2r, Copy_info_r2p, &
+     Copy_list_r2r, Copy_list_p2r, Copy_list_r2p, &
+     sendbuf_r2r, sendbuf_p2r, sendbuf_r2p,       &
+     recvbuf_r2r, recvbuf_p2r, recvbuf_r2p,       &
+     Singular_info, Singular_list, REQ_list
   use mod_grd, only: &
      GRD_x,     &
      GRD_xt,    &
@@ -307,18 +302,16 @@ program prg_driver
 #endif
 
   !$acc data &
-  !$acc& pcopyin(ADM_prc_tab,ADM_rgn_vnum) &
-  !$acc& pcopyin(sendlist,sendlist_pl) &
-  !$acc& pcopyin(sendinfo,sendinfo_pl) &
-  !$acc& pcopyin(recvlist,recvlist_pl) &
-  !$acc& pcopyin(recvinfo,recvinfo_pl) &
-  !$acc& pcopyin(recvlist_r2r,sendlist_r2r) &
-  !$acc& pcopyin(recvlist_sgp,sendlist_sgp) &
-  !$acc& pcopyin(recvlist_r2p,sendlist_r2p) &
-  !$acc& pcopyin(recvlist_p2r,sendlist_p2r) &
-  !$acc& pcopyin(copyinfo_r2r,copyinfo_sgp,copyinfo_r2p,copyinfo_p2r) &
-  !$acc& pcopyin(nsmax,nsmax_pl,nrmax,nrmax_pl) &
-  !$acc& pcopyin(ncmax_r2r,ncmax_sgp,ncmax_r2p,ncmax_p2r) &
+  !$acc& pcopyin(RGNMNG_l2r,RGNMNG_vert_num) &
+  !$acc& pcopyin(Send_info_r2r,Send_info_p2r,Send_info_r2p) &
+  !$acc& pcopyin(Send_list_r2r,Send_list_p2r,Send_list_r2p) &
+  !$acc& pcopyin(Recv_info_r2r,Recv_info_p2r,Recv_info_r2p) &
+  !$acc& pcopyin(Recv_list_r2r,Recv_list_p2r,Recv_list_r2p) &
+  !$acc& pcopyin(Copy_info_r2r,Copy_info_p2r,Copy_info_r2p) &
+  !$acc& pcopyin(Copy_list_r2r,Copy_list_p2r,Copy_list_r2p) &
+  !$acc& pcopyin(sendbuf_r2r,sendbuf_p2r,sendbuf_r2p) &
+  !$acc& pcopyin(recvbuf_r2r,recvbuf_p2r,recvbuf_r2p) &
+  !$acc& pcopyin(Singular_info,Singular_list,REQ_list) &
   !$acc& pcopyin(GRD_rdgz,GRD_rdgzh,GRD_x,GRD_xt,GRD_vz,GRD_zs) &
   !$acc& pcopyin(GMTR_p,GMTR_t,GMTR_a) &
   !$acc& pcopyin(cdiv,cgrad,clap,cinterp_TN,cinterp_HN,cinterp_TRA,cinterp_PRA) &

@@ -994,8 +994,7 @@ contains
     use mod_process, only: &
        PRC_MPIstop
     use mod_adm, only: &
-       ADM_prc_tab, &
-       ADM_prc_me,  &
+       RGNMNG_l2r, &
        ADM_have_pl
     use mod_comm, only: &
        COMM_data_transfer
@@ -1032,7 +1031,7 @@ contains
     endif
 
     do l = 1, ADM_lall
-       rgnid = ADM_prc_tab(l,ADM_prc_me)
+       rgnid = RGNMNG_l2r(l)
        do g = 1, ADM_gall
           tmp(g,k0,l,I_rgn ) = real(rgnid,kind=RP)
           tmp(g,k0,l,I_grid) = real(g    ,kind=RP)

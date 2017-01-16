@@ -845,24 +845,25 @@ contains
        PRC_LOCAL_COMM_WORLD, &
        PRC_MPIstop
     use mod_adm, only: &
-       ADM_N,          &
-       ADM_S,          &
-       ADM_NPL,        &
-       ADM_SPL,        &
-       ADM_RID,        &
-       ADM_rgn_nmax,   &
-       ADM_rgn_vnum,   &
-       ADM_rgn_vtab,   &
-       ADM_rgn2prc,    &
-       ADM_vlink,      &
-       ADM_prc_tab,    &
-       ADM_prc_me,     &
-       ADM_prc_npl,    &
-       ADM_prc_spl,    &
-       ADM_gmax,       &
-       ADM_gmin,       &
-       ADM_gslf_pl
+       ADM_rgn_nmax,    &
+       ADM_vlink,       &
+       ADM_prc_pl,      &
+       ADM_have_pl,     &
+       ADM_gmax,        &
+       ADM_gmin,        &
+       ADM_gslf_pl,     &
+       RGNMNG_vert_num, &
+       RGNMNG_vert_tab, &
+       RGNMNG_l2r,      &
+       RGNMNG_r2lp,     &
+       I_prc,           &
+       I_RGNID,         &
+       I_N,             &
+       I_S,             &
+       I_NPL,           &
+       I_SPL
     use mod_comm, only: &
+       COMM_datatype, &
        COMM_var
     implicit none
 
@@ -875,151 +876,140 @@ contains
     real(RP) :: vsend_pl (ADM_nxyz,ADM_vlink)
     real(RP) :: vrecv_pl (ADM_nxyz,ADM_vlink)
 
-    integer  :: datatype
-
     integer  :: istat(MPI_STATUS_SIZE)
-    integer  :: n, l, ierr
+    integer  :: l, v, r
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
-    if ( RP == DP ) then
-       datatype = MPI_DOUBLE_PRECISION
-    elseif( RP == SP ) then
-       datatype = MPI_REAL
-    else
-       write(*,*) 'xxx [grd/GRD_gen_plgrid] unsupportd precision! RP=', RP
-       call PRC_MPIstop
-    endif
-
     !--- send information of grid around north pole from regular region
+    send_flag(:) = .false.
 
     ! find region which has the north pole
-    do l = ADM_rgn_nmax, 1, -1
-       if ( ADM_rgn_vnum(ADM_N,l) == ADM_vlink ) then
-          do n = 1, ADM_vlink
-             rgntab(n) = ADM_rgn_vtab(ADM_RID,ADM_N,l,n)
-             prctab(n) = ADM_rgn2prc(rgntab(n))
+    do r = ADM_rgn_nmax, 1, -1
+       if ( RGNMNG_vert_num(I_N,r) == ADM_vlink ) then
+          do v = 1, ADM_vlink
+             rgntab(v) = RGNMNG_vert_tab(I_RGNID,I_N,r,v)
+             prctab(v) = RGNMNG_r2lp(I_prc,rgntab(v))
           enddo
           exit
        endif
     enddo
 
-    send_flag(:) = .false.
-
     ! send grid position from regular region
-    do n = 1, ADM_vlink
-       do l = 1, ADM_lall
-          if ( ADM_prc_tab(l,ADM_prc_me) == rgntab(n) ) then
-             vsend_pl(:,n) = GRD_xt(suf(ADM_gmin,ADM_gmax),ADM_KNONE,l,ADM_TJ,:) ! [mod] H.Yashiro 20120525
+    do v = 1, ADM_vlink
+    do l = 1, ADM_lall
+       if ( RGNMNG_l2r(l) == rgntab(v) ) then
+          vsend_pl(:,v) = GRD_xt(suf(ADM_gmin,ADM_gmax),ADM_KNONE,l,ADM_TJ,:) ! [mod] H.Yashiro 20120525
 
-             call MPI_ISEND( vsend_pl(:,n),        &
-                             3,                    &
-                             datatype,             &
-                             ADM_prc_npl-1,        &
-                             rgntab(n),            &
-                             PRC_LOCAL_COMM_WORLD, &
-                             sreq(n),              &
-                             ierr                  )
+          call MPI_ISEND( vsend_pl(1,v),        &
+                          3,                    &
+                          COMM_datatype,        &
+                          ADM_prc_pl-1,         &
+                          rgntab(v),            &
+                          PRC_LOCAL_COMM_WORLD, &
+                          sreq(v),              &
+                          ierr                  )
 
-             send_flag(n) = .true.
-          endif
-       enddo
+          send_flag(v) = .true.
+       endif
+    enddo
     enddo
 
-    if ( ADM_prc_me == ADM_prc_npl ) then
-       do n = 1, ADM_vlink
-          call MPI_IRECV( vrecv_pl(:,n),        &
+    if ( ADM_have_pl ) then
+       do v = 1, ADM_vlink
+          call MPI_IRECV( vrecv_pl(1,v),        &
                           3,                    &
-                          datatype,             &
-                          prctab(n)-1,          &
-                          rgntab(n),            &
+                          COMM_datatype,        &
+                          prctab(v)-1,          &
+                          rgntab(v),            &
                           PRC_LOCAL_COMM_WORLD, &
-                          rreq(n),              &
+                          rreq(v),              &
                           ierr                  )
        enddo
     endif
 
     ! wait and store
-    do n = 1, ADM_vlink
-       if ( send_flag(n) ) then
-          call MPI_WAIT(sreq(n),istat,ierr)
+    do v = 1, ADM_vlink
+       if ( send_flag(v) ) then
+          call MPI_WAIT(sreq(v),istat,ierr)
        endif
     enddo
 
-    if ( ADM_prc_me == ADM_prc_npl ) then
-       do n = 1, ADM_vlink
-          call MPI_WAIT(rreq(n),istat,ierr)
-          GRD_xt_pl(n+1,ADM_KNONE,ADM_NPL,:) = vrecv_pl(:,n) ! [mod] H.Yashiro 20120525
+    if ( ADM_have_pl ) then
+       do v = 1, ADM_vlink
+          call MPI_WAIT(rreq(v),istat,ierr)
+          GRD_xt_pl(v+1,ADM_KNONE,I_NPL,:) = vrecv_pl(:,v) ! [mod] H.Yashiro 20120525
        enddo
     endif
-
-    !--- send information of grid around south pole from regular region
-
-    ! find region which has the south pole
-    do l = 1, ADM_rgn_nmax
-       if ( ADM_rgn_vnum(ADM_S,l) == ADM_vlink ) then
-          do n = 1, ADM_vlink
-             rgntab(n) = ADM_rgn_vtab(ADM_RID,ADM_S,l,n)
-             prctab(n) = ADM_rgn2prc(rgntab(n))
-          enddo
-          exit
-       endif
-    enddo
 
     call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
 
+    !--- send information of grid around south pole from regular region
     send_flag(:) = .false.
 
-    do n = 1, ADM_vlink
-       do l =1, ADM_lall
-          if (ADM_prc_tab(l,ADM_prc_me) == rgntab(n) ) then
-             vsend_pl(:,n) = GRD_xt(suf(ADM_gmax,ADM_gmin),ADM_KNONE,l,ADM_TI,:) ! [mod] H.Yashiro 20120525
-
-             call MPI_ISEND( vsend_pl(:,n),        &
-                             3,                    &
-                             datatype,             &
-                             ADM_prc_spl-1,        &
-                             rgntab(n),            &
-                             PRC_LOCAL_COMM_WORLD, &
-                             sreq(n),              &
-                             ierr                  )
-
-             send_flag(n) = .true.
-          endif
-       enddo
+    ! find region which has the south pole
+    do r = 1, ADM_rgn_nmax
+       if ( RGNMNG_vert_num(I_S,r) == ADM_vlink ) then
+          do v = 1, ADM_vlink
+             rgntab(v) = RGNMNG_vert_tab(I_RGNID,I_S,r,v)
+             prctab(v) = RGNMNG_r2lp(I_prc,rgntab(v))
+          enddo
+          exit
+       endif
     enddo
 
-    if ( ADM_prc_me == ADM_prc_spl ) then
-       do n = 1, ADM_vlink
-          call MPI_IRECV( vrecv_pl(:,n),        &
+    do v = 1, ADM_vlink
+    do l = 1, ADM_lall
+       if (RGNMNG_l2r(l) == rgntab(v) ) then
+          vsend_pl(:,v) = GRD_xt(suf(ADM_gmax,ADM_gmin),ADM_KNONE,l,ADM_TI,:) ! [mod] H.Yashiro 20120525
+
+          call MPI_ISEND( vsend_pl(1,v),        &
                           3,                    &
-                          datatype,             &
-                          prctab(n)-1,          &
-                          rgntab(n),            &
+                          COMM_datatype,        &
+                          ADM_prc_pl-1,         &
+                          rgntab(v),            &
                           PRC_LOCAL_COMM_WORLD, &
-                          rreq(n),              &
+                          sreq(v),              &
+                          ierr                  )
+
+          send_flag(v) = .true.
+       endif
+    enddo
+    enddo
+
+    if ( ADM_have_pl ) then
+       do v = 1, ADM_vlink
+          call MPI_IRECV( vrecv_pl(1,v),        &
+                          3,                    &
+                          COMM_datatype,        &
+                          prctab(v)-1,          &
+                          rgntab(v),            &
+                          PRC_LOCAL_COMM_WORLD, &
+                          rreq(v),              &
                           ierr                  )
        enddo
     endif
 
     ! wait and store
-    do n = 1, ADM_vlink
-       if ( send_flag(n) ) then
-          call MPI_WAIT(sreq(n),istat,ierr)
+    do v = 1, ADM_vlink
+       if ( send_flag(v) ) then
+          call MPI_WAIT(sreq(v),istat,ierr)
        endif
     enddo
 
-    if ( ADM_prc_me == ADM_prc_spl ) then
-       do n = 1, ADM_vlink
-          call MPI_WAIT(rreq(n),istat,ierr)
-          GRD_xt_pl(n+1,ADM_KNONE,ADM_SPL,:) = vrecv_pl(:,n) ! [mod] H.Yashiro 20120525
+    if ( ADM_have_pl ) then
+       do v = 1, ADM_vlink
+          call MPI_WAIT(rreq(v),istat,ierr)
+          GRD_xt_pl(v+1,ADM_KNONE,I_SPL,:) = vrecv_pl(:,v) ! [mod] H.Yashiro 20120525
        enddo
     endif
+
+    call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
 
     ! grid point communication
     call COMM_var( GRD_x, GRD_x_pl, ADM_KNONE, 3 )
 
-    if (      ADM_prc_me == ADM_prc_npl &
-         .OR. ADM_prc_me == ADM_prc_spl ) then
+    if ( ADM_have_pl ) then
        GRD_xt_pl(ADM_gslf_pl,:,:,:) = GRD_x_pl(ADM_gslf_pl,:,:,:)
     endif
 
