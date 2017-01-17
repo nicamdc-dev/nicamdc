@@ -12,8 +12,8 @@ ifeq ($(origin BINNAME), undefined)
    BINNAME = nhm_driver
 endif
 
-BUILDDIR     := $(PWD)/.libs
-NICAM_BINDIR  = $(PWD)
+BUILDDIR     := $(TOPDIR)/.libs
+NICAM_BINDIR  = $(TOPDIR)
 
 include $(SYSDEPDIR)/Makedef.$(NICAM_SYS)
 include $(TOPDIR)/Mkinclude

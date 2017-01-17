@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpiexec.hydra -n \${PJM_MPI_PROC} numactl --membind 1"
+MPIEXEC="mpiexec.hydra -psm2 -n \${PJM_MPI_PROC} numactl -m 1"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -30,7 +30,7 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-NNODE=`expr \( $NMPI - 1 \) / 4 + 1`
+NNODE=`expr \( $NMPI - 1 \) / 2 + 1`
 
 cat << EOF1 > run.sh
 #! /bin/bash -x
@@ -40,7 +40,7 @@ cat << EOF1 > run.sh
 #
 ################################################################################
 #PJM -g gc26
-#PJM -L rscgrp=FLAT-QUADRANT
+#PJM -L rscgrp=regular-flat
 #PJM -L node=${NNODE}
 #PJM --mpi proc=${NMPI}
 #PJM --omp thread=16
@@ -52,7 +52,13 @@ cat << EOF1 > run.sh
 #
 export FORT_FMT_RECL=400
 export OMP_NUM_THREADS=16
-
+export I_MPI_DEBUG=5
+export I_MPI_FABRICS_LIST=tmi
+export I_MPI_PIN_PROCESSOR_EXCLUDE_LIST=0,1,68,69,136,137,204,205
+export I_MPI_PIN_DOMAIN=numa
+export I_MPI_PERHOST=2
+export KMP_HW_SUBSET=1t
+export KMP_AFFINITY=verbose
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .

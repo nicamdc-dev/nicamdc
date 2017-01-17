@@ -1,6 +1,9 @@
 data/grid/boundary/gl06*
 data/grid/boundary/gl07*
+data/grid/boundary/gl08*
 data/grid/llmap/gl06/*
 data/grid/llmap/gl07/*
-data/grid/llmap/gl07/*
+data/grid/llmap/gl08/*
+data/initial/HS_spinup_300day/gl06*
 data/initial/HS_spinup_300day/gl07*
+data/initial/HS_spinup_300day/gl08*

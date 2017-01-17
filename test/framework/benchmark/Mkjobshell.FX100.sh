@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpiexec -mca mpi_print_stats 2"
+MPIEXEC="mpiexec"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -51,8 +51,8 @@ cat << EOF1 > run.sh
 #
 . /fefs/home/system/Env_base
 #
-export PARALLEL=12
-export OMP_NUM_THREADS=12
+export PARALLEL=16
+export OMP_NUM_THREADS=16
 export XOS_MMM_L_ARENA_FREE=2
 
 module load TCSuite
@@ -71,7 +71,8 @@ do
 done
 
 cat << EOF2 >> run.sh
-rm -rf ./prof*
+
+rm   -rf ./prof*
 mkdir -p ./prof
 mkdir -p ./prof_call
 
