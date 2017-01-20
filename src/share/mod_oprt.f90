@@ -109,7 +109,10 @@ contains
        OPRT_io_mode, &
        OPRT_fname
 
+    integer :: gall
+
     integer :: ierr
+    integer :: ij, l, d, v
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -145,6 +148,86 @@ contains
     allocate( OPRT_coef_diff   (ADM_nxyz,ADM_gall,1:6    ,ADM_lall   ) )
     allocate( OPRT_coef_diff_pl(ADM_nxyz,         1:vlink,ADM_lall_pl) )
 #endif
+
+    gall = ADM_gall
+
+    do l = 1, ADM_lall
+       !$omp parallel do default(none),private(ij,d,v), &
+       !$omp shared(l,gall,OPRT_coef_div)
+       do ij = 1, gall
+       do v  = 0, 6
+       do d  = 1, ADM_nxyz
+          OPRT_coef_div(d,ij,v,l) = 0.0_RP
+       enddo
+       enddo
+       enddo
+       !$omp end parallel do
+
+       !$omp parallel do default(none),private(ij,d,v), &
+       !$omp shared(l,gall,OPRT_coef_rot)
+       do ij = 1, gall
+       do v  = 0, 6
+       do d  = 1, ADM_nxyz
+          OPRT_coef_rot(d,ij,v,l) = 0.0_RP
+       enddo
+       enddo
+       enddo
+       !$omp end parallel do
+
+       !$omp parallel do default(none),private(ij,d,v), &
+       !$omp shared(l,gall,OPRT_coef_grad)
+       do ij = 1, gall
+       do v  = 0, 6
+       do d  = 1, ADM_nxyz
+          OPRT_coef_grad(d,ij,v,l) = 0.0_RP
+       enddo
+       enddo
+       enddo
+       !$omp end parallel do
+
+       !$omp parallel do default(none),private(ij,v), &
+       !$omp shared(l,gall,OPRT_coef_lap)
+       do ij = 1, gall
+       do v = 0, 6
+          OPRT_coef_lap(ij,v,l) = 0.0_RP
+       enddo
+       enddo
+       !$omp end parallel do
+
+       !$omp parallel default(none),private(ij,d), &
+       !$omp shared(l,gall,OPRT_coef_intp,OPRT_coef_diff)
+
+       !$omp do
+       do ij = 1, gall
+          do d = 1, ADM_nxyz
+             OPRT_coef_intp(d,ij,1,TI,l) = 0.0_RP
+             OPRT_coef_intp(d,ij,2,TI,l) = 0.0_RP
+             OPRT_coef_intp(d,ij,3,TI,l) = 0.0_RP
+          enddo
+
+          do d = 1, ADM_nxyz
+             OPRT_coef_intp(d,ij,1,TJ,l) = 0.0_RP
+             OPRT_coef_intp(d,ij,2,TJ,l) = 0.0_RP
+             OPRT_coef_intp(d,ij,3,TJ,l) = 0.0_RP
+          enddo
+       enddo
+       !$omp end do
+
+       !$omp do
+       do ij = 1, gall
+       do d  = 1, ADM_nxyz
+          OPRT_coef_diff(d,ij,1,l) = 0.0_RP
+          OPRT_coef_diff(d,ij,2,l) = 0.0_RP
+          OPRT_coef_diff(d,ij,3,l) = 0.0_RP
+          OPRT_coef_diff(d,ij,4,l) = 0.0_RP
+          OPRT_coef_diff(d,ij,5,l) = 0.0_RP
+          OPRT_coef_diff(d,ij,6,l) = 0.0_RP
+       enddo
+       enddo
+       !$omp end do
+
+       !$omp end parallel
+    enddo
 
     call OPRT_divergence_setup( GMTR_p        (:,:,:,:),   GMTR_p_pl        (:,:,:,:), & ! [IN]
                                 GMTR_t        (:,:,:,:,:), GMTR_t_pl        (:,:,:,:), & ! [IN]
