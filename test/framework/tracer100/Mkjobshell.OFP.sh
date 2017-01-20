@@ -54,6 +54,7 @@ export FORT_FMT_RECL=400
 export OMP_NUM_THREADS=16
 export I_MPI_DEBUG=5
 export I_MPI_FABRICS_LIST=tmi
+export I_MPI_HBW_POLICY=hbw_bind,hbw_bind,hbw_bind
 export I_MPI_PIN_PROCESSOR_EXCLUDE_LIST=0,1,68,69,136,137,204,205
 export I_MPI_PIN_DOMAIN=numa
 export I_MPI_PERHOST=2
