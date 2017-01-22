@@ -479,8 +479,8 @@ contains
                      VMTR_C2WfactGz(:,:,:,:)  ) ! [IN]
 
     ! value check
-    mxval = maxval( pre(:,:,:) )
-    mnval = minval( pre(:,:,:) )
+    mxval = maxval( pre(:,ADM_kmin:ADM_kmax,:) )
+    mnval = minval( pre(:,ADM_kmin:ADM_kmax,:) )
 
     if (      mxval >= 2000.E+2_RP .OR. mxval <= 0.0_RP &
          .OR. mnval >= 2000.E+2_RP .OR. mnval <= 0.0_RP ) then ! > 2000hPa or negative?
@@ -660,9 +660,11 @@ contains
     if ( out_mse ) then
        do l = 1, ADM_lall
           do k = 1, ADM_kall
-             mse(:,k,l) = CPdry * tem(:,k,l)      &
-                        + GRAV  * ( GRD_vz(:,k,l,GRD_Z) - GRD_zs (:,K0,l,GRD_ZSFC) ) &
-                        + LHV   * q(:,k,l,I_QV)
+          do g = 1, ADM_gall
+             mse(g,k,l) = CPdry * tem(g,k,l)      &
+                        + GRAV  * ( GRD_vz(g,k,l,GRD_Z) - GRD_zs (g,K0,l,GRD_ZSFC) ) &
+                        + LHV   * q(g,k,l,I_QV)
+          enddo
           enddo
 
           call history_in( 'ml_mse',  mse(:,:,l) )

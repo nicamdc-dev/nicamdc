@@ -50,7 +50,7 @@ mod_saturation.o     : mod_saturation.f90     mod_precision.o mod_adm.o mod_prof
 mod_bndcnd.o         : mod_bndcnd.f90         mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_runconf.o
 mod_bsstate.o        : mod_bsstate.f90        mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_grd.o mod_stdio.o mod_runconf.o mod_vintrpl.o mod_bndcnd.o mod_thrmdyn.o mod_gtl.o mod_prgvar.o
 mod_history.o        : mod_history.f90        mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_time.o mod_runconf.o mod_grd.o mod_calendar.o mod_fio.o mod_comm.o mod_gtl.o mod_vintrpl.o mod_stdio.o mod_cnvvar.o mod_thrmdyn.o mod_vmtr.o mod_prgvar.o
-mod_prgvar.o         : mod_prgvar.f90         mod_precision.o mod_adm.o mod_prof.o mod_runconf.o mod_comm.o mod_ideal_init.o
+mod_prgvar.o         : mod_prgvar.f90         mod_precision.o mod_adm.o mod_prof.o mod_runconf.o mod_comm.o mod_ideal_init.o mod_statistics.o
 mod_chemvar.o        : mod_chemvar.f90        mod_precision.o mod_adm.o mod_prof.o
 mod_extdata.o        : mod_extdata.f90        mod_precision.o mod_adm.o mod_prof.o mod_fio.o mod_calendar.o mod_gtl.o mod_comm.o
 mod_embudget.o       : mod_embudget.f90       mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_stdio.o mod_time.o mod_grd.o mod_vmtr.o mod_gtl.o mod_runconf.o mod_cnvvar.o mod_bsstate.o mod_thrmdyn.o mod_prgvar.o
