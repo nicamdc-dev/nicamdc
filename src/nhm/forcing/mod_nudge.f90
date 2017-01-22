@@ -65,7 +65,7 @@ module mod_nudge
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine NDG_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -93,12 +93,12 @@ contains
        FLAG_NUDGING
     implicit none
 
-    integer :: NDG_kmin0 = -1
-    integer :: NDG_kmax0 = 1000
-    integer :: NDG_kmin1 = -1
-    integer :: NDG_kmax1 = 1000
+    integer  :: NDG_kmin0 = -1
+    integer  :: NDG_kmax0 = 1000
+    integer  :: NDG_kmin1 = -1
+    integer  :: NDG_kmax1 = 1000
 
-    logical :: NDG_hwgt            = .false.     ! weighted nudging option, depending on the distance from the pole
+    logical  :: NDG_hwgt            = .false.     ! weighted nudging option, depending on the distance from the pole
     real(RP) :: NDG_hwgt_center_lat =  35.0_RP      ! lat. of the pole ( -90<=v<=90 )
     real(RP) :: NDG_hwgt_center_lon = 135.0_RP      ! lon. of the pole (-180<=v<=180)
     real(RP) :: NDG_hwgt_halo1_dist =   0.0_RP      ! distance from the pole to the halo1 in [m] (0<=v<=NDG_hwgt_halo2_dist)
@@ -134,10 +134,10 @@ contains
     real(RP) :: wgt_horizontal   (ADM_gall   ,ADM_KNONE,ADM_lall   ,1) ! 2008/09/10 [Add] M.Hara
     real(RP) :: wgt_horizontal_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,1)
 
-    integer :: k0, k1
-    integer :: g, k, l
+    integer  :: k0, k1
+    integer  :: g, k, l
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     if( .NOT. FLAG_NUDGING ) return
@@ -347,8 +347,8 @@ contains
 
     real(RP) :: temp(ADM_gall_in,ADM_kall)
 
-    logical :: eflag
-    integer :: i, j, n, k, l
+    logical  :: eflag
+    integer  :: i, j, n, k, l
     !---------------------------------------------------------------------------
 
     if ( NDG_tau_vxvyvz > 0.0_RP ) then
@@ -686,7 +686,7 @@ contains
 
     real(RP) :: drhogqv ! tendency of rhogqv [kg/m3/s]
 
-    integer :: g, k, l
+    integer  :: g, k, l
     !---------------------------------------------------------------------------
 
     if ( NDG_tau_qv > 0.0_RP ) then
@@ -757,7 +757,7 @@ contains
 
     real(RP) :: center_lon_rad, center_lat_rad ! [rad]
     real(RP) :: dist, fact
-    integer :: g, k0, l
+    integer  :: g, k0, l
     !---------------------------------------------------------------------------
 
     k0 = ADM_KNONE
@@ -831,7 +831,7 @@ contains
        ADM_gall_1d
     implicit none
 
-    integer :: i, j
+    integer  :: i, j
     !---------------------------------------------------------------------------
 
     suf = ADM_gall_1d * (j-1) + i

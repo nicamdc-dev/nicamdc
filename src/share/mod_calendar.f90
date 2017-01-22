@@ -74,7 +74,7 @@ module mod_calendar
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine CALENDAR_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -94,7 +94,7 @@ contains
        imonpp, &
        idaypp
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -204,7 +204,7 @@ contains
     integer,  intent(in)  :: idays
     real(DP), intent(in)  :: rsec
 
-    integer :: isecdy ! # of seconds for a day
+    integer  :: isecdy ! # of seconds for a day
     !---------------------------------------------------------------------------
 
     isecdy = isecmn * iminhr * ihrday
@@ -227,7 +227,7 @@ contains
     integer,  intent(out) :: isec
     real(DP), intent(in)  :: rsec
 
-    integer :: isechr ! # of seconds for a hour
+    integer  :: isechr ! # of seconds for a hour
     !---------------------------------------------------------------------------
 
     isechr = isecmn * iminhr
@@ -282,13 +282,13 @@ contains
     integer, intent(out) :: iday
     integer, intent(in)  :: idays
 
-    integer :: jy
-    integer :: j4, j100, j400
-    integer :: idays0
-    integer :: ileap
+    integer  :: jy
+    integer  :: j4, j100, j400
+    integer  :: idays0
+    integer  :: ileap
 
-    integer :: idy      ! # of days in a year
-    integer :: m, id
+    integer  :: idy      ! # of days in a year
+    integer  :: m, id
     !---------------------------------------------------------------------------
 
     if ( operpt ) then ! return perpetual date
@@ -378,12 +378,12 @@ contains
     integer, intent(in)  :: imonth
     integer, intent(in)  :: iday
 
-    integer :: jyear, jmonth
-    integer :: j4, j100, j400
-    integer :: idays0
-    integer :: ileap
+    integer  :: jyear, jmonth
+    integer  :: j4, j100, j400
+    integer  :: idays0
+    integer  :: ileap
 
-    integer :: m, id
+    integer  :: m, id
     !---------------------------------------------------------------------------
 
     if ( oauto  ) then
@@ -456,8 +456,8 @@ contains
     character(len=*), intent(out) :: htime
     real(DP),         intent(in)  :: dsec
 
-    integer :: idate(6)
-    integer :: i
+    integer  :: idate(6)
+    integer  :: i
     !---------------------------------------------------------------------------
 
     call CALENDAR_ss2yh( idate, & ! [OUT]
@@ -477,7 +477,7 @@ contains
     integer, intent(in) :: iyear     !< current year
     logical             :: checkleap
 
-    integer :: check4, check100, check400
+    integer  :: check4, check100, check400
     !---------------------------------------------------------------------------
 
     check4   = mod(iyear,4  )

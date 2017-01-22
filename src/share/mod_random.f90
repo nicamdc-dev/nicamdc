@@ -11,7 +11,7 @@
 module mod_random
   !-----------------------------------------------------------------------------
   !
-  !++ used modules
+  !++ Used modules
   !
   use mod_precision
   use mod_stdio
@@ -46,7 +46,7 @@ module mod_random
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine RANDOM_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -55,7 +55,7 @@ contains
     namelist / RANDOMPARAM / &
        RANDOM_FIX
 
-    integer :: nseeds, ierr
+    integer  :: nseeds, ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -92,7 +92,7 @@ contains
        PRC_myrank
     implicit none
 
-    integer :: time1(8)
+    integer  :: time1(8)
     real(RP) :: time2
     !---------------------------------------------------------------------------
 

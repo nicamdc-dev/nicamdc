@@ -77,7 +77,7 @@ module mod_mkgrd
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine MKGRD_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -111,7 +111,7 @@ contains
       MKGRD_rotation_lon,     &
       MKGRD_rotation_lat
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -1475,8 +1475,8 @@ contains
        ADM_gall_1d
     implicit none
 
-    integer :: suffix
-    integer :: i, j
+    integer  :: suffix
+    integer  :: i, j
     !---------------------------------------------------------------------------
 
     suffix = ADM_gall_1d * (j-1) + i

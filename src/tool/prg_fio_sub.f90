@@ -88,9 +88,9 @@ program fio_sub
   integer                :: fid_log
   character(len=6)       :: rankstr
 
-  logical :: addvar
-  integer :: p, v, vid
-  integer :: ifid1, ifid2, idid, ofid, odid, ierr
+  logical  :: addvar
+  integer  :: p, v, vid
+  integer  :: ifid1, ifid2, idid, ofid, odid, ierr
   !=====================================================================
 
   !--- read option and preprocess
@@ -288,7 +288,7 @@ contains
       OPT_fid
     implicit none
 
-    integer :: io
+    integer  :: io
     !---------------------------------------------------------------------------
 
     ! --- Set option

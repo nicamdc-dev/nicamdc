@@ -68,7 +68,7 @@ module mod_embudget
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine embudget_setup
     use mod_process, only: &
        PRC_IsMaster, &
@@ -84,7 +84,7 @@ contains
        MNT_INTV, &
        MNT_ON
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -102,8 +102,8 @@ contains
 
     if(.not.MNT_ON) return
 
-    Mass_budget_factor   = 1.D0 / ( 4.D0 * PI * RADIUS * RADIUS )                                    ! [J]       -> [J/m2]
-    Energy_budget_factor = 1.D0 / ( TIME_DTL * real(MNT_INTV,kind=8) * 4.D0 * PI * RADIUS * RADIUS ) ! [J /step] -> [W/m2]
+    Mass_budget_factor   = 1.0_RP / ( 4.0_RP * PI * RADIUS * RADIUS )                                     ! [J]       -> [J/m2]
+    Energy_budget_factor = 1.0_RP / ( TIME_DTL * real(MNT_INTV,kind=RP) * 4.0_RP * PI * RADIUS * RADIUS ) ! [J /step] -> [W/m2]
 
     if( IO_L ) write(IO_FID_LOG,*) "Mass_budget_factor   = ", Mass_budget_factor
     if( IO_L ) write(IO_FID_LOG,*) "Energy_budget_factor = ", Energy_budget_factor
@@ -366,10 +366,10 @@ contains
     enddo
 
     !--- total & subtotal water
-    atm_mass_qtot_sum = 0.D0
-    atm_mass_qvap_sum = 0.D0
-    atm_mass_qliq_sum = 0.D0
-    atm_mass_qice_sum = 0.D0
+    atm_mass_qtot_sum = 0.0_RP
+    atm_mass_qvap_sum = 0.0_RP
+    atm_mass_qliq_sum = 0.0_RP
+    atm_mass_qice_sum = 0.0_RP
     do nq = NQW_STR, NQW_END
        atm_mass_qtot_sum = atm_mass_qtot_sum + rhoq_sum(nq)
 

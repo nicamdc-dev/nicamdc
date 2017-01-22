@@ -42,9 +42,9 @@ program prg_mkvlayer
   real(RP), allocatable :: z_c(:)
   real(RP), allocatable :: z_h(:)
 
-  integer :: kall, kmin, kmax
-  integer :: k
-  integer :: ierr
+  integer  :: kall, kmin, kmax
+  integer  :: k
+  integer  :: ierr
   !=============================================================================
 
   call MPI_Init(ierr)
@@ -116,8 +116,8 @@ contains
 
     integer, parameter :: fid = 10
 
-    integer :: num_of_layer0
-    integer :: k
+    integer  :: num_of_layer0
+    integer  :: k
     !---------------------------------------------------------------------------
 
     open( unit   = fid,           &
@@ -151,7 +151,7 @@ contains
 
     integer, parameter :: fid = 10
 
-    integer :: k
+    integer  :: k
     !---------------------------------------------------------------------------
 
     open( unit   = fid,            &

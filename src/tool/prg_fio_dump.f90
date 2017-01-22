@@ -29,15 +29,15 @@ program prg_fio_dump
   logical               :: endianlok = .false.
 
   character(len=H_LONG) :: argstr
-  integer :: n, narg
+  integer  :: n, narg
 
 #ifdef _NOF2003
-  integer :: IARGC
+  integer  :: IARGC
 #else
-  integer :: command_argument_count
+  integer  :: command_argument_count
 #endif
 
-  integer :: fid, ierr ! return from C program
+  integer  :: fid, ierr ! return from C program
   !=============================================================================
 
   call MPI_Init(ierr)

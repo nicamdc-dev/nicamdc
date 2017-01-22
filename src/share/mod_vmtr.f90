@@ -125,7 +125,7 @@ module mod_vmtr
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine VMTR_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -201,8 +201,8 @@ contains
     namelist / VMTRPARAM / &
        deep
 
-    integer :: ierr
-    integer :: g, k, l
+    integer  :: ierr
+    integer  :: g, k, l
     !---------------------------------------------------------------------------
 
     !--- read parameters

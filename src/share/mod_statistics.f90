@@ -503,7 +503,7 @@ contains
        ADM_gall_1d
     implicit none
 
-    integer :: i, j
+    integer  :: i, j
     !---------------------------------------------------------------------------
 
     suf = ADM_gall_1d * (j-1) + i

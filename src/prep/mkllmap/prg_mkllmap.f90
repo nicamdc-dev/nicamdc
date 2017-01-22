@@ -40,16 +40,16 @@ program prg_mkllmap
   !
   !++ parameters & variables
   !
-  integer :: comm_world
-  integer :: myrank
-  logical :: ismaster
+  integer  :: comm_world
+  integer  :: myrank
+  logical  :: ismaster
 
   character(len=H_LONG) :: output_dir   = './'
 
   namelist /mkllmap_param/ &
      output_dir
 
-  integer :: ierr
+  integer  :: ierr
   !=============================================================================
 
   !---< MPI start >---

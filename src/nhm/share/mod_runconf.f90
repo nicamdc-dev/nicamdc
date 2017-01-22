@@ -158,7 +158,7 @@ module mod_runconf
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine RUNCONF_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -187,7 +187,7 @@ contains
        AF_TYPE,            &
        OUT_FILE_TYPE
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -239,7 +239,7 @@ contains
        CHEM_TRC_desc
     implicit none
 
-    integer :: v, i
+    integer  :: v, i
     !---------------------------------------------------------------------------
 
     !--- counting tracer
@@ -407,7 +407,7 @@ contains
        CI    => CONST_CI
     implicit none
 
-    integer :: v
+    integer  :: v
     !---------------------------------------------------------------------------
     ! 'SIMPLE': standard approximation CVD * T
     ! 'EXACT': exact formulation

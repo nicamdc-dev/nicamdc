@@ -10,7 +10,7 @@
 module mod_adm
   !-----------------------------------------------------------------------------
   !
-  !++ used modules
+  !++ Used modules
   !
   use mod_precision
   use mod_stdio
@@ -177,7 +177,7 @@ module mod_adm
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine ADM_setup
     use mod_process, only: &
        PRC_MPIstop, &
@@ -202,9 +202,9 @@ contains
         ADM_XTMS_MLCP_S,  &
         debug
 
-    integer :: nmax, dmd
-    integer :: l, rgnid
-    integer :: ierr
+    integer  :: nmax, dmd
+    integer  :: l, rgnid
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     ADM_prc_me = PRC_myrank + 1
@@ -376,8 +376,8 @@ contains
         RGNMNG_out_fname, &
         debug
 
-    integer :: l, p, r
-    integer :: ierr
+    integer  :: l, p, r
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     RGNMNG_in_fname = trim(rgnmngfname)
@@ -521,16 +521,16 @@ contains
     integer,          intent(out) :: lnum(pall)         !< number of local region
     integer,          intent(out) :: lp2r(llim,pall)    !< l,prc => region
 
-    integer :: num_of_rgn !< number of region
+    integer  :: num_of_rgn !< number of region
 
     namelist / rgn_info / &
          num_of_rgn
 
-    integer :: rgnid      !< region ID
-    integer :: sw(2) = -1 !< south-west region info
-    integer :: nw(2) = -1 !< north-west region info
-    integer :: ne(2) = -1 !< north-east region info
-    integer :: se(2) = -1 !< south-east region info
+    integer  :: rgnid      !< region ID
+    integer  :: sw(2) = -1 !< south-west region info
+    integer  :: nw(2) = -1 !< north-west region info
+    integer  :: ne(2) = -1 !< north-east region info
+    integer  :: se(2) = -1 !< south-east region info
 
     namelist / rgn_link_info / &
          rgnid, &
@@ -539,22 +539,22 @@ contains
          ne,    &
          se
 
-    integer :: num_of_proc !< number of processes
+    integer  :: num_of_proc !< number of processes
 
     namelist / proc_info / &
          num_of_proc
 
-    integer :: peid            !< process ID
-    integer :: num_of_mng      !< number of regions be managed
-    integer :: mng_rgnid(llim) !< managed region ID
+    integer  :: peid            !< process ID
+    integer  :: num_of_mng      !< number of regions be managed
+    integer  :: mng_rgnid(llim) !< managed region ID
 
     namelist / rgn_mng_info / &
          peid,       &
          num_of_mng, &
          mng_rgnid
 
-    integer :: fid, ierr
-    integer :: r, p, l
+    integer  :: fid, ierr
+    integer  :: r, p, l
     !---------------------------------------------------------------------------
 
     if( IO_L ) write(IO_FID_LOG,*) '*** input mnginfo: ',trim(in_fname)
@@ -632,16 +632,16 @@ contains
     integer,          intent(in) :: lnum(pall)         !< number of local region
     integer,          intent(in) :: lp2r(llim,pall)    !< l,prc => region
 
-    integer :: num_of_rgn !< number of region
+    integer  :: num_of_rgn !< number of region
 
     namelist / rgn_info / &
          num_of_rgn
 
-    integer :: rgnid      !< region ID
-    integer :: sw(2) = -1 !< south-west region info
-    integer :: nw(2) = -1 !< north-west region info
-    integer :: ne(2) = -1 !< north-east region info
-    integer :: se(2) = -1 !< south-east region info
+    integer  :: rgnid      !< region ID
+    integer  :: sw(2) = -1 !< south-west region info
+    integer  :: nw(2) = -1 !< north-west region info
+    integer  :: ne(2) = -1 !< north-east region info
+    integer  :: se(2) = -1 !< south-east region info
 
     namelist / rgn_link_info / &
          rgnid, &
@@ -650,22 +650,22 @@ contains
          ne,    &
          se
 
-    integer :: num_of_proc !< number of processes
+    integer  :: num_of_proc !< number of processes
 
     namelist / proc_info / &
          num_of_proc
 
-    integer :: peid            !< process ID
-    integer :: num_of_mng      !< number of regions be managed
-    integer :: mng_rgnid(llim) !< managed region ID
+    integer  :: peid            !< process ID
+    integer  :: num_of_mng      !< number of regions be managed
+    integer  :: mng_rgnid(llim) !< managed region ID
 
     namelist / rgn_mng_info / &
          peid,       &
          num_of_mng, &
          mng_rgnid
 
-    integer :: fid
-    integer :: r, p, l
+    integer  :: fid
+    integer  :: r, p, l
     !---------------------------------------------------------------------------
 
     if ( ADM_prc_me == ADM_prc_master ) then
@@ -735,13 +735,13 @@ contains
     integer, intent(out) :: lp2r(llim,pall)
 
     integer, parameter :: nmax_dmd = 10
-    integer :: dmd_data(4,nmax_dmd)
+    integer  :: dmd_data(4,nmax_dmd)
 
-    integer :: rall_1d, rall_1dmd
+    integer  :: rall_1d, rall_1dmd
 
-    integer :: d_nb, i_nb, j_nb, rgnid_nb, direction
-    integer :: d, i, j, rgnid
-    integer :: l, p
+    integer  :: d_nb, i_nb, j_nb, rgnid_nb, direction
+    integer  :: d, i, j, rgnid
+    integer  :: l, p
     !---------------------------------------------------------------------------
 
     if( IO_L ) write(IO_FID_LOG,*) '*** generate region management table'
@@ -912,10 +912,10 @@ contains
     integer, intent(out) :: vert_tab   (2,4,rall,vlink_nmax)
     integer, intent(out) :: vert_tab_pl(2,rall_pl,vlink_nmax)
 
-    integer :: rgnid, dir
-    integer :: rgnid_next, dir_next
+    integer  :: rgnid, dir
+    integer  :: rgnid_next, dir_next
 
-    integer :: r, d, v
+    integer  :: r, d, v
     !---------------------------------------------------------------------------
 
     vert_num(:,:)     = -1
@@ -990,7 +990,7 @@ contains
     integer          :: rgnid, rgnid_next
     character(len=2) :: dstr, dstr_next
 
-    integer :: l, d, v
+    integer  :: l, d, v
     !---------------------------------------------------------------------------
 
     if( IO_L ) write(IO_FID_LOG,*)

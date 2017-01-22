@@ -43,7 +43,7 @@ module mod_dynamics
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine dynamics_setup
     use mod_process, only: &
        PRC_MPIstop

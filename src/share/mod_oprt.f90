@@ -10,7 +10,7 @@
 module mod_oprt
   !-----------------------------------------------------------------------------
   !
-  !++ used modules
+  !++ Used modules
   !
   use mod_precision
   use mod_stdio
@@ -92,7 +92,7 @@ module mod_oprt
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine OPRT_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -109,10 +109,10 @@ contains
        OPRT_io_mode, &
        OPRT_fname
 
-    integer :: gall
+    integer  :: gall
 
-    integer :: ierr
-    integer :: ij, l, d, v
+    integer  :: ierr
+    integer  :: ij, l, d, v
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -297,9 +297,9 @@ contains
     real(RP), intent(out) :: coef_div   (ADM_nxyz,ADM_gall,0:6    ,ADM_lall   )
     real(RP), intent(out) :: coef_div_pl(ADM_nxyz,         0:vlink,ADM_lall_pl)
 
-    integer :: ij
-    integer :: ip1j, ijp1, ip1jp1
-    integer :: im1j, ijm1, im1jm1
+    integer  :: ij
+    integer  :: ip1j, ijp1, ip1jp1
+    integer  :: im1j, ijm1, im1jm1
 
     real(RP) :: coef
     integer  :: i, j, l, d, n, v, hn
@@ -511,9 +511,9 @@ contains
     real(RP), intent(out) :: coef_rot   (ADM_nxyz,ADM_gall,0:6    ,ADM_lall   )
     real(RP), intent(out) :: coef_rot_pl(ADM_nxyz,         0:vlink,ADM_lall_pl)
 
-    integer :: ij
-    integer :: ip1j, ijp1, ip1jp1
-    integer :: im1j, ijm1, im1jm1
+    integer  :: ij
+    integer  :: ip1j, ijp1, ip1jp1
+    integer  :: im1j, ijm1, im1jm1
 
     real(RP) :: coef
     integer  :: i, j, l, d, n, v, ht
@@ -725,9 +725,9 @@ contains
     real(RP), intent(out) :: coef_grad   (ADM_nxyz,ADM_gall,0:6    ,ADM_lall   )
     real(RP), intent(out) :: coef_grad_pl(ADM_nxyz,         0:vlink,ADM_lall_pl)
 
-    integer :: ij
-    integer :: ip1j, ijp1, ip1jp1
-    integer :: im1j, ijm1, im1jm1
+    integer  :: ij
+    integer  :: ip1j, ijp1, ip1jp1
+    integer  :: im1j, ijm1, im1jm1
 
     real(RP) :: coef
     integer  :: i, j, l, d, n, v, hn
@@ -949,9 +949,9 @@ contains
     real(RP), intent(out) :: coef_lap   (ADM_gall,0:6    ,ADM_lall   )
     real(RP), intent(out) :: coef_lap_pl(         0:vlink,ADM_lall_pl)
 
-    integer :: ij
-    integer :: ip1j, ijp1, ip1jp1
-    integer :: im1j, ijm1, im1jm1
+    integer  :: ij
+    integer  :: ip1j, ijp1, ip1jp1
+    integer  :: im1j, ijm1, im1jm1
 
     integer  :: i, j, l, d, n, v, hn, tn, tn2
     !---------------------------------------------------------------------------
@@ -1426,11 +1426,11 @@ contains
     real(RP), intent(out) :: coef_diff   (ADM_nxyz,ADM_gall,1:6    ,ADM_lall   )
     real(RP), intent(out) :: coef_diff_pl(ADM_nxyz,         1:vlink,ADM_lall_pl)
 
-    integer :: ij
-    integer :: ip1j, ijp1
-    integer :: im1j, ijm1, im1jm1
+    integer  :: ij
+    integer  :: ip1j, ijp1
+    integer  :: im1j, ijm1, im1jm1
 
-    integer :: i, j, l, d, n, v, hn, tn, tn2
+    integer  :: i, j, l, d, n, v, hn, tn, tn2
     !---------------------------------------------------------------------------
 
     if( IO_L ) write(IO_FID_LOG,*) '*** setup coefficient of diffusion operator'
@@ -1863,7 +1863,7 @@ contains
     integer  :: ip1j, ijp1, ip1jp1
     integer  :: im1j, ijm1, im1jm1
 
-    integer :: i, j, k, l, n, v
+    integer  :: i, j, k, l, n, v
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('OPRT_gradient',2)
@@ -1991,7 +1991,7 @@ contains
     integer  :: ip1j, ijp1, ip1jp1
     integer  :: im1j, ijm1, im1jm1
 
-    integer :: i, j, k, l, n, v
+    integer  :: i, j, k, l, n, v
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('OPRT_laplacian',2)
@@ -2366,7 +2366,7 @@ contains
     integer  :: ip1j, ijp1, ip1jp1
     integer  :: im1j, ijm1, im1jm1
 
-    integer :: i, j, k, l, n, v
+    integer  :: i, j, k, l, n, v
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('OPRT_divdamp',2)
@@ -2638,8 +2638,8 @@ contains
     real(RP) :: tmp   (ADM_gall   ,106,ADM_lall   ,1)
     real(RP) :: tmp_pl(ADM_gall_pl,106,ADM_lall_pl,1)
 
-    integer :: dtype
-    integer :: g, l
+    integer  :: dtype
+    integer  :: g, l
     !---------------------------------------------------------------------------
 
     if    ( RP == SP ) then

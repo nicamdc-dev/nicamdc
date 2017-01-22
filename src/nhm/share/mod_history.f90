@@ -85,7 +85,7 @@ module mod_history
 
   integer,                public,  allocatable :: ksumstr           (:)
   integer,                private, allocatable :: ksumend           (:)
-  real(RP),               private, allocatable :: tsum_save         (:,:)
+  real(DP),               private, allocatable :: tsum_save         (:,:)
   logical,                private, allocatable :: flag_save         (:)
 
   real(RP),               public,  allocatable :: v_save            (:,:,:,:)
@@ -99,7 +99,7 @@ module mod_history
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine history_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -195,9 +195,9 @@ contains
 
     character(len=H_SHORT) :: lname
 
-    integer :: idate(6)
-    integer :: ierr
-    integer :: n
+    integer  :: idate(6)
+    integer  :: ierr
+    integer  :: n
     !---------------------------------------------------------------------------
 
     ! set default
@@ -452,7 +452,7 @@ contains
     enddo
 
     allocate( tsum_save(HIST_req_nmax,ADM_lall) )
-    tsum_save(:,:) = 0.0_RP
+    tsum_save(:,:) = 0.0_DP
 
     ! k-merged history container
     allocate( v_save   (ADM_gall,   ksum,ADM_lall,   1) )
@@ -531,9 +531,9 @@ contains
     integer                :: ijdim_input
     integer                :: kdim_input
 
-    logical :: save_var
-    integer :: kmax
-    integer :: i, j, g, g2, k, k1, k2, l, n
+    logical  :: save_var
+    integer  :: kmax
+    integer  :: i, j, g, g2, k, k1, k2, l, n
     !---------------------------------------------------------------------------
 
     hitem = trim(item)
@@ -622,7 +622,7 @@ contains
                          g2 = (j-1)*ADM_gall_1d + i
                          k2 = ksumstr(n)-1 + k
 
-                         v_save(g2,k2,l,1) = v_save(g2,k2,l,1) + gd(g,k+ADM_kmin-1) * TIME_DTL
+                         v_save(g2,k2,l,1) = v_save(g2,k2,l,1) + gd(g,k+ADM_kmin-1) * real(TIME_DTL,kind=RP)
 
                          g = g + 1
                       enddo
@@ -633,7 +633,7 @@ contains
                    do g = 1, ADM_gall
                       k2 = ksumstr(n)-1 + k
 
-                      v_save(g,k2,l,1) = v_save(g,k2,l,1) + gd(g,k+ADM_kmin-1) * TIME_DTL
+                      v_save(g,k2,l,1) = v_save(g,k2,l,1) + gd(g,k+ADM_kmin-1) * real(TIME_DTL,kind=RP)
                    enddo
                    enddo
                 endif
@@ -648,7 +648,7 @@ contains
                          g2 = (j-1)*ADM_gall_1d + i
                          k2 = ksumstr(n)-1 + k
 
-                         v_save(g2,k2,l,1) = v_save(g2,k2,l,1) + gd(g,k) * TIME_DTL
+                         v_save(g2,k2,l,1) = v_save(g2,k2,l,1) + gd(g,k) * real(TIME_DTL,kind=RP)
 
                          g = g + 1
                       enddo
@@ -659,7 +659,7 @@ contains
                    do g = 1, ADM_gall
                       k2 = ksumstr(n)-1 + k
 
-                      v_save(g,k2,l,1) = v_save(g,k2,l,1) + gd(g,k) * TIME_DTL
+                      v_save(g,k2,l,1) = v_save(g,k2,l,1) + gd(g,k) * real(TIME_DTL,kind=RP)
                    enddo
                    enddo
                 endif
@@ -679,7 +679,7 @@ contains
 
                       if ( k1 > ADM_kmin ) then
                          v_save(g2,k2,l,1) = v_save(g2,k2,l,1) + ( cnvpre_fac1(g2,k,l) * gd(g,k1-1) &
-                                                                 + cnvpre_fac2(g2,k,l) * gd(g,k1  ) ) * TIME_DTL
+                                                                 + cnvpre_fac2(g2,k,l) * gd(g,k1  ) ) * real(TIME_DTL,kind=RP)
                       else
                          v_save(g2,k2,l,1) = UNDEF
                       endif
@@ -696,7 +696,7 @@ contains
 
                       if ( k1 > ADM_kmin ) then
                          v_save(g,k2,l,1) = v_save(g,k2,l,1) + ( cnvpre_fac1(g,k,l) * gd(g,k1-1) &
-                                                               + cnvpre_fac2(g,k,l) * gd(g,k1  ) ) * TIME_DTL
+                                                               + cnvpre_fac2(g,k,l) * gd(g,k1  ) ) * real(TIME_DTL,kind=RP)
                       else
                          v_save(g,k2,l,1) = UNDEF
                       endif
@@ -756,10 +756,10 @@ contains
 
     logical, save :: first = .true.
 
-    integer :: idate(6)
-    logical :: out_var(HIST_req_limit)
-    integer :: num_output
-    integer :: g, k, l, n
+    integer  :: idate(6)
+    logical  :: out_var(HIST_req_limit)
+    integer  :: num_output
+    integer  :: g, k, l, n
     !---------------------------------------------------------------------------
 
     if ( first ) then
@@ -817,7 +817,7 @@ contains
              elseif( abs(v_save(g,k,l,1)-UNDEF) < EPS_ZERO ) then ! tentaive: to avode floating invalid
                 v_save(g,k,l,1) = UNDEF
              else
-                v_save(g,k,l,1) = v_save(g,k,l,1) / tsum_save(n,l)
+                v_save(g,k,l,1) = v_save(g,k,l,1) / real(tsum_save(n,l),kind=RP)
              endif
           enddo
           enddo
@@ -831,7 +831,7 @@ contains
              elseif( abs(v_save_pl(g,k,l,1)-UNDEF) < EPS_ZERO ) then ! tentaive: to avode floating invalid
                 v_save_pl(g,k,l,1) = UNDEF
              else
-                v_save_pl(g,k,l,1) = v_save_pl(g,k,l,1) / tsum_save(n,1)
+                v_save_pl(g,k,l,1) = v_save_pl(g,k,l,1) / real(tsum_save(n,1),kind=RP)
              endif
           enddo
           enddo
@@ -917,7 +917,7 @@ contains
           v_save_pl(:,ksumstr(n):ksumend(n),:,1) = 0.0_RP
 
           tstr_save(n) = TIME_CTIME
-          tsum_save(n,:) = 0.0_RP
+          tsum_save(n,:) = 0.0_DP
        endif
     enddo
 
@@ -935,7 +935,7 @@ contains
     character(len=H_SHORT) :: ktype
     character(len=H_SHORT) :: otype
 
-    integer :: n
+    integer  :: n
     !---------------------------------------------------------------------------
 
     if( IO_L ) write(IO_FID_LOG,*)
@@ -1034,7 +1034,7 @@ contains
     real(RP) :: lpres_sfc(ADM_gall)
     real(RP) :: lpres    (ADM_gall,ADM_kall)
 
-    integer :: g, k, l, nq, kk
+    integer  :: g, k, l, nq, kk
     !---------------------------------------------------------------------------
 
     cnvpre_fac1(:,:,:) = 0.0_RP
@@ -1142,7 +1142,7 @@ contains
 
     real(RP) :: rho_sfc ! surface density [kg/m3]
 
-    integer :: ij, l
+    integer  :: ij, l
     !---------------------------------------------------------------------------
 
     do l  = 1, ldim

@@ -128,7 +128,7 @@ module mod_gmtr
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine GMTR_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -149,7 +149,7 @@ contains
        GMTR_io_mode,      &
        GMTR_fname
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -1013,12 +1013,12 @@ contains
     real(RP) :: tmp2   (ADM_gall   ,54,ADM_lall   ,1)
     real(RP) :: tmp2_pl(ADM_gall_pl,54,ADM_lall_pl,1)
 
-    integer :: rgnid
+    integer  :: rgnid
     integer,  parameter :: I_rgn  = 1
     integer,  parameter :: I_grid = 2
 
-    integer :: dtype
-    integer :: g, l, k0
+    integer  :: dtype
+    integer  :: g, l, k0
     !---------------------------------------------------------------------------
 
     k0 = ADM_KNONE
@@ -1105,7 +1105,7 @@ contains
        ADM_gall_1d
     implicit none
 
-    integer :: i, j
+    integer  :: i, j
     !---------------------------------------------------------------------------
 
     suf = ADM_gall_1d * (j-1) + i

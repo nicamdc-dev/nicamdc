@@ -77,7 +77,7 @@ module mod_saturation
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine SATURATION_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -93,11 +93,11 @@ contains
        TEM00 => CONST_TEM00
     implicit none
 
-    NAMELIST / SATURATIONPARAM / &
+    namelist / SATURATIONPARAM / &
        SATURATION_ULIMIT_TEMP, &
        SATURATION_LLIMIT_TEMP
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -178,7 +178,7 @@ contains
     real(RP), intent(in)  :: temp (ijdim,kdim,ldim) !< temperature [K]
     real(RP), intent(out) :: alpha(ijdim,kdim,ldim) !< liquid/ice separation factor [0-1]
 
-    integer :: ij, k, l
+    integer  :: ij, k, l
     !---------------------------------------------------------------------------
 
     do l  = 1, ldim
@@ -245,7 +245,7 @@ contains
 
     real(RP) :: alpha, psatl, psati
 
-    integer :: ij, k, l
+    integer  :: ij, k, l
     !---------------------------------------------------------------------------
 
     do l  = 1, ldim
@@ -307,7 +307,7 @@ contains
     real(RP), intent(in)  :: temp(ijdim,kdim,ldim) !< temperature               [K]
     real(RP), intent(out) :: psat(ijdim,kdim,ldim) !< saturation vapor pressure [Pa]
 
-    integer :: ij, k, l
+    integer  :: ij, k, l
     !---------------------------------------------------------------------------
 
     do l  = 1, ldim
@@ -359,7 +359,7 @@ contains
     real(RP), intent(in)  :: temp(ijdim,kdim,ldim) !< temperature               [K]
     real(RP), intent(out) :: psat(ijdim,kdim,ldim) !< saturation vapor pressure [Pa]
 
-    integer :: ij, k, l
+    integer  :: ij, k, l
     !---------------------------------------------------------------------------
 
     do l  = 1, ldim

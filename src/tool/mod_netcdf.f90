@@ -247,7 +247,7 @@ contains
     real(4),             intent(in) ,optional :: var_force_to_set_valid_max
     integer,             intent(in) ,optional :: chunksizes(4)
     character(*),        intent(in) ,optional :: var_comp_table_file  ! [add] C.Kodama 2014.05.09
-    integer :: i, j, k, t
+    integer  :: i, j, k, t
 
     !--- set mode
     if( nc%status /= NOT_OPENED ) then
@@ -647,16 +647,16 @@ contains
     character(*),        intent(out),optional :: var_units
     real(4),             intent(out),optional :: var_missing
 
-    integer :: i
+    integer  :: i
     integer             :: wrk_nvar
     integer,allocatable :: wrk_ids(:)
     character(CLEN)     :: wrk_name
-    integer :: wrk_type
-    logical :: wrk_lon_flag
-    logical :: wrk_lat_flag
-    logical :: wrk_lev_flag
-    logical :: wrk_time_flag
-    logical :: wrk_var_flag
+    integer  :: wrk_type
+    logical  :: wrk_lon_flag
+    logical  :: wrk_lat_flag
+    logical  :: wrk_lev_flag
+    logical  :: wrk_time_flag
+    logical  :: wrk_var_flag
 
     !--- set mode
     if( nc%status /= NOT_OPENED ) then
@@ -1187,8 +1187,8 @@ contains
 
     integer(2),allocatable :: wrk_var_int2(:,:,:,:)
 
-    integer :: start(4)
-    integer :: p, q, r, s
+    integer  :: start(4)
+    integer  :: p, q, r, s
 
     start(1:4) = (/ 1, 1, 1, 1 /)
 
@@ -1333,7 +1333,7 @@ contains
          'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', &
          'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC' /)
 
-    integer :: i, j, k, t
+    integer  :: i, j, k, t
     character(CLEN) :: wrk_endian
 
     !--- check mode
@@ -1502,7 +1502,7 @@ contains
     real(4)            :: force_to_set_valid_min    ! maximal value to force to set var_valid_min
     real(4)            :: force_to_set_valid_max    ! minimal value to force to set var_valid_max
 
-    integer :: v
+    integer  :: v
 
     namelist / NM_NETCDF_VAR_COMP /  &
          name,                       &

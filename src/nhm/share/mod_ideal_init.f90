@@ -141,7 +141,7 @@ contains
        chemtracer,  &
        prs_rebuild
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     Kap = Rd / Cp
@@ -653,7 +653,7 @@ contains
     real(DP), parameter :: Xfact   = 1.0_DP ! Earth scaling parameter
     integer,  parameter :: zcoords = 1      ! 1 if z is specified, 0 if p is specified
 
-    integer :: n, k, l, k0
+    integer  :: n, k, l, k0
     !---------------------------------------------------------------------------
 
     k0 = ADM_KNONE
@@ -853,7 +853,7 @@ contains
     integer             :: pert            ! type of perturbation (0 = no perturbation, 1 = perturbation)
     logical,  parameter :: prs_dry = .false.
 
-    integer :: n, k, l, k0
+    integer  :: n, k, l, k0
     !---------------------------------------------------------------------------
 
     DIAG_var(:,:,:,:) = 0.0_RP
@@ -1003,7 +1003,7 @@ contains
     integer,  parameter :: zcoords = 1     ! 1 if z is specified, 0 if p is specified
     logical,  parameter :: prs_dry = .false.
 
-    integer :: n, k, l, k0
+    integer  :: n, k, l, k0
     !---------------------------------------------------------------------------
 
     DIAG_var(:,:,:,:) = 0.0_RP
@@ -1152,9 +1152,9 @@ contains
     real(DP)           :: hybm       = 0.0_DP  ! dont use hybrid sigma-p (eta) coordinate
     real(DP)           :: DP_gc                ! bar{z} for Gal-Chen coordinate
 
-    integer :: I_pasv1, I_pasv2
-    integer :: I_pasv3, I_pasv4
-    integer :: n, k, l, k0
+    integer  :: I_pasv1, I_pasv2
+    integer  :: I_pasv3, I_pasv4
+    integer  :: n, k, l, k0
     !---------------------------------------------------------------------------
 
     DIAG_var(:,:,:,:) = 0.0_RP
@@ -1167,7 +1167,7 @@ contains
     I_pasv4 = 6 + NCHEM_STR + chemvar_getid( "passive004" ) - 1
 
     select case(test_case)
-    case ('1', '1-1') ! DCMIP 2012 Test 1-1: 3D Deformational Flow
+    case('1', '1-1') ! DCMIP 2012 Test 1-1: 3D Deformational Flow
 
        do l = 1, lall
        do n = 1, ijdim
@@ -1237,7 +1237,7 @@ contains
        enddo
        enddo
 
-    case ('2', '1-2') ! DCMIP 2012 Test 1-2: Hadley-like Meridional Circulation
+    case('2', '1-2') ! DCMIP 2012 Test 1-2: Hadley-like Meridional Circulation
 
        do l = 1, lall
        do n = 1, ijdim
@@ -1304,7 +1304,7 @@ contains
        enddo
        enddo
 
-    case ('3', '1-3') ! DCMIP 2012 Test 1-3: Horizontal advection of thin cloud-like tracers in the presence of orography
+    case('3', '1-3') ! DCMIP 2012 Test 1-3: Horizontal advection of thin cloud-like tracers in the presence of orography
 
        do l = 1, lall
        do n = 1, ijdim
@@ -1446,7 +1446,7 @@ contains
     real(DP) :: DP_rho  ! density              [kg/m3], not in use
     real(DP) :: DP_q    ! specific humidity    [kg/kg], not in use
 
-    integer :: I_pasv1
+    integer  :: I_pasv1
 
     real(DP) :: hyam       = 0.0_DP
     real(DP) :: hybm       = 0.0_DP
@@ -1455,7 +1455,7 @@ contains
     integer, parameter :: zcoords = 1
     integer  :: shear
 
-    integer :: n, l, k, k0
+    integer  :: n, l, k, k0
     !---------------------------------------------------------------------------
 
     DIAG_var(:,:,:,:) = 0.0_RP
@@ -1465,7 +1465,7 @@ contains
     I_pasv1 = 6 + chemvar_getid( "passive001" ) + NCHEM_STR - 1
 
     select case( test_case )
-    case ('0', '2-0') ! DCMIP: TEST CASE 2-0 - Steady-State Atmosphere at Rest in the Presence of Orography
+    case('0', '2-0') ! DCMIP: TEST CASE 2-0 - Steady-State Atmosphere at Rest in the Presence of Orography
 
        do l = 1, lall
        do n = 1, ijdim
@@ -1527,7 +1527,7 @@ contains
        enddo
        enddo
 
-    case ('1', '2-1') ! DCMIP: TEST CASE 2-1 - Non-hydrostatic Mountain Waves over a Schaer-type Mountain
+    case('1', '2-1') ! DCMIP: TEST CASE 2-1 - Non-hydrostatic Mountain Waves over a Schaer-type Mountain
        shear = 0 ! constant u
 
        do l = 1, lall
@@ -1590,7 +1590,7 @@ contains
        enddo
        enddo
 
-    case ('2', '2-2') ! DCMIP: TEST CASE 2-2 - Non-hydrostatic Mountain Waves over a Schaer-type Mountain
+    case('2', '2-2') ! DCMIP: TEST CASE 2-2 - Non-hydrostatic Mountain Waves over a Schaer-type Mountain
        shear = 1 ! sheared u
 
        do l = 1, lall
@@ -1712,7 +1712,7 @@ contains
     real(DP) :: DP_rho  ! density              [kg/m3], not in use
     real(DP) :: DP_q    ! specific humidity    [kg/kg], not in use
 
-    integer :: n, k, l, k0
+    integer  :: n, k, l, k0
     !---------------------------------------------------------------------------
 
     k0 = ADM_KNONE
@@ -1810,8 +1810,8 @@ contains
     real(RP) :: vy_local(kdim)
     real(RP) :: vz_local(kdim)
 
-    integer :: n, l, k, K0
-    logical :: logout
+    integer  :: n, l, k, K0
+    logical  :: logout
     !---------------------------------------------------------------------------
 
     K0 = ADM_KNONE
@@ -1882,7 +1882,7 @@ contains
     real(RP), intent(inout) :: prs(kdim)
     logical, intent(in) :: logout
 
-    integer :: k
+    integer  :: k
     real(RP) :: g1, g2, Gphi, Gzero, Pphi
     real(RP), parameter :: N = 0.0187_RP        ! Brunt-Vaisala Freq.
     real(RP), parameter :: prs0 = 1.E+5_RP      ! pressure at the equator [Pa]
@@ -2009,7 +2009,7 @@ contains
       geo   )  !--- INOUT : mean geopotential height
     implicit none
 
-    integer :: k
+    integer  :: k
     integer, intent(in) :: kdim
     real(RP), intent(in) :: lat
     real(RP), intent(in) :: eta(kdim,2)
@@ -2099,13 +2099,13 @@ contains
     logical, intent(in) :: nicamcore
     logical, intent(in) :: logout
 
-    integer :: i, k
+    integer  :: i, k
     integer, parameter :: limit = 400
     real(RP) :: dz, uave, diff
     real(RP) :: f_cf(3)
     real(RP) :: pp(kdim)
-    logical :: iteration = .false.
-    logical :: do_iter = .true.
+    logical  :: iteration = .false.
+    logical  :: do_iter = .true.
     !-----
 
     pp(1) = ps
@@ -2276,7 +2276,7 @@ contains
     integer, parameter :: ID_vx  = 3
     integer, parameter :: ID_vy  = 4
     integer, parameter :: ID_vz  = 5
-    integer :: n, k, l
+    integer  :: n, k, l
     real(RP) :: lat, lon
     real(RP) :: r, rr, rbyrr, cla, clo
     real(RP) :: ptb_wix(kdim), ptb_wiy(kdim)
@@ -2333,7 +2333,7 @@ contains
     real(RP), intent(inout) :: vy1d(kdim)
     real(RP), intent(inout) :: vz1d(kdim)
 
-    integer :: k
+    integer  :: k
     real(RP) :: unit_east(3), unit_north(3)
 
     ! imported from NICAM/nhm/mkinit/prg_mkinit_ncep.f90 (original written by H.Miura)

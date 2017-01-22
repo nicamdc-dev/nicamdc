@@ -226,7 +226,7 @@ contains
     integer(DP) :: ts !! time_start
     integer(DP) :: te !! time_end
 
-    integer :: did, fid
+    integer  :: did, fid
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('FILEIO_in',2)
@@ -320,7 +320,7 @@ contains
     integer(DP) :: ts !! time_start
     integer(DP) :: te !! time_end
 
-    integer :: did, fid
+    integer  :: did, fid
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('FILEIO_in',2)
@@ -537,7 +537,7 @@ contains
 
     integer(DP) :: ts, te
 
-    integer :: did, fid
+    integer  :: did, fid
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('FILEIO_out',2)
@@ -632,7 +632,7 @@ contains
 
     integer(DP) :: ts, te
 
-    integer :: did, fid
+    integer  :: did, fid
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('FILEIO_out',2)
@@ -689,8 +689,8 @@ contains
 
     character(len=H_LONG) :: fname
 
-    integer :: fid
-    integer :: n
+    integer  :: fid
+    integer  :: n
     !---------------------------------------------------------------------------
 
     !--- search/register file

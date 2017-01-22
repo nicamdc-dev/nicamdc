@@ -82,15 +82,15 @@ module mod_latlon
   real(RP), private, allocatable :: w2       (:)
   real(RP), private, allocatable :: w3       (:)
 
-  real(4),  private, allocatable :: checkmap   (:,:)
-  real(4),  private, allocatable :: checkmapsum(:,:)
+  real(SP),  private, allocatable :: checkmap   (:,:)
+  real(SP),  private, allocatable :: checkmapsum(:,:)
 
   logical,  private :: debug = .false.
   !-----------------------------------------------------------------------------
 contains
 
   !-----------------------------------------------------------------------------
-  !> setup lat/lon value of the ico-grid (without mod_gmtr)
+  !> Setup lat/lon value of the ico-grid (without mod_gmtr)
   subroutine LATLON_ico_setup
     use mod_adm, only: &
        ADM_KNONE,   &
@@ -114,7 +114,7 @@ contains
        GRD_x_pl
     implicit none
 
-    integer :: i, j, ij, k0, l, n
+    integer  :: i, j, ij, k0, l, n
     !---------------------------------------------------------------------------
 
     k0 = ADM_KNONE
@@ -195,13 +195,13 @@ contains
 
     character(len=H_LONG) :: fname
 
-    integer :: globalsum
-    integer :: sendbuf(1)
-    integer :: recvbuf(PRC_nprocs)
+    integer  :: globalsum
+    integer  :: sendbuf(1)
+    integer  :: recvbuf(PRC_nprocs)
 
-    integer :: fid, ierr
-    integer :: nstart, nend
-    integer :: n, l, rgnid, i, j
+    integer  :: fid, ierr
+    integer  :: nstart, nend
+    integer  :: n, l, rgnid, i, j
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -485,11 +485,11 @@ contains
     real(RP) :: eps_latlon = 1.E-15_RP ! marginal square near grid points (in radian)
     real(RP) :: eps_vertex = 1.E-15_RP ! marginal value for vartex
 
-    integer :: ij
-    integer :: ip1j, ijp1, ip1jp1
+    integer  :: ij
+    integer  :: ip1j, ijp1, ip1jp1
 
-    integer :: rgnid
-    integer :: ic, jc, k, l, t, i, j
+    integer  :: rgnid
+    integer  :: ic, jc, k, l, t, i, j
     !---------------------------------------------------------------------------
 
     k = ADM_KNONE
@@ -802,8 +802,8 @@ contains
     real(RP) :: SAMPLE   ( ADM_gall,   ADM_KNONE,ADM_lall,   4)
     real(RP) :: SAMPLE_pl( ADM_gall_pl,ADM_KNONE,ADM_lall_pl,4)
 
-    integer :: rgnid, prc
-    integer :: i, j, ij, k, l
+    integer  :: rgnid, prc
+    integer  :: i, j, ij, k, l
     !---------------------------------------------------------------------------
 
     k = ADM_KNONE
@@ -907,7 +907,7 @@ contains
     implicit none
 
     real(RP) :: dlat, dlon
-    integer :: i, j
+    integer  :: i, j
     !---------------------------------------------------------------------------
 
     dlat = ( latmax - latmin ) / real(jmax,kind=RP)
@@ -948,7 +948,7 @@ contains
 
     real(RP) :: dlon
 
-    integer :: n, i, j
+    integer  :: n, i, j
     !---------------------------------------------------------------------------
 
     !--- calculate machine eps.
@@ -1023,7 +1023,7 @@ contains
        ADM_gall_1d
     implicit none
 
-    integer :: i, j
+    integer  :: i, j
     !---------------------------------------------------------------------------
 
     suf = ADM_gall_1d * (j-1) + i
@@ -1081,13 +1081,13 @@ contains
 !
 !    real(RP) ::  grd(ADM_gall,ADM_kall,ADM_lall,ix:iz)
 !    real(RP) ::  grd_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,ix:iz)
-!    logical ::  def_grd(ADM_gall,kmin:kmax,ADM_lall)
+!    logical  ::  def_grd(ADM_gall,kmin:kmax,ADM_lall)
 !
-!    integer :: n0,n1,n2,n3,n4,n5,n6
+!    integer  :: n0,n1,n2,n3,n4,n5,n6
 !    real(RP) :: vec12(ix:iz),vec23(ix:iz),vec31(ix:iz)
 !    real(RP) :: v1,v2,v3,v12,v23,v31
 !
-!    integer :: k,m,l,n
+!    integer  :: k,m,l,n
 !
 !    grd(:,:,:,:)=CONST_UNDEF
 !    grd_pl(:,:,:,:)=CONST_UNDEF

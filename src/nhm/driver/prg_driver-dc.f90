@@ -189,11 +189,11 @@ program prg_driver
   !
   !++ parameters & variables
   !
-  integer :: comm_world
-  integer :: myrank
-  logical :: ismaster
+  integer  :: comm_world
+  integer  :: myrank
+  logical  :: ismaster
 
-  integer :: n
+  integer  :: n
   !=============================================================================
 
   !---< MPI start >---

@@ -67,7 +67,7 @@ module mod_vi
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine vi_setup
     implicit none
     !---------------------------------------------------------------------------
@@ -903,7 +903,7 @@ contains
     real(RP) :: ethtot0     (ADM_gall   ,ADM_kall,ADM_lall   ) ! total enthalpy ( h + v^{2}/2 + phi, previous )
     real(RP) :: ethtot0_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    integer :: l
+    integer  :: l
     !---------------------------------------------------------------------------
 
     !---< update grhog & grhoge >

@@ -39,7 +39,7 @@ module mod_oprt3d
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine OPRT3D_divdamp( &
        ddivdx,    ddivdx_pl,    &
        ddivdy,    ddivdy_pl,    &
@@ -120,11 +120,11 @@ contains
     real(RP) :: rhogw_vm    (ADM_gall,   ADM_kall) ! rho*w  / vertical metrics
     real(RP) :: rhogw_vm_pl (ADM_gall_pl,ADM_kall)
 
-    integer :: ij
-    integer :: ip1j, ijp1, ip1jp1
-    integer :: im1j, ijm1, im1jm1
+    integer  :: ij
+    integer  :: ip1j, ijp1, ip1jp1
+    integer  :: im1j, ijm1, im1jm1
 
-    integer :: i, j, k, l, n, v
+    integer  :: i, j, k, l, n, v
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('OPRT3D_divdamp',2)

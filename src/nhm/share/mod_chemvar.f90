@@ -44,7 +44,7 @@ module mod_chemvar
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine CHEMVAR_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -53,8 +53,8 @@ contains
     namelist /CHEMVARPARAM/ &
        CHEM_TRC_vmax
 
-    integer :: nq
-    integer :: ierr
+    integer  :: nq
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters

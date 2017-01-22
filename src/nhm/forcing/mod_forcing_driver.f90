@@ -56,7 +56,7 @@ module mod_forcing_driver
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine forcing_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -72,7 +72,7 @@ contains
        NEGATIVE_FIXER,       &
        UPDATE_TOT_DENS
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -210,7 +210,7 @@ contains
 
     character(len=H_SHORT) :: varname
 
-    integer :: l, nq, k0
+    integer  :: l, nq, k0
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('__Forcing',1)
@@ -449,7 +449,7 @@ contains
 
     real(RP), save :: time = 0.0_RP ! for tracer advection test [add; original by H.Miura] 20130612 R.Yoshida
 
-    integer :: n, k ,l, k0
+    integer  :: n, k ,l, k0
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('__Forcing',1)

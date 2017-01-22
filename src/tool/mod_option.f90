@@ -47,12 +47,11 @@ contains
     character(len=2)   :: snf
 
 #ifdef _NOF2003
-  integer :: IARGC
+    integer  :: IARGC
 #else
-  integer :: command_argument_count
+    integer  :: command_argument_count
 #endif
-
-    integer :: n, narg, ls, eq
+    integer  :: n, narg, ls, eq
     !---------------------------------------------------------------------------
 
 #ifdef _NOF2003

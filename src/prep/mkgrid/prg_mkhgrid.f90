@@ -55,9 +55,9 @@ program mkhgrid
   !
   !++ parameters & variables
   !
-  integer :: comm_world
-  integer :: myrank
-  logical :: ismaster
+  integer  :: comm_world
+  integer  :: myrank
+  logical  :: ismaster
 
   !=============================================================================
 

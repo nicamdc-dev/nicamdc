@@ -11,7 +11,7 @@
 module mod_const
   !-----------------------------------------------------------------------------
   !
-  !++ used modules
+  !++ Used modules
   !
   use mod_precision
   use mod_stdio
@@ -107,7 +107,7 @@ module mod_const
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine CONST_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -138,7 +138,7 @@ contains
        latent_heat_sub,       &
        thermodyn_type
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- initialization of controled parameters

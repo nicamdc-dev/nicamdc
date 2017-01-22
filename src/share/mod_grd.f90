@@ -208,7 +208,7 @@ module mod_grd
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine GRD_setup
     use mod_process, only: &
        PRC_IsMaster, &
@@ -723,7 +723,7 @@ contains
     real(DP), allocatable :: gz (:)
     real(DP), allocatable :: gzh(:)
 
-    integer :: fid, ierr
+    integer  :: fid, ierr
     !---------------------------------------------------------------------------
 
     if( IO_L ) write(IO_FID_LOG,*) '*** Read vertical grid file: ', trim(fname)
@@ -770,7 +770,7 @@ contains
 
     character(len=*), intent(in) :: fname
 
-    integer :: fid, ierr
+    integer  :: fid, ierr
     !---------------------------------------------------------------------------
 
     if( IO_L ) write(IO_FID_LOG,*) '*** Write vertical grid file: ', trim(fname)
@@ -1052,7 +1052,7 @@ contains
        VECTR_xyz2latlon
     implicit none
 
-    integer :: g, k0, l
+    integer  :: g, k0, l
     !---------------------------------------------------------------------------
 
     k0 = ADM_KNONE
@@ -1113,11 +1113,11 @@ contains
        ADM_gmax_pl
     implicit none
 
-    integer :: ij
-    integer :: im1j, ijm1
+    integer  :: ij
+    integer  :: im1j, ijm1
 
-    integer :: nstart,nend
-    integer :: n, l, v, k0
+    integer  :: nstart,nend
+    integer  :: n, l, v, k0
     !---------------------------------------------------------------------------
 
     k0 = ADM_KNONE
@@ -1184,7 +1184,7 @@ contains
        ADM_gall_1d
     implicit none
 
-    integer :: i, j
+    integer  :: i, j
     !---------------------------------------------------------------------------
 
     suf = ADM_gall_1d * (j-1) + i

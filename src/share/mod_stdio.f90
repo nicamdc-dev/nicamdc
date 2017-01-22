@@ -3,7 +3,6 @@
 !!
 !! @par Description
 !!          Standard, common I/O module
-!!          Imported from SCALE library
 !!
 !! @author Team SCALE
 !!
@@ -52,6 +51,7 @@ module mod_stdio
   logical,               public            :: IO_LOG_SUPPRESS     = .false. !< suppress all of log output?
   logical,               public            :: IO_LOG_ALLNODE      = .true.  !< output log for each node?
   logical,               public            :: IO_LOG_NML_SUPPRESS = .false. !< suppress all of log output?
+  logical,               public            :: IO_AGGREGATE        = .false. !< do parallel I/O through PnetCDF
 
   !-----------------------------------------------------------------------------
   !
@@ -67,7 +67,7 @@ module mod_stdio
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine IO_setup( &
        MODELNAME, &
        fname_in   )
@@ -79,13 +79,14 @@ contains
        IO_LOG_BASENAME,     &
        IO_LOG_SUPPRESS,     &
        IO_LOG_ALLNODE,      &
-       IO_LOG_NML_SUPPRESS
+       IO_LOG_NML_SUPPRESS, &
+       IO_AGGREGATE
 
     character(len=*), intent(in) :: MODELNAME !< name of the model
     character(len=*), intent(in), optional :: fname_in !< name of config file for each process
 
     character(len=H_LONG) :: fname
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     if ( present(fname_in) ) then
@@ -106,7 +107,7 @@ contains
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=PARAM_IO,iostat=ierr)
     if ( ierr > 0 ) then !--- fatal error
-       write(*,*) ' xxx Not appropriate names in namelist PARAM_IO . Check!'
+       write(*,*) 'xxx Not appropriate names in namelist PARAM_IO . Check!'
        stop 1
     endif
 
@@ -124,7 +125,7 @@ contains
     logical, intent(in) :: is_master !< master process?
 
     character(len=H_LONG) :: fname
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     if ( .NOT. IO_LOG_SUPPRESS ) then
@@ -159,19 +160,19 @@ contains
           endif
        endif
 
-       if( IO_L ) write(IO_FID_LOG,*) ''
-       if( IO_L ) write(IO_FID_LOG,*) '########################################################################'
-       if( IO_L ) write(IO_FID_LOG,*) ''
-       if( IO_L ) write(IO_FID_LOG,*) ' NICAM-DC (dynamical core package of NICAM)'
-       if( IO_L ) write(IO_FID_LOG,*) ''
-       if( IO_L ) write(IO_FID_LOG,*) '########################################################################'
-       if( IO_L ) write(IO_FID_LOG,*) ''
-       if( IO_L ) write(IO_FID_LOG,*) '++++++ Module[STDIO] / Categ[IO] / Origin[SCALElib]'
-       if( IO_L ) write(IO_FID_LOG,*) ''
-       if( IO_L ) write(IO_FID_LOG,*) '*** Open config file, FID = ', IO_FID_CONF
-       if( IO_L ) write(IO_FID_LOG,*) '*** Open log    file, FID = ', IO_FID_LOG
-       if( IO_L ) write(IO_FID_LOG,*) '*** basename of log file  = ', trim(IO_LOG_BASENAME)
-       if( IO_L ) write(IO_FID_LOG,*) '*** detailed log output   = ', IO_NML
+       write(IO_FID_LOG,*) ''
+       write(IO_FID_LOG,*) '########################################################################'
+       write(IO_FID_LOG,*) ''
+       write(IO_FID_LOG,*) ' NICAM-DC (dynamical core package of NICAM)'
+       write(IO_FID_LOG,*) ''
+       write(IO_FID_LOG,*) '########################################################################'
+       write(IO_FID_LOG,*) ''
+       write(IO_FID_LOG,*) '++++++ Module[STDIO] / Categ[IO] / Origin[SCALElib]'
+       write(IO_FID_LOG,*) ''
+       write(IO_FID_LOG,*) '*** Open config file, FID = ', IO_FID_CONF
+       write(IO_FID_LOG,*) '*** Open log    file, FID = ', IO_FID_LOG
+       write(IO_FID_LOG,*) '*** basename of log file  = ', trim(IO_LOG_BASENAME)
+       write(IO_FID_LOG,*) '*** detailed log output   = ', IO_NML
 
     else
        if( is_master ) write(*,*) '*** Log report is suppressed.'
@@ -186,8 +187,8 @@ contains
   function IO_get_available_fid() result(fid)
     implicit none
 
-    integer :: fid      !< file ID
-    logical :: i_opened !< file ID is already used or not?
+    integer  :: fid      !< file ID
+    logical  :: i_opened !< file ID is already used or not?
     !---------------------------------------------------------------------------
 
     do fid = IO_MINFID, IO_MAXFID
@@ -259,7 +260,7 @@ contains
     logical,          intent(in) :: is_master !< master process?
     integer                      :: fid       !< file ID
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     fid = IO_get_available_fid()

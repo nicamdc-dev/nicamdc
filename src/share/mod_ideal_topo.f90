@@ -63,7 +63,7 @@ contains
     namelist / IDEALTOPOPARAM / &
        topo_type
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -143,8 +143,8 @@ contains
     real(RP) :: sinPHIm, cosPHIm
     real(RP) :: distance, mask
 
-    integer :: g, l, K0
-    integer :: ierr
+    integer  :: g, l, K0
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -229,8 +229,8 @@ contains
     real(RP) :: sinPHIc, cosPHIc
     real(RP) :: distance
 
-    integer :: g, l, K0
-    integer :: ierr
+    integer  :: g, l, K0
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -296,7 +296,7 @@ contains
     real(RP) :: PHI, ETAv, u0cos32ETAv
     real(RP) :: f1, f2
 
-    integer :: g, l, K0
+    integer  :: g, l, K0
     !---------------------------------------------------------------------------
 
     K0 = ADM_KNONE

@@ -47,7 +47,7 @@ module mod_af_dcmip
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine af_dcmip_init
     use mod_process, only: &
        PRC_MPIstop
@@ -58,14 +58,14 @@ contains
        AF_heldsuarez_init
     implicit none
 
-    logical :: SET_RJ2012          = .false.
-    logical :: SET_DCMIP2016_11    = .false.
-    logical :: SET_DCMIP2016_12    = .false.
-    logical :: SET_DCMIP2016_13    = .false.
-    logical :: SET_DCMIP2016_DRY   = .false.
-    logical :: SET_DCMIP2016_LSC   = .false. ! large scale condensation
-    logical :: SET_DCMIP2016_NOSST = .false.
-    logical :: SET_DCMIP2016_21    = .false.
+    logical  :: SET_RJ2012          = .false.
+    logical  :: SET_DCMIP2016_11    = .false.
+    logical  :: SET_DCMIP2016_12    = .false.
+    logical  :: SET_DCMIP2016_13    = .false.
+    logical  :: SET_DCMIP2016_DRY   = .false.
+    logical  :: SET_DCMIP2016_LSC   = .false. ! large scale condensation
+    logical  :: SET_DCMIP2016_NOSST = .false.
+    logical  :: SET_DCMIP2016_21    = .false.
 
     namelist /FORCING_DCMIP_PARAM/ &
        SET_RJ2012,          &
@@ -84,7 +84,7 @@ contains
        USE_ToyChemistry,    &
        USE_HeldSuarez
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -327,19 +327,20 @@ contains
     real(RP) :: cv   (vlayer)
 
     ! for simple physics
-    real(RP) :: t    (ijdim,vlayer)   ! Temperature at full-model level (K)
-    real(RP) :: qvv  (ijdim,vlayer)   ! Specific Humidity at full-model level (kg/kg)
-    real(RP) :: u    (ijdim,vlayer)   ! Zonal wind at full-model level (m/s)
-    real(RP) :: v    (ijdim,vlayer)   ! Meridional wind at full-model level (m/s)
-    real(RP) :: pmid (ijdim,vlayer)   ! Pressure is full-model level (Pa)
-    real(RP) :: pint (ijdim,vlayer+1) ! Pressure at model interfaces (Pa)
-    real(RP) :: pdel (ijdim,vlayer)   ! Layer thickness (Pa)
-    real(RP) :: rpdel(ijdim,vlayer)   ! Reciprocal of layer thickness (1/Pa)
-    real(RP) :: ps   (ijdim)          ! surface pressure output [dummy]
-    real(RP) :: precip2 (ijdim)
+    real(DP) :: t      (ijdim,vlayer)   ! Temperature at full-model level (K)
+    real(DP) :: qvv    (ijdim,vlayer)   ! Specific Humidity at full-model level (kg/kg)
+    real(DP) :: u      (ijdim,vlayer)   ! Zonal wind at full-model level (m/s)
+    real(DP) :: v      (ijdim,vlayer)   ! Meridional wind at full-model level (m/s)
+    real(DP) :: pmid   (ijdim,vlayer)   ! Pressure is full-model level (Pa)
+    real(DP) :: pint   (ijdim,vlayer+1) ! Pressure at model interfaces (Pa)
+    real(DP) :: pdel   (ijdim,vlayer)   ! Layer thickness (Pa)
+    real(DP) :: rpdel  (ijdim,vlayer)   ! Reciprocal of layer thickness (1/Pa)
+    real(DP) :: ps     (ijdim)          ! surface pressure output [dummy]
+    real(DP) :: precip2(ijdim)
     integer  :: test
 
     ! for toy-chemistory
+    real(DP) :: lat_DP(ijdim)
     real(DP) :: lat_deg, lon_deg
     real(DP) :: cl, cl2
     real(DP) :: cl_f, cl2_f
@@ -361,7 +362,7 @@ contains
     fq (:,:,:) = 0.0_RP
 
     precip (:) = 0.0_RP
-    precip2(:) = 0.0_RP
+    precip2(:) = 0.0_DP
 
     if ( USE_Kessler ) then
        do ij = 1, ijdim
@@ -415,6 +416,8 @@ contains
           test = 0
        endif
 
+       lat_DP(:) = real(lat(:),kind=DP)
+
        do k = 1, vlayer
           kk = kmax - k + 1 ! reverse order
 
@@ -447,7 +450,7 @@ contains
        call simple_physics( ijdim,             & ! [IN]
                             vlayer,            & ! [IN]
                             dt,                & ! [IN]
-                            lat   (:),         & ! [IN]
+                            lat_DP(:),         & ! [IN]
                             t     (:,:),       & ! [INOUT]
                             qvv   (:,:),       & ! [INOUT]
                             u     (:,:),       & ! [INOUT]

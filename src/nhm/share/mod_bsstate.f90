@@ -58,7 +58,7 @@ module mod_bsstate
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine bsstate_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -232,7 +232,7 @@ contains
     real(DP) :: tem_ref_DP(ADM_kall)
     real(DP) :: qv_ref_DP (ADM_kall)
 
-    integer :: fid
+    integer  :: fid
     !---------------------------------------------------------------------------
 
     pre_ref_DP(:) = real(pre_ref(:),kind=DP)
@@ -370,7 +370,7 @@ contains
     real(RP) :: qv_bs   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: qv_bs_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    integer :: k, l
+    integer  :: k, l
     !---------------------------------------------------------------------------
 
     if ( ref_type == 'NOBASE' ) return

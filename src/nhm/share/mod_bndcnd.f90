@@ -67,7 +67,7 @@ module mod_bndcnd
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine BNDCND_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -79,7 +79,7 @@ contains
        BND_TYPE_M_TOP,    &
        BND_TYPE_M_BOTTOM
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- set default

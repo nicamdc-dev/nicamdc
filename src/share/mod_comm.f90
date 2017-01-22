@@ -165,7 +165,7 @@ contains
        debug,              &
        testonly
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -240,13 +240,13 @@ contains
        I_S
     implicit none
 
-    integer :: ginnar
+    integer  :: ginnar
 
-    integer :: prc, prc_rmt
-    integer :: rgnid, rgnid_rmt
-    integer :: i, j, i_rmt, j_rmt
+    integer  :: prc, prc_rmt
+    integer  :: rgnid, rgnid_rmt
+    integer  :: i, j, i_rmt, j_rmt
 
-    integer :: n, l, cnt
+    integer  :: n, l, cnt
     !---------------------------------------------------------------------------
 
     ginnar = ADM_gmax - ADM_gmin + 1
@@ -628,8 +628,8 @@ contains
        I_l
     implicit none
 
-    integer :: sendbuf1(1)
-    integer :: recvbuf1(1)
+    integer  :: sendbuf1(1)
+    integer  :: recvbuf1(1)
 
     integer, allocatable :: sendbuf_info(:)
     integer, allocatable :: recvbuf_info(:)
@@ -637,17 +637,17 @@ contains
     integer, allocatable :: recvbuf_list(:,:,:)
     integer, allocatable :: REQ_list_r2r(:)
 
-    integer :: Recv_nglobal_r2r
-    integer :: Send_size_nglobal
+    integer  :: Recv_nglobal_r2r
+    integer  :: Send_size_nglobal
 
-    integer :: cnt, irank, ipos
-    integer :: totalsize, rank, tag
+    integer  :: cnt, irank, ipos
+    integer  :: totalsize, rank, tag
 
-    integer :: i_from, j_from, r_from, g_from, l_from, p_from
-    integer :: i_to, j_to, r_to, g_to, l_to, p_to
+    integer  :: i_from, j_from, r_from, g_from, l_from, p_from
+    integer  :: i_to, j_to, r_to, g_to, l_to, p_to
 
-    integer :: ierr
-    integer :: n, p
+    integer  :: ierr
+    integer  :: n, p
     !---------------------------------------------------------------------------
 
     allocate( Copy_info_r2r(info_vindex) )
@@ -954,18 +954,18 @@ contains
        I_SPL
     implicit none
 
-    integer :: prc, prc_rmt
-    integer :: rgnid, rgnid_rmt
-    integer :: check_vert_num
-    integer :: pl_to
+    integer  :: prc, prc_rmt
+    integer  :: rgnid, rgnid_rmt
+    integer  :: check_vert_num
+    integer  :: pl_to
 
-    integer :: irank, ipos
+    integer  :: irank, ipos
 
     integer, parameter :: Send_size_nglobal_pl = 10
 
-    integer :: l, l_pl, n, v
-    integer :: i_from, j_from, r_from, g_from, l_from, p_from
-    integer :: i_to, j_to, r_to, g_to, l_to, p_to
+    integer  :: l, l_pl, n, v
+    integer  :: i_from, j_from, r_from, g_from, l_from, p_from
+    integer  :: i_to, j_to, r_to, g_to, l_to, p_to
     !---------------------------------------------------------------------------
 
     allocate( Copy_info_p2r(info_vindex) )
@@ -1401,12 +1401,12 @@ contains
        I_S
     implicit none
 
-    integer :: rgnid
-    integer :: i, j, i_rmt, j_rmt
+    integer  :: rgnid
+    integer  :: i, j, i_rmt, j_rmt
 
-    integer :: l, ipos
-    integer :: i_from, j_from, r_from, g_from, l_from, p_from
-    integer :: i_to, j_to, r_to, g_to, l_to, p_to
+    integer  :: l, ipos
+    integer  :: i_from, j_from, r_from, g_from, l_from, p_from
+    integer  :: i_to, j_to, r_to, g_to, l_to, p_to
     !---------------------------------------------------------------------------
 
     allocate( Singular_info(info_vindex) )
@@ -1521,13 +1521,13 @@ contains
     real(RP), intent(inout) :: var   (:,:,:,:)
     real(RP), intent(inout) :: var_pl(:,:,:,:)
 
-    integer :: shp(4), kmax, vmax
-    integer :: totalsize, rank, tag
-    integer :: irank, ipos, imax
-    integer :: ij_from, l_from, ij_to, l_to
+    integer  :: shp(4), kmax, vmax
+    integer  :: totalsize, rank, tag
+    integer  :: irank, ipos, imax
+    integer  :: ij_from, l_from, ij_to, l_to
 
-    integer :: k, v, ikv
-    integer :: ierr
+    integer  :: k, v, ikv
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     if ( COMM_apply_barrier ) then
@@ -1924,13 +1924,13 @@ contains
     real(RP) :: sendbuf_h2p(kmax*vmax,ADM_rgn_nmax_pl)
     real(RP) :: recvbuf_h2p(kmax*vmax,ADM_rgn_nmax_pl)
 
-    integer :: totalsize, rank, tag
-    integer :: irank, ipos
-    integer :: ij_from, l_from, ij_to, l_to
-    integer :: r_from, r_to
+    integer  :: totalsize, rank, tag
+    integer  :: irank, ipos
+    integer  :: ij_from, l_from, ij_to, l_to
+    integer  :: r_from, r_to
 
-    integer :: k, v, kk
-    integer :: ierr
+    integer  :: k, v, kk
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     if ( COMM_apply_barrier ) then
@@ -2113,8 +2113,8 @@ contains
        ADM_gall_1d
     implicit none
 
-    integer :: suffix
-    integer :: i, j
+    integer  :: suffix
+    integer  :: i, j
     !---------------------------------------------------------------------------
 
     suffix = ADM_gall_1d * (j-1) + i

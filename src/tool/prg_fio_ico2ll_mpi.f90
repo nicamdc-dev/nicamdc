@@ -24,8 +24,9 @@ program fio_ico2ll
      PRC_nprocs,           &
      PRC_mpi_alive
   use mod_const, only: &
-     CONST_UNDEF, &
-     CONST_UNDEF4
+     CONST_UNDEF,  &
+     CONST_UNDEF4, &
+     CONST_UNDEF8
   use mod_calendar, only: &
      CALENDAR_ss2yh
   use mod_fio, only: &
@@ -122,16 +123,16 @@ program fio_ico2ll
   logical               :: allvar = .true.
 
   ! ll grid coordinate
-  integer              :: imax, jmax
-  real(8), allocatable :: lon(:), lat(:)
-  real(8), allocatable :: lon_tmp(:) ! [add] 13-04-18
+  integer               :: imax, jmax
+  REAL(DP), allocatable :: lon(:), lat(:)
+  REAL(DP), allocatable :: lon_tmp(:) ! [add] 13-04-18
 
   ! ico2ll weight mapping
-  integer              :: num_llgrid
-  integer, allocatable :: nmax_llgrid(:,:)
-  integer, allocatable :: lon_idx(:,:,:), lat_idx(:,:,:)
-  integer, allocatable :: n1(:,:,:), n2(:,:,:), n3(:,:,:)
-  real(8), allocatable :: w1(:,:,:), w2(:,:,:), w3(:,:,:)
+  integer               :: num_llgrid
+  integer,  allocatable :: nmax_llgrid(:,:)
+  integer,  allocatable :: lon_idx(:,:,:), lat_idx(:,:,:)
+  integer,  allocatable :: n1(:,:,:), n2(:,:,:), n3(:,:,:)
+  REAL(DP), allocatable :: w1(:,:,:), w2(:,:,:), w3(:,:,:)
 
   ! ico data information
   integer, allocatable :: ifid(:)
@@ -140,8 +141,8 @@ program fio_ico2ll
   type(datainfo)   dinfo
 
   ! topography data information
-  integer, allocatable :: ifid_topo(:)
-  real(8), allocatable :: topo(:,:,:)
+  integer,  allocatable :: ifid_topo(:)
+  REAL(DP), allocatable :: topo(:,:,:)
 
   integer                             :: num_of_data
   integer                             :: nvar
@@ -158,8 +159,8 @@ program fio_ico2ll
   integer(8),             allocatable :: var_time_str(:)
   integer(8),             allocatable :: var_dt(:)
   logical,                allocatable :: var_xi2z(:)
-  real(8),                allocatable :: var_ztop(:)
-  real(8),                allocatable :: var_zgrid(:,:)
+  REAL(DP),               allocatable :: var_ztop(:)
+  REAL(DP),               allocatable :: var_zgrid(:,:)
   ! header
   character(len=16),      allocatable :: var_gthead(:,:)
   ! NetCDF handler
@@ -168,20 +169,20 @@ program fio_ico2ll
   character(len=4)                    :: date_str_tmp(6) ! [add] 13-04-18
 
   ! ico data
-  integer              :: GALL
-  integer              :: PALL_global
-  integer              :: LALL_global
-  integer              :: LALL_local
+  integer               :: GALL
+  integer               :: PALL_global
+  integer               :: LALL_global
+  integer               :: LALL_local
 
-  real(4), allocatable :: data4allrgn(:)
-  real(8), allocatable :: data8allrgn(:)
-  real(4), allocatable :: icodata4   (:,:,:)
-  real(4), allocatable :: icodata4_z (:,:)
+  REAL(SP), allocatable :: data4allrgn(:)
+  REAL(DP), allocatable :: data8allrgn(:)
+  REAL(SP), allocatable :: icodata4   (:,:,:)
+  REAL(SP), allocatable :: icodata4_z (:,:)
 
   ! ll data
-  real(4), allocatable :: lldata(:,:,:)
-  real(4), allocatable :: temp  (:,:)
-  real(4), allocatable :: lldata_total(:,:,:)
+  REAL(SP), allocatable :: lldata(:,:,:)
+  REAL(SP), allocatable :: temp  (:,:)
+  REAL(SP), allocatable :: lldata_total(:,:,:)
 
   ! for MPI
   integer          :: prc_nall, prc_nlocal
@@ -196,16 +197,16 @@ program fio_ico2ll
   integer(8)            :: recsize ! [mod] 12-04-19 H.Yashiro
   integer               :: kmax, num_of_step, step, date_str(6)
 
-  logical :: addvar
-  logical :: exist_topo
-  integer :: ntemp
-  real(8) :: wtemp
-  integer :: fid, did, ofid, irec, ierr
-  integer :: v, t, p, l, k, n, i, j, rgnid
-  real(8) :: pi
+  logical  :: addvar
+  logical  :: exist_topo
+  integer  :: ntemp
+  REAL(DP) :: wtemp
+  integer  :: fid, did, ofid, irec, ierr
+  integer  :: v, t, p, l, k, n, i, j, rgnid
+  REAL(RP) :: pi
   !=============================================================================
 
-  pi = 4.D0 * atan( 1.D0 ) ! [add] 13-04-18
+  pi = 4.0_RP * atan( 1.0_RP ) ! [add] 13-04-18
 
   !--- read option and preprocess
   call readoption !! set fmax, infile
@@ -537,14 +538,14 @@ program fio_ico2ll
         var_time_str (nvar) = dinfo%time_start
         var_dt       (nvar) = dinfo%time_end - dinfo%time_start
         var_xi2z     (nvar) = .false.
-        var_ztop     (nvar) = CONST_UNDEF
-        var_zgrid  (:,nvar) = CONST_UNDEF
+        var_ztop     (nvar) = CONST_UNDEF8
+        var_zgrid  (:,nvar) = CONST_UNDEF8
 
         if ( prc_myrank == 0 ) then ! ##### only for master process
 
         if ( dinfo%layername == 'LAYERNM' ) then ! generate dummy
            do k = 1, dinfo%num_of_layer
-              var_zgrid(k,nvar) = real(k,kind=8)
+              var_zgrid(k,nvar) = real(k,kind=DP)
            enddo
         else ! read from file
            layerfile = trim(layerfile_dir)//'/'//trim(dinfo%layername)//'.txt'
@@ -564,7 +565,7 @@ program fio_ico2ll
               if ( dinfo%layername(1:5) == 'ZSALL' ) then ! check Xi2Z
                  if( IO_L ) write(IO_FID_LOG,*) '*** Try to convert Xi -> Z : ', dinfo%varname
                  var_xi2z(nvar) = .true.
-                 var_ztop(nvar) = 0.5D0 * ( var_zgrid(kmax-1,nvar) + var_zgrid(kmax,nvar) )
+                 var_ztop(nvar) = 0.5_RP * ( var_zgrid(kmax-1,nvar) + var_zgrid(kmax,nvar) )
 
                  if ( kmax == dinfo%num_of_layer+2 ) then ! trim HALO
                     if( IO_L ) write(IO_FID_LOG,*) '*** trim HALO: ', trim(dinfo%layername)
@@ -677,7 +678,7 @@ program fio_ico2ll
               if ( dinfo%datatype == IO_REAL4 ) then
 
                  call fio_read_data(ifid_topo(pp),did,data4allrgn(:))
-                 data8allrgn(:) = real(data4allrgn(:),kind=8)
+                 data8allrgn(:) = real(data4allrgn(:),kind=DP)
 
               elseif( dinfo%datatype == IO_REAL8 ) then
 
@@ -903,7 +904,7 @@ program fio_ico2ll
            pp = p - pstr + 1
 
            data4allrgn(:)  = CONST_UNDEF4
-           data8allrgn(:)  = CONST_UNDEF
+           data8allrgn(:)  = CONST_UNDEF8
            icodata4(:,:,:) = CONST_UNDEF4
 
            call PROF_rapstart('+FILE I FIO')
@@ -924,7 +925,7 @@ program fio_ico2ll
 
               call fio_read_data(ifid(pp),did,data8allrgn(:))
 
-              data4allrgn(:) = real(data8allrgn(:),kind=4)
+              data4allrgn(:) = real(data8allrgn(:),kind=SP)
               where( data8allrgn(:) < CONST_UNDEF*0.1 )
                  data4allrgn(:) = CONST_UNDEF4
               endwhere
@@ -958,7 +959,7 @@ program fio_ico2ll
                                      var_zgrid (:,v),    & ! [IN]
                                      var_ztop  (v),      & ! [IN]
                                      topo      (:,l,pp), & ! [IN]
-                                     CONST_UNDEF4,        & ! [IN]
+                                     CONST_UNDEF4,       & ! [IN]
                                      icodata4  (:,:,l),  & ! [IN]
                                      icodata4_z(:,:)     ) ! [OUT]
 
@@ -1170,7 +1171,7 @@ contains
       OPT_fid
     implicit none
 
-    integer :: io
+    integer  :: io
     !---------------------------------------------------------------------------
 
     ! --- Set option
@@ -1220,29 +1221,29 @@ contains
     implicit none
 
     character(len=H_LONG), intent(in) :: outfile_dir
-    character(len=16),  intent(in) :: outfile_prefix
-    character(len=16),  intent(in) :: varname
-    integer,            intent(in) :: imax
-    integer,            intent(in) :: jmax
-    integer,            intent(in) :: kmax
-    real(8),            intent(in) :: lon(imax)
-    real(8),            intent(in) :: lat(jmax)
-    real(8),            intent(in) :: alt(kmax)
-    integer,            intent(in) :: nstep
-    integer(8),         intent(in) :: time_str
-    integer(8),         intent(in) :: dt
-    logical,            intent(in) :: lon_swap
-    logical,            intent(in) :: devide_template
+    character(len=16),     intent(in) :: outfile_prefix
+    character(len=16),     intent(in) :: varname
+    integer,               intent(in) :: imax
+    integer,               intent(in) :: jmax
+    integer,               intent(in) :: kmax
+    REAL(DP),              intent(in) :: lon(imax)
+    REAL(DP),              intent(in) :: lat(jmax)
+    REAL(DP),              intent(in) :: alt(kmax)
+    integer,               intent(in) :: nstep
+    integer(8),            intent(in) :: time_str
+    integer(8),            intent(in) :: dt
+    logical,               intent(in) :: lon_swap
+    logical,               intent(in) :: devide_template
 
-    real(8) :: pi
-    real(8) :: temp(imax)
+    REAL(RP) :: pi
+    REAL(DP) :: temp(imax)
 
     character(len=32)  :: outfile
     integer            :: fid
     character(len=20)  :: s1, s2
     integer            :: i, j, k
     !---------------------------------------------------------------------------
-    pi = 4.D0 * atan( 1.D0 )
+    pi = 4.0_RP * atan( 1.0_RP )
 
     outfile = trim(outfile_prefix)//trim(var_name(v))
 
@@ -1327,9 +1328,9 @@ contains
     integer,                intent(in)  :: imax
     integer,                intent(in)  :: jmax
     integer,                intent(in)  :: kmax
-    real(8),                intent(in)  :: lon(imax)
-    real(8),                intent(in)  :: lat(jmax)
-    real(8),                intent(in)  :: alt(kmax)
+    REAL(DP),               intent(in)  :: lon(imax)
+    REAL(DP),               intent(in)  :: lat(jmax)
+    REAL(DP),               intent(in)  :: alt(kmax)
     integer(8),             intent(in)  :: dt
     logical,                intent(in)  :: lon_swap
 
@@ -1343,12 +1344,13 @@ contains
     integer           :: ndttm(8)
     character(len=10) :: ndate, ntime, nzone
 
-    real(8) :: pi
-    real(8) :: temp(imax)
-    real(8) :: dx, lonp1(imax+1)
-    integer :: i
+    REAL(RP) :: pi
+    REAL(DP) :: temp(imax)
+    REAL(DP) :: dx, lonp1(imax+1)
+    integer  :: i
     !---------------------------------------------------------------------------
-    pi = 4.D0 * atan( 1.D0 )
+
+    pi = 4.0_RP * atan( 1.0_RP )
 
     hitem  = trim(varname)
     do i=1,16
@@ -1448,7 +1450,7 @@ contains
        else
           lonp1(1) = lon(1)  - dx/2
        endif
-       if ( abs(lonp1(1)) < 1.D-10 ) lonp1(1) = 0.D0
+       if ( abs(lonp1(1)) < 1.E-10_RP ) lonp1(1) = 0.0_RP
 
        do i = 2, imax+1
           lonp1(i) = lonp1(i-1) + dx
@@ -1464,7 +1466,7 @@ contains
        write(axhead(64),'(I16)'  ) imax+1
 
        write(fid) axhead
-       write(fid) real( lonp1(1:imax+1)/pi*180.D0, kind=4 )
+       write(fid) real( lonp1(1:imax+1)/pi*180.0_RP, kind=SP )
 
        close(fid)
     endif
@@ -1487,7 +1489,7 @@ contains
        write(axhead(64),'(I16)'  ) jmax
 
        write(fid) axhead
-       write(fid) real( lat(1:jmax)/pi*180.D0, kind=4 )
+       write(fid) real( lat(1:jmax)/pi*180.0_RP, kind=SP )
 
        close(fid)
     endif
@@ -1504,7 +1506,7 @@ contains
        write(axhead(29),'(A16)'  ) trim(layername)
        write(axhead(31),'(I16)'  ) kmax
        write(axhead(40),'(ES16.7)')     0.E0
-       write(axhead(41),'(ES16.7)') real(maxval(alt),kind=4)
+       write(axhead(41),'(ES16.7)') real(maxval(alt),kind=SP)
        write(axhead(42),'(ES16.7)')  1000.E0
        write(axhead(43),'(ES16.7)') 10000.E0
        if ( layername(1:5) == 'STDPL' ) then
@@ -1515,7 +1517,7 @@ contains
        write(axhead(64),'(I16)'  ) kmax
 
        write(fid) axhead
-       write(fid) real( alt(1:kmax), kind=4 )
+       write(fid) real( alt(1:kmax), kind=SP )
 
        close(fid)
     endif
@@ -1531,7 +1533,7 @@ contains
     integer(8)        :: datesec
     character(len=20) :: template
 
-    integer :: d(6)
+    integer  :: d(6)
 
     character(len=3) :: nmonth(12)
     data nmonth / 'JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC' /
@@ -1556,7 +1558,7 @@ contains
     integer(8)        :: datesec
     character(len=20) :: template
 
-    integer :: d(6)
+    integer  :: d(6)
     !---------------------------------------------------------------------------
 
     ! [Comment] H.Yashiro 20110903
@@ -1594,7 +1596,7 @@ contains
     integer(8)        :: datesec
     character(len=16) :: template
 
-    integer :: d(6), i
+    integer  :: d(6), i
     !---------------------------------------------------------------------------
 
     ! [Comment] H.Yashiro 20110903
@@ -1619,21 +1621,21 @@ contains
       var_Xi )
     implicit none
 
-    integer, intent(in)  :: ijdim
-    integer, intent(in)  :: kdim
-    real(8), intent(in)  :: Xi       (kdim)
-    real(8), intent(in)  :: Ztop
-    real(8), intent(in)  :: Zsfc     (ijdim)
-    real(4), intent(in)  :: UNDEF
+    integer,  intent(in)  :: ijdim
+    integer,  intent(in)  :: kdim
+    REAL(DP), intent(in)  :: Xi       (kdim)
+    REAL(DP), intent(in)  :: Ztop
+    REAL(DP), intent(in)  :: Zsfc     (ijdim)
+    REAL(SP), intent(in)  :: UNDEF
 
-    real(4), intent(in)  :: var_Z (ijdim,kdim)
-    real(4), intent(out) :: var_Xi(ijdim,kdim)
+    REAL(SP), intent(in)  :: var_Z (ijdim,kdim)
+    REAL(SP), intent(out) :: var_Xi(ijdim,kdim)
 
-    real(8) :: Z(ijdim,kdim)
-    integer :: xi2z_idx (2)
-    real(4) :: xi2z_coef(3)
+    REAL(DP) :: Z(ijdim,kdim)
+    integer  :: xi2z_idx (2)
+    REAL(SP) :: xi2z_coef(3)
 
-    integer :: ij, k, kk
+    integer  :: ij, k, kk
     !---------------------------------------------------------------------------
 
     do k  = 1, kdim
@@ -1738,131 +1740,131 @@ contains
     !---------------------------------------------------------------------------
 
     select case( trim(var_name) )
-    case ( 'U', 'u' )
+    case( 'U', 'u' )
        var_name_nc = 'U'
        var_desc_nc = 'Zonal wind'
        var_unit_nc = 'm/s'
-    case ( 'V', 'v' )
+    case( 'V', 'v' )
        var_name_nc = 'V'
        var_desc_nc = 'Meridional wind'
        var_unit_nc = 'm/s'
-    case ( 'W', 'w' )
+    case( 'W', 'w' )
        var_name_nc = 'W'
        var_desc_nc = 'Vertical velocity'
        var_unit_nc = 'm/s'
-    case ( 'PRS', 'prs' )
+    case( 'PRS', 'prs' )
        var_name_nc = 'P'
        var_desc_nc = 'Pressure'
        var_unit_nc = 'Pa'
-    case ( 'T', 't' )
+    case( 'T', 't' )
        var_name_nc = 'T'
        var_desc_nc = 'Temperature'
        var_unit_nc = 'K'
-    case ( 'PS', 'ps' )
+    case( 'PS', 'ps' )
        var_name_nc = 'PS'
        var_desc_nc = 'Surface pressure'
        var_unit_nc = 'Pa'
-    case ( 'U500', 'u500' )
+    case( 'U500', 'u500' )
        var_name_nc = 'U500'
        var_desc_nc = 'Zonal wind at 500 hPa'
        var_unit_nc = 'm/s'
-    case ( 'U850', 'u850' )
+    case( 'U850', 'u850' )
        var_name_nc = 'U850'
        var_desc_nc = 'Zonal wind at 850 hPa'
        var_unit_nc = 'm/s'
-    case ( 'V500', 'v500' )
+    case( 'V500', 'v500' )
        var_name_nc = 'V500'
        var_desc_nc = 'Meridional wind at 500 hPa'
        var_unit_nc = 'm/s'
-    case ( 'V850', 'v850' )
+    case( 'V850', 'v850' )
        var_name_nc = 'V850'
        var_desc_nc = 'Meridional wind at 850 hPa'
        var_unit_nc = 'm/s'
-    case ( 'W500', 'w500' )
+    case( 'W500', 'w500' )
        var_name_nc = 'W500'
        var_desc_nc = 'Vertical velocity at 500 hPa'
        var_unit_nc = 'm/s'
-    case ( 'W850', 'w850' )
+    case( 'W850', 'w850' )
        var_name_nc = 'W850'
        var_desc_nc = 'Vertical velocity at 850 hPa'
        var_unit_nc = 'm/s'
-    case ( 'T500', 't500' )
+    case( 'T500', 't500' )
        var_name_nc = 'T500'
        var_desc_nc = 'Temperature at 500 hPa'
        var_unit_nc = 'K'
-    case ( 'T850', 't850' )
+    case( 'T850', 't850' )
        var_name_nc = 'T850'
        var_desc_nc = 'Temperature at 850 hPa'
        var_unit_nc = 'K'
-    case ( 'QV', 'qv' )
+    case( 'QV', 'qv' )
        var_name_nc = 'Q'
        var_desc_nc = 'Specific humidity'
        var_unit_nc = 'kg/kg'
-    case ( 'QC', 'qc' )
+    case( 'QC', 'qc' )
        var_name_nc = 'Qc'
        var_desc_nc = 'Cloud water mixing ratio'
        var_unit_nc = 'kg/kg'
-    case ( 'QR', 'qr' )
+    case( 'QR', 'qr' )
        var_name_nc = 'Qr'
        var_desc_nc = 'Rain water mixing ratio'
        var_unit_nc = 'kg/kg'
-    case ( 'PASV1', 'pasv1' )
+    case( 'PASV1', 'pasv1' )
        var_name_nc = 'Q1'
        var_desc_nc = 'Singlet chlorine mixing ratio'
        var_unit_nc = 'kg/kg'
-    case ( 'PASV2', 'pasv2' )
+    case( 'PASV2', 'pasv2' )
        var_name_nc = 'Q2'
        var_desc_nc = 'Chlorine gas mixing ratio'
        var_unit_nc = 'kg/kg'
-    case ( 'PRCP', 'prcp' )
+    case( 'PRCP', 'prcp' )
        var_name_nc = 'PRECL'
        var_desc_nc = 'Large-scale precipitation rate'
        var_unit_nc = 'm/s'
-    case ( 'CL_COLUMN', 'cl_column' )
+    case( 'CL_COLUMN', 'cl_column' )
        var_name_nc = 'Q1c'
        var_desc_nc = 'Singlet chlorine mixing ratio (column)'
        var_unit_nc = 'kg/kg'
-    case ( 'CL2_COLUMN', 'cl2_column' )
+    case( 'CL2_COLUMN', 'cl2_column' )
        var_name_nc = 'Q2c'
        var_desc_nc = 'Chlorine gas mixing ratio (column)'
        var_unit_nc = 'kg/kg'
-    case ( 'CLY_COLUMN', 'cly_column' )
+    case( 'CLY_COLUMN', 'cly_column' )
        var_name_nc = 'Cly'
        var_desc_nc = 'Cl and Cl2 the weighted sum (column)'
        var_unit_nc = 'kg/kg'
-    case ( 'FORCING_VX', 'forcing_vx' )
+    case( 'FORCING_VX', 'forcing_vx' )
        var_name_nc = 'Fvx'
        var_desc_nc = 'Forcing term of horizontal velocity: vx'
        var_unit_nc = 'm/s-2'
-    case ( 'FORCING_VY', 'forcing_vy' )
+    case( 'FORCING_VY', 'forcing_vy' )
        var_name_nc = 'Fvy'
        var_desc_nc = 'Forcing term of horizontal velocity: vx'
        var_unit_nc = 'm/s-2'
-    case ( 'FORCING_VZ', 'forcing_vz' )
+    case( 'FORCING_VZ', 'forcing_vz' )
        var_name_nc = 'Fvz'
        var_desc_nc = 'Forcing term of horizontal velocity: vx'
        var_unit_nc = 'm/s-2'
-    case ( 'FORCING_E', 'forcing_e' )
+    case( 'FORCING_E', 'forcing_e' )
        var_name_nc = 'Fe'
        var_desc_nc = 'Forcing term of moist internal energy'
        var_unit_nc = 'J/kg/s'
-    case ( 'FORCING_QV', 'forcing_qv' )
+    case( 'FORCING_QV', 'forcing_qv' )
        var_name_nc = 'Fqv'
        var_desc_nc = 'Forcing term of specific humidity'
        var_unit_nc = 'kg/kg/s'
-    case ( 'FORCING_QC', 'forcing_qc' )
+    case( 'FORCING_QC', 'forcing_qc' )
        var_name_nc = 'Fqc'
        var_desc_nc = 'Forcing term of cloud water mixing ratio'
        var_unit_nc = 'mkg/kg/s'
-    case ( 'FORCING_QR', 'forcing_qr' )
+    case( 'FORCING_QR', 'forcing_qr' )
        var_name_nc = 'Fqr'
        var_desc_nc = 'Forcing term of cloud water mixing ratio'
        var_unit_nc = 'kg/kg/s'
-    case ( 'FORCING_CL', 'forcing_cl' )
+    case( 'FORCING_CL', 'forcing_cl' )
        var_name_nc = 'Fcl'
        var_desc_nc = 'Forcing term of Singlet chlorine mixing ratio'
        var_unit_nc = 'kg/kg/s'
-    case ( 'FORCING_CL2', 'forcing_cl2' )
+    case( 'FORCING_CL2', 'forcing_cl2' )
        var_name_nc = 'Fcl2'
        var_desc_nc = 'Forcing term of Chlorine gas mixing ratio'
        var_unit_nc = 'kg/kg/s'

@@ -58,7 +58,7 @@ program prg_mkmnginfo
        XTMS_MLCP_S,  &
        output_fname
 
-  integer :: ierr
+  integer  :: ierr
   !=============================================================================
 
   call MPI_Init(ierr)
@@ -112,15 +112,15 @@ contains
     integer,          intent(in) :: nmax_prc
     character(len=*), intent(in) :: fname
 
-    integer :: i,j,d
-    integer :: i_nb,j_nb,d_nb,edgid_nb
-    integer :: l,l_nb
-    integer :: k,m,p
-    integer :: rgnlen
-    integer :: tmp, tmp_4r, tmp_m
+    integer  :: i,j,d
+    integer  :: i_nb,j_nb,d_nb,edgid_nb
+    integer  :: l,l_nb
+    integer  :: k,m,p
+    integer  :: rgnlen
+    integer  :: tmp, tmp_4r, tmp_m
     integer, parameter :: nmax_dmd = 10
 
-    integer :: all_rgn
+    integer  :: all_rgn
 
     integer, allocatable :: rgn_tab(:,:,:)
     integer, allocatable :: mngrgn (:)
@@ -128,26 +128,26 @@ contains
 
     integer, parameter   :: fid = 20
 
-    integer :: num_of_rgn
+    integer  :: num_of_rgn
     namelist / rgn_info / num_of_rgn
 
-    integer :: rgnid
-    integer :: &
+    integer  :: rgnid
+    integer  :: &
          sw(I_RGNID:I_DIR),&
          nw(I_RGNID:I_DIR),&
          ne(I_RGNID:I_DIR),&
          se(I_RGNID:I_DIR)
     namelist / rgn_link_info / rgnid, sw, nw, ne, se
 
-    integer :: num_of_proc
+    integer  :: num_of_proc
     namelist /proc_info/ num_of_proc
 
-    integer :: peid
-    integer :: num_of_mng
-    integer :: mng_rgnid(nmax_mng)
+    integer  :: peid
+    integer  :: num_of_mng
+    integer  :: mng_rgnid(nmax_mng)
     namelist /rgn_mng_info/ peid, num_of_mng,mng_rgnid
 
-    integer :: dmd_data(I_SW:I_SE,nmax_dmd)
+    integer  :: dmd_data(I_SW:I_SE,nmax_dmd)
     !---------------------------------------------------------------------------
 
     dmd_data(I_SW:I_SE, 1)=(/ 6, 5, 2,10/)
@@ -353,14 +353,14 @@ contains
     integer, intent(in) :: nmax_prc
     character(len=*), intent(in) :: fname
 
-    integer :: i,j,d
-    integer :: i_nb,j_nb,d_nb,edgid_nb
-    integer :: l,l_nb
-    integer :: k,m,p
-    integer :: rgnlen
-    integer :: nmax_dmd=-1
+    integer  :: i,j,d
+    integer  :: i_nb,j_nb,d_nb,edgid_nb
+    integer  :: l,l_nb
+    integer  :: k,m,p
+    integer  :: rgnlen
+    integer  :: nmax_dmd=-1
 
-    integer :: all_rgn
+    integer  :: all_rgn
 
     integer, allocatable :: rgn_tab(:,:,:)
     integer, allocatable :: mngrgn(:)
@@ -368,23 +368,23 @@ contains
 
     integer, parameter :: fid=20
 
-    integer :: num_of_rgn
+    integer  :: num_of_rgn
     namelist / rgn_info / num_of_rgn
 
-    integer :: rgnid
-    integer :: &
+    integer  :: rgnid
+    integer  :: &
          sw(I_RGNID:I_DIR),&
          nw(I_RGNID:I_DIR),&
          ne(I_RGNID:I_DIR),&
          se(I_RGNID:I_DIR)
     namelist / rgn_link_info / rgnid, sw, nw, ne, se
 
-    integer :: num_of_proc
+    integer  :: num_of_proc
     namelist /proc_info/ num_of_proc
 
-    integer :: peid
-    integer :: num_of_mng
-    integer :: mng_rgnid(nmax_mng)
+    integer  :: peid
+    integer  :: num_of_mng
+    integer  :: mng_rgnid(nmax_mng)
     namelist /rgn_mng_info/ peid, num_of_mng,mng_rgnid
 
     integer,allocatable :: dmd_data(:,:)
@@ -616,15 +616,15 @@ contains
     integer, intent(in) :: nmax_prc
     character(len=*), intent(in) :: fname
 
-    integer :: i,j,d
-    integer :: i_nb,j_nb,d_nb,edgid_nb
-    integer :: l,l_nb
-    integer :: k,m,p
-    integer :: rgnlen
+    integer  :: i,j,d
+    integer  :: i_nb,j_nb,d_nb,edgid_nb
+    integer  :: l,l_nb
+    integer  :: k,m,p
+    integer  :: rgnlen
 
     integer,save :: nmax_dmd=-1
 
-    integer :: all_rgn
+    integer  :: all_rgn
 
     integer, allocatable :: rgn_tab(:,:,:)
     integer, allocatable :: mngrgn(:)
@@ -632,28 +632,28 @@ contains
 
     integer,parameter :: fid=20
 
-    integer :: num_of_rgn
+    integer  :: num_of_rgn
     namelist / rgn_info / num_of_rgn
 
-    integer :: rgnid
-    integer :: &
+    integer  :: rgnid
+    integer  :: &
          sw(I_RGNID:I_DIR),&
          nw(I_RGNID:I_DIR),&
          ne(I_RGNID:I_DIR),&
          se(I_RGNID:I_DIR)
     namelist / rgn_link_info / rgnid, sw, nw, ne, se
 
-    integer :: num_of_proc
+    integer  :: num_of_proc
     namelist /proc_info/ num_of_proc
 
-    integer :: peid
-    integer :: num_of_mng
-    integer :: mng_rgnid(nmax_mng)
+    integer  :: peid
+    integer  :: num_of_mng
+    integer  :: mng_rgnid(nmax_mng)
     namelist /rgn_mng_info/ peid, num_of_mng,mng_rgnid
 
     integer,allocatable :: dmd_data(:,:)
 
-    integer::s
+    integer  :: s
     !---------------------------------------------------------------------------
 
     nmax_dmd = XTMS_K * (1+XTMS_MLCP_S)
@@ -854,15 +854,15 @@ contains
     integer, intent(in) :: nmax_prc
     character(len=*), intent(in) :: fname
 
-    integer :: i,j,d
-    integer :: i_nb,j_nb,d_nb,edgid_nb
-    integer :: l,l_nb
-    integer :: k,m,p
-    integer :: rgnlen
+    integer  :: i,j,d
+    integer  :: i_nb,j_nb,d_nb,edgid_nb
+    integer  :: l,l_nb
+    integer  :: k,m,p
+    integer  :: rgnlen
 
     integer,save :: nmax_dmd=-1
 
-    integer :: all_rgn
+    integer  :: all_rgn
 
     integer, allocatable :: rgn_tab(:,:,:)
     integer, allocatable :: mngrgn(:)
@@ -870,23 +870,23 @@ contains
 
     integer,parameter :: fid=20
 
-    integer :: num_of_rgn
+    integer  :: num_of_rgn
     namelist / rgn_info / num_of_rgn
 
-    integer :: rgnid
-    integer :: &
+    integer  :: rgnid
+    integer  :: &
          sw(I_RGNID:I_DIR),&
          nw(I_RGNID:I_DIR),&
          ne(I_RGNID:I_DIR),&
          se(I_RGNID:I_DIR)
     namelist / rgn_link_info / rgnid, sw, nw, ne, se
 
-    integer :: num_of_proc
+    integer  :: num_of_proc
     namelist /proc_info/ num_of_proc
 
-    integer :: peid
-    integer :: num_of_mng
-    integer :: mng_rgnid(nmax_mng)
+    integer  :: peid
+    integer  :: num_of_mng
+    integer  :: mng_rgnid(nmax_mng)
     namelist /rgn_mng_info/ peid, num_of_mng,mng_rgnid
 
     integer,allocatable :: dmd_data(:,:)
@@ -1067,13 +1067,13 @@ contains
     integer, intent(in)          :: nmax_prc
     character(len=*), intent(in) :: fname
 
-    integer :: i,j,d
-    integer :: i_nb,j_nb,d_nb,edgid_nb
-    integer :: l,l_nb
-    integer :: k,m,p
-    integer :: rgnlen
+    integer  :: i,j,d
+    integer  :: i_nb,j_nb,d_nb,edgid_nb
+    integer  :: l,l_nb
+    integer  :: k,m,p
+    integer  :: rgnlen
     integer, parameter :: nmax_dmd=1
-    integer :: all_rgn
+    integer  :: all_rgn
 
     integer, allocatable :: rgn_tab(:,:,:)
     integer, allocatable :: mngrgn(:)
@@ -1081,26 +1081,26 @@ contains
 
     integer,parameter :: fid=20
 
-    integer :: num_of_rgn
+    integer  :: num_of_rgn
     namelist / rgn_info / num_of_rgn
 
-    integer :: rgnid
-    integer :: &
+    integer  :: rgnid
+    integer  :: &
          sw(I_RGNID:I_DIR),&
          nw(I_RGNID:I_DIR),&
          ne(I_RGNID:I_DIR),&
          se(I_RGNID:I_DIR)
     namelist / rgn_link_info / rgnid, sw, nw, ne, se
 
-    integer :: num_of_proc
+    integer  :: num_of_proc
     namelist /proc_info/ num_of_proc
 
-    integer :: peid
-    integer :: num_of_mng
-    integer :: mng_rgnid(nmax_mng)
+    integer  :: peid
+    integer  :: num_of_mng
+    integer  :: mng_rgnid(nmax_mng)
     namelist /rgn_mng_info/ peid, num_of_mng, mng_rgnid
 
-    integer :: dmd_data(I_SW:I_SE,nmax_dmd)
+    integer  :: dmd_data(I_SW:I_SE,nmax_dmd)
     !---------------------------------------------------------------------------
 
     dmd_data(I_SW:I_SE, 1)=(/1,1,1,1/)
@@ -1228,14 +1228,14 @@ contains
     integer, intent(in) :: nmax_prc
     character(len=*), intent(in) :: fname
 
-    integer :: i,j,d
-    integer :: i_nb,j_nb,d_nb,edgid_nb
-    integer :: l,l_nb
-    integer :: k,m,p
-    integer :: rgnlen
+    integer  :: i,j,d
+    integer  :: i_nb,j_nb,d_nb,edgid_nb
+    integer  :: l,l_nb
+    integer  :: k,m,p
+    integer  :: rgnlen
     integer, parameter :: nmax_dmd=10
 
-    integer :: all_rgn
+    integer  :: all_rgn
 
     integer, allocatable :: rgn_tab(:,:,:)
     integer, allocatable :: mngrgn(:)
@@ -1243,26 +1243,26 @@ contains
 
     integer, parameter :: fid=20
 
-    integer :: num_of_rgn
+    integer  :: num_of_rgn
     namelist / rgn_info / num_of_rgn
 
-    integer :: rgnid
-    integer :: &
+    integer  :: rgnid
+    integer  :: &
          sw(I_RGNID:I_DIR),&
          nw(I_RGNID:I_DIR),&
          ne(I_RGNID:I_DIR),&
          se(I_RGNID:I_DIR)
     namelist / rgn_link_info / rgnid, sw, nw, ne, se
 
-    integer :: num_of_proc
+    integer  :: num_of_proc
     namelist /proc_info/ num_of_proc
 
-    integer :: peid
-    integer :: num_of_mng
-    integer :: mng_rgnid(nmax_mng)
+    integer  :: peid
+    integer  :: num_of_mng
+    integer  :: mng_rgnid(nmax_mng)
     namelist /rgn_mng_info/ peid, num_of_mng,mng_rgnid
 
-    integer :: dmd_data(I_SW:I_SE,nmax_dmd)
+    integer  :: dmd_data(I_SW:I_SE,nmax_dmd)
     !---------------------------------------------------------------------------
 
     dmd_data(I_SW:I_SE, 1)=(/ 6, 5, 2,10/)

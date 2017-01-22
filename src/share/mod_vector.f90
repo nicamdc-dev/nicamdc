@@ -10,7 +10,7 @@
 module mod_vector
   !-----------------------------------------------------------------------------
   !
-  !++ used modules
+  !++ Used modules
   !
   use mod_precision
   use mod_stdio
@@ -282,7 +282,7 @@ contains
     real(RP) :: xp(3), ip
     real(RP) :: angle1, angle2
 
-    integer :: i, j
+    integer  :: i, j
     !---------------------------------------------------------------------
 
     do j = 2  , nvert-1

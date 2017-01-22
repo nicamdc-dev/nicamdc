@@ -83,7 +83,7 @@ module mod_prgvar
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine prgvar_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -112,7 +112,7 @@ contains
        output_io_mode,    &
        allow_missingq
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     TRC_vmax_input = TRC_vmax
@@ -202,7 +202,7 @@ contains
     real(RP), intent(out) :: rhogq    (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_vmax)
     real(RP), intent(out) :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
 
-    integer :: n, k, l, nq
+    integer  :: n, k, l, nq
     !---------------------------------------------------------------------------
 
     do l = 1, ADM_lall
@@ -332,7 +332,7 @@ contains
     real(RP), intent(out) :: q        (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_vmax)
     real(RP), intent(out) :: q_pl     (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
 
-    integer :: n, k, l, nq
+    integer  :: n, k, l, nq
     !---------------------------------------------------------------------------
 
     call cnvvar_prg2diag( PRG_var (:,:,:,:), PRG_var_pl (:,:,:,:), & ! [IN]
@@ -450,7 +450,7 @@ contains
     real(RP), intent(in)  :: rhogq    (ADM_gall   ,ADM_kall,ADM_lall   ,TRC_vmax)
     real(RP), intent(in)  :: rhogq_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_vmax)
 
-    integer :: n, k, l, nq
+    integer  :: n, k, l, nq
     !---------------------------------------------------------------------------
 
     do l = 1, ADM_lall
@@ -536,7 +536,7 @@ contains
     real(RP), intent(out) :: rhoge (ADM_gall_in,ADM_kall,ADM_lall)
     real(RP), intent(out) :: rhogq (ADM_gall_in,ADM_kall,ADM_lall,TRC_vmax)
 
-    integer :: i, j, n, k, l, nq, ij
+    integer  :: i, j, n, k, l, nq, ij
     !---------------------------------------------------------------------------
 
     do l = 1, ADM_lall
@@ -627,7 +627,7 @@ contains
     real(RP), intent(out) :: w     (ADM_gall_in,ADM_kall,ADM_lall)
     real(RP), intent(out) :: q     (ADM_gall_in,ADM_kall,ADM_lall,TRC_vmax)
 
-    integer :: i, j, n, k, l, nq, ij
+    integer  :: i, j, n, k, l, nq, ij
     !---------------------------------------------------------------------------
 
     call cnvvar_prg2diag( PRG_var (:,:,:,:), PRG_var_pl (:,:,:,:), & ! [IN]
@@ -715,7 +715,7 @@ contains
     real(RP), intent(in) :: rhoge (ADM_gall_in,ADM_kall,ADM_lall)
     real(RP), intent(in) :: rhogq (ADM_gall_in,ADM_kall,ADM_lall,TRC_vmax)
 
-    integer :: i, j, n, k, l, nq, ij
+    integer  :: i, j, n, k, l, nq, ij
     !---------------------------------------------------------------------------
 
     do l = 1, ADM_lall

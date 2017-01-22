@@ -11,7 +11,7 @@
 module mod_process
   !-----------------------------------------------------------------------------
   !
-  !++ used modules
+  !++ Used modules
   !
   use mpi
   use mod_precision
@@ -71,7 +71,7 @@ contains
 
     integer, intent(out) :: comm ! communicator
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     call MPI_Init(ierr)
@@ -95,7 +95,7 @@ contains
     integer, intent(out) :: myrank   ! myrank         in this communicator
     logical, intent(out) :: ismaster ! master process in this communicator?
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     PRC_LOCAL_COMM_WORLD = comm
@@ -120,7 +120,7 @@ contains
   subroutine PRC_MPIstop
     implicit none
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     ! flush 1kbyte
@@ -147,7 +147,7 @@ contains
   subroutine PRC_MPIfinish
     implicit none
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     ! Stop MPI
@@ -179,7 +179,7 @@ contains
   subroutine PRC_MPIbarrier
     implicit none
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     if ( PRC_mpi_alive ) then

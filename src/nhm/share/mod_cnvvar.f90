@@ -97,7 +97,7 @@ contains
     real(RP) :: rhog_h   (ADM_gall,   ADM_kall)
     real(RP) :: rhog_h_pl(ADM_gall_pl,ADM_kall)
 
-    integer :: g, k, l, iq
+    integer  :: g, k, l, iq
     !---------------------------------------------------------------------------
 
     do l = 1, ADM_lall
@@ -243,7 +243,7 @@ contains
     real(RP) :: rhog_h   (ADM_gall,   ADM_kall)
     real(RP) :: rhog_h_pl(ADM_gall_pl,ADM_kall)
 
-    integer :: g, k, l, iq
+    integer  :: g, k, l, iq
     !---------------------------------------------------------------------------
 
     call THRMDYN_rhoein( ADM_gall,                  & ! [IN]
@@ -397,7 +397,7 @@ contains
 
     integer  :: gall, kmin, kmax
 
-    integer :: g, k, l
+    integer  :: g, k, l
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('CNV_rhogkin',2)

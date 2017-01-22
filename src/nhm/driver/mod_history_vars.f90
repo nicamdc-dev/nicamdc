@@ -65,7 +65,7 @@ module mod_history_vars
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine history_vars_setup
     use mod_adm, only: &
        ADM_KNONE,   &
@@ -530,9 +530,9 @@ contains
     enddo
 
     if (out_duvw) then
-       u_old (:,:,:) = ( u_old (:,:,:) - u (:,:,:) ) / TIME_DTL * 86400.0_RP ! [m/s/day]
-       v_old (:,:,:) = ( v_old (:,:,:) - v (:,:,:) ) / TIME_DTL * 86400.0_RP ! [m/s/day]
-       wc_old(:,:,:) = ( wc_old(:,:,:) - wc(:,:,:) ) / TIME_DTL * 86400.0_RP ! [m/s/day]
+       u_old (:,:,:) = ( u_old (:,:,:) - u (:,:,:) ) / real(TIME_DTL,kind=RP) * 86400.0_RP ! [m/s/day]
+       v_old (:,:,:) = ( v_old (:,:,:) - v (:,:,:) ) / real(TIME_DTL,kind=RP) * 86400.0_RP ! [m/s/day]
+       wc_old(:,:,:) = ( wc_old(:,:,:) - wc(:,:,:) ) / real(TIME_DTL,kind=RP) * 86400.0_RP ! [m/s/day]
 
        do l = 1, ADM_lall
           call history_in( 'ml_du', u_old (:,:,l) )
@@ -546,7 +546,7 @@ contains
     endif
 
     if (out_dtem) then
-       tem_old(:,:,:) = ( tem_old(:,:,:) - tem(:,:,:) ) / TIME_DTL * 86400.0_RP ! [K/day]
+       tem_old(:,:,:) = ( tem_old(:,:,:) - tem(:,:,:) ) / real(TIME_DTL,kind=RP) * 86400.0_RP ! [K/day]
 
        do l = 1, ADM_lall
           call history_in( 'ml_dtem', tem_old(:,:,l) )
@@ -556,7 +556,7 @@ contains
     endif
 
     if (out_dq) then
-       qv_old(:,:,:) = ( qv_old(:,:,:) - q(:,:,:,I_QV) ) * 1.E3_RP / TIME_DTL * 86400.0_RP ! [g/kg/day]
+       qv_old(:,:,:) = ( qv_old(:,:,:) - q(:,:,:,I_QV) ) * 1.E+3_RP / real(TIME_DTL,kind=RP) * 86400.0_RP ! [g/kg/day]
 
        do l = 1, ADM_lall
           call history_in( 'ml_dq', qv_old(:,:,l) )
@@ -648,7 +648,7 @@ contains
                         pre(:,:,:), & ! [IN]
                         th (:,:,:)  ) ! [OUT]
 
-       thv(:,:,:) = th(:,:,:) * ( 1.D0 + 0.61D0 * q(:,:,:,I_QV) )
+       thv(:,:,:) = th(:,:,:) * ( 1.0_RP + 0.61_RP * q(:,:,:,I_QV) )
 
        do l = 1, ADM_lall
           call history_in( 'ml_th',  th (:,:,l) )
@@ -921,7 +921,7 @@ contains
     real(RP), intent(out) :: rho_srf(ijdim)
     real(RP), intent(out) :: pre_srf(ijdim)
 
-    integer :: ij
+    integer  :: ij
     !---------------------------------------------------------------------------
 
     !--- surface density ( extrapolation )
@@ -975,7 +975,7 @@ contains
     integer  :: ku(ijdim)
     real(RP) :: wght_l, wght_u
 
-    integer :: ij, k
+    integer  :: ij, k
     !---------------------------------------------------------------------------
 
     ! search z-level

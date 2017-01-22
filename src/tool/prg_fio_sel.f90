@@ -82,8 +82,8 @@ program fio_sel
   integer                :: GALL
   integer                :: KALL
   integer                :: LALL
-  real(4), allocatable   :: data4_1D(:)
-  real(8), allocatable   :: data8_1D(:)
+  real(SP), allocatable  :: data4_1D(:)
+  real(DP), allocatable  :: data8_1D(:)
 
   ! for MPI
   integer                :: pe_all
@@ -92,9 +92,9 @@ program fio_sel
   integer                :: fid_log
   character(len=6)       :: rankstr
 
-  logical :: addvar
-  integer :: p, v, vid
-  integer :: ifid, idid, ofid, odid, ierr
+  logical  :: addvar
+  integer  :: p, v, vid
+  integer  :: ifid, idid, ofid, odid, ierr
   !=====================================================================
 
   !--- read option and preprocess
@@ -275,7 +275,7 @@ contains
       OPT_fid
     implicit none
 
-    integer :: io
+    integer  :: io
     !---------------------------------------------------------------------------
 
     ! --- Set option

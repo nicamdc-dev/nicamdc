@@ -1145,14 +1145,14 @@ contains
     real(RP) :: q_ap6(ADM_gall), q_am6(ADM_gall)
     real(RP) :: q_ap, q_am
 
-    integer :: kall, iall
+    integer  :: kall, iall
 
-    integer :: ij
-    integer :: ip1j, ijp1, ip1jp1
-    integer :: im1j, ijm1, im1jm1
+    integer  :: ij
+    integer  :: ip1j, ijp1, ip1jp1
+    integer  :: im1j, ijm1, im1jm1
 
-    integer :: nstart1, nstart2, nstart3, nstart4, nend
-    integer :: n, k, l, v
+    integer  :: nstart1, nstart2, nstart3, nstart4, nend
+    integer  :: n, k, l, v
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____horizontal_adv_remap',2)
@@ -1446,7 +1446,7 @@ contains
     integer  :: gall, kmin, kmax
     real(RP) :: EPS, BIG
 
-    integer :: g, k, l
+    integer  :: g, k, l
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____vertical_adv_limiter',2)
@@ -1671,11 +1671,11 @@ contains
     integer  :: gmin, gmax, kall, iall
     real(RP) :: EPS, BIG
 
-    integer :: ij
-    integer :: ip1j, ijp1, ip1jp1, ip2jp1
-    integer :: im1j, ijm1
+    integer  :: ij
+    integer  :: ip1j, ijp1, ip1jp1, ip2jp1
+    integer  :: im1j, ijm1
 
-    integer :: i, j, k, l, n, v
+    integer  :: i, j, k, l, n, v
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('____horizontal_adv_limiter',2)
@@ -1980,7 +1980,7 @@ contains
        ADM_gall_1d
     implicit none
 
-    integer :: i, j
+    integer  :: i, j
     !---------------------------------------------------------------------------
 
     suf = ADM_gall_1d * (j-1) + i

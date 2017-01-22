@@ -185,7 +185,7 @@ module mod_sgs
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine sgs_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -199,7 +199,7 @@ contains
        SMG_CS,        & !--- Smagorinsky constant
        stratos_effect   !--- stratos effect (default: false)
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
@@ -351,9 +351,9 @@ contains
     real(RP) :: pi   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: pi_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-!    integer :: p, id
-    integer:: i,j,k,l,n,  idir,ivar
-    integer :: nq
+!    integer  :: p, id
+    integer  :: i,j,k,l,n,  idir,ivar
+    integer  :: nq
 
     real(RP) :: del_xyz2, SMG_CS2, LENGTH_maxlim2
     real(RP)::sij(ADM_gall,ADM_kall,ADM_lall,3,3)           ! full level
@@ -418,7 +418,7 @@ contains
     real(RP) :: dummy(ADM_GALL,ADM_kall,ADM_LALL)
     real(RP) :: dummy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    logical :: dbgfirst=.false.
+    logical  :: dbgfirst=.false.
 
     real(RP) :: wrkwrk(ADM_GALL,ADM_kall,ADM_LALL)
     real(RP) :: wrkwrk2(ADM_GALL,ADM_kall,ADM_LALL)
@@ -1003,7 +1003,7 @@ contains
          TRC_VMAX
     implicit none
 
-    integer::k
+    integer  :: k
 
     if(first)then  ! --> why is it needed?
        allocate(smg_oprt_cxh   (ADM_gall   ,ADM_kall,ADM_lall   ))
@@ -1147,9 +1147,9 @@ contains
 
     logical, intent(in), optional :: input_sclh
 
-    logical :: input_sclh_in ! =.true.
+    logical  :: input_sclh_in ! =.true.
 
-    integer::k,i,l
+    integer  :: k,i,l
     !-----------------------------------------------------------------------------------------
 
     if( .not. present(input_sclh) ) input_sclh_in = .true.
@@ -1281,9 +1281,9 @@ contains
     real(RP),intent(in)::vzh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! half level
 
     logical,intent(in),optional::output_sclh
-    logical ::output_sclh_in=.true.
+    logical  ::output_sclh_in=.true.
 
-    integer::k,i,l
+    integer  :: k,i,l
 
     real(RP)::tmp   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP)::tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)

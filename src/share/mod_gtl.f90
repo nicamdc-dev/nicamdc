@@ -144,7 +144,7 @@ contains
     real(RP), intent(in)  :: v     (ADM_gall   ,ADM_kall       ,ADM_lall)
     real(RP), intent(out) :: v_clip(ADM_gall_in,1:(kmax-kmin+1),ADM_lall)
 
-    integer :: i, j, k, l, n
+    integer  :: i, j, k, l, n
     !---------------------------------------------------------------------------
 
     do l = 1,    ADM_lall
@@ -176,7 +176,7 @@ contains
     real(RP), intent(in)  :: v     (ADM_gall   ,ADM_lall)
     real(RP), intent(out) :: v_clip(ADM_gall_in,ADM_lall)
 
-    integer :: i, j, l, n
+    integer  :: i, j, l, n
     !---------------------------------------------------------------------------
 
     do l = 1, ADM_lall
@@ -208,7 +208,7 @@ contains
     real(RP), intent(out) :: v_clip(ADM_gall_in,ADM_lall)
     integer,  intent(in)  :: k
 
-    integer :: i, j, l, n
+    integer  :: i, j, l, n
     !---------------------------------------------------------------------------
 
     do l = 1, ADM_lall
@@ -231,7 +231,7 @@ contains
        ADM_gall_1d
     implicit none
 
-    integer :: i, j
+    integer  :: i, j
     !---------------------------------------------------------------------------
 
     suf = ADM_gall_1d * (j-1) + i

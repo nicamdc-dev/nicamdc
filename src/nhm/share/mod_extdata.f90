@@ -69,7 +69,7 @@ module mod_extdata
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine extdata_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -106,8 +106,8 @@ contains
     logical                :: opt_periodic_year
     real(RP)               :: defval
 
-    integer :: ddata_date(6)
-    logical :: opt_increment_date
+    integer  :: ddata_date(6)
+    logical  :: opt_increment_date
 
     namelist /nm_extdata/   &
          fname,             &
@@ -370,8 +370,8 @@ contains
     real(DP),         intent(in)    :: ctime      ! current time
     logical,          intent(out)   :: eflag
 
-    real(RP) :: dt !-- delta t between two timestep data
-    real(RP) :: wt !-- t weight of two timestep data
+    real(DP) :: dt !-- delta t between two timestep data
+    real(DP) :: wt !-- t weight of two timestep data
 
     !--- data ID
     integer  :: np
@@ -461,7 +461,7 @@ contains
 
     !--- store the raw data to gdata.
     if ( (info(np)%opt_fix_rec).or.(info(np)%opt_monthly_cnst) ) then
-       wt = 1.0_RP
+       wt = 1.0_DP
     elseif(info(np)%data_rec(1) == 1) then !<--- this case is only periodic one.
        data_date_prev(:) = info(np)%data_date(:,info(np)%num_of_data)
        data_date_prev(1) = data_date_prev(1) - 1
@@ -505,7 +505,7 @@ contains
 
     integer, intent(in) :: np
 
-    integer :: n
+    integer  :: n
     !---------------------------------------------------------------------------
 
     info(np)%v   (:,:,:,:) = info(np)%defval

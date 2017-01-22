@@ -44,25 +44,25 @@ contains
 
     integer, parameter :: ADM_l_limit = 2560
 
-    integer :: num_of_rgn
+    integer  :: num_of_rgn
     namelist /rgn_info/ &
          num_of_rgn             !--- number of region
 
-    integer :: num_of_proc
+    integer  :: num_of_proc
     namelist /proc_info/ &
          num_of_proc             !--- number of run-processes
 
-    integer :: peid
-    integer :: num_of_mng
-    integer :: mng_rgnid(ADM_l_limit)
+    integer  :: peid
+    integer  :: num_of_mng
+    integer  :: mng_rgnid(ADM_l_limit)
     namelist /rgn_mng_info/ &
          peid,              & !--- process ID
          num_of_mng,        & !--- number of regions be managed
          mng_rgnid            !--- managed region ID
 
-    integer :: fid, ierr
-    integer :: m, n
-    integer :: lall
+    integer  :: fid, ierr
+    integer  :: m, n
+    integer  :: lall
     !---------------------------------------------------------------------------
 
     lall = 10 * (4**rlevel)
@@ -115,8 +115,8 @@ contains
 
     integer, intent(in) :: rlevel
 
-    integer :: n
-    integer :: num_of_mng
+    integer  :: n
+    integer  :: num_of_mng
     !---------------------------------------------------------------------------
 
     num_of_mng = 10 * (4**rlevel)

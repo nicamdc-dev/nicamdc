@@ -148,7 +148,7 @@ contains
     real(RP), intent(in)  :: q (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
     real(RP), intent(out) :: qd(ijdim,kdim)       ! dry air mass concentration [kg/kg]
 
-    integer :: ij, k, nq
+    integer  :: ij, k, nq
     !---------------------------------------------------------------------------
 
     !$acc kernels pcopy(qd) pcopyin(q) async(0)
@@ -185,7 +185,7 @@ contains
     real(RP), intent(in)  :: q (ijdim,kdim,ldim,nqmax) ! tracer  mass concentration [kg/kg]
     real(RP), intent(out) :: qd(ijdim,kdim,ldim)       ! dry air mass concentration [kg/kg]
 
-    integer :: ij, k, l,nq
+    integer  :: ij, k, l,nq
     !---------------------------------------------------------------------------
 
     !$acc kernels pcopy(qd) pcopyin(q) async(0)
@@ -224,7 +224,7 @@ contains
     real(RP), intent(in)  :: q (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
     real(RP), intent(out) :: cv(ijdim,kdim)       ! specific heat [J/kg/K]
 
-    integer :: ij, k, nq
+    integer  :: ij, k, nq
     !---------------------------------------------------------------------------
 
     !$acc kernels pcopy(cv) pcopyin(qd,q,CVW) async(0)
@@ -261,7 +261,7 @@ contains
     real(RP), intent(in)  :: q (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
     real(RP), intent(out) :: cp(ijdim,kdim)       ! specific heat [J/kg/K]
 
-    integer :: ij, k, nq
+    integer  :: ij, k, nq
     !---------------------------------------------------------------------------
 
     !$acc kernels pcopy(cp) pcopyin(qd,q,cpW) async(0)
@@ -302,7 +302,7 @@ contains
     real(RP), intent(in)  :: q  (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
     real(RP), intent(out) :: rho(ijdim,kdim)       ! density [kg/m3]
 
-    integer :: ij, k
+    integer  :: ij, k
     !---------------------------------------------------------------------------
 
     !$acc kernels pcopy(tem,cv) pcopyin(ein,qd,q,CVW) async(0)
@@ -336,7 +336,7 @@ contains
     real(RP), intent(in)  :: q  (ijdim,kdim,nqmax) ! tracer  mass concentration [kg/kg]
     real(RP), intent(out) :: pre(ijdim,kdim)       ! pressure    [Pa]
 
-    integer :: ij, k
+    integer  :: ij, k
     !---------------------------------------------------------------------------
 
     !$acc kernels pcopy(pre) pcopyin(rho,tem,qd,q) async(0)
@@ -370,7 +370,7 @@ contains
 
     real(RP) :: cv(ijdim,kdim)
 
-    integer :: ij, k, nq
+    integer  :: ij, k, nq
     !---------------------------------------------------------------------------
 
     !$acc kernels pcopy(ein,cv) pcopyin(tem,qd,q,CVW) async(0)
@@ -412,7 +412,7 @@ contains
 
     real(RP) :: cv(ijdim,kdim)
 
-    integer :: ij, k, nq
+    integer  :: ij, k, nq
     !---------------------------------------------------------------------------
 
     !$acc kernels pcopy(tem,cv) pcopyin(ein,qd,q,CVW) async(0)
@@ -524,7 +524,7 @@ contains
     real(RP), intent(in)  :: rho(ijdim,kdim) ! density     [kg/m3]
     real(RP), intent(out) :: eth(ijdim,kdim) ! enthalpy
 
-    integer :: ij, k
+    integer  :: ij, k
     !---------------------------------------------------------------------------
 
     !$acc kernels pcopy(eth) pcopyin(ein,pre,rho) async(0)
@@ -558,7 +558,7 @@ contains
     real(RP), intent(in)  :: rho(ijdim,kdim,ldim) ! density     [kg/m3]
     real(RP), intent(out) :: eth(ijdim,kdim,ldim) ! enthalpy
 
-    integer :: ij, k, l
+    integer  :: ij, k, l
     !---------------------------------------------------------------------------
 
     !$acc kernels pcopy(eth) pcopyin(ein,pre,rho) async(0)
@@ -600,7 +600,7 @@ contains
 
     real(RP), parameter :: EPS = 1.E-10_RP
 
-    integer :: ij, k, nq
+    integer  :: ij, k, nq
     !---------------------------------------------------------------------------
 
     do nq = NQW_STR, NQW_END

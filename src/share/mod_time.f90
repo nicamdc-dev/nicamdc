@@ -41,7 +41,7 @@ module mod_time
   integer,  public :: TIME_LSTEP_MAX = 10     ! Max steps of large step
   integer,  public :: TIME_SSTEP_MAX          ! Max steps of small step
 
-  real(DP), public :: TIME_DTL       = 5.0_RP ! Time interval for large step [sec]
+  real(DP), public :: TIME_DTL       = 5.0_DP ! Time interval for large step [sec]
   real(DP), public :: TIME_DTS                ! Time interval for small step [sec]
   !
   real(DP), public :: TIME_START              ! Start time [sec]
@@ -81,7 +81,7 @@ contains
 
     character(len=H_SHORT) :: integ_type    !< integration method
     logical                :: split         !< time spliting flag
-    real(RP)               :: dtl           !< delta t in large step
+    real(DP)               :: dtl           !< delta t in large step
     integer                :: lstep_max     !< maximum number of large steps
     integer                :: sstep_max     !< division number in large step
     integer                :: start_date(6) !< start date
@@ -109,7 +109,7 @@ contains
     character(len=20) :: HTIME_start
     character(len=20) :: HTIME_end
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     integ_type = TIME_integ_type

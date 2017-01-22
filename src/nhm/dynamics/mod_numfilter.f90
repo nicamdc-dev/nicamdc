@@ -112,7 +112,7 @@ module mod_numfilter
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> setup
+  !> Setup
   subroutine numfilter_setup
     use mod_process, only: &
        PRC_MPIstop
@@ -268,7 +268,7 @@ contains
   end subroutine numfilter_setup
 
   !-----------------------------------------------------------------------------
-  !> setup coefficient for rayleigh damping
+  !> Setup coefficient for rayleigh damping
   subroutine numfilter_rayleigh_damping_setup( &
        alpha, &
        zlimit )
@@ -328,7 +328,7 @@ contains
   end subroutine numfilter_rayleigh_damping_setup
 
   !-----------------------------------------------------------------------------
-  !> setup coefficient for horizontal numerical diffusion
+  !> Setup coefficient for horizontal numerical diffusion
   subroutine numfilter_hdiffusion_setup( &
        hdiff_type,      &
        dep_hgrid,       &
@@ -628,7 +628,7 @@ contains
   end subroutine numfilter_hdiffusion_setup
 
   !-----------------------------------------------------------------------------
-  !> setup coefficient for vertical numerical diffusion
+  !> Setup coefficient for vertical numerical diffusion
   subroutine numfilter_vdiffusion_setup( &
        gamma )
     use mod_const, only: &
@@ -689,7 +689,7 @@ contains
   end subroutine numfilter_vdiffusion_setup
 
   !-----------------------------------------------------------------------------
-  !> setup coefficient for 3D divergence damping
+  !> Setup coefficient for 3D divergence damping
   subroutine numfilter_divdamp_setup( &
        divdamp_type, &
        dep_hgrid,    &
@@ -854,7 +854,7 @@ contains
   end subroutine numfilter_divdamp_setup
 
   !-----------------------------------------------------------------------------
-  !> setup coefficient for vertical numerical diffusion
+  !> Setup coefficient for vertical numerical diffusion
   subroutine numfilter_divdamp_2d_setup( &
        divdamp_type, &
        dep_hgrid,    &
