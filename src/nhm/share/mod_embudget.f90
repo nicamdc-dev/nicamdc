@@ -48,8 +48,8 @@ module mod_embudget
   integer,               private :: MNT_m_fid
   integer,               private :: MNT_e_fid
 
-  real(RP),              private :: Area_factor
-  real(RP),              private :: Budget_factor
+  real(RP),              private :: Mass_budget_factor
+  real(RP),              private :: Energy_budget_factor
 
 
 
@@ -102,11 +102,11 @@ contains
 
     if(.not.MNT_ON) return
 
-    Area_factor   = 1.D0   / ( 4.D0 * PI * RADIUS * RADIUS )                                    ! [J]       -> [J/m2]
-    Budget_factor = 1.D0   / ( TIME_DTL * real(MNT_INTV,kind=8) * 4.D0 * PI * RADIUS * RADIUS ) ! [J /step] -> [W/m2]
+    Mass_budget_factor   = 1.D0 / ( 4.D0 * PI * RADIUS * RADIUS )                                    ! [J]       -> [J/m2]
+    Energy_budget_factor = 1.D0 / ( TIME_DTL * real(MNT_INTV,kind=8) * 4.D0 * PI * RADIUS * RADIUS ) ! [J /step] -> [W/m2]
 
-    if( IO_L ) write(IO_FID_LOG,*) "Area_factor   = ", Area_factor
-    if( IO_L ) write(IO_FID_LOG,*) "Budget_factor = ", Budget_factor
+    if( IO_L ) write(IO_FID_LOG,*) "Mass_budget_factor   = ", Mass_budget_factor
+    if( IO_L ) write(IO_FID_LOG,*) "Energy_budget_factor = ", Energy_budget_factor
 
     ! open budget.info file
     if ( PRC_IsMaster ) then
@@ -151,11 +151,9 @@ contains
     use mod_process, only: &
        PRC_IsMaster
     use mod_const, only: &
-       RADIUS => CONST_RADIUS, &
-       PI     => CONST_PI,     &
-       CVdry  => CONST_CVdry,  &
-       LHV    => CONST_LHV,    &
-       LHF    => CONST_LHF
+       CVdry => CONST_CVdry,  &
+       LHV   => CONST_LHV,    &
+       LHF   => CONST_LHF
     use mod_adm, only: &
        ADM_have_pl, &
        ADM_lall,    &
@@ -171,7 +169,7 @@ contains
     use mod_time, only: &
        TIME_CSTEP, &
        TIME_DTL
-    use mod_gtl, only: &
+    use mod_statistics, only: &
        GTL_global_sum, &
        GTL_global_sum_srf
     use mod_runconf, only: &
@@ -394,28 +392,28 @@ contains
 
     if ( first ) then
        ! [J/m2], absolute value
-       atm_engy_pot_sum_diff  = atm_engy_pot_sum  * Area_factor
-       atm_engy_int_sum_diff  = atm_engy_int_sum  * Area_factor
-       atm_engy_kin_sum_diff  = atm_engy_kin_sum  * Area_factor
-       atm_engy_sum_diff      = atm_engy_sum      * Area_factor
+       atm_engy_pot_sum_diff  = atm_engy_pot_sum  * Mass_budget_factor
+       atm_engy_int_sum_diff  = atm_engy_int_sum  * Mass_budget_factor
+       atm_engy_kin_sum_diff  = atm_engy_kin_sum  * Mass_budget_factor
+       atm_engy_sum_diff      = atm_engy_sum      * Mass_budget_factor
        ! [kg/m2], absolute value
-       atm_mass_qdry_sum_diff = atm_mass_qdry_sum * Area_factor
-       atm_mass_qvap_sum_diff = atm_mass_qvap_sum * Area_factor
-       atm_mass_qliq_sum_diff = atm_mass_qliq_sum * Area_factor
-       atm_mass_qice_sum_diff = atm_mass_qice_sum * Area_factor
-       atm_mass_qtot_sum_diff = atm_mass_qtot_sum * Area_factor
+       atm_mass_qdry_sum_diff = atm_mass_qdry_sum * Mass_budget_factor
+       atm_mass_qvap_sum_diff = atm_mass_qvap_sum * Mass_budget_factor
+       atm_mass_qliq_sum_diff = atm_mass_qliq_sum * Mass_budget_factor
+       atm_mass_qice_sum_diff = atm_mass_qice_sum * Mass_budget_factor
+       atm_mass_qtot_sum_diff = atm_mass_qtot_sum * Mass_budget_factor
     else
        ! [W/m2], difference from previous step
-       atm_engy_pot_sum_diff  = ( atm_engy_pot_sum  - atm_engy_pot_sum_old  ) * Budget_factor
-       atm_engy_int_sum_diff  = ( atm_engy_int_sum  - atm_engy_int_sum_old  ) * Budget_factor
-       atm_engy_kin_sum_diff  = ( atm_engy_kin_sum  - atm_engy_kin_sum_old  ) * Budget_factor
-       atm_engy_sum_diff      = ( atm_engy_sum      - atm_engy_sum_old      ) * Budget_factor
+       atm_engy_pot_sum_diff  = ( atm_engy_pot_sum  - atm_engy_pot_sum_old  ) * Energy_budget_factor
+       atm_engy_int_sum_diff  = ( atm_engy_int_sum  - atm_engy_int_sum_old  ) * Energy_budget_factor
+       atm_engy_kin_sum_diff  = ( atm_engy_kin_sum  - atm_engy_kin_sum_old  ) * Energy_budget_factor
+       atm_engy_sum_diff      = ( atm_engy_sum      - atm_engy_sum_old      ) * Energy_budget_factor
        ! [kg/m2/s], difference from previous step
-       atm_mass_qdry_sum_diff = ( atm_mass_qdry_sum - atm_mass_qdry_sum_old ) * Budget_factor
-       atm_mass_qvap_sum_diff = ( atm_mass_qvap_sum - atm_mass_qvap_sum_old ) * Budget_factor
-       atm_mass_qliq_sum_diff = ( atm_mass_qliq_sum - atm_mass_qliq_sum_old ) * Budget_factor
-       atm_mass_qice_sum_diff = ( atm_mass_qice_sum - atm_mass_qice_sum_old ) * Budget_factor
-       atm_mass_qtot_sum_diff = ( atm_mass_qtot_sum - atm_mass_qtot_sum_old ) * Budget_factor
+       atm_mass_qdry_sum_diff = ( atm_mass_qdry_sum - atm_mass_qdry_sum_old ) * Energy_budget_factor
+       atm_mass_qvap_sum_diff = ( atm_mass_qvap_sum - atm_mass_qvap_sum_old ) * Energy_budget_factor
+       atm_mass_qliq_sum_diff = ( atm_mass_qliq_sum - atm_mass_qliq_sum_old ) * Energy_budget_factor
+       atm_mass_qice_sum_diff = ( atm_mass_qice_sum - atm_mass_qice_sum_old ) * Energy_budget_factor
+       atm_mass_qtot_sum_diff = ( atm_mass_qtot_sum - atm_mass_qtot_sum_old ) * Energy_budget_factor
     endif
 
     if ( PRC_IsMaster ) then

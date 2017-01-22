@@ -740,7 +740,7 @@ contains
     use mod_time, only: &
        TIME_CSTEP, &
        TIME_CTIME
-    use mod_gtl, only: &
+    use mod_statistics, only: &
        GTL_max, &
        GTL_min
     use mod_vintrpl, only: &

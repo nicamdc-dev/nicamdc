@@ -266,9 +266,7 @@ contains
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kall
-    use mod_const, only: &
-       UNDEF => CONST_UNDEF
-    use mod_gtl, only: &
+    use mod_statistics, only: &
        GTL_global_mean_eachlayer
     use mod_runconf, only: &
        TRC_vmax, &

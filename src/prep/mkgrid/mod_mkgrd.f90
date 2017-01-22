@@ -346,7 +346,7 @@ contains
        ADM_gmax
     use mod_comm, only: &
        COMM_data_transfer
-    use mod_gtl, only: &
+    use mod_statistics, only: &
        GTL_max, &
        GTL_min
     implicit none
@@ -926,7 +926,7 @@ contains
        GMTR_p_AREA, &
        GMTR_p,      &
        GMTR_p_pl
-    use mod_gtl, only: &
+    use mod_statistics, only: &
        GTL_global_sum_srf, &
        GTL_max,            &
        GTL_min

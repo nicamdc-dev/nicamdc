@@ -69,7 +69,6 @@ contains
   subroutine history_vars_setup
     use mod_adm, only: &
        ADM_KNONE,   &
-       ADM_have_pl, &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kall,    &
@@ -328,7 +327,7 @@ contains
        VMTR_C2Wfact,   &
        VMTR_C2WfactGz, &
        VMTR_PHI
-    use mod_gtl, only: &
+    use mod_statistics, only: &
        GTL_global_sum_eachlayer
     use mod_time, only: &
        TIME_DTL
