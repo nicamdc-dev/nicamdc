@@ -5,10 +5,10 @@
 ################################################################################
 
 &ADMPARAM
-    glevel      = 5,
-    rlevel      = 0,
+    glevel      = 9,
+    rlevel      = 4,
     vlayer      = 94,
-    rgnmngfname = 'rl00-prc10.info',
+    rgnmngfname = 'rl04-prc2560.info',
 /
 
 &COMMPARAM
@@ -17,13 +17,13 @@
 
 &GRDPARAM
     hgrid_io_mode = 'ADVANCED',
-    hgrid_fname   = 'boundary_GL05RL00',
+    hgrid_fname   = 'boundary_GL09RL04',
     VGRID_fname   = 'vgrid94.dat',
     topo_io_mode  = 'IDEAL',
 /
 
 &TIMEPARAM
-    DTL         = 1200.D0,
+    DTL         = 60.D0,
     INTEG_TYPE  = 'RK3',
     LSTEP_MAX   = 10,
     start_date  = 0000,1,1,0,0,0
@@ -41,7 +41,7 @@
 &RESTARTPARAM
     input_io_mode     = 'IDEAL',
     output_io_mode    = 'ADVANCED',
-    output_basename   = 'restart_all_GL05RL00z94',
+    output_basename   = 'restart_all_GL09RL04z94',
     restart_layername = 'ZSALL96',
 /
 
@@ -69,10 +69,10 @@
 &NUMFILTERPARAM
     hdiff_type        = 'DIRECT',
     lap_order_hdiff   = 2,
-    gamma_h           = 1.20E16,
+    gamma_h           = 3.15E12,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
-    alpha_d           = 1.20E16,
+    alpha_d           = 3.15E12,
 /
 
 &EMBUDGETPARAM

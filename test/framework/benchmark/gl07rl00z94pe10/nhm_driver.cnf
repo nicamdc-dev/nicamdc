@@ -11,6 +11,10 @@
     rgnmngfname = "rl00-prc10.info",
 /
 
+&COMMPARAM
+    COMM_apply_barrier = .true.,
+/
+
 &GRDPARAM
     hgrid_io_mode = "ADVANCED",
     hgrid_fname   = "boundary_GL07RL00",

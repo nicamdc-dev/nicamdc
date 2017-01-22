@@ -6,9 +6,7 @@ FFLAGS_FAST  = -fpp -m64 -O3 -axMIC-AVX512 -qopenmp  \
                -fp-model fast=2                      \
                -align array64byte -xMIC-AVX512       \
                -static_mpi -static_intel             \
-               -qopt-streaming-stores always         \
-               -vec-threshold50                      \
-               -heap-arrays
+               -qopt-streaming-stores always
 
 FFLAGS_DEBUG = -fpp -m64 -O0 -axMIC-AVX512 -qopenmp  \
                -assume byterecl -convert big_endian  \
@@ -16,9 +14,7 @@ FFLAGS_DEBUG = -fpp -m64 -O0 -axMIC-AVX512 -qopenmp  \
                -align array64byte -xMIC-AVX512       \
                -static_mpi -static_intel             \
                -qopt-streaming-stores always         \
-               -vec-threshold50                      \
-               -check bounds -warn all -g -traceback \
-               -heap-arrays
+               -check bounds -warn all -g -traceback
 
 FC     = mpiifort
 FFLAGS = $(FFLAGS_FAST)
