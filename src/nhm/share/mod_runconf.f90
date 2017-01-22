@@ -4,7 +4,7 @@
 !! @par Description
 !!          This module is for managing run configuration
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_runconf
@@ -191,18 +191,17 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[runconf]/Category[nhm share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[runconf]/Category[nhm share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=RUNCONFPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** RUNCONFPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** RUNCONFPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist RUNCONFPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist RUNCONFPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist RUNCONFPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=RUNCONFPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=RUNCONFPARAM)
 
     call RUNCONF_component_setup
 
@@ -220,9 +219,9 @@ contains
     !---------------------------------------------------------------------------
 
     if( THUBURN_LIM ) then ![add] 20130613 R.Yoshida
-       write(IO_FID_LOG,*) 'Run with \"Thuburn Limiter\" in MIURA2004 Advection'
+       if( IO_L ) write(IO_FID_LOG,*) 'Run with \"Thuburn Limiter\" in MIURA2004 Advection'
     else
-       write(IO_FID_LOG,*) '### Without \"Thuburn Limiter\" in MIURA2004 Advection'
+       if( IO_L ) write(IO_FID_LOG,*) '### Without \"Thuburn Limiter\" in MIURA2004 Advection'
     endif
 
     return
@@ -268,8 +267,7 @@ contains
        I_QS    = TRC_vmax + 5
        I_QG    = TRC_vmax + 6
     else
-       write(*,         *) 'xxx You must set RAIN_TYPE to DRY,CLOUD_PARAM,WARM or COLD. STOP.'
-       write(IO_FID_LOG,*) 'xxx You must set RAIN_TYPE to DRY,CLOUD_PARAM,WARM or COLD. STOP.'
+       write(*,*) 'xxx RAIN_TYPE must be set to DRY,CLOUD_PARAM,WARM or COLD. STOP.'
        call PRC_MPIstop
     endif
     NQW_STR  = TRC_vmax + 1
@@ -381,17 +379,17 @@ contains
     DIAG_vmax  = DIAG_vmax0 + TRC_vmax
     I_qend     = DIAG_vmax
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '*** Prognostic Tracers'
-    write(IO_FID_LOG,*) '|=========================================================|'
-    write(IO_FID_LOG,*) '|       :varname         :description                     |'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '*** Prognostic Tracers'
+    if( IO_L ) write(IO_FID_LOG,*) '|=========================================================|'
+    if( IO_L ) write(IO_FID_LOG,*) '|       :varname         :description                     |'
     do v = 1, TRC_vmax
-       write(IO_FID_LOG,'(1x,A,I4,A,A16,A,A,A)') '|ID=', v, ':', TRC_name(v), ':', WLABEL(v),'|'
+       if( IO_L ) write(IO_FID_LOG,'(1x,A,I4,A,A16,A,A,A)') '|ID=', v, ':', TRC_name(v), ':', WLABEL(v),'|'
     enddo
-    write(IO_FID_LOG,*) '|=========================================================|'
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '*** thermodynamic(water) tracers'
-    write(IO_FID_LOG,*) '-->', NQW_MAX, ' tracers(',NQW_STR,'-',NQW_END,')'
+    if( IO_L ) write(IO_FID_LOG,*) '|=========================================================|'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '*** thermodynamic(water) tracers'
+    if( IO_L ) write(IO_FID_LOG,*) '-->', NQW_MAX, ' tracers(',NQW_STR,'-',NQW_END,')'
 
     return
   end subroutine RUNCONF_tracer_setup

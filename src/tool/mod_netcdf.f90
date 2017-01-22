@@ -16,7 +16,7 @@
 !!     2. netcdf_write (necessary times)
 !!     3. netcdf_close
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_netcdf
@@ -439,7 +439,7 @@ contains
           write(log_fid,*) '    add_offset   = ', nc%var_offset
        else
           write(log_fid,*) 'error: Both var_valid_min/max should be set when var_comp_2byte=.true.'
-          write(*      ,*) 'error: Both var_valid_min/max should be set when var_comp_2byte=.true.'
+          write(*,*)       'error: Both var_valid_min/max should be set when var_comp_2byte=.true.'
           stop 1
        endif
     else

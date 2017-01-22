@@ -2,9 +2,9 @@
 !> Module ideal topo
 !!
 !! @par Description
-!!          This module prepares ideal topography for Dynamical Core Test
+!!         This module prepares ideal topography for Dynamical Core Test
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_ideal_topo
@@ -67,18 +67,17 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[ideal topo]/Category[common share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[ideal topo]/Category[common share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=IDEALTOPOPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** IDEALTOPOPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** IDEALTOPOPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=IDEALTOPOPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=IDEALTOPOPARAM)
 
     if    ( topo_type == 'Schar_Moderate' ) then
 
@@ -98,8 +97,7 @@ contains
                            Zsfc(:,:,:)  ) ! [OUT]
 
     else
-       write(*         ,*) 'xxx Not appropriate topo_type. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate topo_type. STOP.'
+       write(*,*) 'xxx [IDEAL_topo] Not appropriate topo_type. STOP.'
        call PRC_MPIstop
     endif
 
@@ -150,18 +148,17 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[topo Schar Moderate]/Category[common share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[topo Schar Moderate]/Category[common share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=IDEALTOPOPARAM_Schar_Moderate,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** IDEALTOPOPARAM_Schar_Moderate is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** IDEALTOPOPARAM_Schar_Moderate is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Moderate. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Moderate. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Moderate. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=IDEALTOPOPARAM_Schar_Moderate)
+    if( IO_NML ) write(IO_FID_LOG,nml=IDEALTOPOPARAM_Schar_Moderate)
 
     K0 = ADM_KNONE
 
@@ -237,18 +234,17 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[topo Schar Steep]/Category[common share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[topo Schar Steep]/Category[common share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=IDEALTOPOPARAM_Schar_Steep,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** IDEALTOPOPARAM_Schar_Steep is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** IDEALTOPOPARAM_Schar_Steep is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Steep. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Steep. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist IDEALTOPOPARAM_Schar_Steep. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=IDEALTOPOPARAM_Schar_Steep)
+    if( IO_NML ) write(IO_FID_LOG,nml=IDEALTOPOPARAM_Schar_Steep)
 
     K0 = ADM_KNONE
 

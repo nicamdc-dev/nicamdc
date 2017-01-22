@@ -1,3 +1,10 @@
+module mod_simple_physics
+implicit none
+private
+
+public :: simple_physics
+
+contains
 !-----------------------------------------------------------------------
 !
 !  Date:  April 26, 2016 (Version 6)
@@ -510,3 +517,4 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
    return
 end subroutine SIMPLE_PHYSICS
 
+end module mod_simple_physics

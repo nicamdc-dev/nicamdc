@@ -4,7 +4,7 @@
 !! @par Description
 !!          This module is for the time management
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_time
@@ -14,6 +14,7 @@ module mod_time
   !
   use mod_precision
   use mod_stdio
+  use mod_prof
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -126,18 +127,17 @@ contains
     start_sec     = 0
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[time]/Category[common share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[time]/Category[common share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=TIMEPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** TIMEPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** TIMEPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist TIMEPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist TIMEPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist TIMEPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=TIMEPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=TIMEPARAM)
 
     !--- rewrite
     TIME_integ_type = integ_type
@@ -146,7 +146,7 @@ contains
     TIME_lstep_max  = lstep_max
 
     if ( sstep_max == -999 )  then
-       write(IO_FID_LOG,*) 'TIME_integ_type is ', trim(TIME_integ_type)
+       if( IO_L ) write(IO_FID_LOG,*) 'TIME_integ_type is ', trim(TIME_integ_type)
        select case(TIME_integ_type)
        case('RK2')
           TIME_sstep_max = 4
@@ -159,7 +159,7 @@ contains
        case default
           write(*,*) 'xxx Invalid TIME_INTEG_TYPE! STOP.'
        endselect
-       write(IO_FID_LOG,*) 'TIME_sstep_max is automatically set to: ', TIME_sstep_max
+       if( IO_L ) write(IO_FID_LOG,*) 'TIME_sstep_max is automatically set to: ', TIME_sstep_max
     else
        TIME_sstep_max = sstep_max
     endif
@@ -211,21 +211,21 @@ contains
     call CALENDAR_ss2cc( HTIME_end,   TIME_END   )
     call CALENDAR_ss2cc( TIME_HTIME,  TIME_CTIME )
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '====== Time management ======'
-    write(IO_FID_LOG,*) '--- Time integration scheme (large step): ', trim(TIME_integ_type)
-    write(IO_FID_LOG,*) '--- Backward integration?               : ', TIME_backward_sw
-    write(IO_FID_LOG,*) '--- Time interval for large step        : ', TIME_DTL
-    write(IO_FID_LOG,*) '--- Time interval for small step        : ', TIME_DTS
-    write(IO_FID_LOG,*) '--- Max steps of large step             : ', TIME_LSTEP_MAX
-    write(IO_FID_LOG,*) '--- Max steps of small step             : ', TIME_SSTEP_MAX
-    write(IO_FID_LOG,*) '--- Start time (sec)                    : ', TIME_START
-    write(IO_FID_LOG,*) '--- End time   (sec)                    : ', TIME_END
-    write(IO_FID_LOG,*) '--- Start time (date)                   : ', HTIME_start
-    write(IO_FID_LOG,*) '--- End time   (date)                   : ', HTIME_end
-    write(IO_FID_LOG,*) '--- total integration time              : ', TIME_END - TIME_START
-    write(IO_FID_LOG,*) '--- Time step at the start              : ', TIME_NSTART
-    write(IO_FID_LOG,*) '--- Time step at the end                : ', TIME_NEND
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '====== Time management ======'
+    if( IO_L ) write(IO_FID_LOG,*) '--- Time integration scheme (large step): ', trim(TIME_integ_type)
+    if( IO_L ) write(IO_FID_LOG,*) '--- Backward integration?               : ', TIME_backward_sw
+    if( IO_L ) write(IO_FID_LOG,*) '--- Time interval for large step        : ', TIME_DTL
+    if( IO_L ) write(IO_FID_LOG,*) '--- Time interval for small step        : ', TIME_DTS
+    if( IO_L ) write(IO_FID_LOG,*) '--- Max steps of large step             : ', TIME_LSTEP_MAX
+    if( IO_L ) write(IO_FID_LOG,*) '--- Max steps of small step             : ', TIME_SSTEP_MAX
+    if( IO_L ) write(IO_FID_LOG,*) '--- Start time (sec)                    : ', TIME_START
+    if( IO_L ) write(IO_FID_LOG,*) '--- End time   (sec)                    : ', TIME_END
+    if( IO_L ) write(IO_FID_LOG,*) '--- Start time (date)                   : ', HTIME_start
+    if( IO_L ) write(IO_FID_LOG,*) '--- End time   (date)                   : ', HTIME_end
+    if( IO_L ) write(IO_FID_LOG,*) '--- total integration time              : ', TIME_END - TIME_START
+    if( IO_L ) write(IO_FID_LOG,*) '--- Time step at the start              : ', TIME_NSTART
+    if( IO_L ) write(IO_FID_LOG,*) '--- Time step at the end                : ', TIME_NEND
 
     return
   end subroutine TIME_setup
@@ -241,7 +241,7 @@ contains
 
     call calendar_ss2cc( TIME_HTIME, TIME_CTIME )
 
-    write(IO_FID_LOG,*) '### TIME =', TIME_HTIME,'( step = ', TIME_CSTEP, ' )'
+    if( IO_L ) write(IO_FID_LOG,*) '### TIME =', TIME_HTIME,'( step = ', TIME_CSTEP, ' )'
     if( PRC_IsMaster ) then
        write(*,*) '### TIME = ', TIME_HTIME,'( step = ', TIME_CSTEP, ' )'
     endif

@@ -203,18 +203,17 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[SGS turbulence]/Category[nhm dynamics]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[SGS turbulence]/Category[nhm dynamics]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=SMGPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** SMGPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** SMGPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist SMGPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist SMGPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist SMGPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=SMGPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=SMGPARAM)
 
     call tb_smg_oprt_init
 
@@ -1535,7 +1534,7 @@ contains
     real(RP):: var(:,:,:)
 !    if (ADM_prc_me.eq.1) then
 !      write(*,*) trim(cha),maxval(var),minval(var), maxloc(var),minloc(var)
-       write(adm_log_fid,*) trim(cha),maxval(var),minval(var), maxloc(var),minloc(var)
+       write(IO_FID_LOG,*) trim(cha),maxval(var),minval(var), maxloc(var),minloc(var)
 !    endif
   end subroutine dbgmx
 

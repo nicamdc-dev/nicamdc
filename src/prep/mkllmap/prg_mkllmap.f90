@@ -4,7 +4,7 @@
 !! @par Description
 !!          Making remapping coefficient between lat-lon and icosahedral grid
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 program prg_mkllmap
@@ -85,18 +85,17 @@ program prg_mkllmap
   call GRD_setup
 
   !--- read parameters
-  write(IO_FID_LOG,*)
-  write(IO_FID_LOG,*) '+++ Program[mkllmap]/Category[tool]'
+  if( IO_L ) write(IO_FID_LOG,*)
+  if( IO_L ) write(IO_FID_LOG,*) '+++ Program[mkllmap]/Category[tool]'
   rewind(IO_FID_CONF)
   read(IO_FID_CONF,nml=MKLLMAP_PARAM,iostat=ierr)
   if ( ierr < 0 ) then
-     write(IO_FID_LOG,*) '*** MKLLMAP_PARAM is not specified. use default.'
+     if( IO_L ) write(IO_FID_LOG,*) '*** MKLLMAP_PARAM is not specified. use default.'
   elseif( ierr > 0 ) then
-     write(*         ,*) 'xxx Not appropriate names in namelist MKLLMAP_PARAM. STOP.'
-     write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist MKLLMAP_PARAM. STOP.'
+     if( IO_L ) write(*,*) 'xxx Not appropriate names in namelist MKLLMAP_PARAM. STOP.'
      call PRC_MPIstop
   endif
-  write(IO_FID_LOG,nml=MKLLMAP_PARAM)
+  if( IO_NML ) write(IO_FID_LOG,nml=MKLLMAP_PARAM)
 
   call LATLON_ico_setup
 

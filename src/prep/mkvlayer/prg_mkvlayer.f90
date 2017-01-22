@@ -4,7 +4,7 @@
 !! @par Description
 !!          Making vertical grid systems based on lorenz coordinate
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 program prg_mkvlayer

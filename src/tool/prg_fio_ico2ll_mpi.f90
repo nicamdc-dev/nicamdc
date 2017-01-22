@@ -6,7 +6,7 @@
 !!          to that on latitude-longitude grid.
 !!          ( packaged NICAM data format : PaNDa )
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 program fio_ico2ll
@@ -294,7 +294,7 @@ program fio_ico2ll
   LALL_local  = LALL_global / PALL_global
 
   if ( mod( PALL_global, prc_nall) /= 0 ) then
-     write(IO_FID_LOG,*) '*** Invalid processor number, STOP:', PALL_global, prc_nall
+     if( IO_L ) write(IO_FID_LOG,*) '*** Invalid processor number, STOP:', PALL_global, prc_nall
      call MPI_Barrier(MPI_COMM_WORLD,ierr)
      call MPI_FINALIZE(ierr)
      stop
@@ -356,7 +356,7 @@ program fio_ico2ll
      do l = 1, LALL_local
         rgnid = MNG_prc_tab(l,p)
         call IO_make_idstr(fname,trim(llmap_base),'rgn',rgnid,isrgn=.true.)
-        write(IO_FID_LOG,*) 'p=', p, 'l=', l, 'rgnid=', rgnid
+        if( IO_L ) write(IO_FID_LOG,*) 'p=', p, 'l=', l, 'rgnid=', rgnid
 
         fid = IO_get_available_fid()
         open(fid,file=trim(fname),form='unformatted',status='old',iostat=ierr)
@@ -431,7 +431,7 @@ program fio_ico2ll
 
   do p = pstr, pend
      pp = p - pstr + 1
-     write(IO_FID_LOG,*) 'p=', pp
+     if( IO_L ) write(IO_FID_LOG,*) 'p=', pp
 
      if (complete) then ! all region
         infname = trim(infile(1))//'.rgnall'
@@ -562,12 +562,12 @@ program fio_ico2ll
               enddo
 
               if ( dinfo%layername(1:5) == 'ZSALL' ) then ! check Xi2Z
-                 write(IO_FID_LOG,*) '*** Try to convert Xi -> Z : ', dinfo%varname
+                 if( IO_L ) write(IO_FID_LOG,*) '*** Try to convert Xi -> Z : ', dinfo%varname
                  var_xi2z(nvar) = .true.
                  var_ztop(nvar) = 0.5D0 * ( var_zgrid(kmax-1,nvar) + var_zgrid(kmax,nvar) )
 
                  if ( kmax == dinfo%num_of_layer+2 ) then ! trim HALO
-                    write(IO_FID_LOG,*) '*** trim HALO: ', trim(dinfo%layername)
+                    if( IO_L ) write(IO_FID_LOG,*) '*** trim HALO: ', trim(dinfo%layername)
                     do k = 1, kmax-2
                        var_zgrid(k,nvar) = var_zgrid(k+1,nvar)
                     enddo
@@ -627,7 +627,7 @@ program fio_ico2ll
 
   if ( topo_base == '' ) then
 
-     write(IO_FID_LOG,*) '*** topography file is not specified. no vertical conversion.'
+     if( IO_L ) write(IO_FID_LOG,*) '*** topography file is not specified. no vertical conversion.'
      var_xi2z(:) = .false. ! reset flag
 
   else
@@ -642,7 +642,7 @@ program fio_ico2ll
 
      do p = pstr, pend
         pp = p - pstr + 1
-        write(IO_FID_LOG,*) 'p=', pp
+        if( IO_L ) write(IO_FID_LOG,*) 'p=', pp
 
         prc_tab_C(1:LALL_local) = MNG_prc_tab(1:LALL_local,p)-1
 
@@ -690,7 +690,7 @@ program fio_ico2ll
         enddo
 
         if ( .NOT. exist_topo ) then
-           write(IO_FID_LOG,*) '*** topography data topo is not found in ', trim(infname), ' ! STOP.'
+           if( IO_L ) write(IO_FID_LOG,*) '*** topography data topo is not found in ', trim(infname), ' ! STOP.'
            stop
         endif
 
@@ -749,9 +749,9 @@ program fio_ico2ll
         if (output_grads) then ! GrADS Format
 
            call PROF_rapstart('+FILE O GRADS')
-           write(IO_FID_LOG,*)
-           write(IO_FID_LOG,*) 'Output: ', trim(outbase)//'.grd', recsize, imax, jmax, kmax
-           write(*         ,*) 'Output: ', trim(outbase)//'.grd'
+           if( IO_L ) write(IO_FID_LOG,*)
+           if( IO_L ) write(IO_FID_LOG,*) 'Output: ', trim(outbase)//'.grd', recsize, imax, jmax, kmax
+           write(*,*)                     'Output: ', trim(outbase)//'.grd'
 
            open( unit   = ofid,                  &
                  file   = trim(outbase)//'.grd', &
@@ -762,7 +762,7 @@ program fio_ico2ll
            irec = 1
 
            if ( outfile_rec > 1 ) then
-              write(IO_FID_LOG,*) 'Change output record position : start from step ', outfile_rec
+              if( IO_L ) write(IO_FID_LOG,*) 'Change output record position : start from step ', outfile_rec
               irec = outfile_rec
            endif
            call PROF_rapend  ('+FILE O GRADS')
@@ -770,9 +770,9 @@ program fio_ico2ll
         elseif(output_gtool) then ! GTOOL3 Format
 
            call PROF_rapstart('+FILE O GTOOL')
-           write(IO_FID_LOG,*)
-           write(IO_FID_LOG,*) 'Output: ', trim(outbase)//'.gt3', recsize, imax, jmax, kmax
-           write(*         ,*) 'Output: ', trim(outbase)//'.gt3'
+           if( IO_L ) write(IO_FID_LOG,*)
+           if( IO_L ) write(IO_FID_LOG,*) 'Output: ', trim(outbase)//'.gt3', recsize, imax, jmax, kmax
+           write(*,*)                     'Output: ', trim(outbase)//'.gt3'
 
            open( unit   = ofid,                  &
                  file   = trim(outbase)//'.gt3', &
@@ -800,9 +800,9 @@ program fio_ico2ll
         elseif(output_netcdf) then ! NetCDF format [add] 13-04-18 C.Kodama
 
            call PROF_rapstart('+FILE O NETCDF')
-           write(IO_FID_LOG,*)
-           write(IO_FID_LOG,*) 'Output: ', trim(outbase)//'.nc'
-           write(*         ,*) 'Output: ', trim(outbase)//'.nc'
+           if( IO_L ) write(IO_FID_LOG,*)
+           if( IO_L ) write(IO_FID_LOG,*) 'Output: ', trim(outbase)//'.nc'
+           write(*,*)                     'Output: ', trim(outbase)//'.nc'
 
            call CALENDAR_ss2yh( date_str(:), real(var_time_str(v),kind=DP) )
 
@@ -823,7 +823,7 @@ program fio_ico2ll
                                            ':',              trim(date_str_tmp(5)), &
                                            ':',              trim(date_str_tmp(6))
 
-           write(IO_FID_LOG,*) '  nc_time_units = ', trim(nc_time_units)
+           if( IO_L ) write(IO_FID_LOG,*) '  nc_time_units = ', trim(nc_time_units)
 
            allocate( lon_tmp(imax) )
 
@@ -885,8 +885,8 @@ program fio_ico2ll
         !--- open output file (every timestep)
         if (devide_template) then
            tmpl = sec2template(nowsec)
-           write(IO_FID_LOG,*)
-           write(IO_FID_LOG,*) 'Output: ', trim(outbase)//'.'//trim(tmpl)//'.grd'
+           if( IO_L ) write(IO_FID_LOG,*)
+           if( IO_L ) write(IO_FID_LOG,*) 'Output: ', trim(outbase)//'.'//trim(tmpl)//'.grd'
 
            open( unit   = ofid,             &
                  file   = trim(outbase)//'.'//trim(tmpl)//'.grd', &
@@ -948,8 +948,8 @@ program fio_ico2ll
                  call PROF_rapstart('+Xi2Z')
 
                  if ( var_ztop(v) < 0.D0 ) then
-                    write(IO_FID_LOG,*) '*** Ztop is not specified.'
-                    write(IO_FID_LOG,*) '*** It will be determined by the vertical axis info in ZSALL**.txt.'
+                    if( IO_L ) write(IO_FID_LOG,*) '*** Ztop is not specified.'
+                    if( IO_L ) write(IO_FID_LOG,*) '*** It will be determined by the vertical axis info in ZSALL**.txt.'
                     stop
                  endif
 
@@ -1092,7 +1092,7 @@ program fio_ico2ll
            close(ofid)
         endif
 
-        write(IO_FID_LOG,*) ' +append step:', step
+        if( IO_L ) write(IO_FID_LOG,*) ' +append step:', step
 
         endif ! ##### master?
 

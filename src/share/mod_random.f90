@@ -59,28 +59,27 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[random]/Category[common share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[random]/Category[common share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=RANDOMPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** RANDOMPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** RANDOMPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist RANDOMPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist RANDOMPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist RANDOMPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=RANDOMPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=RANDOMPARAM)
 
     call random_seed
     call random_seed(size=nseeds)
 
     allocate( RANDOM_seedvar(nseeds))
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '*** Array size for random seed:', nseeds
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '*** Array size for random seed:', nseeds
     if ( RANDOM_FIX ) then
-       write(IO_FID_LOG,*) '*** random seed is fixed.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** random seed is fixed.'
     endif
 
     return

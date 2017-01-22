@@ -4,7 +4,7 @@
 !! @par Description
 !!          Making information file for paralell computation
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 program prg_mkmnginfo

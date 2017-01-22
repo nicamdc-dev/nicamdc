@@ -4,7 +4,7 @@
 !! @par Description
 !!         this module is for the communication based on mpi library.
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_comm
@@ -169,18 +169,17 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[comm]/Category[common share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[comm]/Category[common share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=COMMPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** COMMPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** COMMPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist COMMPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist COMMPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist COMMPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=COMMPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=COMMPARAM)
 
     if ( RP == DP ) then
        COMM_datatype = MPI_DOUBLE_PRECISION
@@ -196,8 +195,8 @@ contains
        COMM_pl = .false.
     endif
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '====== communication information ======'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '====== communication information ======'
 
     call COMM_list_generate
 
@@ -599,11 +598,11 @@ contains
 
     rellist_nmax = cnt
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) "*** rellist_nmax:", rellist_nmax
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) "*** rellist_nmax:", rellist_nmax
 
     if ( debug ) then
-       write(IO_FID_LOG,*) "--- Relation Table"
+       if( IO_L ) write(IO_FID_LOG,*) "--- Relation Table"
        write(IO_FID_LOG,'(7(A10))') 'Count', '|recv_grid', '| recv_rgn', '| recv_prc', &
                                                        '|send_grid', '| send_rgn', '| send_prc'
        do cnt = 1, rellist_nmax
@@ -770,12 +769,12 @@ contains
        Send_size_nglobal = max( Send_size_nglobal, recvbuf_info(n+I_size) )
     enddo
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '*** Recv_nmax_r2r(global) = ', Recv_nglobal_r2r
-    write(IO_FID_LOG,*) '*** Recv_nmax_r2r(local)  = ', Recv_nmax_r2r
-    write(IO_FID_LOG,*) '*** Send_nmax_r2r(local)  = ', Send_nmax_r2r
-    write(IO_FID_LOG,*) '*** Send_size_r2r(global) = ', Send_size_nglobal
-    write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '*** Recv_nmax_r2r(global) = ', Recv_nglobal_r2r
+    if( IO_L ) write(IO_FID_LOG,*) '*** Recv_nmax_r2r(local)  = ', Recv_nmax_r2r
+    if( IO_L ) write(IO_FID_LOG,*) '*** Send_nmax_r2r(local)  = ', Send_nmax_r2r
+    if( IO_L ) write(IO_FID_LOG,*) '*** Send_size_r2r(global) = ', Send_size_nglobal
+    if( IO_L ) write(IO_FID_LOG,*)
     write(IO_FID_LOG,'(A)')             "|---------------------------------------"
     write(IO_FID_LOG,'(A)')             "|               size  prc_from    prc_to"
     write(IO_FID_LOG,'(A10,3(I10))')    "| Copy_r2r", Copy_info_r2r(:)
@@ -844,9 +843,9 @@ contains
     enddo
 
     if ( debug ) then
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) "--- Copy_list_r2r"
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) "--- Copy_list_r2r"
+       if( IO_L ) write(IO_FID_LOG,*)
        write(IO_FID_LOG,'(13(A6))') "number", &
                                                "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
                                                "|  ito","|  jto","|  rto","|  gto","|  lto","|  pto"
@@ -868,8 +867,8 @@ contains
                                              i_to  , j_to  , r_to  , g_to  , l_to  , p_to
        enddo
 
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) "--- Recv_list_r2r"
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) "--- Recv_list_r2r"
        do irank = 1, Recv_nmax_r2r
           write(IO_FID_LOG,'(13(A6))') "number", &
                                                   "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
@@ -893,8 +892,8 @@ contains
           enddo
        enddo
 
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) "--- Send_list_r2r"
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) "--- Send_list_r2r"
        do irank = 1, Send_nmax_r2r
           write(IO_FID_LOG,'(13(A6))') "number", &
                                                   "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
@@ -1207,10 +1206,10 @@ contains
 
     endif
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '*** Recv_nmax_p2r(local)  = ', Recv_nmax_p2r
-    write(IO_FID_LOG,*) '*** Send_nmax_p2r(local)  = ', Send_nmax_p2r
-    write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '*** Recv_nmax_p2r(local)  = ', Recv_nmax_p2r
+    if( IO_L ) write(IO_FID_LOG,*) '*** Send_nmax_p2r(local)  = ', Send_nmax_p2r
+    if( IO_L ) write(IO_FID_LOG,*)
     write(IO_FID_LOG,'(A)')             "|---------------------------------------"
     write(IO_FID_LOG,'(A)')             "|               size  prc_from    prc_to"
     write(IO_FID_LOG,'(A10,3(I10))')    "| Copy_p2r", Copy_info_p2r(:)
@@ -1222,9 +1221,9 @@ contains
     enddo
 
     if ( debug ) then
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) "--- Copy_list_p2r"
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) "--- Copy_list_p2r"
+       if( IO_L ) write(IO_FID_LOG,*)
        write(IO_FID_LOG,'(11(A6))') "number", &
                                                                  "|rfrom","|gfrom","|lfrom","|pfrom", &
                                                "|  ito","|  jto","|  rto","|  gto","|  lto","|  pto"
@@ -1244,8 +1243,8 @@ contains
                                                         i_to  , j_to  , r_to  , g_to  , l_to  , p_to
        enddo
 
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) "--- Recv_list_p2r"
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) "--- Recv_list_p2r"
        do irank = 1, Recv_nmax_p2r
           write(IO_FID_LOG,'(11(A6))') "number", &
                                                                     "|rfrom","|gfrom","|lfrom","|pfrom", &
@@ -1267,8 +1266,8 @@ contains
           enddo
        enddo
 
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) "--- Send_list_p2r"
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) "--- Send_list_p2r"
        do irank = 1, Send_nmax_p2r
           write(IO_FID_LOG,'(11(A6))') "number", &
                                                                     "|rfrom","|gfrom","|lfrom","|pfrom", &
@@ -1291,10 +1290,10 @@ contains
        enddo
     endif
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '*** Recv_nmax_r2p(local)  = ', Recv_nmax_r2p
-    write(IO_FID_LOG,*) '*** Send_nmax_r2p(local)  = ', Send_nmax_r2p
-    write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '*** Recv_nmax_r2p(local)  = ', Recv_nmax_r2p
+    if( IO_L ) write(IO_FID_LOG,*) '*** Send_nmax_r2p(local)  = ', Send_nmax_r2p
+    if( IO_L ) write(IO_FID_LOG,*)
     write(IO_FID_LOG,'(A)')             "|---------------------------------------"
     write(IO_FID_LOG,'(A)')             "|               size  prc_from    prc_to"
     write(IO_FID_LOG,'(A10,3(I10))')    "| Copy_r2p", Copy_info_r2p(:)
@@ -1306,9 +1305,9 @@ contains
     enddo
 
     if ( debug ) then
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) "--- Copy_list_r2p"
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) "--- Copy_list_r2p"
+       if( IO_L ) write(IO_FID_LOG,*)
        write(IO_FID_LOG,'(11(A6))') "number", &
                                                "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
                                                                  "|  rto","|  gto","|  lto","|  pto"
@@ -1328,8 +1327,8 @@ contains
                                                              r_to  , g_to  , l_to  , p_to
        enddo
 
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) "--- Recv_list_r2p"
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) "--- Recv_list_r2p"
        do irank = 1, Recv_nmax_r2p
           write(IO_FID_LOG,'(11(A6))') "number", &
                                                   "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
@@ -1351,8 +1350,8 @@ contains
           enddo
        enddo
 
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) "--- Send_list_r2p"
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) "--- Send_list_r2p"
        do irank = 1, Send_nmax_r2p
           write(IO_FID_LOG,'(11(A6))') "number", &
                                                   "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
@@ -1374,8 +1373,8 @@ contains
           enddo
        enddo
     endif
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '*** Send_size_p2r,r2p     = ', Send_size_nglobal_pl
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '*** Send_size_p2r,r2p     = ', Send_size_nglobal_pl
 
     allocate( sendbuf_r2p(Send_size_nglobal_pl*ADM_kall*COMM_varmax,Send_nmax_r2p) )
     allocate( recvbuf_r2p(Send_size_nglobal_pl*ADM_kall*COMM_varmax,Recv_nmax_r2p) )
@@ -1473,15 +1472,15 @@ contains
        Singular_info(I_prc_to  ) = ADM_prc_me
     endif
 
-    write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*)
     write(IO_FID_LOG,'(A)')             "|---------------------------------------"
     write(IO_FID_LOG,'(A)')             "|               size  prc_from    prc_to"
     write(IO_FID_LOG,'(A10,3(I10))')    "| Singular", Singular_info(:)
 
     if ( debug ) then
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) "--- Singular_list"
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) "--- Singular_list"
+       if( IO_L ) write(IO_FID_LOG,*)
        write(IO_FID_LOG,'(13(A6))') "number", &
                                                "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
                                                "|  ito","|  jto","|  rto","|  gto","|  lto","|  pto"
@@ -1546,9 +1545,9 @@ contains
     vmax = shp(4)
 
     if ( kmax * vmax > ADM_kall * COMM_varmax ) then
-       write(IO_FID_LOG,*) 'xxx [COMM_data_transfer] kmax * vmax exceeds ADM_kall * COMM_varmax, stop!'
-       write(IO_FID_LOG,*) 'xxx kmax * vmax            = ', kmax * vmax
-       write(IO_FID_LOG,*) 'xxx ADM_kall * COMM_varmax = ', ADM_kall * COMM_varmax
+       write(*,*) 'xxx [COMM_data_transfer] kmax * vmax exceeds ADM_kall * COMM_varmax, stop!'
+       write(*,*) 'xxx kmax * vmax            = ', kmax * vmax
+       write(*,*) 'xxx ADM_kall * COMM_varmax = ', ADM_kall * COMM_varmax
        call PRC_MPIstop
     endif
 
@@ -2153,8 +2152,8 @@ contains
     integer  :: i, j, k, l, ij, rgnid, prc
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ TEST start'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ TEST start'
 
     var   (:,:,:,:) = -999.D0
     var_pl(:,:,:,:) = -999.D0
@@ -2197,15 +2196,15 @@ contains
        enddo
     enddo
 
-    write(IO_FID_LOG,*) "##### (prc,rgnid) #####"
+    if( IO_L ) write(IO_FID_LOG,*) "##### (prc,rgnid) #####"
     do l  = 1, ADM_lall
     do k = ADM_kmin, ADM_kmin
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
        write(IO_FID_LOG,'(A9)',advance='no') "        |"
        do i = 1, ADM_gall_1d
           write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
 
        do j = ADM_gall_1d, 1, -1
           write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
@@ -2214,38 +2213,38 @@ contains
              write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                         '(',int(var(ij,k,l,1)),',',int(var(ij,k,l,2)),')'
           enddo
-          write(IO_FID_LOG,*)
+          if( IO_L ) write(IO_FID_LOG,*)
        enddo
     enddo
     enddo
 
     do l  = 1, ADM_lall_pl
     do k = ADM_kmin, ADM_kmin
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
        write(IO_FID_LOG,'(A9)',advance='no') "        |"
        do i = 1, ADM_gall_pl
           write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
 
        write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
        do ij = 1, ADM_gall_pl
           write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                      '(',int(var_pl(ij,k,l,1)),',',int(var_pl(ij,k,l,2)),')'
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
     enddo
     enddo
 
-    write(IO_FID_LOG,*) "##### (i,j) #####"
+    if( IO_L ) write(IO_FID_LOG,*) "##### (i,j) #####"
     do l  = 1, ADM_lall
     do k = ADM_kmin, ADM_kmin
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
        write(IO_FID_LOG,'(A9)',advance='no') "        |"
        do i = 1, ADM_gall_1d
           write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
 
        do j = ADM_gall_1d, 1, -1
           write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
@@ -2254,45 +2253,45 @@ contains
              write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                         '(',int(var(ij,k,l,3)),',',int(var(ij,k,l,4)),')'
           enddo
-          write(IO_FID_LOG,*)
+          if( IO_L ) write(IO_FID_LOG,*)
        enddo
     enddo
     enddo
 
     do l  = 1, ADM_lall_pl
     do k = ADM_kmin, ADM_kmin
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
        write(IO_FID_LOG,'(A9)',advance='no') "        |"
        do i = 1, ADM_gall_pl
           write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
 
        write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
        do ij = 1, ADM_gall_pl
           write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                      '(',int(var_pl(ij,k,l,3)),',',int(var_pl(ij,k,l,4)),')'
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
     enddo
     enddo
 
 
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Communication start'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Communication start'
 
     call COMM_data_transfer( var(:,:,:,:), var_pl(:,:,:,:) )
 
-    write(IO_FID_LOG,*) "##### (prc,rgnid) #####"
+    if( IO_L ) write(IO_FID_LOG,*) "##### (prc,rgnid) #####"
     do l  = 1, ADM_lall
     do k = ADM_kmin, ADM_kmin
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
        write(IO_FID_LOG,'(A9)',advance='no') "        |"
        do i = 1, ADM_gall_1d
           write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
 
        do j = ADM_gall_1d, 1, -1
           write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
@@ -2301,38 +2300,38 @@ contains
              write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                         '(',int(var(ij,k,l,1)),',',int(var(ij,k,l,2)),')'
           enddo
-          write(IO_FID_LOG,*)
+          if( IO_L ) write(IO_FID_LOG,*)
        enddo
     enddo
     enddo
 
     do l  = 1, ADM_lall_pl
     do k = ADM_kmin, ADM_kmin
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
        write(IO_FID_LOG,'(A9)',advance='no') "        |"
        do i = 1, ADM_gall_pl
           write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
 
        write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
        do ij = 1, ADM_gall_pl
           write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                      '(',int(var_pl(ij,k,l,1)),',',int(var_pl(ij,k,l,2)),')'
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
     enddo
     enddo
 
-    write(IO_FID_LOG,*) "##### (i,j) #####"
+    if( IO_L ) write(IO_FID_LOG,*) "##### (i,j) #####"
     do l  = 1, ADM_lall
     do k = ADM_kmin, ADM_kmin
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
        write(IO_FID_LOG,'(A9)',advance='no') "        |"
        do i = 1, ADM_gall_1d
           write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
 
        do j = ADM_gall_1d, 1, -1
           write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
@@ -2341,26 +2340,26 @@ contains
              write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                         '(',int(var(ij,k,l,3)),',',int(var(ij,k,l,4)),')'
           enddo
-          write(IO_FID_LOG,*)
+          if( IO_L ) write(IO_FID_LOG,*)
        enddo
     enddo
     enddo
 
     do l  = 1, ADM_lall_pl
     do k = ADM_kmin, ADM_kmin
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
        write(IO_FID_LOG,'(A9)',advance='no') "        |"
        do i = 1, ADM_gall_pl
           write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
 
        write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
        do ij = 1, ADM_gall_pl
           write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                      '(',int(var_pl(ij,k,l,3)),',',int(var_pl(ij,k,l,4)),')'
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
     enddo
     enddo
 
@@ -2398,20 +2397,20 @@ contains
 
     enddo
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ pole fill start'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ pole fill start'
 
     call COMM_var( var(:,:,:,:), var_pl(:,:,:,:), ADM_kall, 4 )
 
-    write(IO_FID_LOG,*) "##### (prc,rgnid) #####"
+    if( IO_L ) write(IO_FID_LOG,*) "##### (prc,rgnid) #####"
     do l  = 1, ADM_lall
     do k = ADM_kmin, ADM_kmin
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
        write(IO_FID_LOG,'(A9)',advance='no') "        |"
        do i = 1, ADM_gall_1d
           write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
 
        do j = ADM_gall_1d, 1, -1
           write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
@@ -2420,38 +2419,38 @@ contains
              write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                         '(',int(var(ij,k,l,1)),',',int(var(ij,k,l,2)),')'
           enddo
-          write(IO_FID_LOG,*)
+          if( IO_L ) write(IO_FID_LOG,*)
        enddo
     enddo
     enddo
 
     do l  = 1, ADM_lall_pl
     do k = ADM_kmin, ADM_kmin
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
        write(IO_FID_LOG,'(A9)',advance='no') "        |"
        do i = 1, ADM_gall_pl
           write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
 
        write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
        do ij = 1, ADM_gall_pl
           write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                      '(',int(var_pl(ij,k,l,1)),',',int(var_pl(ij,k,l,2)),')'
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
     enddo
     enddo
 
-    write(IO_FID_LOG,*) "##### (i,j) #####"
+    if( IO_L ) write(IO_FID_LOG,*) "##### (i,j) #####"
     do l  = 1, ADM_lall
     do k = ADM_kmin, ADM_kmin
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
        write(IO_FID_LOG,'(A9)',advance='no') "        |"
        do i = 1, ADM_gall_1d
           write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
 
        do j = ADM_gall_1d, 1, -1
           write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
@@ -2460,26 +2459,26 @@ contains
              write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                         '(',int(var(ij,k,l,3)),',',int(var(ij,k,l,4)),')'
           enddo
-          write(IO_FID_LOG,*)
+          if( IO_L ) write(IO_FID_LOG,*)
        enddo
     enddo
     enddo
 
     do l  = 1, ADM_lall_pl
     do k = ADM_kmin, ADM_kmin
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
        write(IO_FID_LOG,'(A9)',advance='no') "        |"
        do i = 1, ADM_gall_pl
           write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
 
        write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
        do ij = 1, ADM_gall_pl
           write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                      '(',int(var_pl(ij,k,l,3)),',',int(var_pl(ij,k,l,4)),')'
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
     enddo
     enddo
 

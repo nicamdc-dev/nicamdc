@@ -4,7 +4,7 @@
 !! @par Description
 !!         This module contains the tools to convert between icosaheral grid and lat-lon grid
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_latlon
@@ -157,6 +157,7 @@ contains
   end subroutine LATLON_ico_setup
 
   !-----------------------------------------------------------------------------
+  !> Setup
   subroutine LATLON_setup( output_dirname )
     use mod_process, only: &
        PRC_LOCAL_COMM_WORLD, &
@@ -204,18 +205,17 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[latlon]/Category[common share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[latlon]/Category[common share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=LATLONPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** LATLONPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** LATLONPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist LATLONPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist LATLONPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist LATLONPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=LATLONPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=LATLONPARAM)
 
     latmax = latmax_deg * D2R
     latmin = latmin_deg * D2R
@@ -248,26 +248,26 @@ contains
     checkmap   (:,:) = 0.0
     checkmapsum(:,:) = 0.0
 
-    write(IO_FID_LOG,*) '====== Lat-Lon grid info. ======'
+    if( IO_L ) write(IO_FID_LOG,*) '====== Lat-Lon grid info. ======'
     if ( latlon_type == 'EQUIDIST' ) then
-       write(IO_FID_LOG,*) '--- Latitude  type   : Equal distance'
+       if( IO_L ) write(IO_FID_LOG,*) '--- Latitude  type   : Equal distance'
     elseif( latlon_type == 'GAUSSIAN' ) then
-       write(IO_FID_LOG,*) '--- Latitude  type   : Gaussian'
+       if( IO_L ) write(IO_FID_LOG,*) '--- Latitude  type   : Gaussian'
     endif
     if ( lon_offset ) then
-       write(IO_FID_LOG,*) '--- Longitude offset : yes'
+       if( IO_L ) write(IO_FID_LOG,*) '--- Longitude offset : yes'
     else
-       write(IO_FID_LOG,*) '--- Longitude offset : no'
+       if( IO_L ) write(IO_FID_LOG,*) '--- Longitude offset : no'
     endif
-    write(IO_FID_LOG,*)    '--- # of Latitude    :', jmax
-    write(IO_FID_LOG,*)    '--- # of Longitude   :', imax
-    write(IO_FID_LOG,*)    '--- Latitude  range  :', lat(1)/D2R,' - ', lat(jmax)/D2R
-    write(IO_FID_LOG,*)    '--- Longitude range  :', lon(1)/D2R,' - ', lon(imax)/D2R
+    if( IO_L ) write(IO_FID_LOG,*)    '--- # of Latitude    :', jmax
+    if( IO_L ) write(IO_FID_LOG,*)    '--- # of Longitude   :', imax
+    if( IO_L ) write(IO_FID_LOG,*)    '--- Latitude  range  :', lat(1)/D2R,' - ', lat(jmax)/D2R
+    if( IO_L ) write(IO_FID_LOG,*)    '--- Longitude range  :', lon(1)/D2R,' - ', lon(imax)/D2R
 
     allocate( nmax_llgrid_rgn(ADM_lall) )
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '*** Start counting grid.'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '*** Start counting grid.'
 
     ! count lat-lon number
     call mkrelmap_ico2ll( 'GET_NUM' )
@@ -282,19 +282,19 @@ contains
                            ierr                  )
     endif
 
-    write(IO_FID_LOG,*) '# of managing llgrid'
+    if( IO_L ) write(IO_FID_LOG,*) '# of managing llgrid'
     do l = 1, ADM_lall
        rgnid = RGNMNG_l2r(l)
 
-       write(IO_FID_LOG,*) 'region=', rgnid, ', llgrid=', nmax_llgrid_rgn(l)
+       if( IO_L ) write(IO_FID_LOG,*) 'region=', rgnid, ', llgrid=', nmax_llgrid_rgn(l)
 
        if ( debug ) then
           do j = 1, jmax
           do i = 1, imax
              if    ( checkmapsum(i,j) >  1.0 ) then
-                write(IO_FID_LOG,*) 'dupicate! (i,j)=', i, j, checkmapsum(i,j)
+                if( IO_L ) write(IO_FID_LOG,*) 'dupicate! (i,j)=', i, j, checkmapsum(i,j)
              elseif( checkmapsum(i,j) == 0.0 ) then
-                write(IO_FID_LOG,*) 'missed!   (i,j)=', i, j, checkmapsum(i,j)
+                if( IO_L ) write(IO_FID_LOG,*) 'missed!   (i,j)=', i, j, checkmapsum(i,j)
              endif
           enddo
           enddo
@@ -327,12 +327,12 @@ contains
 
     globalsum = sum( recvbuf(:) )
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) 'imax x jmax                    = ', imax*jmax
-    write(IO_FID_LOG,*) 'global total of counted llgrid = ', globalsum
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) 'imax x jmax                    = ', imax*jmax
+    if( IO_L ) write(IO_FID_LOG,*) 'global total of counted llgrid = ', globalsum
     if ( globalsum /= imax*jmax ) then
-       write(*,         *) 'counted llgrid does not match!'
-       write(IO_FID_LOG,*) 'counted llgrid does not match!'
+       write(*,*) 'counted llgrid does not match!'
+       if( IO_L ) write(IO_FID_LOG,*) 'counted llgrid does not match!'
 !       call PRC_MPIstop
     endif
 
@@ -347,13 +347,13 @@ contains
     allocate( w2       (nmax_llgrid) )
     allocate( w3       (nmax_llgrid) )
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '*** Start calc relation map.'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '*** Start calc relation map.'
 
     ! calc relation map
     call mkrelmap_ico2ll( 'SET_INDEX' )
 
-    write(IO_FID_LOG,*) '*** OK.'
+    if( IO_L ) write(IO_FID_LOG,*) '*** OK.'
 
     ! output relation map
     if ( debug ) then
@@ -363,7 +363,7 @@ contains
 
           do n = nstart, nend
              if ( abs(w1(n)+w2(n)+w3(n)-1.0_RP) > 1.E-15_RP ) then
-                write(IO_FID_LOG,'(A,2I6,E30.20)') '(lat,lon,area)=', &
+                if( IO_L ) write(IO_FID_LOG,'(A,2I6,E30.20)') '(lat,lon,area)=', &
                 lat_index(n),lon_index(n),w1(n)+w2(n)+w3(n)
              endif
           enddo
@@ -656,10 +656,10 @@ contains
                          if (      area1 * 0.0_RP /= 0.0_RP &
                               .OR. area2 * 0.0_RP /= 0.0_RP &
                               .OR. area3 * 0.0_RP /= 0.0_RP ) then ! Nan?
-                            write(*         ,*) 'Nan! (i,j,ij,t,l)=', i,j,ij,t,l
-                            write(*         ,*) '(area1,area2,area3)=', area1,area2,area3
-                            write(IO_FID_LOG,*) 'Nan! (i,j,ij,t,l)=', i,j,ij,t,l
-                            write(IO_FID_LOG,*) '(area1,area2,area3)=', area1,area2,area3
+                            write(*,*)                     'Nan! (i,j,ij,t,l)=', i,j,ij,t,l
+                            write(*,*)                     '(area1,area2,area3)=', area1,area2,area3
+                            if( IO_L ) write(IO_FID_LOG,*) 'Nan! (i,j,ij,t,l)=', i,j,ij,t,l
+                            if( IO_L ) write(IO_FID_LOG,*) '(area1,area2,area3)=', area1,area2,area3
                             call PRC_MPIstop
                          endif
 
@@ -872,7 +872,7 @@ contains
                        IO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
 
     else
-       write(IO_FID_LOG,*) 'Invalid io_mode!'
+       if( IO_L ) write(IO_FID_LOG,*) 'Invalid io_mode!'
        call PRC_MPIstop
     endif
 

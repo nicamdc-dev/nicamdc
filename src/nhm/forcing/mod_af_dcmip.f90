@@ -4,7 +4,7 @@
 !! @par Description
 !!          This module contains subroutines for forcing term of DCMIP2016 physics
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_af_dcmip
@@ -88,23 +88,22 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[af_dcmip]/Category[nhm forcing]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[af_dcmip]/Category[nhm forcing]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=FORCING_DCMIP_PARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** FORCING_DCMIP_PARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** FORCING_DCMIP_PARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist FORCING_DCMIP_PARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist FORCING_DCMIP_PARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist FORCING_DCMIP_PARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=FORCING_DCMIP_PARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=FORCING_DCMIP_PARAM)
 
     ! overwrite setting
     if ( SET_RJ2012 ) then
 
-       write(IO_FID_LOG,*) '*** Force setting of Reed and Jablonowski (2012)'
+       if( IO_L ) write(IO_FID_LOG,*) '*** Force setting of Reed and Jablonowski (2012)'
        USE_Kessler         = .false.
        USE_SimpleMicrophys = .true.
        SM_Latdepend_SST    = .true.
@@ -113,7 +112,7 @@ contains
 
     elseif( SET_DCMIP2016_11 ) then
 
-       write(IO_FID_LOG,*) '*** Force setting of DCMIP2016 Case 1-1 (Moist baroclinic wave with terminator chemistry)'
+       if( IO_L ) write(IO_FID_LOG,*) '*** Force setting of DCMIP2016 Case 1-1 (Moist baroclinic wave with terminator chemistry)'
        USE_Kessler         = .true.
        USE_SimpleMicrophys = .true.
        SM_Latdepend_SST    = .true.
@@ -121,25 +120,25 @@ contains
        USE_ToyChemistry    = .true.
 
        if ( SET_DCMIP2016_DRY ) then
-          write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: DRY condition'
+          if( IO_L ) write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: DRY condition'
           USE_Kessler         = .false.
        endif
 
        if ( SET_DCMIP2016_LSC ) then
-          write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
+          if( IO_L ) write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
           USE_Kessler         = .false.
           SM_LargeScaleCond   = .true.
        endif
 
        if ( SET_DCMIP2016_NOSST ) then
-          write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: Only Precipitation'
+          if( IO_L ) write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: Only Precipitation'
           USE_SimpleMicrophys = .false.
           SM_Latdepend_SST    = .false.
        endif
 
     elseif( SET_DCMIP2016_12 ) then
 
-       write(IO_FID_LOG,*) '*** Force setting of DCMIP2016 Case 1-2 (Idealized tropical cyclone)'
+       if( IO_L ) write(IO_FID_LOG,*) '*** Force setting of DCMIP2016 Case 1-2 (Idealized tropical cyclone)'
        USE_Kessler         = .true.
        USE_SimpleMicrophys = .true.
        SM_Latdepend_SST    = .true.
@@ -147,25 +146,25 @@ contains
        USE_ToyChemistry    = .false.
 
        if ( SET_DCMIP2016_DRY ) then
-          write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: DRY condition'
+          if( IO_L ) write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: DRY condition'
           USE_Kessler         = .false.
        endif
 
        if ( SET_DCMIP2016_LSC ) then
-          write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
+          if( IO_L ) write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
           USE_Kessler         = .false.
           SM_LargeScaleCond   = .true.
        endif
 
        if ( SET_DCMIP2016_NOSST ) then
-          write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: Only Precipitation'
+          if( IO_L ) write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: Only Precipitation'
           USE_SimpleMicrophys = .false.
           SM_Latdepend_SST    = .false.
        endif
 
     elseif( SET_DCMIP2016_13 ) then
 
-       write(IO_FID_LOG,*) '*** Force setting of DCMIP2016 Case 1-3 (Mesoscale storm)'
+       if( IO_L ) write(IO_FID_LOG,*) '*** Force setting of DCMIP2016 Case 1-3 (Mesoscale storm)'
        USE_Kessler         = .true.
        USE_SimpleMicrophys = .false.
        SM_Latdepend_SST    = .false.
@@ -174,12 +173,12 @@ contains
        USE_ToyChemistry    = .false.
 
        if ( SET_DCMIP2016_DRY ) then
-          write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: DRY condition'
+          if( IO_L ) write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: DRY condition'
           USE_Kessler         = .false.
        endif
 
        if ( SET_DCMIP2016_LSC ) then
-          write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
+          if( IO_L ) write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
           USE_Kessler         = .false.
           USE_SimpleMicrophys = .true.
           SM_LargeScaleCond   = .true.
@@ -187,7 +186,7 @@ contains
 
     elseif( SET_DCMIP2016_21 ) then
 
-       write(IO_FID_LOG,*) '*** Force setting of DCMIP2016 Case 2-1 (Moist Held-Suarez test)'
+       if( IO_L ) write(IO_FID_LOG,*) '*** Force setting of DCMIP2016 Case 2-1 (Moist Held-Suarez test)'
        USE_Kessler         = .true.
        USE_SimpleMicrophys = .true.
        SM_Latdepend_SST    = .false.
@@ -196,30 +195,34 @@ contains
        USE_ToyChemistry    = .false.
        USE_HeldSuarez      = .true.
 
+       if ( SET_DCMIP2016_LSC ) then
+          if( IO_L ) write(IO_FID_LOG,*) '*** Force setting of DCMIP2016: USE SM_LargeScaleCond'
+          USE_Kessler         = .false.
+          SM_LargeScaleCond   = .true.
+       endif
+
        call AF_heldsuarez_init( moist_case = .true. )
 
     endif
 
-    write(IO_FID_LOG,*) '*** Final Settings of FORCING_DCMIP_PARAM'
-    write(IO_FID_LOG,*) '+ USE_Kessler         : ', USE_Kessler
-    write(IO_FID_LOG,*) '+ USE_SimpleMicrophys : ', USE_SimpleMicrophys
-    write(IO_FID_LOG,*) '+ SM_LargeScaleCond   : ', SM_LargeScaleCond
-    write(IO_FID_LOG,*) '+ SM_Latdepend_SST    : ', SM_Latdepend_SST
-    write(IO_FID_LOG,*) '+ SM_PBL_Bryan        : ', SM_PBL_Bryan
-    write(IO_FID_LOG,*) '+ USE_ToyChemistry    : ', USE_ToyChemistry
-    write(IO_FID_LOG,*) '+ USE_HeldSuarez      : ', USE_HeldSuarez
+    if( IO_L ) write(IO_FID_LOG,*) '*** Final Settings of FORCING_DCMIP_PARAM'
+    if( IO_L ) write(IO_FID_LOG,*) '+ USE_Kessler         : ', USE_Kessler
+    if( IO_L ) write(IO_FID_LOG,*) '+ USE_SimpleMicrophys : ', USE_SimpleMicrophys
+    if( IO_L ) write(IO_FID_LOG,*) '+ SM_LargeScaleCond   : ', SM_LargeScaleCond
+    if( IO_L ) write(IO_FID_LOG,*) '+ SM_Latdepend_SST    : ', SM_Latdepend_SST
+    if( IO_L ) write(IO_FID_LOG,*) '+ SM_PBL_Bryan        : ', SM_PBL_Bryan
+    if( IO_L ) write(IO_FID_LOG,*) '+ USE_ToyChemistry    : ', USE_ToyChemistry
+    if( IO_L ) write(IO_FID_LOG,*) '+ USE_HeldSuarez      : ', USE_HeldSuarez
 
     ! initial value of the tracer is set in mod_prgvar - mod_ideal_init
     if ( USE_ToyChemistry ) then
        if ( CHEM_TYPE == 'PASSIVE' ) then
           if ( NCHEM_MAX /= 2 ) then
-             write(*         ,*) 'xxx Not appropriate number of passive tracer. STOP.', NCHEM_MAX
-             write(IO_FID_LOG,*) 'xxx Not appropriate number of passive tracer. STOP.', NCHEM_MAX
+             write(*,*) 'xxx Not appropriate number of passive tracer. STOP.', NCHEM_MAX
              call PRC_MPIstop
           endif
        else
-          write(*         ,*) 'xxx CHEM_TYPE must be set to PASSIVE. STOP.', trim(CHEM_TYPE)
-          write(IO_FID_LOG,*) 'xxx CHEM_TYPE must be set to PASSIVE. STOP.', trim(CHEM_TYPE)
+          write(*,*) 'xxx CHEM_TYPE must be set to PASSIVE. STOP.', trim(CHEM_TYPE)
           call PRC_MPIstop
        endif
     endif
@@ -276,6 +279,8 @@ contains
        NCHEM_STR, &
        NCHEM_END, &
        CVW
+    use mod_simple_physics, only: &
+       simple_physics
     use mod_af_heldsuarez, only: &
        AF_heldsuarez
     use Terminator, only: &

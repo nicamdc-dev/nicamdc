@@ -4,7 +4,7 @@
 !! @par Description
 !!          This module is for the artificial forcing
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_forcing_driver
@@ -76,20 +76,19 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[forcing]/Category[nhm]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[forcing]/Category[nhm]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=FORCING_PARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** FORCING_PARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** FORCING_PARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist FORCING_PARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist FORCING_PARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist FORCING_PARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=FORCING_PARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=FORCING_PARAM)
 
-    write(IO_FID_LOG,*) '+++ Artificial forcing type: ', trim(AF_TYPE)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Artificial forcing type: ', trim(AF_TYPE)
     select case(AF_TYPE)
     case('NONE')
        !--- do nothing
@@ -98,7 +97,7 @@ contains
     case('DCMIP')
        call AF_dcmip_init
     case default
-       write(IO_FID_LOG,*) 'xxx unsupported forcing type! STOP.'
+       write(*,*) 'xxx unsupported forcing type! STOP.'
        call PRC_MPIstop
     end select
 

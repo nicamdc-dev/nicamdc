@@ -4,7 +4,7 @@
 !! @par Description
 !!         This module contains subroutines for numerical smoothings or filters
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_numfilter
@@ -192,18 +192,17 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[numfilter]/Category[nhm dynamics]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[numfilter]/Category[nhm dynamics]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=NUMFILTERPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** NUMFILTERPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** NUMFILTERPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist NUMFILTERPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NUMFILTERPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist NUMFILTERPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=NUMFILTERPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=NUMFILTERPARAM)
 
     global_area = 4.0_RP * PI * RADIUS * RADIUS
     global_grid = 10.0_RP * 4.0_RP**ADM_GLEVEL
@@ -254,9 +253,8 @@ contains
     divdamp_deep_factor  (:) = 0.0_RP
 
     if ( deep_effect ) then
-       write(IO_FID_LOG,*) 'xxx this feature is tentatively suspended. stop.'
+       write(*,*) 'xxx [numfilter_setup] deep_effect feature is tentatively suspended. stop.'
        call PRC_MPIstop
-
        do k = 1, ADM_kall
           Kh_deep_factor       (k) = ( (GRD_gz (k)+RADIUS) / RADIUS )**(2*lap_order_hdiff)
           Kh_deep_factor_h     (k) = ( (GRD_gzh(k)+RADIUS) / RADIUS )**(2*lap_order_hdiff)
@@ -307,23 +305,23 @@ contains
 
     rayleigh_coef_h(:) = alpha * fact(:)
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '-----   Rayleigh damping   -----'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '-----   Rayleigh damping   -----'
 
     if ( NUMFILTER_DOrayleigh ) then
        if ( debug ) then
-          write(IO_FID_LOG,*) '    z[m]      ray.coef   e-time(2DX)'
+          if( IO_L ) write(IO_FID_LOG,*) '    z[m]      ray.coef   e-time(2DX)'
           k = ADM_kmax + 1
-          write(IO_FID_LOG,'(1x,F8.2,3E14.6)') GRD_gzh(k), rayleigh_coef_h(k), 1.0_RP/( rayleigh_coef_h(k)+EPS )
+          if( IO_L ) write(IO_FID_LOG,'(1x,F8.2,3E14.6)') GRD_gzh(k), rayleigh_coef_h(k), 1.0_RP/( rayleigh_coef_h(k)+EPS )
           do k = ADM_kmax, ADM_kmin, -1
-             write(IO_FID_LOG,'(1x,F8.2,3E14.6)') GRD_gz (k), rayleigh_coef  (k), 1.0_RP/( rayleigh_coef  (k)+EPS )
-             write(IO_FID_LOG,'(1x,F8.2,3E14.6)') GRD_gzh(k), rayleigh_coef_h(k), 1.0_RP/( rayleigh_coef_h(k)+EPS )
+             if( IO_L ) write(IO_FID_LOG,'(1x,F8.2,3E14.6)') GRD_gz (k), rayleigh_coef  (k), 1.0_RP/( rayleigh_coef  (k)+EPS )
+             if( IO_L ) write(IO_FID_LOG,'(1x,F8.2,3E14.6)') GRD_gzh(k), rayleigh_coef_h(k), 1.0_RP/( rayleigh_coef_h(k)+EPS )
           enddo
        else
-          write(IO_FID_LOG,*) '=> used.'
+          if( IO_L ) write(IO_FID_LOG,*) '=> used.'
        endif
     else
-       write(IO_FID_LOG,*) '=> not used.'
+       if( IO_L ) write(IO_FID_LOG,*) '=> not used.'
     endif
 
     return
@@ -470,8 +468,8 @@ contains
 
     endif
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '-----   Horizontal numerical diffusion   -----'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '-----   Horizontal numerical diffusion   -----'
     if ( NUMFILTER_DOhorizontaldiff ) then
        if ( .NOT. hdiff_nonlinear ) then
           if ( debug ) then
@@ -491,22 +489,22 @@ contains
                 enddo
              endif
 
-             write(IO_FID_LOG,*) '    z[m]      max coef      min coef  max eft(2DX)  min eft(2DX)'
+             if( IO_L ) write(IO_FID_LOG,*) '    z[m]      max coef      min coef  max eft(2DX)  min eft(2DX)'
              do k = ADM_kmax, ADM_kmin, -1
                 eft_max  = GTL_max_k( e_fold_time, e_fold_time_pl, k )
                 eft_min  = GTL_min_k( e_fold_time, e_fold_time_pl, k )
                 coef_max = GTL_max_k( Kh_coef, Kh_coef_pl, k )
                 coef_min = GTL_min_k( Kh_coef, Kh_coef_pl, k )
-                write(IO_FID_LOG,'(1x,F8.2,4E14.6)') GRD_gz(k), coef_min, coef_max, eft_max, eft_min
+                if( IO_L ) write(IO_FID_LOG,'(1x,F8.2,4E14.6)') GRD_gz(k), coef_min, coef_max, eft_max, eft_min
              enddo
           else
-             write(IO_FID_LOG,*) '=> used.'
+             if( IO_L ) write(IO_FID_LOG,*) '=> used.'
           endif
        else
-          write(IO_FID_LOG,*) '=> Nonlinear filter is used.'
+          if( IO_L ) write(IO_FID_LOG,*) '=> Nonlinear filter is used.'
        endif
     else
-       write(IO_FID_LOG,*) '=> not used.'
+       if( IO_L ) write(IO_FID_LOG,*) '=> not used.'
     endif
 
 
@@ -593,8 +591,8 @@ contains
        enddo
     endif
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '-----   Horizontal numerical diffusion (1st order laplacian)   -----'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '-----   Horizontal numerical diffusion (1st order laplacian)   -----'
     if ( NUMFILTER_DOhorizontaldiff_lap1 ) then
        if ( debug ) then
           do l = 1, ADM_lall
@@ -611,19 +609,19 @@ contains
              enddo
           endif
 
-          write(IO_FID_LOG,*) '    z[m]      max coef      min coef  max eft(2DX)  min eft(2DX)'
+          if( IO_L ) write(IO_FID_LOG,*) '    z[m]      max coef      min coef  max eft(2DX)  min eft(2DX)'
           do k = ADM_kmax, ADM_kmin, -1
              eft_max  = GTL_max_k( e_fold_time,  e_fold_time_pl,  k )
              eft_min  = GTL_min_k( e_fold_time,  e_fold_time_pl,  k )
              coef_max = GTL_max_k( Kh_coef_lap1, Kh_coef_lap1_pl, k )
              coef_min = GTL_min_k( Kh_coef_lap1, Kh_coef_lap1_pl, k )
-             write(IO_FID_LOG,'(1x,F8.2,4E14.6)') GRD_gz(k), coef_min, coef_max, eft_max, eft_min
+             if( IO_L ) write(IO_FID_LOG,'(1x,F8.2,4E14.6)') GRD_gz(k), coef_min, coef_max, eft_max, eft_min
           enddo
        else
-          write(IO_FID_LOG,*) '=> used.'
+          if( IO_L ) write(IO_FID_LOG,*) '=> used.'
        endif
     else
-       write(IO_FID_LOG,*) '=> not used.'
+       if( IO_L ) write(IO_FID_LOG,*) '=> not used.'
     endif
 
     return
@@ -669,22 +667,22 @@ contains
     Kv_coef  (:) = gamma * GRD_dgz (:)**6 / large_step_dt
     Kv_coef_h(:) = gamma * GRD_dgzh(:)**6 / large_step_dt
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '-----   Vertical numerical diffusion   -----'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '-----   Vertical numerical diffusion   -----'
     if ( NUMFILTER_DOverticaldiff ) then
        if ( debug ) then
-          write(IO_FID_LOG,*) '    z[m]          coef   e-time(2DX)'
+          if( IO_L ) write(IO_FID_LOG,*) '    z[m]          coef   e-time(2DX)'
           k = ADM_kmax + 1
-          write(IO_FID_LOG,'(1x,F8.2,3E14.6)') GRD_gzh(k), Kv_coef_h(k), (GRD_dgzh(k)/PI)**6 / ( Kv_coef_h(k)+EPS )
+          if( IO_L ) write(IO_FID_LOG,'(1x,F8.2,3E14.6)') GRD_gzh(k), Kv_coef_h(k), (GRD_dgzh(k)/PI)**6 / ( Kv_coef_h(k)+EPS )
           do k = ADM_kmax, ADM_kmin, -1
-             write(IO_FID_LOG,'(1x,F8.2,3E14.6)') GRD_gzh(k), Kv_coef_h(k), (GRD_dgzh(k)/PI)**6 / ( Kv_coef_h(k)+EPS )
-             write(IO_FID_LOG,'(1x,F8.2,3E14.6)') GRD_gz (k), Kv_coef  (k), (GRD_dgz (k)/PI)**6 / ( Kv_coef  (k)+EPS )
+             if( IO_L ) write(IO_FID_LOG,'(1x,F8.2,3E14.6)') GRD_gzh(k), Kv_coef_h(k), (GRD_dgzh(k)/PI)**6 / ( Kv_coef_h(k)+EPS )
+             if( IO_L ) write(IO_FID_LOG,'(1x,F8.2,3E14.6)') GRD_gz (k), Kv_coef  (k), (GRD_dgz (k)/PI)**6 / ( Kv_coef  (k)+EPS )
           enddo
        else
-          write(IO_FID_LOG,*) '=> used.'
+          if( IO_L ) write(IO_FID_LOG,*) '=> used.'
        endif
     else
-       write(IO_FID_LOG,*) '=> not used.'
+       if( IO_L ) write(IO_FID_LOG,*) '=> not used.'
     endif
 
     return
@@ -809,8 +807,8 @@ contains
        divdamp_coef(:,:,:) = max( divdamp_coef(:,:,:), Kh_coef_minlim )
     endif
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '-----   3D divergence damping   -----'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '-----   3D divergence damping   -----'
     if ( NUMFILTER_DOdivdamp ) then
        if ( debug ) then
           do l = 1, ADM_lall
@@ -831,19 +829,19 @@ contains
              enddo
           endif
 
-          write(IO_FID_LOG,*) '    z[m]      max coef      min coef  max eft(2DX)  min eft(2DX)'
+          if( IO_L ) write(IO_FID_LOG,*) '    z[m]      max coef      min coef  max eft(2DX)  min eft(2DX)'
           do k = ADM_kmax, ADM_kmin, -1
              eft_max  = GTL_max_k( e_fold_time,  e_fold_time_pl,  k )
              eft_min  = GTL_min_k( e_fold_time,  e_fold_time_pl,  k )
              coef_max = GTL_max_k( divdamp_coef, divdamp_coef_pl, k )
              coef_min = GTL_min_k( divdamp_coef, divdamp_coef_pl, k )
-             write(IO_FID_LOG,'(1x,F8.2,4E14.6)') GRD_gz(k), coef_min, coef_max, eft_max, eft_min
+             if( IO_L ) write(IO_FID_LOG,'(1x,F8.2,4E14.6)') GRD_gz(k), coef_min, coef_max, eft_max, eft_min
           enddo
        else
-          write(IO_FID_LOG,*) '=> used.'
+          if( IO_L ) write(IO_FID_LOG,*) '=> used.'
        endif
     else
-       write(IO_FID_LOG,*) '=> not used.'
+       if( IO_L ) write(IO_FID_LOG,*) '=> not used.'
     endif
 
     if( alpha_v > 0.0_RP ) NUMFILTER_DOdivdamp_v = .true.
@@ -984,8 +982,8 @@ contains
        enddo
     endif
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '-----   2D divergence damping   -----'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '-----   2D divergence damping   -----'
     if ( NUMFILTER_DOdivdamp_2d ) then
        if ( debug ) then
           do l = 1, ADM_lall
@@ -1006,19 +1004,19 @@ contains
              e_fold_time_pl(:,:,:) = 0.0_RP
           endif
 
-          write(IO_FID_LOG,*) '    z[m]      max coef      min coef  max eft(2DX)  min eft(2DX)'
+          if( IO_L ) write(IO_FID_LOG,*) '    z[m]      max coef      min coef  max eft(2DX)  min eft(2DX)'
           do k = ADM_kmax, ADM_kmin, -1
              eft_max  = GTL_max_k( e_fold_time,  e_fold_time_pl,  k )
              eft_min  = GTL_min_k( e_fold_time,  e_fold_time_pl,  k )
              coef_max = GTL_max_k( divdamp_coef, divdamp_coef_pl, k )
              coef_min = GTL_min_k( divdamp_coef, divdamp_coef_pl, k )
-             write(IO_FID_LOG,'(1x,F8.2,4E14.6)') GRD_gz(k), coef_min, coef_max, eft_max, eft_min
+             if( IO_L ) write(IO_FID_LOG,'(1x,F8.2,4E14.6)') GRD_gz(k), coef_min, coef_max, eft_max, eft_min
           enddo
        else
-          write(IO_FID_LOG,*) '=> used.'
+          if( IO_L ) write(IO_FID_LOG,*) '=> used.'
        endif
     else
-       write(IO_FID_LOG,*) '=> not used.'
+       if( IO_L ) write(IO_FID_LOG,*) '=> not used.'
     endif
 
     return

@@ -28,7 +28,7 @@ program prg_mkllmap
      ADM_proc_stop,   &
      ADM_proc_finish, &
      ADM_setup,       &
-     ADM_LOG_FID,     &
+     IO_FID_LOG,     &
      ADM_CTL_FID,     &
      ADM_MAXFNAME
   use mod_fio, only: &
@@ -73,18 +73,17 @@ program prg_mkllmap
   call GRD_setup
 
   !--- read parameters
-  write(ADM_LOG_FID,*)
-  write(ADM_LOG_FID,*) '+++ Program[mkllmap]/Category[tool]'
+  if( IO_L ) write(IO_FID_LOG,*)
+  write(IO_FID_LOG,*) '+++ Program[mkllmap]/Category[tool]'
   rewind(ADM_CTL_FID)
   read(ADM_CTL_FID,nml=MKLLMAP_PARAM,iostat=ierr)
   if ( ierr < 0 ) then
-     write(ADM_LOG_FID,*) '*** MKLLMAP_PARAM is not specified. use default.'
+     if( IO_L ) write(IO_FID_LOG,*) '*** MKLLMAP_PARAM is not specified. use default.'
   elseif( ierr > 0 ) then
-     write(*,          *) 'xxx Not appropriate names in namelist MKLLMAP_PARAM. STOP.'
-     write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist MKLLMAP_PARAM. STOP.'
+     write(*,*) 'xxx Not appropriate names in namelist MKLLMAP_PARAM. STOP.'
      call ADM_proc_stop
   endif
-  write(ADM_LOG_FID,nml=MKLLMAP_PARAM)
+  if( IO_NML ) write(IO_FID_LOG,nml=MKLLMAP_PARAM)
 
   call LATLON_ico_setup
 

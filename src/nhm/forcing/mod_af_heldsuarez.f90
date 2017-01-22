@@ -4,7 +4,7 @@
 !! @par Description
 !!          This module contains subroutines for forcing term of Held-Suarez test
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_af_heldsuarez
@@ -55,18 +55,18 @@ contains
     logical, intent(in) :: moist_case
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[af_heldsuarez]/Category[nhm forcing]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[af_heldsuarez]/Category[nhm forcing]'
 
     if ( moist_case ) then
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) '*** Moist H-S testcase by Thatcher and Jablonowski (2016)'
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) '*** Moist H-S testcase by Thatcher and Jablonowski (2016)'
 
        T_eq0 = 294.0_RP
        DT_y  =  65.0_RP
     else ! original HS parameter
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) '*** Held and Suarez (1994) testcase'
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) '*** Held and Suarez (1994) testcase'
 
        T_eq0 = 315.0_RP
        DT_y  =  60.0_RP

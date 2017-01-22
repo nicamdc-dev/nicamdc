@@ -4,7 +4,7 @@
 !! @par Description
 !!          This module calculates initial condition of ideal test cases
 !!
-!! @author Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_ideal_init
@@ -149,80 +149,79 @@ contains
     r2d = 180.0_RP/pi
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[dycoretest]/Category[nhm share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[dycoretest]/Category[nhm share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=DYCORETESTPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** DYCORETESTPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** DYCORETESTPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist DYCORETESTPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist DYCORETESTPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist DYCORETESTPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=DYCORETESTPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=DYCORETESTPARAM)
 
     DCTEST_type = init_type
     DCTEST_case = test_case
 
-    write(IO_FID_LOG,*) '*** type: ', trim(init_type)
+    if( IO_L ) write(IO_FID_LOG,*) '*** type: ', trim(init_type)
     select case(init_type)
-!    case ('DCMIP2012-11','DCMIP2012-12','DCMIP2012-13' &
+!    case('DCMIP2012-11','DCMIP2012-12','DCMIP2012-13' &
 !          'DCMIP2012-200','DCMIP2012-21','DCMIP2012-22')
 
-!       write(IO_FID_LOG,*) '*** test case: ', trim(test_case)
+!       if( IO_L ) write(IO_FID_LOG,*) '*** test case: ', trim(test_case)
 !       call IDEAL_init_DCMIP2012( ADM_gall, ADM_kall, ADM_lall, init_type, DIAG_var(:,:,:,:) )
 
-    case ('Heldsuarez')
+    case('Heldsuarez')
 
        call hs_init ( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
 
-    case ('Jablonowski')
+    case('Jablonowski')
 
-       write(IO_FID_LOG,*) '*** test case   : ', trim(test_case)
-       write(IO_FID_LOG,*) '*** eps_geo2prs = ', eps_geo2prs
-       write(IO_FID_LOG,*) '*** nicamcore   = ', nicamcore
+       if( IO_L ) write(IO_FID_LOG,*) '*** test case   : ', trim(test_case)
+       if( IO_L ) write(IO_FID_LOG,*) '*** eps_geo2prs = ', eps_geo2prs
+       if( IO_L ) write(IO_FID_LOG,*) '*** nicamcore   = ', nicamcore
        call jbw_init( ADM_gall, ADM_kall, ADM_lall, test_case, eps_geo2prs, nicamcore, DIAG_var(:,:,:,:) )
 
-    case ('Jablonowski-Moist')
+    case('Jablonowski-Moist')
 
-       write(IO_FID_LOG,*) '*** test case   : ', trim(test_case)
-       write(IO_FID_LOG,*) '*** nicamcore   = ', nicamcore
-       write(IO_FID_LOG,*) '*** chemtracer  = ', chemtracer
+       if( IO_L ) write(IO_FID_LOG,*) '*** test case   : ', trim(test_case)
+       if( IO_L ) write(IO_FID_LOG,*) '*** nicamcore   = ', nicamcore
+       if( IO_L ) write(IO_FID_LOG,*) '*** chemtracer  = ', chemtracer
        call jbw_moist_init( ADM_gall, ADM_kall, ADM_lall, test_case, chemtracer, DIAG_var(:,:,:,:) )
 
-    case ('Supercell')
+    case('Supercell')
 
-       write(IO_FID_LOG,*) '*** test case   : ', trim(test_case)
-       write(IO_FID_LOG,*) '*** nicamcore   = ', nicamcore
+       if( IO_L ) write(IO_FID_LOG,*) '*** test case   : ', trim(test_case)
+       if( IO_L ) write(IO_FID_LOG,*) '*** nicamcore   = ', nicamcore
        call sc_init( ADM_gall, ADM_kall, ADM_lall, test_case, prs_rebuild, DIAG_var(:,:,:,:) )
 
-    case ('Tropical-Cyclone')
+    case('Tropical-Cyclone')
 
-       write(IO_FID_LOG,*) '*** nicamcore   = ', nicamcore
+       if( IO_L ) write(IO_FID_LOG,*) '*** nicamcore   = ', nicamcore
        call tc_init( ADM_gall, ADM_kall, ADM_lall, prs_rebuild, DIAG_var(:,:,:,:) )
 
-    case ('Traceradvection')
+    case('Traceradvection')
 
-       write(IO_FID_LOG,*) '*** test case: ', trim(test_case)
+       if( IO_L ) write(IO_FID_LOG,*) '*** test case: ', trim(test_case)
        call tracer_init( ADM_gall, ADM_kall, ADM_lall, test_case, DIAG_var(:,:,:,:) )
 
-    case ('Mountainwave')
+    case('Mountainwave')
 
-       write(IO_FID_LOG,*) '*** test case: ', trim(test_case)
+       if( IO_L ) write(IO_FID_LOG,*) '*** test case: ', trim(test_case)
        call mountwave_init( ADM_gall, ADM_kall, ADM_lall, test_case, DIAG_var(:,:,:,:) )
 
-    case ('Gravitywave')
+    case('Gravitywave')
 
        call gravwave_init( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
 
-    case ('Tomita2004')
+    case('Tomita2004')
 
        call tomita_init( ADM_gall, ADM_kall, ADM_lall, DIAG_var(:,:,:,:) )
 
     case default
 
-       write(IO_FID_LOG,*) 'xxx Invalid init_type. STOP.'
+       write(*,*) 'xxx [dycore_input] Invalid init_type. STOP.'
        call PRC_MPIstop
 
     end select
@@ -381,8 +380,8 @@ contains
        enddo
 
        if ( itr > itrmax ) then
-          write(IO_FID_LOG,*) 'xxx iteration not converged!', k, pre_save-pre(k), pre(k), pre_sfc, tem(k), tem_sfc
-          write(*         ,*) 'xxx iteration not converged!', k, pre_save-pre(k), pre(k), pre_sfc, tem(k), tem_sfc
+          write(*,*) 'xxx [dycore_input/hs_init] iteration not converged!', &
+                     k, pre_save-pre(k), pre(k), pre_sfc, tem(k), tem_sfc
           stop
        endif
 
@@ -412,8 +411,8 @@ contains
           enddo
 
           if ( itr > itrmax ) then
-             write(IO_FID_LOG,*) 'xxx iteration not converged!', k, pre_save-pre(k), pre(k), pre(k-1), tem(k), tem(k-1)
-             write(*         ,*) 'xxx iteration not converged!', k, pre_save-pre(k), pre(k), pre(k-1), tem(k), tem(k-1)
+             write(*,*) 'xxx [dycore_input/hs_init] iteration not converged!', &
+                        k, pre_save-pre(k), pre(k), pre(k-1), tem(k), tem(k-1)
              stop
           endif
        enddo
@@ -488,31 +487,31 @@ contains
     logout = .true.
 
     select case( trim(test_case) )
-    case ('1', '4-1')  ! with perturbation
-       write(IO_FID_LOG,*) "Jablonowski Initialize - case 1: with perturbation (no rebalance)"
+    case('1', '4-1')  ! with perturbation
+       if( IO_L ) write(IO_FID_LOG,*) "Jablonowski Initialize - case 1: with perturbation (no rebalance)"
        pertb = .true.
-    case ('2', '4-2')  ! without perturbation
-       write(IO_FID_LOG,*) "Jablonowski Initialize - case 2: without perturbation (no rebalance)"
+    case('2', '4-2')  ! without perturbation
+       if( IO_L ) write(IO_FID_LOG,*) "Jablonowski Initialize - case 2: without perturbation (no rebalance)"
        pertb = .false.
-    case ('3')  ! with perturbation (PS Distribution Method)
-       write(IO_FID_LOG,*) "Jablonowski Initialize - PS Distribution Method: with perturbation"
-       write(IO_FID_LOG,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
+    case('3')  ! with perturbation (PS Distribution Method)
+       if( IO_L ) write(IO_FID_LOG,*) "Jablonowski Initialize - PS Distribution Method: with perturbation"
+       if( IO_L ) write(IO_FID_LOG,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
        pertb = .true.
        psgm = .true.
        eta_limit = .false.
-    case ('4')  ! without perturbation (PS Distribution Method)
-       write(IO_FID_LOG,*) "Jablonowski Initialize - PS Distribution Method: without perturbation"
-       write(IO_FID_LOG,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
+    case('4')  ! without perturbation (PS Distribution Method)
+       if( IO_L ) write(IO_FID_LOG,*) "Jablonowski Initialize - PS Distribution Method: without perturbation"
+       if( IO_L ) write(IO_FID_LOG,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
        pertb = .false.
        psgm = .true.
        eta_limit = .false.
     case default
-       write(IO_FID_LOG,*) "Unknown test_case: '"//trim(test_case)//"' specified."
-       write(IO_FID_LOG,*) "Force changed to case 1 (with perturbation)"
+       if( IO_L ) write(IO_FID_LOG,*) "Unknown test_case: '"//trim(test_case)//"' specified."
+       if( IO_L ) write(IO_FID_LOG,*) "Force changed to case 1 (with perturbation)"
        pertb = .true.
     end select
-    write(IO_FID_LOG,*) " | eps for geo2prs: ", eps_geo2prs
-    write(IO_FID_LOG,*) " | nicamcore switch for geo2prs: ", nicamcore
+    if( IO_L ) write(IO_FID_LOG,*) " | eps for geo2prs: ", eps_geo2prs
+    if( IO_L ) write(IO_FID_LOG,*) " | nicamcore switch for geo2prs: ", nicamcore
 
     do l = 1, lall
     do n = 1, ijdim
@@ -541,8 +540,7 @@ contains
        enddo
 
        if ( itr > itrmax ) then
-          write(*         ,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
-          write(IO_FID_LOG,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
+          write(*,*) 'ETA ITERATION ERROR: NOT CONVERGED', n, l
           call PRC_MPIstop
        endif
 
@@ -569,13 +567,13 @@ contains
 
     if (pertb) call perturbation( ijdim, kdim, lall, 5, DIAG_var(:,:,:,1:5) )
 
-    write (IO_FID_LOG,*) " |            Vertical Coordinate used in JBW initialization              |"
-    write (IO_FID_LOG,*) " |------------------------------------------------------------------------|"
+    if( IO_L ) write(IO_FID_LOG,*) " |            Vertical Coordinate used in JBW initialization              |"
+    if( IO_L ) write(IO_FID_LOG,*) " |------------------------------------------------------------------------|"
     do k = 1, kdim
-       write (IO_FID_LOG,'(3X,"(k=",I3,") HGT:",F8.2," [m]",2X,"PRS: ",F9.2," [Pa]",2X,"GH: ",F8.2," [m]",2X,"ETA: ",F9.5)') &
+       if( IO_L ) write(IO_FID_LOG,'(3X,"(k=",I3,") HGT:",F8.2," [m]",2X,"PRS: ",F9.2," [Pa]",2X,"GH: ",F8.2," [m]",2X,"ETA: ",F9.5)') &
        k, z_local(k), prs(k), geo(k)/g, eta(k,1)
     enddo
-    write (IO_FID_LOG,*) " |------------------------------------------------------------------------|"
+    if( IO_L ) write(IO_FID_LOG,*) " |------------------------------------------------------------------------|"
 
     return
   end subroutine jbw_init
@@ -665,42 +663,41 @@ contains
     DP_p = 0.0_DP
 
     select case( trim(test_case) )
-    case ('1')  ! perturbation: exponential / with moisture
-       write(IO_FID_LOG,*) "Moist Baroclinic Wave Initialize - case 1: perturbation: exponential / with moisture"
+    case('1')  ! perturbation: exponential / with moisture
+       if( IO_L ) write(IO_FID_LOG,*) "Moist Baroclinic Wave Initialize - case 1: perturbation: exponential / with moisture"
        moist = 1
        pertt = 0
-    case ('2')  ! perturbation: stream function / with moisture
-       write(IO_FID_LOG,*) "Moist Baroclinic Wave Initialize - case 2: perturbation: stream function / with moisture"
+    case('2')  ! perturbation: stream function / with moisture
+       if( IO_L ) write(IO_FID_LOG,*) "Moist Baroclinic Wave Initialize - case 2: perturbation: stream function / with moisture"
        moist = 1
        pertt = 1
-    case ('3')  ! perturbation: exponential / without moisture
-       write(IO_FID_LOG,*) "Moist Baroclinic Wave Initialize - case 3: perturbation: exponential / without moisture"
+    case('3')  ! perturbation: exponential / without moisture
+       if( IO_L ) write(IO_FID_LOG,*) "Moist Baroclinic Wave Initialize - case 3: perturbation: exponential / without moisture"
        moist = 0
        pertt = 0
-    case ('4')  ! perturbation: stream function / without moisture
-       write(IO_FID_LOG,*) "Moist Baroclinic Wave Initialize - case 4: perturbation: stream function / without moisture"
+    case('4')  ! perturbation: stream function / without moisture
+       if( IO_L ) write(IO_FID_LOG,*) "Moist Baroclinic Wave Initialize - case 4: perturbation: stream function / without moisture"
        moist = 0
        pertt = 1
-    case ('5')  ! no perturbation / without moisture
-       write(IO_FID_LOG,*) "Moist Baroclinic Wave Initialize - case 5: no perturbation / with moisture"
+    case('5')  ! no perturbation / without moisture
+       if( IO_L ) write(IO_FID_LOG,*) "Moist Baroclinic Wave Initialize - case 5: no perturbation / with moisture"
        moist = 1
        pertt = -99
-    case ('6')  ! no perturbation / without moisture
-       write(IO_FID_LOG,*) "Moist Baroclinic Wave Initialize - case 6: no perturbation / without moisture"
+    case('6')  ! no perturbation / without moisture
+       if( IO_L ) write(IO_FID_LOG,*) "Moist Baroclinic Wave Initialize - case 6: no perturbation / without moisture"
        moist = 0
        pertt = -99
     case default
-       write(IO_FID_LOG,*) "xxx Invalid test_case: '"//trim(test_case)//"' specified."
-       write(IO_FID_LOG,*) 'STOP.'
+       if( IO_L ) write(IO_FID_LOG,*) "xxx Invalid test_case: '"//trim(test_case)//"' specified."
+       if( IO_L ) write(IO_FID_LOG,*) 'STOP.'
        call PRC_MPIstop
     end select
-    write(IO_FID_LOG,*) "Chemical Tracer: ", chemtracer
-    write(IO_FID_LOG,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
+    if( IO_L ) write(IO_FID_LOG,*) "Chemical Tracer: ", chemtracer
+    if( IO_L ) write(IO_FID_LOG,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
 
     if ( moist == 1 ) then
        if ( NQW_MAX < 3 ) then
-          write(*         ,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
-          write(IO_FID_LOG,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
+          write(*,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
           call PRC_MPIstop
        endif
     endif
@@ -768,8 +765,7 @@ contains
 
        if ( chemtracer ) then
           if ( NCHEM_MAX /= 2 ) then
-             write(*         ,*) 'NCHEM_MAX is not enough! requires 2.', NCHEM_MAX
-             write(IO_FID_LOG,*) 'NCHEM_MAX is not enough! requires 2.', NCHEM_MAX
+             write(*,*) 'NCHEM_MAX is not enough! requires 2.', NCHEM_MAX
              call PRC_MPIstop
           endif
 
@@ -868,22 +864,21 @@ contains
     Mvap2  = ( 1.0_RP - RdovRv ) / RdovRv
 
     select case( trim(test_case) )
-    case ('1')  ! with perturbation
-       write(IO_FID_LOG,*) "Super-Cell Initialize - case 1: with perturbation"
+    case('1')  ! with perturbation
+       if( IO_L ) write(IO_FID_LOG,*) "Super-Cell Initialize - case 1: with perturbation"
        pert = 1
-    case ('2')  ! without perturbation
-       write(IO_FID_LOG,*) "Super-Cell Initialize - case 2: no perturbation"
+    case('2')  ! without perturbation
+       if( IO_L ) write(IO_FID_LOG,*) "Super-Cell Initialize - case 2: no perturbation"
        pert = 0
     case default
-       write(IO_FID_LOG,*) "xxx Invalid test_case: '"//trim(test_case)//"' specified."
-       write(IO_FID_LOG,*) 'STOP.'
+       if( IO_L ) write(IO_FID_LOG,*) "xxx Invalid test_case: '"//trim(test_case)//"' specified."
+       if( IO_L ) write(IO_FID_LOG,*) 'STOP.'
        call PRC_MPIstop
     end select
-    write(IO_FID_LOG,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
+    if( IO_L ) write(IO_FID_LOG,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
 
     if ( NQW_MAX < 3 ) then
-       write(*         ,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
-       write(IO_FID_LOG,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
+       write(*,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
        call PRC_MPIstop
     endif
 
@@ -1018,10 +1013,9 @@ contains
     RdovRv = Rd / Rv
     Mvap2  = ( 1.0_RP - RdovRv ) / RdovRv
 
-    write(IO_FID_LOG,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
+    if( IO_L ) write(IO_FID_LOG,*) "### DO NOT INPUT ANY TOPOGRAPHY ###"
     if ( NQW_MAX < 3 ) then
-       write(*         ,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
-       write(IO_FID_LOG,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
+       write(*,*) 'NQW_MAX is not enough! requires more than 3.', NQW_MAX
        call PRC_MPIstop
     endif
 
@@ -1387,8 +1381,7 @@ contains
        enddo
 
     case default
-       write(*         ,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
-       write(IO_FID_LOG,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
+       write(*,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
        call PRC_MPIstop
     end select
 
@@ -1660,8 +1653,7 @@ contains
        enddo
 
     case default
-       write(*         ,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
-       write(IO_FID_LOG,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
+       write(*,*) "Unknown test_case: ", trim(test_case)," specified. STOP"
        call PRC_MPIstop
     end select
 
@@ -1826,7 +1818,7 @@ contains
 
     DIAG_var(:,:,:,:) = 0.0_RP
 
-    write(IO_FID_LOG,*) "Qian98 Like Mountain Wave Exp. (Tomita and Satoh 2004)"
+    if( IO_L ) write(IO_FID_LOG,*) "Qian98 Like Mountain Wave Exp. (Tomita and Satoh 2004)"
 
     do l = 1, lall
     do n = 1, ijdim
@@ -1856,13 +1848,13 @@ contains
     enddo
     enddo
 
-    write (IO_FID_LOG,*) " |            Vertical Coordinate used in JBW initialization              |"
-    write (IO_FID_LOG,*) " |------------------------------------------------------------------------|"
+    if( IO_L ) write(IO_FID_LOG,*) " |            Vertical Coordinate used in JBW initialization              |"
+    if( IO_L ) write(IO_FID_LOG,*) " |------------------------------------------------------------------------|"
     do k = 1, kdim
-       write (IO_FID_LOG,'(3X,"(k=",I3,") HGT:",F8.2," [m]",2X,"PRS: ",F9.2," [Pa]")') &
+       if( IO_L ) write(IO_FID_LOG,'(3X,"(k=",I3,") HGT:",F8.2," [m]",2X,"PRS: ",F9.2," [Pa]")') &
        k, z_local(k), prs(k)
     enddo
-    write (IO_FID_LOG,*) " |------------------------------------------------------------------------|"
+    if( IO_L ) write(IO_FID_LOG,*) " |------------------------------------------------------------------------|"
 
     return
   end subroutine tomita_init
@@ -1899,11 +1891,11 @@ contains
     !-----
 
     if (logout) then
-       write(IO_FID_LOG, '("| == Tomita 2004 Mountain Wave Exp.  ( Z levels:", I4, ")")') kdim
-       write(IO_FID_LOG, '("| -- Brunt-Vaisala Freq.:", F20.10)') N
-       write(IO_FID_LOG, '("| -- Earth Angular Velocity:", F20.10)') omega
-       write(IO_FID_LOG, '("| -- Earth Radius:", F20.10)') a
-       write(IO_FID_LOG, '("| -- Earth Gravity Accel.:", F20.10)') g
+       if( IO_L ) write(IO_FID_LOG, '("| == Tomita 2004 Mountain Wave Exp.  ( Z levels:", I4, ")")') kdim
+       if( IO_L ) write(IO_FID_LOG, '("| -- Brunt-Vaisala Freq.:", F20.10)') N
+       if( IO_L ) write(IO_FID_LOG, '("| -- Earth Angular Velocity:", F20.10)') omega
+       if( IO_L ) write(IO_FID_LOG, '("| -- Earth Radius:", F20.10)') a
+       if( IO_L ) write(IO_FID_LOG, '("| -- Earth Gravity Accel.:", F20.10)') g
     endif
 
     N2 = N**2.0_RP
@@ -1986,15 +1978,19 @@ contains
     enddo
 
     eta(:,1) = eta(:,2)
-    if(message) write(IO_FID_LOG,'(A,I4,A,ES20.10,A,ES20.10)') &
-                " | Eta  ",itr,": -- MAX: ",maxval(diff(:))," MIN: ",minval(diff(:))
-    if(message) write(IO_FID_LOG,'(A,I4,A,ES20.10,A,ES20.10)') &
-                " | Diff ",itr,": -- MAX: ",maxval(diff(:))," MIN: ",minval(diff(:))
+    if (message) then
+       if( IO_L ) write(IO_FID_LOG,'(A,I4,A,ES20.10,A,ES20.10)') &
+                  " | Eta  ",itr,": -- MAX: ",maxval(diff(:))," MIN: ",minval(diff(:))
+       if( IO_L ) write(IO_FID_LOG,'(A,I4,A,ES20.10,A,ES20.10)') &
+                  " | Diff ",itr,": -- MAX: ",maxval(diff(:))," MIN: ",minval(diff(:))
+    endif
 
     if ( maxval(diff(:)) < criteria ) then
        signal = .false.
     else
-       if(message) write(IO_FID_LOG,*) "| Iterating : ", itr, "criteria = ", criteria
+       if (message) then
+          if( IO_L ) write(IO_FID_LOG,*) "| Iterating : ", itr, "criteria = ", criteria
+       endif
     endif
 
     return
@@ -2042,12 +2038,12 @@ contains
                    +  5.0_RP*(etaT**3.0_RP)*(eta(k,1)**2.0_RP) - (10.0_RP/3.0_RP)*(etaT**2.0_RP)*(eta(k,1)**3.0_RP) &
                    + (5.0_RP/4.0_RP)*etaT*(eta(k,1)**4.0_RP) - (1.0_RP/5.0_RP)*(eta(k,1)**5.0_RP)                   )
        else
-          write (IO_FID_LOG,'(A)') "|-- ETA BOUNDARY ERROR: [steady state calc.]"
-          write (IO_FID_LOG,'("|-- (",I3,")  eta: ",F10.4)') k, eta(k,1)
+          if( IO_L ) write(IO_FID_LOG,'(A)') "|-- ETA BOUNDARY ERROR: [steady state calc.]"
+          if( IO_L ) write(IO_FID_LOG,'("|-- (",I3,")  eta: ",F10.4)') k, eta(k,1)
           stop
        endif
        !else
-       !   write (IO_FID_LOG,'(A)') "|-- OVER 1.0 for eta: [steady state calc.]"
+       !   if( IO_L ) write(IO_FID_LOG,'(A)') "|-- OVER 1.0 for eta: [steady state calc.]"
        !   stop
        !endif
     enddo
@@ -2150,12 +2146,12 @@ contains
        endif
     enddo
     else
-       !write(IO_FID_LOG,*) 'ETA ITERATION SKIPPED'
+       !if( IO_L ) write(IO_FID_LOG,*) 'ETA ITERATION SKIPPED'
        do_iter = .false.
     endif
 
     if (do_iter) then
-       write(IO_FID_LOG,*) 'ETA ITERATION ERROR: NOT CONVERGED at GEO2PRS', diff
+       if( IO_L ) write(IO_FID_LOG,*) 'ETA ITERATION ERROR: NOT CONVERGED at GEO2PRS', diff
        stop
     endif
 
@@ -2170,18 +2166,18 @@ contains
 
     if (logout) then
        if (iteration) then
-          write(IO_FID_LOG, *) " | diff (guess - ps) : ", diff, "[Pa]  --  itr times: ", (i-1)
+          if( IO_L ) write(IO_FID_LOG, *) " | diff (guess - ps) : ", diff, "[Pa]  --  itr times: ", (i-1)
        else
-          write(IO_FID_LOG, *) " | no iteration in geo2prs"
+          if( IO_L ) write(IO_FID_LOG, *) " | no iteration in geo2prs"
        endif
     endif
     if (message) then
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(A)') " | ----- Pressure (Final Guess) -----"
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,'(A)') " | ----- Pressure (Final Guess) -----"
        do k = 1, kdim
-          write(IO_FID_LOG, '(" | K(",I3,") -- ",F20.13)') k, prs(k)
+          if( IO_L ) write(IO_FID_LOG, '(" | K(",I3,") -- ",F20.13)') k, prs(k)
        enddo
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
     endif
 
     return

@@ -4,7 +4,7 @@
 !! @par Description
 !!         This module is for the management of the icosahedral grid system
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_grd
@@ -252,18 +252,17 @@ contains
     k0 = ADM_KNONE
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[grd]/Category[common share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[grd]/Category[common share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=GRDPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** GRDPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** GRDPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist GRDPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist GRDPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist GRDPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=GRDPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=GRDPARAM)
 
 
 
@@ -495,33 +494,33 @@ contains
 
     !--- output information about grid.
     if ( ADM_kall /= ADM_KNONE ) then
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(5x,A)')             '|======      Vertical Coordinate [m]      ======|'
-       write(IO_FID_LOG,'(5x,A)')             '|                                               |'
-       write(IO_FID_LOG,'(5x,A)')             '|          -GRID CENTER-       -GRID INTERFACE- |'
-       write(IO_FID_LOG,'(5x,A)')             '|  k        gz     d(gz)      gzh    d(gzh)   k |'
-       write(IO_FID_LOG,'(5x,A)')             '|                                               |'
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,'(5x,A)')             '|======      Vertical Coordinate [m]      ======|'
+       if( IO_L ) write(IO_FID_LOG,'(5x,A)')             '|                                               |'
+       if( IO_L ) write(IO_FID_LOG,'(5x,A)')             '|          -GRID CENTER-       -GRID INTERFACE- |'
+       if( IO_L ) write(IO_FID_LOG,'(5x,A)')             '|  k        gz     d(gz)      gzh    d(gzh)   k |'
+       if( IO_L ) write(IO_FID_LOG,'(5x,A)')             '|                                               |'
        k = ADM_kmax + 1
-       write(IO_FID_LOG,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        | dummy'
-       write(IO_FID_LOG,'(5x,A,2F10.1,I4,A)') '|                      ',GRD_gzh(k),GRD_dgzh(k),k,' | TOA'
+       if( IO_L ) write(IO_FID_LOG,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        | dummy'
+       if( IO_L ) write(IO_FID_LOG,'(5x,A,2F10.1,I4,A)') '|                      ',GRD_gzh(k),GRD_dgzh(k),k,' | TOA'
        k = ADM_kmax
-       write(IO_FID_LOG,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        | kmax'
-       write(IO_FID_LOG,'(5x,A,2F10.1,I4,A)') '|                      ',GRD_gzh(k),GRD_dgzh(k),k,' |'
+       if( IO_L ) write(IO_FID_LOG,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        | kmax'
+       if( IO_L ) write(IO_FID_LOG,'(5x,A,2F10.1,I4,A)') '|                      ',GRD_gzh(k),GRD_dgzh(k),k,' |'
        do k = ADM_kmax-1, ADM_kmin+1, -1
-       write(IO_FID_LOG,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        |'
-       write(IO_FID_LOG,'(5x,A,2F10.1,I4,A)') '|                      ',GRD_gzh(k),GRD_dgzh(k),k,' |'
+       if( IO_L ) write(IO_FID_LOG,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        |'
+       if( IO_L ) write(IO_FID_LOG,'(5x,A,2F10.1,I4,A)') '|                      ',GRD_gzh(k),GRD_dgzh(k),k,' |'
        enddo
        k = ADM_kmin
-       write(IO_FID_LOG,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        | kmin'
-       write(IO_FID_LOG,'(5x,A,2F10.1,I4,A)') '|                      ',GRD_gzh(k),GRD_dgzh(k),k,' | ground'
+       if( IO_L ) write(IO_FID_LOG,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        | kmin'
+       if( IO_L ) write(IO_FID_LOG,'(5x,A,2F10.1,I4,A)') '|                      ',GRD_gzh(k),GRD_dgzh(k),k,' | ground'
        k = ADM_kmin-1
-       write(IO_FID_LOG,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        | dummy'
-       write(IO_FID_LOG,'(5x,A)')             '|===============================================|'
+       if( IO_L ) write(IO_FID_LOG,'(5x,A,I3,2F10.1,A)') '|',k,GRD_gz(k),GRD_dgz(k), '                        | dummy'
+       if( IO_L ) write(IO_FID_LOG,'(5x,A)')             '|===============================================|'
 
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) '--- Vertical layer scheme = ', trim(vgrid_scheme)
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) '--- Vertical layer scheme = ', trim(vgrid_scheme)
        if ( vgrid_scheme == 'HYBRID' ) then
-          write(IO_FID_LOG,*) '--- e-folding height = ', h_efold
+          if( IO_L ) write(IO_FID_LOG,*) '--- e-folding height = ', h_efold
        endif
 
        if ( output_vgrid ) then
@@ -530,8 +529,8 @@ contains
           endif
        endif
     else
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) '--- vartical layer = 1'
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) '--- vartical layer = 1'
     endif
 
     return
@@ -585,7 +584,7 @@ contains
        endif
 
     else
-       write(IO_FID_LOG,*) 'Invalid io_mode!'
+       if( IO_L ) write(IO_FID_LOG,*) 'Invalid io_mode!'
        call PRC_MPIstop
     endif
 
@@ -702,7 +701,7 @@ contains
        endif
 
     else
-       write(IO_FID_LOG,*) 'Invalid io_mode!'
+       if( IO_L ) write(IO_FID_LOG,*) 'Invalid io_mode!'
        call PRC_MPIstop
     endif
 
@@ -727,7 +726,7 @@ contains
     integer :: fid, ierr
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*) '*** Read vertical grid file: ', trim(fname)
+    if( IO_L ) write(IO_FID_LOG,*) '*** Read vertical grid file: ', trim(fname)
 
     fid = IO_get_available_fid()
     open( unit   = fid,           &
@@ -737,7 +736,7 @@ contains
           iostat = ierr           )
 
        if ( ierr /= 0 ) then
-          write(IO_FID_LOG,*) 'xxx [grd/GRD_input_vgrid] No vertical grid file.'
+          write(*,*) 'xxx [GRD_input_vgrid] No vertical grid file.'
           call PRC_MPIstop
        endif
 
@@ -750,7 +749,7 @@ contains
        read(fid) gzh(:)
 
        if ( num_of_layer /= ADM_vlayer ) then
-          write(IO_FID_LOG,*) 'xxx [grd/GRD_input_vgrid] inconsistency in number of vertical layers.'
+          write(*,*) 'xxx [GRD_input_vgrid] inconsistency in number of vertical layers.'
           call PRC_MPIstop
        endif
 
@@ -774,7 +773,7 @@ contains
     integer :: fid, ierr
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*) '*** Write vertical grid file: ', trim(fname)
+    if( IO_L ) write(IO_FID_LOG,*) '*** Write vertical grid file: ', trim(fname)
 
     fid = IO_get_available_fid()
     open( unit   = fid,           &
@@ -809,7 +808,7 @@ contains
     character(len=*), intent(in) :: basename
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*) '*** topography data input'
+    if( IO_L ) write(IO_FID_LOG,*) '*** topography data input'
 
     if ( topo_io_mode == 'ADVANCED' ) then
 
@@ -825,7 +824,7 @@ contains
 
     elseif( topo_io_mode == 'IDEAL' ) then
 
-       write(IO_FID_LOG,*) '*** make ideal topography'
+       if( IO_L ) write(IO_FID_LOG,*) '*** make ideal topography'
 
        call IDEAL_topo( GRD_s (:,:,:,GRD_LAT), & ! [IN]
                         GRD_s (:,:,:,GRD_LON), & ! [IN]

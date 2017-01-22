@@ -4,7 +4,7 @@
 !! @par Description
 !!         This module is for the generic subroutine, e.g., global mean.
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_gtl
@@ -14,6 +14,7 @@ module mod_gtl
   !
   use mod_precision
   use mod_stdio
+  use mod_prof
   !-----------------------------------------------------------------------------
   implicit none
   private

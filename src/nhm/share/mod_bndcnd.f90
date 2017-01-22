@@ -4,7 +4,7 @@
 !! @par Description
 !!          This module provides the subroutines for boundary conditions
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_bndcnd
@@ -89,60 +89,59 @@ contains
     BND_TYPE_M_BOTTOM = 'RIGID'
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[bndcnd]/Category[nhm share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[bndcnd]/Category[nhm share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=BNDCNDPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** BNDCNDPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** BNDCNDPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist BNDCNDPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist BNDCNDPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist BNDCNDPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=BNDCNDPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=BNDCNDPARAM)
 
     if    ( BND_TYPE_T_TOP == 'TEM' ) then
-       write(IO_FID_LOG,*) '*** Boundary setting type (temperature, top   ) : equal to uppermost atmosphere'
+       if( IO_L ) write(IO_FID_LOG,*) '*** Boundary setting type (temperature, top   ) : equal to uppermost atmosphere'
        is_top_tem = .true.
     elseif( BND_TYPE_T_TOP == 'EPL' ) then
-       write(IO_FID_LOG,*) '*** Boundary setting type (temperature, top   ) : lagrange extrapolation'
+       if( IO_L ) write(IO_FID_LOG,*) '*** Boundary setting type (temperature, top   ) : lagrange extrapolation'
        is_top_epl = .true.
     else
-       write(IO_FID_LOG,*) 'xxx Invalid BND_TYPE_T_TOP. STOP.'
+       if( IO_L ) write(IO_FID_LOG,*) 'xxx Invalid BND_TYPE_T_TOP. STOP.'
        call PRC_MPIstop
     endif
 
     if    ( BND_TYPE_T_BOTTOM == 'TEM' ) then
-       write(IO_FID_LOG,*) '*** Boundary setting type (temperature, bottom) : equal to lowermost atmosphere'
+       if( IO_L ) write(IO_FID_LOG,*) '*** Boundary setting type (temperature, bottom) : equal to lowermost atmosphere'
        is_btm_tem = .true.
     elseif( BND_TYPE_T_BOTTOM == 'EPL' ) then
-       write(IO_FID_LOG,*) '*** Boundary setting type (temperature, bottom) : lagrange extrapolation'
+       if( IO_L ) write(IO_FID_LOG,*) '*** Boundary setting type (temperature, bottom) : lagrange extrapolation'
        is_btm_epl = .true.
     else
-       write(IO_FID_LOG,*) 'xxx Invalid BND_TYPE_T_BOTTOM. STOP.'
+       if( IO_L ) write(IO_FID_LOG,*) 'xxx Invalid BND_TYPE_T_BOTTOM. STOP.'
        call PRC_MPIstop
     endif
 
     if    ( BND_TYPE_M_TOP == 'RIGID' ) then
-       write(IO_FID_LOG,*) '*** Boundary setting type (momentum,    top   ) : rigid'
+       if( IO_L ) write(IO_FID_LOG,*) '*** Boundary setting type (momentum,    top   ) : rigid'
        is_top_rigid = .true.
     elseif( BND_TYPE_M_TOP == 'FREE' ) then
-       write(IO_FID_LOG,*) '*** Boundary setting type (momentum,    top   ) : free'
+       if( IO_L ) write(IO_FID_LOG,*) '*** Boundary setting type (momentum,    top   ) : free'
        is_top_free  = .true.
     else
-       write(IO_FID_LOG,*) 'xxx Invalid BND_TYPE_M_TOP. STOP.'
+       if( IO_L ) write(IO_FID_LOG,*) 'xxx Invalid BND_TYPE_M_TOP. STOP.'
        call PRC_MPIstop
     endif
 
     if    ( BND_TYPE_M_BOTTOM == 'RIGID' ) then
-       write(IO_FID_LOG,*) '*** Boundary setting type (momentum,    bottom) : rigid'
+       if( IO_L ) write(IO_FID_LOG,*) '*** Boundary setting type (momentum,    bottom) : rigid'
        is_btm_rigid = .true.
     elseif( BND_TYPE_M_BOTTOM == 'FREE' ) then
-       write(IO_FID_LOG,*) '*** Boundary setting type (momentum,    bottom) : free'
+       if( IO_L ) write(IO_FID_LOG,*) '*** Boundary setting type (momentum,    bottom) : free'
        is_btm_free  = .true.
     else
-       write(IO_FID_LOG,*) 'xxx Invalid BND_TYPE_M_BOTTOM. STOP.'
+       if( IO_L ) write(IO_FID_LOG,*) 'xxx Invalid BND_TYPE_M_BOTTOM. STOP.'
        call PRC_MPIstop
     endif
 

@@ -219,8 +219,8 @@ program prg_driver
   call PROF_setprefx('INIT')
   call PROF_rapstart('Initialize',0)
 
-  write(IO_FID_LOG,*)           '##### start  setup     #####'
-  if( PRC_IsMaster ) write(*,*) '##### start  setup     #####'
+  if( IO_L ) write(IO_FID_LOG,*) '##### start  setup     #####'
+  if( PRC_IsMaster ) write(*,*)  '##### start  setup     #####'
 
   !---< cnst module setup >---
   call CONST_setup
@@ -286,16 +286,16 @@ program prg_driver
   !---< history variable module setup >---
   call history_vars_setup
 
-  write(IO_FID_LOG,*)           '##### finish setup     #####'
-  if( PRC_IsMaster ) write(*,*) '##### finish setup     #####'
+  if( IO_L ) write(IO_FID_LOG,*) '##### finish setup     #####'
+  if( PRC_IsMaster ) write(*,*)  '##### finish setup     #####'
 
   call PROF_rapend('Initialize',0)
   !#############################################################################
   call PROF_setprefx('MAIN')
   call PROF_rapstart('Main_Loop',0)
 
-  write(IO_FID_LOG,*)           '##### start  main loop #####'
-  if( PRC_IsMaster ) write(*,*) '##### start  main loop #####'
+  if( IO_L ) write(IO_FID_LOG,*) '##### start  main loop #####'
+  if( PRC_IsMaster ) write(*,*)  '##### start  main loop #####'
 
 #ifdef _FIPP_
   call fipp_start()
@@ -364,8 +364,8 @@ program prg_driver
   call fipp_stop()
 #endif
 
-  write(IO_FID_LOG,*)           '##### finish main loop #####'
-  if( PRC_IsMaster ) write(*,*) '##### finish main loop #####'
+  if( IO_L ) write(IO_FID_LOG,*) '##### finish main loop #####'
+  if( PRC_IsMaster ) write(*,*)  '##### finish main loop #####'
 
   call PROF_rapend('Main_Loop',0)
   !#############################################################################

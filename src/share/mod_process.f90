@@ -126,8 +126,8 @@ contains
     ! flush 1kbyte
     write(IO_FID_LOG,'(32A32)') '                                '
 
-    write(IO_FID_LOG,*)           '+++ Abort MPI'
-    if( PRC_IsMaster ) write(*,*) '+++ Abort MPI'
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Abort MPI'
+    if( PRC_IsMaster ) write(*,*)  '+++ Abort MPI'
 
     if ( IO_L ) then
        if( IO_FID_LOG /= IO_FID_STDOUT ) close(IO_FID_LOG)
@@ -153,15 +153,15 @@ contains
     ! Stop MPI
     if ( PRC_mpi_alive ) then
        if ( IO_L ) then
-          write(IO_FID_LOG,*)
-          write(IO_FID_LOG,*) '++++++ Stop MPI'
-          write(IO_FID_LOG,*)
+          if( IO_L ) write(IO_FID_LOG,*)
+          if( IO_L ) write(IO_FID_LOG,*) '++++++ Stop MPI'
+          if( IO_L ) write(IO_FID_LOG,*)
        endif
 
        call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
 
        call MPI_Finalize(ierr)
-       write(IO_FID_LOG,*) '*** MPI is peacefully finalized'
+       if( IO_L ) write(IO_FID_LOG,*) '*** MPI is peacefully finalized'
     endif
 
     ! Close logfile, configfile

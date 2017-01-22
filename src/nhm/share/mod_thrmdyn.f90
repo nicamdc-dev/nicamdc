@@ -4,7 +4,7 @@
 !! @par Description
 !!          This module calculates thermodyanical variables
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_thrmdyn

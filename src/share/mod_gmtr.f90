@@ -4,7 +4,7 @@
 !! @par Description
 !!         In this module, the geometrics of the icosahedral grid such as area are calculated
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_gmtr
@@ -153,18 +153,17 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[gmtr]/Category[common share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[gmtr]/Category[common share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=GMTRPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** GMTRPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** GMTRPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist GMTRPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist GMTRPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist GMTRPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=GMTRPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=GMTRPARAM)
 
 
 
@@ -265,7 +264,7 @@ contains
     integer  :: i, j, k0, l, d, v, n
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*) '*** setup metrics for hexagonal/pentagonal mesh'
+    if( IO_L ) write(IO_FID_LOG,*) '*** setup metrics for hexagonal/pentagonal mesh'
 
     k0 = ADM_KNONE
 
@@ -449,7 +448,7 @@ contains
     integer  :: i, j, k0, l, d, v, n, t
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*) '*** setup metrics for triangle mesh'
+    if( IO_L ) write(IO_FID_LOG,*) '*** setup metrics for triangle mesh'
 
     k0 = ADM_KNONE
 
@@ -615,7 +614,7 @@ contains
     integer  :: i, j, k0, l, d, v, n
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*) '*** setup metrics for cell arcs'
+    if( IO_L ) write(IO_FID_LOG,*) '*** setup metrics for cell arcs'
 
     k0 = ADM_KNONE
 

@@ -4,7 +4,7 @@
 !! @par Description
 !!          This module contains the subroutines for differential operators
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_oprt
@@ -116,18 +116,17 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[oprt]/Category[common share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[oprt]/Category[common share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=OPRTPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** OPRTPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** OPRTPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist OPRTPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist OPRTPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist OPRTPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=OPRTPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=OPRTPARAM)
 
 #ifndef _FIXEDINDEX_
     allocate( OPRT_coef_div    (ADM_nxyz,ADM_gall,0:6    ,ADM_lall   ) )
@@ -306,7 +305,7 @@ contains
     integer  :: i, j, l, d, n, v, hn
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*) '*** setup coefficient of divergence operator'
+    if( IO_L ) write(IO_FID_LOG,*) '*** setup coefficient of divergence operator'
 
     coef_div   (:,:,:,:) = 0.0_RP
     coef_div_pl(:,  :,:) = 0.0_RP
@@ -520,7 +519,7 @@ contains
     integer  :: i, j, l, d, n, v, ht
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*) '*** setup coefficient of rotation operator'
+    if( IO_L ) write(IO_FID_LOG,*) '*** setup coefficient of rotation operator'
 
     coef_rot   (:,:,:,:) = 0.0_RP
     coef_rot_pl(:,  :,:) = 0.0_RP
@@ -734,7 +733,7 @@ contains
     integer  :: i, j, l, d, n, v, hn
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*) '*** setup coefficient of gradient operator'
+    if( IO_L ) write(IO_FID_LOG,*) '*** setup coefficient of gradient operator'
 
     coef_grad   (:,:,:,:) = 0.0_RP
     coef_grad_pl(:,  :,:) = 0.0_RP
@@ -957,7 +956,7 @@ contains
     integer  :: i, j, l, d, n, v, hn, tn, tn2
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*) '*** setup coefficient of laplacian operator'
+    if( IO_L ) write(IO_FID_LOG,*) '*** setup coefficient of laplacian operator'
 
     coef_lap   (:,:,:) = 0.0_RP
     coef_lap_pl(  :,:) = 0.0_RP
@@ -1434,7 +1433,7 @@ contains
     integer :: i, j, l, d, n, v, hn, tn, tn2
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*) '*** setup coefficient of diffusion operator'
+    if( IO_L ) write(IO_FID_LOG,*) '*** setup coefficient of diffusion operator'
 
     coef_intp   (:,:,:,:,:) = 0.0_RP
     coef_intp_pl(:,:,:,  :) = 0.0_RP
@@ -2888,7 +2887,7 @@ contains
                         '', dtype, 'LAYERNM', 1, 106, 1, 0.0_DP, 0.0_DP ) ! [IN]
 
     else
-       write(IO_FID_LOG,*) 'Invalid io_mode!'
+       if( IO_L ) write(IO_FID_LOG,*) 'Invalid io_mode!'
        call PRC_MPIstop
     endif
 

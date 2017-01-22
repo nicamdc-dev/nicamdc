@@ -95,9 +95,9 @@ contains
     implicit none
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[hio]/Category[common share]'
-    write(IO_FID_LOG,*) '+++ HIO is disabled.'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[hio]/Category[common share]'
+    if( IO_L ) write(IO_FID_LOG,*) '+++ HIO is disabled.'
 
     return
   end subroutine HIO_setup
@@ -127,8 +127,8 @@ contains
     logical, intent(in), optional :: allow_missingq !< if data is missing, set value to zero, else execution stops.
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
     call PRC_MPIstop
 
     return
@@ -159,8 +159,8 @@ contains
     logical, intent(in), optional :: allow_missingq !< if data is missing, set value to zero, else execution stops.
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
     call PRC_MPIstop
 
     return
@@ -197,8 +197,8 @@ contains
     logical,          intent(in)    :: opt_periodic_year
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
     call PRC_MPIstop
 
     return
@@ -244,8 +244,8 @@ contains
     logical,intent(in), optional :: append
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
     call PRC_MPIstop
 
     return
@@ -291,8 +291,8 @@ contains
     logical,intent(in), optional :: append
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(varname), trim(basename)
     call PRC_MPIstop
 
     return
@@ -308,8 +308,8 @@ contains
     character(len=*), intent(in) :: basename
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(basename)
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!', trim(basename)
     call PRC_MPIstop
 
     return
@@ -322,8 +322,8 @@ contains
     implicit none
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) 'xxx HIO is disabled. STOP!'
     call PRC_MPIstop
 
     return

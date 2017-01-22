@@ -4,7 +4,7 @@
 !! @par Description
 !!          Making horizontal grid systems based on the icosahedral grid configuration
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_mkgrd
@@ -115,18 +115,17 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Program[mkgrd]/Category[prep]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Program[mkgrd]/Category[prep]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=PARAM_MKGRD,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** PARAM_MKGRD is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** PARAM_MKGRD is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist PARAM_MKGRD. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist PARAM_MKGRD. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist PARAM_MKGRD. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=PARAM_MKGRD)
+    if( IO_NML ) write(IO_FID_LOG,nml=PARAM_MKGRD)
 
 #ifndef _FIXEDINDEX_
     allocate( GRD_x    (ADM_gall   ,ADM_KNONE,ADM_lall   ,              ADM_nxyz) )
@@ -189,7 +188,7 @@ contains
     integer  :: i, j, ij, k, l
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*) '*** Make standard grid system'
+    if( IO_L ) write(IO_FID_LOG,*) '*** Make standard grid system'
 
     k = ADM_KNONE
 
@@ -395,14 +394,14 @@ contains
     lambda = 2.0_RP*PI / ( 10.0_RP*2.0_RP**(ADM_glevel-1) )
     dbar   = MKGRD_spring_beta * lambda
 
-    write(IO_FID_LOG,*) '*** Apply grid modification with spring dynamics'
-    write(IO_FID_LOG,*) '*** spring factor beta  = ', MKGRD_spring_beta
-    write(IO_FID_LOG,*) '*** length lambda       = ', lambda
-    write(IO_FID_LOG,*) '*** delta t             = ', dt
-    write(IO_FID_LOG,*) '*** conversion criteria = ', criteria
-    write(IO_FID_LOG,*) '*** dumping coefficient = ', dump_coef
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,'(3(A16))') 'itelation', 'max. Kinetic E', 'max. forcing'
+    if( IO_L ) write(IO_FID_LOG,*) '*** Apply grid modification with spring dynamics'
+    if( IO_L ) write(IO_FID_LOG,*) '*** spring factor beta  = ', MKGRD_spring_beta
+    if( IO_L ) write(IO_FID_LOG,*) '*** length lambda       = ', lambda
+    if( IO_L ) write(IO_FID_LOG,*) '*** delta t             = ', dt
+    if( IO_L ) write(IO_FID_LOG,*) '*** conversion criteria = ', criteria
+    if( IO_L ) write(IO_FID_LOG,*) '*** dumping coefficient = ', dump_coef
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,'(3(A16))') 'itelation', 'max. Kinetic E', 'max. forcing'
 
     var   (:,:,:,:) = 0.0_RP
     var_pl(:,:,:,:) = 0.0_RP
@@ -578,11 +577,11 @@ contains
     angle_y    = 0.25_RP*PI * ( 3.0_RP - sqrt(3.0_RP) )
     angle_tilt = MKGRD_prerotation_tilt * d2r
 
-    write(IO_FID_LOG,*) '*** Apply pre-rotation'
-    write(IO_FID_LOG,*) '*** Diamond tilting factor = ', MKGRD_prerotation_tilt
-    write(IO_FID_LOG,*) '*** angle_z   (deg) = ', angle_z    / d2r
-    write(IO_FID_LOG,*) '*** angle_y   (deg) = ', angle_y    / d2r
-    write(IO_FID_LOG,*) '*** angle_tilt(deg) = ', angle_tilt / d2r
+    if( IO_L ) write(IO_FID_LOG,*) '*** Apply pre-rotation'
+    if( IO_L ) write(IO_FID_LOG,*) '*** Diamond tilting factor = ', MKGRD_prerotation_tilt
+    if( IO_L ) write(IO_FID_LOG,*) '*** angle_z   (deg) = ', angle_z    / d2r
+    if( IO_L ) write(IO_FID_LOG,*) '*** angle_y   (deg) = ', angle_y    / d2r
+    if( IO_L ) write(IO_FID_LOG,*) '*** angle_tilt(deg) = ', angle_tilt / d2r
 
     do l = 1, ADM_lall
        do ij = 1, ADM_gall
@@ -661,8 +660,8 @@ contains
 
     if( .NOT. MKGRD_DOSTRETCH ) return
 
-    write(IO_FID_LOG,*) '*** Apply stretch'
-    write(IO_FID_LOG,*) '*** Stretch factor = ', MKGRD_stretch_alpha
+    if( IO_L ) write(IO_FID_LOG,*) '*** Apply stretch'
+    if( IO_L ) write(IO_FID_LOG,*) '*** Stretch factor = ', MKGRD_stretch_alpha
 
     k = ADM_KNONE
 
@@ -744,8 +743,8 @@ contains
 
     if( .NOT. MKGRD_DOSHRINK ) return
 
-    write(IO_FID_LOG,*) '*** Apply shrink'
-    write(IO_FID_LOG,*) '*** Shrink level = ', MKGRD_shrink_level
+    if( IO_L ) write(IO_FID_LOG,*) '*** Apply shrink'
+    if( IO_L ) write(IO_FID_LOG,*) '*** Shrink level = ', MKGRD_shrink_level
 
     k = ADM_KNONE
 
@@ -828,9 +827,9 @@ contains
 
     if( .NOT. MKGRD_DOROTATE ) return
 
-    write(IO_FID_LOG,*) '*** Apply rotation'
-    write(IO_FID_LOG,*) '*** North pole -> Longitude(deg) = ', MKGRD_rotation_lon
-    write(IO_FID_LOG,*) '*** North pole -> Latitude (deg) = ', MKGRD_rotation_lat
+    if( IO_L ) write(IO_FID_LOG,*) '*** Apply rotation'
+    if( IO_L ) write(IO_FID_LOG,*) '*** North pole -> Longitude(deg) = ', MKGRD_rotation_lon
+    if( IO_L ) write(IO_FID_LOG,*) '*** North pole -> Latitude (deg) = ', MKGRD_rotation_lat
 
     k = ADM_KNONE
 
@@ -887,12 +886,12 @@ contains
     implicit none
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*) '*** Calc gravitational center'
+    if( IO_L ) write(IO_FID_LOG,*) '*** Calc gravitational center'
 
-    write(IO_FID_LOG,*) '*** center -> vertex'
+    if( IO_L ) write(IO_FID_LOG,*) '*** center -> vertex'
     call MKGRD_center2vertex
 
-    write(IO_FID_LOG,*) '*** vertex -> center'
+    if( IO_L ) write(IO_FID_LOG,*) '*** vertex -> center'
     call MKGRD_vertex2center
 
     call COMM_data_transfer( GRD_x(:,:,:,:), GRD_x_pl(:,:,:,:) )
@@ -957,7 +956,7 @@ contains
     integer  :: i, j, ij, k, l, m
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*) '*** Diagnose grid property'
+    if( IO_L ) write(IO_FID_LOG,*) '*** Diagnose grid property'
 
     k = ADM_KNONE
 
@@ -1081,20 +1080,20 @@ contains
     length_max = GTL_max( length(:,:,:), length_pl(:,:,:), 1, 1, 1 )
     angle_max  = GTL_max( angle (:,:,:), angle_pl (:,:,:), 1, 1, 1 )
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '------ Diagnosis result ---'
-    write(IO_FID_LOG,*) '--- ideal  global surface area  = ', 4.0_RP*PI*RADIUS*RADIUS*1.E-6_RP,' [km2]'
-    write(IO_FID_LOG,*) '--- actual global surface area  = ', global_area*1.E-6_RP,' [km2]'
-    write(IO_FID_LOG,*) '--- global total number of grid = ', global_grid
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '--- average grid interval       = ', sqarea_avg * 1.E-3_RP,' [km]'
-    write(IO_FID_LOG,*) '--- max grid interval           = ', sqarea_max * 1.E-3_RP,' [km]'
-    write(IO_FID_LOG,*) '--- min grid interval           = ', sqarea_min * 1.E-3_RP,' [km]'
-    write(IO_FID_LOG,*) '--- ratio max/min grid interval = ', sqarea_max / sqarea_min
-    write(IO_FID_LOG,*) '--- average length of arc(side) = ', length_avg * 1.E-3_RP,' [km]'
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '--- max length distortion       = ', length_max * 1.D-3,' [km]'
-    write(IO_FID_LOG,*) '--- max angle distortion        = ', angle_max*180.0_RP/PI,' [deg]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '------ Diagnosis result ---'
+    if( IO_L ) write(IO_FID_LOG,*) '--- ideal  global surface area  = ', 4.0_RP*PI*RADIUS*RADIUS*1.E-6_RP,' [km2]'
+    if( IO_L ) write(IO_FID_LOG,*) '--- actual global surface area  = ', global_area*1.E-6_RP,' [km2]'
+    if( IO_L ) write(IO_FID_LOG,*) '--- global total number of grid = ', global_grid
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '--- average grid interval       = ', sqarea_avg * 1.E-3_RP,' [km]'
+    if( IO_L ) write(IO_FID_LOG,*) '--- max grid interval           = ', sqarea_max * 1.E-3_RP,' [km]'
+    if( IO_L ) write(IO_FID_LOG,*) '--- min grid interval           = ', sqarea_min * 1.E-3_RP,' [km]'
+    if( IO_L ) write(IO_FID_LOG,*) '--- ratio max/min grid interval = ', sqarea_max / sqarea_min
+    if( IO_L ) write(IO_FID_LOG,*) '--- average length of arc(side) = ', length_avg * 1.E-3_RP,' [km]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '--- max length distortion       = ', length_max * 1.D-3,' [km]'
+    if( IO_L ) write(IO_FID_LOG,*) '--- max angle distortion        = ', angle_max*180.0_RP/PI,' [deg]'
 
     return
   end subroutine MKGRD_diagnosis

@@ -4,7 +4,7 @@
 !! @par Description
 !!          This module is for the set of basic state for non-hydrostatic model
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_bsstate
@@ -92,18 +92,17 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[basic state]/Category[nhm share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[basic state]/Category[nhm share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=BSSTATEPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** BSSTATEPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** BSSTATEPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist BSSTATEPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist BSSTATEPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist BSSTATEPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=BSSTATEPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=BSSTATEPARAM)
 
     !--- allocation of reference variables
     allocate( rho_bs   (ADM_gall   ,ADM_kall,ADM_lall   ) )
@@ -121,9 +120,9 @@ contains
     tem_bs   (:,:,:) = 0.0_RP
     tem_bs_pl(:,:,:) = 0.0_RP
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '*** Basic state information ***'
-    write(IO_FID_LOG,*) '--- Basic state type : ', trim(ref_type)
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '*** Basic state information ***'
+    if( IO_L ) write(IO_FID_LOG,*) '--- Basic state type : ', trim(ref_type)
 
     if    ( ref_type == 'NOBASE' ) then
 
@@ -155,8 +154,8 @@ contains
                             tem_ref(:), & ! [IN]
                             qv_ref (:)  ) ! [IN]
 
-       write(IO_FID_LOG,*) '-------------------------------------------------------'
-       write(IO_FID_LOG,*) 'Level   Density  Pressure     Temp. Pot. Tem.        qv'
+       if( IO_L ) write(IO_FID_LOG,*) '-------------------------------------------------------'
+       if( IO_L ) write(IO_FID_LOG,*) 'Level   Density  Pressure     Temp. Pot. Tem.        qv'
 
        do k = ADM_kall, 1, -1
           th_ref (k) = tem_ref(k) * ( PRE00 / pre_ref(k) )**(Rdry/CPdry)
@@ -164,7 +163,7 @@ contains
                                                  + (          qv_ref(k) ) * Rvap )
 
           if( k == ADM_kmax ) write(IO_FID_LOG,*) '-------------------------------------------------------'
-          write(IO_FID_LOG,'(I4,F12.4,3F10.2,F10.7)') k,rho_ref(k),pre_ref(k),tem_ref(k),th_ref(k),qv_ref(k)
+          if( IO_L ) write(IO_FID_LOG,'(I4,F12.4,3F10.2,F10.7)') k,rho_ref(k),pre_ref(k),tem_ref(k),th_ref(k),qv_ref(k)
           if( k == ADM_kmin ) write(IO_FID_LOG,*) '-------------------------------------------------------'
        enddo
     endif

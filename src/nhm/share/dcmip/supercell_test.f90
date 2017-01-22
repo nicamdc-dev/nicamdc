@@ -1,4 +1,4 @@
-MODULE supercell
+module supercell
 
 !=======================================================================
 !
@@ -11,9 +11,9 @@ MODULE supercell
 !  SUBROUTINE supercell_test(
 !    lon,lat,p,z,zcoords,u,v,t,thetav,ps,rho,q,pert)
 !
-!  Given a point specified by: 
-!      lon    longitude (radians) 
-!      lat    latitude (radians) 
+!  Given a point specified by:
+!      lon    longitude (radians)
+!      lat    latitude (radians)
 !      p/z    pressure (Pa) / height (m)
 !  zcoords    1 if z is specified, 0 if p is specified
 !     pert    1 if thermal perturbation included, 0 if not
@@ -85,7 +85,7 @@ MODULE supercell
        uc         = 15.d0      ,      & ! coordinate reference velocity
        zs         = 5000.d0    ,      & ! lower altitude of maximum velocity
        zt         = 1000.d0             ! transition distance of velocity
- 
+
   REAL(8), PARAMETER ::               &
        pert_dtheta = 3.d0         ,   & ! perturbation magnitude
        pert_lonc   = 0.d0         ,   & ! perturbation longitude
@@ -96,7 +96,7 @@ MODULE supercell
 
 !-----------------------------------------------------------------------
 !    Coefficients computed from initialization
-!----------------------------------------------------------------------- 
+!-----------------------------------------------------------------------
   INTEGER(4)                  :: initialized = 0
 
   REAL(8), DIMENSION(nphi)    :: phicoord
@@ -141,7 +141,7 @@ CONTAINS
 
     ! Buffer matrices for iteration
     REAL(8), DIMENSION(nphi, nz) :: phicoordmat, dztheta, rhs, irhs
-  
+
     ! Buffer for sampled potential temperature at equator
     REAL(8), DIMENSION(nz) :: thetaeq
 
@@ -156,6 +156,12 @@ CONTAINS
 
     ! Loop indices
     INTEGER(4) :: i, k, iter
+
+#ifndef _MATHLIB
+    write(*,*) 'This subroutine requires a math library such as LAPACK.'
+    write(*,*) 'Please set environment variable ENABLE_MATHLIB=T to use this subroutine.'
+    stop
+#endif
 
     ! Chebyshev nodes in the phi direction
     do i = 1, nphi
@@ -189,6 +195,7 @@ CONTAINS
         nz, zcoord, ddz(:,k), zcoord(k))
     end do
 
+#ifdef _MATHLIB
     ! Compute the int(dphi) operator via pseudoinverse
     lwork = 5*nphi
 
@@ -238,6 +245,7 @@ CONTAINS
     call DGEMM('T', 'T', &
       nz, nz, nz, 1.0d0, svdzvt, nz, svdzu, nz, 0.0d0, &
       intz, nz)
+#endif
 
     ! Sample the equatorial velocity field and its derivative
     do k = 1, nz
@@ -350,7 +358,7 @@ CONTAINS
 !-----------------------------------------------------------------------
   SUBROUTINE supercell_test(lon,lat,p,z,zcoords,u,v,t,thetav,ps,rho,q,pert) &
     BIND(c, name = "supercell_test")
- 
+
     IMPLICIT NONE
 
     !------------------------------------------------
@@ -615,7 +623,7 @@ CONTAINS
     end if
 
     zonal_velocity = zonal_velocity * cos(lat)
-      
+
   END FUNCTION zonal_velocity
 
 !-----------------------------------------------------------------------
@@ -697,7 +705,7 @@ CONTAINS
 
     ! Loop indices
     INTEGER(4) :: i, j
-    
+
     ! Compute the Lagrangian polynomial coefficients
     do i = 1, npts
       coeffs(i) = 1.0d0
@@ -787,4 +795,4 @@ CONTAINS
 
   END SUBROUTINE
 
-END MODULE supercell
+END module supercell

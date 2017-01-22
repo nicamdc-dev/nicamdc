@@ -4,7 +4,7 @@
 !! @par Description
 !!          This module is for managing the output variables
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_history
@@ -14,6 +14,7 @@ module mod_history
   !
   use mod_precision
   use mod_stdio
+  use mod_prof
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -223,18 +224,17 @@ contains
     doout_step0 = HIST_output_step0
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[history]/Category[nhm share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[history]/Category[nhm share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=NMHISD,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** NMHISD is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** NMHISD is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist NMHISD. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NMHISD. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist NMHISD. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=NMHISD)
+    if( IO_NML ) write(IO_FID_LOG,nml=NMHISD)
 
     ! nonsence restore
     step_def        = step
@@ -249,9 +249,9 @@ contains
 
     if (      output_io_mode == 'HIO'      &
          .OR. output_io_mode == 'ADVANCED' ) then
-       write(IO_FID_LOG,*) '*** History output type:', trim(output_io_mode)
+       if( IO_L ) write(IO_FID_LOG,*) '*** History output type:', trim(output_io_mode)
     else
-       write(IO_FID_LOG,*) 'xxx Invalid output_io_mode!', trim(output_io_mode)
+       write(*,*) 'xxx Invalid output_io_mode!', trim(output_io_mode)
        call PRC_MPIstop
     endif
     HIST_io_fname = trim(output_path)//trim(histall_fname)
@@ -274,20 +274,19 @@ contains
        if ( ierr < 0 ) then
           exit
        elseif( ierr > 0 ) then
-          write(*         ,*) 'xxx Not appropriate names in namelist NMHIST. STOP.'
-          write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NMHIST. STOP.'
+          write(*,*) 'xxx Not appropriate names in namelist NMHIST. STOP.'
           call PRC_MPIstop
       endif
     enddo
     HIST_req_nmax = n - 1
 
     if    ( HIST_req_nmax > HIST_req_limit ) then
-       write(IO_FID_LOG,*) '*** request of history file is exceed! n >', HIST_req_limit
+       if( IO_L ) write(IO_FID_LOG,*) '*** request of history file is exceed! n >', HIST_req_limit
     elseif( HIST_req_nmax == 0 ) then
-       write(IO_FID_LOG,*) '*** No history file specified.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** No history file specified.'
        return
     else
-       write(IO_FID_LOG,*) '*** Number of requested history item : ', HIST_req_nmax
+       if( IO_L ) write(IO_FID_LOG,*) '*** Number of requested history item : ', HIST_req_nmax
     endif
 
     allocate( item_save         (HIST_req_nmax) )
@@ -364,7 +363,7 @@ contains
        if( ierr /= 0 ) exit
 
        if ( item == '' ) then
-          write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NMHIST. STOP.'
+          write(*,*) 'xxx Not appropriate names in namelist NMHIST. STOP.'
           call PRC_MPIstop
        endif
 
@@ -405,7 +404,7 @@ contains
 
        if ( out_prelev ) then
           if ( ktype /= '3D' ) then
-             write(IO_FID_LOG,*) '*** Only 3D vars can be output by pressure coordinates. item=', trim(item)
+             if( IO_L ) write(IO_FID_LOG,*) '*** Only 3D vars can be output by pressure coordinates. item=', trim(item)
              out_prelev = .false.
           else
              calc_pressure = .true.
@@ -488,7 +487,7 @@ contains
     enddo
 
     if ( calc_pressure ) then
-       write(IO_FID_LOG,*) '*** use z2p : YES'
+       if( IO_L ) write(IO_FID_LOG,*) '*** use z2p : YES'
 
        allocate( pres_levs_ln(npreslev) )
        pres_levs_ln(1:npreslev) = log( pres_levs(1:npreslev) * 100 )
@@ -544,11 +543,10 @@ contains
 
     if (       ijdim_input /= ADM_gall_in &
          .AND. ijdim_input /= ADM_gall    ) then
-       write(IO_FID_LOG,*) '+++ Module[history]/Category[nhm share]'
-       write(IO_FID_LOG,*) 'xxx invalid dimension, item=', hitem, &
-                           ', ijdim_input=', ijdim_input, &
-                           ', ADM_gall_in=', ADM_gall_in, &
-                           ', ADM_gall=',    ADM_gall
+       write(*,*) 'xxx [history/history_in] invalid dimension, item=',        hitem,       &
+                                                            ', ijdim_input=', ijdim_input, &
+                                                            ', ADM_gall_in=', ADM_gall_in, &
+                                                            ', ADM_gall=',    ADM_gall
        call PRC_MPIstop
     endif
 
@@ -568,23 +566,23 @@ contains
           if ( ktype_save(n) == '3D' ) then
              if ( .NOT. out_prelev_save(n) ) then ! normal, trim HALO
                 if ( kdim_input-2 /= kmax_save(n) ) then
-                   write(IO_FID_LOG,*) '+++ Module[history]/Category[nhm share]'
-                   write(IO_FID_LOG,*) '*** Size unmatch, item=', hitem, &
+                   if( IO_L ) write(IO_FID_LOG,*) '+++ Module[history]/Category[nhm share]'
+                   if( IO_L ) write(IO_FID_LOG,*) '*** Size unmatch, item=', hitem, &
                                        ', kdim_input=', kdim_input, &
                                        ', kmax_save=',  kmax_save(n)
                 endif
              else
                 if ( kdim_input /= ADM_kall ) then
-                   write(IO_FID_LOG,*) '+++ Module[history]/Category[nhm share]'
-                   write(IO_FID_LOG,*) '*** Size unmatch, item=', hitem, &
+                   if( IO_L ) write(IO_FID_LOG,*) '+++ Module[history]/Category[nhm share]'
+                   if( IO_L ) write(IO_FID_LOG,*) '*** Size unmatch, item=', hitem, &
                                        ', kdim_input=', kdim_input, &
                                        ', kmax for convert from z to p=', ADM_kall
                 endif
              endif
           else
              if ( kdim_input /= kmax_save(n) ) then
-                write(IO_FID_LOG,*) '+++ Module[history]/Category[nhm share]'
-                write(IO_FID_LOG,*) '*** Size unmatch, item=', hitem, &
+                if( IO_L ) write(IO_FID_LOG,*) '+++ Module[history]/Category[nhm share]'
+                if( IO_L ) write(IO_FID_LOG,*) '*** Size unmatch, item=', hitem, &
                                     ', kdim_input=', kdim_input, &
                                     ', kmax_save=',  kmax_save(n)
              endif
@@ -795,9 +793,9 @@ contains
 
     ! At least one variable will output, do communication
     if ( num_output > 0 ) then
-       write(IO_FID_LOG,*) '### HISTORY num_output = ', num_output
+       if( IO_L ) write(IO_FID_LOG,*) '### HISTORY num_output = ', num_output
        call CALENDAR_ss2cc( HTIME, TIME_CTIME )
-       write(IO_FID_LOG,*) '###         date-time  = ', HTIME
+       if( IO_L ) write(IO_FID_LOG,*) '###         date-time  = ', HTIME
 
        call COMM_var( v_save, v_save_pl, KSUM, 1 )
     else
@@ -854,7 +852,7 @@ contains
              enddo
 
              if ( opt_wgrid_save(n) ) then
-                write(IO_FID_LOG,*) 'xxx opt_wgrid is disabled! stop.', file_save(n)
+                write(*,*) 'xxx opt_wgrid is disabled! stop.', file_save(n)
                 call PRC_MPIstop
              endif
 
@@ -866,7 +864,7 @@ contains
              enddo
           endif
 
-          write(IO_FID_LOG,'(A,A16,A,1PE24.17,A,E24.17)') ' [', item(1:16), '] max=', val_max, ', min=', val_min
+          if( IO_L ) write(IO_FID_LOG,'(A,A16,A,1PE24.17,A,E24.17)') ' [', item(1:16), '] max=', val_max, ', min=', val_min
 
           if ( output_io_mode == 'ADVANCED' ) then
 
@@ -940,13 +938,13 @@ contains
     integer :: n
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '*** [HIST] Output item list '
-    write(IO_FID_LOG,*) '*** Total number of requested history item :', HIST_req_nmax
-    write(IO_FID_LOG,*) '============================================================================'
-    write(IO_FID_LOG,*) 'NAME            :Save name       :UNIT            :Avg.type        :interval'
-    write(IO_FID_LOG,*) '                :Vert.type       :# of layer      :p?  :z?  :zh? :lag.intrp?'
-    write(IO_FID_LOG,*) '============================================================================'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '*** [HIST] Output item list '
+    if( IO_L ) write(IO_FID_LOG,*) '*** Total number of requested history item :', HIST_req_nmax
+    if( IO_L ) write(IO_FID_LOG,*) '============================================================================'
+    if( IO_L ) write(IO_FID_LOG,*) 'NAME            :Save name       :UNIT            :Avg.type        :interval'
+    if( IO_L ) write(IO_FID_LOG,*) '                :Vert.type       :# of layer      :p?  :z?  :zh? :lag.intrp?'
+    if( IO_L ) write(IO_FID_LOG,*) '============================================================================'
 
     do n = 1, HIST_req_nmax
        item  = item_save(n)
@@ -955,30 +953,31 @@ contains
        ktype = ktype_save(n)
        otype = output_type_save(n)
 
-       write(IO_FID_LOG,'(1x,A16,A,A16,A,A16,A,A16,A,I8)')      item (1:16), &
-                                                           ':', file (1:16), &
-                                                           ':', unit (1:16), &
-                                                           ':', otype(1:16), &
-                                                           ':', step_save(n)
+       if( IO_L ) write(IO_FID_LOG,'(1x,A16,A,A16,A,A16,A,A16,A,I8)')      item (1:16), &
+                                                           ":", file (1:16), &
+                                                           ":", unit (1:16), &
+                                                           ":", otype(1:16), &
+                                                           ":", step_save(n)
 
-       write(IO_FID_LOG,'(17x,A,A16,A,I016,A,L04,A,L04,A,L04,A,L04)') ':', ktype(1:16),           &
-                                                                      ':', kmax_save(n),          &
-                                                                      ':', out_prelev_save   (n), &
-                                                                      ':', out_vintrpl_save  (n), &
-                                                                      ':', opt_wgrid_save    (n), &
-                                                                      ':', opt_lagintrpl_save(n)
+       if( IO_L ) write(IO_FID_LOG,'(17x,A,A16,A,I016,A,L04,A,L04,A,L04,A,L04)') ":", ktype(1:16),           &
+                                                                      ":", kmax_save(n),          &
+                                                                      ":", out_prelev_save   (n), &
+                                                                      ":", out_vintrpl_save  (n), &
+                                                                      ":", opt_wgrid_save    (n), &
+                                                                      ":", opt_lagintrpl_save(n)
 
        if ( .NOT. flag_save(n) ) then ! not stored yet or never
-          write(IO_FID_LOG,*) '+++ this variable is requested but not stored yet. check!'
+          if( IO_L ) write(IO_FID_LOG,*) '+++ this variable is requested but not stored yet. check!'
           if ( check_flag ) then
-             write(IO_FID_LOG,*) 'xxx history check_flag is on. stop!'
+             write(*,*) '+++ this variable is requested but not stored yet. check!', trim(item_save(n))
+             write(*,*) 'xxx history check_flag is on. stop!'
              call PRC_MPIstop
           endif
        endif
     enddo
 
-    write(IO_FID_LOG,*) '============================================================================'
-    write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '============================================================================'
+    if( IO_L ) write(IO_FID_LOG,*)
 
     return
   end subroutine history_outlist

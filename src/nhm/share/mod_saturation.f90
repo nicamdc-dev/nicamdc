@@ -4,7 +4,7 @@
 !! @par Description
 !!         This module is for saturation processes
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_saturation
@@ -101,41 +101,43 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[saturation]/Category[nhm share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[saturation]/Category[nhm share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=SATURATIONPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** SATURATIONPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** SATURATIONPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist SATURATIONPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist SATURATIONPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist SATURATIONPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=SATURATIONPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=SATURATIONPARAM)
 
     RTEM00 = 1.0_RP / TEM00
 
     if ( CONST_THERMODYN_TYPE == 'EXACT' ) then
+
        CPovR_liq = ( CPvap - CL ) / Rvap
        CPovR_ice = ( CPvap - CI ) / Rvap
        CVovR_liq = ( CVvap - CL ) / Rvap
        CVovR_ice = ( CVvap - CI ) / Rvap
+
     elseif(      CONST_THERMODYN_TYPE == 'SIMPLE'  &
             .OR. CONST_THERMODYN_TYPE == 'SIMPLE2' ) then
+
        CPovR_liq = 0.0_RP
        CPovR_ice = 0.0_RP
        CVovR_liq = 0.0_RP
        CVovR_ice = 0.0_RP
+
     endif
     LovR_liq = LHV / Rvap
     LovR_ice = LHS / Rvap
 
-
     dalphadT_const = 1.0_RP / ( SATURATION_ULIMIT_TEMP - SATURATION_LLIMIT_TEMP )
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,'(1x,A,F7.2,A,F7.2)') '*** Temperature range for ice : ', &
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,F7.2,A,F7.2)') '*** Temperature range for ice : ', &
                                            SATURATION_LLIMIT_TEMP, ' - ', &
                                            SATURATION_ULIMIT_TEMP
 

@@ -4,7 +4,7 @@
 !! @par Description
 !!          This module is for monitoring the energy/mass budget
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_embudget
@@ -14,6 +14,7 @@ module mod_embudget
   !
   use mod_precision
   use mod_stdio
+  use mod_prof
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -87,26 +88,25 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[embudget]/Category[nhm share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[embudget]/Category[nhm share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=EMBUDGETPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** EMBUDGETPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** EMBUDGETPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist EMBUDGETPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist EMBUDGETPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist EMBUDGETPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=EMBUDGETPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=EMBUDGETPARAM)
 
     if(.not.MNT_ON) return
 
     Area_factor   = 1.D0   / ( 4.D0 * PI * RADIUS * RADIUS )                                    ! [J]       -> [J/m2]
     Budget_factor = 1.D0   / ( TIME_DTL * real(MNT_INTV,kind=8) * 4.D0 * PI * RADIUS * RADIUS ) ! [J /step] -> [W/m2]
 
-    write(IO_FID_LOG,*) "Area_factor   = ", Area_factor
-    write(IO_FID_LOG,*) "Budget_factor = ", Budget_factor
+    if( IO_L ) write(IO_FID_LOG,*) "Area_factor   = ", Area_factor
+    if( IO_L ) write(IO_FID_LOG,*) "Budget_factor = ", Budget_factor
 
     ! open budget.info file
     if ( PRC_IsMaster ) then

@@ -5,7 +5,7 @@
 !!          Read argument and convert to namelist format
 !!          (This idea is referenced from GTOOL3 suite)
 !!
-!! @author Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_tool_option
@@ -17,7 +17,7 @@ module mod_tool_option
   private
   !-----------------------------------------------------------------------------
   !
-  !++ public procedure
+  !++ Public procedures
   !
   public :: OPT_convert
 
@@ -28,7 +28,7 @@ module mod_tool_option
   integer, public :: OPT_fid !< fileunit number for namelist
   !-----------------------------------------------------------------------------
   !
-  !++ private procedure
+  !++ Private procedures
   !
   !-----------------------------------------------------------------------------
   !

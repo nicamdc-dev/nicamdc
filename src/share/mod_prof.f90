@@ -112,22 +112,22 @@ contains
     integer :: ierr
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '++++++ Module[PROF] / Categ[COMMON] / Origin[SCALElib]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '++++++ Module[PROF] / Categ[COMMON] / Origin[SCALElib]'
 
     !--- read namelist
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=PARAM_PROF,iostat=ierr)
     if( ierr < 0 ) then !--- missing
-       write(IO_FID_LOG,*) '*** Not found namelist. Default used.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** Not found namelist. Default used.'
     elseif( ierr > 0 ) then !--- fatal error
        write(*,*) 'xxx Not appropriate names in namelist PARAM_PROF. Check!'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=PARAM_PROF)
+    if( IO_NML ) write(IO_FID_LOG,nml=PARAM_PROF)
 
-    write(IO_FID_LOG,*) '*** Rap output level              = ', PROF_rap_level
-    write(IO_FID_LOG,*) '*** Add MPI_barrier in every rap? = ', PROF_mpi_barrier
+    if( IO_L ) write(IO_FID_LOG,*) '*** Rap output level              = ', PROF_rap_level
+    if( IO_L ) write(IO_FID_LOG,*) '*** Add MPI_barrier in every rap? = ', PROF_mpi_barrier
 
     PROF_prefix = ''
 
@@ -261,9 +261,9 @@ contains
        endif
     enddo
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '*** Computational Time Report'
-    write(IO_FID_LOG,*) '*** Rap level is ', PROF_rap_level
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '*** Computational Time Report'
+    if( IO_L ) write(IO_FID_LOG,*) '*** Rap level is ', PROF_rap_level
 
     if ( IO_LOG_ALLNODE ) then ! report for each node
 
@@ -362,8 +362,8 @@ contains
 
     if ( IO_LOG_ALLNODE ) then ! report for each node
 
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) '*** PAPI Report [Local PE information]'
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) '*** PAPI Report [Local PE information]'
        write(IO_FID_LOG,'(1x,A,F15.3)') '*** Real time          [sec] : ', PROF_PAPI_real_time
        write(IO_FID_LOG,'(1x,A,F15.3)') '*** CPU  time          [sec] : ', PROF_PAPI_proc_time
        write(IO_FID_LOG,'(1x,A,F15.3)') '*** FLOP             [GFLOP] : ', PROF_PAPI_gflop
@@ -382,8 +382,8 @@ contains
                              minidx    (1:3), & ! [OUT]
                              statistics(1:3)  ) ! [IN]
 
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) '*** PAPI Report'
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) '*** PAPI Report'
        write(IO_FID_LOG,'(1x,A,A,F10.3,A,F10.3,A,I5,A,A,F10.3,A,I5,A,A,I7)') &
                   '*** Real time [sec]',' T(avg)=',avgvar(1), &
                   ', T(max)=',maxvar(1),'[',maxidx(1),']',', T(min)=',minvar(1),'[',minidx(1),']'
@@ -393,14 +393,14 @@ contains
        write(IO_FID_LOG,'(1x,A,A,F10.3,A,F10.3,A,I5,A,A,F10.3,A,I5,A,A,I7)') &
                   '*** FLOP    [GFLOP]',' N(avg)=',avgvar(3), &
                   ', N(max)=',maxvar(3),'[',maxidx(3),']',', N(min)=',minvar(3),'[',minidx(3),']'
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
        write(IO_FID_LOG,'(1x,A,F15.3,A,I6,A)') &
                   '*** TOTAL FLOP    [GFLOP] : ', avgvar(3)*PRC_nprocs, '(',PRC_nprocs,' PEs)'
        write(IO_FID_LOG,'(1x,A,F15.3)') &
                   '*** FLOPS        [GFLOPS] : ', avgvar(3)*PRC_nprocs/maxvar(2)
        write(IO_FID_LOG,'(1x,A,F15.3)') &
                   '*** FLOPS per PE [GFLOPS] : ', avgvar(3)/maxvar(2)
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
 
        if ( IO_LOG_SUPPRESS ) then ! report to STDOUT
           if ( PRC_IsMaster ) then ! master node

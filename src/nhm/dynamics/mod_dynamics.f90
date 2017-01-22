@@ -4,7 +4,7 @@
 !! @par Description
 !!          This module contains the core component of fluid dynamics on icosahedral grid system
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_dynamics
@@ -67,20 +67,20 @@ contains
     implicit none
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[dynamics]/Category[nhm]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[dynamics]/Category[nhm]'
 
-    write(IO_FID_LOG,*) '+++ Time integration type: ', trim(TIME_INTEG_TYPE)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Time integration type: ', trim(TIME_INTEG_TYPE)
     select case(TIME_INTEG_TYPE)
     case('RK2')
-       write(IO_FID_LOG,*) '+++ 2-stage Runge-Kutta'
+       if( IO_L ) write(IO_FID_LOG,*) '+++ 2-stage Runge-Kutta'
 
        num_of_iteration_lstep    = 2
        num_of_iteration_sstep(1) = TIME_SSTEP_MAX / 2
        num_of_iteration_sstep(2) = TIME_SSTEP_MAX
 
     case('RK3')
-       write(IO_FID_LOG,*) '+++ 3-stage Runge-Kutta'
+       if( IO_L ) write(IO_FID_LOG,*) '+++ 3-stage Runge-Kutta'
 
        num_of_iteration_lstep    = 3
        num_of_iteration_sstep(1) = TIME_SSTEP_MAX / 3
@@ -88,7 +88,7 @@ contains
        num_of_iteration_sstep(3) = TIME_SSTEP_MAX
 
     case('RK4')
-       write(IO_FID_LOG,*) '+++ 4-stage Runge-Kutta'
+       if( IO_L ) write(IO_FID_LOG,*) '+++ 4-stage Runge-Kutta'
 
        num_of_iteration_lstep    = 4
        num_of_iteration_sstep(1) = TIME_SSTEP_MAX / 4
@@ -97,17 +97,18 @@ contains
        num_of_iteration_sstep(4) = TIME_SSTEP_MAX
 
     case('TRCADV')
-       write(IO_FID_LOG,*) '+++ Offline tracer experiment'
+       if( IO_L ) write(IO_FID_LOG,*) '+++ Offline tracer experiment'
 
        num_of_iteration_lstep    = 0
 
        if ( TRC_ADV_TYPE == 'DEFAULT' ) then
-          write(IO_FID_LOG,*) 'xxx unsupported advection scheme for TRCADV test! STOP.'
+          write(*,*) 'xxx [dynamics_setup] unsupported advection scheme for TRCADV test! STOP.', &
+                     trim(TRC_ADV_TYPE)
           call PRC_MPIstop
        endif
 
     case default
-       write(IO_FID_LOG,*) 'xxx unsupported integration type! STOP.'
+       write(*,*) 'xxx [dynamics_setup] unsupported integration type! STOP.', trim(TIME_INTEG_TYPE)
        call PRC_MPIstop
     endselect
 

@@ -4,7 +4,7 @@
 !! @par Description
 !!         This module is for the management of process and region
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_adm
@@ -218,30 +218,26 @@ contains
 #endif
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[adm]/Category[common share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[adm]/Category[common share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=ADMPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(*         ,*) 'xxx Not found namelist! STOP.'
-       write(IO_FID_LOG,*) 'xxx Not found namelist! STOP.'
+       write(*,*) 'xxx Not found namelist ADMPARAM! STOP.'
        call PRC_MPIstop
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist ADMPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist ADMPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist ADMPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=ADMPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=ADMPARAM)
 
     ! Error if glevel & rlevel are not defined
     if ( glevel < 1 ) then
-       write(*         ,*) 'xxx glevel is not appropriate :', glevel
-       write(IO_FID_LOG,*) 'xxx glevel is not appropriate :', glevel
+       write(*,*) 'xxx [ADM_setup] glevel is not appropriate :', glevel
        call PRC_MPIstop
     endif
     if ( rlevel < 0 ) then
-       write(*         ,*) 'xxx rlevel is not appropriate :', rlevel
-       write(IO_FID_LOG,*) 'xxx rlevel is not appropriate :', rlevel
+       write(*,*) 'xxx [ADM_setup] rlevel is not appropriate :', rlevel
        call PRC_MPIstop
     endif
 
@@ -257,8 +253,7 @@ contains
     elseif( ADM_HGRID_SYSTEM == 'ICO-XTMS' ) then
        dmd        = 10
     else
-       write(*         ,*) 'xxx Not appropriate param for ADM_HGRID_SYSTEM. STOP.', trim(ADM_HGRID_SYSTEM)
-       write(IO_FID_LOG,*) 'xxx Not appropriate param for ADM_HGRID_SYSTEM. STOP.', trim(ADM_HGRID_SYSTEM)
+       write(*,*) 'xxx [ADM_setup] Not appropriate param for ADM_HGRID_SYSTEM. STOP.', trim(ADM_HGRID_SYSTEM)
        call PRC_MPIstop
     endif
 #else
@@ -286,8 +281,7 @@ contains
        ADM_vlink  = 5
        dmd        = 10
     else
-       write(*         ,*) 'xxx Not appropriate param for ADM_HGRID_SYSTEM. STOP.', trim(ADM_HGRID_SYSTEM)
-       write(IO_FID_LOG,*) 'xxx Not appropriate param for ADM_HGRID_SYSTEM. STOP.', trim(ADM_HGRID_SYSTEM)
+       write(*,*) 'xxx [ADM_setup] Not appropriate param for ADM_HGRID_SYSTEM. STOP.', trim(ADM_HGRID_SYSTEM)
        call PRC_MPIstop
     endif
 
@@ -297,23 +291,19 @@ contains
 
 #ifdef _FIXEDINDEX_
     if ( ADM_glevel /= glevel ) then
-       write(*,         *) 'xxx Fixed glevel is not match (fixed,requested): ', ADM_glevel, glevel
-       write(IO_FID_LOG,*) 'xxx Fixed glevel is not match (fixed,requested): ', ADM_glevel, glevel
+       write(*,*) 'xxx [ADM_setup] Fixed glevel is not match (fixed,requested): ', ADM_glevel, glevel
        call PRC_MPIstop
     endif
     if ( ADM_rlevel /= rlevel ) then
-       write(*         ,*) 'xxx Fixed rlevel is not match (fixed,requested): ', ADM_rlevel, rlevel
-       write(IO_FID_LOG,*) 'xxx Fixed rlevel is not match (fixed,requested): ', ADM_rlevel, rlevel
+       write(*,*) 'xxx [ADM_setup] Fixed rlevel is not match (fixed,requested): ', ADM_rlevel, rlevel
        call PRC_MPIstop
     endif
     if ( ADM_vlayer /= vlayer ) then
-       write(*         ,*) 'xxx Fixed vlayer is not match (fixed,requested): ', ADM_vlayer, vlayer
-       write(IO_FID_LOG,*) 'xxx Fixed vlayer is not match (fixed,requested): ', ADM_vlayer, vlayer
+       write(*,*) 'xxx [ADM_setup] Fixed vlayer is not match (fixed,requested): ', ADM_vlayer, vlayer
        call PRC_MPIstop
     endif
     if ( ADM_DMD /= dmd ) then
-       write(*         ,*) 'xxx Fixed dmd is not match (fixed,requested): ', ADM_DMD, dmd
-       write(IO_FID_LOG,*) 'xxx Fixed dmd is not match (fixed,requested): ', ADM_DMD, dmd
+       write(*,*) 'xxx [ADM_setup] Fixed dmd is not match (fixed,requested): ', ADM_DMD, dmd
        call PRC_MPIstop
     endif
 #else
@@ -393,18 +383,17 @@ contains
     RGNMNG_in_fname = trim(rgnmngfname)
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[rgnmng]/Category[common share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[rgnmng]/Category[common share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=RGNMNGPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** RGNMNGPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** RGNMNGPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist RGNMNGPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist RGNMNGPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist RGNMNGPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=RGNMNGPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=RGNMNGPARAM)
 
     ! Global information (Each process has all the information)
     allocate( RGNMNG_edge_tab(I_RGNID:I_DIR,I_SW:I_SE,ADM_rgn_nmax) )
@@ -420,7 +409,7 @@ contains
                           RGNMNG_lnum    (:),     & ! [OUT]
                           RGNMNG_lp2r    (:,:)    ) ! [OUT]
     else
-       write(IO_FID_LOG,*) '*** input file is not specified.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** input file is not specified.'
 
        if ( ADM_HGRID_SYSTEM == 'ICO' ) then
           call RGNMNG_generate_ico( ADM_rlevel,             & ! [IN]
@@ -568,7 +557,7 @@ contains
     integer :: r, p, l
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*) '*** input mnginfo: ',trim(in_fname)
+    if( IO_L ) write(IO_FID_LOG,*) '*** input mnginfo: ',trim(in_fname)
 
     fid = IO_get_available_fid()
     open( unit   = fid,            &
@@ -579,15 +568,15 @@ contains
 
        ! ERROR if filename are not defined
        if ( ierr /= 0 ) then
-          write(IO_FID_LOG,*) 'xxx mnginfo file is not found! STOP. ', trim(in_fname)
+          if( IO_L ) write(IO_FID_LOG,*) 'xxx mnginfo file is not found! STOP. ', trim(in_fname)
           call PRC_MPIstop
        endif
 
        read(fid,nml=rgn_info)
 
        if ( num_of_rgn /= rall ) then
-          write(IO_FID_LOG,*) 'xxx No match for region number! STOP.'
-          write(IO_FID_LOG,*) 'xxx rall= ',rall,' num_of_rgn=',num_of_rgn
+          if( IO_L ) write(IO_FID_LOG,*) 'xxx No match for region number! STOP.'
+          if( IO_L ) write(IO_FID_LOG,*) 'xxx rall= ',rall,' num_of_rgn=',num_of_rgn
           call PRC_MPIstop
        endif
 
@@ -602,8 +591,8 @@ contains
 
        read(fid,nml=proc_info)
        if ( num_of_proc /= pall ) then
-          write(IO_FID_LOG,*) ' xxx No match for  process number! STOP.'
-          write(IO_FID_LOG,*) ' xxx prc_all= ',pall,' num_of_proc=',num_of_proc
+          if( IO_L ) write(IO_FID_LOG,*) ' xxx No match for  process number! STOP.'
+          if( IO_L ) write(IO_FID_LOG,*) ' xxx prc_all= ',pall,' num_of_proc=',num_of_proc
           call PRC_MPIstop
        endif
 
@@ -680,7 +669,7 @@ contains
     !---------------------------------------------------------------------------
 
     if ( ADM_prc_me == ADM_prc_master ) then
-       write(IO_FID_LOG,*) '*** output mnginfo: ',trim(out_fname)
+       if( IO_L ) write(IO_FID_LOG,*) '*** output mnginfo: ',trim(out_fname)
 
        fid = IO_get_available_fid()
        open( unit   = fid,             &
@@ -717,7 +706,7 @@ contains
 
        close(fid)
     else
-       write(IO_FID_LOG,*) '*** output mnginfo: only in the master process'
+       if( IO_L ) write(IO_FID_LOG,*) '*** output mnginfo: only in the master process'
     endif
 
     return
@@ -755,8 +744,8 @@ contains
     integer :: l, p
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*) '*** generate region management table'
-    write(IO_FID_LOG,*) '*** Topology: default icosahedral'
+    if( IO_L ) write(IO_FID_LOG,*) '*** generate region management table'
+    if( IO_L ) write(IO_FID_LOG,*) '*** Topology: default icosahedral'
 
     dmd_data(:, 1) = (/  6, 5, 2,10 /)
     dmd_data(:, 2) = (/ 10, 1, 3, 9 /)
@@ -1004,7 +993,7 @@ contains
     integer :: l, d, v
     !---------------------------------------------------------------------------
 
-    write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*)
     write(IO_FID_LOG,'(1x,A)'   ) '====== Process management info. ======'
     write(IO_FID_LOG,'(1x,A,I7)') '--- Total number of process           : ', PRC_nprocs
     write(IO_FID_LOG,'(1x,A,I7)') '--- My Process number = (my rank + 1) : ', ADM_prc_me
@@ -1017,7 +1006,7 @@ contains
                                              ' (', 2**ADM_rlevel, ' x', 2**ADM_rlevel, ' x', ADM_DMD, ' )'
     write(IO_FID_LOG,'(1x,A,I7)') '--- #  of region per process          : ', ADM_lall
     write(IO_FID_LOG,'(1x,A)'   ) '--- ID of region in my process        : '
-    write(IO_FID_LOG,*)           RGNMNG_lp2r(1:ADM_lall,ADM_prc_me)
+    if( IO_L ) write(IO_FID_LOG,*)           RGNMNG_lp2r(1:ADM_lall,ADM_prc_me)
 
     write(IO_FID_LOG,'(1x,A,I7)') '--- Region ID, contains north pole    : ', RGNMNG_rgn4pl(I_NPL)
     write(IO_FID_LOG,'(1x,A,I7)') '--- Region ID, contains south pole    : ', RGNMNG_rgn4pl(I_SPL)
@@ -1033,24 +1022,24 @@ contains
     write(IO_FID_LOG,'(1x,A,I7)') '--- Number of vertical layer          : ', ADM_kmax-ADM_kmin+1
 
     if ( debug ) then
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) '====== region management information ======'
-       write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) '====== region management information ======'
+       if( IO_L ) write(IO_FID_LOG,*)
        write(IO_FID_LOG,'(1x,A,I7)') '--- # of region in this node : ', ADM_lall
 
-       write(IO_FID_LOG,*) '--- (l,prc_me) => (rgn)'
+       if( IO_L ) write(IO_FID_LOG,*) '--- (l,prc_me) => (rgn)'
        do l = 1, ADM_lall
           rgnid = RGNMNG_l2r(l)
           write(IO_FID_LOG,'(1x,A,I4,A,I6,A,I6,A)') '--- (',l,',',ADM_prc_me,') => (',rgnid,') '
        enddo
 
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) '--- Link information'
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) '--- Link information'
        do l = 1, ADM_lall
           rgnid = RGNMNG_l2r(l)
 
-          write(IO_FID_LOG,*)
-          write(IO_FID_LOG,*) '--- edge link: (rgn,direction)'
+          if( IO_L ) write(IO_FID_LOG,*)
+          if( IO_L ) write(IO_FID_LOG,*) '--- edge link: (rgn,direction)'
           do d = I_SW, I_SE
              rgnid_next = RGNMNG_edge_tab(I_RGNID,d,rgnid)
              dstr       = RGNMNG_edgename(d)
@@ -1058,7 +1047,7 @@ contains
              write(IO_FID_LOG,'(5x,A,I6,A,A,A,I6,A,A,A)') '(',rgnid,',',dstr,') -> (', rgnid_next,',', dstr_next,')'
           enddo
 
-          write(IO_FID_LOG,*) '--- vertex link: (rgn)'
+          if( IO_L ) write(IO_FID_LOG,*) '--- vertex link: (rgn)'
           do d = I_W, I_S
              dstr = RGNMNG_vertname(d)
              write(IO_FID_LOG,'(5x,A,I6,A,A,A)',advance='no') '(',rgnid,',',dstr,')'
@@ -1066,15 +1055,15 @@ contains
                 dstr = RGNMNG_vertname(RGNMNG_vert_tab(I_DIR,d,rgnid,v))
                 write(IO_FID_LOG,'(A,I6,A,A,A)',advance='no') ' -> (',RGNMNG_vert_tab(I_RGNID,d,rgnid,v),',',dstr,')'
              enddo
-             write(IO_FID_LOG,*)
+             if( IO_L ) write(IO_FID_LOG,*)
           enddo
        enddo
 
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) '--- Pole information (in the global scope)'
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) '--- region, having north pole data : ', RGNMNG_rgn4pl(I_NPL)
-       write(IO_FID_LOG,*) '--- vertex link: (north pole)'
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) '--- Pole information (in the global scope)'
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) '--- region, having north pole data : ', RGNMNG_rgn4pl(I_NPL)
+       if( IO_L ) write(IO_FID_LOG,*) '--- vertex link: (north pole)'
        do v = 2, ADM_vlink
           rgnid = RGNMNG_vert_tab_pl(I_RGNID,I_NPL,v)
           dstr  = RGNMNG_vertname(RGNMNG_vert_tab_pl(I_DIR,I_NPL,v))
@@ -1083,12 +1072,12 @@ contains
        rgnid = RGNMNG_vert_tab_pl(I_RGNID,I_NPL,1)
        dstr  = RGNMNG_vertname(RGNMNG_vert_tab_pl(I_DIR,I_NPL,1))
        write(IO_FID_LOG,'(A,I6,A,A,A)',advance='no') ' -> (',rgnid,',',dstr,')'
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) '--- process, managing north pole : ', RGNMNG_r2p_pl(I_NPL)
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) '--- process, managing north pole : ', RGNMNG_r2p_pl(I_NPL)
 
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) '--- region, having south pole data : ', RGNMNG_rgn4pl(I_SPL)
-       write(IO_FID_LOG,*) '--- vertex link: (south pole)'
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) '--- region, having south pole data : ', RGNMNG_rgn4pl(I_SPL)
+       if( IO_L ) write(IO_FID_LOG,*) '--- vertex link: (south pole)'
        do v = 2, ADM_vlink
           rgnid = RGNMNG_vert_tab_pl(I_RGNID,I_SPL,v)
           dstr  = RGNMNG_vertname(RGNMNG_vert_tab_pl(I_DIR,I_SPL,v))
@@ -1097,8 +1086,8 @@ contains
        rgnid = RGNMNG_vert_tab_pl(I_RGNID,I_SPL,1)
        dstr  = RGNMNG_vertname(RGNMNG_vert_tab_pl(I_DIR,I_SPL,1))
        write(IO_FID_LOG,'(A,I6,A,A,A)',advance='no') ' -> (',rgnid,',',dstr,')'
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,*) '--- process, managing south pole : ', RGNMNG_r2p_pl(I_SPL)
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) '--- process, managing south pole : ', RGNMNG_r2p_pl(I_SPL)
     endif
 
     return

@@ -155,18 +155,17 @@ contains
     thermodyn_type        = CONST_THERMODYN_TYPE
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[cnst]/Category[common share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[cnst]/Category[common share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=CNSTPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** CNSTPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** CNSTPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist CNSTPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist CNSTPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist CNSTPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=CNSTPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=CNSTPARAM)
 
     CONST_GRAV   = earth_gravity
     CONST_RADIUS = earth_radius / small_planet_factor
@@ -224,65 +223,65 @@ contains
 
     CONST_SOUND = sqrt( CONST_CPdry * CONST_Rdry / ( CONST_CPdry - CONST_Rdry ) * CONST_TEM00 )
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '*** Precision ***'
-    write(IO_FID_LOG,*) '*** kind     (floating point value) = ', kind     (1.0_RP)
-    write(IO_FID_LOG,*) '*** precision(floating point value) = ', precision(1.0_RP)
-    write(IO_FID_LOG,*) '*** range    (floating point value) = ', range    (1.0_RP)
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '*** List of constants ***'
-    write(IO_FID_LOG,*) '*** PI                                                : PI      = ', CONST_PI
-    write(IO_FID_LOG,*) '*** Small number                                      : EPS     = ', CONST_EPS
-    write(IO_FID_LOG,*) '*** Small number (1-EPS)                              : EPS1    = ', CONST_EPS1
-    write(IO_FID_LOG,*) '*** Huge  number                                      : HUGE    = ', CONST_HUGE
-    write(IO_FID_LOG,*) '*** undefined number (INT2)                           : UNDEF2  = ', CONST_UNDEF2
-    write(IO_FID_LOG,*) '*** undefined number (REAL,general use)               : UNDEF   = ', CONST_UNDEF
-    write(IO_FID_LOG,*) '*** undefined number (REAL4)                          : UNDEF4  = ', CONST_UNDEF4
-    write(IO_FID_LOG,*) '*** undefined number (REAL8)                          : UNDEF8  = ', CONST_UNDEF8
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '*** Precision ***'
+    if( IO_L ) write(IO_FID_LOG,*) '*** kind     (floating point value) = ', kind     (1.0_RP)
+    if( IO_L ) write(IO_FID_LOG,*) '*** precision(floating point value) = ', precision(1.0_RP)
+    if( IO_L ) write(IO_FID_LOG,*) '*** range    (floating point value) = ', range    (1.0_RP)
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '*** List of constants ***'
+    if( IO_L ) write(IO_FID_LOG,*) '*** PI                                                : PI      = ', CONST_PI
+    if( IO_L ) write(IO_FID_LOG,*) '*** Small number                                      : EPS     = ', CONST_EPS
+    if( IO_L ) write(IO_FID_LOG,*) '*** Small number (1-EPS)                              : EPS1    = ', CONST_EPS1
+    if( IO_L ) write(IO_FID_LOG,*) '*** Huge  number                                      : HUGE    = ', CONST_HUGE
+    if( IO_L ) write(IO_FID_LOG,*) '*** undefined number (INT2)                           : UNDEF2  = ', CONST_UNDEF2
+    if( IO_L ) write(IO_FID_LOG,*) '*** undefined number (REAL,general use)               : UNDEF   = ', CONST_UNDEF
+    if( IO_L ) write(IO_FID_LOG,*) '*** undefined number (REAL4)                          : UNDEF4  = ', CONST_UNDEF4
+    if( IO_L ) write(IO_FID_LOG,*) '*** undefined number (REAL8)                          : UNDEF8  = ', CONST_UNDEF8
 
-    write(IO_FID_LOG,*) '*** radius of the planet                          [m] : RADIUS  = ', CONST_RADIUS
-    write(IO_FID_LOG,*) '*** angular velocity of the planet              [1/s] : OHM     = ', CONST_OHM
-    write(IO_FID_LOG,*) '*** standard acceleration of gravity           [m/s2] : GRAV    = ', CONST_GRAV
+    if( IO_L ) write(IO_FID_LOG,*) '*** radius of the planet                          [m] : RADIUS  = ', CONST_RADIUS
+    if( IO_L ) write(IO_FID_LOG,*) '*** angular velocity of the planet              [1/s] : OHM     = ', CONST_OHM
+    if( IO_L ) write(IO_FID_LOG,*) '*** standard acceleration of gravity           [m/s2] : GRAV    = ', CONST_GRAV
 
-    write(IO_FID_LOG,*) '*** Stefan-Boltzman constant                [W/m2/K4] : STB     = ', CONST_STB
-    write(IO_FID_LOG,*) '*** von Karman constant                               : KARMAN  = ', CONST_KARMAN
-    write(IO_FID_LOG,*) '*** universal gas constant                  [J/mol/K] : R       = ', CONST_R
+    if( IO_L ) write(IO_FID_LOG,*) '*** Stefan-Boltzman constant                [W/m2/K4] : STB     = ', CONST_STB
+    if( IO_L ) write(IO_FID_LOG,*) '*** von Karman constant                               : KARMAN  = ', CONST_KARMAN
+    if( IO_L ) write(IO_FID_LOG,*) '*** universal gas constant                  [J/mol/K] : R       = ', CONST_R
 
-    write(IO_FID_LOG,*) '*** mass weight (dry air)                     [g/mol] : Mdry    = ', CONST_Mdry
-    write(IO_FID_LOG,*) '*** specific gas constant (dry air)          [J/kg/K] : Rdry    = ', CONST_Rdry
-    write(IO_FID_LOG,*) '*** specific heat (dry air, const. pressure) [J/kg/K] : CPdry   = ', CONST_CPdry
-    write(IO_FID_LOG,*) '*** specific heat (dry air, const. volume)   [J/kg/K] : Cvdry   = ', CONST_CVdry
-    write(IO_FID_LOG,*) '*** lapse rate of ISA                           [K/m] : LAPS    = ', CONST_LAPS
-    write(IO_FID_LOG,*) '*** dry adiabatic lapse rate                    [K/m] : LAPSdry = ', CONST_LAPSdry
+    if( IO_L ) write(IO_FID_LOG,*) '*** mass weight (dry air)                     [g/mol] : Mdry    = ', CONST_Mdry
+    if( IO_L ) write(IO_FID_LOG,*) '*** specific gas constant (dry air)          [J/kg/K] : Rdry    = ', CONST_Rdry
+    if( IO_L ) write(IO_FID_LOG,*) '*** specific heat (dry air, const. pressure) [J/kg/K] : CPdry   = ', CONST_CPdry
+    if( IO_L ) write(IO_FID_LOG,*) '*** specific heat (dry air, const. volume)   [J/kg/K] : Cvdry   = ', CONST_CVdry
+    if( IO_L ) write(IO_FID_LOG,*) '*** lapse rate of ISA                           [K/m] : LAPS    = ', CONST_LAPS
+    if( IO_L ) write(IO_FID_LOG,*) '*** dry adiabatic lapse rate                    [K/m] : LAPSdry = ', CONST_LAPSdry
 
-    write(IO_FID_LOG,*) '*** mass weight (water vapor)                 [g/mol] : Rvap    = ', CONST_Rvap
-    write(IO_FID_LOG,*) '*** specific gas constant (water vapor)      [J/kg/K] : Rvap    = ', CONST_Rvap
-    write(IO_FID_LOG,*) '*** specific heat (vapor, const. pressure)   [J/kg/K] : CPvap   = ', CONST_CPvap
-    write(IO_FID_LOG,*) '*** specific heat (vapor, const. volume)     [J/kg/K] : CVvap   = ', CONST_CVvap
-    write(IO_FID_LOG,*) '*** specific heat (liquid water)             [J/kg/K] : CL      = ', CONST_CL
-    write(IO_FID_LOG,*) '*** specific heat (ice)                      [J/kg/K] : CI      = ', CONST_CI
-    write(IO_FID_LOG,*) '*** Rdry / Rvap                                       : EPSvap  = ', CONST_EPSvap
-    write(IO_FID_LOG,*) '*** 1 / EPSvap - 1                                    : EPSTvap = ', CONST_EPSTvap
+    if( IO_L ) write(IO_FID_LOG,*) '*** mass weight (water vapor)                 [g/mol] : Rvap    = ', CONST_Rvap
+    if( IO_L ) write(IO_FID_LOG,*) '*** specific gas constant (water vapor)      [J/kg/K] : Rvap    = ', CONST_Rvap
+    if( IO_L ) write(IO_FID_LOG,*) '*** specific heat (vapor, const. pressure)   [J/kg/K] : CPvap   = ', CONST_CPvap
+    if( IO_L ) write(IO_FID_LOG,*) '*** specific heat (vapor, const. volume)     [J/kg/K] : CVvap   = ', CONST_CVvap
+    if( IO_L ) write(IO_FID_LOG,*) '*** specific heat (liquid water)             [J/kg/K] : CL      = ', CONST_CL
+    if( IO_L ) write(IO_FID_LOG,*) '*** specific heat (ice)                      [J/kg/K] : CI      = ', CONST_CI
+    if( IO_L ) write(IO_FID_LOG,*) '*** Rdry / Rvap                                       : EPSvap  = ', CONST_EPSvap
+    if( IO_L ) write(IO_FID_LOG,*) '*** 1 / EPSvap - 1                                    : EPSTvap = ', CONST_EPSTvap
 
-    write(IO_FID_LOG,*) '*** latent heat of vaporizaion at 0C           [J/kg] : LHV0    = ', CONST_LHV0
-    write(IO_FID_LOG,*) '*** latent heat of sublimation at 0C           [J/kg] : LHS0    = ', CONST_LHS0
-    write(IO_FID_LOG,*) '*** latent heat of fusion      at 0C           [J/kg] : LHF0    = ', CONST_LHF0
-    write(IO_FID_LOG,*) '*** latent heat of vaporizaion at 0K           [J/kg] : LHV00   = ', CONST_LHV00
-    write(IO_FID_LOG,*) '*** latent heat of sublimation at 0K           [J/kg] : LHS00   = ', CONST_LHS00
-    write(IO_FID_LOG,*) '*** latent heat of fusion      at 0K           [J/kg] : LHF00   = ', CONST_LHF00
-    write(IO_FID_LOG,*) '*** Thermodynamics calculation type : ', trim(CONST_THERMODYN_TYPE)
-    write(IO_FID_LOG,*) '*** latent heat of vaporizaion (used)          [J/kg] : LHV     = ', CONST_LHV
-    write(IO_FID_LOG,*) '*** latent heat of sublimation (used)          [J/kg] : LHS     = ', CONST_LHS
-    write(IO_FID_LOG,*) '*** latent heat of fusion      (used)          [J/kg] : LHF     = ', CONST_LHF
-    write(IO_FID_LOG,*) '*** saturate pressure of water vapor at 0C       [Pa] : PSAT0   = ', CONST_PSAT0
-    write(IO_FID_LOG,*) '*** density of water                          [kg/m3] : DWATR   = ', CONST_DWATR
-    write(IO_FID_LOG,*) '*** density of ice                            [kg/m3] : DICE    = ', CONST_DICE
+    if( IO_L ) write(IO_FID_LOG,*) '*** latent heat of vaporizaion at 0C           [J/kg] : LHV0    = ', CONST_LHV0
+    if( IO_L ) write(IO_FID_LOG,*) '*** latent heat of sublimation at 0C           [J/kg] : LHS0    = ', CONST_LHS0
+    if( IO_L ) write(IO_FID_LOG,*) '*** latent heat of fusion      at 0C           [J/kg] : LHF0    = ', CONST_LHF0
+    if( IO_L ) write(IO_FID_LOG,*) '*** latent heat of vaporizaion at 0K           [J/kg] : LHV00   = ', CONST_LHV00
+    if( IO_L ) write(IO_FID_LOG,*) '*** latent heat of sublimation at 0K           [J/kg] : LHS00   = ', CONST_LHS00
+    if( IO_L ) write(IO_FID_LOG,*) '*** latent heat of fusion      at 0K           [J/kg] : LHF00   = ', CONST_LHF00
+    if( IO_L ) write(IO_FID_LOG,*) '*** Thermodynamics calculation type : ', trim(CONST_THERMODYN_TYPE)
+    if( IO_L ) write(IO_FID_LOG,*) '*** latent heat of vaporizaion (used)          [J/kg] : LHV     = ', CONST_LHV
+    if( IO_L ) write(IO_FID_LOG,*) '*** latent heat of sublimation (used)          [J/kg] : LHS     = ', CONST_LHS
+    if( IO_L ) write(IO_FID_LOG,*) '*** latent heat of fusion      (used)          [J/kg] : LHF     = ', CONST_LHF
+    if( IO_L ) write(IO_FID_LOG,*) '*** saturate pressure of water vapor at 0C       [Pa] : PSAT0   = ', CONST_PSAT0
+    if( IO_L ) write(IO_FID_LOG,*) '*** density of water                          [kg/m3] : DWATR   = ', CONST_DWATR
+    if( IO_L ) write(IO_FID_LOG,*) '*** density of ice                            [kg/m3] : DICE    = ', CONST_DICE
 
-    write(IO_FID_LOG,*) '*** speed of sound (dry air at 0C)              [m/s] : SOUND   = ', CONST_SOUND
-    write(IO_FID_LOG,*) '*** standard pressure                            [Pa] : Pstd    = ', CONST_Pstd
-    write(IO_FID_LOG,*) '*** pressure reference                           [Pa] : PRE00   = ', CONST_PRE00
-    write(IO_FID_LOG,*) '*** standard temperature (15C)                    [K] : Tstd    = ', CONST_Tstd
-    write(IO_FID_LOG,*) '*** temperature reference (0C)                    [K] : TEM00   = ', CONST_TEM00
+    if( IO_L ) write(IO_FID_LOG,*) '*** speed of sound (dry air at 0C)              [m/s] : SOUND   = ', CONST_SOUND
+    if( IO_L ) write(IO_FID_LOG,*) '*** standard pressure                            [Pa] : Pstd    = ', CONST_Pstd
+    if( IO_L ) write(IO_FID_LOG,*) '*** pressure reference                           [Pa] : PRE00   = ', CONST_PRE00
+    if( IO_L ) write(IO_FID_LOG,*) '*** standard temperature (15C)                    [K] : Tstd    = ', CONST_Tstd
+    if( IO_L ) write(IO_FID_LOG,*) '*** temperature reference (0C)                    [K] : TEM00   = ', CONST_TEM00
 
     return
   end subroutine CONST_setup

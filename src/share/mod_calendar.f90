@@ -5,7 +5,7 @@
 !! @par Description
 !!         This module provides the subroutines for calendar.
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_calendar
@@ -98,18 +98,17 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[calendar]/Category[common share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[calendar]/Category[common share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=NM_CALENDAR,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** NM_CALENDAR is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** NM_CALENDAR is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist NM_CALENDAR. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist NM_CALENDAR. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist NM_CALENDAR. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=NM_CALENDAR)
+    if( IO_NML ) write(IO_FID_LOG,nml=NM_CALENDAR)
 
     return
   end subroutine CALENDAR_setup

@@ -4,7 +4,7 @@
 !! @par Description
 !!          mnginfo reader (extraced from mod_adm)
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_mnginfo_light

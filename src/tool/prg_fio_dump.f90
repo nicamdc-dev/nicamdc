@@ -5,7 +5,7 @@
 !!          header/data veiwer for new format data
 !!          ( packaged NICAM data format : PaNDa )
 !!
-!! @author Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 program prg_fio_dump

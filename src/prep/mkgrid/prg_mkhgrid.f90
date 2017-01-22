@@ -4,7 +4,7 @@
 !! @par Description
 !!          Making horizontal grid systems based on the icosahedral grid configuration
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 program mkhgrid

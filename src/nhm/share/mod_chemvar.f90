@@ -4,7 +4,7 @@
 !! @par Description
 !!         This module contains the chemical or general-perpose tracer variables
 !!
-!! @author Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_chemvar
@@ -58,18 +58,17 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[chemvar]/Category[nhm share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[chemvar]/Category[nhm share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=CHEMVARPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** CHEMVARPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** CHEMVARPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist CHEMVARPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist CHEMVARPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist CHEMVARPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=CHEMVARPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=CHEMVARPARAM)
 
     allocate( CHEM_TRC_name(CHEM_TRC_vmax) )
     allocate( CHEM_TRC_desc(CHEM_TRC_vmax) )
@@ -107,7 +106,7 @@ contains
     enddo
 
     if ( chemvar_getid <= 0 ) then
-       write(IO_FID_LOG,*) 'xxx INDEX does not exist =>', tname
+       write(*,*) 'xxx [chemvar_getid] INDEX does not exist =>', tname
        call PRC_MPIstop
     endif
 

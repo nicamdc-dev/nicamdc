@@ -4,7 +4,7 @@
 !! @par Description
 !!          This module contains subroutines for forcing term of Tracer Advection Test
 !!
-!! @author Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_af_trcadv

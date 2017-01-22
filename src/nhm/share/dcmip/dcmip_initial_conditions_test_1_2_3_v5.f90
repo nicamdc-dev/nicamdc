@@ -1,4 +1,4 @@
-MODULE dcmip_initial_conditions_test_1_2_3
+module dcmip_initial_conditions_test_1_2_3
 
   !=======================================================================
   !
@@ -1344,5 +1344,5 @@ IMPLICIT NONE
 END SUBROUTINE test3_gravity_wave
 
 
-END MODULE dcmip_initial_conditions_test_1_2_3
+END module dcmip_initial_conditions_test_1_2_3
 

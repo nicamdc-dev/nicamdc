@@ -4,7 +4,7 @@
 !! @par Description
 !!          This module is for the caluculation of source terms
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_src

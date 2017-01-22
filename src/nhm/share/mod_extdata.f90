@@ -4,7 +4,7 @@
 !! @par Description
 !!          General module for reading external-data
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_extdata
@@ -14,6 +14,7 @@ module mod_extdata
   !
   use mod_precision
   use mod_stdio
+  use mod_prof
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -141,8 +142,8 @@ contains
        read(IO_FID_CONF, nml=nm_extdata, iostat=ierr)
 
        if ( ierr>0 ) then
-          write(IO_FID_LOG,*) 'Msg : Sub[extdata_setup]/Mod[mod_extdata]'
-          write(IO_FID_LOG,*) ' *** WARNING : Not appropriate names in namelist!! CHECK!!'
+          if( IO_L ) write(IO_FID_LOG,*) 'Msg : Sub[extdata_setup]/Mod[mod_extdata]'
+          if( IO_L ) write(IO_FID_LOG,*) ' *** WARNING : Not appropriate names in namelist!! CHECK!!'
           call PRC_MPIstop
        endif
 
@@ -185,8 +186,7 @@ contains
        elseif( trim(layer_type) == 'NUM' ) then
           info(np)%kall = nlayer
        else
-          write(IO_FID_LOG,*) 'Msg : Sub[extdata_setup]/Mod[mod_extdata]'
-          write(IO_FID_LOG,*) 'xxx invlalid type of layer_type.', trim(layer_type)
+          write(*,*) 'xxx [extdata] invlalid type of layer_type.', trim(layer_type)
           call PRC_MPIstop
        endif
 
@@ -230,7 +230,7 @@ contains
                          opt_periodic_year     ) ! [IN]
 
        else
-          write(IO_FID_LOG,*) 'xxx Invalid input_io_mode!', trim(input_io_mode)
+          write(*,*) 'xxx [extdata] Invalid input_io_mode!', trim(input_io_mode)
           call PRC_MPIstop
        endif
 
@@ -295,8 +295,8 @@ contains
        else !--- default
 
           if ( info(np)%data_rec(1) == 1 ) then
-             write(IO_FID_LOG,*) 'xxx data time is not consistent with the simulation time! : ', &
-                                 trim(info(np)%dataname )
+             write(*,*) 'xxx [extdata] data time is not consistent with the simulation time! : ', &
+                        trim(info(np)%dataname )
              call PRC_MPIstop
           else !--- default
              info(np)%data_rec(2) = info(np)%data_rec(1)-1
@@ -310,36 +310,36 @@ contains
     enddo
 
     !--- output information
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) 'Msg : Sub[extdata_setup]/Mod[mod_extdata]'
-    write(IO_FID_LOG,*) '===================================================='
-    write(IO_FID_LOG,*) '--- Number of maximum external data  : ',max_extdata
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) 'Msg : Sub[extdata_setup]/Mod[mod_extdata]'
+    if( IO_L ) write(IO_FID_LOG,*) '===================================================='
+    if( IO_L ) write(IO_FID_LOG,*) '--- Number of maximum external data  : ',max_extdata
     do np = 1, max_extdata
-       write(IO_FID_LOG,'(1x,A,I4,A,A)') '--- variable [',np,'] : ', trim(info(np)%dataname)
+       if( IO_L ) write(IO_FID_LOG,'(1x,A,I4,A,A)') '--- variable [',np,'] : ', trim(info(np)%dataname)
     enddo
-    write(IO_FID_LOG,*) '===================================================='
+    if( IO_L ) write(IO_FID_LOG,*) '===================================================='
 
     do np = 1, max_extdata
-       write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(1x,A,I4,A)') '============ External file NO. : ',np,' ============='
-       write(IO_FID_LOG,*) '--- fname             : ', trim(info(np)%fname)
-       write(IO_FID_LOG,*) '--- dataname          : ', trim(info(np)%dataname)
-       write(IO_FID_LOG,*) '--- input_io_mode     : ', trim(info(np)%input_io_mode)
-       write(IO_FID_LOG,*) '--- input_size        : ', info(np)%input_size
-       write(IO_FID_LOG,*) '--- layer_type        : ', info(np)%layer_type
-       write(IO_FID_LOG,*) '--- layername         : ', info(np)%layername
-       write(IO_FID_LOG,*) '--- num_of_data       : ', info(np)%num_of_data
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,'(1x,A,I4,A)') '============ External file NO. : ',np,' ============='
+       if( IO_L ) write(IO_FID_LOG,*) '--- fname             : ', trim(info(np)%fname)
+       if( IO_L ) write(IO_FID_LOG,*) '--- dataname          : ', trim(info(np)%dataname)
+       if( IO_L ) write(IO_FID_LOG,*) '--- input_io_mode     : ', trim(info(np)%input_io_mode)
+       if( IO_L ) write(IO_FID_LOG,*) '--- input_size        : ', info(np)%input_size
+       if( IO_L ) write(IO_FID_LOG,*) '--- layer_type        : ', info(np)%layer_type
+       if( IO_L ) write(IO_FID_LOG,*) '--- layername         : ', info(np)%layername
+       if( IO_L ) write(IO_FID_LOG,*) '--- num_of_data       : ', info(np)%num_of_data
        do im = 1, info(np)%num_of_data
-          write(IO_FID_LOG,'(1x,A,6(I4,1x))') '--- data_date         : ', info(np)%data_date(:,im)
+          if( IO_L ) write(IO_FID_LOG,'(1x,A,6(I4,1x))') '--- data_date         : ', info(np)%data_date(:,im)
        enddo
-       write(IO_FID_LOG,*) '--- opt_fix_rec       : ', info(np)%opt_fix_rec
-       write(IO_FID_LOG,*) '--- opt_monthly_cnst  : ', info(np)%opt_monthly_cnst
-       write(IO_FID_LOG,*) '--- opt_periodic_year : ', info(np)%opt_periodic_year
-       write(IO_FID_LOG,*) '--- defval            : ', info(np)%defval
+       if( IO_L ) write(IO_FID_LOG,*) '--- opt_fix_rec       : ', info(np)%opt_fix_rec
+       if( IO_L ) write(IO_FID_LOG,*) '--- opt_monthly_cnst  : ', info(np)%opt_monthly_cnst
+       if( IO_L ) write(IO_FID_LOG,*) '--- opt_periodic_year : ', info(np)%opt_periodic_year
+       if( IO_L ) write(IO_FID_LOG,*) '--- defval            : ', info(np)%defval
        if ( info(np)%input_io_mode == 'ADVANCED' ) then
-         write(IO_FID_LOG,*) '--- first step        : ', info(np)%data_rec(1)
+         if( IO_L ) write(IO_FID_LOG,*) '--- first step        : ', info(np)%data_rec(1)
        endif
-       write(IO_FID_LOG,*) '====================================================='
+       if( IO_L ) write(IO_FID_LOG,*) '====================================================='
     enddo
 
     return
@@ -424,7 +424,7 @@ contains
           if ( ctime > info(np)%data_time(info(np)%data_rec(1)) ) then
              !<-- current time pass the current data
 
-             write(IO_FID_LOG,*) '*** Update external data :',trim(info(np)%dataname)
+             if( IO_L ) write(IO_FID_LOG,*) '*** Update external data :',trim(info(np)%dataname)
 
              !--- increment of data_rec
              info(np)%data_rec(2) = info(np)%data_rec(1)
@@ -432,7 +432,7 @@ contains
              if (       ( info(np)%data_rec(1) > info(np)%num_of_data ) &
                   .AND. ( .not. info(np)%opt_periodic_year )            ) then
 
-                write(IO_FID_LOG,*) 'xxx This run is over the land surface data range.'
+                write(*,*) 'xxx [extdata] Current time exceeded the time range of the input data.'
                 call PRC_MPIstop
 
              elseif( ( info(np)%data_rec(1) > info(np)%num_of_data ) .and. &
@@ -447,9 +447,9 @@ contains
                 enddo
 
                 !--- output of message.
-                write(IO_FID_LOG,*) '*** data date is updated as follows.'
+                if( IO_L ) write(IO_FID_LOG,*) '*** data date is updated as follows.'
                 do im = 1,info(np)%num_of_data
-                   write(IO_FID_LOG,*) ' ----- data_date(',im,') : ', info(np)%data_date(:,im)
+                   if( IO_L ) write(IO_FID_LOG,*) ' ----- data_date(',im,') : ', info(np)%data_date(:,im)
                 enddo
 
              endif
@@ -535,12 +535,12 @@ contains
 
     call COMM_var( info(np)%v, info(np)%v_pl, info(np)%kall, 2 )
 
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '===== READ EXTERNAL DATA ============================'
-    write(IO_FID_LOG,'(1x,A,I4,A,A)') '--- variable [',np,'] : ', trim(info(np)%dataname)
-    write(IO_FID_LOG,*) '--- forward  data step(record) number : ',info(np)%data_rec(1)
-    write(IO_FID_LOG,*) '--- backward data step(record) number : ',info(np)%data_rec(2)
-    write(IO_FID_LOG,*) '====================================================='
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '===== READ EXTERNAL DATA ============================'
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,I4,A,A)') '--- variable [',np,'] : ', trim(info(np)%dataname)
+    if( IO_L ) write(IO_FID_LOG,*) '--- forward  data step(record) number : ',info(np)%data_rec(1)
+    if( IO_L ) write(IO_FID_LOG,*) '--- backward data step(record) number : ',info(np)%data_rec(2)
+    if( IO_L ) write(IO_FID_LOG,*) '====================================================='
 
     return
   end subroutine data_read

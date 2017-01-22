@@ -4,7 +4,7 @@
 !! @par Description
 !!          In this module, the vertical metrics is calculated for the icoshaedral model
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_vmtr
@@ -206,18 +206,17 @@ contains
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(IO_FID_LOG,*)
-    write(IO_FID_LOG,*) '+++ Module[vmtr]/Category[common share]'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[vmtr]/Category[common share]'
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=VMTRPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(IO_FID_LOG,*) '*** VMTRPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** VMTRPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*         ,*) 'xxx Not appropriate names in namelist VMTRPARAM. STOP.'
-       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist VMTRPARAM. STOP.'
+       write(*,*) 'xxx Not appropriate names in namelist VMTRPARAM. STOP.'
        call PRC_MPIstop
     endif
-    write(IO_FID_LOG,nml=VMTRPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=VMTRPARAM)
 
 #ifndef _FIXEDINDEX_
     allocate( VMTR_GAM2H       (ADM_gall   ,ADM_kall,ADM_lall   ) )
@@ -252,7 +251,7 @@ contains
     allocate( VMTR_PHI_pl      (ADM_gall_pl,ADM_kall,ADM_lall_pl) )
 #endif
 
-    write(IO_FID_LOG,*) '*** setup metrics for 3-D control volume'
+    if( IO_L ) write(IO_FID_LOG,*) '*** setup metrics for 3-D control volume'
 
     !--- if 1 layer model( shallow water model ),
     if ( ADM_kall == ADM_KNONE ) then

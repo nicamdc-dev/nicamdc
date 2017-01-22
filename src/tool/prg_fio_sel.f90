@@ -5,7 +5,7 @@
 !!          extract pe0000x format data
 !!          ( packaged NICAM data format : PaNDa )
 !!
-!! @author Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 program fio_sel

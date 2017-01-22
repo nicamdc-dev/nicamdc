@@ -4,7 +4,7 @@
 !! @par Description
 !!          This module contains vertical interpolation subroutines
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_vintrpl
