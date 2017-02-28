@@ -2,27 +2,28 @@
 # ------ FOR K computer -----
 #
 FFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,noalias=s,mfunc=2 \
-               -Qm -Qt -X03 -Ncompdisp -Koptmsg=1 -Cpp                   \
+               -Qi -Qt -X03 -Ncompdisp -Koptmsg=1 -Cpp                   \
                -x-                                                       \
-               -Kdynamic_iteration -Ksimd,openmp                         \
+               -Kdynamic_iteration -Ksimd                                \
                -Kauto,threadsafe
 
-# note: Kauto,threadsafe,autoobjstack,temparraystack depends on the stacksize.
-# If you find the segmentation fault error, please check.
+#               -Qm -Nquickdbg -NRtrap
 
-FFLAGS_DEBUG = -O0                                                       \
-               -Qm -Qt -X03 -v03s -v03d -v03o -Ncompdisp -Koptmsg=2 -Cpp \
-               -Ec -Eg -Ha -He -Hf -Ho -Hs -Hu -Hx -Ncheck_global        \
+FFLAGS_DEBUG = -O0                                                   \
+               -Qi -Qt -X03 -Ncompdisp -Koptmsg=2 -Cpp               \
+               -x-                                                   \
+               -Ec -Eg -Ha -He -Hf -Ho -Hs -Hu -Hx -v03s -v03d -v03o \
+               -Ncheck_cache_arraysize -Ncheck_global                \
                -DDEBUG
 
 FC     = mpifrtpx
 FFLAGS = $(FFLAGS_FAST)
 #FFLAGS = $(FFLAGS_DEBUG)
 
+CC     = mpifccpx
 CFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,region_extension,restp=all -Ksimd
 CFLAGS_DEBUG = -O0
 
-CC     = mpifccpx
 CFLAGS = $(CFLAGS_FAST)
 #CFLAGS = $(CFLAGS_DEBUG)
 
@@ -41,11 +42,14 @@ PERF_MONIT = -Ntl_trt -D_FIPP_ -U_FAPP_ -U_FINEPA_
 FFLAGS += $(PERF_MONIT)
 CFLAGS += $(PERF_MONIT)
 
+#ifeq ($(ENABLE_OPENMP),T)
+	FFLAGS += -Kopenmp
+#endif
+
 ifeq ($(ENABLE_NETCDF),T)
-	NETCDF_INCLUDE ?= -I/opt/aics/netcdf/k-serial-noszip/include
-	NETCDF_LIBS    ?= -L/opt/aics/netcdf/k-serial-noszip/lib-static -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm
-	FFLAGS         += $(NETCDF_INCLUDE)
-	CFLAGS         += $(NETCDF_INCLUDE)
+	FFLAGS      += -I/opt/aics/netcdf/k-serial-noszip/include
+	CFLAGS      += -I/opt/aics/netcdf/k-serial-noszip/include
+	NETCDF_LIBS ?= -L/opt/aics/netcdf/k-serial-noszip/lib-static -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm
 endif
 
 LAPACK_LIBS ?= -SSL2BLAMP -SCALAPACK

@@ -1,27 +1,28 @@
 #
 # ------ FOR Linux 64bit & intel fortran&C & intel mpi -----
 #
-FFLAGS_FAST  = -fpp -m64 -O3 -axMIC-AVX512 -qopenmp  \
-               -assume byterecl -convert big_endian  \
-               -fp-model fast=2                      \
-               -align array64byte -xMIC-AVX512       \
-               -static_mpi -static_intel             \
-               -qopt-streaming-stores always
+FFLAGS_FAST  = -fpp -m64 -O3 -xMIC-AVX512           \
+               -assume byterecl -convert big_endian \
+               -fp-model fast=2 -align array64byte  \
+               -no-prec-div                         \
+               -qopt-streaming-stores always -g -traceback
 
-FFLAGS_DEBUG = -fpp -m64 -O0 -axMIC-AVX512 -qopenmp  \
-               -assume byterecl -convert big_endian  \
-               -fpe0 -fp-model source                \
-               -align array64byte -xMIC-AVX512       \
-               -static_mpi -static_intel             \
-               -qopt-streaming-stores always         \
+FFLAGS_DEBUG = -fpp -m64 -O0 -xMIC-AVX512                \
+               -assume byterecl -convert big_endian      \
+               -fpe0 -fp-model source -align array64byte \
+               -qopt-streaming-stores always             \
                -check bounds -warn all -g -traceback
 
 FC     = mpiifort
 FFLAGS = $(FFLAGS_FAST)
 #FFLAGS = $(FFLAGS_DEBUG)
 
-CFLAGS_FAST  = -O3 -axMIC-AVX512 -mcmodel=medium
-CFLAGS_DEBUG = -O0 -axMIC-AVX512 -mcmodel=medium
+LD     = $(FC)
+LFLAGS = $(FFLAGS_FAST)
+#LFLAGS = $(FFLAGS_DEBUG)
+
+CFLAGS_FAST  = -O3 -xMIC-AVX512
+CFLAGS_DEBUG = -O0 -xMIC-AVX512
 
 CC     = mpiicc
 CFLAGS = $(CFLAGS_FAST)
@@ -29,22 +30,35 @@ CFLAGS = $(CFLAGS_FAST)
 
 ##### Special Options #####
 
+ifeq ($(ENABLE_OPENMP),T)
+	FFLAGS += -qopenmp
+	LFLAGS += -qopenmp
+endif
+
 ifeq ($(ENABLE_NETCDF),T)
-	NETCDF_INCLUDE ?= -I/mppxb/c26053/share/include
-	NETCDF_LIBS    ?= -L/mppxb/c26053/share/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm
+	NETCDF_INCLUDE ?= -I/work/opt/local/apps/intel/2017.1.132/netcdf-fortran/4.4.3/include -I/work/opt/local/apps/intel/2017.1.132/hdf5/1.8.17/include -I/work/opt/local/apps/intel/2017.1.132/netcdf/4.4.1/include
+	NETCDF_LIBS    ?= -L/work/opt/local/apps/intel/2017.1.132/netcdf-fortran/4.4.3/lib -lnetcdff -L/work/opt/local/apps/intel/2017.1.132/hdf5/1.8.17/lib -L/work/opt/local/apps/intel/2017.1.132/netcdf/4.4.1/lib -lnetcdf -lhdf5_hl -lhdf5 -lnetcdf -lz
 	FFLAGS         += $(NETCDF_INCLUDE)
+	LFLAGS         += $(NETCDF_INCLUDE)
 	CFLAGS         += $(NETCDF_INCLUDE)
 endif
 
 LAPACK_LIBS ?= -mkl
 
+ifeq ($(ENABLE_VTAMP),T)
+	VTAMP_INCLUDE ?= -I/opt/intel/vtune_amplifier_xe_2017.1.0.486011/include/intel64
+	VTAMP_LIBS    ?= -L/opt/intel/vtune_amplifier_xe_2017.1.0.486011/lib64 -littnotify
+	FFLAGS        += -g -no-ip -no-ipo -qopt-report=5 -DVTAMP $(VTAMP_INCLUDE)
+	LFLAGS        +=    -no-ip -no-ipo -qopt-report=5 -DVTAMP $(VTAMP_INCLUDE)
+else
+	FFLAGS        += -static_intel
+	LFLAGS        += -static_intel
+endif
+
 ###########################
 
 MODDIROPT ?= -module $(BUILDDIR)
 OBJDIR    ?= $(BUILDDIR)
-
-LD     = $(FC)
-LFLAGS = $(FFLAGS)
 
 MAKE    = make
 INSTALL = install

@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpiexec.hydra -psm2 -n \${PJM_MPI_PROC} numactl -m 1"
+MPIEXEC="mpiexec.hydra -n ${NMPI}"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -30,7 +30,9 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-NNODE=`expr \( $NMPI - 1 \) / 2 + 1`
+NNODE=`expr \( $NMPI - 1 \) / 32 + 1`
+NPROC=`expr $NMPI / $NNODE`
+NPIND=`expr \( 255 \) / $NPROC + 1`
 
 cat << EOF1 > run.sh
 #! /bin/bash -x
@@ -40,26 +42,32 @@ cat << EOF1 > run.sh
 #
 ################################################################################
 #PJM -g gc26
-#PJM -L rscgrp=regular-flat
+#PJM -L rscgrp=regular-cache
 #PJM -L node=${NNODE}
 #PJM --mpi proc=${NMPI}
-#PJM --omp thread=16
-#PJM -L elapse=01:00:00
+#PJM --omp thread=2
+#PJM -L elapse=00:30:00
 #PJM -N NICAMDC
 #PJM -X
 #PJM -j
 #PJM -s
 #
 export FORT_FMT_RECL=400
-export OMP_NUM_THREADS=16
-export I_MPI_DEBUG=5
-export I_MPI_FABRICS_LIST=tmi
-export I_MPI_HBW_POLICY=hbw_bind,hbw_bind,hbw_bind
+
+export HFI_NO_CPUAFFINITY=1
 export I_MPI_PIN_PROCESSOR_EXCLUDE_LIST=0,1,68,69,136,137,204,205
-export I_MPI_PIN_DOMAIN=numa
-export I_MPI_PERHOST=2
+export I_MPI_HBW_POLICY=hbw_bind,,
+export I_MPI_FABRICS_LIST=tmi
+unset KMP_AFFINITY
+#export KMP_AFFINITY=verbose
+#export I_MPI_DEBUG=5
+
+export OMP_NUM_THREADS=2
+export I_MPI_PIN_DOMAIN=${NPIND}
+export I_MPI_PERHOST=${NPROC}
 export KMP_HW_SUBSET=1t
-export KMP_AFFINITY=verbose
+export I_MPI_FABRICS=shm:tmi
+export I_MPI_HARD_FINALIZE=1
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .

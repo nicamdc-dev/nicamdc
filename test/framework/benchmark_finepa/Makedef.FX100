@@ -1,18 +1,15 @@
 #
 # ------ FOR FX100 -----
 #
-FFLAGS_FAST  = -Kfast,ocl,preex,array_private,noalias=s,mfunc=2          \
+FFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,noalias=s,mfunc=2 \
                -Qi -Qt -X03 -Ncompdisp -Koptmsg=1 -Cpp                   \
                -x-                                                       \
-               -Kdynamic_iteration -Ksimd,openmp                         \
+               -Kdynamic_iteration -Ksimd                                \
                -Kauto,threadsafe
-
-# note: Kauto,threadsafe,autoobjstack,temparraystack depends on the stacksize.
-# If you find the segmentation fault error, please check.
 
 #               -Qm -Nquickdbg -NRtrap
 
-FFLAGS_DEBUG = -O0 -Kopenmp                                          \
+FFLAGS_DEBUG = -O0                                                   \
                -Qi -Qt -X03 -Ncompdisp -Koptmsg=2 -Cpp               \
                -x-                                                   \
                -Ec -Eg -Ha -He -Hf -Ho -Hs -Hu -Hx -v03s -v03d -v03o \
@@ -23,10 +20,10 @@ FC     = mpifrtpx
 FFLAGS = $(FFLAGS_FAST)
 #FFLAGS = $(FFLAGS_DEBUG)
 
-CFLAGS_FAST  = -Kfast,ocl,preex,array_private,region_extension,restp=all -Ksimd
+CC     = mpifccpx
+CFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,region_extension,restp=all -Ksimd
 CFLAGS_DEBUG = -O0
 
-CC     = mpifccpx
 CFLAGS = $(CFLAGS_FAST)
 #CFLAGS = $(CFLAGS_DEBUG)
 
@@ -44,6 +41,10 @@ PERF_MONIT = -Ntl_trt -U_FIPP_ -U_FAPP_ -D_FINEPA_
 
 FFLAGS += $(PERF_MONIT)
 CFLAGS += $(PERF_MONIT)
+
+#ifeq ($(ENABLE_OPENMP),T)
+	FFLAGS += -Kopenmp
+#endif
 
 ifeq ($(ENABLE_NETCDF),T)
 	FFLAGS      += -I/usr/local/SPARC/NetCDF-Fortran/4.2/include

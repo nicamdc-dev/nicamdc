@@ -105,8 +105,8 @@ cat << EOFICO2LL1 > ico2ll.sh
 #
 . /fefs/home/system/Env_base
 #
-export PARALLEL=12
-export OMP_NUM_THREADS=12
+export PARALLEL=16
+export OMP_NUM_THREADS=16
 export XOS_MMM_L_ARENA_FREE=2
 
 module load TCSuite

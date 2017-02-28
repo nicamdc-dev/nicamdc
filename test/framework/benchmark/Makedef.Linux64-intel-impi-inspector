@@ -1,12 +1,13 @@
 #
 # ------ FOR Linux 64bit & intel fortran&C & intel mpi -----
 #
-FFLAGS_FAST  = -fpp -m64 -O3 -axMIC-AVX512 -qopenmp \
-               -assume byterecl -convert big_endian \
-               -fp-model source -g                  \
+
+FFLAGS_FAST  = -fpp -m64 -O3 -xHost -openmp -openmp-report \
+               -assume byterecl -convert big_endian        \
+               -fp-model source -g                         \
                -mcmodel=medium -heap-arrays
 
-FFLAGS_DEBUG = -fpp -m64 -O0 -axMIC-AVX512 -qopenmp  \
+FFLAGS_DEBUG = -fpp -m64 -O0 -openmp -openmp-report  \
                -assume byterecl -convert big_endian  \
                -fpe0 -fp-model source                \
                -check bounds -warn all -g -traceback \
@@ -16,18 +17,14 @@ FC     = mpiifort
 FFLAGS = $(FFLAGS_FAST)
 #FFLAGS = $(FFLAGS_DEBUG)
 
-CFLAGS_FAST  = -O3 -axMIC-AVX512 -mcmodel=medium
-CFLAGS_DEBUG = -O0 -axMIC-AVX512 -mcmodel=medium
-
 CC     = mpiicc
-CFLAGS = $(CFLAGS_FAST)
-#CFLAGS = $(CFLAGS_DEBUG)
+CFLAGS = -O3 -xHost -ip -openmp -openmp-report -g -mcmodel=medium
 
 ##### Special Options #####
 
 ifeq ($(ENABLE_NETCDF),T)
-	NETCDF_INCLUDE ?= -I/mppxb/c26053/share/include
-	NETCDF_LIBS    ?= -L/mppxb/c26053/share/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm
+	NETCDF_INCLUDE ?= -I$(NETCDF4)/include -L$(HDF5)/include
+	NETCDF_LIBS    ?= -L$(NETCDF4)/lib -L$(HDF5)/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lm -lz
 	FFLAGS         += $(NETCDF_INCLUDE)
 	CFLAGS         += $(NETCDF_INCLUDE)
 endif
@@ -42,9 +39,8 @@ OBJDIR    ?= $(BUILDDIR)
 LD     = $(FC)
 LFLAGS = $(FFLAGS)
 
-MAKE    = make
 INSTALL = install
 AR      = ar
 ARFLAGS = r
 RANLIB  = ranlib
-JOBSUB  = sbatch
+JOBSUB  = sh
