@@ -4,7 +4,7 @@
 !! @par Description
 !!         This module contains subroutines for tracer advection
 !!
-!! @author NICAM developers, Team SCALE
+!! @author NICAM developers
 !<
 !-------------------------------------------------------------------------------
 module mod_src_tracer
@@ -50,6 +50,12 @@ module mod_src_tracer
   !++ Public procedures
   !
   public :: src_tracer_advection
+  public :: horizontal_flux
+  public :: horizontal_remap
+  public :: vertical_limiter_thuburn
+  public :: horizontal_limiter_thuburn
+  public :: ADJ_OPRT_divergence2_rev
+  public :: ADJ_OPRT_gradient
 
   !-----------------------------------------------------------------------------
   !
@@ -59,18 +65,13 @@ module mod_src_tracer
   !
   !++ Private procedures
   !
-  private :: horizontal_flux
-  private :: horizontal_remap
-  private :: vertical_limiter_thuburn
-  private :: horizontal_limiter_thuburn
-
   !-----------------------------------------------------------------------------
   !
   !++ Private parameters & variables
   !
   !-----------------------------------------------------------------------------
 contains
-  !----------------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
   subroutine src_tracer_advection( &
        vmax,                        &
        rhogq,       rhogq_pl,       &
@@ -82,7 +83,8 @@ contains
        rhogw_mean,  rhogw_mean_pl,  &
        frhog,       frhog_pl,       &
        dt,                          &
-       thuburn_lim                  )
+       thuburn_lim,                 &
+       thuburn_lim_v, thuburn_lim_h )
     use mod_const, only: &
        CONST_EPS
     use mod_adm, only: &
@@ -92,6 +94,7 @@ contains
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kall,    &
+       ADM_gall_1d, &
        ADM_gmin,    &
        ADM_gmax,    &
        ADM_gslf_pl, &
@@ -134,6 +137,9 @@ contains
     real(RP), intent(in)    :: dt                                                    ! delta t
     logical,  intent(in)    :: thuburn_lim                                           ! switch of thuburn limiter [add] 20130613 R.Yoshida
 
+    logical,  intent(in), optional :: thuburn_lim_v(vmax)                            ! switch of thuburn limiter
+    logical,  intent(in), optional :: thuburn_lim_h(vmax)                            ! switch of thuburn limiter
+
     real(RP) :: rhog     (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: rhog_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: rhogvx   (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -170,30 +176,44 @@ contains
     real(RP), parameter :: b2 = 1.0_RP
     real(RP), parameter :: b3 = 1.0_RP - (b1+b2)
 
-    integer  :: gall, kall, kmin, kmax
+    logical  :: apply_limiter_v(vmax)
+    logical  :: apply_limiter_h(vmax)
+
+    integer  :: gmin, gmax, gall, kall, kmin, kmax, lall
     real(RP) :: EPS
 
-    integer  :: nstart, nend
     integer  :: g, k, l, v, iq
     !---------------------------------------------------------------------------
 
+    gmin = (ADM_gmin-1)*ADM_gall_1d + ADM_gmin
+    gmax = (ADM_gmax-1)*ADM_gall_1d + ADM_gmax
     gall = ADM_gall
     kall = ADM_kall
     kmin = ADM_kmin
     kmax = ADM_kmax
+    lall = ADM_lall
 
     EPS = CONST_EPS
+
+    apply_limiter_v(:) = thuburn_lim
+    apply_limiter_h(:) = thuburn_lim
+    if ( present(thuburn_lim_v) ) then
+       apply_limiter_v(:) = thuburn_lim_v(:)
+    endif
+    if ( present(thuburn_lim_h) ) then
+       apply_limiter_h(:) = thuburn_lim_h(:)
+    endif
 
     !---------------------------------------------------------------------------
     ! Vertical Advection (fractioanl step) : 1st
     !---------------------------------------------------------------------------
     call PROF_rapstart('____vertical_adv',2)
 
-    do l = 1, ADM_lall
-       !$omp parallel default(none),private(g,k), &
-       !$omp shared(l,gall,kall,kmin,kmax,flx_v,rhogvx_mean,rhogvy_mean,rhogvz_mean,rhogw_mean,dt, &
-       !$omp        d,ck,frhog,rhog_in,GRD_rdgz,VMTR_RGAMH,VMTR_RGSQRTH,VMTR_C2WfactGz)
-
+    !$omp parallel default(none),private(g,k,l), &
+    !$omp shared(gall,kall,kmin,kmax,lall,flx_v,rhogvx_mean,rhogvy_mean,rhogvz_mean,rhogw_mean,dt, &
+    !$omp        d,ck,frhog,rhog_in,GRD_rdgz,VMTR_RGAMH,VMTR_RGSQRTH,VMTR_C2WfactGz,               &
+    !$omp        apply_limiter_v,apply_limiter_h)
+    do l = 1, lall
        !$omp do
        do k = kmin+1, kmax
        do g = 1, gall
@@ -210,6 +230,7 @@ contains
        enddo
        !$omp end do nowait
 
+!OCL XFILL
        !$omp do
        do g = 1, gall
           flx_v(g,kmin,  l) = 0.0_RP
@@ -217,6 +238,7 @@ contains
        enddo
        !$omp end do
 
+!OCL XFILL
        !$omp do
        do k = 1, kall
        do g = 1, gall
@@ -225,6 +247,7 @@ contains
        enddo
        !$omp end do nowait
 
+!OCL XFILL
        !$omp do
        do k = kmin, kmax
        do g = 1, gall
@@ -234,6 +257,7 @@ contains
        enddo
        !$omp end do nowait
 
+!OCL XFILL
        !$omp do
        do g = 1, gall
           ck(g,kmin-1,l,1) = 0.0_RP
@@ -242,9 +266,8 @@ contains
           ck(g,kmax+1,l,2) = 0.0_RP
        enddo
        !$omp end do
-
-       !$omp end parallel
     enddo
+    !$omp end parallel
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
@@ -282,10 +305,10 @@ contains
     !--- vertical advection: 2nd-order centered difference
     do iq = 1, vmax
 
-       do l = 1, ADM_lall
-          !$omp parallel default(none),private(g,k), &
-          !$omp shared(l,iq,gall,kall,kmin,kmax,q_h,q,rhogq,rhog_in,GRD_afact,GRD_bfact)
-
+       !$omp parallel default(none),private(g,k,l), &
+       !$omp shared(iq,gall,kall,kmin,kmax,lall,q_h,q,rhogq,rhog_in,GRD_afact,GRD_bfact)
+       do l = 1, lall
+!OCL XFILL
           !$omp do
           do k = 1, kall
           do g = 1, gall
@@ -293,7 +316,7 @@ contains
           enddo
           enddo
           !$omp end do
-
+!OCL XFILL
           !$omp do
           do k = kmin, kmax+1
           do g = 1, gall
@@ -302,15 +325,14 @@ contains
           enddo
           enddo
           !$omp end do nowait
-
+!OCL XFILL
           !$omp do
           do g = 1, gall
              q_h(g,kmin-1,l) = 0.0_RP
           enddo
           !$omp end do
-
-          !$omp end parallel
        enddo
+       !$omp end parallel
 
        if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
@@ -324,7 +346,7 @@ contains
           enddo
        endif
 
-       if ( thuburn_lim ) then
+       if ( apply_limiter_v(iq) ) then
           call vertical_limiter_thuburn( q_h(:,:,:),   q_h_pl(:,:,:),  & ! [INOUT]
                                          q  (:,:,:),   q_pl  (:,:,:),  & ! [IN]
                                          d  (:,:,:),   d_pl  (:,:,:),  & ! [IN]
@@ -332,10 +354,10 @@ contains
        endif
 
        !--- update rhogq
-       do l = 1, ADM_lall
-          !$omp parallel default(none),private(g,k), &
-          !$omp shared(l,iq,gall,kmin,kmax,rhogq,q_h,flx_v,GRD_rdgz)
-
+       !$omp parallel default(none),private(g,k,l), &
+       !$omp shared(iq,gall,kmin,kmax,lall,rhogq,q_h,flx_v,GRD_rdgz)
+       do l = 1, lall
+!OCL XFILL
           !$omp do
           do g = 1, gall
              q_h(g,kmin  ,l) = 0.0_RP
@@ -353,15 +375,15 @@ contains
           enddo
           !$omp end do nowait
 
+!OCL XFILL
           !$omp do
           do g = 1, gall
              rhogq(g,kmin-1,l,iq) = 0.0_RP
              rhogq(g,kmax+1,l,iq) = 0.0_RP
           enddo
           !$omp end do
-
-          !$omp end parallel
        enddo
+       !$omp end parallel
 
        if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
@@ -386,10 +408,10 @@ contains
     enddo ! tracer q LOOP
 
     !--- update rhog
-    do l = 1, ADM_lall
-       !$omp parallel default(none),private(g,k), &
-       !$omp shared(l,gall,kmin,kmax,rhog,rhog_in,flx_v,GRD_rdgz,frhog,dt)
-
+    !$omp parallel default(none),private(g,k,l), &
+    !$omp shared(gall,kmin,kmax,lall,rhog,rhog_in,flx_v,GRD_rdgz,frhog,dt)
+    do l = 1, lall
+!OCL XFILL
        !$omp do
        do k = kmin, kmax
        do g = 1, gall
@@ -399,17 +421,17 @@ contains
                                        + b1 * frhog(g,k,l) * dt
        enddo
        enddo
-       !$omp end do
+       !$omp end do nowait
 
+!OCL XFILL
        !$omp do
        do g = 1, gall
           rhog(g,kmin-1,l) = rhog_in(g,kmin,l)
           rhog(g,kmax+1,l) = rhog_in(g,kmax,l)
        enddo
        !$omp end do
-
-       !$omp end parallel
     enddo
+    !$omp end parallel
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
@@ -433,13 +455,33 @@ contains
     !---------------------------------------------------------------------------
     call PROF_rapstart('____horizontal_adv',2)
 
-    d(:,:,:) = b2 * frhog(:,:,:) / rhog(:,:,:) * dt
+!OCL XFILL
+    !$omp parallel do default(none),private(g,k,l), &
+    !$omp shared(gall,kall,lall,d,frhog,rhog,dt), &
+    !$omp collapse(2)
+    do l = 1, lall
+    do k = 1, kall
+    do g = 1, gall
+       d(g,k,l) = b2 * frhog(g,k,l) / rhog(g,k,l) * dt
+    enddo
+    enddo
+    enddo
+    !$omp end parallel do
 
-    !$omp parallel workshare
-    rhogvx(:,:,:) = rhogvx_mean(:,:,:) * VMTR_RGAM(:,:,:)
-    rhogvy(:,:,:) = rhogvy_mean(:,:,:) * VMTR_RGAM(:,:,:)
-    rhogvz(:,:,:) = rhogvz_mean(:,:,:) * VMTR_RGAM(:,:,:)
-    !$omp end parallel workshare
+!OCL XFILL
+    !$omp parallel do default(none),private(g,k,l), &
+    !$omp shared(gall,kall,lall,rhogvx,rhogvy,rhogvz,rhogvx_mean,rhogvy_mean,rhogvz_mean,VMTR_RGAM), &
+    !$omp collapse(2)
+    do l = 1, lall
+    do k = 1, kall
+    do g = 1, gall
+       rhogvx(g,k,l) = rhogvx_mean(g,k,l) * VMTR_RGAM(g,k,l)
+       rhogvy(g,k,l) = rhogvy_mean(g,k,l) * VMTR_RGAM(g,k,l)
+       rhogvz(g,k,l) = rhogvz_mean(g,k,l) * VMTR_RGAM(g,k,l)
+    enddo
+    enddo
+    enddo
+    !$omp end parallel do
 
     if ( ADM_have_pl ) then
        d_pl(:,:,:) = b2 * frhog_pl(:,:,:) / rhog_pl(:,:,:) * dt
@@ -458,29 +500,30 @@ contains
                           dt                                           ) ! [IN]
 
     !--- Courant number
-    do l = 1, ADM_lall
-       !$omp parallel do default(none),private(g,k), &
-       !$omp shared(l,gall,kall,ch,cmask,flx_h,rhog,EPS)
-       do k = 1, kall
-       do g = 1, gall
-          ch(g,k,l,1) = flx_h(g,k,l,1) / rhog(g,k,l)
-          ch(g,k,l,2) = flx_h(g,k,l,2) / rhog(g,k,l)
-          ch(g,k,l,3) = flx_h(g,k,l,3) / rhog(g,k,l)
-          ch(g,k,l,4) = flx_h(g,k,l,4) / rhog(g,k,l)
-          ch(g,k,l,5) = flx_h(g,k,l,5) / rhog(g,k,l)
-          ch(g,k,l,6) = flx_h(g,k,l,6) / rhog(g,k,l)
+    !$omp parallel do default(none),private(g,k,l), &
+    !$omp shared(gall,kall,lall,ch,cmask,flx_h,rhog,EPS), &
+    !$omp collapse(2)
+    do l = 1, lall
+    do k = 1, kall
+    do g = 1, gall
+       ch(g,k,l,1) = flx_h(g,k,l,1) / rhog(g,k,l)
+       ch(g,k,l,2) = flx_h(g,k,l,2) / rhog(g,k,l)
+       ch(g,k,l,3) = flx_h(g,k,l,3) / rhog(g,k,l)
+       ch(g,k,l,4) = flx_h(g,k,l,4) / rhog(g,k,l)
+       ch(g,k,l,5) = flx_h(g,k,l,5) / rhog(g,k,l)
+       ch(g,k,l,6) = flx_h(g,k,l,6) / rhog(g,k,l)
 
-          ! c <= 0(incoming), cmask = 1
-          cmask(g,k,l,1) = 0.5_RP - sign(0.5_RP,ch(g,k,l,1)-EPS)
-          cmask(g,k,l,2) = 0.5_RP - sign(0.5_RP,ch(g,k,l,2)-EPS)
-          cmask(g,k,l,3) = 0.5_RP - sign(0.5_RP,ch(g,k,l,3)-EPS)
-          cmask(g,k,l,4) = 0.5_RP - sign(0.5_RP,ch(g,k,l,4)-EPS)
-          cmask(g,k,l,5) = 0.5_RP - sign(0.5_RP,ch(g,k,l,5)-EPS)
-          cmask(g,k,l,6) = 0.5_RP - sign(0.5_RP,ch(g,k,l,6)-EPS)
-       enddo
-       enddo
-       !$omp end parallel do
+       ! c <= 0(incoming), cmask = 1
+       cmask(g,k,l,1) = 0.5_RP - sign(0.5_RP,ch(g,k,l,1)-EPS)
+       cmask(g,k,l,2) = 0.5_RP - sign(0.5_RP,ch(g,k,l,2)-EPS)
+       cmask(g,k,l,3) = 0.5_RP - sign(0.5_RP,ch(g,k,l,3)-EPS)
+       cmask(g,k,l,4) = 0.5_RP - sign(0.5_RP,ch(g,k,l,4)-EPS)
+       cmask(g,k,l,5) = 0.5_RP - sign(0.5_RP,ch(g,k,l,5)-EPS)
+       cmask(g,k,l,6) = 0.5_RP - sign(0.5_RP,ch(g,k,l,6)-EPS)
     enddo
+    enddo
+    enddo
+    !$omp end parallel do
 
     if ( ADM_have_pl ) then
        g = ADM_gslf_pl
@@ -498,9 +541,18 @@ contains
 
     do iq = 1, vmax
 
-       !$omp parallel workshare
-       q(:,:,:) = rhogq(:,:,:,iq) / rhog(:,:,:)
-       !$omp end parallel workshare
+!OCL XFILL
+       !$omp parallel do default(none),private(g,k,l), &
+       !$omp shared(iq,gall,kall,lall,q,rhogq,rhog), &
+       !$omp collapse(2)
+       do l = 1, lall
+       do k = 1, kall
+       do g = 1, gall
+          q(g,k,l) = rhogq(g,k,l,iq) / rhog(g,k,l)
+       enddo
+       enddo
+       enddo
+       !$omp end parallel do
 
        if ( ADM_have_pl ) then
           q_pl(:,:,:) = rhogq_pl(:,:,:,iq) / rhog_pl(:,:,:)
@@ -513,7 +565,7 @@ contains
                               GRD_xc(:,:,:,:,:), GRD_xc_pl(:,:,:,:)  ) ! [IN]
 
        ! apply flux limiter
-       if ( thuburn_lim ) then
+       if ( apply_limiter_h(iq) ) then
           call horizontal_limiter_thuburn( q_a  (:,:,:,:),   q_a_pl  (:,:,:), & ! [INOUT]
                                            q    (:,:,:),     q_pl    (:,:,:), & ! [IN]
                                            d    (:,:,:),     d_pl    (:,:,:), & ! [IN]
@@ -522,24 +574,22 @@ contains
        endif
 
        !--- update rhogq
-       do l = 1, ADM_lall
-          nstart = suf(ADM_gmin,ADM_gmin)
-          nend   = suf(ADM_gmax,ADM_gmax)
-
-          !$omp parallel do default(none),private(g,k), &
-          !$omp shared(l,iq,nstart,nend,kall,rhogq,flx_h,q_a)
-          do k = 1, kall
-          do g = nstart, nend
-             rhogq(g,k,l,iq) = rhogq(g,k,l,iq) - ( flx_h(g,k,l,1) * q_a(g,k,l,1) &
-                                                 + flx_h(g,k,l,2) * q_a(g,k,l,2) &
-                                                 + flx_h(g,k,l,3) * q_a(g,k,l,3) &
-                                                 + flx_h(g,k,l,4) * q_a(g,k,l,4) &
-                                                 + flx_h(g,k,l,5) * q_a(g,k,l,5) &
-                                                 + flx_h(g,k,l,6) * q_a(g,k,l,6) )
-          enddo
-          enddo
-          !$omp end parallel do
+       !$omp parallel do default(none),private(g,k,l), &
+       !$omp shared(iq,gmin,gmax,kall,lall,rhogq,flx_h,q_a), &
+       !$omp collapse(2)
+       do l = 1, lall
+       do k = 1, kall
+       do g = gmin, gmax
+          rhogq(g,k,l,iq) = rhogq(g,k,l,iq) - ( flx_h(g,k,l,1) * q_a(g,k,l,1) &
+                                              + flx_h(g,k,l,2) * q_a(g,k,l,2) &
+                                              + flx_h(g,k,l,3) * q_a(g,k,l,3) &
+                                              + flx_h(g,k,l,4) * q_a(g,k,l,4) &
+                                              + flx_h(g,k,l,5) * q_a(g,k,l,5) &
+                                              + flx_h(g,k,l,6) * q_a(g,k,l,6) )
        enddo
+       enddo
+       enddo
+       !$omp end parallel do
 
        if ( ADM_have_pl ) then
           g = ADM_gslf_pl
@@ -556,24 +606,22 @@ contains
     enddo ! tracer q LOOP
 
     !--- update rhog
-    do l = 1, ADM_lall
-       nstart = suf(ADM_gmin,ADM_gmin)
-       nend   = suf(ADM_gmax,ADM_gmax)
-
-       !$omp parallel do default(none),private(g,k), &
-       !$omp shared(l,iq,nstart,nend,kall,rhog,flx_h,frhog,dt)
-       do k = 1, kall
-       do g = nstart, nend
-          rhog(g,k,l)= rhog(g,k,l) - ( flx_h(g,k,l,1) &
-                                     + flx_h(g,k,l,2) &
-                                     + flx_h(g,k,l,3) &
-                                     + flx_h(g,k,l,4) &
-                                     + flx_h(g,k,l,5) &
-                                     + flx_h(g,k,l,6) ) + b2 * frhog(g,k,l) * dt
-       enddo
-       enddo
-       !$omp end parallel do
+    !$omp parallel do default(none),private(g,k,l), &
+    !$omp shared(gmin,gmax,kall,lall,rhog,flx_h,frhog,dt), &
+    !$omp collapse(2)
+    do l = 1, lall
+    do k = 1, kall
+    do g = gmin, gmax
+       rhog(g,k,l)= rhog(g,k,l) - ( flx_h(g,k,l,1) &
+                                  + flx_h(g,k,l,2) &
+                                  + flx_h(g,k,l,3) &
+                                  + flx_h(g,k,l,4) &
+                                  + flx_h(g,k,l,5) &
+                                  + flx_h(g,k,l,6) ) + b2 * frhog(g,k,l) * dt
     enddo
+    enddo
+    enddo
+    !$omp end parallel do
 
     if ( ADM_have_pl ) then
        g = ADM_gslf_pl
@@ -594,10 +642,10 @@ contains
     !---------------------------------------------------------------------------
     call PROF_rapstart('____vertical_adv',2)
 
-    do l = 1, ADM_lall
-       !$omp parallel default(none),private(g,k), &
-       !$omp shared(l,gall,kall,kmin,kmax,ck,d,frhog,rhog,flx_v,GRD_rdgz,dt)
-
+    !$omp parallel default(none),private(g,k,l), &
+    !$omp shared(gall,kall,kmin,kmax,lall,ck,d,frhog,rhog,flx_v,GRD_rdgz,dt)
+    do l = 1, lall
+!OCL XFILL
        !$omp do
        do k = 1, kall
        do g = 1, gall
@@ -606,6 +654,7 @@ contains
        enddo
        !$omp end do nowait
 
+!OCL XFILL
        !$omp do
        do k = kmin, kmax
        do g = 1, gall
@@ -615,6 +664,7 @@ contains
        enddo
        !$omp end do nowait
 
+!OCL XFILL
        !$omp do
        do g = 1, gall
           ck(g,kmin-1,l,1) = 0.0_RP
@@ -623,9 +673,8 @@ contains
           ck(g,kmax+1,l,2) = 0.0_RP
        enddo
        !$omp end do
-
-       !$omp end parallel
-    enddo ! l LOOP
+    enddo
+    !$omp end parallel
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
@@ -645,10 +694,10 @@ contains
     !--- vertical advection: 2nd-order centered difference
     do iq = 1, vmax
 
-       do l = 1, ADM_lall
-          !$omp parallel default(none),private(g,k), &
-          !$omp shared(l,iq,gall,kall,kmin,kmax,q_h,q,rhogq,rhog,GRD_afact,GRD_bfact)
-
+       !$omp parallel default(none),private(g,k,l), &
+       !$omp shared(iq,gall,kall,kmin,kmax,lall,q_h,q,rhogq,rhog,GRD_afact,GRD_bfact)
+       do l = 1, lall
+!OCL XFILL
           !$omp do
           do k = 1, kall
           do g = 1, gall
@@ -657,6 +706,7 @@ contains
           enddo
           !$omp end do
 
+!OCL XFILL
           !$omp do
           do k = kmin, kmax+1
           do g = 1, gall
@@ -666,14 +716,14 @@ contains
           enddo
           !$omp end do nowait
 
+!OCL XFILL
           !$omp do
           do g = 1, gall
              q_h(g,kmin-1,l) = 0.0_RP
           enddo
           !$omp end do
-
-          !$omp end parallel
        enddo
+       !$omp end parallel
 
        if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
@@ -687,7 +737,7 @@ contains
           enddo
        endif
 
-       if ( thuburn_lim ) then
+       if ( apply_limiter_v(iq) ) then
           call vertical_limiter_thuburn( q_h(:,:,:),   q_h_pl(:,:,:),  & ! [INOUT]
                                          q  (:,:,:),   q_pl  (:,:,:),  & ! [IN]
                                          d  (:,:,:),   d_pl  (:,:,:),  & ! [IN]
@@ -695,10 +745,10 @@ contains
        endif
 
        !--- update rhogq
-       do l = 1, ADM_lall
-          !$omp parallel default(none),private(g,k), &
-          !$omp shared(l,iq,gall,kmin,kmax,rhogq,q_h,flx_v,GRD_rdgz)
-
+       !$omp parallel default(none),private(g,k,l), &
+       !$omp shared(iq,gall,kmin,kmax,lall,rhogq,q_h,flx_v,GRD_rdgz)
+       do l = 1, lall
+!OCL XFILL
           !$omp do
           do g = 1, gall
              q_h(g,kmin  ,l) = 0.0_RP
@@ -716,15 +766,15 @@ contains
           enddo
           !$omp end do nowait
 
+!OCL XFILL
           !$omp do
           do g = 1, gall
              rhogq(g,kmin-1,l,iq) = 0.0_RP
              rhogq(g,kmax+1,l,iq) = 0.0_RP
           enddo
           !$omp end do
-
-          !$omp end parallel
        enddo
+       !$omp end parallel
 
        if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
@@ -746,6 +796,33 @@ contains
           enddo
        endif
 
+       !--- tiny negative fixer
+!OCL XFILL, SIMD
+       !$omp parallel do default(none),private(g,k,l), &
+       !$omp shared(iq,gall,kmin,kmax,lall,rhogq)
+       do l = 1, lall
+       do k = kmin, kmax
+       do g = 1, gall
+          if ( rhogq(g,k,l,iq) > -1.E-10_RP .AND. rhogq(g,k,l,iq) < 0.0_RP ) then
+             rhogq(g,k,l,iq) = 0.0_RP
+          endif
+       enddo
+       enddo
+       enddo
+       !$omp end parallel do
+
+       if ( ADM_have_pl ) then
+          do l = 1, ADM_lall_pl
+          do k = ADM_kmin, ADM_kmax
+          do g = 1, ADM_gall_pl
+             if ( rhogq_pl(g,k,l,iq) > -1.E-10_RP .AND. rhogq_pl(g,k,l,iq) < 0.0_RP ) then
+                rhogq_pl(g,k,l,iq) = 0.0_RP
+             endif
+          enddo
+          enddo
+          enddo
+       endif
+
     enddo ! tracer q LOOP
 
     call PROF_rapend('____vertical_adv',2)
@@ -754,7 +831,7 @@ contains
   end subroutine src_tracer_advection
 
   !-----------------------------------------------------------------------------
-  !> prepare horizontal advection trem: mass flux, GRD_xc
+  !> Prepare horizontal advection term: mass flux, GRD_xc
   subroutine horizontal_flux( &
        flx_h,  flx_h_pl,  &
        GRD_xc, GRD_xc_pl, &
@@ -918,6 +995,7 @@ contains
 
           !--- calculate flux and mass centroid position
 
+!OCL XFILL
           !$omp do
           do j = 1, iall
           do i = 1, iall
@@ -1145,7 +1223,7 @@ contains
     real(RP) :: q_ap6(ADM_gall), q_am6(ADM_gall)
     real(RP) :: q_ap, q_am
 
-    integer  :: kall, iall
+    integer  :: kall, lall, iall
 
     integer  :: ij
     integer  :: ip1j, ijp1, ip1jp1
@@ -1164,6 +1242,7 @@ contains
     call COMM_data_transfer( gradq(:,:,:,:), gradq_pl(:,:,:,:) )
 
     kall = ADM_kall
+    lall = ADM_lall
     iall = ADM_gall_1d
 
     nstart1 = suf(ADM_gmin-1,ADM_gmin-1)
@@ -1173,205 +1252,190 @@ contains
     nend    = suf(ADM_gmax  ,ADM_gmax  )
 
     ! interpolated Q at cell arc
-    do l = 1, ADM_lall
+    !$omp parallel default(none),private(n,k,l,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1), &
+    !$omp shared(q,gradq,GRD_xc,GRD_x,kall,lall,iall,nstart1,nstart2,nstart3,nstart4,nend, &
+    !$omp        q_a,cmask,q_ap1,q_am1,q_ap2,q_am2,q_ap3,q_am3,q_ap4,q_am4,q_ap5,q_am5,q_ap6,q_am6)
+    do l = 1, lall
+    do k = 1, kall
+       !$omp do
+       do n = nstart1, nend
+          ij   = n
 
-       !$omp parallel default(none),private(n,k,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1), &
-       !$omp shared(q,gradq,GRD_xc,GRD_x,l,kall,iall,nstart1,nstart2,nstart3,nstart4,nend, &
-       !$omp        q_a,cmask,q_ap1,q_am1,q_ap2,q_am2,q_ap3,q_am3,q_ap4,q_am4,q_ap5,q_am5,q_ap6,q_am6)
-       do k = 1, kall
-
-          !$omp do
-          do n = nstart1, nend
-             ij = n
-
-             q_ap1(n) = q(ij,k,l) + gradq(ij,k,l,XDIR) * ( GRD_xc(ij,k,l,AI,XDIR) - GRD_x(ij,K0,l,XDIR) ) &
-                                  + gradq(ij,k,l,YDIR) * ( GRD_xc(ij,k,l,AI,YDIR) - GRD_x(ij,K0,l,YDIR) ) &
-                                  + gradq(ij,k,l,ZDIR) * ( GRD_xc(ij,k,l,AI,ZDIR) - GRD_x(ij,K0,l,ZDIR) )
-          enddo
-          !$omp end do nowait
-
-          !$omp do
-          do n = nstart1, nend
-             ij   = n
-             ip1j = n + 1
-
-             q_am1(n) = q(ip1j,k,l) + gradq(ip1j,k,l,XDIR) * ( GRD_xc(ij,k,l,AI,XDIR) - GRD_x(ip1j,K0,l,XDIR) ) &
-                                    + gradq(ip1j,k,l,YDIR) * ( GRD_xc(ij,k,l,AI,YDIR) - GRD_x(ip1j,K0,l,YDIR) ) &
-                                    + gradq(ip1j,k,l,ZDIR) * ( GRD_xc(ij,k,l,AI,ZDIR) - GRD_x(ip1j,K0,l,ZDIR) )
-          enddo
-          !$omp end do nowait
-
-          !$omp do
-          do n = nstart1, nend
-             ij = n
-
-             q_ap2(n) = q(ij,k,l) + gradq(ij,k,l,XDIR) * ( GRD_xc(ij,k,l,AIJ,XDIR) - GRD_x(ij,K0,l,XDIR) ) &
-                                  + gradq(ij,k,l,YDIR) * ( GRD_xc(ij,k,l,AIJ,YDIR) - GRD_x(ij,K0,l,YDIR) ) &
-                                  + gradq(ij,k,l,ZDIR) * ( GRD_xc(ij,k,l,AIJ,ZDIR) - GRD_x(ij,K0,l,ZDIR) )
-          enddo
-          !$omp end do nowait
-
-          !$omp do
-          do n = nstart1, nend
-             ij     = n
-             ip1jp1 = n + 1 + iall
-
-             q_am2(n) = q(ip1jp1,k,l) + gradq(ip1jp1,k,l,XDIR) * ( GRD_xc(ij,k,l,AIJ,XDIR) - GRD_x(ip1jp1,K0,l,XDIR) ) &
-                                      + gradq(ip1jp1,k,l,YDIR) * ( GRD_xc(ij,k,l,AIJ,YDIR) - GRD_x(ip1jp1,K0,l,YDIR) ) &
-                                      + gradq(ip1jp1,k,l,ZDIR) * ( GRD_xc(ij,k,l,AIJ,ZDIR) - GRD_x(ip1jp1,K0,l,ZDIR) )
-          enddo
-          !$omp end do nowait
-
-          !$omp do
-          do n = nstart1, nend
-             ij = n
-
-             q_ap3(n) = q(ij,k,l) + gradq(ij,k,l,XDIR) * ( GRD_xc(ij,k,l,AJ,XDIR) - GRD_x(ij,K0,l,XDIR) ) &
-                                  + gradq(ij,k,l,YDIR) * ( GRD_xc(ij,k,l,AJ,YDIR) - GRD_x(ij,K0,l,YDIR) ) &
-                                  + gradq(ij,k,l,ZDIR) * ( GRD_xc(ij,k,l,AJ,ZDIR) - GRD_x(ij,K0,l,ZDIR) )
-          enddo
-          !$omp end do nowait
-
-          !$omp do
-          do n = nstart1, nend
-             ij   = n
-             ijp1 = n + iall
-
-             q_am3(n) = q(ijp1,k,l) + gradq(ijp1,k,l,XDIR) * ( GRD_xc(ij,k,l,AJ,XDIR) - GRD_x(ijp1,K0,l,XDIR) ) &
-                                    + gradq(ijp1,k,l,YDIR) * ( GRD_xc(ij,k,l,AJ,YDIR) - GRD_x(ijp1,K0,l,YDIR) ) &
-                                    + gradq(ijp1,k,l,ZDIR) * ( GRD_xc(ij,k,l,AJ,ZDIR) - GRD_x(ijp1,K0,l,ZDIR) )
-          enddo
-          !$omp end do nowait
-
-          !$omp do
-          do n = nstart2, nend
-             ij   = n
-             im1j = n - 1
-
-             q_ap4(n) = q(im1j,k,l) + gradq(im1j,k,l,XDIR) * ( GRD_xc(im1j,k,l,AI,XDIR) - GRD_x(im1j,K0,l,XDIR) ) &
-                                    + gradq(im1j,k,l,YDIR) * ( GRD_xc(im1j,k,l,AI,YDIR) - GRD_x(im1j,K0,l,YDIR) ) &
-                                    + gradq(im1j,k,l,ZDIR) * ( GRD_xc(im1j,k,l,AI,ZDIR) - GRD_x(im1j,K0,l,ZDIR) )
-          enddo
-          !$omp end do nowait
-
-          !$omp do
-          do n = nstart2, nend
-             ij = n
-
-             q_am4(n) = q(ij,k,l) + gradq(ij,k,l,XDIR) * ( GRD_xc(im1j,k,l,AI,XDIR) - GRD_x(ij,K0,l,XDIR) ) &
-                                  + gradq(ij,k,l,YDIR) * ( GRD_xc(im1j,k,l,AI,YDIR) - GRD_x(ij,K0,l,YDIR) ) &
-                                  + gradq(ij,k,l,ZDIR) * ( GRD_xc(im1j,k,l,AI,ZDIR) - GRD_x(ij,K0,l,ZDIR) )
-          enddo
-          !$omp end do nowait
-
-          !$omp do
-          do n = nstart3, nend
-             ij     = n
-             im1jm1 = n - 1 - iall
-
-             q_ap5(n) = q(im1jm1,k,l) + gradq(im1jm1,k,l,XDIR) * ( GRD_xc(im1jm1,k,l,AIJ,XDIR) - GRD_x(im1jm1,K0,l,XDIR) ) &
-                                      + gradq(im1jm1,k,l,YDIR) * ( GRD_xc(im1jm1,k,l,AIJ,YDIR) - GRD_x(im1jm1,K0,l,YDIR) ) &
-                                      + gradq(im1jm1,k,l,ZDIR) * ( GRD_xc(im1jm1,k,l,AIJ,ZDIR) - GRD_x(im1jm1,K0,l,ZDIR) )
-          enddo
-          !$omp end do nowait
-
-          !$omp do
-          do n = nstart3, nend
-             ij = n
-
-             q_am5(n) = q(ij,k,l) + gradq(ij,k,l,XDIR) * ( GRD_xc(im1jm1,k,l,AIJ,XDIR) - GRD_x(ij,K0,l,XDIR) ) &
-                                  + gradq(ij,k,l,YDIR) * ( GRD_xc(im1jm1,k,l,AIJ,YDIR) - GRD_x(ij,K0,l,YDIR) ) &
-                                  + gradq(ij,k,l,ZDIR) * ( GRD_xc(im1jm1,k,l,AIJ,ZDIR) - GRD_x(ij,K0,l,ZDIR) )
-          enddo
-          !$omp end do nowait
-
-          !$omp do
-          do n = nstart4, nend
-             ij   = n
-             ijm1 = n - iall
-
-             q_ap6(n) = q(ijm1,k,l) + gradq(ijm1,k,l,XDIR) * ( GRD_xc(ijm1,k,l,AJ,XDIR) - GRD_x(ijm1,K0,l,XDIR) ) &
-                                    + gradq(ijm1,k,l,YDIR) * ( GRD_xc(ijm1,k,l,AJ,YDIR) - GRD_x(ijm1,K0,l,YDIR) ) &
-                                    + gradq(ijm1,k,l,ZDIR) * ( GRD_xc(ijm1,k,l,AJ,ZDIR) - GRD_x(ijm1,K0,l,ZDIR) )
-          enddo
-          !$omp end do nowait
-
-          !$omp do
-          do n = nstart4, nend
-             ij = n
-
-             q_am6(n) = q(ij,k,l) + gradq(ij,k,l,XDIR) * ( GRD_xc(ijm1,k,l,AJ,XDIR) - GRD_x(ij,K0,l,XDIR) ) &
-                                  + gradq(ij,k,l,YDIR) * ( GRD_xc(ijm1,k,l,AJ,YDIR) - GRD_x(ij,K0,l,YDIR) ) &
-                                  + gradq(ij,k,l,ZDIR) * ( GRD_xc(ijm1,k,l,AJ,ZDIR) - GRD_x(ij,K0,l,ZDIR) )
-          enddo
-          !$omp end do
-
-          !$omp do
-          do n = nstart1, nstart2
-             q_ap4(n) = 0.0_RP
-             q_am4(n) = 0.0_RP
-          enddo
-          !$omp end do nowait
-
-          !$omp do
-          do n = nstart1, nstart3
-             q_ap5(n) = 0.0_RP
-             q_am5(n) = 0.0_RP
-          enddo
-          !$omp end do nowait
-
-          !$omp do
-          do n = nstart1, nstart4
-             q_ap6(n) = 0.0_RP
-             q_am6(n) = 0.0_RP
-          enddo
-          !$omp end do
-
-          !$omp do
-          do n = nstart1, nend
-             q_a(n,k,l,1) = (        cmask(n,k,l,1) ) * q_am1(n) &
-                          + ( 1.0_RP-cmask(n,k,l,1) ) * q_ap1(n)
-          enddo
-          !$omp end do nowait
-
-          !$omp do
-          do n = nstart1, nend
-             q_a(n,k,l,2) = (        cmask(n,k,l,2) ) * q_am2(n) &
-                          + ( 1.0_RP-cmask(n,k,l,2) ) * q_ap2(n)
-          enddo
-          !$omp end do nowait
-
-          !$omp do
-          do n = nstart1, nend
-             q_a(n,k,l,3) = (        cmask(n,k,l,3) ) * q_am3(n) &
-                          + ( 1.0_RP-cmask(n,k,l,3) ) * q_ap3(n)
-          enddo
-          !$omp end do nowait
-
-          !$omp do
-          do n = nstart1, nend
-             q_a(n,k,l,4) = (        cmask(n,k,l,4) ) * q_am4(n) &
-                          + ( 1.0_RP-cmask(n,k,l,4) ) * q_ap4(n)
-          enddo
-          !$omp end do nowait
-
-          !$omp do
-          do n = nstart1, nend
-             q_a(n,k,l,5) = (        cmask(n,k,l,5) ) * q_am5(n) &
-                          + ( 1.0_RP-cmask(n,k,l,5) ) * q_ap5(n)
-          enddo
-          !$omp end do nowait
-
-          !$omp do
-          do n = nstart1, nend
-             q_a(n,k,l,6) = (        cmask(n,k,l,6) ) * q_am6(n) &
-                          + ( 1.0_RP-cmask(n,k,l,6) ) * q_ap6(n)
-          enddo
-          !$omp end do
-
+          q_ap1(n) = q(ij  ,k,l) + gradq(ij  ,k,l,XDIR) * ( GRD_xc(ij,k,l,AI,XDIR) - GRD_x(ij  ,K0,l,XDIR) ) &
+                                 + gradq(ij  ,k,l,YDIR) * ( GRD_xc(ij,k,l,AI,YDIR) - GRD_x(ij  ,K0,l,YDIR) ) &
+                                 + gradq(ij  ,k,l,ZDIR) * ( GRD_xc(ij,k,l,AI,ZDIR) - GRD_x(ij  ,K0,l,ZDIR) )
        enddo
-       !$omp end parallel
+       !$omp end do nowait
+
+       !$omp do
+       do n = nstart1, nend
+          ij   = n
+          ip1j = n + 1
+
+          q_am1(n) = q(ip1j,k,l) + gradq(ip1j,k,l,XDIR) * ( GRD_xc(ij,k,l,AI,XDIR) - GRD_x(ip1j,K0,l,XDIR) ) &
+                                 + gradq(ip1j,k,l,YDIR) * ( GRD_xc(ij,k,l,AI,YDIR) - GRD_x(ip1j,K0,l,YDIR) ) &
+                                 + gradq(ip1j,k,l,ZDIR) * ( GRD_xc(ij,k,l,AI,ZDIR) - GRD_x(ip1j,K0,l,ZDIR) )
+       enddo
+       !$omp end do nowait
+
+       !$omp do
+       do n = nstart1, nend
+          ij     = n
+
+          q_ap2(n) = q(ij    ,k,l) + gradq(ij    ,k,l,XDIR) * ( GRD_xc(ij,k,l,AIJ,XDIR) - GRD_x(ij    ,K0,l,XDIR) ) &
+                                   + gradq(ij    ,k,l,YDIR) * ( GRD_xc(ij,k,l,AIJ,YDIR) - GRD_x(ij    ,K0,l,YDIR) ) &
+                                   + gradq(ij    ,k,l,ZDIR) * ( GRD_xc(ij,k,l,AIJ,ZDIR) - GRD_x(ij    ,K0,l,ZDIR) )
+       enddo
+       !$omp end do nowait
+
+       !$omp do
+       do n = nstart1, nend
+          ij     = n
+          ip1jp1 = n + 1 + iall
+
+          q_am2(n) = q(ip1jp1,k,l) + gradq(ip1jp1,k,l,XDIR) * ( GRD_xc(ij,k,l,AIJ,XDIR) - GRD_x(ip1jp1,K0,l,XDIR) ) &
+                                   + gradq(ip1jp1,k,l,YDIR) * ( GRD_xc(ij,k,l,AIJ,YDIR) - GRD_x(ip1jp1,K0,l,YDIR) ) &
+                                   + gradq(ip1jp1,k,l,ZDIR) * ( GRD_xc(ij,k,l,AIJ,ZDIR) - GRD_x(ip1jp1,K0,l,ZDIR) )
+       enddo
+       !$omp end do nowait
+
+       !$omp do
+       do n = nstart1, nend
+          ij   = n
+
+          q_ap3(n) = q(ij  ,k,l) + gradq(ij  ,k,l,XDIR) * ( GRD_xc(ij,k,l,AJ,XDIR) - GRD_x(ij  ,K0,l,XDIR) ) &
+                                 + gradq(ij  ,k,l,YDIR) * ( GRD_xc(ij,k,l,AJ,YDIR) - GRD_x(ij  ,K0,l,YDIR) ) &
+                                 + gradq(ij  ,k,l,ZDIR) * ( GRD_xc(ij,k,l,AJ,ZDIR) - GRD_x(ij  ,K0,l,ZDIR) )
+       enddo
+       !$omp end do nowait
+
+       !$omp do
+       do n = nstart1, nend
+          ij   = n
+          ijp1 = n + iall
+
+          q_am3(n) = q(ijp1,k,l) + gradq(ijp1,k,l,XDIR) * ( GRD_xc(ij,k,l,AJ,XDIR) - GRD_x(ijp1,K0,l,XDIR) ) &
+                                 + gradq(ijp1,k,l,YDIR) * ( GRD_xc(ij,k,l,AJ,YDIR) - GRD_x(ijp1,K0,l,YDIR) ) &
+                                 + gradq(ijp1,k,l,ZDIR) * ( GRD_xc(ij,k,l,AJ,ZDIR) - GRD_x(ijp1,K0,l,ZDIR) )
+       enddo
+       !$omp end do nowait
+
+       !$omp do
+       do n = nstart2, nend
+          ij   = n
+          im1j = n - 1
+
+          q_ap4(n) = q(im1j,k,l) + gradq(im1j,k,l,XDIR) * ( GRD_xc(im1j,k,l,AI,XDIR) - GRD_x(im1j,K0,l,XDIR) ) &
+                                 + gradq(im1j,k,l,YDIR) * ( GRD_xc(im1j,k,l,AI,YDIR) - GRD_x(im1j,K0,l,YDIR) ) &
+                                 + gradq(im1j,k,l,ZDIR) * ( GRD_xc(im1j,k,l,AI,ZDIR) - GRD_x(im1j,K0,l,ZDIR) )
+       enddo
+       !$omp end do nowait
+
+       !$omp do
+       do n = nstart2, nend
+          ij = n
+
+          q_am4(n) = q(ij  ,k,l) + gradq(ij  ,k,l,XDIR) * ( GRD_xc(im1j,k,l,AI,XDIR) - GRD_x(ij  ,K0,l,XDIR) ) &
+                                 + gradq(ij  ,k,l,YDIR) * ( GRD_xc(im1j,k,l,AI,YDIR) - GRD_x(ij  ,K0,l,YDIR) ) &
+                                 + gradq(ij  ,k,l,ZDIR) * ( GRD_xc(im1j,k,l,AI,ZDIR) - GRD_x(ij  ,K0,l,ZDIR) )
+       enddo
+       !$omp end do nowait
+
+       !$omp do
+       do n = nstart3, nend
+          ij     = n
+          im1jm1 = n - 1 - iall
+
+          q_ap5(n) = q(im1jm1,k,l) + gradq(im1jm1,k,l,XDIR) * ( GRD_xc(im1jm1,k,l,AIJ,XDIR) - GRD_x(im1jm1,K0,l,XDIR) ) &
+                                   + gradq(im1jm1,k,l,YDIR) * ( GRD_xc(im1jm1,k,l,AIJ,YDIR) - GRD_x(im1jm1,K0,l,YDIR) ) &
+                                   + gradq(im1jm1,k,l,ZDIR) * ( GRD_xc(im1jm1,k,l,AIJ,ZDIR) - GRD_x(im1jm1,K0,l,ZDIR) )
+       enddo
+       !$omp end do nowait
+
+       !$omp do
+       do n = nstart3, nend
+          ij = n
+
+          q_am5(n) = q(ij,k,l) + gradq(ij,k,l,XDIR) * ( GRD_xc(im1jm1,k,l,AIJ,XDIR) - GRD_x(ij,K0,l,XDIR) ) &
+                               + gradq(ij,k,l,YDIR) * ( GRD_xc(im1jm1,k,l,AIJ,YDIR) - GRD_x(ij,K0,l,YDIR) ) &
+                               + gradq(ij,k,l,ZDIR) * ( GRD_xc(im1jm1,k,l,AIJ,ZDIR) - GRD_x(ij,K0,l,ZDIR) )
+       enddo
+       !$omp end do nowait
+
+       !$omp do
+       do n = nstart4, nend
+          ij   = n
+          ijm1 = n - iall
+
+          q_ap6(n) = q(ijm1,k,l) + gradq(ijm1,k,l,XDIR) * ( GRD_xc(ijm1,k,l,AJ,XDIR) - GRD_x(ijm1,K0,l,XDIR) ) &
+                                 + gradq(ijm1,k,l,YDIR) * ( GRD_xc(ijm1,k,l,AJ,YDIR) - GRD_x(ijm1,K0,l,YDIR) ) &
+                                 + gradq(ijm1,k,l,ZDIR) * ( GRD_xc(ijm1,k,l,AJ,ZDIR) - GRD_x(ijm1,K0,l,ZDIR) )
+       enddo
+       !$omp end do nowait
+
+       !$omp do
+       do n = nstart4, nend
+          ij = n
+
+          q_am6(n) = q(ij,k,l) + gradq(ij,k,l,XDIR) * ( GRD_xc(ijm1,k,l,AJ,XDIR) - GRD_x(ij,K0,l,XDIR) ) &
+                               + gradq(ij,k,l,YDIR) * ( GRD_xc(ijm1,k,l,AJ,YDIR) - GRD_x(ij,K0,l,YDIR) ) &
+                               + gradq(ij,k,l,ZDIR) * ( GRD_xc(ijm1,k,l,AJ,ZDIR) - GRD_x(ij,K0,l,ZDIR) )
+       enddo
+       !$omp end do
+
+       !$omp do
+       do n = nstart1, nstart2
+          q_ap4(n) = 0.0_RP
+          q_am4(n) = 0.0_RP
+       enddo
+       !$omp end do nowait
+
+       !$omp do
+       do n = nstart1, nstart3
+          q_ap5(n) = 0.0_RP
+          q_am5(n) = 0.0_RP
+       enddo
+       !$omp end do nowait
+
+       !$omp do
+       do n = nstart1, nstart4
+          q_ap6(n) = 0.0_RP
+          q_am6(n) = 0.0_RP
+       enddo
+       !$omp end do
+
+!OCL XFILL
+       !$omp do
+       do n = nstart1, nend
+          q_a(n,k,l,1) = (        cmask(n,k,l,1) ) * q_am1(n) &
+                       + ( 1.0_RP-cmask(n,k,l,1) ) * q_ap1(n)
+          q_a(n,k,l,2) = (        cmask(n,k,l,2) ) * q_am2(n) &
+                       + ( 1.0_RP-cmask(n,k,l,2) ) * q_ap2(n)
+       enddo
+       !$omp end do nowait
+
+!OCL XFILL
+       !$omp do
+       do n = nstart1, nend
+          q_a(n,k,l,3) = (        cmask(n,k,l,3) ) * q_am3(n) &
+                       + ( 1.0_RP-cmask(n,k,l,3) ) * q_ap3(n)
+          q_a(n,k,l,4) = (        cmask(n,k,l,4) ) * q_am4(n) &
+                       + ( 1.0_RP-cmask(n,k,l,4) ) * q_ap4(n)
+       enddo
+       !$omp end do nowait
+
+!OCL XFILL
+       !$omp do
+       do n = nstart1, nend
+          q_a(n,k,l,5) = (        cmask(n,k,l,5) ) * q_am5(n) &
+                       + ( 1.0_RP-cmask(n,k,l,5) ) * q_ap5(n)
+          q_a(n,k,l,6) = (        cmask(n,k,l,6) ) * q_am6(n) &
+                       + ( 1.0_RP-cmask(n,k,l,6) ) * q_ap6(n)
+       enddo
+       !$omp end do
     enddo
+    enddo
+    !$omp end parallel
 
     if ( ADM_have_pl ) then
        n = ADM_gslf_pl
@@ -1464,6 +1528,7 @@ contains
        !$omp         qnext_min,qnext_max,Cin,Cout,CQin_min,CQin_max,Qout_min_k,Qout_max_k),  &
        !$omp shared(l,gall,kmin,kmax,q_h,ck,q,d,Qout_min_km1,Qout_max_km1,EPS,BIG)
 
+!OCL XFILL
        !$omp do
        do g = 1, gall
           k = kmin ! peeling
@@ -1504,6 +1569,7 @@ contains
        !$omp end do
 
        do k = kmin+1, kmax
+!OCL XFILL
           !$omp do
           do g = 1, gall
              inflagL = 0.5_RP - sign(0.5_RP, ck(g,k  ,l,1)) ! incoming flux: flag=1
@@ -1697,6 +1763,7 @@ contains
        !$omp shared(l,ADM_have_sgp,gmin,gmax,kall,iall,q,cmask,d,ch,Qin,Qout,EPS,BIG)
        do k = 1, kall
           !---< (i) define inflow bounds, eq.(32)&(33) >---
+!OCL XFILL
           !$omp do
           do j = gmin-1, gmax
           do i = gmin-1, gmax
@@ -1772,6 +1839,7 @@ contains
           endif
 
           !---< (iii) define allowable range of q at next step, eq.(42)&(43) >---
+!OCL XFILL
           !$omp do
           do j = gmin, gmax
           do i = gmin, gmax
@@ -1840,6 +1908,7 @@ contains
           enddo
           !$omp end do
 
+!OCL XFILL
           !$omp do
           do j = 1, iall
           do i = 1, iall
@@ -1921,7 +1990,7 @@ contains
 
     !---- apply inflow/outflow limiter
     do l = 1, ADM_lall
-       !$omp parallel do default(none), private(i,j,k,ij,ip1j,ip1jp1,ijp1), &
+       !$omp parallel do default(none),private(i,j,k,ij,ip1j,ip1jp1,ijp1), &
        !$omp shared(l,gmin,gmax,kall,iall,q_a,cmask,Qin,Qout)
        do k = 1, kall
           do j = gmin-1, gmax

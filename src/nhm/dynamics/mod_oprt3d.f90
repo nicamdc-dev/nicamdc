@@ -39,7 +39,7 @@ module mod_oprt3d
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> Setup
+  !> 3D divergence damping operator
   subroutine OPRT3D_divdamp( &
        ddivdx,    ddivdx_pl,    &
        ddivdy,    ddivdy_pl,    &
@@ -100,221 +100,248 @@ contains
     real(RP), intent(in)  :: rhogvz_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in)  :: rhogw       (ADM_gall   ,ADM_kall,ADM_lall   ) ! rho*w  { gam2 x G^1/2 }
     real(RP), intent(in)  :: rhogw_pl    (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP), intent(in)  :: coef_intp   (ADM_nxyz,ADM_gall   ,1:3,TI:TJ,ADM_lall   )
-    real(RP), intent(in)  :: coef_intp_pl(ADM_nxyz,ADM_gall_pl,1:3,      ADM_lall_pl)
-    real(RP), intent(in)  :: coef_diff   (ADM_nxyz,ADM_gall,1:6        ,ADM_lall   )
-    real(RP), intent(in)  :: coef_diff_pl(ADM_nxyz,         1:ADM_vlink,ADM_lall_pl)
+    real(RP), intent(in)  :: coef_intp   (ADM_gall   ,1:3,ADM_nxyz,TI:TJ,ADM_lall   )
+    real(RP), intent(in)  :: coef_intp_pl(ADM_gall_pl,1:3,ADM_nxyz,      ADM_lall_pl)
+    real(RP), intent(in)  :: coef_diff   (ADM_gall,1:6        ,ADM_nxyz,ADM_lall   )
+    real(RP), intent(in)  :: coef_diff_pl(         1:ADM_vlink,ADM_nxyz,ADM_lall_pl)
 
     real(RP) :: sclt   (ADM_gall   ,TI:TJ) ! scalar on the hexagon vertex
     real(RP) :: sclt_pl(ADM_gall_pl)
     real(RP) :: sclt_rhogw
     real(RP) :: sclt_rhogw_pl
-    integer  :: gmin, gmax, gall, kmin, kmax, iall
 
-    real(RP) :: rhogvx_vm   (ADM_gall   )          ! rho*vx / vertical metrics
+    real(RP) :: rhogvx_vm   (ADM_gall   )                      ! rho*vx / vertical metrics
     real(RP) :: rhogvx_vm_pl(ADM_gall_pl)
-    real(RP) :: rhogvy_vm   (ADM_gall   )          ! rho*vy / vertical metrics
+    real(RP) :: rhogvy_vm   (ADM_gall   )                      ! rho*vy / vertical metrics
     real(RP) :: rhogvy_vm_pl(ADM_gall_pl)
-    real(RP) :: rhogvz_vm   (ADM_gall   )          ! rho*vz / vertical metrics
+    real(RP) :: rhogvz_vm   (ADM_gall   )                      ! rho*vz / vertical metrics
     real(RP) :: rhogvz_vm_pl(ADM_gall_pl)
-    real(RP) :: rhogw_vm    (ADM_gall,   ADM_kall) ! rho*w  / vertical metrics
-    real(RP) :: rhogw_vm_pl (ADM_gall_pl,ADM_kall)
+    real(RP) :: rhogw_vm    (ADM_gall,   ADM_kall,ADM_lall   ) ! rho*w  / vertical metrics
+    real(RP) :: rhogw_vm_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl)
+
+    integer  :: gmin, gmax, iall, gall, kall, kmin, kmax, lall, gminm1
 
     integer  :: ij
     integer  :: ip1j, ijp1, ip1jp1
     integer  :: im1j, ijm1, im1jm1
 
-    integer  :: i, j, k, l, n, v
+    integer  :: g, k, l, n, v
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('OPRT3D_divdamp',2)
 
-    gmin = ADM_gmin
-    gmax = ADM_gmax
+    gmin = (ADM_gmin-1)*ADM_gall_1d + ADM_gmin
+    gmax = (ADM_gmax-1)*ADM_gall_1d + ADM_gmax
+    iall = ADM_gall_1d
     gall = ADM_gall
+    kall = ADM_kall
     kmin = ADM_kmin
     kmax = ADM_kmax
-    iall = ADM_gall_1d
+    lall = ADM_lall
 
-    !$omp parallel workshare
-    ddivdx(:,:,:) = 0.0_RP
-    ddivdy(:,:,:) = 0.0_RP
-    ddivdz(:,:,:) = 0.0_RP
-    !$omp end parallel workshare
+    gminm1 = (ADM_gmin-1-1)*ADM_gall_1d + ADM_gmin-1
 
-    do l = 1, ADM_lall
-
-       !$omp parallel do default(none), private(ij,k), &
-       !$omp shared(l,gall,kmin,kmax,rhogvx,rhogvy,rhogvz,rhogw,rhogw_vm,VMTR_C2WfactGz,VMTR_RGSQRTH,VMTR_RGAMH)
+    !$omp parallel default(none),private(g,k,l), &
+    !$omp shared(gall,kmin,kmax,lall,rhogw_vm,rhogvx,rhogvy,rhogvz,rhogw,VMTR_C2WfactGz,VMTR_RGSQRTH,VMTR_RGAMH)
+    do l = 1, lall
+       !$omp do
        do k = kmin+1, kmax
-          do ij = 1, gall
-             rhogw_vm(ij,k) = ( VMTR_C2WfactGz(ij,k,1,l) * rhogvx(ij,k  ,l) &
-                              + VMTR_C2WfactGz(ij,k,2,l) * rhogvx(ij,k-1,l) &
-                              + VMTR_C2WfactGz(ij,k,3,l) * rhogvy(ij,k  ,l) &
-                              + VMTR_C2WfactGz(ij,k,4,l) * rhogvy(ij,k-1,l) &
-                              + VMTR_C2WfactGz(ij,k,5,l) * rhogvz(ij,k  ,l) &
-                              + VMTR_C2WfactGz(ij,k,6,l) * rhogvz(ij,k-1,l) &
-                              ) * VMTR_RGAMH(ij,k,l)                        & ! horizontal contribution
-                            + rhogw(ij,k,l) * VMTR_RGSQRTH(ij,k,l)            ! vertical   contribution
-          enddo
+       do g = 1, gall
+          rhogw_vm(g,k,l) = ( VMTR_C2WfactGz(g,k,1,l) * rhogvx(g,k  ,l) &
+                            + VMTR_C2WfactGz(g,k,2,l) * rhogvx(g,k-1,l) &
+                            + VMTR_C2WfactGz(g,k,3,l) * rhogvy(g,k  ,l) &
+                            + VMTR_C2WfactGz(g,k,4,l) * rhogvy(g,k-1,l) &
+                            + VMTR_C2WfactGz(g,k,5,l) * rhogvz(g,k  ,l) &
+                            + VMTR_C2WfactGz(g,k,6,l) * rhogvz(g,k-1,l) &
+                            ) * VMTR_RGAMH(g,k,l)                       & ! horizontal contribution
+                          + rhogw(g,k,l) * VMTR_RGSQRTH(g,k,l)            ! vertical   contribution
        enddo
+       enddo
+       !$omp end do nowait
 
-       !$omp parallel workshare
-       rhogw_vm(:,kmin  ) = 0.0_RP
-       rhogw_vm(:,kmax+1) = 0.0_RP
-       !$omp end parallel workshare
+!OCL XFILL
+       !$omp do
+       do g = 1, gall
+          rhogw_vm(g,kmin  ,l) = 0.0_RP
+          rhogw_vm(g,kmax+1,l) = 0.0_RP
+       enddo
+       !$omp end do
+    enddo
+    !$omp end parallel
 
-       !$omp parallel default(none), private(i,j,k,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1,sclt_rhogw), &
-       !$omp shared(l,ADM_have_sgp,gmin,gmax,gall,kmin,kmax,iall,ddivdx,ddivdy,ddivdz,rhogvx,rhogvy,rhogvz, &
-       !$omp        rhogvx_vm,rhogvy_vm,rhogvz_vm,rhogw_vm,sclt,coef_intp,coef_diff,GRD_rdgz,VMTR_RGAM)
+    !$omp parallel default(none),private(g,k,l,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1,sclt_rhogw), &
+    !$omp shared(ADM_have_sgp,gminm1,gmin,gmax,gall,kmin,kmax,lall,iall,ddivdx,ddivdy,ddivdz,rhogvx,rhogvy,rhogvz, &
+    !$omp        rhogvx_vm,rhogvy_vm,rhogvz_vm,rhogw_vm,sclt,coef_intp,coef_diff,GRD_rdgz,VMTR_RGAM)
+    do l = 1, lall
        do k = kmin, kmax
-
+!OCL XFILL
           !$omp do
-          do ij = 1, gall
-             rhogvx_vm(ij) = rhogvx(ij,k,l) * VMTR_RGAM(ij,k,l)
-             rhogvy_vm(ij) = rhogvy(ij,k,l) * VMTR_RGAM(ij,k,l)
-             rhogvz_vm(ij) = rhogvz(ij,k,l) * VMTR_RGAM(ij,k,l)
+          do g = 1, gall
+             rhogvx_vm(g) = rhogvx(g,k,l) * VMTR_RGAM(g,k,l)
+             rhogvy_vm(g) = rhogvy(g,k,l) * VMTR_RGAM(g,k,l)
+             rhogvz_vm(g) = rhogvz(g,k,l) * VMTR_RGAM(g,k,l)
           enddo
           !$omp end do
 
           !$omp do
-          do j = gmin-1, gmax
-             do i = gmin-1, gmax
-                ij     = (j-1)*iall + i
-                ip1j   = ij + 1
-                ip1jp1 = ij + iall + 1
+          do g = gminm1, gmax
+             ij     = g
+             ip1j   = g + 1
+             ip1jp1 = g + iall + 1
+             ijp1   = g + iall
 
-                sclt_rhogw = ( ( rhogw_vm(ij,k+1) + rhogw_vm(ip1j,k+1) + rhogw_vm(ip1jp1,k+1) ) &
-                             - ( rhogw_vm(ij,k  ) + rhogw_vm(ip1j,k  ) + rhogw_vm(ip1jp1,k  ) ) &
-                             ) / 3.0_RP * GRD_rdgz(k)
+             sclt_rhogw = ( ( rhogw_vm(ij,k+1,l) + rhogw_vm(ip1j,k+1,l) + rhogw_vm(ip1jp1,k+1,l) ) &
+                          - ( rhogw_vm(ij,k  ,l) + rhogw_vm(ip1j,k  ,l) + rhogw_vm(ip1jp1,k  ,l) ) &
+                          ) / 3.0_RP * GRD_rdgz(k)
 
-                sclt(ij,TI) = coef_intp(XDIR,ij,1,TI,l) * rhogvx_vm(ij    ) &
-                            + coef_intp(XDIR,ij,2,TI,l) * rhogvx_vm(ip1j  ) &
-                            + coef_intp(XDIR,ij,3,TI,l) * rhogvx_vm(ip1jp1) &
-                            + coef_intp(YDIR,ij,1,TI,l) * rhogvy_vm(ij    ) &
-                            + coef_intp(YDIR,ij,2,TI,l) * rhogvy_vm(ip1j  ) &
-                            + coef_intp(YDIR,ij,3,TI,l) * rhogvy_vm(ip1jp1) &
-                            + coef_intp(ZDIR,ij,1,TI,l) * rhogvz_vm(ij    ) &
-                            + coef_intp(ZDIR,ij,2,TI,l) * rhogvz_vm(ip1j  ) &
-                            + coef_intp(ZDIR,ij,3,TI,l) * rhogvz_vm(ip1jp1) &
-                            + sclt_rhogw
-             enddo
+             sclt(g,TI) = coef_intp(g,1,XDIR,TI,l) * rhogvx_vm(ij    ) &
+                        + coef_intp(g,2,XDIR,TI,l) * rhogvx_vm(ip1j  ) &
+                        + coef_intp(g,3,XDIR,TI,l) * rhogvx_vm(ip1jp1) &
+                        + coef_intp(g,1,YDIR,TI,l) * rhogvy_vm(ij    ) &
+                        + coef_intp(g,2,YDIR,TI,l) * rhogvy_vm(ip1j  ) &
+                        + coef_intp(g,3,YDIR,TI,l) * rhogvy_vm(ip1jp1) &
+                        + coef_intp(g,1,ZDIR,TI,l) * rhogvz_vm(ij    ) &
+                        + coef_intp(g,2,ZDIR,TI,l) * rhogvz_vm(ip1j  ) &
+                        + coef_intp(g,3,ZDIR,TI,l) * rhogvz_vm(ip1jp1) &
+                        + sclt_rhogw
+          enddo
+          !$omp end do nowait
 
-             do i = gmin-1, gmax
-                ij     = (j-1)*iall + i
-                ip1jp1 = ij + iall + 1
-                ijp1   = ij + iall
+          !$omp do
+          do g = gminm1, gmax
+             ij     = g
+             ip1j   = g + 1
+             ip1jp1 = g + iall + 1
+             ijp1   = g + iall
 
-                sclt_rhogw = ( ( rhogw_vm(ij,k+1) + rhogw_vm(ip1jp1,k+1) + rhogw_vm(ijp1,k+1) ) &
-                             - ( rhogw_vm(ij,k  ) + rhogw_vm(ip1jp1,k  ) + rhogw_vm(ijp1,k  ) ) &
-                             ) / 3.0_RP * GRD_rdgz(k)
+             sclt_rhogw = ( ( rhogw_vm(ij,k+1,l) + rhogw_vm(ip1jp1,k+1,l) + rhogw_vm(ijp1,k+1,l) ) &
+                          - ( rhogw_vm(ij,k  ,l) + rhogw_vm(ip1jp1,k  ,l) + rhogw_vm(ijp1,k  ,l) ) &
+                          ) / 3.0_RP * GRD_rdgz(k)
 
-                sclt(ij,TJ) = coef_intp(XDIR,ij,1,TJ,l) * rhogvx_vm(ij    ) &
-                            + coef_intp(XDIR,ij,2,TJ,l) * rhogvx_vm(ip1jp1) &
-                            + coef_intp(XDIR,ij,3,TJ,l) * rhogvx_vm(ijp1  ) &
-                            + coef_intp(YDIR,ij,1,TJ,l) * rhogvy_vm(ij    ) &
-                            + coef_intp(YDIR,ij,2,TJ,l) * rhogvy_vm(ip1jp1) &
-                            + coef_intp(YDIR,ij,3,TJ,l) * rhogvy_vm(ijp1  ) &
-                            + coef_intp(ZDIR,ij,1,TJ,l) * rhogvz_vm(ij    ) &
-                            + coef_intp(ZDIR,ij,2,TJ,l) * rhogvz_vm(ip1jp1) &
-                            + coef_intp(ZDIR,ij,3,TJ,l) * rhogvz_vm(ijp1  ) &
-                            + sclt_rhogw
-             enddo
+             sclt(g,TJ) = coef_intp(g,1,XDIR,TJ,l) * rhogvx_vm(ij    ) &
+                        + coef_intp(g,2,XDIR,TJ,l) * rhogvx_vm(ip1jp1) &
+                        + coef_intp(g,3,XDIR,TJ,l) * rhogvx_vm(ijp1  ) &
+                        + coef_intp(g,1,YDIR,TJ,l) * rhogvy_vm(ij    ) &
+                        + coef_intp(g,2,YDIR,TJ,l) * rhogvy_vm(ip1jp1) &
+                        + coef_intp(g,3,YDIR,TJ,l) * rhogvy_vm(ijp1  ) &
+                        + coef_intp(g,1,ZDIR,TJ,l) * rhogvz_vm(ij    ) &
+                        + coef_intp(g,2,ZDIR,TJ,l) * rhogvz_vm(ip1jp1) &
+                        + coef_intp(g,3,ZDIR,TJ,l) * rhogvz_vm(ijp1  ) &
+                        + sclt_rhogw
           enddo
           !$omp end do
 
           if ( ADM_have_sgp(l) ) then ! pentagon
              !$omp master
-             j = gmin-1
-             i = gmin-1
-
-             ij     = (j-1)*iall + i
-             ip1j   = ij + 1
-
-             sclt(ij,TI) = sclt(ip1j,TJ)
+             sclt(gminm1,TI) = sclt(gminm1+1,TJ)
              !$omp end master
           endif
 
+!OCL XFILL
           !$omp do
-          do j = gmin, gmax
-             do i = gmin, gmax
-                ij     = (j-1)*iall + i
-                im1j   = ij - 1
-                im1jm1 = ij - iall -1
-                ijm1   = ij - iall
+          do g = 1, gmin-1
+             ddivdx(g,k,l) = 0.0_RP
+             ddivdy(g,k,l) = 0.0_RP
+             ddivdz(g,k,l) = 0.0_RP
+          enddo
+          !$omp end do nowait
 
-                ddivdx(ij,k,l) = ( coef_diff(XDIR,ij,1,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) ) &
-                                 + coef_diff(XDIR,ij,2,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) ) &
-                                 + coef_diff(XDIR,ij,3,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) ) &
-                                 + coef_diff(XDIR,ij,4,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) ) &
-                                 + coef_diff(XDIR,ij,5,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) ) &
-                                 + coef_diff(XDIR,ij,6,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) ) )
-             enddo
+          !$omp do
+          do g = gmin, gmax
+             ij     = g
+             im1j   = g - 1
+             im1jm1 = g - iall - 1
+             ijm1   = g - iall
 
-             do i = gmin, gmax
-                ij     = (j-1)*iall + i
-                im1j   = ij - 1
-                im1jm1 = ij - iall -1
-                ijm1   = ij - iall
+             ddivdx(g,k,l) = ( coef_diff(g,1,XDIR,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) ) &
+                             + coef_diff(g,2,XDIR,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) ) &
+                             + coef_diff(g,3,XDIR,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) ) &
+                             + coef_diff(g,4,XDIR,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) ) &
+                             + coef_diff(g,5,XDIR,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) ) &
+                             + coef_diff(g,6,XDIR,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) ) )
+          enddo
+          !$omp end do nowait
 
-                ddivdy(ij,k,l) = ( coef_diff(YDIR,ij,1,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) ) &
-                                 + coef_diff(YDIR,ij,2,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) ) &
-                                 + coef_diff(YDIR,ij,3,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) ) &
-                                 + coef_diff(YDIR,ij,4,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) ) &
-                                 + coef_diff(YDIR,ij,5,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) ) &
-                                 + coef_diff(YDIR,ij,6,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) ) )
-             enddo
+          !$omp do
+          do g = gmin, gmax
+             ij     = g
+             im1j   = g - 1
+             im1jm1 = g - iall - 1
+             ijm1   = g - iall
 
-             do i = gmin, gmax
-                ij     = (j-1)*iall + i
-                im1j   = ij - 1
-                im1jm1 = ij - iall -1
-                ijm1   = ij - iall
+             ddivdy(g,k,l) = ( coef_diff(g,1,YDIR,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) ) &
+                             + coef_diff(g,2,YDIR,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) ) &
+                             + coef_diff(g,3,YDIR,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) ) &
+                             + coef_diff(g,4,YDIR,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) ) &
+                             + coef_diff(g,5,YDIR,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) ) &
+                             + coef_diff(g,6,YDIR,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) ) )
+          enddo
+          !$omp end do nowait
 
-                ddivdz(ij,k,l) = ( coef_diff(ZDIR,ij,1,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) ) &
-                                 + coef_diff(ZDIR,ij,2,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) ) &
-                                 + coef_diff(ZDIR,ij,3,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) ) &
-                                 + coef_diff(ZDIR,ij,4,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) ) &
-                                 + coef_diff(ZDIR,ij,5,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) ) &
-                                 + coef_diff(ZDIR,ij,6,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) ) )
-             enddo
+          !$omp do
+          do g = gmin, gmax
+             ij     = g
+             im1j   = g - 1
+             im1jm1 = g - iall - 1
+             ijm1   = g - iall
+
+             ddivdz(g,k,l) = ( coef_diff(g,1,ZDIR,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) ) &
+                             + coef_diff(g,2,ZDIR,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) ) &
+                             + coef_diff(g,3,ZDIR,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) ) &
+                             + coef_diff(g,4,ZDIR,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) ) &
+                             + coef_diff(g,5,ZDIR,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) ) &
+                             + coef_diff(g,6,ZDIR,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) ) )
+          enddo
+          !$omp end do nowait
+
+!OCL XFILL
+          !$omp do
+          do g = gmax+1, gall
+             ddivdx(g,k,l) = 0.0_RP
+             ddivdy(g,k,l) = 0.0_RP
+             ddivdz(g,k,l) = 0.0_RP
           enddo
           !$omp end do
+       enddo ! loop k
 
+!OCL XFILL
+       !$omp do
+       do g = 1, gall
+          ddivdx(g,kmin-1,l) = 0.0_RP
+          ddivdy(g,kmin-1,l) = 0.0_RP
+          ddivdz(g,kmin-1,l) = 0.0_RP
+          ddivdx(g,kmax+1,l) = 0.0_RP
+          ddivdy(g,kmax+1,l) = 0.0_RP
+          ddivdz(g,kmax+1,l) = 0.0_RP
        enddo
-       !$omp end parallel
-
-       !$omp parallel workshare
-       ddivdx(:,ADM_kmin-1,l) = 0.0_RP
-       ddivdx(:,ADM_kmax+1,l) = 0.0_RP
-       ddivdy(:,ADM_kmin-1,l) = 0.0_RP
-       ddivdy(:,ADM_kmax+1,l) = 0.0_RP
-       ddivdz(:,ADM_kmin-1,l) = 0.0_RP
-       ddivdz(:,ADM_kmax+1,l) = 0.0_RP
-       !$omp end parallel workshare
-    enddo ! l loop
+       !$omp end do
+    enddo ! loop l
+    !$omp end parallel
 
     if ( ADM_have_pl ) then
+       n = ADM_gslf_pl
+
        do l = 1, ADM_lall_pl
           do k = ADM_kmin+1, ADM_kmax
-          do ij = 1, ADM_gall_pl
-             rhogw_vm_pl(ij,k) = ( VMTR_C2WfactGz_pl(ij,k,1,l) * rhogvx_pl(ij,k  ,l) &
-                                 + VMTR_C2WfactGz_pl(ij,k,2,l) * rhogvx_pl(ij,k-1,l) &
-                                 + VMTR_C2WfactGz_pl(ij,k,3,l) * rhogvy_pl(ij,k  ,l) &
-                                 + VMTR_C2WfactGz_pl(ij,k,4,l) * rhogvy_pl(ij,k-1,l) &
-                                 + VMTR_C2WfactGz_pl(ij,k,5,l) * rhogvz_pl(ij,k  ,l) &
-                                 + VMTR_C2WfactGz_pl(ij,k,6,l) * rhogvz_pl(ij,k-1,l) &
-                                 ) * VMTR_RGAMH_pl(ij,k,l)                           & ! horizontal contribution
-                               + rhogw_pl(ij,k,l) * VMTR_RGSQRTH_pl(ij,k,l)            ! vertical   contribution
+          do g = 1, ADM_gall_pl
+             rhogw_vm_pl(g,k,l) = ( VMTR_C2WfactGz_pl(g,k,1,l) * rhogvx_pl(g,k  ,l) &
+                                  + VMTR_C2WfactGz_pl(g,k,2,l) * rhogvx_pl(g,k-1,l) &
+                                  + VMTR_C2WfactGz_pl(g,k,3,l) * rhogvy_pl(g,k  ,l) &
+                                  + VMTR_C2WfactGz_pl(g,k,4,l) * rhogvy_pl(g,k-1,l) &
+                                  + VMTR_C2WfactGz_pl(g,k,5,l) * rhogvz_pl(g,k  ,l) &
+                                  + VMTR_C2WfactGz_pl(g,k,6,l) * rhogvz_pl(g,k-1,l) &
+                                  ) * VMTR_RGAMH_pl(g,k,l)                          & ! horizontal contribution
+                                + rhogw_pl(g,k,l) * VMTR_RGSQRTH_pl(g,k,l)            ! vertical   contribution
           enddo
-          enddo
-          do ij = 1, ADM_gall_pl
-             rhogw_vm_pl(ij,ADM_kmin  ) = 0.0_RP
-             rhogw_vm_pl(ij,ADM_kmax+1) = 0.0_RP
           enddo
 
-          n = ADM_gslf_pl
+          do g = 1, ADM_gall_pl
+             rhogw_vm_pl(g,ADM_kmin  ,l) = 0.0_RP
+             rhogw_vm_pl(g,ADM_kmax+1,l) = 0.0_RP
+          enddo
+       enddo
 
+       do l = 1, ADM_lall_pl
           do k = ADM_kmin, ADM_kmax
              do v = 1, ADM_gall_pl
                 rhogvx_vm_pl(v) = rhogvx_pl(v,k,l) * VMTR_RGAM_pl(v,k,l)
@@ -327,19 +354,19 @@ contains
                 ijp1 = v + 1
                 if( ijp1 == ADM_gmax_pl+1 ) ijp1 = ADM_gmin_pl
 
-                sclt_rhogw_pl = ( ( rhogw_vm_pl(n,k+1) + rhogw_vm_pl(ij,k+1) + rhogw_vm_pl(ijp1,k+1) ) &
-                                - ( rhogw_vm_pl(n,k  ) + rhogw_vm_pl(ij,k  ) + rhogw_vm_pl(ijp1,k  ) ) &
+                sclt_rhogw_pl = ( ( rhogw_vm_pl(n,k+1,l) + rhogw_vm_pl(ij,k+1,l) + rhogw_vm_pl(ijp1,k+1,l) ) &
+                                - ( rhogw_vm_pl(n,k  ,l) + rhogw_vm_pl(ij,k  ,l) + rhogw_vm_pl(ijp1,k  ,l) ) &
                                 ) / 3.0_RP * GRD_rdgz(k)
 
-                sclt_pl(ij) = coef_intp_pl(XDIR,v,1,l) * rhogvx_vm_pl(n   ) &
-                            + coef_intp_pl(XDIR,v,2,l) * rhogvx_vm_pl(ij  ) &
-                            + coef_intp_pl(XDIR,v,3,l) * rhogvx_vm_pl(ijp1) &
-                            + coef_intp_pl(YDIR,v,1,l) * rhogvy_vm_pl(n   ) &
-                            + coef_intp_pl(YDIR,v,2,l) * rhogvy_vm_pl(ij  ) &
-                            + coef_intp_pl(YDIR,v,3,l) * rhogvy_vm_pl(ijp1) &
-                            + coef_intp_pl(ZDIR,v,1,l) * rhogvz_vm_pl(n   ) &
-                            + coef_intp_pl(ZDIR,v,2,l) * rhogvz_vm_pl(ij  ) &
-                            + coef_intp_pl(ZDIR,v,3,l) * rhogvz_vm_pl(ijp1) &
+                sclt_pl(ij) = coef_intp_pl(v,1,XDIR,l) * rhogvx_vm_pl(n   ) &
+                            + coef_intp_pl(v,2,XDIR,l) * rhogvx_vm_pl(ij  ) &
+                            + coef_intp_pl(v,3,XDIR,l) * rhogvx_vm_pl(ijp1) &
+                            + coef_intp_pl(v,1,YDIR,l) * rhogvy_vm_pl(n   ) &
+                            + coef_intp_pl(v,2,YDIR,l) * rhogvy_vm_pl(ij  ) &
+                            + coef_intp_pl(v,3,YDIR,l) * rhogvy_vm_pl(ijp1) &
+                            + coef_intp_pl(v,1,ZDIR,l) * rhogvz_vm_pl(n   ) &
+                            + coef_intp_pl(v,2,ZDIR,l) * rhogvz_vm_pl(ij  ) &
+                            + coef_intp_pl(v,3,ZDIR,l) * rhogvz_vm_pl(ijp1) &
                             + sclt_rhogw_pl
              enddo
 
@@ -352,20 +379,18 @@ contains
                 ijm1 = v - 1
                 if( ijm1 == ADM_gmin_pl-1 ) ijm1 = ADM_gmax_pl ! cyclic condition
 
-                ddivdx_pl(n,k,l) = ddivdx_pl(n,k,l) + coef_diff_pl(XDIR,v-1,l) * ( sclt_pl(ijm1) + sclt_pl(ij) )
-                ddivdy_pl(n,k,l) = ddivdy_pl(n,k,l) + coef_diff_pl(YDIR,v-1,l) * ( sclt_pl(ijm1) + sclt_pl(ij) )
-                ddivdz_pl(n,k,l) = ddivdz_pl(n,k,l) + coef_diff_pl(ZDIR,v-1,l) * ( sclt_pl(ijm1) + sclt_pl(ij) )
+                ddivdx_pl(n,k,l) = ddivdx_pl(n,k,l) + coef_diff_pl(v-1,XDIR,l) * ( sclt_pl(ijm1) + sclt_pl(ij) )
+                ddivdy_pl(n,k,l) = ddivdy_pl(n,k,l) + coef_diff_pl(v-1,YDIR,l) * ( sclt_pl(ijm1) + sclt_pl(ij) )
+                ddivdz_pl(n,k,l) = ddivdz_pl(n,k,l) + coef_diff_pl(v-1,ZDIR,l) * ( sclt_pl(ijm1) + sclt_pl(ij) )
              enddo
           enddo
 
-          do ij = 1, ADM_gall_pl
-             ddivdx_pl(ij,ADM_kmin-1,l) = 0.0_RP
-             ddivdx_pl(ij,ADM_kmax+1,l) = 0.0_RP
-             ddivdy_pl(ij,ADM_kmin-1,l) = 0.0_RP
-             ddivdy_pl(ij,ADM_kmax+1,l) = 0.0_RP
-             ddivdz_pl(ij,ADM_kmin-1,l) = 0.0_RP
-             ddivdz_pl(ij,ADM_kmax+1,l) = 0.0_RP
-          enddo
+          ddivdx_pl(:,ADM_kmin-1,l) = 0.0_RP
+          ddivdx_pl(:,ADM_kmax+1,l) = 0.0_RP
+          ddivdy_pl(:,ADM_kmin-1,l) = 0.0_RP
+          ddivdy_pl(:,ADM_kmax+1,l) = 0.0_RP
+          ddivdz_pl(:,ADM_kmin-1,l) = 0.0_RP
+          ddivdz_pl(:,ADM_kmax+1,l) = 0.0_RP
        enddo
     else
        ddivdx_pl(:,:,:) = 0.0_RP
