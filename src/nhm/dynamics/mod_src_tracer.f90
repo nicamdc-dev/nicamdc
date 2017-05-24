@@ -54,8 +54,6 @@ module mod_src_tracer
   public :: horizontal_remap
   public :: vertical_limiter_thuburn
   public :: horizontal_limiter_thuburn
-  public :: ADJ_OPRT_divergence2_rev
-  public :: ADJ_OPRT_gradient
 
   !-----------------------------------------------------------------------------
   !

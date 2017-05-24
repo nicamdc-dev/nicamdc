@@ -2,7 +2,7 @@
 !> Module generic tool
 !!
 !! @par Description
-!!         This module is for the generic subroutine
+!!         This module is for the generic subroutine, e.g., global mean.
 !!
 !! @author NICAM developers
 !<
@@ -14,7 +14,6 @@ module mod_gtl
   !
   use mod_precision
   use mod_stdio
-  use mod_prof
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -25,8 +24,38 @@ module mod_gtl
   public :: GTL_mk_rigidrotation
 
   public :: GTL_clip_region
+  public :: GTL_clip_region2
   public :: GTL_clip_region_1layer
   public :: GTL_clip_region_1layer_k
+
+  public :: GTL_clip_region_SP
+  public :: GTL_clip_region_DP
+  public :: GTL_clip_region2_SP
+  public :: GTL_clip_region2_DP
+  public :: GTL_clip_region_1layer_SP
+  public :: GTL_clip_region_1layer_DP
+  public :: GTL_clip_region_1layer_k_SP
+  public :: GTL_clip_region_1layer_k_DP
+
+  interface GTL_clip_region
+     module procedure GTL_clip_region_SP
+     module procedure GTL_clip_region_DP
+  end interface GTL_clip_region
+
+  interface GTL_clip_region2
+     module procedure GTL_clip_region2_SP
+     module procedure GTL_clip_region2_DP
+  end interface GTL_clip_region2
+
+  interface GTL_clip_region_1layer
+     module procedure GTL_clip_region_1layer_SP
+     module procedure GTL_clip_region_1layer_DP
+  end interface GTL_clip_region_1layer
+
+  interface GTL_clip_region_1layer_k
+     module procedure GTL_clip_region_1layer_k_SP
+     module procedure GTL_clip_region_1layer_k_DP
+  end interface GTL_clip_region_1layer_k
 
   !-----------------------------------------------------------------------------
   !
@@ -129,11 +158,12 @@ contains
   end subroutine GTL_mk_rigidrotation
 
   !-----------------------------------------------------------------------------
-  subroutine GTL_clip_region( v, v_clip, kmin, kmax )
+  subroutine GTL_clip_region_SP( var_orig, var_clip, kmin, kmax )
     use mod_adm, only: &
        ADM_lall,    &
        ADM_gall,    &
        ADM_gall_in, &
+       ADM_gall_1d, &
        ADM_kall,    &
        ADM_gmin,    &
        ADM_gmax
@@ -141,101 +171,352 @@ contains
 
     integer,  intent(in)  :: kmin
     integer,  intent(in)  :: kmax
-    real(RP), intent(in)  :: v     (ADM_gall   ,ADM_kall       ,ADM_lall)
-    real(RP), intent(out) :: v_clip(ADM_gall_in,1:(kmax-kmin+1),ADM_lall)
+    real(RP), intent(in)  :: var_orig(ADM_gall   ,ADM_kall       ,ADM_lall)
+    real(SP), intent(out) :: var_clip(ADM_gall_in,1:(kmax-kmin+1),ADM_lall)
 
-    integer  :: i, j, k, l, n
+    integer  :: gmin, gmax, lall, gall_1d
+    integer  :: i, j, k, l, n, ij
     !---------------------------------------------------------------------------
 
-    do l = 1,    ADM_lall
-    do k = kmin, kmax
-       n = 1
-       do j = ADM_gmin, ADM_gmax+1
-       do i = ADM_gmin, ADM_gmax+1
-          v_clip(n,k-kmin+1,l) = v(suf(i,j),k,l)
+    gmin    = ADM_gmin
+    gmax    = ADM_gmax
+    gall_1d = ADM_gall_1d
+    lall    = ADM_lall
 
-          n = n + 1
-       enddo
-       enddo
+!OCL XFILL
+    !$omp parallel do default(none),private(i,j,k,l,n,ij), &
+    !$omp shared(gmin,gmax,gall_1d,lall,kmin,kmax,var_clip,var_orig), &
+    !$omp collapse(3)
+    do l = 1,    lall
+    do k = kmin, kmax
+    do j = gmin, gmax+1
+    do i = gmin, gmax+1
+       n  = (gall_1d-1) * (j-2) + (i-1)
+       ij = (gall_1d  ) * (j-1) + (i  )
+
+       var_clip(n,k-kmin+1,l) = var_orig(ij,k,l)
+    enddo
+    enddo
     enddo
     enddo
 
     return
-  end subroutine GTL_clip_region
+  end subroutine GTL_clip_region_SP
 
   !-----------------------------------------------------------------------------
-  subroutine GTL_clip_region_1layer( v, v_clip )
+  subroutine GTL_clip_region_DP( var_orig, var_clip, kmin, kmax )
     use mod_adm, only: &
        ADM_lall,    &
        ADM_gall,    &
        ADM_gall_in, &
+       ADM_gall_1d, &
+       ADM_kall,    &
        ADM_gmin,    &
        ADM_gmax
     implicit none
 
-    real(RP), intent(in)  :: v     (ADM_gall   ,ADM_lall)
-    real(RP), intent(out) :: v_clip(ADM_gall_in,ADM_lall)
+    integer,  intent(in)  :: kmin
+    integer,  intent(in)  :: kmax
+    real(RP), intent(in)  :: var_orig(ADM_gall   ,ADM_kall       ,ADM_lall)
+    real(DP), intent(out) :: var_clip(ADM_gall_in,1:(kmax-kmin+1),ADM_lall)
 
-    integer  :: i, j, l, n
+    integer  :: gmin, gmax, lall, gall_1d
+    integer  :: i, j, k, l, n, ij
     !---------------------------------------------------------------------------
 
-    do l = 1, ADM_lall
-       n = 1
-       do j = ADM_gmin, ADM_gmax+1
-       do i = ADM_gmin, ADM_gmax+1
-          v_clip(n,l) = v(suf(i,j),l)
+    gmin    = ADM_gmin
+    gmax    = ADM_gmax
+    gall_1d = ADM_gall_1d
+    lall    = ADM_lall
 
-          n = n + 1
-       enddo
-       enddo
+!OCL XFILL
+    !$omp parallel do default(none),private(i,j,k,l,n,ij), &
+    !$omp shared(gmin,gmax,gall_1d,lall,kmin,kmax,var_clip,var_orig), &
+    !$omp collapse(3)
+    do l = 1,    lall
+    do k = kmin, kmax
+    do j = gmin, gmax+1
+    do i = gmin, gmax+1
+       n  = (gall_1d-1) * (j-2) + (i-1)
+       ij = (gall_1d  ) * (j-1) + (i  )
+
+       var_clip(n,k-kmin+1,l) = var_orig(ij,k,l)
+    enddo
+    enddo
+    enddo
     enddo
 
     return
-  end subroutine GTL_clip_region_1layer
+  end subroutine GTL_clip_region_DP
 
   !-----------------------------------------------------------------------------
-  subroutine GTL_clip_region_1layer_k(v,v_clip,ksize,k)
+  subroutine GTL_clip_region2_SP( var_orig, var_clip, kmin, kmax, vmax )
     use mod_adm, only: &
        ADM_lall,    &
        ADM_gall,    &
        ADM_gall_in, &
+       ADM_gall_1d, &
+       ADM_kall,    &
+       ADM_gmin,    &
+       ADM_gmax
+    implicit none
+
+    integer,  intent(in)  :: kmin
+    integer,  intent(in)  :: kmax
+    integer,  intent(in)  :: vmax
+    real(RP), intent(in)  :: var_orig(ADM_gall   ,ADM_kall       ,vmax,ADM_lall)
+    real(SP), intent(out) :: var_clip(ADM_gall_in,1:(kmax-kmin+1),vmax,ADM_lall)
+
+    integer  :: gmin, gmax, lall, gall_1d
+    integer  :: i, j, k, v, l, n, ij
+    !---------------------------------------------------------------------------
+
+    gmin    = ADM_gmin
+    gmax    = ADM_gmax
+    gall_1d = ADM_gall_1d
+    lall    = ADM_lall
+
+!OCL XFILL
+    !$omp parallel do default(none),private(i,j,k,v,l,n,ij), &
+    !$omp shared(gmin,gmax,gall_1d,lall,kmin,kmax,vmax,var_clip,var_orig), &
+    !$omp collapse(4)
+    do l = 1,    lall
+    do v = 1,    vmax
+    do k = kmin, kmax
+    do j = gmin, gmax+1
+    do i = gmin, gmax+1
+       n  = (gall_1d-1) * (j-2) + (i-1)
+       ij = (gall_1d  ) * (j-1) + (i  )
+
+       var_clip(n,k-kmin+1,v,l) = var_orig(ij,k,v,l)
+    enddo
+    enddo
+    enddo
+    enddo
+    enddo
+
+    return
+  end subroutine GTL_clip_region2_SP
+
+  !-----------------------------------------------------------------------------
+  subroutine GTL_clip_region2_DP( var_orig, var_clip, kmin, kmax, vmax )
+    use mod_adm, only: &
+       ADM_lall,    &
+       ADM_gall,    &
+       ADM_gall_in, &
+       ADM_gall_1d, &
+       ADM_kall,    &
+       ADM_gmin,    &
+       ADM_gmax
+    implicit none
+
+    integer,  intent(in)  :: kmin
+    integer,  intent(in)  :: kmax
+    integer,  intent(in)  :: vmax
+    real(RP), intent(in)  :: var_orig(ADM_gall   ,ADM_kall       ,vmax,ADM_lall)
+    real(DP), intent(out) :: var_clip(ADM_gall_in,1:(kmax-kmin+1),vmax,ADM_lall)
+
+    integer  :: gmin, gmax, lall, gall_1d
+    integer  :: i, j, k, v, l, n, ij
+    !---------------------------------------------------------------------------
+
+    gmin    = ADM_gmin
+    gmax    = ADM_gmax
+    gall_1d = ADM_gall_1d
+    lall    = ADM_lall
+
+!OCL XFILL
+    !$omp parallel do default(none),private(i,j,k,v,l,n,ij), &
+    !$omp shared(gmin,gmax,gall_1d,lall,kmin,kmax,vmax,var_clip,var_orig), &
+    !$omp collapse(4)
+    do l = 1,    lall
+    do v = 1,    vmax
+    do k = kmin, kmax
+    do j = gmin, gmax+1
+    do i = gmin, gmax+1
+       n  = (gall_1d-1) * (j-2) + (i-1)
+       ij = (gall_1d  ) * (j-1) + (i  )
+
+       var_clip(n,k-kmin+1,v,l) = var_orig(ij,k,v,l)
+    enddo
+    enddo
+    enddo
+    enddo
+    enddo
+
+    return
+  end subroutine GTL_clip_region2_DP
+
+  !-----------------------------------------------------------------------------
+  subroutine GTL_clip_region_1layer_SP( var_orig, var_clip )
+    use mod_adm, only: &
+       ADM_lall,    &
+       ADM_gall,    &
+       ADM_gall_in, &
+       ADM_gall_1d, &
+       ADM_gmin,    &
+       ADM_gmax
+    implicit none
+
+    real(RP), intent(in)  :: var_orig(ADM_gall   ,ADM_lall)
+    real(SP), intent(out) :: var_clip(ADM_gall_in,ADM_lall)
+
+    integer  :: gmin, gmax, lall, gall_1d
+    integer  :: i, j, l, n, ij
+    !---------------------------------------------------------------------------
+
+    gmin    = ADM_gmin
+    gmax    = ADM_gmax
+    gall_1d = ADM_gall_1d
+    lall    = ADM_lall
+
+!OCL XFILL
+    !$omp parallel do default(none),private(i,j,l,n,ij), &
+    !$omp shared(gmin,gmax,gall_1d,lall,var_clip,var_orig), &
+    !$omp collapse(2)
+    do l = 1,    lall
+    do j = gmin, gmax+1
+    do i = gmin, gmax+1
+       n  = (gall_1d-1) * (j-2) + (i-1)
+       ij = (gall_1d  ) * (j-1) + (i  )
+
+       var_clip(n,l) = var_orig(ij,l)
+    enddo
+    enddo
+    enddo
+    !$omp end parallel do
+
+    return
+  end subroutine GTL_clip_region_1layer_SP
+
+  !-----------------------------------------------------------------------------
+  subroutine GTL_clip_region_1layer_DP( var_orig, var_clip )
+    use mod_adm, only: &
+       ADM_lall,    &
+       ADM_gall,    &
+       ADM_gall_in, &
+       ADM_gall_1d, &
+       ADM_gmin,    &
+       ADM_gmax
+    implicit none
+
+    real(RP), intent(in)  :: var_orig(ADM_gall   ,ADM_lall)
+    real(DP), intent(out) :: var_clip(ADM_gall_in,ADM_lall)
+
+    integer  :: gmin, gmax, lall, gall_1d
+    integer  :: i, j, l, n, ij
+    !---------------------------------------------------------------------------
+
+    gmin    = ADM_gmin
+    gmax    = ADM_gmax
+    gall_1d = ADM_gall_1d
+    lall    = ADM_lall
+
+!OCL XFILL
+    !$omp parallel do default(none),private(i,j,l,n,ij), &
+    !$omp shared(gmin,gmax,gall_1d,lall,var_clip,var_orig), &
+    !$omp collapse(2)
+    do l = 1,    lall
+    do j = gmin, gmax+1
+    do i = gmin, gmax+1
+       n  = (gall_1d-1) * (j-2) + (i-1)
+       ij = (gall_1d  ) * (j-1) + (i  )
+
+       var_clip(n,l) = var_orig(ij,l)
+    enddo
+    enddo
+    enddo
+    !$omp end parallel do
+
+    return
+  end subroutine GTL_clip_region_1layer_DP
+
+  !-----------------------------------------------------------------------------
+  subroutine GTL_clip_region_1layer_k_SP( var_orig, var_clip, ksize, k )
+    use mod_adm, only: &
+       ADM_lall,    &
+       ADM_gall,    &
+       ADM_gall_in, &
+       ADM_gall_1d, &
        ADM_gmin,    &
        ADM_gmax
     implicit none
 
     integer,  intent(in)  :: ksize
-    real(RP), intent(in)  :: v     (ADM_gall   ,ksize, ADM_lall)
-    real(RP), intent(out) :: v_clip(ADM_gall_in,ADM_lall)
+    real(RP), intent(in)  :: var_orig(ADM_gall   ,ksize,ADM_lall)
+    real(SP), intent(out) :: var_clip(ADM_gall_in,      ADM_lall)
     integer,  intent(in)  :: k
 
-    integer  :: i, j, l, n
+    integer  :: gmin, gmax, lall, gall_1d
+    integer  :: i, j, l, n, ij
     !---------------------------------------------------------------------------
 
-    do l = 1, ADM_lall
-       n = 1
-       do j = ADM_gmin, ADM_gmax+1
-       do i = ADM_gmin, ADM_gmax+1
-          v_clip(n,l) = v(suf(i,j),k,l)
+    gmin    = ADM_gmin
+    gmax    = ADM_gmax
+    gall_1d = ADM_gall_1d
+    lall    = ADM_lall
 
-          n = n + 1
-       enddo
-       enddo
+!OCL XFILL
+    !$omp parallel do default(none),private(i,j,l,n,ij), &
+    !$omp shared(k,gmin,gmax,gall_1d,lall,var_clip,var_orig), &
+    !$omp collapse(2)
+    do l = 1,    lall
+    do j = gmin, gmax+1
+    do i = gmin, gmax+1
+       n  = (gall_1d-1) * (j-2) + (i-1)
+       ij = (gall_1d  ) * (j-1) + (i  )
+
+       var_clip(n,l) = var_orig(ij,k,l)
     enddo
+    enddo
+    enddo
+    !$omp end parallel do
 
     return
-  end subroutine GTL_clip_region_1layer_k
+  end subroutine GTL_clip_region_1layer_k_SP
 
   !-----------------------------------------------------------------------------
-  integer function suf(i,j)
+  subroutine GTL_clip_region_1layer_k_DP( var_orig, var_clip, ksize, k )
     use mod_adm, only: &
-       ADM_gall_1d
+       ADM_lall,    &
+       ADM_gall,    &
+       ADM_gall_in, &
+       ADM_gall_1d, &
+       ADM_gmin,    &
+       ADM_gmax
     implicit none
 
-    integer  :: i, j
+    integer,  intent(in)  :: ksize
+    real(RP), intent(in)  :: var_orig(ADM_gall   ,ksize,ADM_lall)
+    real(DP), intent(out) :: var_clip(ADM_gall_in,      ADM_lall)
+    integer,  intent(in)  :: k
+
+    integer  :: gmin, gmax, lall, gall_1d
+    integer  :: i, j, l, n, ij
     !---------------------------------------------------------------------------
 
-    suf = ADM_gall_1d * (j-1) + i
+    gmin    = ADM_gmin
+    gmax    = ADM_gmax
+    gall_1d = ADM_gall_1d
+    lall    = ADM_lall
 
-  end function suf
+!OCL XFILL
+    !$omp parallel do default(none),private(i,j,l,n,ij), &
+    !$omp shared(k,gmin,gmax,gall_1d,lall,var_clip,var_orig), &
+    !$omp collapse(2)
+    do l = 1,    lall
+    do j = gmin, gmax+1
+    do i = gmin, gmax+1
+       n  = (gall_1d-1) * (j-2) + (i-1)
+       ij = (gall_1d  ) * (j-1) + (i  )
+
+       var_clip(n,l) = var_orig(ij,k,l)
+    enddo
+    enddo
+    enddo
+    !$omp end parallel do
+
+    return
+  end subroutine GTL_clip_region_1layer_k_DP
 
 end module mod_gtl

@@ -27,7 +27,6 @@ module mod_runconf
   !
   !++ Public parameters & variables
   !
-  character(len=H_SHORT), public :: RUNNAME = ''
 
   !---< Component Selector >---
 
@@ -36,8 +35,10 @@ module mod_runconf
   integer,                public :: DYN_DIV_NUM        = 1
   character(len=H_SHORT), public :: TRC_ADV_TYPE       = 'MIURA2004'
   character(len=H_SHORT), public :: NDIFF_LOCATION     = 'IN_LARGE_STEP2'
+  character(len=H_SHORT), public :: TRC_ADV_LOCATION   = 'IN_DYN_DIV'
   logical,                public :: FLAG_NUDGING       = .false.
   logical,                public :: THUBURN_LIM        = .true.  ! [add] 20130613 R.Yoshida
+  real(RP),               public :: CORIOLIS_PARAM     = 0.0_RP
 
   !--- Physics
   character(len=H_SHORT), public :: RAIN_TYPE          = 'DRY'
@@ -165,7 +166,6 @@ contains
     implicit none
 
     namelist /RUNCONFPARAM/ &
-       RUNNAME,            &
        NON_HYDRO_ALPHA,    &
        DYN_DIV_NUM,        &
        TRC_ADV_TYPE,       &

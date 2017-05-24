@@ -124,7 +124,7 @@ contains
     !---------------------------------------------------------------------------
 
     ! flush 1kbyte
-    write(IO_FID_LOG,'(32A32)') '                                '
+    if( IO_L ) write(IO_FID_LOG,'(32A32)') '                                '
 
     if( IO_L ) write(IO_FID_LOG,*) '+++ Abort MPI'
     if( PRC_IsMaster ) write(*,*)  '+++ Abort MPI'

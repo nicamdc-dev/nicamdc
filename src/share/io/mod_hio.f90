@@ -180,9 +180,9 @@ contains
 
        endif
 
-       write(IO_FID_LOG,'(1x,A,A,A,I3)') '*** [HIO] File registration (ADVANCED) : ', &
+       if( IO_L ) write(IO_FID_LOG,'(1x,A,A,A,I3)') '*** [HIO] File registration (ADVANCED) : ', &
                             trim(rwname(rwtype)),' - ', HIO_fid_count
-       write(IO_FID_LOG,'(1x,A,I3,A,A)') '*** fid= ', fid, ', name: ', trim(fname)
+       if( IO_L ) write(IO_FID_LOG,'(1x,A,I3,A,A)') '*** fid= ', fid, ', name: ', trim(fname)
 
        HIO_fname_list(HIO_fid_count) = trim(basename)
        HIO_fid_list  (HIO_fid_count) = fid
@@ -701,7 +701,7 @@ contains
           call hio_fclose(fid)
           call hio_mk_fname(fname,trim(HIO_fname_list(n)),'pe',ADM_prc_me-1,6)
 
-          write(IO_FID_LOG,'(1x,A,I3,A,A)') &
+          if( IO_L ) write(IO_FID_LOG,'(1x,A,I3,A,A)') &
           '*** [HIO] File close (ADVANCED) fid= ', fid, ', name: ', trim(fname)
 
           ! remove closed file info from the list
@@ -729,7 +729,7 @@ contains
        call hio_fclose(fid)
        call hio_mk_fname(fname,trim(HIO_fname_list(n)),'pe',ADM_prc_me-1,6)
 
-       write(IO_FID_LOG,'(1x,A,I3,A,A)') &
+       if( IO_L ) write(IO_FID_LOG,'(1x,A,I3,A,A)') &
        '*** [HIO] File close (poh5) fid= ', fid, ', name: ', trim(fname)
     enddo
 

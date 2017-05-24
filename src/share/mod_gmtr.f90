@@ -231,10 +231,11 @@ contains
        ADM_gmax,     &
        ADM_gslf_pl
     use mod_grd, only: &
-       GRD_XDIR,     &
-       GRD_YDIR,     &
-       GRD_ZDIR,     &
-       GRD_LON,      &
+       GRD_XDIR,               &
+       GRD_YDIR,               &
+       GRD_ZDIR,               &
+       GRD_LON,                &
+       GRD_grid_type_on_plane, &
        GRD_grid_type
     use mod_vector, only: &
        VECTR_triangle,      &
@@ -303,7 +304,7 @@ contains
        endif
 
        !--- calc control area
-       if ( GRD_grid_type == 'ON_PLANE' ) then
+       if ( GRD_grid_type == GRD_grid_type_on_plane ) then
           do j = ADM_gmin, ADM_gmax
           do i = ADM_gmin, ADM_gmax
              ij = suf(i,j)
@@ -338,7 +339,7 @@ contains
        endif
 
        !--- calc coefficient between xyz <-> latlon
-       if ( GRD_grid_type == 'ON_PLANE' ) then
+       if ( GRD_grid_type == GRD_grid_type_on_plane ) then
           GMTR_p(:,k0,l,GMTR_p_IX) = 1.0_RP
           GMTR_p(:,k0,l,GMTR_p_IY) = 0.0_RP
           GMTR_p(:,k0,l,GMTR_p_IZ) = 0.0_RP
@@ -423,6 +424,7 @@ contains
        ADM_gmin_pl,  &
        ADM_gmax_pl
     use mod_grd, only: &
+       GRD_grid_type_on_plane, &
        GRD_grid_type
     use mod_vector, only: &
        VECTR_triangle,      &
@@ -488,7 +490,7 @@ contains
           wk(:,:,suf(ADM_gmin-1,ADM_gmin-1),ADM_TI) = wk(:,:,suf(ADM_gmin,ADM_gmin-1),ADM_TJ)
        endif
 
-       if ( GRD_grid_type == 'ON_PLANE' ) then
+       if ( GRD_grid_type == GRD_grid_type_on_plane ) then
           do t = ADM_TI,ADM_TJ
           do j = ADM_gmin-1, ADM_gmax
           do i = ADM_gmin-1, ADM_gmax
@@ -591,6 +593,7 @@ contains
        ADM_gmin_pl,  &
        ADM_gmax_pl
     use mod_grd, only: &
+       GRD_grid_type_on_plane, &
        GRD_grid_type
     implicit none
 
@@ -930,13 +933,16 @@ contains
        VECTR_cross, &
        VECTR_abs,   &
        VECTR_angle
+    use mod_grd, only : &
+      GRD_grid_type_on_plane, &
+      GRD_grid_type_on_sphere
     implicit none
 
     real(RP),         intent(out) :: vT   (3)     ! tangential vector
     real(RP),         intent(out) :: vN   (3)     ! normal     vector
     real(RP),         intent(in)  :: vFrom(3)
     real(RP),         intent(in)  :: vTo  (3)
-    character(len=*), intent(in)  :: grid_type    ! ON_SPHERE or ON_PLANE
+    integer,          intent(in)  :: grid_type    ! ON_SPHERE or ON_PLANE
     character(len=*), intent(in)  :: polygon_type ! ON_SPHERE or ON_PLANE
     real(RP),         intent(in)  :: radius
 
@@ -949,14 +955,14 @@ contains
     ! calculate tangential vector
     vT(:) = vTo(:) - vFrom(:)
 
-    if ( grid_type == 'ON_PLANE' ) then ! treat as point on the plane
+    if ( grid_type == GRD_grid_type_on_plane ) then ! treat as point on the plane
 
        ! calculate normal vector
        vN(1) = -vT(2)
        vN(2) =  vT(1)
        vN(3) = 0.0_RP
 
-    elseif( grid_type == 'ON_SPHERE' ) then ! treat as point on the sphere
+    elseif( grid_type == GRD_grid_type_on_sphere ) then ! treat as point on the sphere
 
        if ( polygon_type == 'ON_PLANE' ) then ! length of a line
 

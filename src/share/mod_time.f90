@@ -14,7 +14,6 @@ module mod_time
   !
   use mod_precision
   use mod_stdio
-  use mod_prof
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -241,9 +240,11 @@ contains
 
     call calendar_ss2cc( TIME_HTIME, TIME_CTIME )
 
-    if( IO_L ) write(IO_FID_LOG,*) '### TIME =', TIME_HTIME,'( step = ', TIME_CSTEP, ' )'
+    if( IO_L ) write(IO_FID_LOG,'(1x,3A,I8,A,I8,A)') &
+                                '### TIME = ', TIME_HTIME, '( step = ', TIME_CSTEP, '/', TIME_LSTEP_MAX, ' )'
     if( PRC_IsMaster ) then
-       write(*,*) '### TIME = ', TIME_HTIME,'( step = ', TIME_CSTEP, ' )'
+       write(*,'(1x,3A,I8,A,I8,A)') &
+               '### TIME = ', TIME_HTIME, '( step = ', TIME_CSTEP, '/', TIME_LSTEP_MAX, ' )'
     endif
 
     return

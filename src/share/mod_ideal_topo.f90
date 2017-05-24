@@ -2,7 +2,7 @@
 !> Module ideal topo
 !!
 !! @par Description
-!!         This module prepares ideal topography for Dynamical Core Test
+!!          This module prepares ideal topography for Dynamical Core Test
 !!
 !! @author NICAM developers
 !<

@@ -25,7 +25,23 @@ module mod_comm
   !
   public :: COMM_setup
   public :: COMM_data_transfer
+  public :: COMM_data_transfer_nopl
   public :: COMM_var
+
+  interface COMM_data_transfer
+     module procedure COMM_data_transfer_SP
+     module procedure COMM_data_transfer_DP
+  end interface COMM_data_transfer
+
+  interface COMM_var
+     module procedure COMM_var_SP
+     module procedure COMM_var_DP
+  end interface COMM_var
+
+  public :: COMM_ensemble_transpose
+  public :: COMM_ensemble_transpose_rev
+  public :: COMM_ensemble_scatter
+  public :: COMM_ensemble_gather
 
   public :: COMM_Stat_sum
   public :: COMM_Stat_sum_eachlayer
@@ -74,12 +90,19 @@ module mod_comm
   ! working buffer
   integer,  public, allocatable :: REQ_list(:)
 
-  real(RP), public, allocatable :: sendbuf_r2r(:,:)
-  real(RP), public, allocatable :: recvbuf_r2r(:,:)
-  real(RP), public, allocatable :: sendbuf_p2r(:,:)
-  real(RP), public, allocatable :: recvbuf_p2r(:,:)
-  real(RP), public, allocatable :: sendbuf_r2p(:,:)
-  real(RP), public, allocatable :: recvbuf_r2p(:,:)
+  real(SP), public, allocatable :: sendbuf_r2r_SP(:,:)
+  real(SP), public, allocatable :: recvbuf_r2r_SP(:,:)
+  real(SP), public, allocatable :: sendbuf_p2r_SP(:,:)
+  real(SP), public, allocatable :: recvbuf_p2r_SP(:,:)
+  real(SP), public, allocatable :: sendbuf_r2p_SP(:,:)
+  real(SP), public, allocatable :: recvbuf_r2p_SP(:,:)
+
+  real(DP), public, allocatable :: sendbuf_r2r_DP(:,:)
+  real(DP), public, allocatable :: recvbuf_r2r_DP(:,:)
+  real(DP), public, allocatable :: sendbuf_p2r_DP(:,:)
+  real(DP), public, allocatable :: recvbuf_p2r_DP(:,:)
+  real(DP), public, allocatable :: sendbuf_r2p_DP(:,:)
+  real(DP), public, allocatable :: recvbuf_r2p_DP(:,:)
 
   !-----------------------------------------------------------------------------
   !
@@ -599,14 +622,14 @@ contains
     rellist_nmax = cnt
 
     if( IO_L ) write(IO_FID_LOG,*)
-    if( IO_L ) write(IO_FID_LOG,*) "*** rellist_nmax:", rellist_nmax
+    if( IO_L ) write(IO_FID_LOG,*) '*** rellist_nmax:', rellist_nmax
 
     if ( debug ) then
-       if( IO_L ) write(IO_FID_LOG,*) "--- Relation Table"
-       write(IO_FID_LOG,'(7(A10))') 'Count', '|recv_grid', '| recv_rgn', '| recv_prc', &
-                                                       '|send_grid', '| send_rgn', '| send_prc'
+       if( IO_L ) write(IO_FID_LOG,*) '--- Relation Table'
+       if( IO_L ) write(IO_FID_LOG,'(7(A10))') 'Count', '|recv_grid', '| recv_rgn', '| recv_prc', &
+                                                        '|send_grid', '| send_rgn', '| send_prc'
        do cnt = 1, rellist_nmax
-          write(IO_FID_LOG,'(7(I10))') cnt, rellist(:,cnt)
+          if( IO_L ) write(IO_FID_LOG,'(7(I10))') cnt, rellist(:,cnt)
        enddo
     endif
 
@@ -775,14 +798,14 @@ contains
     if( IO_L ) write(IO_FID_LOG,*) '*** Send_nmax_r2r(local)  = ', Send_nmax_r2r
     if( IO_L ) write(IO_FID_LOG,*) '*** Send_size_r2r(global) = ', Send_size_nglobal
     if( IO_L ) write(IO_FID_LOG,*)
-    write(IO_FID_LOG,'(A)')             "|---------------------------------------"
-    write(IO_FID_LOG,'(A)')             "|               size  prc_from    prc_to"
-    write(IO_FID_LOG,'(A10,3(I10))')    "| Copy_r2r", Copy_info_r2r(:)
+    if( IO_L ) write(IO_FID_LOG,'(A)')             '|---------------------------------------'
+    if( IO_L ) write(IO_FID_LOG,'(A)')             '|               size  prc_from    prc_to'
+    if( IO_L ) write(IO_FID_LOG,'(A10,3(I10))')    '| Copy_r2r', Copy_info_r2r(:)
     do irank = 1, Recv_nmax_r2r
-       write(IO_FID_LOG,'(A10,3(I10))') "| Recv_r2r", Recv_info_r2r(:,irank)
+       if( IO_L ) write(IO_FID_LOG,'(A10,3(I10))') '| Recv_r2r', Recv_info_r2r(:,irank)
     enddo
     do irank = 1, Send_nmax_r2r
-       write(IO_FID_LOG,'(A10,3(I10))') "| Send_r2r", Send_info_r2r(:,irank)
+       if( IO_L ) write(IO_FID_LOG,'(A10,3(I10))') '| Send_r2r', Send_info_r2r(:,irank)
     enddo
 
     ! Communicate detailed information in each pair
@@ -844,11 +867,11 @@ contains
 
     if ( debug ) then
        if( IO_L ) write(IO_FID_LOG,*)
-       if( IO_L ) write(IO_FID_LOG,*) "--- Copy_list_r2r"
+       if( IO_L ) write(IO_FID_LOG,*) '--- Copy_list_r2r'
        if( IO_L ) write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(13(A6))') "number", &
-                                               "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
-                                               "|  ito","|  jto","|  rto","|  gto","|  lto","|  pto"
+       if( IO_L ) write(IO_FID_LOG,'(13(A6))') 'number', &
+                                               '|ifrom','|jfrom','|rfrom','|gfrom','|lfrom','|pfrom', &
+                                               '|  ito','|  jto','|  rto','|  gto','|  lto','|  pto'
        do ipos = 1, Copy_info_r2r(I_size)
           g_from = Copy_list_r2r(I_grid_from,ipos)
           l_from = Copy_list_r2r(I_l_from,ipos)
@@ -863,16 +886,16 @@ contains
           j_to   = (g_to-i_to) / ADM_gall_1d + 1
           r_to   = RGNMNG_lp2r(l_to,p_to)
 
-          write(IO_FID_LOG,'(13(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
-                                             i_to  , j_to  , r_to  , g_to  , l_to  , p_to
+          if( IO_L ) write(IO_FID_LOG,'(13(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
+                                                        i_to  , j_to  , r_to  , g_to  , l_to  , p_to
        enddo
 
        if( IO_L ) write(IO_FID_LOG,*)
-       if( IO_L ) write(IO_FID_LOG,*) "--- Recv_list_r2r"
+       if( IO_L ) write(IO_FID_LOG,*) '--- Recv_list_r2r'
        do irank = 1, Recv_nmax_r2r
-          write(IO_FID_LOG,'(13(A6))') "number", &
-                                                  "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
-                                                  "|  ito","|  jto","|  rto","|  gto","|  lto","|  pto"
+          if( IO_L ) write(IO_FID_LOG,'(13(A6))') 'number', &
+                                                  '|ifrom','|jfrom','|rfrom','|gfrom','|lfrom','|pfrom', &
+                                                  '|  ito','|  jto','|  rto','|  gto','|  lto','|  pto'
           do ipos = 1, Recv_info_r2r(I_size,irank)
              g_from = Recv_list_r2r(I_grid_from,ipos,irank)
              l_from = Recv_list_r2r(I_l_from,ipos,irank)
@@ -887,17 +910,17 @@ contains
              j_to   = (g_to-i_to) / ADM_gall_1d + 1
              r_to   = RGNMNG_lp2r(l_to,p_to)
 
-             write(IO_FID_LOG,'(13(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
-                                                i_to  , j_to  , r_to  , g_to  , l_to  , p_to
+             if( IO_L ) write(IO_FID_LOG,'(13(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
+                                                           i_to  , j_to  , r_to  , g_to  , l_to  , p_to
           enddo
        enddo
 
        if( IO_L ) write(IO_FID_LOG,*)
-       if( IO_L ) write(IO_FID_LOG,*) "--- Send_list_r2r"
+       if( IO_L ) write(IO_FID_LOG,*) '--- Send_list_r2r'
        do irank = 1, Send_nmax_r2r
-          write(IO_FID_LOG,'(13(A6))') "number", &
-                                                  "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
-                                                  "|  ito","|  jto","|  rto","|  gto","|  lto","|  pto"
+          if( IO_L ) write(IO_FID_LOG,'(13(A6))') 'number', &
+                                                  '|ifrom','|jfrom','|rfrom','|gfrom','|lfrom','|pfrom', &
+                                                  '|  ito','|  jto','|  rto','|  gto','|  lto','|  pto'
           do ipos = 1, Send_info_r2r(I_size,irank)
              g_from = Send_list_r2r(I_grid_from,ipos,irank)
              l_from = Send_list_r2r(I_l_from,ipos,irank)
@@ -912,14 +935,16 @@ contains
              j_to   = (g_to-i_to) / ADM_gall_1d + 1
              r_to   = RGNMNG_lp2r(l_to,p_to)
 
-             write(IO_FID_LOG,'(13(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
-                                                i_to  , j_to  , r_to  , g_to  , l_to  , p_to
+             if( IO_L ) write(IO_FID_LOG,'(13(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
+                                                           i_to  , j_to  , r_to  , g_to  , l_to  , p_to
           enddo
        enddo
     endif
 
-    allocate( sendbuf_r2r(Send_size_nglobal*ADM_kall*COMM_varmax,Send_nmax_r2r) )
-    allocate( recvbuf_r2r(Send_size_nglobal*ADM_kall*COMM_varmax,Recv_nmax_r2r) )
+    allocate( sendbuf_r2r_SP(Send_size_nglobal*ADM_kall*COMM_varmax,Send_nmax_r2r) )
+    allocate( recvbuf_r2r_SP(Send_size_nglobal*ADM_kall*COMM_varmax,Recv_nmax_r2r) )
+    allocate( sendbuf_r2r_DP(Send_size_nglobal*ADM_kall*COMM_varmax,Send_nmax_r2r) )
+    allocate( recvbuf_r2r_DP(Send_size_nglobal*ADM_kall*COMM_varmax,Recv_nmax_r2r) )
 
     return
   end subroutine COMM_sortdest
@@ -1210,23 +1235,23 @@ contains
     if( IO_L ) write(IO_FID_LOG,*) '*** Recv_nmax_p2r(local)  = ', Recv_nmax_p2r
     if( IO_L ) write(IO_FID_LOG,*) '*** Send_nmax_p2r(local)  = ', Send_nmax_p2r
     if( IO_L ) write(IO_FID_LOG,*)
-    write(IO_FID_LOG,'(A)')             "|---------------------------------------"
-    write(IO_FID_LOG,'(A)')             "|               size  prc_from    prc_to"
-    write(IO_FID_LOG,'(A10,3(I10))')    "| Copy_p2r", Copy_info_p2r(:)
+    if( IO_L ) write(IO_FID_LOG,'(A)')             '|---------------------------------------'
+    if( IO_L ) write(IO_FID_LOG,'(A)')             '|               size  prc_from    prc_to'
+    if( IO_L ) write(IO_FID_LOG,'(A10,3(I10))')    '| Copy_p2r', Copy_info_p2r(:)
     do irank = 1, Recv_nmax_p2r
-       write(IO_FID_LOG,'(A10,3(I10))') "| Recv_p2r", Recv_info_p2r(:,irank)
+       if( IO_L ) write(IO_FID_LOG,'(A10,3(I10))') '| Recv_p2r', Recv_info_p2r(:,irank)
     enddo
     do irank = 1, Send_nmax_p2r
-       write(IO_FID_LOG,'(A10,3(I10))') "| Send_p2r", Send_info_p2r(:,irank)
+       if( IO_L ) write(IO_FID_LOG,'(A10,3(I10))') '| Send_p2r', Send_info_p2r(:,irank)
     enddo
 
     if ( debug ) then
        if( IO_L ) write(IO_FID_LOG,*)
-       if( IO_L ) write(IO_FID_LOG,*) "--- Copy_list_p2r"
+       if( IO_L ) write(IO_FID_LOG,*) '--- Copy_list_p2r'
        if( IO_L ) write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(11(A6))') "number", &
-                                                                 "|rfrom","|gfrom","|lfrom","|pfrom", &
-                                               "|  ito","|  jto","|  rto","|  gto","|  lto","|  pto"
+       if( IO_L ) write(IO_FID_LOG,'(11(A6))') 'number', &
+                                                                 '|rfrom','|gfrom','|lfrom','|pfrom', &
+                                               '|  ito','|  jto','|  rto','|  gto','|  lto','|  pto'
        do ipos = 1, Copy_info_p2r(I_size)
           g_from = Copy_list_p2r(I_grid_from,ipos)
           l_from = Copy_list_p2r(I_l_from,ipos)
@@ -1239,16 +1264,16 @@ contains
           j_to   = (g_to-i_to) / ADM_gall_1d + 1
           r_to   = RGNMNG_lp2r(l_to,p_to)
 
-          write(IO_FID_LOG,'(11(I6))') ipos,                 r_from, g_from, l_from, p_from, &
+          if( IO_L ) write(IO_FID_LOG,'(11(I6))') ipos,                 r_from, g_from, l_from, p_from, &
                                                         i_to  , j_to  , r_to  , g_to  , l_to  , p_to
        enddo
 
        if( IO_L ) write(IO_FID_LOG,*)
-       if( IO_L ) write(IO_FID_LOG,*) "--- Recv_list_p2r"
+       if( IO_L ) write(IO_FID_LOG,*) '--- Recv_list_p2r'
        do irank = 1, Recv_nmax_p2r
-          write(IO_FID_LOG,'(11(A6))') "number", &
-                                                                    "|rfrom","|gfrom","|lfrom","|pfrom", &
-                                                  "|  ito","|  jto","|  rto","|  gto","|  lto","|  pto"
+          if( IO_L ) write(IO_FID_LOG,'(11(A6))') 'number', &
+                                                                    '|rfrom','|gfrom','|lfrom','|pfrom', &
+                                                  '|  ito','|  jto','|  rto','|  gto','|  lto','|  pto'
           do ipos = 1, Recv_info_p2r(I_size,irank)
              g_from = Recv_list_p2r(I_grid_from,ipos,irank)
              l_from = Recv_list_p2r(I_l_from,ipos,irank)
@@ -1261,17 +1286,17 @@ contains
              j_to   = (g_to-i_to) / ADM_gall_1d + 1
              r_to   = RGNMNG_lp2r(l_to,p_to)
 
-             write(IO_FID_LOG,'(11(I6))') ipos,                 r_from, g_from, l_from, p_from, &
-                                                i_to  , j_to  , r_to  , g_to  , l_to  , p_to
+             if( IO_L ) write(IO_FID_LOG,'(11(I6))') ipos,                 r_from, g_from, l_from, p_from, &
+                                                           i_to  , j_to  , r_to  , g_to  , l_to  , p_to
           enddo
        enddo
 
        if( IO_L ) write(IO_FID_LOG,*)
-       if( IO_L ) write(IO_FID_LOG,*) "--- Send_list_p2r"
+       if( IO_L ) write(IO_FID_LOG,*) '--- Send_list_p2r'
        do irank = 1, Send_nmax_p2r
-          write(IO_FID_LOG,'(11(A6))') "number", &
-                                                                    "|rfrom","|gfrom","|lfrom","|pfrom", &
-                                                  "|  ito","|  jto","|  rto","|  gto","|  lto","|  pto"
+          if( IO_L ) write(IO_FID_LOG,'(11(A6))') 'number', &
+                                                                    '|rfrom','|gfrom','|lfrom','|pfrom', &
+                                                  '|  ito','|  jto','|  rto','|  gto','|  lto','|  pto'
           do ipos = 1, Send_info_p2r(I_size,irank)
              g_from = Send_list_p2r(I_grid_from,ipos,irank)
              l_from = Send_list_p2r(I_l_from,ipos,irank)
@@ -1284,8 +1309,8 @@ contains
              j_to   = (g_to-i_to) / ADM_gall_1d + 1
              r_to   = RGNMNG_lp2r(l_to,p_to)
 
-             write(IO_FID_LOG,'(11(I6))') ipos,                 r_from, g_from, l_from, p_from, &
-                                                i_to  , j_to  , r_to  , g_to  , l_to  , p_to
+             if( IO_L ) write(IO_FID_LOG,'(11(I6))') ipos,                 r_from, g_from, l_from, p_from, &
+                                                           i_to  , j_to  , r_to  , g_to  , l_to  , p_to
           enddo
        enddo
     endif
@@ -1294,23 +1319,23 @@ contains
     if( IO_L ) write(IO_FID_LOG,*) '*** Recv_nmax_r2p(local)  = ', Recv_nmax_r2p
     if( IO_L ) write(IO_FID_LOG,*) '*** Send_nmax_r2p(local)  = ', Send_nmax_r2p
     if( IO_L ) write(IO_FID_LOG,*)
-    write(IO_FID_LOG,'(A)')             "|---------------------------------------"
-    write(IO_FID_LOG,'(A)')             "|               size  prc_from    prc_to"
-    write(IO_FID_LOG,'(A10,3(I10))')    "| Copy_r2p", Copy_info_r2p(:)
+    if( IO_L ) write(IO_FID_LOG,'(A)')             '|---------------------------------------'
+    if( IO_L ) write(IO_FID_LOG,'(A)')             '|               size  prc_from    prc_to'
+    if( IO_L ) write(IO_FID_LOG,'(A10,3(I10))')    '| Copy_r2p', Copy_info_r2p(:)
     do irank = 1, Recv_nmax_r2p
-       write(IO_FID_LOG,'(A10,3(I10))') "| Recv_r2p", Recv_info_r2p(:,irank)
+       if( IO_L ) write(IO_FID_LOG,'(A10,3(I10))') '| Recv_r2p', Recv_info_r2p(:,irank)
     enddo
     do irank = 1, Send_nmax_r2p
-       write(IO_FID_LOG,'(A10,3(I10))') "| Send_r2p", Send_info_r2p(:,irank)
+       if( IO_L ) write(IO_FID_LOG,'(A10,3(I10))') '| Send_r2p', Send_info_r2p(:,irank)
     enddo
 
     if ( debug ) then
        if( IO_L ) write(IO_FID_LOG,*)
-       if( IO_L ) write(IO_FID_LOG,*) "--- Copy_list_r2p"
+       if( IO_L ) write(IO_FID_LOG,*) '--- Copy_list_r2p'
        if( IO_L ) write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(11(A6))') "number", &
-                                               "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
-                                                                 "|  rto","|  gto","|  lto","|  pto"
+       if( IO_L ) write(IO_FID_LOG,'(11(A6))') 'number', &
+                                               '|ifrom','|jfrom','|rfrom','|gfrom','|lfrom','|pfrom', &
+                                                                 '|  rto','|  gto','|  lto','|  pto'
        do ipos = 1, Copy_info_r2p(I_size)
           g_from = Copy_list_r2p(I_grid_from,ipos)
           l_from = Copy_list_r2p(I_l_from,ipos)
@@ -1323,16 +1348,16 @@ contains
           p_to   = Copy_info_r2p(I_prc_to)
           r_to   = l_to
 
-          write(IO_FID_LOG,'(11(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
-                                                             r_to  , g_to  , l_to  , p_to
+          if( IO_L ) write(IO_FID_LOG,'(11(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
+                                                                        r_to  , g_to  , l_to  , p_to
        enddo
 
        if( IO_L ) write(IO_FID_LOG,*)
-       if( IO_L ) write(IO_FID_LOG,*) "--- Recv_list_r2p"
+       if( IO_L ) write(IO_FID_LOG,*) '--- Recv_list_r2p'
        do irank = 1, Recv_nmax_r2p
-          write(IO_FID_LOG,'(11(A6))') "number", &
-                                                  "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
-                                                                    "|  rto","|  gto","|  lto","|  pto"
+          if( IO_L ) write(IO_FID_LOG,'(11(A6))') 'number', &
+                                                  '|ifrom','|jfrom','|rfrom','|gfrom','|lfrom','|pfrom', &
+                                                                    '|  rto','|  gto','|  lto','|  pto'
           do ipos = 1, Recv_info_r2p(I_size,irank)
              g_from = Recv_list_r2p(I_grid_from,ipos,irank)
              l_from = Recv_list_r2p(I_l_from,ipos,irank)
@@ -1345,17 +1370,17 @@ contains
              p_to   = Recv_info_r2p(I_prc_to,irank)
              r_to   = l_to
 
-             write(IO_FID_LOG,'(11(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
-                                                                r_to  , g_to  , l_to  , p_to
+             if( IO_L ) write(IO_FID_LOG,'(11(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
+                                                                           r_to  , g_to  , l_to  , p_to
           enddo
        enddo
 
        if( IO_L ) write(IO_FID_LOG,*)
-       if( IO_L ) write(IO_FID_LOG,*) "--- Send_list_r2p"
+       if( IO_L ) write(IO_FID_LOG,*) '--- Send_list_r2p'
        do irank = 1, Send_nmax_r2p
-          write(IO_FID_LOG,'(11(A6))') "number", &
-                                                  "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
-                                                                    "|  rto","|  gto","|  lto","|  pto"
+          if( IO_L ) write(IO_FID_LOG,'(11(A6))') 'number', &
+                                                  '|ifrom','|jfrom','|rfrom','|gfrom','|lfrom','|pfrom', &
+                                                                    '|  rto','|  gto','|  lto','|  pto'
           do ipos = 1, Send_info_r2p(I_size,irank)
              g_from = Send_list_r2p(I_grid_from,ipos,irank)
              l_from = Send_list_r2p(I_l_from,ipos,irank)
@@ -1368,18 +1393,22 @@ contains
              p_to   = Send_info_r2p(I_prc_to,irank)
              r_to   = l_to
 
-             write(IO_FID_LOG,'(11(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
-                                                                r_to  , g_to  , l_to  , p_to
+             if( IO_L ) write(IO_FID_LOG,'(11(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
+                                                                           r_to  , g_to  , l_to  , p_to
           enddo
        enddo
     endif
     if( IO_L ) write(IO_FID_LOG,*)
     if( IO_L ) write(IO_FID_LOG,*) '*** Send_size_p2r,r2p     = ', Send_size_nglobal_pl
 
-    allocate( sendbuf_r2p(Send_size_nglobal_pl*ADM_kall*COMM_varmax,Send_nmax_r2p) )
-    allocate( recvbuf_r2p(Send_size_nglobal_pl*ADM_kall*COMM_varmax,Recv_nmax_r2p) )
-    allocate( sendbuf_p2r(Send_size_nglobal_pl*ADM_kall*COMM_varmax,Send_nmax_p2r) )
-    allocate( recvbuf_p2r(Send_size_nglobal_pl*ADM_kall*COMM_varmax,Recv_nmax_p2r) )
+    allocate( sendbuf_r2p_SP(Send_size_nglobal_pl*ADM_kall*COMM_varmax,Send_nmax_r2p) )
+    allocate( recvbuf_r2p_SP(Send_size_nglobal_pl*ADM_kall*COMM_varmax,Recv_nmax_r2p) )
+    allocate( sendbuf_p2r_SP(Send_size_nglobal_pl*ADM_kall*COMM_varmax,Send_nmax_p2r) )
+    allocate( recvbuf_p2r_SP(Send_size_nglobal_pl*ADM_kall*COMM_varmax,Recv_nmax_p2r) )
+    allocate( sendbuf_r2p_DP(Send_size_nglobal_pl*ADM_kall*COMM_varmax,Send_nmax_r2p) )
+    allocate( recvbuf_r2p_DP(Send_size_nglobal_pl*ADM_kall*COMM_varmax,Recv_nmax_r2p) )
+    allocate( sendbuf_p2r_DP(Send_size_nglobal_pl*ADM_kall*COMM_varmax,Send_nmax_p2r) )
+    allocate( recvbuf_p2r_DP(Send_size_nglobal_pl*ADM_kall*COMM_varmax,Recv_nmax_p2r) )
 
     return
   end subroutine COMM_sortdest_pl
@@ -1438,8 +1467,8 @@ contains
           Singular_info(I_size) = Singular_info(I_size) + 1
           ipos                  = Singular_info(I_size)
 
-          i     = ADM_gmin - 1
-          j     = ADM_gmax
+          i     = ADM_gmin
+          j     = ADM_gmax + 1
           i_rmt = ADM_gmin - 1
           j_rmt = ADM_gmax + 1
 
@@ -1473,17 +1502,17 @@ contains
     endif
 
     if( IO_L ) write(IO_FID_LOG,*)
-    write(IO_FID_LOG,'(A)')             "|---------------------------------------"
-    write(IO_FID_LOG,'(A)')             "|               size  prc_from    prc_to"
-    write(IO_FID_LOG,'(A10,3(I10))')    "| Singular", Singular_info(:)
+    if( IO_L ) write(IO_FID_LOG,'(A)')             '|---------------------------------------'
+    if( IO_L ) write(IO_FID_LOG,'(A)')             '|               size  prc_from    prc_to'
+    if( IO_L ) write(IO_FID_LOG,'(A10,3(I10))')    '| Singular', Singular_info(:)
 
     if ( debug ) then
        if( IO_L ) write(IO_FID_LOG,*)
-       if( IO_L ) write(IO_FID_LOG,*) "--- Singular_list"
+       if( IO_L ) write(IO_FID_LOG,*) '--- Singular_list'
        if( IO_L ) write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(13(A6))') "number", &
-                                               "|ifrom","|jfrom","|rfrom","|gfrom","|lfrom","|pfrom", &
-                                               "|  ito","|  jto","|  rto","|  gto","|  lto","|  pto"
+       if( IO_L ) write(IO_FID_LOG,'(13(A6))') 'number', &
+                                               '|ifrom','|jfrom','|rfrom','|gfrom','|lfrom','|pfrom', &
+                                               '|  ito','|  jto','|  rto','|  gto','|  lto','|  pto'
        do ipos = 1, Singular_info(I_size)
           g_from = Singular_list(I_grid_from,ipos)
           l_from = Singular_list(I_l_from,ipos)
@@ -1498,8 +1527,8 @@ contains
           j_to   = (g_to-i_to) / ADM_gall_1d + 1
           r_to   = RGNMNG_lp2r(l_to,p_to)
 
-          write(IO_FID_LOG,'(13(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
-                                             i_to  , j_to  , r_to  , g_to  , l_to  , p_to
+          if( IO_L ) write(IO_FID_LOG,'(13(I6))') ipos, i_from, j_from, r_from, g_from, l_from, p_from, &
+                                                        i_to  , j_to  , r_to  , g_to  , l_to  , p_to
        enddo
     endif
 
@@ -1508,7 +1537,7 @@ contains
 
   !-----------------------------------------------------------------------------
   !> Data transfer kernel
-  subroutine COMM_data_transfer( &
+  subroutine COMM_data_transfer_SP( &
        var,   &
        var_pl )
     use mod_process, only: &
@@ -1518,8 +1547,8 @@ contains
        ADM_kall
     implicit none
 
-    real(RP), intent(inout) :: var   (:,:,:,:)
-    real(RP), intent(inout) :: var_pl(:,:,:,:)
+    real(SP), intent(inout) :: var   (:,:,:,:)
+    real(SP), intent(inout) :: var_pl(:,:,:,:)
 
     integer  :: shp(4), kmax, vmax
     integer  :: totalsize, rank, tag
@@ -1570,6 +1599,23 @@ contains
 
     REQ_count = 0
 
+    !--- receive r2r
+    do irank = 1, Recv_nmax_r2r
+       REQ_count = REQ_count + 1
+       totalsize = Recv_info_r2r(I_size    ,irank) * kmax * vmax
+       rank      = Recv_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
+       tag       = Recv_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
+
+       call MPI_IRECV( recvbuf_r2r_SP(1,irank), & ! [OUT]
+                       totalsize,               & ! [IN]
+                       MPI_REAL,                & ! [IN]
+                       rank,                    & ! [IN]
+                       tag,                     & ! [IN]
+                       PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                       REQ_list(REQ_count),     & ! [OUT]
+                       ierr                     ) ! [OUT]
+    enddo
+
     !--- receive p2r
     do irank = 1, Recv_nmax_p2r
        REQ_count = REQ_count + 1
@@ -1577,14 +1623,14 @@ contains
        rank      = Recv_info_p2r(I_prc_from,irank) - 1 ! rank = prc - 1
        tag       = Recv_info_p2r(I_prc_from,irank) + 1000000
 
-       call MPI_IRECV( recvbuf_p2r(1,irank), & ! [OUT]
-                       totalsize,            & ! [IN]
-                       COMM_datatype,        & ! [IN]
-                       rank,                 & ! [IN]
-                       tag,                  & ! [IN]
-                       PRC_LOCAL_COMM_WORLD, & ! [IN]
-                       REQ_list(REQ_count),  & ! [OUT]
-                       ierr                  ) ! [OUT]
+       call MPI_IRECV( recvbuf_p2r_SP(1,irank), & ! [OUT]
+                       totalsize,               & ! [IN]
+                       MPI_REAL,                & ! [IN]
+                       rank,                    & ! [IN]
+                       tag,                     & ! [IN]
+                       PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                       REQ_list(REQ_count),     & ! [OUT]
+                       ierr                     ) ! [OUT]
     enddo
 
     !--- receive r2p
@@ -1594,105 +1640,14 @@ contains
        rank      = Recv_info_r2p(I_prc_from,irank) - 1 ! rank = prc - 1
        tag       = Recv_info_r2p(I_prc_from,irank) + 2000000
 
-       call MPI_IRECV( recvbuf_r2p(1,irank), & ! [OUT]
-                       totalsize,            & ! [IN]
-                       COMM_datatype,        & ! [IN]
-                       rank,                 & ! [IN]
-                       tag,                  & ! [IN]
-                       PRC_LOCAL_COMM_WORLD, & ! [IN]
-                       REQ_list(REQ_count),  & ! [OUT]
-                       ierr                  ) ! [OUT]
-    enddo
-
-    !--- receive r2r
-    do irank = 1, Recv_nmax_r2r
-       REQ_count = REQ_count + 1
-       totalsize = Recv_info_r2r(I_size    ,irank) * kmax * vmax
-       rank      = Recv_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
-       tag       = Recv_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
-
-       call MPI_IRECV( recvbuf_r2r(1,irank), & ! [OUT]
-                       totalsize,            & ! [IN]
-                       COMM_datatype,        & ! [IN]
-                       rank,                 & ! [IN]
-                       tag,                  & ! [IN]
-                       PRC_LOCAL_COMM_WORLD, & ! [IN]
-                       REQ_list(REQ_count),  & ! [OUT]
-                       ierr                  ) ! [OUT]
-    enddo
-
-    !--- pack and send p2r
-    do irank = 1, Send_nmax_p2r
-       imax = Send_info_p2r(I_size,irank)
-
-       !$omp parallel do default(none),private(ipos,k,v,ikv,ij_from,l_from) &
-       !$omp shared(irank,imax,kmax,vmax,Send_list_p2r,sendbuf_p2r,var_pl)
-       do v    = 1, vmax
-       do k    = 1, kmax
-       do ipos = 1, imax
-          ij_from = Send_list_p2r(I_grid_from,ipos,irank)
-          l_from  = Send_list_p2r(I_l_from   ,ipos,irank)
-
-          ikv = (v-1) * imax * kmax &
-              + (k-1) * imax        &
-              + ipos
-
-          sendbuf_p2r(ikv,irank) = var_pl(ij_from,k,l_from,v)
-       enddo
-       enddo
-       enddo
-       !$omp end parallel do
-
-       REQ_count = REQ_count + 1
-       totalsize = imax * kmax * vmax
-       rank      = Send_info_p2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
-       tag       = Send_info_p2r(I_prc_from,irank) + 1000000
-
-       call MPI_ISEND( sendbuf_p2r(1,irank), & ! [IN]
-                       totalsize,            & ! [IN]
-                       COMM_datatype,        & ! [IN]
-                       rank,                 & ! [IN]
-                       tag,                  & ! [IN]
-                       PRC_LOCAL_COMM_WORLD, & ! [IN]
-                       REQ_list(REQ_count),  & ! [OUT]
-                       ierr                  ) ! [OUT]
-    enddo
-
-    !--- pack and send r2p
-    do irank = 1, Send_nmax_r2p
-       imax = Send_info_r2p(I_size,irank)
-
-       !$omp parallel do default(none),private(ipos,k,v,ikv,ij_from,l_from) &
-       !$omp shared(irank,imax,kmax,vmax,Send_list_r2p,sendbuf_r2p,var)
-       do v    = 1, vmax
-       do k    = 1, kmax
-       do ipos = 1, imax
-          ij_from = Send_list_r2p(I_grid_from,ipos,irank)
-          l_from  = Send_list_r2p(I_l_from   ,ipos,irank)
-
-          ikv = (v-1) * imax * kmax &
-              + (k-1) * imax        &
-              + ipos
-
-          sendbuf_r2p(ikv,irank) = var(ij_from,k,l_from,v)
-       enddo
-       enddo
-       enddo
-       !$omp end parallel do
-
-       REQ_count = REQ_count + 1
-       totalsize = imax * kmax * vmax
-       rank      = Send_info_r2p(I_prc_to  ,irank) - 1 ! rank = prc - 1
-       tag       = Send_info_r2p(I_prc_from,irank) + 2000000
-
-       call MPI_ISEND( sendbuf_r2p(1,irank), & ! [IN]
-                       totalsize,            & ! [IN]
-                       COMM_datatype,        & ! [IN]
-                       rank,                 & ! [IN]
-                       tag,                  & ! [IN]
-                       PRC_LOCAL_COMM_WORLD, & ! [IN]
-                       REQ_list(REQ_count),  & ! [OUT]
-                       ierr                  ) ! [OUT]
+       call MPI_IRECV( recvbuf_r2p_SP(1,irank), & ! [OUT]
+                       totalsize,               & ! [IN]
+                       MPI_REAL,                & ! [IN]
+                       rank,                    & ! [IN]
+                       tag,                     & ! [IN]
+                       PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                       REQ_list(REQ_count),     & ! [OUT]
+                       ierr                     ) ! [OUT]
     enddo
 
     !--- pack and send r2r
@@ -1700,7 +1655,8 @@ contains
        imax = Send_info_r2r(I_size,irank)
 
        !$omp parallel do default(none),private(ipos,k,v,ikv,ij_from,l_from) &
-       !$omp shared(irank,imax,kmax,vmax,Send_list_r2r,sendbuf_r2r,var)
+       !$omp shared(irank,imax,kmax,vmax,Send_list_r2r,sendbuf_r2r_SP,var) &
+       !$omp collapse(2)
        do v    = 1, vmax
        do k    = 1, kmax
        do ipos = 1, imax
@@ -1711,7 +1667,7 @@ contains
               + (k-1) * imax        &
               + ipos
 
-          sendbuf_r2r(ikv,irank) = var(ij_from,k,l_from,v)
+          sendbuf_r2r_SP(ikv,irank) = var(ij_from,k,l_from,v)
        enddo
        enddo
        enddo
@@ -1722,22 +1678,123 @@ contains
        rank      = Send_info_r2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
        tag       = Send_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
 
-       call MPI_ISEND( sendbuf_r2r(1,irank), & ! [IN]
-                       totalsize,            & ! [IN]
-                       COMM_datatype,        & ! [IN]
-                       rank,                 & ! [IN]
-                       tag,                  & ! [IN]
-                       PRC_LOCAL_COMM_WORLD, & ! [IN]
-                       REQ_list(REQ_count),  & ! [OUT]
-                       ierr                  ) ! [OUT]
+       call MPI_ISEND( sendbuf_r2r_SP(1,irank), & ! [IN]
+                       totalsize,               & ! [IN]
+                       MPI_REAL,                & ! [IN]
+                       rank,                    & ! [IN]
+                       tag,                     & ! [IN]
+                       PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                       REQ_list(REQ_count),     & ! [OUT]
+                       ierr                     ) ! [OUT]
+    enddo
+
+    !--- pack and send p2r
+    do irank = 1, Send_nmax_p2r
+       imax = Send_info_p2r(I_size,irank)
+
+       !$omp parallel do default(none),private(ipos,k,v,ikv,ij_from,l_from) &
+       !$omp shared(irank,imax,kmax,vmax,Send_list_p2r,sendbuf_p2r_SP,var_pl) &
+       !$omp collapse(2)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Send_list_p2r(I_grid_from,ipos,irank)
+          l_from  = Send_list_p2r(I_l_from   ,ipos,irank)
+
+          ikv = (v-1) * imax * kmax &
+              + (k-1) * imax        &
+              + ipos
+
+          sendbuf_p2r_SP(ikv,irank) = var_pl(ij_from,k,l_from,v)
+       enddo
+       enddo
+       enddo
+       !$omp end parallel do
+
+       REQ_count = REQ_count + 1
+       totalsize = imax * kmax * vmax
+       rank      = Send_info_p2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
+       tag       = Send_info_p2r(I_prc_from,irank) + 1000000
+
+       call MPI_ISEND( sendbuf_p2r_SP(1,irank), & ! [IN]
+                       totalsize,               & ! [IN]
+                       MPI_REAL,                & ! [IN]
+                       rank,                    & ! [IN]
+                       tag,                     & ! [IN]
+                       PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                       REQ_list(REQ_count),     & ! [OUT]
+                       ierr                     ) ! [OUT]
+    enddo
+
+    !--- pack and send r2p
+    do irank = 1, Send_nmax_r2p
+       imax = Send_info_r2p(I_size,irank)
+
+       !$omp parallel do default(none),private(ipos,k,v,ikv,ij_from,l_from) &
+       !$omp shared(irank,imax,kmax,vmax,Send_list_r2p,sendbuf_r2p_SP,var) &
+       !$omp collapse(2)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Send_list_r2p(I_grid_from,ipos,irank)
+          l_from  = Send_list_r2p(I_l_from   ,ipos,irank)
+
+          ikv = (v-1) * imax * kmax &
+              + (k-1) * imax        &
+              + ipos
+
+          sendbuf_r2p_SP(ikv,irank) = var(ij_from,k,l_from,v)
+       enddo
+       enddo
+       enddo
+       !$omp end parallel do
+
+       REQ_count = REQ_count + 1
+       totalsize = imax * kmax * vmax
+       rank      = Send_info_r2p(I_prc_to  ,irank) - 1 ! rank = prc - 1
+       tag       = Send_info_r2p(I_prc_from,irank) + 2000000
+
+       call MPI_ISEND( sendbuf_r2p_SP(1,irank), & ! [IN]
+                       totalsize,               & ! [IN]
+                       MPI_REAL,                & ! [IN]
+                       rank,                    & ! [IN]
+                       tag,                     & ! [IN]
+                       PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                       REQ_list(REQ_count),     & ! [OUT]
+                       ierr                     ) ! [OUT]
+    enddo
+
+    !$omp parallel default(none),private(ipos,k,v,imax,irank,ij_from,l_from,ij_to,l_to) &
+    !$omp shared(kmax,vmax,var,var_pl,                      &
+    !$omp        Copy_nmax_p2r,Copy_info_p2r,Copy_list_p2r, &
+    !$omp        Copy_nmax_r2p,Copy_info_r2p,Copy_list_r2p, &
+    !$omp        Copy_nmax_r2r,Copy_info_r2r,Copy_list_r2r  )
+
+    !--- copy r2r
+    do irank = 1, Copy_nmax_r2r
+       imax = Copy_info_r2r(I_size)
+
+       !$omp do collapse(2)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Copy_list_r2r(I_grid_from,ipos)
+          l_from  = Copy_list_r2r(I_l_from   ,ipos)
+          ij_to   = Copy_list_r2r(I_grid_to  ,ipos)
+          l_to    = Copy_list_r2r(I_l_to     ,ipos)
+
+          var(ij_to,k,l_to,v) = var(ij_from,k,l_from,v)
+       enddo
+       enddo
+       enddo
+       !$omp end do nowait
     enddo
 
     !--- copy p2r
-    !$omp parallel do default(none),private(ipos,k,v,imax,irank,ij_from,l_from,ij_to,l_to) &
-    !$omp shared(kmax,vmax,Copy_nmax_p2r,Copy_info_p2r,Copy_list_p2r,var,var_pl)
     do irank = 1, Copy_nmax_p2r
        imax = Copy_info_p2r(I_size)
 
+       !$omp do collapse(2)
        do v    = 1, vmax
        do k    = 1, kmax
        do ipos = 1, imax
@@ -1750,15 +1807,14 @@ contains
        enddo
        enddo
        enddo
+       !$omp end do nowait
     enddo
-    !$omp end parallel do
 
     !--- copy r2p
-    !$omp parallel do default(none),private(ipos,k,v,imax,irank,ij_from,l_from,ij_to,l_to) &
-    !$omp shared(kmax,vmax,Copy_nmax_r2p,Copy_info_r2p,Copy_list_r2p,var,var_pl)
     do irank = 1, Copy_nmax_r2p
        imax = Copy_info_r2p(I_size)
 
+       !$omp do collapse(2)
        do v    = 1, vmax
        do k    = 1, kmax
        do ipos = 1, imax
@@ -1771,8 +1827,630 @@ contains
        enddo
        enddo
        enddo
+       !$omp end do nowait
     enddo
-    !$omp end parallel do
+
+    !$omp end parallel
+
+    !--- wait all
+    call MPI_WAITALL( REQ_count,           & ! [IN]
+                      REQ_list(:),         & ! [IN]
+                      MPI_STATUSES_IGNORE, & ! [OUT]
+                      ierr                 ) ! [OUT]
+
+    !$omp parallel default(none),private(ipos,k,v,imax,irank,ikv,ij_from,l_from,ij_to,l_to) &
+    !$omp shared(kmax,vmax,var,var_pl,                                  &
+    !$omp        Recv_nmax_p2r,Recv_info_p2r,Recv_list_p2r,recvbuf_p2r_SP, &
+    !$omp        Recv_nmax_r2p,Recv_info_r2p,Recv_list_r2p,recvbuf_r2p_SP, &
+    !$omp        Recv_nmax_r2r,Recv_info_r2r,Recv_list_r2r,recvbuf_r2r_SP, &
+    !$omp        Singular_nmax,Singular_info,Singular_list              )
+
+    !--- unpack r2r
+    do irank = 1, Recv_nmax_r2r
+       imax = Recv_info_r2r(I_size,irank)
+
+       !$omp do collapse(2)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_to = Recv_list_r2r(I_grid_to,ipos,irank)
+          l_to  = Recv_list_r2r(I_l_to   ,ipos,irank)
+
+          ikv = (v-1) * imax * kmax &
+              + (k-1) * imax        &
+              + ipos
+
+          var(ij_to,k,l_to,v) = recvbuf_r2r_SP(ikv,irank)
+       enddo
+       enddo
+       enddo
+       !$omp end do nowait
+    enddo
+
+    !--- unpack p2r
+    do irank = 1, Recv_nmax_p2r
+       imax = Recv_info_p2r(I_size,irank)
+
+       !$omp do collapse(2)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_to = Recv_list_p2r(I_grid_to,ipos,irank)
+          l_to  = Recv_list_p2r(I_l_to   ,ipos,irank)
+
+          ikv = (v-1) * imax * kmax &
+              + (k-1) * imax        &
+              + ipos
+
+          var(ij_to,k,l_to,v) = recvbuf_p2r_SP(ikv,irank)
+       enddo
+       enddo
+       enddo
+       !$omp end do nowait
+    enddo
+
+    !--- unpack r2p
+    do irank = 1, Recv_nmax_r2p
+       imax = Recv_info_r2p(I_size,irank)
+
+       !$omp do collapse(2)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_to = Recv_list_r2p(I_grid_to,ipos,irank)
+          l_to  = Recv_list_r2p(I_l_to   ,ipos,irank)
+
+          ikv = (v-1) * imax * kmax &
+              + (k-1) * imax        &
+              + ipos
+
+          var_pl(ij_to,k,l_to,v) = recvbuf_r2p_SP(ikv,irank)
+       enddo
+       enddo
+       enddo
+       !$omp end do nowait
+    enddo
+
+    !--- singular point (halo to halo)
+    do irank = 1, Singular_nmax
+       imax = Singular_info(I_size)
+
+       !$omp do collapse(2)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Singular_list(I_grid_from,ipos)
+          l_from  = Singular_list(I_l_from   ,ipos)
+          ij_to   = Singular_list(I_grid_to  ,ipos)
+          l_to    = Singular_list(I_l_to     ,ipos)
+
+          var(ij_to,k,l_to,v) = var(ij_from,k,l_from,v)
+       enddo
+       enddo
+       enddo
+       !$omp end do nowait
+    enddo
+
+    !$omp end parallel
+
+    !$acc wait
+
+    call PROF_rapend('COMM_data_transfer',2)
+
+    return
+  end subroutine COMM_data_transfer_SP
+
+  !-----------------------------------------------------------------------------
+  !> Data transfer kernel
+  subroutine COMM_data_transfer_DP( &
+       var,   &
+       var_pl )
+    use mod_process, only: &
+       PRC_LOCAL_COMM_WORLD, &
+       PRC_MPIstop
+    use mod_adm, only: &
+       ADM_kall
+    implicit none
+
+    real(DP), intent(inout) :: var   (:,:,:,:)
+    real(DP), intent(inout) :: var_pl(:,:,:,:)
+
+    integer  :: shp(4), kmax, vmax
+    integer  :: totalsize, rank, tag
+    integer  :: irank, ipos, imax
+    integer  :: ij_from, l_from, ij_to, l_to
+
+    integer  :: k, v, ikv
+    integer  :: ierr
+    !---------------------------------------------------------------------------
+
+    if ( COMM_apply_barrier ) then
+       call PROF_rapstart('COMM_barrier',2)
+       call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
+       call PROF_rapend  ('COMM_barrier',2)
+    endif
+
+    !$acc wait
+
+    call PROF_rapstart('COMM_data_transfer',2)
+
+    shp  = shape(var)
+    kmax = shp(2)
+    vmax = shp(4)
+
+    if ( kmax * vmax > ADM_kall * COMM_varmax ) then
+       write(*,*) 'xxx [COMM_data_transfer] kmax * vmax exceeds ADM_kall * COMM_varmax, stop!'
+       write(*,*) 'xxx kmax * vmax            = ', kmax * vmax
+       write(*,*) 'xxx ADM_kall * COMM_varmax = ', ADM_kall * COMM_varmax
+       call PRC_MPIstop
+    endif
+
+    !---< start communication >---
+    ! Theres no p2r & r2p communication without calling COMM_sortdest_pl.
+    ! receive pole   => region
+    ! receive region => pole
+    ! receive region => region
+    ! pack and send pole   => region
+    ! pack and send region => pole
+    ! pack and send region => region
+    ! copy pole   => region
+    ! copy region => pole
+    ! copy region => region
+    ! wait all
+    ! unpack pole   => region
+    ! unpack region => pole
+    ! unpack region => region
+    ! copy region halo => region halo (singular point)
+
+    REQ_count = 0
+
+    !--- receive r2r
+    do irank = 1, Recv_nmax_r2r
+       REQ_count = REQ_count + 1
+       totalsize = Recv_info_r2r(I_size    ,irank) * kmax * vmax
+       rank      = Recv_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
+       tag       = Recv_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
+
+       call MPI_IRECV( recvbuf_r2r_DP(1,irank), & ! [OUT]
+                       totalsize,               & ! [IN]
+                       MPI_DOUBLE_PRECISION,    & ! [IN]
+                       rank,                    & ! [IN]
+                       tag,                     & ! [IN]
+                       PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                       REQ_list(REQ_count),     & ! [OUT]
+                       ierr                     ) ! [OUT]
+    enddo
+
+    !--- receive p2r
+    do irank = 1, Recv_nmax_p2r
+       REQ_count = REQ_count + 1
+       totalsize = Recv_info_p2r(I_size    ,irank) * kmax * vmax
+       rank      = Recv_info_p2r(I_prc_from,irank) - 1 ! rank = prc - 1
+       tag       = Recv_info_p2r(I_prc_from,irank) + 1000000
+
+       call MPI_IRECV( recvbuf_p2r_DP(1,irank), & ! [OUT]
+                       totalsize,               & ! [IN]
+                       MPI_DOUBLE_PRECISION,    & ! [IN]
+                       rank,                    & ! [IN]
+                       tag,                     & ! [IN]
+                       PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                       REQ_list(REQ_count),     & ! [OUT]
+                       ierr                     ) ! [OUT]
+    enddo
+
+    !--- receive r2p
+    do irank = 1, Recv_nmax_r2p
+       REQ_count = REQ_count + 1
+       totalsize = Recv_info_r2p(I_size    ,irank) * kmax * vmax
+       rank      = Recv_info_r2p(I_prc_from,irank) - 1 ! rank = prc - 1
+       tag       = Recv_info_r2p(I_prc_from,irank) + 2000000
+
+       call MPI_IRECV( recvbuf_r2p_DP(1,irank), & ! [OUT]
+                       totalsize,               & ! [IN]
+                       MPI_DOUBLE_PRECISION,    & ! [IN]
+                       rank,                    & ! [IN]
+                       tag,                     & ! [IN]
+                       PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                       REQ_list(REQ_count),     & ! [OUT]
+                       ierr                     ) ! [OUT]
+    enddo
+
+    !--- pack and send r2r
+    do irank = 1, Send_nmax_r2r
+       imax = Send_info_r2r(I_size,irank)
+
+       !$omp parallel do default(none),private(ipos,k,v,ikv,ij_from,l_from) &
+       !$omp shared(irank,imax,kmax,vmax,Send_list_r2r,sendbuf_r2r_DP,var) &
+       !$omp collapse(2)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Send_list_r2r(I_grid_from,ipos,irank)
+          l_from  = Send_list_r2r(I_l_from   ,ipos,irank)
+
+          ikv = (v-1) * imax * kmax &
+              + (k-1) * imax        &
+              + ipos
+
+          sendbuf_r2r_DP(ikv,irank) = var(ij_from,k,l_from,v)
+       enddo
+       enddo
+       enddo
+       !$omp end parallel do
+
+       REQ_count = REQ_count + 1
+       totalsize = imax * kmax * vmax
+       rank      = Send_info_r2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
+       tag       = Send_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
+
+       call MPI_ISEND( sendbuf_r2r_DP(1,irank), & ! [IN]
+                       totalsize,               & ! [IN]
+                       MPI_DOUBLE_PRECISION,    & ! [IN]
+                       rank,                    & ! [IN]
+                       tag,                     & ! [IN]
+                       PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                       REQ_list(REQ_count),     & ! [OUT]
+                       ierr                     ) ! [OUT]
+    enddo
+
+    !--- pack and send p2r
+    do irank = 1, Send_nmax_p2r
+       imax = Send_info_p2r(I_size,irank)
+
+       !$omp parallel do default(none),private(ipos,k,v,ikv,ij_from,l_from) &
+       !$omp shared(irank,imax,kmax,vmax,Send_list_p2r,sendbuf_p2r_DP,var_pl) &
+       !$omp collapse(2)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Send_list_p2r(I_grid_from,ipos,irank)
+          l_from  = Send_list_p2r(I_l_from   ,ipos,irank)
+
+          ikv = (v-1) * imax * kmax &
+              + (k-1) * imax        &
+              + ipos
+
+          sendbuf_p2r_DP(ikv,irank) = var_pl(ij_from,k,l_from,v)
+       enddo
+       enddo
+       enddo
+       !$omp end parallel do
+
+       REQ_count = REQ_count + 1
+       totalsize = imax * kmax * vmax
+       rank      = Send_info_p2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
+       tag       = Send_info_p2r(I_prc_from,irank) + 1000000
+
+       call MPI_ISEND( sendbuf_p2r_DP(1,irank), & ! [IN]
+                       totalsize,               & ! [IN]
+                       MPI_DOUBLE_PRECISION,    & ! [IN]
+                       rank,                    & ! [IN]
+                       tag,                     & ! [IN]
+                       PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                       REQ_list(REQ_count),     & ! [OUT]
+                       ierr                     ) ! [OUT]
+    enddo
+
+    !--- pack and send r2p
+    do irank = 1, Send_nmax_r2p
+       imax = Send_info_r2p(I_size,irank)
+
+       !$omp parallel do default(none),private(ipos,k,v,ikv,ij_from,l_from) &
+       !$omp shared(irank,imax,kmax,vmax,Send_list_r2p,sendbuf_r2p_DP,var) &
+       !$omp collapse(2)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Send_list_r2p(I_grid_from,ipos,irank)
+          l_from  = Send_list_r2p(I_l_from   ,ipos,irank)
+
+          ikv = (v-1) * imax * kmax &
+              + (k-1) * imax        &
+              + ipos
+
+          sendbuf_r2p_DP(ikv,irank) = var(ij_from,k,l_from,v)
+       enddo
+       enddo
+       enddo
+       !$omp end parallel do
+
+       REQ_count = REQ_count + 1
+       totalsize = imax * kmax * vmax
+       rank      = Send_info_r2p(I_prc_to  ,irank) - 1 ! rank = prc - 1
+       tag       = Send_info_r2p(I_prc_from,irank) + 2000000
+
+       call MPI_ISEND( sendbuf_r2p_DP(1,irank), & ! [IN]
+                       totalsize,               & ! [IN]
+                       MPI_DOUBLE_PRECISION,    & ! [IN]
+                       rank,                    & ! [IN]
+                       tag,                     & ! [IN]
+                       PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                       REQ_list(REQ_count),     & ! [OUT]
+                       ierr                     ) ! [OUT]
+    enddo
+
+    !$omp parallel default(none),private(ipos,k,v,imax,irank,ij_from,l_from,ij_to,l_to) &
+    !$omp shared(kmax,vmax,var,var_pl,                      &
+    !$omp        Copy_nmax_p2r,Copy_info_p2r,Copy_list_p2r, &
+    !$omp        Copy_nmax_r2p,Copy_info_r2p,Copy_list_r2p, &
+    !$omp        Copy_nmax_r2r,Copy_info_r2r,Copy_list_r2r  )
+
+    !--- copy r2r
+    do irank = 1, Copy_nmax_r2r
+       imax = Copy_info_r2r(I_size)
+
+       !$omp do collapse(2)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Copy_list_r2r(I_grid_from,ipos)
+          l_from  = Copy_list_r2r(I_l_from   ,ipos)
+          ij_to   = Copy_list_r2r(I_grid_to  ,ipos)
+          l_to    = Copy_list_r2r(I_l_to     ,ipos)
+
+          var(ij_to,k,l_to,v) = var(ij_from,k,l_from,v)
+       enddo
+       enddo
+       enddo
+       !$omp end do nowait
+    enddo
+
+    !--- copy p2r
+    do irank = 1, Copy_nmax_p2r
+       imax = Copy_info_p2r(I_size)
+
+       !$omp do collapse(2)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Copy_list_p2r(I_grid_from,ipos)
+          l_from  = Copy_list_p2r(I_l_from   ,ipos)
+          ij_to   = Copy_list_p2r(I_grid_to  ,ipos)
+          l_to    = Copy_list_p2r(I_l_to     ,ipos)
+
+          var(ij_to,k,l_to,v) = var_pl(ij_from,k,l_from,v)
+       enddo
+       enddo
+       enddo
+       !$omp end do nowait
+    enddo
+
+    !--- copy r2p
+    do irank = 1, Copy_nmax_r2p
+       imax = Copy_info_r2p(I_size)
+
+       !$omp do collapse(2)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Copy_list_r2p(I_grid_from,ipos)
+          l_from  = Copy_list_r2p(I_l_from   ,ipos)
+          ij_to   = Copy_list_r2p(I_grid_to  ,ipos)
+          l_to    = Copy_list_r2p(I_l_to     ,ipos)
+
+          var_pl(ij_to,k,l_to,v) = var(ij_from,k,l_from,v)
+       enddo
+       enddo
+       enddo
+       !$omp end do nowait
+    enddo
+
+    !$omp end parallel
+
+    !--- wait all
+    call MPI_WAITALL( REQ_count,           & ! [IN]
+                      REQ_list(:),         & ! [IN]
+                      MPI_STATUSES_IGNORE, & ! [OUT]
+                      ierr                 ) ! [OUT]
+
+    !$omp parallel default(none),private(ipos,k,v,imax,irank,ikv,ij_from,l_from,ij_to,l_to) &
+    !$omp shared(kmax,vmax,var,var_pl,                                  &
+    !$omp        Recv_nmax_p2r,Recv_info_p2r,Recv_list_p2r,recvbuf_p2r_DP, &
+    !$omp        Recv_nmax_r2p,Recv_info_r2p,Recv_list_r2p,recvbuf_r2p_DP, &
+    !$omp        Recv_nmax_r2r,Recv_info_r2r,Recv_list_r2r,recvbuf_r2r_DP, &
+    !$omp        Singular_nmax,Singular_info,Singular_list              )
+
+    !--- unpack r2r
+    do irank = 1, Recv_nmax_r2r
+       imax = Recv_info_r2r(I_size,irank)
+
+       !$omp do collapse(2)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_to = Recv_list_r2r(I_grid_to,ipos,irank)
+          l_to  = Recv_list_r2r(I_l_to   ,ipos,irank)
+
+          ikv = (v-1) * imax * kmax &
+              + (k-1) * imax        &
+              + ipos
+
+          var(ij_to,k,l_to,v) = recvbuf_r2r_DP(ikv,irank)
+       enddo
+       enddo
+       enddo
+       !$omp end do nowait
+    enddo
+
+    !--- unpack p2r
+    do irank = 1, Recv_nmax_p2r
+       imax = Recv_info_p2r(I_size,irank)
+
+       !$omp do collapse(2)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_to = Recv_list_p2r(I_grid_to,ipos,irank)
+          l_to  = Recv_list_p2r(I_l_to   ,ipos,irank)
+
+          ikv = (v-1) * imax * kmax &
+              + (k-1) * imax        &
+              + ipos
+
+          var(ij_to,k,l_to,v) = recvbuf_p2r_DP(ikv,irank)
+       enddo
+       enddo
+       enddo
+       !$omp end do nowait
+    enddo
+
+    !--- unpack r2p
+    do irank = 1, Recv_nmax_r2p
+       imax = Recv_info_r2p(I_size,irank)
+
+       !$omp do collapse(2)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_to = Recv_list_r2p(I_grid_to,ipos,irank)
+          l_to  = Recv_list_r2p(I_l_to   ,ipos,irank)
+
+          ikv = (v-1) * imax * kmax &
+              + (k-1) * imax        &
+              + ipos
+
+          var_pl(ij_to,k,l_to,v) = recvbuf_r2p_DP(ikv,irank)
+       enddo
+       enddo
+       enddo
+       !$omp end do nowait
+    enddo
+
+    !--- singular point (halo to halo)
+    do irank = 1, Singular_nmax
+       imax = Singular_info(I_size)
+
+       !$omp do collapse(2)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Singular_list(I_grid_from,ipos)
+          l_from  = Singular_list(I_l_from   ,ipos)
+          ij_to   = Singular_list(I_grid_to  ,ipos)
+          l_to    = Singular_list(I_l_to     ,ipos)
+
+          var(ij_to,k,l_to,v) = var(ij_from,k,l_from,v)
+       enddo
+       enddo
+       enddo
+       !$omp end do nowait
+    enddo
+
+    !$omp end parallel
+
+    !$acc wait
+
+    call PROF_rapend('COMM_data_transfer',2)
+
+    return
+  end subroutine COMM_data_transfer_DP
+
+  !-----------------------------------------------------------------------------
+  !> Data transfer kernel
+  subroutine COMM_data_transfer_nopl( &
+       var )
+    use mod_process, only: &
+       PRC_LOCAL_COMM_WORLD, &
+       PRC_MPIstop
+    use mod_adm, only: &
+       ADM_kall
+    implicit none
+
+    real(DP), intent(inout) :: var   (:,:,:,:)
+
+    integer  :: shp(4), kmax, vmax
+    integer  :: totalsize, rank, tag
+    integer  :: irank, ipos, imax
+    integer  :: ij_from, l_from, ij_to, l_to
+
+    integer  :: k, v, ikv
+    integer  :: ierr
+    !---------------------------------------------------------------------------
+
+    if ( COMM_apply_barrier ) then
+       call PROF_rapstart('COMM_barrier',2)
+       call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
+       call PROF_rapend  ('COMM_barrier',2)
+    endif
+
+    !$acc wait
+
+    call PROF_rapstart('COMM_data_transfer',2)
+
+    shp  = shape(var)
+    kmax = shp(2)
+    vmax = shp(4)
+
+    if ( kmax * vmax > ADM_kall * COMM_varmax ) then
+       write(*,*) 'xxx [COMM_data_transfer_nopl] kmax * vmax exceeds ADM_kall * COMM_varmax, stop!'
+       write(*,*) 'xxx kmax * vmax            = ', kmax * vmax
+       write(*,*) 'xxx ADM_kall * COMM_varmax = ', ADM_kall * COMM_varmax
+       call PRC_MPIstop
+    endif
+
+    !---< start communication >---
+    ! receive region => region
+    ! pack and send region => region
+    ! copy region => region
+    ! wait all
+    ! unpack region => region
+    ! copy region halo => region halo (singular point)
+
+    REQ_count = 0
+
+    !--- receive r2r
+    do irank = 1, Recv_nmax_r2r
+       REQ_count = REQ_count + 1
+       totalsize = Recv_info_r2r(I_size    ,irank) * kmax * vmax
+       rank      = Recv_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
+       tag       = Recv_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
+
+       call MPI_IRECV( recvbuf_r2r_DP(1,irank), & ! [OUT]
+                       totalsize,               & ! [IN]
+                       MPI_DOUBLE_PRECISION,    & ! [IN]
+                       rank,                    & ! [IN]
+                       tag,                     & ! [IN]
+                       PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                       REQ_list(REQ_count),     & ! [OUT]
+                       ierr                     ) ! [OUT]
+    enddo
+
+    !--- pack and send r2r
+    do irank = 1, Send_nmax_r2r
+       imax = Send_info_r2r(I_size,irank)
+
+       !$omp parallel do default(none),private(ipos,k,v,ikv,ij_from,l_from) &
+       !$omp shared(irank,imax,kmax,vmax,Send_list_r2r,sendbuf_r2r_DP,var)
+       do v    = 1, vmax
+       do k    = 1, kmax
+       do ipos = 1, imax
+          ij_from = Send_list_r2r(I_grid_from,ipos,irank)
+          l_from  = Send_list_r2r(I_l_from   ,ipos,irank)
+
+          ikv = (v-1) * imax * kmax &
+              + (k-1) * imax        &
+              + ipos
+
+          sendbuf_r2r_DP(ikv,irank) = var(ij_from,k,l_from,v)
+       enddo
+       enddo
+       enddo
+       !$omp end parallel do
+
+       REQ_count = REQ_count + 1
+       totalsize = imax * kmax * vmax
+       rank      = Send_info_r2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
+       tag       = Send_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
+
+       call MPI_ISEND( sendbuf_r2r_DP(1,irank), & ! [IN]
+                       totalsize,               & ! [IN]
+                       MPI_DOUBLE_PRECISION,    & ! [IN]
+                       rank,                    & ! [IN]
+                       tag,                     & ! [IN]
+                       PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                       REQ_list(REQ_count),     & ! [OUT]
+                       ierr                     ) ! [OUT]
+    enddo
 
     !--- copy r2r
     !$omp parallel do default(none),private(ipos,k,v,imax,irank,ij_from,l_from,ij_to,l_to) &
@@ -1801,55 +2479,9 @@ contains
                       MPI_STATUSES_IGNORE, & ! [OUT]
                       ierr                 ) ! [OUT]
 
-    !--- unpack p2r
-    !$omp parallel do default(none),private(ipos,k,v,imax,irank,ij_to,l_to,ikv) &
-    !$omp shared(kmax,vmax,Recv_nmax_p2r,Recv_info_p2r,Recv_list_p2r,recvbuf_p2r,var)
-    do irank = 1, Recv_nmax_p2r
-       imax = Recv_info_p2r(I_size,irank)
-
-       do v    = 1, vmax
-       do k    = 1, kmax
-       do ipos = 1, imax
-          ij_to = Recv_list_p2r(I_grid_to,ipos,irank)
-          l_to  = Recv_list_p2r(I_l_to   ,ipos,irank)
-
-          ikv = (v-1) * imax * kmax &
-              + (k-1) * imax        &
-              + ipos
-
-          var(ij_to,k,l_to,v) = recvbuf_p2r(ikv,irank)
-       enddo
-       enddo
-       enddo
-    enddo
-    !$omp end parallel do
-
-    !--- unpack r2p
-    !$omp parallel do default(none),private(ipos,k,v,imax,irank,ij_to,l_to,ikv) &
-    !$omp shared(kmax,vmax,Recv_nmax_r2p,Recv_info_r2p,Recv_list_r2p,recvbuf_r2p,var_pl)
-    do irank = 1, Recv_nmax_r2p
-       imax = Recv_info_r2p(I_size,irank)
-
-       do v    = 1, vmax
-       do k    = 1, kmax
-       do ipos = 1, imax
-          ij_to = Recv_list_r2p(I_grid_to,ipos,irank)
-          l_to  = Recv_list_r2p(I_l_to   ,ipos,irank)
-
-          ikv = (v-1) * imax * kmax &
-              + (k-1) * imax        &
-              + ipos
-
-          var_pl(ij_to,k,l_to,v) = recvbuf_r2p(ikv,irank)
-       enddo
-       enddo
-       enddo
-    enddo
-    !$omp end parallel do
-
     !--- unpack r2r
     !$omp parallel do default(none),private(ipos,k,v,imax,irank,ij_to,l_to,ikv) &
-    !$omp shared(kmax,vmax,Recv_nmax_r2r,Recv_info_r2r,Recv_list_r2r,recvbuf_r2r,var)
+    !$omp shared(kmax,vmax,Recv_nmax_r2r,Recv_info_r2r,Recv_list_r2r,recvbuf_r2r_DP,var)
     do irank = 1, Recv_nmax_r2r
        imax = Recv_info_r2r(I_size,irank)
 
@@ -1863,7 +2495,7 @@ contains
               + (k-1) * imax        &
               + ipos
 
-          var(ij_to,k,l_to,v) = recvbuf_r2r(ikv,irank)
+          var(ij_to,k,l_to,v) = recvbuf_r2r_DP(ikv,irank)
        enddo
        enddo
        enddo
@@ -1893,11 +2525,11 @@ contains
     call PROF_rapend('COMM_data_transfer',2)
 
     return
-  end subroutine COMM_data_transfer
+  end subroutine COMM_data_transfer_nopl
 
   !-----------------------------------------------------------------------------
   !> Data transfer with region halo => pole center
-  subroutine COMM_var( &
+  subroutine COMM_var_SP( &
        var,    &
        var_pl, &
        kmax,   &
@@ -1918,11 +2550,11 @@ contains
 
     integer,  intent(in)    :: kmax
     integer,  intent(in)    :: vmax
-    real(RP), intent(inout) :: var   (ADM_gall,   kmax,ADM_lall,   vmax)
-    real(RP), intent(inout) :: var_pl(ADM_gall_pl,kmax,ADM_lall_pl,vmax)
+    real(SP), intent(inout) :: var   (ADM_gall,   kmax,ADM_lall,   vmax)
+    real(SP), intent(inout) :: var_pl(ADM_gall_pl,kmax,ADM_lall_pl,vmax)
 
-    real(RP) :: sendbuf_h2p(kmax*vmax,ADM_rgn_nmax_pl)
-    real(RP) :: recvbuf_h2p(kmax*vmax,ADM_rgn_nmax_pl)
+    real(SP) :: sendbuf_h2p_SP(kmax*vmax,ADM_rgn_nmax_pl)
+    real(SP) :: recvbuf_h2p_SP(kmax*vmax,ADM_rgn_nmax_pl)
 
     integer  :: totalsize, rank, tag
     integer  :: irank, ipos
@@ -1957,14 +2589,14 @@ contains
              rank      = Send_info_p2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
              tag       = Send_info_p2r(I_prc_from,irank) + 1000000
 
-             call MPI_IRECV( recvbuf_h2p(1,I_NPL), & ! [OUT]
-                             totalsize,            & ! [IN]
-                             COMM_datatype,        & ! [IN]
-                             rank,                 & ! [IN]
-                             tag,                  & ! [IN]
-                             PRC_LOCAL_COMM_WORLD, & ! [IN]
-                             REQ_list(REQ_count),  & ! [OUT]
-                             ierr                  ) ! [OUT]
+             call MPI_IRECV( recvbuf_h2p_SP(1,I_NPL), & ! [OUT]
+                             totalsize,               & ! [IN]
+                             MPI_REAL,                & ! [IN]
+                             rank,                    & ! [IN]
+                             tag,                     & ! [IN]
+                             PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                             REQ_list(REQ_count),     & ! [OUT]
+                             ierr                     ) ! [OUT]
           endif
 
           if ( r_from == RGNMNG_rgn4pl(I_SPL) ) then
@@ -1973,14 +2605,14 @@ contains
              rank      = Send_info_p2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
              tag       = Send_info_p2r(I_prc_from,irank) + 2000000
 
-             call MPI_IRECV( recvbuf_h2p(1,I_SPL), & ! [OUT]
-                             totalsize,            & ! [IN]
-                             COMM_datatype,        & ! [IN]
-                             rank,                 & ! [IN]
-                             tag,                  & ! [IN]
-                             PRC_LOCAL_COMM_WORLD, & ! [IN]
-                             REQ_list(REQ_count),  & ! [OUT]
-                             ierr                  ) ! [OUT]
+             call MPI_IRECV( recvbuf_h2p_SP(1,I_SPL), & ! [OUT]
+                             totalsize,               & ! [IN]
+                             MPI_REAL,                & ! [IN]
+                             rank,                    & ! [IN]
+                             tag,                     & ! [IN]
+                             PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                             REQ_list(REQ_count),     & ! [OUT]
+                             ierr                     ) ! [OUT]
           endif
        enddo
     enddo
@@ -1996,7 +2628,7 @@ contains
              do v = 1, vmax
              do k = 1, kmax
                 kk = (v-1) * kmax + k
-                sendbuf_h2p(kk,I_NPL) = var(ij_from,k,l_from,v)
+                sendbuf_h2p_SP(kk,I_NPL) = var(ij_from,k,l_from,v)
              enddo
              enddo
 
@@ -2005,21 +2637,21 @@ contains
              rank      = Recv_info_p2r(I_prc_from,irank) - 1 ! rank = prc - 1
              tag       = Recv_info_p2r(I_prc_from,irank) + 1000000
 
-             call MPI_ISEND( sendbuf_h2p(1,I_NPL), & ! [IN]
-                             totalsize,            & ! [IN]
-                             COMM_datatype,        & ! [IN]
-                             rank,                 & ! [IN]
-                             tag,                  & ! [IN]
-                             PRC_LOCAL_COMM_WORLD, & ! [IN]
-                             REQ_list(REQ_count),  & ! [OUT]
-                             ierr                  ) ! [OUT]
+             call MPI_ISEND( sendbuf_h2p_SP(1,I_NPL), & ! [IN]
+                             totalsize,               & ! [IN]
+                             MPI_REAL,                & ! [IN]
+                             rank,                    & ! [IN]
+                             tag,                     & ! [IN]
+                             PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                             REQ_list(REQ_count),     & ! [OUT]
+                             ierr                     ) ! [OUT]
           endif
 
           if ( r_from == RGNMNG_rgn4pl(I_SPL) ) then
              do v = 1, vmax
              do k = 1, kmax
                 kk = (v-1) * kmax + k
-                sendbuf_h2p(kk,I_SPL) = var(ij_from,k,l_from,v)
+                sendbuf_h2p_SP(kk,I_SPL) = var(ij_from,k,l_from,v)
              enddo
              enddo
 
@@ -2028,14 +2660,14 @@ contains
              rank      = Recv_info_p2r(I_prc_from,irank) - 1 ! rank = prc - 1
              tag       = Recv_info_p2r(I_prc_from,irank) + 2000000
 
-             call MPI_ISEND( sendbuf_h2p(1,I_SPL), & ! [IN]
-                             totalsize,            & ! [IN]
-                             COMM_datatype,        & ! [IN]
-                             rank,                 & ! [IN]
-                             tag,                  & ! [IN]
-                             PRC_LOCAL_COMM_WORLD, & ! [IN]
-                             REQ_list(REQ_count),  & ! [OUT]
-                             ierr                  ) ! [OUT]
+             call MPI_ISEND( sendbuf_h2p_SP(1,I_SPL), & ! [IN]
+                             totalsize,               & ! [IN]
+                             MPI_REAL,                & ! [IN]
+                             rank,                    & ! [IN]
+                             tag,                     & ! [IN]
+                             PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                             REQ_list(REQ_count),     & ! [OUT]
+                             ierr                     ) ! [OUT]
           endif
        enddo
     enddo
@@ -2080,7 +2712,7 @@ contains
              do v = 1, vmax
              do k = 1, kmax
                 kk = (v-1) * kmax + k
-                var_pl(ij_to,k,l_to,v) = recvbuf_h2p(kk,I_NPL)
+                var_pl(ij_to,k,l_to,v) = recvbuf_h2p_SP(kk,I_NPL)
              enddo
              enddo
           endif
@@ -2089,7 +2721,7 @@ contains
              do v = 1, vmax
              do k = 1, kmax
                 kk = (v-1) * kmax + k
-                var_pl(ij_to,k,l_to,v) = recvbuf_h2p(kk,I_SPL)
+                var_pl(ij_to,k,l_to,v) = recvbuf_h2p_SP(kk,I_SPL)
              enddo
              enddo
           endif
@@ -2103,7 +2735,217 @@ contains
     call PROF_rapend('COMM_var',2)
 
     return
-  end subroutine COMM_var
+  end subroutine COMM_var_SP
+
+  !-----------------------------------------------------------------------------
+  !> Data transfer with region halo => pole center
+  subroutine COMM_var_DP( &
+       var,    &
+       var_pl, &
+       kmax,   &
+       vmax    )
+    use mod_process, only: &
+       PRC_LOCAL_COMM_WORLD
+    use mod_adm, only: &
+       ADM_rgn_nmax_pl, &
+       ADM_lall,        &
+       ADM_lall_pl,     &
+       ADM_gall,        &
+       ADM_gall_pl,     &
+       RGNMNG_rgn4pl,   &
+       RGNMNG_lp2r,     &
+       I_NPL,           &
+       I_SPL
+    implicit none
+
+    integer,  intent(in)    :: kmax
+    integer,  intent(in)    :: vmax
+    real(DP), intent(inout) :: var   (ADM_gall,   kmax,ADM_lall,   vmax)
+    real(DP), intent(inout) :: var_pl(ADM_gall_pl,kmax,ADM_lall_pl,vmax)
+
+    real(DP) :: sendbuf_h2p_DP(kmax*vmax,ADM_rgn_nmax_pl)
+    real(DP) :: recvbuf_h2p_DP(kmax*vmax,ADM_rgn_nmax_pl)
+
+    integer  :: totalsize, rank, tag
+    integer  :: irank, ipos
+    integer  :: ij_from, l_from, ij_to, l_to
+    integer  :: r_from, r_to
+
+    integer  :: k, v, kk
+    integer  :: ierr
+    !---------------------------------------------------------------------------
+
+    if ( COMM_apply_barrier ) then
+       call PROF_rapstart('COMM_barrier',2)
+       call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
+       call PROF_rapend  ('COMM_barrier',2)
+    endif
+
+    call PROF_rapstart('COMM_var',2)
+
+    if( comm_pl ) then
+
+    REQ_count = 0
+
+    !--- receive p2r-reverse
+    do irank = 1, Send_nmax_p2r
+       do ipos = 1, Send_info_p2r(I_size,irank)
+          l_from = Send_list_p2r(I_l_to   ,ipos,irank)
+          r_from = RGNMNG_lp2r(l_from,Send_info_p2r(I_prc_to,irank))
+
+          if ( r_from == RGNMNG_rgn4pl(I_NPL) ) then
+             REQ_count = REQ_count + 1
+             totalsize = kmax * vmax
+             rank      = Send_info_p2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
+             tag       = Send_info_p2r(I_prc_from,irank) + 1000000
+
+             call MPI_IRECV( recvbuf_h2p_DP(1,I_NPL), & ! [OUT]
+                             totalsize,               & ! [IN]
+                             MPI_DOUBLE_PRECISION,    & ! [IN]
+                             rank,                    & ! [IN]
+                             tag,                     & ! [IN]
+                             PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                             REQ_list(REQ_count),     & ! [OUT]
+                             ierr                     ) ! [OUT]
+          endif
+
+          if ( r_from == RGNMNG_rgn4pl(I_SPL) ) then
+             REQ_count = REQ_count + 1
+             totalsize = kmax * vmax
+             rank      = Send_info_p2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
+             tag       = Send_info_p2r(I_prc_from,irank) + 2000000
+
+             call MPI_IRECV( recvbuf_h2p_DP(1,I_SPL), & ! [OUT]
+                             totalsize,               & ! [IN]
+                             MPI_DOUBLE_PRECISION,    & ! [IN]
+                             rank,                    & ! [IN]
+                             tag,                     & ! [IN]
+                             PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                             REQ_list(REQ_count),     & ! [OUT]
+                             ierr                     ) ! [OUT]
+          endif
+       enddo
+    enddo
+
+    !--- pack and send p2r-reverse
+    do irank = 1, Recv_nmax_p2r
+       do ipos = 1, Recv_info_p2r(I_size,irank)
+          ij_from = Recv_list_p2r(I_grid_to,ipos,irank)
+          l_from  = Recv_list_p2r(I_l_to   ,ipos,irank)
+          r_from  = RGNMNG_lp2r(l_from,Recv_info_p2r(I_prc_to,irank))
+
+          if ( r_from == RGNMNG_rgn4pl(I_NPL) ) then
+             do v = 1, vmax
+             do k = 1, kmax
+                kk = (v-1) * kmax + k
+                sendbuf_h2p_DP(kk,I_NPL) = var(ij_from,k,l_from,v)
+             enddo
+             enddo
+
+             REQ_count = REQ_count + 1
+             totalsize = kmax * vmax
+             rank      = Recv_info_p2r(I_prc_from,irank) - 1 ! rank = prc - 1
+             tag       = Recv_info_p2r(I_prc_from,irank) + 1000000
+
+             call MPI_ISEND( sendbuf_h2p_DP(1,I_NPL), & ! [IN]
+                             totalsize,               & ! [IN]
+                             MPI_DOUBLE_PRECISION,    & ! [IN]
+                             rank,                    & ! [IN]
+                             tag,                     & ! [IN]
+                             PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                             REQ_list(REQ_count),     & ! [OUT]
+                             ierr                     ) ! [OUT]
+          endif
+
+          if ( r_from == RGNMNG_rgn4pl(I_SPL) ) then
+             do v = 1, vmax
+             do k = 1, kmax
+                kk = (v-1) * kmax + k
+                sendbuf_h2p_DP(kk,I_SPL) = var(ij_from,k,l_from,v)
+             enddo
+             enddo
+
+             REQ_count = REQ_count + 1
+             totalsize = kmax * vmax
+             rank      = Recv_info_p2r(I_prc_from,irank) - 1 ! rank = prc - 1
+             tag       = Recv_info_p2r(I_prc_from,irank) + 2000000
+
+             call MPI_ISEND( sendbuf_h2p_DP(1,I_SPL), & ! [IN]
+                             totalsize,               & ! [IN]
+                             MPI_DOUBLE_PRECISION,    & ! [IN]
+                             rank,                    & ! [IN]
+                             tag,                     & ! [IN]
+                             PRC_LOCAL_COMM_WORLD,    & ! [IN]
+                             REQ_list(REQ_count),     & ! [OUT]
+                             ierr                     ) ! [OUT]
+          endif
+       enddo
+    enddo
+
+    !--- copy p2r-reverse
+    do irank = 1, Copy_nmax_p2r
+       do ipos = 1, Copy_info_p2r(I_size)
+          ij_from = Copy_list_p2r(I_grid_to  ,ipos)
+          l_from  = Copy_list_p2r(I_l_to     ,ipos)
+          r_from  = RGNMNG_lp2r(l_from,Copy_info_p2r(I_prc_to))
+          ij_to   = Copy_list_p2r(I_grid_from,ipos)
+          l_to    = Copy_list_p2r(I_l_from   ,ipos)
+          r_to    = RGNMNG_lp2r(l_to,Copy_info_p2r(I_prc_from))
+
+          if (      r_from == RGNMNG_rgn4pl(I_NPL) &
+               .OR. r_from == RGNMNG_rgn4pl(I_SPL) ) then
+             do v = 1, vmax
+             do k = 1, kmax
+                var_pl(ij_to,k,l_to,v) = var(ij_from,k,l_from,v)
+             enddo
+             enddo
+          endif
+       enddo
+    enddo
+
+    !--- wait all
+    call MPI_WAITALL( REQ_count,           & ! [IN]
+                      REQ_list(:),         & ! [IN]
+                      MPI_STATUSES_IGNORE, & ! [OUT]
+                      ierr                 ) ! [OUT]
+
+    !--- unpack p2r-reverse
+    do irank = 1, Send_nmax_p2r
+       do ipos = 1, Send_info_p2r(I_size,irank)
+          l_from = Send_list_p2r(I_l_to     ,ipos,irank)
+          r_from = RGNMNG_lp2r(l_from,Send_info_p2r(I_prc_to,irank))
+
+          ij_to  = Send_list_p2r(I_grid_from,ipos,irank)
+          l_to   = Send_list_p2r(I_l_from   ,ipos,irank)
+
+          if ( r_from == RGNMNG_rgn4pl(I_NPL) ) then
+             do v = 1, vmax
+             do k = 1, kmax
+                kk = (v-1) * kmax + k
+                var_pl(ij_to,k,l_to,v) = recvbuf_h2p_DP(kk,I_NPL)
+             enddo
+             enddo
+          endif
+
+          if ( r_from == RGNMNG_rgn4pl(I_SPL) ) then
+             do v = 1, vmax
+             do k = 1, kmax
+                kk = (v-1) * kmax + k
+                var_pl(ij_to,k,l_to,v) = recvbuf_h2p_DP(kk,I_SPL)
+             enddo
+             enddo
+          endif
+       enddo
+    enddo
+
+    endif
+
+    call COMM_data_transfer(var,var_pl)
+
+    call PROF_rapend('COMM_var',2)
+
+    return
+  end subroutine COMM_var_DP
 
   !-----------------------------------------------------------------------------
   !> suffix calculation
@@ -2196,21 +3038,21 @@ contains
        enddo
     enddo
 
-    if( IO_L ) write(IO_FID_LOG,*) "##### (prc,rgnid) #####"
+    if( IO_L ) write(IO_FID_LOG,*) '##### (prc,rgnid) #####'
     do l  = 1, ADM_lall
     do k = ADM_kmin, ADM_kmin
        if( IO_L ) write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       if( IO_L ) write(IO_FID_LOG,'(A9)',advance='no') '        |'
        do i = 1, ADM_gall_1d
-          write(IO_FID_LOG,'(I9)',advance='no') i
+          if( IO_L ) write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
        if( IO_L ) write(IO_FID_LOG,*)
 
        do j = ADM_gall_1d, 1, -1
-          write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+          if( IO_L ) write(IO_FID_LOG,'(I8,A1)',advance='no') j, '|'
           do i = 1, ADM_gall_1d
              ij = ADM_gall_1d * (j-1) + i
-             write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+             if( IO_L ) write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                         '(',int(var(ij,k,l,1)),',',int(var(ij,k,l,2)),')'
           enddo
           if( IO_L ) write(IO_FID_LOG,*)
@@ -2221,36 +3063,36 @@ contains
     do l  = 1, ADM_lall_pl
     do k = ADM_kmin, ADM_kmin
        if( IO_L ) write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       if( IO_L ) write(IO_FID_LOG,'(A9)',advance='no') '        |'
        do i = 1, ADM_gall_pl
-          write(IO_FID_LOG,'(I9)',advance='no') i
+          if( IO_L ) write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
        if( IO_L ) write(IO_FID_LOG,*)
 
-       write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+       if( IO_L ) write(IO_FID_LOG,'(I8,A1)',advance='no') j, '|'
        do ij = 1, ADM_gall_pl
-          write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+          if( IO_L ) write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                      '(',int(var_pl(ij,k,l,1)),',',int(var_pl(ij,k,l,2)),')'
        enddo
        if( IO_L ) write(IO_FID_LOG,*)
     enddo
     enddo
 
-    if( IO_L ) write(IO_FID_LOG,*) "##### (i,j) #####"
+    if( IO_L ) write(IO_FID_LOG,*) '##### (i,j) #####'
     do l  = 1, ADM_lall
     do k = ADM_kmin, ADM_kmin
        if( IO_L ) write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       if( IO_L ) write(IO_FID_LOG,'(A9)',advance='no') '        |'
        do i = 1, ADM_gall_1d
-          write(IO_FID_LOG,'(I9)',advance='no') i
+          if( IO_L ) write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
        if( IO_L ) write(IO_FID_LOG,*)
 
        do j = ADM_gall_1d, 1, -1
-          write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+          if( IO_L ) write(IO_FID_LOG,'(I8,A1)',advance='no') j, '|'
           do i = 1, ADM_gall_1d
              ij = ADM_gall_1d * (j-1) + i
-             write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+             if( IO_L ) write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                         '(',int(var(ij,k,l,3)),',',int(var(ij,k,l,4)),')'
           enddo
           if( IO_L ) write(IO_FID_LOG,*)
@@ -2261,15 +3103,15 @@ contains
     do l  = 1, ADM_lall_pl
     do k = ADM_kmin, ADM_kmin
        if( IO_L ) write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       if( IO_L ) write(IO_FID_LOG,'(A9)',advance='no') '        |'
        do i = 1, ADM_gall_pl
-          write(IO_FID_LOG,'(I9)',advance='no') i
+          if( IO_L ) write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
        if( IO_L ) write(IO_FID_LOG,*)
 
-       write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+       if( IO_L ) write(IO_FID_LOG,'(I8,A1)',advance='no') j, '|'
        do ij = 1, ADM_gall_pl
-          write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+          if( IO_L ) write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                      '(',int(var_pl(ij,k,l,3)),',',int(var_pl(ij,k,l,4)),')'
        enddo
        if( IO_L ) write(IO_FID_LOG,*)
@@ -2283,21 +3125,21 @@ contains
 
     call COMM_data_transfer( var(:,:,:,:), var_pl(:,:,:,:) )
 
-    if( IO_L ) write(IO_FID_LOG,*) "##### (prc,rgnid) #####"
+    if( IO_L ) write(IO_FID_LOG,*) '##### (prc,rgnid) #####'
     do l  = 1, ADM_lall
     do k = ADM_kmin, ADM_kmin
        if( IO_L ) write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       if( IO_L ) write(IO_FID_LOG,'(A9)',advance='no') '        |'
        do i = 1, ADM_gall_1d
-          write(IO_FID_LOG,'(I9)',advance='no') i
+          if( IO_L ) write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
        if( IO_L ) write(IO_FID_LOG,*)
 
        do j = ADM_gall_1d, 1, -1
-          write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+          if( IO_L ) write(IO_FID_LOG,'(I8,A1)',advance='no') j, '|'
           do i = 1, ADM_gall_1d
              ij = ADM_gall_1d * (j-1) + i
-             write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+             if( IO_L ) write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                         '(',int(var(ij,k,l,1)),',',int(var(ij,k,l,2)),')'
           enddo
           if( IO_L ) write(IO_FID_LOG,*)
@@ -2308,36 +3150,36 @@ contains
     do l  = 1, ADM_lall_pl
     do k = ADM_kmin, ADM_kmin
        if( IO_L ) write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       if( IO_L ) write(IO_FID_LOG,'(A9)',advance='no') '        |'
        do i = 1, ADM_gall_pl
-          write(IO_FID_LOG,'(I9)',advance='no') i
+          if( IO_L ) write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
        if( IO_L ) write(IO_FID_LOG,*)
 
-       write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+       if( IO_L ) write(IO_FID_LOG,'(I8,A1)',advance='no') j, '|'
        do ij = 1, ADM_gall_pl
-          write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+          if( IO_L ) write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                      '(',int(var_pl(ij,k,l,1)),',',int(var_pl(ij,k,l,2)),')'
        enddo
        if( IO_L ) write(IO_FID_LOG,*)
     enddo
     enddo
 
-    if( IO_L ) write(IO_FID_LOG,*) "##### (i,j) #####"
+    if( IO_L ) write(IO_FID_LOG,*) '##### (i,j) #####'
     do l  = 1, ADM_lall
     do k = ADM_kmin, ADM_kmin
        if( IO_L ) write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       if( IO_L ) write(IO_FID_LOG,'(A9)',advance='no') '        |'
        do i = 1, ADM_gall_1d
-          write(IO_FID_LOG,'(I9)',advance='no') i
+          if( IO_L ) write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
        if( IO_L ) write(IO_FID_LOG,*)
 
        do j = ADM_gall_1d, 1, -1
-          write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+          if( IO_L ) write(IO_FID_LOG,'(I8,A1)',advance='no') j, '|'
           do i = 1, ADM_gall_1d
              ij = ADM_gall_1d * (j-1) + i
-             write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+             if( IO_L ) write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                         '(',int(var(ij,k,l,3)),',',int(var(ij,k,l,4)),')'
           enddo
           if( IO_L ) write(IO_FID_LOG,*)
@@ -2348,15 +3190,15 @@ contains
     do l  = 1, ADM_lall_pl
     do k = ADM_kmin, ADM_kmin
        if( IO_L ) write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       if( IO_L ) write(IO_FID_LOG,'(A9)',advance='no') '        |'
        do i = 1, ADM_gall_pl
-          write(IO_FID_LOG,'(I9)',advance='no') i
+          if( IO_L ) write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
        if( IO_L ) write(IO_FID_LOG,*)
 
-       write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+       if( IO_L ) write(IO_FID_LOG,'(I8,A1)',advance='no') j, '|'
        do ij = 1, ADM_gall_pl
-          write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+          if( IO_L ) write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                      '(',int(var_pl(ij,k,l,3)),',',int(var_pl(ij,k,l,4)),')'
        enddo
        if( IO_L ) write(IO_FID_LOG,*)
@@ -2402,21 +3244,21 @@ contains
 
     call COMM_var( var(:,:,:,:), var_pl(:,:,:,:), ADM_kall, 4 )
 
-    if( IO_L ) write(IO_FID_LOG,*) "##### (prc,rgnid) #####"
+    if( IO_L ) write(IO_FID_LOG,*) '##### (prc,rgnid) #####'
     do l  = 1, ADM_lall
     do k = ADM_kmin, ADM_kmin
        if( IO_L ) write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       if( IO_L ) write(IO_FID_LOG,'(A9)',advance='no') '        |'
        do i = 1, ADM_gall_1d
-          write(IO_FID_LOG,'(I9)',advance='no') i
+          if( IO_L ) write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
        if( IO_L ) write(IO_FID_LOG,*)
 
        do j = ADM_gall_1d, 1, -1
-          write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+          if( IO_L ) write(IO_FID_LOG,'(I8,A1)',advance='no') j, '|'
           do i = 1, ADM_gall_1d
              ij = ADM_gall_1d * (j-1) + i
-             write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+             if( IO_L ) write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                         '(',int(var(ij,k,l,1)),',',int(var(ij,k,l,2)),')'
           enddo
           if( IO_L ) write(IO_FID_LOG,*)
@@ -2427,36 +3269,36 @@ contains
     do l  = 1, ADM_lall_pl
     do k = ADM_kmin, ADM_kmin
        if( IO_L ) write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       if( IO_L ) write(IO_FID_LOG,'(A9)',advance='no') '        |'
        do i = 1, ADM_gall_pl
-          write(IO_FID_LOG,'(I9)',advance='no') i
+          if( IO_L ) write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
        if( IO_L ) write(IO_FID_LOG,*)
 
-       write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+       if( IO_L ) write(IO_FID_LOG,'(I8,A1)',advance='no') j, '|'
        do ij = 1, ADM_gall_pl
-          write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+          if( IO_L ) write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                      '(',int(var_pl(ij,k,l,1)),',',int(var_pl(ij,k,l,2)),')'
        enddo
        if( IO_L ) write(IO_FID_LOG,*)
     enddo
     enddo
 
-    if( IO_L ) write(IO_FID_LOG,*) "##### (i,j) #####"
+    if( IO_L ) write(IO_FID_LOG,*) '##### (i,j) #####'
     do l  = 1, ADM_lall
     do k = ADM_kmin, ADM_kmin
        if( IO_L ) write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       if( IO_L ) write(IO_FID_LOG,'(A9)',advance='no') '        |'
        do i = 1, ADM_gall_1d
-          write(IO_FID_LOG,'(I9)',advance='no') i
+          if( IO_L ) write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
        if( IO_L ) write(IO_FID_LOG,*)
 
        do j = ADM_gall_1d, 1, -1
-          write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+          if( IO_L ) write(IO_FID_LOG,'(I8,A1)',advance='no') j, '|'
           do i = 1, ADM_gall_1d
              ij = ADM_gall_1d * (j-1) + i
-             write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+             if( IO_L ) write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                         '(',int(var(ij,k,l,3)),',',int(var(ij,k,l,4)),')'
           enddo
           if( IO_L ) write(IO_FID_LOG,*)
@@ -2467,15 +3309,15 @@ contains
     do l  = 1, ADM_lall_pl
     do k = ADM_kmin, ADM_kmin
        if( IO_L ) write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(A9)',advance='no') "        |"
+       if( IO_L ) write(IO_FID_LOG,'(A9)',advance='no') '        |'
        do i = 1, ADM_gall_pl
-          write(IO_FID_LOG,'(I9)',advance='no') i
+          if( IO_L ) write(IO_FID_LOG,'(I9)',advance='no') i
        enddo
        if( IO_L ) write(IO_FID_LOG,*)
 
-       write(IO_FID_LOG,'(I8,A1)',advance='no') j, "|"
+       if( IO_L ) write(IO_FID_LOG,'(I8,A1)',advance='no') j, '|'
        do ij = 1, ADM_gall_pl
-          write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
+          if( IO_L ) write(IO_FID_LOG,'(A1,I3,A1,I3,A1)',advance='no') &
                      '(',int(var_pl(ij,k,l,3)),',',int(var_pl(ij,k,l,4)),')'
        enddo
        if( IO_L ) write(IO_FID_LOG,*)
@@ -2528,6 +3370,8 @@ contains
     use mod_process, only: &
        PRC_LOCAL_COMM_WORLD, &
        PRC_nprocs
+    use mod_adm, only: &
+       ADM_prc_me
     implicit none
 
     integer,  intent(in)  :: kall
@@ -2627,14 +3471,14 @@ contains
 
     sendbuf(1) = localmax
 
-    call MPI_Allgather( sendbuf,              &
-                        1,                    &
-                        COMM_datatype,        &
-                        recvbuf,              &
-                        1,                    &
-                        COMM_datatype,        &
+    call MPI_Allgather( sendbuf,        &
+                        1,              &
+                        COMM_datatype,  &
+                        recvbuf,        &
+                        1,              &
+                        COMM_datatype,  &
                         PRC_LOCAL_COMM_WORLD, &
-                        ierr                  )
+                        ierr            )
 
     globalmax = maxval( recvbuf(:) )
 
@@ -2659,18 +3503,343 @@ contains
 
     sendbuf(1) = localmin
 
-    call MPI_Allgather( sendbuf,              &
-                        1,                    &
-                        COMM_datatype,        &
-                        recvbuf,              &
-                        1,                    &
-                        COMM_datatype,        &
+    call MPI_Allgather( sendbuf,        &
+                        1,              &
+                        COMM_datatype,  &
+                        recvbuf,        &
+                        1,              &
+                        COMM_datatype,  &
                         PRC_LOCAL_COMM_WORLD, &
-                        ierr                  )
+                        ierr            )
 
     globalmin = minval( recvbuf(:) )
 
     return
   end subroutine COMM_Stat_min
+
+  !-----------------------------------------------------------------------------
+  subroutine COMM_ensemble_transpose( &
+       knum,    &
+       var_mem, &
+       var_ens  )
+    use mod_adm, only: &
+       ADM_lall,       &
+       ADM_gall,       &
+       ADM_gall_1d,    &
+       ENS_COMM_WORLD, &
+       ENS_gall,       &
+       ENS_eall,       &
+       ENS_div_nmax,   &
+       ENS_d2e,        &
+       ENS_d2l,        &
+       ENS_imin,       &
+       ENS_imax,       &
+       ENS_jmin,       &
+       ENS_jmax
+    implicit none
+
+    integer,  intent(in)  :: knum
+    real(RP), intent(in)  :: var_mem   (ADM_gall   ,knum,ADM_lall   )
+    real(RP), intent(out) :: var_ens   (ENS_gall   ,knum,ENS_eall)
+!    real(RP), intent(in)  :: var_mem_pl(ADM_gall_pl,knum,ADM_lall_pl)
+!    real(RP), intent(out) :: var_ens_pl(ENS_gall_pl,knum,ENS_eall)
+
+    real(RP) :: var_send   (ENS_gall   ,knum,ENS_eall)
+!    real(RP) :: var_send_pl(ENS_gall_pl,knum)
+
+    integer  :: gg(ENS_eall)
+
+    integer  :: ierr
+    integer  :: i, j, k, l, e, d, g
+
+    integer  :: suf
+    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+    !---------------------------------------------------------------------------
+
+    gg(:) = 0
+    do d = 1, ENS_div_nmax
+       e = ENS_d2e(d)
+       l = ENS_d2l(d)
+
+       do j = ENS_jmin(d), ENS_jmax(d)
+       do i = ENS_imin(d), ENS_imax(d)
+          g = suf(i,j)
+          gg(e) = gg(e) + 1
+
+          do k = 1, knum
+             var_send(gg(e),k,e) = var_mem(g,k,l)
+          enddo
+       enddo
+       enddo
+    enddo
+
+    call MPI_Alltoall( var_send,       &
+                       ENS_gall*knum,  &
+                       COMM_datatype,  &
+                       var_ens,        &
+                       ENS_gall*knum,  &
+                       COMM_datatype,  &
+                       ENS_COMM_WORLD, &
+                       ierr            )
+
+!    if ( ADM_have_pl ) then
+!       do l = 1, ADM_lall_pl
+!       do k = 1, knum
+!          var_send_pl(l,k) = var_mem_pl(ADM_gslf_pl,k,l)
+!       enddo
+!       enddo
+!
+!       call MPI_Gather( var_send_pl,      &
+!                        ENS_gall_pl*knum, &
+!                        COMM_datatype,    &
+!                        var_ens_pl,       &
+!                        ENS_gall_pl*knum, &
+!                        COMM_datatype,    &
+!                        ENS_prc_master-1, &
+!                        ENS_COMM_WORLD,   &
+!                        ierr              )
+!    endif
+!
+!    if ( .NOT. ENS_have_pl ) then
+!       var_ens_pl(:,:,:) = 0.D0
+!    endif
+
+    return
+  end subroutine COMM_ensemble_transpose
+
+  !-----------------------------------------------------------------------------
+  subroutine COMM_ensemble_transpose_rev( &
+      knum,    &
+      var_ens, &
+      var_mem  )
+    use mod_adm, only: &
+       ADM_lall,       &
+       ADM_gall,       &
+       ADM_gall_1d,    &
+       ENS_COMM_WORLD, &
+       ENS_gall,       &
+       ENS_eall,       &
+       ENS_div_nmax,   &
+       ENS_d2e,        &
+       ENS_d2l,        &
+       ENS_imin,       &
+       ENS_imax,       &
+       ENS_jmin,       &
+       ENS_jmax
+    implicit none
+
+    integer,  intent(in)  :: knum
+    real(RP), intent(in)  :: var_ens   (ENS_gall   ,knum,ENS_eall)
+    real(RP), intent(out) :: var_mem   (ADM_gall   ,knum,ADM_lall   )
+!    real(RP), intent(in)  :: var_ens_pl(ENS_gall_pl,knum,ENS_eall)
+!    real(RP), intent(out) :: var_mem_pl(ADM_gall_pl,knum,ADM_lall_pl)
+
+    real(RP) :: var_recv   (ENS_gall   ,knum,ENS_eall)
+!    real(RP) :: var_recv_pl(ENS_gall_pl,knum)
+
+    integer  :: gg(ENS_eall)
+
+    integer  :: ierr
+    integer  :: i, j, k, l, e, d, g
+
+    integer  :: suf
+    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+    !---------------------------------------------------------------------------
+
+    call MPI_Alltoall( var_ens,        &
+                       ENS_gall*knum,  &
+                       COMM_datatype,  &
+                       var_recv,       &
+                       ENS_gall*knum,  &
+                       COMM_datatype,  &
+                       ENS_COMM_WORLD, &
+                       ierr            )
+
+    ! fill the original diamond with HALO: from left to rigth
+    gg(:) = 0
+    do d = 1, ENS_div_nmax
+       e = ENS_d2e(d)
+       l = ENS_d2l(d)
+
+       do j = ENS_jmin(d), ENS_jmax(d)
+       do i = ENS_imin(d), ENS_imax(d)
+          g = suf(i,j)
+          gg(e) = gg(e) + 1
+
+          do k = 1, knum
+             var_mem(g,k,l) = var_recv(gg(e),k,e)
+          enddo
+       enddo
+       enddo
+    enddo
+
+!    if ( ADM_have_pl ) then
+!       call MPI_Scatter( var_ens_pl,       &
+!                         ENS_gall_pl*knum, &
+!                         COMM_datatype,    &
+!                         var_recv_pl,      &
+!                         ENS_gall_pl*knum, &
+!                         COMM_datatype,    &
+!                         ENS_prc_me-1,     &
+!                         ENS_COMM_WORLD,   &
+!                         ierr              )
+!
+!       do l = 1, ADM_lall_pl
+!       do k = 1, knum
+!          var_mem_pl(ADM_gslf_pl,k,l) = var_recv_pl(l,k)
+!       enddo
+!       enddo
+!    endif
+!
+!    if ( .NOT. ENS_have_pl ) then
+!       var_mem_pl(:,:,:) = 0.D0
+!    endif
+
+    return
+  end subroutine COMM_ensemble_transpose_rev
+
+  !-----------------------------------------------------------------------------
+  subroutine COMM_ensemble_scatter( &
+       knum,    &
+       var_mem, &
+       var_ens  )
+    use mod_adm, only: &
+       ADM_lall,       &
+       ADM_gall,       &
+       ADM_gall_1d,    &
+       ENS_COMM_WORLD, &
+       ENS_prc_me,     &
+       ENS_prc_master, &
+       ENS_gall,       &
+       ENS_eall,       &
+       ENS_div_nmax,   &
+       ENS_d2e,        &
+       ENS_d2l,        &
+       ENS_imin,       &
+       ENS_imax,       &
+       ENS_jmin,       &
+       ENS_jmax
+    implicit none
+
+    integer,  intent(in)  :: knum
+    real(RP), intent(in)  :: var_mem(ADM_gall,knum,ADM_lall)
+    real(RP), intent(out) :: var_ens(ENS_gall,knum)
+
+    real(RP) :: var_send(ENS_gall,knum,ENS_eall)
+
+    integer  :: gg(ENS_eall)
+
+    integer  :: ierr
+    integer  :: i, j, k, l, e, d, g
+
+    integer  :: suf
+    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+    !---------------------------------------------------------------------------
+
+    var_send(:,:,:) = 0.D0
+
+    if ( ENS_prc_me == ENS_prc_master ) then
+       gg(:) = 0
+       do d = 1, ENS_div_nmax
+          e = ENS_d2e(d)
+          l = ENS_d2l(d)
+
+          do j = ENS_jmin(d), ENS_jmax(d)
+          do i = ENS_imin(d), ENS_imax(d)
+             g = suf(i,j)
+             gg(e) = gg(e) + 1
+
+             do k = 1, knum
+                var_send(gg(e),k,e) = var_mem(g,k,l)
+             enddo
+          enddo
+          enddo
+       enddo
+    endif
+
+    call MPI_Scatter( var_send(1,1,1),  &
+                      ENS_gall*knum,    &
+                      COMM_datatype,    &
+                      var_ens(1,1),     &
+                      ENS_gall*knum,    &
+                      COMM_datatype,    &
+                      ENS_prc_master-1, &
+                      ENS_COMM_WORLD,   &
+                      ierr              )
+
+    return
+  end subroutine COMM_ensemble_scatter
+
+  !-----------------------------------------------------------------------------
+  subroutine COMM_ensemble_gather( &
+       knum,    &
+       var_ens, &
+       var_mem  )
+    use mod_adm, only: &
+       ADM_lall,       &
+       ADM_gall,       &
+       ADM_gall_1d,    &
+       ENS_COMM_WORLD, &
+       ENS_prc_me,     &
+       ENS_prc_master, &
+       ENS_gall,       &
+       ENS_eall,       &
+       ENS_div_nmax,   &
+       ENS_d2e,        &
+       ENS_d2l,        &
+       ENS_imin,       &
+       ENS_imax,       &
+       ENS_jmin,       &
+       ENS_jmax
+    implicit none
+
+    integer,  intent(in)  :: knum
+    real(RP), intent(in)  :: var_ens(ENS_gall,knum)
+    real(RP), intent(out) :: var_mem(ADM_gall,knum,ADM_lall)
+
+    real(RP) :: var_recv(ENS_gall,knum,ENS_eall)
+
+    integer  :: gg(ENS_eall)
+
+    integer  :: ierr
+    integer  :: i, j, k, l, e, d, g
+
+    integer  :: suf
+    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+    !---------------------------------------------------------------------------
+
+    call MPI_Gather( var_ens(1,1),     &
+                     ENS_gall*knum,    &
+                     COMM_datatype,    &
+                     var_recv(1,1,1),  &
+                     ENS_gall*knum,    &
+                     COMM_datatype,    &
+                     ENS_prc_master-1, &
+                     ENS_COMM_WORLD,   &
+                     ierr              )
+
+    var_mem(:,:,:) = 0.D0
+
+    if ( ENS_prc_me == ENS_prc_master ) then
+       gg(:) = 0
+       do d = 1, ENS_div_nmax
+          e = ENS_d2e(d)
+          l = ENS_d2l(d)
+
+          do j = ENS_jmin(d), ENS_jmax(d)
+          do i = ENS_imin(d), ENS_imax(d)
+             g = suf(i,j)
+             gg(e) = gg(e) + 1
+
+             do k = 1, knum
+                var_mem(g,k,l) = var_recv(gg(e),k,e)
+             enddo
+          enddo
+          enddo
+       enddo
+    endif
+
+    return
+  end subroutine COMM_ensemble_gather
 
 end module mod_comm
