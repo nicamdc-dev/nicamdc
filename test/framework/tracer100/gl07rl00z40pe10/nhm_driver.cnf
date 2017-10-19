@@ -34,7 +34,6 @@
 /
 
 &RUNCONFPARAM
-    RUNNAME        = 'ICOMEX_HS',
     NDIFF_LOCATION = 'IN_LARGE_STEP2',
     AF_TYPE        = 'HELD-SUAREZ',
     CHEM_TYPE      = 'PASSIVE',

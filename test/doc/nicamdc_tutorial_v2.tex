@@ -289,7 +289,6 @@
      * snip *
 
      &RUNCONFPARAM
-       RUNNAME        = 'DCMIP2016-11',      <--
        NDIFF_LOCATION = 'IN_LARGE_STEP2',
        THUBURN_LIM    = .true.,
        RAIN_TYPE      = "WARM",
@@ -317,7 +316,6 @@
 
  \noindent \textcolor{blue}{{\sf Note}}
  \begin{itemize}
-   \item "RUNNAME" should be specified as "DCMIP2016-11".
    \item "init\_type" should be specified as "Jablonowski-Moist".
    \item "test\_case" can be choose from 1 ~ 6.\\
           case 1: perturbation: exponential / with moisture \\
@@ -344,7 +342,6 @@
      * snip *
 
      &RUNCONFPARAM
-       RUNNAME        = 'DCMIP2016-12',      <--
        NDIFF_LOCATION = 'IN_LARGE_STEP2',
        THUBURN_LIM    = .true.,
        RAIN_TYPE      = "WARM",
@@ -368,7 +365,6 @@
 
  \noindent \textcolor{blue}{{\sf Note}}
  \begin{itemize}
-   \item "RUNNAME" should be specified as "DCMIP2016-12".
    \item "init\_type" should be specified as "Tropical-Cyclone".
    \item \verb|FORCING_DCMIP_PARAM| should be specified as "\verb|SET_DCMIP2016_12 = .true.|".
    \item "step" in \verb|NMHISD| should be changed following required history output interval
@@ -389,7 +385,6 @@
      * snip *
 
      &RUNCONFPARAM
-       RUNNAME        = 'DCMIP2016-13',      <--
        NDIFF_LOCATION = 'IN_LARGE_STEP2',
        THUBURN_LIM    = .true.,
        RAIN_TYPE      = "WARM",
@@ -414,7 +409,6 @@
 
  \noindent \textcolor{blue}{{\sf Note}}
  \begin{itemize}
-   \item "RUNNAME" should be specified as "DCMIP2016-13".
    \item "init\_type" should be specified as "Supercell".
    \item "test\_case" can be choose from 1 ~ 6.\\
           case 1: with initial perturbation \\
@@ -517,7 +511,6 @@
      * snip *
 
      &RUNCONFPARAM
-       RUNNAME        = 'DCMIP2016-11',
        NDIFF_LOCATION = 'IN_LARGE_STEP2',
        THUBURN_LIM    = .true.,
        RAIN_TYPE      = "WARM",
@@ -880,7 +873,6 @@ In the tropical cyclone, two types of tests are requested.
 \caption{RUNCONFPARAM (Common Configurations)}
 \begin{tabularx}{150mm}{|l|l|l|X|} \hline
  \rowcolor[gray]{0.9} parameters & example & kind & description          \\ \hline
- RUNNAME               & 'DCMIP2016-11'   & char & name of run case \\ \hline
  \verb|NDIFF_LOCATION|        & '\verb|IN_LARGE_STEP2|' & char  & setting of numerical diffusion \\ \hline
  \verb|THUBURN_LIM|           & .true.      & logical & use of the limiter \\ \hline
  \verb|EIN_TYPE|              & 'SIMPLE'    & char  & evaluation type of internal energy \\ \hline

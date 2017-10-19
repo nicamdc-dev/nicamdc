@@ -27,7 +27,6 @@
 /
 
 &RUNCONFPARAM
-    RUNNAME        = 'DCMIP2016-21',
     NDIFF_LOCATION = 'IN_LARGE_STEP2',
     THUBURN_LIM    = .true.,
     RAIN_TYPE      = "WARM",

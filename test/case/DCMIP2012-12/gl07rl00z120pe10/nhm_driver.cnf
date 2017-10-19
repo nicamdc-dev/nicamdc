@@ -26,7 +26,6 @@
 /
 
 &RUNCONFPARAM
-    RUNNAME     = 'DCMIP2012-12',
     THUBURN_LIM = .true.
     CHEM_TYPE   = 'PASSIVE',
 /

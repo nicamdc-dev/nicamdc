@@ -30,7 +30,6 @@
 /
 
 &RUNCONFPARAM
-    RUNNAME        = 'ICOMEX_JW',
     NDIFF_LOCATION = 'IN_LARGE_STEP2',
 /
 

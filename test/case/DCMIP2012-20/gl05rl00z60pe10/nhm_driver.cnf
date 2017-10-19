@@ -26,7 +26,6 @@
 /
 
 &RUNCONFPARAM
-    RUNNAME         = 'DCMIP2012-21',
     NDIFF_LOCATION  = 'IN_LARGE_STEP2',
 /
 
