@@ -31,7 +31,7 @@ CFLAGS = $(CFLAGS_FAST)
 ##### Special Options #####
 
 ifeq ($(ENABLE_OPENMP),T)
-	FFLAGS += -qopenmp -qopenmp-report
+	FFLAGS += -qopenmp
 endif
 
 ifeq ($(ENABLE_NETCDF),T)

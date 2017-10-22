@@ -26,7 +26,7 @@ CFLAGS = $(CFLAGS_FAST)
 ##### Special Options #####
 
 ifeq ($(ENABLE_OPENMP),T)
-	FFLAGS += -openmp -openmp-report
+	FFLAGS += -openmp
 endif
 
 ifeq ($(ENABLE_NETCDF),T)
@@ -46,7 +46,7 @@ LD     = $(FC)
 LFLAGS = $(FFLAGS)
 
 MAKE    = make
-INSTALL = install
+INSTALL = cp -u
 AR      = ar
 ARFLAGS = r
 RANLIB  = ranlib

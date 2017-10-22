@@ -3,9 +3,9 @@
 #
 FFLAGS_FAST  = -fpp -m64 -O3 -xMIC-AVX512           \
                -assume byterecl -convert big_endian \
-               -fp-model fast=2 -align array64byte  \
-               -no-prec-div                         \
-               -qopt-streaming-stores always -g -traceback
+               -fp-model source -align array64byte  \
+               -qopt-streaming-stores always
+#                -DTS29113
 
 FFLAGS_DEBUG = -fpp -m64 -O0 -xMIC-AVX512                \
                -assume byterecl -convert big_endian      \
@@ -30,6 +30,9 @@ CFLAGS = $(CFLAGS_FAST)
 
 ##### Special Options #####
 
+# for 2M alignment of MPI buffer
+#bufalloc = bufalloc.o
+
 ifeq ($(ENABLE_OPENMP),T)
 	FFLAGS += -qopenmp
 	LFLAGS += -qopenmp
@@ -46,8 +49,8 @@ endif
 LAPACK_LIBS ?= -mkl
 
 ifeq ($(ENABLE_VTAMP),T)
-	VTAMP_INCLUDE ?= -I/opt/intel/vtune_amplifier_xe_2017.1.0.486011/include/intel64
-	VTAMP_LIBS    ?= -L/opt/intel/vtune_amplifier_xe_2017.1.0.486011/lib64 -littnotify
+	VTAMP_INCLUDE ?= -I/home/opt/local/cores/intel/vtune_amplifier_xe_2017.3.0.510739/include/intel64
+	VTAMP_LIBS    ?= -L/home/opt/local/cores/intel/vtune_amplifier_xe_2017.3.0.510739/lib64 -littnotify
 	FFLAGS        += -g -no-ip -no-ipo -qopt-report=5 -DVTAMP $(VTAMP_INCLUDE)
 	LFLAGS        +=    -no-ip -no-ipo -qopt-report=5 -DVTAMP $(VTAMP_INCLUDE)
 else
