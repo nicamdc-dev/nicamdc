@@ -59,6 +59,7 @@ module mod_prof
   !++ Private procedures
   !
   private :: get_rapid
+  private :: get_grpid
 
   !-----------------------------------------------------------------------------
   !
@@ -67,14 +68,14 @@ module mod_prof
   integer,                  private, parameter :: PROF_rapnlimit = 300
   character(len=H_SHORT),   private            :: PROF_prefix    = ''
   integer,                  private            :: PROF_rapnmax   = 0
-  character(len=H_SHORT*2), private            :: PROF_rapname(PROF_rapnlimit)
+  character(len=H_SHORT*2), private            :: PROF_rapname (PROF_rapnlimit)
   integer,                  private            :: PROF_grpnmax   = 0
-  character(len=H_SHORT),   private            :: PROF_grpname(PROF_rapnlimit)
-  integer,                  private            :: PROF_grpid  (PROF_rapnlimit)
-  real(DP),                 private            :: PROF_raptstr(PROF_rapnlimit)
-  real(DP),                 private            :: PROF_rapttot(PROF_rapnlimit)
-  integer,                  private            :: PROF_rapnstr(PROF_rapnlimit)
-  integer,                  private            :: PROF_rapnend(PROF_rapnlimit)
+  character(len=H_SHORT),   private            :: PROF_grpname (PROF_rapnlimit)
+  integer,                  private            :: PROF_grpid   (PROF_rapnlimit)
+  real(DP),                 private            :: PROF_raptstr (PROF_rapnlimit)
+  real(DP),                 private            :: PROF_rapttot (PROF_rapnlimit)
+  integer,                  private            :: PROF_rapnstr (PROF_rapnlimit)
+  integer,                  private            :: PROF_rapnend (PROF_rapnlimit)
   integer,                  private            :: PROF_raplevel(PROF_rapnlimit)
 
   integer,                  private, parameter :: PROF_default_rap_level = 2
@@ -159,13 +160,12 @@ contains
        PRC_MPItime
     implicit none
 
-    character(len=*), intent(in)           :: rapname_base !< name  of item
-    integer,          intent(in), optional :: level        !< level of item
+    character(len=*), intent(in) :: rapname_base    !< name of item
 
-    character(len=H_SHORT*2) :: rapname !< name of item with prefix
+    integer,          intent(in), optional :: level !< level of item (default is 2)
 
-    integer :: id
-    integer :: level_
+    character(len=H_SHORT*2) :: rapname             !< name of item with prefix
+    integer                  :: id, level_
     !---------------------------------------------------------------------------
 
     if ( present(level) ) then
@@ -207,13 +207,12 @@ contains
        PRC_MPItime
     implicit none
 
-    character(len=*), intent(in)           :: rapname_base !< name  of item
-    integer,          intent(in), optional :: level        !< level of item
+    character(len=*), intent(in) :: rapname_base    !< name of item
 
-    character(len=H_SHORT) :: rapname !< name of item with prefix
+    integer,          intent(in), optional :: level !< level of item
 
-    integer :: id
-    integer :: level_
+    character(len=H_SHORT*2) :: rapname             !< name of item with prefix
+    integer                  :: id, level_
     !---------------------------------------------------------------------------
 
     if ( present(level) ) then
@@ -272,13 +271,13 @@ contains
     if ( IO_LOG_ALLNODE ) then ! report for each node
 
        do gid = 1, PROF_rapnmax
-          do id = 1, PROF_rapnmax
-             if (       PROF_raplevel(id) <= PROF_rap_level &
-                  .AND. PROF_grpid   (id) == gid            ) then
-                if( IO_L ) write(IO_FID_LOG,'(1x,A,I3.3,A,A,A,F10.3,A,I9)') &
-                           '*** ID=',id,' : ',PROF_rapname(id),' T=',PROF_rapttot(id),' N=',PROF_rapnstr(id)
-             endif
-          enddo
+       do id  = 1, PROF_rapnmax
+          if (       PROF_raplevel(id) <= PROF_rap_level &
+               .AND. PROF_grpid(id)    == gid            ) then
+             if( IO_L ) write(IO_FID_LOG,'(1x,A,I3.3,3A,F10.3,A,I9)') &
+                  '*** ID=',id,' : ',PROF_rapname(id),' T=',PROF_rapttot(id),' N=',PROF_rapnstr(id)
+          endif
+       enddo
        enddo
 
     else
@@ -301,18 +300,18 @@ contains
        endif
 
        do gid = 1, PROF_rapnmax
-          do id = 1, PROF_rapnmax
-             if (       PROF_raplevel(id) <= PROF_rap_level &
-                  .AND. PROF_grpid   (id) == gid            &
-                  .AND. fid > 0                             ) then
-                if( IO_L ) write(IO_FID_LOG,'(1x,A,I3.3,3A,F10.3,A,F10.3,A,I5,2A,F10.3,A,I5,2A,I9)') &
-                           '*** ID=',id,' : ',PROF_rapname(id), &
-                           ' T(avg)=',avgvar(id), &
-                           ', T(max)=',maxvar(id),'[',maxidx(id),']', &
-                           ', T(min)=',minvar(id),'[',minidx(id),']', &
-                           ' N=',PROF_rapnstr(id)
-             endif
-          enddo
+       do id  = 1, PROF_rapnmax
+          if (       PROF_raplevel(id) <= PROF_rap_level &
+               .AND. PROF_grpid(id)    == gid            &
+               .AND. fid > 0                             ) then
+             if( IO_L ) write(IO_FID_LOG,'(1x,A,I3.3,3A,F10.3,A,F10.3,A,I5,2A,F10.3,A,I5,2A,I9)') &
+                  '*** ID=',id,' : ',PROF_rapname(id), &
+                  ' T(avg)=',avgvar(id), &
+                  ', T(max)=',maxvar(id),'[',maxidx(id),']', &
+                  ', T(min)=',minvar(id),'[',minidx(id),']', &
+                  ' N=',PROF_rapnstr(id)
+          endif
+       enddo
        enddo
 
     endif
@@ -441,13 +440,14 @@ contains
 
     character(len=*), intent(in)    :: rapname !< name of item
     integer,          intent(inout) :: level   !< level of item
+    integer                         :: id
 
-    character (len=H_SHORT) :: trapname
-
-    integer :: id
+    character(len=H_SHORT*2) :: trapname
+    character(len=H_SHORT)   :: trapname2
     !---------------------------------------------------------------------------
 
     trapname  = trim(rapname)
+    trapname2 = trim(rapname)
 
     do id = 1, PROF_rapnmax
        if ( trapname == PROF_rapname(id) ) then
@@ -464,7 +464,7 @@ contains
     PROF_rapnend(id) = 0
     PROF_rapttot(id) = 0.0_DP
 
-    PROF_grpid   (id) = get_grpid(trapname)
+    PROF_grpid   (id) = get_grpid(trapname2)
     PROF_raplevel(id) = level
 
     return
@@ -475,15 +475,14 @@ contains
   function get_grpid( rapname ) result(gid)
     implicit none
 
-    character(len=*), intent(in)    :: rapname !< name of item
+    character(len=*), intent(in) :: rapname !< name of item
+    integer                      :: gid
 
     character(len=H_SHORT) :: grpname
-
-    integer :: gid
-    integer :: idx
+    integer                :: idx
     !---------------------------------------------------------------------------
 
-    idx = index(rapname," ")
+    idx = index(rapname,' ')
     if ( idx > 1 ) then
        grpname = rapname(1:idx-1)
     else
@@ -518,7 +517,7 @@ contains
     PROF_max    = real(maxval(var),kind=DP)
     PROF_min    = real(minval(var),kind=DP)
     PROF_sum    = real(sum   (var),kind=DP)
-    write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
     '+',PROF_header,'[',PROF_item,'] max=',PROF_max,',min=',PROF_min,',sum=',PROF_sum
 
     return
@@ -541,7 +540,7 @@ contains
     PROF_max    = real(maxval(var),kind=DP)
     PROF_min    = real(minval(var),kind=DP)
     PROF_sum    = real(sum   (var),kind=DP)
-    write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
     '+',PROF_header,'[',PROF_item,'] max=',PROF_max,',min=',PROF_min,',sum=',PROF_sum
 
     return
@@ -564,7 +563,7 @@ contains
     PROF_max    = real(maxval(var),kind=DP)
     PROF_min    = real(minval(var),kind=DP)
     PROF_sum    = real(sum   (var),kind=DP)
-    write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
     '+',PROF_header,'[',PROF_item,'] max=',PROF_max,',min=',PROF_min,',sum=',PROF_sum
 
     return
@@ -587,7 +586,7 @@ contains
     PROF_max    = real(maxval(var),kind=DP)
     PROF_min    = real(minval(var),kind=DP)
     PROF_sum    = real(sum   (var),kind=DP)
-    write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
     '+',PROF_header,'[',PROF_item,'] max=',PROF_max,',min=',PROF_min,',sum=',PROF_sum
 
     return
@@ -610,7 +609,7 @@ contains
     PROF_max    = real(maxval(var),kind=DP)
     PROF_min    = real(minval(var),kind=DP)
     PROF_sum    = real(sum   (var),kind=DP)
-    write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
     '+',PROF_header,'[',PROF_item,'] max=',PROF_max,',min=',PROF_min,',sum=',PROF_sum
 
     return
@@ -633,7 +632,7 @@ contains
     PROF_max    = real(maxval(var),kind=DP)
     PROF_min    = real(minval(var),kind=DP)
     PROF_sum    = real(sum   (var),kind=DP)
-    write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
     '+',PROF_header,'[',PROF_item,'] max=',PROF_max,',min=',PROF_min,',sum=',PROF_sum
 
     return
@@ -656,7 +655,7 @@ contains
     PROF_max    = real(maxval(var),kind=DP)
     PROF_min    = real(minval(var),kind=DP)
     PROF_sum    = real(sum   (var),kind=DP)
-    write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
     '+',PROF_header,'[',PROF_item,'] max=',PROF_max,',min=',PROF_min,',sum=',PROF_sum
 
     return
@@ -679,7 +678,7 @@ contains
     PROF_max    = real(maxval(var),kind=DP)
     PROF_min    = real(minval(var),kind=DP)
     PROF_sum    = real(sum   (var),kind=DP)
-    write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
     '+',PROF_header,'[',PROF_item,'] max=',PROF_max,',min=',PROF_min,',sum=',PROF_sum
 
     return
@@ -702,7 +701,7 @@ contains
     PROF_max    = real(maxval(var),kind=DP)
     PROF_min    = real(minval(var),kind=DP)
     PROF_sum    = real(sum   (var),kind=DP)
-    write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
     '+',PROF_header,'[',PROF_item,'] max=',PROF_max,',min=',PROF_min,',sum=',PROF_sum
 
     return
@@ -725,7 +724,7 @@ contains
     PROF_max    = real(maxval(var),kind=DP)
     PROF_min    = real(minval(var),kind=DP)
     PROF_sum    = real(sum   (var),kind=DP)
-    write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
     '+',PROF_header,'[',PROF_item,'] max=',PROF_max,',min=',PROF_min,',sum=',PROF_sum
 
     return
@@ -748,7 +747,7 @@ contains
     PROF_max    = real(maxval(var),kind=DP)
     PROF_min    = real(minval(var),kind=DP)
     PROF_sum    = real(sum   (var),kind=DP)
-    write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
     '+',PROF_header,'[',PROF_item,'] max=',PROF_max,',min=',PROF_min,',sum=',PROF_sum
 
     return
@@ -771,7 +770,7 @@ contains
     PROF_max    = real(maxval(var),kind=DP)
     PROF_min    = real(minval(var),kind=DP)
     PROF_sum    = real(sum   (var),kind=DP)
-    write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,A7,A,A16,3(A,ES24.16))') &
     '+',PROF_header,'[',PROF_item,'] max=',PROF_max,',min=',PROF_min,',sum=',PROF_sum
 
     return

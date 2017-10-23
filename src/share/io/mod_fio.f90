@@ -44,6 +44,7 @@ module mod_fio
   !
   !++ Public parameters & variables
   !
+
   !> struct for package infomation
   type, public :: headerinfo
      character(len=H_LONG)  :: fname         !< file name
@@ -78,17 +79,20 @@ module mod_fio
   !
   !++ Private procedures
   !
+  public :: FIO_getfid
+
   !-----------------------------------------------------------------------------
   !
   !++ Private parameters & variables
   !
-  integer,               private, parameter :: FIO_nmaxfile = 64
-  character(len=H_LONG), private            :: FIO_fname_list(FIO_nmaxfile)
-  integer,               private            :: FIO_fid_list  (FIO_nmaxfile)
-  integer,               private            :: FIO_fid_count = 1
+  integer, private, parameter :: FIO_nmaxfile = 1024
 
-  type(headerinfo), private :: hinfo
-  type(datainfo),   private :: dinfo
+  character(len=H_LONG), private :: FIO_fname_list(FIO_nmaxfile) = ''
+  integer,               private :: FIO_fid_list  (FIO_nmaxfile) = -1
+  integer,               private :: FIO_fid_count = 1
+
+  type(headerinfo),      private :: hinfo
+  type(datainfo),        private :: dinfo
 
   integer, private, parameter :: max_num_of_data = 2500 !--- max time step num
   integer, private, parameter :: preclist(0:3) = (/ 4, 8, 4, 8 /)
@@ -132,6 +136,8 @@ contains
        pkg_desc, &
        pkg_note  )
     use mod_adm, only: &
+       GLOBAL_prefix_dir,    &
+       GLOBAL_extension_ens, &
        ADM_prc_me
     implicit none
 
@@ -144,6 +150,7 @@ contains
     character(len=H_SHORT) :: rwname(0:2)
     data rwname / 'READ','WRITE','APPEND' /
 
+    character(len=H_LONG) :: basename_mod
     character(len=H_LONG) :: fname
     integer               :: n
     !---------------------------------------------------------------------------
@@ -156,12 +163,13 @@ contains
 
     if ( fid < 0 ) then ! file registration
        !--- register new file and open
-       call fio_mk_fname(fname,trim(basename),'pe',ADM_prc_me-1,6)
+       basename_mod = trim(GLOBAL_prefix_dir)//trim(basename)//trim(GLOBAL_extension_ens)
+       call fio_mk_fname(fname,trim(basename_mod),'pe',ADM_prc_me-1,6)
        call fio_register_file(fid,fname)
 
        if ( rwtype == IO_FREAD ) then
 
-!          call fio_dump_finfo(n,FIO_BIG_ENDIAN,FIO_DUMP_HEADER) ! dump to stdout(check)
+!          call fio_dump_finfo(n,IO_BIG_ENDIAN,IO_DUMP_HEADER) ! dump to stdout(check)
           call fio_fopen(fid,rwtype)
           call fio_read_allinfo(fid)
 
@@ -178,9 +186,9 @@ contains
 
        endif
 
-       write(IO_FID_LOG,'(1x,A,A,A,I3)') '*** [FIO] File registration (ADVANCED) : ', &
+       if( IO_L ) write(IO_FID_LOG,'(1x,A,A,A,I3)') '*** [FIO] File registration (ADVANCED) : ', &
                             trim(rwname(rwtype)),' - ', FIO_fid_count
-       write(IO_FID_LOG,'(1x,A,I3,A,A)') '*** fid= ', fid, ', name: ', trim(fname)
+       if( IO_L ) write(IO_FID_LOG,'(1x,A,I3,A,A)') '*** fid= ', fid, ', name: ', trim(fname)
 
        FIO_fname_list(FIO_fid_count) = trim(basename)
        FIO_fid_list  (FIO_fid_count) = fid
@@ -422,12 +430,13 @@ contains
     do i = 1, max_num_of_data
        !--- seek data ID and get information
        call fio_seek_datainfo(did,fid,varname,i)
-       call fio_get_datainfo (fid,did,dinfo)
 
        if ( did == -1 ) then
           num_of_step = i - 1
           exit
        endif
+
+       call fio_get_datainfo(fid,did,dinfo)
 
        !--- verify
        if ( dinfo%layername /= layername ) then
@@ -502,19 +511,26 @@ contains
     integer,          intent(in) :: k_start, k_end
     integer,          intent(in) :: step
     real(DP),         intent(in) :: t_start, t_end
-
-    logical,intent(in), optional :: append
+    logical,          intent(in), optional :: append
 
     real(SP) :: var4(ADM_gall,k_start:k_end,ADM_lall)
     real(DP) :: var8(ADM_gall,k_start:k_end,ADM_lall)
 
+    integer  :: file_mode
     integer  :: did, fid
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('FILEIO_out',2)
 
+    file_mode = IO_FWRITE
+    if ( present(append) ) then
+       if ( append ) then
+          file_mode = IO_FAPPEND
+       endif
+    endif
+
     !--- search/register file
-    call FIO_getfid( fid, basename, IO_FWRITE, pkg_desc, pkg_note )
+    call FIO_getfid( fid, basename, file_mode, pkg_desc, pkg_note )
 
     !--- append data to the file
     dinfo%varname      = varname
@@ -595,19 +611,26 @@ contains
     integer,          intent(in) :: k_start, k_end
     integer,          intent(in) :: step
     real(DP),         intent(in) :: t_start, t_end
-
-    logical,intent(in), optional :: append
+    logical,          intent(in), optional :: append
 
     real(SP) :: var4(ADM_gall,k_start:k_end,ADM_lall)
     real(DP) :: var8(ADM_gall,k_start:k_end,ADM_lall)
 
+    integer  :: file_mode
     integer  :: did, fid
     !---------------------------------------------------------------------------
 
     call PROF_rapstart('FILEIO_out',2)
 
+    file_mode = IO_FWRITE
+    if ( present(append) ) then
+       if ( append ) then
+          file_mode = IO_FAPPEND
+       endif
+    endif
+
     !--- search/register file
-    call FIO_getfid( fid, basename, IO_FWRITE, pkg_desc, pkg_note )
+    call FIO_getfid( fid, basename, file_mode, pkg_desc, pkg_note )
 
     !--- append data to the file
     dinfo%varname      = varname
@@ -670,7 +693,7 @@ contains
           call fio_fclose(fid)
           call fio_mk_fname(fname,trim(FIO_fname_list(n)),'pe',ADM_prc_me-1,6)
 
-          write(IO_FID_LOG,'(1x,A,I3,A,A)') &
+          if( IO_L ) write(IO_FID_LOG,'(1x,A,I3,A,A)') &
           '*** [FIO] File close (ADVANCED) fid= ', fid, ', name: ', trim(fname)
 
           ! remove closed file info from the list
@@ -698,7 +721,7 @@ contains
        call fio_fclose(fid)
        call fio_mk_fname(fname,trim(FIO_fname_list(n)),'pe',ADM_prc_me-1,6)
 
-       write(IO_FID_LOG,'(1x,A,I3,A,A)') &
+       if( IO_L ) write(IO_FID_LOG,'(1x,A,I3,A,A)') &
        '*** [FIO] File close (ADVANCED) fid= ', fid, ', name: ', trim(fname)
     enddo
 

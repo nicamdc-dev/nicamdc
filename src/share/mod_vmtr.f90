@@ -149,8 +149,7 @@ contains
        GRD_bfact,    &
        GRD_cfact,    &
        GRD_dfact,    &
-       GRD_rscale,   &
-       GRD_grid_type
+       GRD_rscale
     use mod_gmtr, only: &
        GMTR_area,   &
        GMTR_area_pl

@@ -66,8 +66,25 @@ module mod_adm
   ! dimension of the spacial vector
   integer,  public, parameter :: ADM_nxyz = 3
 
+  !#############################################################################
+  ! Global Parameters
+  !#############################################################################
+  integer, public            :: GLOBAL_glevel                ! grid     division level
+  integer, public            :: GLOBAL_rlevel                ! region   division level
+  integer, public            :: GLOBAL_elevel                ! ensemble division level
+  integer, public            :: GLOBAL_COMM_WORLD            ! communication world per member
+  integer, public            :: GLOBAL_prc_all               ! number of MPI process
+  integer, public            :: GLOBAL_prc_me                ! my process ID
+  integer, public, parameter :: GLOBAL_prc_master  = 1       ! master process ID
+
+  logical, public            :: GLOBAL_ensemble_on = .false. ! ensemble run is on?
+
+  character(len=H_LONG), public              :: GLOBAL_prefix_dir    = '' !< prefix,    directory name
+  character(len=H_LONG), public              :: GLOBAL_extension_ens = '' !< extension, ensemble name
+  character(len=H_LONG), public, allocatable :: GLOBAL_extension_rgn(:)   !< extension, region name
+
 #ifdef _FIXEDINDEX_
-  include "inc_index.h"
+  include 'inc_index.h'
 #else
   !#############################################################################
   ! Basic Index Parameters
@@ -150,6 +167,35 @@ module mod_adm
                                                      ! 'MLCP-OLD' OLD vergion (only for s=1)
 
   integer,                public :: ADM_XTMS_MLCP_S  = 1 ! [XTMS] Number of segment for MLCP
+
+  !
+  !====== Information for ensemble ======
+  !
+  integer, public              :: ENS_COMM_WORLD     ! communication world for ensemble
+  integer, public              :: ENS_prc_all        ! number of MPI process in the ensemble
+  integer, public              :: ENS_prc_me         ! my process ID in the ensemble
+  integer, public, parameter   :: ENS_prc_master = 1 ! master process ID in the emsemble
+  logical, public              :: ENS_have_pl        ! this ID manages pole grid?
+
+  integer, public              :: ENS_elevel         ! ensemble division level
+  integer, public              :: ENS_div_nmax       ! number of divided part
+  integer, public              :: ENS_gall           ! number of horizontal grid
+  integer, public, parameter   :: ENS_gall_pl = 2    ! number of horizontal grid, pole point
+  integer, public              :: ENS_eall           ! number of ensemble
+
+  !
+  !====== Information for processes-division relationship ======
+  !
+  integer, public              :: ENS_ediv           ! number of divided part per process
+  integer, public              :: ENS_gdiv           ! number of horizontal grid per divided part
+  integer, public              :: ENS_gdiv_1d        ! number of horizontal grid(1D) per divided part
+
+  integer, public, allocatable :: ENS_d2e(:)         ! division ID -> ensemble member ID
+  integer, public, allocatable :: ENS_d2l(:)         ! division ID -> local l
+  integer, public, allocatable :: ENS_imin(:)        ! start i-index of 1D horizontal grid for devide
+  integer, public, allocatable :: ENS_imax(:)        ! end   i-index of 1D horizontal grid for divide
+  integer, public, allocatable :: ENS_jmin(:)        ! start j-index of 1D horizontal grid for devide
+  integer, public, allocatable :: ENS_jmax(:)        ! end   j-index of 1D horizontal grid for divide
 
   !-----------------------------------------------------------------------------
   !
@@ -241,6 +287,18 @@ contains
        call PRC_MPIstop
     endif
 
+    ! Error if glevel & rlevel are different from global parameter
+    if ( GLOBAL_ensemble_on ) then
+       if ( glevel /= GLOBAL_glevel ) then
+          write(*,*) 'xxx glevel is not equal (global,local) :', GLOBAL_glevel, glevel
+          call PRC_MPIstop
+       endif
+       if ( rlevel /= GLOBAL_rlevel ) then
+          write(*,*) 'xxx rlevel is not equal (global,local) :', GLOBAL_rlevel, rlevel
+          call PRC_MPIstop
+       endif
+    endif
+
 #ifdef _FIXEDINDEX_
     if ( ADM_HGRID_SYSTEM == 'ICO' ) then
        dmd        = 10
@@ -260,15 +318,19 @@ contains
     if ( ADM_HGRID_SYSTEM == 'ICO' ) then
        ADM_vlink  = 5
        dmd        = 10
+       ADM_prc_pl = 1
     elseif( ADM_HGRID_SYSTEM == 'LCP' ) then
        if( ADM_vlink == -1 ) ADM_vlink = 6
        dmd        = 4 * ADM_vlink
+       ADM_prc_pl = 1
     elseif( ADM_HGRID_SYSTEM == 'MLCP-OLD' ) then
        if( ADM_vlink == -1 ) ADM_vlink = 6
        dmd        = 2 * ADM_vlink
+       ADM_prc_pl = 1
     elseif( ADM_HGRID_SYSTEM == 'MLCP' ) then
        if( ADM_vlink == -1 ) ADM_vlink = 6
        dmd        = (1+ADM_XTMS_MLCP_S)  * ADM_vlink
+       ADM_prc_pl = 1
     elseif( ADM_HGRID_SYSTEM == 'PERIODIC-1DMD' ) then ! T.Ohno 110721
        ADM_vlink  = 5
        dmd        = 1
@@ -280,6 +342,7 @@ contains
     elseif( ADM_HGRID_SYSTEM == 'ICO-XTMS' ) then
        ADM_vlink  = 5
        dmd        = 10
+       ADM_prc_pl = 1
     else
        write(*,*) 'xxx [ADM_setup] Not appropriate param for ADM_HGRID_SYSTEM. STOP.', trim(ADM_HGRID_SYSTEM)
        call PRC_MPIstop
@@ -338,11 +401,18 @@ contains
 
     call RGNMNG_setup( rgnmngfname )
 
-    allocate( ADM_have_sgp(ADM_lall) )
-    ADM_have_sgp(:) = .false.
+
+
+    allocate( GLOBAL_extension_rgn(ADM_lall) )
+    allocate( ADM_have_sgp        (ADM_lall) )
+    GLOBAL_extension_rgn(:) = ''
+    ADM_have_sgp        (:) = .false.
 
     do l = 1, ADM_lall
        rgnid = RGNMNG_lp2r(l,ADM_prc_me)
+
+       write(GLOBAL_extension_rgn(l),'(A,I5.5)') '.rgn', rgnid-1
+
        if ( RGNMNG_vert_num(I_W,rgnid) == 3 ) then
           ADM_have_sgp(l) = .true.
        endif
@@ -394,6 +464,11 @@ contains
        call PRC_MPIstop
     endif
     if( IO_NML ) write(IO_FID_LOG,nml=RGNMNGPARAM)
+
+    if ( ADM_lall > RGNMNG_llim ) then
+       write(*,*) 'xxx limit exceed! local region: ', ADM_lall, RGNMNG_llim
+       call PRC_MPIstop
+    endif
 
     ! Global information (Each process has all the information)
     allocate( RGNMNG_edge_tab(I_RGNID:I_DIR,I_SW:I_SE,ADM_rgn_nmax) )
@@ -505,7 +580,7 @@ contains
        in_fname, &
        rall,     &
        pall,     &
-       llim,     &
+       lall,     &
        edge_tab, &
        lnum,     &
        lp2r      )
@@ -516,10 +591,10 @@ contains
     character(len=*), intent(in)  :: in_fname           !< input file
     integer,          intent(in)  :: rall               !< total number of region
     integer,          intent(in)  :: pall               !< total number of process
-    integer,          intent(in)  :: llim               !< limit number of local region
+    integer,          intent(in)  :: lall               !< limit number of local region
     integer,          intent(out) :: edge_tab(2,4,rall) !< region link information (for 4 edges)
     integer,          intent(out) :: lnum(pall)         !< number of local region
-    integer,          intent(out) :: lp2r(llim,pall)    !< l,prc => region
+    integer,          intent(out) :: lp2r(lall,pall)    !< l,prc => region
 
     integer  :: num_of_rgn !< number of region
 
@@ -546,7 +621,7 @@ contains
 
     integer  :: peid            !< process ID
     integer  :: num_of_mng      !< number of regions be managed
-    integer  :: mng_rgnid(llim) !< managed region ID
+    integer  :: mng_rgnid(RGNMNG_llim) !< managed region ID
 
     namelist / rgn_mng_info / &
          peid,       &
@@ -601,6 +676,11 @@ contains
 
           lnum(peid) = num_of_mng
 
+          if ( lnum(peid) /= ADM_lall ) then
+             write(*,*) 'xxx local region number is not match: ', peid, lnum(peid), ADM_lall
+             call PRC_MPIstop
+          endif
+
           lp2r(:,peid) = -1 ! initialize
           do l = 1, lnum(peid)
              lp2r(l,peid) = mng_rgnid(l)
@@ -618,7 +698,7 @@ contains
        out_fname, &
        rall,      &
        pall,      &
-       llim,      &
+       lall,      &
        edge_tab,  &
        lnum,      &
        lp2r       )
@@ -627,15 +707,15 @@ contains
     character(len=*), intent(in) :: out_fname          !< output file
     integer,          intent(in) :: rall               !< total number of region
     integer,          intent(in) :: pall               !< total number of process
-    integer,          intent(in) :: llim               !< limit number of local region
+    integer,          intent(in) :: lall               !< limit number of local region
     integer,          intent(in) :: edge_tab(2,4,rall) !< region link information (for 4 edges)
     integer,          intent(in) :: lnum(pall)         !< number of local region
-    integer,          intent(in) :: lp2r(llim,pall)    !< l,prc => region
+    integer,          intent(in) :: lp2r(lall,pall)    !< l,prc => region
 
     integer  :: num_of_rgn !< number of region
 
     namelist / rgn_info / &
-         num_of_rgn
+       num_of_rgn
 
     integer  :: rgnid      !< region ID
     integer  :: sw(2) = -1 !< south-west region info
@@ -644,25 +724,25 @@ contains
     integer  :: se(2) = -1 !< south-east region info
 
     namelist / rgn_link_info / &
-         rgnid, &
-         sw,    &
-         nw,    &
-         ne,    &
-         se
+       rgnid, &
+       sw,    &
+       nw,    &
+       ne,    &
+       se
 
     integer  :: num_of_proc !< number of processes
 
     namelist / proc_info / &
-         num_of_proc
+       num_of_proc
 
     integer  :: peid            !< process ID
     integer  :: num_of_mng      !< number of regions be managed
-    integer  :: mng_rgnid(llim) !< managed region ID
+    integer  :: mng_rgnid(RGNMNG_llim) !< managed region ID
 
     namelist / rgn_mng_info / &
-         peid,       &
-         num_of_mng, &
-         mng_rgnid
+       peid,       &
+       num_of_mng, &
+       mng_rgnid
 
     integer  :: fid
     integer  :: r, p, l
@@ -718,7 +798,7 @@ contains
        rlevel,   &
        rall,     &
        pall,     &
-       llim,     &
+       lall,     &
        edge_tab, &
        lnum,     &
        lp2r      )
@@ -729,10 +809,10 @@ contains
     integer, intent(in)  :: rlevel
     integer, intent(in)  :: rall
     integer, intent(in)  :: pall
-    integer, intent(in)  :: llim
+    integer, intent(in)  :: lall
     integer, intent(out) :: edge_tab(2,4,rall)
     integer, intent(out) :: lnum(pall)
-    integer, intent(out) :: lp2r(llim,pall)
+    integer, intent(out) :: lp2r(lall,pall)
 
     integer, parameter :: nmax_dmd = 10
     integer  :: dmd_data(4,nmax_dmd)
@@ -871,6 +951,11 @@ contains
        write(*,*) 'invalid number of process!', rall, pall
        call PRC_MPIstop
     else
+       if ( rall/pall /= lall ) then
+          write(*,*) 'xxx local region number is not match: ', rall/pall, lall
+          call PRC_MPIstop
+       endif
+
        do p = 1, pall
           lnum(p) = rall / pall
        enddo
@@ -994,43 +1079,43 @@ contains
     !---------------------------------------------------------------------------
 
     if( IO_L ) write(IO_FID_LOG,*)
-    write(IO_FID_LOG,'(1x,A)'   ) '====== Process management info. ======'
-    write(IO_FID_LOG,'(1x,A,I7)') '--- Total number of process           : ', PRC_nprocs
-    write(IO_FID_LOG,'(1x,A,I7)') '--- My Process number = (my rank + 1) : ', ADM_prc_me
-    write(IO_FID_LOG,'(1x,A)'   ) '====== Region/Grid topology info. ======'
-    write(IO_FID_LOG,'(1x,A,A)' ) '--- Grid sysytem                      : ', ADM_HGRID_SYSTEM
-    write(IO_FID_LOG,'(1x,A,I7)') '--- #  of diamond                     : ', ADM_DMD
-    write(IO_FID_LOG,'(1x,A)'   ) '====== Region management info. ======'
-    write(IO_FID_LOG,'(1x,A,I7)') '--- Region level (RL)                 : ', ADM_rlevel
-    write(IO_FID_LOG,'(1x,A,I7,3(A,I4),A)') '--- Total number of region            : ', ADM_rgn_nmax, &
+    if( IO_L ) write(IO_FID_LOG,'(1x,A)'   ) '====== Process management info. ======'
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,I7)') '--- Total number of process           : ', PRC_nprocs
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,I7)') '--- My Process number = (my rank + 1) : ', ADM_prc_me
+    if( IO_L ) write(IO_FID_LOG,'(1x,A)'   ) '====== Region/Grid topology info. ======'
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,A)' ) '--- Grid sysytem                      : ', ADM_HGRID_SYSTEM
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,I7)') '--- #  of diamond                     : ', ADM_DMD
+    if( IO_L ) write(IO_FID_LOG,'(1x,A)'   ) '====== Region management info. ======'
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,I7)') '--- Region level (RL)                 : ', ADM_rlevel
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,I7,3(A,I4),A)') '--- Total number of region            : ', ADM_rgn_nmax, &
                                              ' (', 2**ADM_rlevel, ' x', 2**ADM_rlevel, ' x', ADM_DMD, ' )'
-    write(IO_FID_LOG,'(1x,A,I7)') '--- #  of region per process          : ', ADM_lall
-    write(IO_FID_LOG,'(1x,A)'   ) '--- ID of region in my process        : '
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,I7)') '--- #  of region per process          : ', ADM_lall
+    if( IO_L ) write(IO_FID_LOG,'(1x,A)'   ) '--- ID of region in my process        : '
     if( IO_L ) write(IO_FID_LOG,*)           RGNMNG_lp2r(1:ADM_lall,ADM_prc_me)
 
-    write(IO_FID_LOG,'(1x,A,I7)') '--- Region ID, contains north pole    : ', RGNMNG_rgn4pl(I_NPL)
-    write(IO_FID_LOG,'(1x,A,I7)') '--- Region ID, contains south pole    : ', RGNMNG_rgn4pl(I_SPL)
-    write(IO_FID_LOG,'(1x,A,I7)') '--- Process rank, managing north pole : ', RGNMNG_r2p_pl(I_NPL)
-    write(IO_FID_LOG,'(1x,A,I7)') '--- Process rank, managing south pole : ', RGNMNG_r2p_pl(I_SPL)
-    write(IO_FID_LOG,'(1x,A)'   ) '====== Grid management info. ======'
-    write(IO_FID_LOG,'(1x,A,I7)') '--- Grid level (GL)                   : ', ADM_glevel
-    write(IO_FID_LOG,'(1x,A,I7,2(A,I4),A,I7,A)') '--- Total number of grid (horizontal) : ', &
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,I7)') '--- Region ID, contains north pole    : ', RGNMNG_rgn4pl(I_NPL)
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,I7)') '--- Region ID, contains south pole    : ', RGNMNG_rgn4pl(I_SPL)
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,I7)') '--- Process rank, managing north pole : ', RGNMNG_r2p_pl(I_NPL)
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,I7)') '--- Process rank, managing south pole : ', RGNMNG_r2p_pl(I_SPL)
+    if( IO_L ) write(IO_FID_LOG,'(1x,A)'   ) '====== Grid management info. ======'
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,I7)') '--- Grid level (GL)                   : ', ADM_glevel
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,I7,2(A,I4),A,I7,A)') '--- Total number of grid (horizontal) : ', &
                                                  4**(ADM_glevel-ADM_rlevel)*ADM_rgn_nmax,    &
                                                  ' (', 2**(ADM_glevel-ADM_rlevel),           &
                                                  ' x', 2**(ADM_glevel-ADM_rlevel),           &
                                                  ' x', ADM_rgn_nmax, ' )'
-    write(IO_FID_LOG,'(1x,A,I7)') '--- Number of vertical layer          : ', ADM_kmax-ADM_kmin+1
+    if( IO_L ) write(IO_FID_LOG,'(1x,A,I7)') '--- Number of vertical layer          : ', ADM_kmax-ADM_kmin+1
 
     if ( debug ) then
        if( IO_L ) write(IO_FID_LOG,*)
        if( IO_L ) write(IO_FID_LOG,*) '====== region management information ======'
        if( IO_L ) write(IO_FID_LOG,*)
-       write(IO_FID_LOG,'(1x,A,I7)') '--- # of region in this node : ', ADM_lall
+       if( IO_L ) write(IO_FID_LOG,'(1x,A,I7)') '--- # of region in this node : ', ADM_lall
 
        if( IO_L ) write(IO_FID_LOG,*) '--- (l,prc_me) => (rgn)'
        do l = 1, ADM_lall
           rgnid = RGNMNG_l2r(l)
-          write(IO_FID_LOG,'(1x,A,I4,A,I6,A,I6,A)') '--- (',l,',',ADM_prc_me,') => (',rgnid,') '
+          if( IO_L ) write(IO_FID_LOG,'(1x,A,I4,A,I6,A,I6,A)') '--- (',l,',',ADM_prc_me,') => (',rgnid,') '
        enddo
 
        if( IO_L ) write(IO_FID_LOG,*)
@@ -1044,16 +1129,16 @@ contains
              rgnid_next = RGNMNG_edge_tab(I_RGNID,d,rgnid)
              dstr       = RGNMNG_edgename(d)
              dstr_next  = RGNMNG_edgename(RGNMNG_edge_tab(I_DIR,d,rgnid))
-             write(IO_FID_LOG,'(5x,A,I6,A,A,A,I6,A,A,A)') '(',rgnid,',',dstr,') -> (', rgnid_next,',', dstr_next,')'
+             if( IO_L ) write(IO_FID_LOG,'(5x,A,I6,A,A,A,I6,A,A,A)') '(',rgnid,',',dstr,') -> (', rgnid_next,',', dstr_next,')'
           enddo
 
           if( IO_L ) write(IO_FID_LOG,*) '--- vertex link: (rgn)'
           do d = I_W, I_S
              dstr = RGNMNG_vertname(d)
-             write(IO_FID_LOG,'(5x,A,I6,A,A,A)',advance='no') '(',rgnid,',',dstr,')'
+             if( IO_L ) write(IO_FID_LOG,'(5x,A,I6,A,A,A)',advance='no') '(',rgnid,',',dstr,')'
              do v = 2, RGNMNG_vert_num(d,rgnid)
                 dstr = RGNMNG_vertname(RGNMNG_vert_tab(I_DIR,d,rgnid,v))
-                write(IO_FID_LOG,'(A,I6,A,A,A)',advance='no') ' -> (',RGNMNG_vert_tab(I_RGNID,d,rgnid,v),',',dstr,')'
+                if( IO_L ) write(IO_FID_LOG,'(A,I6,A,A,A)',advance='no') ' -> (',RGNMNG_vert_tab(I_RGNID,d,rgnid,v),',',dstr,')'
              enddo
              if( IO_L ) write(IO_FID_LOG,*)
           enddo
@@ -1067,11 +1152,11 @@ contains
        do v = 2, ADM_vlink
           rgnid = RGNMNG_vert_tab_pl(I_RGNID,I_NPL,v)
           dstr  = RGNMNG_vertname(RGNMNG_vert_tab_pl(I_DIR,I_NPL,v))
-          write(IO_FID_LOG,'(A,I6,A,A,A)',advance='no') ' -> (',rgnid,',',dstr,')'
+          if( IO_L ) write(IO_FID_LOG,'(A,I6,A,A,A)',advance='no') ' -> (',rgnid,',',dstr,')'
        enddo
        rgnid = RGNMNG_vert_tab_pl(I_RGNID,I_NPL,1)
        dstr  = RGNMNG_vertname(RGNMNG_vert_tab_pl(I_DIR,I_NPL,1))
-       write(IO_FID_LOG,'(A,I6,A,A,A)',advance='no') ' -> (',rgnid,',',dstr,')'
+       if( IO_L ) write(IO_FID_LOG,'(A,I6,A,A,A)',advance='no') ' -> (',rgnid,',',dstr,')'
        if( IO_L ) write(IO_FID_LOG,*)
        if( IO_L ) write(IO_FID_LOG,*) '--- process, managing north pole : ', RGNMNG_r2p_pl(I_NPL)
 
@@ -1081,16 +1166,36 @@ contains
        do v = 2, ADM_vlink
           rgnid = RGNMNG_vert_tab_pl(I_RGNID,I_SPL,v)
           dstr  = RGNMNG_vertname(RGNMNG_vert_tab_pl(I_DIR,I_SPL,v))
-          write(IO_FID_LOG,'(A,I6,A,A,A)',advance='no') ' -> (',rgnid,',',dstr,')'
+          if( IO_L ) write(IO_FID_LOG,'(A,I6,A,A,A)',advance='no') ' -> (',rgnid,',',dstr,')'
        enddo
        rgnid = RGNMNG_vert_tab_pl(I_RGNID,I_SPL,1)
        dstr  = RGNMNG_vertname(RGNMNG_vert_tab_pl(I_DIR,I_SPL,1))
-       write(IO_FID_LOG,'(A,I6,A,A,A)',advance='no') ' -> (',rgnid,',',dstr,')'
+       if( IO_L ) write(IO_FID_LOG,'(A,I6,A,A,A)',advance='no') ' -> (',rgnid,',',dstr,')'
        if( IO_L ) write(IO_FID_LOG,*)
        if( IO_L ) write(IO_FID_LOG,*) '--- process, managing south pole : ', RGNMNG_r2p_pl(I_SPL)
     endif
 
     return
   end subroutine output_info
+
+  !-----------------------------------------------------------------------------
+  subroutine ADM_make_idstr( &
+       fname,    &
+       besename, &
+       l         )
+    implicit none
+
+    character(len=*), intent(out) :: fname    ! combined string (file name)
+    character(len=*), intent(in)  :: besename ! basename
+    integer,          intent(in)  :: l        ! local region number
+    !---------------------------------------------------------------------------
+
+    fname =  trim(GLOBAL_prefix_dir)      &
+          // trim(besename)               &
+          // trim(GLOBAL_extension_ens)   &
+          // trim(GLOBAL_extension_rgn(l) )
+
+    return
+  end subroutine ADM_make_idstr
 
 end module mod_adm

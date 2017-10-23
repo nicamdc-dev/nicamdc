@@ -134,8 +134,10 @@ program prg_driver
      Recv_list_r2r, Recv_list_p2r, Recv_list_r2p, &
      Copy_info_r2r, Copy_info_p2r, Copy_info_r2p, &
      Copy_list_r2r, Copy_list_p2r, Copy_list_r2p, &
-     sendbuf_r2r, sendbuf_p2r, sendbuf_r2p,       &
-     recvbuf_r2r, recvbuf_p2r, recvbuf_r2p,       &
+     sendbuf_r2r_SP, sendbuf_p2r_SP, sendbuf_r2p_SP, &
+     recvbuf_r2r_SP, recvbuf_p2r_SP, recvbuf_r2p_SP, &
+     sendbuf_r2r_DP, sendbuf_p2r_DP, sendbuf_r2p_DP, &
+     recvbuf_r2r_DP, recvbuf_p2r_DP, recvbuf_r2p_DP, &
      Singular_info, Singular_list, REQ_list
   use mod_grd, only: &
      GRD_x,     &

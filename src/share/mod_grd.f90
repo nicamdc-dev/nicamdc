@@ -169,16 +169,17 @@ module mod_grd
   real(RP), public, allocatable :: GRD_rdgzh(:)
 
   real(RP), public, allocatable :: GRD_afact(:) ! From the cell center value to the cell wall value
-  real(RP), public, allocatable :: GRD_bfact(:) !    A(k-1/2) = ( afac(k) A(k) + bfac(k) * A(k-1) ) / 2
+  real(RP), public, allocatable :: GRD_bfact(:) !  A(k-1/2) = ( afact(k) A(k) + bfact(k) * A(k-1) )
   real(RP), public, allocatable :: GRD_cfact(:) ! From the cell wall value to the cell center value
-  real(RP), public, allocatable :: GRD_dfact(:) !    A(k) = ( cfac(k) A(k+1/2) + dfac(k) * A(k-1/2) ) / 2
+  real(RP), public, allocatable :: GRD_dfact(:) !  A(k) = ( cfact(k) A(k+1/2) + dfact(k) * A(k-1/2) )
 
   real(RP), public, allocatable :: GRD_vz   (:,:,:,:)
   real(RP), public, allocatable :: GRD_vz_pl(:,:,:,:)
 #endif
 
-  character(len=H_SHORT), public :: GRD_grid_type = 'ON_SPHERE' ! grid type [add] T.Ohno 110722
-                                                  ! 'ON_PLANE'
+  integer, public, parameter :: GRD_grid_type_on_sphere = 1
+  integer, public, parameter :: GRD_grid_type_on_plane  = 2
+  integer, public            :: GRD_grid_type           = GRD_grid_type_on_sphere
 
   !-----------------------------------------------------------------------------
   !
@@ -195,6 +196,7 @@ module mod_grd
   character(len=H_SHORT), private :: topo_io_mode   = 'ADVANCED'
   character(len=H_LONG),  private :: hgrid_fname    = ''         ! horizontal grid file
   character(len=H_LONG),  private :: topo_fname     = ''         ! topography file
+  character(len=H_LONG),  private :: toposd_fname   = ''         ! topography file
 
   character(len=H_LONG),  private :: vgrid_fname    = ''         ! vertical grid file
   character(len=H_SHORT), private :: vgrid_scheme   = 'LINEAR'   ! vertical coordinate scheme
@@ -233,6 +235,7 @@ contains
        topo_io_mode,   &
        hgrid_fname,    &
        topo_fname,     &
+       toposd_fname,   &
        vgrid_fname,    &
        vgrid_scheme,   &
        h_efold,        &
@@ -300,7 +303,7 @@ contains
     if( hgrid_comm_flg ) call COMM_data_transfer( GRD_x, GRD_x_pl )
 
     ! scaling
-    if ( trim(GRD_grid_type) == 'ON_PLANE' ) then
+    if ( GRD_grid_type == GRD_grid_type_on_plane ) then
        call GRD_scaling(triangle_size)
     else
        call GRD_scaling(RADIUS)
@@ -322,7 +325,9 @@ contains
     GRD_zs   (:,:,:,:) = 0.0_RP
     GRD_zs_pl(:,:,:,:) = 0.0_RP
 
-    call GRD_input_topograph(topo_fname)
+    call GRD_input_topograph( topo_fname,   & ![IN]
+                              toposd_fname, & ![IN]
+                              topo_io_mode  ) ![IN]
 
 
 
@@ -584,7 +589,7 @@ contains
        endif
 
     else
-       if( IO_L ) write(IO_FID_LOG,*) 'Invalid io_mode!'
+       write(*,*) 'xxx [grd/GRD_input_hgrid] Invalid io_mode!', trim(io_mode)
        call PRC_MPIstop
     endif
 
@@ -701,7 +706,7 @@ contains
        endif
 
     else
-       if( IO_L ) write(IO_FID_LOG,*) 'Invalid io_mode!'
+       write(*,*) 'xxx [grd/GRD_output_hgrid] Invalid io_mode!', trim(io_mode)
        call PRC_MPIstop
     endif
 
@@ -736,7 +741,7 @@ contains
           iostat = ierr           )
 
        if ( ierr /= 0 ) then
-          write(*,*) 'xxx [GRD_input_vgrid] No vertical grid file.'
+          write(*,*) 'xxx [grd/GRD_input_vgrid] No vertical grid file.'
           call PRC_MPIstop
        endif
 
@@ -749,7 +754,7 @@ contains
        read(fid) gzh(:)
 
        if ( num_of_layer /= ADM_vlayer ) then
-          write(*,*) 'xxx [GRD_input_vgrid] inconsistency in number of vertical layers.'
+          write(*,*) 'xxx [grd/GRD_input_vgrid] inconsistency in number of vertical layers.'
           call PRC_MPIstop
        endif
 
@@ -763,15 +768,22 @@ contains
 
   !-----------------------------------------------------------------------------
   !> Output vertical grid
-  subroutine GRD_output_vgrid( fname )
+  subroutine GRD_output_vgrid( &
+       basename )
     use mod_adm, only: &
+       GLOBAL_prefix_dir,    &
+       GLOBAL_extension_ens, &
        ADM_vlayer
     implicit none
 
-    character(len=*), intent(in) :: fname
+    character(len=*), intent(in) :: basename
+
+    character(len=H_LONG) :: fname
 
     integer  :: fid, ierr
     !---------------------------------------------------------------------------
+
+    fname = trim(GLOBAL_prefix_dir)//trim(basename)//trim(GLOBAL_extension_ens)
 
     if( IO_L ) write(IO_FID_LOG,*) '*** Write vertical grid file: ', trim(fname)
 
@@ -794,35 +806,47 @@ contains
   !-----------------------------------------------------------------------------
   !> Input topography data
   subroutine GRD_input_topograph( &
-       basename )
-    use mod_comm, only: &
-       COMM_var
+       topo_basename,   &
+       toposd_basename, &
+       io_mode          )
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_fio, only: &
        FIO_input
     use mod_hio, only: &
        HIO_input
+    use mod_comm, only: &
+       COMM_var
     use mod_ideal_topo, only: &
        IDEAL_topo
     implicit none
 
-    character(len=*), intent(in) :: basename
+    character(len=*), intent(in) :: topo_basename   ! input basename (topography)
+    character(len=*), intent(in) :: toposd_basename ! input basename (std.dev. of topography)
+    character(len=*), intent(in) :: io_mode         ! io_mode
     !---------------------------------------------------------------------------
 
     if( IO_L ) write(IO_FID_LOG,*) '*** topography data input'
 
-    if ( topo_io_mode == 'ADVANCED' ) then
+    if ( io_mode == 'ADVANCED' ) then
 
-       if ( basename /= 'NONE' ) then
-          call FIO_input(GRD_zs(:,:,:,GRD_ZSFC),basename,'topo','ZSSFC1',1,1,1)
+       if ( topo_basename /= 'NONE' ) then
+          call FIO_input(GRD_zs(:,:,:,GRD_ZSFC),topo_basename,  'topo'       ,'ZSSFC1',1,1,1)
+       endif
+       if ( toposd_basename /= 'NONE' ) then
+          call FIO_input(GRD_zs(:,:,:,GRD_ZSD ),toposd_basename,'topo_stddev','ZSSFC1',1,1,1)
        endif
 
-    elseif( topo_io_mode == 'POH5' ) then
+    elseif( io_mode == 'POH5' ) then
 
-       if ( basename /= 'NONE' ) then
-          call HIO_input(GRD_zs(:,:,:,GRD_ZSFC),basename,'topo','ZSSFC1',1,1,1)
+       if ( topo_basename /= 'NONE' ) then
+          call HIO_input(GRD_zs(:,:,:,GRD_ZSFC),topo_basename,  'topo'       ,'ZSSFC1',1,1,1)
+       endif
+       if ( toposd_basename /= 'NONE' ) then
+          call HIO_input(GRD_zs(:,:,:,GRD_ZSD ),toposd_basename,'topo_stddev','ZSSFC1',1,1,1)
        endif
 
-    elseif( topo_io_mode == 'IDEAL' ) then
+    elseif( io_mode == 'IDEAL' ) then
 
        if( IO_L ) write(IO_FID_LOG,*) '*** make ideal topography'
 
@@ -830,6 +854,9 @@ contains
                         GRD_s (:,:,:,GRD_LON), & ! [IN]
                         GRD_zs(:,:,:,GRD_ZSFC) ) ! [OUT]
 
+    else
+       write(*,*) 'xxx [grd/GRD_input_topograph] Invalid io_mode!', trim(io_mode)
+       call PRC_MPIstop
     endif ! io_mode
 
     call COMM_var( GRD_zs, GRD_zs_pl, ADM_KNONE, 2 )
@@ -844,25 +871,26 @@ contains
        PRC_LOCAL_COMM_WORLD, &
        PRC_MPIstop
     use mod_adm, only: &
-       ADM_rgn_nmax,    &
-       ADM_vlink,       &
-       ADM_prc_pl,      &
-       ADM_have_pl,     &
-       ADM_gmax,        &
-       ADM_gmin,        &
-       ADM_gslf_pl,     &
-       RGNMNG_vert_num, &
-       RGNMNG_vert_tab, &
-       RGNMNG_l2r,      &
-       RGNMNG_r2lp,     &
-       I_prc,           &
-       I_RGNID,         &
        I_N,             &
        I_S,             &
        I_NPL,           &
-       I_SPL
+       I_SPL,           &
+       I_RGNID,         &
+       I_prc,           &
+       RGNMNG_vert_num, &
+       RGNMNG_vert_tab, &
+       RGNMNG_l2r,      &
+       RGNMNG_lp2r,     &
+       RGNMNG_r2lp,     &
+       RGNMNG_r2p_pl,   &
+       ADM_rgn_nmax,    &
+       ADM_vlink,       &
+       ADM_prc_pl,      &
+       ADM_prc_me,      &
+       ADM_gmax,        &
+       ADM_gmin,        &
+       ADM_gslf_pl
     use mod_comm, only: &
-       COMM_datatype, &
        COMM_var
     implicit none
 
@@ -875,10 +903,21 @@ contains
     real(RP) :: vsend_pl (ADM_nxyz,ADM_vlink)
     real(RP) :: vrecv_pl (ADM_nxyz,ADM_vlink)
 
+    integer  :: datatype
+
     integer  :: istat(MPI_STATUS_SIZE)
     integer  :: l, v, r
     integer  :: ierr
     !---------------------------------------------------------------------------
+
+    if ( RP == DP ) then
+       datatype = MPI_DOUBLE_PRECISION
+    elseif( RP == SP ) then
+       datatype = MPI_REAL
+    else
+       write(*,*) 'xxx [grd/GRD_gen_plgrid] unsupportd precision! RP=', RP
+       call PRC_MPIstop
+    endif
 
     !--- send information of grid around north pole from regular region
     send_flag(:) = .false.
@@ -900,25 +939,25 @@ contains
        if ( RGNMNG_l2r(l) == rgntab(v) ) then
           vsend_pl(:,v) = GRD_xt(suf(ADM_gmin,ADM_gmax),ADM_KNONE,l,ADM_TJ,:) ! [mod] H.Yashiro 20120525
 
-          call MPI_ISEND( vsend_pl(1,v),        &
-                          3,                    &
-                          COMM_datatype,        &
-                          ADM_prc_pl-1,         &
-                          rgntab(v),            &
-                          PRC_LOCAL_COMM_WORLD, &
-                          sreq(v),              &
-                          ierr                  )
+          call MPI_ISEND( vsend_pl(:,v),          &
+                          3,                      &
+                          datatype,               &
+                          RGNMNG_r2p_pl(I_NPL)-1, &
+                          rgntab(v),              &
+                          PRC_LOCAL_COMM_WORLD,   &
+                          sreq(v),                &
+                          ierr                    )
 
           send_flag(v) = .true.
        endif
     enddo
     enddo
 
-    if ( ADM_have_pl ) then
+    if ( ADM_prc_me == RGNMNG_r2p_pl(I_NPL) ) then
        do v = 1, ADM_vlink
-          call MPI_IRECV( vrecv_pl(1,v),        &
+          call MPI_IRECV( vrecv_pl(:,v),        &
                           3,                    &
-                          COMM_datatype,        &
+                          datatype,             &
                           prctab(v)-1,          &
                           rgntab(v),            &
                           PRC_LOCAL_COMM_WORLD, &
@@ -934,14 +973,12 @@ contains
        endif
     enddo
 
-    if ( ADM_have_pl ) then
+    if ( ADM_prc_me == RGNMNG_r2p_pl(I_NPL) ) then
        do v = 1, ADM_vlink
           call MPI_WAIT(rreq(v),istat,ierr)
           GRD_xt_pl(v+1,ADM_KNONE,I_NPL,:) = vrecv_pl(:,v) ! [mod] H.Yashiro 20120525
        enddo
     endif
-
-    call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
 
     !--- send information of grid around south pole from regular region
     send_flag(:) = .false.
@@ -962,25 +999,25 @@ contains
        if (RGNMNG_l2r(l) == rgntab(v) ) then
           vsend_pl(:,v) = GRD_xt(suf(ADM_gmax,ADM_gmin),ADM_KNONE,l,ADM_TI,:) ! [mod] H.Yashiro 20120525
 
-          call MPI_ISEND( vsend_pl(1,v),        &
-                          3,                    &
-                          COMM_datatype,        &
-                          ADM_prc_pl-1,         &
-                          rgntab(v),            &
-                          PRC_LOCAL_COMM_WORLD, &
-                          sreq(v),              &
-                          ierr                  )
+          call MPI_ISEND( vsend_pl(:,v),          &
+                          3,                      &
+                          datatype,               &
+                          RGNMNG_r2p_pl(I_SPL)-1, &
+                          rgntab(v),              &
+                          PRC_LOCAL_COMM_WORLD,   &
+                          sreq(v),                &
+                          ierr                    )
 
           send_flag(v) = .true.
        endif
     enddo
     enddo
 
-    if ( ADM_have_pl ) then
+    if ( ADM_prc_me == RGNMNG_r2p_pl(I_SPL) ) then
        do v = 1, ADM_vlink
-          call MPI_IRECV( vrecv_pl(1,v),        &
+          call MPI_IRECV( vrecv_pl(:,v),        &
                           3,                    &
-                          COMM_datatype,        &
+                          datatype,             &
                           prctab(v)-1,          &
                           rgntab(v),            &
                           PRC_LOCAL_COMM_WORLD, &
@@ -996,7 +1033,7 @@ contains
        endif
     enddo
 
-    if ( ADM_have_pl ) then
+    if ( ADM_prc_me == RGNMNG_r2p_pl(I_SPL) ) then
        do v = 1, ADM_vlink
           call MPI_WAIT(rreq(v),istat,ierr)
           GRD_xt_pl(v+1,ADM_KNONE,I_SPL,:) = vrecv_pl(:,v) ! [mod] H.Yashiro 20120525
@@ -1008,7 +1045,8 @@ contains
     ! grid point communication
     call COMM_var( GRD_x, GRD_x_pl, ADM_KNONE, 3 )
 
-    if ( ADM_have_pl ) then
+    if (      ADM_prc_me == RGNMNG_r2p_pl(I_NPL) &
+         .OR. ADM_prc_me == RGNMNG_r2p_pl(I_SPL) ) then
        GRD_xt_pl(ADM_gslf_pl,:,:,:) = GRD_x_pl(ADM_gslf_pl,:,:,:)
     endif
 
@@ -1033,7 +1071,7 @@ contains
        GRD_xt_pl(:,:,:,:)   = GRD_xt_pl(:,:,:,:) * fact
     endif
 
-    if ( GRD_grid_type == 'ON_PLANE' ) then
+    if ( GRD_grid_type == GRD_grid_type_on_plane ) then
        ! do nothing
     else
        ! setting the sphere radius

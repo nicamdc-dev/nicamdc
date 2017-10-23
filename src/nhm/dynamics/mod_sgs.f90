@@ -352,7 +352,7 @@ contains
     real(RP) :: pi_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
 !    integer  :: p, id
-    integer  :: i,j,k,l,n,  idir,ivar
+    integer:: i,j,k,l,n,  idir,ivar
     integer  :: nq
 
     real(RP) :: del_xyz2, SMG_CS2, LENGTH_maxlim2
@@ -418,7 +418,7 @@ contains
     real(RP) :: dummy(ADM_GALL,ADM_kall,ADM_LALL)
     real(RP) :: dummy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    logical  :: dbgfirst=.false.
+    logical :: dbgfirst=.false.
 
     real(RP) :: wrkwrk(ADM_GALL,ADM_kall,ADM_LALL)
     real(RP) :: wrkwrk2(ADM_GALL,ADM_kall,ADM_LALL)
@@ -619,7 +619,7 @@ contains
 !!$       do l = 1, ADM_lall_pl
 !!$          do k = ADM_kmin+1, ADM_kmax
 !!$             do n = 1, ADM_gall_pl
-!!$                n2= CONST_EGRAV/(potemh(n,k,l) * (potem(n,k,l)-potem(n,k-1,l))/ ( GRD_vz(n,k,l,GRD_Z)-GRD_vz(n,k-1,l,GRD_Z) ))
+!!$                n2= CONST_GRAV/(potemh(n,k,l) * (potem(n,k,l)-potem(n,k-1,l))/ ( GRD_vz(n,k,l,GRD_Z)-GRD_vz(n,k-1,l,GRD_Z) ))
 !!$                ri= n2/max(  (vx(n,k,l)-vx(n,k-1,l))**2+(vy(n,k,l)-vy(n,k-1,l))**2+(vz(n,k,l)-vz(n,k-1,l))**2, EPS) *&
 !!$                     ( GRD_vz(n,k,l,GRD_Z)-GRD_vz(n,k-1,l,GRD_Z) )**2
 !!$                qtot =
@@ -985,7 +985,7 @@ contains
     return
 
   end subroutine sgs_smagorinsky
-  !-------------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
   subroutine tb_smg_oprt_init(  &
        )
     use mod_grd, only: &
@@ -998,12 +998,12 @@ contains
          GRD_Z,        &!101201
          GRD_x,        &
          GRD_x_pl,     &
-         GRD_rscale!=cnst_eradisu
+         GRD_rscale!=CONST_eradisu
     use mod_runconf, only: &
          TRC_VMAX
     implicit none
 
-    integer  :: k
+    integer::k
 
     if(first)then  ! --> why is it needed?
        allocate(smg_oprt_cxh   (ADM_gall   ,ADM_kall,ADM_lall   ))
@@ -1108,7 +1108,7 @@ contains
     return
   end subroutine tb_smg_oprt_init
 
-  !-----------------------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
   ! gradient3d hybrid routine (full and half)
   subroutine Gradient3dfh(  &
        scl,  scl_pl,  &
@@ -1117,8 +1117,7 @@ contains
        vhh,  vhh_pl,  &
        input_sclh     )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_gall,    &
@@ -1147,10 +1146,10 @@ contains
 
     logical, intent(in), optional :: input_sclh
 
-    logical  :: input_sclh_in ! =.true.
+    logical :: input_sclh_in ! =.true.
 
-    integer  :: k,i,l
-    !-----------------------------------------------------------------------------------------
+    integer::k,i,l
+    !---------------------------------------------------------------------------
 
     if( .not. present(input_sclh) ) input_sclh_in = .true.
     if(       present(input_sclh) ) input_sclh_in = input_sclh
@@ -1230,7 +1229,7 @@ contains
     return
   end subroutine Gradient3dfh
 
-  !-------------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
   ! gsqrt * gam^2 * div3d  (full and half)
   subroutine gsqrt_Div3dfh(  &
        vx, vx_pl,                  & !in (full level) tensor component)
@@ -1281,9 +1280,9 @@ contains
     real(RP),intent(in)::vzh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! half level
 
     logical,intent(in),optional::output_sclh
-    logical  ::output_sclh_in=.true.
+    logical ::output_sclh_in=.true.
 
-    integer  :: k,i,l
+    integer::k,i,l
 
     real(RP)::tmp   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP)::tmp_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -1528,13 +1527,13 @@ contains
 
     return
   end subroutine gsqrt_Div3dfh
-  !-------------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
   subroutine dbgmx(cha,var)
     character(len=*):: cha
     real(RP):: var(:,:,:)
 !    if (ADM_prc_me.eq.1) then
 !      write(*,*) trim(cha),maxval(var),minval(var), maxloc(var),minloc(var)
-       write(IO_FID_LOG,*) trim(cha),maxval(var),minval(var), maxloc(var),minloc(var)
+       if( IO_L ) write(IO_FID_LOG,*) trim(cha),maxval(var),minval(var), maxloc(var),minloc(var)
 !    endif
   end subroutine dbgmx
 

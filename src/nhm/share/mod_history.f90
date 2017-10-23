@@ -122,8 +122,6 @@ contains
        GRD_gz
     use mod_time, only: &
        TIME_CTIME
-    use mod_runconf, only: &
-       RUNNAME
     implicit none
 
     character(len=H_SHORT) :: hist3D_layername  != ''
@@ -255,7 +253,7 @@ contains
        call PRC_MPIstop
     endif
     HIST_io_fname = trim(output_path)//trim(histall_fname)
-    HIST_io_desc  = trim(RUNNAME)
+    HIST_io_desc  = "NICAM history output"
 
     if    ( output_size == 4 ) then
        HIST_dtype = IO_REAL4
