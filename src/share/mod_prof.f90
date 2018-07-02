@@ -2,11 +2,11 @@
 !> module profiler
 !!
 !! @par Description
-!!          Time counter & FLOP counter(PAPI) toolbox + simple array checker
+!!         Time counter & FLOP counter(PAPI) toolbox + simple array checker
 !!
-!! @author Team SCALE
-!!
+!! @author NICAM developers
 !<
+!-------------------------------------------------------------------------------
 module mod_prof
   !-----------------------------------------------------------------------------
   !
@@ -118,7 +118,7 @@ contains
     !--- read namelist
     rewind(IO_FID_CONF)
     read(IO_FID_CONF,nml=PARAM_PROF,iostat=ierr)
-    if( ierr < 0 ) then !--- missing
+    if ( ierr < 0 ) then !--- missing
        if( IO_L ) write(IO_FID_LOG,*) '*** Not found namelist. Default used.'
     elseif( ierr > 0 ) then !--- fatal error
        write(*,*) 'xxx Not appropriate names in namelist PARAM_PROF. Check!'
@@ -187,6 +187,7 @@ contains
 
 #ifdef DEBUG
     !if( IO_L ) write(IO_FID_LOG,*) '<DEBUG> [PROF] ', rapname, PROF_rapnstr(id)
+    flush(IO_FID_LOG)
 #endif
 
 #ifdef _FAPP_

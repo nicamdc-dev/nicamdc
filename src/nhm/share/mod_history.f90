@@ -552,6 +552,10 @@ contains
        call get_log_pres
     endif
 
+    !$acc data &
+    !$acc pcopy(v_save) &
+    !$acc pcopyin(gd,ksumstr,cnvpre_klev,cnvpre_fac1,cnvpre_fac2)
+
     do n = 1, HIST_req_nmax
 
        save_var = .false.
@@ -613,9 +617,14 @@ contains
              if ( ktype_save(n) == '3D' ) then ! trim HALO
 
                 if ( ijdim_input == ADM_gall_in ) then
+
+                   !$acc kernels pcopy(v_save) pcopyin(gd,ksumstr)
+                   !$acc loop independent
                    do k = 1, kmax
                       g = 1
+                      !$acc loop independent
                       do j = ADM_gmin, ADM_gmax+1
+                      !$acc loop independent
                       do i = ADM_gmin, ADM_gmax+1
                          g2 = (j-1)*ADM_gall_1d + i
                          k2 = ksumstr(n)-1 + k
@@ -624,24 +633,42 @@ contains
 
                          g = g + 1
                       enddo
+                      !$acc end loop
                       enddo
+                      !$acc end loop
                    enddo
+                   !$acc end loop
+                   !$acc end kernels
+
                 else ! ijdim_input == ADM_gall
+
+                   !$acc kernels pcopy(v_save) pcopyin(gd,ksumstr)
+                   !$acc loop independent
                    do k = 1, kmax
+                   !$acc loop independent
                    do g = 1, ADM_gall
                       k2 = ksumstr(n)-1 + k
 
                       v_save(g,k2,l,1) = v_save(g,k2,l,1) + gd(g,k+ADM_kmin-1) * real(TIME_DTL,kind=RP)
                    enddo
+                   !$acc end loop
                    enddo
+                   !$acc end loop
+                   !$acc end kernels
+
                 endif
 
              else
 
                 if (ijdim_input == ADM_gall_in) then
+
+                   !$acc kernels pcopy(v_save) pcopyin(gd,ksumstr)
+                   !$acc loop independent
                    do k = 1, kmax
                       g = 1
+                      !$acc loop independent
                       do j = ADM_gmin, ADM_gmax+1
+                      !$acc loop independent
                       do i = ADM_gmin, ADM_gmax+1
                          g2 = (j-1)*ADM_gall_1d + i
                          k2 = ksumstr(n)-1 + k
@@ -650,16 +677,29 @@ contains
 
                          g = g + 1
                       enddo
+                      !$acc end loop
                       enddo
+                      !$acc end loop
                    enddo
+                   !$acc end loop
+                   !$acc end kernels
+
                 else ! ijdim_input == ADM_gall
+
+                   !$acc kernels pcopy(v_save) pcopyin(gd,ksumstr)
+                   !$acc loop independent
                    do k = 1, kmax
+                   !$acc loop independent
                    do g = 1, ADM_gall
                       k2 = ksumstr(n)-1 + k
 
                       v_save(g,k2,l,1) = v_save(g,k2,l,1) + gd(g,k) * real(TIME_DTL,kind=RP)
                    enddo
+                   !$acc end loop
                    enddo
+                   !$acc end loop
+                   !$acc end kernels
+
                 endif
 
              endif
@@ -667,9 +707,13 @@ contains
           else ! convert to pressure level
 
              if (ijdim_input == ADM_gall_in) then
+
+                !$acc kernels pcopy(v_save) pcopyin(gd,cnvpre_fac1,cnvpre_fac2,cnvpre_klev,ksumstr)
                 do k = 1, npreslev
                    g = 1
+                   !$acc loop independent
                    do j = ADM_gmin, ADM_gmax+1
+                   !$acc loop independent
                    do i = ADM_gmin, ADM_gmax+1
                       g2 = (j-1)*ADM_gall_1d + i
                       k1 = cnvpre_klev(g2,k,l)
@@ -684,10 +728,18 @@ contains
 
                       g = g + 1
                    enddo
+                   !$acc end loop
                    enddo
+                   !$acc end loop
                 enddo
+                !$acc end loop
+                !$acc end kernels
+
              else ! ijdim_input == ADM_gall
+
+                !$acc kernels pcopy(v_save) pcopyin(gd,cnvpre_fac1,cnvpre_fac2,cnvpre_klev,ksumstr)
                 do k = 1, npreslev
+                   !$acc loop independent
                    do g = 1, ADM_gall
                       k1 = cnvpre_klev(g,k,l)
                       k2 = ksumstr(n)-1 + k
@@ -699,7 +751,11 @@ contains
                          v_save(g,k2,l,1) = UNDEF
                       endif
                    enddo
+                   !$acc end loop
                 enddo
+                !$acc end loop
+                !$acc end kernels
+
              endif
 
           endif ! z*-level or p-level
@@ -708,6 +764,8 @@ contains
 
        endif ! save data ?
     enddo
+
+    !$acc end data
 
     return
   end subroutine history_in

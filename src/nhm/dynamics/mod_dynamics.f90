@@ -24,7 +24,6 @@ module mod_dynamics
   !
   public :: dynamics_setup
   public :: dynamics_step
-  public :: dynbudget_step0
 
   !-----------------------------------------------------------------------------
   !
@@ -66,8 +65,8 @@ contains
        numfilter_setup
     use mod_vi, only: &
        vi_setup
-!    use mod_sgs, only: &
-!       sgs_setup
+!TENTATIVE!    use mod_sgs, only: &
+!TENTATIVE!       sgs_setup
     use mod_nudge, only: &
        NDG_setup
     implicit none
@@ -144,7 +143,7 @@ contains
     call vi_setup
 
     !---< sub-grid scale dynamics module setup >---
-!    call sgs_setup
+!TENTATIVE!    call sgs_setup
 
     !---< nudging module setup >---
     call NDG_setup
@@ -167,9 +166,51 @@ contains
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_kmax,    &
-       ADM_kmin
+       ADM_kmin,    &
+       ADM_have_sgp   ! [OpenACC]
     use mod_comm, only: &
-       COMM_data_transfer
+       COMM_data_transfer, &
+       sendbuf_r2r_SP, & ! [OpenACC]
+       sendbuf_p2r_SP, & ! [OpenACC]
+       sendbuf_r2p_SP, & ! [OpenACC]
+       recvbuf_r2r_SP, & ! [OpenACC]
+       recvbuf_p2r_SP, & ! [OpenACC]
+       recvbuf_r2p_SP, & ! [OpenACC]
+       sendbuf_r2r_DP, & ! [OpenACC]
+       sendbuf_p2r_DP, & ! [OpenACC]
+       sendbuf_r2p_DP, & ! [OpenACC]
+       recvbuf_r2r_DP, & ! [OpenACC]
+       recvbuf_p2r_DP, & ! [OpenACC]
+       recvbuf_r2p_DP, & ! [OpenACC]
+       Send_list_r2r,  & ! [OpenACC]
+       Send_list_p2r,  & ! [OpenACC]
+       Send_list_r2p,  & ! [OpenACC]
+       Recv_list_r2r,  & ! [OpenACC]
+       Recv_list_p2r,  & ! [OpenACC]
+       Recv_list_r2p,  & ! [OpenACC]
+       Copy_list_r2r,  & ! [OpenACC]
+       Copy_list_p2r,  & ! [OpenACC]
+       Copy_list_r2p,  & ! [OpenACC]
+       Singular_list     ! [OpenACC]
+    use mod_grd, only: &
+       GRD_rdgz,  & ! [OpenACC]
+       GRD_rdgzh, & ! [OpenACC]
+       GRD_afact, & ! [OpenACC]
+       GRD_bfact, & ! [OpenACC]
+       GRD_cfact, & ! [OpenACC]
+       GRD_dfact, & ! [OpenACC]
+       GRD_x,     & ! [OpenACC]
+       GRD_xr       ! [OpenACC]
+    use mod_gmtr, only: &
+       GMTR_p, & ! [OpenACC]
+       GMTR_t, & ! [OpenACC]
+       GMTR_a    ! [OpenACC]
+    use mod_oprt, only: &
+       OPRT_coef_div,  & ! [OpenACC]
+       OPRT_coef_grad, & ! [OpenACC]
+       OPRT_coef_lap,  & ! [OpenACC]
+       OPRT_coef_intp, & ! [OpenACC]
+       OPRT_coef_diff    ! [OpenACC]
     use mod_vmtr, only: &
        VMTR_GSGAM2,       &
        VMTR_GSGAM2_pl,    &
@@ -178,7 +219,15 @@ contains
        VMTR_C2WfactGz,    &
        VMTR_C2WfactGz_pl, &
        VMTR_PHI,          &
-       VMTR_PHI_pl
+       VMTR_PHI_pl,       &
+       VMTR_GAM2H,        & ! [OpenACC]
+       VMTR_GSGAM2H,      & ! [OpenACC]
+       VMTR_RGSQRTH,      & ! [OpenACC]
+       VMTR_RGAM,         & ! [OpenACC]
+       VMTR_RGAMH,        & ! [OpenACC]
+       VMTR_RGSGAM2,      & ! [OpenACC]
+       VMTR_RGSGAM2H,     & ! [OpenACC]
+       VMTR_W2Cfact         ! [OpenACC]
     use mod_time, only: &
        TIME_INTEG_TYPE, &
        TIME_DTL,        &
@@ -211,7 +260,8 @@ contains
        THUBURN_LIM
     use mod_prgvar, only: &
        prgvar_get, &
-       prgvar_set
+       prgvar_set, &
+       PRG_var       ! [OpenACC]
     use mod_bndcnd, only: &
        BNDCND_all
     use mod_bsstate, only: &
@@ -227,26 +277,27 @@ contains
        NUMFILTER_DOverticaldiff,   &
        numfilter_rayleigh_damping, &
        numfilter_hdiffusion,       &
-       numfilter_vdiffusion
+       numfilter_vdiffusion,       &
+       Kh_coef,                    & ! [OpenACC]
+       Kh_coef_lap1,               & ! [OpenACC]
+       divdamp_coef,               & ! [OpenACC]
+       divdamp_2d_coef               ! [OpenACC]
     use mod_src, only: &
        src_advection_convergence_momentum, &
        src_advection_convergence,          &
        I_SRC_default
     use mod_vi, only: &
-       vi_small_step
+       vi_small_step, &
+       Mc, Ml, Mu       ! [OpenACC]
     use mod_src_tracer, only: &
        src_tracer_advection
     use mod_forcing_driver, only: &
        forcing_update
-!    use mod_sgs, only: &
-!       sgs_smagorinsky
+!TENTATIVE!    use mod_sgs, only: &
+!TENTATIVE!       sgs_smagorinsky
     use mod_nudge, only: &
        NDG_update_reference, &
        NDG_apply_uvtp
-    !##### OpenACC (for data copy) #####
-    use mod_prgvar, only: &
-       PRG_var
-    !##### OpenACC #####
     implicit none
 
     real(RP) :: PROG         (ADM_gall   ,ADM_kall,ADM_lall   ,6)        ! prognostic variables
@@ -337,10 +388,23 @@ contains
     !---------------------------------------------------------------------------
     !$acc wait
 
-    !$acc  data &
-    !$acc& create(PROG,PROGq,g_TEND,g_TENDq,f_TEND,f_TENDq,PROG0,PROGq0,PROG_split,PROG_mean) &
-    !$acc& create(rho,vx,vy,vz,w,ein,tem,pre,eth,th,rhogd,pregd,q,qd,cv) &
-    !$acc& pcopy(PRG_var)
+    !$acc data &
+    !$acc pcreate(g_TEND,g_TENDq,f_TEND,f_TENDq,PROG00,PROGq00,PROG0,PROG_split,PROG_mean) &
+    !$acc pcreate(f_TENDrho_mean,f_TENDq_mean,PROG_mean_mean) &
+    !$acc pcreate(DIAG,q,rho,ein,eth,th,rhogd,pregd,qd,cv) &
+    !$acc pcopyin(ADM_have_sgp) &
+    !$acc pcopyin(GRD_rdgz,GRD_rdgzh,GRD_afact,GRD_bfact,GRD_cfact,GRD_dfact,GRD_x,GRD_xr) &
+    !$acc pcopy(sendbuf_r2r_SP,sendbuf_p2r_SP,sendbuf_r2p_SP,recvbuf_r2r_SP,recvbuf_p2r_SP,recvbuf_r2p_SP) &
+    !$acc pcopy(sendbuf_r2r_DP,sendbuf_p2r_DP,sendbuf_r2p_DP,recvbuf_r2r_DP,recvbuf_p2r_DP,recvbuf_r2p_DP) &
+    !$acc pcopyin(Send_list_r2r,Send_list_p2r,Send_list_r2p,Recv_list_r2r,Recv_list_p2r,Recv_list_r2p) &
+    !$acc pcopyin(Copy_list_r2r,Copy_list_p2r,Copy_list_r2p,Singular_list) &
+    !$acc pcopyin(GMTR_p,GMTR_t,GMTR_a) &
+    !$acc pcopyin(OPRT_coef_div,OPRT_coef_grad,OPRT_coef_lap,OPRT_coef_intp,OPRT_coef_diff) &
+    !$acc pcopyin(VMTR_GAM2H,VMTR_GSGAM2,VMTR_GSGAM2H,VMTR_RGSQRTH,VMTR_RGAM,VMTR_RGAMH) &
+    !$acc pcopyin(VMTR_RGSGAM2,VMTR_RGSGAM2H,VMTR_W2Cfact,VMTR_C2Wfact,VMTR_C2WfactGz,VMTR_PHI) &
+    !$acc pcopyin(rho_bs,pre_bs) &
+    !$acc pcopyin(Kh_coef,Kh_coef_lap1,divdamp_coef,divdamp_2d_coef,Mc,Ml,Mu) &
+    !$acc pcopyin(num_of_iteration_sstep)
 
     call PROF_rapstart('__Dynamics',1)
 
@@ -365,6 +429,10 @@ contains
     dyn_step_dt   = real(TIME_DTL,kind=RP)
     large_step_dt = real(TIME_DTL,kind=RP) * rweight_dyndiv
 
+#ifdef MORETIMER
+call PROF_rapstart('___Pre_Post_01')
+#endif
+
     !--- get from prg0
     call prgvar_get( PROG (:,:,:,I_RHOG),   PROG_pl (:,:,:,I_RHOG),   & ! [OUT]
                      PROG (:,:,:,I_RHOGVX), PROG_pl (:,:,:,I_RHOGVX), & ! [OUT]
@@ -374,17 +442,25 @@ contains
                      PROG (:,:,:,I_RHOGE),  PROG_pl (:,:,:,I_RHOGE),  & ! [OUT]
                      PROGq(:,:,:,:),        PROGq_pl(:,:,:,:)         ) ! [OUT]
 
+#ifdef MORETIMER
+call PROF_rapend  ('___Pre_Post_01')
+#endif
+
     call PROF_rapend  ('___Pre_Post',1)
 
     do ndyn = 1, DYN_DIV_NUM
 
     call PROF_rapstart('___Pre_Post',1)
 
+#ifdef MORETIMER
+call PROF_rapstart('___Pre_Post_02')
+#endif
+
     !--- save the value before tracer advection
     if ( ( .NOT. trcadv_out_dyndiv ) .OR. ndyn == 1 ) then
 
 !OCL XFILL
-       !$acc kernels pcopy(PROG00) pcopyin(PROG) async(0)
+       !$acc kernels pcopy(PROG00) pcopyin(PROG)
        !$omp parallel do default(none),private(g,k,l,iv), &
        !$omp shared(gall,kall,lall,PROG00,PROG), &
        !$omp collapse(3)
@@ -405,7 +481,7 @@ contains
        if ( TRC_ADV_TYPE == 'DEFAULT' ) then
 
 !OCL XFILL
-          !$acc kernels pcopy(PROGq00) pcopyin(PROGq) async(0)
+          !$acc kernels pcopy(PROGq00) pcopyin(PROGq)
           !$omp parallel do default(none),private(g,k,l,nq), &
           !$omp shared(gall,kall,lall,nall,PROGq00,PROGq), &
           !$omp collapse(3)
@@ -426,9 +502,14 @@ contains
        endif
     endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('___Pre_Post_02')
+call PROF_rapstart('___Pre_Post_03')
+#endif
+
     !--- save the value before RK loop
 !OCL XFILL
-    !$acc kernels pcopy(PROG0) pcopyin(PROG) async(0)
+    !$acc kernels pcopy(PROG0) pcopyin(PROG)
     !$omp parallel do default(none),private(g,k,l,iv), &
     !$omp shared(gall,kall,lall,PROG0,PROG), &
     !$omp collapse(3)
@@ -446,6 +527,10 @@ contains
 
     PROG0_pl(:,:,:,:) = PROG_pl(:,:,:,:)
 
+#ifdef MORETIMER
+call PROF_rapend  ('___Pre_Post_03')
+#endif
+
     call PROF_rapend  ('___Pre_Post',1)
 
     if ( TIME_INTEG_TYPE == 'TRCADV' ) then  ! TRC-ADV Test Bifurcation
@@ -453,7 +538,7 @@ contains
        call PROF_rapstart('___Tracer_Advection',1)
 
 !OCL XFILL
-       !$acc kernels pcopy(f_TEND) async(0)
+       !$acc kernels pcopy(f_TEND)
        !$omp parallel do default(none),private(g,k,l,iv), &
        !$omp shared(gall,kall,lall,f_TEND), &
        !$omp collapse(3)
@@ -497,9 +582,13 @@ contains
 
        call PROF_rapstart('___Pre_Post',1)
 
+#ifdef MORETIMER
+call PROF_rapstart('___Pre_Post_04')
+#endif
+
        !---< Generate diagnostic values and set the boudary conditions
 !OCL XFILL
-       !$acc kernels pcopy(rho,vx,vy,vz,ein) pcopyin(PROG,VMTR_GSGAM2) async(0)
+       !$acc kernels pcopy(DIAG,rho,ein) pcopyin(PROG,VMTR_GSGAM2)
        !$omp parallel do default(none),private(g,k,l), &
        !$omp shared(gall,kall,lall,rho,ein,PROG,DIAG,VMTR_GSGAM2), &
        !$omp collapse(2)
@@ -516,9 +605,8 @@ contains
        enddo
        !$omp end parallel do
        !$acc end kernels
-
 !OCL XFILL
-       !$acc kernels pcopy(q) pcopyin(PROGq,PROG) async(0)
+       !$acc kernels pcopy(q) pcopyin(PROGq,PROG)
        !$omp parallel do default(none),private(g,k,l,nq), &
        !$omp shared(gall,kall,lall,nall,q,PROG,PROGq), &
        !$omp collapse(3)
@@ -534,7 +622,7 @@ contains
        !$omp end parallel do
        !$acc end kernels
 
-       !$acc kernels pcopy(cv,qd,tem,pre) pcopyin(q,ein,rho,CVW) async(0)
+       !$acc kernels pcopy(DIAG,cv,qd) pcopyin(q,ein,rho,CVW)
        !$omp parallel do default(none),private(g,k,l,nq), &
        !$omp shared(gall,kall,lall,nall,nmin,nmax,DIAG,rho,ein,q,qd,cv,CVW,Rdry,Rvap,CVdry,iqv), &
        !$omp collapse(2)
@@ -560,9 +648,8 @@ contains
        enddo
        !$omp end parallel do
        !$acc end kernels
-
 !OCL XFILL
-       !$acc kernels pcopy(w) pcopyin(PROG,VMTR_C2Wfact) async(0)
+       !$acc kernels pcopy(DIAG) pcopyin(PROG,VMTR_C2Wfact)
        !$omp parallel do default(none),private(g,k,l), &
        !$omp shared(gall,kmin,kmax,lall,DIAG,PROG,VMTR_C2Wfact), &
        !$omp collapse(2)
@@ -576,6 +663,11 @@ contains
        enddo
        !$omp end parallel do
        !$acc end kernels
+
+#ifdef MORETIMER
+call PROF_rapend  ('___Pre_Post_04')
+call PROF_rapstart('___Pre_Post_05')
+#endif
 
        call BNDCND_all( ADM_gall,                       & ! [IN]
                         ADM_kall,                       & ! [IN]
@@ -599,6 +691,11 @@ contains
                         VMTR_C2Wfact  (:,:,:,:),        & ! [IN]
                         VMTR_C2WfactGz(:,:,:,:)         ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('___Pre_Post_05')
+call PROF_rapstart('___Pre_Post_06')
+#endif
+
        call THRMDYN_th ( ADM_gall,          & ! [IN]
                          ADM_kall,          & ! [IN]
                          ADM_lall,          & ! [IN]
@@ -614,9 +711,14 @@ contains
                          rho (:,:,:),       & ! [IN]
                          eth (:,:,:)        ) ! [OUT]
 
+#ifdef MORETIMER
+call PROF_rapend  ('___Pre_Post_06')
+call PROF_rapstart('___Pre_Post_07')
+#endif
+
        ! perturbations ( pre, rho with metrics )
 !OCL XFILL
-       !$acc kernels pcopy(pregd,rhogd) pcopyin(DIAG,pre_bs,rho,rho_bs,VMTR_GSGAM2) async(0)
+       !$acc kernels pcopy(pregd,rhogd) pcopyin(DIAG,pre_bs,rho,rho_bs,VMTR_GSGAM2)
        !$omp parallel do default(none),private(g,k,l), &
        !$omp shared(gall,kall,lall,pregd,rhogd,DIAG,pre_bs,rho,rho_bs,VMTR_GSGAM2), &
        !$omp collapse(2)
@@ -630,6 +732,11 @@ contains
        enddo
        !$omp end parallel do
        !$acc end kernels
+
+#ifdef MORETIMER
+call PROF_rapend  ('___Pre_Post_07')
+call PROF_rapstart('___Pre_Post_08')
+#endif
 
        if ( ADM_have_pl ) then
 
@@ -717,6 +824,10 @@ contains
 
        endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('___Pre_Post_08')
+#endif
+
        !$acc wait
        call PROF_rapend  ('___Pre_Post',1)
        !------------------------------------------------------------------------
@@ -739,8 +850,12 @@ contains
                                                 g_TEND(:,:,:,I_RHOGVZ), g_TEND_pl(:,:,:,I_RHOGVZ), & ! [OUT]
                                                 g_TEND(:,:,:,I_RHOGW),  g_TEND_pl(:,:,:,I_RHOGW)   ) ! [OUT]
 
+#ifdef MORETIMER
+call PROF_rapstart('___Large_step_01')
+#endif
+
 !OCL XFILL
-       !$acc kernels pcopy(g_TEND) async(0)
+       !$acc kernels pcopy(g_TEND)
        !$omp parallel do default(none),private(g,k,l), &
        !$omp shared(gall,kall,lall,g_TEND), &
        !$omp collapse(2)
@@ -757,6 +872,10 @@ contains
 
        g_TEND_pl(:,:,:,I_RHOG)  = 0.0_RP
        g_TEND_pl(:,:,:,I_RHOGE) = 0.0_RP
+
+#ifdef MORETIMER
+call PROF_rapend  ('___Large_step_01')
+#endif
 
        !---< numerical diffusion term
        if ( NDIFF_LOCATION == 'IN_LARGE_STEP' ) then
@@ -841,26 +960,26 @@ contains
 
        endif
 
-!       if ( TB_TYPE == 'SMG' ) then ! Smagorinksy-type SGS model
-!          call sgs_smagorinsky( nl,                                                  &
-!                                rho    (:,:,:),          rho_pl    (:,:,:),          & ! [IN]
-!                                PROG   (:,:,:,I_RHOG),   PROG_pl   (:,:,:,I_RHOG),   & ! [IN]
-!                                PROGq  (:,:,:,:),        PROGq_pl  (:,:,:,:  ),      & ! [IN]
-!                                DIAG   (:,:,:,I_vx),     DIAG_pl   (:,:,:,I_vx),     & ! [IN]
-!                                DIAG   (:,:,:,I_vy),     DIAG_pl   (:,:,:,I_vy),     & ! [IN]
-!                                DIAG   (:,:,:,I_vz),     DIAG_pl   (:,:,:,I_vz),     & ! [IN]
-!                                DIAG   (:,:,:,I_w),      DIAG_pl   (:,:,:,I_w),      & ! [IN]
-!                                DIAG   (:,:,:,I_tem),    DIAG_pl   (:,:,:,I_tem),    & ! [IN]
-!                                q      (:,:,:,:),        q_pl      (:,:,:,:),        & ! [IN]
-!                                th     (:,:,:),          th_pl     (:,:,:),          & ! [IN]
-!                                f_TEND (:,:,:,I_RHOG),   f_TEND_pl (:,:,:,I_RHOG),   & ! [INOUT]
-!                                f_TEND (:,:,:,I_RHOGVX), f_TEND_pl (:,:,:,I_RHOGVX), & ! [INOUT]
-!                                f_TEND (:,:,:,I_RHOGVY), f_TEND_pl (:,:,:,I_RHOGVY), & ! [INOUT]
-!                                f_TEND (:,:,:,I_RHOGVZ), f_TEND_pl (:,:,:,I_RHOGVZ), & ! [INOUT]
-!                                f_TEND (:,:,:,I_RHOGW),  f_TEND_pl (:,:,:,I_RHOGW),  & ! [INOUT]
-!                                f_TEND (:,:,:,I_RHOGE),  f_TEND_pl (:,:,:,I_RHOGE),  & ! [INOUT]
-!                                f_TENDq(:,:,:,:),        f_TENDq_pl(:,:,:,:)         ) ! [INOUT]
-!       endif
+!TENTATIVE!       if ( TB_TYPE == 'SMG' ) then ! Smagorinksy-type SGS model
+!TENTATIVE!          call sgs_smagorinsky( nl,                                                  &
+!TENTATIVE!                                rho    (:,:,:),          rho_pl    (:,:,:),          & ! [IN]
+!TENTATIVE!                                PROG   (:,:,:,I_RHOG),   PROG_pl   (:,:,:,I_RHOG),   & ! [IN]
+!TENTATIVE!                                PROGq  (:,:,:,:),        PROGq_pl  (:,:,:,:  ),      & ! [IN]
+!TENTATIVE!                                DIAG   (:,:,:,I_vx),     DIAG_pl   (:,:,:,I_vx),     & ! [IN]
+!TENTATIVE!                                DIAG   (:,:,:,I_vy),     DIAG_pl   (:,:,:,I_vy),     & ! [IN]
+!TENTATIVE!                                DIAG   (:,:,:,I_vz),     DIAG_pl   (:,:,:,I_vz),     & ! [IN]
+!TENTATIVE!                                DIAG   (:,:,:,I_w),      DIAG_pl   (:,:,:,I_w),      & ! [IN]
+!TENTATIVE!                                DIAG   (:,:,:,I_tem),    DIAG_pl   (:,:,:,I_tem),    & ! [IN]
+!TENTATIVE!                                q      (:,:,:,:),        q_pl      (:,:,:,:),        & ! [IN]
+!TENTATIVE!                                th     (:,:,:),          th_pl     (:,:,:),          & ! [IN]
+!TENTATIVE!                                f_TEND (:,:,:,I_RHOG),   f_TEND_pl (:,:,:,I_RHOG),   & ! [INOUT]
+!TENTATIVE!                                f_TEND (:,:,:,I_RHOGVX), f_TEND_pl (:,:,:,I_RHOGVX), & ! [INOUT]
+!TENTATIVE!                                f_TEND (:,:,:,I_RHOGVY), f_TEND_pl (:,:,:,I_RHOGVY), & ! [INOUT]
+!TENTATIVE!                                f_TEND (:,:,:,I_RHOGVZ), f_TEND_pl (:,:,:,I_RHOGVZ), & ! [INOUT]
+!TENTATIVE!                                f_TEND (:,:,:,I_RHOGW),  f_TEND_pl (:,:,:,I_RHOGW),  & ! [INOUT]
+!TENTATIVE!                                f_TEND (:,:,:,I_RHOGE),  f_TEND_pl (:,:,:,I_RHOGE),  & ! [INOUT]
+!TENTATIVE!                                f_TENDq(:,:,:,:),        f_TENDq_pl(:,:,:,:)         ) ! [INOUT]
+!TENTATIVE!       endif
 
        if ( FLAG_NUDGING ) then
 
@@ -889,8 +1008,12 @@ contains
                                ndg_TEND_out                                       ) ! [IN] ( TEND out )
        endif
 
+#ifdef MORETIMER
+call PROF_rapstart('___Large_step_02')
+#endif
+
        !--- sum the large step TEND ( advection + coriolis + num.diff.,SGS,nudge )
-       !$acc kernels pcopy(g_TEND) pcopyin(f_TEND) async(0)
+       !$acc kernels pcopy(g_TEND) pcopyin(f_TEND)
        !$omp parallel do default(none),private(g,k,l,iv), &
        !$omp shared(gall,kall,lall,g_TEND,f_TEND), &
        !$omp collapse(3)
@@ -908,6 +1031,10 @@ contains
 
        g_TEND_pl(:,:,:,:) = g_TEND_pl(:,:,:,:) + f_TEND_pl(:,:,:,:)
 
+#ifdef MORETIMER
+call PROF_rapend  ('___Large_step_02')
+#endif
+
        !$acc wait
        call PROF_rapend  ('___Large_step',1)
        !------------------------------------------------------------------------
@@ -915,10 +1042,14 @@ contains
        !------------------------------------------------------------------------
        call PROF_rapstart('___Small_step',1)
 
+#ifdef MORETIMER
+call PROF_rapstart('___Small_step_01')
+#endif
+
        if ( nl /= 1 ) then ! update split values
 
 !OCL XFILL
-          !$acc kernels pcopy(PROG_split) pcopyin(PROG0,PROG) async(0)
+          !$acc kernels pcopy(PROG_split) pcopyin(PROG0,PROG)
           !$omp parallel do default(none),private(g,k,l,iv), &
           !$omp shared(gall,kall,lall,PROG_split,PROG0,PROG), &
           !$omp collapse(3)
@@ -939,7 +1070,7 @@ contains
        else
 
 !OCL XFILL
-          !$acc kernels pcopy(PROG_split) async(0)
+          !$acc kernels pcopy(PROG_split)
           !$omp parallel do default(none),private(g,k,l,iv), &
           !$omp shared(gall,kall,lall,PROG_split), &
           !$omp collapse(3)
@@ -958,6 +1089,10 @@ contains
           PROG_split_pl(:,:,:,:) = 0.0_RP
 
        endif
+
+#ifdef MORETIMER
+call PROF_rapend  ('___Small_step_01')
+#endif
 
        !------ Core routine for small step
        !------    1. By this subroutine, prognostic variables ( rho,.., rhoge ) are calculated through
@@ -1013,7 +1148,11 @@ contains
                                         large_step_dt,                                           & ! [IN]
                                         THUBURN_LIM                                              ) ! [IN]
 
-             !$acc kernels pcopy(PROGq) pcopyin(f_TENDq) async(0)
+#ifdef MORETIMER
+call PROF_rapstart('___Tracer_Advection_01')
+#endif
+
+             !$acc kernels pcopy(PROGq) pcopyin(f_TENDq)
              !$omp parallel do default(none),private(g,k,l,nq), &
              !$omp shared(gall,kall,lall,nall,PROGq,f_TENDq,large_step_dt), &
              !$omp collapse(3)
@@ -1032,6 +1171,10 @@ contains
              if ( ADM_have_pl ) then
                 PROGq_pl(:,:,:,:) = PROGq_pl(:,:,:,:) + large_step_dt * f_TENDq_pl(:,:,:,:)
              endif
+
+#ifdef MORETIMER
+call PROF_rapend  ('___Tracer_Advection_01')
+#endif
 
              ! [comment] H.Tomita: I don't recommend adding the hyperviscosity term because of numerical instability in this case.
              if( I_TKE >= 0 ) do_tke_correction = .true.
@@ -1053,14 +1196,14 @@ contains
           enddo ! tracer LOOP
 
 !OCL XFILL
-          !$acc kernels pcopy(PROGq) pcopyin(PROGq0,g_TENDq,f_TENDq) async(0)
+          !$acc kernels pcopy(PROGq) pcopyin(PROGq00,g_TENDq,f_TENDq,num_of_iteration_sstep)
           !$omp parallel default(none),private(g,k,l,nq), &
           !$omp shared(gall,kall,lall,nall,nl,kmin,kmax,PROGq,PROGq00,g_TENDq,f_TENDq,num_of_iteration_sstep,small_step_dt)
           do nq = 1, nall
           do l  = 1, lall
              !$omp do
-             do k  = 1, kall
-             do g  = 1, gall
+             do k = 1, kall
+             do g = 1, gall
                 PROGq(g,k,l,nq) = PROGq00(g,k,l,nq)                                                                        &
                                 + ( num_of_iteration_sstep(nl) * small_step_dt ) * ( g_TENDq(g,k,l,nq) + f_TENDq(g,k,l,nq) )
              enddo
@@ -1068,7 +1211,7 @@ contains
              !$omp end do
 
              !$omp do
-             do g  = 1, gall
+             do g = 1, gall
                 PROGq(g,kmin-1,l,nq) = 0.0_RP
                 PROGq(g,kmax+1,l,nq) = 0.0_RP
              enddo
@@ -1093,7 +1236,11 @@ contains
        ! TKE fixer
        if ( do_tke_correction ) then
 
-          !$acc kernels pcopy(PROG,PROGq) pcopyin(VMTR_GSGAM2) async(0)
+#ifdef MORETIMER
+call PROF_rapstart('___Tracer_Advection_02')
+#endif
+
+          !$acc kernels pcopy(PROG,PROGq) pcopyin(VMTR_GSGAM2)
           do l = 1, ADM_lall
              !$omp parallel do default(none),private(g,k,TKEG_corr), &
              !$omp shared(l,gall,kall,PROG,PROGq,itke)
@@ -1122,6 +1269,10 @@ contains
              enddo
           endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('___Tracer_Advection_02')
+#endif
+
        endif
 
        else
@@ -1129,8 +1280,8 @@ contains
           !--- calculation of mean ( mean mass flux and tendency )
           if ( nl == num_of_iteration_lstep ) then
              if ( ndyn == 1 ) then
-
 !OCL XFILL
+                !$acc kernels pcopy(PROG_mean_mean) pcopyin(PROG_mean)
                 !$omp parallel do default(none),private(g,k,l,iv), &
                 !$omp shared(gall,kall,lall,PROG_mean_mean,rweight_dyndiv,PROG_mean), &
                 !$omp collapse(3)
@@ -1144,8 +1295,9 @@ contains
                 enddo
                 enddo
                 !$omp end parallel do
-
+                !$acc end kernels
 !OCL XFILL
+                !$acc kernels pcopy(f_TENDrho_mean) pcopyin(f_TEND)
                 !$omp parallel do default(none),private(g,k,l), &
                 !$omp shared(gall,kall,lall,f_TENDrho_mean,rweight_dyndiv,f_TEND), &
                 !$omp collapse(2)
@@ -1157,8 +1309,9 @@ contains
                 enddo
                 enddo
                 !$omp end parallel do
-
+                !$acc end kernels
 !OCL XFILL
+                !$acc kernels pcopy(f_TENDq_mean) pcopyin(f_TENDq)
                 !$omp parallel do default(none),private(g,k,l,nq), &
                 !$omp shared(gall,kall,lall,nall,f_TENDq_mean,rweight_dyndiv,f_TENDq), &
                 !$omp collapse(3)
@@ -1172,13 +1325,13 @@ contains
                 enddo
                 enddo
                 !$omp end parallel do
+                !$acc end kernels
 
                 PROG_mean_mean_pl(:,:,:,:) = rweight_dyndiv * PROG_mean_pl(:,:,:,:)
                 f_TENDrho_mean_pl(:,:,:)   = rweight_dyndiv * f_TEND_pl   (:,:,:,I_RHOG)
                 f_TENDq_mean_pl  (:,:,:,:) = rweight_dyndiv * f_TENDq_pl  (:,:,:,:)
-
              else
-
+                !$acc kernels pcopy(PROG_mean_mean) pcopyin(PROG_mean)
                 !$omp parallel do default(none),private(g,k,l,iv), &
                 !$omp shared(gall,kall,lall,PROG_mean_mean,rweight_dyndiv,PROG_mean), &
                 !$omp collapse(3)
@@ -1192,7 +1345,9 @@ contains
                 enddo
                 enddo
                 !$omp end parallel do
+                !$acc end kernels
 
+                !$acc kernels pcopy(f_TENDrho_mean) pcopyin(f_TEND)
                 !$omp parallel do default(none),private(g,k,l), &
                 !$omp shared(gall,kall,lall,f_TENDrho_mean,rweight_dyndiv,f_TEND), &
                 !$omp collapse(2)
@@ -1204,7 +1359,9 @@ contains
                 enddo
                 enddo
                 !$omp end parallel do
+                !$acc end kernels
 
+                !$acc kernels pcopy(f_TENDq_mean) pcopyin(f_TENDq)
                 !$omp parallel do default(none),private(g,k,l,nq), &
                 !$omp shared(gall,kall,lall,nall,f_TENDq_mean,rweight_dyndiv,f_TENDq), &
                 !$omp collapse(3)
@@ -1218,11 +1375,11 @@ contains
                 enddo
                 enddo
                 !$omp end parallel do
+                !$acc end kernels
 
                 PROG_mean_mean_pl(:,:,:,:) = PROG_mean_mean_pl(:,:,:,:) + rweight_dyndiv * PROG_mean_pl(:,:,:,:)
                 f_TENDrho_mean_pl(:,:,:)   = f_TENDrho_mean_pl(:,:,:)   + rweight_dyndiv * f_TEND_pl   (:,:,:,I_RHOG)
                 f_TENDq_mean_pl  (:,:,:,:) = f_TENDq_mean_pl  (:,:,:,:) + rweight_dyndiv * f_TENDq_pl  (:,:,:,:)
-
              endif
           endif
 
@@ -1231,10 +1388,18 @@ contains
        call PROF_rapend  ('___Tracer_Advection',1)
        call PROF_rapstart('___Pre_Post',1)
 
+#ifdef MORETIMER
+call PROF_rapstart('___Pre_Post_09c')
+#endif
+
        !------ Update
        if ( nl /= num_of_iteration_lstep ) then
           call COMM_data_transfer( PROG, PROG_pl )
        endif
+
+#ifdef MORETIMER
+call PROF_rapend  ('___Pre_Post_09c')
+#endif
 
        call PROF_rapend  ('___Pre_Post',1)
 
@@ -1258,7 +1423,11 @@ contains
                                   dyn_step_dt,                                                       & ! [IN]
                                   THUBURN_LIM                                                        ) ! [IN]
 
-             !$acc kernels pcopy(PROGq) pcopyin(f_TENDq) async(0)
+#ifdef MORETIMER
+call PROF_rapstart('___Tracer_Advection_03')
+#endif
+
+             !$acc kernels pcopy(PROGq) pcopyin(f_TENDq)
              !$omp parallel do default(none),private(g,k,l,nq), &
              !$omp shared(gall,kall,lall,nall,PROGq,f_TENDq_mean,dyn_step_dt), &
              !$omp collapse(3)
@@ -1278,7 +1447,12 @@ contains
                 PROGq_pl(:,:,:,:) = PROGq_pl(:,:,:,:) + dyn_step_dt * f_TENDq_mean_pl(:,:,:,:)
              endif
 
-          !$acc kernels pcopy(PROG,PROGq) pcopyin(VMTR_GSGAM2) async(0)
+#ifdef MORETIMER
+call PROF_rapend  ('___Tracer_Advection_03')
+call PROF_rapstart('___Tracer_Advection_04')
+#endif
+
+          !$acc kernels pcopy(PROG,PROGq) pcopyin(VMTR_GSGAM2)
           do l = 1, ADM_lall
              !$omp parallel do default(none),private(g,k,TKEG_corr), &
              !$omp shared(l,gall,kall,PROG,PROGq,itke)
@@ -1307,12 +1481,20 @@ contains
              enddo
           endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('___Tracer_Advection_04')
+#endif
+
        call PROF_rapend  ('___Tracer_Advection',1)
     endif
 
     enddo !--- divided step for dynamics
 
     call PROF_rapstart('___Pre_Post',1)
+
+#ifdef MORETIMER
+call PROF_rapstart('___Pre_Post_10')
+#endif
 
     call prgvar_set( PROG(:,:,:,I_RHOG),   PROG_pl(:,:,:,I_RHOG),   & ! [IN]
                      PROG(:,:,:,I_RHOGVX), PROG_pl(:,:,:,I_RHOGVX), & ! [IN]
@@ -1322,42 +1504,38 @@ contains
                      PROG(:,:,:,I_RHOGE),  PROG_pl(:,:,:,I_RHOGE),  & ! [IN]
                      PROGq(:,:,:,:),       PROGq_pl(:,:,:,:)        ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('___Pre_Post_10')
+#endif
+
     call PROF_rapend  ('___Pre_Post',1)
 
-    !$acc end data
+!     call PROF_rapstart('___Pre_Post',1)
+!
+!     !=> Niwa [TM]
+!     if (trim(TM_RUN) == 'ON' .AND. TM_OUT_METVAR) then
+!        call tm_metvar_setmfx( &
+!             v_mean_c(:,:,:,I_rhogvx),  v_mean_c_pl(:,:,:,I_rhogvx), &
+!             v_mean_c(:,:,:,I_rhogvy),  v_mean_c_pl(:,:,:,I_rhogvy), &
+!             v_mean_c(:,:,:,I_rhogvz),  v_mean_c_pl(:,:,:,I_rhogvz), &
+!             v_mean_c(:,:,:,I_rhogw),   v_mean_c_pl(:,:,:,I_rhogw)   )
+!        !
+!        call tm_metvar_setmet( &
+!             rhog,                   rhog_pl, &
+!             rhoge,                  rhoge_pl, &
+!             rhogq(:,:,:,I_QV:I_QC), rhogq_pl(:,:,:,I_QV:I_QC) &
+!             )
+!     endif
+!     !<= Niwa [TM]
+!
+!     call PROF_rapend  ('___Pre_Post',1)
 
-    !$acc wait
     call PROF_rapend  ('__Dynamics',1)
+
+    !$acc end data
+    !$acc wait
 
     return
   end subroutine dynamics_step
-
-  !-----------------------------------------------------------------------------
-  !> For history output at the start time (t=0)
-  subroutine dynbudget_step0
-    use mod_adm, only: &
-       ADM_gall_in, &
-       ADM_kall,    &
-       ADM_lall
-    use mod_history, only: &
-       history_in
-    implicit none
-
-    real(RP) :: zero(ADM_gall_in,ADM_kall)
-
-    integer  :: l
-    !---------------------------------------------------------------------------
-
-    zero(:,:) = 0.0_RP
-
-    do l = 1, ADM_lall
-       call history_in( 'ml_dyn_du',   zero(:,:) )
-       call history_in( 'ml_dyn_dv',   zero(:,:) )
-       call history_in( 'ml_dyn_dtem', zero(:,:) )
-       call history_in( 'ml_dyn_dqv',  zero(:,:) )
-    enddo
-
-    return
-  end subroutine dynbudget_step0
 
 end module mod_dynamics

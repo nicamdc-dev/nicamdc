@@ -2,12 +2,11 @@
 !> module RANDOM
 !!
 !! @par Description
-!!          random number generation module
-!!          Imported from SCALE library
+!!         Random number generation module
 !!
-!! @author Team SCALE
-!!
+!! @author NICAM developers
 !<
+!-------------------------------------------------------------------------------
 module mod_random
   !-----------------------------------------------------------------------------
   !
@@ -24,6 +23,11 @@ module mod_random
   !
   public :: RANDOM_setup
   public :: RANDOM_get
+
+  interface RANDOM_get
+     module procedure RANDOM_get_SP
+     module procedure RANDOM_get_DP
+  end interface RANDOM_get
 
   !-----------------------------------------------------------------------------
   !
@@ -93,7 +97,7 @@ contains
     implicit none
 
     integer  :: time1(8)
-    real(RP) :: time2
+    real(DP) :: time2
     !---------------------------------------------------------------------------
 
     if ( RANDOM_FIX ) then
@@ -109,15 +113,14 @@ contains
        call cpu_time(time2)
     endif
 
-    RANDOM_seedvar(:) = &
-         + ( time1(1) - 1970 ) * 32140800 &
-         + time1(2) * 2678400 &
-         + time1(3) * 86400 &
-         + time1(4) * 60 &
-         + time1(5) * 3600 &
-         + time1(6) * 60 &
-         + time1(7) &
-         + int(time2*1.E6_RP) + PRC_myrank
+    RANDOM_seedvar(:) = ( time1(1) - 1970 ) * 32140800 &
+                      + time1(2) * 2678400 &
+                      + time1(3) * 86400 &
+                      + time1(4) * 60 &
+                      + time1(5) * 3600 &
+                      + time1(6) * 60 &
+                      + time1(7) &
+                      + int(time2*1.E6_DP) + PRC_myrank
 
     call random_seed(put=RANDOM_seedvar)
 
@@ -126,16 +129,30 @@ contains
 
   !-----------------------------------------------------------------------------
   !> Get random number
-  subroutine RANDOM_get( var )
+  subroutine RANDOM_get_SP( var )
     implicit none
 
-    real(RP), intent(out) :: var(:,:,:)
+    real(SP), intent(out) :: var(:,:,:)
     !---------------------------------------------------------------------------
 
     call RANDOM_reset
     call random_number(var)
 
     return
-  end subroutine RANDOM_get
+  end subroutine RANDOM_get_SP
+
+  !-----------------------------------------------------------------------------
+  !> Get random number
+  subroutine RANDOM_get_DP( var )
+    implicit none
+
+    real(DP), intent(out) :: var(:,:,:)
+    !---------------------------------------------------------------------------
+
+    call RANDOM_reset
+    call random_number(var)
+
+    return
+  end subroutine RANDOM_get_DP
 
 end module mod_random

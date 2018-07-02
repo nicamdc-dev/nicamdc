@@ -144,6 +144,7 @@ contains
        src_buoyancy,              &
        I_SRC_default,             &
        I_SRC_horizontal
+    !$ use omp_lib
     implicit none
 
     real(RP), intent(inout) :: PROG         (ADM_gall   ,ADM_kall,ADM_lall   ,6) ! prognostic variables
@@ -246,6 +247,14 @@ contains
 
     integer  :: g, k, l, iv, ns
     !---------------------------------------------------------------------------
+    !$acc data &
+    !$acc pcreate(rhog_h,eth_h,diff_vh,diff_we,grhogetot0,g_TEND,drhog,drhogw,drhoge) &
+    !$acc pcreate(ddivdvx,ddivdvy,ddivdvz,ddivdw,ddivdvx_2d,ddivdvy_2d,ddivdvz_2d) &
+    !$acc pcreate(dpgrad,dpgradw,dbuoiw,drhoge_pw,drhoge_pwh,gz_tilde,preg_prim_split) &
+    !$acc pcopy(PROG,PROG_split,PROG_mean) &
+    !$acc pcopyin(vx,vy,vz,eth,rhog_prim,preg_prim,g_TEND0) &
+    !$acc pcopyin(Mc,Ml,Mu) &
+    !$acc pcopyin(GRD_afact,GRD_bfact,VMTR_C2Wfact,VMTR_W2Cfact)
 
     call PROF_rapstart('____vi_path0',2)
 
@@ -259,7 +268,12 @@ contains
     RovCV = CONST_Rdry / CONST_CVdry
     alpha = real(NON_HYDRO_ALPHA,kind=RP)
 
+#ifdef MORETIMER
+call PROF_rapstart('___vi_small_step_01')
+#endif
+
 !OCL XFILL
+    !$acc kernels pcopy(grhogetot0) pcopyin(g_TEND0)
     !$omp parallel do default(none),private(g,k,l), &
     !$omp shared(gall,kall,lall,grhogetot0,g_TEND0), &
     !$omp collapse(2)
@@ -271,10 +285,18 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     grhogetot0_pl(:,:,:) = g_TEND0_pl(:,:,:,I_RHOGE)
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_01')
+call PROF_rapstart('___vi_small_step_02')
+#endif
+
     ! full level -> half level
+
+    !$acc kernels pcopy(rhog_h,eth_h) pcopyin(PROG,eth,GRD_afact,GRD_bfact,VMTR_C2Wfact)
     !$omp parallel default(none),private(g,k,l), &
     !$omp shared(gall,kall,kmin,kmax,lall,rhog_h,eth_h,   &
     !$omp        PROG,eth,GRD_afact,GRD_bfact,VMTR_C2Wfact)
@@ -299,6 +321,7 @@ contains
        !$omp end do
     enddo
     !$omp end parallel
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
@@ -317,6 +340,11 @@ contains
        enddo
     endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_02')
+call PROF_rapstart('___vi_small_step_03z')
+#endif
+
     !---< Calculation of source term for rhog >
 
     call src_flux_convergence( PROG (:,:,:,I_RHOGVX), PROG_pl (:,:,:,I_RHOGVX), & ! [IN]
@@ -325,6 +353,11 @@ contains
                                PROG (:,:,:,I_RHOGW),  PROG_pl (:,:,:,I_RHOGW),  & ! [IN]
                                drhog(:,:,:),          drhog_pl(:,:,:),          & ! [OUT]
                                I_SRC_default                                    ) ! [IN]
+
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_03z')
+call PROF_rapstart('___vi_small_step_04z')
+#endif
 
     !---< Calculation of source term for Vh(vx,vy,vz) and W >
 
@@ -338,6 +371,11 @@ contains
                             ddivdvz(:,:,:),          ddivdvz_pl(:,:,:),          & ! [OUT]
                             ddivdw (:,:,:),          ddivdw_pl (:,:,:)           ) ! [OUT]
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_04z')
+call PROF_rapstart('___vi_small_step_05z')
+#endif
+
     call numfilter_divdamp_2d( PROG      (:,:,:,I_RHOGVX), PROG_pl      (:,:,:,I_RHOGVX), & ! [IN]
                                PROG      (:,:,:,I_RHOGVY), PROG_pl      (:,:,:,I_RHOGVY), & ! [IN]
                                PROG      (:,:,:,I_RHOGVZ), PROG_pl      (:,:,:,I_RHOGVZ), & ! [IN]
@@ -345,15 +383,30 @@ contains
                                ddivdvy_2d(:,:,:),          ddivdvy_2d_pl(:,:,:),          & ! [OUT]
                                ddivdvz_2d(:,:,:),          ddivdvz_2d_pl(:,:,:)           ) ! [OUT]
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_05z')
+call PROF_rapstart('___vi_small_step_06z')
+#endif
+
     ! pressure force
     call src_pres_gradient( preg_prim(:,:,:),   preg_prim_pl(:,:,:),   & ! [IN]
                             dpgrad   (:,:,:,:), dpgrad_pl   (:,:,:,:), & ! [OUT]
                             dpgradw  (:,:,:),   dpgradw_pl  (:,:,:),   & ! [OUT]
                             I_SRC_default                              ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_06z')
+call PROF_rapstart('___vi_small_step_07o')
+#endif
+
     ! buoyancy force
     call src_buoyancy( rhog_prim(:,:,:), rhog_prim_pl(:,:,:), & ! [IN]
                        dbuoiw   (:,:,:), dbuoiw_pl   (:,:,:)  ) ! [OUT]
+
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_07o')
+call PROF_rapstart('___vi_small_step_08z')
+#endif
 
     !---< Calculation of source term for rhoge >
 
@@ -366,6 +419,14 @@ contains
                                     drhoge(:,:,:),          drhoge_pl(:,:,:),          & ! [OUT]
                                     I_SRC_default                                      ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_08z')
+call PROF_rapstart('___vi_small_step_09')
+#endif
+
+    ! pressure work
+
+    !$acc kernels pcopy(drhoge_pw,drhoge_pwh,gz_tilde) pcopyin(PROG,vx,vy,vz,dpgrad,dpgradw,dbuoiw,rhog_h,VMTR_W2Cfact)
     !$omp parallel default(none),private(g,k,l), &
     !$omp shared(gall,kall,kmin,kmax,lall,drhoge_pw,drhoge_pwh,gz_tilde,        &
     !$omp        PROG,vx,vy,vz,dpgrad,dpgradw,dbuoiw,rhog_h,VMTR_W2Cfact,grav)
@@ -378,7 +439,6 @@ contains
        enddo
        enddo
        !$omp end do
-
 !OCL XFILL
        !$omp do
        do k = kmin, kmax
@@ -391,7 +451,6 @@ contains
        enddo
        enddo
        !$omp end do nowait
-
 !OCL XFILL
        !$omp do
        do g = 1, gall
@@ -401,6 +460,7 @@ contains
        !$omp end do
     enddo
     !$omp end parallel
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
@@ -427,8 +487,15 @@ contains
        enddo
     endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_09')
+call PROF_rapstart('___vi_small_step_10')
+#endif
+
     !---< sum of tendencies ( large step + pres-grad + div-damp + div-damp_2d + buoyancy ) >
 !OCL XFILL
+    !$acc kernels pcopy(g_TEND) pcopyin(g_TEND0,drhog,dpgradw,dbuoiw,drhoge,drhoge_pw) &
+    !$acc pcopyin(dpgrad,ddivdvx,ddivdvy,ddivdvz,ddivdw,ddivdvx_2d,ddivdvy_2d,ddivdvz_2d)
     !$omp parallel do default(none),private(g,k,l), &
     !$omp shared(gall,kall,lall,g_TEND,g_TEND0,drhog,dpgradw,dbuoiw,drhoge,drhoge_pw,        &
     !$omp        dpgrad,ddivdvx,ddivdvy,ddivdvz,ddivdw,ddivdvx_2d,ddivdvy_2d,ddivdvz_2d,alpha), &
@@ -447,6 +514,7 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
@@ -464,10 +532,16 @@ contains
        enddo
     endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_10')
+call PROF_rapstart('___vi_small_step_11')
+#endif
+
     ! initialization of mean mass flux
     rweight_itr = 1.0_RP / real(num_of_itr,kind=RP)
 
 !OCL XFILL
+    !$acc kernels pcopy(PROG_mean) pcopyin(PROG)
     !$omp parallel do default(none),private(g,k,l,iv), &
     !$omp shared(gall,kall,lall,PROG_mean,PROG), &
     !$omp collapse(3)
@@ -481,13 +555,23 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     PROG_mean_pl(:,:,:,I_RHOG:I_RHOGW)   = PROG_pl(:,:,:,I_RHOG:I_RHOGW)
+
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_11')
+call PROF_rapstart('___vi_small_step_12o')
+#endif
 
     ! update working matrix for vertical implicit solver
     call vi_rhow_update_matrix( eth_h   (:,:,:), eth_h_pl   (:,:,:), & ! [IN]
                                 gz_tilde(:,:,:), gz_tilde_pl(:,:,:), & ! [IN]
                                 dt                                   ) ! [IN]
+
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_12o')
+#endif
 
     call PROF_rapend  ('____vi_path0',2)
     !---------------------------------------------------------------------------
@@ -501,6 +585,11 @@ contains
 
        !---< calculation of preg_prim(*) from rhog(*) & rhoge(*) >
 
+#ifdef MORETIMER
+call PROF_rapstart('___vi_small_step_13')
+#endif
+
+       !$acc kernels pcopy(preg_prim_split) pcopyin(PROG_split)
        !$omp parallel default(none),private(g,k,l), &
        !$omp shared(gall,kall,kmin,kmax,lall,preg_prim_split,PROG_split,RovCV)
        do l = 1, lall
@@ -528,6 +617,7 @@ contains
           !$omp end do
        enddo
        !$omp end parallel
+       !$acc end kernels
 
        if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
@@ -548,9 +638,17 @@ contains
           enddo
        endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_13')
+#endif
+
        if ( TIME_SPLIT ) then
 
           !---< Calculation of source term for Vh(vx,vy,vz) and W (split) >
+
+#ifdef MORETIMER
+call PROF_rapstart('___vi_small_step_14z')
+#endif
 
           ! divergence damping
           call numfilter_divdamp( PROG_split(:,:,:,I_RHOGVX), PROG_split_pl(:,:,:,I_RHOGVX), & ! [IN]
@@ -562,6 +660,11 @@ contains
                                   ddivdvz   (:,:,:),          ddivdvz_pl   (:,:,:),          & ! [OUT]
                                   ddivdw    (:,:,:),          ddivdw_pl    (:,:,:)           ) ! [OUT]
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_14z')
+call PROF_rapstart('___vi_small_step_15z')
+#endif
+
           ! 2d divergence damping
           call numfilter_divdamp_2d( PROG_split(:,:,:,I_RHOGVX), PROG_split_pl(:,:,:,I_RHOGVX), & ! [IN]
                                      PROG_split(:,:,:,I_RHOGVY), PROG_split_pl(:,:,:,I_RHOGVY), & ! [IN]
@@ -569,6 +672,11 @@ contains
                                      ddivdvx_2d(:,:,:),          ddivdvx_2d_pl(:,:,:),          & ! [OUT]
                                      ddivdvy_2d(:,:,:),          ddivdvy_2d_pl(:,:,:),          & ! [OUT]
                                      ddivdvz_2d(:,:,:),          ddivdvz_2d_pl(:,:,:)           ) ! [OUT]
+
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_15z')
+call PROF_rapstart('___vi_small_step_16z')
+#endif
 
           ! pressure force
           ! dpgradw=0.0_RP becaude of f_type='HORIZONTAL'.
@@ -580,8 +688,15 @@ contains
           ! buoyancy force
           ! not calculated, because this term is implicit.
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_16z')
+call PROF_rapstart('___vi_small_step_17')
+#endif
+
           !---< sum of tendencies ( large step + split{ pres-grad + div-damp + div-damp_2d } ) >
 !OCL XFILL
+          !$acc kernels pcopy(drhogw,diff_vh) &
+          !$acc pcopyin(PROG_split,g_TEND,dpgrad,ddivdvx,ddivdvy,ddivdvz,ddivdw,ddivdvx_2d,ddivdvy_2d,ddivdvz_2d)
           !$omp parallel do default(none),private(g,k,l,drhogvx,drhogvy,drhogvz),                  &
           !$omp shared(gall,kall,lall,drhogw,diff_vh,PROG_split,dt,g_TEND,                         &
           !$omp        dpgrad,ddivdvx,ddivdvy,ddivdvz,ddivdw,ddivdvx_2d,ddivdvy_2d,ddivdvz_2d,alpha), &
@@ -601,6 +716,7 @@ contains
           enddo
           enddo
           !$omp end parallel do
+          !$acc end kernels
 
           if ( ADM_have_pl ) then
              do l = 1, ADM_lall_pl
@@ -619,10 +735,19 @@ contains
              enddo
           endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_17')
+#endif
+
        else ! NO-SPLITING
+
+#ifdef MORETIMER
+call PROF_rapstart('___vi_small_step_18')
+#endif
 
           !---< sum of tendencies ( large step ) >
 !OCL XFILL
+          !$acc kernels pcopy(drhogw,diff_vh) pcopyin(PROG_split,g_TEND)
           !$omp parallel do default(none),private(g,k,l,drhogvx,drhogvy,drhogvz), &
           !$omp shared(gall,kall,lall,drhogw,diff_vh,PROG_split,dt,g_TEND), &
           !$omp collapse(2)
@@ -641,6 +766,7 @@ contains
           enddo
           enddo
           !$omp end parallel do
+          !$acc end kernels
 
           if ( ADM_have_pl ) then
              do l = 1, ADM_lall_pl
@@ -659,7 +785,15 @@ contains
              enddo
           endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_18')
+#endif
+
        endif ! Split/Non-split
+
+#ifdef MORETIMER
+call PROF_rapstart('___vi_small_step_19')
+#endif
 
        ! treatment for boundary condition
        call BNDCND_rhovxvyvz( ADM_gall,              & ! [IN]
@@ -680,10 +814,23 @@ contains
                                  diff_vh_pl(:,:,:,3)       ) ! [INOUT]
        endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_19')
+call PROF_rapstart('___vi_small_step_20c')
+#endif
+
        call COMM_data_transfer( diff_vh, diff_vh_pl )
+
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_20c')
+#endif
 
        call PROF_rapend  ('____vi_path1',2)
        call PROF_rapstart('____vi_path2',2)
+
+#ifdef MORETIMER
+call PROF_rapstart('___vi_small_step_21z')
+#endif
 
        !---< vertical implicit scheme >
 
@@ -712,11 +859,22 @@ contains
                      grhogetot0     (:,:,:),          grhogetot0_pl     (:,:,:),          & ! [IN]
                      dt                                     ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_21z')
+call PROF_rapstart('___vi_small_step_22c')
+#endif
+
        ! treatment for boundary condition
        call COMM_data_transfer( diff_we, diff_we_pl )
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_22c')
+call PROF_rapstart('___vi_small_step_23')
+#endif
+
        ! update split value and mean mass flux
 !OCL XFILL
+       !$acc kernels pcopy(PROG_split) pcopyin(diff_vh,diff_we)
        !$omp parallel do default(none),private(g,k,l) &
        !$omp shared(gall,kall,lall,PROG_split,diff_vh,diff_we), &
        !$omp collapse(2)
@@ -733,7 +891,9 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
+       !$acc kernels pcopy(PROG_mean) pcopyin(PROG_split)
        !$omp parallel do default(none),private(g,k,l,iv) &
        !$omp shared(gall,kall,lall,PROG_mean,PROG_split,rweight_itr), &
        !$omp collapse(3)
@@ -747,6 +907,7 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        if ( ADM_have_pl ) then
           PROG_split_pl(:,:,:,I_RHOGVX) = diff_vh_pl(:,:,:,1)
@@ -760,6 +921,10 @@ contains
                                              + PROG_split_pl(:,:,:,I_RHOG:I_RHOGW) * rweight_itr
        endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_23')
+#endif
+
        call PROF_rapend  ('____vi_path2',2)
 
     enddo ! small step end
@@ -772,6 +937,11 @@ contains
 
     ! update prognostic variables
 
+#ifdef MORETIMER
+call PROF_rapstart('___vi_small_step_24')
+#endif
+
+    !$acc kernels pcopy(PROG) pcopyin(PROG_split)
     !$omp parallel do default(none),private(g,k,l,iv) &
     !$omp shared(gall,kall,lall,PROG,PROG_split,rweight_itr), &
     !$omp collapse(3)
@@ -785,19 +955,36 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        PROG_pl(:,:,:,:) = PROG_pl(:,:,:,:) + PROG_split_pl(:,:,:,:)
     endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_24')
+call PROF_rapstart('___vi_small_step_25o')
+#endif
+
     call OPRT_horizontalize_vec( PROG(:,:,:,I_RHOGVX), PROG_pl(:,:,:,I_RHOGVX), & ! [INOUT]
                                  PROG(:,:,:,I_RHOGVY), PROG_pl(:,:,:,I_RHOGVY), & ! [INOUT]
                                  PROG(:,:,:,I_RHOGVZ), PROG_pl(:,:,:,I_RHOGVZ)  ) ! [INOUT]
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_25o')
+call PROF_rapstart('___vi_small_step_26c')
+#endif
+
     ! communication of mean velocity
     call COMM_data_transfer( PROG_mean, PROG_mean_pl )
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_small_step_26c')
+#endif
+
     call PROF_rapend  ('____vi_path3',2)
+
+    !$acc end data
 
     return
   end subroutine vi_small_step
@@ -948,6 +1135,15 @@ contains
 
     integer  :: g, k, l
     !---------------------------------------------------------------------------
+    !$acc data &
+    !$acc pcreate(drhog,drhoge,drhogetot,grhog1,grhoge1,gpre) &
+    !$acc pcreate(rhog1,rhogvx1,rhogvy1,rhogvz1,rhogw1,rhogkin0,rhogkin10,rhogkin11,ethtot0) &
+    !$acc pcopy(rhog_split1,rhogw_split1,rhoge_split1) &
+    !$acc pcopyin(rhogvx_split1,rhogvy_split1,rhogvz_split1) &
+    !$acc pcopyin(rhog_split0,rhogvx_split0,rhogvy_split0,rhogvz_split0,rhogw_split0,rhoge_split0,preg_prim_split0) &
+    !$acc pcopyin(rhog0,rhogvx0,rhogvy0,rhogvz0,rhogw0,eth0,grhog,grhogw,grhoge,grhogetot) &
+    !$acc pcopyin(Mc,Ml,Mu) &
+    !$acc pcopyin(VMTR_PHI,VMTR_C2WfactGz)
 
     gall = ADM_gall
     kall = ADM_kall
@@ -960,6 +1156,10 @@ contains
 
     if ( TIME_SPLIT ) then
 
+#ifdef MORETIMER
+call PROF_rapstart('___vi_main_01z')
+#endif
+
        ! horizontal flux convergence
        call src_flux_convergence( rhogvx_split1, rhogvx_split1_pl, & ! [IN]
                                   rhogvy_split1, rhogvy_split1_pl, & ! [IN]
@@ -967,6 +1167,11 @@ contains
                                   rhogw_split0,  rhogw_split0_pl,  & ! [IN]
                                   drhog,         drhog_pl,         & ! [OUT]
                                   I_SRC_horizontal                 ) ! [IN]
+
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_main_01z')
+call PROF_rapstart('___vi_main_02z')
+#endif
 
        ! horizontal advection convergence
        call src_advection_convergence( rhogvx_split1, rhogvx_split1_pl, & ! [IN]
@@ -977,9 +1182,17 @@ contains
                                        drhoge,        drhoge_pl,        & ! [OUT]
                                        I_SRC_horizontal                 ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_main_02z')
+#endif
+
     else
+#ifdef MORETIMER
+call PROF_rapstart('___vi_main_03')
+#endif
 
 !OCL XFILL
+       !$acc kernels pcopy(drhog,drhoge)
        !$omp parallel do default(none),private(g,k,l) &
        !$omp shared(gall,kall,lall,drhog,drhoge), &
        !$omp collapse(2)
@@ -992,14 +1205,23 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        drhog_pl (:,:,:) = 0.0_RP
        drhoge_pl(:,:,:) = 0.0_RP
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_main_03')
+#endif
 
     endif
 
+#ifdef MORETIMER
+call PROF_rapstart('___vi_main_04')
+#endif
+
     ! update grhog, grhoge and calc source term of pressure
 !OCL XFILL
+    !$acc kernels pcopy(grhog1,grhoge1,gpre) pcopyin(grhog,grhoge,drhog,drhoge)
     !$omp parallel do default(none),private(g,k,l), &
     !$omp shared(gall,kall,lall,grhog1,grhoge1,gpre,grhog,grhoge,drhog,drhoge,Rdry,CVdry), &
     !$omp collapse(2)
@@ -1013,6 +1235,7 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        grhog1_pl (:,:,:) = grhog_pl  (:,:,:) + drhog_pl (:,:,:)
@@ -1020,12 +1243,18 @@ contains
        gpre_pl   (:,:,:) = grhoge1_pl(:,:,:) * Rdry / CVdry
     endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_main_04')
+call PROF_rapstart('___vi_main_05')
+#endif
+
     !---------------------------------------------------------------------------
     ! verical implict calculation core
     !---------------------------------------------------------------------------
 
     ! boundary condition for rhogw_split1
 !OCL XFILL
+    !$acc kernels pcopy(grhog1,grhoge1,gpre) pcopyin(grhog,grhoge,drhog,drhoge)
     !$omp parallel do default(none),private(g,k,l), &
     !$omp shared(gall,kall,lall,rhogw_split1), &
     !$omp collapse(2)
@@ -1037,6 +1266,7 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     do l = 1, ADM_lall
        call BNDCND_rhow( ADM_gall,               & ! [IN]
@@ -1060,6 +1290,11 @@ contains
        enddo
     endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_main_05')
+call PROF_rapstart('___vi_main_06o')
+#endif
+
     ! update rhogw_split1
     call vi_rhow_solver( rhogw_split1,     rhogw_split1_pl,     & ! [INOUT]
                          rhogw_split0,     rhogw_split0_pl,     & ! [IN]
@@ -1070,6 +1305,11 @@ contains
                          gpre,             gpre_pl,             & ! [IN]
                          dt                                     ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_main_06o')
+call PROF_rapstart('___vi_main_07z')
+#endif
+
     ! update rhog_split1
     call src_flux_convergence( rhogvx_split1, rhogvx_split1_pl, & ! [IN]
                                rhogvy_split1, rhogvy_split1_pl, & ! [IN]
@@ -1078,7 +1318,13 @@ contains
                                drhog,         drhog_pl,         & ! [OUT]
                                I_SRC_default                    ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_main_07z')
+call PROF_rapstart('___vi_main_08')
+#endif
+
 !OCL XFILL
+    !$acc kernels pcopy(rhog_split1) pcopyin(rhog_split0,grhog,drhog)
     !$omp parallel do default(none),private(g,k,l), &
     !$omp shared(gall,kall,lall,rhog_split1,rhog_split0,grhog,drhog,dt), &
     !$omp collapse(2)
@@ -1090,10 +1336,16 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        rhog_split1_pl(:,:,:) = rhog_split0_pl(:,:,:) + ( grhog_pl(:,:,:) + drhog_pl(:,:,:) ) * dt
     endif
+
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_main_08')
+call PROF_rapstart('___vi_main_09o')
+#endif
 
     !---------------------------------------------------------------------------
     ! energy correction by Etotal (Satoh,2002)
@@ -1107,8 +1359,15 @@ contains
                          rhogw0,   rhogw0_pl,  & ! [IN]
                          rhogkin0, rhogkin0_pl ) ! [OUT]
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_main_09o')
+call PROF_rapstart('___vi_main_10')
+#endif
+
     ! prognostic variables ( previous + split (t=n) )
 !OCL XFILL
+    !$acc kernels pcopy(rhog1,rhogvx1,rhogvy1,rhogvz1,rhogw1) &
+    !$acc pcopyin(rhog0,rhogvx0,rhogvy0,rhogvz0,rhogw0,rhog_split0,rhogvx_split0,rhogvy_split0,rhogvz_split0,rhogw_split0)
     !$omp parallel do default(none),private(g,k,l), &
     !$omp shared(gall,kall,lall,rhog1,rhogvx1,rhogvy1,rhogvz1,rhogw1,              &
     !$omp        rhog0,rhogvx0,rhogvy0,rhogvz0,rhogw0,                             &
@@ -1126,6 +1385,7 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        rhog1_pl  (:,:,:) = rhog0_pl  (:,:,:) + rhog_split0_pl  (:,:,:)
@@ -1135,6 +1395,11 @@ contains
        rhogw1_pl (:,:,:) = rhogw0_pl (:,:,:) + rhogw_split0_pl (:,:,:)
     endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_main_10')
+call PROF_rapstart('___vi_main_11o')
+#endif
+
     ! calc rhogkin ( previous + split(t=n) )
     call cnvvar_rhogkin( rhog1,     rhog1_pl,    & ! [IN]
                          rhogvx1,   rhogvx1_pl,  & ! [IN]
@@ -1143,8 +1408,15 @@ contains
                          rhogw1,    rhogw1_pl,   & ! [IN]
                          rhogkin10, rhogkin10_pl ) ! [OUT]
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_main_11o')
+call PROF_rapstart('___vi_main_12')
+#endif
+
     ! prognostic variables ( previous + split (t=n+1) )
 !OCL XFILL
+    !$acc kernels pcopy(rhog1,rhogvx1,rhogvy1,rhogvz1,rhogw1) &
+    !$acc pcopyin(rhog0,rhogvx0,rhogvy0,rhogvz0,rhogw0,rhog_split1,rhogvx_split1,rhogvy_split1,rhogvz_split1,rhogw_split1)
     !$omp parallel do default(none),private(g,k,l), &
     !$omp shared(gall,kall,lall,rhog1,rhogvx1,rhogvy1,rhogvz1,rhogw1,              &
     !$omp        rhog0,rhogvx0,rhogvy0,rhogvz0,rhogw0,                             &
@@ -1162,6 +1434,7 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        rhog1_pl  (:,:,:) = rhog0_pl  (:,:,:) + rhog_split1_pl  (:,:,:)
@@ -1171,6 +1444,11 @@ contains
        rhogw1_pl (:,:,:) = rhogw0_pl (:,:,:) + rhogw_split1_pl (:,:,:)
     endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_main_12')
+call PROF_rapstart('___vi_main_13o')
+#endif
+
     ! calc rhogkin ( previous + split(t=n+1) )
     call cnvvar_rhogkin( rhog1,     rhog1_pl,    & ! [IN]
                          rhogvx1,   rhogvx1_pl,  & ! [IN]
@@ -1179,8 +1457,14 @@ contains
                          rhogw1,    rhogw1_pl,   & ! [IN]
                          rhogkin11, rhogkin11_pl ) ! [OUT]
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_main_13o')
+call PROF_rapstart('___vi_main_14')
+#endif
+
     ! calculate total enthalpy ( h + v^{2}/2 + phi, previous )
 !OCL XFILL
+    !$acc kernels pcopy(ethtot0) pcopyin(eth0,rhogkin0,rhog0,VMTR_PHI)
     !$omp parallel do default(none),private(g,k,l), &
     !$omp shared(gall,kall,lall,ethtot0,eth0,rhogkin0,rhog0,VMTR_PHI), &
     !$omp collapse(2)
@@ -1194,12 +1478,18 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        ethtot0_pl(:,:,:) = eth0_pl(:,:,:)                       &
                          + rhogkin0_pl(:,:,:) / rhog0_pl(:,:,:) &
                          + VMTR_PHI_pl(:,:,:)
     endif
+
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_main_14')
+call PROF_rapstart('___vi_main_15z')
+#endif
 
     ! advection convergence for eth + kin + phi
     call src_advection_convergence( rhogvx1,   rhogvx1_pl,   & ! [IN]
@@ -1210,7 +1500,14 @@ contains
                                     drhogetot, drhogetot_pl, & ! [OUT]
                                     I_SRC_default            ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_main_15z')
+call PROF_rapstart('___vi_main_16')
+#endif
+
 !OCL XFILL
+    !$acc kernels pcopy(rhoge_split1) &
+    !$acc pcopyin(rhoge_split0,grhogetot,drhogetot,rhogkin10,rhogkin11,rhog_split0,rhog_split1,VMTR_PHI)
     !$omp parallel do default(none),private(g,k,l), &
     !$omp shared(gall,kall,lall,rhoge_split1,rhoge_split0,grhogetot,drhogetot,dt, &
     !$omp        rhogkin10,rhogkin11,rhog_split0,rhog_split1,VMTR_PHI), &
@@ -1229,6 +1526,7 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        rhoge_split1_pl(:,:,:) = rhoge_split0_pl (:,:,:)                        &
@@ -1239,6 +1537,11 @@ contains
                               + ( rhog_split0_pl(:,:,:)                        &
                                 - rhog_split1_pl(:,:,:) ) * VMTR_PHI_pl(:,:,:)
     endif
+
+    !$acc end data
+#ifdef MORETIMER
+call PROF_rapend  ('___vi_main_16')
+#endif
 
     return
   end subroutine vi_main
@@ -1263,8 +1566,8 @@ contains
        Rdry  => CONST_Rdry, &
        CVdry => CONST_CVdry
     use mod_grd, only: &
-       GRD_rdgzh, &
        GRD_rdgz,  &
+       GRD_rdgzh, &
        GRD_cfact, &
        GRD_dfact
     use mod_vmtr, only: &
@@ -1300,7 +1603,7 @@ contains
     ! C_o(:,:,:) = VMTR_RGAM2H (:,:,:) * ( CONST_CVdry / CONST_Rdry * CONST_GRAV )
     ! C_i(:,:,:) = 1.0_RP / VMTR_RGAM2H(:,:,:)
     ! D  (:,:,:) = CONST_CVdry / CONST_Rdry / ( dt*dt ) / VMTR_RGSQRTH(:,:,:)
-
+    !
     ! do k = ADM_kmin+1, ADM_kmax
     !    Mc(:,k,:) = dble(NON_HYDRO_ALPHA) *D(:,k,:)              &
     !              + GRD_rdgzh(k)                                 &
@@ -1317,6 +1620,11 @@ contains
     !                * ( B(:,k-1,:) + C_o(:,k,:) * C_i(:,k-1,:) )
     ! enddo
 
+    !$acc data &
+    !$acc pcopy(Mc,Ml,Mu) &
+    !$acc pcopyin(eth,g_tilde) &
+    !$acc pcopyin(GRD_rdgzh,GRD_rdgz,GRD_cfact,GRD_dfact,VMTR_GAM2H,VMTR_RGSQRTH,VMTR_RGAMH,VMTR_RGSGAM2)
+
     call PROF_rapstart('____vi_rhow_update_matrix',2)
 
     gall = ADM_gall
@@ -1327,6 +1635,8 @@ contains
     GCVovR   = GRAV * CVdry / Rdry
     ACVovRt2 = real(NON_HYDRO_ALPHA,kind=RP) * CVdry / Rdry / ( dt*dt )
 
+    !$acc kernels pcopy(Mc,Mu,Ml) &
+    !$acc pcopyin(eth,g_tilde,GRD_rdgzh,GRD_rdgz,GRD_cfact,GRD_dfact,VMTR_GAM2H,VMTR_RGSQRTH,VMTR_RGAMH,VMTR_RGSGAM2)
     !$omp parallel do default(none),private(g,k,l),                                               &
     !$omp shared(gall,kmin,kmax,lall,eth,g_tilde,dt,GCVovR,ACVovRt2,Mu,Mc,Ml,GRD_cfact,GRD_dfact, &
     !$omp        GRD_rdgzh,GRD_rdgz,VMTR_GAM2H,VMTR_RGSQRTH,VMTR_RGAMH,VMTR_RGSGAM2), &
@@ -1342,7 +1652,6 @@ contains
                                      - ( GRD_dfact(k) - GRD_cfact(k-1) )         &
                                      * ( g_tilde(g,k,l) + GCVovR )               )
        enddo
-
 !OCL XFILL
        do g = 1, gall
           Mu(g,k,l) = -GRD_rdgzh(k) * ( VMTR_RGSGAM2(g,k  ,l) * GRD_rdgz(k)                     &
@@ -1351,7 +1660,6 @@ contains
                                       * ( g_tilde   (g,k+1,l)                                   &
                                         + VMTR_GAM2H(g,k+1,l)* VMTR_RGAMH(g,k,l)**2 * GCVovR  ) )
        enddo
-
 !OCL XFILL
        do g = 1, gall
           Ml(g,k,l) = -GRD_rdgzh(k) * ( VMTR_RGSGAM2(g,k  ,l) * GRD_rdgz(k)                     &
@@ -1363,6 +1671,7 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
@@ -1400,6 +1709,8 @@ contains
     endif
 
     call PROF_rapend('____vi_rhow_update_matrix',2)
+
+    !$acc end data
 
     return
   end subroutine vi_rhow_update_matrix
@@ -1482,6 +1793,11 @@ contains
     !$ integer  :: n_per_thread
     !$ integer  :: n_thread
     !---------------------------------------------------------------------------
+    !$acc data &
+    !$acc pcreate(Sall,beta,gamma) &
+    !$acc pcopy(rhogw) &
+    !$acc pcopyin(Mc,Mu,Ml,rhogw0,preg0,rhog0,Srho,Sw,Spre) &
+    !$acc pcopyin(GRD_rdgzh,GRD_afact,GRD_bfact,VMTR_GSGAM2H,VMTR_RGAM,VMTR_RGAMH,VMTR_RGSGAM2,VMTR_RGSGAM2H)
 
     call PROF_rapstart('____vi_rhow_solver',2)
 
@@ -1501,10 +1817,13 @@ contains
     gstr = 1
     gend = gall
     !$ n_thread     = omp_get_num_threads()
-    !$ n_per_thread = gall / n_thread + int( 0.5_RP + sign(0.5_RP,mod(gall,n_thread)-0.5_RP) )
+    !$ n_per_thread = gall / n_thread + int( 0.5_RP + sign(0.5_RP,real(mod(gall,n_thread),kind=RP)-0.5_RP) )
     !$ gstr         = n_per_thread * omp_get_thread_num() + 1
     !$ gend         = min( gstr+n_per_thread-1, gall )
 
+    !$acc kernels pcopy(rhogw) present(Sall,beta,gamma) &
+    !$acc pcopyin(Mc,Mu,Ml,rhogw0,preg0,rhog0,Srho,Sw,Spre) &
+    !$acc pcopyin(GRD_afact,GRD_bfact,GRD_rdgzh,VMTR_GSGAM2H,VMTR_RGAM,VMTR_RGAMH,VMTR_RGSGAM2,VMTR_RGSGAM2H)
     do l = 1, lall
        ! calc Sall
        do k = kmin+1, kmax
@@ -1561,6 +1880,8 @@ contains
           rhogw(g,kmax+1,l) = rhogw(g,kmax+1,l) * VMTR_GSGAM2H(g,kmax+1,l)
        enddo
     enddo
+    !$acc end kernels
+
     !$omp end parallel
 
     if ( ADM_have_pl ) then
@@ -1617,6 +1938,8 @@ contains
     endif
 
     call PROF_rapend('____vi_rhow_solver',2)
+
+    !$acc end data
 
     return
   end subroutine vi_rhow_solver

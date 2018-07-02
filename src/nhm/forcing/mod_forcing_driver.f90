@@ -118,7 +118,6 @@ contains
     use mod_grd, only: &
        GRD_LAT,  &
        GRD_LON,  &
-       GRD_s,    &
        GRD_zs,   &
        GRD_ZSFC, &
        GRD_vz,   &
@@ -223,9 +222,9 @@ contains
     call GTL_clip_region(GRD_vz(:,:,:,GRD_Z) ,z      ,1,ADM_kall)
     call GTL_clip_region(GRD_vz(:,:,:,GRD_ZH),zh     ,1,ADM_kall)
 
-    call GTL_clip_region_1layer(GRD_zs(:,k0,:,GRD_ZSFC),z_srf)
-    call GTL_clip_region_1layer(GRD_s (:,k0,:,GRD_LAT) ,lat  )
-    call GTL_clip_region_1layer(GRD_s (:,k0,:,GRD_LON) ,lon  )
+    call GTL_clip_region_1layer(GRD_zs (:,k0,:,GRD_ZSFC),z_srf)
+    call GTL_clip_region_1layer(GRD_LAT(:,:),            lat  )
+    call GTL_clip_region_1layer(GRD_LON(:,:),            lon  )
 
     call GTL_clip_region_1layer(GMTR_p(:,k0,:,GMTR_p_IX),ix)
     call GTL_clip_region_1layer(GMTR_p(:,k0,:,GMTR_p_IY),iy)
@@ -256,9 +255,9 @@ contains
     !--- boundary condition
     do l = 1, ADM_lall
        call BNDCND_thermo( ADM_gall_in, & ! [IN]
+                           tem(:,:,l),  & ! [INOUT]
                            rho(:,:,l),  & ! [INOUT]
                            pre(:,:,l),  & ! [INOUT]
-                           tem(:,:,l),  & ! [INOUT]
                            phi(:,:,l)   ) ! [IN]
 
        vx(:,ADM_kmax+1,l) = vx(:,ADM_kmax,l)
@@ -417,13 +416,13 @@ contains
        ADM_lall_pl, &
        ADM_kall
     use mod_grd, only: &
-       GRD_LAT,  &
-       GRD_LON,  &
-       GRD_s,    &
-       GRD_s_pl, &
-       GRD_Z,    &
-       GRD_ZH,   &
-       GRD_vz,   &
+       GRD_LAT,    &
+       GRD_LAT_pl, &
+       GRD_LON,    &
+       GRD_LON_pl, &
+       GRD_Z,      &
+       GRD_ZH,     &
+       GRD_vz,     &
        GRD_vz_pl
     use mod_time, only: &
        TIME_DTL
@@ -466,15 +465,15 @@ contains
        do n = 1, ADM_gall
           ! full (1): u,v
           ! half (2): w
-          call test11_velocity( time,                   & ! [IN]
-                                GRD_s (n,k0,l,GRD_LON), & ! [IN]
-                                GRD_s (n,k0,l,GRD_LAT), & ! [IN]
-                                GRD_vz(n,k,l,GRD_Z ),   & ! [IN]
-                                GRD_vz(n,k,l,GRD_ZH),   & ! [IN]
-                                vx    (n,k,l),          & ! [OUT]
-                                vy    (n,k,l),          & ! [OUT]
-                                vz    (n,k,l),          & ! [OUT]
-                                w     (n,k,l)           ) ! [OUT]
+          call test11_velocity( time,                  & ! [IN]
+                                GRD_LON(n,  l),        & ! [IN]
+                                GRD_LAT(n,  l),        & ! [IN]
+                                GRD_vz (n,k,l,GRD_Z ), & ! [IN]
+                                GRD_vz (n,k,l,GRD_ZH), & ! [IN]
+                                vx     (n,k,l),        & ! [OUT]
+                                vy     (n,k,l),        & ! [OUT]
+                                vz     (n,k,l),        & ! [OUT]
+                                w      (n,k,l)         ) ! [OUT]
        enddo
        enddo
        enddo
@@ -483,15 +482,15 @@ contains
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do n = 1, ADM_gall_pl
-             call test11_velocity( time,                      & ! [IN]
-                                   GRD_s_pl (n,k0,l,GRD_LON), & ! [IN]
-                                   GRD_s_pl (n,k0,l,GRD_LAT), & ! [IN]
-                                   GRD_vz_pl(n,k,l,GRD_Z ),   & ! [IN]
-                                   GRD_vz_pl(n,k,l,GRD_ZH),   & ! [IN]
-                                   vx_pl    (n,k,l),          & ! [OUT]
-                                   vy_pl    (n,k,l),          & ! [OUT]
-                                   vz_pl    (n,k,l),          & ! [OUT]
-                                   w_pl     (n,k,l)           ) ! [OUT]
+             call test11_velocity( time,                     & ! [IN]
+                                   GRD_LON_pl(n,  l),        & ! [IN]
+                                   GRD_LAT_pl(n,  l),        & ! [IN]
+                                   GRD_vz_pl (n,k,l,GRD_Z ), & ! [IN]
+                                   GRD_vz_pl (n,k,l,GRD_ZH), & ! [IN]
+                                   vx_pl     (n,k,l),        & ! [OUT]
+                                   vy_pl     (n,k,l),        & ! [OUT]
+                                   vz_pl     (n,k,l),        & ! [OUT]
+                                   w_pl      (n,k,l)         ) ! [OUT]
           enddo
           enddo
           enddo
@@ -504,15 +503,15 @@ contains
        do n = 1, ADM_gall
           ! full (1): u,v
           ! half (2): w
-          call test12_velocity( time,                   & ! [IN]
-                                GRD_s (n,k0,l,GRD_LON), & ! [IN]
-                                GRD_s (n,k0,l,GRD_LAT), & ! [IN]
-                                GRD_vz(n,k,l,GRD_Z ),   & ! [IN]
-                                GRD_vz(n,k,l,GRD_ZH),   & ! [IN]
-                                vx    (n,k,l),          & ! [OUT]
-                                vy    (n,k,l),          & ! [OUT]
-                                vz    (n,k,l),          & ! [OUT]
-                                w     (n,k,l)           ) ! [OUT]
+          call test12_velocity( time,                  & ! [IN]
+                                GRD_LON(n,  l),        & ! [IN]
+                                GRD_LAT(n,  l),        & ! [IN]
+                                GRD_vz (n,k,l,GRD_Z ), & ! [IN]
+                                GRD_vz (n,k,l,GRD_ZH), & ! [IN]
+                                vx     (n,k,l),        & ! [OUT]
+                                vy     (n,k,l),        & ! [OUT]
+                                vz     (n,k,l),        & ! [OUT]
+                                w      (n,k,l)         ) ! [OUT]
        enddo
        enddo
        enddo
@@ -521,15 +520,15 @@ contains
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do n = 1, ADM_gall_pl
-             call test12_velocity( time,                      & ! [IN]
-                                   GRD_s_pl (n,k0,l,GRD_LON), & ! [IN]
-                                   GRD_s_pl (n,k0,l,GRD_LAT), & ! [IN]
-                                   GRD_vz_pl(n,k,l,GRD_Z ),   & ! [IN]
-                                   GRD_vz_pl(n,k,l,GRD_ZH),   & ! [IN]
-                                   vx_pl    (n,k,l),          & ! [OUT]
-                                   vy_pl    (n,k,l),          & ! [OUT]
-                                   vz_pl    (n,k,l),          & ! [OUT]
-                                   w_pl     (n,k,l)           ) ! [OUT]
+             call test12_velocity( time,                     & ! [IN]
+                                   GRD_LON_pl(n,  l),        & ! [IN]
+                                   GRD_LAT_pl(n,  l),        & ! [IN]
+                                   GRD_vz_pl (n,k,l,GRD_Z ), & ! [IN]
+                                   GRD_vz_pl (n,k,l,GRD_ZH), & ! [IN]
+                                   vx_pl     (n,k,l),        & ! [OUT]
+                                   vy_pl     (n,k,l),        & ! [OUT]
+                                   vz_pl     (n,k,l),        & ! [OUT]
+                                   w_pl      (n,k,l)         ) ! [OUT]
           enddo
           enddo
           enddo

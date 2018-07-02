@@ -1255,6 +1255,12 @@ contains
 
     integer  :: g, k, l, iv, nq, p
     !---------------------------------------------------------------------------
+    !$acc data &
+    !$acc pcreate(KH_coef_h,KH_coef_lap1_h,vtmp,vtmp2,qtmp,qtmp2,vtmp_lap1,qtmp_lap1,wk,rhog_h) &
+    !$acc pcopy(tendency,tendency_q) &
+    !$acc pcopyin(rhog,rho,vx,vy,vz,w,tem,q) &
+    !$acc pcopyin(KH_coef,KH_coef_lap1) &
+    !$acc pcopyin(GRD_gz,OPRT_coef_lap,OPRT_coef_intp,OPRT_coef_diff,VMTR_C2Wfact,rho_bs,tem_bs)
 
     call PROF_rapstart('____numfilter_hdiffusion',2)
 
@@ -1267,6 +1273,10 @@ contains
 
     CVdry = CONST_CVdry
 
+#ifdef MORETIMER
+call PROF_rapstart('____numfilter_hdiff_01')
+#endif
+
     if ( hdiff_nonlinear ) then
        call height_factor( ADM_kall, GRD_gz(:), GRD_htop, ZD_hdiff_nl, fact(:) )
 
@@ -1275,6 +1285,7 @@ contains
     endif
 
 !OCL XFILL
+    !$acc kernels present(rhog_h) pcopyin(rhog,VMTR_C2Wfact)
     !$omp parallel default(none),private(g,k,l), &
     !$omp shared(gall,kmin,kmax,lall,rhog_h,rhog,VMTR_C2Wfact)
     do l = 1, lall
@@ -1294,6 +1305,7 @@ contains
        !$omp end do
     enddo
     !$omp end parallel
+    !$acc end kernels
 
     do l = 1, ADM_lall_pl
        do k = ADM_kmin, ADM_kmax+1
@@ -1308,7 +1320,13 @@ contains
        enddo
     enddo
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_01')
+call PROF_rapstart('____numfilter_hdiff_02')
+#endif
+
 !OCL XFILL
+    !$acc kernels present(vtmp) pcopyin(vx,vy,vz,w,tem,rho,tem_bs,rho_bs)
     !$omp parallel do default(none),private(g,k,l), &
     !$omp shared(gall,kall,lall,vtmp,vx,vy,vz,w,tem,rho,tem_bs,rho_bs), &
     !$omp collapse(2)
@@ -1325,6 +1343,7 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     vtmp_pl(:,:,:,1) = vx_pl (:,:,:)
     vtmp_pl(:,:,:,2) = vy_pl (:,:,:)
@@ -1336,6 +1355,7 @@ contains
     ! copy beforehand
     if ( NUMFILTER_DOhorizontaldiff_lap1 ) then
 !OCL XFILL
+       !$acc kernels present(vtmp_lap1) pcopyin(vtmp)
        !$omp parallel do default(none),private(g,k,l,iv), &
        !$omp shared(gall,kall,lall,vtmp_lap1,vtmp), &
        !$omp collapse(3)
@@ -1349,12 +1369,21 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        vtmp_lap1_pl(:,:,:,:) = vtmp_pl(:,:,:,:)
     endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_02')
+#endif
+
     ! high order laplacian
     do p = 1, lap_order_hdiff
+
+#ifdef MORETIMER
+call PROF_rapstart('____numfilter_hdiff_03o')
+#endif
 
        ! for momentum
        call OPRT_laplacian( vtmp2        (:,:,:,1), vtmp2_pl        (:,:,:,1), & ! [OUT]
@@ -1373,14 +1402,22 @@ contains
                             vtmp         (:,:,:,4), vtmp_pl         (:,:,:,4), & ! [IN]
                             OPRT_coef_lap(:,:,:),   OPRT_coef_lap_pl(:,:)      ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_03o')
+#endif
+
        ! for scalar
        if ( p == lap_order_hdiff ) then
 
           if ( hdiff_nonlinear ) then
 
-             large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=DP)
+#ifdef MORETIMER
+call PROF_rapstart('____numfilter_hdiff_04')
+#endif
 
+             large_step_dt = TIME_DTL / real(DYN_DIV_NUM,kind=DP)
 !OCL XFILL
+             !$acc kernels present(KH_coef) pcopyin(vtmp,Kh_max)
              !$omp parallel do default(none),private(g,k,l,d2T_dx2,coef),                         &
              !$omp shared(gall,kall,lall,KH_coef,vtmp,AREA_ave,large_step_dt,Kh_max,Kh_coef_minlim), &
              !$omp collapse(2)
@@ -1395,6 +1432,7 @@ contains
              enddo
              enddo
              !$omp end parallel do
+             !$acc end kernels
 
              do l = 1, ADM_lall_pl
              do k = 1, ADM_kall
@@ -1407,6 +1445,12 @@ contains
              enddo
              enddo
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_04')
+call PROF_rapstart('____numfilter_hdiff_05')
+#endif
+
+             !$acc kernels present(KH_coef_h) pcopyin(KH_coef)
              !$omp parallel default(none),private(g,k,l),      &
              !$omp shared(gall,kmin,kmax,lall,KH_coef_h,KH_coef)
              do l = 1, lall
@@ -1418,7 +1462,6 @@ contains
                 enddo
                 enddo
                 !$omp end do nowait
-
 !OCL XFILL
                 !$omp do
                 do g = 1, gall
@@ -1429,6 +1472,7 @@ contains
                 !$omp end do
              enddo
              !$omp end parallel
+             !$acc end kernels
 
              do l = 1, ADM_lall_pl
                 do k = ADM_kmin+1, ADM_kmax
@@ -1439,9 +1483,17 @@ contains
                 KH_coef_h_pl(:,ADM_kmax+1,l) = 0.0_RP
              enddo
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_05')
+#endif
+
           else
+#ifdef MORETIMER
+call PROF_rapstart('____numfilter_hdiff_06')
+#endif
 
 !OCL XFILL
+             !$acc kernels present(KH_coef_h) pcopyin(KH_coef)
              !$omp parallel do default(none),private(g,k,l), &
              !$omp shared(gall,kall,lall,KH_coef_h,KH_coef), &
              !$omp collapse(2)
@@ -1453,12 +1505,22 @@ contains
              enddo
              enddo
              !$omp end parallel do
+             !$acc end kernels
 
              KH_coef_h_pl(:,:,:) = KH_coef_pl(:,:,:)
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_06')
+#endif
+
           endif ! nonlinear1
 
+#ifdef MORETIMER
+call PROF_rapstart('____numfilter_hdiff_07')
+#endif
+
 !OCL XFILL
+          !$acc kernels present(wk) pcopyin(rhog,KH_coef)
           !$omp parallel do default(none),private(g,k,l), &
           !$omp shared(gall,kall,lall,wk,rhog,KH_coef,CVdry), &
           !$omp collapse(2)
@@ -1470,7 +1532,14 @@ contains
           enddo
           enddo
           !$omp end parallel do
+          !$acc end kernels
+
           wk_pl(:,:,:) = rhog_pl(:,:,:) * CVdry * KH_coef_pl(:,:,:)
+
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_07')
+call PROF_rapstart('____numfilter_hdiff_08o')
+#endif
 
           call OPRT_diffusion( vtmp2         (:,:,:,5),   vtmp2_pl         (:,:,:,5), & ! [OUT]
                                vtmp          (:,:,:,5),   vtmp_pl          (:,:,:,5), & ! [IN]
@@ -1478,7 +1547,13 @@ contains
                                OPRT_coef_intp(:,:,:,:,:), OPRT_coef_intp_pl(:,:,:,:), & ! [IN]
                                OPRT_coef_diff(:,:,:,:),   OPRT_coef_diff_pl(:,:,:)    ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_08o')
+call PROF_rapstart('____numfilter_hdiff_09')
+#endif
+
 !OCL XFILL
+          !$acc kernels present(wk) pcopyin(rhog,KH_coef)
           !$omp parallel do default(none),private(g,k,l), &
           !$omp shared(gall,kall,lall,wk,rhog,KH_coef,hdiff_fact_rho), &
           !$omp collapse(2)
@@ -1490,8 +1565,14 @@ contains
           enddo
           enddo
           !$omp end parallel do
+          !$acc end kernels
 
           wk_pl(:,:,:) = rhog_pl(:,:,:) * hdiff_fact_rho * KH_coef_pl(:,:,:)
+
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_09')
+call PROF_rapstart('____numfilter_hdiff_10o')
+#endif
 
           call OPRT_diffusion( vtmp2         (:,:,:,6),   vtmp2_pl         (:,:,:,6), & ! [OUT]
                                vtmp          (:,:,:,6),   vtmp_pl          (:,:,:,6), & ! [IN]
@@ -1499,7 +1580,15 @@ contains
                                OPRT_coef_intp(:,:,:,:,:), OPRT_coef_intp_pl(:,:,:,:), & ! [IN]
                                OPRT_coef_diff(:,:,:,:),   OPRT_coef_diff_pl(:,:,:)    ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_10o')
+#endif
+
        else
+
+#ifdef MORETIMER
+call PROF_rapstart('____numfilter_hdiff_11o')
+#endif
 
           call OPRT_laplacian( vtmp2        (:,:,:,5), vtmp2_pl        (:,:,:,5), & ! [OUT]
                                vtmp         (:,:,:,5), vtmp_pl         (:,:,:,5), & ! [IN]
@@ -1509,9 +1598,18 @@ contains
                                vtmp         (:,:,:,6), vtmp_pl         (:,:,:,6), & ! [IN]
                                OPRT_coef_lap(:,:,:),   OPRT_coef_lap_pl(:,:)      ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_11o')
+#endif
+
        endif
 
+#ifdef MORETIMER
+call PROF_rapstart('____numfilter_hdiff_12')
+#endif
+
 !OCL XFILL
+       !$acc kernels present(vtmp) pcopyin(vtmp2)
        !$omp parallel do default(none),private(g,k,l,iv), &
        !$omp shared(gall,kall,lall,vtmp,vtmp2), &
        !$omp collapse(3)
@@ -1525,17 +1623,31 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        vtmp_pl(:,:,:,:) = -vtmp2_pl(:,:,:,:)
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_12')
+call PROF_rapstart('____numfilter_hdiff_13c')
+#endif
+
        call COMM_data_transfer( vtmp, vtmp_pl )
+
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_13c')
+#endif
 
     enddo ! laplacian order loop
 
     !--- 1st order laplacian filter
     if ( NUMFILTER_DOhorizontaldiff_lap1 ) then
+#ifdef MORETIMER
+call PROF_rapstart('____numfilter_hdiff_14')
+#endif
 
 !OCL XFILL
+       !$acc kernels present(KH_coef_lap1_h) pcopyin(KH_coef_lap1)
        !$omp parallel do default(none),private(g,k,l), &
        !$omp shared(gall,kall,lall,KH_coef_lap1_h,KH_coef_lap1), &
        !$omp collapse(2)
@@ -1547,8 +1659,14 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        KH_coef_lap1_h_pl(:,:,:) = KH_coef_lap1_pl(:,:,:)
+
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_14')
+call PROF_rapstart('____numfilter_hdiff_15o')
+#endif
 
        call OPRT_laplacian( vtmp2        (:,:,:,1), vtmp2_pl        (:,:,:,1), & ! [OUT]
                             vtmp_lap1    (:,:,:,1), vtmp_lap1_pl    (:,:,:,1), & ! [IN]
@@ -1566,7 +1684,13 @@ contains
                             vtmp_lap1    (:,:,:,4), vtmp_lap1_pl    (:,:,:,4), & ! [IN]
                             OPRT_coef_lap(:,:,:),   OPRT_coef_lap_pl(:,:)      ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_15o')
+call PROF_rapstart('____numfilter_hdiff_16')
+#endif
+
 !OCL XFILL
+       !$acc kernels present(wk) pcopyin(rhog,KH_coef_lap1)
        !$omp parallel do default(none),private(g,k,l), &
        !$omp shared(gall,kall,lall,wk,rhog,KH_coef_lap1,CVdry), &
        !$omp collapse(2)
@@ -1578,8 +1702,14 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        wk_pl(:,:,:) = rhog_pl(:,:,:) * CVdry * KH_coef_lap1_pl(:,:,:)
+
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_16')
+call PROF_rapstart('____numfilter_hdiff_17o')
+#endif
 
        call OPRT_diffusion( vtmp2         (:,:,:,5),   vtmp2_pl         (:,:,:,5), & ! [OUT]
                             vtmp_lap1     (:,:,:,5),   vtmp_lap1_pl     (:,:,:,5), & ! [IN]
@@ -1587,7 +1717,13 @@ contains
                             OPRT_coef_intp(:,:,:,:,:), OPRT_coef_intp_pl(:,:,:,:), & ! [IN]
                             OPRT_coef_diff(:,:,:,:),   OPRT_coef_diff_pl(:,:,:)    ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_17o')
+call PROF_rapstart('____numfilter_hdiff_18')
+#endif
+
 !OCL XFILL
+       !$acc kernels present(wk) pcopyin(rhog,KH_coef_lap1)
        !$omp parallel do default(none),private(g,k,l), &
        !$omp shared(gall,kall,lall,wk,rhog,KH_coef_lap1,hdiff_fact_rho), &
        !$omp collapse(2)
@@ -1599,8 +1735,14 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        wk_pl(:,:,:) = rhog_pl(:,:,:) * hdiff_fact_rho * KH_coef_lap1_pl(:,:,:)
+
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_18')
+call PROF_rapstart('____numfilter_hdiff_19o')
+#endif
 
        call OPRT_diffusion( vtmp2         (:,:,:,6),   vtmp2_pl         (:,:,:,6), & ! [OUT]
                             vtmp_lap1     (:,:,:,6),   vtmp_lap1_pl     (:,:,:,6), & ! [IN]
@@ -1608,7 +1750,13 @@ contains
                             OPRT_coef_intp(:,:,:,:,:), OPRT_coef_intp_pl(:,:,:,:), & ! [IN]
                             OPRT_coef_diff(:,:,:,:),   OPRT_coef_diff_pl(:,:,:)    ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_19o')
+call PROF_rapstart('____numfilter_hdiff_20')
+#endif
+
 !OCL XFILL
+       !$acc kernels present(vtmp_lap1) pcopyin(vtmp2)
        !$omp parallel do default(none),private(g,k,l,iv), &
        !$omp shared(gall,kall,lall,vtmp_lap1,vtmp2), &
        !$omp collapse(3)
@@ -1622,14 +1770,29 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        vtmp_lap1_pl(:,:,:,:) = -vtmp2_pl(:,:,:,:)
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_20')
+call PROF_rapstart('____numfilter_hdiff_21c')
+#endif
+
        call COMM_data_transfer( vtmp_lap1, vtmp_lap1_pl )
+
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_21c')
+#endif
 
     else
 
+#ifdef MORETIMER
+call PROF_rapstart('____numfilter_hdiff_22')
+#endif
+
 !OCL XFILL
+       !$acc kernels present(KH_coef_lap1_h)
        !$omp parallel do default(none),private(g,k,l), &
        !$omp shared(gall,kall,lall,KH_coef_lap1_h), &
        !$omp collapse(2)
@@ -1641,8 +1804,9 @@ contains
        enddo
        enddo
        !$omp end parallel do
-
+       !$acc end kernels
 !OCL XFILL
+       !$acc kernels present(vtmp_lap1)
        !$omp parallel do default(none),private(g,k,l,iv), &
        !$omp shared(gall,kall,lall,vtmp_lap1), &
        !$omp collapse(3)
@@ -1656,14 +1820,25 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        KH_coef_lap1_h_pl(:,:,:)   = 0.0_RP
        vtmp_lap1_pl     (:,:,:,:) = 0.0_RP
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_22')
+#endif
+
     endif
+
+#ifdef MORETIMER
+call PROF_rapstart('____numfilter_hdiff_23')
+#endif
 
     !--- Update tendency
 !OCL XFILL
+    !$acc kernels pcopy(tendency) &
+    !$acc pcopyin(rhog,rhog_h,vtmp,vtmp_lap1,KH_coef,KH_coef_lap1,KH_coef_h,KH_coef_lap1_h)
     !$omp parallel do default(none),private(g,k,l),                  &
     !$omp shared(gall,kall,lall,tendency,vtmp,vtmp_lap1,rhog,rhog_h, &
     !$omp        KH_coef,KH_coef_h,KH_coef_lap1,KH_coef_lap1_h), &
@@ -1685,6 +1860,7 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
@@ -1707,9 +1883,18 @@ contains
        tendency_pl(:,:,:,:) = 0.0_RP
     endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_23')
+call PROF_rapstart('____numfilter_hdiff_24o')
+#endif
+
     call OPRT_horizontalize_vec( tendency(:,:,:,I_RHOGVX), tendency_pl(:,:,:,I_RHOGVX), & ! [INOUT]
                                  tendency(:,:,:,I_RHOGVY), tendency_pl(:,:,:,I_RHOGVY), & ! [INOUT]
                                  tendency(:,:,:,I_RHOGVZ), tendency_pl(:,:,:,I_RHOGVZ)  ) ! [INOUT]
+
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_24o')
+#endif
 
     !---------------------------------------------------------------------------
     ! For tracer
@@ -1719,17 +1904,21 @@ contains
     if ( TRC_ADV_TYPE /= 'MIURA2004' ) then
 
 !OCL XFILL
+       !$acc kernels
        !$omp parallel workshare
        qtmp   (:,:,:,:) = q   (:,:,:,:)
        !$omp end parallel workshare
+       !$acc end kernels
        qtmp_pl(:,:,:,:) = q_pl(:,:,:,:)
 
        ! copy beforehand
        if ( NUMFILTER_DOhorizontaldiff_lap1 ) then
 !OCL XFILL
+          !$acc kernels
           !$omp parallel workshare
           qtmp_lap1   (:,:,:,:) = qtmp   (:,:,:,:)
           !$omp end parallel workshare
+          !$acc end kernels
           qtmp_lap1_pl(:,:,:,:) = qtmp_pl(:,:,:,:)
        endif
 
@@ -1739,9 +1928,11 @@ contains
           if ( p == lap_order_hdiff ) then
 
 !OCL XFILL
+             !$acc kernels
              !$omp parallel workshare
              wk   (:,:,:) = rhog   (:,:,:) * hdiff_fact_q * KH_coef   (:,:,:)
              !$omp end parallel workshare
+             !$acc end kernels
              wk_pl(:,:,:) = rhog_pl(:,:,:) * hdiff_fact_q * KH_coef_pl(:,:,:)
 
              do nq = 1, TRC_VMAX
@@ -1759,10 +1950,12 @@ contains
              enddo
           endif
 
-          !$omp parallel workshare
 !OCL XFILL
+          !$acc kernels
+          !$omp parallel workshare
           qtmp   (:,:,:,:) = -qtmp2   (:,:,:,:)
           !$omp end parallel workshare
+          !$acc end kernels
           qtmp_pl(:,:,:,:) = -qtmp2_pl(:,:,:,:)
 
           call COMM_data_transfer( qtmp, qtmp_pl )
@@ -1772,10 +1965,12 @@ contains
        !--- 1st order laplacian filter
        if ( NUMFILTER_DOhorizontaldiff_lap1 ) then
 
-          !$omp parallel workshare
 !OCL XFILL
+          !$acc kernels
+          !$omp parallel workshare
           wk   (:,:,:) = rhog   (:,:,:) * hdiff_fact_q * KH_coef_lap1   (:,:,:)
           !$omp end parallel workshare
+          !$acc end kernels
           wk_pl(:,:,:) = rhog_pl(:,:,:) * hdiff_fact_q * KH_coef_lap1_pl(:,:,:)
 
           do nq = 1, TRC_VMAX
@@ -1786,24 +1981,29 @@ contains
                                   OPRT_coef_diff(:,:,:,:),   OPRT_coef_diff_pl(:,:,:)     ) ! [IN]
           enddo
 
-          !$omp parallel workshare
 !OCL XFILL
+          !$acc kernels
+          !$omp parallel workshare
           qtmp_lap1   (:,:,:,:) = -qtmp2   (:,:,:,:)
           !$omp end parallel workshare
+          !$acc end kernels
           qtmp_lap1_pl(:,:,:,:) = -qtmp2_pl(:,:,:,:)
 
           call COMM_data_transfer( qtmp_lap1(:,:,:,:), qtmp_lap1_pl(:,:,:,:) )
        else
-          !$omp parallel workshare
 !OCL XFILL
+          !$acc kernels
+          !$omp parallel workshare
           qtmp_lap1   (:,:,:,:) = 0.0_RP
           !$omp end parallel workshare
+          !$acc end kernels
           qtmp_lap1_pl(:,:,:,:) = 0.0_RP
        endif
 
        do nq = 1, TRC_VMAX
        do l  = 1, ADM_lall
 !OCL XFILL
+          !$acc kernels
           !$omp parallel do default(none),private(g,k), &
           !$omp shared(l,nq,gall,kmin,kmax,tendency_q,qtmp,qtmp_lap1)
           do k  = kmin, kmax
@@ -1812,6 +2012,7 @@ contains
           enddo
           enddo
           !$omp end parallel do
+          !$acc end kernels
        enddo
        enddo
 
@@ -1828,7 +2029,12 @@ contains
        endif
     else
 
+#ifdef MORETIMER
+call PROF_rapstart('____numfilter_hdiff_25')
+#endif
+
 !OCL XFILL
+       !$acc kernels
        !$omp parallel do default(none),private(g,k,l,nq), &
        !$omp shared(gall,kall,lall,nall,tendency_q), &
        !$omp collapse(3)
@@ -1842,12 +2048,19 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        tendency_q_pl(:,:,:,:) = 0.0_RP
+
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_hdiff_25')
+#endif
 
     endif ! apply filter to tracer?
 
     call PROF_rapend('____numfilter_hdiffusion',2)
+
+    !$acc end data
 
     return
   end subroutine numfilter_hdiffusion
@@ -2520,8 +2733,12 @@ contains
     lall = ADM_lall
 
     if ( .NOT. NUMFILTER_DOdivdamp ) then
+#ifdef MORETIMER
+call PROF_rapstart('____numfilter_divd_01')
+#endif
 
 !OCL XFILL
+       !$acc kernels pcopy(gdx,gdy,gdz,gdvz)
        !$omp parallel do default(none),private(g,k,l), &
        !$omp shared(gall,kall,lall,gdx,gdy,gdz,gdvz), &
        !$omp collapse(2)
@@ -2536,15 +2753,31 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        gdx_pl (:,:,:) = 0.0_RP
        gdy_pl (:,:,:) = 0.0_RP
        gdz_pl (:,:,:) = 0.0_RP
        gdvz_pl(:,:,:) = 0.0_RP
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_divd_01')
+#endif
+
        call PROF_rapend('____numfilter_divdamp',2)
        return
     endif
+
+    !$acc data &
+    !$acc pcreate(vtmp,vtmp2,cnv) &
+    !$acc pcopy(gdx,gdy,gdz,gdvz) &
+    !$acc pcopyin(rhogvx,rhogvy,rhogvz,rhogw) &
+    !$acc pcopyin(divdamp_coef) &
+    !$acc pcopyin(GRD_rdgzh,OPRT_coef_intp,OPRT_coef_diff)
+
+#ifdef MORETIMER
+call PROF_rapstart('____numfilter_divd_02o')
+#endif
 
     !--- 3D divergence divdamp
     call OPRT3D_divdamp( vtmp2         (:,:,:,1),   vtmp2_pl         (:,:,:,1), & ! [OUT]
@@ -2557,14 +2790,27 @@ contains
                          OPRT_coef_intp(:,:,:,:,:), OPRT_coef_intp_pl(:,:,:,:), & ! [IN]
                          OPRT_coef_diff(:,:,:,:),   OPRT_coef_diff_pl(:,:,:)    ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_divd_02o')
+#endif
+
     if ( lap_order_divdamp > 1 ) then
        do p = 1, lap_order_divdamp-1
 
+#ifdef MORETIMER
+call PROF_rapstart('____numfilter_divd_03c')
+#endif
+
           call COMM_data_transfer( vtmp2, vtmp2_pl )
 
-          !--- note : sign changes
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_divd_03c')
+call PROF_rapstart('____numfilter_divd_04')
+#endif
 
+          !--- note : sign changes
 !OCL XFILL
+          !$acc kernels present(vtmp) pcopyin(vtmp2)
           !$omp parallel do default(none),private(g,k,l,iv), &
           !$omp shared(gall,kall,lall,vtmp,vtmp2), &
           !$omp collapse(3)
@@ -2578,8 +2824,14 @@ contains
           enddo
           enddo
           !$omp end parallel do
+          !$acc end kernels
 
           vtmp_pl(:,:,:,:) = -vtmp2_pl(:,:,:,:)
+
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_divd_04')
+call PROF_rapstart('____numfilter_divd_05o')
+#endif
 
           !--- 2D dinvergence divdamp
           call OPRT_divdamp( vtmp2         (:,:,:,1),   vtmp2_pl         (:,:,:,1), & ! [OUT]
@@ -2591,11 +2843,20 @@ contains
                              OPRT_coef_intp(:,:,:,:,:), OPRT_coef_intp_pl(:,:,:,:), & ! [IN]
                              OPRT_coef_diff(:,:,:,:),   OPRT_coef_diff_pl(:,:,:)    ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_divd_05o')
+#endif
+
        enddo ! lap_order
     endif
 
+#ifdef MORETIMER
+call PROF_rapstart('____numfilter_divd_06')
+#endif
+
     !--- X coeffcient
 !OCL XFILL
+    !$acc kernels present(gdx,gdy,gdz) pcopyin(vtmp2,divdamp_coef)
     !$omp parallel do default(none),private(g,k,l), &
     !$omp shared(gall,kall,lall,gdx,gdy,gdz,divdamp_coef,vtmp2), &
     !$omp collapse(2)
@@ -2609,6 +2870,7 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        gdx_pl(:,:,:) = divdamp_coef_pl(:,:,:) * vtmp2_pl(:,:,:,1)
@@ -2616,9 +2878,18 @@ contains
        gdz_pl(:,:,:) = divdamp_coef_pl(:,:,:) * vtmp2_pl(:,:,:,3)
     endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_divd_06')
+call PROF_rapstart('____numfilter_divd_07o')
+#endif
+
     call OPRT_horizontalize_vec( gdx(:,:,:), gdx_pl(:,:,:), & ! [INOUT]
                                  gdy(:,:,:), gdy_pl(:,:,:), & ! [INOUT]
                                  gdz(:,:,:), gdz_pl(:,:,:)  ) ! [INOUT]
+
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_divd_07o')
+#endif
 
     if ( NUMFILTER_DOdivdamp_v ) then
 
@@ -2629,6 +2900,11 @@ contains
                                   cnv   (:,:,:), cnv_pl   (:,:,:), & ! [OUT]
                                   I_SRC_default                    ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapstart('____numfilter_divd_08')
+#endif
+
+       !$acc kernels pcopy(gdvz) pcopyin(cnv,GRD_rdgzh)
        !$omp parallel default(none),private(g,k,l), &
        !$omp shared(gall,kmin,kmax,lall,gdvz,cnv,GRD_rdgzh,divdamp_coef_v)
        do l = 1, lall
@@ -2640,7 +2916,6 @@ contains
           enddo
           enddo
           !$omp end do nowait
-
 !OCL XFILL
           !$omp do
           do g = 1, gall
@@ -2651,6 +2926,7 @@ contains
           !$omp end do
        enddo
        !$omp end parallel
+       !$acc end kernels
 
        if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
@@ -2663,9 +2939,18 @@ contains
           enddo
        endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_divd_08')
+#endif
+
     else
 
+#ifdef MORETIMER
+call PROF_rapstart('____numfilter_divd_09')
+#endif
+
 !OCL XFILL
+       !$acc kernels pcopy(gdvz)
        !$omp parallel do default(none),private(g,k,l), &
        !$omp shared(gall,kall,lall,gdvz), &
        !$omp collapse(2)
@@ -2677,18 +2962,25 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        gdvz_pl(:,:,:) = 0.0_RP
+
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_divd_09')
+#endif
 
     endif
 
     call PROF_rapend('____numfilter_divdamp',2)
 
+    !$acc end data
+
     return
   end subroutine numfilter_divdamp
 
   !-----------------------------------------------------------------------------
-  !> 2D divergence divdamp
+  !> Horizontal divergence damping
   subroutine numfilter_divdamp_2d( &
        rhogvx, rhogvx_pl, &
        rhogvy, rhogvy_pl, &
@@ -2746,7 +3038,12 @@ contains
 
     if ( .NOT. NUMFILTER_DOdivdamp_2d ) then
 
+#ifdef MORETIMER
+call PROF_rapstart('____numfilter_divd2d_01')
+#endif
+
 !OCL XFILL
+       !$acc kernels pcopy(gdx,gdy,gdz)
        !$omp parallel do default(none),private(g,k,l), &
        !$omp shared(gall,kall,lall,gdx,gdy,gdz), &
        !$omp collapse(2)
@@ -2760,14 +3057,26 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        gdx_pl(:,:,:) = 0.0_RP
        gdy_pl(:,:,:) = 0.0_RP
        gdz_pl(:,:,:) = 0.0_RP
 
+#ifdef MORETIMER
+call PROF_rapend  ('____numfilter_divd2d_01')
+#endif
+
        call PROF_rapend('____numfilter_divdamp_2d',2)
        return
     endif
+
+    !$acc data &
+    !$acc pcreate(vtmp,vtmp2) &
+    !$acc pcopy(gdx,gdy,gdz) &
+    !$acc pcopyin(rhogvx,rhogvy,rhogvz) &
+    !$acc pcopyin(divdamp_2d_coef) &
+    !$acc pcopyin(OPRT_coef_intp,OPRT_coef_diff)
 
     !--- 2D dinvergence divdamp
     call OPRT_divdamp( vtmp2         (:,:,:,1),   vtmp2_pl         (:,:,:,1), & ! [OUT]
@@ -2785,9 +3094,11 @@ contains
           call COMM_data_transfer(vtmp2,vtmp2_pl)
 
           !--- note : sign changes
+          !$acc kernels
           !$omp parallel workshare
           vtmp   (:,:,:,:) = -vtmp2   (:,:,:,:)
           !$omp end parallel workshare
+          !$acc end kernels
           vtmp_pl(:,:,:,:) = -vtmp2_pl(:,:,:,:)
 
           !--- 2D dinvergence divdamp
@@ -2805,6 +3116,7 @@ contains
 
     !--- X coeffcient
     do l = 1, ADM_lall
+       !$acc kernels pcopy(gdx,gdy,gdz) pcopyin(vtmp2,divdamp_2d_coef)
        !$omp parallel do default(none),private(g,k), &
        !$omp shared(l,gall,kall,gdx,gdy,gdz,divdamp_2d_coef,vtmp2)
        do k = 1, kall
@@ -2815,6 +3127,7 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
     enddo
 
     if ( ADM_have_pl ) then
@@ -2829,11 +3142,13 @@ contains
 
     call PROF_rapend('____numfilter_divdamp_2d',2)
 
+    !$acc end data
+
     return
   end subroutine numfilter_divdamp_2d
 
   !-----------------------------------------------------------------------------
-  !> Smoothing coefficient
+  !> Smoothing
   subroutine numfilter_smooth_1var( &
        s, s_pl )
     use mod_adm, only: &

@@ -27,6 +27,11 @@ module mod_bndcnd
   public :: BNDCND_rhovxvyvz
   public :: BNDCND_rhow
 
+  interface BNDCND_thermo
+     module procedure BNDCND_thermo_SP
+     module procedure BNDCND_thermo_DP
+  end interface BNDCND_thermo
+
   !-----------------------------------------------------------------------------
   !
   !++ Public parameters & variables
@@ -206,10 +211,10 @@ contains
 
     integer  :: ij, l
     !---------------------------------------------------------------------------
-    !$acc  data &
-    !$acc& pcopy(rho,vx,vy,vz,w,ein,tem,pre) &
-    !$acc& pcopy(rhog,rhogvx,rhogvy,rhogvz,rhogw,rhoge) &
-    !$acc& pcopyin(gsqrtgam2,phi,c2wfact,c2wfact_Gz)
+    !$acc data &
+    !$acc pcopy(rho,vx,vy,vz,w,ein,tem,pre) &
+    !$acc pcopy(rhog,rhogvx,rhogvy,rhogvz,rhogw,rhoge) &
+    !$acc pcopyin(gsqrtgam2,phi,c2wfact,c2wfact_Gz)
 
     kmin = ADM_kmin
     kmax = ADM_kmax
@@ -220,16 +225,17 @@ contains
 
     do l = 1, ldim
        call BNDCND_thermo( ijdim,      & ! [IN]
+                           tem(:,:,l), & ! [INOUT]
                            rho(:,:,l), & ! [INOUT]
                            pre(:,:,l), & ! [INOUT]
-                           tem(:,:,l), & ! [INOUT]
                            phi(:,:,l)  ) ! [IN]
     enddo
 
+    !$acc kernels pcopy(rhog,ein,rhoge) pcopyin(rho,tem,gsqrtgam2)
     !$omp parallel default(none),private(ij,l), &
     !$omp shared(ijdim,ldim,kmax,kmin,rhog,rhoge,ein,rho,tem,gsqrtgam2,CVdry)
-    !$acc kernels pcopy(rhog,ein,rhoge) pcopyin(rho,tem,gsqrtgam2) async(0)
     do l  = 1, ldim
+!OCL XFILL
        !$omp do
        do ij = 1, ijdim
           rhog (ij,kmax+1,l) = rho(ij,kmax+1,l) * gsqrtgam2(ij,kmax+1,l)
@@ -243,8 +249,8 @@ contains
        enddo
        !$omp end do
     enddo
-    !$acc end kernels
     !$omp end parallel
+    !$acc end kernels
 
     !--- Momentum ( rhogvx, rhogvy, rhogvz, vx, vy, vz )
 
@@ -256,10 +262,11 @@ contains
                            rhogvy(:,:,:), & ! [INOUT]
                            rhogvz(:,:,:)  ) ! [INOUT]
 
+    !$acc kernels pcopy(vx,vy,vz) pcopyin(rhogvx,rhogvy,rhogvz,rhog)
     !$omp parallel default(none),private(ij,l), &
     !$omp shared(ijdim,ldim,kmax,kmin,vx,vy,vz,rhog,rhogvx,rhogvy,rhogvz)
-    !$acc kernels pcopy(vx,vy,vz) pcopyin(rhogvx,rhogvy,rhogvz,rhog) async(0)
     do l  = 1, ldim
+!OCL XFILL
        !$omp do
        do ij = 1, ijdim
           vx(ij,kmax+1,l) = rhogvx(ij,kmax+1,l) / rhog(ij,kmax+1,l)
@@ -272,8 +279,8 @@ contains
        enddo
        !$omp end do
     enddo
-    !$acc end kernels
     !$omp end parallel
+    !$acc end kernels
 
     !--- Momentum ( rhogw, w )
     do l = 1, ldim
@@ -285,10 +292,11 @@ contains
                          c2wfact_Gz(:,:,:,l)  ) ! [IN]
     enddo
 
+    !$acc kernels pcopy(w) pcopyin(rhog,rhogw,c2wfact)
     !$omp parallel default(none),private(ij,l), &
     !$omp shared(ijdim,ldim,kmax,kmin,w,rhogw,rhog,c2wfact)
-    !$acc kernels pcopy(w) pcopyin(rhog,rhogw,c2wfact) async(0)
     do l  = 1, ldim
+!OCL XFILL
        !$omp do
        do ij = 1, ijdim
           w(ij,kmax+1,l) = rhogw(ij,kmax+1,l) / ( c2wfact(ij,kmax+1,1,l) * rhog(ij,kmax+1,l) &
@@ -299,20 +307,21 @@ contains
        enddo
        !$omp end do
     enddo
-    !$acc end kernels
     !$omp end parallel
+    !$acc end kernels
 
     !$acc end data
+
     return
   end subroutine BNDCND_all
 
   !-----------------------------------------------------------------------------
   !> Boundary condition setting for thermodynamical variables
-  subroutine BNDCND_thermo( &
+  subroutine BNDCND_thermo_SP( &
        ijdim, &
+       tem,   &
        rho,   &
        pre,   &
-       tem,   &
        phi    )
     use mod_adm, only: &
        kdim => ADM_kall, &
@@ -324,25 +333,25 @@ contains
     implicit none
 
     integer,  intent(in)    :: ijdim           ! number of horizontal grid
-    real(RP), intent(inout) :: rho(ijdim,kdim) ! density
-    real(RP), intent(inout) :: pre(ijdim,kdim) ! pressure
-    real(RP), intent(inout) :: tem(ijdim,kdim) ! temperature
-    real(RP), intent(in)    :: phi(ijdim,kdim) ! geopotential
+    real(SP), intent(inout) :: tem(ijdim,kdim) ! temperature
+    real(SP), intent(inout) :: rho(ijdim,kdim) ! density
+    real(SP), intent(inout) :: pre(ijdim,kdim) ! pressure
+    real(SP), intent(in)    :: phi(ijdim,kdim) ! geopotential
 
     integer  :: kmin, kmax
-    real(RP) :: GRAV, Rdry
+    real(SP) :: GRAV, Rdry
 
     integer  :: ij
 
-    real(RP) :: z,z1,z2,z3,p1,p2,p3
-    real(RP) :: lag_intpl
+    real(SP) :: z,z1,z2,z3,p1,p2,p3
+    real(SP) :: lag_intpl
     lag_intpl(z,z1,p1,z2,p2,z3,p3) = ( (z-z2)*(z-z3))/((z1-z2)*(z1-z3) ) * p1 &
                                    + ( (z-z1)*(z-z3))/((z2-z1)*(z2-z3) ) * p2 &
                                    + ( (z-z1)*(z-z2))/((z3-z1)*(z3-z2) ) * p3
     !---------------------------------------------------------------------------
-    !$acc  data &
-    !$acc& pcopy(tem,rho,pre) &
-    !$acc& pcopyin(phi)
+    !$acc data &
+    !$acc pcopy(tem,rho,pre) &
+    !$acc pcopyin(phi)
 
     kmin = ADM_kmin
     kmax = ADM_kmax
@@ -350,10 +359,10 @@ contains
     GRAV = CONST_GRAV
     Rdry = CONST_Rdry
 
+    !$acc kernels pcopy(tem,pre,rho) pcopyin(phi)
     !$omp parallel do default(none),private(ij,z,z1,z2,z3), &
     !$omp shared(ijdim,kmax,kmin,is_top_tem,is_top_epl,is_btm_tem,is_btm_epl, &
-    !$omp        tem,phi,GRAV)
-    !$acc kernels pcopy(tem) pcopyin(phi) async(0)
+    !$omp        rho,pre,tem,phi,Rdry,GRAV)
     do ij = 1, ijdim
 
        if    ( is_top_tem ) then
@@ -388,14 +397,104 @@ contains
                                       z3, tem(ij,kmin  )  )
        endif
 
-    enddo
-    !$acc end kernels
-    !$omp end parallel do
+       !--- set the boundary of pressure ( hydrostatic balance )
+       pre(ij,kmax+1) = pre(ij,kmax-1) - rho(ij,kmax) * ( phi(ij,kmax+1) - phi(ij,kmax-1) )
+       pre(ij,kmin-1) = pre(ij,kmin+1) - rho(ij,kmin) * ( phi(ij,kmin-1) - phi(ij,kmin+1) )
 
-    !$omp parallel do default(none),private(ij), &
-    !$omp shared(ijdim,kmax,kmin,rho,pre,tem,phi,Rdry)
-    !$acc kernels pcopy(pre,rho) pcopyin(phi,tem) async(0)
+       !--- set the boundary of density ( equation of state )
+       rho(ij,kmax+1) = pre(ij,kmax+1) / ( Rdry * tem(ij,kmax+1) )
+       rho(ij,kmin-1) = pre(ij,kmin-1) / ( Rdry * tem(ij,kmin-1) )
+
+    enddo
+    !$omp end parallel do
+    !$acc end kernels
+
+    !$acc end data
+
+    return
+  end subroutine BNDCND_thermo_SP
+
+  !-----------------------------------------------------------------------------
+  !> Boundary condition setting for thermodynamical variables
+  subroutine BNDCND_thermo_DP( &
+       ijdim, &
+       tem,   &
+       rho,   &
+       pre,   &
+       phi    )
+    use mod_adm, only: &
+       kdim => ADM_kall, &
+       ADM_kmin,         &
+       ADM_kmax
+    use mod_const, only: &
+       CONST_GRAV, &
+       CONST_Rdry
+    implicit none
+
+    integer,  intent(in)    :: ijdim           ! number of horizontal grid
+    real(DP), intent(inout) :: tem(ijdim,kdim) ! temperature
+    real(DP), intent(inout) :: rho(ijdim,kdim) ! density
+    real(DP), intent(inout) :: pre(ijdim,kdim) ! pressure
+    real(DP), intent(in)    :: phi(ijdim,kdim) ! geopotential
+
+    integer  :: kmin, kmax
+    real(DP) :: GRAV, Rdry
+
+    integer  :: ij
+
+    real(DP) :: z,z1,z2,z3,p1,p2,p3
+    real(DP) :: lag_intpl
+    lag_intpl(z,z1,p1,z2,p2,z3,p3) = ( (z-z2)*(z-z3))/((z1-z2)*(z1-z3) ) * p1 &
+                                   + ( (z-z1)*(z-z3))/((z2-z1)*(z2-z3) ) * p2 &
+                                   + ( (z-z1)*(z-z2))/((z3-z1)*(z3-z2) ) * p3
+    !---------------------------------------------------------------------------
+    !$acc data &
+    !$acc pcopy(tem,rho,pre) &
+    !$acc pcopyin(phi)
+
+    kmin = ADM_kmin
+    kmax = ADM_kmax
+
+    GRAV = CONST_GRAV
+    Rdry = CONST_Rdry
+
+    !$acc kernels pcopy(tem,pre,rho) pcopyin(phi)
+    !$omp parallel do default(none),private(ij,z,z1,z2,z3), &
+    !$omp shared(ijdim,kmax,kmin,is_top_tem,is_top_epl,is_btm_tem,is_btm_epl, &
+    !$omp        rho,pre,tem,phi,Rdry,GRAV)
     do ij = 1, ijdim
+
+       if    ( is_top_tem ) then
+
+          tem(ij,kmax+1) = tem(ij,kmax) ! dT/dz = 0
+
+       elseif( is_top_epl ) then
+          z  = phi(ij,kmax+1) / GRAV
+          z1 = phi(ij,kmax  ) / GRAV
+          z2 = phi(ij,kmax-1) / GRAV
+          z3 = phi(ij,kmax-2) / GRAV
+
+          tem(ij,kmax+1) = lag_intpl( z ,                 &
+                                      z1, tem(ij,kmax  ), &
+                                      z2, tem(ij,kmax-1), &
+                                      z3, tem(ij,kmax-2)  )
+       endif
+
+       if   ( is_btm_tem ) then
+
+          tem(ij,kmin-1) = tem(ij,kmin) ! dT/dz = 0
+
+       elseif( is_btm_epl ) then
+          z1 = phi(ij,kmin+2) / GRAV
+          z2 = phi(ij,kmin+1) / GRAV
+          z3 = phi(ij,kmin  ) / GRAV
+          z  = phi(ij,kmin-1) / GRAV
+
+          tem(ij,kmin-1) = lag_intpl( z,                  &
+                                      z1, tem(ij,kmin+2), &
+                                      z2, tem(ij,kmin+1), &
+                                      z3, tem(ij,kmin  )  )
+       endif
 
        !--- set the boundary of pressure ( hydrostatic balance )
        pre(ij,kmax+1) = pre(ij,kmax-1) - rho(ij,kmax) * ( phi(ij,kmax+1) - phi(ij,kmax-1) )
@@ -406,12 +505,13 @@ contains
        rho(ij,kmin-1) = pre(ij,kmin-1) / ( Rdry * tem(ij,kmin-1) )
 
     enddo
-    !$acc end kernels
     !$omp end parallel do
+    !$acc end kernels
 
     !$acc end data
+
     return
-  end subroutine BNDCND_thermo
+  end subroutine BNDCND_thermo_DP
 
   !-----------------------------------------------------------------------------
   !> Boundary condition setting for horizontal momentum
@@ -440,17 +540,17 @@ contains
 
     integer  :: ij, l
     !---------------------------------------------------------------------------
-    !$acc  data &
-    !$acc& pcopy(rhogvx,rhogvy,rhogvz) &
-    !$acc& pcopyin(rhog)
+    !$acc data &
+    !$acc pcopy(rhogvx,rhogvy,rhogvz) &
+    !$acc pcopyin(rhog)
 
     kmin = ADM_kmin
     kmax = ADM_kmax
 
+    !$acc kernels pcopy(rhogvx,rhogvy,rhogvz) pcopyin(rhog)
     !$omp parallel default(none),private(ij,l), &
     !$omp shared(ijdim,ldim,kmax,kmin,is_top_rigid,is_top_free,is_btm_rigid,is_btm_free, &
     !$omp        rhog,rhogvx,rhogvy,rhogvz)
-    !$acc kernels pcopy(rhogvx,rhogvy,rhogvz) pcopyin(rhog) async(0)
     do l  = 1, ldim
        !$omp do
        do ij = 1, ijdim
@@ -478,10 +578,11 @@ contains
        enddo
        !$omp end do
     enddo
-    !$acc end kernels
     !$omp end parallel
+    !$acc end kernels
 
     !$acc end data
+
     return
   end subroutine BNDCND_rhovxvyvz
 
@@ -518,10 +619,10 @@ contains
     kmin = ADM_kmin
     kmax = ADM_kmax
 
+    !$acc kernels pcopy(rhogw) pcopyin(rhogvx,rhogvy,rhogvz,c2wfact)
     !$omp parallel do default(none),private(ij), &
     !$omp shared(ijdim,kmax,kmin,is_top_rigid,is_top_free,is_btm_rigid,is_btm_free, &
     !$omp        rhogw,c2wfact,rhogvx,rhogvy,rhogvz)
-    !$acc kernels pcopy(rhogw) pcopyin(rhogvx,rhogvy,rhogvz,c2wfact) async(0)
     do ij = 1, ijdim
 
        if    ( is_top_rigid ) then
@@ -549,10 +650,11 @@ contains
        rhogw(ij,kmin-1) = 0.0_RP
 
     enddo
-    !$acc end kernels
     !$omp end parallel do
+    !$acc end kernels
 
     !$acc end data
+
     return
   end subroutine BNDCND_rhow
 

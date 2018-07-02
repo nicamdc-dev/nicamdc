@@ -2,7 +2,7 @@
 !> Module vertical interpolation
 !!
 !! @par Description
-!!          This module contains vertical interpolation subroutines
+!!         Vertical interpolation tools
 !!
 !! @author NICAM developers
 !<

@@ -2,7 +2,7 @@
 !> Module time management
 !!
 !! @par Description
-!!          This module is for the time management
+!!         Management of time
 !!
 !! @author NICAM developers
 !<
@@ -14,6 +14,7 @@ module mod_time
   !
   use mod_precision
   use mod_stdio
+  use mod_prof
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -92,18 +93,18 @@ contains
     integer                :: start_sec     !< start sec
 
     namelist / TIMEPARAM / &
-         integ_type,  &
-         split,       &
-         dtl,         &
-         lstep_max,   &
-         sstep_max,   &
-         start_date,  &
-         start_year,  &
-         start_month, &
-         start_day,   &
-         start_hour,  &
-         start_min,   &
-         start_sec
+       integ_type,  &
+       split,       &
+       dtl,         &
+       lstep_max,   &
+       sstep_max,   &
+       start_date,  &
+       start_year,  &
+       start_month, &
+       start_day,   &
+       start_hour,  &
+       start_min,   &
+       start_sec
 
     character(len=20) :: HTIME_start
     character(len=20) :: HTIME_end
@@ -152,7 +153,7 @@ contains
        case('RK3')
           TIME_sstep_max = 6
         case('RK4')
-          TIME_sstep_max = 8
+          TIME_sstep_max = 12
         case('TRCADV')
           TIME_sstep_max = 0
        case default
@@ -238,7 +239,7 @@ contains
     implicit none
     !---------------------------------------------------------------------------
 
-    call calendar_ss2cc( TIME_HTIME, TIME_CTIME )
+    call CALENDAR_ss2cc( TIME_HTIME, TIME_CTIME )
 
     if( IO_L ) write(IO_FID_LOG,'(1x,3A,I8,A,I8,A)') &
                                 '### TIME = ', TIME_HTIME, '( step = ', TIME_CSTEP, '/', TIME_LSTEP_MAX, ' )'

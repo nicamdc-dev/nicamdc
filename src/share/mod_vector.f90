@@ -2,7 +2,7 @@
 !> module vector
 !!
 !! @par Description
-!!          module for 3D vector on the sphere
+!!         3D vector operator on the sphere
 !!
 !! @author NICAM developers
 !<
@@ -34,6 +34,16 @@ module mod_vector
   public :: VECTR_rotation
   public :: VECTR_distance
 
+  interface VECTR_xyz2latlon
+     module procedure VECTR_xyz2latlon_SP
+     module procedure VECTR_xyz2latlon_DP
+  end interface VECTR_xyz2latlon
+
+  interface VECTR_distance
+     module procedure VECTR_distance_SP
+     module procedure VECTR_distance_DP
+  end interface VECTR_distance
+
   !-----------------------------------------------------------------------------
   !
   !++ Public parameters & variables
@@ -53,7 +63,7 @@ module mod_vector
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  subroutine VECTR_xyz2latlon( &
+  subroutine VECTR_xyz2latlon_SP( &
        x,   &
        y,   &
        z,   &
@@ -63,30 +73,30 @@ contains
        EPS => CONST_EPS
     implicit none
 
-    real(RP), intent(in)  :: x
-    real(RP), intent(in)  :: y
-    real(RP), intent(in)  :: z
-    real(RP), intent(out) :: lat
-    real(RP), intent(out) :: lon
+    real(SP), intent(in)  :: x
+    real(SP), intent(in)  :: y
+    real(SP), intent(in)  :: z
+    real(SP), intent(out) :: lat
+    real(SP), intent(out) :: lon
 
-    real(RP) :: length, length_h
+    real(SP) :: length, length_h
     !---------------------------------------------------------------------------
 
     length = sqrt( x*x + y*y + z*z )
 
     if ( length < EPS ) then ! 3D vector length is
-       lat = 0.0_RP
-       lon = 0.0_RP
+       lat = 0.0_SP
+       lon = 0.0_SP
        return
     endif
 
-    if    ( z / length >= 1.0_RP ) then ! vector is parallele to z axis.
-       lat = asin(1.0_RP)
-       lon = 0.0_RP
+    if    ( z / length >= 1.0_SP ) then ! vector is parallele to z axis.
+       lat = asin(1.0_SP)
+       lon = 0.0_SP
        return
-    elseif( z / length <= -1.0_RP ) then ! vector is parallele to z axis.
-       lat = asin(-1.0_RP)
-       lon = 0.0_RP
+    elseif( z / length <= -1.0_SP ) then ! vector is parallele to z axis.
+       lat = asin(-1.0_SP)
+       lon = 0.0_SP
        return
     else
        lat = asin( z / length )
@@ -95,22 +105,82 @@ contains
     length_h = sqrt( x*x + y*y )
 
     if ( length_h < EPS ) then
-       lon = 0.0_RP
+       lon = 0.0_SP
        return
     endif
 
-    if    ( x / length_h >= 1.0_RP ) then
-       lon = acos(1.0_RP)
-    elseif( x / length_h <= -1.0_RP ) then
-       lon = acos(-1.0_RP)
+    if    ( x / length_h >= 1.0_SP ) then
+       lon = acos(1.0_SP)
+    elseif( x / length_h <= -1.0_SP ) then
+       lon = acos(-1.0_SP)
     else
        lon = acos( x / length_h )
     endif
 
-    if( y < 0.0_RP ) lon = -lon
+    if( y < 0.0_SP ) lon = -lon
 
     return
-  end subroutine VECTR_xyz2latlon
+  end subroutine VECTR_xyz2latlon_SP
+
+  !-----------------------------------------------------------------------------
+  subroutine VECTR_xyz2latlon_DP( &
+       x,   &
+       y,   &
+       z,   &
+       lat, &
+       lon  )
+    use mod_const, only: &
+       EPS => CONST_EPS
+    implicit none
+
+    real(DP), intent(in)  :: x
+    real(DP), intent(in)  :: y
+    real(DP), intent(in)  :: z
+    real(DP), intent(out) :: lat
+    real(DP), intent(out) :: lon
+
+    real(DP) :: length, length_h
+    !---------------------------------------------------------------------------
+
+    length = sqrt( x*x + y*y + z*z )
+
+    if ( length < EPS ) then ! 3D vector length is
+       lat = 0.0_DP
+       lon = 0.0_DP
+       return
+    endif
+
+    if    ( z / length >= 1.0_DP ) then ! vector is parallele to z axis.
+       lat = asin(1.0_DP)
+       lon = 0.0_DP
+       return
+    elseif( z / length <= -1.0_DP ) then ! vector is parallele to z axis.
+       lat = asin(-1.0_DP)
+       lon = 0.0_DP
+       return
+    else
+       lat = asin( z / length )
+    endif
+
+    length_h = sqrt( x*x + y*y )
+
+    if ( length_h < EPS ) then
+       lon = 0.0_DP
+       return
+    endif
+
+    if    ( x / length_h >= 1.0_DP ) then
+       lon = acos(1.0_DP)
+    elseif( x / length_h <= -1.0_DP ) then
+       lon = acos(-1.0_DP)
+    else
+       lon = acos( x / length_h )
+    endif
+
+    if( y < 0.0_DP ) lon = -lon
+
+    return
+  end subroutine VECTR_xyz2latlon_DP
 
   !-----------------------------------------------------------------------------
   subroutine VECTR_latlon2xyz( &
@@ -464,9 +534,9 @@ contains
   !-----------------------------------------------------------------------------
   !> Apply rotation matrix
   subroutine VECTR_rotation( &
-      a,     &
-      angle, &
-      iaxis  )
+       a,     &
+       angle, &
+       iaxis  )
     implicit none
 
     real(RP), intent(inout) :: a(3)
@@ -527,7 +597,7 @@ contains
 
   !-----------------------------------------------------------------------
   !> Get horizontal distance on the sphere
-  subroutine VECTR_distance( &
+  subroutine VECTR_distance_SP( &
        r,    &
        lon1, &
        lat1, &
@@ -537,11 +607,11 @@ contains
     implicit none
 
     real(RP), intent(in)  :: r          ! radius in meter
-    real(RP), intent(in)  :: lon1, lat1 ! in radian
-    real(RP), intent(in)  :: lon2, lat2 ! in radian
-    real(RP), intent(out) :: dist       ! distance of the two points in meter
+    real(SP), intent(in)  :: lon1, lat1 ! in radian
+    real(SP), intent(in)  :: lon2, lat2 ! in radian
+    real(SP), intent(out) :: dist       ! distance of the two points in meter
 
-    real(RP) :: gmm, gno_x, gno_y
+    real(SP) :: gmm, gno_x, gno_y
     !-----------------------------------------------------------------------
 
     gmm = sin(lat1) * sin(lat2) &
@@ -554,6 +624,37 @@ contains
     dist = r * atan2( sqrt(gno_x*gno_x+gno_y*gno_y), gmm )
 
     return
-  end subroutine VECTR_distance
+  end subroutine VECTR_distance_SP
+
+  !-----------------------------------------------------------------------
+  !> Get horizontal distance on the sphere
+  subroutine VECTR_distance_DP( &
+       r,    &
+       lon1, &
+       lat1, &
+       lon2, &
+       lat2, &
+       dist  )
+    implicit none
+
+    real(RP), intent(in)  :: r          ! radius in meter
+    real(DP), intent(in)  :: lon1, lat1 ! in radian
+    real(DP), intent(in)  :: lon2, lat2 ! in radian
+    real(DP), intent(out) :: dist       ! distance of the two points in meter
+
+    real(DP) :: gmm, gno_x, gno_y
+    !-----------------------------------------------------------------------
+
+    gmm = sin(lat1) * sin(lat2) &
+        + cos(lat1) * cos(lat2) * cos(lon2-lon1)
+
+    gno_x = gmm * ( cos(lat2) * sin(lon2-lon1) )
+    gno_y = gmm * ( cos(lat1) * sin(lat2) &
+                  - sin(lat1) * cos(lat2) * cos(lon2-lon1) )
+
+    dist = r * atan2( sqrt(gno_x*gno_x+gno_y*gno_y), gmm )
+
+    return
+  end subroutine VECTR_distance_DP
 
 end module mod_vector

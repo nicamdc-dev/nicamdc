@@ -160,19 +160,19 @@ contains
           endif
        endif
 
-       write(IO_FID_LOG,*) ''
-       write(IO_FID_LOG,*) '########################################################################'
-       write(IO_FID_LOG,*) ''
-       write(IO_FID_LOG,*) ' NICAM-DC (dynamical core package of NICAM)'
-       write(IO_FID_LOG,*) ''
-       write(IO_FID_LOG,*) '########################################################################'
-       write(IO_FID_LOG,*) ''
-       write(IO_FID_LOG,*) '++++++ Module[STDIO] / Categ[IO] / Origin[SCALElib]'
-       write(IO_FID_LOG,*) ''
-       write(IO_FID_LOG,*) '*** Open config file, FID = ', IO_FID_CONF
-       write(IO_FID_LOG,*) '*** Open log    file, FID = ', IO_FID_LOG
-       write(IO_FID_LOG,*) '*** basename of log file  = ', trim(IO_LOG_BASENAME)
-       write(IO_FID_LOG,*) '*** detailed log output   = ', IO_NML
+       if( IO_L ) write(IO_FID_LOG,*) ''
+       if( IO_L ) write(IO_FID_LOG,*) '########################################################################'
+       if( IO_L ) write(IO_FID_LOG,*) ''
+       if( IO_L ) write(IO_FID_LOG,*) ' NICAM-DC (dynamical core package of NICAM)'
+       if( IO_L ) write(IO_FID_LOG,*) ''
+       if( IO_L ) write(IO_FID_LOG,*) '########################################################################'
+       if( IO_L ) write(IO_FID_LOG,*) ''
+       if( IO_L ) write(IO_FID_LOG,*) '++++++ Module[STDIO] / Categ[IO] / Origin[SCALElib]'
+       if( IO_L ) write(IO_FID_LOG,*) ''
+       if( IO_L ) write(IO_FID_LOG,*) '*** Open config file, FID = ', IO_FID_CONF
+       if( IO_L ) write(IO_FID_LOG,*) '*** Open log    file, FID = ', IO_FID_LOG
+       if( IO_L ) write(IO_FID_LOG,*) '*** basename of log file  = ', trim(IO_LOG_BASENAME)
+       if( IO_L ) write(IO_FID_LOG,*) '*** detailed log output   = ', IO_NML
 
     else
        if( is_master ) write(*,*) '*** Log report is suppressed.'

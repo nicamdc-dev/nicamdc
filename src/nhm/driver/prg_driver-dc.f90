@@ -125,31 +125,49 @@ program prg_driver
 
   !##### OpenACC (for data copy) #####
   use mod_adm, only: &
-     RGNMNG_l2r,  &
-     RGNMNG_vert_num
+     ADM_have_sgp
   use mod_comm, only: &
-     Send_info_r2r, Send_info_p2r, Send_info_r2p, &
-     Send_list_r2r, Send_list_p2r, Send_list_r2p, &
-     Recv_info_r2r, Recv_info_p2r, Recv_info_r2p, &
-     Recv_list_r2r, Recv_list_p2r, Recv_list_r2p, &
-     Copy_info_r2r, Copy_info_p2r, Copy_info_r2p, &
-     Copy_list_r2r, Copy_list_p2r, Copy_list_r2p, &
-     sendbuf_r2r_SP, sendbuf_p2r_SP, sendbuf_r2p_SP, &
-     recvbuf_r2r_SP, recvbuf_p2r_SP, recvbuf_r2p_SP, &
-     sendbuf_r2r_DP, sendbuf_p2r_DP, sendbuf_r2p_DP, &
-     recvbuf_r2r_DP, recvbuf_p2r_DP, recvbuf_r2p_DP, &
-     Singular_info, Singular_list, REQ_list
+     sendbuf_r2r_SP, &
+     sendbuf_p2r_SP, &
+     sendbuf_r2p_SP, &
+     recvbuf_r2r_SP, &
+     recvbuf_p2r_SP, &
+     recvbuf_r2p_SP, &
+     sendbuf_r2r_DP, &
+     sendbuf_p2r_DP, &
+     sendbuf_r2p_DP, &
+     recvbuf_r2r_DP, &
+     recvbuf_p2r_DP, &
+     recvbuf_r2p_DP, &
+     Send_list_r2r,  &
+     Send_list_p2r,  &
+     Send_list_r2p,  &
+     Recv_list_r2r,  &
+     Recv_list_p2r,  &
+     Recv_list_r2p,  &
+     Copy_list_r2r,  &
+     Copy_list_p2r,  &
+     Copy_list_r2p,  &
+     Singular_list
   use mod_grd, only: &
-     GRD_x,     &
-     GRD_xt,    &
-     GRD_zs,    &
      GRD_rdgz,  &
      GRD_rdgzh, &
-     GRD_vz
+     GRD_afact, &
+     GRD_bfact, &
+     GRD_cfact, &
+     GRD_dfact, &
+     GRD_x,     &
+     GRD_xr
   use mod_gmtr, only: &
      GMTR_p, &
      GMTR_t, &
      GMTR_a
+  use mod_oprt, only: &
+     OPRT_coef_div,  &
+     OPRT_coef_grad, &
+     OPRT_coef_lap,  &
+     OPRT_coef_intp, &
+     OPRT_coef_diff
   use mod_vmtr, only: &
      VMTR_GAM2H,     &
      VMTR_GSGAM2,    &
@@ -163,28 +181,18 @@ program prg_driver
      VMTR_C2Wfact,   &
      VMTR_C2WfactGz, &
      VMTR_PHI
-  use mod_runconf, only: &
-     CVW
   use mod_prgvar, only: &
-     PRG_var,  &
-     DIAG_var
+     PRG_var
   use mod_bsstate, only: &
      rho_bs, &
-     pre_bs, &
-     tem_bs
+     pre_bs
   use mod_numfilter, only: &
-     Kh_coef,      &
-     Kh_coef_lap1, &
-     divdamp_coef
+     Kh_coef,        &
+     Kh_coef_lap1,   &
+     divdamp_coef,   &
+     divdamp_2d_coef
   use mod_vi, only: &
-     Mc, &
-     Ml, &
-     Mu
-  use mod_history, only: &
-     ksumstr,     &
-     cnvpre_klev, &
-     cnvpre_fac1, &
-     cnvpre_fac2
+     Mc, Ml, Mu
   !##### OpenACC #####
   implicit none
   !-----------------------------------------------------------------------------
@@ -304,28 +312,18 @@ program prg_driver
 #endif
 
   !$acc data &
-  !$acc& pcopyin(RGNMNG_l2r,RGNMNG_vert_num) &
-  !$acc& pcopyin(Send_info_r2r,Send_info_p2r,Send_info_r2p) &
-  !$acc& pcopyin(Send_list_r2r,Send_list_p2r,Send_list_r2p) &
-  !$acc& pcopyin(Recv_info_r2r,Recv_info_p2r,Recv_info_r2p) &
-  !$acc& pcopyin(Recv_list_r2r,Recv_list_p2r,Recv_list_r2p) &
-  !$acc& pcopyin(Copy_info_r2r,Copy_info_p2r,Copy_info_r2p) &
-  !$acc& pcopyin(Copy_list_r2r,Copy_list_p2r,Copy_list_r2p) &
-  !$acc& pcopyin(sendbuf_r2r,sendbuf_p2r,sendbuf_r2p) &
-  !$acc& pcopyin(recvbuf_r2r,recvbuf_p2r,recvbuf_r2p) &
-  !$acc& pcopyin(Singular_info,Singular_list,REQ_list) &
-  !$acc& pcopyin(GRD_rdgz,GRD_rdgzh,GRD_x,GRD_xt,GRD_vz,GRD_zs) &
-  !$acc& pcopyin(GMTR_p,GMTR_t,GMTR_a) &
-  !$acc& pcopyin(cdiv,cgrad,clap,cinterp_TN,cinterp_HN,cinterp_TRA,cinterp_PRA) &
-  !$acc& pcopyin(VMTR_GAM2,VMTR_GAM2H,VMTR_GSGAM2,VMTR_GSGAM2H) &
-  !$acc& pcopyin(VMTR_RGSQRTH,VMTR_RGAM,VMTR_RGAMH,VMTR_RGSGAM2,VMTR_RGSGAM2H) &
-  !$acc& pcopyin(VMTR_W2Cfact,VMTR_C2Wfact,VMTR_C2WfactGz,VMTR_PHI) &
-  !$acc& pcopyin(CVW) &
-  !$acc& pcopyin(rho_bs,pre_bs,tem_bs) &
-  !$acc& pcopyin(divdamp_coef,Kh_coef,Kh_coef_lap1) &
-  !$acc& pcopyin(Mc,Mu,Ml) &
-  !$acc& pcopyin(ksumstr,cnvpre_klev,cnvpre_fac1,cnvpre_fac2) &
-  !$acc& pcopy  (PRG_var,DIAG_var)
+  !$acc pcopyin(ADM_have_sgp) &
+  !$acc pcopyin(GRD_rdgz,GRD_rdgzh,GRD_afact,GRD_bfact,GRD_cfact,GRD_dfact,GRD_x,GRD_xr) &
+  !$acc pcopy(sendbuf_r2r_SP,sendbuf_p2r_SP,sendbuf_r2p_SP,recvbuf_r2r_SP,recvbuf_p2r_SP,recvbuf_r2p_SP) &
+  !$acc pcopy(sendbuf_r2r_DP,sendbuf_p2r_DP,sendbuf_r2p_DP,recvbuf_r2r_DP,recvbuf_p2r_DP,recvbuf_r2p_DP) &
+  !$acc pcopyin(Send_list_r2r,Send_list_p2r,Send_list_r2p,Recv_list_r2r,Recv_list_p2r,Recv_list_r2p) &
+  !$acc pcopyin(Copy_list_r2r,Copy_list_p2r,Copy_list_r2p,Singular_list) &
+  !$acc pcopyin(GMTR_p,GMTR_t,GMTR_a) &
+  !$acc pcopyin(OPRT_coef_div,OPRT_coef_grad,OPRT_coef_lap,OPRT_coef_intp,OPRT_coef_diff) &
+  !$acc pcopyin(VMTR_GAM2H,VMTR_GSGAM2,VMTR_GSGAM2H,VMTR_RGSQRTH,VMTR_RGAM,VMTR_RGAMH) &
+  !$acc pcopyin(VMTR_RGSGAM2,VMTR_RGSGAM2H,VMTR_W2Cfact,VMTR_C2Wfact,VMTR_C2WfactGz,VMTR_PHI) &
+  !$acc pcopyin(rho_bs,pre_bs) &
+  !$acc pcopyin(Kh_coef,Kh_coef_lap1,divdamp_coef,divdamp_2d_coef,Mc,Ml,Mu)
 
   !--- history output at initial time
   if ( HIST_output_step0 ) then

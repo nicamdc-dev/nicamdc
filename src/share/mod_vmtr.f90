@@ -2,7 +2,7 @@
 !> Module vertical metrics
 !!
 !! @par Description
-!!          In this module, the vertical metrics is calculated for the icoshaedral model
+!!         Vertical metrics on the icosahedral grid system
 !!
 !! @author NICAM developers
 !<
@@ -14,6 +14,7 @@ module mod_vmtr
   !
   use mod_precision
   use mod_stdio
+  use mod_prof
 
   use mod_adm, only: &
      ADM_lall,    &
@@ -120,7 +121,7 @@ module mod_vmtr
   !
   !++ Private parameters & variables
   !
-  logical, private :: deep = .false.
+  logical, private :: VMTR_deep_atmos = .false.
 
   !-----------------------------------------------------------------------------
 contains
@@ -198,7 +199,7 @@ contains
     real(RP) :: GZZH_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
     namelist / VMTRPARAM / &
-       deep
+       VMTR_deep_atmos
 
     integer  :: ierr
     integer  :: g, k, l
@@ -314,7 +315,7 @@ contains
     enddo
 
     !--- Gamma = (a+z) / a
-    if ( deep ) then
+    if ( VMTR_deep_atmos ) then
        do l = 1, ADM_lall
        do k = 1, ADM_kall
        do g = 1, ADM_gall
@@ -383,12 +384,12 @@ contains
     do l = 1, ADM_lall
        do k = 1, ADM_kall
        do g = 1, ADM_gall
-          GZXH(g,k,l) = -var(g,k,l,JXH) / GSQRTH(g,k,l)
-          GZYH(g,k,l) = -var(g,k,l,JYH) / GSQRTH(g,k,l)
-          GZZH(g,k,l) = -var(g,k,l,JZH) / GSQRTH(g,k,l)
           GZX (g,k,l) = -var(g,k,l,JX)  / GSQRT (g,k,l)
           GZY (g,k,l) = -var(g,k,l,JY)  / GSQRT (g,k,l)
           GZZ (g,k,l) = -var(g,k,l,JZ)  / GSQRT (g,k,l)
+          GZXH(g,k,l) = -var(g,k,l,JXH) / GSQRTH(g,k,l)
+          GZYH(g,k,l) = -var(g,k,l,JYH) / GSQRTH(g,k,l)
+          GZZH(g,k,l) = -var(g,k,l,JZH) / GSQRTH(g,k,l)
        enddo
        enddo
 
@@ -452,7 +453,7 @@ contains
        enddo
 
        !--- Gamma = (a+z) / a
-       if ( deep ) then
+       if ( VMTR_deep_atmos ) then
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do g = 1, ADM_gall_pl
@@ -521,12 +522,12 @@ contains
        do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do g = 1, ADM_gall_pl
-             GZXH_pl(g,k,l) = -var_pl(g,k,l,JXH) / GSQRTH_pl(g,k,l)
-             GZYH_pl(g,k,l) = -var_pl(g,k,l,JYH) / GSQRTH_pl(g,k,l)
-             GZZH_pl(g,k,l) = -var_pl(g,k,l,JZH) / GSQRTH_pl(g,k,l)
              GZX_pl (g,k,l) = -var_pl(g,k,l,JX)  / GSQRT_pl (g,k,l)
              GZY_pl (g,k,l) = -var_pl(g,k,l,JY)  / GSQRT_pl (g,k,l)
              GZZ_pl (g,k,l) = -var_pl(g,k,l,JZ)  / GSQRT_pl (g,k,l)
+             GZXH_pl(g,k,l) = -var_pl(g,k,l,JXH) / GSQRTH_pl(g,k,l)
+             GZYH_pl(g,k,l) = -var_pl(g,k,l,JYH) / GSQRTH_pl(g,k,l)
+             GZZH_pl(g,k,l) = -var_pl(g,k,l,JZH) / GSQRTH_pl(g,k,l)
           enddo
           enddo
 

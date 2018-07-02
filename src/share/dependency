@@ -58,7 +58,7 @@ mod_oprt.o       : mod_oprt.f90       mod_precision.o mod_stdio.o mod_process.o 
 mod_vmtr.o       : mod_vmtr.f90       mod_precision.o mod_stdio.o mod_process.o mod_prof.o mod_const.o mod_adm.o                                     mod_comm.o mod_grd.o mod_gmtr.o mod_oprt.o
 
 mod_time.o       : mod_time.f90       mod_precision.o mod_adm.o mod_prof.o mod_calendar.o
-mod_gtl.o        : mod_gtl.f90        mod_precision.o mod_adm.o mod_prof.o mod_grd.o mod_gmtr.o
+mod_gtl.o        : mod_gtl.f90        mod_precision.o mod_adm.o mod_prof.o mod_grd.o mod_gmtr.o mod_vmtr.o
 mod_statistics.o : mod_statistics.f90 mod_precision.o mod_adm.o mod_prof.o mod_comm.o mod_gmtr.o mod_vmtr.o
 mod_vintrpl.o    : mod_vintrpl.f90    mod_precision.o mod_adm.o mod_prof.o mod_grd.o mod_const.o
 mod_latlon.o     : mod_latlon.f90     mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_vector.o mod_grd.o mod_oprt.o mod_comm.o mod_gmtr.o

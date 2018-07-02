@@ -36,25 +36,25 @@ module mod_history_vars
   !
   !++ Private parameters & variables
   !
-  logical, private :: out_uv_cos   = .false.
-  logical, private :: out_omg      = .false.
-  logical, private :: out_rha      = .false.
-  logical, private :: out_rh       = .false.
-  logical, private :: out_rhi      = .false.
-  logical, private :: out_th       = .false.
-  logical, private :: out_th_prime = .false.
-  logical, private :: out_mse      = .false.
-  logical, private :: out_850hPa   = .false.
-  logical, private :: out_500hPa   = .false.
-  logical, private :: out_250hPa   = .false.
-  logical, private :: out_100hPa   = .false.
+  logical,  private :: out_uv_cos   = .false.
+  logical,  private :: out_omg      = .false.
+  logical,  private :: out_rha      = .false.
+  logical,  private :: out_rh       = .false.
+  logical,  private :: out_rhi      = .false.
+  logical,  private :: out_th       = .false.
+  logical,  private :: out_th_prime = .false.
+  logical,  private :: out_mse      = .false.
+  logical,  private :: out_850hPa   = .false.
+  logical,  private :: out_500hPa   = .false.
+  logical,  private :: out_250hPa   = .false.
+  logical,  private :: out_100hPa   = .false.
 
-  logical, private :: out_pw       = .false.
-  logical, private :: out_lwp      = .false.
-  logical, private :: out_iwp      = .false.
-  logical, private :: out_duvw     = .false.
-  logical, private :: out_dtem     = .false.
-  logical, private :: out_dq       = .false.
+  logical,  private :: out_pw       = .false.
+  logical,  private :: out_lwp      = .false.
+  logical,  private :: out_iwp      = .false.
+  logical,  private :: out_duvw     = .false.
+  logical,  private :: out_dtem     = .false.
+  logical,  private :: out_dq       = .false.
 
   real(RP), private, allocatable :: u_old  (:,:,:)
   real(RP), private, allocatable :: v_old  (:,:,:)
@@ -141,7 +141,7 @@ contains
 
     character(len=H_SHORT) :: varname
 
-    integer  :: n, k, l, nq
+    integer  :: n, g, k, l, nq
     !---------------------------------------------------------------------------
 
     do n = 1, HIST_req_nmax
@@ -201,7 +201,15 @@ contains
                               w,      w_pl,      & ! [OUT]
                               q,      q_pl       ) ! [OUT]
 
-    ein(:,:,:) = rhoge(:,:,:) / rhog(:,:,:)
+    !$acc kernels pcopy(ein) pcopyin(rhog,rhoge)
+    do l = 1, ADM_lall
+    do k = 1, ADM_kall
+    do g = 1, ADM_gall
+       ein(g,k,l) = rhoge(g,k,l) / rhog(g,k,l)
+    enddo
+    enddo
+    enddo
+    !$acc end kernels
 
     ! boundary condition
     call BNDCND_all( ADM_gall,                & ! [IN]
@@ -235,35 +243,66 @@ contains
                        withcos = .false.        ) ! [IN]
 
     ! vertical wind at cell center
+    !$acc kernels pcopy(wc) pcopyin(w,VMTR_W2Cfact)
     do l = 1, ADM_lall
-       do k = ADM_kmin, ADM_kmax
-          wc(:,k,l) = ( VMTR_W2Cfact(:,k,1,l) * w(:,k+1,l) &
-                      + VMTR_W2Cfact(:,k,2,l) * w(:,k  ,l) )
-       enddo
-       wc(:,ADM_kmin-1,l) = w(:,ADM_kmin  ,l)
-       wc(:,ADM_kmax+1,l) = w(:,ADM_kmax+1,l)
+    do k = 1, ADM_kall
+    do g = 1, ADM_gall
+       if (       k >= ADM_kmin &
+            .AND. k <= ADM_kmax ) then
+          wc(g,k,l) = ( VMTR_W2Cfact(g,k,1,l) * w(g,k+1,l) &
+                      + VMTR_W2Cfact(g,k,2,l) * w(g,k  ,l) )
+       else
+          wc(g,k,l) = 0.0_RP
+       endif
     enddo
+    enddo
+    enddo
+    !$acc end kernels
 
     if (out_duvw) then
        allocate( u_old (ADM_gall,ADM_kall,ADM_lall) )
        allocate( v_old (ADM_gall,ADM_kall,ADM_lall) )
        allocate( wc_old(ADM_gall,ADM_kall,ADM_lall) )
 
-       u_old (:,:,:) = u (:,:,:)
-       v_old (:,:,:) = v (:,:,:)
-       wc_old(:,:,:) = wc(:,:,:)
+       !$acc kernels pcopy(u_old,v_old,wc_old) pcopyin(u,v,wc)
+       do l = 1, ADM_lall
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
+          u_old (g,k,l) = u (g,k,l)
+          v_old (g,k,l) = v (g,k,l)
+          wc_old(g,k,l) = wc(g,k,l)
+       enddo
+       enddo
+       enddo
+       !$acc end kernels
     endif
 
     if (out_dtem) then
        allocate( tem_old(ADM_gall,ADM_kall,ADM_lall) )
 
-       tem_old(:,:,:) = tem(:,:,:)
+       !$acc kernels pcopy(tem_old) pcopyin(tem)
+       do l = 1, ADM_lall
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
+          tem_old(g,k,l) = tem(g,k,l)
+       enddo
+       enddo
+       enddo
+       !$acc end kernels
     endif
 
     if (out_dq) then
        allocate( qv_old(ADM_gall,ADM_kall,ADM_lall) )
 
-       qv_old(:,:,:) = q(:,:,:,I_QV)
+       !$acc kernels pcopy(qv_old) pcopyin(q)
+       do l = 1, ADM_lall
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
+          qv_old(g,k,l) = q(g,k,l,I_QV)
+       enddo
+       enddo
+       enddo
+       !$acc end kernels
     endif
 
     tmp2d(:,:) = 0.0_RP
@@ -430,11 +469,20 @@ contains
     real(RP) :: rhodz    (ADM_gall   ,ADM_KNONE,ADM_lall  )
 
     real(RP) :: mxval, mnval
+    real(RP) :: dday
 
     integer  :: g, k, l, nq, K0
     !---------------------------------------------------------------------------
+    !$acc wait
+
+    !$acc data &
+    !$acc pcreate(ein,wc,omg,thv,rh,mse,one,th_prime,q_clw,q_cli,qtot,tmp2d) &
+    !$acc pcopyin(GRD_dgz,GRD_zs,GRD_vz) &
+    !$acc pcopyin(VMTR_GSGAM2,VMTR_W2Cfact,VMTR_C2Wfact,VMTR_C2WfactGz,VMTR_PHI)
 
     K0 = ADM_KNONE
+
+    dday = 86400.0_RP / real(TIME_DTL,kind=RP) ! [/s->/day]
 
     !--- get variables
     call prgvar_get_withdiag( rhog,   rhog_pl,   & ! [OUT]
@@ -453,7 +501,15 @@ contains
                               w,      w_pl,      & ! [OUT]
                               q,      q_pl       ) ! [OUT]
 
-    ein(:,:,:) = rhoge(:,:,:) / rhog(:,:,:)
+    !$acc kernels pcopy(ein) pcopyin(rhog,rhoge)
+    do l = 1, ADM_lall
+    do k = 1, ADM_kall
+    do g = 1, ADM_gall
+       ein(g,k,l) = rhoge(g,k,l) / rhog(g,k,l)
+    enddo
+    enddo
+    enddo
+    !$acc end kernels
 
     ! boundary condition
     call BNDCND_all( ADM_gall,                & ! [IN]
@@ -478,6 +534,8 @@ contains
                      VMTR_C2Wfact  (:,:,:,:), & ! [IN]
                      VMTR_C2WfactGz(:,:,:,:)  ) ! [IN]
 
+    !$acc wait
+
     ! value check
     mxval = maxval( pre(:,ADM_kmin:ADM_kmax,:) )
     mnval = minval( pre(:,ADM_kmin:ADM_kmax,:) )
@@ -499,6 +557,20 @@ contains
        call PRC_MPIstop
     endif
 
+    !--- density, temperature & pressure
+    do l = 1, ADM_lall
+       call history_in( 'ml_rho',  rho(:,:,l) )
+       call history_in( 'ml_tem',  tem(:,:,l) )
+       call history_in( 'ml_pres', pre(:,:,l) )
+    enddo
+
+    !--- wind on cartesian
+    do l = 1, ADM_lall
+       call history_in( 'vx', vx(:,:,l) )
+       call history_in( 'vy', vy(:,:,l) )
+       call history_in( 'vz', vz(:,:,l) )
+    enddo
+
     ! zonal and meridonal wind
     call cnvvar_vh2uv( u (:,:,:), u_pl (:,:,:), & ! [OUT]
                        v (:,:,:), v_pl (:,:,:), & ! [OUT]
@@ -508,31 +580,40 @@ contains
                        withcos = .false.        ) ! [IN]
 
     ! vertical wind at cell center
+    !$acc kernels pcopy(wc) pcopyin(w,VMTR_W2Cfact)
     do l = 1, ADM_lall
-       do k = ADM_kmin, ADM_kmax
-          wc(:,k,l) = ( VMTR_W2Cfact(:,k,1,l) * w(:,k+1,l) &
-                      + VMTR_W2Cfact(:,k,2,l) * w(:,k  ,l) )
-       enddo
-       wc(:,ADM_kmin-1,l) = w(:,ADM_kmin  ,l)
-       wc(:,ADM_kmax+1,l) = w(:,ADM_kmax+1,l)
+    do k = 1, ADM_kall
+    do g = 1, ADM_gall
+       if (       k >= ADM_kmin &
+            .AND. k <= ADM_kmax ) then
+          wc(g,k,l) = ( VMTR_W2Cfact(g,k,1,l) * w(g,k+1,l) &
+                      + VMTR_W2Cfact(g,k,2,l) * w(g,k  ,l) )
+       else
+          wc(g,k,l) = 0.0_RP
+       endif
     enddo
+    enddo
+    enddo
+    !$acc end kernels
 
     do l = 1, ADM_lall
-       call history_in( 'ml_rho',  rho(:,:,l) )
-       call history_in( 'ml_tem',  tem(:,:,l) )
-       call history_in( 'ml_pres', pre(:,:,l) )
-
        call history_in( 'ml_u',    u  (:,:,l) )
        call history_in( 'ml_v',    v  (:,:,l) )
        call history_in( 'ml_w',    wc (:,:,l) )
-
-       call history_in( 'ml_hgt',  GRD_vz(:,:,l,GRD_Z) ) ! geopotential height : Hydrostatic assumption
     enddo
 
     if (out_duvw) then
-       u_old (:,:,:) = ( u_old (:,:,:) - u (:,:,:) ) / real(TIME_DTL,kind=RP) * 86400.0_RP ! [m/s/day]
-       v_old (:,:,:) = ( v_old (:,:,:) - v (:,:,:) ) / real(TIME_DTL,kind=RP) * 86400.0_RP ! [m/s/day]
-       wc_old(:,:,:) = ( wc_old(:,:,:) - wc(:,:,:) ) / real(TIME_DTL,kind=RP) * 86400.0_RP ! [m/s/day]
+       !$acc kernels pcopy(u_old,v_old,wc_old) pcopyin(u,v,wc)
+       do l = 1, ADM_lall
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
+          u_old (g,k,l) = ( u_old (g,k,l) - u (g,k,l) ) * dday ! [m/s/day]
+          v_old (g,k,l) = ( v_old (g,k,l) - v (g,k,l) ) * dday ! [m/s/day]
+          wc_old(g,k,l) = ( wc_old(g,k,l) - wc(g,k,l) ) * dday ! [m/s/day]
+       enddo
+       enddo
+       enddo
+       !$acc end kernels
 
        do l = 1, ADM_lall
           call history_in( 'ml_du', u_old (:,:,l) )
@@ -540,29 +621,69 @@ contains
           call history_in( 'ml_dw', wc_old(:,:,l) )
        enddo
 
-       u_old (:,:,:) = u (:,:,:)
-       v_old (:,:,:) = v (:,:,:)
-       wc_old(:,:,:) = wc(:,:,:)
+       !$acc kernels pcopy(u_old,v_old,wc_old) pcopyin(u,v,wc)
+       do l = 1, ADM_lall
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
+          u_old (g,k,l) = u (g,k,l)
+          v_old (g,k,l) = v (g,k,l)
+          wc_old(g,k,l) = wc(g,k,l)
+       enddo
+       enddo
+       enddo
+       !$acc end kernels
     endif
 
     if (out_dtem) then
-       tem_old(:,:,:) = ( tem_old(:,:,:) - tem(:,:,:) ) / real(TIME_DTL,kind=RP) * 86400.0_RP ! [K/day]
+       !$acc kernels pcopy(tem_old) pcopyin(tem)
+       do l = 1, ADM_lall
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
+          tem_old(g,k,l) = ( tem_old(g,k,l) - tem(g,k,l) ) * dday ! [K/day]
+       enddo
+       enddo
+       enddo
+       !$acc end kernels
 
        do l = 1, ADM_lall
           call history_in( 'ml_dtem', tem_old(:,:,l) )
        enddo
 
-       tem_old(:,:,:) = tem(:,:,:)
+       !$acc kernels pcopy(tem_old) pcopyin(tem)
+       do l = 1, ADM_lall
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
+          tem_old(g,k,l) = tem(g,k,l)
+       enddo
+       enddo
+       enddo
+       !$acc end kernels
     endif
 
     if (out_dq) then
-       qv_old(:,:,:) = ( qv_old(:,:,:) - q(:,:,:,I_QV) ) * 1.E+3_RP / real(TIME_DTL,kind=RP) * 86400.0_RP ! [g/kg/day]
+       !$acc kernels pcopy(qv_old) pcopyin(q)
+       do l = 1, ADM_lall
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
+          qv_old(g,k,l) = ( qv_old(g,k,l) - q(g,k,l,I_QV) ) * 1.E+3_RP * dday ! [g/kg/day]
+       enddo
+       enddo
+       enddo
+       !$acc end kernels
 
        do l = 1, ADM_lall
           call history_in( 'ml_dq', qv_old(:,:,l) )
        enddo
 
-       qv_old(:,:,:) = q(:,:,:,I_QV)
+       !$acc kernels pcopy(qv_old) pcopyin(q)
+       do l = 1, ADM_lall
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
+          qv_old(g,k,l) = q(g,k,l,I_QV)
+       enddo
+       enddo
+       enddo
+       !$acc end kernels
     endif
 
     ! zonal and meridonal wind with cos(phi)
@@ -580,17 +701,54 @@ contains
        enddo
     endif
 
-    ! omega
+    !--- omega
     if (out_omg) then
+       !$acc kernels pcopy(omg) pcopyin(rho,wc)
        do l = 1, ADM_lall
-          omg(:,:,l) = -GRAV * rho(:,:,l) * wc(:,:,l)
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
+          omg(g,k,l) = -GRAV * rho(g,k,l) * wc(g,k,l)
+       enddo
+       enddo
+       enddo
+       !$acc end kernels
 
+       do l = 1, ADM_lall
           call history_in( 'ml_omg', omg(:,:,l) )
        enddo
     endif
 
-    ! relative humidity (liq+ice, liq, ice)
+    !--- geopotential height : Hydrostatic assumption
+    do l = 1, ADM_lall
+       call history_in( 'ml_hgt',  GRD_vz(:,:,l,GRD_Z) )
+    enddo
 
+    !--- potential temperature
+    if ( out_th ) then
+       call THRMDYN_th( ADM_gall,   & ! [IN]
+                        ADM_kall,   & ! [IN]
+                        ADM_lall,   & ! [IN]
+                        tem(:,:,:), & ! [IN]
+                        pre(:,:,:), & ! [IN]
+                        th (:,:,:)  ) ! [OUT]
+
+       !$acc kernels pcopy(thv) pcopyin(th,q)
+       do l = 1, ADM_lall
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
+          thv(g,k,l) = th(g,k,l) * ( 1.0_RP + 0.61_RP * q(g,k,l,I_QV) )
+       enddo
+       enddo
+       enddo
+       !$acc end kernels
+
+       do l = 1, ADM_lall
+          call history_in( 'ml_th',  th (:,:,l) )
+          call history_in( 'ml_thv', thv(:,:,l) )
+       enddo
+    endif
+
+    !--- relative humidity (liq+ice, liq, ice)
     if ( out_rha ) then
        call SATURATION_psat_all( ADM_gall,    & ! [IN]
                                  ADM_kall,    & ! [IN]
@@ -598,11 +756,19 @@ contains
                                  tem (:,:,:), & ! [IN]
                                  psat(:,:,:)  ) ! [OUT]
 
+       !$acc kernels pcopy(rh) pcopyin(rho,tem,q,psat)
        do l = 1, ADM_lall
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
           rh(:,:,l) = q(:,:,l,I_QV) * rho(:,:,l) * Rvap * tem(:,:,l) &
                     / psat(:,:,l) &
                     * 100.0_RP
+       enddo
+       enddo
+       enddo
+       !$acc end kernels
 
+       do l = 1, ADM_lall
           call history_in( 'ml_rha', rh(:,:,l) )
        enddo
     endif
@@ -614,11 +780,19 @@ contains
                                  tem (:,:,:), & ! [IN]
                                  psat(:,:,:)  ) ! [OUT]
 
+       !$acc kernels pcopy(rh) pcopyin(rho,tem,q,psat)
        do l = 1, ADM_lall
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
           rh(:,:,l) = q(:,:,l,I_QV) * rho(:,:,l) * Rvap * tem(:,:,l) &
                     / psat(:,:,l) &
                     * 100.0_RP
+       enddo
+       enddo
+       enddo
+       !$acc end kernels
 
+       do l = 1, ADM_lall
           call history_in( 'ml_rh', rh(:,:,l) )
        enddo
     endif
@@ -630,49 +804,46 @@ contains
                                  tem (:,:,:), & ! [IN]
                                  psat(:,:,:)  ) ! [OUT]
 
+       !$acc kernels pcopy(rh) pcopyin(rho,tem,q,psat)
        do l = 1, ADM_lall
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
           rh(:,:,l) = q(:,:,l,I_QV) * rho(:,:,l) * Rvap * tem(:,:,l) &
                     / psat(:,:,l) &
                     * 100.0_RP
-
-          call history_in( 'ml_rhi', rh(:,:,l) )
        enddo
-    endif
-
-    ! potential temperature
-    if ( out_th ) then
-       call THRMDYN_th( ADM_gall,   & ! [IN]
-                        ADM_kall,   & ! [IN]
-                        ADM_lall,   & ! [IN]
-                        tem(:,:,:), & ! [IN]
-                        pre(:,:,:), & ! [IN]
-                        th (:,:,:)  ) ! [OUT]
-
-       thv(:,:,:) = th(:,:,:) * ( 1.0_RP + 0.61_RP * q(:,:,:,I_QV) )
+       enddo
+       enddo
+       !$acc end kernels
 
        do l = 1, ADM_lall
-          call history_in( 'ml_th',  th (:,:,l) )
-          call history_in( 'ml_thv', thv(:,:,l) )
+          call history_in( 'ml_rhi', rh(:,:,l) )
        enddo
     endif
 
     ! moist static energy
     if ( out_mse ) then
+       !$acc kernels pcopy(mse) pcopyin(tem,VMTR_PHI,q)
        do l = 1, ADM_lall
-          do k = 1, ADM_kall
-          do g = 1, ADM_gall
-             mse(g,k,l) = CPdry * tem(g,k,l)      &
-                        + GRAV  * ( GRD_vz(g,k,l,GRD_Z) - GRD_zs (g,K0,l,GRD_ZSFC) ) &
-                        + LHV   * q(g,k,l,I_QV)
-          enddo
-          enddo
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
+          mse(g,k,l) = tem     (g,k,l) * CPdry    &
+                     + VMTR_PHI(g,k,l)            &
+                     + q       (g,k,l,I_QV) * LHV
+       enddo
+       enddo
+       enddo
+       !$acc end kernels
 
+       do l = 1, ADM_lall
           call history_in( 'ml_mse',  mse(:,:,l) )
        enddo
     endif
 
     if ( out_th_prime ) then
+       !$acc kernels pcopy(one)
        one   (:,:,:) = 1.0_RP
+       !$acc end kernels
        one_pl(:,:,:) = 1.0_RP
 
        call GTL_global_sum_eachlayer( one, one_pl, area_prof )
@@ -695,11 +866,17 @@ contains
 
        call GTL_global_sum_eachlayer( th, th_pl, th_prof )
 
+       !$acc kernels pcopy(th_prime) pcopyin(th,th_prof,area_prof)
        do l = 1, ADM_lall
-          do k = 1, ADM_kall
-             th_prime(:,k,l) = th(:,k,l) - th_prof(k) / area_prof(k)
-          enddo
+       do k = 1, ADM_kall
+       do g = 1, ADM_gall
+          th_prime(g,k,l) = th(g,k,l) - th_prof(k) / area_prof(k)
+       enddo
+       enddo
+       enddo
+       !$acc end kernels
 
+       do l = 1, ADM_lall
           call history_in( 'ml_th_prime', th_prime(:,:,l) )
        enddo
     endif
@@ -810,55 +987,92 @@ contains
     enddo
 
     ! hydrometeors
-    do l  = 1, ADM_lall
-       q_clw(:,:,l) = 0.0_RP
-       q_cli(:,:,l) = 0.0_RP
+    !$acc kernels pcopy(q_clw,q_cli) pcopyin(q)
+    do l = 1, ADM_lall
+    do k = 1, ADM_kall
+    do g = 1, ADM_gall
+       q_clw(g,k,l) = 0.0_RP
+       q_cli(g,k,l) = 0.0_RP
+
+       !$acc loop seq
        do nq = NQW_STR, NQW_END
           if ( nq == I_QC ) then
-             q_clw(:,:,l) = q_clw(:,:,l) + q(:,:,l,nq)
+             q_clw(g,k,l) = q_clw(g,k,l) + q(g,k,l,nq)
           elseif( nq == I_QR ) then
-             q_clw(:,:,l) = q_clw(:,:,l) + q(:,:,l,nq)
+             q_clw(g,k,l) = q_clw(g,k,l) + q(g,k,l,nq)
           elseif( nq == I_QI ) then
-             q_cli(:,:,l) = q_cli(:,:,l) + q(:,:,l,nq)
+             q_cli(g,k,l) = q_cli(g,k,l) + q(g,k,l,nq)
           elseif( nq == I_QS ) then
-             q_cli(:,:,l) = q_cli(:,:,l) + q(:,:,l,nq)
+             q_cli(g,k,l) = q_cli(g,k,l) + q(g,k,l,nq)
           elseif( nq == I_QG ) then
-             q_cli(:,:,l) = q_cli(:,:,l) + q(:,:,l,nq)
+             q_cli(g,k,l) = q_cli(g,k,l) + q(g,k,l,nq)
           endif
        enddo
+       !$acc end loop
+
+       qtot(g,k,l) = q_clw(g,k,l) + q_cli(g,k,l)
     enddo
+    enddo
+    enddo
+    !$acc end kernels
 
     do l = 1, ADM_lall
-       qtot(:,:,l) = q_clw(:,:,l) + q_cli(:,:,l)
-
        call history_in( 'ml_qtot', qtot(:,:,l) )
     enddo
 
     if (out_pw) then
+       !$acc kernels pcopy(tmp2d) pcopyin(rho,q,VMTR_GSGAM2,GRD_dgz)
        do l = 1, ADM_lall
+       do g = 1, ADM_gall
+          tmp2d(g,K0,l) = 0.0_RP
+          !$acc loop seq
           do k = ADM_kmin, ADM_kmax
-             tmp2d(:,K0,l) = tmp2d(:,K0,l) + rho(:,k,l) * q(:,k,l,I_QV) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
+             tmp2d(g,K0,l) = tmp2d(g,K0,l) + rho(g,k,l) * q(g,k,l,I_QV) * VMTR_GSGAM2(g,k,l) * GRD_dgz(k)
           enddo
+          !$acc end loop
+       enddo
+       enddo
+       !$acc end kernels
+
+       do l = 1, ADM_lall
           call history_in( 'sl_pw', tmp2d(:,:,l) )
        enddo
     endif
 
     if (out_lwp) then
+       !$acc kernels pcopy(tmp2d) pcopyin(rho,q_clw,VMTR_GSGAM2,GRD_dgz)
        do l = 1, ADM_lall
-          tmp2d(:,K0,l) = 0.0_RP
+       do g = 1, ADM_gall
+          tmp2d(g,K0,l) = 0.0_RP
+          !$acc loop seq
           do k = ADM_kmin, ADM_kmax
              tmp2d(:,K0,l) = tmp2d(:,K0,l) + rho(:,k,l) * q_clw(:,k,l) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
           enddo
+          !$acc end loop
+       enddo
+       enddo
+       !$acc end kernels
+
+       do l = 1, ADM_lall
           call history_in( 'sl_lwp', tmp2d(:,:,l) )
        enddo
     endif
 
     if (out_iwp) then
-       do l  = 1, ADM_lall
-          tmp2d(:,K0,l) = 0.0_RP
+       !$acc kernels pcopy(tmp2d) pcopyin(rho,q_cli,VMTR_GSGAM2,GRD_dgz)
+       do l = 1, ADM_lall
+       do g = 1, ADM_gall
+          tmp2d(g,K0,l) = 0.0_RP
+          !$acc loop seq
           do k = ADM_kmin, ADM_kmax
              tmp2d(:,K0,l) = tmp2d(:,K0,l) + rho(:,k,l) * q_cli(:,k,l) * VMTR_GSGAM2(:,k,l) * GRD_dgz(k)
           enddo
+          !$acc end loop
+       enddo
+       enddo
+       !$acc end kernels
+
+       do l = 1, ADM_lall
           call history_in( 'sl_iwp', tmp2d(:,:,l) )
        enddo
     endif
@@ -896,6 +1110,8 @@ contains
        enddo
     endif
 
+    !$acc end data
+
     return
   end subroutine history_vars
 
@@ -925,17 +1141,28 @@ contains
 
     integer  :: ij
     !---------------------------------------------------------------------------
+    !$acc wait
+
+    !$acc data &
+    !$acc pcreate(rho_srf,pre_srf) &
+    !$acc pcopyin(rho,pre,z,z_srf)
 
     !--- surface density ( extrapolation )
+    !$acc kernels pcopy(rho_srf) pcopyin(rho,z,z_srf)
     do ij = 1, ijdim
        rho_srf(ij) = rho(ij,kmin) &
                    - ( rho(ij,kmin+1)-rho(ij,kmin) ) * ( z(ij,kmin)-z_srf(ij) ) / ( z(ij,kmin+1)-z(ij,kmin) )
     enddo
+    !$acc end kernels
 
     !--- surface pressure ( hydrostatic balance )
+    !$acc kernels pcopy(pre_srf) pcopyin(rho,pre,z,z_srf)
     do ij = 1, ijdim
        pre_srf(ij) = pre(ij,kmin) + rho(ij,kmin) * GRAV * ( z(ij,kmin)-z_srf(ij) )
     enddo
+    !$acc end kernels
+
+    !$acc end data
 
     return
   end subroutine sv_pre_sfc
@@ -979,6 +1206,11 @@ contains
 
     integer  :: ij, k
     !---------------------------------------------------------------------------
+    !$acc wait
+
+    !$acc data &
+    !$acc pcreate(u_p,v_p,w_p,t_p) &
+    !$acc pcopyin(pre,u_z,v_z,w_z,t_z)
 
     ! search z-level
     do ij = 1, ijdim
@@ -996,6 +1228,7 @@ contains
     enddo
 
     ! interpolate
+    !$acc kernels pcopy(u_p,v_p,w_p,t_p) pcopyin(pre,u_z,v_z,w_z,t_z)
     do ij = 1, ijdim
        wght_l = ( log(plev)           - log(pre(ij,ku(ij))) ) &
               / ( log(pre(ij,kl(ij))) - log(pre(ij,ku(ij))) )
@@ -1008,6 +1241,9 @@ contains
        w_p(ij) = wght_l * w_z(ij,kl(ij)) + wght_u * w_z(ij,ku(ij))
        t_p(ij) = wght_l * t_z(ij,kl(ij)) + wght_u * t_z(ij,ku(ij))
     enddo
+    !$acc end kernels
+
+    !$acc end data
 
     return
   end subroutine sv_plev_uvwt

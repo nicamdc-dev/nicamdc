@@ -21,7 +21,7 @@ module mod_comm
   private
   !-----------------------------------------------------------------------------
   !
-  !++ public procedure
+  !++ Public procedures
   !
   public :: COMM_setup
   public :: COMM_data_transfer
@@ -48,6 +48,31 @@ module mod_comm
   public :: COMM_Stat_avg
   public :: COMM_Stat_max
   public :: COMM_Stat_min
+
+  interface COMM_Stat_sum
+     module procedure COMM_Stat_sum_SP
+     module procedure COMM_Stat_sum_DP
+  end interface COMM_Stat_sum
+
+  interface COMM_Stat_sum_eachlayer
+     module procedure COMM_Stat_sum_eachlayer_SP
+     module procedure COMM_Stat_sum_eachlayer_DP
+  end interface COMM_Stat_sum_eachlayer
+
+  interface COMM_Stat_avg
+     module procedure COMM_Stat_avg_SP
+     module procedure COMM_Stat_avg_DP
+  end interface COMM_Stat_avg
+
+  interface COMM_Stat_max
+     module procedure COMM_Stat_max_SP
+     module procedure COMM_Stat_max_DP
+  end interface COMM_Stat_max
+
+  interface COMM_Stat_min
+     module procedure COMM_Stat_min_SP
+     module procedure COMM_Stat_min_DP
+  end interface COMM_Stat_min
 
   !-----------------------------------------------------------------------------
   !
@@ -854,10 +879,12 @@ contains
     enddo
 
     !--- wait packets
-    call MPI_WAITALL( Recv_nmax_r2r+Send_nmax_r2r, & ! [IN]
-                      REQ_list_r2r(:),             & ! [IN]
-                      MPI_STATUSES_IGNORE,         & ! [OUT]
-                      ierr                         ) ! [OUT]
+    if ( Recv_nmax_r2r+Send_nmax_r2r > 0 ) then
+       call MPI_WAITALL( Recv_nmax_r2r+Send_nmax_r2r, & ! [IN]
+                         REQ_list_r2r(:),             & ! [IN]
+                         MPI_STATUSES_IGNORE,         & ! [OUT]
+                         ierr                         ) ! [OUT]
+    endif
 
     do irank = 1, Send_nmax_r2r
        do ipos = 1, Send_info_r2r(I_size,irank)
@@ -1558,6 +1585,9 @@ contains
     integer  :: k, v, ikv
     integer  :: ierr
     !---------------------------------------------------------------------------
+    !$acc data &
+    !$acc pcopy(var) &
+    !$acc pcopy(var_pl)
 
     if ( COMM_apply_barrier ) then
        call PROF_rapstart('COMM_barrier',2)
@@ -1650,15 +1680,23 @@ contains
                        ierr                     ) ! [OUT]
     enddo
 
+    !$acc data &
+    !$acc pcopyin(Send_list_r2r,Send_list_p2r,Send_list_r2p)
+    !$acc wait
+
     !--- pack and send r2r
     do irank = 1, Send_nmax_r2r
        imax = Send_info_r2r(I_size,irank)
 
+       !$acc kernels pcopy(sendbuf_r2r_SP)
        !$omp parallel do default(none),private(ipos,k,v,ikv,ij_from,l_from) &
        !$omp shared(irank,imax,kmax,vmax,Send_list_r2r,sendbuf_r2r_SP,var) &
        !$omp collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_from = Send_list_r2r(I_grid_from,ipos,irank)
           l_from  = Send_list_r2r(I_l_from   ,ipos,irank)
@@ -1672,12 +1710,14 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        REQ_count = REQ_count + 1
        totalsize = imax * kmax * vmax
        rank      = Send_info_r2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
        tag       = Send_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
 
+       !$acc wait
        call MPI_ISEND( sendbuf_r2r_SP(1,irank), & ! [IN]
                        totalsize,               & ! [IN]
                        MPI_REAL,                & ! [IN]
@@ -1692,11 +1732,15 @@ contains
     do irank = 1, Send_nmax_p2r
        imax = Send_info_p2r(I_size,irank)
 
+       !$acc kernels pcopy(sendbuf_p2r_SP)
        !$omp parallel do default(none),private(ipos,k,v,ikv,ij_from,l_from) &
        !$omp shared(irank,imax,kmax,vmax,Send_list_p2r,sendbuf_p2r_SP,var_pl) &
        !$omp collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_from = Send_list_p2r(I_grid_from,ipos,irank)
           l_from  = Send_list_p2r(I_l_from   ,ipos,irank)
@@ -1710,12 +1754,14 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        REQ_count = REQ_count + 1
        totalsize = imax * kmax * vmax
        rank      = Send_info_p2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
        tag       = Send_info_p2r(I_prc_from,irank) + 1000000
 
+       !$acc wait
        call MPI_ISEND( sendbuf_p2r_SP(1,irank), & ! [IN]
                        totalsize,               & ! [IN]
                        MPI_REAL,                & ! [IN]
@@ -1730,11 +1776,15 @@ contains
     do irank = 1, Send_nmax_r2p
        imax = Send_info_r2p(I_size,irank)
 
+       !$acc kernels pcopy(sendbuf_r2p_SP)
        !$omp parallel do default(none),private(ipos,k,v,ikv,ij_from,l_from) &
        !$omp shared(irank,imax,kmax,vmax,Send_list_r2p,sendbuf_r2p_SP,var) &
        !$omp collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_from = Send_list_r2p(I_grid_from,ipos,irank)
           l_from  = Send_list_r2p(I_l_from   ,ipos,irank)
@@ -1748,12 +1798,14 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        REQ_count = REQ_count + 1
        totalsize = imax * kmax * vmax
        rank      = Send_info_r2p(I_prc_to  ,irank) - 1 ! rank = prc - 1
        tag       = Send_info_r2p(I_prc_from,irank) + 2000000
 
+       !$acc wait
        call MPI_ISEND( sendbuf_r2p_SP(1,irank), & ! [IN]
                        totalsize,               & ! [IN]
                        MPI_REAL,                & ! [IN]
@@ -1763,6 +1815,11 @@ contains
                        REQ_list(REQ_count),     & ! [OUT]
                        ierr                     ) ! [OUT]
     enddo
+
+    !$acc end data
+    !$acc data &
+    !$acc pcopyin(Copy_list_r2r,Copy_list_p2r,Copy_list_r2p)
+    !$acc wait
 
     !$omp parallel default(none),private(ipos,k,v,imax,irank,ij_from,l_from,ij_to,l_to) &
     !$omp shared(kmax,vmax,var,var_pl,                      &
@@ -1774,9 +1831,13 @@ contains
     do irank = 1, Copy_nmax_r2r
        imax = Copy_info_r2r(I_size)
 
+       !$acc kernels
        !$omp do collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_from = Copy_list_r2r(I_grid_from,ipos)
           l_from  = Copy_list_r2r(I_l_from   ,ipos)
@@ -1788,15 +1849,20 @@ contains
        enddo
        enddo
        !$omp end do nowait
+       !$acc end kernels
     enddo
 
     !--- copy p2r
     do irank = 1, Copy_nmax_p2r
        imax = Copy_info_p2r(I_size)
 
+       !$acc kernels
        !$omp do collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_from = Copy_list_p2r(I_grid_from,ipos)
           l_from  = Copy_list_p2r(I_l_from   ,ipos)
@@ -1808,15 +1874,20 @@ contains
        enddo
        enddo
        !$omp end do nowait
+       !$acc end kernels
     enddo
 
     !--- copy r2p
     do irank = 1, Copy_nmax_r2p
        imax = Copy_info_r2p(I_size)
 
+       !$acc kernels
        !$omp do collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_from = Copy_list_r2p(I_grid_from,ipos)
           l_from  = Copy_list_r2p(I_l_from   ,ipos)
@@ -1828,30 +1899,42 @@ contains
        enddo
        enddo
        !$omp end do nowait
+       !$acc end kernels
     enddo
 
     !$omp end parallel
 
     !--- wait all
-    call MPI_WAITALL( REQ_count,           & ! [IN]
-                      REQ_list(:),         & ! [IN]
-                      MPI_STATUSES_IGNORE, & ! [OUT]
-                      ierr                 ) ! [OUT]
+    if ( REQ_count > 0 ) then
+       call MPI_WAITALL( REQ_count,           & ! [IN]
+                         REQ_list(:),         & ! [IN]
+                         MPI_STATUSES_IGNORE, & ! [OUT]
+                         ierr                 ) ! [OUT]
+    endif
+
+    !$acc end data
+    !$acc data &
+    !$acc pcopyin(Recv_list_r2r,Recv_list_p2r,Recv_list_r2p)
+    !$acc wait
 
     !$omp parallel default(none),private(ipos,k,v,imax,irank,ikv,ij_from,l_from,ij_to,l_to) &
-    !$omp shared(kmax,vmax,var,var_pl,                                  &
+    !$omp shared(kmax,vmax,var,var_pl,                                     &
     !$omp        Recv_nmax_p2r,Recv_info_p2r,Recv_list_p2r,recvbuf_p2r_SP, &
     !$omp        Recv_nmax_r2p,Recv_info_r2p,Recv_list_r2p,recvbuf_r2p_SP, &
     !$omp        Recv_nmax_r2r,Recv_info_r2r,Recv_list_r2r,recvbuf_r2r_SP, &
-    !$omp        Singular_nmax,Singular_info,Singular_list              )
+    !$omp        Singular_nmax,Singular_info,Singular_list                 )
 
     !--- unpack r2r
     do irank = 1, Recv_nmax_r2r
        imax = Recv_info_r2r(I_size,irank)
 
+       !$acc kernels pcopyin(recvbuf_r2r_SP)
        !$omp do collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_to = Recv_list_r2r(I_grid_to,ipos,irank)
           l_to  = Recv_list_r2r(I_l_to   ,ipos,irank)
@@ -1865,15 +1948,20 @@ contains
        enddo
        enddo
        !$omp end do nowait
+       !$acc end kernels
     enddo
 
     !--- unpack p2r
     do irank = 1, Recv_nmax_p2r
        imax = Recv_info_p2r(I_size,irank)
 
+       !$acc kernels pcopyin(recvbuf_p2r_SP)
        !$omp do collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_to = Recv_list_p2r(I_grid_to,ipos,irank)
           l_to  = Recv_list_p2r(I_l_to   ,ipos,irank)
@@ -1887,15 +1975,20 @@ contains
        enddo
        enddo
        !$omp end do nowait
+       !$acc end kernels
     enddo
 
     !--- unpack r2p
     do irank = 1, Recv_nmax_r2p
        imax = Recv_info_r2p(I_size,irank)
 
+       !$acc kernels pcopyin(recvbuf_r2p_SP)
        !$omp do collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_to = Recv_list_r2p(I_grid_to,ipos,irank)
           l_to  = Recv_list_r2p(I_l_to   ,ipos,irank)
@@ -1909,15 +2002,23 @@ contains
        enddo
        enddo
        !$omp end do nowait
+       !$acc end kernels
     enddo
+
+    !$acc end data
+    !$acc wait
 
     !--- singular point (halo to halo)
     do irank = 1, Singular_nmax
        imax = Singular_info(I_size)
 
+       !$acc kernels pcopyin(Singular_list)
        !$omp do collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_from = Singular_list(I_grid_from,ipos)
           l_from  = Singular_list(I_l_from   ,ipos)
@@ -1929,13 +2030,15 @@ contains
        enddo
        enddo
        !$omp end do nowait
+       !$acc end kernels
     enddo
 
     !$omp end parallel
 
-    !$acc wait
-
     call PROF_rapend('COMM_data_transfer',2)
+
+    !$acc end data
+    !$acc wait
 
     return
   end subroutine COMM_data_transfer_SP
@@ -1963,6 +2066,9 @@ contains
     integer  :: k, v, ikv
     integer  :: ierr
     !---------------------------------------------------------------------------
+    !$acc data &
+    !$acc pcopy(var) &
+    !$acc pcopy(var_pl)
 
     if ( COMM_apply_barrier ) then
        call PROF_rapstart('COMM_barrier',2)
@@ -2055,15 +2161,23 @@ contains
                        ierr                     ) ! [OUT]
     enddo
 
+    !$acc data &
+    !$acc pcopyin(Send_list_r2r,Send_list_p2r,Send_list_r2p)
+    !$acc wait
+
     !--- pack and send r2r
     do irank = 1, Send_nmax_r2r
        imax = Send_info_r2r(I_size,irank)
 
+       !$acc kernels pcopy(sendbuf_r2r_DP)
        !$omp parallel do default(none),private(ipos,k,v,ikv,ij_from,l_from) &
        !$omp shared(irank,imax,kmax,vmax,Send_list_r2r,sendbuf_r2r_DP,var) &
        !$omp collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_from = Send_list_r2r(I_grid_from,ipos,irank)
           l_from  = Send_list_r2r(I_l_from   ,ipos,irank)
@@ -2077,12 +2191,14 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        REQ_count = REQ_count + 1
        totalsize = imax * kmax * vmax
        rank      = Send_info_r2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
        tag       = Send_info_r2r(I_prc_from,irank) - 1 ! rank = prc - 1
 
+       !$acc wait
        call MPI_ISEND( sendbuf_r2r_DP(1,irank), & ! [IN]
                        totalsize,               & ! [IN]
                        MPI_DOUBLE_PRECISION,    & ! [IN]
@@ -2097,11 +2213,15 @@ contains
     do irank = 1, Send_nmax_p2r
        imax = Send_info_p2r(I_size,irank)
 
+       !$acc kernels pcopy(sendbuf_p2r_DP)
        !$omp parallel do default(none),private(ipos,k,v,ikv,ij_from,l_from) &
        !$omp shared(irank,imax,kmax,vmax,Send_list_p2r,sendbuf_p2r_DP,var_pl) &
        !$omp collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_from = Send_list_p2r(I_grid_from,ipos,irank)
           l_from  = Send_list_p2r(I_l_from   ,ipos,irank)
@@ -2115,12 +2235,14 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        REQ_count = REQ_count + 1
        totalsize = imax * kmax * vmax
        rank      = Send_info_p2r(I_prc_to  ,irank) - 1 ! rank = prc - 1
        tag       = Send_info_p2r(I_prc_from,irank) + 1000000
 
+       !$acc wait
        call MPI_ISEND( sendbuf_p2r_DP(1,irank), & ! [IN]
                        totalsize,               & ! [IN]
                        MPI_DOUBLE_PRECISION,    & ! [IN]
@@ -2135,11 +2257,15 @@ contains
     do irank = 1, Send_nmax_r2p
        imax = Send_info_r2p(I_size,irank)
 
+       !$acc kernels pcopy(sendbuf_r2p_DP)
        !$omp parallel do default(none),private(ipos,k,v,ikv,ij_from,l_from) &
        !$omp shared(irank,imax,kmax,vmax,Send_list_r2p,sendbuf_r2p_DP,var) &
        !$omp collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_from = Send_list_r2p(I_grid_from,ipos,irank)
           l_from  = Send_list_r2p(I_l_from   ,ipos,irank)
@@ -2153,12 +2279,14 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        REQ_count = REQ_count + 1
        totalsize = imax * kmax * vmax
        rank      = Send_info_r2p(I_prc_to  ,irank) - 1 ! rank = prc - 1
        tag       = Send_info_r2p(I_prc_from,irank) + 2000000
 
+       !$acc wait
        call MPI_ISEND( sendbuf_r2p_DP(1,irank), & ! [IN]
                        totalsize,               & ! [IN]
                        MPI_DOUBLE_PRECISION,    & ! [IN]
@@ -2168,6 +2296,11 @@ contains
                        REQ_list(REQ_count),     & ! [OUT]
                        ierr                     ) ! [OUT]
     enddo
+
+    !$acc end data
+    !$acc data &
+    !$acc pcopyin(Copy_list_r2r,Copy_list_p2r,Copy_list_r2p)
+    !$acc wait
 
     !$omp parallel default(none),private(ipos,k,v,imax,irank,ij_from,l_from,ij_to,l_to) &
     !$omp shared(kmax,vmax,var,var_pl,                      &
@@ -2179,9 +2312,13 @@ contains
     do irank = 1, Copy_nmax_r2r
        imax = Copy_info_r2r(I_size)
 
+       !$acc kernels
        !$omp do collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_from = Copy_list_r2r(I_grid_from,ipos)
           l_from  = Copy_list_r2r(I_l_from   ,ipos)
@@ -2193,15 +2330,20 @@ contains
        enddo
        enddo
        !$omp end do nowait
+       !$acc end kernels
     enddo
 
     !--- copy p2r
     do irank = 1, Copy_nmax_p2r
        imax = Copy_info_p2r(I_size)
 
+       !$acc kernels
        !$omp do collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_from = Copy_list_p2r(I_grid_from,ipos)
           l_from  = Copy_list_p2r(I_l_from   ,ipos)
@@ -2213,15 +2355,20 @@ contains
        enddo
        enddo
        !$omp end do nowait
+       !$acc end kernels
     enddo
 
     !--- copy r2p
     do irank = 1, Copy_nmax_r2p
        imax = Copy_info_r2p(I_size)
 
+       !$acc kernels
        !$omp do collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_from = Copy_list_r2p(I_grid_from,ipos)
           l_from  = Copy_list_r2p(I_l_from   ,ipos)
@@ -2233,30 +2380,42 @@ contains
        enddo
        enddo
        !$omp end do nowait
+       !$acc end kernels
     enddo
 
     !$omp end parallel
 
     !--- wait all
-    call MPI_WAITALL( REQ_count,           & ! [IN]
-                      REQ_list(:),         & ! [IN]
-                      MPI_STATUSES_IGNORE, & ! [OUT]
-                      ierr                 ) ! [OUT]
+    if ( REQ_count > 0 ) then
+       call MPI_WAITALL( REQ_count,           & ! [IN]
+                         REQ_list(:),         & ! [IN]
+                         MPI_STATUSES_IGNORE, & ! [OUT]
+                         ierr                 ) ! [OUT]
+    endif
+
+    !$acc end data
+    !$acc data &
+    !$acc pcopyin(Recv_list_r2r,Recv_list_p2r,Recv_list_r2p)
+    !$acc wait
 
     !$omp parallel default(none),private(ipos,k,v,imax,irank,ikv,ij_from,l_from,ij_to,l_to) &
-    !$omp shared(kmax,vmax,var,var_pl,                                  &
+    !$omp shared(kmax,vmax,var,var_pl,                                     &
     !$omp        Recv_nmax_p2r,Recv_info_p2r,Recv_list_p2r,recvbuf_p2r_DP, &
     !$omp        Recv_nmax_r2p,Recv_info_r2p,Recv_list_r2p,recvbuf_r2p_DP, &
     !$omp        Recv_nmax_r2r,Recv_info_r2r,Recv_list_r2r,recvbuf_r2r_DP, &
-    !$omp        Singular_nmax,Singular_info,Singular_list              )
+    !$omp        Singular_nmax,Singular_info,Singular_list                 )
 
     !--- unpack r2r
     do irank = 1, Recv_nmax_r2r
        imax = Recv_info_r2r(I_size,irank)
 
+       !$acc kernels pcopyin(recvbuf_r2r_DP)
        !$omp do collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_to = Recv_list_r2r(I_grid_to,ipos,irank)
           l_to  = Recv_list_r2r(I_l_to   ,ipos,irank)
@@ -2270,15 +2429,20 @@ contains
        enddo
        enddo
        !$omp end do nowait
+       !$acc end kernels
     enddo
 
     !--- unpack p2r
     do irank = 1, Recv_nmax_p2r
        imax = Recv_info_p2r(I_size,irank)
 
+       !$acc kernels pcopyin(recvbuf_p2r_DP)
        !$omp do collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_to = Recv_list_p2r(I_grid_to,ipos,irank)
           l_to  = Recv_list_p2r(I_l_to   ,ipos,irank)
@@ -2292,15 +2456,20 @@ contains
        enddo
        enddo
        !$omp end do nowait
+       !$acc end kernels
     enddo
 
     !--- unpack r2p
     do irank = 1, Recv_nmax_r2p
        imax = Recv_info_r2p(I_size,irank)
 
+       !$acc kernels pcopyin(recvbuf_r2p_DP)
        !$omp do collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_to = Recv_list_r2p(I_grid_to,ipos,irank)
           l_to  = Recv_list_r2p(I_l_to   ,ipos,irank)
@@ -2314,15 +2483,23 @@ contains
        enddo
        enddo
        !$omp end do nowait
+       !$acc end kernels
     enddo
+
+    !$acc end data
+    !$acc wait
 
     !--- singular point (halo to halo)
     do irank = 1, Singular_nmax
        imax = Singular_info(I_size)
 
+       !$acc kernels pcopyin(Singular_list)
        !$omp do collapse(2)
+       !$acc loop independent
        do v    = 1, vmax
+       !$acc loop independent
        do k    = 1, kmax
+       !$acc loop independent
        do ipos = 1, imax
           ij_from = Singular_list(I_grid_from,ipos)
           l_from  = Singular_list(I_l_from   ,ipos)
@@ -2334,13 +2511,15 @@ contains
        enddo
        enddo
        !$omp end do nowait
+       !$acc end kernels
     enddo
 
     !$omp end parallel
 
-    !$acc wait
-
     call PROF_rapend('COMM_data_transfer',2)
+
+    !$acc end data
+    !$acc wait
 
     return
   end subroutine COMM_data_transfer_DP
@@ -2372,8 +2551,6 @@ contains
        call MPI_Barrier(PRC_LOCAL_COMM_WORLD,ierr)
        call PROF_rapend  ('COMM_barrier',2)
     endif
-
-    !$acc wait
 
     call PROF_rapstart('COMM_data_transfer',2)
 
@@ -2474,10 +2651,12 @@ contains
     !$omp end parallel do
 
     !--- wait all
-    call MPI_WAITALL( REQ_count,           & ! [IN]
-                      REQ_list(:),         & ! [IN]
-                      MPI_STATUSES_IGNORE, & ! [OUT]
-                      ierr                 ) ! [OUT]
+    if ( REQ_count > 0 ) then
+       call MPI_WAITALL( REQ_count,           & ! [IN]
+                         REQ_list(:),         & ! [IN]
+                         MPI_STATUSES_IGNORE, & ! [OUT]
+                         ierr                 ) ! [OUT]
+    endif
 
     !--- unpack r2r
     !$omp parallel do default(none),private(ipos,k,v,imax,irank,ij_to,l_to,ikv) &
@@ -2519,8 +2698,6 @@ contains
        enddo
        enddo
     enddo
-
-    !$acc wait
 
     call PROF_rapend('COMM_data_transfer',2)
 
@@ -2573,7 +2750,7 @@ contains
 
     call PROF_rapstart('COMM_var',2)
 
-    if( comm_pl ) then
+    if ( comm_pl ) then
 
     REQ_count = 0
 
@@ -2694,10 +2871,12 @@ contains
     enddo
 
     !--- wait all
-    call MPI_WAITALL( REQ_count,           & ! [IN]
-                      REQ_list(:),         & ! [IN]
-                      MPI_STATUSES_IGNORE, & ! [OUT]
-                      ierr                 ) ! [OUT]
+    if ( REQ_count > 0 ) then
+       call MPI_WAITALL( REQ_count,           & ! [IN]
+                         REQ_list(:),         & ! [IN]
+                         MPI_STATUSES_IGNORE, & ! [OUT]
+                         ierr                 ) ! [OUT]
+    endif
 
     !--- unpack p2r-reverse
     do irank = 1, Send_nmax_p2r
@@ -2730,7 +2909,7 @@ contains
 
     endif
 
-    call COMM_data_transfer(var,var_pl)
+    call COMM_data_transfer_SP(var,var_pl)
 
     call PROF_rapend('COMM_var',2)
 
@@ -2783,7 +2962,7 @@ contains
 
     call PROF_rapstart('COMM_var',2)
 
-    if( comm_pl ) then
+    if ( comm_pl ) then
 
     REQ_count = 0
 
@@ -2904,10 +3083,12 @@ contains
     enddo
 
     !--- wait all
-    call MPI_WAITALL( REQ_count,           & ! [IN]
-                      REQ_list(:),         & ! [IN]
-                      MPI_STATUSES_IGNORE, & ! [OUT]
-                      ierr                 ) ! [OUT]
+    if ( REQ_count > 0 ) then
+       call MPI_WAITALL( REQ_count,           & ! [IN]
+                         REQ_list(:),         & ! [IN]
+                         MPI_STATUSES_IGNORE, & ! [OUT]
+                         ierr                 ) ! [OUT]
+    endif
 
     !--- unpack p2r-reverse
     do irank = 1, Send_nmax_p2r
@@ -2940,7 +3121,7 @@ contains
 
     endif
 
-    call COMM_data_transfer(var,var_pl)
+    call COMM_data_transfer_DP(var,var_pl)
 
     call PROF_rapend('COMM_var',2)
 
@@ -2997,8 +3178,8 @@ contains
     if( IO_L ) write(IO_FID_LOG,*)
     if( IO_L ) write(IO_FID_LOG,*) '+++ TEST start'
 
-    var   (:,:,:,:) = -999.D0
-    var_pl(:,:,:,:) = -999.D0
+    var   (:,:,:,:) = -999.0_RP
+    var_pl(:,:,:,:) = -999.0_RP
 
     do l = 1, ADM_lall
        rgnid = RGNMNG_l2r(l)
@@ -3019,7 +3200,7 @@ contains
 
        if ( ADM_have_sgp(l) ) then
           do k = ADM_kmin, ADM_kmax
-             var(1,k,l,:) = -1.D0
+             var(1,k,l,:) = -1.0_RP
           enddo
        endif
     enddo
@@ -3330,17 +3511,17 @@ contains
   end subroutine COMM_debugtest
 
   !-----------------------------------------------------------------------------
-  subroutine COMM_Stat_sum( localsum, globalsum )
+  subroutine COMM_Stat_sum_SP( localsum, globalsum )
     use mod_process, only: &
        PRC_LOCAL_COMM_WORLD, &
        PRC_nprocs
     implicit none
 
-    real(RP), intent(in)  :: localsum
-    real(RP), intent(out) :: globalsum
+    real(SP), intent(in)  :: localsum
+    real(SP), intent(out) :: globalsum
 
-    real(RP) :: sendbuf(1)
-    real(RP) :: recvbuf(PRC_nprocs)
+    real(SP) :: sendbuf(1)
+    real(SP) :: recvbuf(PRC_nprocs)
 
     integer  :: ierr
     !---------------------------------------------------------------------------
@@ -3350,10 +3531,10 @@ contains
 
        call MPI_Allgather( sendbuf,              &
                            1,                    &
-                           COMM_datatype,        &
+                           MPI_REAL,             &
                            recvbuf,              &
                            1,                    &
-                           COMM_datatype,        &
+                           MPI_REAL,             &
                            PRC_LOCAL_COMM_WORLD, &
                            ierr                  )
 
@@ -3363,25 +3544,59 @@ contains
     endif
 
     return
-  end subroutine COMM_Stat_sum
+  end subroutine COMM_Stat_sum_SP
 
   !-----------------------------------------------------------------------------
-  subroutine COMM_Stat_sum_eachlayer( kall, localsum, globalsum )
+  subroutine COMM_Stat_sum_DP( localsum, globalsum )
     use mod_process, only: &
        PRC_LOCAL_COMM_WORLD, &
        PRC_nprocs
-    use mod_adm, only: &
-       ADM_prc_me
+    implicit none
+
+    real(DP), intent(in)  :: localsum
+    real(DP), intent(out) :: globalsum
+
+    real(DP) :: sendbuf(1)
+    real(DP) :: recvbuf(PRC_nprocs)
+
+    integer  :: ierr
+    !---------------------------------------------------------------------------
+
+    if ( COMM_pl ) then
+       sendbuf(1) = localsum
+
+       call MPI_Allgather( sendbuf,              &
+                           1,                    &
+                           MPI_DOUBLE_PRECISION, &
+                           recvbuf,              &
+                           1,                    &
+                           MPI_DOUBLE_PRECISION, &
+                           PRC_LOCAL_COMM_WORLD, &
+                           ierr                  )
+
+       globalsum = sum( recvbuf(:) )
+    else
+       globalsum = localsum
+    endif
+
+    return
+  end subroutine COMM_Stat_sum_DP
+
+  !-----------------------------------------------------------------------------
+  subroutine COMM_Stat_sum_eachlayer_SP( kall, localsum, globalsum )
+    use mod_process, only: &
+       PRC_LOCAL_COMM_WORLD, &
+       PRC_nprocs
     implicit none
 
     integer,  intent(in)  :: kall
-    real(RP), intent(in)  :: localsum (kall)
-    real(RP), intent(out) :: globalsum(kall)
+    real(SP), intent(in)  :: localsum (kall)
+    real(SP), intent(out) :: globalsum(kall)
 
-    real(RP) :: sendbuf(kall)
+    real(SP) :: sendbuf(kall)
     integer  :: displs (PRC_nprocs)
     integer  :: counts (PRC_nprocs)
-    real(RP) :: recvbuf(kall,PRC_nprocs)
+    real(SP) :: recvbuf(kall,PRC_nprocs)
 
     integer  :: ierr
     integer  :: k, p
@@ -3397,11 +3612,11 @@ contains
 
        call MPI_Allgatherv( sendbuf,              &
                             kall,                 &
-                            COMM_datatype,        &
+                            MPI_REAL,             &
                             recvbuf,              &
                             counts,               &
                             displs,               &
-                            COMM_datatype,        &
+                            MPI_REAL,             &
                             PRC_LOCAL_COMM_WORLD, &
                             ierr                  )
 
@@ -3415,20 +3630,70 @@ contains
     endif
 
     return
-  end subroutine COMM_Stat_sum_eachlayer
+  end subroutine COMM_Stat_sum_eachlayer_SP
 
   !-----------------------------------------------------------------------------
-  subroutine COMM_Stat_avg( localavg, globalavg )
+  subroutine COMM_Stat_sum_eachlayer_DP( kall, localsum, globalsum )
     use mod_process, only: &
        PRC_LOCAL_COMM_WORLD, &
        PRC_nprocs
     implicit none
 
-    real(RP), intent(in)  :: localavg
-    real(RP), intent(out) :: globalavg
+    integer,  intent(in)  :: kall
+    real(DP), intent(in)  :: localsum (kall)
+    real(DP), intent(out) :: globalsum(kall)
 
-    real(RP) :: sendbuf(1)
-    real(RP) :: recvbuf(PRC_nprocs)
+    real(DP) :: sendbuf(kall)
+    integer  :: displs (PRC_nprocs)
+    integer  :: counts (PRC_nprocs)
+    real(DP) :: recvbuf(kall,PRC_nprocs)
+
+    integer  :: ierr
+    integer  :: k, p
+    !---------------------------------------------------------------------------
+
+    do p = 1, PRC_nprocs
+       displs(p) = (p-1) * kall
+       counts(p) = kall
+    enddo
+
+    if ( COMM_pl ) then
+       sendbuf(:) = localsum(:)
+
+       call MPI_Allgatherv( sendbuf,              &
+                            kall,                 &
+                            MPI_DOUBLE_PRECISION, &
+                            recvbuf,              &
+                            counts,               &
+                            displs,               &
+                            MPI_DOUBLE_PRECISION, &
+                            PRC_LOCAL_COMM_WORLD, &
+                            ierr                  )
+
+       do k = 1, kall
+          globalsum(k) = sum( recvbuf(k,:) )
+       enddo
+    else
+       do k = 1, kall
+          globalsum(k) = localsum(k)
+       enddo
+    endif
+
+    return
+  end subroutine COMM_Stat_sum_eachlayer_DP
+
+  !-----------------------------------------------------------------------------
+  subroutine COMM_Stat_avg_SP( localavg, globalavg )
+    use mod_process, only: &
+       PRC_LOCAL_COMM_WORLD, &
+       PRC_nprocs
+    implicit none
+
+    real(SP), intent(in)  :: localavg
+    real(SP), intent(out) :: globalavg
+
+    real(SP) :: sendbuf(1)
+    real(SP) :: recvbuf(PRC_nprocs)
 
     integer  :: ierr
     !---------------------------------------------------------------------------
@@ -3438,65 +3703,133 @@ contains
 
        call MPI_Allgather( sendbuf,              &
                            1,                    &
-                           COMM_datatype,        &
+                           MPI_REAL,             &
                            recvbuf,              &
                            1,                    &
-                           COMM_datatype,        &
+                           MPI_REAL,             &
                            PRC_LOCAL_COMM_WORLD, &
                            ierr                  )
 
-       globalavg = sum( recvbuf(:) ) / real(PRC_nprocs,kind=RP)
+       globalavg = sum( recvbuf(:) ) / real(PRC_nprocs,kind=SP)
     else
        globalavg = localavg
     endif
 
     return
-  end subroutine COMM_Stat_avg
+  end subroutine COMM_Stat_avg_SP
 
   !-----------------------------------------------------------------------------
-  subroutine COMM_Stat_max( localmax, globalmax )
+  subroutine COMM_Stat_avg_DP( localavg, globalavg )
     use mod_process, only: &
        PRC_LOCAL_COMM_WORLD, &
        PRC_nprocs
     implicit none
 
-    real(RP), intent(in)  :: localmax
-    real(RP), intent(out) :: globalmax
+    real(DP), intent(in)  :: localavg
+    real(DP), intent(out) :: globalavg
 
-    real(RP) :: sendbuf(1)
-    real(RP) :: recvbuf(PRC_nprocs)
+    real(DP) :: sendbuf(1)
+    real(DP) :: recvbuf(PRC_nprocs)
+
+    integer  :: ierr
+    !---------------------------------------------------------------------------
+
+    if ( COMM_pl ) then
+       sendbuf(1) = localavg
+
+       call MPI_Allgather( sendbuf,              &
+                           1,                    &
+                           MPI_DOUBLE_PRECISION, &
+                           recvbuf,              &
+                           1,                    &
+                           MPI_DOUBLE_PRECISION, &
+                           PRC_LOCAL_COMM_WORLD, &
+                           ierr                  )
+
+       globalavg = sum( recvbuf(:) ) / real(PRC_nprocs,kind=DP)
+    else
+       globalavg = localavg
+    endif
+
+    return
+  end subroutine COMM_Stat_avg_DP
+
+  !-----------------------------------------------------------------------------
+  subroutine COMM_Stat_max_SP( localmax, globalmax )
+    use mod_process, only: &
+       PRC_LOCAL_COMM_WORLD, &
+       PRC_nprocs
+    implicit none
+
+    real(SP), intent(in)  :: localmax
+    real(SP), intent(out) :: globalmax
+
+    real(SP) :: sendbuf(1)
+    real(SP) :: recvbuf(PRC_nprocs)
 
     integer  :: ierr
     !---------------------------------------------------------------------------
 
     sendbuf(1) = localmax
 
-    call MPI_Allgather( sendbuf,        &
-                        1,              &
-                        COMM_datatype,  &
-                        recvbuf,        &
-                        1,              &
-                        COMM_datatype,  &
+    call MPI_Allgather( sendbuf,              &
+                        1,                    &
+                        MPI_REAL,             &
+                        recvbuf,              &
+                        1,                    &
+                        MPI_REAL,             &
                         PRC_LOCAL_COMM_WORLD, &
-                        ierr            )
+                        ierr                  )
 
     globalmax = maxval( recvbuf(:) )
 
     return
-  end subroutine COMM_Stat_max
+  end subroutine COMM_Stat_max_SP
 
   !-----------------------------------------------------------------------------
-  subroutine COMM_Stat_min( localmin, globalmin )
+  subroutine COMM_Stat_max_DP( localmax, globalmax )
     use mod_process, only: &
        PRC_LOCAL_COMM_WORLD, &
        PRC_nprocs
     implicit none
 
-    real(RP), intent(in)  :: localmin
-    real(RP), intent(out) :: globalmin
+    real(DP), intent(in)  :: localmax
+    real(DP), intent(out) :: globalmax
 
-    real(RP) :: sendbuf(1)
-    real(RP) :: recvbuf(PRC_nprocs)
+    real(DP) :: sendbuf(1)
+    real(DP) :: recvbuf(PRC_nprocs)
+
+    integer  :: ierr
+    !---------------------------------------------------------------------------
+
+    sendbuf(1) = localmax
+
+    call MPI_Allgather( sendbuf,              &
+                        1,                    &
+                        MPI_DOUBLE_PRECISION, &
+                        recvbuf,              &
+                        1,                    &
+                        MPI_DOUBLE_PRECISION, &
+                        PRC_LOCAL_COMM_WORLD, &
+                        ierr                  )
+
+    globalmax = maxval( recvbuf(:) )
+
+    return
+  end subroutine COMM_Stat_max_DP
+
+  !-----------------------------------------------------------------------------
+  subroutine COMM_Stat_min_SP( localmin, globalmin )
+    use mod_process, only: &
+       PRC_LOCAL_COMM_WORLD, &
+       PRC_nprocs
+    implicit none
+
+    real(SP), intent(in)  :: localmin
+    real(SP), intent(out) :: globalmin
+
+    real(SP) :: sendbuf(1)
+    real(SP) :: recvbuf(PRC_nprocs)
 
     integer  :: ierr
     !---------------------------------------------------------------------------
@@ -3505,17 +3838,49 @@ contains
 
     call MPI_Allgather( sendbuf,        &
                         1,              &
-                        COMM_datatype,  &
+                        MPI_REAL,       &
                         recvbuf,        &
                         1,              &
-                        COMM_datatype,  &
+                        MPI_REAL,       &
                         PRC_LOCAL_COMM_WORLD, &
                         ierr            )
 
     globalmin = minval( recvbuf(:) )
 
     return
-  end subroutine COMM_Stat_min
+  end subroutine COMM_Stat_min_SP
+
+  !-----------------------------------------------------------------------------
+  subroutine COMM_Stat_min_DP( localmin, globalmin )
+    use mod_process, only: &
+       PRC_LOCAL_COMM_WORLD, &
+       PRC_nprocs
+    implicit none
+
+    real(DP), intent(in)  :: localmin
+    real(DP), intent(out) :: globalmin
+
+    real(DP) :: sendbuf(1)
+    real(DP) :: recvbuf(PRC_nprocs)
+
+    integer  :: ierr
+    !---------------------------------------------------------------------------
+
+    sendbuf(1) = localmin
+
+    call MPI_Allgather( sendbuf,              &
+                        1,                    &
+                        MPI_DOUBLE_PRECISION, &
+                        recvbuf,              &
+                        1,                    &
+                        MPI_DOUBLE_PRECISION, &
+                        PRC_LOCAL_COMM_WORLD, &
+                        ierr                  )
+
+    globalmin = minval( recvbuf(:) )
+
+    return
+  end subroutine COMM_Stat_min_DP
 
   !-----------------------------------------------------------------------------
   subroutine COMM_ensemble_transpose( &
@@ -3553,7 +3918,7 @@ contains
     integer  :: i, j, k, l, e, d, g
 
     integer  :: suf
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+    suf(i,j) = ADM_gall_1d * (j-1) + i
     !---------------------------------------------------------------------------
 
     gg(:) = 0
@@ -3601,7 +3966,7 @@ contains
 !    endif
 !
 !    if ( .NOT. ENS_have_pl ) then
-!       var_ens_pl(:,:,:) = 0.D0
+!       var_ens_pl(:,:,:) = 0.0_RP
 !    endif
 
     return
@@ -3643,7 +4008,7 @@ contains
     integer  :: i, j, k, l, e, d, g
 
     integer  :: suf
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+    suf(i,j) = ADM_gall_1d * (j-1) + i
     !---------------------------------------------------------------------------
 
     call MPI_Alltoall( var_ens,        &
@@ -3692,7 +4057,7 @@ contains
 !    endif
 !
 !    if ( .NOT. ENS_have_pl ) then
-!       var_mem_pl(:,:,:) = 0.D0
+!       var_mem_pl(:,:,:) = 0.0_RP
 !    endif
 
     return
@@ -3733,10 +4098,10 @@ contains
     integer  :: i, j, k, l, e, d, g
 
     integer  :: suf
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+    suf(i,j) = ADM_gall_1d * (j-1) + i
     !---------------------------------------------------------------------------
 
-    var_send(:,:,:) = 0.D0
+    var_send(:,:,:) = 0.0_RP
 
     if ( ENS_prc_me == ENS_prc_master ) then
        gg(:) = 0
@@ -3805,7 +4170,7 @@ contains
     integer  :: i, j, k, l, e, d, g
 
     integer  :: suf
-    suf(i,j) = ADM_gall_1d * ((j)-1) + (i)
+    suf(i,j) = ADM_gall_1d * (j-1) + i
     !---------------------------------------------------------------------------
 
     call MPI_Gather( var_ens(1,1),     &
@@ -3818,7 +4183,7 @@ contains
                      ENS_COMM_WORLD,   &
                      ierr              )
 
-    var_mem(:,:,:) = 0.D0
+    var_mem(:,:,:) = 0.0_RP
 
     if ( ENS_prc_me == ENS_prc_master ) then
        gg(:) = 0

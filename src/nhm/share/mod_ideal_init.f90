@@ -238,8 +238,7 @@ contains
        RANDOM_get
     use mod_grd, only: &
        GRD_LAT, &
-       GRD_LON, &
-       GRD_s
+       GRD_LON
     implicit none
 
     real(RP), intent(out) :: TRC_var(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
@@ -267,7 +266,7 @@ contains
           do l = 1, ADM_lall
           do k = 1, ADM_kall
           do g = 1, ADM_gall
-             deg = nint( GRD_s(g,k0,l,GRD_LON) / D2R )
+             deg = nint( GRD_LON(g,l) / D2R )
              if ( mod(deg,10) == 0 ) then
                 TRC_var(g,k,l,nq) = real(ADM_kall-k+1,kind=RP)
              else
@@ -280,7 +279,7 @@ contains
           do l = 1, ADM_lall
           do k = 1, ADM_kall
           do g = 1, ADM_gall
-             deg = nint( GRD_s(g,k0,l,GRD_LAT) / D2R )
+             deg = nint( GRD_LAT(g,l) / D2R )
              if ( mod(deg,10) == 0 ) then
                 TRC_var(g,k,l,nq) = real(ADM_kall-k+1,kind=RP)
              else
@@ -312,7 +311,6 @@ contains
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
-       GRD_s,   &
        GRD_Z,   &
        GRD_vz
     implicit none
@@ -349,8 +347,8 @@ contains
           dz(k) = GRD_vz(n,k,l,GRD_Z) - GRD_vz(n,k-1,l,GRD_Z)
        enddo
 
-       lat = GRD_s(n,k0,l,GRD_LAT)
-       lon = GRD_s(n,k0,l,GRD_LON)
+       lat = GRD_LAT(n,l)
+       lon = GRD_LON(n,l)
 
        pre_sfc = PRE00
 !       tem_sfc = 300.0_RP
@@ -444,7 +442,6 @@ contains
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
-       GRD_s,   &
        GRD_Z,   &
        GRD_ZH,  &
        GRD_vz
@@ -520,8 +517,8 @@ contains
           z_local(k) = GRD_vz(n,k,l,GRD_Z)
        enddo
 
-       lat = GRD_s(n,k0,l,GRD_LAT)
-       lon = GRD_s(n,k0,l,GRD_LON)
+       lat = GRD_LAT(n,l)
+       lon = GRD_LON(n,l)
 
        signal = .true.
 
@@ -591,7 +588,6 @@ contains
     use mod_grd, only: &
        GRD_LAT,   &
        GRD_LON,   &
-       GRD_s,     &
        GRD_afact, &
        GRD_bfact, &
        GRD_Z,     &
@@ -704,10 +700,10 @@ contains
 
     do l = 1, lall
     do n = 1, ijdim
-       lat    = GRD_s(n,k0,l,GRD_LAT)
-       lon    = GRD_s(n,k0,l,GRD_LON)
-       DP_lat = real(GRD_s(n,k0,l,GRD_LAT),kind=DP)
-       DP_lon = real(GRD_s(n,k0,l,GRD_LON),kind=DP)
+       lat    = GRD_LAT(n,l)
+       lon    = GRD_LON(n,l)
+       DP_lat = real(GRD_LAT(n,l),kind=DP)
+       DP_lon = real(GRD_LON(n,l),kind=DP)
 
        do k = 1, kdim
           DP_z = real(GRD_vz(n,k,l,GRD_Z),kind=DP)
@@ -782,9 +778,9 @@ contains
     enddo
     call BNDCND_thermo(     &
          ijdim,             &
+         DIAG_var(:,:,l,2), &
          rho0,              &
          DIAG_var(:,:,l,1), &
-         DIAG_var(:,:,l,2), &
          phi(:,:,l)         )
     enddo
 
@@ -804,7 +800,6 @@ contains
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
-       GRD_s,   &
        GRD_Z,   &
        GRD_vz
     use mod_runconf, only: &
@@ -887,10 +882,10 @@ contains
 
     do l = 1, lall
     do n = 1, ijdim
-       lat    = GRD_s(n,k0,l,GRD_LAT)
-       lon    = GRD_s(n,k0,l,GRD_LON)
-       DP_lat = real(GRD_s(n,k0,l,GRD_LAT),kind=DP)
-       DP_lon = real(GRD_s(n,k0,l,GRD_LON),kind=DP)
+       lat    = GRD_LAT(n,l)
+       lon    = GRD_LON(n,l)
+       DP_lat = real(GRD_LAT(n,l),kind=DP)
+       DP_lon = real(GRD_LON(n,l),kind=DP)
 
        do k = 1, kdim
           DP_z = real(GRD_vz(n,k,l,GRD_Z),kind=DP)
@@ -955,7 +950,6 @@ contains
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
-       GRD_s,   &
        GRD_Z,   &
        GRD_vz
     use mod_runconf, only: &
@@ -1022,10 +1016,10 @@ contains
 
     do l = 1, lall
     do n = 1, ijdim
-       lat    = GRD_s(n,k0,l,GRD_LAT)
-       lon    = GRD_s(n,k0,l,GRD_LON)
-       DP_lat = real(GRD_s(n,k0,l,GRD_LAT),kind=DP)
-       DP_lon = real(GRD_s(n,k0,l,GRD_LON),kind=DP)
+       lat    = GRD_LAT(n,l)
+       lon    = GRD_LON(n,l)
+       DP_lat = real(GRD_LAT(n,l),kind=DP)
+       DP_lon = real(GRD_LON(n,l),kind=DP)
 
        do k = 1, kdim
           DP_z = real(GRD_vz(n,k,l,GRD_Z),kind=DP)
@@ -1086,7 +1080,6 @@ contains
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
-       GRD_s,   &
        GRD_gz,  &
        GRD_Z,   &
        GRD_ZH,  &
@@ -1177,8 +1170,8 @@ contains
           enddo
           p(:) = 0.0_RP
 
-          lat = GRD_s(n,k0,l,GRD_LAT)
-          lon = GRD_s(n,k0,l,GRD_LON)
+          lat = GRD_LAT(n,l)
+          lon = GRD_LON(n,l)
 
           do k = 1, kdim
              DP_lon = real(lon ,kind=DP)
@@ -1247,8 +1240,8 @@ contains
           enddo
           p(:) = 0.0_RP
 
-          lat = GRD_s(n,k0,l,GRD_LAT)
-          lon = GRD_s(n,k0,l,GRD_LON)
+          lat = GRD_LAT(n,l)
+          lon = GRD_LON(n,l)
 
           do k = 1, kdim
              DP_lon = real(lon ,kind=DP)
@@ -1314,8 +1307,8 @@ contains
           enddo
           p(:) = 0.0_RP
 
-          lat = GRD_s(n,k0,l,GRD_LAT)
-          lon = GRD_s(n,k0,l,GRD_LON)
+          lat = GRD_LAT(n,l)
+          lon = GRD_LON(n,l)
 
           do k = 1, kdim
              DP_gc = real(GRD_gz(k),kind=DP)
@@ -1401,7 +1394,6 @@ contains
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
-       GRD_s,   &
        GRD_vz,  &
        GRD_Z,   &
        GRD_ZH
@@ -1475,8 +1467,8 @@ contains
           enddo
           p(:) = 0.0_RP
 
-          lat = GRD_s(n,k0,l,GRD_LAT)
-          lon = GRD_s(n,k0,l,GRD_LON)
+          lat = GRD_LAT(n,l)
+          lon = GRD_LON(n,l)
 
           do k = 1, kdim
              DP_lon = real(lon ,kind=DP)
@@ -1538,8 +1530,8 @@ contains
           enddo
           p(:) = 0.0_RP
 
-          lat = GRD_s(n,k0,l,GRD_LAT)
-          lon = GRD_s(n,k0,l,GRD_LON)
+          lat = GRD_LAT(n,l)
+          lon = GRD_LON(n,l)
 
           do k = 1, kdim
              DP_lon = real(lon ,kind=DP)
@@ -1601,8 +1593,8 @@ contains
           enddo
           p(:) = 0.0_RP
 
-          lat = GRD_s(n,k0,l,GRD_LAT)
-          lon = GRD_s(n,k0,l,GRD_LON)
+          lat = GRD_LAT(n,l)
+          lon = GRD_LON(n,l)
 
           do k = 1, kdim
              DP_lon = real(lon ,kind=DP)
@@ -1670,7 +1662,6 @@ contains
     use mod_grd, only: &
        GRD_LAT, &
        GRD_LON, &
-       GRD_s,   &
        GRD_Z,   &
        GRD_ZH,  &
        GRD_vz
@@ -1727,8 +1718,8 @@ contains
        enddo
        p(:) = 0.0_RP
 
-       lat = GRD_s(n,k0,l,GRD_LAT)
-       lon = GRD_s(n,k0,l,GRD_LON)
+       lat = GRD_LAT(n,l)
+       lon = GRD_LON(n,l)
 
        do k = 1, kdim
           DP_lon = real(lon ,kind=DP)

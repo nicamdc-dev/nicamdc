@@ -738,10 +738,10 @@ contains
     use mod_comm, only: &
        COMM_data_transfer
     use mod_grd, only: &
-       GRD_LAT,  &
-       GRD_LON,  &
-       GRD_s,    &
-       GRD_s_pl
+       GRD_LAT,    &
+       GRD_LAT_pl, &
+       GRD_LON,    &
+       GRD_LON_pl
     use mod_history, only: &
        history_in
     implicit none
@@ -768,12 +768,12 @@ contains
     do l = 1, ADM_lall
     do g = 1, ADM_gall
 
-       call VECTR_distance( RADIUS,                & ! [IN]
-                            center_lon_rad,        & ! [IN]
-                            center_lat_rad,        & ! [IN]
-                            GRD_s(g,k0,l,GRD_LON), & ! [IN]
-                            GRD_s(g,k0,l,GRD_LAT), & ! [IN]
-                            dist                   ) ! [OUT]
+       call VECTR_distance( RADIUS,         & ! [IN]
+                            center_lon_rad, & ! [IN]
+                            center_lat_rad, & ! [IN]
+                            GRD_LON(g,l),   & ! [IN]
+                            GRD_LAT(g,l),   & ! [IN]
+                            dist            ) ! [OUT]
 
        if ( dist < halo1_dist ) then
           fact = 0.0_RP
@@ -793,12 +793,12 @@ contains
        do l = 1, ADM_lall_pl
        do g = 1, ADM_gall_pl
 
-          call VECTR_distance( RADIUS,                   & ! [IN]
-                               center_lon,               & ! [IN]
-                               center_lat,               & ! [IN]
-                               GRD_s_pl(g,k0,l,GRD_LON), & ! [IN]
-                               GRD_s_pl(g,k0,l,GRD_LAT), & ! [IN]
-                               dist                      ) ! [OUT]
+          call VECTR_distance( RADIUS,          & ! [IN]
+                               center_lon,      & ! [IN]
+                               center_lat,      & ! [IN]
+                               GRD_LON_pl(g,l), & ! [IN]
+                               GRD_LAT_pl(g,l), & ! [IN]
+                               dist             ) ! [OUT]
 
           if ( dist < halo1_dist ) then
              fact = 0.0_RP

@@ -2,7 +2,7 @@
 !> Module operator
 !!
 !! @par Description
-!!          This module contains the subroutines for differential operators
+!!         Horizontal differential operators
 !!
 !! @author NICAM developers
 !<
@@ -1565,6 +1565,9 @@ contains
 
     integer  :: g, k, l, n, v
     !---------------------------------------------------------------------------
+    !$acc data &
+    !$acc pcopy(scl) &
+    !$acc pcopyin(vx,vy,vz,coef_div)
 
     call PROF_rapstart('OPRT_divergence',2)
 
@@ -1575,6 +1578,7 @@ contains
     kall = ADM_kall
     lall = ADM_lall
 
+    !$acc kernels pcopy(scl) pcopyin(vx,vy,vz,coef_div)
     !$omp parallel do default(none),private(g,k,l,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1), &
     !$omp shared(gmin,gmax,iall,gall,kall,lall,scl,vx,vy,vz,coef_div), &
     !$omp collapse(2)
@@ -1584,7 +1588,6 @@ contains
        do g = 1, gmin-1
           scl(g,k,l) = 0.0_RP
        enddo
-
 !OCL XFILL
        do g = gmin, gmax
           ij     = g
@@ -1647,6 +1650,7 @@ contains
     enddo ! loop k
     enddo ! loop l
     !$omp end parallel do
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        n = ADM_gslf_pl
@@ -1666,6 +1670,8 @@ contains
     endif
 
     call PROF_rapend('OPRT_divergence',2)
+
+    !$acc end data
 
     return
   end subroutine OPRT_divergence
@@ -1846,6 +1852,9 @@ contains
 
     integer  :: g, k, l, n, v
     !---------------------------------------------------------------------------
+    !$acc data &
+    !$acc pcopy(grad) &
+    !$acc pcopyin(scl,coef_grad)
 
     call PROF_rapstart('OPRT_gradient',2)
 
@@ -1856,6 +1865,7 @@ contains
     kall = ADM_kall
     lall = ADM_lall
 
+    !$acc kernels pcopy(grad) pcopyin(scl,coef_grad)
     !$omp parallel do default(none),private(g,k,l,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1), &
     !$omp shared(gmin,gmax,iall,gall,kall,lall,grad,scl,coef_grad), &
     !$omp collapse(2)
@@ -1921,7 +1931,6 @@ contains
                              + coef_grad(g,5,ZDIR,l) * scl(im1jm1,k,l) &
                              + coef_grad(g,6,ZDIR,l) * scl(ijm1  ,k,l) )
        enddo
-
 !OCL XFILL
        do g = gmax+1, gall
           grad(g,k,l,XDIR) = 0.0_RP
@@ -1931,6 +1940,7 @@ contains
     enddo ! loop k
     enddo ! loop l
     !$omp end parallel do
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        n = ADM_gslf_pl
@@ -1952,6 +1962,8 @@ contains
     endif
 
     call PROF_rapend('OPRT_gradient',2)
+
+    !$acc end data
 
     return
   end subroutine OPRT_gradient
@@ -1985,6 +1997,9 @@ contains
 
     integer  :: g, k, l, n, v
     !---------------------------------------------------------------------------
+    !$acc data &
+    !$acc pcopy(dscl) &
+    !$acc pcopyin(scl,coef_lap)
 
     call PROF_rapstart('OPRT_laplacian',2)
 
@@ -1995,6 +2010,7 @@ contains
     kall = ADM_kall
     lall = ADM_lall
 
+    !$acc kernels pcopy(dscl) pcopyin(scl,coef_lap)
     !$omp parallel do default(none),private(g,k,l,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1), &
     !$omp shared(gmin,gmax,iall,gall,kall,lall,dscl,scl,coef_lap), &
     !$omp collapse(2)
@@ -2004,7 +2020,6 @@ contains
        do g = 1, gmin-1
           dscl(g,k,l) = 0.0_RP
        enddo
-
 !OCL XFILL
        do g = gmin, gmax
           ij     = g
@@ -2023,7 +2038,6 @@ contains
                         + coef_lap(g,5,l) * scl(im1jm1,k,l) &
                         + coef_lap(g,6,l) * scl(ijm1  ,k,l) )
        enddo
-
 !OCL XFILL
        do g = gmax+1, gall
           dscl(g,k,l) = 0.0_RP
@@ -2031,6 +2045,7 @@ contains
     enddo ! loop k
     enddo ! loop l
     !$omp end parallel do
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        n = ADM_gslf_pl
@@ -2048,6 +2063,8 @@ contains
     endif
 
     call PROF_rapend('OPRT_laplacian',2)
+
+    !$acc end data
 
     return
   end subroutine OPRT_laplacian
@@ -2085,9 +2102,13 @@ contains
     real(RP), intent(in)  :: coef_diff   (ADM_gall,1:6    ,ADM_nxyz,ADM_lall   )
     real(RP), intent(in)  :: coef_diff_pl(         1:vlink,ADM_nxyz,ADM_lall_pl)
 
-    real(RP) :: vt   (ADM_gall   ,ADM_nxyz,TI:TJ)
-    real(RP) :: vt_pl(ADM_gall_pl,ADM_nxyz      )
-    real(RP) :: kf   (1:6)
+#ifdef _OPENACC
+    real(RP) :: vt   (ADM_gall,ADM_kall,ADM_nxyz,TI:TJ)
+#else
+    real(RP) :: vt   (ADM_gall,ADM_nxyz,TI:TJ)
+#endif
+    real(RP) :: vt_pl(ADM_gall_pl,ADM_nxyz)
+    real(RP) :: kf1, kf2, kf3, kf4, kf5, kf6
 
     integer  :: gmin, gmax, iall, gall, kall, lall, nxyz, gminm1
 
@@ -2097,6 +2118,11 @@ contains
 
     integer  :: g, k, l, d, n, v
     !---------------------------------------------------------------------------
+    !$acc data &
+    !$acc pcreate(vt) &
+    !$acc pcopy(dscl) &
+    !$acc pcopyin(scl,kh,coef_intp,coef_diff) &
+    !$acc pcopyin(ADM_have_sgp)
 
     call PROF_rapstart('OPRT_diffusion',2)
 
@@ -2110,61 +2136,80 @@ contains
 
     gminm1 = (ADM_gmin-1-1)*ADM_gall_1d + ADM_gmin-1
 
-    !$omp parallel default(none),private(g,k,l,d,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1), &
-    !$omp shared(ADM_have_sgp,gminm1,gmin,gmax,iall,gall,kall,lall,nxyz,dscl,scl,kh,kf,vt,coef_intp,coef_diff)
+    !$omp parallel default(none),private(g,k,l,d,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1,kf1,kf2,kf3,kf4,kf5,kf6), &
+    !$omp shared(ADM_have_sgp,gminm1,gmin,gmax,iall,gall,kall,lall,nxyz,dscl,scl,kh,vt,coef_intp,coef_diff)
     do l = 1, lall
+    !$acc kernels pcopy(dscl) present(vt) pcopyin(scl,kh,coef_intp,coef_diff,ADM_have_sgp)
     do k = 1, kall
 
+       !$acc loop independent
        do d = 1, nxyz
           !$omp do
+          !$acc loop independent
           do g = gminm1, gmax
              ij     = g
              ip1j   = g + 1
              ip1jp1 = g + iall + 1
              ijp1   = g + iall
 
-             vt(g,d,TI) = ( ( + 2.0_RP * coef_intp(g,1,d,TI,l) &
-                              - 1.0_RP * coef_intp(g,2,d,TI,l) &
-                              - 1.0_RP * coef_intp(g,3,d,TI,l) ) * scl(ij    ,k,l) &
-                          + ( - 1.0_RP * coef_intp(g,1,d,TI,l) &
-                              + 2.0_RP * coef_intp(g,2,d,TI,l) &
-                              - 1.0_RP * coef_intp(g,3,d,TI,l) ) * scl(ip1j  ,k,l) &
-                          + ( - 1.0_RP * coef_intp(g,1,d,TI,l) &
-                              - 1.0_RP * coef_intp(g,2,d,TI,l) &
-                              + 2.0_RP * coef_intp(g,3,d,TI,l) ) * scl(ip1jp1,k,l) &
-                          ) / 3.0_RP
+#ifdef _OPENACC
+             vt(g,k,d,TI) = &
+#else
+             vt(g,d,TI)   = &
+#endif
+                            ( ( + 2.0_RP * coef_intp(g,1,d,TI,l) &
+                                - 1.0_RP * coef_intp(g,2,d,TI,l) &
+                                - 1.0_RP * coef_intp(g,3,d,TI,l) ) * scl(ij    ,k,l) &
+                            + ( - 1.0_RP * coef_intp(g,1,d,TI,l) &
+                                + 2.0_RP * coef_intp(g,2,d,TI,l) &
+                                - 1.0_RP * coef_intp(g,3,d,TI,l) ) * scl(ip1j  ,k,l) &
+                            + ( - 1.0_RP * coef_intp(g,1,d,TI,l) &
+                                - 1.0_RP * coef_intp(g,2,d,TI,l) &
+                                + 2.0_RP * coef_intp(g,3,d,TI,l) ) * scl(ip1jp1,k,l) &
+                            ) / 3.0_RP
           enddo
           !$omp end do nowait
 
           !$omp do
+          !$acc loop independent
           do g = gminm1, gmax
              ij     = g
              ip1j   = g + 1
              ip1jp1 = g + iall + 1
              ijp1   = g + iall
 
-             vt(g,d,TJ) = ( ( + 2.0_RP * coef_intp(g,1,d,TJ,l) &
-                              - 1.0_RP * coef_intp(g,2,d,TJ,l) &
-                              - 1.0_RP * coef_intp(g,3,d,TJ,l) ) * scl(ij    ,k,l) &
-                          + ( - 1.0_RP * coef_intp(g,1,d,TJ,l) &
-                              + 2.0_RP * coef_intp(g,2,d,TJ,l) &
-                              - 1.0_RP * coef_intp(g,3,d,TJ,l) ) * scl(ip1jp1,k,l) &
-                          + ( - 1.0_RP * coef_intp(g,1,d,TJ,l) &
-                              - 1.0_RP * coef_intp(g,2,d,TJ,l) &
-                              + 2.0_RP * coef_intp(g,3,d,TJ,l) ) * scl(ijp1  ,k,l) &
-                          ) / 3.0_RP
+#ifdef _OPENACC
+             vt(g,k,d,TJ) = &
+#else
+             vt(g,d,TJ)   = &
+#endif
+                            ( ( + 2.0_RP * coef_intp(g,1,d,TJ,l) &
+                                - 1.0_RP * coef_intp(g,2,d,TJ,l) &
+                                - 1.0_RP * coef_intp(g,3,d,TJ,l) ) * scl(ij    ,k,l) &
+                            + ( - 1.0_RP * coef_intp(g,1,d,TJ,l) &
+                                + 2.0_RP * coef_intp(g,2,d,TJ,l) &
+                                - 1.0_RP * coef_intp(g,3,d,TJ,l) ) * scl(ip1jp1,k,l) &
+                            + ( - 1.0_RP * coef_intp(g,1,d,TJ,l) &
+                                - 1.0_RP * coef_intp(g,2,d,TJ,l) &
+                                + 2.0_RP * coef_intp(g,3,d,TJ,l) ) * scl(ijp1  ,k,l) &
+                            ) / 3.0_RP
           enddo
           !$omp end do
        enddo
 
        if ( ADM_have_sgp(l) ) then ! pentagon
           !$omp master
+#ifdef _OPENACC
+          vt(gminm1,k,XDIR,TI) = vt(gminm1+1,k,XDIR,TJ)
+          vt(gminm1,k,YDIR,TI) = vt(gminm1+1,k,YDIR,TJ)
+          vt(gminm1,k,ZDIR,TI) = vt(gminm1+1,k,ZDIR,TJ)
+#else
           vt(gminm1,XDIR,TI) = vt(gminm1+1,XDIR,TJ)
           vt(gminm1,YDIR,TI) = vt(gminm1+1,YDIR,TJ)
           vt(gminm1,ZDIR,TI) = vt(gminm1+1,ZDIR,TJ)
+#endif
           !$omp end master
        endif
-
 !OCL XFILL
        !$omp do
        do g = 1, gmin-1
@@ -2182,19 +2227,28 @@ contains
           im1jm1 = g - iall - 1
           ijm1   = g - iall
 
-          kf(1) = 0.5_RP * ( kh(ij    ,k,l) + kh(ip1jp1,k,l) )
-          kf(2) = 0.5_RP * ( kh(ij    ,k,l) + kh(ijp1  ,k,l) )
-          kf(3) = 0.5_RP * ( kh(im1j  ,k,l) + kh(ij    ,k,l) )
-          kf(4) = 0.5_RP * ( kh(im1jm1,k,l) + kh(ij    ,k,l) )
-          kf(5) = 0.5_RP * ( kh(ijm1  ,k,l) + kh(ij    ,k,l) )
-          kf(6) = 0.5_RP * ( kh(ij    ,k,l) + kh(ip1j  ,k,l) )
+          kf1 = 0.5_RP * ( kh(ij    ,k,l) + kh(ip1jp1,k,l) )
+          kf2 = 0.5_RP * ( kh(ij    ,k,l) + kh(ijp1  ,k,l) )
+          kf3 = 0.5_RP * ( kh(im1j  ,k,l) + kh(ij    ,k,l) )
+          kf4 = 0.5_RP * ( kh(im1jm1,k,l) + kh(ij    ,k,l) )
+          kf5 = 0.5_RP * ( kh(ijm1  ,k,l) + kh(ij    ,k,l) )
+          kf6 = 0.5_RP * ( kh(ij    ,k,l) + kh(ip1j  ,k,l) )
 
-          dscl(g,k,l) = ( kf(1) * coef_diff(g,1,XDIR,l) * ( vt(ij    ,XDIR,TI) + vt(ij    ,XDIR,TJ) ) &
-                        + kf(2) * coef_diff(g,2,XDIR,l) * ( vt(ij    ,XDIR,TJ) + vt(im1j  ,XDIR,TI) ) &
-                        + kf(3) * coef_diff(g,3,XDIR,l) * ( vt(im1j  ,XDIR,TI) + vt(im1jm1,XDIR,TJ) ) &
-                        + kf(4) * coef_diff(g,4,XDIR,l) * ( vt(im1jm1,XDIR,TJ) + vt(im1jm1,XDIR,TI) ) &
-                        + kf(5) * coef_diff(g,5,XDIR,l) * ( vt(im1jm1,XDIR,TI) + vt(ijm1  ,XDIR,TJ) ) &
-                        + kf(6) * coef_diff(g,6,XDIR,l) * ( vt(ijm1  ,XDIR,TJ) + vt(ij    ,XDIR,TI) ) )
+#ifdef _OPENACC
+          dscl(g,k,l) = ( kf1 * coef_diff(g,1,XDIR,l) * ( vt(ij    ,k,XDIR,TI) + vt(ij    ,k,XDIR,TJ) ) &
+                        + kf2 * coef_diff(g,2,XDIR,l) * ( vt(ij    ,k,XDIR,TJ) + vt(im1j  ,k,XDIR,TI) ) &
+                        + kf3 * coef_diff(g,3,XDIR,l) * ( vt(im1j  ,k,XDIR,TI) + vt(im1jm1,k,XDIR,TJ) ) &
+                        + kf4 * coef_diff(g,4,XDIR,l) * ( vt(im1jm1,k,XDIR,TJ) + vt(im1jm1,k,XDIR,TI) ) &
+                        + kf5 * coef_diff(g,5,XDIR,l) * ( vt(im1jm1,k,XDIR,TI) + vt(ijm1  ,k,XDIR,TJ) ) &
+                        + kf6 * coef_diff(g,6,XDIR,l) * ( vt(ijm1  ,k,XDIR,TJ) + vt(ij    ,k,XDIR,TI) ) )
+#else
+          dscl(g,k,l) = ( kf1 * coef_diff(g,1,XDIR,l) * ( vt(ij    ,XDIR,TI) + vt(ij    ,XDIR,TJ) ) &
+                        + kf2 * coef_diff(g,2,XDIR,l) * ( vt(ij    ,XDIR,TJ) + vt(im1j  ,XDIR,TI) ) &
+                        + kf3 * coef_diff(g,3,XDIR,l) * ( vt(im1j  ,XDIR,TI) + vt(im1jm1,XDIR,TJ) ) &
+                        + kf4 * coef_diff(g,4,XDIR,l) * ( vt(im1jm1,XDIR,TJ) + vt(im1jm1,XDIR,TI) ) &
+                        + kf5 * coef_diff(g,5,XDIR,l) * ( vt(im1jm1,XDIR,TI) + vt(ijm1  ,XDIR,TJ) ) &
+                        + kf6 * coef_diff(g,6,XDIR,l) * ( vt(ijm1  ,XDIR,TJ) + vt(ij    ,XDIR,TI) ) )
+#endif
        enddo
        !$omp end do
 
@@ -2208,19 +2262,28 @@ contains
           im1jm1 = g - iall - 1
           ijm1   = g - iall
 
-          kf(1) = 0.5_RP * ( kh(ij    ,k,l) + kh(ip1jp1,k,l) )
-          kf(2) = 0.5_RP * ( kh(ij    ,k,l) + kh(ijp1  ,k,l) )
-          kf(3) = 0.5_RP * ( kh(im1j  ,k,l) + kh(ij    ,k,l) )
-          kf(4) = 0.5_RP * ( kh(im1jm1,k,l) + kh(ij    ,k,l) )
-          kf(5) = 0.5_RP * ( kh(ijm1  ,k,l) + kh(ij    ,k,l) )
-          kf(6) = 0.5_RP * ( kh(ij    ,k,l) + kh(ip1j  ,k,l) )
+          kf1 = 0.5_RP * ( kh(ij    ,k,l) + kh(ip1jp1,k,l) )
+          kf2 = 0.5_RP * ( kh(ij    ,k,l) + kh(ijp1  ,k,l) )
+          kf3 = 0.5_RP * ( kh(im1j  ,k,l) + kh(ij    ,k,l) )
+          kf4 = 0.5_RP * ( kh(im1jm1,k,l) + kh(ij    ,k,l) )
+          kf5 = 0.5_RP * ( kh(ijm1  ,k,l) + kh(ij    ,k,l) )
+          kf6 = 0.5_RP * ( kh(ij    ,k,l) + kh(ip1j  ,k,l) )
 
-          dscl(g,k,l) = dscl(g,k,l) + ( kf(1) * coef_diff(g,1,YDIR,l) * ( vt(ij    ,XDIR,TI) + vt(ij    ,YDIR,TJ) ) &
-                                      + kf(2) * coef_diff(g,2,YDIR,l) * ( vt(ij    ,XDIR,TJ) + vt(im1j  ,YDIR,TI) ) &
-                                      + kf(3) * coef_diff(g,3,YDIR,l) * ( vt(im1j  ,XDIR,TI) + vt(im1jm1,YDIR,TJ) ) &
-                                      + kf(4) * coef_diff(g,4,YDIR,l) * ( vt(im1jm1,XDIR,TJ) + vt(im1jm1,YDIR,TI) ) &
-                                      + kf(5) * coef_diff(g,5,YDIR,l) * ( vt(im1jm1,XDIR,TI) + vt(ijm1  ,YDIR,TJ) ) &
-                                      + kf(6) * coef_diff(g,6,YDIR,l) * ( vt(ijm1  ,XDIR,TJ) + vt(ij    ,YDIR,TI) ) )
+#ifdef _OPENACC
+          dscl(g,k,l) = dscl(g,k,l) + ( kf1 * coef_diff(g,1,YDIR,l) * ( vt(ij    ,k,YDIR,TI) + vt(ij    ,k,YDIR,TJ) ) &
+                                      + kf2 * coef_diff(g,2,YDIR,l) * ( vt(ij    ,k,YDIR,TJ) + vt(im1j  ,k,YDIR,TI) ) &
+                                      + kf3 * coef_diff(g,3,YDIR,l) * ( vt(im1j  ,k,YDIR,TI) + vt(im1jm1,k,YDIR,TJ) ) &
+                                      + kf4 * coef_diff(g,4,YDIR,l) * ( vt(im1jm1,k,YDIR,TJ) + vt(im1jm1,k,YDIR,TI) ) &
+                                      + kf5 * coef_diff(g,5,YDIR,l) * ( vt(im1jm1,k,YDIR,TI) + vt(ijm1  ,k,YDIR,TJ) ) &
+                                      + kf6 * coef_diff(g,6,YDIR,l) * ( vt(ijm1  ,k,YDIR,TJ) + vt(ij    ,k,YDIR,TI) ) )
+#else
+          dscl(g,k,l) = dscl(g,k,l) + ( kf1 * coef_diff(g,1,YDIR,l) * ( vt(ij    ,YDIR,TI) + vt(ij    ,YDIR,TJ) ) &
+                                      + kf2 * coef_diff(g,2,YDIR,l) * ( vt(ij    ,YDIR,TJ) + vt(im1j  ,YDIR,TI) ) &
+                                      + kf3 * coef_diff(g,3,YDIR,l) * ( vt(im1j  ,YDIR,TI) + vt(im1jm1,YDIR,TJ) ) &
+                                      + kf4 * coef_diff(g,4,YDIR,l) * ( vt(im1jm1,YDIR,TJ) + vt(im1jm1,YDIR,TI) ) &
+                                      + kf5 * coef_diff(g,5,YDIR,l) * ( vt(im1jm1,YDIR,TI) + vt(ijm1  ,YDIR,TJ) ) &
+                                      + kf6 * coef_diff(g,6,YDIR,l) * ( vt(ijm1  ,YDIR,TJ) + vt(ij    ,YDIR,TI) ) )
+#endif
        enddo
        !$omp end do
 
@@ -2234,22 +2297,30 @@ contains
           im1jm1 = g - iall - 1
           ijm1   = g - iall
 
-          kf(1) = 0.5_RP * ( kh(ij    ,k,l) + kh(ip1jp1,k,l) )
-          kf(2) = 0.5_RP * ( kh(ij    ,k,l) + kh(ijp1  ,k,l) )
-          kf(3) = 0.5_RP * ( kh(im1j  ,k,l) + kh(ij    ,k,l) )
-          kf(4) = 0.5_RP * ( kh(im1jm1,k,l) + kh(ij    ,k,l) )
-          kf(5) = 0.5_RP * ( kh(ijm1  ,k,l) + kh(ij    ,k,l) )
-          kf(6) = 0.5_RP * ( kh(ij    ,k,l) + kh(ip1j  ,k,l) )
+          kf1 = 0.5_RP * ( kh(ij    ,k,l) + kh(ip1jp1,k,l) )
+          kf2 = 0.5_RP * ( kh(ij    ,k,l) + kh(ijp1  ,k,l) )
+          kf3 = 0.5_RP * ( kh(im1j  ,k,l) + kh(ij    ,k,l) )
+          kf4 = 0.5_RP * ( kh(im1jm1,k,l) + kh(ij    ,k,l) )
+          kf5 = 0.5_RP * ( kh(ijm1  ,k,l) + kh(ij    ,k,l) )
+          kf6 = 0.5_RP * ( kh(ij    ,k,l) + kh(ip1j  ,k,l) )
 
-          dscl(g,k,l) = dscl(g,k,l) + ( kf(1) * coef_diff(g,1,ZDIR,l) * ( vt(ij    ,XDIR,TI) + vt(ij    ,ZDIR,TJ) ) &
-                                      + kf(2) * coef_diff(g,2,ZDIR,l) * ( vt(ij    ,XDIR,TJ) + vt(im1j  ,ZDIR,TI) ) &
-                                      + kf(3) * coef_diff(g,3,ZDIR,l) * ( vt(im1j  ,XDIR,TI) + vt(im1jm1,ZDIR,TJ) ) &
-                                      + kf(4) * coef_diff(g,4,ZDIR,l) * ( vt(im1jm1,XDIR,TJ) + vt(im1jm1,ZDIR,TI) ) &
-                                      + kf(5) * coef_diff(g,5,ZDIR,l) * ( vt(im1jm1,XDIR,TI) + vt(ijm1  ,ZDIR,TJ) ) &
-                                      + kf(6) * coef_diff(g,6,ZDIR,l) * ( vt(ijm1  ,XDIR,TJ) + vt(ij    ,ZDIR,TI) ) )
+#ifdef _OPENACC
+          dscl(g,k,l) = dscl(g,k,l) + ( kf1 * coef_diff(g,1,ZDIR,l) * ( vt(ij    ,k,ZDIR,TI) + vt(ij    ,k,ZDIR,TJ) ) &
+                                      + kf2 * coef_diff(g,2,ZDIR,l) * ( vt(ij    ,k,ZDIR,TJ) + vt(im1j  ,k,ZDIR,TI) ) &
+                                      + kf3 * coef_diff(g,3,ZDIR,l) * ( vt(im1j  ,k,ZDIR,TI) + vt(im1jm1,k,ZDIR,TJ) ) &
+                                      + kf4 * coef_diff(g,4,ZDIR,l) * ( vt(im1jm1,k,ZDIR,TJ) + vt(im1jm1,k,ZDIR,TI) ) &
+                                      + kf5 * coef_diff(g,5,ZDIR,l) * ( vt(im1jm1,k,ZDIR,TI) + vt(ijm1  ,k,ZDIR,TJ) ) &
+                                      + kf6 * coef_diff(g,6,ZDIR,l) * ( vt(ijm1  ,k,ZDIR,TJ) + vt(ij    ,k,ZDIR,TI) ) )
+#else
+          dscl(g,k,l) = dscl(g,k,l) + ( kf1 * coef_diff(g,1,ZDIR,l) * ( vt(ij    ,ZDIR,TI) + vt(ij    ,ZDIR,TJ) ) &
+                                      + kf2 * coef_diff(g,2,ZDIR,l) * ( vt(ij    ,ZDIR,TJ) + vt(im1j  ,ZDIR,TI) ) &
+                                      + kf3 * coef_diff(g,3,ZDIR,l) * ( vt(im1j  ,ZDIR,TI) + vt(im1jm1,ZDIR,TJ) ) &
+                                      + kf4 * coef_diff(g,4,ZDIR,l) * ( vt(im1jm1,ZDIR,TJ) + vt(im1jm1,ZDIR,TI) ) &
+                                      + kf5 * coef_diff(g,5,ZDIR,l) * ( vt(im1jm1,ZDIR,TI) + vt(ijm1  ,ZDIR,TJ) ) &
+                                      + kf6 * coef_diff(g,6,ZDIR,l) * ( vt(ijm1  ,ZDIR,TJ) + vt(ij    ,ZDIR,TI) ) )
+#endif
        enddo
        !$omp end do nowait
-
 !OCL XFILL
        !$omp do
        do g = gmax+1, gall
@@ -2257,6 +2328,7 @@ contains
        enddo
        !$omp end do
     enddo ! loop k
+    !$acc end kernels
     enddo ! loop l
     !$omp end parallel
 
@@ -2307,6 +2379,8 @@ contains
 
     call PROF_rapend('OPRT_diffusion',2)
 
+    !$acc end data
+
     return
   end subroutine OPRT_diffusion
 
@@ -2352,7 +2426,11 @@ contains
     real(RP), intent(in)  :: coef_diff   (ADM_gall,1:6    ,ADM_nxyz,ADM_lall   )
     real(RP), intent(in)  :: coef_diff_pl(         1:vlink,ADM_nxyz,ADM_lall_pl)
 
-    real(RP) :: sclt   (ADM_gall   ,TI:TJ)
+#ifdef _OPENACC
+    real(RP) :: sclt   (ADM_gall,ADM_kall,TI:TJ)
+#else
+    real(RP) :: sclt   (ADM_gall,TI:TJ)
+#endif
     real(RP) :: sclt_pl(ADM_gall_pl)
 
     integer  :: gmin, gmax, iall, gall, kall, lall, gminm1
@@ -2363,6 +2441,11 @@ contains
 
     integer  :: g, k, l, n, v
     !---------------------------------------------------------------------------
+    !$acc data &
+    !$acc pcreate(sclt) &
+    !$acc pcopy(ddivdx,ddivdy,ddivdz) &
+    !$acc pcopyin(vx,vy,vz,coef_intp,coef_diff) &
+    !$acc pcopyin(ADM_have_sgp)
 
     call PROF_rapstart('OPRT_divdamp',2)
 
@@ -2378,6 +2461,7 @@ contains
     !$omp parallel default(none),private(g,k,l,ij,ip1j,ip1jp1,ijp1,im1j,ijm1,im1jm1), &
     !$omp shared(ADM_have_sgp,gminm1,gmin,gmax,iall,gall,kall,lall,ddivdx,ddivdy,ddivdz,vx,vy,vz,sclt,coef_intp,coef_diff)
     do l = 1, lall
+    !$acc kernels pcopy(ddivdx,ddivdy,ddivdz) present(sclt) pcopyin(vx,vy,vz,coef_intp,coef_diff,ADM_have_sgp)
     do k = 1, kall
        !$omp do
        do g = gminm1, gmax
@@ -2386,15 +2470,20 @@ contains
           ip1jp1 = g + iall + 1
           ijp1   = g + iall
 
-          sclt(g,TI) = coef_intp(g,1,XDIR,TI,l) * vx(ij    ,k,l) &
-                     + coef_intp(g,2,XDIR,TI,l) * vx(ip1j  ,k,l) &
-                     + coef_intp(g,3,XDIR,TI,l) * vx(ip1jp1,k,l) &
-                     + coef_intp(g,1,YDIR,TI,l) * vy(ij    ,k,l) &
-                     + coef_intp(g,2,YDIR,TI,l) * vy(ip1j  ,k,l) &
-                     + coef_intp(g,3,YDIR,TI,l) * vy(ip1jp1,k,l) &
-                     + coef_intp(g,1,ZDIR,TI,l) * vz(ij    ,k,l) &
-                     + coef_intp(g,2,ZDIR,TI,l) * vz(ip1j  ,k,l) &
-                     + coef_intp(g,3,ZDIR,TI,l) * vz(ip1jp1,k,l)
+#ifdef _OPENACC
+          sclt(g,k,TI) = &
+#else
+          sclt(g,TI)   = &
+#endif
+                         coef_intp(g,1,XDIR,TI,l) * vx(ij    ,k,l) &
+                       + coef_intp(g,2,XDIR,TI,l) * vx(ip1j  ,k,l) &
+                       + coef_intp(g,3,XDIR,TI,l) * vx(ip1jp1,k,l) &
+                       + coef_intp(g,1,YDIR,TI,l) * vy(ij    ,k,l) &
+                       + coef_intp(g,2,YDIR,TI,l) * vy(ip1j  ,k,l) &
+                       + coef_intp(g,3,YDIR,TI,l) * vy(ip1jp1,k,l) &
+                       + coef_intp(g,1,ZDIR,TI,l) * vz(ij    ,k,l) &
+                       + coef_intp(g,2,ZDIR,TI,l) * vz(ip1j  ,k,l) &
+                       + coef_intp(g,3,ZDIR,TI,l) * vz(ip1jp1,k,l)
        enddo
        !$omp end do nowait
 
@@ -2405,24 +2494,32 @@ contains
           ip1jp1 = g + iall + 1
           ijp1   = g + iall
 
-          sclt(g,TJ) = coef_intp(g,1,XDIR,TJ,l) * vx(ij    ,k,l) &
-                     + coef_intp(g,2,XDIR,TJ,l) * vx(ip1jp1,k,l) &
-                     + coef_intp(g,3,XDIR,TJ,l) * vx(ijp1  ,k,l) &
-                     + coef_intp(g,1,YDIR,TJ,l) * vy(ij    ,k,l) &
-                     + coef_intp(g,2,YDIR,TJ,l) * vy(ip1jp1,k,l) &
-                     + coef_intp(g,3,YDIR,TJ,l) * vy(ijp1  ,k,l) &
-                     + coef_intp(g,1,ZDIR,TJ,l) * vz(ij    ,k,l) &
-                     + coef_intp(g,2,ZDIR,TJ,l) * vz(ip1jp1,k,l) &
-                     + coef_intp(g,3,ZDIR,TJ,l) * vz(ijp1  ,k,l)
+#ifdef _OPENACC
+          sclt(g,k,TJ) = &
+#else
+          sclt(g,TJ)   = &
+#endif
+                         coef_intp(g,1,XDIR,TJ,l) * vx(ij    ,k,l) &
+                       + coef_intp(g,2,XDIR,TJ,l) * vx(ip1jp1,k,l) &
+                       + coef_intp(g,3,XDIR,TJ,l) * vx(ijp1  ,k,l) &
+                       + coef_intp(g,1,YDIR,TJ,l) * vy(ij    ,k,l) &
+                       + coef_intp(g,2,YDIR,TJ,l) * vy(ip1jp1,k,l) &
+                       + coef_intp(g,3,YDIR,TJ,l) * vy(ijp1  ,k,l) &
+                       + coef_intp(g,1,ZDIR,TJ,l) * vz(ij    ,k,l) &
+                       + coef_intp(g,2,ZDIR,TJ,l) * vz(ip1jp1,k,l) &
+                       + coef_intp(g,3,ZDIR,TJ,l) * vz(ijp1  ,k,l)
        enddo
        !$omp end do
 
        if ( ADM_have_sgp(l) ) then ! pentagon
           !$omp master
+#ifdef _OPENACC
+          sclt(gminm1,k,TI) = sclt(gminm1+1,k,TJ)
+#else
           sclt(gminm1,TI) = sclt(gminm1+1,TJ)
+#endif
           !$omp end master
        endif
-
 !OCL XFILL
        !$omp do
        do g = 1, gmin-1
@@ -2439,12 +2536,21 @@ contains
           im1jm1 = g - iall - 1
           ijm1   = g - iall
 
+#ifdef _OPENACC
+          ddivdx(g,k,l) = ( coef_diff(g,1,XDIR,l) * ( sclt(ij,    k,TI) + sclt(ij,    k,TJ) ) &
+                          + coef_diff(g,2,XDIR,l) * ( sclt(ij,    k,TJ) + sclt(im1j,  k,TI) ) &
+                          + coef_diff(g,3,XDIR,l) * ( sclt(im1j,  k,TI) + sclt(im1jm1,k,TJ) ) &
+                          + coef_diff(g,4,XDIR,l) * ( sclt(im1jm1,k,TJ) + sclt(im1jm1,k,TI) ) &
+                          + coef_diff(g,5,XDIR,l) * ( sclt(im1jm1,k,TI) + sclt(ijm1  ,k,TJ) ) &
+                          + coef_diff(g,6,XDIR,l) * ( sclt(ijm1,  k,TJ) + sclt(ij,    k,TI) ) )
+#else
           ddivdx(g,k,l) = ( coef_diff(g,1,XDIR,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) ) &
                           + coef_diff(g,2,XDIR,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) ) &
                           + coef_diff(g,3,XDIR,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) ) &
                           + coef_diff(g,4,XDIR,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) ) &
                           + coef_diff(g,5,XDIR,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) ) &
                           + coef_diff(g,6,XDIR,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) ) )
+#endif
        enddo
        !$omp end do nowait
 
@@ -2455,12 +2561,21 @@ contains
           im1jm1 = g - iall - 1
           ijm1   = g - iall
 
+#ifdef _OPENACC
+          ddivdy(g,k,l) = ( coef_diff(g,1,YDIR,l) * ( sclt(ij,    k,TI) + sclt(ij,    k,TJ) ) &
+                          + coef_diff(g,2,YDIR,l) * ( sclt(ij,    k,TJ) + sclt(im1j,  k,TI) ) &
+                          + coef_diff(g,3,YDIR,l) * ( sclt(im1j,  k,TI) + sclt(im1jm1,k,TJ) ) &
+                          + coef_diff(g,4,YDIR,l) * ( sclt(im1jm1,k,TJ) + sclt(im1jm1,k,TI) ) &
+                          + coef_diff(g,5,YDIR,l) * ( sclt(im1jm1,k,TI) + sclt(ijm1  ,k,TJ) ) &
+                          + coef_diff(g,6,YDIR,l) * ( sclt(ijm1,  k,TJ) + sclt(ij,    k,TI) ) )
+#else
           ddivdy(g,k,l) = ( coef_diff(g,1,YDIR,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) ) &
                           + coef_diff(g,2,YDIR,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) ) &
                           + coef_diff(g,3,YDIR,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) ) &
                           + coef_diff(g,4,YDIR,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) ) &
                           + coef_diff(g,5,YDIR,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) ) &
                           + coef_diff(g,6,YDIR,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) ) )
+#endif
        enddo
        !$omp end do nowait
 
@@ -2471,15 +2586,23 @@ contains
           im1jm1 = g - iall - 1
           ijm1   = g - iall
 
+#ifdef _OPENACC
+          ddivdz(g,k,l) = ( coef_diff(g,1,ZDIR,l) * ( sclt(ij,    k,TI) + sclt(ij,    k,TJ) ) &
+                          + coef_diff(g,2,ZDIR,l) * ( sclt(ij,    k,TJ) + sclt(im1j,  k,TI) ) &
+                          + coef_diff(g,3,ZDIR,l) * ( sclt(im1j,  k,TI) + sclt(im1jm1,k,TJ) ) &
+                          + coef_diff(g,4,ZDIR,l) * ( sclt(im1jm1,k,TJ) + sclt(im1jm1,k,TI) ) &
+                          + coef_diff(g,5,ZDIR,l) * ( sclt(im1jm1,k,TI) + sclt(ijm1  ,k,TJ) ) &
+                          + coef_diff(g,6,ZDIR,l) * ( sclt(ijm1,  k,TJ) + sclt(ij,    k,TI) ) )
+#else
           ddivdz(g,k,l) = ( coef_diff(g,1,ZDIR,l) * ( sclt(ij,    TI) + sclt(ij,    TJ) ) &
                           + coef_diff(g,2,ZDIR,l) * ( sclt(ij,    TJ) + sclt(im1j,  TI) ) &
                           + coef_diff(g,3,ZDIR,l) * ( sclt(im1j,  TI) + sclt(im1jm1,TJ) ) &
                           + coef_diff(g,4,ZDIR,l) * ( sclt(im1jm1,TJ) + sclt(im1jm1,TI) ) &
                           + coef_diff(g,5,ZDIR,l) * ( sclt(im1jm1,TI) + sclt(ijm1  ,TJ) ) &
                           + coef_diff(g,6,ZDIR,l) * ( sclt(ijm1,  TJ) + sclt(ij,    TI) ) )
+#endif
        enddo
        !$omp end do nowait
-
 !OCL XFILL
        !$omp do
        do g = gmax+1, gall
@@ -2489,6 +2612,7 @@ contains
        enddo
        !$omp end do
     enddo ! loop k
+    !$acc end kernels
     enddo ! loop l
     !$omp end parallel
 
@@ -2537,6 +2661,8 @@ contains
 
     call PROF_rapend('OPRT_divdamp',2)
 
+    !$acc end data
+
     return
   end subroutine OPRT_divdamp
 
@@ -2548,13 +2674,13 @@ contains
     use mod_adm, only: &
        ADM_have_pl
     use mod_grd, only: &
-       XDIR => GRD_XDIR, &
-       YDIR => GRD_YDIR, &
-       ZDIR => GRD_ZDIR, &
+       XDIR => GRD_XDIR,       &
+       YDIR => GRD_YDIR,       &
+       ZDIR => GRD_ZDIR,       &
        GRD_grid_type_on_plane, &
-       GRD_grid_type, &
-       GRD_rscale,       &
-       GRD_x,            &
+       GRD_grid_type,          &
+       GRD_rscale,             &
+       GRD_x,                  &
        GRD_x_pl
     implicit none
 
@@ -2575,6 +2701,10 @@ contains
 
     if( GRD_grid_type == GRD_grid_type_on_plane ) return
 
+    !$acc data &
+    !$acc pcopy(vx,vy,vz) &
+    !$acc pcopyin(GRD_x)
+
     call PROF_rapstart('OPRT_horizontalize_vec',2)
 
     rscale = GRD_rscale
@@ -2582,6 +2712,7 @@ contains
     kall   = ADM_kall
     lall   = ADM_lall
 
+    !$acc kernels pcopy(vx,vy,vz) pcopyin(GRD_x)
     !$omp parallel do default(none),private(g,k,l,prd), &
     !$omp shared(gall,kall,lall,vx,vy,vz,GRD_x,rscale), &
     !$omp collapse(2)
@@ -2599,6 +2730,7 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
@@ -2621,6 +2753,8 @@ contains
     endif
 
     call PROF_rapend('OPRT_horizontalize_vec',2)
+
+    !$acc end data
 
     return
   end subroutine OPRT_horizontalize_vec

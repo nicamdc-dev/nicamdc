@@ -91,7 +91,7 @@ contains
        VMTR_C2Wfact,    &
        VMTR_C2Wfact_pl
     use mod_runconf, only: &
-       CORIOLIS_PARAM, &
+       f => CORIOLIS_PARAM, &
        NON_HYDRO_ALPHA
     implicit none
 
@@ -141,10 +141,15 @@ contains
 
     integer  :: gall, kmin, kmax, lall
     real(RP) :: prd, wc
-    real(RP) :: ohm, corioli, rscale, alpha
+    real(RP) :: ohm, rscale, alpha
 
     integer  :: g, k, l
     !---------------------------------------------------------------------------
+    !$acc data &
+    !$acc pcreate(vvx,vvy,vvz,dvvx,dvvy,dvvz,grhogwc) &
+    !$acc pcopy(grhogvx,grhogvy,grhogvz,grhogw) &
+    !$acc pcopyin(vx,vy,vz,w,rhog,rhogvx,rhogvy,rhogvz,rhogw) &
+    !$acc pcopyin(GRD_x,GRD_cfact,GRD_dfact,VMTR_C2Wfact)
 
     call PROF_rapstart('____src_advection_conv_m',2)
 
@@ -153,15 +158,18 @@ contains
     kmax = ADM_kmax
     lall = ADM_lall
 
-    ohm     = CONST_OHM
-    corioli = CORIOLIS_PARAM
-    rscale  = GRD_rscale
-    alpha   = real(NON_HYDRO_ALPHA,kind=RP)
+    ohm    = CONST_OHM
+    rscale = GRD_rscale
+    alpha  = real(NON_HYDRO_ALPHA,kind=RP)
 
     !---< merge horizontal velocity & vertical velocity >
 
-    if ( GRD_grid_type == GRD_grid_type_on_plane ) then
+#ifdef MORETIMER
+call PROF_rapstart('____src_adv_conv_m_01')
+#endif
 
+    if ( GRD_grid_type == GRD_grid_type_on_plane ) then
+       !$acc kernels present(vvx,vvy,vvz) pcopyin(vx,vy,w,GRD_cfact,GRD_dfact)
        !$omp parallel default(none),private(g,k,l), &
        !$omp shared(gall,kmin,kmax,lall,vvx,vvy,vvz,vx,vy,w,GRD_cfact,GRD_dfact)
        do l = 1, lall
@@ -189,39 +197,39 @@ contains
           !$omp end do
        enddo
        !$omp end parallel
-
+       !$acc end kernels
     else
-
-      !$omp parallel default(none),private(g,k,l,wc), &
-      !$omp shared(gall,kmin,kmax,lall,vvx,vvy,vvz,vx,vy,vz,w,GRD_cfact,GRD_dfact,GRD_x,rscale)
-      do l = 1, lall
+       !$acc kernels present(vvx,vvy,vvz) pcopyin(vx,vy,vz,w,GRD_x,GRD_cfact,GRD_dfact)
+       !$omp parallel default(none),private(g,k,l,wc), &
+       !$omp shared(gall,kmin,kmax,lall,vvx,vvy,vvz,vx,vy,vz,w,GRD_cfact,GRD_dfact,GRD_x,rscale)
+       do l = 1, lall
 !OCL XFILL
-         !$omp do
-         do k = kmin,kmax
-         do g = 1, gall
-            wc = GRD_cfact(k) * w(g,k+1,l) &
-               + GRD_dfact(k) * w(g,k  ,l)
+          !$omp do
+          do k = kmin, kmax
+          do g = 1, gall
+             wc = GRD_cfact(k) * w(g,k+1,l) &
+                + GRD_dfact(k) * w(g,k  ,l)
 
-            vvx(g,k,l) = vx(g,k,l) + wc * GRD_x(g,1,l,XDIR) / rscale
-            vvy(g,k,l) = vy(g,k,l) + wc * GRD_x(g,1,l,YDIR) / rscale
-            vvz(g,k,l) = vz(g,k,l) + wc * GRD_x(g,1,l,ZDIR) / rscale
-         enddo
-         enddo
-         !$omp end do nowait
-
+             vvx(g,k,l) = vx(g,k,l) + wc * GRD_x(g,1,l,XDIR) / rscale
+             vvy(g,k,l) = vy(g,k,l) + wc * GRD_x(g,1,l,YDIR) / rscale
+             vvz(g,k,l) = vz(g,k,l) + wc * GRD_x(g,1,l,ZDIR) / rscale
+          enddo
+          enddo
+          !$omp end do nowait
 !OCL XFILL
-         !$omp do
-         do g = 1, gall
-            vvx(g,kmin-1,l) = 0.0_RP
-            vvx(g,kmax+1,l) = 0.0_RP
-            vvy(g,kmin-1,l) = 0.0_RP
-            vvy(g,kmax+1,l) = 0.0_RP
-            vvz(g,kmin-1,l) = 0.0_RP
-            vvz(g,kmax+1,l) = 0.0_RP
-         enddo
-         !$omp end do
-      enddo
-      !$omp end parallel
+          !$omp do
+          do g = 1, gall
+             vvx(g,kmin-1,l) = 0.0_RP
+             vvx(g,kmax+1,l) = 0.0_RP
+             vvy(g,kmin-1,l) = 0.0_RP
+             vvy(g,kmax+1,l) = 0.0_RP
+             vvz(g,kmin-1,l) = 0.0_RP
+             vvz(g,kmax+1,l) = 0.0_RP
+          enddo
+          !$omp end do
+       enddo
+       !$omp end parallel
+       !$acc end kernels
     endif
 
     if ( ADM_have_pl ) then
@@ -246,8 +254,12 @@ contains
              vvz_pl(g,ADM_kmax+1,l) = 0.0_RP
           enddo
        enddo
-
     endif
+
+#ifdef MORETIMER
+call PROF_rapend  ('____src_adv_conv_m_01')
+call PROF_rapstart('____src_adv_conv_m_02z')
+#endif
 
     !---< advection term for momentum >
 
@@ -275,19 +287,24 @@ contains
                                     dvvz,   dvvz_pl,   & ! [OUT]
                                     I_SRC_default      ) ! [IN]
 
-    if ( GRD_grid_type == GRD_grid_type_on_plane ) then
+#ifdef MORETIMER
+call PROF_rapend  ('____src_adv_conv_m_02z')
+call PROF_rapstart('____src_adv_conv_m_03')
+#endif
 
+    if ( GRD_grid_type == GRD_grid_type_on_plane ) then
+       !$acc kernels pcopy(grhogvx,grhogvy,grhogvz,grhogw) pcopyin(rhog,dvvx,dvvy,dvvz,vvx,vvy,VMTR_C2Wfact)
        !$omp parallel default(none),private(g,k,l), &
        !$omp shared(gall,kmin,kmax,lall,grhogvx,grhogvy,grhogvz,grhogw, &
-       !$omp        dvvx,dvvy,dvvz,vvx,vvy,rhog,corioli,VMTR_C2Wfact,alpha)
+       !$omp        dvvx,dvvy,dvvz,vvx,vvy,rhog,f,VMTR_C2Wfact,alpha)
        do l = 1, lall
           !---< coriolis force >
 !OCL XFILL
           !$omp do
           do k = kmin, kmax
           do g = 1, gall
-             grhogvx(g,k,l) = dvvx(g,k,l) + corioli * rhog(g,k,l) * vvy(g,k,l)
-             grhogvy(g,k,l) = dvvy(g,k,l) - corioli * rhog(g,k,l) * vvx(g,k,l)
+             grhogvx(g,k,l) = dvvx(g,k,l) + f * rhog(g,k,l) * vvy(g,k,l)
+             grhogvy(g,k,l) = dvvy(g,k,l) - f * rhog(g,k,l) * vvx(g,k,l)
              grhogvz(g,k,l) = 0.0_RP
 
              grhogw(g,k,l) = ( VMTR_C2Wfact(g,k,1,l) * dvvz(g,k  ,l) &
@@ -311,9 +328,10 @@ contains
           !$omp end do
        enddo
        !$omp end parallel
-
+       !$acc end kernels
     else
-
+       !$acc kernels pcopy(grhogvx,grhogvy,grhogvz,grhogw) present(grhogwc,dvvx,dvvy) &
+       !$acc pcopyin(rhog,dvvz,vvx,vvy,GRD_x,VMTR_C2Wfact)
        !$omp parallel default(none),private(g,k,l,prd), &
        !$omp shared(gall,kmin,kmax,lall,grhogvx,grhogvy,grhogvz,grhogw,grhogwc,       &
        !$omp        dvvx,dvvy,dvvz,vvx,vvy,rhog,GRD_x,VMTR_C2Wfact,ohm,rscale,alpha)
@@ -370,7 +388,7 @@ contains
           !$omp end do
        enddo
        !$omp end parallel
-
+       !$acc end kernels
     endif
 
     if ( ADM_have_pl ) then
@@ -424,7 +442,13 @@ contains
        grhogw_pl (:,:,:) = 0.0_RP
     endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('____src_adv_conv_m_03')
+#endif
+
     call PROF_rapend('____src_advection_conv_m',2)
+
+    !$acc end data
 
     return
   end subroutine src_advection_convergence_momentum
@@ -482,6 +506,11 @@ contains
 
     integer  :: g, k, l
     !---------------------------------------------------------------------------
+    !$acc data &
+    !$acc pcreate(rhogvxscl,rhogvyscl,rhogvzscl,rhogwscl) &
+    !$acc pcopy(grhogscl) &
+    !$acc pcopyin(rhogvx,rhogvy,rhogvz,rhogw,scl) &
+    !$acc pcopyin(GRD_afact,GRD_bfact)
 
     call PROF_rapstart('____src_advection_conv',2)
 
@@ -491,8 +520,13 @@ contains
     kmax = ADM_kmax
     lall = ADM_lall
 
+#ifdef MORETIMER
+call PROF_rapstart('____src_adv_conv_01')
+#endif
+
     ! rhogvh * scl
 !OCL XFILL
+    !$acc kernels present(rhogvxscl,rhogvyscl,rhogvzscl) pcopyin(rhogvx,rhogvy,rhogvz,scl)
     !$omp parallel do default(none),private(g,k,l), &
     !$omp shared(gall,kall,lall,rhogvxscl,rhogvyscl,rhogvzscl,rhogvx,rhogvy,rhogvz,scl), &
     !$omp collapse(2)
@@ -506,6 +540,7 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        rhogvxscl_pl(:,:,:) = rhogvx_pl(:,:,:) * scl_pl(:,:,:)
@@ -513,11 +548,20 @@ contains
        rhogvzscl_pl(:,:,:) = rhogvz_pl(:,:,:) * scl_pl(:,:,:)
     endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('____src_adv_conv_01')
+#endif
+
     ! rhogw * scl at half level
     if ( fluxtype == I_SRC_default ) then
 
+#ifdef MORETIMER
+call PROF_rapstart('____src_adv_conv_02')
+#endif
+
+       !$acc kernels present(rhogwscl) pcopyin(rhogw,scl,GRD_afact,GRD_bfact)
        !$omp parallel default(none),private(g,k,l), &
-       !$omp shared(gall,kmin,kmax,lall,rhogwscl,rhogw,GRD_afact,GRD_bfact,scl)
+       !$omp shared(gall,kmin,kmax,lall,rhogwscl,rhogw,scl,GRD_afact,GRD_bfact)
        do l = 1, lall
 !OCL XFILL
           !$omp do
@@ -537,6 +581,7 @@ contains
           !$omp end do
        enddo
        !$omp end parallel
+       !$acc end kernels
 
        if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
@@ -552,9 +597,18 @@ contains
           enddo
        endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('____src_adv_conv_02')
+#endif
+
     elseif( fluxtype == I_SRC_horizontal ) then
 
+#ifdef MORETIMER
+call PROF_rapstart('____src_adv_conv_03')
+#endif
+
 !OCL XFILL
+       !$acc kernels present(rhogwscl)
        !$omp parallel do default(none),private(g,k,l), &
        !$omp shared(gall,kall,lall,rhogwscl), &
        !$omp collapse(2)
@@ -566,12 +620,21 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        if ( ADM_have_pl ) then
           rhogwscl_pl(:,:,:) = 0.0_RP
        endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('____src_adv_conv_03')
+#endif
+
     endif
+
+#ifdef MORETIMER
+call PROF_rapstart('____src_adv_conv_04z')
+#endif
 
     !--- flux convergence step
     call src_flux_convergence( rhogvxscl, rhogvxscl_pl, & ! [IN]
@@ -581,7 +644,13 @@ contains
                                grhogscl,  grhogscl_pl,  & ! [OUT]
                                fluxtype                 ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('____src_adv_conv_04z')
+#endif
+
     call PROF_rapend('____src_advection_conv',2)
+
+    !$acc end data
 
     return
   end subroutine src_advection_convergence
@@ -657,6 +726,11 @@ contains
 
     integer  :: g, k, l
     !---------------------------------------------------------------------------
+    !$acc data &
+    !$acc pcreate(div_rhogvh,rhogvx_vm,rhogvy_vm,rhogvz_vm,rhogw_vmh) &
+    !$acc pcopy(grhog) &
+    !$acc pcopyin(rhogvx,rhogvy,rhogvz,rhogw) &
+    !$acc pcopyin(GRD_rdgz,OPRT_coef_div,VMTR_RGSQRTH,VMTR_RGAM,VMTR_RGAMH,VMTR_C2WfactGz)
 
     call PROF_rapstart('____src_flux_conv',2)
 
@@ -672,8 +746,13 @@ contains
        vertical_flag = 0.0_RP
     endif
 
+#ifdef MORETIMER
+call PROF_rapstart('____src_flux_conv_01')
+#endif
+
     !--- Horizontal flux
 !OCL XFILL
+    !$acc kernels present(rhogvx_vm,rhogvy_vm,rhogvz_vm) pcopyin(rhogvx,rhogvy,rhogvz,VMTR_RGAM)
     !$omp parallel do default(none),private(g,k,l), &
     !$omp shared(gall,kall,kmin,kmax,lall,rhogvx_vm,rhogvy_vm,rhogvz_vm,rhogvx,rhogvy,rhogvz,VMTR_RGAM), &
     !$omp collapse(2)
@@ -687,8 +766,10 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     !--- Vertical flux
+    !$acc kernels present(rhogw_vmh) pcopyin(rhogvx,rhogvy,rhogvz,rhogw,VMTR_RGSQRTH,VMTR_RGAMH,VMTR_C2WfactGz)
     !$omp parallel default(none),private(g,k,l), &
     !$omp shared(gall,kall,kmin,kmax,lall,rhogw_vmh,vertical_flag, &
     !$omp        rhogvx,rhogvy,rhogvz,rhogw,VMTR_RGSQRTH,VMTR_RGAMH,VMTR_C2WfactGz)
@@ -707,7 +788,6 @@ contains
        enddo
        enddo
        !$omp end do nowait
-
 !OCL XFILL
        !$omp do
        do g = 1, gall
@@ -717,6 +797,7 @@ contains
        !$omp end do
     enddo
     !$omp end parallel
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
@@ -750,6 +831,11 @@ contains
        enddo
     endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('____src_flux_conv_01')
+call PROF_rapstart('____src_flux_conv_02o')
+#endif
+
     !--- Horizontal flux convergence
     call OPRT_divergence( div_rhogvh   (:,:,:),   div_rhogvh_pl   (:,:,:), & ! [OUT]
                           rhogvx_vm    (:,:,:),   rhogvx_vm_pl    (:,:,:), & ! [IN]
@@ -757,7 +843,14 @@ contains
                           rhogvz_vm    (:,:,:),   rhogvz_vm_pl    (:,:,:), & ! [IN]
                           OPRT_coef_div(:,:,:,:), OPRT_coef_div_pl(:,:,:)  ) ! [IN]
 
+#ifdef MORETIMER
+call PROF_rapend  ('____src_flux_conv_02o')
+call PROF_rapstart('____src_flux_conv_03')
+#endif
+
     !--- Total flux convergence
+
+    !$acc kernels pcopy(grhog) pcopyin(div_rhogvh,rhogw_vmh,GRD_rdgz)
     !$omp parallel default(none),private(g,k,l), &
     !$omp shared(gall,kmin,kmax,lall,grhog,div_rhogvh,rhogw_vmh,GRD_rdgz)
     do l = 1, lall
@@ -770,7 +863,6 @@ contains
        enddo
        enddo
        !$omp end do nowait
-
 !OCL XFILL
        !$omp do
        do g = 1, gall
@@ -780,6 +872,7 @@ contains
        !$omp end do
     enddo
     !$omp end parallel
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
@@ -797,7 +890,13 @@ contains
        enddo
     endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('____src_flux_conv_03')
+#endif
+
     call PROF_rapend('____src_flux_conv',2)
+
+    !$acc end data
 
     return
   end subroutine src_flux_convergence
@@ -862,6 +961,11 @@ contains
 
     integer  :: g, k, l, d
     !---------------------------------------------------------------------------
+    !$acc data &
+    !$acc pcreate(P_vm,P_vmh) &
+    !$acc pcopy(Pgrad,Pgradw) &
+    !$acc pcopyin(P) &
+    !$acc pcopyin(GRD_rdgz,GRD_rdgzh,OPRT_coef_grad,VMTR_GAM2H,VMTR_RGAM,VMTR_RGAMH,VMTR_RGSGAM2,VMTR_C2WfactGz)
 
     call PROF_rapstart('____src_pres_gradient',2)
 
@@ -874,7 +978,12 @@ contains
 
     !---< horizontal gradient, horizontal contribution >---
 
+#ifdef MORETIMER
+call PROF_rapstart('____src_pres_grad_01')
+#endif
+
 !OCL XFILL
+    !$acc kernels present(P_vm) pcopyin(P,VMTR_RGAM)
     !$omp parallel do default(none),private(g,k,l), &
     !$omp shared(gall,kall,lall,P_vm,P,VMTR_RGAM), &
     !$omp collapse(2)
@@ -886,10 +995,16 @@ contains
     enddo
     enddo
     !$omp end parallel do
+    !$acc end kernels
 
     if ( ADM_have_pl) then
        P_vm_pl(:,:,:) = P_pl(:,:,:) * VMTR_RGAM_pl(:,:,:)
     endif
+
+#ifdef MORETIMER
+call PROF_rapend  ('____src_pres_grad_01')
+call PROF_rapstart('____src_pres_grad_02o')
+#endif
 
     call OPRT_gradient( Pgrad         (:,:,:,:), Pgrad_pl         (:,:,:,:), & ! [OUT]
                         P_vm          (:,:,:),   P_vm_pl          (:,:,:),   & ! [IN]
@@ -897,6 +1012,12 @@ contains
 
     !---< horizontal gradient, vertical contribution >---
 
+#ifdef MORETIMER
+call PROF_rapend  ('____src_pres_grad_02o')
+call PROF_rapstart('____src_pres_grad_03')
+#endif
+
+    !$acc kernels pcopy(Pgrad) present(P_vmh) pcopyin(P,GRD_rdgz,VMTR_RGAMH,VMTR_C2WfactGz)
     !$omp parallel default(none),private(g,k,l,d), &
     !$omp shared(gall,kmin,kmax,lall,nxyz,Pgrad,P_vmh,P,GRD_rdgz,VMTR_C2WfactGz,VMTR_RGAMH)
     do l = 1, lall
@@ -941,6 +1062,7 @@ contains
        enddo
     enddo
     !$omp end parallel
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
@@ -978,15 +1100,29 @@ contains
        enddo
     endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('____src_pres_grad_03')
+call PROF_rapstart('____src_pres_grad_04o')
+#endif
+
     !--- horizontalize
     call OPRT_horizontalize_vec( Pgrad(:,:,:,XDIR), Pgrad_pl(:,:,:,XDIR), & ! [INOUT]
                                  Pgrad(:,:,:,YDIR), Pgrad_pl(:,:,:,YDIR), & ! [INOUT]
                                  Pgrad(:,:,:,ZDIR), Pgrad_pl(:,:,:,ZDIR)  ) ! [INOUT]
 
+#ifdef MORETIMER
+call PROF_rapend  ('____src_pres_grad_04o')
+#endif
+
     !---< vertical gradient (half level) >---
 
     if ( gradtype == I_SRC_default ) then
 
+#ifdef MORETIMER
+call PROF_rapstart('____src_pres_grad_05')
+#endif
+
+       !$acc kernels pcopy(Pgradw) pcopyin(P,GRD_rdgzh,VMTR_GAM2H,VMTR_RGSGAM2)
        !$omp parallel default(none),private(g,k,l), &
        !$omp shared(gall,kmin,kmax,lall,Pgradw,P,GRD_rdgzh,VMTR_GAM2H,VMTR_RGSGAM2)
        do l = 1, lall
@@ -999,7 +1135,6 @@ contains
           enddo
           enddo
           !$omp end do nowait
-
 !OCL XFILL
           !$omp do
           do g = 1, gall
@@ -1010,6 +1145,7 @@ contains
           !$omp end do
        enddo
        !$omp end parallel
+       !$acc end kernels
 
        if ( ADM_have_pl ) then
           do l = 1, ADM_lall_pl
@@ -1029,9 +1165,18 @@ contains
           enddo
        endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('____src_pres_grad_05')
+#endif
+
     elseif( gradtype == I_SRC_horizontal ) then
 
+#ifdef MORETIMER
+call PROF_rapstart('____src_pres_grad_06')
+#endif
+
 !OCL XFILL
+       !$acc kernels pcopy(Pgradw)
        !$omp parallel do default(none),private(g,k,l), &
        !$omp shared(gall,kall,lall,Pgradw), &
        !$omp collapse(2)
@@ -1043,14 +1188,21 @@ contains
        enddo
        enddo
        !$omp end parallel do
+       !$acc end kernels
 
        if ( ADM_have_pl ) then
           Pgradw_pl(:,:,:) = 0.0_RP
        endif
 
+#ifdef MORETIMER
+call PROF_rapend  ('____src_pres_grad_06')
+#endif
+
     endif
 
     call PROF_rapend('____src_pres_gradient',2)
+
+    !$acc end data
 
     return
   end subroutine src_pres_gradient
@@ -1087,6 +1239,10 @@ contains
 
     integer  :: g, k, l
     !---------------------------------------------------------------------------
+    !$acc data &
+    !$acc pcopy(buoiw) &
+    !$acc pcopyin(rhog) &
+    !$acc pcopyin(VMTR_C2Wfact)
 
     call PROF_rapstart('____src_buoyancy',2)
 
@@ -1097,6 +1253,7 @@ contains
 
     grav = CONST_GRAV
 
+    !$acc kernels pcopy(buoiw) pcopyin(rhog,VMTR_C2Wfact)
     !$omp parallel default(none),private(g,k,l), &
     !$omp shared(gall,kmin,kmax,lall,buoiw,rhog,VMTR_C2Wfact,grav)
     do l = 1, lall
@@ -1109,7 +1266,6 @@ contains
        enddo
        enddo
        !$omp end do nowait
-
 !OCL XFILL
        !$omp do
        do g = 1, gall
@@ -1120,6 +1276,7 @@ contains
        !$omp end do
     enddo
     !$omp end parallel
+    !$acc end kernels
 
     if ( ADM_have_pl ) then
        do l = 1, ADM_lall_pl
@@ -1139,6 +1296,8 @@ contains
     endif
 
     call PROF_rapend('____src_buoyancy',2)
+
+    !$acc end data
 
     return
   end subroutine src_buoyancy

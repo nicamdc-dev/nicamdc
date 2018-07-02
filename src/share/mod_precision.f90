@@ -2,12 +2,11 @@
 !> module PRECISION
 !!
 !! @par Description
-!!          precision module
-!!          Imported from SCALE library
+!!         Precision definition
 !!
-!! @author Team SCALE
-!!
+!! @author NICAM developers
 !<
+!-------------------------------------------------------------------------------
 module mod_precision
   !-----------------------------------------------------------------------------
   !
