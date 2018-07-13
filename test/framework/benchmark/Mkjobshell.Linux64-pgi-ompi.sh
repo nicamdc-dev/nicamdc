@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="/opt/pgi/osx86-64/2014/mpi/mpich/bin/mpiexec -np ${NMPI}"
+MPIEXEC="mpirun -np ${NMPI}"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -34,7 +34,7 @@ cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ FOR MacOSX & pgi fortran&C & mpich -----
+# ------ FOR Linux64 & pgi C&fortran & openmpi -----
 #
 ################################################################################
 export FORT_FMT_RECL=400
@@ -63,7 +63,7 @@ cat << EOFICO2LL1 > ico2ll.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ FOR MacOSX & pgi fortran&C & mpich -----
+# ------ FOR Linux64 & pgi C&fortran & openmpi -----
 #
 ################################################################################
 export FORT_FMT_RECL=400
@@ -91,16 +91,6 @@ layerfile_dir="./zaxis" \
 llmap_base="./llmap" \
 -lon_swap \
 -comm_smallchunk
-
-${MPIEXEC} ./fio_ico2ll_mpi \
-history \
-glevel=${GLEV} \
-rlevel=${RLEV} \
-mnginfo="./${MNGINFO}" \
-layerfile_dir="./zaxis" \
-llmap_base="./llmap" \
--lon_swap \
--comm_smallchunk -output_gtool
 
 ################################################################################
 EOFICO2LL2

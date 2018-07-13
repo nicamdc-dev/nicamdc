@@ -1,21 +1,22 @@
 #
-# ------ FOR Linux 64bit & pgi fortran&C & OpenMPI1.4 -----
+# ------ FOR Linux 64bit & pgi fortran&C & OpenMPI -----
 #
-FFLAGS_FAST  = -Mpreprocess -fastsse -Mipa=fast,inline -m64 \
-               -Mbyteswapio                      \
-               -Mflushz -pc 64                   \
-               -Msmartalloc=huge
+FFLAGS_FAST  = -Mpreprocess -m64 -fast                \
+               -Mbyteswapio                           \
+               -Mflushz -Mfprelaxed -Mfpapprox -Kieee \
+               -Mvect=assoc
 
-FFLAGS_DEBUG = -Mpreprocess -O0 -m64 -Minfo      \
-               -Mbyteswapio                      \
-               -Ktrap=fp -pc 64 -Kieee           \
-               -Mbounds -Mstandard -g -traceback
+FFLAGS_DEBUG = -Mpreprocess -m64 -O0  \
+               -Mbyteswapio -Mneginfo \
+               -Mflushz -Ktrap=fp     \
+               -Mbounds -Mstandard    \
+               -g -traceback
 
 FC     = mpif90
 FFLAGS = $(FFLAGS_FAST)
 #FFLAGS = $(FFLAGS_DEBUG)
 
-CFLAGS_FAST  = -fastsse -m64
+CFLAGS_FAST  = -fast
 CFLAGS_DEBUG = -O0
 
 CC     = mpicc
@@ -25,11 +26,11 @@ CFLAGS = $(CFLAGS_FAST)
 ##### Special Options #####
 
 ifeq ($(ENABLE_OPENMP),T)
-	FFLAGS += -openmp -openmp-report
+	FFLAGS += -mp
 endif
 
 ifeq ($(ENABLE_OPENACC),T)
-	FFLAGS += -Minfo=accel -acc -ta=nvidia
+	FFLAGS += -acc -ta=tesla,cuda8.0,cc60 -Mcuda -Minfo=accel
 endif
 
 ifeq ($(ENABLE_NETCDF),T)
@@ -46,7 +47,7 @@ MODDIROPT ?= -module $(BUILDDIR)
 OBJDIR    ?= $(BUILDDIR)
 
 LD     = $(FC)
-LFLAGS = $(FFLAGS) $(PGI_LIBS)
+LFLAGS = $(FFLAGS)
 
 MAKE    = make
 INSTALL = install
