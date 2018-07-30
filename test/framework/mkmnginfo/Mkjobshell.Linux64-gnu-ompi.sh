@@ -12,11 +12,11 @@ cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ For MacOSX & gfortran7.3 & OpenMPI3.0 -----
+# ------ For Linux64 & intel C&fortran & intel mpi -----
 #
 ################################################################################
 export FORT_FMT_RECL=400
-export GFORTRAN_UNBUFFERED_ALL=Y
+
 
 ln -svf ${TOPDIR}/bin/${BINNAME} .
 
