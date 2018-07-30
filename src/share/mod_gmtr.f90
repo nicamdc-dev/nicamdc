@@ -141,8 +141,6 @@ contains
        GRD_x_pl,   &
        GRD_xt,     &
        GRD_xt_pl,  &
-       GRD_LAT,    &
-       GRD_LAT_pl, &
        GRD_LON,    &
        GRD_LON_pl, &
        GRD_gz,     &

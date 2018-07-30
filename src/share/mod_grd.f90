@@ -336,11 +336,6 @@ contains
     ! calc latitude/longitude of each grid point
     call GRD_makelatlon
 
-    GRD_LAT   (:,:) = GRD_s   (:,k0,:,I_LAT)
-    GRD_LON   (:,:) = GRD_s   (:,k0,:,I_LON)
-    GRD_LAT_pl(:,:) = GRD_s_pl(:,k0,:,I_LAT)
-    GRD_LON_pl(:,:) = GRD_s_pl(:,k0,:,I_LON)
-
     ! calc position of cell arc
     call GRD_makearc
 
@@ -1156,6 +1151,9 @@ contains
                               GRD_xt(g,k0,l,ADM_TJ,GRD_ZDIR), & ! [IN]
                               GRD_st(g,k0,l,ADM_TJ,I_LAT),    & ! [OUT]
                               GRD_st(g,k0,l,ADM_TJ,I_LON)     ) ! [OUT]
+
+       GRD_LAT(g,l) = GRD_s(g,k0,l,I_LAT)
+       GRD_LON(g,l) = GRD_s(g,k0,l,I_LON)
     enddo
     enddo
 
@@ -1173,6 +1171,9 @@ contains
                                  GRD_xt_pl(g,k0,l,GRD_ZDIR), & ! [IN]
                                  GRD_st_pl(g,k0,l,I_LAT),    & ! [OUT]
                                  GRD_st_pl(g,k0,l,I_LON)     ) ! [OUT]
+
+          GRD_LAT_pl(g,l) = GRD_s_pl(g,k0,l,I_LAT)
+          GRD_LON_pl(g,l) = GRD_s_pl(g,k0,l,I_LON)
        enddo
        enddo
     endif
