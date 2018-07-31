@@ -162,8 +162,8 @@ module mod_comm
   integer,  private              :: rellist_nmax !> number of list
 
   ! node-node communication/copy info
-  integer,  private, parameter   :: Recv_nlim = 10 !> number limit of rank to receive data
-  integer,  private, parameter   :: Send_nlim = 10 !> number limit of rank to send    data
+  integer,  private, parameter   :: Recv_nlim = 20 !> number limit of rank to receive data
+  integer,  private, parameter   :: Send_nlim = 20 !> number limit of rank to send    data
 
   integer,  private              :: Copy_nmax_r2r = 0
   integer,  private              :: Recv_nmax_r2r = 0
@@ -790,14 +790,16 @@ contains
 
     totalsize = info_vindex * Recv_nglobal_r2r
 
-    call MPI_Allgather( sendbuf_info(1),      & ! [IN]
-                        totalsize,            & ! [IN]
-                        MPI_INTEGER,          & ! [IN]
-                        recvbuf_info(1),      & ! [OUT]
-                        totalsize,            & ! [IN]
-                        MPI_INTEGER,          & ! [IN]
-                        PRC_LOCAL_COMM_WORLD, & ! [IN]
-                        ierr                  ) ! [OUT]
+    if ( totalsize > 0 ) then
+       call MPI_Allgather( sendbuf_info(1),      & ! [IN]
+                           totalsize,            & ! [IN]
+                           MPI_INTEGER,          & ! [IN]
+                           recvbuf_info(1),      & ! [OUT]
+                           totalsize,            & ! [IN]
+                           MPI_INTEGER,          & ! [IN]
+                           PRC_LOCAL_COMM_WORLD, & ! [IN]
+                           ierr                  ) ! [OUT]
+    endif
 
     Send_size_nglobal = 0
 
@@ -1015,7 +1017,7 @@ contains
 
     integer, parameter :: Send_size_nglobal_pl = 10
 
-    integer  :: l, l_pl, n, v
+    integer  :: l, l_pl, n, v, vv
     integer  :: i_from, j_from, r_from, g_from, l_from, p_from
     integer  :: i_to, j_to, r_to, g_to, l_to, p_to
     !---------------------------------------------------------------------------
@@ -1160,8 +1162,11 @@ contains
        rgnid = l_pl
        prc   = ADM_prc_me
 
-       do v = ADM_vlink, 1, -1
-          rgnid_rmt = RGNMNG_vert_tab_pl(I_RGNID,rgnid,v)
+       do v = ADM_vlink+1, 2, -1
+          vv = v
+          if( v == ADM_vlink+1 ) vv = 1
+
+          rgnid_rmt = RGNMNG_vert_tab_pl(I_RGNID,rgnid,vv)
           prc_rmt   = RGNMNG_r2lp(I_prc,rgnid_rmt)
 
           if ( rgnid == I_NPL ) then
@@ -1176,7 +1181,7 @@ contains
              j_to   = ADM_gmin
           endif
 
-          pl_to = v
+          pl_to = vv
           if( pl_to < ADM_gmin_pl ) pl_to = ADM_gmax_pl
 
           if ( prc == prc_rmt ) then ! no communication
