@@ -303,13 +303,13 @@ SUBROUTINE SIMPLE_PHYSICS(pcols, pver, dtime, lat, t, q, u, v, pmid, pint, pdel,
            dphi2 = ( 20.D0 / 180.D0 * pi )**2
            dphi0 = ( 17.D0 / 180.D0 * pi )
            do i = 1, pcols
-              Tsurf(i) = 29.D0 * exp( -0.5D0 * (max(abs(lat(i))-dphi0,0))**2 / dphi2 ) + 271.D0
+              Tsurf(i) = 29.D0 * exp( -0.5D0 * (max(abs(lat(i))-dphi0,0.D0))**2 / dphi2 ) + 271.D0
            enddo
         elseif( MITC_TYPE == 3 ) then
            dphi2 = ( 23.D0 / 180.D0 * pi )**2
            dphi0 = ( 12.D0 / 180.D0 * pi )
            do i = 1, pcols
-              Tsurf(i) = 32.D0 * exp( -0.5D0 * (max(abs(lat(i))-dphi0,0))**2 / dphi2 ) + 271.D0
+              Tsurf(i) = 32.D0 * exp( -0.5D0 * (max(abs(lat(i))-dphi0,0.D0))**2 / dphi2 ) + 271.D0
            enddo
         else
            write(*,*) 'xxx MITC_TYPE is out of range! STOP.', MITC_TYPE
