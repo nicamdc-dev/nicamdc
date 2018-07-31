@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpirun --oversubscribe -np ${TPROC}"
+MPIEXEC="mpirun -np ${TPROC}"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -25,6 +25,7 @@ fi
 
 dir2d=gl${GL}rl${RL}pe${NP}
 res2d=GL${GL}RL${RL}
+BNDDIR="${TOPDIR}/data/grid/boundary"
 
 MNGINFO=rl${RL}-prc${NP}.info
 
@@ -32,11 +33,11 @@ cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ For MacOSX & gfortran7.3 & OpenMPI3.0 -----
+# ------ For Linux64 & intel C&fortran & intel mpi -----
 #
 ################################################################################
 export FORT_FMT_RECL=400
-export GFORTRAN_UNBUFFERED_ALL=Y
+
 
 ln -svf ${TOPDIR}/bin/${BINNAME} .
 EOF1
@@ -67,8 +68,8 @@ cat << EOF2 >> run.sh
 
 # run
 ${MPIEXEC} ./${BINNAME} mkhgrid.cnf || exit
-mkdir -p            ${TOPDIR}/data/grid/boundary/${dir2d}
-mv -f boundary*.pe* ${TOPDIR}/data/grid/boundary/${dir2d}
+mkdir -p ${BNDDIR}/${ODIR}
+mv -f boundary*.pe* ${BNDDIR}/${dir2d}
 
 ################################################################################
 EOF2
