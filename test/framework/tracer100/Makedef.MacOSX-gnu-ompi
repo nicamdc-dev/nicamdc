@@ -1,5 +1,5 @@
 #
-# ------ FOR MacOSX & gfortran4.8 & OpenMPI1.7 -----
+# ------ FOR MacOSX & gfortran7.3 & OpenMPI3.0 -----
 #
 FFLAGS_FAST  = -cpp -O3 -m64 -fopenmp \
                -std=f2003 -fall-intrinsics -pedantic-errors -fimplicit-none -fmodule-private \
