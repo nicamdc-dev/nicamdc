@@ -141,8 +141,6 @@ contains
        GRD_x_pl,   &
        GRD_xt,     &
        GRD_xt_pl,  &
-       GRD_LAT,    &
-       GRD_LAT_pl, &
        GRD_LON,    &
        GRD_LON_pl, &
        GRD_gz,     &
@@ -1223,8 +1221,8 @@ contains
        do l = 1, ADM_lall_pl
           sqarea_local_max = max( sqarea_local_max, sqarea_pl(ADM_gslf_pl,k,l) )
           sqarea_local_min = min( sqarea_local_min, sqarea_pl(ADM_gslf_pl,k,l) )
-          length_local_max = max( length_local_max, sqarea_pl(ADM_gslf_pl,k,l) )
-          angle_local_max  = max( angle_local_max , sqarea_pl(ADM_gslf_pl,k,l) )
+          length_local_max = max( length_local_max, length_pl(ADM_gslf_pl,k,l) )
+          angle_local_max  = max( angle_local_max , angle_pl (ADM_gslf_pl,k,l) )
        enddo
     endif
 

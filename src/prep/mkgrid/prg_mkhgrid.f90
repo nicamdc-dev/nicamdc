@@ -44,7 +44,6 @@ program mkhgrid
      MKGRD_shrink,       &
      MKGRD_rotate,       &
      MKGRD_gravcenter,   &
-     MKGRD_diagnosis,    &
      MKGRD_IN_BASENAME,  &
      MKGRD_IN_io_mode,   &
      MKGRD_OUT_BASENAME, &
@@ -140,10 +139,6 @@ program mkhgrid
   call GRD_scaling( RADIUS )
   call GMTR_setup
   call PROF_rapend  ('GMTR_setup',0)
-
-  call PROF_rapstart('MKGRD_diagnosis',0)
-  call MKGRD_diagnosis
-  call PROF_rapend  ('MKGRD_diagnosis',0)
 
   call PROF_rapend('Main_MKGRD',0)
   !#############################################################################

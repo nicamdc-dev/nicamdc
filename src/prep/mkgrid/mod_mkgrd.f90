@@ -16,17 +16,21 @@ module mod_mkgrd
   use mod_stdio
   use mod_prof
   use mod_grd, only: &
-     GRD_XDIR,  &
-     GRD_YDIR,  &
-     GRD_ZDIR,  &
-     GRD_x,     &
-     GRD_x_pl,  &
-     GRD_xt,    &
-     GRD_xt_pl, &
-     GRD_s,     &
-     GRD_s_pl,  &
-     GRD_st,    &
-     GRD_st_pl
+     GRD_XDIR,   &
+     GRD_YDIR,   &
+     GRD_ZDIR,   &
+     GRD_x,      &
+     GRD_x_pl,   &
+     GRD_xt,     &
+     GRD_xt_pl,  &
+     GRD_s,      &
+     GRD_s_pl,   &
+     GRD_st,     &
+     GRD_st_pl,  &
+     GRD_LAT,    &
+     GRD_LAT_pl, &
+     GRD_LON,    &
+     GRD_LON_pl
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -137,6 +141,11 @@ contains
     allocate( GRD_s_pl (ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              2) )
     allocate( GRD_st   (ADM_gall   ,ADM_KNONE,ADM_lall   ,ADM_TI:ADM_TJ,2) )
     allocate( GRD_st_pl(ADM_gall_pl,ADM_KNONE,ADM_lall_pl,              2) )
+
+    allocate( GRD_LAT   (ADM_gall   ,ADM_lall   ) )
+    allocate( GRD_LAT_pl(ADM_gall_pl,ADM_lall_pl) )
+    allocate( GRD_LON   (ADM_gall   ,ADM_lall   ) )
+    allocate( GRD_LON_pl(ADM_gall_pl,ADM_lall_pl) )
 #endif
     GRD_x    (:,:,:,:)   = UNDEF
     GRD_x_pl (:,:,:,:)   = UNDEF
@@ -147,6 +156,11 @@ contains
     GRD_s_pl (:,:,:,:)   = UNDEF
     GRD_st   (:,:,:,:,:) = UNDEF
     GRD_st_pl(:,:,:,:)   = UNDEF
+
+    GRD_LAT   (:,:)       = UNDEF
+    GRD_LAT_pl(:,:)       = UNDEF
+    GRD_LON   (:,:)       = UNDEF
+    GRD_LON_pl(:,:)       = UNDEF
 
     return
   end subroutine MKGRD_setup

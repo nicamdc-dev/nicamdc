@@ -491,6 +491,7 @@ contains
                                     ADM_rgn_nmax,           & ! [IN]
                                     PRC_nprocs,             & ! [IN]
                                     RGNMNG_llim,            & ! [IN]
+                                    ADM_lall,               & ! [IN]
                                     RGNMNG_edge_tab(:,:,:), & ! [OUT]
                                     RGNMNG_lnum    (:),     & ! [OUT]
                                     RGNMNG_lp2r    (:,:)    ) ! [OUT]
@@ -798,6 +799,7 @@ contains
        rlevel,   &
        rall,     &
        pall,     &
+       llim,     &
        lall,     &
        edge_tab, &
        lnum,     &
@@ -809,10 +811,11 @@ contains
     integer, intent(in)  :: rlevel
     integer, intent(in)  :: rall
     integer, intent(in)  :: pall
+    integer, intent(in)  :: llim
     integer, intent(in)  :: lall
     integer, intent(out) :: edge_tab(2,4,rall)
     integer, intent(out) :: lnum(pall)
-    integer, intent(out) :: lp2r(lall,pall)
+    integer, intent(out) :: lp2r(llim,pall)
 
     integer, parameter :: nmax_dmd = 10
     integer  :: dmd_data(4,nmax_dmd)

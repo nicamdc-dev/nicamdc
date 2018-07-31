@@ -24,18 +24,18 @@ program prg_mkvlayer
   integer, parameter :: kdum = 1
   integer, parameter :: fid  = 11
 
-  integer                :: num_of_layer = 10        ! number of layers
-  character(len=H_SHORT) :: layer_type   = 'POWER'   ! type of layer
-  real(RP)               :: ztop         = 1.E4_RP   ! height of model top if layer_type='POWER'
-  real(RP)               :: fact         = 1.0_RP    ! factor              if layer_type='POWER'
-  character(len=H_LONG)  :: infname      = 'infile'  ! input  file name    if layer_type='GIVEN'
-  character(len=H_LONG)  :: outfname     = 'outfile' ! output file name
+  integer                :: num_of_layer = 10          ! number of layers
+  character(len=H_SHORT) :: layer_type   = 'ULLRICH14' ! type of layer
+                                         ! 'EVEN'
+                                         ! 'GIVEN'
+  real(RP)               :: ztop         = 1.E4_RP     ! height of model top
+  character(len=H_LONG)  :: infname      = 'infile'    ! input  file name if layer_type='GIVEN'
+  character(len=H_LONG)  :: outfname     = 'outfile'   ! output file name
 
   namelist / mkvlayer_cnf / &
        num_of_layer, &
        layer_type,   &
        ztop,         &
-       fact,         &
        infname,      &
        outfname
 
@@ -66,9 +66,13 @@ program prg_mkvlayer
   allocate( z_c(kall) )
 
   select case(layer_type)
-  case('POWER')
+  case('ULLRICH14')
 
-     call mk_layer_powerfunc( ztop, fact )
+     call mk_layer_ullrich14( ztop )
+
+  case('EVEN')
+
+     call mk_layer_even( ztop )
 
   case('GIVEN')
 
@@ -90,23 +94,45 @@ program prg_mkvlayer
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  subroutine mk_layer_powerfunc( ztop, fact )
+  subroutine mk_layer_ullrich14( ztop )
     implicit none
 
     real(RP), intent(in) :: ztop
-    real(RP), intent(in) :: fact
 
-    real(RP) :: a
+    real(RP), parameter :: mu = 15.0_RP
+
+    real(RP) :: fact
     integer  :: k
     !---------------------------------------------------------------------------
 
-    a = ztop / real(num_of_layer,kind=RP)**fact
     do k = kmin, kmax+1
-       z_h(k) = a * real(k-kmin,kind=RP)**fact
+       fact = ( real(k,kind=RP) / real(num_of_layer,kind=RP) )**2
+
+       z_h(k) =  ztop * ( sqrt( mu * fact + 1.0_RP ) - 1.0_RP ) &
+                      / ( sqrt( mu        + 1.0_RP ) - 1.0_RP )
     enddo
 
     return
-  end subroutine mk_layer_powerfunc
+  end subroutine mk_layer_ullrich14
+
+  !-----------------------------------------------------------------------------
+  subroutine mk_layer_even( ztop )
+    implicit none
+
+    real(RP), intent(in) :: ztop
+
+    real(RP) :: dz
+    integer  :: k
+    !---------------------------------------------------------------------------
+
+    dz = ztop / real(kmax-kmin+1,kind=RP)
+
+    do k = 1, kall
+       z_h(k) =  dz * real(k-1,kind=RP)
+    enddo
+
+    return
+  end subroutine mk_layer_even
 
   !-----------------------------------------------------------------------------
   subroutine mk_layer_given( infname )
