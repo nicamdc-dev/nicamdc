@@ -3,7 +3,7 @@
 # resolution dependent parameters
 #              GL04    GL05    GL06    GL07    GL08    GL09
 DTLLIST=(   2400.D0 1200.D0  600.D0  300.D0  180.D0   90.D0 )
-LSTEPLIST=(     324     648    1296    2592    4320    8640 )
+LSTEPLIST=(     252     504    1008    2016    3360    6720 )
 NDIFFLIST=( 1.0D+17 1.3D+16 1.6D+15 2.0D+14 2.5D+13 3.2D+12 )
 
 for glevel in 5 6 7

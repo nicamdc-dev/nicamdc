@@ -12,7 +12,7 @@
 /
 
 &COMMPARAM
-    COMM_apply_barrier = .true.,
+    COMM_apply_barrier = .false.,
 /
 
 &GRDPARAM
@@ -24,7 +24,7 @@
 
 &TIMEPARAM
     DTL         = #DTL#,
-    INTEG_TYPE  = 'RK3',
+    INTEG_TYPE  = 'RK2',
     LSTEP_MAX   = #LSTEP#,
     start_date  = 0000,1,1,0,0,0
 /
@@ -76,7 +76,7 @@
 
 &EMBUDGETPARAM
     MNT_ON   = .true.,
-    MNT_INTV = 10    ,
+    MNT_INTV = #LSTEP#,
 /
 
 &NMHISD
