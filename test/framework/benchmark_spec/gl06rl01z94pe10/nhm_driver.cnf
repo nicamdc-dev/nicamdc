@@ -1,0 +1,91 @@
+################################################################################
+#
+# NICAM-DC mkhgrid config
+#
+################################################################################
+
+&ADMPARAM
+    glevel      = 6,
+    rlevel      = 1,
+    vlayer      = 94,
+    rgnmngfname = "rl01-prc10.info",
+/
+
+&COMMPARAM
+    COMM_apply_barrier = .false.,
+/
+
+&GRDPARAM
+    hgrid_io_mode = 'ADVANCED',
+    hgrid_fname   = 'boundary_GL06RL01',
+    VGRID_fname   = 'vgrid94.dat',
+    topo_io_mode  = 'IDEAL',
+/
+
+&TIMEPARAM
+    DTL         = 600.D0,
+    INTEG_TYPE  = 'RK2',
+    LSTEP_MAX   = 1008,
+    start_date  = 0000,1,1,0,0,0
+/
+
+&RUNCONFPARAM
+    NDIFF_LOCATION = 'IN_LARGE_STEP2',
+/
+
+&BSSTATEPARAM
+    ref_type = 'NOBASE',
+/
+
+&RESTARTPARAM
+    input_io_mode     = 'IDEAL',
+    output_io_mode    = 'ADVANCED',
+    output_basename   = 'restart_all_GL06RL01z94',
+    restart_layername = 'ZSALL96',
+/
+
+##### ICOMEX Test case: Jablonowski Baroclinic Wave
+# test_case = 1: with initial perturbation
+#             2: without initial perturbation
+&DYCORETESTPARAM
+    init_type = 'Jablonowski',
+    test_case = '1'
+/
+
+&IDEALTOPOPARAM
+    topo_type = 'JW',
+/
+
+&CNSTPARAM
+    earth_radius        = 6.37122E+6,
+    earth_angvel        =   7.292E-5,
+    small_planet_factor =      1.E0,
+    earth_gravity       = 9.80616E0,
+    gas_cnst            =   287.0E0,
+    specific_heat_pre   =  1004.5E0,
+/
+
+&NUMFILTERPARAM
+    hdiff_type        = 'DIRECT',
+    lap_order_hdiff   = 2,
+    gamma_h           = 1.6D+15,
+    divdamp_type      = 'DIRECT',
+    lap_order_divdamp = 2,
+    alpha_d           = 1.6D+15,
+/
+
+&EMBUDGETPARAM
+    MNT_ON   = .true.,
+    MNT_INTV = 1008,
+/
+
+&NMHISD
+    output_io_mode   = 'ADVANCED' ,
+    histall_fname    = 'history'  ,
+    hist3D_layername = 'ZSDEF94'  ,
+    NO_VINTRPL       = .false.    ,
+    output_type      = 'SNAPSHOT' ,
+    step             = 10         ,
+/
+
+################################################################################
