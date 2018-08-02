@@ -3,9 +3,8 @@
 !!
 !! @par Description
 !!          MPI/non-MPI management module
-!!          Imported from SCALE library
 !!
-!! @author Team SCALE
+!! @author NICAM developers
 !!
 !<
 module mod_process

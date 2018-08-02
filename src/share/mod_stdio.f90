@@ -167,7 +167,7 @@ contains
        if( IO_L ) write(IO_FID_LOG,*) ''
        if( IO_L ) write(IO_FID_LOG,*) '########################################################################'
        if( IO_L ) write(IO_FID_LOG,*) ''
-       if( IO_L ) write(IO_FID_LOG,*) '++++++ Module[STDIO] / Categ[IO] / Origin[SCALElib]'
+       if( IO_L ) write(IO_FID_LOG,*) '+++ Module[stdio]/Category[common share]'
        if( IO_L ) write(IO_FID_LOG,*) ''
        if( IO_L ) write(IO_FID_LOG,*) '*** Open config file, FID = ', IO_FID_CONF
        if( IO_L ) write(IO_FID_LOG,*) '*** Open log    file, FID = ', IO_FID_LOG

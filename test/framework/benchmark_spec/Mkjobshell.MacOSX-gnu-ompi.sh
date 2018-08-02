@@ -39,7 +39,7 @@ cat << EOF1 > run.sh
 ################################################################################
 export FORT_FMT_RECL=400
 export GFORTRAN_UNBUFFERED_ALL=Y
-export OMP_NUM_THREADS=2
+export OMP_NUM_THREADS=1
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
