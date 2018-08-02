@@ -15,6 +15,7 @@ module mod_latlon
   use mpi
   use mod_precision
   use mod_stdio
+  use mod_prof
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -292,9 +293,9 @@ contains
           do j = 1, jmax
           do i = 1, imax
              if    ( checkmapsum(i,j) >  1.0 ) then
-                if( IO_L ) write(IO_FID_LOG,*) 'dupicate! (i,j)=', i, j, checkmapsum(i,j)
+                if( IO_L ) write(IO_FID_LOG,*) 'dupicate! (i,j)=', i, j, checkmapsum(i,j), lat(j)/D2R, lon(i)/D2R
              elseif( checkmapsum(i,j) == 0.0 ) then
-                if( IO_L ) write(IO_FID_LOG,*) 'missed!   (i,j)=', i, j, checkmapsum(i,j)
+                if( IO_L ) write(IO_FID_LOG,*) 'missed!   (i,j)=', i, j, checkmapsum(i,j), lat(j)/D2R, lon(i)/D2R
              endif
           enddo
           enddo
@@ -482,7 +483,7 @@ contains
     real(RP) :: area_total, area1, area2, area3
 
     real(RP) :: eps_judge  = 1.E-18_RP ! marginal value for inner products
-    real(RP) :: eps_latlon = 1.E-15_RP ! marginal square near grid points (in radian)
+    real(RP) :: eps_latlon = 1.E-02_RP ! marginal square near grid points (in radian)
     real(RP) :: eps_vertex = 1.E-15_RP ! marginal value for vartex
 
     integer  :: ij
@@ -491,6 +492,8 @@ contains
     integer  :: rgnid
     integer  :: ic, jc, k, l, t, i, j
     !---------------------------------------------------------------------------
+
+    call PROF_rapstart('mkrelmap_ico2ll',0)
 
     k = ADM_KNONE
 
@@ -770,6 +773,8 @@ contains
        enddo ! i LOOP
        enddo ! j LOOP
     enddo ! l LOOP
+
+    call PROF_rapend  ('mkrelmap_ico2ll',0)
 
     return
   end subroutine mkrelmap_ico2ll

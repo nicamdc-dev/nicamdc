@@ -68,6 +68,13 @@ program prg_mkllmap
   call IO_LOG_setup( myrank,  & ! [IN]
                      ismaster ) ! [IN]
 
+  !---< profiler module setup >---
+  call PROF_setup
+
+  !#############################################################################
+  call PROF_setprefx('INIT')
+  call PROF_rapstart('Initialize',0)
+
   !--- < cnst module setup > ---
   call CONST_setup
 
@@ -99,8 +106,20 @@ program prg_mkllmap
 
   call LATLON_ico_setup
 
+  call PROF_rapend('Initialize',0)
+  !#############################################################################
+  call PROF_setprefx('MAIN')
+  call PROF_rapstart('Main_MKLLMAP',0)
+
   call LATLON_setup( output_dir )
 
+  call PROF_rapend('Main_MKLLMAP',0)
+  !#############################################################################
+
+  call PROF_rapreport
+
+  !--- finalize all process
   call PRC_MPIfinish
 
+  stop
 end program prg_mkllmap

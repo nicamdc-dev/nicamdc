@@ -433,14 +433,18 @@ contains
     real(RP) :: abc(3)
     real(RP) :: prd, r
 
-    ! ON_SPHERE
-    real(RP) :: angle(3)
-    real(RP) :: oaob(3), oaoc(3)
-    real(RP) :: oboc(3), oboa(3)
-    real(RP) :: ocoa(3), ocob(3)
-    real(RP) :: abab, acac
-    real(RP) :: bcbc, baba
-    real(RP) :: caca, cbcb
+    ! ON_SPHERE (Using three angles)
+!     real(RP) :: angle(3)
+!     real(RP) :: oaob(3), oaoc(3)
+!     real(RP) :: oboc(3), oboa(3)
+!     real(RP) :: ocoa(3), ocob(3)
+!     real(RP) :: abab, acac
+!     real(RP) :: bcbc, baba
+!     real(RP) :: caca, cbcb
+
+    ! ON_SPHERE (Using three sides: lHuillier formula)
+    real(RP) :: len(3)
+    real(RP) :: s, x
     !---------------------------------------------------------------------------
 
     area = 0.0_RP
@@ -460,49 +464,66 @@ contains
 
        area = prd * r*r * radius*radius
 
-    elseif( polygon_type == 'ON_SPHERE' ) then ! On a unit sphere, area = sum of angles - pi.
+!     elseif( polygon_type == 'ON_SPHERE' ) then ! On a unit sphere, area = sum of angles - pi.
+!
+!        ! angle 1
+!        call VECTR_cross( oaob(:), o(:), a(:), o(:), b(:) )
+!        call VECTR_cross( oaoc(:), o(:), a(:), o(:), c(:) )
+!        call VECTR_abs( abab, oaob(:) )
+!        call VECTR_abs( acac, oaoc(:) )
+!
+!        if ( abab < EPS .OR. acac < EPS ) then
+!           !write(*,'(A,3(ES20.10))') 'zero length abab or acac:', abab, acac
+!           return
+!        endif
+!
+!        call VECTR_angle( angle(1), oaob(:), o(:), oaoc(:) )
+!
+!        ! angle 2
+!        call VECTR_cross( oboc(:), o(:), b(:), o(:), c(:) )
+!        oboa(:) = -oaob(:)
+!        call VECTR_abs( bcbc, oboc(:) )
+!        baba = abab
+!
+!        if ( bcbc < EPS .OR. baba < EPS ) then
+!           !write(*,'(A,3(ES20.10))') 'zero length bcbc or baba:', bcbc, baba
+!           return
+!        endif
+!
+!        call VECTR_angle( angle(2), oboc(:), o(:), oboa(:) )
+!
+!        ! angle 3
+!        ocoa(:) = -oaoc(:)
+!        ocob(:) = -oboc(:)
+!        caca = acac
+!        cbcb = bcbc
+!
+!        if ( caca < EPS .OR. cbcb < EPS ) then
+!           !write(*,'(A,3(ES20.10))') 'zero length caca or cbcb:', caca, cbcb
+!           return
+!        endif
+!
+!        call VECTR_angle( angle(3), ocoa(:), o(:), ocob(:) )
+!
+!        ! calc area
+!        area = ( angle(1)+angle(2)+angle(3) - PI ) * radius*radius
+!
+    elseif( polygon_type == 'ON_SPHERE' ) then ! On a unit sphere
 
-       ! angle 1
-       call VECTR_cross( oaob(:), o(:), a(:), o(:), b(:) )
-       call VECTR_cross( oaoc(:), o(:), a(:), o(:), c(:) )
-       call VECTR_abs( abab, oaob(:) )
-       call VECTR_abs( acac, oaoc(:) )
+       call VECTR_angle( len(1), a(:), o(:), b(:) )
+       call VECTR_angle( len(2), b(:), o(:), c(:) )
+       call VECTR_angle( len(3), c(:), o(:), a(:) )
 
-       if ( abab < EPS .OR. acac < EPS ) then
-          !write(*,'(A,3(ES20.10))') 'zero length abab or acac:', abab, acac
-          return
-       endif
+       ! calc area (lHuillier formula)
+       len(1) = 0.5_RP * len(1)
+       len(2) = 0.5_RP * len(2)
+       len(3) = 0.5_RP * len(3)
+       s      = 0.5_RP * ( len(1) + len(2) + len(3) )
 
-       call VECTR_angle( angle(1), oaob(:), o(:), oaoc(:) )
+       x = tan( s ) * tan( s-len(1) ) * tan( s-len(2) ) * tan( s-len(3) )
+       x = max(x,0.0_RP)
 
-       ! angle 2
-       call VECTR_cross( oboc(:), o(:), b(:), o(:), c(:) )
-       oboa(:) = -oaob(:)
-       call VECTR_abs( bcbc, oboc(:) )
-       baba = abab
-
-       if ( bcbc < EPS .OR. baba < EPS ) then
-          !write(*,'(A,3(ES20.10))') 'zero length bcbc or baba:', bcbc, baba
-          return
-       endif
-
-       call VECTR_angle( angle(2), oboc(:), o(:), oboa(:) )
-
-       ! angle 3
-       ocoa(:) = -oaoc(:)
-       ocob(:) = -oboc(:)
-       caca = acac
-       cbcb = bcbc
-
-       if ( caca < EPS .OR. cbcb < EPS ) then
-          !write(*,'(A,3(ES20.10))') 'zero length caca or cbcb:', caca, cbcb
-          return
-       endif
-
-       call VECTR_angle( angle(3), ocoa(:), o(:), ocob(:) )
-
-       ! calc area
-       area = ( angle(1)+angle(2)+angle(3) - PI ) * radius*radius
+       area = 4.0_RP * atan(sqrt(x)) * radius*radius
 
     endif
 
