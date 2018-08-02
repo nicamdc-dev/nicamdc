@@ -100,9 +100,9 @@ ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
 ln -sv ${TOPDIR}/data/zaxis .
 EOFICO2LL1
 
-for f in $( ls ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/ )
+for f in $( ls ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/ )
 do
-   echo "ln -sv ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/${f} ." >> ico2ll.sh
+   echo "ln -sv ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/${f} ." >> ico2ll.sh
 done
 
 cat << EOFICO2LL2 >> ico2ll.sh
@@ -159,9 +159,9 @@ ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
 ln -sv ${TOPDIR}/data/zaxis .
 EOFICO2LLNC1
 
-for f in $( ls ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/ )
+for f in $( ls ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/ )
 do
-   echo "ln -sv ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/${f} ." >> ico2ll_netcdf.sh
+   echo "ln -sv ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/${f} ." >> ico2ll_netcdf.sh
 done
 
 cat << EOFICO2LLNC2 >> ico2ll_netcdf.sh

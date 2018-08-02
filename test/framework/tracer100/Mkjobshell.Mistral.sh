@@ -93,9 +93,9 @@ ln -svf ${TOPDIR}/data/mnginfo/${MNGINFO} .
 ln -svf ${TOPDIR}/data/zaxis .
 EOFICO2LL1
 
-for f in $( ls ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/ )
+for f in $( ls ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/ )
 do
-   echo "ln -svf ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/${f} ." >> ico2ll.sh
+   echo "ln -svf ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/${f} ." >> ico2ll.sh
 done
 
 cat << EOFICO2LL2 >> ico2ll.sh
