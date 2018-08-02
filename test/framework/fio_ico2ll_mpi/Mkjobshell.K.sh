@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpiexec --oversubscribe -np ${NMPI}"
+MPIEXEC="mpiexec"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -30,45 +30,42 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
+# for K computer
+if [ ${NMPI} -gt 36864 ]; then
+   rscgrp="huge"
+elif [ ${NMPI} -gt 384 ]; then
+   rscgrp="large"
+else
+   rscgrp="small"
+fi
+
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ FOR MacOSX & gfortran7.3 & OpenMPI3.0 -----
+# for K computer
 #
 ################################################################################
-export FORT_FMT_RECL=400
-export GFORTRAN_UNBUFFERED_ALL=Y
-export OMP_NUM_THREADS=1
-
-ln -sv ${TOPDIR}/bin/${BINNAME} .
-ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
-ln -sv ${TOPDIR}/data/zaxis .
-EOF1
-
-if ls ../../mkllmap/gl${GL}rl${RL}/sample_${res2d}.pe* > /dev/null 2>&1
-then
-   for f in $( ls ../../mkllmap/gl${GL}rl${RL}/sample_${res2d}.pe* )
-   do
-      echo "ln -sv ../../mkllmap/gl${GL}rl${RL}/${f} ." >> run.sh
-   done
-else
-   echo "sample data in mkllmap is not found!"
-   exit 1
-fi
-
-if ls ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/llmap.info > /dev/null 2>&1
-then
-   for f in $( ls ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/ )
-   do
-      echo "ln -sv ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/${f} ." >> run.sh
-   done
-else
-   echo "llmap data is not found!"
-   exit 1
-fi
-
-cat << EOF2 >> run.sh
+#PJM --rsc-list "rscgrp=${rscgrp}"
+#PJM --rsc-list "node=${NMPI}"
+#PJM --rsc-list "elapse=01:00:00"
+#PJM --stg-transfiles all
+#PJM --mpi "use-rankdir"
+#PJM --stgin  "rank=* ${TOPDIR}/bin/${BINNAME}                            %r:./"
+#PJM --stgin  "rank=* ${TOPDIR}/data/mnginfo/${MNGINFO}                   %r:./"
+#PJM --stgin  "rank=* ${TOPDIR}/data/zaxis/*                              %r:./"
+#PJM --stgin  "rank=* ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/llmap.*    %r:./"
+#PJM --stgin  "rank=* ../../mkllmap/gl${GL}rl${RL}/sample_${res2d}.pe%06r %r:./"
+#PJM --stgout "rank=* %r:./llmap.*     ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/"
+#PJM --stgout "rank=* %r:./*           ./"
+#PJM -j
+#PJM -s
+#
+. /work/system/Env_base
+#
+export PARALLEL=8
+export OMP_NUM_THREADS=8
+export XOS_MMM_L_ARENA_FREE=2
 
 # run
 ${MPIEXEC} ./${BINNAME} sample_${res2d} \
@@ -80,4 +77,4 @@ ${MPIEXEC} ./${BINNAME} sample_${res2d} \
            -lon_swap -output_netcdf || exit
 
 ################################################################################
-EOF2
+EOF1

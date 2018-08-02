@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpiexec --oversubscribe -np ${NMPI}"
+MPIEXEC="mpirun --mca btl openib,self"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -30,16 +30,34 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
+NNODE=`expr \( $NMPI - 1 \) / 20 + 1`
+NPROC=`expr $NMPI / $NNODE`
+
+if [ ${NNODE} -gt 16 ]; then
+   rscgrp="l"
+elif [ ${NNODE} -gt 3 ]; then
+   rscgrp="m"
+else
+   rscgrp="s"
+fi
+
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ FOR MacOSX & gfortran7.3 & OpenMPI3.0 -----
+# ------ FOR Linux64 & intel C&fortran & mpt & torque -----
 #
 ################################################################################
+#PBS -q ${rscgrp}
+#PBS -l nodes=${NNODE}:ppn=${NPROC}
+#PBS -N ico2ll_gl${GL}rl${RL}
+#PBS -l walltime=05:00:00
+#PBS -o STDOUT
+#PBS -e STDERR
 export FORT_FMT_RECL=400
 export GFORTRAN_UNBUFFERED_ALL=Y
-export OMP_NUM_THREADS=1
+
+cd \$PBS_O_WORKDIR
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .

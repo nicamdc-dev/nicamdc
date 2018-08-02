@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpiexec --oversubscribe -np ${NMPI}"
+MPIEXEC="mpirun -np ${NMPI}"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -34,12 +34,12 @@ cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ FOR MacOSX & gfortran7.3 & OpenMPI3.0 -----
+# ------ FOR Linux64 & pgi C&fortran & openmpi -----
 #
 ################################################################################
 export FORT_FMT_RECL=400
-export GFORTRAN_UNBUFFERED_ALL=Y
-export OMP_NUM_THREADS=1
+
+
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
