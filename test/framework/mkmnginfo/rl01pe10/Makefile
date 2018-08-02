@@ -9,13 +9,13 @@ TESTDIR   = ../../..
 
 
 # parameters for run
-glevel    = 5
-rlevel    = 0
-nmpi      = 1
+glevel    = none
+rlevel    = none
+nmpi      = none
 zlayer    = none
 vgrid     = none
 
-BINNAME   = mkrawgrid
+BINNAME   = mkmnginfo
 
 # build, makedir, run, jobshell, allclean, clean is inside of common Makefile
 include $(TESTDIR)/Makefile.common
