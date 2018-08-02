@@ -1,0 +1,30 @@
+################################################################################
+#
+# NICAM-DC mkllmap config
+#
+################################################################################
+
+&ADMPARAM
+    glevel      = #glevel#,
+    rlevel      = #rlevel#,
+    vlayer      = 1,
+    rgnmngfname = "#rl#-#prc#.info",
+/
+
+&GRDPARAM
+    hgrid_io_mode = 'ADVANCED',
+    hgrid_fname   = 'boundary_#GL##RL#',
+    topo_fname    = 'NONE',
+    toposd_fname  = 'NONE',
+/
+
+&LATLONPARAM
+    imax                = 360,
+    jmax                = 180,
+    latmin_deg          = -90.D0,
+    latmax_deg          =  90.D0,
+    polar_limit_deg     =  85.D0,
+    SAMPLE_OUT_BASENAME = "sample_#GL##RL#",
+/
+
+################################################################################

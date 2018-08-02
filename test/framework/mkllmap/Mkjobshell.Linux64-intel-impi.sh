@@ -8,6 +8,9 @@ VGRID=${5}
 TOPDIR=${6}
 BINNAME=${7}
 
+# System specific
+MPIEXEC="mpirun -np ${NMPI}"
+
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
 if   [ ${NMPI} -ge 10000 ]; then
@@ -27,38 +30,31 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-outdir=${dir3d}
-cd ${outdir}
-
-##### Generate config file
-cat << EOFNHM > ${BINNAME}.cnf
+cat << EOF1 > run.sh
+#! /bin/bash -x
 ################################################################################
 #
-# NICAM tool config
+# ------ FOR Linux64 & intel C&fortran & intel mpi -----
 #
 ################################################################################
+export FORT_FMT_RECL=400
 
-&ADMPARAM
-    glevel      = ${GLEV},
-    rlevel      = ${RLEV},
-    vlayer      = 1,
-    rgnmngfname = "${MNGINFO}",
-/
 
-&GRDPARAM
-    hgrid_fname   = "hgrid_${res2d}",
-    hgrid_io_mode = "ADVANCED",
-/
+ln -sv ${TOPDIR}/bin/${BINNAME} .
+ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
+EOF1
 
-&LATLONPARAM
-    imax                = 360,
-    jmax                = 180,
-    latmin_deg          = -90.D0,
-    latmax_deg          =  90.D0,
-    polar_limit_deg     =  85.D0,
-!    debug               =  .true.,
-    SAMPLE_OUT_BASENAME = "sample_${res2d}",
-/
+for f in $( ls ${TOPDIR}/data/grid/boundary/${dir2d} )
+do
+   echo "ln -sv ${TOPDIR}/data/grid/boundary/${dir2d}/${f} ." >> run.sh
+done
+
+cat << EOF2 >> run.sh
+
+# run
+${MPIEXEC} ./${BINNAME} || exit
+mkdir -p      ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}
+mv -f llmap.* ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/
 
 ################################################################################
-EOFNHM
+EOF2
