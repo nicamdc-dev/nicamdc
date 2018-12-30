@@ -166,7 +166,6 @@ program fio_ico2ll
   ! NetCDF handler
   type(netcdf_handler)                :: nc              ! [add] 13-04-18
   character(len=1024)                 :: nc_time_units   ! [add] 13-04-18
-  character(len=4)                    :: date_str_tmp(6) ! [add] 13-04-18
 
   ! ico data
   integer               :: GALL
@@ -234,25 +233,17 @@ program fio_ico2ll
      stop
   endif
 
-  if    (output_gtool) then
+  if (output_gtool) then
      output_grads    = .false.
      devide_template = .false.
      outfile_rec     = 1
      output_netcdf   = .false.
-     call PROF_rapstart('+FILE O GTOOL')
-     call PROF_rapend  ('+FILE O GTOOL')
   elseif(output_netcdf) then
      output_grads    = .false.
      devide_template = .false.
      outfile_rec     = 1
      output_gtool    = .false.
-     call PROF_rapstart('+FILE O NETCDF')
-     call PROF_rapend  ('+FILE O NETCDF')
-  elseif(output_grads) then
-     call PROF_rapstart('+FILE O GRADS')
-     call PROF_rapend  ('+FILE O GRADS')
   endif
-
 
   if ( trim(selectvar(1)) /= '' ) then
      allvar = .false.
@@ -278,9 +269,10 @@ program fio_ico2ll
   PRC_LOCAL_COMM_WORLD = MPI_COMM_WORLD
   PRC_nprocs           = prc_nall
 
-  call PROF_rapstart('FIO_ICO2LL_MPI')
-
   ! borrow IO_FID_LOG to share log file id between other module
+  IO_L           = .true.
+  IO_LOG_ALLNODE = .true.
+
   IO_FID_LOG = IO_get_available_fid()
   if (output_netcdf) then
      call NETCDF_set_logfid( IO_FID_LOG )
@@ -288,7 +280,9 @@ program fio_ico2ll
 
   write(rankstr,'(I6.6)') prc_myrank
   open(IO_FID_LOG, file='msg_ico2ll.pe'//trim(rankstr) )
-  write(IO_FID_LOG,*) '+++ Parallel Execution, Use MPI'
+  if( IO_L ) write(IO_FID_LOG,*) '+++ Parallel Execution, Use MPI'
+
+  call PROF_rapstart('FIO_ICO2LL_MPI')
 
   PALL_global = MNG_PALL
   LALL_global = 10 * (4**rlevel)
@@ -304,18 +298,18 @@ program fio_ico2ll
   prc_nlocal = PALL_global / prc_nall
   pstr       = prc_myrank*prc_nlocal + 1
   pend       = prc_myrank*prc_nlocal + prc_nlocal
-  write(IO_FID_LOG,*) '*** Number of Total .pexxxxxx files: ', PALL_global
-  write(IO_FID_LOG,*) '*** Number of PE to packing precess: ', prc_nall
-  write(IO_FID_LOG,*) '*** The rank of this process       : ', prc_myrank
-  write(IO_FID_LOG,*) '*** Number of files for this rank  : ', prc_nlocal
-  write(IO_FID_LOG,*) '*** file ID to pack                : ', pstr-1, ' - ', pend-1
+  if( IO_L ) write(IO_FID_LOG,*) '*** Number of Total .pexxxxxx files: ', PALL_global
+  if( IO_L ) write(IO_FID_LOG,*) '*** Number of PE to packing precess: ', prc_nall
+  if( IO_L ) write(IO_FID_LOG,*) '*** The rank of this process       : ', prc_myrank
+  if( IO_L ) write(IO_FID_LOG,*) '*** Number of files for this rank  : ', prc_nlocal
+  if( IO_L ) write(IO_FID_LOG,*) '*** file ID to pack                : ', pstr-1, ' - ', pend-1
 
   !--- setup
   call fio_syscheck()
 
   !#########################################################
 
-  write(IO_FID_LOG,*) '*** llmap read start'
+  if( IO_L ) write(IO_FID_LOG,*) '*** llmap read start'
   call PROF_rapstart('READ LLMAP')
 
   !--- Read lat-lon grid information
@@ -418,11 +412,11 @@ program fio_ico2ll
   enddo
 
   call PROF_rapend('READ LLMAP')
-  write(IO_FID_LOG,*) '*** llmap read end'
+  if( IO_L ) write(IO_FID_LOG,*) '*** llmap read end'
 
   !#########################################################
 
-  write(IO_FID_LOG,*) '*** icodata read start'
+  if( IO_L ) write(IO_FID_LOG,*) '*** icodata read start'
   call PROF_rapstart('OPEN ICODATA')
 
   ! Read icodata information (all process)
@@ -465,11 +459,11 @@ program fio_ico2ll
   enddo
 
   call PROF_rapend('OPEN ICODATA')
-  write(IO_FID_LOG,*) '*** icodata read end'
+  if( IO_L ) write(IO_FID_LOG,*) '*** icodata read end'
 
   !#########################################################
 
-  write(IO_FID_LOG,*) '*** header check start'
+  if( IO_L ) write(IO_FID_LOG,*) '*** header check start'
   call PROF_rapstart('CHECK HEADER')
 
   !--- check all header
@@ -586,8 +580,8 @@ program fio_ico2ll
   GALL = ( (2**(glevel-rlevel))+2 ) &
        * ( (2**(glevel-rlevel))+2 )
 
-  write(IO_FID_LOG,*) '*** get variable informations'
-  write(IO_FID_LOG,*) 'num_of_data    : ', num_of_data
+  if( IO_L ) write(IO_FID_LOG,*) '*** get variable informations'
+  if( IO_L ) write(IO_FID_LOG,*) 'num_of_data    : ', num_of_data
 
   if ( nvar == 0 ) then
      write(*,*) 'No variables to convert. Finish.'
@@ -595,11 +589,11 @@ program fio_ico2ll
   endif
 
   call PROF_rapend('CHECK HEADER')
-  write(IO_FID_LOG,*) '*** header check end'
+  if( IO_L ) write(IO_FID_LOG,*) '*** header check end'
 
   !#########################################################
 
-  write(IO_FID_LOG,*) '*** topography read start'
+  if( IO_L ) write(IO_FID_LOG,*) '*** topography read start'
   call PROF_rapstart('READ TOPOGRAPHY')
 
   call PROF_rapstart('+Communication')
@@ -706,20 +700,20 @@ program fio_ico2ll
   endif
 
   call PROF_rapend('READ TOPOGRAPHY')
-  write(IO_FID_LOG,*) '*** topography read end'
+  if( IO_L ) write(IO_FID_LOG,*) '*** topography read end'
 
-  write(IO_FID_LOG,*) '########## Variable List ########## '
-  write(IO_FID_LOG,*) 'ID |NAME            |STEPS|Layername       |START FROM         |DT [sec]|Xi2Z?'
+  if( IO_L ) write(IO_FID_LOG,*) '########## Variable List ########## '
+  if( IO_L ) write(IO_FID_LOG,*) 'ID |NAME            |STEPS|Layername       |START FROM         |DT [sec]|Xi2Z?'
   do v = 1, nvar
      call CALENDAR_ss2yh( date_str(:), real(var_time_str(v),kind=DP) )
      write(tmpl,'(I4.4,"/",I2.2,"/",I2.2,1x,I2.2,":",I2.2,":",I2.2)') date_str(:)
-     write(IO_FID_LOG,'(1x,I3,A1,A16,A1,I5,A1,A16,A1,A19,A1,I8,A1,L5)') &
+     if( IO_L ) write(IO_FID_LOG,'(1x,I3,A1,A16,A1,I5,A1,A16,A1,A19,A1,I8,A1,L5)') &
               v,'|',var_name(v),'|',var_nstep(v),'|',var_layername(v),'|', tmpl,'|', var_dt(v), '|', var_xi2z(v)
   enddo
 
   !#########################################################
 
-  write(IO_FID_LOG,*) '*** convert start : PaNDa format to lat-lon data'
+  if( IO_L ) write(IO_FID_LOG,*) '*** convert start : PaNDa format to lat-lon data'
   call PROF_rapstart('CONVERT')
 
   !--- start weighting summation
@@ -807,23 +801,12 @@ program fio_ico2ll
 
            call CALENDAR_ss2yh( date_str(:), real(var_time_str(v),kind=DP) )
 
-           do j = 1, 6
-              write( date_str_tmp(j), '(I4)' ) date_str(j)
-              date_str_tmp(j) = adjustl( date_str_tmp(j) )
-              if ( j == 1 ) then
-                 write(date_str_tmp(j),'(4A)') ('0',i=1,4-len_trim(date_str_tmp(j))), trim(date_str_tmp(j))
-              else
-                 write(date_str_tmp(j),'(2A)') ('0',i=1,2-len_trim(date_str_tmp(j))), trim(date_str_tmp(j))
-              endif
-           enddo
-
-           write(nc_time_units,'(6(A,A))') 'minutes since ', trim(date_str_tmp(1)), &
-                                           '-',              trim(date_str_tmp(2)), &
-                                           '-',              trim(date_str_tmp(3)), &
-                                           ' ',              trim(date_str_tmp(4)), &
-                                           ':',              trim(date_str_tmp(5)), &
-                                           ':',              trim(date_str_tmp(6))
-
+           write( nc_time_units,'(A14,I4.4,5(A,I2.2))') 'minutes since ', date_str(1), &
+                                                                     '-', date_str(2), &
+                                                                     '-', date_str(3), &
+                                                                     ' ', date_str(4), &
+                                                                     ':', date_str(5), &
+                                                                     ':', date_str(6)
            if( IO_L ) write(IO_FID_LOG,*) '  nc_time_units = ', trim(nc_time_units)
 
            allocate( lon_tmp(imax) )
@@ -937,10 +920,10 @@ program fio_ico2ll
            do l = 1, LALL_local
               if ( t == 1 ) then
                  if ( mod(l,10) == 0 ) then
-                    write(IO_FID_LOG,'(1x,I6.6)')              MNG_prc_tab(l,p)
-                    write(IO_FID_LOG,'(A)',advance='no')       '          '
+                    if( IO_L ) write(IO_FID_LOG,'(1x,I6.6)')              MNG_prc_tab(l,p)
+                    if( IO_L ) write(IO_FID_LOG,'(A)',advance='no')       '          '
                  else
-                    write(IO_FID_LOG,'(1x,I6.6)',advance='no') MNG_prc_tab(l,p)
+                    if( IO_L ) write(IO_FID_LOG,'(1x,I6.6)',advance='no') MNG_prc_tab(l,p)
                  endif
               endif
 
@@ -1014,7 +997,7 @@ program fio_ico2ll
 
            enddo ! region LOOP
 
-           if ( t==1 ) write(IO_FID_LOG,*)
+           if ( t==1 .AND. IO_L ) write(IO_FID_LOG,*)
 
         enddo ! PE LOOP
 
@@ -1151,7 +1134,7 @@ program fio_ico2ll
   enddo ! PE LOOP
 
   call PROF_rapend('CONVERT')
-  write(IO_FID_LOG,*) '*** convert finished! '
+  if( IO_L ) write(IO_FID_LOG,*) '*** convert finished! '
 
   call PROF_rapend('FIO_ICO2LL_MPI')
   call PROF_rapreport
@@ -1296,8 +1279,8 @@ contains
        write(fid,'(A)') 'ENDVARS '
     close(fid)
 
-    write(IO_FID_LOG,'(A,A)') 'Generate ',trim(outfile)//'.ctl'
-    write(*         ,'(A,A)') 'Generate ',trim(outfile)//'.ctl'
+    if( IO_L ) write(IO_FID_LOG,'(A,A)') 'Generate ',trim(outfile)//'.ctl'
+    write(*,'(A,A)')                     'Generate ',trim(outfile)//'.ctl'
 
   end subroutine makegradsctl
 

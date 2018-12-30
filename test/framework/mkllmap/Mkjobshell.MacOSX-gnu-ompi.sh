@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="openmpirun -np ${NMPI}"
+MPIEXEC="mpiexec --oversubscribe -np ${NMPI}"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -30,32 +30,32 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-outdir=${dir3d}
-cd ${outdir}
-
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ FOR MacOSX & gfortran4.6 & OpenMPI1.6 -----
+# ------ FOR MacOSX & gfortran7.3 & OpenMPI3.0 -----
 #
 ################################################################################
 export FORT_FMT_RECL=400
 export GFORTRAN_UNBUFFERED_ALL=Y
+export OMP_NUM_THREADS=1
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
-ln -sv ../../mkmnginfo/${dir3d}/${MNGINFO} .
+ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
 EOF1
 
-for f in $( ls ../../mkhgrid/${dir3d}/hgrid_${res2d}.pe* )
+for f in $( ls ${TOPDIR}/data/grid/boundary/${dir2d} )
 do
-   echo "ln -sv ${f} ." >> run.sh
+   echo "ln -sv ${TOPDIR}/data/grid/boundary/${dir2d}/${f} ." >> run.sh
 done
 
 cat << EOF2 >> run.sh
 
 # run
 ${MPIEXEC} ./${BINNAME} || exit
+mkdir -p      ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}
+mv -f llmap.* ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/
 
 ################################################################################
 EOF2

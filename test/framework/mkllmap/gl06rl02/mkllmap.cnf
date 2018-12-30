@@ -1,0 +1,30 @@
+################################################################################
+#
+# NICAM-DC mkllmap config
+#
+################################################################################
+
+&ADMPARAM
+    glevel      = 6,
+    rlevel      = 2,
+    vlayer      = 1,
+    rgnmngfname = "rl02-prc160.info",
+/
+
+&GRDPARAM
+    hgrid_io_mode = 'ADVANCED',
+    hgrid_fname   = 'boundary_GL06RL02',
+    topo_fname    = 'NONE',
+    toposd_fname  = 'NONE',
+/
+
+&LATLONPARAM
+    imax                = 360,
+    jmax                = 180,
+    latmin_deg          = -90.D0,
+    latmax_deg          =  90.D0,
+    polar_limit_deg     =  85.D0,
+    SAMPLE_OUT_BASENAME = "sample_GL06RL02",
+/
+
+################################################################################

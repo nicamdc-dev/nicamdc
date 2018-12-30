@@ -3,9 +3,8 @@
 !!
 !! @par Description
 !!          Physical constants module
-!!          Imported from SCALE library
 !!
-!! @author Team SCALE
+!! @author NICAM developers
 !!
 !<
 module mod_const

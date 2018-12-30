@@ -113,7 +113,7 @@ contains
     !---------------------------------------------------------------------------
 
     if( IO_L ) write(IO_FID_LOG,*)
-    if( IO_L ) write(IO_FID_LOG,*) '++++++ Module[PROF] / Categ[COMMON] / Origin[SCALElib]'
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[prof]/Category[common share]'
 
     !--- read namelist
     rewind(IO_FID_CONF)

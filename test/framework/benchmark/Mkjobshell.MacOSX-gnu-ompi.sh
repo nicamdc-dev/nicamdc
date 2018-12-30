@@ -39,7 +39,7 @@ cat << EOF1 > run.sh
 ################################################################################
 export FORT_FMT_RECL=400
 export GFORTRAN_UNBUFFERED_ALL=Y
-export OMP_NUM_THREADS=2
+export OMP_NUM_THREADS=1
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
@@ -76,9 +76,9 @@ ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
 ln -sv ${TOPDIR}/data/zaxis .
 EOFICO2LL1
 
-for f in $( ls ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/ )
+for f in $( ls ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/ )
 do
-   echo "ln -sv ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/${f} ." >> ico2ll.sh
+   echo "ln -sv ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/${f} ." >> ico2ll.sh
 done
 
 cat << EOFICO2LL2 >> ico2ll.sh

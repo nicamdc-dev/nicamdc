@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="openmpirun -np ${NMPI}"
+MPIEXEC="mpiexec --oversubscribe -np ${NMPI}"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -30,47 +30,54 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-outdir=${dir3d}
-cd ${outdir}
-
-cat << EOFICO2LL1 > run.sh
+cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ FOR MacOSX & gfortran4.6 & OpenMPI1.6 -----
+# ------ FOR MacOSX & gfortran7.3 & OpenMPI3.0 -----
 #
 ################################################################################
 export FORT_FMT_RECL=400
 export GFORTRAN_UNBUFFERED_ALL=Y
+export OMP_NUM_THREADS=1
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
-ln -sv ../../mkmnginfo/${dir3d}/${MNGINFO} .
+ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
 ln -sv ${TOPDIR}/data/zaxis .
-EOFICO2LL1
+EOF1
 
-for f in $( ls ../../mkllmap/${dir3d}/sample_${res2d}.pe* )
-do
-   echo "ln -sv ${f} ." >> run.sh
-done
+if ls ../../mkllmap/gl${GL}rl${RL}/sample_${res2d}.pe* > /dev/null 2>&1
+then
+   for f in $( ls ../../mkllmap/gl${GL}rl${RL}/sample_${res2d}.pe* )
+   do
+      echo "ln -sv ../../mkllmap/gl${GL}rl${RL}/${f} ." >> run.sh
+   done
+else
+   echo "sample data in mkllmap is not found!"
+   exit 1
+fi
 
-for f in $( ls ../../mkllmap/${dir3d}/llmap.* )
-do
-   echo "ln -sv ${f} ." >> run.sh
-done
+if ls ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/llmap.info > /dev/null 2>&1
+then
+   for f in $( ls ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/ )
+   do
+      echo "ln -sv ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/${f} ." >> run.sh
+   done
+else
+   echo "llmap data is not found!"
+   exit 1
+fi
 
-cat << EOFICO2LL2 >> run.sh
+cat << EOF2 >> run.sh
 
 # run
-${MPIEXEC} ./fio_ico2ll_mpi \
-sample_${res2d} \
-glevel=${GLEV} \
-rlevel=${RLEV} \
-mnginfo="./${MNGINFO}" \
-layerfile_dir="./zaxis" \
-llmap_base="./llmap" \
-nlim_llgrid=1000000 \
--lon_swap \
--comm_smallchunk
+${MPIEXEC} ./${BINNAME} sample_${res2d} \
+           glevel=${GLEV} \
+           rlevel=${RLEV} \
+           mnginfo="./${MNGINFO}" \
+           layerfile_dir="./zaxis" \
+           llmap_base="./llmap" \
+           -lon_swap -output_netcdf || exit
 
 ################################################################################
-EOFICO2LL2
+EOF2

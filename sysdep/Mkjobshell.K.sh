@@ -89,7 +89,7 @@ cat << EOFICO2LL1 > ico2ll.sh
 #PJM --stgin  "rank=* ${TOPDIR}/data/mnginfo/${MNGINFO} %r:./"
 #PJM --stgin  "rank=* ${TOPDIR}/data/zaxis/*            %r:./"
 #PJM --stgin  "rank=* ./history.pe%06r                  %r:./"
-#PJM --stgin  "rank=* ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/llmap.* %r:./"
+#PJM --stgin  "rank=* ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/llmap.* %r:./"
 #PJM --stgout "rank=* %r:./*           ./"
 #PJM --stgout "rank=0 ../*             ./"
 #PJM -j

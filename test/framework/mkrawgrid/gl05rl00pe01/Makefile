@@ -11,7 +11,7 @@ TESTDIR   = ../../..
 # parameters for run
 glevel    = 5
 rlevel    = 0
-nmpi      = 01
+nmpi      = 1
 zlayer    = none
 vgrid     = none
 
