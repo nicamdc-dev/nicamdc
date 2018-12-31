@@ -63,6 +63,8 @@ module mod_io_param
   integer, public, parameter :: IO_DUMP_ALL      = 2 !< Dump all
   integer, public, parameter :: IO_DUMP_ALL_MORE = 3 !< Dump all and more
 
+  integer, public, parameter :: IO_preclist(0:3) = (/ 4, 8, 4, 8 /)
+
   !-----------------------------------------------------------------------------
   !
   !++ Private procedures
