@@ -37,6 +37,7 @@ dir2d_I=gl${GL}rl${RL_I}pe${NP_I}
 res2d_I=GL${GL}RL${RL_I}
 dir2d_O=gl${GL}rl${RL_O}pe${NP_O}
 res2d_O=GL${GL}RL${RL_O}
+BNDDIR="${TOPDIR}/data/grid/boundary"
 
 MNGINFO_I=rl${RL_I}-prc${NP_I}.info
 MNGINFO_O=rl${RL_O}-prc${NP_O}.info
@@ -66,6 +67,7 @@ cat << EOF1 > run.sh
 #PJM --stgin  "rank=* ${TOPDIR}/data/mnginfo/${MNGINFO_I}                 %r:./"
 #PJM --stgin  "rank=* ${TOPDIR}/data/mnginfo/${MNGINFO_O}                 %r:./"
 #PJM --stgin  "rank=* ${TOPDIR}/data/grid/boundary/${dir2d}/boundary_${res2d}.pe%06r %r:./"
+#PJM --stgout "rank=* %r:./${dir2d_O}/boundary*.pe%06r    ./${BNDDIR}/${dir2d}/"
 #PJM --stgout "rank=* %r:./* ./"
 #PJM -j
 #PJM -s

@@ -33,7 +33,7 @@ cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ For Linux64 & intel C&fortran & intel mpi -----
+# ------ For Linux64 & GNU C&fortran & openmpi -----
 #
 ################################################################################
 export FORT_FMT_RECL=400
@@ -68,7 +68,7 @@ cat << EOF2 >> run.sh
 
 # run
 ${MPIEXEC} ./${BINNAME} mkhgrid.cnf || exit
-mkdir -p ${BNDDIR}/${ODIR}
+mkdir -p ${BNDDIR}/${dir2d}
 mv -f boundary*.pe* ${BNDDIR}/${dir2d}
 
 ################################################################################

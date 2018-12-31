@@ -27,8 +27,7 @@ do
    done
 
    rlevel=1
-#   for nmpi in 1 2 4 5 8 10 20 40
-   for nmpi in 4 8 20 40
+   for nmpi in 1 2 4 5 8 10 20 40
    do
       GL=`printf %02d ${glevel}`
       RL=`printf %02d ${rlevel}`
@@ -51,8 +50,7 @@ do
    done
 
    rlevel=2
-#   for nmpi in 1 2 4 5 8 10 16 20 32 40 80 160
-   for nmpi in 1 2 4 16 20 32 40 80 160
+   for nmpi in 1 2 4 5 8 10 16 20 32 40 80 160
    do
       GL=`printf %02d ${glevel}`
       RL=`printf %02d ${rlevel}`

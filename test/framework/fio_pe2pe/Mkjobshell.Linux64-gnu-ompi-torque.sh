@@ -90,6 +90,7 @@ ${MPIEXEC} ./${BINNAME} boundary_${res2d_I} outfile="./${dir2d_O}/boundary_${res
            glevel=${GLEV} \
            rlevel_in=${RLEV_I}  mnginfo_in="./${MNGINFO_I}"  \
            rlevel_out=${RLEV_O} mnginfo_out="./${MNGINFO_O}" || exit
+mv -f ./${dir2d_O} ${TOPDIR}/data/grid/boundary/
 rm -f dump*
 
 ################################################################################
