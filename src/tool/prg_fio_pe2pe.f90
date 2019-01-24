@@ -189,15 +189,17 @@ program fio_pe2pe
   prc_nlocal = MNG_PALL_in / prc_nall
   pstr       = prc_myrank*prc_nlocal + 1
   pend       = prc_myrank*prc_nlocal + prc_nlocal
+  write(fid_log,*)
   write(fid_log,*) '*** For Input *** '
   write(fid_log,*) '*** Number of Total .pexxxxxx files : ', MNG_PALL_in
   write(fid_log,*) '*** Number of PE to packing precess : ', prc_nall
   write(fid_log,*) '*** The rank of this process        : ', prc_myrank
   write(fid_log,*) '*** Number of files for this rank   : ', prc_nlocal
   write(fid_log,*) '*** file ID to pack                 : ', pstr-1, ' - ', pend-1
+  write(fid_log,*)
 
   do p = pstr, pend
-     write(fid_log,*) '+pe:', p-1
+     write(fid_log,'(1x,A,I6.6)') '+pe= ', p-1
 
      call fio_mk_fname(fname, trim(infile(1)),'pe',p-1,6)
 
@@ -214,15 +216,15 @@ program fio_pe2pe
         pkg_note  = hinfo%note
         nmax_data = hinfo%num_of_data
         allocate( dinfo(0:nmax_data-1) )
-        rgnid_in(:) = hinfo%rgnid(:) + 1
      endif
+     rgnid_in(:) = hinfo%rgnid(:)
 
-     write(fid_log,*) '++input : ', trim(fname), ' (n=', nmax_data, ')'
+     write(fid_log,*) '+input: ', trim(fname), ' (n=', nmax_data, ')'
 
      do did = 0, nmax_data-1
         ! get datainfo from input file
         call fio_get_datainfo(fid,did,dinfo(did))
-        write(fid_log,*) '-did=', did, ', name=', dinfo(did)%varname
+        write(fid_log,'(1x,A,I4.4,2A)') '+variable id= ', did, ', name: ', trim(dinfo(did)%varname)
 
         KALL  = dinfo(did)%num_of_layer
         oprec = IO_preclist(dinfo(did)%datatype)
@@ -239,6 +241,11 @@ program fio_pe2pe
            data4_3D_in = reshape( data4_1D,shape(data4_3D_in) )
 
            do l = 1, LALL_in
+              write(fid_log,'(1x,A,I6.6,2ES11.3)') ' +in (rgnid,min,max)= ',   &
+                                                   rgnid_in(l),                &
+                                                   minval(data4_3D_in(:,:,l)), &
+                                                   maxval(data4_3D_in(:,:,l))
+
               call devideregion_SP( glevel,              & ! [IN]
                                     rlevel_in,           & ! [IN]
                                     rlevel_out,          & ! [IN]
@@ -252,6 +259,11 @@ program fio_pe2pe
                                     data4_3D_out(:,:,:)  ) ! [OUT]
 
               do n = 1, ndivide*ndivide
+                 write(fid_log,'(1x,A,I6.6,2ES11.3)') ' +out(rgnid,min,max)= ',    &
+                                                      rgnid_div(n),                &
+                                                      minval(data4_3D_out(:,:,n)), &
+                                                      maxval(data4_3D_out(:,:,n))
+
                  write(fname_dump,'(A4,I4.4,I6.6)') 'dump', did, rgnid_div(n)
 
                  fid_dump = IO_get_available_fid()
@@ -281,6 +293,11 @@ program fio_pe2pe
            data8_3D_in = reshape( data8_1D,shape(data8_3D_in) )
 
            do l = 1, LALL_in
+              write(fid_log,'(1x,A,I6.6,2ES11.3)') ' +in (rgnid,min,max)= ',   &
+                                                   rgnid_in(l),                &
+                                                   minval(data8_3D_in(:,:,l)), &
+                                                   maxval(data8_3D_in(:,:,l))
+
               call devideregion_DP( glevel,              & ! [IN]
                                     rlevel_in,           & ! [IN]
                                     rlevel_out,          & ! [IN]
@@ -293,11 +310,13 @@ program fio_pe2pe
                                     rgnid_div   (:),     & ! [OUT]
                                     data8_3D_out(:,:,:)  ) ! [OUT]
 
-              write(fid_log,*) '-l=', l
-              write(fid_log,*) ' -in :', maxval(data8_3D_in(:,:,l)),minval(data8_3D_in(:,:,l))
               do n = 1, ndivide*ndivide
+                 write(fid_log,'(1x,A,I6.6,2ES11.3)') ' +out(rgnid,min,max)= ',    &
+                                                      rgnid_div(n),                &
+                                                      minval(data8_3D_out(:,:,n)), &
+                                                      maxval(data8_3D_out(:,:,n))
+
                  write(fname_dump,'(A4,I4.4,I6.6)') 'dump', did, rgnid_div(n)
-                 write(fid_log,*) ' -out:', maxval(data8_3D_out(:,:,n)),minval(data8_3D_out(:,:,n))
 
                  fid_dump = IO_get_available_fid()
                  open( unit   = fid_dump,            &
@@ -324,15 +343,17 @@ program fio_pe2pe
   prc_nlocal = MNG_PALL_out / prc_nall
   pstr       = prc_myrank*prc_nlocal + 1
   pend       = prc_myrank*prc_nlocal + prc_nlocal
-  write(fid_log,*) '*** For Input *** '
+  write(fid_log,*)
+  write(fid_log,*) '*** For Output *** '
   write(fid_log,*) '*** Number of Total .pexxxxxx files : ', MNG_PALL_out
   write(fid_log,*) '*** Number of PE to packing precess : ', prc_nall
   write(fid_log,*) '*** The rank of this process        : ', prc_myrank
   write(fid_log,*) '*** Number of files for this rank   : ', prc_nlocal
   write(fid_log,*) '*** file ID to pack                 : ', pstr-1, ' - ', pend-1
+  write(fid_log,*)
 
   do p = pstr, pend
-     write(fid_log,*) '+pe:', p-1
+!     write(fid_log,'(1x,A,I6.6)') '+pe= ', p-1
 
      rgnid_out(1:LALL_out) = MNG_prc_tab_out(1:LALL_out,p)-1
 
@@ -350,9 +371,11 @@ program fio_pe2pe
      call fio_fopen(fid,IO_FWRITE)
      call fio_put_write_pkginfo(fid,pkg_desc,pkg_note)
 
-     write(fid_log,*) '++output : ', trim(fname), ' (n=', nmax_data, ')'
+     write(fid_log,*) '+output : ', trim(fname), ' (n=', nmax_data, ')'
 
      do did = 0, nmax_data-1
+        write(fid_log,'(1x,A,I4.4,2A)') '+variable id= ', did, ', name: ', trim(dinfo(did)%varname)
+
         KALL  = dinfo(did)%num_of_layer
         oprec = IO_preclist(dinfo(did)%datatype)
 
@@ -502,27 +525,26 @@ contains
     rgn_1d_in   = 2**rlevel_in
     rgn_1d_out  = 2**rlevel_out
 
-    dmdid       = (rgnid_in-1) / (rgn_1d_in*rgn_1d_in) + 1
-
-    rij_in = rgnid_in - (dmdid-1)*rgn_1d_in*rgn_1d_in
-    rj_in  = mod(rij_in-1,rgn_1d_in)
-    ri_in  = (rgnid_in-1) / rgn_1d_in + 1
+    dmdid  =     rgnid_in/rgn_1d_in**2
+    rij_in = mod(rgnid_in,rgn_1d_in**2)
+    rj_in  =     rij_in/rgn_1d_in
+    ri_in  = mod(rij_in,rgn_1d_in)
 
     do j = 1, ndivide
     do i = 1, ndivide
        n = (j-1)*ndivide + i
 
-       rj_out = mod(rij_in-1,rgn_1d_in)
-       ri_out = (ri_in-1)*ndivide + 1
+       rj_out  = rj_in*ndivide
+       ri_out  = ri_in*ndivide
+       rij_out = rj_out*rgn_1d_out + ri_out &
+               + (j-1) *rgn_1d_out + (i-1)
 
-       rij_out = (j-1)*rgn_1d_out + i
-
-       rgnid_div(n) = (dmdid-1)*rgn_1d_out*rgn_1d_out + rij_out
+       rgnid_div(n) = dmdid*rgn_1d_out*rgn_1d_out + rij_out
 
        do gj_out = 1, grid_1d_out
        do gi_out = 1, grid_1d_out
-          gj_in = (j-1)*grid_1d_out + gj_out
-          gi_in = (i-1)*grid_1d_out + gi_out
+          gj_in = (j-1)*(grid_1d_out-2) + gj_out
+          gi_in = (i-1)*(grid_1d_out-2) + gi_out
 
           gij_in  = (gj_in -1)*grid_1d_in  + gi_in
           gij_out = (gj_out-1)*grid_1d_out + gi_out
@@ -581,22 +603,21 @@ contains
     rgn_1d_in   = 2**rlevel_in
     rgn_1d_out  = 2**rlevel_out
 
-    dmdid       = (rgnid_in-1) / (rgn_1d_in*rgn_1d_in) + 1
-
-    rij_in = rgnid_in - (dmdid-1)*rgn_1d_in*rgn_1d_in
-    rj_in  = mod(rij_in-1,rgn_1d_in) + 1
-    ri_in  = (rgnid_in-1) / rgn_1d_in + 1
+    dmdid  =     rgnid_in/rgn_1d_in**2
+    rij_in = mod(rgnid_in,rgn_1d_in**2)
+    rj_in  =     rij_in/rgn_1d_in
+    ri_in  = mod(rij_in,rgn_1d_in)
 
     do j = 1, ndivide
     do i = 1, ndivide
        n = (j-1)*ndivide + i
 
-       rj_out = mod(rij_in-1,rgn_1d_in) + 1
-       ri_out = (ri_in-1)*ndivide + 1
+       rj_out  = rj_in*ndivide
+       ri_out  = ri_in*ndivide
+       rij_out = rj_out*rgn_1d_out + ri_out &
+               + (j-1) *rgn_1d_out + (i-1)
 
-       rij_out = (j-1)*rgn_1d_out + i
-
-       rgnid_div(n) = (dmdid-1)*rgn_1d_out*rgn_1d_out + rij_out - 1
+       rgnid_div(n) = dmdid*rgn_1d_out*rgn_1d_out + rij_out
 
        do gj_out = 1, grid_1d_out
        do gi_out = 1, grid_1d_out
