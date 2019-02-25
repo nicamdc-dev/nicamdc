@@ -80,6 +80,10 @@ module mod_prgvar
   character(len=H_SHORT), private :: output_io_mode = 'ADVANCED'
   logical,                private :: allow_missingq = .false.
 
+  character(len=H_LONG),  private :: restart_ref_basename = ''
+  character(len=H_SHORT), private :: ref_io_mode          = 'ADVANCED'
+  logical,                private :: verification         = .false.
+
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
@@ -101,16 +105,20 @@ contains
 
     character(len=H_LONG)  :: input_basename    = ''
     character(len=H_LONG)  :: output_basename   = 'restart'
+    character(len=H_LONG)  :: ref_basename      = 'reference'
     character(len=H_SHORT) :: restart_layername = ''
 
     namelist / RESTARTPARAM / &
        TRC_vmax_input,    &
        input_basename,    &
        output_basename,   &
+       ref_basename,      &
        restart_layername, &
        input_io_mode,     &
        output_io_mode,    &
-       allow_missingq
+       ref_io_mode,       &
+       allow_missingq,    &
+       verification
 
     integer  :: ierr
     !---------------------------------------------------------------------------
@@ -132,6 +140,7 @@ contains
 
     restart_input_basename  = input_basename
     restart_output_basename = output_basename
+    restart_ref_basename    = ref_basename
     layername               = restart_layername
 
     if( IO_L ) write(IO_FID_LOG,*)
@@ -907,22 +916,34 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine restart_output( basename )
+    use mod_process, only: &
+       PRC_IsMaster
     use mod_adm, only: &
+       ADM_gall,    &
+       ADM_gall_pl, &
        ADM_kall,    &
+       ADM_lall,    &
+       ADM_lall_pl, &
        ADM_kmax,    &
        ADM_kmin
     use mod_io_param, only: &
        IO_REAL8
+    use mod_comm, only: &
+       COMM_var
     use mod_fio, only: &
+       FIO_input, &
        FIO_output
     use mod_hio, only: &
+       HIO_input, &
        HIO_output
     use mod_time, only: &
        TIME_CTIME
     use mod_statistics, only: &
-       GTL_max, &
+       GTL_global_mean, &
+       GTL_max,         &
        GTL_min
     use mod_runconf, only: &
+       DIAG_vmax, &
        DIAG_name, &
        TRC_vmax,  &
        TRC_name,  &
@@ -953,7 +974,12 @@ contains
 
     character(len=H_SHORT) :: WUNIT = 'kg/kg'
 
-    real(RP) :: val_max, val_min
+    real(RP) :: DIAG_ref    (ADM_gall   ,ADM_kall,ADM_lall   ,DIAG_vmax)
+    real(RP) :: DIAG_ref_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,DIAG_vmax)
+    real(RP) :: DIAG_ref2   (ADM_gall   ,ADM_kall,ADM_lall   ,DIAG_vmax)
+    real(RP) :: DIAG_ref2_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,DIAG_vmax)
+
+    real(RP) :: val_max, val_min, val_rmse
     logical  :: nonzero
 
     integer  :: nq
@@ -993,31 +1019,132 @@ contains
        if( IO_L ) write(IO_FID_LOG,'(1x,A,A16,2(A,1PE24.17))') '--- ', TRC_name(nq),  ': max=', val_max, ', min=', val_min
     enddo
 
-    if ( output_io_mode == 'ADVANCED' ) then
+    if ( verification ) then
 
+       if ( ref_io_mode == 'ADVANCED' ) then
+
+          do nq = 1, DIAG_vmax0
+             call FIO_input( DIAG_ref(:,:,:,nq),restart_ref_basename,DIAG_name(nq), &
+                             layername,1,ADM_kall,1                                 )
+          enddo
+
+          do nq = 1, TRC_vmax_input
+             call FIO_input( DIAG_ref(:,:,:,DIAG_vmax0+nq),restart_ref_basename,TRC_name(nq), &
+                             layername,1,ADM_kall,1,                                          &
+                             allow_missingq=allow_missingq                                    )
+          enddo
+
+       elseif( ref_io_mode == 'POH5' ) then
+
+          do nq = 1, DIAG_vmax0
+             call HIO_input( DIAG_ref(:,:,:,nq),restart_ref_basename,DIAG_name(nq), &
+                             layername,1,ADM_kall,1                                 )
+          enddo
+
+          do nq = 1, TRC_vmax_input
+             call HIO_input( DIAG_ref(:,:,:,DIAG_vmax0+nq),restart_ref_basename,TRC_name(nq), &
+                             layername,1,ADM_kall,1,                                          &
+                             allow_missingq=allow_missingq                                    )
+          enddo
+
+       endif !--- io_mode
+
+       call COMM_var( DIAG_ref, DIAG_ref_pl, ADM_kall, DIAG_vmax )
+
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) '====== data range check : reference variables ======'
        do nq = 1, DIAG_vmax0
-          call FIO_output( DIAG_var(:,:,:,nq), basename, desc, '', DIAG_name(nq), DLABEL(nq), '', DUNIT(nq), & ! [IN]
-                           IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                       ) ! [IN]
+          val_max = GTL_max( DIAG_ref(:,:,:,nq), DIAG_ref_pl(:,:,:,nq), ADM_kall, ADM_kmin, ADM_kmax )
+          val_min = GTL_min( DIAG_ref(:,:,:,nq), DIAG_ref_pl(:,:,:,nq), ADM_kall, ADM_kmin, ADM_kmax )
+          if( IO_L ) write(IO_FID_LOG,'(1x,A,A16,2(A,1PE24.17))') '--- ', DIAG_name(nq), ': max=', val_max, ', min=', val_min
        enddo
 
        do nq = 1, TRC_vmax
-          call FIO_output( DIAG_var(:,:,:,DIAG_vmax0+nq), basename, desc, '', TRC_name(nq), WLABEL(nq), '', WUNIT, & ! [IN]
-                           IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                             ) ! [IN]
+          val_max = GTL_max( DIAG_ref   (:,:,:,DIAG_vmax0+nq), &
+                             DIAG_ref_pl(:,:,:,DIAG_vmax0+nq), &
+                             ADM_kall, ADM_kmin, ADM_kmax      )
+
+          if ( val_max <= 0.0_RP ) then
+             nonzero = .false.
+          else
+             nonzero = .true.
+          endif
+
+          val_min = GTL_min( DIAG_ref   (:,:,:,DIAG_vmax0+nq), &
+                             DIAG_ref_pl(:,:,:,DIAG_vmax0+nq), &
+                             ADM_kall, ADM_kmin, ADM_kmax, nonzero)
+
+          if( IO_L ) write(IO_FID_LOG,'(1x,A,A16,2(A,1PE24.17))') '--- ', TRC_name(nq),  ': max=', val_max, ', min=', val_min
        enddo
 
-    elseif( output_io_mode == 'POH5' ) then
+       DIAG_ref    (:,:,:,:) = DIAG_ref   (:,:,:,:) - DIAG_var   (:,:,:,:)
+       DIAG_ref_pl (:,:,:,:) = DIAG_ref_pl(:,:,:,:) - DIAG_var_pl(:,:,:,:)
+       DIAG_ref2   (:,:,:,:) = DIAG_ref   (:,:,:,:)**2
+       DIAG_ref2_pl(:,:,:,:) = DIAG_ref_pl(:,:,:,:)**2
 
+       if( IO_L ) write(IO_FID_LOG,*)
+       if( IO_L ) write(IO_FID_LOG,*) '====== data range check : difference from the reference ======'
        do nq = 1, DIAG_vmax0
-          call HIO_output( DIAG_var(:,:,:,nq), basename, desc, '', DIAG_name(nq), DLABEL(nq), '', DUNIT(nq), & ! [IN]
-                           IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                       ) ! [IN]
+          val_max = GTL_max( DIAG_ref   (:,:,:,nq),       &
+                             DIAG_ref_pl(:,:,:,nq),       &
+                             ADM_kall, ADM_kmin, ADM_kmax )
+          val_min = GTL_min( DIAG_ref   (:,:,:,nq),       &
+                             DIAG_ref_pl(:,:,:,nq),       &
+                             ADM_kall, ADM_kmin, ADM_kmax )
+
+          if( IO_L ) write(IO_FID_LOG,'(1x,A,A16,2(A,1PE24.17))') '--- ', DIAG_name(nq), ': max=', val_max, ', min=', val_min
+
+          val_rmse = sqrt( GTL_global_mean( DIAG_ref2(:,:,:,nq), DIAG_ref2_pl(:,:,:,nq) ) )
+          if ( PRC_IsMaster ) then
+             write(*,'(1x,A,A16,3(A,1PE24.17))') '### ', DIAG_name(nq), ': max=', val_max, ', min=', val_min, ', rmse=', val_rmse
+          endif
        enddo
 
        do nq = 1, TRC_vmax
-          call HIO_output( DIAG_var(:,:,:,DIAG_vmax0+nq), basename, desc, '', TRC_name(nq), WLABEL(nq), '', WUNIT, & ! [IN]
-                           IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                             ) ! [IN]
+          val_max = GTL_max( DIAG_ref   (:,:,:,DIAG_vmax0+nq), &
+                             DIAG_ref_pl(:,:,:,DIAG_vmax0+nq), &
+                             ADM_kall, ADM_kmin, ADM_kmax      )
+          val_min = GTL_min( DIAG_ref   (:,:,:,DIAG_vmax0+nq), &
+                             DIAG_ref_pl(:,:,:,DIAG_vmax0+nq), &
+                             ADM_kall, ADM_kmin, ADM_kmax      )
+
+          if( IO_L ) write(IO_FID_LOG,'(1x,A,A16,2(A,1PE24.17))') '--- ', TRC_name(nq),  ': max=', val_max, ', min=', val_min
+
+          val_rmse = sqrt( GTL_global_mean( DIAG_ref2(:,:,:,DIAG_vmax0+nq), DIAG_ref2_pl(:,:,:,DIAG_vmax0+nq) ) )
+          if ( PRC_IsMaster ) then
+             write(*,'(1x,A,A16,3(A,1PE24.17))') '### ', TRC_name(nq), ': max=', val_max, ', min=', val_min, ', rmse=', val_rmse
+          endif
        enddo
 
-    endif !--- io_mode
+    else
+
+       if ( output_io_mode == 'ADVANCED' ) then
+
+          do nq = 1, DIAG_vmax0
+             call FIO_output( DIAG_var(:,:,:,nq), basename, desc, '', DIAG_name(nq), DLABEL(nq), '', DUNIT(nq), & ! [IN]
+                              IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                       ) ! [IN]
+          enddo
+
+          do nq = 1, TRC_vmax
+             call FIO_output( DIAG_var(:,:,:,DIAG_vmax0+nq), basename, desc, '', TRC_name(nq), WLABEL(nq), '', WUNIT, & ! [IN]
+                              IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                             ) ! [IN]
+          enddo
+
+       elseif( output_io_mode == 'POH5' ) then
+
+          do nq = 1, DIAG_vmax0
+             call HIO_output( DIAG_var(:,:,:,nq), basename, desc, '', DIAG_name(nq), DLABEL(nq), '', DUNIT(nq), & ! [IN]
+                              IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                       ) ! [IN]
+          enddo
+
+          do nq = 1, TRC_vmax
+             call HIO_output( DIAG_var(:,:,:,DIAG_vmax0+nq), basename, desc, '', TRC_name(nq), WLABEL(nq), '', WUNIT, & ! [IN]
+                              IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                             ) ! [IN]
+          enddo
+
+       endif !--- io_mode
+
+    endif !--- verification
 
     return
   end subroutine restart_output
