@@ -50,6 +50,11 @@ do
    echo "ln -sv ${TOPDIR}/data/grid/boundary/${dir2d}/${f} ." >> run.sh
 done
 
+for f in $( ls ${TOPDIR}/data/reference/benchmark_spec/${dir2d} )
+do
+   echo "ln -sv ${TOPDIR}/data/reference/benchmark_spec/${dir2d}/${f} ." >> run.sh
+done
+
 cat << EOF2 >> run.sh
 
 # run

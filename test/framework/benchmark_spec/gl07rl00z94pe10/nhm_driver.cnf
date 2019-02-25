@@ -39,8 +39,8 @@
 
 &RESTARTPARAM
     input_io_mode     = 'IDEAL',
-    output_io_mode    = 'ADVANCED',
-    output_basename   = 'restart_all_GL07RL00z94',
+    verification      = .true.,
+    ref_basename      = 'restart_all_GL07RL00z94',
     restart_layername = 'ZSALL96',
 /
 
