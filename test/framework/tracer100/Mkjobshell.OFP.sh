@@ -41,7 +41,7 @@ cat << EOF1 > run.sh
 # ------ FOR Oakforest-PACS -----
 #
 ################################################################################
-#PJM -g gc26
+#PJM -g jh180023
 #PJM -L rscgrp=regular-cache
 #PJM -L node=${NNODE}
 #PJM --mpi proc=${NMPI}

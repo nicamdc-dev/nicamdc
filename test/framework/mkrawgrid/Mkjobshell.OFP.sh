@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpirun -np ${NMPI}"
+MPIEXEC="mpiexec.hydra -n ${NMPI}"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -25,14 +25,48 @@ fi
 
 MNGINFO=rl${RL}-prc${NP}.info
 
+NNODE=`expr \( $NMPI - 1 \) / 64 + 1`
+NPROC=`expr $NMPI / $NNODE`
+NPIND=`expr \( 255 \) / $NPROC + 1`
+
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ For Linux64 & intel C&fortran & intel mpi -----
+# ------ FOR Oakforest-PACS -----
 #
 ################################################################################
+#PJM -g jh180023
+#PJM -L rscgrp=regular-cache
+#PJM -L node=${NNODE}
+#PJM --mpi proc=${NMPI}
+#PJM --omp thread=1
+#PJM -L elapse=06:00:00
+#PJM -N NICAMDC
+#PJM -j
+#PJM -s
+#
+module load hdf5_szip
+module load hdf5
+module load netcdf
+module load netcdf-fortran
+
 export FORT_FMT_RECL=400
+
+export HFI_NO_CPUAFFINITY=1
+export I_MPI_PIN_PROCESSOR_EXCLUDE_LIST=0,1,68,69,136,137,204,205
+export I_MPI_HBW_POLICY=hbw_bind,,
+export I_MPI_FABRICS_LIST=tmi
+unset KMP_AFFINITY
+#export KMP_AFFINITY=verbose
+#export I_MPI_DEBUG=5
+
+export OMP_NUM_THREADS=1
+export I_MPI_PIN_DOMAIN=${NPIND}
+export I_MPI_PERHOST=${NPROC}
+export KMP_HW_SUBSET=1t
+export I_MPI_FABRICS=shm:tmi
+export I_MPI_HARD_FINALIZE=1
 
 
 ln -svf ${TOPDIR}/bin/${BINNAME} .

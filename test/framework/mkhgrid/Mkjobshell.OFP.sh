@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpiexec"
+MPIEXEC="mpiexec.hydra -n ${NMPI}"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -29,37 +29,59 @@ BNDDIR="${TOPDIR}/data/grid/boundary"
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-# for K computer
-if [ ${NMPI} -gt 36864 ]; then
-   rscgrp="huge"
-elif [ ${NMPI} -gt 384 ]; then
-   rscgrp="large"
-else
-   rscgrp="small"
-fi
+NNODE=`expr \( $NMPI - 1 \) / 64 + 1`
+NPROC=`expr $NMPI / $NNODE`
+NPIND=`expr \( 255 \) / $NPROC + 1`
 
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ For K computer
+# ------ FOR Oakforest-PACS -----
 #
 ################################################################################
-#PJM --rsc-list "rscgrp=${rscgrp}"
-#PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=00:30:00"
-#PJM --stg-transfiles all
-#PJM --mpi "use-rankdir"
-#PJM --stgin  "rank=* ${TOPDIR}/bin/${BINNAME} %r:./"
-#PJM --stgin  "rank=* ./mkhgrid.cnf            %r:./"
+#PJM -g jh180023
+#PJM -L rscgrp=regular-cache
+#PJM -L node=${NNODE}
+#PJM --mpi proc=${NMPI}
+#PJM --omp thread=1
+#PJM -L elapse=00:30:00
+#PJM -N NICAMDC
+#PJM -j
+#PJM -s
+#
+module load hdf5_szip
+module load hdf5
+module load netcdf
+module load netcdf-fortran
+
+export FORT_FMT_RECL=400
+
+export HFI_NO_CPUAFFINITY=1
+export I_MPI_PIN_PROCESSOR_EXCLUDE_LIST=0,1,68,69,136,137,204,205
+export I_MPI_HBW_POLICY=hbw_bind,,
+export I_MPI_FABRICS_LIST=tmi
+unset KMP_AFFINITY
+#export KMP_AFFINITY=verbose
+#export I_MPI_DEBUG=5
+
+export OMP_NUM_THREADS=1
+export I_MPI_PIN_DOMAIN=${NPIND}
+export I_MPI_PERHOST=${NPROC}
+export KMP_HW_SUBSET=1t
+export I_MPI_FABRICS=shm:tmi
+export I_MPI_HARD_FINALIZE=1
+
+
+ln -svf ${TOPDIR}/bin/${BINNAME} .
 EOF1
 
 if   [ -f ${TOPDIR}/data/mnginfo/${MNGINFO} ]; then
    echo "mnginfo file is found in default database"
-   echo "#PJM --stgin  \"rank=* ${TOPDIR}/data/mnginfo/${MNGINFO} %r:./\"" >> run.sh
+   echo "ln -svf ${TOPDIR}/data/mnginfo/${MNGINFO} ." >> run.sh
 elif [ -f ../../mkmnginfo/rl${RL}pe${NP}/${MNGINFO} ]; then
    echo "mnginfo file is found in test directory"
-   echo "#PJM --stgin  \"rank=* ../../mkmnginfo/rl${RL}pe${NP}/${MNGINFO} %r:./\"" >> run.sh
+   echo "ln -svf ../../mkmnginfo/rl${RL}pe${NP}/${MNGINFO} ." >> run.sh
 else
    echo "mnginfo file is not found!"
    exit 1
@@ -67,26 +89,21 @@ fi
 
 if ls ../../mkrawgrid/${dir2d}/rawgrid_${res2d}.pe* > /dev/null 2>&1
 then
-   echo "#PJM --stgin  \"rank=* ../../mkrawgrid/${dir2d}/rawgrid_${res2d}.pe%06r %r:./\"" >> run.sh
+   for f in $( ls ../../mkrawgrid/${dir2d}/rawgrid_${res2d}.pe* )
+   do
+      echo "ln -svf ${f} ." >> run.sh
+   done
 else
    echo "rawgrid file is not found!"
    exit 1
 fi
 
 cat << EOF2 >> run.sh
-#PJM --stgout "rank=* %r:./boundary*.pe%06r       ./${BNDDIR}/${dir2d}/"
-#PJM --stgout "rank=* %r:./*                      ./"
-#PJM -j
-#PJM -s
-#
-. /work/system/Env_base
-#
-export PARALLEL=8
-export OMP_NUM_THREADS=8
-export XOS_MMM_L_ARENA_FREE=2
 
 # run
 ${MPIEXEC} ./${BINNAME} mkhgrid.cnf || exit
+mkdir -p ${BNDDIR}/${dir2d}
+mv -f boundary*.pe* ${BNDDIR}/${dir2d}
 
 ################################################################################
 EOF2

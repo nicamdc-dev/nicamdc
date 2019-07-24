@@ -41,17 +41,21 @@ cat << EOF1 > run.sh
 # ------ FOR Oakforest-PACS -----
 #
 ################################################################################
-#PJM -g gc26
+#PJM -g jh180023
 #PJM -L rscgrp=regular-cache
 #PJM -L node=${NNODE}
 #PJM --mpi proc=${NMPI}
 #PJM --omp thread=2
 #PJM -L elapse=00:30:00
 #PJM -N NICAMDC
-#PJM -X
 #PJM -j
 #PJM -s
 #
+module load hdf5_szip
+module load hdf5
+module load netcdf
+module load netcdf-fortran
+
 export FORT_FMT_RECL=400
 
 export HFI_NO_CPUAFFINITY=1

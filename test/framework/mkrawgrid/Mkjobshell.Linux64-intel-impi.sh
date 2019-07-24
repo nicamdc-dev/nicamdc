@@ -2,25 +2,25 @@
 
 GLEV=${1}
 RLEV=${2}
-TPROC=${3}
+NMPI=${3}
 ZL=${4}
 VGRID=${5}
 TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="mpirun -np ${TPROC}"
+MPIEXEC="mpirun -np ${NMPI}"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
-if   [ ${TPROC} -ge 10000 ]; then
-	NP=`printf %05d ${TPROC}`
-elif [ ${TPROC} -ge 1000 ]; then
-	NP=`printf %04d ${TPROC}`
-elif [ ${TPROC} -ge 100 ]; then
-	NP=`printf %03d ${TPROC}`
+if   [ ${NMPI} -ge 10000 ]; then
+	NP=`printf %05d ${NMPI}`
+elif [ ${NMPI} -ge 1000 ]; then
+	NP=`printf %04d ${NMPI}`
+elif [ ${NMPI} -ge 100 ]; then
+	NP=`printf %03d ${NMPI}`
 else
-	NP=`printf %02d ${TPROC}`
+	NP=`printf %02d ${NMPI}`
 fi
 
 MNGINFO=rl${RL}-prc${NP}.info

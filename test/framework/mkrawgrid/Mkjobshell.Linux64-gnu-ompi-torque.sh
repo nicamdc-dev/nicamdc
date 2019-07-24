@@ -2,7 +2,7 @@
 
 GLEV=${1}
 RLEV=${2}
-TPROC=${3}
+NMPI=${3}
 ZL=${4}
 VGRID=${5}
 TOPDIR=${6}
@@ -13,20 +13,20 @@ MPIEXEC="mpirun --mca btl openib,sm,self --bind-to core"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
-if   [ ${TPROC} -ge 10000 ]; then
-	NP=`printf %05d ${TPROC}`
-elif [ ${TPROC} -ge 1000 ]; then
-	NP=`printf %04d ${TPROC}`
-elif [ ${TPROC} -ge 100 ]; then
-	NP=`printf %03d ${TPROC}`
+if   [ ${NMPI} -ge 10000 ]; then
+	NP=`printf %05d ${NMPI}`
+elif [ ${NMPI} -ge 1000 ]; then
+	NP=`printf %04d ${NMPI}`
+elif [ ${NMPI} -ge 100 ]; then
+	NP=`printf %03d ${NMPI}`
 else
-	NP=`printf %02d ${TPROC}`
+	NP=`printf %02d ${NMPI}`
 fi
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-NNODE=`expr \( $TPROC - 1 \) / 20 + 1`
-NPROC=`expr $TPROC / $NNODE`
+NNODE=`expr \( $NMPI - 1 \) / 20 + 1`
+NPROC=`expr $NMPI / $NNODE`
 
 if [ ${NNODE} -gt 16 ]; then
    rscgrp="l"

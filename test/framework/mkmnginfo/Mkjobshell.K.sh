@@ -2,7 +2,7 @@
 
 GLEV=${1}
 RLEV=${2}
-TPROC=${3}
+NMPI=${3}
 ZL=${4}
 VGRID=${5}
 TOPDIR=${6}
