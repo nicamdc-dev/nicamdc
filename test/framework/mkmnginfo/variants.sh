@@ -74,3 +74,53 @@ do
    sed -e "s/#rl#/rl${RL}/g"                                 |
    sed -e "s/#prc#/prc${PE}/g"                               > ${outdir}/mkmnginfo.cnf
 done
+
+rlevel=5
+for nmpi in 160 256 320 512 640 1024 1280 2048 2560 5120 10240
+do
+   RL=`printf %02d ${rlevel}`
+   if   [ ${nmpi} -ge 10000 ]; then
+      PE=`printf %05d ${nmpi}`
+   elif [ ${nmpi} -ge 1000 ]; then
+      PE=`printf %04d ${nmpi}`
+   elif [ ${nmpi} -ge 100 ]; then
+      PE=`printf %03d ${nmpi}`
+   else
+      PE=`printf %02d ${nmpi}`
+   fi
+
+   outdir=rl${RL}pe${PE}
+   mkdir -p ${outdir}
+
+   cp ./templates/Makefile ${outdir}/Makefile
+
+   sed -e "s/#rlevel#/${rlevel}/g" ./templates/mkmnginfo.cnf |
+   sed -e "s/#nmpi#/${nmpi}/g"                               |
+   sed -e "s/#rl#/rl${RL}/g"                                 |
+   sed -e "s/#prc#/prc${PE}/g"                               > ${outdir}/mkmnginfo.cnf
+done
+
+rlevel=6
+for nmpi in 4096 8192 10240 20480 40960
+do
+   RL=`printf %02d ${rlevel}`
+   if   [ ${nmpi} -ge 10000 ]; then
+      PE=`printf %05d ${nmpi}`
+   elif [ ${nmpi} -ge 1000 ]; then
+      PE=`printf %04d ${nmpi}`
+   elif [ ${nmpi} -ge 100 ]; then
+      PE=`printf %03d ${nmpi}`
+   else
+      PE=`printf %02d ${nmpi}`
+   fi
+
+   outdir=rl${RL}pe${PE}
+   mkdir -p ${outdir}
+
+   cp ./templates/Makefile ${outdir}/Makefile
+
+   sed -e "s/#rlevel#/${rlevel}/g" ./templates/mkmnginfo.cnf |
+   sed -e "s/#nmpi#/${nmpi}/g"                               |
+   sed -e "s/#rl#/rl${RL}/g"                                 |
+   sed -e "s/#prc#/prc${PE}/g"                               > ${outdir}/mkmnginfo.cnf
+done
