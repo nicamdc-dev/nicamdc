@@ -73,3 +73,54 @@ do
    done
 
 done
+
+for glevel in 9
+do
+
+   rlevel=5
+   for nmpi in 2048
+   do
+      GL=`printf %02d ${glevel}`
+      RL=`printf %02d ${rlevel}`
+      if   [ ${nmpi} -ge 10000 ]; then
+         PE=`printf %05d ${nmpi}`
+      elif [ ${nmpi} -ge 1000 ]; then
+         PE=`printf %04d ${nmpi}`
+      elif [ ${nmpi} -ge 100 ]; then
+         PE=`printf %03d ${nmpi}`
+      else
+         PE=`printf %02d ${nmpi}`
+      fi
+
+      outdir=gl${GL}rl02pe32_rl${RL}pe${PE}
+      mkdir -p ${outdir}
+
+      sed -e "s/#glevel#/${glevel}/g" ./templates/Makefile_pe32 |
+      sed -e "s/#rlevel_out#/${rlevel}/g"                       |
+      sed -e "s/#nmpi_out#/${nmpi}/g"                           > ${outdir}/Makefile
+   done
+
+   rlevel=6
+   for nmpi in 8192
+   do
+      GL=`printf %02d ${glevel}`
+      RL=`printf %02d ${rlevel}`
+      if   [ ${nmpi} -ge 10000 ]; then
+         PE=`printf %05d ${nmpi}`
+      elif [ ${nmpi} -ge 1000 ]; then
+         PE=`printf %04d ${nmpi}`
+      elif [ ${nmpi} -ge 100 ]; then
+         PE=`printf %03d ${nmpi}`
+      else
+         PE=`printf %02d ${nmpi}`
+      fi
+
+      outdir=gl${GL}rl02pe32_rl${RL}pe${PE}
+      mkdir -p ${outdir}
+
+      sed -e "s/#glevel#/${glevel}/g" ./templates/Makefile_pe32 |
+      sed -e "s/#rlevel_out#/${rlevel}/g"                       |
+      sed -e "s/#nmpi_out#/${nmpi}/g"                           > ${outdir}/Makefile
+   done
+
+done

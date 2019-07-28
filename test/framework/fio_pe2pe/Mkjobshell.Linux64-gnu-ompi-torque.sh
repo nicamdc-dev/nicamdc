@@ -8,6 +8,8 @@ NMPI_O=${5}
 TOPDIR=${6}
 BINNAME=${7}
 
+NMPI=1 # serial execution
+
 # System specific
 MPIEXEC="mpirun --mca btl openib,self"
 
@@ -33,8 +35,8 @@ else
 	NP_O=`printf %02d ${NMPI_O}`
 fi
 
-NNODE=`expr \( $NMPI_I - 1 \) / 20 + 1`
-NPROC=`expr $NMPI_I / $NNODE`
+NNODE=`expr \( $NMPI - 1 \) / 20 + 1`
+NPROC=`expr $NMPI / $NNODE`
 
 if [ ${NNODE} -gt 16 ]; then
    rscgrp="l"
@@ -46,8 +48,10 @@ fi
 
 dir2d_I=gl${GL}rl${RL_I}pe${NP_I}
 res2d_I=GL${GL}RL${RL_I}
+res3d_I=GL${GL}RL${RL_I}z94
 dir2d_O=gl${GL}rl${RL_O}pe${NP_O}
 res2d_O=GL${GL}RL${RL_O}
+res3d_O=GL${GL}RL${RL_O}z94
 
 MNGINFO_I=rl${RL_I}-prc${NP_I}.info
 MNGINFO_O=rl${RL_O}-prc${NP_O}.info
@@ -61,7 +65,7 @@ cat << EOF1 > run.sh
 ################################################################################
 #PBS -q ${rscgrp}
 #PBS -l nodes=${NNODE}:ppn=${NPROC}
-#PBS -N pe2pe_gl${GL}rl${RL}
+#PBS -N pe2pe_gl${GL}
 #PBS -l walltime=05:00:00
 #PBS -o STDOUT
 #PBS -e STDERR
@@ -81,6 +85,11 @@ do
    echo "ln -sv ${TOPDIR}/data/grid/boundary/${dir2d_I}/${f} ." >> run.sh
 done
 
+for f in $( ls ${TOPDIR}/data/reference/benchmark_spec/${dir2d_I} )
+do
+   echo "ln -sv ${TOPDIR}/data/reference/benchmark_spec/${dir2d_I}/${f} ." >> run.sh
+done
+
 cat << EOF2 >> run.sh
 
 # run
@@ -90,8 +99,16 @@ ${MPIEXEC} ./${BINNAME} boundary_${res2d_I} outfile="./${dir2d_O}/boundary_${res
            glevel=${GLEV} \
            rlevel_in=${RLEV_I}  mnginfo_in="./${MNGINFO_I}"  \
            rlevel_out=${RLEV_O} mnginfo_out="./${MNGINFO_O}" || exit
-mv -f ./${dir2d_O} ${TOPDIR}/data/grid/boundary/
 rm -f dump*
+${MPIEXEC} ./${BINNAME} restart_all_${res3d_I} outfile="./${dir2d_O}/restart_all_${res3d_O}" \
+           glevel=${GLEV} \
+           rlevel_in=${RLEV_I}  mnginfo_in="./${MNGINFO_I}"  \
+           rlevel_out=${RLEV_O} mnginfo_out="./${MNGINFO_O}" || exit
+rm -f dump*
+mkdir -p ${TOPDIR}/data/grid/boundary/${dir2d_O}
+mv -f ./${dir2d_O}/boundary_*    ${TOPDIR}/data/grid/boundary/${dir2d_O}/
+mkdir -p ${TOPDIR}/data/reference/benchmark_spec/${dir2d_O}
+mv -f ./${dir2d_O}/restart_all_* ${TOPDIR}/data/reference/benchmark_spec/${dir2d_O}/
 
 ################################################################################
 EOF2

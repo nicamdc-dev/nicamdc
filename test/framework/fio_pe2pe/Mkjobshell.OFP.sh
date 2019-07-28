@@ -11,7 +11,7 @@ BINNAME=${7}
 NMPI=1 # serial execution
 
 # System specific
-MPIEXEC="mpiexec"
+MPIEXEC="mpiexec.hydra -n ${NMPI}"
 
 GL=`printf %02d ${GLEV}`
 RL_I=`printf %02d ${RLEV_I}`
@@ -41,49 +41,70 @@ res3d_I=GL${GL}RL${RL_I}z94
 dir2d_O=gl${GL}rl${RL_O}pe${NP_O}
 res2d_O=GL${GL}RL${RL_O}
 res3d_O=GL${GL}RL${RL_O}z94
-BNDDIR="${TOPDIR}/data/grid/boundary"
-REFDIR="${TOPDIR}/data/reference/benchmark_spec"
 
 MNGINFO_I=rl${RL_I}-prc${NP_I}.info
 MNGINFO_O=rl${RL_O}-prc${NP_O}.info
 
-# for K computer
-if [ ${NMPI} -gt 36864 ]; then
-   rscgrp="huge"
-elif [ ${NMPI} -gt 384 ]; then
-   rscgrp="large"
-else
-   rscgrp="small"
-fi
+NNODE=`expr \( $NMPI - 1 \) / 64 + 1`
+NPROC=`expr $NMPI / $NNODE`
+NPIND=`expr \( 255 \) / $NPROC + 1`
 
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# for K computer
+# ------ FOR Oakforest-PACS -----
 #
 ################################################################################
-#PJM --rsc-list "rscgrp=${rscgrp}"
-#PJM --rsc-list "node=${NMPI}"
-#PJM --rsc-list "elapse=01:00:00"
-#PJM --stg-transfiles all
-#PJM --mpi "use-rankdir"
-#PJM --stgin  "rank=* ${TOPDIR}/bin/${BINNAME}                             %r:./"
-#PJM --stgin  "rank=* ${TOPDIR}/data/mnginfo/${MNGINFO_I}                  %r:./"
-#PJM --stgin  "rank=* ${TOPDIR}/data/mnginfo/${MNGINFO_O}                  %r:./"
-#PJM --stgin  "rank=* ${BNDDIR}/${dir2d_I}/boundary_${res2d_I}.pe%06r      %r:./"
-#PJM --stgin  "rank=* ${REFDIR}/${dir2d_I}/restart_all_${res3d_I}.pe%06r   %r:./"
-#PJM --stgout "rank=* %r:./${dir2d_O}/boundary_*.pe%06r    ${BNDDIR}/${dir2d_O}/"
-#PJM --stgout "rank=* %r:./${dir2d_O}/restart_all_*.pe%06r ${REFDIR}/${dir2d_O}/"
-#PJM --stgout "rank=* %r:./* ./"
+#PJM -g jh180023
+#PJM -L rscgrp=regular-cache
+#PJM -L node=${NNODE}
+#PJM --mpi proc=${NMPI}
+#PJM --omp thread=1
+#PJM -L elapse=05:00:00
+#PJM -N pe2pe_gl${GL}
 #PJM -j
 #PJM -s
 #
-. /work/system/Env_base
-#
-export PARALLEL=8
-export OMP_NUM_THREADS=8
-export XOS_MMM_L_ARENA_FREE=2
+module load hdf5_szip
+module load hdf5
+module load netcdf
+module load netcdf-fortran
+
+export FORT_FMT_RECL=400
+
+export HFI_NO_CPUAFFINITY=1
+export I_MPI_PIN_PROCESSOR_EXCLUDE_LIST=0,1,68,69,136,137,204,205
+export I_MPI_HBW_POLICY=hbw_bind,,
+export I_MPI_FABRICS_LIST=tmi
+unset KMP_AFFINITY
+#export KMP_AFFINITY=verbose
+#export I_MPI_DEBUG=5
+
+export OMP_NUM_THREADS=1
+export I_MPI_PIN_DOMAIN=${NPIND}
+export I_MPI_PERHOST=${NPROC}
+export KMP_HW_SUBSET=1t
+export I_MPI_FABRICS=shm:tmi
+export I_MPI_HARD_FINALIZE=1
+
+
+ln -sv ${TOPDIR}/bin/${BINNAME} .
+ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO_I} .
+ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO_O} .
+EOF1
+
+for f in $( ls ${TOPDIR}/data/grid/boundary/${dir2d_I} )
+do
+   echo "ln -sv ${TOPDIR}/data/grid/boundary/${dir2d_I}/${f} ." >> run.sh
+done
+
+for f in $( ls ${TOPDIR}/data/reference/benchmark_spec/${dir2d_I} )
+do
+   echo "ln -sv ${TOPDIR}/data/reference/benchmark_spec/${dir2d_I}/${f} ." >> run.sh
+done
+
+cat << EOF2 >> run.sh
 
 # run
 mkdir -p ./${dir2d_O}
@@ -98,6 +119,10 @@ ${MPIEXEC} ./${BINNAME} restart_all_${res3d_I} outfile="./${dir2d_O}/restart_all
            rlevel_in=${RLEV_I}  mnginfo_in="./${MNGINFO_I}"  \
            rlevel_out=${RLEV_O} mnginfo_out="./${MNGINFO_O}" || exit
 rm -f dump*
+mkdir -p ${TOPDIR}/data/grid/boundary/${dir2d_O}
+mv -f ./${dir2d_O}/boundary_*    ${TOPDIR}/data/grid/boundary/${dir2d_O}/
+mkdir -p ${TOPDIR}/data/reference/benchmark_spec/${dir2d_O}
+mv -f ./${dir2d_O}/restart_all_* ${TOPDIR}/data/reference/benchmark_spec/${dir2d_O}/
 
 ################################################################################
-EOF1
+EOF2
