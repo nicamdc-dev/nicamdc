@@ -13,7 +13,7 @@ glevel     = 9
 rlevel_in  = 2
 nmpi_in    = 32
 rlevel_out = 3
-nmpi_out   = 256
+nmpi_out   = 64
 
 BINNAME   = fio_pe2pe
 

@@ -101,7 +101,7 @@ do
    done
 
    rlevel=3
-   for nmpi in 128 256 320 640
+   for nmpi in 64 128 320 640
    do
       GL=`printf %02d ${glevel}`
       RL=`printf %02d ${rlevel}`
@@ -124,7 +124,7 @@ do
    done
 
    rlevel=4
-   for nmpi in 512 1280 2560
+   for nmpi in 256 512 1280 2560
    do
       GL=`printf %02d ${glevel}`
       RL=`printf %02d ${rlevel}`
