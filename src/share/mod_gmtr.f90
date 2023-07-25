@@ -1253,9 +1253,9 @@ contains
   !-----------------------------------------------------------------------------
   subroutine GMTR_output_metrics( &
        basename )
-    use mod_io_param, only: &
-       IO_REAL8, &
-       IO_REAL4
+    use mod_fio_common, only: &
+       FIO_REAL8, &
+       FIO_REAL4
     use mod_process, only: &
        PRC_MPIstop
     use mod_adm, only: &
@@ -1265,8 +1265,6 @@ contains
        COMM_data_transfer
     use mod_fio, only: &
        FIO_output
-    use mod_hio, only: &
-       HIO_output
     implicit none
 
     character(len=*), intent(in) :: basename
@@ -1290,9 +1288,9 @@ contains
     k0 = ADM_KNONE
 
     if    ( RP == SP ) then
-       dtype = IO_REAL4
+       dtype = FIO_REAL4
     elseif( RP == DP ) then
-       dtype = IO_REAL8
+       dtype = FIO_REAL8
     endif
 
     do l = 1, ADM_lall
@@ -1348,16 +1346,6 @@ contains
                         'grid', 'grid number', '',                      & ! [IN]
                         'NIL', dtype, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
        call FIO_output( tmp2(:,:,:,1),     basename, desc, '',          & ! [IN]
-                        'gmtrmetrics', 'gmtr metrics', '',              & ! [IN]
-                        '', dtype, 'LAYERNM', 1, 54, 1, 0.0_DP, 0.0_DP  ) ! [IN]
-    elseif( GMTR_io_mode == 'POH5' ) then
-       call HIO_output( tmp(:,:,:,I_rgn),  basename, desc, '',          & ! [IN]
-                        'rgn', 'region number', '',                     & ! [IN]
-                        'NIL', dtype, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
-       call HIO_output( tmp(:,:,:,I_grid), basename, desc, '',          & ! [IN]
-                        'grid', 'grid number', '',                      & ! [IN]
-                        'NIL', dtype, 'ZSSFC1', 1, 1, 1, 0.0_DP, 0.0_DP ) ! [IN]
-       call HIO_output( tmp2(:,:,:,1),     basename, desc, '',          & ! [IN]
                         'gmtrmetrics', 'gmtr metrics', '',              & ! [IN]
                         '', dtype, 'LAYERNM', 1, 54, 1, 0.0_DP, 0.0_DP  ) ! [IN]
     endif

@@ -15,11 +15,9 @@ program fio_pe2pe
   !
   use mpi
   use mod_precision
-  use mod_io_param
+  use iso_c_binding
+  use mod_fio_common
   use mod_stdio
-  use mod_fio, only: &
-     headerinfo, &
-     datainfo
   use mod_mnginfo_light, only: &
      MNG_mnginfo_input, &
      MNG_PALL,          &
@@ -28,6 +26,12 @@ program fio_pe2pe
      MNG_rgn2prc
   !-----------------------------------------------------------------------------
   implicit none
+  !-----------------------------------------------------------------------------
+  !
+  !++ C interface
+  !
+  include 'mod_fio_panda.inc'
+
   !-----------------------------------------------------------------------------
   !
   !++ param & variable
@@ -76,9 +80,10 @@ program fio_pe2pe
   integer                :: ndivide
   integer, allocatable   :: rgnid_div(:)
 
-  type(headerinfo)            :: hinfo
-  type(datainfo), allocatable :: dinfo(:)
+  type(headerinfo_panda)            :: hinfo
+  type(datainfo_panda), allocatable :: dinfo(:)
 
+  character(len=H_SHORT) :: var_name_file
   character(len=H_MID)   :: pkg_desc
   character(len=H_LONG)  :: pkg_note
   integer                :: nmax_data
@@ -88,10 +93,10 @@ program fio_pe2pe
   integer                :: KALL
   integer                :: LALL_in
   integer                :: LALL_out
-  real(SP), allocatable  :: data4_1D    (:)
+  real(SP), target, allocatable :: data4_1D(:)
+  real(DP), target, allocatable :: data8_1D(:)
   real(SP), allocatable  :: data4_3D_in (:,:,:)
   real(SP), allocatable  :: data4_3D_out(:,:,:)
-  real(DP), allocatable  :: data8_1D    (:)
   real(DP), allocatable  :: data8_3D_in (:,:,:)
   real(DP), allocatable  :: data8_3D_out(:,:,:)
 
@@ -102,7 +107,7 @@ program fio_pe2pe
   character(len=6)       :: rankstr
 
   integer  :: p, l, n
-  integer  :: fid, did, ierr, fid_dump
+  integer  :: fid, did, odid, ierr, fid_dump
   !=====================================================================
 
   !--- read option and preprocess
@@ -144,9 +149,8 @@ program fio_pe2pe
   deallocate( MNG_prc_tab  )
   deallocate( MNG_rgn2prc  )
 
-  allocate( hinfo%rgnid(LALL_in)  )
-  allocate( rgnid_in   (LALL_in) )
-  allocate( rgnid_out  (LALL_out) )
+  allocate( rgnid_in (LALL_in)  )
+  allocate( rgnid_out(LALL_out) )
 
   ndivide = 2**(rlevel_out-rlevel_in)
   allocate( rgnid_div(ndivide*ndivide) )
@@ -182,7 +186,7 @@ program fio_pe2pe
   endif
 
   !--- setup
-  call fio_syscheck()
+  ierr = fio_syscheck()
 
   write(fid_log,*) '*** pe2pe start : PaNDa format to PaNDa format data'
 
@@ -201,42 +205,45 @@ program fio_pe2pe
   do p = pstr, pend
      write(fid_log,'(1x,A,I6.6)') '+pe= ', p-1
 
-     call fio_mk_fname(fname, trim(infile(1)),'pe',p-1,6)
+     call fio_mk_fname(fname,cstr(infile(1)),cstr('pe'),p-1,6)
 
-     call fio_register_file(fid,trim(fname))
-     call fio_fopen(fid,IO_FREAD)
+     fid  = fio_register_file(fname)
+     ierr = fio_fopen(fid,FIO_FREAD)
      ! put information from 1st input file
-     call fio_put_commoninfo_fromfile(fid,IO_BIG_ENDIAN)
+     ierr = fio_put_commoninfo_fromfile(fid,FIO_BIG_ENDIAN)
 
-     call fio_read_allinfo(fid)
-     call fio_get_pkginfo(fid,hinfo)
+     ierr = fio_read_allinfo(fid)
+     ierr = fio_get_pkginfo(hinfo,fid)
 
      if ( p == pstr ) then
-        pkg_desc  = hinfo%description
-        pkg_note  = hinfo%note
+        call fstr(pkg_desc, hinfo%description)
+        call fstr(pkg_note, hinfo%note       )
         nmax_data = hinfo%num_of_data
         allocate( dinfo(0:nmax_data-1) )
      endif
-     rgnid_in(:) = hinfo%rgnid(:)
+     rgnid_in(:) = MNG_prc_tab_out(1:LALL_in,p)-1
 
+     call fstr(fname)
      write(fid_log,*) '+input: ', trim(fname), ' (n=', nmax_data, ')'
 
      do did = 0, nmax_data-1
         ! get datainfo from input file
-        call fio_get_datainfo(fid,did,dinfo(did))
-        write(fid_log,'(1x,A,I4.4,2A)') '+variable id= ', did, ', name: ', trim(dinfo(did)%varname)
+        ierr = fio_get_datainfo(dinfo(did),fid,did)
+        call fstr(var_name_file, dinfo(did)%varname )
+
+        write(fid_log,'(1x,A,I4.4,2A)') '+variable id= ', did, ', name: ', trim(var_name_file)
 
         KALL  = dinfo(did)%num_of_layer
-        oprec = IO_preclist(dinfo(did)%datatype)
+        oprec = FIO_preclist(dinfo(did)%datatype)
 
         ! read PaNDa->write dump
-        if ( dinfo(did)%datatype == IO_REAL4 ) then
+        if ( dinfo(did)%datatype == FIO_REAL4 ) then
 
            allocate( data4_1D    (GALL_in *KALL*LALL_in ) )
            allocate( data4_3D_in (GALL_in ,KALL,LALL_in ) )
            allocate( data4_3D_out(GALL_out,KALL,ndivide*ndivide) )
 
-           call fio_read_data(fid,did,data4_1D)
+           ierr = fio_read_data(fid,did,c_loc(data4_1D(:)))
 
            data4_3D_in = reshape( data4_1D,shape(data4_3D_in) )
 
@@ -282,13 +289,13 @@ program fio_pe2pe
            deallocate( data4_3D_in  )
            deallocate( data4_3D_out )
 
-        elseif( dinfo(did)%datatype == IO_REAL8 ) then
+        elseif( dinfo(did)%datatype == FIO_REAL8 ) then
 
            allocate( data8_1D    (GALL_in *KALL*LALL_in ) )
            allocate( data8_3D_in (GALL_in ,KALL,LALL_in ) )
            allocate( data8_3D_out(GALL_out,KALL,ndivide*ndivide) )
 
-           call fio_read_data(fid,did,data8_1D)
+           ierr = fio_read_data(fid,did,c_loc(data8_1D(:)))
 
            data8_3D_in = reshape( data8_1D,shape(data8_3D_in) )
 
@@ -337,7 +344,7 @@ program fio_pe2pe
         endif
      enddo
 
-     call fio_fclose(fid)
+     ierr = fio_fclose(fid)
   enddo
 
   prc_nlocal = MNG_PALL_out / prc_nall
@@ -357,39 +364,39 @@ program fio_pe2pe
 
      rgnid_out(1:LALL_out) = MNG_prc_tab_out(1:LALL_out,p)-1
 
-     call fio_put_commoninfo( IO_SPLIT_FILE,  &
-                              IO_BIG_ENDIAN,  &
-                              IO_ICOSAHEDRON, &
-                              glevel,         &
-                              rlevel_out,     &
-                              LALL_out,       &
-                              rgnid_out       )
+     ierr = fio_put_commoninfo( FIO_SPLIT_FILE,  &
+                                FIO_BIG_ENDIAN,  &
+                                FIO_ICOSAHEDRON, &
+                                glevel,          &
+                                rlevel_out,      &
+                                LALL_out,        &
+                                rgnid_out        )
 
      call fio_mk_fname(fname, trim(outfile),'pe',p-1,6)
 
-     call fio_register_file(fid,trim(fname))
-     call fio_fopen(fid,IO_FWRITE)
-     call fio_put_write_pkginfo(fid,pkg_desc,pkg_note)
+     fid = fio_register_file(fname)
+     ierr = fio_fopen(fid,FIO_FREAD)
+     ierr = fio_put_write_pkginfo(fid,cstr(pkg_desc),cstr(pkg_note))
 
      write(fid_log,*) '+output : ', trim(fname), ' (n=', nmax_data, ')'
 
      do did = 0, nmax_data-1
-        write(fid_log,'(1x,A,I4.4,2A)') '+variable id= ', did, ', name: ', trim(dinfo(did)%varname)
+        write(fid_log,'(1x,A,I4.4,2A)') '+variable id= ', did, ', name: ', trim(var_name_file)
 
         KALL  = dinfo(did)%num_of_layer
-        oprec = IO_preclist(dinfo(did)%datatype)
+        oprec = FIO_preclist(dinfo(did)%datatype)
 
         if ( p == pstr ) then
            dinfo(did)%datasize = GALL_out * LALL_out * KALL * oprec
         endif
 
-        call fio_put_write_datainfo(did,fid,dinfo(did))
+        odid = fio_put_write_datainfo(fid,dinfo(did))
 
         do l = 1, LALL_out
-           write(fname_dump,'(A4,I4.4,I6.6)') 'dump', did, rgnid_out(l)
+           write(fname_dump,'(A4,2I4.4,I6.6)') 'dump', did, odid, rgnid_out(l)
 
            ! read dump->write PaNDa
-           if ( dinfo(did)%datatype == IO_REAL4 ) then
+           if ( dinfo(did)%datatype == FIO_REAL4 ) then
 
               allocate( data4_1D(GALL_out*KALL) )
 
@@ -402,11 +409,11 @@ program fio_pe2pe
                   read(fid_dump,rec=1) data4_1D
               close(fid_dump)
 
-              call fio_write_data_1rgn(fid,did,data4_1D)
+              ierr = fio_write_data_1rgn(fid,odid,c_loc(data4_1D))
 
               deallocate( data4_1D )
 
-           elseif( dinfo(did)%datatype == IO_REAL8 ) then
+           elseif( dinfo(did)%datatype == FIO_REAL8 ) then
 
               allocate( data8_1D(GALL_out*KALL) )
 
@@ -419,7 +426,7 @@ program fio_pe2pe
                   read(fid_dump,rec=1) data8_1D
               close(fid_dump)
 
-              call fio_write_data_1rgn(fid,did,data8_1D)
+              ierr = fio_write_data_1rgn(fid,odid,c_loc(data8_1D))
 
               deallocate( data8_1D )
            endif
@@ -427,7 +434,7 @@ program fio_pe2pe
 
      enddo ! data loop
 
-     call fio_fclose(fid)
+     ierr = fio_fclose(fid)
   enddo ! PE loop
 
   write(fid_log,*) 'convert finished.'

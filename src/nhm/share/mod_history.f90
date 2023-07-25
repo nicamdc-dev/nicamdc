@@ -103,9 +103,9 @@ contains
   subroutine history_setup
     use mod_process, only: &
        PRC_MPIstop
-    use mod_io_param, only: &
-       IO_REAL4, &
-       IO_REAL8
+    use mod_fio_common, only: &
+       FIO_REAL4, &
+       FIO_REAL8
     use mod_const, only: &
        PRE00 => CONST_PRE00
     use mod_calendar, only: &
@@ -245,8 +245,7 @@ contains
 
     HIST_output_step0 = doout_step0
 
-    if (      output_io_mode == 'HIO'      &
-         .OR. output_io_mode == 'ADVANCED' ) then
+    if ( output_io_mode == 'ADVANCED' ) then
        if( IO_L ) write(IO_FID_LOG,*) '*** History output type:', trim(output_io_mode)
     else
        write(*,*) 'xxx Invalid output_io_mode!', trim(output_io_mode)
@@ -256,9 +255,9 @@ contains
     HIST_io_desc  = "NICAM history output"
 
     if    ( output_size == 4 ) then
-       HIST_dtype = IO_REAL4
+       HIST_dtype = FIO_REAL4
     elseif( output_size == 8 ) then
-       HIST_dtype = IO_REAL8
+       HIST_dtype = FIO_REAL8
     else
        write(*,*) 'output_size is not appropriate:',output_size
        call PRC_MPIstop
@@ -791,8 +790,6 @@ contains
        COMM_var
     use mod_fio, only: &
        FIO_output
-    use mod_hio, only: &
-       HIO_output
     use mod_time, only: &
        TIME_CSTEP, &
        TIME_CTIME
@@ -936,28 +933,6 @@ contains
              elseif( output_type_save(n) == 'AVERAGE' ) then
 
                 call FIO_output( v_save(:,:,:,1),                             & ! [IN]
-                                 HIST_io_fname,    HIST_io_desc    , '',      & ! [IN]
-                                 file_save(n),     desc_save(n), '',          & ! [IN]
-                                 unit_save(n),     HIST_dtype,                & ! [IN]
-                                 lname_save(n),    ksumstr(n),   ksumend(n),  & ! [IN]
-                                 tmax_save(n),     tstr_save(n), tend_save(n) ) ! [IN]
-
-             endif
-
-          elseif( output_io_mode == 'POH5' ) then
-
-             if ( output_type_save(n) == 'SNAPSHOT' ) then
-
-                call HIO_output( v_save(:,:,:,1),                             & ! [IN]
-                                 HIST_io_fname,    HIST_io_desc    , '',      & ! [IN]
-                                 file_save(n),     desc_save(n), '',          & ! [IN]
-                                 unit_save(n),     HIST_dtype,                & ! [IN]
-                                 lname_save(n),    ksumstr(n),   ksumend(n),  & ! [IN]
-                                 tmax_save(n),     tend_save(n), tend_save(n) ) ! [IN]
-
-             elseif( output_type_save(n) == 'AVERAGE' ) then
-
-                call HIO_output( v_save(:,:,:,1),                             & ! [IN]
                                  HIST_io_fname,    HIST_io_desc    , '',      & ! [IN]
                                  file_save(n),     desc_save(n), '',          & ! [IN]
                                  unit_save(n),     HIST_dtype,                & ! [IN]

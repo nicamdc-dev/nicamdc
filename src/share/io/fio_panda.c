@@ -63,7 +63,7 @@
  *int32_t        fio_dump_finfolist           : dump package summary of all finfo
  *int32_t        fio_dump_finfo               : dump package detail of finfo
  **********************************************************************/
-#include "fio.h"
+#include "fio_panda.h"
 
 /* file ID counter */
 int32_t num_of_file = 0;
@@ -192,8 +192,10 @@ int32_t fio_syscheck( void )
   }
 
   if ( *(char*)&i ) {
+    /* printf("This system is little endian\n"); */
     system_endiantype = FIO_LITTLE_ENDIAN;
   } else {
+    /* printf("This system is big endian\n"); */
     system_endiantype = FIO_BIG_ENDIAN;
   }
 
@@ -320,92 +322,91 @@ static int32_t fio_new_datainfo( int32_t fid )
 
 /** put package information (full) ************************************/
 int32_t fio_put_pkginfo( int32_t fid,
-                         headerinfo_t hinfo )
+                         headerinfo_t *hinfo )
 {
   int32_t i;
 
-  fio_set_str( finfo[fid].header.description,hinfo.description,FIO_HMID-1  );
-  fio_set_str( finfo[fid].header.note,       hinfo.note,       FIO_HLONG-1 );
-  finfo[fid].header.num_of_data   = hinfo.num_of_data;
-  finfo[fid].header.fmode         = hinfo.fmode;
-  finfo[fid].header.endiantype    = hinfo.endiantype;
-  finfo[fid].header.grid_topology = hinfo.grid_topology;
-  finfo[fid].header.glevel        = hinfo.glevel;
-  finfo[fid].header.rlevel        = hinfo.rlevel;
-  finfo[fid].header.num_of_rgn    = hinfo.num_of_rgn;
+  fio_set_str( finfo[fid].header.description,hinfo->description,FIO_HMID-1  );
+  fio_set_str( finfo[fid].header.note,       hinfo->note,       FIO_HLONG-1 );
+  finfo[fid].header.num_of_data   = hinfo->num_of_data;
+  finfo[fid].header.fmode         = hinfo->fmode;
+  finfo[fid].header.endiantype    = hinfo->endiantype;
+  finfo[fid].header.grid_topology = hinfo->grid_topology;
+  finfo[fid].header.glevel        = hinfo->glevel;
+  finfo[fid].header.rlevel        = hinfo->rlevel;
+  finfo[fid].header.num_of_rgn    = hinfo->num_of_rgn;
 
   finfo[fid].header.rgnid = (int32_t *)realloc(finfo[fid].header.rgnid,
                             sizeof(int32_t)*finfo[fid].header.num_of_rgn);
   for( i=0; i<finfo[fid].header.num_of_rgn; i++ ) {
-    finfo[fid].header.rgnid[i] = hinfo.rgnid[i];
+    finfo[fid].header.rgnid[i] = hinfo->rgnid[i];
   }
 
   return(SUCCESS_CODE);
 }
 
 /** get package information (full) ************************************/
-headerinfo_t fio_get_pkginfo( int32_t fid )
+int32_t fio_get_pkginfo( headerinfo_t *hinfo,
+                         int32_t fid )
 {
-  headerinfo_t hinfo;
   int32_t i;
 
-  fio_trim_str( hinfo.description,finfo[fid].header.description,FIO_HMID-1  );
-  fio_trim_str( hinfo.note,       finfo[fid].header.note,FIO_HLONG-1 );
-  hinfo.num_of_data   = finfo[fid].header.num_of_data;
-  hinfo.fmode         = finfo[fid].header.fmode;
-  hinfo.endiantype    = finfo[fid].header.endiantype;
-  hinfo.grid_topology = finfo[fid].header.grid_topology;
-  hinfo.glevel        = finfo[fid].header.glevel;
-  hinfo.rlevel        = finfo[fid].header.rlevel;
-  hinfo.num_of_rgn    = finfo[fid].header.num_of_rgn;
+  fio_trim_str( hinfo->description,finfo[fid].header.description,FIO_HMID-1  );
+  fio_trim_str( hinfo->note,       finfo[fid].header.note,FIO_HLONG-1 );
+  hinfo->num_of_data   = finfo[fid].header.num_of_data;
+  hinfo->fmode         = finfo[fid].header.fmode;
+  hinfo->endiantype    = finfo[fid].header.endiantype;
+  hinfo->grid_topology = finfo[fid].header.grid_topology;
+  hinfo->glevel        = finfo[fid].header.glevel;
+  hinfo->rlevel        = finfo[fid].header.rlevel;
+  hinfo->num_of_rgn    = finfo[fid].header.num_of_rgn;
 
-  hinfo.rgnid = (int32_t *)malloc(sizeof(int32_t)*hinfo.num_of_rgn);
-  for( i=0; i<hinfo.num_of_rgn; i++ ) {
-    hinfo.rgnid[i] = finfo[fid].header.rgnid[i];
+  hinfo->rgnid = (int32_t *)malloc(sizeof(int32_t)*hinfo->num_of_rgn);
+  for( i=0; i<hinfo->num_of_rgn; i++ ) {
+    hinfo->rgnid[i] = finfo[fid].header.rgnid[i];
   }
 
-  return(hinfo);
+  return(SUCCESS_CODE);
 }
 
 /** put data information (full) ***************************************/
 int32_t fio_put_datainfo( int32_t fid,
                           int32_t did,
-                          datainfo_t ditem )
+                          datainfo_t *ditem )
 {
-  fio_set_str( finfo[fid].dinfo[did].varname,    ditem.varname,    FIO_HSHORT-1 );
-  fio_set_str( finfo[fid].dinfo[did].description,ditem.description,FIO_HMID-1   );
-  fio_set_str( finfo[fid].dinfo[did].unit,       ditem.unit,       FIO_HSHORT-1 );
-  fio_set_str( finfo[fid].dinfo[did].layername,  ditem.layername,  FIO_HSHORT-1 );
-  fio_set_str( finfo[fid].dinfo[did].note,       ditem.note,       FIO_HLONG-1  );
-  finfo[fid].dinfo[did].datasize     = ditem.datasize;
-  finfo[fid].dinfo[did].datatype     = ditem.datatype;
-  finfo[fid].dinfo[did].num_of_layer = ditem.num_of_layer;
-  finfo[fid].dinfo[did].step         = ditem.step;
-  finfo[fid].dinfo[did].time_start   = ditem.time_start;
-  finfo[fid].dinfo[did].time_end     = ditem.time_end;
+  fio_set_str( finfo[fid].dinfo[did].varname,    ditem->varname,    FIO_HSHORT-1 );
+  fio_set_str( finfo[fid].dinfo[did].description,ditem->description,FIO_HMID-1   );
+  fio_set_str( finfo[fid].dinfo[did].unit,       ditem->unit,       FIO_HSHORT-1 );
+  fio_set_str( finfo[fid].dinfo[did].layername,  ditem->layername,  FIO_HSHORT-1 );
+  fio_set_str( finfo[fid].dinfo[did].note,       ditem->note,       FIO_HLONG-1  );
+  finfo[fid].dinfo[did].datasize     = ditem->datasize;
+  finfo[fid].dinfo[did].datatype     = ditem->datatype;
+  finfo[fid].dinfo[did].num_of_layer = ditem->num_of_layer;
+  finfo[fid].dinfo[did].step         = ditem->step;
+  finfo[fid].dinfo[did].time_start   = ditem->time_start;
+  finfo[fid].dinfo[did].time_end     = ditem->time_end;
 
   return(SUCCESS_CODE);
 }
 
 /** get data information (full) ***************************************/
-datainfo_t fio_get_datainfo( int32_t fid,
-                             int32_t did  )
+int32_t fio_get_datainfo( datainfo_t *ditem,
+                          int32_t fid,
+                          int32_t did  )
 {
-  datainfo_t ditem;
+  fio_trim_str( ditem->varname,    finfo[fid].dinfo[did].varname,    FIO_HSHORT-1 );
+  fio_trim_str( ditem->description,finfo[fid].dinfo[did].description,FIO_HMID-1   );
+  fio_trim_str( ditem->unit,       finfo[fid].dinfo[did].unit,       FIO_HSHORT-1 );
+  fio_trim_str( ditem->layername,  finfo[fid].dinfo[did].layername,  FIO_HSHORT-1 );
+  fio_trim_str( ditem->note,       finfo[fid].dinfo[did].note,       FIO_HLONG-1  );
+  ditem->datasize     = finfo[fid].dinfo[did].datasize;
+  ditem->datatype     = finfo[fid].dinfo[did].datatype;
+  ditem->num_of_layer = finfo[fid].dinfo[did].num_of_layer;
+  ditem->step         = finfo[fid].dinfo[did].step;
+  ditem->time_start   = finfo[fid].dinfo[did].time_start;
+  ditem->time_end     = finfo[fid].dinfo[did].time_end;
 
-  fio_trim_str( ditem.varname,    finfo[fid].dinfo[did].varname,    FIO_HSHORT-1 );
-  fio_trim_str( ditem.description,finfo[fid].dinfo[did].description,FIO_HMID-1   );
-  fio_trim_str( ditem.unit,       finfo[fid].dinfo[did].unit,       FIO_HSHORT-1 );
-  fio_trim_str( ditem.layername,  finfo[fid].dinfo[did].layername,  FIO_HSHORT-1 );
-  fio_trim_str( ditem.note,       finfo[fid].dinfo[did].note,       FIO_HLONG-1  );
-  ditem.datasize     = finfo[fid].dinfo[did].datasize;
-  ditem.datatype     = finfo[fid].dinfo[did].datatype;
-  ditem.num_of_layer = finfo[fid].dinfo[did].num_of_layer;
-  ditem.step         = finfo[fid].dinfo[did].step;
-  ditem.time_start   = finfo[fid].dinfo[did].time_start;
-  ditem.time_end     = finfo[fid].dinfo[did].time_end;
-
-  return(ditem);
+  return(SUCCESS_CODE);
 }
 
 /** seek data id by varname and step **********************************/
@@ -415,9 +416,15 @@ int32_t fio_seek_datainfo( int32_t fid,
 {
   int32_t did;
 
+  char _varname[FIO_HSHORT];
+  int32_t len = strlen(varname);
+  if( len > FIO_HSHORT-1 ){ len = FIO_HSHORT-1; }
+
+  fio_set_str( _varname, varname, len );
+
   for( did=0; did<finfo[fid].header.num_of_data; did++ ) {
-    if (    strcmp(finfo[fid].dinfo[did].varname,varname) == 0
-         && finfo[fid].dinfo[did].step    == step              ) {
+    if (    strcmp(finfo[fid].dinfo[did].varname,_varname) == 0
+         && finfo[fid].dinfo[did].step == step                 ) {
       return(did);
     }
   }
@@ -825,7 +832,7 @@ int32_t fio_write_data_1rgn( int32_t fid,
   void *_data;
 
   ijkall = (round(pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel))+2)
-    * (round(pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel))+2)
+         * (round(pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel))+2)
          * finfo[fid].dinfo[did].num_of_layer;
 
   datasize = ijkall * precision[finfo[fid].dinfo[did].datatype];
@@ -1090,28 +1097,28 @@ int32_t fio_valid_pkginfo( int32_t fid )
   int32_t i;
 
   if(finfo[fid].header.grid_topology!=common.grid_topology) {
-    fprintf(stderr,"Warning: grid_topology is not match, %d, %d\n",
+    fprintf(stderr,"Warning[PaNDa]: grid_topology is not match, %d, %d\n",
                    finfo[fid].header.grid_topology,common.grid_topology);
   }
 
   if(finfo[fid].header.glevel!=common.glevel) {
-    fprintf(stderr,"Warning: glevel is not match, %d, %d\n",
+    fprintf(stderr,"Warning[PaNDa]: glevel is not match, %d, %d\n",
                    finfo[fid].header.glevel,common.glevel              );
   }
 
   if(finfo[fid].header.rlevel!=common.rlevel) {
-    fprintf(stderr,"Warning: rlevel is not match, %d, %d\n",
+    fprintf(stderr,"Warning[PaNDa]: rlevel is not match, %d, %d\n",
                    finfo[fid].header.rlevel,common.rlevel              );
   }
 
   if(finfo[fid].header.num_of_rgn!=common.num_of_rgn) {
-    fprintf(stderr,"Warning: num_of_rgn is not match, %d, %d\n",
+    fprintf(stderr,"Warning[PaNDa]: num_of_rgn is not match, %d, %d\n",
                    finfo[fid].header.num_of_rgn,common.num_of_rgn      );
   }
 
   for( i=0; i<finfo[fid].header.num_of_rgn; i++ ) {
     if(finfo[fid].header.rgnid[i]!=common.rgnid[i]) {
-    fprintf(stderr,"Warning: rgnid[%d] is not match, %d, %d\n",
+    fprintf(stderr,"Warning[PaNDa]: rgnid[%d] is not match, %d, %d\n",
                    i,finfo[fid].header.rgnid[i],common.rgnid[i]        );
     }
   }
@@ -1125,28 +1132,28 @@ int32_t fio_valid_pkginfo_validrgn( int32_t fid,
   int32_t i;
 
   if(finfo[fid].header.grid_topology!=common.grid_topology) {
-    fprintf(stderr,"Warning: grid_topology is not match, %d, %d\n",
+    fprintf(stderr,"Warning[PaNDa]: grid_topology is not match, %d, %d\n",
                    finfo[fid].header.grid_topology,common.grid_topology);
   }
 
   if(finfo[fid].header.glevel!=common.glevel) {
-    fprintf(stderr,"Warning: glevel is not match, %d, %d\n",
+    fprintf(stderr,"Warning[PaNDa]: glevel is not match, %d, %d\n",
                    finfo[fid].header.glevel,common.glevel              );
   }
 
   if(finfo[fid].header.rlevel!=common.rlevel) {
-    fprintf(stderr,"Warning: rlevel is not match, %d, %d\n",
+    fprintf(stderr,"Warning[PaNDa]: rlevel is not match, %d, %d\n",
                    finfo[fid].header.rlevel,common.rlevel              );
   }
 
   if(finfo[fid].header.num_of_rgn!=common.num_of_rgn) {
-    fprintf(stderr,"Warning: num_of_rgn is not match, %d, %d\n",
+    fprintf(stderr,"Warning[PaNDa]: num_of_rgn is not match, %d, %d\n",
                    finfo[fid].header.num_of_rgn,common.num_of_rgn      );
   }
 
   for( i=0; i<finfo[fid].header.num_of_rgn; i++ ) {
     if(finfo[fid].header.rgnid[i]!=rgnid[i]) {
-    fprintf(stderr,"Warning: rgnid[%d] is not match, %d, %d\n",
+    fprintf(stderr,"Warning[PaNDa]: rgnid[%d] is not match, %d, %d\n",
                    i,finfo[fid].header.rgnid[i],rgnid[i]               );
     }
   }
@@ -1162,7 +1169,7 @@ int32_t fio_valid_datainfo( int32_t fid )
   char* str_dtype[5] = { "XXXX","REAL4","REAL8","INTEGER4","INTEGER8" };
 
   ijall = (round(pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel))+2)
-    * (round(pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel))+2);
+        * (round(pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel))+2);
 
   for( did=0; did<finfo[fid].header.num_of_data; did++ ) {
     datasize = ijall
@@ -1171,7 +1178,7 @@ int32_t fio_valid_datainfo( int32_t fid )
              * precision[finfo[fid].dinfo[did].datatype];
 
     if(finfo[fid].dinfo[did].datasize!=datasize) {
-      fprintf(stderr,"Warning: datasize is not match, %ld\n",
+      fprintf(stderr,"Warning[PaNDa]: datasize is not match, %ld\n",
                      (long)finfo[fid].dinfo[did].datasize     );
       fprintf(stderr,"         datasize must be %d[grid]x%d[layer]x%d[region]x%s=%ld\n",
                      ijall,
@@ -1187,7 +1194,7 @@ int32_t fio_valid_datainfo( int32_t fid )
 
 /** put & write data information and write data ***********************/
 int32_t fio_put_write_datainfo_data( int32_t fid,
-                                     datainfo_t ditem,
+                                     datainfo_t *ditem,
                                      void *data        )
 {
   int32_t did;
@@ -1205,7 +1212,7 @@ int32_t fio_put_write_datainfo_data( int32_t fid,
 
 /** put & write data information **************************************/
 int32_t fio_put_write_datainfo( int32_t fid,
-                                datainfo_t ditem )
+                                datainfo_t *ditem )
 {
   int32_t did;
 
@@ -1284,10 +1291,10 @@ int32_t fio_read_allinfo_tmpdata( int32_t fid )
   return(SUCCESS_CODE);
 }
 
-void fio_register_vname_tmpdata( const char *vname_in )
+int32_t fio_register_vname_tmpdata( const char *vname_in )
 {
-  strcpy(vname[nvar++],vname_in);
-  /* printf("debug:%s\n", vname[nvar-1]);*/
+  fio_set_str( vname[nvar++],vname_in,FIO_HSHORT-1 );
+  return(SUCCESS_CODE);
 }
 
 /** allocate and copy datainfo ****************************************/
@@ -1387,7 +1394,7 @@ int32_t fio_dump_finfo( int32_t fid,
   fio_read_datainfo( fid );
 
   ijall = (round(pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel))+2)
-    * (round(pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel))+2);
+        * (round(pow(2,finfo[fid].header.glevel-finfo[fid].header.rlevel))+2);
 
   /* package info */
   printf( "============ DATA PACKAGE DEFINITION =============\n" );
@@ -1480,9 +1487,9 @@ int32_t fio_dump_finfo( int32_t fid,
                printf("%d\n",*(int32_t *)c);
                c += 4;
                break;
-        case FIO_INTEGER8:
-               printf("%lld\n",*(int64_t *)c);
-               c += 8;
+        case FIO_INTEGER2:
+               printf("%hd\n",*(int16_t *)c);
+               c += 2;
                break;
         default :
                fprintf(stderr,"xxx Undefined data type! stop\n");
@@ -1530,9 +1537,9 @@ int32_t fio_dump_finfo( int32_t fid,
                printf("%d\n",*(int32_t *)c);
                c += 4;
                break;
-        case FIO_INTEGER8:
-               printf("%lld\n",*(int64_t *)c);
-               c += 8;
+        case FIO_INTEGER2:
+               printf("%hd\n",*(int16_t *)c);
+               c += 2;
                break;
         default :
                fprintf(stderr,"xxx Undefined data type! stop\n");

@@ -2768,7 +2768,7 @@ contains
        ADM_have_pl
     use mod_comm, only: &
        COMM_data_transfer
-    use mod_io_param
+    use mod_fio_common
     use mod_fio, only: &
        FIO_output
     implicit none
@@ -2785,9 +2785,9 @@ contains
     !---------------------------------------------------------------------------
 
     if    ( RP == SP ) then
-       dtype = IO_REAL4
+       dtype = FIO_REAL4
     elseif( RP == DP ) then
-       dtype = IO_REAL8
+       dtype = FIO_REAL8
     endif
 
     do l = 1, ADM_lall
