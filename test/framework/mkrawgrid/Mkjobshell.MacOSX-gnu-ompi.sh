@@ -9,7 +9,7 @@ TOPDIR=${6}
 BINNAME=${7}
 
 # System specific
-MPIEXEC="openmpirun -np ${NMPI}"
+MPIEXEC="mpirun --oversubscribe -np ${NMPI}"
 
 GL=`printf %02d ${GLEV}`
 RL=`printf %02d ${RLEV}`
@@ -23,31 +23,36 @@ else
 	NP=`printf %02d ${NMPI}`
 fi
 
-dir2d=gl${GL}rl${RL}pe${NP}
-dir3d=gl${GL}rl${RL}z${ZL}pe${NP}
-res2d=GL${GL}RL${RL}
-res3d=GL${GL}RL${RL}z${ZL}
-
 MNGINFO=rl${RL}-prc${NP}.info
-
-outdir=${dir3d}
-cd ${outdir}
 
 cat << EOF1 > run.sh
 #! /bin/bash -x
 ################################################################################
 #
-# ------ FOR MacOSX & gfortran4.6 & OpenMPI1.6 -----
+# ------ For MacOSX & gfortran7.3 & OpenMPI3.0 -----
 #
 ################################################################################
 export FORT_FMT_RECL=400
 export GFORTRAN_UNBUFFERED_ALL=Y
 
-ln -sv ${TOPDIR}/bin/${BINNAME} .
-ln -sv ../../mkmnginfo/${dir3d}/${MNGINFO} .
+ln -svf ${TOPDIR}/bin/${BINNAME} .
+EOF1
+
+if   [ -f ${TOPDIR}/data/mnginfo/${MNGINFO} ]; then
+   echo "mnginfo file is found in default database"
+   echo "ln -svf ${TOPDIR}/data/mnginfo/${MNGINFO} ." >> run.sh
+elif [ -f ../../mkmnginfo/rl${RL}pe${NP}/${MNGINFO} ]; then
+   echo "mnginfo file is found in test directory"
+   echo "ln -svf ../../mkmnginfo/rl${RL}pe${NP}/${MNGINFO} ." >> run.sh
+else
+   echo "mnginfo file is not found!"
+   exit 1
+fi
+
+cat << EOF2 >> run.sh
 
 # run
-${MPIEXEC} ./${BINNAME} || exit
+${MPIEXEC} ./${BINNAME} mkrawgrid.cnf || exit
 
 ################################################################################
-EOF1
+EOF2

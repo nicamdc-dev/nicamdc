@@ -64,7 +64,6 @@ cat << EOF1 > run.sh
 #
 export PARALLEL=8
 export OMP_NUM_THREADS=8
-#export fu08bf=1
 export XOS_MMM_L_ARENA_FREE=2
 
 # run
@@ -90,7 +89,7 @@ cat << EOFICO2LL1 > ico2ll.sh
 #PJM --stgin  "rank=* ${TOPDIR}/data/mnginfo/${MNGINFO} %r:./"
 #PJM --stgin  "rank=* ${TOPDIR}/data/zaxis/*            %r:./"
 #PJM --stgin  "rank=* ./history.pe%06r                  %r:./"
-#PJM --stgin  "rank=* ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/llmap.* %r:./"
+#PJM --stgin  "rank=* ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/llmap.* %r:./"
 #PJM --stgout "rank=* %r:./*           ./"
 #PJM --stgout "rank=0 ../*             ./"
 #PJM -j
@@ -100,7 +99,6 @@ cat << EOFICO2LL1 > ico2ll.sh
 #
 export PARALLEL=8
 export OMP_NUM_THREADS=8
-export fu08bf=1
 
 # run
 ${MPIEXEC} ./fio_ico2ll_mpi \

@@ -1,10 +1,10 @@
 #
-# ------ FOR MacOSX & gfortran4.8 & OpenMPI1.7 -----
+# ------ FOR MacOSX & gfortran7.3 & OpenMPI3.0 -----
 #
 FFLAGS_FAST  = -cpp -O3 -m64 \
                -std=f2003 -fall-intrinsics -pedantic-errors -fimplicit-none -fmodule-private \
-               -fconvert=big-endian -frecord-marker=4 -ffree-line-length-none
-
+               -fconvert=big-endian -frecord-marker=4 -ffree-line-length-none                \
+               -ffpe-summary=none
 
 FFLAGS_DEBUG = -cpp -O0 -m64 \
                -std=f2003 -fall-intrinsics -pedantic-errors -fimplicit-none -fmodule-private \
@@ -18,17 +18,17 @@ FC     = mpif90
 #FFLAGS = $(FFLAGS_FAST)
 FFLAGS = $(FFLAGS_DEBUG)
 
-CC     = mpicc
 CFLAGS_FAST  = -O3 -m64 -std=c99
 CFLAGS_DEBUG = -O0 -m64 -std=c99 -g -fbacktrace
 
+CC     = mpicc
 CFLAGS = $(CFLAGS_FAST)
 #CFLAGS = $(CFLAGS_DEBUG)
 
 ##### Special Options #####
 
 ifeq ($(ENABLE_OPENMP),T)
-	FFLAGS += -openmp -openmp-report
+	FFLAGS += -fopenmp
 endif
 
 ifeq ($(ENABLE_NETCDF),T)
@@ -37,17 +37,18 @@ ifeq ($(ENABLE_NETCDF),T)
 	NETCDF_LIBS ?= $(shell nf-config --flibs) $(shell nc-config --libs)
 endif
 
-LAPACK_LIBS    ?= -L/opt/local/lib -llapack -lf77blas -lcblas -latlas
+LAPACK_LIBS ?=
 
 ###########################
 
-MODDIROPT ?= -J $(BUILD_DIR)
-OBJDIR    ?= $(BUILD_DIR)
+MODDIROPT ?= -J $(BUILDDIR)
+OBJDIR    ?= $(BUILDDIR)
 
 LD     = $(FC)
 LFLAGS = $(FFLAGS)
 
-INSTALL = install
+MAKE    = make
+INSTALL = gcp -u # if not exist, use "install"
 AR      = ar
 ARFLAGS = r
 RANLIB  = ranlib

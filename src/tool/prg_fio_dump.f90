@@ -1,56 +1,53 @@
 !-------------------------------------------------------------------------------
-!
-!+  Program FIO dump
-!
+!> Program FIO dump
+!!
+!! @par Description
+!!          header/data veiwer for new format data
+!!          ( packaged NICAM data format : PaNDa )
+!!
+!! @author NICAM developers
+!<
 !-------------------------------------------------------------------------------
 program prg_fio_dump
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
-  !      header/data veiwer for new format data
-  !      ( packaged NICAM data format : PaNDa )
-  !
-  !++ Current Corresponding Author: H. Yashiro
-  ! 
-  !++ History: 
-  !      Version   Date       Comment 
-  !      -----------------------------------------------------------------------
-  !      0.90      11-09-01  H.Yashiro : [NEW]
-  !
-  !-----------------------------------------------------------------------------
-  !
   !++ Used modules
   !
-  use mod_fio, only : &
-    FIO_HLONG,         &
-    FIO_LITTLE_ENDIAN, &
-    FIO_BIG_ENDIAN,    &
-    FIO_DUMP_HEADER,   &
-    FIO_DUMP_ALL,      &
-    FIO_DUMP_ALL_MORE
+  use mpi
+  use iso_c_binding
+  use mod_fio_common
+  use mod_stdio
   !-----------------------------------------------------------------------------
   implicit none
   !-----------------------------------------------------------------------------
   !
-  !++ parameters & variables
-  character(LEN=FIO_HLONG) :: fname     = ""
-  integer                  :: mode      = FIO_DUMP_HEADER
-  integer                  :: endian    = FIO_BIG_ENDIAN
-  logical                  :: filelok   = .false.
-  logical                  :: modelok   = .false.
-  logical                  :: endianlok = .false.
+  !++ C interface
+  !
+  include 'mod_fio_panda.inc'
 
-  character(LEN=FIO_HLONG) :: argstr
-  integer :: n, narg
+  !-----------------------------------------------------------------------------
+  !
+  !++ parameters & variables
+  character(len=H_LONG) :: fname     = ''
+  integer               :: mode      = FIO_DUMP_HEADER
+  integer               :: endian    = FIO_BIG_ENDIAN
+  logical               :: filelok   = .false.
+  logical               :: modelok   = .false.
+  logical               :: endianlok = .false.
+
+  character(len=H_LONG) :: argstr
+  integer  :: n, narg
 
 #ifdef _NOF2003
-  integer :: IARGC
+  integer  :: IARGC
 #else
-  integer :: command_argument_count
+  integer  :: command_argument_count
 #endif
 
-  integer :: fid ! return from C program
+  integer  :: fid, ierr ! return from C program
   !=============================================================================
+
+  call MPI_Init(ierr)
 
 #ifdef _NOF2003
   narg = IARGC()
@@ -77,7 +74,7 @@ program prg_fio_dump
 #endif
 
      if ( argstr(1:1) == '-' ) then
-        select case(argstr(2:2)) 
+        select case(argstr(2:2))
         case('h')
            if(.not. modelok) mode = FIO_DUMP_HEADER
            modelok = .true.
@@ -100,11 +97,12 @@ program prg_fio_dump
      endif
   enddo
 
-  call fio_syscheck()
+  ierr = fio_syscheck()
 
-  call fio_register_file(fid,trim(fname))
+  fid = fio_register_file(cstr(fname))
 
-  call fio_dump_finfo(fid,endian,mode)
+  ierr = fio_dump_finfo(fid,endian,mode)
+
+  call MPI_Finalize(ierr)
 
 end program prg_fio_dump
-!-------------------------------------------------------------------------------

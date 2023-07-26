@@ -27,12 +27,10 @@
 /
 
 &RUNCONFPARAM
-    RUNNAME        = 'DCMIP2016-12',
     NDIFF_LOCATION = 'IN_LARGE_STEP2',
     THUBURN_LIM    = .true.,
-    EIN_TYPE       = 'SIMPLE',
     RAIN_TYPE      = "WARM",
-    AF_TYPE        = 'DCMIP2016',
+    AF_TYPE        = 'DCMIP',
 /
 
 &BSSTATEPARAM
@@ -62,26 +60,23 @@
 /
 
 &CNSTPARAM
-    earth_radius        = 6.37122D+6,
-    earth_angvel        =   7.292D-5,
-    small_planet_factor =      1.D0,
-    earth_gravity       = 9.80616D0,
-    gas_cnst            =   287.0D0,
-    specific_heat_pre   =  1004.5D0,
+    earth_radius        = 6.37122E+6,
+    earth_angvel        =   7.292E-5,
+    small_planet_factor =      1.E0,
+    earth_gravity       = 9.80616E0,
+    gas_cnst            =   287.0E0,
+    specific_heat_pre   =  1004.5E0,
 /
 
 &NUMFILTERPARAM
     lap_order_hdiff   = 2,
     hdiff_type        = 'NONLINEAR1',
-    Kh_coef_maxlim    = 1.200D+17,
-    Kh_coef_minlim    = 1.200D+16,
-    ZD_hdiff_nl       = 20000.D0,
+    Kh_coef_maxlim    = 1.20E+17,
+    Kh_coef_minlim    = 1.20E+16,
+    ZD_hdiff_nl       = 20000.E0,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
-    alpha_d           = 1.20D16,
-    gamma_h_lap1      = 0.0D0,
-    ZD                = 20000.D0,
-    alpha_r           = 0.00D0,
+    alpha_d           = 1.20E+16,
 /
 
 &EMBUDGETPARAM

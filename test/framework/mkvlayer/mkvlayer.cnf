@@ -1,0 +1,6 @@
+&MKVLAYER_CNF
+    num_of_layer = 30,
+    layer_type   = 'ULLRICH14',
+    ztop         = 30.D+3,
+    outfname     = 'vgrid30_ullrich14_30km_dcmip2016v2.dat',
+/

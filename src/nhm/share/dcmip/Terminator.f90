@@ -2,7 +2,7 @@
 ! This is the "toy" chemistry module.
 !================================================================================================
 
-MODULE Terminator
+module Terminator
 
 implicit none
 private

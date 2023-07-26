@@ -1,32 +1,26 @@
 !-------------------------------------------------------------------------------
-!>
-!! Module forcing driver
+!> Module forcing driver
 !!
 !! @par Description
-!!         This module is for the artificial forcing
+!!          This module is for the artificial forcing
 !!
-!! @author R.Yoshida
-!!
-!! @par History
-!! @li      2012-10-11 (R.Yoshida) [NEW] extract from phystep
-!! @li      2013-03-07 (H.Yashiro) marge, refactoring
-!!
+!! @author NICAM developers
 !<
+!-------------------------------------------------------------------------------
 module mod_forcing_driver
   !-----------------------------------------------------------------------------
   !
   !++ Used modules
   !
   use mod_precision
-  use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID
+  use mod_stdio
+  use mod_prof
   !-----------------------------------------------------------------------------
   implicit none
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: forcing_setup
   public :: forcing_step
@@ -62,50 +56,49 @@ module mod_forcing_driver
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
+  !> Setup
   subroutine forcing_setup
-    use mod_adm, only: &
-       ADM_proc_stop,  &
-       ADM_CTL_FID
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_runconf, only: &
        AF_TYPE
     use mod_af_heldsuarez, only: &
        AF_heldsuarez_init
-    use mod_af_dcmip2016, only: &
-       AF_dcmip2016_init
+    use mod_af_dcmip, only: &
+       AF_dcmip_init
     implicit none
 
     namelist /FORCING_PARAM/ &
        NEGATIVE_FIXER,       &
        UPDATE_TOT_DENS
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[forcing]/Category[nhm]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=FORCING_PARAM,iostat=ierr)
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[forcing]/Category[nhm]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=FORCING_PARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** FORCING_PARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** FORCING_PARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist FORCING_PARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist FORCING_PARAM. STOP.'
-       call ADM_proc_stop
+       write(*,*) 'xxx Not appropriate names in namelist FORCING_PARAM. STOP.'
+       call PRC_MPIstop
     endif
-    write(ADM_LOG_FID,nml=FORCING_PARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=FORCING_PARAM)
 
-    write(ADM_LOG_FID,*) '+++ Artificial forcing type: ', trim(AF_TYPE)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Artificial forcing type: ', trim(AF_TYPE)
     select case(AF_TYPE)
     case('NONE')
        !--- do nothing
     case('HELD-SUAREZ')
-       call AF_heldsuarez_init
-    case('DCMIP2016')
-       call AF_dcmip2016_init
+       call AF_heldsuarez_init( moist_case = .false. )
+    case('DCMIP')
+       call AF_dcmip_init
     case default
-       write(ADM_LOG_FID,*) 'xxx unsupported forcing type! STOP.'
-       call ADM_proc_stop
+       write(*,*) 'xxx unsupported forcing type! STOP.'
+       call PRC_MPIstop
     end select
 
     return
@@ -113,59 +106,56 @@ contains
 
   !-----------------------------------------------------------------------------
   subroutine forcing_step
+    use mod_const, only: &
+       GRAV => CONST_GRAV
     use mod_adm, only: &
+       ADM_KNONE,   &
        ADM_gall_in, &
        ADM_kall,    &
        ADM_lall,    &
        ADM_kmin,    &
-       ADM_kmax,    &
-       ADM_KNONE
-    use mod_cnst, only: &
-       GRAV => CNST_EGRAV
-    use mod_time, only: &
-       TIME_DTL
+       ADM_kmax
     use mod_grd, only: &
-       GRD_dgz,  &
+       GRD_LAT,  &
+       GRD_LON,  &
        GRD_zs,   &
        GRD_ZSFC, &
        GRD_vz,   &
        GRD_Z,    &
        GRD_ZH
     use mod_gmtr, only: &
-       GMTR_P_var, &
-       GMTR_P_IX,  &
-       GMTR_P_IY,  &
-       GMTR_P_IZ,  &
-       GMTR_P_JX,  &
-       GMTR_P_JY,  &
-       GMTR_P_JZ,  &
-       GMTR_lat,   &
-       GMTR_lon
+       GMTR_p, &
+       GMTR_p_IX,  &
+       GMTR_p_IY,  &
+       GMTR_p_IZ,  &
+       GMTR_p_JX,  &
+       GMTR_p_JY,  &
+       GMTR_p_JZ
     use mod_vmtr, only: &
        VMTR_GSGAM2,  &
        VMTR_GSGAM2H, &
        VMTR_PHI
-    use mod_runconf, only: &
-       AF_TYPE,   &
-       TRC_VMAX,  &
-       NQW_STR,   &
-       NQW_END,   &
-       NCHEM_STR, &
-       NCHEM_END
-    use mod_prgvar, only: &
-       prgvar_get_in_withdiag, &
-       prgvar_set_in
+    use mod_time, only: &
+       TIME_DTL
     use mod_gtl, only: &
        GTL_clip_region, &
        GTL_clip_region_1layer
+    use mod_runconf, only: &
+       AF_TYPE,  &
+       TRC_VMAX, &
+       NQW_STR,  &
+       NQW_END
+    use mod_prgvar, only: &
+       prgvar_get_in_withdiag, &
+       prgvar_set_in
     use mod_bndcnd, only: &
-       bndcnd_thermo
-    use mod_af_heldsuarez, only: &
-       AF_heldsuarez
-    use mod_af_dcmip2016, only: &
-       AF_dcmip2016
+       BNDCND_thermo
     use mod_history, only: &
        history_in
+    use mod_af_heldsuarez, only: &
+       AF_heldsuarez
+    use mod_af_dcmip, only: &
+       AF_dcmip
     implicit none
 
     real(RP) :: rhog  (ADM_gall_in,ADM_kall,ADM_lall)
@@ -217,33 +207,31 @@ contains
 
     real(RP) :: frhogq(ADM_gall_in,ADM_kall,ADM_lall)
 
-    real(RP) :: tmp2d(ADM_gall_in,1)
+    character(len=H_SHORT) :: varname
 
-    character(len=16) :: varname
-
-    integer :: l, k, nq, k0
+    integer  :: l, nq, k0
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('__Forcing')
+    call PROF_rapstart('__Forcing',1)
 
     k0 = ADM_KNONE
 
-    call GTL_clip_region(VMTR_GSGAM2 (:,:,:),gsgam2, 1,ADM_kall)
-    call GTL_clip_region(VMTR_GSGAM2H(:,:,:),gsgam2h,1,ADM_kall)
-    call GTL_clip_region(VMTR_PHI    (:,:,:),phi,    1,ADM_kall)
-    call GTL_clip_region(real(GRD_vz(:,:,:,GRD_Z),kind=RP),z,1,ADM_kall)
-    call GTL_clip_region(real(GRD_vz(:,:,:,GRD_ZH),kind=RP),zh,1,ADM_kall)
+    call GTL_clip_region(VMTR_GSGAM2 (:,:,:) ,gsgam2 ,1,ADM_kall)
+    call GTL_clip_region(VMTR_GSGAM2H(:,:,:) ,gsgam2h,1,ADM_kall)
+    call GTL_clip_region(VMTR_PHI    (:,:,:) ,phi    ,1,ADM_kall)
+    call GTL_clip_region(GRD_vz(:,:,:,GRD_Z) ,z      ,1,ADM_kall)
+    call GTL_clip_region(GRD_vz(:,:,:,GRD_ZH),zh     ,1,ADM_kall)
 
-    call GTL_clip_region_1layer(real(GRD_zs  (:,k0,:,GRD_ZSFC),kind=RP),z_srf)
-    call GTL_clip_region_1layer(real(GMTR_lat(:,:),kind=RP),lat)
-    call GTL_clip_region_1layer(real(GMTR_lon(:,:),kind=RP),lon)
+    call GTL_clip_region_1layer(GRD_zs (:,k0,:,GRD_ZSFC),z_srf)
+    call GTL_clip_region_1layer(GRD_LAT(:,:),            lat  )
+    call GTL_clip_region_1layer(GRD_LON(:,:),            lon  )
 
-    call GTL_clip_region_1layer(real(GMTR_P_var(:,k0,:,GMTR_P_IX),kind=RP),ix)
-    call GTL_clip_region_1layer(real(GMTR_P_var(:,k0,:,GMTR_P_IY),kind=RP),iy)
-    call GTL_clip_region_1layer(real(GMTR_P_var(:,k0,:,GMTR_P_IZ),kind=RP),iz)
-    call GTL_clip_region_1layer(real(GMTR_P_var(:,k0,:,GMTR_P_JX),kind=RP),jx)
-    call GTL_clip_region_1layer(real(GMTR_P_var(:,k0,:,GMTR_P_JY),kind=RP),jy)
-    call GTL_clip_region_1layer(real(GMTR_P_var(:,k0,:,GMTR_P_JZ),kind=RP),jz)
+    call GTL_clip_region_1layer(GMTR_p(:,k0,:,GMTR_p_IX),ix)
+    call GTL_clip_region_1layer(GMTR_p(:,k0,:,GMTR_p_IY),iy)
+    call GTL_clip_region_1layer(GMTR_p(:,k0,:,GMTR_p_IZ),iz)
+    call GTL_clip_region_1layer(GMTR_p(:,k0,:,GMTR_p_JX),jx)
+    call GTL_clip_region_1layer(GMTR_p(:,k0,:,GMTR_p_JY),jy)
+    call GTL_clip_region_1layer(GMTR_p(:,k0,:,GMTR_p_JZ),jz)
 
     !--- get the prognostic and diagnostic variables
     call prgvar_get_in_withdiag( rhog,   & ! [IN]
@@ -266,7 +254,7 @@ contains
 
     !--- boundary condition
     do l = 1, ADM_lall
-       call bndcnd_thermo( ADM_gall_in, & ! [IN]
+       call BNDCND_thermo( ADM_gall_in, & ! [IN]
                            tem(:,:,l),  & ! [INOUT]
                            rho(:,:,l),  & ! [INOUT]
                            pre(:,:,l),  & ! [INOUT]
@@ -284,13 +272,13 @@ contains
 
        !--- surface pressure ( hydrostatic balance )
        pre_srf(:,l) = pre(:,ADM_kmin,l) &
-                    + rho(:,ADM_kmin,l)  * GRAV * ( z(:,ADM_kmin,l)-z_srf(:,l) )
+                    + rho(:,ADM_kmin,l) * GRAV * ( z(:,ADM_kmin,l)-z_srf(:,l) )
     enddo
 
     ! tentative negative fixer
     if ( NEGATIVE_FIXER ) then
        do nq = 1, TRC_VMAX
-          q(:,:,:,nq) = max( q(:,:,:,nq), 0.0D0 )
+          q(:,:,:,nq) = max( q(:,:,:,nq), 0.0_RP )
        enddo
     endif
 
@@ -299,7 +287,7 @@ contains
     case('HELD-SUAREZ')
 
        do l = 1, ADM_lall
-          call af_HeldSuarez( ADM_gall_in,  & ! [IN]
+          call AF_heldsuarez( ADM_gall_in,  & ! [IN]
                               lat(:,l),     & ! [IN]
                               pre(:,:,l),   & ! [IN]
                               tem(:,:,l),   & ! [IN]
@@ -316,39 +304,39 @@ contains
           call history_in( 'ml_af_fvz', fvz(:,:,l) )
           call history_in( 'ml_af_fe',  fe (:,:,l) )
        enddo
-       fw (:,:,:)   = 0.0_RP
-       fq (:,:,:,:) = 0.0_RP
+       fw(:,:,:)   = 0.0_RP
+       fq(:,:,:,:) = 0.0_RP
 
-    case('DCMIP2016')
+    case('DCMIP')
 
        do l = 1, ADM_lall
-          call af_dcmip2016 ( ADM_gall_in,      & ! [IN]
-                              lat    (:,l),     & ! [IN]
-                              lon    (:,l),     & ! [IN]
-                              z      (:,:,l),   & ! [IN]
-                              zh     (:,:,l),   & ! [IN]
-                              rho    (:,:,l),   & ! [IN]
-                              pre    (:,:,l),   & ! [IN]
-                              tem    (:,:,l),   & ! [IN]
-                              vx     (:,:,l),   & ! [IN]
-                              vy     (:,:,l),   & ! [IN]
-                              vz     (:,:,l),   & ! [IN]
-                              q      (:,:,l,:), & ! [IN]
-                              ein    (:,:,l),   & ! [IN]
-                              pre_srf(:,l),     & ! [IN]
-                              fvx    (:,:,l),   & ! [OUT]
-                              fvy    (:,:,l),   & ! [OUT]
-                              fvz    (:,:,l),   & ! [OUT]
-                              fe     (:,:,l),   & ! [OUT]
-                              fq     (:,:,l,:), & ! [OUT]
-                              precip (:,k0,l),  & ! [OUT]
-                              ix     (:,l),     & ! [IN]
-                              iy     (:,l),     & ! [IN]
-                              iz     (:,l),     & ! [IN]
-                              jx     (:,l),     & ! [IN]
-                              jy     (:,l),     & ! [IN]
-                              jz     (:,l),     & ! [IN]
-                              TIME_DTL          ) ! [IN]
+          call AF_dcmip( ADM_gall_in,      & ! [IN]
+                         lat    (:,l),     & ! [IN]
+                         lon    (:,l),     & ! [IN]
+                         z      (:,:,l),   & ! [IN]
+                         zh     (:,:,l),   & ! [IN]
+                         rho    (:,:,l),   & ! [IN]
+                         pre    (:,:,l),   & ! [IN]
+                         tem    (:,:,l),   & ! [IN]
+                         vx     (:,:,l),   & ! [IN]
+                         vy     (:,:,l),   & ! [IN]
+                         vz     (:,:,l),   & ! [IN]
+                         q      (:,:,l,:), & ! [IN]
+                         ein    (:,:,l),   & ! [IN]
+                         pre_srf(:,l),     & ! [IN]
+                         fvx    (:,:,l),   & ! [OUT]
+                         fvy    (:,:,l),   & ! [OUT]
+                         fvz    (:,:,l),   & ! [OUT]
+                         fe     (:,:,l),   & ! [OUT]
+                         fq     (:,:,l,:), & ! [OUT]
+                         precip (:,k0,l),  & ! [OUT]
+                         ix     (:,l),     & ! [IN]
+                         iy     (:,l),     & ! [IN]
+                         iz     (:,l),     & ! [IN]
+                         jx     (:,l),     & ! [IN]
+                         jy     (:,l),     & ! [IN]
+                         jz     (:,l),     & ! [IN]
+                         TIME_DTL          ) ! [IN]
 
           call history_in( 'ml_af_fvx', fvx(:,:,l) )
           call history_in( 'ml_af_fvy', fvy(:,:,l) )
@@ -385,21 +373,13 @@ contains
     do nq = 1, TRC_VMAX
        frhogq(:,:,:) = fq(:,:,:,nq) * rho(:,:,:) * GSGAM2(:,:,:)
 
-!       rhogq(:,:,:,nq) = rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:)
-!
-!       ! tentative negative fixer
-!       if ( NEGATIVE_FIXER ) then
-!          rhogq(:,:,:,nq) = max( rhogq(:,:,:,nq), 0.0D0 )
-!       endif
-       ! tentative negative fixer
        if ( NEGATIVE_FIXER ) then
-         tmp(:,:,:)      = max(rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:), 0.d0)
-         frhogq(:,:,:)   = (tmp(:,:,:) - rhogq(:,:,:,nq))/TIME_DTL
-         rhogq(:,:,:,nq) = tmp(:,:,:)
+          tmp   (:,:,:)    = max( rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:), 0.0_DP )
+          frhogq(:,:,:)    = ( tmp(:,:,:) - rhogq(:,:,:,nq) ) / TIME_DTL
+          rhogq (:,:,:,nq) = tmp(:,:,:)
        else
-         rhogq(:,:,:,nq) = rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:)
+          rhogq(:,:,:,nq) = rhogq(:,:,:,nq) + TIME_DTL * frhogq(:,:,:)
        endif
-
 
        if ( UPDATE_TOT_DENS ) then
           if (       nq >= NQW_STR &
@@ -418,7 +398,7 @@ contains
                         rhoge,  & ! [IN]
                         rhogq   ) ! [IN]
 
-    call DEBUG_rapend  ('__Forcing')
+    call PROF_rapend  ('__Forcing',1)
 
     return
   end subroutine forcing_step
@@ -429,49 +409,51 @@ contains
        PROG, PROG_pl )
     use mod_adm, only: &
        ADM_have_pl, &
+       ADM_KNONE,   &
        ADM_gall,    &
        ADM_gall_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_kall
+    use mod_grd, only: &
+       GRD_LAT,    &
+       GRD_LAT_pl, &
+       GRD_LON,    &
+       GRD_LON_pl, &
+       GRD_Z,      &
+       GRD_ZH,     &
+       GRD_vz,     &
+       GRD_vz_pl
     use mod_time, only: &
        TIME_DTL
-    use mod_grd, only: &
-       GRD_Z,    &
-       GRD_ZH,   &
-       GRD_vz,   &
-       GRD_vz_pl
-    use mod_gmtr, only: &
-       GMTR_lon,    &
-       GMTR_lon_pl, &
-       GMTR_lat,    &
-       GMTR_lat_pl
-    use mod_ideal_init, only: &
-       DCTEST_type, &
-       DCTEST_case
     use mod_af_trcadv, only: & ![add] 20130612 R.Yoshida
        test11_velocity, &
        test12_velocity
+    use mod_ideal_init, only: &
+       DCTEST_type, &
+       DCTEST_case
     implicit none
 
-    real(RP), intent(inout) :: PROG    (ADM_gall,   ADM_kall,ADM_lall,   nmax_PROG) ! prognostic variables
+    real(RP), intent(inout) :: PROG    (ADM_gall   ,ADM_kall,ADM_lall   ,nmax_PROG) ! prognostic variables
     real(RP), intent(inout) :: PROG_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,nmax_PROG)
 
-    real(RP) :: vx     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_x
+    real(RP) :: vx     (ADM_gall   ,ADM_kall,ADM_lall   ) ! horizontal velocity_x
     real(RP) :: vx_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP) :: vy     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_y
+    real(RP) :: vy     (ADM_gall   ,ADM_kall,ADM_lall   ) ! horizontal velocity_y
     real(RP) :: vy_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP) :: vz     (ADM_gall,   ADM_kall,ADM_lall   ) ! horizontal velocity_z
+    real(RP) :: vz     (ADM_gall   ,ADM_kall,ADM_lall   ) ! horizontal velocity_z
     real(RP) :: vz_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    real(RP) :: w      (ADM_gall,   ADM_kall,ADM_lall   ) ! vertical velocity
+    real(RP) :: w      (ADM_gall   ,ADM_kall,ADM_lall   ) ! vertical velocity
     real(RP) :: w_pl   (ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    real(RP), save :: time = 0.0_RP ! for tracer advection test  [add; original by H.Miura] 20130612 R.Yoshida
+    real(RP), save :: time = 0.0_RP ! for tracer advection test [add; original by H.Miura] 20130612 R.Yoshida
 
-    integer :: n, k ,l
+    integer  :: n, k ,l, k0
     !---------------------------------------------------------------------------
 
-    call DEBUG_rapstart('__Forcing')
+    call PROF_rapstart('__Forcing',1)
+
+    k0 = ADM_KNONE
 
     !--- update velocity
     time = time + TIME_DTL
@@ -483,15 +465,15 @@ contains
        do n = 1, ADM_gall
           ! full (1): u,v
           ! half (2): w
-          call test11_velocity( time,                   & ![IN]
-                                real(GMTR_lon(n,l),kind=RP),          & ![IN]
-                                real(GMTR_lat(n,l),kind=RP),          & ![IN]
-                                real(GRD_vz  (n,k,l,GRD_Z ),kind=RP), & ![IN]
-                                real(GRD_vz  (n,k,l,GRD_ZH),kind=RP), & ![IN]
-                                vx      (n,k,l),        & ![OUT]
-                                vy      (n,k,l),        & ![OUT]
-                                vz      (n,k,l),        & ![OUT]
-                                w       (n,k,l)         ) ![OUT]
+          call test11_velocity( time,                  & ! [IN]
+                                GRD_LON(n,  l),        & ! [IN]
+                                GRD_LAT(n,  l),        & ! [IN]
+                                GRD_vz (n,k,l,GRD_Z ), & ! [IN]
+                                GRD_vz (n,k,l,GRD_ZH), & ! [IN]
+                                vx     (n,k,l),        & ! [OUT]
+                                vy     (n,k,l),        & ! [OUT]
+                                vz     (n,k,l),        & ! [OUT]
+                                w      (n,k,l)         ) ! [OUT]
        enddo
        enddo
        enddo
@@ -500,15 +482,15 @@ contains
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do n = 1, ADM_gall_pl
-             call test11_velocity( time,                      & ![IN]
-                                   real(GMTR_lon_pl(n,l),kind=RP),          & ![IN]
-                                   real(GMTR_lat_pl(n,l),kind=RP),          & ![IN]
-                                   real(GRD_vz_pl  (n,k,l,GRD_Z ),kind=RP), & ![IN]
-                                   real(GRD_vz_pl  (n,k,l,GRD_ZH),kind=RP), & ![IN]
-                                   vx_pl      (n,k,l),        & ![OUT]
-                                   vy_pl      (n,k,l),        & ![OUT]
-                                   vz_pl      (n,k,l),        & ![OUT]
-                                   w_pl       (n,k,l)         ) ![OUT]
+             call test11_velocity( time,                     & ! [IN]
+                                   GRD_LON_pl(n,  l),        & ! [IN]
+                                   GRD_LAT_pl(n,  l),        & ! [IN]
+                                   GRD_vz_pl (n,k,l,GRD_Z ), & ! [IN]
+                                   GRD_vz_pl (n,k,l,GRD_ZH), & ! [IN]
+                                   vx_pl     (n,k,l),        & ! [OUT]
+                                   vy_pl     (n,k,l),        & ! [OUT]
+                                   vz_pl     (n,k,l),        & ! [OUT]
+                                   w_pl      (n,k,l)         ) ! [OUT]
           enddo
           enddo
           enddo
@@ -521,15 +503,15 @@ contains
        do n = 1, ADM_gall
           ! full (1): u,v
           ! half (2): w
-          call test12_velocity( time,                   & ![IN]
-                                real(GMTR_lon(n,l),kind=RP),          & ![IN]
-                                real(GMTR_lat(n,l),kind=RP),          & ![IN]
-                                real(GRD_vz  (n,k,l,GRD_Z ),kind=RP), & ![IN]
-                                real(GRD_vz  (n,k,l,GRD_ZH),kind=RP), & ![IN]
-                                vx      (n,k,l),        & ![OUT]
-                                vy      (n,k,l),        & ![OUT]
-                                vz      (n,k,l),        & ![OUT]
-                                w       (n,k,l)         ) ![OUT]
+          call test12_velocity( time,                  & ! [IN]
+                                GRD_LON(n,  l),        & ! [IN]
+                                GRD_LAT(n,  l),        & ! [IN]
+                                GRD_vz (n,k,l,GRD_Z ), & ! [IN]
+                                GRD_vz (n,k,l,GRD_ZH), & ! [IN]
+                                vx     (n,k,l),        & ! [OUT]
+                                vy     (n,k,l),        & ! [OUT]
+                                vz     (n,k,l),        & ! [OUT]
+                                w      (n,k,l)         ) ! [OUT]
        enddo
        enddo
        enddo
@@ -538,15 +520,15 @@ contains
           do l = 1, ADM_lall_pl
           do k = 1, ADM_kall
           do n = 1, ADM_gall_pl
-             call test12_velocity( time,                      & ![IN]
-                                   real(GMTR_lon_pl(n,l),kind=RP),          & ![IN]
-                                   real(GMTR_lat_pl(n,l),kind=RP),          & ![IN]
-                                   real(GRD_vz_pl  (n,k,l,GRD_Z ),kind=RP), & ![IN]
-                                   real(GRD_vz_pl  (n,k,l,GRD_ZH),kind=RP), & ![IN]
-                                   vx_pl      (n,k,l),        & ![OUT]
-                                   vy_pl      (n,k,l),        & ![OUT]
-                                   vz_pl      (n,k,l),        & ![OUT]
-                                   w_pl       (n,k,l)         ) ![OUT]
+             call test12_velocity( time,                     & ! [IN]
+                                   GRD_LON_pl(n,  l),        & ! [IN]
+                                   GRD_LAT_pl(n,  l),        & ! [IN]
+                                   GRD_vz_pl (n,k,l,GRD_Z ), & ! [IN]
+                                   GRD_vz_pl (n,k,l,GRD_ZH), & ! [IN]
+                                   vx_pl     (n,k,l),        & ! [OUT]
+                                   vy_pl     (n,k,l),        & ! [OUT]
+                                   vz_pl     (n,k,l),        & ! [OUT]
+                                   w_pl      (n,k,l)         ) ! [OUT]
           enddo
           enddo
           enddo
@@ -566,7 +548,7 @@ contains
        PROG_pl(:,:,:,I_RHOGW ) = w_pl (:,:,:) * PROG_pl(:,:,:,I_RHOG)
     endif
 
-    call DEBUG_rapend  ('__Forcing')
+    call PROF_rapend  ('__Forcing',1)
 
     return
   end subroutine forcing_update

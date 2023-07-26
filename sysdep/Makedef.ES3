@@ -1,24 +1,26 @@
 #
-# ------ FOR Earth Simulator 2, SX -----
+# ------ FOR Earth Simulator 3, SX -----
 #
-
 FFLAGS_FAST  = -C hopt                    \
                -Ep -f2003 -dW             \
                -Wf"-L fmtlist transform"  \
-               -Wf"-pvctl chgpwr fullmsg"
+               -Wf"-pvctl chgpwr fullmsg"  \
+               -size_t64
 
-FFLAGS_DEBUG = -C vsafe                   \
+FFLAGS_DEBUG = -C vsafe -eCP -Cdebug      \
                -Ep -f2003 -dW             \
                -Wf"-L fmtlist transform"  \
                -Wf"-pvctl fullmsg"        \
-               -Wf"-init heap=nan stack=nan"
+               -Wf"-init heap=nan stack=nan" \
+               -size_t64
 
 FC     = sxmpif90
 FFLAGS = $(FFLAGS_FAST)
 #FFLAGS = $(FFLAGS_DEBUG)
 
 CC     = sxmpic++
-CFLAGS =
+CFLAGS = -size_t64
+##CFLAGS = -g -size_t64 -traceback -mask flovf -mask flunf -mask inv -mask zdiv -mask inexact -mask fxovf
 
 ##### Special Options #####
 
@@ -42,12 +44,13 @@ endif
 
 ###########################
 
-MODDIROPT ?= -to $(BUILD_DIR) -I$(BUILD_DIR)
-OBJDIR    ?= $(BUILD_DIR)
+MODDIROPT ?= -to $(BUILDDIR) -I$(BUILDDIR)
+OBJDIR    ?= $(BUILDDIR)
 
 LD     = $(FC)
 LFLAGS = $(FFLAGS)
 
+MAKE    = make
 INSTALL = cp -u
 AR      = sxar
 ARFLAGS = r

@@ -30,7 +30,6 @@ res3d=GL${GL}RL${RL}z${ZL}
 
 MNGINFO=rl${RL}-prc${NP}.info
 
-# for RICC-FX100
 NNODE=`expr $NMPI / 5`
 
 cat << EOF1 > run.sh
@@ -96,9 +95,9 @@ ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
 ln -sv ${TOPDIR}/data/zaxis .
 EOFICO2LL1
 
-for f in $( ls ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/ )
+for f in $( ls ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/ )
 do
-   echo "ln -sv ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/${f} ." >> ico2ll.sh
+   echo "ln -sv ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/${f} ." >> ico2ll.sh
 done
 
 cat << EOFICO2LL2 >> ico2ll.sh

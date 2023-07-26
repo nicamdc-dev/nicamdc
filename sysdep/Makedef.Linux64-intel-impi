@@ -16,17 +16,17 @@ FC     = mpiifort
 FFLAGS = $(FFLAGS_FAST)
 #FFLAGS = $(FFLAGS_DEBUG)
 
-CC     = mpiicc
 CFLAGS_FAST  = -O3 -xHost -ip -mcmodel=medium
 CFLAGS_DEBUG = -O0 -mcmodel=medium
 
+CC     = mpiicc
 CFLAGS = $(CFLAGS_FAST)
 #CFLAGS = $(CFLAGS_DEBUG)
 
 ##### Special Options #####
 
 ifeq ($(ENABLE_OPENMP),T)
-	FFLAGS += -openmp -openmp-report
+	FFLAGS += -openmp
 endif
 
 ifeq ($(ENABLE_NETCDF),T)
@@ -35,17 +35,18 @@ ifeq ($(ENABLE_NETCDF),T)
 	NETCDF_LIBS ?= $(shell nf-config --flibs) $(shell nc-config --libs)
 endif
 
-LAPACK_LIBS    ?= -mkl
+LAPACK_LIBS ?=
 
 ###########################
 
-MODDIROPT ?= -module $(BUILD_DIR)
-OBJDIR    ?= $(BUILD_DIR)
+MODDIROPT ?= -module $(BUILDDIR)
+OBJDIR    ?= $(BUILDDIR)
 
 LD     = $(FC)
 LFLAGS = $(FFLAGS)
 
-INSTALL = install
+MAKE    = make
+INSTALL = cp -u
 AR      = ar
 ARFLAGS = r
 RANLIB  = ranlib

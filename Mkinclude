@@ -10,14 +10,6 @@ SRCDIR = $(TOPDIR)/src
 
 ##### select special files #####
 
-mod_oprt      := mod_oprt
-mod_oprt3d    := mod_oprt3d
-mod_dynamics   := mod_dynamics
-mod_vi         := mod_vi
-mod_src        := mod_src
-mod_src_tracer := mod_src_tracer
-mod_numfilter  := mod_numfilter
-
 ifeq ($(ENABLE_NETCDF),T)
 	mod_netcdf := mod_netcdf
 else
@@ -25,13 +17,10 @@ else
 	mod_netcdf := mod_nonetcdf
 endif
 
-ifeq ($(ENABLE_POH5),T)
-	mod_hio := mod_hio
-else
-	VPATH += share/extra:
-	mod_hio := mod_nohio
-endif
-
 ifeq ($(ENABLE_FIXEDINDEX),T)
 	FFLAGS += -D_FIXEDINDEX_ -I$(SRCDIR)/include
+endif
+
+ifeq ($(SINGLE),T)
+	FFLAGS += -DSINGLE
 endif

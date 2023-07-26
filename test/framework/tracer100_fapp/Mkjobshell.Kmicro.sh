@@ -60,7 +60,6 @@ cat << EOF1 > run.sh
 #
 export PARALLEL=8
 export OMP_NUM_THREADS=8
-#export fu08bf=1
 export XOS_MMM_L_ARENA_FREE=2
 
 ln -sv ${TOPDIR}/bin/${BINNAME} .
@@ -114,16 +113,15 @@ cat << EOFICO2LL1 > ico2ll.sh
 #
 export PARALLEL=8
 export OMP_NUM_THREADS=8
-#export fu08bf=1
 
 ln -sv ${TOPDIR}/bin/fio_ico2ll_mpi .
 ln -sv ${TOPDIR}/data/mnginfo/${MNGINFO} .
 ln -sv ${TOPDIR}/data/zaxis .
 EOFICO2LL1
 
-for f in $( ls ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/ )
+for f in $( ls ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/ )
 do
-   echo "ln -sv ${TOPDIR}/data/grid/llmap/gl${GL}/rl${RL}/${f} ." >> ico2ll.sh
+   echo "ln -sv ${TOPDIR}/data/grid/llmap/gl${GL}rl${RL}/${f} ." >> ico2ll.sh
 done
 
 cat << EOFICO2LL2 >> ico2ll.sh

@@ -34,9 +34,11 @@ module mod_sgs
   !
   !++ Used modules
   !
+  use mod_precision
+  use mod_stdio
+  use mod_prof
+
   use mod_adm, only: &
-     ADM_LOG_FID, &
-     ADM_NSYS,    &
      ADM_prc_me,  &
      ADM_have_pl, &
      ADM_lall,    &
@@ -47,8 +49,8 @@ module mod_sgs
      ADM_kmin,    &
      ADM_kmax,    &
      ADM_KNONE
-  use mod_cnst, only: &
-     EPS => CNST_EPS_ZERO
+  use mod_const, only: &
+     EPS => CONST_EPS
   use mod_vmtr,only:&
      VMTR_GSGAM2,&
      VMTR_RGAM2,&
@@ -97,7 +99,7 @@ module mod_sgs
   !
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: sgs_setup
   public :: sgs_smagorinsky
@@ -183,10 +185,10 @@ module mod_sgs
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
+  !> Setup
   subroutine sgs_setup
-    use mod_adm, only: &
-       ADM_CTL_FID, &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     implicit none
 
     namelist / SMGPARAM / &
@@ -197,22 +199,21 @@ contains
        SMG_CS,        & !--- Smagorinsky constant
        stratos_effect   !--- stratos effect (default: false)
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[SGS turbulence]/Category[nhm dynamics]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=SMGPARAM,iostat=ierr)
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[SGS turbulence]/Category[nhm dynamics]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=SMGPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** SMGPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** SMGPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist SMGPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist SMGPARAM. STOP.'
-       call ADM_proc_stop
+       write(*,*) 'xxx Not appropriate names in namelist SMGPARAM. STOP.'
+       call PRC_MPIstop
     endif
-    write(ADM_LOG_FID,nml=SMGPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=SMGPARAM)
 
     call tb_smg_oprt_init
 
@@ -246,11 +247,11 @@ contains
     !------     1. Calculation region of frhogvx,...., frhoge
     !------                    : (:,:,:)
     !------
-    !
-    use mod_gmtr, only :  &
+
+    use mod_gmtr, only: &
          GMTR_area,&
          GMTR_area_pl
-    use mod_grd, only :  &
+    use mod_grd, only: &
          GRD_rscale,&
          GRD_xdir,&
          GRD_ydir,&
@@ -264,27 +265,24 @@ contains
          GRD_vz_pl,    &
          GRD_gz,         &
          GRD_gzh
-    use mod_cnst, only : &
-         CNST_CV,        &
-         CNST_CP,        &
-         CNST_PI
-    use mod_runconf, only : &
+    use mod_const, only: &
+         CPdry => CONST_CPdry
+    use mod_runconf, only: &
          I_QV
-    use mod_oprt, only :        &
+    use mod_oprt, only: &
          OPRT_horizontalize_vec,&
          OPRT_laplacian,        &
          OPRT_diffusion
-    use mod_comm, only :        &
+    use mod_comm, only: &
          COMM_data_transfer
-    use mod_runconf, only :         &
+    use mod_runconf, only: &
          TRC_VMAX
-    use mod_bsstate, only :         &
+    use mod_bsstate, only: &
          rho_bs,rho_bs_pl
-    use mod_time, only : &
+    use mod_time, only: &
          TIME_DTL
-    !
     implicit none
-    !
+
     integer, intent(in) :: nl
     real(RP), intent(in) :: rho   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in) :: rho_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
@@ -292,7 +290,7 @@ contains
     real(RP), intent(in) :: rhog_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in) :: rhogq(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
     real(RP), intent(in) :: rhogq_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
-    !
+
     real(RP), intent(in) :: vx   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in) :: vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in) :: vy   (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -305,7 +303,7 @@ contains
     real(RP), intent(in) :: tem_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(in) :: q(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
     real(RP), intent(in) :: q_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
-    !
+
     real(RP), intent(inout) :: frhog   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(inout) :: frhog_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP), intent(inout) :: frhogvx   (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -346,16 +344,16 @@ contains
     real(RP) :: grhogvyh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: grhogvzh   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: grhogvzh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    !
+
     real(RP), intent(in) :: potem   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP), intent(in) :: potem_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP) :: pi   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP) :: pi_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    !
-!    integer :: p, id
+
+!    integer  :: p, id
     integer:: i,j,k,l,n,  idir,ivar
-    integer :: nq
-    !
+    integer  :: nq
+
     real(RP) :: del_xyz2, SMG_CS2, LENGTH_maxlim2
     real(RP)::sij(ADM_gall,ADM_kall,ADM_lall,3,3)           ! full level
     real(RP)::sij_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3,3)  ! full level
@@ -365,20 +363,20 @@ contains
     real(RP)::sijsijh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! half level
     real(RP)::sijh(ADM_gall,ADM_kall,ADM_lall,3,3)
     real(RP)::sijh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,3,3)  ! partial ui / partial xj
-    !
+
     !------ diffusion coefficient
     real(RP)::K_coef   (ADM_gall   ,ADM_kall,ADM_lall   )            ! full level
     real(RP)::K_coef_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)            ! full level
     real(RP)::K_coefh   (ADM_gall   ,ADM_kall,ADM_lall   )            ! half level
     real(RP)::K_coefh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)            ! half level
-    !
+
     real(RP)::abs_vxh   (ADM_gall   ,ADM_kall,ADM_lall   )            ! half level
     real(RP)::abs_vxh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)   ! half level
     real(RP)::abs_vyh   (ADM_gall   ,ADM_kall,ADM_lall   )            ! half level
     real(RP)::abs_vyh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)   ! half level
     real(RP)::abs_vzh   (ADM_gall   ,ADM_kall,ADM_lall   )            ! half level
     real(RP)::abs_vzh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)   ! half level
-    !
+
     real(RP)::abs_vx   (ADM_gall   ,ADM_kall,ADM_lall   )            ! full level
     real(RP)::abs_vx_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)   ! full level
     real(RP)::abs_vy   (ADM_gall   ,ADM_kall,ADM_lall   )            ! full level
@@ -398,14 +396,14 @@ contains
     real(RP) :: stratosh(ADM_GALL,ADM_kall,ADM_LALL)
     real(RP) :: stratosh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 
-    !
+
 !    real(RP) :: fq   (ADM_gall   ,ADM_kall,ADM_lall   )
 !    real(RP) :: fq_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
 !    real(RP) :: wrk(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
 !    real(RP) :: wrk_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
 !    real(RP) :: wrkh(ADM_gall,ADM_kall,ADM_lall,TRC_VMAX)
 !    real(RP) :: wrkh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl,TRC_VMAX)
-    !
+
 !    real(RP) :: rhoh   (ADM_gall   ,ADM_kall,ADM_lall   )  ! rho at half level
 !    real(RP) :: rhoh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! rho at half level
     real(RP) :: pih   (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -453,7 +451,7 @@ contains
        abs_vzh(:,k,:) = (vz(:,k,:)+vz(:,k-1,:))/2 + w(:,k,:) * GRD_x(:,ADM_knone,:,GRD_ZDIR)/GRD_rscale
     enddo
 
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
       abs_vxh_pl(:,ADM_kmin,:) = 0!vx_pl(:,ADM_kmin,:)/2 + w_pl(:,ADM_kmin,:) * GRD_x_pl(:,ADM_knone,:,GRD_XDIR)/GRD_rscale
       abs_vyh_pl(:,ADM_kmin,:) = 0!vy_pl(:,ADM_kmin,:)/2 + w_pl(:,ADM_kmin,:) * GRD_x_pl(:,ADM_knone,:,GRD_YDIR)/GRD_rscale
       abs_vzh_pl(:,ADM_kmin,:) = 0!vz_pl(:,ADM_kmin,:)/2 + w_pl(:,ADM_kmin,:) * GRD_x_pl(:,ADM_knone,:,GRD_ZDIR)/GRD_rscale
@@ -463,7 +461,7 @@ contains
        abs_vzh_pl(:,k,:) = (vz_pl(:,k,:)+vz_pl(:,k-1,:))/2 + w_pl(:,k,:) * GRD_x_pl(:,ADM_knone,:,GRD_ZDIR)/GRD_rscale
       enddo
     endif
-    !
+
     ! full level
     !   w(k=ADM_kmax+1) is top  and I don't know about its treatment
     do k=ADM_kmin,ADM_kmax-1
@@ -476,7 +474,7 @@ contains
     abs_vy(:,k,:) = vy(:,k,:) + (w(:,k,:)+w(:,k,:))/2 * GRD_x(:,ADM_knone,:,GRD_YDIR)/GRD_rscale
     abs_vz(:,k,:) = vz(:,k,:) + (w(:,k,:)+w(:,k,:))/2 * GRD_x(:,ADM_knone,:,GRD_ZDIR)/GRD_rscale
 
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
       do k=ADM_kmin,ADM_kmax-1
        abs_vx_pl(:,k,:) = vx_pl(:,k,:) + (w_pl(:,k,:)+w_pl(:,k+1,:))/2 * GRD_x_pl(:,ADM_knone,:,GRD_XDIR)/GRD_rscale
        abs_vy_pl(:,k,:) = vy_pl(:,k,:) + (w_pl(:,k,:)+w_pl(:,k+1,:))/2 * GRD_x_pl(:,ADM_knone,:,GRD_YDIR)/GRD_rscale
@@ -489,7 +487,7 @@ contains
     endif
 
     do l=1,ADM_lall
-       if (dbgfirst)then
+       if (dbgfirst) then
 
        call history_in('vx',vx(:,:,l))
        call history_in('vy',vy(:,:,l))
@@ -523,7 +521,7 @@ contains
 
     !=============================== (2) calculate Sij and K_coefh at both full and half level ====================
 !    call dbgmx('aa oprt_GAM',smg_oprt_GAM(:,ADM_kmin:ADM_kmax,:))
-!    if (ADM_prc_me.eq.1) call dbgmx('aa oprt_GAM_pl',smg_oprt_GAM_pl(:,ADM_kmin:ADM_kmax,:))
+!    if (ADM_prc_me==1) call dbgmx('aa oprt_GAM_pl',smg_oprt_GAM_pl(:,ADM_kmin:ADM_kmax,:))
 
     sijh=0.0_RP
     sijh_pl=0.0_RP
@@ -599,19 +597,19 @@ contains
 
 !!$    ! stratos effect
 !!$    if (stratos_effect) then
-!!$       !
+!!$
 !!$       ql=0
-!!$       if (RAIN_TYPE.eq.'WARM')  ql(:,:,:)=q(:,:,:,IQC)+q(:,:,:,IQR)
-!!$       if (MP_TYPE.eq.'NSW5')  ql(:,:,:)=q(:,:,:,IQC)+q(:,:,:,IQR)+q(:,:,:,IQI)+q(:,:,:,IQS) ! ( ice effect is omitted)
-!!$       if (MP_TYPE.eq.'NSW6')  ql(:,:,:)=q(:,:,:,IQC)+q(:,:,:,IQR)+q(:,:,:,IQI)+q(:,:,:,IQS)+q(:,:,:,IQG)! ( ice effect is omitted)
+!!$       if (RAIN_TYPE=='WARM')  ql(:,:,:)=q(:,:,:,IQC)+q(:,:,:,IQR)
+!!$       if (MP_TYPE=='NSW5')  ql(:,:,:)=q(:,:,:,IQC)+q(:,:,:,IQR)+q(:,:,:,IQI)+q(:,:,:,IQS) ! ( ice effect is omitted)
+!!$       if (MP_TYPE=='NSW6')  ql(:,:,:)=q(:,:,:,IQC)+q(:,:,:,IQR)+q(:,:,:,IQI)+q(:,:,:,IQS)+q(:,:,:,IQG)! ( ice effect is omitted)
 !!$       qtot(:,:,:)=ql(:,:,:)+qv(:,:,:)
-!!$       !
+!!$
 !!$       do k = ADM_kmin+1, ADM_kmax
 !!$          potemh(:,k,:)=(potem(:,k,:)+potem(:,k-1,:))/2
 !!$       enddo
 !!$       k=ADM_kmin
 !!$       potemh(:,k,:)=potem(:,k,:)
-!!$       !
+!!$
 !!$       beta_theta =
 !!$
 !!$
@@ -620,7 +618,7 @@ contains
 !!$       do l = 1, ADM_lall_pl
 !!$          do k = ADM_kmin+1, ADM_kmax
 !!$             do n = 1, ADM_gall_pl
-!!$                n2= CNST_EGRAV/(potemh(n,k,l) * (potem(n,k,l)-potem(n,k-1,l))/ ( GRD_vz(n,k,l,GRD_Z)-GRD_vz(n,k-1,l,GRD_Z) ))
+!!$                n2= CONST_GRAV/(potemh(n,k,l) * (potem(n,k,l)-potem(n,k-1,l))/ ( GRD_vz(n,k,l,GRD_Z)-GRD_vz(n,k-1,l,GRD_Z) ))
 !!$                ri= n2/max(  (vx(n,k,l)-vx(n,k-1,l))**2+(vy(n,k,l)-vy(n,k-1,l))**2+(vz(n,k,l)-vz(n,k-1,l))**2, EPS) *&
 !!$                     ( GRD_vz(n,k,l,GRD_Z)-GRD_vz(n,k-1,l,GRD_Z) )**2
 !!$                qtot =
@@ -658,7 +656,7 @@ contains
        enddo
     enddo
 
-    if(nl==1)then
+    if (nl==1) then
 
        do l=1,ADM_lall
           call history_in('K_coefh',K_coefh(:,:,l)) ! sonouchi kesu
@@ -692,7 +690,7 @@ contains
     call dbgmx('sijsijha',sqrt(max(2.0_RP*sijsijh(:,:,:),EPS)))
     call dbgmx('sijsijhb',sqrt(max(stratosh(:,:,:),EPS)))
 
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
        K_coefh_pl(:,ADM_kmin-1,:) = 0.0_RP ! im not sure
        K_coefh_pl(:,ADM_kmax+1,:) = 0.0_RP
        do l = 1, ADM_lall_pl
@@ -723,7 +721,7 @@ contains
           enddo
        enddo
     enddo
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
        K_coef_pl(:,ADM_kmin-1,:) = 0.0_RP
        K_coef_pl(:,ADM_kmax+1,:) = 0.0_RP
        do l = 1, ADM_lall_pl
@@ -739,7 +737,7 @@ contains
     endif
 
     do l=1,ADM_lall
-       if (dbgfirst)then
+       if (dbgfirst) then
 
           call history_in('K_coef',K_coef(:,:,l))
           call history_in('K_coefh',K_coefh(:,:,l))
@@ -761,7 +759,7 @@ contains
     K_coefh(:,ADM_kmin-1,:) = 0.0_RP
     K_coefh(:,ADM_kmax+1,:) = 0.0_RP
 
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
        K_coef_pl(:,ADM_kmin:ADM_kmax,:)=K_coef_pl(:,ADM_kmin:ADM_kmax,:)*rho_pl(:,ADM_kmin:ADM_kmax,:)
        do k=ADM_kmin+1,ADM_kmax
           K_coefh_pl(:,k,:) = K_coefh_pl(:,k,:)*(rho_pl(:,k,:)+rho_pl(:,k-1,:))*0.5
@@ -792,15 +790,15 @@ contains
                        input_sclh = .false.                             )
 
     !============================= (5) calculate inside the divergence and communicate ============================
-    !
+
 !    pi(:,ADM_kmin:ADM_kmax,:)=temd(:,ADM_kmin:ADM_kmax,:)/potem(:,ADM_kmin:ADM_kmax,:)
     pi(:,ADM_kmin:ADM_kmax,:)=tem(:,ADM_kmin:ADM_kmax,:)/potem(:,ADM_kmin:ADM_kmax,:)
     do k=ADM_kmin+1,ADM_kmax
        pih(:,k,:)    = (pi(:,k,:)+pi(:,k-1,:))*0.5
     enddo
     pih(:,ADM_kmin,:)=pi(:,ADM_kmin,:) ! im not sure
-    !
-    if( ADM_have_pl ) then
+
+    if ( ADM_have_pl ) then
 !      pi_pl(:,ADM_kmin:ADM_kmax,:)=temd_pl(:,ADM_kmin:ADM_kmax,:)/potem_pl(:,ADM_kmin:ADM_kmax,:)
        pi_pl(:,ADM_kmin:ADM_kmax,:)=tem_pl(:,ADM_kmin:ADM_kmax,:)/potem_pl(:,ADM_kmin:ADM_kmax,:)
        do k=ADM_kmin+1,ADM_kmax
@@ -815,14 +813,14 @@ contains
           varh(:,ADM_kmin:ADM_kmax,:,idir,ivar)=Sijh(:,ADM_kmin:ADM_kmax,:,idir,ivar) * 2*K_coefH(:,ADM_kmin:ADM_kmax,:) * GAMMA
        enddo
        var(:,ADM_kmin:ADM_kmax,:,idir,IPOTEM)=var(:,ADM_kmin:ADM_kmax,:,idir,IPOTEM)*K_coef(:,ADM_kmin:ADM_kmax,:)&
-            / Pr * CNST_CP * pi(:,ADM_kmin:ADM_kmax,:) ! energy
+            / Pr * CPdry * pi(:,ADM_kmin:ADM_kmax,:) ! energy
        varh(:,ADM_kmin:ADM_kmax,:,idir,IPOTEM)=varh(:,ADM_kmin:ADM_kmax,:,idir,IPOTEM)*K_coefH(:,ADM_kmin:ADM_kmax,:)&
-            / Pr * CNST_CP * pih(:,ADM_kmin:ADM_kmax,:) ! energy
+            / Pr * CPdry * pih(:,ADM_kmin:ADM_kmax,:) ! energy
        do ivar=IMAX+1,IMAX+TRC_VMAX
           var(:,ADM_kmin:ADM_kmax,:,idir,ivar)=var(:,ADM_kmin:ADM_kmax,:,idir,ivar)*K_coef(:,ADM_kmin:ADM_kmax,:) / Pr
           varh(:,ADM_kmin:ADM_kmax,:,idir,ivar)=varh(:,ADM_kmin:ADM_kmax,:,idir,ivar)*K_coefh(:,ADM_kmin:ADM_kmax,:) / Pr
        enddo
-       if( ADM_have_pl ) then
+       if ( ADM_have_pl ) then
           do ivar=IVX,IVZ
              var_pl(:,ADM_kmin:ADM_kmax,:,idir,ivar)=Sij_pl(:,ADM_kmin:ADM_kmax,:,idir,ivar)&
                   * 2*K_coef_pl(:,ADM_kmin:ADM_kmax,:) * GAMMA
@@ -830,9 +828,9 @@ contains
                   * 2*K_coefH_pl(:,ADM_kmin:ADM_kmax,:) * GAMMA
           enddo
           var_pl(:,ADM_kmin:ADM_kmax,:,idir,IPOTEM)=var_pl(:,ADM_kmin:ADM_kmax,:,idir,IPOTEM)*&
-               K_coef_pl(:,ADM_kmin:ADM_kmax,:) / Pr * CNST_CP * pi_pl(:,ADM_kmin:ADM_kmax,:) ! energy
+               K_coef_pl(:,ADM_kmin:ADM_kmax,:) / Pr * CPdry * pi_pl(:,ADM_kmin:ADM_kmax,:) ! energy
           varh_pl(:,ADM_kmin:ADM_kmax,:,idir,IPOTEM)=varh_pl(:,ADM_kmin:ADM_kmax,:,idir,IPOTEM)&
-               *K_coefH_pl(:,ADM_kmin:ADM_kmax,:) / Pr * CNST_CP * pih_pl(:,ADM_kmin:ADM_kmax,:) ! energy
+               *K_coefH_pl(:,ADM_kmin:ADM_kmax,:) / Pr * CPdry * pih_pl(:,ADM_kmin:ADM_kmax,:) ! energy
           do ivar=IMAX+1,IMAX+TRC_VMAX
              var_pl(:,ADM_kmin:ADM_kmax,:,idir,ivar)=var_pl(:,ADM_kmin:ADM_kmax,:,idir,ivar)&
                   *K_coef_pl(:,ADM_kmin:ADM_kmax,:) / Pr
@@ -917,7 +915,7 @@ contains
             grhogvyh(:,k,:) * GRD_x(:,ADM_knone,:,GRD_YDIR)+&
             grhogvzh(:,k,:) * GRD_x(:,ADM_knone,:,GRD_ZDIR)  ) / GRD_rscale
     enddo
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
        do k=ADM_kmin+1,ADM_kmax
           frhogw_pl(:,k,:) = frhogw_pl(:,k,:) + ( &
                grhogvxh_pl(:,k,:) * GRD_x_pl(:,ADM_knone,:,GRD_XDIR)+&
@@ -963,7 +961,7 @@ contains
     frhogetot(:,ADM_kmin:ADM_kmax,:)=frhogetot(:,ADM_kmin:ADM_kmax,:)+grhoge(:,ADM_kmin:ADM_kmax,:)
 
     do l=1,ADM_lall
-       if (dbgfirst)then
+       if (dbgfirst) then
 
           call history_in('gvx',grhogvx(:,:,l))
           call history_in('gvy',grhogvy(:,:,l))
@@ -984,9 +982,8 @@ contains
     enddo
 
     return
-    !
   end subroutine sgs_smagorinsky
-  !-------------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
   subroutine tb_smg_oprt_init(  &
        )
     use mod_grd, only: &
@@ -999,14 +996,14 @@ contains
          GRD_Z,        &!101201
          GRD_x,        &
          GRD_x_pl,     &
-         GRD_rscale!=cnst_eradisu
-    use mod_runconf, only :         &
+         GRD_rscale!=CONST_eradisu
+    use mod_runconf, only: &
          TRC_VMAX
     implicit none
 
     integer::k
 
-    if(first)then  ! --> why is it needed?
+    if (first) then  ! --> why is it needed?
        allocate(smg_oprt_cxh   (ADM_gall   ,ADM_kall,ADM_lall   ))
        allocate(smg_oprt_cxh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl))
        allocate(smg_oprt_cyh   (ADM_gall   ,ADM_kall,ADM_lall   ))
@@ -1049,7 +1046,7 @@ contains
     smg_oprt_GAM(:,ADM_kmin:ADM_kmax,:) = sqrt(VMTR_GAM2(:,ADM_kmin:ADM_kmax,:))
     smg_oprt_GAMH(:,ADM_kmin:ADM_kmax,:) = sqrt(VMTR_GAM2H(:,ADM_kmin:ADM_kmax,:))
 
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
        smg_oprt_gsqrt_pl(:,ADM_kmin:ADM_kmax,:) = VMTR_GSGAM2_pl(:,ADM_kmin:ADM_kmax,:)/VMTR_GAM2_pl(:,ADM_kmin:ADM_kmax,:)
        smg_oprt_gsqrtH_pl(:,ADM_kmin:ADM_kmax,:) = VMTR_GSGAM2H_pl(:,ADM_kmin:ADM_kmax,:)/VMTR_GAM2H_pl(:,ADM_kmin:ADM_kmax,:)
        smg_oprt_GAM_pl(:,ADM_kmin:ADM_kmax,:) = sqrt(VMTR_GAM2_pl(:,ADM_kmin:ADM_kmax,:))
@@ -1059,7 +1056,7 @@ contains
     ! 1/gamma at half level
     smg_oprt_rgamH(:,ADM_kmin:ADM_kmax,:)= 1.0_RP/sqrt(VMTR_GAM2H(:,ADM_kmin:ADM_kmax,:))
     smg_oprt_rgam(:,ADM_kmin:ADM_kmax,:)= 1.0_RP/sqrt(VMTR_GAM2(:,ADM_kmin:ADM_kmax,:))
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
       smg_oprt_rgamH_pl(:,ADM_kmin:ADM_kmax,:)= 1.0_RP/sqrt(VMTR_GAM2H_pl(:,ADM_kmin:ADM_kmax,:))
       smg_oprt_rgam_pl(:,ADM_kmin:ADM_kmax,:)= 1.0_RP/sqrt(VMTR_GAM2_pl(:,ADM_kmin:ADM_kmax,:))
     endif
@@ -1075,7 +1072,7 @@ contains
          *VMTR_RGSH(:,k,:)/GRD_rscale + VMTR_GZZH(:,k,:)*smg_oprt_rgamH(:,k,:) )
     enddo
 
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
       do k=ADM_kmin,ADM_kmax
         smg_oprt_cxh_pl(:,k,:) =  GRD_rdgz(k)*  (GRD_x_pl(:,ADM_knone,:,GRD_XDIR) &
          *VMTR_RGSH_pl(:,k,:)/GRD_rscale + VMTR_GZXH_pl(:,k,:)*smg_oprt_rgamH_pl(:,k,:)  )
@@ -1095,7 +1092,7 @@ contains
        smg_oprt_cz(:,k,:) =  GRD_rdgzh(k)*   (GRD_x(:,ADM_knone,:,GRD_ZDIR) &
          /smg_oprt_gsqrt(:,k,:)/GRD_rscale + VMTR_GZZ(:,k,:)*smg_oprt_rgam(:,k,:) )
     enddo
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
       do k=ADM_kmin,ADM_kmax
         smg_oprt_cx_pl(:,k,:) =  GRD_rdgzh(k)*  (GRD_x_pl(:,ADM_knone,:,GRD_XDIR) &
          /smg_oprt_gsqrt_pl(:,k,:)/GRD_rscale + VMTR_GZX_pl(:,k,:)*smg_oprt_rgam_pl(:,k,:)  )
@@ -1109,7 +1106,7 @@ contains
     return
   end subroutine tb_smg_oprt_init
 
-  !-----------------------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
   ! gradient3d hybrid routine (full and half)
   subroutine Gradient3dfh(  &
        scl,  scl_pl,  &
@@ -1118,8 +1115,7 @@ contains
        vhh,  vhh_pl,  &
        input_sclh     )
     use mod_adm, only: &
-       ADM_prc_me,  &
-       ADM_prc_pl,  &
+       ADM_have_pl, &
        ADM_lall,    &
        ADM_lall_pl, &
        ADM_gall,    &
@@ -1145,15 +1141,15 @@ contains
     real(RP), intent(out) :: vh_pl  (ADM_gall_pl,ADM_kall,ADM_lall_pl,ADM_nxyz)
     real(RP), intent(out) :: vhh    (ADM_gall   ,ADM_kall,ADM_lall   ,ADM_nxyz)
     real(RP), intent(out) :: vhh_pl (ADM_gall_pl,ADM_kall,ADM_lall_pl,ADM_nxyz)
-    !
+
     logical, intent(in), optional :: input_sclh
 
     logical :: input_sclh_in ! =.true.
 
     integer::k,i,l
-    !-----------------------------------------------------------------------------------------
+    !---------------------------------------------------------------------------
 
-    if( .not. present(input_sclh) ) input_sclh_in = .true.
+    if( .NOT. present(input_sclh) ) input_sclh_in = .true.
     if(       present(input_sclh) ) input_sclh_in = input_sclh
 
     ! horizontal gradient for full
@@ -1231,7 +1227,7 @@ contains
     return
   end subroutine Gradient3dfh
 
-  !-------------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
   ! gsqrt * gam^2 * div3d  (full and half)
   subroutine gsqrt_Div3dfh(  &
        vx, vx_pl,                  & !in (full level) tensor component)
@@ -1260,13 +1256,13 @@ contains
 !    use mod_vmtr,only:&
 !         vmtr_gam,&
 !         vmtr_gam_pl
-
     implicit none
+
     real(RP),intent(out)::sclh   (ADM_gall   ,ADM_kall,ADM_lall   )          ! half level
     real(RP),intent(out)::sclh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl) ! half level
     real(RP),intent(out)::scl   (ADM_gall   ,ADM_kall,ADM_lall   )            ! full level
     real(RP),intent(out)::scl_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)   ! full level
-    !
+
     ! horizontal gradient
     real(RP),intent(in)::vx   (ADM_gall   ,ADM_kall,ADM_lall   )           ! full level
     real(RP),intent(in)::vy   (ADM_gall   ,ADM_kall,ADM_lall   )           ! full level
@@ -1280,7 +1276,7 @@ contains
     real(RP),intent(in)::vxh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! half level
     real(RP),intent(in)::vyh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! half level
     real(RP),intent(in)::vzh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)  ! half level
-    !
+
     logical,intent(in),optional::output_sclh
     logical ::output_sclh_in=.true.
 
@@ -1296,7 +1292,7 @@ contains
     real(RP)::tmp_vy_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP)::tmp_vz   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP)::tmp_vz_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
-    !
+
     real(RP)::tmp_vxh   (ADM_gall   ,ADM_kall,ADM_lall   )
     real(RP)::tmp_vxh_pl(ADM_gall_pl,ADM_kall,ADM_lall_pl)
     real(RP)::tmp_vyh   (ADM_gall   ,ADM_kall,ADM_lall   )
@@ -1335,12 +1331,12 @@ contains
     tmp_vx(:,ADM_kmin:ADM_kmax,:)= vx(:,ADM_kmin:ADM_kmax,:)* smg_oprt_gsqrt(:,ADM_kmin:ADM_kmax,:)
     tmp_vy(:,ADM_kmin:ADM_kmax,:)= vy(:,ADM_kmin:ADM_kmax,:)* smg_oprt_gsqrt(:,ADM_kmin:ADM_kmax,:)
     tmp_vz(:,ADM_kmin:ADM_kmax,:)= vz(:,ADM_kmin:ADM_kmax,:)* smg_oprt_gsqrt(:,ADM_kmin:ADM_kmax,:)
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
        tmp_vx_pl(:,ADM_kmin:ADM_kmax,:)= vx_pl(:,ADM_kmin:ADM_kmax,:)* smg_oprt_gsqrt_pl(:,ADM_kmin:ADM_kmax,:)
        tmp_vy_pl(:,ADM_kmin:ADM_kmax,:)= vy_pl(:,ADM_kmin:ADM_kmax,:)* smg_oprt_gsqrt_pl(:,ADM_kmin:ADM_kmax,:)
        tmp_vz_pl(:,ADM_kmin:ADM_kmax,:)= vz_pl(:,ADM_kmin:ADM_kmax,:)* smg_oprt_gsqrt_pl(:,ADM_kmin:ADM_kmax,:)
     endif
-    !
+
     call OPRT_divergence(&
          tmp,tmp_pl,&
          tmp_vx, tmp_vx_pl,   &
@@ -1362,7 +1358,7 @@ contains
     enddo
 
     scl(:,ADM_kmin:ADM_kmax,:) = tmp(:,ADM_kmin:ADM_kmax,:) * smg_oprt_GAM(:,ADM_kmin:ADM_kmax,:)
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
        scl_pl(:,ADM_kmin:ADM_kmax,:) = tmp_pl(:,ADM_kmin:ADM_kmax,:) * smg_oprt_GAM_pl(:,ADM_kmin:ADM_kmax,:)
     endif
 !    call dbgmx('div',tmp)
@@ -1374,7 +1370,7 @@ contains
 !    call dbgmx('tmpvz',tmp_vz)
 !    call dbgmx('tmpvz_pl',tmp_vz_pl)
 !    call dbgmx('oprt_GAM',smg_oprt_GAM(:,ADM_kmin:ADM_kmax,:))
-!    if (ADM_prc_me.eq.1) call dbgmx('oprt_GAM_pl',smg_oprt_GAM_pl(:,ADM_kmin:ADM_kmax,:))
+!    if (ADM_prc_me==1) call dbgmx('oprt_GAM_pl',smg_oprt_GAM_pl(:,ADM_kmin:ADM_kmax,:))
     !-----------
 
     do k=ADM_kmin,ADM_kmax
@@ -1388,7 +1384,7 @@ contains
     enddo
     k=ADM_kmax
     tmp(:,k,:)=(0-tmph(:,k,:))*GRD_rdgz(k) ! flux from top is zero
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
        do k=ADM_kmin,ADM_kmax
           tmph_pl(:,k,:) = smg_oprt_gsqrtH_pl(:,k,:) * (&
           + VMTR_GZXH_pl(:,k,:)*vxh_pl(:,k,:) &
@@ -1403,7 +1399,7 @@ contains
     endif
     scl(:,ADM_kmin:ADM_kmax,:)=scl(:,ADM_kmin:ADM_kmax,:) + &
          tmp(:,ADM_kmin:ADM_kmax,:) * smg_oprt_GAM(:,ADM_kmin:ADM_kmax,:)
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
        scl_pl(:,ADM_kmin:ADM_kmax,:) = scl_pl(:,ADM_kmin:ADM_kmax,:) + &
             tmp_pl(:,ADM_kmin:ADM_kmax,:)*smg_oprt_GAM_pl(:,ADM_kmin:ADM_kmax,:)
     endif
@@ -1421,7 +1417,7 @@ contains
     enddo
     k=ADM_kmax
     tmp(:,k,:)=(0-tmph(:,k,:))*GRD_rdgz(k)  ! flux from top is zero
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
        do k=ADM_kmin,ADM_kmax
           tmph_pl(:,k,:) = VMTR_GAM2H_pl(:,k,:) * (&
           + GRD_X_pl(:,ADM_KNONE,:,GRD_XDIR)*vxh_pl(:,k,:) &
@@ -1435,24 +1431,24 @@ contains
       tmp_pl(:,k,:)=(0-tmph_pl(:,k,:))*GRD_rdgz(k) ! flux from top is zero
     endif
     scl(:,ADM_kmin:ADM_kmax,:)=scl(:,ADM_kmin:ADM_kmax,:) + tmp(:,ADM_kmin:ADM_kmax,:)
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
        scl_pl(:,ADM_kmin:ADM_kmax,:) = scl_pl(:,ADM_kmin:ADM_kmax,:) + tmp_pl(:,ADM_kmin:ADM_kmax,:)
     endif
 
 
     !-------------------------- for half level -------------------------
-    if (.not.output_sclh_in) then
+    if (.NOT.output_sclh_in) then
        return
     endif
     tmp_vxh(:,ADM_kmin:ADM_kmax,:)= vxh(:,ADM_kmin:ADM_kmax,:)*smg_oprt_gsqrtH(:,ADM_kmin:ADM_kmax,:) ! half level !!
     tmp_vyh(:,ADM_kmin:ADM_kmax,:)= vyh(:,ADM_kmin:ADM_kmax,:)*smg_oprt_gsqrtH(:,ADM_kmin:ADM_kmax,:)
     tmp_vzh(:,ADM_kmin:ADM_kmax,:)= vzh(:,ADM_kmin:ADM_kmax,:)*smg_oprt_gsqrtH(:,ADM_kmin:ADM_kmax,:)
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
        tmp_vxh_pl(:,ADM_kmin:ADM_kmax,:)= vxh_pl(:,ADM_kmin:ADM_kmax,:)*smg_oprt_gsqrtH_pl(:,ADM_kmin:ADM_kmax,:)
        tmp_vyh_pl(:,ADM_kmin:ADM_kmax,:)= vyh_pl(:,ADM_kmin:ADM_kmax,:)*smg_oprt_gsqrtH_pl(:,ADM_kmin:ADM_kmax,:)
        tmp_vzh_pl(:,ADM_kmin:ADM_kmax,:)= vzh_pl(:,ADM_kmin:ADM_kmax,:)*smg_oprt_gsqrtH_pl(:,ADM_kmin:ADM_kmax,:)
     endif
-    !
+
     call OPRT_divergence(& ! half level !!
          tmph,tmph_pl,&
          tmp_vxh, tmp_vxh_pl,   &
@@ -1460,7 +1456,7 @@ contains
          tmp_vzh, tmp_vzh_pl,   &
          mfact=1.0_RP)
     sclh(:,ADM_kmin:ADM_kmax,:) = tmph(:,ADM_kmin:ADM_kmax,:) * smg_oprt_GAMH(:,ADM_kmin:ADM_kmax,:)
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
        sclh_pl(:,ADM_kmin:ADM_kmax,:) = tmph_pl(:,ADM_kmin:ADM_kmax,:) * smg_oprt_GAMH_pl(:,ADM_kmin:ADM_kmax,:)
     endif
 
@@ -1477,7 +1473,7 @@ contains
     enddo
     k=ADM_kmin
     tmph(:,k,:)=(tmp(:,k,:)-0)*GRD_rdgzH(k) ! flux from ground is zero
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
        do k=ADM_kmin,ADM_kmax
           tmp_pl(:,k,:) = smg_oprt_gsqrt_pl(:,k,:) * (&
           + VMTR_GZX_pl(:,k,:)*vx_pl(:,k,:) &
@@ -1491,7 +1487,7 @@ contains
       tmph_pl(:,k,:)=(tmp_pl(:,k,:)-0)*GRD_rdgzh(k) ! flux from ground is zero
     endif
     sclh(:,ADM_kmin:ADM_kmax,:)=sclh(:,ADM_kmin:ADM_kmax,:) + tmph(:,ADM_kmin:ADM_kmax,:) * smg_oprt_GAMH(:,ADM_kmin:ADM_kmax,:)
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
        sclh_pl(:,ADM_kmin:ADM_kmax,:) = sclh_pl(:,ADM_kmin:ADM_kmax,:) + &
             tmph_pl(:,ADM_kmin:ADM_kmax,:) * smg_oprt_GAMH_pl(:,ADM_kmin:ADM_kmax,:)
     endif
@@ -1509,7 +1505,7 @@ contains
     enddo
     k=ADM_kmin
     tmph(:,k,:)=(tmp(:,k,:)-0)*GRD_rdgzH(k) ! flux from ground is zero
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
        do k=ADM_kmin,ADM_kmax
           tmp_pl(:,k,:) = VMTR_GAM2_pl(:,k,:) * ( &
           + GRD_X_pl(:,ADM_KNONE,:,GRD_XDIR)*vx_pl(:,k,:) &
@@ -1523,23 +1519,20 @@ contains
       tmph_pl(:,k,:)=(tmp_pl(:,k,:)-0)*GRD_rdgzh(k) ! flux from ground is zero
     endif
     sclh(:,ADM_kmin:ADM_kmax,:)=sclh(:,ADM_kmin:ADM_kmax,:) + tmph(:,ADM_kmin:ADM_kmax,:)
-    if( ADM_have_pl ) then
+    if ( ADM_have_pl ) then
        sclh_pl(:,ADM_kmin:ADM_kmax,:) = sclh_pl(:,ADM_kmin:ADM_kmax,:) + tmph_pl(:,ADM_kmin:ADM_kmax,:)
     endif
 
     return
   end subroutine gsqrt_Div3dfh
-  !-------------------------------------------------------------------------------
+  !-----------------------------------------------------------------------------
   subroutine dbgmx(cha,var)
-    character(*):: cha
+    character(len=*):: cha
     real(RP):: var(:,:,:)
-!    if (ADM_prc_me.eq.1) then
+!    if (ADM_prc_me==1) then
 !      write(*,*) trim(cha),maxval(var),minval(var), maxloc(var),minloc(var)
-       write(adm_log_fid,*) trim(cha),maxval(var),minval(var), maxloc(var),minloc(var)
+       if( IO_L ) write(IO_FID_LOG,*) trim(cha),maxval(var),minval(var), maxloc(var),minloc(var)
 !    endif
   end subroutine dbgmx
 
-
-
 end module mod_sgs
-!-------------------------------------------------------------------------------

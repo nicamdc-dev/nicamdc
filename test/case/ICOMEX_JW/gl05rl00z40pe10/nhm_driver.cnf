@@ -20,14 +20,6 @@
     topo_io_mode  = "IDEAL",
 /
 
-&GMTRPARAM
-    GMTR_io_mode = 'ADVANCED', GMTR_fname = 'metrics_GL05RL00',
-/
-
-&OPRTPARAM
-    OPRT_io_mode = 'ADVANCED', OPRT_fname = 'metrics_GL05RL00',
-/
-
 &TIMEPARAM
     DTL         = 1200.D0,
     INTEG_TYPE  = "RK3",
@@ -36,7 +28,6 @@
 /
 
 &RUNCONFPARAM
-    RUNNAME        = 'ICOMEX_JW',
     NDIFF_LOCATION = 'IN_LARGE_STEP2',
 /
 
@@ -64,21 +55,21 @@
 /
 
 &CNSTPARAM
-    earth_radius        = 6.37122D+6,
-    earth_angvel        =   7.292D-5,
-    small_planet_factor =      1.D0,
-    earth_gravity       = 9.80616D0,
-    gas_cnst            =   287.0D0,
-    specific_heat_pre   =  1004.5D0,
+    earth_radius        = 6.37122E+6,
+    earth_angvel        =   7.292E-5,
+    small_planet_factor =      1.E0,
+    earth_gravity       = 9.80616E0,
+    gas_cnst            =   287.0E0,
+    specific_heat_pre   =  1004.5E0,
 /
 
 &NUMFILTERPARAM
     hdiff_type        = 'DIRECT',
     lap_order_hdiff   = 2,
-    gamma_h           = 1.20D16,
+    gamma_h           = 1.20E16,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
-    alpha_d           = 1.20D16,
+    alpha_d           = 1.20E16,
 /
 
 &EMBUDGETPARAM

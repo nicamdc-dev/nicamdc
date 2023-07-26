@@ -26,7 +26,6 @@
 /
 
 &RUNCONFPARAM
-    RUNNAME         = 'DCMIP2012-22',
     NDIFF_LOCATION  = 'IN_LARGE_STEP2',
 /
 
@@ -60,21 +59,21 @@
 /
 
 &CNSTPARAM
-    earth_radius        = 6.37122D+6,
-    earth_angvel        =      0.D0,
-    small_planet_factor =    500.D0,
-    earth_gravity       = 9.80616D0,
-    gas_cnst            =   287.0D0,
-    specific_heat_pre   =  1004.5D0,
+    earth_radius        = 6.37122E+6,
+    earth_angvel        =      0.E0,
+    small_planet_factor =    500.E0,
+    earth_gravity       = 9.80616E0,
+    gas_cnst            =   287.0E0,
+    specific_heat_pre   =  1004.5E0,
 /
 
 &NUMFILTERPARAM
     hdiff_type        = 'DIRECT',
     lap_order_hdiff   = 2,
-    gamma_h           = 9.00D7,
+    gamma_h           = 9.00E7,
     divdamp_type      = 'DIRECT',
     lap_order_divdamp = 2,
-    alpha_d           = 9.00D7,
+    alpha_d           = 9.00E7,
 /
 
 &EMBUDGETPARAM

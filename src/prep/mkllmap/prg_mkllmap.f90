@@ -1,103 +1,122 @@
 !-------------------------------------------------------------------------------
-!
-!+  Program mkllmap
-!
+!> Program mkllmap
+!!
+!! @par Description
+!!          Making remapping coefficient between lat-lon and icosahedral grid
+!!
+!! @author NICAM developers
+!<
 !-------------------------------------------------------------------------------
 program prg_mkllmap
   !-----------------------------------------------------------------------------
   !
-  !++ Description:
-  !
-  !++ Current Corresponding Author :
-  !
-  !++ History:
-  !       This program originate from 'cnvlatlon.f90'(by H.Tomita) ver 4.38 .
-  !
-  !      Version   Date       Comment
-  !      -----------------------------------------------------------------------
-  !                 11-11-09  H.Yashiro [mod] Avoid arc-cos, precise calculation
-  !      -----------------------------------------------------------------------
-  !
-  !-----------------------------------------------------------------------------
-  !
-  !++ Used modules (shared)
+  !++ Used modules
   !
   use mod_precision
-  use mod_debug
+  use mod_stdio
+  use mod_prof
+  use mod_process, only: &
+     PRC_MPIstart,    &
+     PRC_LOCAL_setup, &
+     PRC_MPIstop,     &
+     PRC_MPIfinish
+  use mod_const, only: &
+     CONST_setup
   use mod_adm, only: &
-     ADM_LOG_FID,     &
-     ADM_MULTI_PRC,   &
-     ADM_proc_init,   &
-     ADM_proc_stop,   &
-     ADM_proc_finish, &
-     ADM_setup,       &
-     ADM_CTL_FID,     &
-     ADM_MAXFNAME
+     ADM_setup
   use mod_fio, only: &
      FIO_setup
   use mod_comm, only: &
      COMM_setup
-  use mod_cnst, only: &
-     CNST_setup
   use mod_grd, only: &
      GRD_setup
   use mod_latlon, only: &
      LATLON_setup, &
      LATLON_ico_setup
   implicit none
+  !-----------------------------------------------------------------------------
+  !
+  !++ parameters & variables
+  !
+  integer  :: comm_world
+  integer  :: myrank
+  logical  :: ismaster
 
-  character(len=ADM_MAXFNAME) :: output_dir   = './'
-  logical                     :: use_quadprec = .false.
+  character(len=H_LONG) :: output_dir   = './'
 
   namelist /mkllmap_param/ &
-      use_quadprec, &
-      output_dir
+     output_dir
 
-  integer :: ierr
+  integer  :: ierr
   !=============================================================================
-  !
-  !--- start process
-  !
-  call ADM_proc_init(ADM_MULTI_PRC)
-  !
+
+  !---< MPI start >---
+  call PRC_MPIstart( comm_world ) ! [OUT]
+
+  !---< STDIO setup >---
+  call IO_setup( 'NICAM-DC',   & ! [IN]
+                 'mkllmap.cnf' ) ! [IN]
+
+  !---< Local process management setup >---
+  call PRC_LOCAL_setup( comm_world, & ! [IN]
+                        myrank,     & ! [OUT]
+                        ismaster    ) ! [OUT]
+
+  !---< Logfile setup >---
+  call IO_LOG_setup( myrank,  & ! [IN]
+                     ismaster ) ! [IN]
+
+  !---< profiler module setup >---
+  call PROF_setup
+
+  !#############################################################################
+  call PROF_setprefx('INIT')
+  call PROF_rapstart('Initialize',0)
+
+  !--- < cnst module setup > ---
+  call CONST_setup
+
   !--- < admin module setup > ---
-  call ADM_setup('mkllmap.cnf')
-  !
+  call ADM_setup
+
+  !---< I/O module setup >---
   call FIO_setup
-  !
+
   !--- < comm module setup > ---
   call COMM_setup
-  !
-  !--- < cnst module setup > ---
-  call CNST_setup
-  !
+
   !--- < grid module setup > ---
   call GRD_setup
 
   !--- read parameters
-  write(ADM_LOG_FID,*)
-  write(ADM_LOG_FID,*) '+++ Program[mkllmap]/Category[tool]'
-  rewind(ADM_CTL_FID)
-  read(ADM_CTL_FID,nml=MKLLMAP_PARAM,iostat=ierr)
+  if( IO_L ) write(IO_FID_LOG,*)
+  if( IO_L ) write(IO_FID_LOG,*) '+++ Program[mkllmap]/Category[tool]'
+  rewind(IO_FID_CONF)
+  read(IO_FID_CONF,nml=MKLLMAP_PARAM,iostat=ierr)
   if ( ierr < 0 ) then
-     write(ADM_LOG_FID,*) '*** MKLLMAP_PARAM is not specified. use default.'
+     if( IO_L ) write(IO_FID_LOG,*) '*** MKLLMAP_PARAM is not specified. use default.'
   elseif( ierr > 0 ) then
-     write(*,          *) 'xxx Not appropriate names in namelist MKLLMAP_PARAM. STOP.'
-     write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist MKLLMAP_PARAM. STOP.'
-     call ADM_proc_stop
+     if( IO_L ) write(*,*) 'xxx Not appropriate names in namelist MKLLMAP_PARAM. STOP.'
+     call PRC_MPIstop
   endif
-  write(ADM_LOG_FID,nml=MKLLMAP_PARAM)
+  if( IO_NML ) write(IO_FID_LOG,nml=MKLLMAP_PARAM)
 
   call LATLON_ico_setup
 
-  if ( use_quadprec ) then
-     call LATLON_setup( output_dir, 'mkllmap_q' )
-  else
-     call LATLON_setup( output_dir, 'mkllmap' )
-  endif
+  call PROF_rapend('Initialize',0)
+  !#############################################################################
+  call PROF_setprefx('MAIN')
+  call PROF_rapstart('Main_MKLLMAP',0)
 
+  call LATLON_setup( output_dir )
 
-  call ADM_proc_finish
+  call PROF_rapend('Main_MKLLMAP',0)
+  !#############################################################################
 
+  call PROF_rapreport
+
+  !--- finalize all process
+  call PRC_MPIfinish
+
+  stop
 end program prg_mkllmap
-!-------------------------------------------------------------------------------

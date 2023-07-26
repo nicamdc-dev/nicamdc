@@ -1,78 +1,25 @@
 !-------------------------------------------------------------------------------
-!>
-!! run configuration module
+!> Module run configuration
 !!
 !! @par Description
-!!         admin modlue for 3D-model
+!!          This module is for managing run configuration
 !!
-!! @author H.Tomita
-!!
-!! @par History
-!! @li      2004-02-17 (H.Tomita)   Imported from igdc-4.34
-!! @li      2005-10-28 (M.Satoh)    add ISCCP parameter
-!! @li      2005-12-27 (M.Satoh)    introduce RAD_DIV_NUM
-!! @li      2006-04-19 (H.Tomita)   Add 'DRY' option.
-!! @li      2006-05-06 (H.Tomita)   abolish TURB_DIV_NUM.
-!! @li      2006-08-11 (H.Tomita)   Add TRC_ADV_TYPE, TRC_NEG_FIX
-!! @li      2006-09-28 (S.Iga)      Add OUT_FILE_TYPE
-!! @li      2007-01-26 (H.Tomita)   Add the 'SIMPLE2' EIN_TYPE.
-!!                                  Control the EIN_TYPE in thie module. as CVW(I_Q?) and LHV,LHF, and LHS.
-!! @li      2007-03-23 (Y.Niwa)     add FLAG_NUDGING
-!! @li      2007-05-08 (H.Tomita)   1. Move physics type configuration from mod_physicsinit.f90 to here.
-!!                                  2. Add TRC_ADD_MAX for future implementation of turbulence scheme.
-!! @li      2007-06-26 (Y.Niwa)     move LAND_TYPE from mod_land_driver to here
-!!                                  move OCEAN_TYPE from mod_ocean_driver to here
-!! @li      2007-07-17 (A.T.Noda)   Add RAD_CLOUD_TYPE for use of the partial cloud in rd_driver
-!! @li      2007-07-23 (K.Suzuki)   SPRINTARS aerosol model
-!!                                  1. Add number of aerosol tracers
-!!                                  2. Add KAPCL: number of aerosol for radiation
-!!                                  3. Add AE_TYPE for aerosol type configuration
-!! @li      2007-11-07 (T.Mitsui)   add "OPT_OUTPUT_ALL" to omit output_all
-!! @li      2008-01-24 (Y.Niwa)     add MIURA2004OLD
-!!                                     TRC_ADV_TYPE='DEFAULT', TRC_NEG_FIX='ON'
-!!                                  => TRC_ADV_TYPE='MIURA2004', TRC_NEG_FIX='OFF'
-!!                                  add TRC_SAVE_MEMORY
-!! @li      2008-01-30 (Y.Niwa)     bug fixes
-!! @li      2008-03-10 (T.Mitsui)   add intermediate output of restart file
-!! @li      2008-04-12 (T.Mitsui)   add 2-moment hydrometeors, incloud aerosol and their labeling
-!! @li      2008-04-23 (H.Tomita)   Add MP_DIVNUM for microphysics.
-!! @li      2008-08-11 (H.Tomita)   Add SFC_DIV_NUM and TB_DIV_NUM.
-!! @li      2008-10-05 (T.Mitsui)   add option : ALL_PHYSTEP_POST
-!! @li      2009-01-28 (A.T.Noda)   Implement MYNN
-!! @li      2009-04-14 (T.Mitsui)   add opt_carb, opt_dust, opt_salt, opt_sulf trivial changing incloud aerosols
-!!                                  add opt_aerosol_forcing for ARF
-!! @li      2009-07-28 (H.Tomita)   add PRCIP_TRN_ECORRECT
-!!                                  for energy adjustment in the rain-sedimentation process
-!! @li      2010-03-08 (C.Kodama)   Add overwrite_restart option
-!! @li      2010-04-26 (M.Satoh)    add ROUGHNESS_SEA_TYPE
-!! @li      2010-06-19 (A.T.Noda)   Allow to use a convection parameterization
-!!                                  with an advanced microphysics schemes, such as G98, NSW?,
-!! @li      2010-11-11 (A.T.Noda)   1. add CORIOLIS, RAD_FIX_LAT/LON for Giga-LES
-!! @li      2011-06-30 (T.Seiki)    fill undefined indices
-!! @li      2011-07-22 (T.Ohno)     add CORIOLIS_PARAM
-!! @li      2011-09-03 (H.Yashiro)  add TRC_name for New I/O
-!! @li      2012-02-01 (T.Seiki)    add incloud aerosol indices+initialization
-!! @li      2012-07-23 (H.Yashiro)  [add] River         by K.Yoshimura
-!! @li      2012-07-23 (H.Yashiro)  [add] Water Isotope by K.Yoshimura
-!! @li      2012-11-05 (H.Yashiro)  NICAM milestone project (Phase I:cleanup of shared module)
-!!
+!! @author NICAM developers
 !<
+!-------------------------------------------------------------------------------
 module mod_runconf
   !-----------------------------------------------------------------------------
   !
   !++ Used modules
   !
   use mod_precision
-  use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID,  &
-     ADM_NSYS
+  use mod_stdio
   !-----------------------------------------------------------------------------
   implicit none
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: runconf_setup
 
@@ -80,38 +27,38 @@ module mod_runconf
   !
   !++ Public parameters & variables
   !
-  character(len=ADM_NSYS), public :: RUNNAME = ''
 
   !---< Component Selector >---
 
   !--- Dynamics
-  integer,                 public :: NON_HYDRO_ALPHA    = 1 ! Nonhydrostatic/hydrostatic flag
-  integer,                 public :: DYN_DIV_NUM        = 1
-  character(len=ADM_NSYS), public :: TRC_ADV_TYPE       = 'MIURA2004'
-  character(len=ADM_NSYS), public :: NDIFF_LOCATION     = 'IN_LARGE_STEP2'
-  logical,                 public :: FLAG_NUDGING       = .false.
-  logical,                 public :: THUBURN_LIM        = .true.  ! [add] 20130613 R.Yoshida
+  integer,                public :: NON_HYDRO_ALPHA    = 1 ! Nonhydrostatic/hydrostatic flag
+  integer,                public :: DYN_DIV_NUM        = 1
+  character(len=H_SHORT), public :: TRC_ADV_TYPE       = 'MIURA2004'
+  character(len=H_SHORT), public :: NDIFF_LOCATION     = 'IN_LARGE_STEP2'
+  character(len=H_SHORT), public :: TRC_ADV_LOCATION   = 'IN_DYN_DIV'
+  logical,                public :: FLAG_NUDGING       = .false.
+  logical,                public :: THUBURN_LIM        = .true.  ! [add] 20130613 R.Yoshida
+  real(RP),               public :: CORIOLIS_PARAM     = 0.0_RP
 
   !--- Physics
-  character(len=ADM_NSYS), public :: RAIN_TYPE          = 'DRY'
-  logical,                 public :: opt_2moment_water  = .false.
+  character(len=H_SHORT), public :: RAIN_TYPE          = 'DRY'
+  logical,                public :: opt_2moment_water  = .false.
 
-  character(len=ADM_NSYS), public :: CP_TYPE            = 'NONE'
-  character(len=ADM_NSYS), public :: MP_TYPE            = 'NONE'
-  character(len=ADM_NSYS), public :: RD_TYPE            = 'NONE'
-  character(len=ADM_NSYS), public :: SF_TYPE            = 'DEFAULT'
-  character(len=ADM_NSYS), public :: ROUGHNESS_SEA_TYPE = 'DEFAULT'
-  character(len=ADM_NSYS), public :: OCEAN_TYPE         = 'NONE'
-  character(len=ADM_NSYS), public :: RIV_TYPE           = 'NONE'
-  character(len=ADM_NSYS), public :: LAND_TYPE          = 'NONE'
-  character(len=ADM_NSYS), public :: TB_TYPE            = 'NONE'
-  character(len=ADM_NSYS), public :: AE_TYPE            = 'NONE'
-  character(len=ADM_NSYS), public :: CHEM_TYPE          = 'NONE'
-  character(len=ADM_NSYS), public :: GWD_TYPE           = 'NONE'
-  character(len=ADM_NSYS), public :: AF_TYPE            = 'NONE'
-  character(len=ADM_NSYS), public :: EIN_TYPE           = 'EXACT'
+  character(len=H_SHORT), public :: CP_TYPE            = 'NONE'
+  character(len=H_SHORT), public :: MP_TYPE            = 'NONE'
+  character(len=H_SHORT), public :: RD_TYPE            = 'NONE'
+  character(len=H_SHORT), public :: SF_TYPE            = 'DEFAULT'
+  character(len=H_SHORT), public :: ROUGHNESS_SEA_TYPE = 'DEFAULT'
+  character(len=H_SHORT), public :: OCEAN_TYPE         = 'NONE'
+  character(len=H_SHORT), public :: RIVER_TYPE         = 'NONE'
+  character(len=H_SHORT), public :: LAND_TYPE          = 'NONE'
+  character(len=H_SHORT), public :: TB_TYPE            = 'NONE'
+  character(len=H_SHORT), public :: AE_TYPE            = 'NONE'
+  character(len=H_SHORT), public :: CHEM_TYPE          = 'NONE'
+  character(len=H_SHORT), public :: GWD_TYPE           = 'NONE'
+  character(len=H_SHORT), public :: AF_TYPE            = 'NONE'
 
-  character(len=ADM_NSYS), public :: OUT_FILE_TYPE      = 'DEFAULT'
+  character(len=H_SHORT), public :: OUT_FILE_TYPE      = 'DEFAULT'
 
   !---< tracer ID setting >---
 
@@ -127,7 +74,7 @@ module mod_runconf
   integer, public, parameter :: I_RHOGQstr =  7 ! tracers
   integer, public            :: I_RHOGQend = -1 !
 
-  character(len=16), public  :: PRG_name(PRG_vmax0)
+  character(len=H_SHORT), public  :: PRG_name(PRG_vmax0)
   data PRG_name / 'rhog', 'rhogvx', 'rhogvy', 'rhogvz', 'rhogw', 'rhoge' /
 
   integer, public            :: DIAG_vmax       ! total number of diagnostic variables
@@ -142,13 +89,13 @@ module mod_runconf
   integer, public, parameter :: I_qstr     =  7 ! tracers
   integer, public            :: I_qend     = -1 !
 
-  character(len=16), public  :: DIAG_name(DIAG_vmax0)
+  character(len=H_SHORT), public  :: DIAG_name(DIAG_vmax0)
   data DIAG_name / 'pre', 'tem', 'vx', 'vy', 'vz', 'w' /
 
   integer, public            :: TRC_vmax   =  0 ! total number of tracers
 
-  character(len=16),       public, allocatable :: TRC_name(:) ! short name  of tracer [add] H.Yashiro 20110819
-  character(len=ADM_NSYS), public, allocatable :: WLABEL  (:) ! description of tracer
+  character(len=H_SHORT), public, allocatable :: TRC_name(:) ! short name  of tracer
+  character(len=H_MID),   public, allocatable :: WLABEL  (:) ! description of tracer
 
   integer, public            :: NQW_MAX    =  0 ! subtotal number of water mass tracers
   integer, public            :: NQW_STR    = -1 ! start index of water mass tracers
@@ -183,19 +130,18 @@ module mod_runconf
   !--- specific heat of water on const pressure
   real(RP), public, allocatable :: CVW(:)
   real(RP), public, allocatable :: CPW(:)
-  !--- Latent heat
-  real(RP), public            :: LHV
-  real(RP), public            :: LHF
-  real(RP), public            :: LHS
+
   !--- No. of band for rad.
   integer, public, parameter :: NRBND     = 3
   integer, public, parameter :: NRBND_VIS = 1
   integer, public, parameter :: NRBND_NIR = 2
   integer, public, parameter :: NRBND_IR  = 3
+
   !--- direct/diffuse
   integer, public, parameter :: NRDIR         = 2
   integer, public, parameter :: NRDIR_DIRECT  = 1
   integer, public, parameter :: NRDIR_DIFFUSE = 2
+
   !--- roughness  parameter
   integer, public, parameter :: NTYPE_Z0 = 3
   integer, public, parameter :: N_Z0M    = 1
@@ -215,13 +161,11 @@ contains
   !-----------------------------------------------------------------------------
   !> Setup
   subroutine RUNCONF_setup
-    use mod_adm, only: &
-       ADM_CTL_FID, &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     implicit none
 
     namelist /RUNCONFPARAM/ &
-       RUNNAME,            &
        NON_HYDRO_ALPHA,    &
        DYN_DIV_NUM,        &
        TRC_ADV_TYPE,       &
@@ -241,26 +185,23 @@ contains
        CHEM_TYPE,          &
        GWD_TYPE,           &
        AF_TYPE,            &
-       AF_TYPE,            &
-       EIN_TYPE,           &
        OUT_FILE_TYPE
 
-    integer :: ierr
+    integer  :: ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[runconf]/Category[nhm share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=RUNCONFPARAM,iostat=ierr)
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[runconf]/Category[nhm share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=RUNCONFPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** RUNCONFPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** RUNCONFPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist RUNCONFPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist RUNCONFPARAM. STOP.'
-       call ADM_proc_stop
+       write(*,*) 'xxx Not appropriate names in namelist RUNCONFPARAM. STOP.'
+       call PRC_MPIstop
     endif
-    write(ADM_LOG_FID,nml=RUNCONFPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=RUNCONFPARAM)
 
     call RUNCONF_component_setup
 
@@ -274,15 +215,13 @@ contains
   !-----------------------------------------------------------------------------
   !> component check
   subroutine RUNCONF_component_setup
-    use mod_adm, only: &
-       ADM_proc_stop
     implicit none
     !---------------------------------------------------------------------------
 
-    if( THUBURN_LIM ) then  ![add] 20130613 R.Yoshida
-       write(ADM_LOG_FID,*) 'Run with \"Thuburn Limiter\" in MIURA2004 Advection'
+    if( THUBURN_LIM ) then ![add] 20130613 R.Yoshida
+       if( IO_L ) write(IO_FID_LOG,*) 'Run with \"Thuburn Limiter\" in MIURA2004 Advection'
     else
-       write(ADM_LOG_FID,*) '### Without \"Thuburn Limiter\" in MIURA2004 Advection'
+       if( IO_L ) write(IO_FID_LOG,*) '### Without \"Thuburn Limiter\" in MIURA2004 Advection'
     endif
 
     return
@@ -291,8 +230,8 @@ contains
   !-----------------------------------------------------------------------------
   !> tracer setup
   subroutine RUNCONF_tracer_setup
-    use mod_adm, only: &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     use mod_chemvar, only: &
        CHEMVAR_setup, &
        CHEM_TRC_vmax, &
@@ -300,7 +239,7 @@ contains
        CHEM_TRC_desc
     implicit none
 
-    integer :: v, i
+    integer  :: v, i
     !---------------------------------------------------------------------------
 
     !--- counting tracer
@@ -328,9 +267,8 @@ contains
        I_QS    = TRC_vmax + 5
        I_QG    = TRC_vmax + 6
     else
-       write(*,          *) 'xxx You must set RAIN_TYPE to DRY,CLOUD_PARAM,WARM or COLD. STOP.'
-       write(ADM_LOG_FID,*) 'xxx You must set RAIN_TYPE to DRY,CLOUD_PARAM,WARM or COLD. STOP.'
-       call ADM_proc_stop
+       write(*,*) 'xxx RAIN_TYPE must be set to DRY,CLOUD_PARAM,WARM or COLD. STOP.'
+       call PRC_MPIstop
     endif
     NQW_STR  = TRC_vmax + 1
     NQW_END  = TRC_vmax + NQW_MAX
@@ -441,17 +379,17 @@ contains
     DIAG_vmax  = DIAG_vmax0 + TRC_vmax
     I_qend     = DIAG_vmax
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '*** Prognostic Tracers'
-    write(ADM_LOG_FID,*) '|=========================================================|'
-    write(ADM_LOG_FID,*) '|       :varname         :description                     |'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '*** Prognostic Tracers'
+    if( IO_L ) write(IO_FID_LOG,*) '|=========================================================|'
+    if( IO_L ) write(IO_FID_LOG,*) '|       :varname         :description                     |'
     do v = 1, TRC_vmax
-       write(ADM_LOG_FID,'(1x,A,I4,A,A16,A,A,A)') '|ID=', v, ':', TRC_name(v), ':', WLABEL(v),'|'
+       if( IO_L ) write(IO_FID_LOG,'(1x,A,I4,A,A16,A,A,A)') '|ID=', v, ':', TRC_name(v), ':', WLABEL(v),'|'
     enddo
-    write(ADM_LOG_FID,*) '|=========================================================|'
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '*** thermodynamic(water) tracers'
-    write(ADM_LOG_FID,*) '-->', NQW_MAX, ' tracers(',NQW_STR,'-',NQW_END,')'
+    if( IO_L ) write(IO_FID_LOG,*) '|=========================================================|'
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '*** thermodynamic(water) tracers'
+    if( IO_L ) write(IO_FID_LOG,*) '-->', NQW_MAX, ' tracers(',NQW_STR,'-',NQW_END,')'
 
     return
   end subroutine RUNCONF_tracer_setup
@@ -459,24 +397,17 @@ contains
   !-----------------------------------------------------------------------------
   !> thermodynamic setup
   subroutine RUNCONF_thermodyn_setup
-    use mod_adm, only: &
-       ADM_proc_stop
-    use mod_cnst, only: &
-       CNST_CV,    &
-       CNST_CVV,   &
-       CNST_CP,    &
-       CNST_CPV,   &
-       CNST_CL,    &
-       CNST_CI,    &
-       CNST_LH0,   &
-       CNST_LH00,  &
-       CNST_LHS0,  &
-       CNST_LHS00, &
-       CNST_LHF0,  &
-       CNST_LHF00
+    use mod_const, only: &
+       CONST_THERMODYN_TYPE, &
+       CPdry => CONST_CPdry, &
+       CPvap => CONST_CPvap, &
+       CVdry => CONST_CVdry, &
+       CVvap => CONST_CVvap, &
+       CL    => CONST_CL,    &
+       CI    => CONST_CI
     implicit none
 
-    integer :: v
+    integer  :: v
     !---------------------------------------------------------------------------
     ! 'SIMPLE': standard approximation CVD * T
     ! 'EXACT': exact formulation
@@ -490,79 +421,70 @@ contains
     allocate( CVW(NQW_STR:NQW_END) )
     allocate( CPW(NQW_STR:NQW_END) )
 
-    if(EIN_TYPE=='EXACT') then
-       LHV = CNST_LH00
-       LHS = CNST_LHS00
-       LHF = CNST_LHF00
+    if ( CONST_THERMODYN_TYPE == 'SIMPLE' ) then
        do v = NQW_STR, NQW_END
-          if ( v == I_QV ) then       ! vapor
-             CVW(v) = CNST_CVV
-             CPW(v) = CNST_CPV
-          else if ( v == I_QC ) then  ! cloud
-             CVW(v) = CNST_CL
-             CPW(v) = CNST_CL
-          else if ( v == I_QR ) then  ! rain
-             CVW(v) = CNST_CL
-             CPW(v) = CNST_CL
-          else if ( v == I_QI ) then  ! ice
-             CVW(v) = CNST_CI
-             CPW(v) = CNST_CI
-          else if ( v == I_QS ) then  ! snow
-             CVW(v) = CNST_CI
-             CPW(v) = CNST_CI
-          else if ( v == I_QG ) then  ! graupel
-             CVW(v) = CNST_CI
-             CPW(v) = CNST_CI
+          if    ( v == I_QV ) then ! vapor
+             CVW(v) = CVdry
+             CPW(v) = CPdry
+          elseif( v == I_QC ) then ! cloud
+             CVW(v) = CVdry
+             CPW(v) = CVdry
+          elseif( v == I_QR ) then ! rain
+             CVW(v) = CVdry
+             CPW(v) = CVdry
+          elseif( v == I_QI ) then ! ice
+             CVW(v) = CVdry
+             CPW(v) = CVdry
+          elseif( v == I_QS ) then ! snow
+             CVW(v) = CVdry
+             CPW(v) = CVdry
+          elseif( v == I_QG ) then ! graupel
+             CVW(v) = CVdry
+             CPW(v) = CVdry
           endif
        enddo
-    elseif(EIN_TYPE=='SIMPLE2') then
-       LHV = CNST_LH0
-       LHS = CNST_LHS0
-       LHF = CNST_LHF0
+    elseif( CONST_THERMODYN_TYPE == 'SIMPLE2' ) then
        do v = NQW_STR, NQW_END
-          if ( v == I_QV ) then       ! vapor
-             CVW(v) = CNST_CVV
-             CPW(v) = CNST_CPV
-          else if ( v == I_QC ) then  ! cloud
-             CVW(v) = CNST_CPV
-             CPW(v) = CNST_CPV
-          else if ( v == I_QR ) then  ! rain
-             CVW(v) = CNST_CPV
-             CPW(v) = CNST_CPV
-          else if ( v == I_QI ) then  ! ice
-             CVW(v) = CNST_CPV
-             CPW(v) = CNST_CPV
-          else if ( v == I_QS ) then  ! snow
-             CVW(v) = CNST_CPV
-             CPW(v) = CNST_CPV
-          else if ( v == I_QG ) then  ! graupel
-             CVW(v) = CNST_CPV
-             CPW(v) = CNST_CPV
+          if    ( v == I_QV ) then ! vapor
+             CVW(v) = CVvap
+             CPW(v) = CPvap
+          elseif( v == I_QC ) then ! cloud
+             CVW(v) = CPvap
+             CPW(v) = CPvap
+          elseif( v == I_QR ) then ! rain
+             CVW(v) = CPvap
+             CPW(v) = CPvap
+          elseif( v == I_QI ) then ! ice
+             CVW(v) = CPvap
+             CPW(v) = CPvap
+          elseif( v == I_QS ) then ! snow
+             CVW(v) = CPvap
+             CPW(v) = CPvap
+          elseif( v == I_QG ) then ! graupel
+             CVW(v) = CPvap
+             CPW(v) = CPvap
           endif
        enddo
-    elseif(EIN_TYPE=='SIMPLE') then
-       LHV = CNST_LH0
-       LHS = CNST_LHS0
-       LHF = CNST_LHF0
+    elseif( CONST_THERMODYN_TYPE == 'EXACT' ) then
        do v = NQW_STR, NQW_END
-          if ( v == I_QV ) then       ! vapor
-             CVW(v) = CNST_CV
-             CPW(v) = CNST_CP
-          else if ( v == I_QC ) then  ! cloud
-             CVW(v) = CNST_CV
-             CPW(v) = CNST_CV
-          else if ( v == I_QR ) then  ! rain
-             CVW(v) = CNST_CV
-             CPW(v) = CNST_CV
-          else if ( v == I_QI ) then  ! ice
-             CVW(v) = CNST_CV
-             CPW(v) = CNST_CV
-          else if ( v == I_QS ) then  ! snow
-             CVW(v) = CNST_CV
-             CPW(v) = CNST_CV
-          else if ( v == I_QG ) then  ! graupel
-             CVW(v) = CNST_CV
-             CPW(v) = CNST_CV
+          if    ( v == I_QV ) then ! vapor
+             CVW(v) = CVvap
+             CPW(v) = CPvap
+          elseif( v == I_QC ) then ! cloud
+             CVW(v) = CL
+             CPW(v) = CL
+          elseif( v == I_QR ) then ! rain
+             CVW(v) = CL
+             CPW(v) = CL
+          elseif( v == I_QI ) then ! ice
+             CVW(v) = CI
+             CPW(v) = CI
+          elseif( v == I_QS ) then ! snow
+             CVW(v) = CI
+             CPW(v) = CI
+          elseif( v == I_QG ) then ! graupel
+             CVW(v) = CI
+             CPW(v) = CI
           endif
        enddo
     endif
@@ -571,4 +493,3 @@ contains
   end subroutine RUNCONF_thermodyn_setup
 
 end module mod_runconf
-!-------------------------------------------------------------------------------

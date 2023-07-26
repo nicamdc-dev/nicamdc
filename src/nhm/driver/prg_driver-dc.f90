@@ -57,21 +57,21 @@ program prg_driver
   !++ Used modules
   !
   use mod_precision
-  use mod_debug
-  use mod_adm, only: &
-     ADM_MULTI_PRC,      &
-     ADM_LOG_FID,        &
-     ADM_prc_me,         &
-     ADM_prc_run_master, &
-     ADM_proc_init,      &
-     ADM_proc_finish,    &
-     ADM_setup
+  use mod_stdio
+  use mod_prof
+  use mod_process, only: &
+     PRC_IsMaster,    &
+     PRC_MPIstart,    &
+     PRC_LOCAL_setup, &
+     PRC_MPIfinish
+  use mod_const, only: &
+     CONST_setup
+  use mod_calendar, only: &
+     CALENDAR_setup
   use mod_random, only: &
      RANDOM_setup
-  use mod_cnst, only: &
-     CNST_setup
-  use mod_calendar, only: &
-     calendar_setup
+  use mod_adm, only: &
+     ADM_setup
   use mod_fio, only: &
      FIO_setup
   use mod_comm, only: &
@@ -96,6 +96,8 @@ program prg_driver
      extdata_setup
   use mod_runconf, only: &
      runconf_setup
+  use mod_saturation, only: &
+     saturation_setup
   use mod_prgvar, only: &
      prgvar_setup,            &
      restart_input_basename,  &
@@ -121,45 +123,50 @@ program prg_driver
 
   !##### OpenACC (for data copy) #####
   use mod_adm, only: &
-     ADM_prc_tab,  &
-     ADM_rgn_vnum, &
-     ADM_IopJop
+     ADM_have_sgp
   use mod_comm, only: &
-     sendlist,     sendlist_pl,  &
-     sendinfo,     sendinfo_pl,  &
-     recvlist,     recvlist_pl,  &
-     recvinfo,     recvinfo_pl,  &
-     recvlist_r2r, sendlist_r2r, &
-     recvlist_r2p, sendlist_r2p, &
-     recvlist_p2r, sendlist_p2r, &
-     recvlist_sgp, sendlist_sgp, &
-     copyinfo_r2r, copyinfo_sgp, &
-     copyinfo_r2p, copyinfo_p2r, &
-     nsmax,        nsmax_pl,     &
-     nrmax,        nrmax_pl,     &
-     ncmax_r2r,    ncmax_sgp,    &
-     ncmax_r2p,    ncmax_p2r
+     sendbuf_r2r_SP, &
+     sendbuf_p2r_SP, &
+     sendbuf_r2p_SP, &
+     recvbuf_r2r_SP, &
+     recvbuf_p2r_SP, &
+     recvbuf_r2p_SP, &
+     sendbuf_r2r_DP, &
+     sendbuf_p2r_DP, &
+     sendbuf_r2p_DP, &
+     recvbuf_r2r_DP, &
+     recvbuf_p2r_DP, &
+     recvbuf_r2p_DP, &
+     Send_list_r2r,  &
+     Send_list_p2r,  &
+     Send_list_r2p,  &
+     Recv_list_r2r,  &
+     Recv_list_p2r,  &
+     Recv_list_r2p,  &
+     Copy_list_r2r,  &
+     Copy_list_p2r,  &
+     Copy_list_r2p,  &
+     Singular_list
   use mod_grd, only: &
-     GRD_x,     &
-     GRD_xt,    &
-     GRD_zs,    &
      GRD_rdgz,  &
      GRD_rdgzh, &
-     GRD_vz
+     GRD_afact, &
+     GRD_bfact, &
+     GRD_cfact, &
+     GRD_dfact, &
+     GRD_x,     &
+     GRD_xr
   use mod_gmtr, only: &
-     GMTR_P_var, &
-     GMTR_T_var, &
-     GMTR_A_var
+     GMTR_p, &
+     GMTR_t, &
+     GMTR_a
   use mod_oprt, only: &
-     cdiv,        &
-     cgrad,       &
-     clap,        &
-     cinterp_TN,  &
-     cinterp_HN,  &
-     cinterp_TRA, &
-     cinterp_PRA
+     OPRT_coef_div,  &
+     OPRT_coef_grad, &
+     OPRT_coef_lap,  &
+     OPRT_coef_intp, &
+     OPRT_coef_diff
   use mod_vmtr, only: &
-     VMTR_GAM2,      &
      VMTR_GAM2H,     &
      VMTR_GSGAM2,    &
      VMTR_GSGAM2H,   &
@@ -172,59 +179,68 @@ program prg_driver
      VMTR_C2Wfact,   &
      VMTR_C2WfactGz, &
      VMTR_PHI
-  use mod_runconf, only: &
-     CVW
   use mod_prgvar, only: &
-     PRG_var,  &
-     PRG_var1, &
-     DIAG_var
+     PRG_var
   use mod_bsstate, only: &
      rho_bs, &
-     pre_bs, &
-     tem_bs
+     pre_bs
   use mod_numfilter, only: &
-     Kh_coef,      &
-     Kh_coef_lap1, &
-     divdamp_coef
-  use mod_vi, only : &
-     Mc, &
-     Ml, &
-     Mu
-  use mod_history, only: &
-     ksumstr,     &
-     cnvpre_klev, &
-     cnvpre_fac1, &
-     cnvpre_fac2
+     Kh_coef,        &
+     Kh_coef_lap1,   &
+     divdamp_coef,   &
+     divdamp_2d_coef
+  use mod_vi, only: &
+     Mc, Ml, Mu
   !##### OpenACC #####
   implicit none
-
-  character(len=14) :: cdate
-
-  integer :: n
   !-----------------------------------------------------------------------------
+  !
+  !++ parameters & variables
+  !
+  integer  :: comm_world
+  integer  :: myrank
+  logical  :: ismaster
 
-  call ADM_proc_init(ADM_MULTI_PRC)
+  integer  :: n
+  !=============================================================================
 
-  !---< admin module setup >---
-  call ADM_setup('nhm_driver.cnf')
+  !---< MPI start >---
+  call PRC_MPIstart( comm_world ) ! [OUT]
 
-  call DEBUG_rapstart('Total')
+  !---< STDIO setup >---
+  call IO_setup( 'NICAM-DC',      & ! [IN]
+                 'nhm_driver.cnf' ) ! [IN]
+
+  !---< Local process management setup >---
+  call PRC_LOCAL_setup( comm_world, & ! [IN]
+                        myrank,     & ! [OUT]
+                        ismaster    ) ! [OUT]
+
+  !---< Logfile setup >---
+  call IO_LOG_setup( myrank,  & ! [IN]
+                     ismaster ) ! [IN]
+
+  !---< profiler module setup >---
+  call PROF_setup
+
   !#############################################################################
-  call DEBUG_rapstart('Setup_ALL')
+  call PROF_setprefx('INIT')
+  call PROF_rapstart('Initialize',0)
 
-  write(ADM_LOG_FID,*) '##### start  setup     #####'
-  if ( ADM_prc_me == ADM_prc_run_master ) then
-     write(*,*) '##### start  setup     #####'
-  endif
+  if( IO_L ) write(IO_FID_LOG,*) '##### start  setup     #####'
+  if( PRC_IsMaster ) write(*,*)  '##### start  setup     #####'
+
+  !---< cnst module setup >---
+  call CONST_setup
+
+  !---< calendar module setup >---
+  call CALENDAR_setup
 
   !---< radom module setup >---
   call RANDOM_setup
 
-  !---< cnst module setup >---
-  call CNST_setup
-
-  !---< calendar module setup >---
-  call calendar_setup
+  !---< admin module setup >---
+  call ADM_setup
 
   !---< I/O module setup >---
   call FIO_setup
@@ -254,6 +270,9 @@ program prg_driver
   !---< nhm_runconf module setup >---
   call runconf_setup
 
+  !---< saturation module setup >---
+  call saturation_setup
+
   !---< prognostic variable module setup >---
   call prgvar_setup
   call restart_input( restart_input_basename )
@@ -274,49 +293,34 @@ program prg_driver
   !---< history variable module setup >---
   call history_vars_setup
 
-  write(ADM_LOG_FID,*) '##### finish setup     #####'
-  if ( ADM_prc_me == ADM_prc_run_master ) then
-     write(*,*) '##### finish setup     #####'
-  endif
+  if( IO_L ) write(IO_FID_LOG,*) '##### finish setup     #####'
+  if( PRC_IsMaster ) write(*,*)  '##### finish setup     #####'
 
-  call DEBUG_rapend('Setup_ALL')
+  call PROF_rapend('Initialize',0)
   !#############################################################################
-  call DEBUG_rapstart('Main_ALL')
+  call PROF_setprefx('MAIN')
+  call PROF_rapstart('Main_Loop',0)
 
-  write(ADM_LOG_FID,*) '##### start  main loop #####'
-  if ( ADM_prc_me == ADM_prc_run_master ) then
-     write(*,*) '##### start  main loop #####'
-  endif
+  if( IO_L ) write(IO_FID_LOG,*) '##### start  main loop #####'
+  if( PRC_IsMaster ) write(*,*)  '##### start  main loop #####'
 
 #ifdef _FIPP_
   call fipp_start()
 #endif
 
   !$acc data &
-  !$acc& pcopyin(ADM_prc_tab,ADM_rgn_vnum,ADM_IopJop) &
-  !$acc& pcopyin(sendlist,sendlist_pl) &
-  !$acc& pcopyin(sendinfo,sendinfo_pl) &
-  !$acc& pcopyin(recvlist,recvlist_pl) &
-  !$acc& pcopyin(recvinfo,recvinfo_pl) &
-  !$acc& pcopyin(recvlist_r2r,sendlist_r2r) &
-  !$acc& pcopyin(recvlist_sgp,sendlist_sgp) &
-  !$acc& pcopyin(recvlist_r2p,sendlist_r2p) &
-  !$acc& pcopyin(recvlist_p2r,sendlist_p2r) &
-  !$acc& pcopyin(copyinfo_r2r,copyinfo_sgp,copyinfo_r2p,copyinfo_p2r) &
-  !$acc& pcopyin(nsmax,nsmax_pl,nrmax,nrmax_pl) &
-  !$acc& pcopyin(ncmax_r2r,ncmax_sgp,ncmax_r2p,ncmax_p2r) &
-  !$acc& pcopyin(GRD_rdgz,GRD_rdgzh,GRD_x,GRD_xt,GRD_vz,GRD_zs) &
-  !$acc& pcopyin(GMTR_P_var,GMTR_T_var,GMTR_A_var) &
-  !$acc& pcopyin(cdiv,cgrad,clap,cinterp_TN,cinterp_HN,cinterp_TRA,cinterp_PRA) &
-  !$acc& pcopyin(VMTR_GAM2,VMTR_GAM2H,VMTR_GSGAM2,VMTR_GSGAM2H) &
-  !$acc& pcopyin(VMTR_RGSQRTH,VMTR_RGAM,VMTR_RGAMH,VMTR_RGSGAM2,VMTR_RGSGAM2H) &
-  !$acc& pcopyin(VMTR_W2Cfact,VMTR_C2Wfact,VMTR_C2WfactGz,VMTR_PHI) &
-  !$acc& pcopyin(CVW) &
-  !$acc& pcopyin(rho_bs,pre_bs,tem_bs) &
-  !$acc& pcopyin(divdamp_coef,Kh_coef,Kh_coef_lap1) &
-  !$acc& pcopyin(Mc,Mu,Ml) &
-  !$acc& pcopyin(ksumstr,cnvpre_klev,cnvpre_fac1,cnvpre_fac2) &
-  !$acc& pcopy  (PRG_var,PRG_var1,DIAG_var)
+  !$acc pcopyin(ADM_have_sgp) &
+  !$acc pcopyin(GRD_rdgz,GRD_rdgzh,GRD_afact,GRD_bfact,GRD_cfact,GRD_dfact,GRD_x,GRD_xr) &
+  !$acc pcopy(sendbuf_r2r_SP,sendbuf_p2r_SP,sendbuf_r2p_SP,recvbuf_r2r_SP,recvbuf_p2r_SP,recvbuf_r2p_SP) &
+  !$acc pcopy(sendbuf_r2r_DP,sendbuf_p2r_DP,sendbuf_r2p_DP,recvbuf_r2r_DP,recvbuf_p2r_DP,recvbuf_r2p_DP) &
+  !$acc pcopyin(Send_list_r2r,Send_list_p2r,Send_list_r2p,Recv_list_r2r,Recv_list_p2r,Recv_list_r2p) &
+  !$acc pcopyin(Copy_list_r2r,Copy_list_p2r,Copy_list_r2p,Singular_list) &
+  !$acc pcopyin(GMTR_p,GMTR_t,GMTR_a) &
+  !$acc pcopyin(OPRT_coef_div,OPRT_coef_grad,OPRT_coef_lap,OPRT_coef_intp,OPRT_coef_diff) &
+  !$acc pcopyin(VMTR_GAM2H,VMTR_GSGAM2,VMTR_GSGAM2H,VMTR_RGSQRTH,VMTR_RGAM,VMTR_RGAMH) &
+  !$acc pcopyin(VMTR_RGSGAM2,VMTR_RGSGAM2H,VMTR_W2Cfact,VMTR_C2Wfact,VMTR_C2WfactGz,VMTR_PHI) &
+  !$acc pcopyin(rho_bs,pre_bs) &
+  !$acc pcopyin(Kh_coef,Kh_coef_lap1,divdamp_coef,divdamp_2d_coef,Mc,Ml,Mu)
 
   !--- history output at initial time
   if ( HIST_output_step0 ) then
@@ -331,12 +335,12 @@ program prg_driver
 
   do n = 1, TIME_LSTEP_MAX
 
-     call DEBUG_rapstart('_Atmos')
+     call PROF_rapstart('_Atmos',1)
      call dynamics_step
      call forcing_step
-     call DEBUG_rapend  ('_Atmos')
+     call PROF_rapend  ('_Atmos',1)
 
-     call DEBUG_rapstart('_History')
+     call PROF_rapstart('_History',1)
      call history_vars
      call TIME_advance
 
@@ -344,11 +348,10 @@ program prg_driver
      call embudget_monitor
      call history_out
 
-     if (n == TIME_LSTEP_MAX) then
-        cdate = ""
+     if ( n == TIME_LSTEP_MAX ) then
         call restart_output( restart_output_basename )
      endif
-     call DEBUG_rapend  ('_History')
+     call PROF_rapend  ('_History',1)
 
   enddo
 
@@ -358,19 +361,16 @@ program prg_driver
   call fipp_stop()
 #endif
 
-  write(ADM_LOG_FID,*) '##### finish main loop #####'
-  if ( ADM_prc_me == ADM_prc_run_master ) then
-     write(*,*) '##### finish main loop #####'
-  endif
+  if( IO_L ) write(IO_FID_LOG,*) '##### finish main loop #####'
+  if( PRC_IsMaster ) write(*,*)  '##### finish main loop #####'
 
-  call DEBUG_rapend('Main_ALL')
+  call PROF_rapend('Main_Loop',0)
   !#############################################################################
-  call DEBUG_rapend('Total')
 
-  call DEBUG_rapreport
+  call PROF_rapreport
 
   !--- finalize all process
-  call ADM_proc_finish
+  call PRC_MPIfinish
 
   stop
 end program prg_driver

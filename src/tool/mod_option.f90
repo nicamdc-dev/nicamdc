@@ -1,34 +1,26 @@
 !-------------------------------------------------------------------------------
-!
-!+ module option interpreter
-!
+!> Module option interpreter
+!!
+!! @par Description
+!!          Read argument and convert to namelist format
+!!          (This idea is referenced from GTOOL3 suite)
+!!
+!! @author NICAM developers
+!<
 !-------------------------------------------------------------------------------
 module mod_tool_option
   !-----------------------------------------------------------------------------
   !
-  !++ Description: 
-  !      Read argument and convert to namelist format
-  !      This idea is referenced from GTOOL3 suite
-  !
-  !++ Current Corresponding Author: H.Yashiro
-  ! 
-  !++ History: 
-  !      Version   Date      Comment 
-  !      -----------------------------------------------------------------------
-  !      0.90      11-09-01  H.Yashiro : [NEW]
-  !
-  !-----------------------------------------------------------------------------
-  !
   !++ Used modules
   !
-  !-----------------------------------------------------------------------------
   implicit none
   private
   !-----------------------------------------------------------------------------
   !
-  !++ public procedure
+  !++ Public procedures
   !
   public :: OPT_convert
+
   !-----------------------------------------------------------------------------
   !
   !++ public param & variable
@@ -36,7 +28,7 @@ module mod_tool_option
   integer, public :: OPT_fid !< fileunit number for namelist
   !-----------------------------------------------------------------------------
   !
-  !++ private procedure
+  !++ Private procedures
   !
   !-----------------------------------------------------------------------------
   !
@@ -46,22 +38,20 @@ module mod_tool_option
 contains
   !-----------------------------------------------------------------------------
   !> Read argument and convert to namelist format
-  !-----------------------------------------------------------------------------
   subroutine OPT_convert( ninfile )
     implicit none
 
     integer, intent(out) :: ninfile !< [out] nuber of input files
 
-    character(LEN=256) :: argstr
-    character(LEN=2)   :: snf
+    character(len=256) :: argstr
+    character(len=2)   :: snf
 
 #ifdef _NOF2003
-  integer :: IARGC
+    integer  :: IARGC
 #else
-  integer :: command_argument_count
+    integer  :: command_argument_count
 #endif
-
-    integer :: n, narg, ls, eq
+    integer  :: n, narg, ls, eq
     !---------------------------------------------------------------------------
 
 #ifdef _NOF2003
@@ -85,14 +75,14 @@ contains
        ls = len_trim(argstr)
 
        if ( argstr(1:1) == '-' ) then
-          if ( argstr(2:2) == '-' ) then                               !! '--option' format
+          if ( argstr(2:2) == '-' ) then                              ! '--option' format
              write(OPT_fid,'(A)') ' '//argstr(3:ls)//'=F'
-          elseif ( argstr(2:3) == 'no' .OR. argstr(2:3) == 'NO' ) then !! '-nooption'/'-NOOPTION' format
+          elseif( argstr(2:3) == 'no' .OR. argstr(2:3) == 'NO' ) then ! '-nooption'/'-NOOPTION' format
              write(OPT_fid,'(A)') ' '//argstr(4:ls)//'=F'
-          else                                                         !! '-option' format
+          else                                                        ! '-option' format
              write(OPT_fid,'(A)') ' '//argstr(2:ls)//'=T'
           endif
-       elseif( index(argstr,'=') == 0 ) then                           !! no '=' is filename
+       elseif( index(argstr,'=') == 0 ) then                          ! no '=' is filename
           ninfile = ninfile + 1
           write(snf,'(I2.2)') ninfile
           write(OPT_fid,'(A)') ' infile('//snf//')="'//trim(adjustl(argstr))//'"'
@@ -112,4 +102,3 @@ contains
   end subroutine OPT_convert
 
 end module mod_tool_option
-!-------------------------------------------------------------------------------

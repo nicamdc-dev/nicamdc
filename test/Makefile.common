@@ -4,18 +4,18 @@
 #
 ################################################################################
 
-ifeq ($(origin SYSDEP_DIR), undefined)
-   SYSDEP_DIR = $(TOPDIR)/sysdep
+ifeq ($(origin SYSDEPDIR), undefined)
+   SYSDEPDIR = $(TOPDIR)/sysdep
 endif
 
 ifeq ($(origin BINNAME), undefined)
    BINNAME = nhm_driver
 endif
 
-BUILD_DIR    := $(PWD)/.libs
-NICAM_BINDIR  = $(PWD)
+BUILDDIR     := $(TOPDIR)/.libs
+NICAM_BINDIR  = $(TOPDIR)
 
-include $(SYSDEP_DIR)/Makedef.$(NICAM_SYS)
+include $(SYSDEPDIR)/Makedef.$(NICAM_SYS)
 include $(TOPDIR)/Mkinclude
 
 all:
@@ -23,15 +23,15 @@ all:
 	$(MAKE) tools
 
 build:
-	mkdir -p $(BUILD_DIR)
+	mkdir -p $(BUILDDIR)
 	$(MAKE) -C $(TOPDIR)/src nhm NICAM_BINDIR=$(NICAM_BINDIR) \
-                                BUILD_DIR=$(BUILD_DIR)       \
-                                SYSDEP_DIR=$(SYSDEP_DIR)
+                                BUILDDIR=$(BUILDDIR)         \
+                                SYSDEPDIR=$(SYSDEPDIR)
 
 tools:
-	mkdir -p $(BUILD_DIR)
-	$(MAKE) -C $(TOPDIR)/src BUILD_DIR=$(BUILD_DIR)   \
-                            SYSDEP_DIR=$(SYSDEP_DIR)
+	mkdir -p $(BUILDDIR)
+	$(MAKE) -C $(TOPDIR)/src BUILDDIR=$(BUILDDIR) \
+                            SYSDEPDIR=$(SYSDEPDIR)
 
 run: jobshell
 	$(JOBSUB) run.sh
@@ -49,10 +49,10 @@ jobshell:
 
 allclean:
 	$(MAKE) -C $(TOPDIR)/src allclean NICAM_BINDIR=$(NICAM_BINDIR) \
-                                     BUILD_DIR=$(BUILD_DIR)       \
-                                     SYSDEP_DIR=$(SYSDEP_DIR)
+                                     BUILDDIR=$(BUILDDIR)         \
+                                     SYSDEPDIR=$(SYSDEPDIR)
 	rm -f run.sh
 
 clean:
-	$(MAKE) -C $(TOPDIR)/src clean BUILD_DIR=$(BUILD_DIR)       \
-                                  SYSDEP_DIR=$(SYSDEP_DIR)
+	$(MAKE) -C $(TOPDIR)/src clean BUILDDIR=$(BUILDDIR) \
+                                  SYSDEPDIR=$(SYSDEPDIR)

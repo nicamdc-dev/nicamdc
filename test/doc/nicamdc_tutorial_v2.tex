@@ -34,7 +34,7 @@
  the Japan Agency for Marine-Earth Science and Technology (JAMSTEC), Atmosphere
  and Ocean Research Institute (AORI) at The University of Tokyo, and RIKEN / Advanced
  Institute for Computational Science (AICS). A reference paper for NICAM is
- Tomita and Satoh (2004), Satoh et al. (2008). See also NICAM.jp (\url{http://nicam.jp/}). 
+ Tomita and Satoh (2004), Satoh et al. (2008). See also NICAM.jp (\url{http://nicam.jp/}).
  This distribution package (NICAM-DC) is released for the purpose of widespread
  use of NICAM. The license is according to BSD 2 Clause. Have lots of fun!
 
@@ -206,7 +206,7 @@
    [at Line 22]
    # User Settings
    # ---------------------------------------------------------------------
-   
+
    glev=5          # g-level of original grid
    case=161        # test case number
    out_intev='day' # output interval (format: "1hr", "6hr", "day", "100s")
@@ -289,12 +289,10 @@
      * snip *
 
      &RUNCONFPARAM
-       RUNNAME        = 'DCMIP2016-11',      <--
        NDIFF_LOCATION = 'IN_LARGE_STEP2',
        THUBURN_LIM    = .true.,
-       EIN_TYPE       = 'SIMPLE',
        RAIN_TYPE      = "WARM",
-       AF_TYPE        = 'DCMIP2016',
+       AF_TYPE        = 'DCMIP',
       /
 
      * snip *
@@ -315,10 +313,9 @@
      * snip *
  \end{verbatim}
 
- 
+
  \noindent \textcolor{blue}{{\sf Note}}
  \begin{itemize}
-   \item "RUNNAME" should be specified as "DCMIP2016-11".
    \item "init\_type" should be specified as "Jablonowski-Moist".
    \item "test\_case" can be choose from 1 ~ 6.\\
           case 1: perturbation: exponential / with moisture \\
@@ -345,12 +342,10 @@
      * snip *
 
      &RUNCONFPARAM
-       RUNNAME        = 'DCMIP2016-12',      <--
        NDIFF_LOCATION = 'IN_LARGE_STEP2',
        THUBURN_LIM    = .true.,
-       EIN_TYPE       = 'SIMPLE',
        RAIN_TYPE      = "WARM",
-       AF_TYPE        = 'DCMIP2016',
+       AF_TYPE        = 'DCMIP',
       /
 
      * snip *
@@ -370,7 +365,6 @@
 
  \noindent \textcolor{blue}{{\sf Note}}
  \begin{itemize}
-   \item "RUNNAME" should be specified as "DCMIP2016-12".
    \item "init\_type" should be specified as "Tropical-Cyclone".
    \item \verb|FORCING_DCMIP_PARAM| should be specified as "\verb|SET_DCMIP2016_12 = .true.|".
    \item "step" in \verb|NMHISD| should be changed following required history output interval
@@ -391,12 +385,10 @@
      * snip *
 
      &RUNCONFPARAM
-       RUNNAME        = 'DCMIP2016-13',      <--
        NDIFF_LOCATION = 'IN_LARGE_STEP2',
        THUBURN_LIM    = .true.,
-       EIN_TYPE       = 'SIMPLE',
        RAIN_TYPE      = "WARM",
-       AF_TYPE        = 'DCMIP2016',
+       AF_TYPE        = 'DCMIP',
       /
 
      * snip *
@@ -417,7 +409,6 @@
 
  \noindent \textcolor{blue}{{\sf Note}}
  \begin{itemize}
-   \item "RUNNAME" should be specified as "DCMIP2016-13".
    \item "init\_type" should be specified as "Supercell".
    \item "test\_case" can be choose from 1 ~ 6.\\
           case 1: with initial perturbation \\
@@ -520,10 +511,8 @@
      * snip *
 
      &RUNCONFPARAM
-       RUNNAME        = 'DCMIP2016-11',
        NDIFF_LOCATION = 'IN_LARGE_STEP2',
        THUBURN_LIM    = .true.,
-       EIN_TYPE       = 'SIMPLE',
        RAIN_TYPE      = "WARM",
        AF_TYPE        = 'NONE',       <--
       /
@@ -769,7 +758,7 @@ In the moist baroclinic wave, two types of tests are requested.
    \item 3D param: Qv, Qc, Qr, U, V, W, Theta, T, P (or Rho)
    \item 2D param: surface pressure, instantaneous precip 6-hourly averaged precip.
    \item Additional 2D diagnostics are required for the Terminator test,
-         as described in the test case document.  
+         as described in the test case document.
  \end{itemize}
 
 
@@ -837,7 +826,7 @@ In the tropical cyclone, two types of tests are requested.
 \section{Appendix: Configuration Parameters}
 %##########################################################################################
 
- columns of example show settings of test case 161 in g-level 5. 
+ columns of example show settings of test case 161 in g-level 5.
 
 \begin{table}[htb]
 \begin{center}
@@ -884,7 +873,6 @@ In the tropical cyclone, two types of tests are requested.
 \caption{RUNCONFPARAM (Common Configurations)}
 \begin{tabularx}{150mm}{|l|l|l|X|} \hline
  \rowcolor[gray]{0.9} parameters & example & kind & description          \\ \hline
- RUNNAME               & 'DCMIP2016-11'   & char & name of run case \\ \hline
  \verb|NDIFF_LOCATION|        & '\verb|IN_LARGE_STEP2|' & char  & setting of numerical diffusion \\ \hline
  \verb|THUBURN_LIM|           & .true.      & logical & use of the limiter \\ \hline
  \verb|EIN_TYPE|              & 'SIMPLE'    & char  & evaluation type of internal energy \\ \hline

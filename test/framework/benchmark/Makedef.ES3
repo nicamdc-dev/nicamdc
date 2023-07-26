@@ -1,7 +1,6 @@
 #
-# ------ FOR Earth Simulator 2, SX -----
+# ------ FOR Earth Simulator 3, SX -----
 #
-
 FFLAGS_FAST  = -C hopt                    \
                -Ep -f2003 -dW             \
                -Wf"-L fmtlist transform"  \
@@ -42,12 +41,13 @@ endif
 
 ###########################
 
-MODDIROPT ?= -to $(BUILD_DIR) -I$(BUILD_DIR)
-OBJDIR    ?= $(BUILD_DIR)
+MODDIROPT ?= -to $(BUILDDIR) -I$(BUILDDIR)
+OBJDIR    ?= $(BUILDDIR)
 
 LD     = $(FC)
 LFLAGS = $(FFLAGS)
 
+MAKE    = make
 INSTALL = cp -u
 AR      = sxar
 ARFLAGS = r

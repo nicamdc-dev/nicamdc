@@ -1,0 +1,71 @@
+#
+# ------ FOR Linux 64bit & intel fortran&C & intel mpi -----
+#
+FFLAGS_FAST  = -fpp -m64 -O3 -xMIC-AVX512           \
+               -assume byterecl -convert big_endian \
+               -fp-model source -align array64byte  \
+               -qopt-streaming-stores always
+#                -DTS29113
+
+FFLAGS_DEBUG = -fpp -m64 -O0 -xMIC-AVX512                \
+               -assume byterecl -convert big_endian      \
+               -fpe0 -fp-model source -align array64byte \
+               -qopt-streaming-stores always             \
+               -check bounds -warn all -g -traceback
+
+FC     = mpiifort
+FFLAGS = $(FFLAGS_FAST)
+#FFLAGS = $(FFLAGS_DEBUG)
+
+LD     = $(FC)
+LFLAGS = $(FFLAGS_FAST)
+#LFLAGS = $(FFLAGS_DEBUG)
+
+CFLAGS_FAST  = -O3 -xMIC-AVX512
+CFLAGS_DEBUG = -O0 -xMIC-AVX512
+
+CC     = mpiicc
+CFLAGS = $(CFLAGS_FAST)
+#CFLAGS = $(CFLAGS_DEBUG)
+
+##### Special Options #####
+
+# for 2M alignment of MPI buffer
+#bufalloc = bufalloc.o
+
+ifeq ($(ENABLE_OPENMP),T)
+	FFLAGS += -qopenmp
+	LFLAGS += -qopenmp
+endif
+
+ifeq ($(ENABLE_NETCDF),T)
+	NETCDF_INCLUDE ?= -I/work/opt/local/apps/intel/2018.1.163/netcdf-fortran/4.4.3/include -I/work/opt/local/apps/intel/2018.1.163/hdf5/1.8.17/include -I/work/opt/local/apps/intel/2018.1.163/netcdf/4.4.1/include
+	NETCDF_LIBS    ?= -L/work/opt/local/apps/intel/2018.1.163/netcdf-fortran/4.4.3/lib -lnetcdff -L/work/opt/local/apps/intel/2018.1.163/hdf5/1.8.17/lib -L/work/opt/local/apps/intel/2018.1.163/netcdf/4.4.1/lib -lnetcdf -lhdf5_hl -lhdf5 -lnetcdf -lz
+	FFLAGS         += $(NETCDF_INCLUDE)
+	LFLAGS         += $(NETCDF_INCLUDE)
+	CFLAGS         += $(NETCDF_INCLUDE)
+endif
+
+LAPACK_LIBS ?= -mkl
+
+ifeq ($(ENABLE_VTAMP),T)
+	VTAMP_INCLUDE ?= -I/home/opt/local/cores/intel/vtune_amplifier_xe_2017.3.0.510739/include/intel64
+	VTAMP_LIBS    ?= -L/home/opt/local/cores/intel/vtune_amplifier_xe_2017.3.0.510739/lib64 -littnotify
+	FFLAGS        += -g -no-ip -no-ipo -qopt-report=5 -DVTAMP $(VTAMP_INCLUDE)
+	LFLAGS        +=    -no-ip -no-ipo -qopt-report=5 -DVTAMP $(VTAMP_INCLUDE)
+else
+	FFLAGS        += -static_intel
+	LFLAGS        += -static_intel
+endif
+
+###########################
+
+MODDIROPT ?= -module $(BUILDDIR)
+OBJDIR    ?= $(BUILDDIR)
+
+MAKE    = make
+INSTALL = install
+AR      = ar
+ARFLAGS = r
+RANLIB  = ranlib
+JOBSUB  = pjsub

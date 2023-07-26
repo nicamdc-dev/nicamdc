@@ -1,17 +1,18 @@
 #
 # ------ FOR FX100 -----
 #
-FFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,noalias=s,mfunc=1 \
-               -Qi -Qt -X03 -Ncompdisp -Koptmsg=1 -Cpp                   \
-               -Kdynamic_iteration -Ksimd,openmp                         \
-               -Kauto,threadsafe
+FFLAGS_FAST  = -Kfast,parallel,ocl,preex,array_private,noalias=s,mfunc=2 \
+               -Qi -Qt -X03 -Ncompdisp -Koptmsg=2 -Cpp                   \
+               -Kdynamic_iteration -Ksimd                                \
+               -Kauto,threadsafe                                         \
+               -Kprefetch_sequential=soft
 
-# note: Kauto,threadsafe,autoobjstack,temparraystack depends on the stacksize.
-# If you find the segmentation fault error, please check.
+#               -Qm -Nquickdbg -NRtrap
 
-FFLAGS_DEBUG = -O0                                                       \
-               -Qi -Qt -X03 -v03s -v03d -v03o -Ncompdisp -Koptmsg=1 -Cpp \
-               -Ec -Eg -Ha -He -Hf -Ho -Hs -Hu -Hx -Ncheck_global        \
+FFLAGS_DEBUG = -O0                                                   \
+               -Qi -Qt -X03 -Ncompdisp -Koptmsg=2 -Cpp               \
+               -Ec -Eg -Ha -He -Hf -Ho -Hs -Hu -Hx -v03s -v03d -v03o \
+               -Ncheck_cache_arraysize -Ncheck_global                \
                -DDEBUG
 
 FC     = mpifrtpx
@@ -45,20 +46,23 @@ ifeq ($(ENABLE_OPENMP),T)
 endif
 
 ifeq ($(ENABLE_NETCDF),T)
-	FFLAGS      += $(shell nf-config --fflags)
-	CFLAGS      += $(shell nc-config --cflags)
-	NETCDF_LIBS ?= $(shell nf-config --flibs) $(shell nc-config --libs)
+	FFLAGS      += -I/usr/local/SPARC/NetCDF-Fortran/4.2/include
+	CFLAGS      += -I/usr/local/SPARC/NetCDF-C/4.3.2/include -I/usr/local/SPARC/HDF5/1.8.17/include
+	NETCDF_LIBS ?= -L/usr/local/SPARC/NetCDF-Fortran/4.2/lib -lnetcdff -L/usr/local/SPARC/HDF5/1.8.17/lib -L/usr/local/SPARC/NetCDF-C/4.3.2/lib -lnetcdf -lhdf5_hl -lhdf5 -lnetcdf -lz
 endif
+
+LAPACK_LIBS ?= -SSL2BLAMP -SCALAPACK
 
 ###########################
 
-MODDIROPT ?= -M $(BUILD_DIR)
-OBJDIR    ?= $(BUILD_DIR)
+MODDIROPT ?= -M $(BUILDDIR)
+OBJDIR    ?= $(BUILDDIR)
 
 LD     = $(FC)
 LFLAGS = $(FFLAGS)
 
-INSTALL = install
+MAKE    = make
+INSTALL = cp -u
 AR      = ar
 ARFLAGS = r
 RANLIB  = ranlib

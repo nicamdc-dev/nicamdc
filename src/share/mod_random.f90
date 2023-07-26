@@ -2,29 +2,32 @@
 !> module RANDOM
 !!
 !! @par Description
-!!          random number generation module
+!!         Random number generation module
 !!
 !! @author NICAM developers
-!!
 !<
+!-------------------------------------------------------------------------------
 module mod_random
   !-----------------------------------------------------------------------------
   !
-  !++ used modules
+  !++ Used modules
   !
   use mod_precision
-  use mod_debug
-  use mod_adm, only: &
-     ADM_LOG_FID
+  use mod_stdio
   !-----------------------------------------------------------------------------
   implicit none
   private
   !-----------------------------------------------------------------------------
   !
-  !++ Public procedure
+  !++ Public procedures
   !
   public :: RANDOM_setup
   public :: RANDOM_get
+
+  interface RANDOM_get
+     module procedure RANDOM_get_SP
+     module procedure RANDOM_get_DP
+  end interface RANDOM_get
 
   !-----------------------------------------------------------------------------
   !
@@ -32,7 +35,7 @@ module mod_random
   !
   !-----------------------------------------------------------------------------
   !
-  !++ Private procedure
+  !++ Private procedures
   !
   private :: RANDOM_reset
 
@@ -49,40 +52,38 @@ contains
   !-----------------------------------------------------------------------------
   !> Setup
   subroutine RANDOM_setup
-    use mod_adm, only: &
-       ADM_CTL_FID,   &
-       ADM_proc_stop
+    use mod_process, only: &
+       PRC_MPIstop
     implicit none
 
     namelist / RANDOMPARAM / &
        RANDOM_FIX
 
-    integer :: nseeds, ierr
+    integer  :: nseeds, ierr
     !---------------------------------------------------------------------------
 
     !--- read parameters
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '+++ Module[random]/Category[common share]'
-    rewind(ADM_CTL_FID)
-    read(ADM_CTL_FID,nml=RANDOMPARAM,iostat=ierr)
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[random]/Category[common share]'
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=RANDOMPARAM,iostat=ierr)
     if ( ierr < 0 ) then
-       write(ADM_LOG_FID,*) '*** RANDOMPARAM is not specified. use default.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** RANDOMPARAM is not specified. use default.'
     elseif( ierr > 0 ) then
-       write(*,          *) 'xxx Not appropriate names in namelist RANDOMPARAM. STOP.'
-       write(ADM_LOG_FID,*) 'xxx Not appropriate names in namelist RANDOMPARAM. STOP.'
-       call ADM_proc_stop
+       write(*,*) 'xxx Not appropriate names in namelist RANDOMPARAM. STOP.'
+       call PRC_MPIstop
     endif
-    write(ADM_LOG_FID,nml=RANDOMPARAM)
+    if( IO_NML ) write(IO_FID_LOG,nml=RANDOMPARAM)
 
     call random_seed
     call random_seed(size=nseeds)
 
     allocate( RANDOM_seedvar(nseeds))
 
-    write(ADM_LOG_FID,*)
-    write(ADM_LOG_FID,*) '*** Array size for random seed:', nseeds
+    if( IO_L ) write(IO_FID_LOG,*)
+    if( IO_L ) write(IO_FID_LOG,*) '*** Array size for random seed:', nseeds
     if ( RANDOM_FIX ) then
-       write(ADM_LOG_FID,*) '*** random seed is fixed.'
+       if( IO_L ) write(IO_FID_LOG,*) '*** random seed is fixed.'
     endif
 
     return
@@ -91,12 +92,12 @@ contains
   !-----------------------------------------------------------------------------
   !> Reset random seed
   subroutine RANDOM_reset
-    use mod_adm, only: &
-       ADM_prc_me
+    use mod_process, only: &
+       PRC_myrank
     implicit none
 
-    integer :: time1(8)
-    real(RP) :: time2
+    integer  :: time1(8)
+    real(DP) :: time2
     !---------------------------------------------------------------------------
 
     if ( RANDOM_FIX ) then
@@ -112,15 +113,14 @@ contains
        call cpu_time(time2)
     endif
 
-    RANDOM_seedvar(:) = &
-         + ( time1(1) - 1970 ) * 32140800 &
-         + time1(2) * 2678400 &
-         + time1(3) * 86400 &
-         + time1(4) * 60 &
-         + time1(5) * 3600 &
-         + time1(6) * 60 &
-         + time1(7) &
-         + int(time2*1.E6_RP) + ADM_prc_me
+    RANDOM_seedvar(:) = ( time1(1) - 1970 ) * 32140800 &
+                      + time1(2) * 2678400 &
+                      + time1(3) * 86400 &
+                      + time1(4) * 60 &
+                      + time1(5) * 3600 &
+                      + time1(6) * 60 &
+                      + time1(7) &
+                      + int(time2*1.E6_DP) + PRC_myrank
 
     call random_seed(put=RANDOM_seedvar)
 
@@ -129,17 +129,30 @@ contains
 
   !-----------------------------------------------------------------------------
   !> Get random number
-  subroutine RANDOM_get( var )
+  subroutine RANDOM_get_SP( var )
     implicit none
 
-    real(RP), intent(out) :: var(:,:,:)
+    real(SP), intent(out) :: var(:,:,:)
     !---------------------------------------------------------------------------
 
     call RANDOM_reset
     call random_number(var)
 
     return
-  end subroutine RANDOM_get
+  end subroutine RANDOM_get_SP
+
+  !-----------------------------------------------------------------------------
+  !> Get random number
+  subroutine RANDOM_get_DP( var )
+    implicit none
+
+    real(DP), intent(out) :: var(:,:,:)
+    !---------------------------------------------------------------------------
+
+    call RANDOM_reset
+    call random_number(var)
+
+    return
+  end subroutine RANDOM_get_DP
 
 end module mod_random
-!-------------------------------------------------------------------------------
