@@ -12,18 +12,19 @@
 #ifndef __FIO_DEF_H__
 #define __FIO_DEF_H__
 
-/* These parameters are also defined in mod_fio */
+/* These parameters are also defined in mod_fio_common */
 
 /* character length */
 #define FIO_HSHORT  16
 #define FIO_HMID    64
 #define FIO_HLONG  256
+#define FIO_HFILE 1024
 
 /* data type */
 #define FIO_REAL4     0
 #define FIO_REAL8     1
 #define FIO_INTEGER4  2
-#define FIO_INTEGER8  3
+#define FIO_INTEGER2  3
 
 /* data endian */
 #define FIO_UNKNOWN_ENDIAN  0

@@ -783,8 +783,8 @@ contains
   subroutine LL_outputsample
     use mod_process, only: &
        PRC_MPIstop
-    use mod_io_param, only: &
-       IO_REAL8
+    use mod_fio_common, only: &
+       FIO_REAL8
     use mod_adm, only: &
        ADM_prc_me,  &
        ADM_lall,    &
@@ -800,8 +800,6 @@ contains
        COMM_data_transfer
     use mod_fio, only: &
        FIO_output
-    use mod_hio, only: &
-       HIO_output
     implicit none
 
     real(RP) :: SAMPLE   ( ADM_gall,   ADM_KNONE,ADM_lall,   4)
@@ -850,31 +848,16 @@ contains
 
        call FIO_output( SAMPLE(:,:,:,1), SAMPLE_OUT_BASENAME, '', '', & ! [IN]
                        'sample1', 'sample data(prc)', '', 'NIL',      & ! [IN]
-                       IO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+                       FIO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
        call FIO_output( SAMPLE(:,:,:,2), SAMPLE_OUT_BASENAME, '', '', & ! [IN]
                        'sample2', 'sample data(rgn)', '', 'NIL',      & ! [IN]
-                       IO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+                       FIO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
        call FIO_output( SAMPLE(:,:,:,3), SAMPLE_OUT_BASENAME, '', '', & ! [IN]
                        'sample3', 'sample data(i)', '', 'NIL',        & ! [IN]
-                       IO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+                       FIO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
        call FIO_output( SAMPLE(:,:,:,4), SAMPLE_OUT_BASENAME, '', '', & ! [IN]
                        'sample4', 'sample data(j)', '', 'NIL',        & ! [IN]
-                       IO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
-
-    elseif( SAMPLE_io_mode == 'POH5' ) then
-
-       call HIO_output( SAMPLE(:,:,:,1), SAMPLE_OUT_BASENAME, '', '', & ! [IN]
-                       'sample1', 'sample data(prc)', '', 'NIL',      & ! [IN]
-                       IO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
-       call HIO_output( SAMPLE(:,:,:,2), SAMPLE_OUT_BASENAME, '', '', & ! [IN]
-                       'sample2', 'sample data(rgn)', '', 'NIL',      & ! [IN]
-                       IO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
-       call HIO_output( SAMPLE(:,:,:,3), SAMPLE_OUT_BASENAME, '', '', & ! [IN]
-                       'sample3', 'sample data(i)', '', 'NIL',        & ! [IN]
-                       IO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
-       call HIO_output( SAMPLE(:,:,:,4), SAMPLE_OUT_BASENAME, '', '', & ! [IN]
-                       'sample4', 'sample data(j)', '', 'NIL',        & ! [IN]
-                       IO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
+                       FIO_REAL8, 'ZSSFC1', k, k, 1, 0.0_DP, 0.0_DP    ) ! [IN]
 
     else
        if( IO_L ) write(IO_FID_LOG,*) 'Invalid io_mode!'

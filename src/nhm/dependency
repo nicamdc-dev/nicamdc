@@ -81,7 +81,7 @@ kessler.o                                : kessler.f90
 Terminator.o                             : Terminator.f90
 
 mod_history_vars.o	: mod_history_vars.f90 mod_precision.o mod_adm.o mod_prof.o mod_const.o mod_history.o mod_runconf.o mod_gmtr.o mod_gtl.o mod_vmtr.o mod_prgvar.o mod_bsstate.o mod_cnvvar.o mod_thrmdyn.o mod_saturation.o mod_bndcnd.o mod_grd.o
-prg_driver-dc.o		: prg_driver-dc.f90    mod_precision.o mod_adm.o mod_prof.o mod_random.o mod_const.o mod_fio.o $(mod_hio).o mod_comm.o mod_grd.o mod_gmtr.o mod_oprt.o mod_vmtr.o mod_time.o mod_calendar.o mod_history.o mod_history_vars.o mod_embudget.o mod_runconf.o mod_saturation.o mod_prgvar.o mod_extdata.o mod_forcing_driver.o mod_dynamics.o
+prg_driver-dc.o		: prg_driver-dc.f90    mod_precision.o mod_adm.o mod_prof.o mod_random.o mod_const.o mod_fio.o mod_comm.o mod_grd.o mod_gmtr.o mod_oprt.o mod_vmtr.o mod_time.o mod_calendar.o mod_history.o mod_history_vars.o mod_embudget.o mod_runconf.o mod_saturation.o mod_prgvar.o mod_extdata.o mod_forcing_driver.o mod_dynamics.o
 
 $(NICAM_BINDIR)/$(PRJ_NHM01): $(BUILDDIR)/$(PRJ_NHM01)
 	$(INSTALL) $< $@

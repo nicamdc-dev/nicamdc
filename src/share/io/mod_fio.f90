@@ -2,7 +2,7 @@
 !> Module file I/O
 !!
 !! @par Description
-!!         This module is container for file I/O (PaNDa format)
+!!         File I/O module (interface)
 !!
 !! @author NICAM developers
 !<
@@ -13,9 +13,10 @@ module mod_fio
   !++ Used modules
   !
   use mod_precision
-  use mod_io_param
   use mod_stdio
   use mod_prof
+
+  use mod_fio_common
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -44,344 +45,226 @@ module mod_fio
   !
   !++ Public parameters & variables
   !
-
-  !> struct for package infomation
-  type, public :: headerinfo
-     character(len=H_LONG)  :: fname         !< file name
-     character(len=H_MID)   :: description   !< file description
-     character(len=H_LONG)  :: note          !< longer note of file
-     integer                :: num_of_data   !< number of data
-     integer                :: fmode         !< file mode(0,1,2)
-     integer                :: endiantype    !< endian type(0,1,2)
-     integer                :: grid_topology !< grid topology(0,1,2)
-     integer                :: glevel        !< glevel
-     integer                :: rlevel        !< rlevel
-     integer                :: num_of_rgn    !< number of region
-     integer, pointer       :: rgnid(:)      !< array of region id
-  endtype headerinfo
-
-  !> struct for data infomation
-  type, public :: datainfo
-     character(len=H_SHORT) :: varname      !< variable name
-     character(len=H_MID)   :: description  !< variable description
-     character(len=H_SHORT) :: unit         !< unit of variable
-     character(len=H_SHORT) :: layername    !< layer name
-     character(len=H_LONG)  :: note         !< longer note of variable
-     integer(DP)            :: datasize     !< data size
-     integer                :: datatype     !< data type(0,1,2,3)
-     integer                :: num_of_layer !< number of layer
-     integer                :: step
-     integer(DP)            :: time_start
-     integer(DP)            :: time_end
-  endtype datainfo
-
   !-----------------------------------------------------------------------------
   !
   !++ Private procedures
   !
-  public :: FIO_getfid
-
   !-----------------------------------------------------------------------------
   !
   !++ Private parameters & variables
   !
-  integer, private, parameter :: FIO_nmaxfile = 1024
-
-  character(len=H_LONG), private :: FIO_fname_list(FIO_nmaxfile) = ''
-  integer,               private :: FIO_fid_list  (FIO_nmaxfile) = -1
-  integer,               private :: FIO_fid_count = 1
-
-  type(headerinfo),      private :: hinfo
-  type(datainfo),        private :: dinfo
-
-  integer, private, parameter :: max_num_of_data = 2500 !--- max time step num
-  integer, private, parameter :: preclist(0:3) = (/ 4, 8, 4, 8 /)
+  character(len=H_SHORT),   private :: FIO_FORMAT = 'PANDA'
 
   !-----------------------------------------------------------------------------
 contains
   !-----------------------------------------------------------------------------
-  !> Setup
   subroutine FIO_setup
-    use mod_adm, only: &
-       RGNMNG_l2r, &
-       ADM_glevel, &
-       ADM_rlevel, &
-       ADM_lall
+    use mod_process, only: &
+       PRC_MPIstop
+    use mod_fio_panda, only: &
+       FIO_PANDA_setup
     implicit none
+
+    namelist / FIOPARAM / &
+       FIO_FORMAT
+
+    integer :: ierr
     !---------------------------------------------------------------------------
 
-    if( IO_L ) write(IO_FID_LOG,*)
-    if( IO_L ) write(IO_FID_LOG,*) '+++ Module[fio]/Category[common share]'
+    write(IO_FID_LOG,*)
+    write(IO_FID_LOG,*) '+++ Module[fileio]/Category[common share]'
 
-    call fio_syscheck()
-    call fio_put_commoninfo( IO_SPLIT_FILE,  & ! [IN]
-                             IO_BIG_ENDIAN,  & ! [IN]
-                             IO_ICOSAHEDRON, & ! [IN]
-                             ADM_glevel,     & ! [IN]
-                             ADM_rlevel,     & ! [IN]
-                             ADM_lall,       & ! [IN]
-                             RGNMNG_l2r(:)-1 ) ! [IN]
+    !--- read parameters
+    rewind(IO_FID_CONF)
+    read(IO_FID_CONF,nml=FIOPARAM,iostat=ierr)
+    if ( ierr < 0 ) then
+       write(IO_FID_LOG,*) '*** FIOPARAM is not specified. use default.'
+    elseif( ierr > 0 ) then
+       write(*,         *) 'xxx Not appropriate names in namelist FIOPARAM. STOP.'
+       write(IO_FID_LOG,*) 'xxx Not appropriate names in namelist FIOPARAM. STOP.'
+       call PRC_MPIstop
+    endif
+    write(IO_FID_LOG,nml=FIOPARAM)
 
-    allocate( hinfo%rgnid(ADM_lall) )
+    select case(FIO_FORMAT)
+    case('PANDA')
+       write(IO_FID_LOG,*) '*** File I/O format : Packaged NICAM DAta format (PaNDa)'
+       call FIO_PANDA_setup
+    case('HDF5')
+       write(IO_FID_LOG,*) '*** File I/O format : HDF5 format'
+       write(*,*)           'xxx HDF5 format is not implemented yet! STOP.'
+       call PRC_MPIstop
+    case('NETCDF')
+       write(IO_FID_LOG,*) '*** File I/O format : NetCDF(4) format'
+       write(*,*)           'xxx NetCDF format is not implemented yet! STOP.'
+       call PRC_MPIstop
+    case default
+       write(*,*) 'xxx Not appropriate FIO_FORMAT. STOP : ', trim(FIO_FORMAT)
+       call PRC_MPIstop
+    end select
 
     return
   end subroutine FIO_setup
 
   !-----------------------------------------------------------------------------
-  !> Get file ID of given basename.
-  subroutine FIO_getfid( &
-       fid,      &
-       basename, &
-       rwtype,   &
-       pkg_desc, &
-       pkg_note  )
-    use mod_adm, only: &
-       GLOBAL_prefix_dir,    &
-       GLOBAL_extension_ens, &
-       ADM_prc_me
-    implicit none
-
-    integer,          intent(out) :: fid      !< file ID
-    character(len=*), intent(in)  :: basename !< basename of file
-    integer,          intent(in)  :: rwtype   !< file access type
-    character(len=*), intent(in)  :: pkg_desc !< package(file) description
-    character(len=*), intent(in)  :: pkg_note !< package(file) note
-
-    character(len=H_SHORT) :: rwname(0:2)
-    data rwname / 'READ','WRITE','APPEND' /
-
-    character(len=H_LONG) :: basename_mod
-    character(len=H_LONG) :: fname
-    integer               :: n
-    !---------------------------------------------------------------------------
-
-    !--- search existing file
-    fid = -1
-    do n = 1, FIO_fid_count
-       if ( basename == FIO_fname_list(n) ) fid = FIO_fid_list(n)
-    enddo
-
-    if ( fid < 0 ) then ! file registration
-       !--- register new file and open
-       basename_mod = trim(GLOBAL_prefix_dir)//trim(basename)//trim(GLOBAL_extension_ens)
-       call fio_mk_fname(fname,trim(basename_mod),'pe',ADM_prc_me-1,6)
-       call fio_register_file(fid,fname)
-
-       if ( rwtype == IO_FREAD ) then
-
-!          call fio_dump_finfo(n,IO_BIG_ENDIAN,IO_DUMP_HEADER) ! dump to stdout(check)
-          call fio_fopen(fid,rwtype)
-          call fio_read_allinfo(fid)
-
-       elseif( rwtype == IO_FWRITE ) then
-
-          call fio_fopen(fid,rwtype)
-          call fio_put_write_pkginfo(fid,pkg_desc,pkg_note)
-
-       elseif( rwtype == IO_FAPPEND ) then
-
-          call fio_fopen(fid,rwtype)
-          call fio_read_pkginfo(fid)
-          call fio_write_pkginfo(fid)
-
-       endif
-
-       if( IO_L ) write(IO_FID_LOG,'(1x,A,A,A,I3)') '*** [FIO] File registration (ADVANCED) : ', &
-                            trim(rwname(rwtype)),' - ', FIO_fid_count
-       if( IO_L ) write(IO_FID_LOG,'(1x,A,I3,A,A)') '*** fid= ', fid, ', name: ', trim(fname)
-
-       FIO_fname_list(FIO_fid_count) = trim(basename)
-       FIO_fid_list  (FIO_fid_count) = fid
-       FIO_fid_count = FIO_fid_count + 1
-    endif
-
-    return
-  end subroutine FIO_getfid
-
-  !-----------------------------------------------------------------------------
-  !> Input(read) one variable at one step.
   subroutine FIO_input_SP( &
-       var,           &
-       basename,      &
-       varname,       &
-       layername,     &
-       k_start,       &
-       k_end,         &
-       step,          &
-       allow_missingq ) !--- optional
-    use mod_process, only: &
-       PRC_MPIstop
-    use mod_adm, only: &
-       ADM_gall, &
-       ADM_lall
+       var,            &
+       basename,       &
+       varname,        &
+       layername,      &
+       k_start,        &
+       k_end,          &
+       step,           &
+       allow_missingq, & !--- optional
+       did_out         ) !--- optional
+    use mod_fio_panda, only: &
+       FIO_PANDA_input_SP
     implicit none
 
-    real(SP),         intent(out) :: var(:,:,:) !< variable(ij,k,l)
-    character(len=*), intent(in)  :: basename   !< basename of file
-    character(len=*), intent(in)  :: varname    !< variable name
-    character(len=*), intent(in)  :: layername  !< layer name
-    integer,          intent(in)  :: k_start    !< start index of vertical level
-    integer,          intent(in)  :: k_end      !< end   index of vertical level
-    integer,          intent(in)  :: step       !< step to be read
+    real(SP),         intent(out) :: var(:,:,:)
+    character(len=*), intent(in)  :: basename
+    character(len=*), intent(in)  :: varname
+    character(len=*), intent(in)  :: layername
+    integer,          intent(in)  :: k_start, k_end
+    integer,          intent(in)  :: step
 
-    logical, intent(in), optional :: allow_missingq !< if data is missing, set value to zero, else execution stops.
+    logical, intent(in),  optional :: allow_missingq !--- if data is missing, set value to zero
+    integer, intent(out), optional :: did_out
 
-    real(SP) :: var4(ADM_gall,k_start:k_end,ADM_lall)
-    real(DP) :: var8(ADM_gall,k_start:k_end,ADM_lall)
-
-    integer  :: did, fid
+    logical :: allow_missingq_
+    integer :: did
     !---------------------------------------------------------------------------
 
-    call PROF_rapstart('FILEIO_in',2)
-
-    !--- search/register file
-    call FIO_getfid( fid, basename, IO_FREAD, '', '' )
-
-    !--- seek data ID and get information
-    call fio_seek_datainfo(did,fid,varname,step)
-    call fio_get_datainfo(fid,did,dinfo)
-
-    !--- verify
-    if ( did == -1 ) then
-       if ( present(allow_missingq) ) then
-          if ( allow_missingq ) then
-             if( IO_L ) write(IO_FID_LOG,*) '*** [INPUT]/[FIO] data not found! : ', &
-                                  'varname= ',trim(varname),', step=',step
-             if( IO_L ) write(IO_FID_LOG,*) '*** [INPUT]/[FIO] Q Value is set to 0.'
-
-             var(:,k_start:k_end,:) = 0.0_SP
-
-             call PROF_rapend('FILEIO_in',2)
-             return
-          endif
-       else
-          if( IO_L ) write(IO_FID_LOG,*) 'xxx [INPUT]/[FIO] data not found! : ', &
-                               'varname= ',trim(varname),', step=',step
-          call PRC_MPIstop
-       endif
+    allow_missingq_ = .false.
+    if ( present(allow_missingq) ) then
+       allow_missingq_ = allow_missingq
     endif
 
-    if ( dinfo%layername /= layername ) then
-       if( IO_L ) write(IO_FID_LOG,*) 'xxx [INPUT]/[FIO] layername mismatch! ', &
-                            '[',trim(dinfo%layername),':',trim(layername),']'
-       call PRC_MPIstop
-    elseif( dinfo%num_of_layer /= k_end-k_start+1 ) then
-       if( IO_L ) write(IO_FID_LOG,*) 'xxx [INPUT]/[FIO] num_of_layer mismatch! ', &
-                            dinfo%num_of_layer,k_end-k_start+1
-       call PRC_MPIstop
+    select case(FIO_FORMAT)
+    case('PANDA')
+
+       call FIO_PANDA_input_SP ( var(:,:,:),      & ! [OUT]
+                                 basename,        & ! [IN]
+                                 varname,         & ! [IN]
+                                 layername,       & ! [IN]
+                                 k_start,         & ! [IN]
+                                 k_end,           & ! [IN]
+                                 step,            & ! [IN]
+                                 allow_missingq_, & ! [IN]
+                                 did              ) ! [IN]
+
+!   case('HDF5')
+!
+!      call FIO_HDF5_input_SP  ( var(:,:,:),      & ! [OUT]
+!                                basename,        & ! [IN]
+!                                varname,         & ! [IN]
+!                                layername,       & ! [IN]
+!                                k_start,         & ! [IN]
+!                                k_end,           & ! [IN]
+!                                step,            & ! [IN]
+!                                allow_missingq_, & ! [IN]
+!                                did              ) ! [IN]
+!
+!   case('NETCDF')
+!
+!      call FIO_NETCDF_input_SP( var(:,:,:),     & ! [OUT]
+!                                basename,       & ! [IN]
+!                                varname,        & ! [IN]
+!                                layername,      & ! [IN]
+!                                k_start,        & ! [IN]
+!                                k_end,          & ! [IN]
+!                                step,           & ! [IN]
+!                                allow_missingq_ ) ! [IN]
+
+    end select
+
+    if ( present(did_out) )then
+      did_out = did
     endif
-
-    !--- read data
-    if ( dinfo%datatype == IO_REAL4 ) then
-
-       call fio_read_data(fid,did,var4(:,:,:))
-       var(:,k_start:k_end,:) = real( var4(:,1:dinfo%num_of_layer,:), kind=SP )
-
-    elseif( dinfo%datatype == IO_REAL8 ) then
-
-       call fio_read_data(fid,did,var8(:,:,:))
-       var(:,k_start:k_end,:) = real( var8(:,1:dinfo%num_of_layer,:), kind=SP )
-
-    endif
-
-    call PROF_rapend('FILEIO_in',2)
 
     return
   end subroutine FIO_input_SP
 
   !-----------------------------------------------------------------------------
-  !> Input(read) one variable at one step.
   subroutine FIO_input_DP( &
-       var,           &
-       basename,      &
-       varname,       &
-       layername,     &
-       k_start,       &
-       k_end,         &
-       step,          &
-       allow_missingq ) !--- optional
-    use mod_process, only: &
-       PRC_MPIstop
-    use mod_adm, only: &
-       ADM_gall, &
-       ADM_lall
+       var,            &
+       basename,       &
+       varname,        &
+       layername,      &
+       k_start,        &
+       k_end,          &
+       step,           &
+       allow_missingq, & !--- optional
+       did_out         )
+    use mod_fio_panda, only: &
+       FIO_PANDA_input_DP
     implicit none
 
-    real(DP),         intent(out) :: var(:,:,:) !< variable(ij,k,l)
-    character(len=*), intent(in)  :: basename   !< basename of file
-    character(len=*), intent(in)  :: varname    !< variable name
-    character(len=*), intent(in)  :: layername  !< layer name
-    integer,          intent(in)  :: k_start    !< start index of vertical level
-    integer,          intent(in)  :: k_end      !< end   index of vertical level
-    integer,          intent(in)  :: step       !< step to be read
+    real(DP),         intent(out) :: var(:,:,:)
+    character(len=*), intent(in)  :: basename
+    character(len=*), intent(in)  :: varname
+    character(len=*), intent(in)  :: layername
+    integer,          intent(in)  :: k_start, k_end
+    integer,          intent(in)  :: step
 
-    logical, intent(in), optional :: allow_missingq !< if data is missing, set value to zero, else execution stops.
+    logical, intent(in),  optional :: allow_missingq !--- if data is missing, set value to zero
+    integer, intent(out), optional :: did_out
 
-    real(SP) :: var4(ADM_gall,k_start:k_end,ADM_lall)
-    real(DP) :: var8(ADM_gall,k_start:k_end,ADM_lall)
-
-    integer  :: did, fid
+    logical :: allow_missingq_
+    integer :: did
     !---------------------------------------------------------------------------
 
-    call PROF_rapstart('FILEIO_in',2)
-
-    !--- search/register file
-    call FIO_getfid( fid, basename, IO_FREAD, '', '' )
-
-    !--- seek data ID and get information
-    call fio_seek_datainfo(did,fid,varname,step)
-    call fio_get_datainfo(fid,did,dinfo)
-
-    !--- verify
-    if ( did == -1 ) then
-       if ( present(allow_missingq) ) then
-          if ( allow_missingq ) then
-             if( IO_L ) write(IO_FID_LOG,*) '*** [INPUT]/[FIO] data not found! : ', &
-                                  'varname= ',trim(varname),', step=',step
-             if( IO_L ) write(IO_FID_LOG,*) '*** [INPUT]/[FIO] Q Value is set to 0.'
-
-             var(:,k_start:k_end,:) = 0.0_DP
-
-             call PROF_rapend('FILEIO_in',2)
-             return
-          endif
-       else
-          if( IO_L ) write(IO_FID_LOG,*) 'xxx [INPUT]/[FIO] data not found! : ', &
-                               'varname= ',trim(varname),', step=',step
-          call PRC_MPIstop
-       endif
+    allow_missingq_ = .false.
+    if ( present(allow_missingq) ) then
+       allow_missingq_ = allow_missingq
     endif
 
-    if ( dinfo%layername /= layername ) then
-       if( IO_L ) write(IO_FID_LOG,*) 'xxx [INPUT]/[FIO] layername mismatch! ', &
-                            '[',trim(dinfo%layername),':',trim(layername),']'
-       call PRC_MPIstop
-    elseif( dinfo%num_of_layer /= k_end-k_start+1 ) then
-       if( IO_L ) write(IO_FID_LOG,*) 'xxx [INPUT]/[FIO] num_of_layer mismatch! ', &
-                            dinfo%num_of_layer,k_end-k_start+1
-       call PRC_MPIstop
+    select case(FIO_FORMAT)
+    case('PANDA')
+
+       call FIO_PANDA_input_DP ( var(:,:,:),      & ! [OUT]
+                                 basename,        & ! [IN]
+                                 varname,         & ! [IN]
+                                 layername,       & ! [IN]
+                                 k_start,         & ! [IN]
+                                 k_end,           & ! [IN]
+                                 step,            & ! [IN]
+                                 allow_missingq_, &
+                                 did              ) ! [IN]
+
+!   case('HDF5')
+!
+!      call FIO_HDF5_input_DP  ( var(:,:,:),      & ! [OUT]
+!                                basename,        & ! [IN]
+!                                varname,         & ! [IN]
+!                                layername,       & ! [IN]
+!                                k_start,         & ! [IN]
+!                                k_end,           & ! [IN]
+!                                step,            & ! [IN]
+!                                allow_missingq_, & ! [IN]
+!                                did              ) ! [IN]
+!
+!   case('NETCDF')
+!
+!      call FIO_NETCDF_input_DP( var(:,:,:),     & ! [OUT]
+!                                basename,       & ! [IN]
+!                                varname,        & ! [IN]
+!                                layername,      & ! [IN]
+!                                k_start,        & ! [IN]
+!                                k_end,          & ! [IN]
+!                                step,           & ! [IN]
+!                                allow_missingq_ ) ! [IN]
+
+    end select
+
+    if ( present(did_out) )then
+      did_out = did
     endif
-
-    !--- read data
-    if ( dinfo%datatype == IO_REAL4 ) then
-
-       call fio_read_data(fid,did,var4(:,:,:))
-       var(:,k_start:k_end,:) = real( var4(:,1:dinfo%num_of_layer,:), kind=DP )
-
-    elseif( dinfo%datatype == IO_REAL8 ) then
-
-       call fio_read_data(fid,did,var8(:,:,:))
-       var(:,k_start:k_end,:) = real( var8(:,1:dinfo%num_of_layer,:), kind=DP )
-
-    endif
-
-    call PROF_rapend('FILEIO_in',2)
 
     return
   end subroutine FIO_input_DP
 
   !-----------------------------------------------------------------------------
-  !> Read in all steps of given `varname`, returns total data
   subroutine FIO_seek( &
        start_step,       &
        num_of_step,      &
@@ -395,83 +278,75 @@ contains
        ctime,            &
        cdate,            &
        opt_periodic_year )
-    use mod_process, only: &
-       PRC_MPIstop
-    use mod_calendar, only: &
-       CALENDAR_ss2yh, &
-       CALENDAR_yh2ss
+    use mod_fio_panda, only: &
+       FIO_PANDA_seek
     implicit none
 
     integer,          intent(inout) :: start_step
     integer,          intent(inout) :: num_of_step
-    integer,          intent(inout) :: data_date(6,max_num_of_data)
+    integer,          intent(inout) :: data_date(6,FIO_data_nlim)
     integer,          intent(inout) :: prec
     character(len=*), intent(in)    :: basename
     character(len=*), intent(in)    :: varname
-    character(len=*), intent(in)    :: layername      ! for verification only
-    integer,          intent(in)    :: k_start, k_end ! for verification only
+    character(len=*), intent(in)    :: layername
+    integer,          intent(in)    :: k_start, k_end
     real(DP),         intent(in)    :: ctime
-    integer,          intent(in)    :: cdate(6)       ! cdate(1) is only used only when opt_periodic_year is T.
+    integer,          intent(in)    :: cdate(6)
     logical,          intent(in)    :: opt_periodic_year
-
-    real(DP) :: midtime ! [sec]
-    logical  :: startflag
-    integer  :: did, fid
-    integer  :: i
     !---------------------------------------------------------------------------
 
-    call PROF_rapstart('FILEIO_in',2)
+    select case(FIO_FORMAT)
+    case('PANDA')
 
-    !--- search/register file
-    call FIO_getfid( fid, basename, IO_FREAD, '', '' )
+       call FIO_PANDA_seek ( start_step,       & ! [INOUT]
+                             num_of_step,      & ! [INOUT]
+                             data_date(:,:),   & ! [INOUT]
+                             prec,             & ! [INOUT]
+                             basename,         & ! [IN]
+                             varname,          & ! [IN]
+                             layername,        & ! [IN]
+                             k_start,          & ! [IN]
+                             k_end,            & ! [IN]
+                             ctime,            & ! [IN]
+                             cdate(:),         & ! [IN]
+                             opt_periodic_year ) ! [IN]
 
-    startflag = .false.
+!   case('HDF5')
+!
+!      call FIO_HDF5_seek  ( start_step,       & ! [INOUT]
+!                            num_of_step,      & ! [INOUT]
+!                            data_date(:,:),   & ! [INOUT]
+!                            prec,             & ! [INOUT]
+!                            basename,         & ! [IN]
+!                            varname,          & ! [IN]
+!                            layername,        & ! [IN]
+!                            k_start,          & ! [IN]
+!                            k_end,            & ! [IN]
+!                            ctime,            & ! [IN]
+!                            cdate(:),         & ! [IN]
+!                            opt_periodic_year ) ! [IN]
+!
+!   case('NETCDF')
+!
+!      call FIO_NETCDF_seek( start_step,       & ! [INOUT]
+!                            num_of_step,      & ! [INOUT]
+!                            data_date(:,:),   & ! [INOUT]
+!                            prec,             & ! [INOUT]
+!                            basename,         & ! [IN]
+!                            varname,          & ! [IN]
+!                            layername,        & ! [IN]
+!                            k_start,          & ! [IN]
+!                            k_end,            & ! [IN]
+!                            ctime,            & ! [IN]
+!                            cdate(:),         & ! [IN]
+!                            opt_periodic_year ) ! [IN]
 
-    do i = 1, max_num_of_data
-       !--- seek data ID and get information
-       call fio_seek_datainfo(did,fid,varname,i)
-
-       if ( did == -1 ) then
-          num_of_step = i - 1
-          exit
-       endif
-
-       call fio_get_datainfo(fid,did,dinfo)
-
-       !--- verify
-       if ( dinfo%layername /= layername ) then
-          if( IO_L ) write(IO_FID_LOG,*) 'xxx [INPUT]/[FIO] layername mismatch! ', &
-                               '[',trim(dinfo%layername),':',trim(layername),']'
-          call PRC_MPIstop
-       elseif( dinfo%num_of_layer /= k_end-k_start+1 ) then
-          if( IO_L ) write(IO_FID_LOG,*) 'xxx [INPUT]/[FIO] num_of_layer mismatch!', &
-                               dinfo%num_of_layer,k_end-k_start+1
-          call PRC_MPIstop
-       endif
-
-       midtime = real( int( (dinfo%time_start+dinfo%time_end)*0.5_DP+1.0_DP, kind=DP ), kind=DP )
-       call CALENDAR_ss2yh( data_date(:,i), midtime )
-
-       if ( opt_periodic_year ) then
-          data_date(1,i) = cdate(1)
-          call CALENDAR_yh2ss( midtime, data_date(:,i) )
-       endif
-
-       if (       ( .not. startflag ) &
-            .AND. ( ctime < midtime ) ) then
-          startflag  = .true.
-          start_step = i
-          prec       = preclist(dinfo%datatype)
-       endif
-    enddo
-
-    call PROF_rapend('FILEIO_in',2)
+    end select
 
     return
   end subroutine FIO_seek
 
   !-----------------------------------------------------------------------------
-  !> Append data with data header
   subroutine FIO_output_SP( &
        var,       &
        basename,  &
@@ -488,14 +363,12 @@ contains
        step,      &
        t_start,   &
        t_end,     &
+       digits,    &
+       abstol,    &
+       reltol,    &
        append     )
-    use mod_process, only: &
-       PRC_MPIstop
-    use mod_const, only: &
-       UNDEF4 => CONST_UNDEF4
-    use mod_adm, only: &
-       ADM_gall, &
-       ADM_lall
+    use mod_fio_panda, only: &
+       FIO_PANDA_output_SP
     implicit none
 
     real(SP),         intent(in) :: var(:,:,:)
@@ -511,67 +384,106 @@ contains
     integer,          intent(in) :: k_start, k_end
     integer,          intent(in) :: step
     real(DP),         intent(in) :: t_start, t_end
+    integer,          intent(in), optional :: digits ! [SCIL] significant digits       for lossy compression
+    real(DP),         intent(in), optional :: abstol ! [SCIL] absolute error tolerance for lossy compression
+    real(DP),         intent(in), optional :: reltol ! [SCIL] relative error tolerance for lossy compression
     logical,          intent(in), optional :: append
 
-    real(SP) :: var4(ADM_gall,k_start:k_end,ADM_lall)
-    real(DP) :: var8(ADM_gall,k_start:k_end,ADM_lall)
-
-    integer  :: file_mode
-    integer  :: did, fid
+    integer  :: digits_
+    real(DP) :: abstol_, reltol_
+    logical  :: append_
     !---------------------------------------------------------------------------
 
-    call PROF_rapstart('FILEIO_out',2)
-
-    file_mode = IO_FWRITE
+    append_ = .false.
     if ( present(append) ) then
-       if ( append ) then
-          file_mode = IO_FAPPEND
-       endif
+       append_ = append
     endif
 
-    !--- search/register file
-    call FIO_getfid( fid, basename, file_mode, pkg_desc, pkg_note )
+    select case(FIO_FORMAT)
+    case('PANDA')
 
-    !--- append data to the file
-    dinfo%varname      = varname
-    dinfo%description  = data_desc
-    dinfo%unit         = unit
-    dinfo%layername    = layername
-    dinfo%note         = data_note
-    dinfo%datasize     = int( ADM_gall * ADM_lall * (k_end-k_start+1) * preclist(dtype), kind=DP )
-    dinfo%datatype     = dtype
-    dinfo%num_of_layer = k_end-k_start+1
-    dinfo%step         = step
-    dinfo%time_start   = int( t_start, kind=DP )
-    dinfo%time_end     = int( t_end,   kind=DP )
+       call FIO_PANDA_output_SP ( var(:,:,:), & ! [IN]
+                                  basename,   & ! [IN]
+                                  pkg_desc,   & ! [IN]
+                                  pkg_note,   & ! [IN]
+                                  varname,    & ! [IN]
+                                  data_desc,  & ! [IN]
+                                  data_note,  & ! [IN]
+                                  unit,       & ! [IN]
+                                  dtype,      & ! [IN]
+                                  layername,  & ! [IN]
+                                  k_start,    & ! [IN]
+                                  k_end,      & ! [IN]
+                                  step,       & ! [IN]
+                                  t_start,    & ! [IN]
+                                  t_end,      & ! [IN]
+                                  append      ) ! [IN]
 
-    if ( dtype == IO_REAL4 ) then
+!   case('HDF5')
+!
+!      !=> [SCIL]
+!      if ( present(digits) ) then
+!         digits_ = digits
+!      else
+!         digits_ = -1
+!      endif
+!      if ( present(abstol) ) then
+!         abstol_ = abstol
+!      else
+!         abstol_ = -999.0_DP
+!      endif
+!      if ( present(reltol) ) then
+!         reltol_ = reltol
+!      else
+!         reltol_ = -999.0_DP
+!      endif
+!      !<= [SCIL]
+!
+!      call FIO_HDF5_output_SP  ( var(:,:,:), & ! [IN]
+!                                 basename,   & ! [IN]
+!                                 pkg_desc,   & ! [IN]
+!                                 pkg_note,   & ! [IN]
+!                                 varname,    & ! [IN]
+!                                 data_desc,  & ! [IN]
+!                                 data_note,  & ! [IN]
+!                                 unit,       & ! [IN]
+!                                 dtype,      & ! [IN]
+!                                 layername,  & ! [IN]
+!                                 k_start,    & ! [IN]
+!                                 k_end,      & ! [IN]
+!                                 step,       & ! [IN]
+!                                 t_start,    & ! [IN]
+!                                 t_end,      & ! [IN]
+!                                 digits_,    & ! [IN] [SCIL]
+!                                 abstol_,    & ! [IN] [SCIL]
+!                                 reltol_,    & ! [IN] [SCIL]
+!                                 append      ) ! [IN]
+!
+!   case('NETCDF')
+!
+!      call FIO_NETCDF_output_SP( var(:,:,:), & ! [IN]
+!                                 basename,   & ! [IN]
+!                                 pkg_desc,   & ! [IN]
+!                                 pkg_note,   & ! [IN]
+!                                 varname,    & ! [IN]
+!                                 data_desc,  & ! [IN]
+!                                 data_note,  & ! [IN]
+!                                 unit,       & ! [IN]
+!                                 dtype,      & ! [IN]
+!                                 layername,  & ! [IN]
+!                                 k_start,    & ! [IN]
+!                                 k_end,      & ! [IN]
+!                                 step,       & ! [IN]
+!                                 t_start,    & ! [IN]
+!                                 t_end,      & ! [IN]
+!                                 append      ) ! [IN]
 
-       var4(:,k_start:k_end,:) = real( var(:,k_start:k_end,:), kind=SP )
-       where( var4(:,:,:) < (UNDEF4+1.0_SP) )
-          var4(:,:,:) = UNDEF4
-       endwhere
-
-       call fio_put_write_datainfo_data(did,fid,dinfo,var4(:,:,:))
-
-    elseif( dtype == IO_REAL8 ) then
-
-       var8(:,k_start:k_end,:) = real( var(:,k_start:k_end,:), kind=DP )
-
-       call fio_put_write_datainfo_data(did,fid,dinfo,var8(:,:,:))
-
-    else
-       if( IO_L ) write(IO_FID_LOG,*) 'xxx [OUTPUT]/[FIO] Unsupported datatype!', dtype
-       call PRC_MPIstop
-    endif
-
-    call PROF_rapend('FILEIO_out',2)
+    end select
 
     return
   end subroutine FIO_output_SP
 
   !-----------------------------------------------------------------------------
-  !> Append data with data header
   subroutine FIO_output_DP( &
        var,       &
        basename,  &
@@ -588,14 +500,12 @@ contains
        step,      &
        t_start,   &
        t_end,     &
+       digits,    &
+       abstol,    &
+       reltol,    &
        append     )
-    use mod_process, only: &
-       PRC_MPIstop
-    use mod_const, only: &
-       UNDEF4 => CONST_UNDEF4
-    use mod_adm, only: &
-       ADM_gall, &
-       ADM_lall
+    use mod_fio_panda, only: &
+       FIO_PANDA_output_DP
     implicit none
 
     real(DP),         intent(in) :: var(:,:,:)
@@ -611,61 +521,101 @@ contains
     integer,          intent(in) :: k_start, k_end
     integer,          intent(in) :: step
     real(DP),         intent(in) :: t_start, t_end
+    integer,          intent(in), optional :: digits ! [SCIL] significant digits       for lossy compression
+    real(DP),         intent(in), optional :: abstol ! [SCIL] absolute error tolerance for lossy compression
+    real(DP),         intent(in), optional :: reltol ! [SCIL] relative error tolerance for lossy compression
     logical,          intent(in), optional :: append
 
-    real(SP) :: var4(ADM_gall,k_start:k_end,ADM_lall)
-    real(DP) :: var8(ADM_gall,k_start:k_end,ADM_lall)
-
-    integer  :: file_mode
-    integer  :: did, fid
+    integer  :: digits_
+    real(DP) :: abstol_, reltol_
+    logical  :: append_
     !---------------------------------------------------------------------------
 
-    call PROF_rapstart('FILEIO_out',2)
-
-    file_mode = IO_FWRITE
+    append_ = .false.
     if ( present(append) ) then
-       if ( append ) then
-          file_mode = IO_FAPPEND
-       endif
+       append_ = append
     endif
 
-    !--- search/register file
-    call FIO_getfid( fid, basename, file_mode, pkg_desc, pkg_note )
+    select case(FIO_FORMAT)
+    case('PANDA')
 
-    !--- append data to the file
-    dinfo%varname      = varname
-    dinfo%description  = data_desc
-    dinfo%unit         = unit
-    dinfo%layername    = layername
-    dinfo%note         = data_note
-    dinfo%datasize     = int( ADM_gall * ADM_lall * (k_end-k_start+1) * preclist(dtype), kind=DP )
-    dinfo%datatype     = dtype
-    dinfo%num_of_layer = k_end-k_start+1
-    dinfo%step         = step
-    dinfo%time_start   = int( t_start, kind=DP )
-    dinfo%time_end     = int( t_end,   kind=DP )
+       call FIO_PANDA_output_DP ( var(:,:,:), & ! [IN]
+                                  basename,   & ! [IN]
+                                  pkg_desc,   & ! [IN]
+                                  pkg_note,   & ! [IN]
+                                  varname,    & ! [IN]
+                                  data_desc,  & ! [IN]
+                                  data_note,  & ! [IN]
+                                  unit,       & ! [IN]
+                                  dtype,      & ! [IN]
+                                  layername,  & ! [IN]
+                                  k_start,    & ! [IN]
+                                  k_end,      & ! [IN]
+                                  step,       & ! [IN]
+                                  t_start,    & ! [IN]
+                                  t_end,      & ! [IN]
+                                  append      ) ! [IN]
 
-    if ( dtype == IO_REAL4 ) then
+!   case('HDF5')
+!
+!      !=> [SCIL]
+!      if ( present(digits) ) then
+!         digits_ = digits
+!      else
+!         digits_ = -1
+!      endif
+!      if ( present(abstol) ) then
+!         abstol_ = abstol
+!      else
+!         abstol_ = -999.0_DP
+!      endif
+!      if ( present(reltol) ) then
+!         reltol_ = reltol
+!      else
+!         reltol_ = -999.0_DP
+!      endif
+!      !<= [SCIL]
+!
+!      call FIO_HDF5_output_DP  ( var(:,:,:), & ! [IN]
+!                                 basename,   & ! [IN]
+!                                 pkg_desc,   & ! [IN]
+!                                 pkg_note,   & ! [IN]
+!                                 varname,    & ! [IN]
+!                                 data_desc,  & ! [IN]
+!                                 data_note,  & ! [IN]
+!                                 unit,       & ! [IN]
+!                                 dtype,      & ! [IN]
+!                                 layername,  & ! [IN]
+!                                 k_start,    & ! [IN]
+!                                 k_end,      & ! [IN]
+!                                 step,       & ! [IN]
+!                                 t_start,    & ! [IN]
+!                                 t_end,      & ! [IN]
+!                                 digits_,    & ! [IN] [SCIL]
+!                                 abstol_,    & ! [IN] [SCIL]
+!                                 reltol_,    & ! [IN] [SCIL]
+!                                 append      ) ! [IN]
+!
+!   case('NETCDF')
+!
+!      call FIO_NETCDF_output_DP( var(:,:,:), & ! [IN]
+!                                 basename,   & ! [IN]
+!                                 pkg_desc,   & ! [IN]
+!                                 pkg_note,   & ! [IN]
+!                                 varname,    & ! [IN]
+!                                 data_desc,  & ! [IN]
+!                                 data_note,  & ! [IN]
+!                                 unit,       & ! [IN]
+!                                 dtype,      & ! [IN]
+!                                 layername,  & ! [IN]
+!                                 k_start,    & ! [IN]
+!                                 k_end,      & ! [IN]
+!                                 step,       & ! [IN]
+!                                 t_start,    & ! [IN]
+!                                 t_end,      & ! [IN]
+!                                 append      ) ! [IN]
 
-       var4(:,k_start:k_end,:) = real( var(:,k_start:k_end,:), kind=SP )
-       where( var4(:,:,:) < (UNDEF4+1.0_SP) )
-          var4(:,:,:) = UNDEF4
-       endwhere
-
-       call fio_put_write_datainfo_data(did,fid,dinfo,var4(:,:,:))
-
-    elseif( dtype == IO_REAL8 ) then
-
-       var8(:,k_start:k_end,:) = real( var(:,k_start:k_end,:), kind=DP )
-
-       call fio_put_write_datainfo_data(did,fid,dinfo,var8(:,:,:))
-
-    else
-       if( IO_L ) write(IO_FID_LOG,*) 'xxx [OUTPUT]/[FIO] Unsupported datatype!', dtype
-       call PRC_MPIstop
-    endif
-
-    call PROF_rapend('FILEIO_out',2)
+    end select
 
     return
   end subroutine FIO_output_DP
@@ -673,57 +623,52 @@ contains
   !-----------------------------------------------------------------------------
   subroutine FIO_close( &
        basename )
-    use mod_adm, only: &
-       ADM_prc_me
+    use mod_fio_panda, only: &
+       FIO_PANDA_close
     implicit none
 
     character(len=*), intent(in) :: basename
-
-    character(len=H_LONG) :: fname
-
-    integer  :: fid
-    integer  :: n
     !---------------------------------------------------------------------------
 
-    !--- search/register file
-    do n = 1, FIO_fid_count
-       if ( basename == FIO_fname_list(n) ) then
-          fid = FIO_fid_list(n)
+    select case(FIO_FORMAT)
+    case('PANDA')
 
-          call fio_fclose(fid)
-          call fio_mk_fname(fname,trim(FIO_fname_list(n)),'pe',ADM_prc_me-1,6)
+       call FIO_PANDA_close ( basename ) ! [IN]
 
-          if( IO_L ) write(IO_FID_LOG,'(1x,A,I3,A,A)') &
-          '*** [FIO] File close (ADVANCED) fid= ', fid, ', name: ', trim(fname)
+!   case('HDF5')
+!
+!      call FIO_HDF5_close  ( basename ) ! [IN]
+!
+!   case('NETCDF')
+!
+!      call FIO_NETCDF_close( basename ) ! [IN]
 
-          ! remove closed file info from the list
-          FIO_fname_list(n) = ''
-          FIO_fid_list  (n) = -1
-       endif
-    enddo
+    end select
 
     return
   end subroutine FIO_close
 
   !-----------------------------------------------------------------------------
   subroutine FIO_finalize
-    use mod_adm, only: &
-       ADM_prc_me
+    use mod_fio_panda, only: &
+       FIO_PANDA_finalize
     implicit none
-
-    character(len=H_LONG) :: fname
-    integer               :: n, fid
     !---------------------------------------------------------------------------
 
-    do n = 1, FIO_fid_count
-       fid = FIO_fid_list(n)
+    select case(FIO_FORMAT)
+    case('PANDA')
 
-       call fio_fclose(fid)
-       call fio_mk_fname(fname,trim(FIO_fname_list(n)),'pe',ADM_prc_me-1,6)
+       call FIO_PANDA_finalize
 
-       if( IO_L ) write(IO_FID_LOG,'(1x,A,I3,A,A)') &
-       '*** [FIO] File close (ADVANCED) fid= ', fid, ', name: ', trim(fname)
-    enddo
+!   case('HDF5')
+!
+!      call FIO_HDF5_finalize
+!
+!   case('NETCDF')
+!
+!      call FIO_NETCDF_finalize
+
+    end select
 
     return
   end subroutine FIO_finalize

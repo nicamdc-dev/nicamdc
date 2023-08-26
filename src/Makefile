@@ -78,9 +78,9 @@ clean:
 
 .SUFFIXES: .o .f90 .c .mod
 %.o : %.f90
-	$(FC) $(FFLAGS) -I$(BUILDDIR) $(MODDIROPT) -o $(OBJDIR)/$@ -c $<
+	$(FC) $(FFLAGS) -I$(BUILDDIR) $(MODDIROPT) -o $(OBJDIR)/$@ -c $< -I$(TOPDIR)/src/share/io
 %.o : %.c
-	$(CC) $(CFLAGS) -o $(OBJDIR)/$@ -c $<
+	$(CC) $(CFLAGS) -o $(OBJDIR)/$@ -c $< -I$(TOPDIR)/NICAM/share/io
 
 %.o : %.mod
 

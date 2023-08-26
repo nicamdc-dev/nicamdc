@@ -12,7 +12,7 @@ module mod_stdio
   !
   !++ Used modules
   !
-  use mod_io_param
+  use mod_fio_common
   !-----------------------------------------------------------------------------
   implicit none
   private
@@ -31,9 +31,9 @@ module mod_stdio
   !
   !++ Public parameters & variables
   !
-  integer,               public, parameter :: H_SHORT     = IO_HSHORT       !< Character length (16)
-  integer,               public, parameter :: H_MID       = IO_HMID         !< Character length (64)
-  integer,               public, parameter :: H_LONG      = IO_HLONG        !< Character length (256)
+  integer,               public, parameter :: H_SHORT     = FIO_HSHORT      !< Character length (16)
+  integer,               public, parameter :: H_MID       = FIO_HMID        !< Character length (64)
+  integer,               public, parameter :: H_LONG      = FIO_HLONG       !< Character length (256)
 
   character(len=H_MID),  public            :: H_MODELNAME                   !< name and version of the model
   character(len=H_MID),  public            :: H_LIBNAME                     !< name and version of the library

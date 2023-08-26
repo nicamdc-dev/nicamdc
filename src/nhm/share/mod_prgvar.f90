@@ -778,8 +778,6 @@ contains
        ADM_kmin
     use mod_fio, only: &
        FIO_input
-    use mod_hio, only: &
-       HIO_input
     use mod_comm, only: &
        COMM_var
     use mod_statistics, only: &
@@ -818,19 +816,6 @@ contains
 
        do nq = 1, TRC_vmax_input
           call FIO_input( DIAG_var(:,:,:,DIAG_vmax0+nq),basename,TRC_name(nq), &
-                          layername,1,ADM_kall,1,                              &
-                          allow_missingq=allow_missingq                        )
-       enddo
-
-    elseif( input_io_mode == 'POH5' ) then
-
-       do nq = 1, DIAG_vmax0
-          call HIO_input( DIAG_var(:,:,:,nq),basename,DIAG_name(nq), &
-                          layername,1,ADM_kall,1                     )
-       enddo
-
-       do nq = 1, TRC_vmax_input
-          call HIO_input( DIAG_var(:,:,:,DIAG_vmax0+nq),basename,TRC_name(nq), &
                           layername,1,ADM_kall,1,                              &
                           allow_missingq=allow_missingq                        )
        enddo
@@ -926,16 +911,13 @@ contains
        ADM_lall_pl, &
        ADM_kmax,    &
        ADM_kmin
-    use mod_io_param, only: &
-       IO_REAL8
+    use mod_fio_common, only: &
+       FIO_REAL8
     use mod_comm, only: &
        COMM_var
     use mod_fio, only: &
        FIO_input, &
        FIO_output
-    use mod_hio, only: &
-       HIO_input, &
-       HIO_output
     use mod_time, only: &
        TIME_CTIME
     use mod_statistics, only: &
@@ -1034,19 +1016,6 @@ contains
                              allow_missingq=allow_missingq                                    )
           enddo
 
-       elseif( ref_io_mode == 'POH5' ) then
-
-          do nq = 1, DIAG_vmax0
-             call HIO_input( DIAG_ref(:,:,:,nq),restart_ref_basename,DIAG_name(nq), &
-                             layername,1,ADM_kall,1                                 )
-          enddo
-
-          do nq = 1, TRC_vmax_input
-             call HIO_input( DIAG_ref(:,:,:,DIAG_vmax0+nq),restart_ref_basename,TRC_name(nq), &
-                             layername,1,ADM_kall,1,                                          &
-                             allow_missingq=allow_missingq                                    )
-          enddo
-
        endif !--- io_mode
 
        call COMM_var( DIAG_ref, DIAG_ref_pl, ADM_kall, DIAG_vmax )
@@ -1122,24 +1091,12 @@ contains
 
           do nq = 1, DIAG_vmax0
              call FIO_output( DIAG_var(:,:,:,nq), basename, desc, '', DIAG_name(nq), DLABEL(nq), '', DUNIT(nq), & ! [IN]
-                              IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                       ) ! [IN]
+                              FIO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                       ) ! [IN]
           enddo
 
           do nq = 1, TRC_vmax
              call FIO_output( DIAG_var(:,:,:,DIAG_vmax0+nq), basename, desc, '', TRC_name(nq), WLABEL(nq), '', WUNIT, & ! [IN]
-                              IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                             ) ! [IN]
-          enddo
-
-       elseif( output_io_mode == 'POH5' ) then
-
-          do nq = 1, DIAG_vmax0
-             call HIO_output( DIAG_var(:,:,:,nq), basename, desc, '', DIAG_name(nq), DLABEL(nq), '', DUNIT(nq), & ! [IN]
-                              IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                       ) ! [IN]
-          enddo
-
-          do nq = 1, TRC_vmax
-             call HIO_output( DIAG_var(:,:,:,DIAG_vmax0+nq), basename, desc, '', TRC_name(nq), WLABEL(nq), '', WUNIT, & ! [IN]
-                              IO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                             ) ! [IN]
+                              FIO_REAL8, layername, 1, ADM_kall, 1, TIME_CTIME, TIME_CTIME                             ) ! [IN]
           enddo
 
        endif !--- io_mode

@@ -14,16 +14,23 @@ program prg_fio_dump
   !++ Used modules
   !
   use mpi
-  use mod_io_param
+  use iso_c_binding
+  use mod_fio_common
   use mod_stdio
   !-----------------------------------------------------------------------------
   implicit none
   !-----------------------------------------------------------------------------
   !
+  !++ C interface
+  !
+  include 'mod_fio_panda.inc'
+
+  !-----------------------------------------------------------------------------
+  !
   !++ parameters & variables
   character(len=H_LONG) :: fname     = ''
-  integer               :: mode      = IO_DUMP_HEADER
-  integer               :: endian    = IO_BIG_ENDIAN
+  integer               :: mode      = FIO_DUMP_HEADER
+  integer               :: endian    = FIO_BIG_ENDIAN
   logical               :: filelok   = .false.
   logical               :: modelok   = .false.
   logical               :: endianlok = .false.
@@ -69,19 +76,19 @@ program prg_fio_dump
      if ( argstr(1:1) == '-' ) then
         select case(argstr(2:2))
         case('h')
-           if(.not. modelok) mode = IO_DUMP_HEADER
+           if(.not. modelok) mode = FIO_DUMP_HEADER
            modelok = .true.
         case('d')
-           if(.not. modelok) mode = IO_DUMP_ALL
+           if(.not. modelok) mode = FIO_DUMP_ALL
            modelok = .true.
         case('e') ! [add] 20120621 H.Yashiro
-           if(.not. modelok) mode = IO_DUMP_ALL_MORE
+           if(.not. modelok) mode = FIO_DUMP_ALL_MORE
            modelok = .true.
         case('b')
-           if(.not. endianlok) endian = IO_BIG_ENDIAN
+           if(.not. endianlok) endian = FIO_BIG_ENDIAN
            endianlok = .true.
         case('l')
-           if(.not. endianlok) endian = IO_LITTLE_ENDIAN
+           if(.not. endianlok) endian = FIO_LITTLE_ENDIAN
            endianlok = .true.
         endselect
      else
@@ -90,11 +97,11 @@ program prg_fio_dump
      endif
   enddo
 
-  call fio_syscheck()
+  ierr = fio_syscheck()
 
-  call fio_register_file(fid,trim(fname))
+  fid = fio_register_file(cstr(fname))
 
-  call fio_dump_finfo(fid,endian,mode)
+  ierr = fio_dump_finfo(fid,endian,mode)
 
   call MPI_Finalize(ierr)
 
